@@ -1,5 +1,5 @@
-import { MyAccount } from "../components/my-account"
-import { DashboardLayout } from "../components/dashboard-layout"
+import { MyAccount } from "../components/my-account";
+import { DashboardLayout } from "../components/dashboard-layout";
 
 export default function MyAccountPage() {
   return (
@@ -9,6 +9,5 @@ export default function MyAccountPage() {
         <MyAccount />
       </div>
     </DashboardLayout>
-  )
+  );
 }
-

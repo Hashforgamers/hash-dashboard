@@ -1,27 +1,41 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Gamepad2, HardDrive, Wrench, DollarSign, Package } from "lucide-react"
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Gamepad2, HardDrive, Wrench, DollarSign, Package } from "lucide-react";
 
 interface AddConsoleFormProps {
-  consoleType: string
+  consoleType: string;
 }
 
 export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
-  const [step, setStep] = useState(1)
-  const totalSteps = 5
+  const [step, setStep] = useState(1);
+  const totalSteps = 5;
 
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
     // Handle form submission logic here
-    console.log("Form submitted")
-  }
+    console.log("Form submitted");
+  };
 
   const renderStepIndicator = () => (
     <div className="flex items-center justify-between mb-8">
@@ -48,7 +62,7 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
         </div>
       ))}
     </div>
-  )
+  );
 
   const renderStepContent = () => {
     switch (step) {
@@ -60,7 +74,9 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
                 <Gamepad2 className="w-6 h-6 text-blue-500" />
                 Console Details
               </CardTitle>
-              <CardDescription>Enter the basic information about the console</CardDescription>
+              <CardDescription>
+                Enter the basic information about the console
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
@@ -91,7 +107,12 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="consoleType">Console Type</Label>
-                  <Input id="consoleType" value={consoleType} readOnly className="bg-gray-50" />
+                  <Input
+                    id="consoleType"
+                    value={consoleType}
+                    readOnly
+                    className="bg-gray-50"
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="releaseDate">Release Date</Label>
@@ -100,11 +121,14 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="description">Description</Label>
-                <Textarea id="description" placeholder="Enter console description" />
+                <Textarea
+                  id="description"
+                  placeholder="Enter console description"
+                />
               </div>
             </CardContent>
           </Card>
-        )
+        );
       case 2:
         return (
           <Card>
@@ -113,17 +137,25 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
                 <HardDrive className="w-6 h-6 text-blue-500" />
                 Hardware Specifications
               </CardTitle>
-              <CardDescription>Enter the technical specifications</CardDescription>
+              <CardDescription>
+                Enter the technical specifications
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="processorType">Processor Type</Label>
-                  <Input id="processorType" placeholder="Enter processor type" />
+                  <Input
+                    id="processorType"
+                    placeholder="Enter processor type"
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="graphicsCard">Graphics Card</Label>
-                  <Input id="graphicsCard" placeholder="Enter graphics card details" />
+                  <Input
+                    id="graphicsCard"
+                    placeholder="Enter graphics card details"
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="ramSize">RAM Size</Label>
@@ -131,16 +163,22 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="storageCapacity">Storage Capacity</Label>
-                  <Input id="storageCapacity" placeholder="Enter storage capacity" />
+                  <Input
+                    id="storageCapacity"
+                    placeholder="Enter storage capacity"
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="connectivity">Connectivity</Label>
-                  <Input id="connectivity" placeholder="Enter connectivity options" />
+                  <Input
+                    id="connectivity"
+                    placeholder="Enter connectivity options"
+                  />
                 </div>
               </div>
             </CardContent>
           </Card>
-        )
+        );
       case 3:
         return (
           <Card>
@@ -149,7 +187,9 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
                 <Wrench className="w-6 h-6 text-blue-500" />
                 Maintenance & Status
               </CardTitle>
-              <CardDescription>Enter maintenance and availability information</CardDescription>
+              <CardDescription>
+                Enter maintenance and availability information
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
@@ -162,7 +202,9 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
                     <SelectContent>
                       <SelectItem value="available">Available</SelectItem>
                       <SelectItem value="inUse">In Use</SelectItem>
-                      <SelectItem value="maintenance">Under Maintenance</SelectItem>
+                      <SelectItem value="maintenance">
+                        Under Maintenance
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -185,17 +227,22 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
                   <Input id="lastMaintenance" type="date" />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="nextMaintenance">Next Scheduled Maintenance</Label>
+                  <Label htmlFor="nextMaintenance">
+                    Next Scheduled Maintenance
+                  </Label>
                   <Input id="nextMaintenance" type="date" />
                 </div>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="maintenanceNotes">Maintenance Notes</Label>
-                <Textarea id="maintenanceNotes" placeholder="Enter maintenance notes" />
+                <Textarea
+                  id="maintenanceNotes"
+                  placeholder="Enter maintenance notes"
+                />
               </div>
             </CardContent>
           </Card>
-        )
+        );
       case 4:
         return (
           <Card>
@@ -204,7 +251,9 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
                 <DollarSign className="w-6 h-6 text-blue-500" />
                 Price & Cost
               </CardTitle>
-              <CardDescription>Enter pricing and warranty information</CardDescription>
+              <CardDescription>
+                Enter pricing and warranty information
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
@@ -214,11 +263,18 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="rentalPrice">Rental Price</Label>
-                  <Input id="rentalPrice" type="number" placeholder="Enter rental price" />
+                  <Input
+                    id="rentalPrice"
+                    type="number"
+                    placeholder="Enter rental price"
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="warrantyPeriod">Warranty Period</Label>
-                  <Input id="warrantyPeriod" placeholder="Enter warranty period" />
+                  <Input
+                    id="warrantyPeriod"
+                    placeholder="Enter warranty period"
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="insuranceStatus">Insurance Status</Label>
@@ -235,7 +291,7 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
               </div>
             </CardContent>
           </Card>
-        )
+        );
       case 5:
         return (
           <Card>
@@ -244,7 +300,9 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
                 <Package className="w-6 h-6 text-blue-500" />
                 Additional Details
               </CardTitle>
-              <CardDescription>Enter games and accessories information</CardDescription>
+              <CardDescription>
+                Enter games and accessories information
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
@@ -265,11 +323,11 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
               </div>
             </CardContent>
           </Card>
-        )
+        );
       default:
-        return null
+        return null;
     }
-  }
+  };
 
   return (
     <form onSubmit={handleSubmit} className="max-w-4xl mx-auto py-8">
@@ -299,5 +357,5 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
         )}
       </div>
     </form>
-  )
+  );
 }

@@ -1,14 +1,29 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { PlusCircle, List, Monitor, Gamepad, Tv, Headset, ArrowLeft } from 'lucide-react'
-import { AddConsoleForm } from "./add-console-form"
-import { ConsoleList } from "./console-list"
-import { EditConsoleForm } from "./edit-console-form"
-import { motion, AnimatePresence } from "framer-motion"
+import { useState } from "react";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import {
+  PlusCircle,
+  List,
+  Monitor,
+  Gamepad,
+  Tv,
+  Headset,
+  ArrowLeft,
+} from "lucide-react";
+import { AddConsoleForm } from "./add-console-form";
+import { ConsoleList } from "./console-list";
+import { EditConsoleForm } from "./edit-console-form";
+import { motion, AnimatePresence } from "framer-motion";
 
+// Define the available actions (Add and List)
 const actions = [
   {
     type: "add",
@@ -16,7 +31,7 @@ const actions = [
     label: "Add New Console",
     description: "Register a new gaming console in the system",
     color: "bg-emerald-100 dark:bg-emerald-950",
-    iconColor: "#059669"
+    iconColor: "#059669",
   },
   {
     type: "list",
@@ -24,106 +39,73 @@ const actions = [
     label: "List Consoles",
     description: "View and manage existing consoles",
     color: "bg-blue-100 dark:bg-blue-950",
-    iconColor: "#2563eb"
+    iconColor: "#2563eb",
   },
-]
+];
 
+// Define the available console types (PC, PS5, Xbox, VR)
 const consoleTypes = [
   {
     type: "PC",
     icon: Monitor,
     color: "bg-purple-100 dark:bg-purple-950",
     iconColor: "#7c3aed",
-    description: "Gaming PCs and Workstations"
+    description: "Gaming PCs and Workstations",
   },
   {
     type: "PS5",
     icon: Tv,
     color: "bg-blue-100 dark:bg-blue-950",
     iconColor: "#2563eb",
-    description: "PlayStation 5 Gaming Consoles"
+    description: "PlayStation 5 Gaming Consoles",
   },
   {
     type: "Xbox",
     icon: Gamepad,
     color: "bg-green-100 dark:bg-green-950",
     iconColor: "#059669",
-    description: "Xbox Series Gaming Consoles"
+    description: "Xbox Series Gaming Consoles",
   },
   {
     type: "VR",
     icon: Headset,
     color: "bg-orange-100 dark:bg-orange-950",
     iconColor: "#ea580c",
-    description: "Virtual Reality Systems"
+    description: "Virtual Reality Systems",
   },
-]
+];
 
 export function ManageGamingConsole() {
-  const [selectedAction, setSelectedAction] = useState<string | null>(null)
-  const [selectedConsoleType, setSelectedConsoleType] = useState<string | null>(null)
-  const [editingConsole, setEditingConsole] = useState<any | null>(null)
+  const [selectedAction, setSelectedAction] = useState<string | null>(null);
+  const [selectedConsoleType, setSelectedConsoleType] = useState<string | null>(
+    null
+  );
+  const [editingConsole, setEditingConsole] = useState<any | null>(null);
 
   const handleActionClick = (actionType: string) => {
-    setSelectedAction(actionType)
-    setSelectedConsoleType(null)
-  }
+    setSelectedAction(actionType);
+    setSelectedConsoleType(null);
+  };
 
   const handleConsoleTypeClick = (consoleType: string) => {
-    setSelectedConsoleType(consoleType)
-  }
+    setSelectedConsoleType(consoleType);
+  };
 
   const handleEditConsole = (console: any) => {
-    setEditingConsole(console)
-  }
+    setEditingConsole(console);
+  };
 
   const handleCloseEdit = () => {
-    setEditingConsole(null)
-  }
+    setEditingConsole(null);
+  };
 
   const handleBack = () => {
     if (selectedConsoleType) {
-      setSelectedConsoleType(null)
+      setSelectedConsoleType(null);
     } else {
-      setSelectedAction(null)
+      setSelectedAction(null);
     }
-  }
-
-  // const renderHeader = () => {
-  //   let title = "Gaming Console Management"
-  //   let description = "Select an action to manage gaming consoles"
-
-  //   if (selectedAction === "add") {
-  //     title = selectedConsoleType 
-  //       ? `Add New ${selectedConsoleType} Console`
-  //       : "Select Console Type"
-  //     description = selectedConsoleType
-  //       ? `Fill in the details for the new ${selectedConsoleType} console`
-  //       : "Choose the type of gaming console to add"
-  //   } else if (selectedAction === "list") {
-  //     title = "Console Inventory"
-  //     description = "View and manage all registered gaming consoles"
-  //   }
-
-  //   return (
-  //     <div className="mb-8">
-  //       <div className="flex items-center gap-4 mb-2">
-  //         {(selectedAction || editingConsole) && (
-  //           <Button
-  //             variant="ghost"
-  //             size="icon"
-  //             onClick={handleBack}
-  //             className="h-8 w-8"
-  //           >
-  //             <ArrowLeft className="h-4 w-4" />
-  //           </Button>
-  //         )}
-  //         <h1 className="text-3xl font-bold tracking-tight">{title}</h1>
-  //       </div>
-  //       <p className="text-muted-foreground">{description}</p>
-  //     </div>
-  //   )
-  // }
+  };
 
   const renderContent = () => {
     if (selectedAction === "add") {
@@ -136,7 +118,7 @@ export function ManageGamingConsole() {
           >
             <AddConsoleForm consoleType={selectedConsoleType} />
           </motion.div>
-        )
+        );
       }
       return (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -148,12 +130,15 @@ export function ManageGamingConsole() {
               whileHover={{ scale: 1.02 }}
               transition={{ duration: 0.2 }}
             >
-              <Card 
+              <Card
                 className={`cursor-pointer transition-all hover:shadow-lg ${console.color}`}
                 onClick={() => handleConsoleTypeClick(console.type)}
               >
                 <CardHeader>
-                  <console.icon className="w-8 h-8 mb-2" style={{ color: console.iconColor }} />
+                  <console.icon
+                    className="w-8 h-8 mb-2"
+                    style={{ color: console.iconColor }}
+                  />
                   <CardTitle>{console.type}</CardTitle>
                   <CardDescription>{console.description}</CardDescription>
                 </CardHeader>
@@ -161,7 +146,7 @@ export function ManageGamingConsole() {
             </motion.div>
           ))}
         </div>
-      )
+      );
     }
     if (selectedAction === "list") {
       return (
@@ -172,7 +157,7 @@ export function ManageGamingConsole() {
         >
           <ConsoleList onEdit={handleEditConsole} />
         </motion.div>
-      )
+      );
     }
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -184,14 +169,19 @@ export function ManageGamingConsole() {
             whileHover={{ scale: 1.02 }}
             transition={{ duration: 0.2 }}
           >
-            <Card 
-              className={`cursor-pointer transition-all hover:shadow-lg ${action.color} ${
-                selectedAction === action.type ? 'ring-2 ring-primary' : ''
-              }`}
+            <Card
+              className={`cursor-pointer transition-all hover:shadow-lg ${
+                action.color
+              } ${selectedAction === action.type ? "ring-2 ring-primary" : ""}`}
               onClick={() => handleActionClick(action.type)}
             >
               <CardHeader>
-                <action.icon className="w-8 h-8 mb-2" style={{ color: action.iconColor }} />
+                {selectedAction === null && (
+                  <action.icon
+                    className="w-8 h-8 mb-2"
+                    style={{ color: action.iconColor }}
+                  />
+                )}
                 <CardTitle>{action.label}</CardTitle>
                 <CardDescription>{action.description}</CardDescription>
               </CardHeader>
@@ -199,18 +189,77 @@ export function ManageGamingConsole() {
           </motion.div>
         ))}
       </div>
-    )
-  }
+    );
+  };
 
   return (
     <div className="container mx-auto py-8 px-4">
-      {/* {renderHeader()} */}
-      <AnimatePresence mode="wait">
-        {renderContent()}
-      </AnimatePresence>
+      <div
+        className="inline-flex items-center mb-10"
+        style={{ position: "relative", height: "auto" }}
+      >
+        <motion.div
+          className="flex items-center justify-center p-1 -ml-4"
+          style={{ position: "absolute", left: "-56px" }}
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1.0, scale: 1.0 }}
+          whileHover={{ scale: 1.1 }}
+          transition={{ duration: 0.3 }}
+        >
+          {(selectedAction === "add" || selectedAction === "list") && (
+            <button
+              type="button"
+              onClick={handleBack}
+              className="bg-black text-center w-24 rounded-2xl  relative text-lime-100 text-sm   group"
+            >
+              <div className="bg-lime-400 rounded-xl h- w-1/4 grid place-items-center absolute left-0 top-0 group-hover:w-full z-10 duration-500">
+                <svg
+                  width="25px"
+                  height="25px"
+                  viewBox="0 0 1024 1024"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    fill="#000000"
+                    d="M224 480h640a32 32 0 1 1 0 64H224a32 32 0 0 1 0-64z"
+                  ></path>
+                  <path
+                    fill="#000000"
+                    d="m237.248 512 265.408 265.344a32 32 0 0 1-45.312 45.312l-288-288a32 32 0 0 1 0-45.312l288-288a32 32 0 1 1 45.312 45.312L237.248 512z"
+                  ></path>
+                </svg>
+              </div>
+              <p className="translate-x-4 width-24">Go Back</p>
+            </button>
+
+            // <Button
+            //   variant="ghost"
+            //   size="icon"
+            //   onClick={handleBack}
+            //   className="bg-transparent hover:bg-none hover:text-white transition-colors duration-300 flex items-center justify-center"
+            //   style={{
+            //     height: "3rem",
+            //     width: "3rem",
+            //   }}
+            // >
+            //   <span
+            //     className="text-3xl font-bold rounded-full text-green-600 hover:text-white"
+            //     style={{
+            //       lineHeight: "2",
+            //     }}
+            //   >
+            //     &#x2190;
+            //   </span>
+            // </Button>
+          )}
+        </motion.div>
+      </div>
+
+      <AnimatePresence mode="wait">{renderContent()}</AnimatePresence>
+
       {editingConsole && (
         <EditConsoleForm console={editingConsole} onClose={handleCloseEdit} />
       )}
     </div>
-  )
+  );
 }

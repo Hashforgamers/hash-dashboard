@@ -1,5 +1,5 @@
-import { TransactionTable } from "../components/transaction-table"
-import { DashboardLayout } from "../components/dashboard-layout"
+import { TransactionTable } from "../components/transaction-table";
+import { DashboardLayout } from "../components/dashboard-layout";
 
 export default function TransactionReportPage() {
   return (
@@ -9,6 +9,5 @@ export default function TransactionReportPage() {
         <TransactionTable />
       </div>
     </DashboardLayout>
-  )
+  );
 }
-
