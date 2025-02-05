@@ -2,10 +2,10 @@ import { LogOut } from "lucide-react";
 
 export function ButtonDestructive() {
   return (
-    <div className="absolute bottom-0 left-0 pl-5 pb-5">
-      <button className="flex items-center space-x-2 rounded-md text-red-500 px-4 py-2 transition-transform duration-200 ease-out hover:scale-105">
-        <LogOut className="w-4 h-4 transition-transform duration-200 ease-out hover:scale-110" />
-        <span className="font-medium">Logout</span>
+    <div className="absolute bottom-0 w-max "> 
+      <button className="group flex items-center space-x-2 rounded-md px-1 py-2 text-base font-medium text-red-500 transition-all hover:scale-105 hover:bg-accent">
+        <LogOut className="h-5 w-5 shrink-0" />
+        <span className="hidden group-hover:inline-block">Logout</span>
       </button>
     </div>
   );
