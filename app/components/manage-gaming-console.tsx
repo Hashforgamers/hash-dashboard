@@ -207,50 +207,50 @@ export function ManageGamingConsole() {
           transition={{ duration: 0.3 }}
         >
           {(selectedAction === "add" || selectedAction === "list") && (
-            <button
-              type="button"
-              onClick={handleBack}
-              className="bg-black text-center w-24 rounded-2xl  relative text-lime-100 text-sm   group"
-            >
-              <div className="bg-lime-400 rounded-xl h- w-1/4 grid place-items-center absolute left-0 top-0 group-hover:w-full z-10 duration-500">
-                <svg
-                  width="25px"
-                  height="25px"
-                  viewBox="0 0 1024 1024"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    fill="#000000"
-                    d="M224 480h640a32 32 0 1 1 0 64H224a32 32 0 0 1 0-64z"
-                  ></path>
-                  <path
-                    fill="#000000"
-                    d="m237.248 512 265.408 265.344a32 32 0 0 1-45.312 45.312l-288-288a32 32 0 0 1 0-45.312l288-288a32 32 0 1 1 45.312 45.312L237.248 512z"
-                  ></path>
-                </svg>
-              </div>
-              <p className="translate-x-4 width-24">Go Back</p>
-            </button>
-
-            // <Button
-            //   variant="ghost"
-            //   size="icon"
+            // <button
+            //   type="button"
             //   onClick={handleBack}
-            //   className="bg-transparent hover:bg-none hover:text-white transition-colors duration-300 flex items-center justify-center"
-            //   style={{
-            //     height: "3rem",
-            //     width: "3rem",
-            //   }}
+            //   className="bg-black text-center w-24 rounded-2xl  relative text-lime-100 text-sm   group"
             // >
-            //   <span
-            //     className="text-3xl font-bold rounded-full text-green-600 hover:text-white"
-            //     style={{
-            //       lineHeight: "2",
-            //     }}
-            //   >
-            //     &#x2190;
-            //   </span>
-            // </Button>
+            //   <div className="bg-lime-400 rounded-xl h- w-1/4 grid place-items-center absolute left-0 top-0 group-hover:w-full z-10 duration-500">
+            //     <svg
+            //       width="25px"
+            //       height="25px"
+            //       viewBox="0 0 1024 1024"
+            //       xmlns="http://www.w3.org/2000/svg"
+            //     >
+            //       <path
+            //         fill="#000000"
+            //         d="M224 480h640a32 32 0 1 1 0 64H224a32 32 0 0 1 0-64z"
+            //       ></path>
+            //       <path
+            //         fill="#000000"
+            //         d="m237.248 512 265.408 265.344a32 32 0 0 1-45.312 45.312l-288-288a32 32 0 0 1 0-45.312l288-288a32 32 0 1 1 45.312 45.312L237.248 512z"
+            //       ></path>
+            //     </svg>
+            //   </div>
+            //   <p className="translate-x-4 width-24">Go Back</p>
+            // </button>
+
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleBack}
+              className="bg-transparent hover:bg-none hover:text-white transition-colors duration-300 flex items-center justify-center rounded-full"
+              style={{
+                height: "3rem",
+                width: "3rem",
+              }}
+            >
+              <span
+                className="text-3xl font-bold rounded-full text-green-600 "
+                style={{
+                  lineHeight: "2",
+                }}
+              >
+                &#x2190;
+              </span>
+            </Button>
           )}
         </motion.div>
       </div>
