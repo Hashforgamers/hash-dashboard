@@ -5,7 +5,7 @@ import { LayoutDashboard, Receipt, Gamepad2, CalendarCheck, User } from "lucide-
 import { Moon, Sun } from "lucide-react"
 import { useTheme } from "next-themes"
 import { useState } from "react"
-
+import { ButtonDestructive } from "./log-out"
 export function MainNav({
   className,
   ...props
@@ -61,6 +61,8 @@ export function MainNav({
         </div>
         <span className="hidden group-hover:inline-block">Toggle Theme</span>
       </button>
+      
+      <ButtonDestructive/>
     </nav>
   )
 }
