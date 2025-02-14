@@ -210,7 +210,7 @@ export function ManageGamingConsole() {
             <button
               type="button"
               onClick={handleBack}
-              className="bg-black text-center w-24 rounded-2xl  relative text-lime-100 text-sm   group"
+              className=" text-center w-24 rounded-2xl  relative text-lime-100 text-sm   group"
             >
               <div className="bg-lime-400 rounded-xl h- w-1/4 grid place-items-center absolute left-0 top-0 group-hover:w-full z-10 duration-500">
                 <svg
@@ -229,21 +229,21 @@ export function ManageGamingConsole() {
                   ></path>
                 </svg>
               </div>
-              <p className="translate-x-4 width-24">Go Back</p>
+              <p className="translate-x-4 width-24 text-lime-400">Go Back</p>
             </button>
 
             // <Button
             //   variant="ghost"
             //   size="icon"
             //   onClick={handleBack}
-            //   className="bg-transparent hover:bg-none hover:text-white transition-colors duration-300 flex items-center justify-center"
+            //   className="bg-transparent hover:bg-none hover:text-white transition-colors duration-300 flex items-center justify-center rounded-full"
             //   style={{
             //     height: "3rem",
             //     width: "3rem",
             //   }}
             // >
             //   <span
-            //     className="text-3xl font-bold rounded-full text-green-600 hover:text-white"
+            //     className="text-3xl font-bold rounded-full text-green-600 "
             //     style={{
             //       lineHeight: "2",
             //     }}

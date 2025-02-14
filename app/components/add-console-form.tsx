@@ -111,7 +111,7 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
                     id="consoleType"
                     value={consoleType}
                     readOnly
-                    className="bg-gray-50"
+                    // className="bg-gray-50"
                   />
                 </div>
                 <div className="space-y-2">
