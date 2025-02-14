@@ -229,7 +229,13 @@ export function ManageBooking() {
       // case "create":
       //   return <CreateBookingForm />;
       case "create":
+        // return (
+        //   <div className="bg-green-500">
+        //     <GridConsole setSelectedAction={setSelectedAction} />;
+        //   </div>
+        // );
         return <GridConsole setSelectedAction={setSelectedAction} />;
+
       case "change":
         return <ChangeBookingForm />;
       case "reject":
@@ -298,7 +304,8 @@ export function ManageBooking() {
             exit="exit"
             className="relative bg-card rounded-lg shadow-lg p-6 border dark:border-gray-800"
           >
-            <div className="absolute inset-0 bg-gradient-to-br from-background/50 to-background rounded-lg" />
+            <div className="absolute inset-0 bg-gradient-to-br from-background/50 to-background rounded-lg " />
+
             <div className="relative">{renderForm()}</div>
           </motion.div>
         )}
