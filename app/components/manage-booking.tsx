@@ -959,78 +959,116 @@ function ListBooking() {
   const [bookings, setBookings] = useState([
     {
       id: "1",
-      time: "10:00 AM",
-      system: "PC1",
-      user: "User 1",
+      bookingDate: "2025-02-21",
+      bookingTime: "10:00 AM",
+      username: "User 1",
+      consoleType: "PC1",
+      bookedDate: "2025-02-20",
+      startTime: null,
+      endTime: null,
       status: "Not played",
     },
     {
       id: "2",
-      time: "11:00 AM",
-      system: "PS5-2",
-      user: "User 2",
+      bookingDate: "2025-02-21",
+      bookingTime: "11:00 AM",
+      username: "User 2",
+      consoleType: "PS5-2",
+      bookedDate: "2025-02-20",
+      startTime: Date.now() - 1800000, // 30 min ago
+      endTime: null,
       status: "In progress",
-      startTime: Date.now() - 1800000,
     },
     {
       id: "3",
-      time: "12:00 PM",
-      system: "Xbox-1",
-      user: "User 3",
+      bookingDate: "2025-02-21",
+      bookingTime: "12:00 PM",
+      username: "User 3",
+      consoleType: "Xbox-1",
+      bookedDate: "2025-02-19",
+      startTime: Date.now() - 7200000, // 2 hours ago
+      endTime: Date.now() - 3600000, // 1 hour ago
       status: "Completed",
     },
     {
       id: "4",
-      time: "01:00 PM",
-      system: "PC2",
-      user: "User 4",
+      bookingDate: "2025-02-21",
+      bookingTime: "01:00 PM",
+      username: "User 4",
+      consoleType: "PC2",
+      bookedDate: "2025-02-19",
+      startTime: null,
+      endTime: null,
       status: "Not played",
     },
     {
       id: "5",
-      time: "02:00 PM",
-      system: "PS5-1",
-      user: "User 5",
+      bookingDate: "2025-02-21",
+      bookingTime: "02:00 PM",
+      username: "User 5",
+      consoleType: "PS5-1",
+      bookedDate: "2025-02-18",
+      startTime: Date.now() - 3600000, // 1 hour ago
+      endTime: null,
       status: "In progress",
-      startTime: Date.now() - 3600000,
     },
     {
       id: "6",
-      time: "03:00 PM",
-      system: "Xbox-2",
-      user: "User 6",
+      bookingDate: "2025-02-21",
+      bookingTime: "03:00 PM",
+      username: "User 6",
+      consoleType: "Xbox-2",
+      bookedDate: "2025-02-18",
+      startTime: Date.now() - 10800000, // 3 hours ago
+      endTime: Date.now() - 7200000, // 2 hours ago
       status: "Completed",
     },
     {
       id: "7",
-      time: "04:00 PM",
-      system: "PC3",
-      user: "User 7",
+      bookingDate: "2025-02-21",
+      bookingTime: "04:00 PM",
+      username: "User 7",
+      consoleType: "PC3",
+      bookedDate: "2025-02-17",
+      startTime: null,
+      endTime: null,
       status: "Not played",
     },
     {
       id: "8",
-      time: "05:00 PM",
-      system: "PS5-3",
-      user: "User 8",
+      bookingDate: "2025-02-21",
+      bookingTime: "05:00 PM",
+      username: "User 8",
+      consoleType: "PS5-3",
+      bookedDate: "2025-02-17",
+      startTime: Date.now() - 5400000, // 1.5 hours ago
+      endTime: null,
       status: "In progress",
-      startTime: Date.now() - 5400000,
     },
     {
       id: "9",
-      time: "06:00 PM",
-      system: "Xbox-3",
-      user: "User 9",
+      bookingDate: "2025-02-21",
+      bookingTime: "06:00 PM",
+      username: "User 9",
+      consoleType: "Xbox-3",
+      bookedDate: "2025-02-16",
+      startTime: Date.now() - 14400000, // 4 hours ago
+      endTime: Date.now() - 10800000, // 3 hours ago
       status: "Completed",
     },
     {
       id: "10",
-      time: "07:00 PM",
-      system: "PC4",
-      user: "User 10",
+      bookingDate: "2025-02-21",
+      bookingTime: "07:00 PM",
+      username: "User 10",
+      consoleType: "PC4",
+      bookedDate: "2025-02-16",
+      startTime: null,
+      endTime: null,
       status: "Not played",
     },
   ]);
+
   const [filteredBookings, setFilteredBookings] = useState(bookings);
   const [sortConfig, setSortConfig] = useState<{
     key: string;
@@ -1119,7 +1157,7 @@ function ListBooking() {
                 className="font-semibold cursor-pointer hover:bg-muted/50 transition-colors"
                 onClick={() => handleSort("id")}
               >
-                Booking ID{" "}
+                Booking Date{" "}
                 {sortConfig?.key === "id" &&
                   (sortConfig.direction === "asc" ? "↑" : "↓")}
               </TableHead>
@@ -1127,7 +1165,7 @@ function ListBooking() {
                 className="font-semibold cursor-pointer hover:bg-muted/50 transition-colors"
                 onClick={() => handleSort("id")}
               >
-                Booking ID{" "}
+                Booking time{" "}
                 {sortConfig?.key === "id" &&
                   (sortConfig.direction === "asc" ? "↑" : "↓")}
               </TableHead>
@@ -1135,7 +1173,7 @@ function ListBooking() {
                 className="font-semibold cursor-pointer hover:bg-muted/50 transition-colors"
                 onClick={() => handleSort("id")}
               >
-                Booking Time{" "}
+                UserName{" "}
                 {sortConfig?.key === "id" &&
                   (sortConfig.direction === "asc" ? "↑" : "↓")}
               </TableHead>
@@ -1143,7 +1181,7 @@ function ListBooking() {
                 className="font-semibold cursor-pointer hover:bg-muted/50 transition-colors"
                 onClick={() => handleSort("id")}
               >
-                System Number{" "}
+                Console Type{" "}
                 {sortConfig?.key === "id" &&
                   (sortConfig.direction === "asc" ? "↑" : "↓")}
               </TableHead>
@@ -1151,7 +1189,23 @@ function ListBooking() {
                 className="font-semibold cursor-pointer hover:bg-muted/50 transition-colors"
                 onClick={() => handleSort("id")}
               >
-                User Details{" "}
+                Booked Date{" "}
+                {sortConfig?.key === "id" &&
+                  (sortConfig.direction === "asc" ? "↑" : "↓")}
+              </TableHead>
+              <TableHead
+                className="font-semibold cursor-pointer hover:bg-muted/50 transition-colors"
+                onClick={() => handleSort("id")}
+              >
+                Start time{" "}
+                {sortConfig?.key === "id" &&
+                  (sortConfig.direction === "asc" ? "↑" : "↓")}
+              </TableHead>
+              <TableHead
+                className="font-semibold cursor-pointer hover:bg-muted/50 transition-colors"
+                onClick={() => handleSort("id")}
+              >
+                End Timer{" "}
                 {sortConfig?.key === "id" &&
                   (sortConfig.direction === "asc" ? "↑" : "↓")}
               </TableHead>
@@ -1167,15 +1221,7 @@ function ListBooking() {
                 className="font-semibold cursor-pointer hover:bg-muted/50 transition-colors"
                 onClick={() => handleSort("id")}
               >
-                Start Timer{" "}
-                {sortConfig?.key === "id" &&
-                  (sortConfig.direction === "asc" ? "↑" : "↓")}
-              </TableHead>
-              <TableHead
-                className="font-semibold cursor-pointer hover:bg-muted/50 transition-colors"
-                onClick={() => handleSort("id")}
-              >
-                Timer{" "}
+                Type{" "}
                 {sortConfig?.key === "id" &&
                   (sortConfig.direction === "asc" ? "↑" : "↓")}
               </TableHead>
@@ -1191,7 +1237,7 @@ function ListBooking() {
                   exit={{ opacity: 0, y: -20 }}
                   transition={{ delay: index * 0.1 }}
                 >
-                  <TableCell>{booking.id}</TableCell>
+                  {/* <TableCell>{booking.id}</TableCell>
                   <TableCell>{booking.time}</TableCell>
                   <TableCell>{booking.system}</TableCell>
                   <TableCell>{booking.user}</TableCell>
@@ -1206,8 +1252,38 @@ function ListBooking() {
                         Start
                       </Button>
                     )}
+                  </TableCell> */}
+                  <TableCell>{booking.id}</TableCell>
+                  <TableCell>{booking.bookingDate}</TableCell>
+                  <TableCell>{booking.bookingTime}</TableCell>
+                  <TableCell>{booking.username}</TableCell>
+                  <TableCell>{booking.consoleType}</TableCell>
+                  <TableCell>{booking.bookedDate}</TableCell>
+                  <TableCell>
+                    {booking.startTime
+                      ? new Date(booking.startTime).toLocaleTimeString()
+                      : "Not started"}
                   </TableCell>
+                  <TableCell>
+                    {booking.endTime
+                      ? new Date(booking.endTime).toLocaleTimeString()
+                      : "Not ended"}
+                  </TableCell>
+
                   <TableCell>{getStatusBadge(booking.status)}</TableCell>
+                  <TableCell>
+                    {booking.status === "Not played" && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => startTimer(booking.id)}
+                      >
+                        Start
+                      </Button>
+                    )}
+                  </TableCell>
+
+                  {/* <TableCell>{getStatusBadge(booking.status)}</TableCell> */}
                   {/* Other cells */}
                 </motion.tr>
               ))}

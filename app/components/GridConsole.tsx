@@ -157,7 +157,8 @@ const CreateBookingForm: React.FC<CreateBookingFormProps> = ({
 }) => {
   const [selectedSlots, setSelectedSlots] = useState<string[]>([]);
   const [formStep, setFormStep] = useState<number>(1);
-  const totalSteps = 4;
+  const [paymentType, setPaymentType] = useState<string>("");
+  const totalSteps = 3;
 
   const handleSlotClick = (slot: string) => {
     setSelectedSlots((prev) =>
@@ -177,20 +178,20 @@ const CreateBookingForm: React.FC<CreateBookingFormProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Form submitted with data:", { selectedSlots });
+    console.log("Form submitted with data:", { selectedSlots, paymentType });
     setShowForm(false);
   };
 
   return (
     <form className="space-y-8" onSubmit={handleSubmit}>
       <div className="flex items-center justify-between mb-8">
-        <Button
+        <button
           type="button"
           className="w-8 h-8 font-xl rounded-md"
           onClick={() => setShowForm(false)}
         >
           X
-        </Button>
+        </button>
         <h2 className="text-2xl font-bold">Create New Booking</h2>
         <div className="flex items-center space-x-2">
           {Array.from({ length: totalSteps }).map((_, i) => (
@@ -221,18 +222,28 @@ const CreateBookingForm: React.FC<CreateBookingFormProps> = ({
               <h3 className="text-lg font-semibold text-primary">
                 Gamer's Information
               </h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="space-y-2">
-                  <Label htmlFor="name">Name</Label>
-                  <Input id="name" placeholder="Enter name" />
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="space-y-2  ">
+                  <label htmlFor="name">Name :</label>
+                  <input
+                    id="name"
+                    placeholder="Enter name"
+                    className="px-3 rounded py-1"
+                  />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
-                  <Input id="email" type="email" placeholder="Enter email" />
+                  <label htmlFor="email">Email :</label>
+                  <input
+                    id="email"
+                    type="email"
+                    className="px-3 rounded py-1"
+                    placeholder="Enter email"
+                  />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="phone">Phone Number</Label>
-                  <Input
+                  <label htmlFor="phone">Phone Number :</label>
+                  <input
+                    className="px-3 rounded py-1"
                     id="phone"
                     type="tel"
                     placeholder="Enter phone number"
@@ -249,29 +260,34 @@ const CreateBookingForm: React.FC<CreateBookingFormProps> = ({
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <Label htmlFor="bookingDate">Booking Date</Label>
-                  <Input id="bookingDate" type="date" />
+                  <label htmlFor="bookingDate">Booking Date :</label>
+                  <input
+                    id="bookingDate"
+                    type="date"
+                    min={new Date().toISOString().split("T")[0]}
+                    className="px-3 rounded py-1"
+                  />
                 </div>
                 <div className="space-y-2">
-                  <Label>Slot Time</Label>
-                  <ScrollArea className="h-[300px] rounded-md border p-4">
+                  <label>Slot Time</label>
+                  <div className="h-[300px] rounded-md border p-4 overflow-y-auto">
                     <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
                       {Array.from({ length: 24 }, (_, i) => i).map((hour) => (
-                        <Button
+                        <button
                           key={hour}
-                          variant={
+                          type="button"
+                          className={`px-4 py-2 rounded-lg ${
                             selectedSlots.includes(hour.toString())
-                              ? "default"
-                              : "outline"
-                          }
+                              ? "bg-green-600 text-white"
+                              : "bg-gray-400 text-black"
+                          }`}
                           onClick={() => handleSlotClick(hour.toString())}
                         >
-                          <Clock className="w-4 h-4 mr-1" />
                           {hour.toString().padStart(2, "0")}:00
-                        </Button>
+                        </button>
                       ))}
                     </div>
-                  </ScrollArea>
+                  </div>
                 </div>
               </div>
             </div>
@@ -280,35 +296,37 @@ const CreateBookingForm: React.FC<CreateBookingFormProps> = ({
           {formStep === 3 && (
             <div className="space-y-6">
               <h3 className="text-lg font-semibold text-primary">
-                Gaming Console Selection
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <Label htmlFor="consoleType">Console Type</Label>
-                  <Input
-                    id="consoleType"
-                    value={selectedConsoleType}
-                    readOnly
-                  />
-                </div>
-              </div>
-            </div>
-          )}
-
-          {formStep === 4 && (
-            <div className="space-y-6">
-              <h3 className="text-lg font-semibold text-primary">
                 Payment Details
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <Label htmlFor="totalAmount">Total Amount</Label>
-                  <Input
-                    id="totalAmount"
-                    type="number"
-                    value={selectedSlots.length * 100}
-                    readOnly
-                  />
+                  <label htmlFor="totalAmount">
+                    {`Total Amount: ${selectedSlots.length * 100}`}
+                  </label>
+                </div>
+              </div>
+              <div className="flex items-center gap-1">
+                <label htmlFor="paymentType">Payment Type:</label>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    className={`px-3 py-1 rounded-md text-white border-2 border-white ${
+                      paymentType === "Cash" ? "bg-green-600" : ""
+                    }`}
+                    onClick={() => setPaymentType("Cash")}
+                  >
+                    Cash
+                  </button>
+
+                  <button
+                    type="button"
+                    className={`px-3 py-1 rounded-md text-white border-2 border-white  ${
+                      paymentType === "Online" ? "bg-blue-600" : ""
+                    }`}
+                    onClick={() => setPaymentType("Online")}
+                  >
+                    Online
+                  </button>
                 </div>
               </div>
             </div>
@@ -316,18 +334,31 @@ const CreateBookingForm: React.FC<CreateBookingFormProps> = ({
         </motion.div>
       </AnimatePresence>
 
-      <div className="flex justify-between mt-8">
+      <div className="flex justify-between mt-8 ">
         {formStep > 1 && (
-          <Button type="button" onClick={prevStep}>
+          <button
+            type="button"
+            onClick={prevStep}
+            className="border-2 border-white rounded-md px-2 py-1 "
+          >
             Previous Step
-          </Button>
+          </button>
         )}
         {formStep < totalSteps ? (
-          <Button type="button" onClick={nextStep}>
+          <button
+            type="button"
+            onClick={nextStep}
+            className="border-2 border-white rounded-md px-2 py-1 "
+          >
             Next Step
-          </Button>
+          </button>
         ) : (
-          <Button type="submit">Complete Booking</Button>
+          <button
+            type="submit"
+            className="border-2 border-white rounded-md px-2 py-1 "
+          >
+            Complete Booking
+          </button>
         )}
       </div>
     </form>
