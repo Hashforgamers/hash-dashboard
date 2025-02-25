@@ -37,36 +37,7 @@ interface Transaction {
   slotDate: string;
   slotTime: string;
 }
-// const token = localStorage.getItem("jwtToken");
-// console.log(token);
 
-// if (token) {
-//   try {
-//     const decoded = JSON.parse(atob(token.split(".")[1])); // Decode JWT payload
-//     console.log("Decoded JWT:", decoded);
-
-//     const vendorId = decoded?.sub?.id; // Extract vendor ID
-//     console.log("Vendor ID:", vendorId);
-//   } catch (error) {
-//     console.error("Invalid JWT Token:", error);
-//   }
-// }
-
-// async function fetchData(): Promise<Record<string, unknown> | null> {
-//   try {
-//     const response: Response = await fetch(
-//       " https://hfg-dashboard.onrender.com/api/transactionReport/1/20250101/20250304"
-//     );
-
-//     if (!response.ok) {
-//       throw new Error(`HTTP error! Status: ${response.status}`);
-//     }
-//     return (await response.json()) as Transaction[]; // Return fetched data
-//   } catch (error) {
-//     console.error("Error fetching data:", error);
-//     return null;
-//   }
-// }
 const token = localStorage.getItem("jwtToken");
 let vendorId: Number = null;
 let issuedAt: Number = null;
