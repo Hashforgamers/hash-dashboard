@@ -60,14 +60,14 @@ const FilterComponent: React.FC<FilterProps> = ({
     <AnimatePresence>
       {showFilter && (
         <motion.div
-          initial={{ opacity: 0, scale: 0.8 }}
+          initial={{ opacity: 0, scale: 1 }}
           animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0, scale: 0.8 }}
+          exit={{ opacity: 0, scale: 1 }}
           // className="fixed left-[80%] w-[25%] max-w-lg -translate-x-1/2 -translate-y-1/2 shadow-lg rounded-lg p-1 dark:border-gray-700 z-50 backdrop-blur-sm bg-black/30 "
           // className="fixed left-[80%] w-[25%] w-full h-full flex items-center justify-center z-50 backdrop-blur-sm bg-black/30"
-          className="fixed w-full h-full z-50 backdrop-blur-sm bg-black/30 "
+          className="fixed w-full h-full z-50  "
         >
-          <Card className="p-2 absolute left-[70%] fixed ">
+          <Card className="p-2 relative left-[80%] fixed ">
             <CardHeader className="top-0">
               <button
                 className="absolute right-2 p-2 transition-all rounded-md hover:bg-red-500 hover:scale-110"

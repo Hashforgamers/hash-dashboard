@@ -32,62 +32,62 @@ type CreateBookingFormProps = {
 };
 
 const consoleTypes: ConsoleType[] = [
-  // {
-  //   type: "PC",
-  //   icon: Monitor,
-  //   color: "grey",
-  //   iconColor: "#7c3aed",
-  //   description: "Gaming PCs and Workstations",
-  // },
-  // {
-  //   type: "PS5",
-  //   icon: Tv,
-  //   color: "grey",
-  //   iconColor: "#2563eb",
-  //   description: "PlayStation 5 Gaming Consoles",
-  // },
-  // {
-  //   type: "Xbox",
-  //   icon: Gamepad,
-  //   color: "grey",
-  //   iconColor: "#059669",
-  //   description: "Xbox Series Gaming Consoles",
-  // },
-  // {
-  //   type: "VR",
-  //   icon: Headset,
-  //   color: "grey",
-  //   iconColor: "#ea580c",
-  //   description: "Virtual Reality Systems",
-  // },
   {
     type: "PC",
     icon: Monitor,
-    color: "bg-purple-100 dark:bg-purple-950",
+    color: "grey",
     iconColor: "#7c3aed",
     description: "Gaming PCs and Workstations",
   },
   {
     type: "PS5",
     icon: Tv,
-    color: "bg-blue-100 dark:bg-blue-950",
+    color: "grey",
     iconColor: "#2563eb",
     description: "PlayStation 5 Gaming Consoles",
   },
   {
     type: "Xbox",
     icon: Gamepad,
-    color: "bg-green-100 dark:bg-green-950",
+    color: "grey",
     iconColor: "#059669",
     description: "Xbox Series Gaming Consoles",
   },
   {
     type: "VR",
     icon: Headset,
-    color: "bg-orange-100 dark:bg-orange-950",
+    color: "grey",
     iconColor: "#ea580c",
     description: "Virtual Reality Systems",
   },
+  // {
+  //   type: "PC",
+  //   icon: Monitor,
+  //   color: "bg-purple-100 dark:bg-purple-950",
+  //   iconColor: "#7c3aed",
+  //   description: "Gaming PCs and Workstations",
+  // },
+  // {
+  //   type: "PS5",
+  //   icon: Tv,
+  //   color: "bg-blue-100 dark:bg-blue-950",
+  //   iconColor: "#2563eb",
+  //   description: "PlayStation 5 Gaming Consoles",
+  // },
+  // {
+  //   type: "Xbox",
+  //   icon: Gamepad,
+  //   color: "bg-green-100 dark:bg-green-950",
+  //   iconColor: "#059669",
+  //   description: "Xbox Series Gaming Consoles",
+  // },
+  // {
+  //   type: "VR",
+  //   icon: Headset,
+  //   color: "bg-orange-100 dark:bg-orange-950",
+  //   iconColor: "#ea580c",
+  //   description: "Virtual Reality Systems",
+  // },
 ];
 
 const GridConsole: React.FC<GridConsoleProps> = ({ setSelectedAction }) => {
