@@ -47,6 +47,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
 import { Action as SonnerAction } from "sonner";
 import GridConsole from "./GridConsole"; // No curly braces for default export
+import { error } from "console";
 
 // const actions = [
 //   {
@@ -132,6 +133,24 @@ interface BookingAction {
     iconDark: string;
   };
 }
+// async function fetchData() {
+//   try {
+//     const response = await fetch(
+//       "https://hfg-booking.onrender.com/api/getAllBooking/vendor/1/20250216"
+//     );
+
+//     if (!response.ok) {
+//       console.log("Data is not coming");
+//       return null;
+//     }
+
+//     const data = await response.json(); // Parse JSON response
+//     return "data is comming properly"; // Return the fetched data
+//   } catch (error) {
+//     console.error("Error fetching data:", error);
+//     return null;
+//   }
+// }
 
 const actions: BookingAction[] = [
   {
@@ -937,6 +956,46 @@ function RejectBookingForm() {
 // Rest of the code remains the same...
 
 function ListBooking() {
+  const fetchData = async () => {
+    try {
+      const response = await fetch(
+        "https://hfg-booking.onrender.com/api/getAllBooking/vendor/1/20250216",
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            "Access-Control-Allow-Origin": "*",
+          },
+          // mode: "cors",
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log("Fetched Data:", data);
+      return data;
+    } catch (error) {
+      console.error("Error fetching data:", error);
+      return null;
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  useEffect(() => {
+    const getData = async () => {
+      const data = await fetchData();
+      console.log(data); // Just for debugging
+    };
+
+    getData();
+  }, []);
+
   const [searchQuery, setSearchQuery] = useState("");
 
   const startTimer = (id: string) => {
