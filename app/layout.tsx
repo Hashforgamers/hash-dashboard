@@ -1,4 +1,5 @@
 import { ThemeProvider } from "next-themes";
+import { AuthProvider } from "./AuthProvider";
 
 import "./globals.css";
 
@@ -11,11 +12,13 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <head />
       <body>
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-          {/* Add BackButton here */}
-
-          {children}
-        </ThemeProvider>
+        <AuthProvider>
+          {" "}
+          {/* Wrap inside AuthProvider */}
+          <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+            {children}
+          </ThemeProvider>
+        </AuthProvider>
       </body>
     </html>
   );

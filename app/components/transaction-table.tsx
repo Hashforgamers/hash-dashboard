@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Table,
@@ -26,443 +26,84 @@ import {
 } from "lucide-react";
 import FilterComponent from "./filterComponenet";
 import { saveAs } from "file-saver";
+import { jwtDecode } from "jwt-decode";
+interface Transaction {
+  id: number;
+  userName: string;
+  amount: number;
+  modeOfPayment: string;
+  bookingType: string;
+  settlementStatus: string;
+  slotDate: string;
+  slotTime: string;
+}
 
-const transactions = [
-  {
-    id: "1",
-    slotDate: "2023-06-01",
-    slotTime: "10:00 AM",
-    userName: "John Doe",
-    amount: 50,
-    modeOfPayment: "Credit Card",
-    bookingType: "hash",
-    settlementStatus: "done",
-  },
-  {
-    id: "2",
-    slotDate: "2023-06-02",
-    slotTime: "2:00 PM",
-    userName: "Jane Smith",
-    amount: 75,
-    modeOfPayment: "Cash",
-    bookingType: "direct",
-    settlementStatus: "N/A",
-  },
-  {
-    id: "3",
-    slotDate: "2023-06-03",
-    slotTime: "11:00 AM",
-    userName: "Bob Johnson",
-    amount: 60,
-    modeOfPayment: "PayPal",
-    bookingType: "hash",
-    settlementStatus: "pending",
-  },
-  {
-    id: "2",
-    slotDate: "2023-06-02",
-    slotTime: "2:00 PM",
-    userName: "Jane Smith",
-    amount: 75,
-    modeOfPayment: "Cash",
-    bookingType: "direct",
-    settlementStatus: "N/A",
-  },
-  {
-    id: "3",
-    slotDate: "2023-06-03",
-    slotTime: "11:00 AM",
-    userName: "Bob Johnson",
-    amount: 60,
-    modeOfPayment: "PayPal",
-    bookingType: "hash",
-    settlementStatus: "pending",
-  },
-  {
-    id: "2",
-    slotDate: "2023-06-02",
-    slotTime: "2:00 PM",
-    userName: "Jane Smith",
-    amount: 75,
-    modeOfPayment: "Cash",
-    bookingType: "direct",
-    settlementStatus: "N/A",
-  },
-  {
-    id: "3",
-    slotDate: "2023-06-03",
-    slotTime: "11:00 AM",
-    userName: "Bob Johnson",
-    amount: 60,
-    modeOfPayment: "PayPal",
-    bookingType: "hash",
-    settlementStatus: "pending",
-  },
-  {
-    id: "2",
-    slotDate: "2023-06-02",
-    slotTime: "2:00 PM",
-    userName: "Jane Smith",
-    amount: 75,
-    modeOfPayment: "Cash",
-    bookingType: "direct",
-    settlementStatus: "N/A",
-  },
-  {
-    id: "3",
-    slotDate: "2023-06-03",
-    slotTime: "11:00 AM",
-    userName: "Bob Johnson",
-    amount: 60,
-    modeOfPayment: "PayPal",
-    bookingType: "hash",
-    settlementStatus: "pending",
-  },
-  {
-    id: "2",
-    slotDate: "2023-06-02",
-    slotTime: "2:00 PM",
-    userName: "Jane Smith",
-    amount: 75,
-    modeOfPayment: "Cash",
-    bookingType: "direct",
-    settlementStatus: "N/A",
-  },
-  {
-    id: "3",
-    slotDate: "2023-06-03",
-    slotTime: "11:00 AM",
-    userName: "Bob Johnson",
-    amount: 60,
-    modeOfPayment: "PayPal",
-    bookingType: "hash",
-    settlementStatus: "pending",
-  },
-  {
-    id: "2",
-    slotDate: "2023-06-02",
-    slotTime: "2:00 PM",
-    userName: "Jane Smith",
-    amount: 75,
-    modeOfPayment: "Cash",
-    bookingType: "direct",
-    settlementStatus: "N/A",
-  },
-  {
-    id: "3",
-    slotDate: "2023-06-03",
-    slotTime: "11:00 AM",
-    userName: "Bob Johnson",
-    amount: 60,
-    modeOfPayment: "PayPal",
-    bookingType: "hash",
-    settlementStatus: "pending",
-  },
-  {
-    id: "2",
-    slotDate: "2023-06-02",
-    slotTime: "2:00 PM",
-    userName: "Jane Smith",
-    amount: 75,
-    modeOfPayment: "Cash",
-    bookingType: "direct",
-    settlementStatus: "N/A",
-  },
-  {
-    id: "3",
-    slotDate: "2023-06-03",
-    slotTime: "11:00 AM",
-    userName: "Bob Johnson",
-    amount: 60,
-    modeOfPayment: "PayPal",
-    bookingType: "hash",
-    settlementStatus: "pending",
-  },
-  {
-    id: "2",
-    slotDate: "2023-06-02",
-    slotTime: "2:00 PM",
-    userName: "Jane Smith",
-    amount: 75,
-    modeOfPayment: "Cash",
-    bookingType: "direct",
-    settlementStatus: "N/A",
-  },
-  {
-    id: "3",
-    slotDate: "2023-06-03",
-    slotTime: "11:00 AM",
-    userName: "Bob Johnson",
-    amount: 60,
-    modeOfPayment: "PayPal",
-    bookingType: "hash",
-    settlementStatus: "pending",
-  },
-  {
-    id: "2",
-    slotDate: "2023-06-02",
-    slotTime: "2:00 PM",
-    userName: "Jane Smith",
-    amount: 75,
-    modeOfPayment: "Cash",
-    bookingType: "direct",
-    settlementStatus: "N/A",
-  },
-  {
-    id: "3",
-    slotDate: "2023-06-03",
-    slotTime: "11:00 AM",
-    userName: "Bob Johnson",
-    amount: 60,
-    modeOfPayment: "PayPal",
-    bookingType: "hash",
-    settlementStatus: "pending",
-  },
-  {
-    id: "2",
-    slotDate: "2023-06-02",
-    slotTime: "2:00 PM",
-    userName: "Jane Smith",
-    amount: 75,
-    modeOfPayment: "Cash",
-    bookingType: "direct",
-    settlementStatus: "N/A",
-  },
-  {
-    id: "3",
-    slotDate: "2023-06-03",
-    slotTime: "11:00 AM",
-    userName: "Bob Johnson",
-    amount: 60,
-    modeOfPayment: "PayPal",
-    bookingType: "hash",
-    settlementStatus: "pending",
-  },
+const token = localStorage.getItem("jwtToken");
+let vendorId: Number = null;
+let issuedAt: Number = null;
+let expirationTime: Number = null;
 
-  {
-    id: "2",
-    slotDate: "2023-06-02",
-    slotTime: "2:00 PM",
-    userName: "Jane Smith",
-    amount: 75,
-    modeOfPayment: "Cash",
-    bookingType: "direct",
-    settlementStatus: "N/A",
-  },
-  {
-    id: "3",
-    slotDate: "2023-06-03",
-    slotTime: "11:00 AM",
-    userName: "Bob Johnson",
-    amount: 60,
-    modeOfPayment: "PayPal",
-    bookingType: "hash",
-    settlementStatus: "pending",
-  },
-  {
-    id: "2",
-    slotDate: "2023-06-02",
-    slotTime: "2:00 PM",
-    userName: "Jane Smith",
-    amount: 75,
-    modeOfPayment: "Cash",
-    bookingType: "direct",
-    settlementStatus: "N/A",
-  },
-  {
-    id: "3",
-    slotDate: "2023-06-03",
-    slotTime: "11:00 AM",
-    userName: "Bob Johnson",
-    amount: 60,
-    modeOfPayment: "PayPal",
-    bookingType: "hash",
-    settlementStatus: "pending",
-  },
-  {
-    id: "2",
-    slotDate: "2023-06-02",
-    slotTime: "2:00 PM",
-    userName: "Jane Smith",
-    amount: 75,
-    modeOfPayment: "Cash",
-    bookingType: "direct",
-    settlementStatus: "N/A",
-  },
-  {
-    id: "3",
-    slotDate: "2023-06-03",
-    slotTime: "11:00 AM",
-    userName: "Bob Johnson",
-    amount: 60,
-    modeOfPayment: "PayPal",
-    bookingType: "hash",
-    settlementStatus: "pending",
-  },
+if (token) {
+  try {
+    const decoded = jwtDecode(token); // Decode JWT safely
+    console.log("Decoded JWT:", decoded);
 
-  {
-    id: "2",
-    slotDate: "2023-06-02",
-    slotTime: "2:00 PM",
-    userName: "Jane Smith",
-    amount: 75,
-    modeOfPayment: "Cash",
-    bookingType: "direct",
-    settlementStatus: "N/A",
-  },
-  {
-    id: "3",
-    slotDate: "2023-06-03",
-    slotTime: "11:00 AM",
-    userName: "Bob Johnson",
-    amount: 60,
-    modeOfPayment: "PayPal",
-    bookingType: "hash",
-    settlementStatus: "pending",
-  },
-  {
-    id: "2",
-    slotDate: "2023-06-02",
-    slotTime: "2:00 PM",
-    userName: "Jane Smith",
-    amount: 75,
-    modeOfPayment: "Cash",
-    bookingType: "direct",
-    settlementStatus: "N/A",
-  },
-  {
-    id: "3",
-    slotDate: "2023-06-03",
-    slotTime: "11:00 AM",
-    userName: "Bob Johnson",
-    amount: 60,
-    modeOfPayment: "PayPal",
-    bookingType: "hash",
-    settlementStatus: "pending",
-  },
-  {
-    id: "2",
-    slotDate: "2023-06-02",
-    slotTime: "2:00 PM",
-    userName: "Jane Smith",
-    amount: 75,
-    modeOfPayment: "Cash",
-    bookingType: "direct",
-    settlementStatus: "N/A",
-  },
-  {
-    id: "3",
-    slotDate: "2023-06-03",
-    slotTime: "11:00 AM",
-    userName: "Bob Johnson",
-    amount: 60,
-    modeOfPayment: "PayPal",
-    bookingType: "hash",
-    settlementStatus: "pending",
-  },
-  {
-    id: "2",
-    slotDate: "2023-06-02",
-    slotTime: "2:00 PM",
-    userName: "Jane Smith",
-    amount: 75,
-    modeOfPayment: "Cash",
-    bookingType: "direct",
-    settlementStatus: "N/A",
-  },
-  {
-    id: "3",
-    slotDate: "2023-06-03",
-    slotTime: "11:00 AM",
-    userName: "Bob Johnson",
-    amount: 60,
-    modeOfPayment: "PayPal",
-    bookingType: "hash",
-    settlementStatus: "pending",
-  },
-  {
-    id: "2",
-    slotDate: "2023-06-02",
-    slotTime: "2:00 PM",
-    userName: "Jane Smith",
-    amount: 75,
-    modeOfPayment: "Cash",
-    bookingType: "direct",
-    settlementStatus: "N/A",
-  },
-  {
-    id: "3",
-    slotDate: "2023-06-03",
-    slotTime: "11:00 AM",
-    userName: "Bob Johnson",
-    amount: 60,
-    modeOfPayment: "PayPal",
-    bookingType: "hash",
-    settlementStatus: "pending",
-  },
-  {
-    id: "2",
-    slotDate: "2023-06-02",
-    slotTime: "2:00 PM",
-    userName: "Jane Smith",
-    amount: 75,
-    modeOfPayment: "Cash",
-    bookingType: "direct",
-    settlementStatus: "N/A",
-  },
-  {
-    id: "3",
-    slotDate: "2023-06-03",
-    slotTime: "11:00 AM",
-    userName: "Bob Johnson",
-    amount: 60,
-    modeOfPayment: "PayPal",
-    bookingType: "hash",
-    settlementStatus: "pending",
-  },
-  {
-    id: "2",
-    slotDate: "2023-06-02",
-    slotTime: "2:00 PM",
-    userName: "Jane Smith",
-    amount: 75,
-    modeOfPayment: "Cash",
-    bookingType: "direct",
-    settlementStatus: "N/A",
-  },
-  {
-    id: "3",
-    slotDate: "2023-06-03",
-    slotTime: "11:00 AM",
-    userName: "Bob Johnson",
-    amount: 60,
-    modeOfPayment: "PayPal",
-    bookingType: "hash",
-    settlementStatus: "pending",
-  },
-  {
-    id: "2",
-    slotDate: "2023-06-02",
-    slotTime: "2:00 PM",
-    userName: "Jane Smith",
-    amount: 75,
-    modeOfPayment: "Cash",
-    bookingType: "direct",
-    settlementStatus: "N/A",
-  },
-  {
-    id: "3",
-    slotDate: "2023-06-03",
-    slotTime: "11:00 AM",
-    userName: "Bob Johnson",
-    amount: 60,
-    modeOfPayment: "PayPal",
-    bookingType: "hash",
-    settlementStatus: "pending",
-  },
-];
+    vendorId = decoded?.sub?.id; // Extract Vendor ID
+    issuedAt = decoded?.iat; // Extract Issued At (epoch time)
+    expirationTime = decoded?.exp; // Extract Expiration Time (epoch time)
+
+    console.log("Vendor ID:", vendorId);
+    console.log("Issued At (epoch):", issuedAt);
+    console.log("Expiration Time (epoch):", expirationTime);
+  } catch (error) {
+    console.error("Invalid JWT Token:", error);
+  }
+}
+function convertEpochToYYYYMMDD(epoch: number | null) {
+  if (!epoch) return ""; // Handle null case
+  const date = new Date(epoch * 1000); // Convert epoch to milliseconds
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0"); // Ensure two-digit month
+  const day = String(date.getDate()).padStart(2, "0"); // Ensure two-digit day
+  return `${year}${month}${day}`;
+}
+
+async function fetchData(): Promise<Record<string, unknown> | null> {
+  if (!vendorId) {
+    console.error("Vendor ID is missing!");
+    return null;
+  }
+
+  const fromDate = convertEpochToYYYYMMDD(issuedAt);
+  const toDate = convertEpochToYYYYMMDD(expirationTime);
+
+  const apiUrl = `https://hfg-dashboard.onrender.com/api/transactionReport/${vendorId}/${fromDate}/${toDate}`;
+  console.log("Fetching data from:", apiUrl);
+
+  try {
+    const response: Response = await fetch(apiUrl, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    console.log("Fetched Data:", data);
+    return data;
+  } catch (error) {
+    console.error("Error fetching data:", error);
+    return null;
+  }
+}
 
 export function TransactionTable() {
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [showFilter, setShowFilter] = useState(false);
   const [filters, setFilters] = useState({
@@ -470,8 +111,22 @@ export function TransactionTable() {
     bookingType: "",
     settlementStatus: "",
   });
-
+  useEffect(() => {
+    async function loadTransactions() {
+      const data: Transaction[] | null = await fetchData();
+      setTransactions(data || []); // ✅ Ensure transactions is always an array
+    }
+    loadTransactions();
+  }, []);
   const metrics = useMemo(() => {
+    if (!transactions || transactions.length === 0)
+      return {
+        total: 0,
+        uniqueUsers: 0,
+        pendingSettlements: 0,
+        cashTransactions: 0,
+      };
+
     const total = transactions.reduce((sum, t) => sum + t.amount, 0);
     const uniqueUsers = new Set(transactions.map((t) => t.userName)).size;
     const pendingSettlements = transactions.filter(
@@ -487,18 +142,31 @@ export function TransactionTable() {
       pendingSettlements,
       cashTransactions,
     };
-  }, []);
+  }, [transactions]); // Recalculate whenever transactions change
 
+  // Filtered transactions based on search and filters
   const filteredTransactions = useMemo(() => {
+    // Ensure transactions is always an array before filtering
+    if (!Array.isArray(transactions)) return [];
+
     return transactions.filter((t) => {
-      // Check for filters
       const isModeOfPaymentValid =
-        !filters.modeOfPayment || t.modeOfPayment === filters.modeOfPayment;
+        !filters.modeOfPayment ||
+        (t.modeOfPayment &&
+          t.modeOfPayment.toLowerCase().trim() ===
+            filters.modeOfPayment.toLowerCase().trim());
+
       const isBookingTypeValid =
-        !filters.bookingType || t.bookingType === filters.bookingType;
+        !filters.bookingType ||
+        (t.bookingType &&
+          t.bookingType.toLowerCase().trim() ===
+            filters.bookingType.toLowerCase().trim());
+
       const isSettlementStatusValid =
         !filters.settlementStatus ||
-        t.settlementStatus === filters.settlementStatus;
+        (t.settlementStatus &&
+          t.settlementStatus.toLowerCase().trim() ===
+            filters.settlementStatus.toLowerCase().trim());
 
       // Search term check (case-insensitive)
       const searchFields = [t.userName, t.modeOfPayment, t.bookingType].map(
@@ -719,6 +387,7 @@ export function TransactionTable() {
         </motion.button>
       </motion.div>
       <FilterComponent
+        className="z-2"
         filters={filters}
         setFilters={setFilters}
         showFilter={showFilter}
@@ -731,9 +400,9 @@ export function TransactionTable() {
         initial="hidden"
         animate="visible"
         transition={{ duration: 0.3, delay: 0.5 }}
-        className="rounded-md border bg-card"
+        className="rounded-md border bg-card "
       >
-        <div className="max-h-[600px] overflow-auto">
+        <div className="max-h-[600px] overflow-auto ">
           <Table>
             <TableHeader>
               <TableRow>
@@ -763,7 +432,7 @@ export function TransactionTable() {
                     <TableCell className="font-medium">
                       {transaction.userName}
                     </TableCell>
-                    <TableCell>${transaction.amount.toFixed(2)}</TableCell>
+                    <TableCell>{transaction.amount.toFixed(2)}</TableCell>
                     <TableCell>
                       <Badge variant="secondary">
                         {transaction.modeOfPayment}
