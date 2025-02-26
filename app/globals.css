@@ -106,3 +106,18 @@ body {
   animation: spin-slow 3s linear infinite;
   background-size: 300%;
 }
+
+
+/* Add this to your global CSS (tailwind.config.js or a separate .css file) */
+::-webkit-scrollbar {
+  width: 6px; /* Decreased width to make the scrollbar thinner */
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: black; /* Scrollbar thumb color */
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1; /* Track color */
+}

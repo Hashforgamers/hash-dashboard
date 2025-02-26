@@ -119,7 +119,6 @@ export function DashboardContent() {
         </motion.div>
       </div>
 
-      {/* Main Content */}
       <div className="grid gap-6 grid-cols-1 lg:grid-cols-4">
         {/* Left Side - Stats and Graphs */}
         <div className="lg:col-span-3 space-y-6">

@@ -49,8 +49,7 @@ const bookings = [
     time: "12:00pm",
     duration: "2hrs",
     status: "Paid",
-  },
-];
+  },];
 
 const container = {
   hidden: { opacity: 0 },
@@ -71,7 +70,9 @@ export function UpcomingBookings() {
   return (
     <div className="p-4">
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Upcoming Bookings</h2>
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+          Upcoming Bookings
+        </h2>
         <button className="text-sm text-emerald-500 hover:text-emerald-400">
           View all
         </button>
@@ -81,18 +82,22 @@ export function UpcomingBookings() {
         variants={container}
         initial="hidden"
         animate="show"
-        className="space-y-4"
+        className="space-y-4 max-h-[500px] overflow-y-auto scrollbar-thin scrollbar-thumb-green-500 scrollbar-track-gray-100"
       >
         {bookings.map((booking) => (
           <motion.div
             key={booking.id}
             variants={item}
-            className="bg-white dark:bg-zinc-900 rounded-lg p-4 border border-gray-200 dark:border-zinc-800 shadow"
+            className="bg-white dark:bg-zinc-900 rounded-lg p-2 border border-gray-200 dark:border-zinc-800 shadow"
           >
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="font-medium text-gray-800 dark:text-white">{booking.user}</h3>
-                <p className="text-sm text-gray-500 dark:text-zinc-400">{booking.system}</p>
+                <h3 className="font-medium text-gray-800 dark:text-white">
+                  {booking.user}
+                </h3>
+                <p className="text-sm text-gray-500 dark:text-zinc-400">
+                  {booking.system}
+                </p>
               </div>
               {booking.status === "Paid" ? (
                 <motion.button
@@ -119,3 +124,4 @@ export function UpcomingBookings() {
     </div>
   );
 }
+

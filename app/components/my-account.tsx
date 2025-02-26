@@ -69,7 +69,7 @@ export function MyAccount() {
   const [page, setPage] = useState<string | null>("Profile");
   const prevPageRef = useRef<string | null>(null);
 
-  const handleViewInpage = (e) => {
+  const handleViewInpage = (e:any) => {
     const label = e.target.dataset.label;
     setPage(label);
   };
