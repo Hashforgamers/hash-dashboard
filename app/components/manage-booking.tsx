@@ -869,15 +869,29 @@ function ListBooking() {
   const fetchData = async () => {
     try {
       const response = await axios.get(
-        "https://hfg-booking.onrender.com/api/getAllBooking/vendor/1/20250216"
-        // {
-        //   headers: {
-        //     "Content-Type": "application/json",
-        //   },
-        // }
+        "https://hfg-booking.onrender.com/api/getAllBooking/vendor/1/20250216/",
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
       );
 
-      console.log("Fetched Data:", response.data);
+      const mappedBookings = response.data.map((booking) => ({
+        id: booking.bookingId.toString(),  // Ensure the ID is a string
+        bookingDate: booking.bookingDate,
+        bookingTime: booking.bookingTime, // Keep the time format as it is
+        username: booking.userName,
+        consoleType: booking.consoleType, // Assuming the consoleType is the name, adjust as needed
+        bookedDate: booking.bookedDate,
+        startTime: booking.startTime || null, // Ensure to handle null values
+        endTime: booking.endTime || null,
+        status: booking.status, // Status from API
+      }));
+
+      // Set the bookings state after mapping
+      setBookings(mappedBookings);
+      setFilteredBookings(mappedBookings);
       return response.data;
     } catch (error) {
       console.error(
@@ -890,31 +904,7 @@ function ListBooking() {
   useEffect(() => {
     fetchData();
   }, []);
-  // async function fetchGames() {
-  //   try {
-  //     const response = await fetch(
-  //       "https://hfg-booking.onrender.com/api/getAllBooking/vendor/1/20250216"
-  //     ); // Replace with the actual API URL
-  //     if (!response.ok) {
-  //       throw new Error(`HTTP error! Status: ${response.status}`);
-  //     }
-  //     const games = await response.json();
-  //     console.log(games);
-  //     return games;
-  //   } catch (error) {
-  //     console.error("Error fetching games:", error);
-  //     return [];
-  //   }
-  // }
-
-  // const [game, setGame] = useState<any>([]);
-  // useEffect(() => {
-  //   async function getGames() {
-  //     const data = await fetchGames();
-  //     // setGame(data);
-  //   }
-  //   getGames();
-  // }, []);
+ 
   const [searchQuery, setSearchQuery] = useState("");
 
   const startTimer = (id: string) => {
@@ -936,115 +926,16 @@ function ListBooking() {
 
   const [bookings, setBookings] = useState([
     {
-      id: "1",
-      bookingDate: "2025-02-21",
-      bookingTime: "10:00 AM",
-      username: "User 1",
-      consoleType: "PC1",
-      bookedDate: "2025-02-20",
+      id: null,
+      bookingDate: null,
+      bookingTime: null,
+      username: null,
+      consoleType: null,
+      bookedDate: null,
       startTime: null,
       endTime: null,
-      status: "Not played",
-    },
-    {
-      id: "2",
-      bookingDate: "2025-02-21",
-      bookingTime: "11:00 AM",
-      username: "User 2",
-      consoleType: "PS5-2",
-      bookedDate: "2025-02-20",
-      startTime: Date.now() - 1800000, // 30 min ago
-      endTime: null,
-      status: "In progress",
-    },
-    {
-      id: "3",
-      bookingDate: "2025-02-21",
-      bookingTime: "12:00 PM",
-      username: "User 3",
-      consoleType: "Xbox-1",
-      bookedDate: "2025-02-19",
-      startTime: Date.now() - 7200000, // 2 hours ago
-      endTime: Date.now() - 3600000, // 1 hour ago
-      status: "Completed",
-    },
-    {
-      id: "4",
-      bookingDate: "2025-02-21",
-      bookingTime: "01:00 PM",
-      username: "User 4",
-      consoleType: "PC2",
-      bookedDate: "2025-02-19",
-      startTime: null,
-      endTime: null,
-      status: "Not played",
-    },
-    {
-      id: "5",
-      bookingDate: "2025-02-21",
-      bookingTime: "02:00 PM",
-      username: "User 5",
-      consoleType: "PS5-1",
-      bookedDate: "2025-02-18",
-      startTime: Date.now() - 3600000, // 1 hour ago
-      endTime: null,
-      status: "In progress",
-    },
-    {
-      id: "6",
-      bookingDate: "2025-02-21",
-      bookingTime: "03:00 PM",
-      username: "User 6",
-      consoleType: "Xbox-2",
-      bookedDate: "2025-02-18",
-      startTime: Date.now() - 10800000, // 3 hours ago
-      endTime: Date.now() - 7200000, // 2 hours ago
-      status: "Completed",
-    },
-    {
-      id: "7",
-      bookingDate: "2025-02-21",
-      bookingTime: "04:00 PM",
-      username: "User 7",
-      consoleType: "PC3",
-      bookedDate: "2025-02-17",
-      startTime: null,
-      endTime: null,
-      status: "Not played",
-    },
-    {
-      id: "8",
-      bookingDate: "2025-02-21",
-      bookingTime: "05:00 PM",
-      username: "User 8",
-      consoleType: "PS5-3",
-      bookedDate: "2025-02-17",
-      startTime: Date.now() - 5400000, // 1.5 hours ago
-      endTime: null,
-      status: "In progress",
-    },
-    {
-      id: "9",
-      bookingDate: "2025-02-21",
-      bookingTime: "06:00 PM",
-      username: "User 9",
-      consoleType: "Xbox-3",
-      bookedDate: "2025-02-16",
-      startTime: Date.now() - 14400000, // 4 hours ago
-      endTime: Date.now() - 10800000, // 3 hours ago
-      status: "Completed",
-    },
-    {
-      id: "10",
-      bookingDate: "2025-02-21",
-      bookingTime: "07:00 PM",
-      username: "User 10",
-      consoleType: "PC4",
-      bookedDate: "2025-02-16",
-      startTime: null,
-      endTime: null,
-      status: "Not played",
-    },
+      status: null,
+    }
   ]);
 
   const [filteredBookings, setFilteredBookings] = useState(bookings);
@@ -1093,14 +984,28 @@ function ListBooking() {
     }
   };
 
+  // const getStatusBadge = (status: string) => {
+  //   const variants = {
+  //     "rejected": "warning",
+  //     "confirmed": "success",
+  //   };
+  //   return <Badge variant={variants[status]}>{status}</Badge>;
+  // };
   const getStatusBadge = (status: string) => {
     const variants = {
-      "Not played": "secondary",
-      "In progress": "warning",
-      Completed: "success",
+      "rejected": "bg-red-100 dark:bg-red-950",  // Red for rejected (light/dark mode)
+      "confirmed": "bg-emerald-100 dark:bg-emerald-950",  // Green for confirmed (light/dark mode)
     };
-    return <Badge variant={variants[status]}>{status}</Badge>;
+  
+    return <span className={`px-3 py-1 rounded-full ${variants[status] || 'bg-gray-300 text-black dark:bg-gray-700 dark:text-white'}`}>{status}</span>;
   };
+  
+
+  const formatTime = (time: string) => {
+    const [hours, minutes, seconds] = time.split(":");
+    return `${hours}:${minutes}`; // You can format it further if needed (e.g., `HH:mm`)
+  };
+  
 
   return (
     <div className="space-y-8">
@@ -1238,14 +1143,10 @@ function ListBooking() {
                   <TableCell>{booking.consoleType}</TableCell>
                   <TableCell>{booking.bookedDate}</TableCell>
                   <TableCell>
-                    {booking.startTime
-                      ? new Date(booking.startTime).toLocaleTimeString()
-                      : "Not started"}
+                  {booking.startTime ? formatTime(booking.startTime) : "Not started"}
                   </TableCell>
                   <TableCell>
-                    {booking.endTime
-                      ? new Date(booking.endTime).toLocaleTimeString()
-                      : "Not ended"}
+                  {booking.endTime ? formatTime(booking.endTime) : "Not ended"}
                   </TableCell>
 
                   <TableCell>{getStatusBadge(booking.status)}</TableCell>
