@@ -60,37 +60,12 @@ const consoleTypes: ConsoleType[] = [
     iconColor: "#ea580c",
     description: "Virtual Reality Systems",
   },
-  // {
-  //   type: "PC",
-  //   icon: Monitor,
-  //   color: "bg-purple-100 dark:bg-purple-950",
-  //   iconColor: "#7c3aed",
-  //   description: "Gaming PCs and Workstations",
-  // },
-  // {
-  //   type: "PS5",
-  //   icon: Tv,
-  //   color: "bg-blue-100 dark:bg-blue-950",
-  //   iconColor: "#2563eb",
-  //   description: "PlayStation 5 Gaming Consoles",
-  // },
-  // {
-  //   type: "Xbox",
-  //   icon: Gamepad,
-  //   color: "bg-green-100 dark:bg-green-950",
-  //   iconColor: "#059669",
-  //   description: "Xbox Series Gaming Consoles",
-  // },
-  // {
-  //   type: "VR",
-  //   icon: Headset,
-  //   color: "bg-orange-100 dark:bg-orange-950",
-  //   iconColor: "#ea580c",
-  //   description: "Virtual Reality Systems",
-  // },
 ];
 
-const GridConsole: React.FC<GridConsoleProps> = ({ setSelectedAction }) => {
+const GridConsole: React.FC<GridConsoleProps> = (
+  { setSelectedAction },
+  { game }
+) => {
   const [showForm, setShowForm] = useState<boolean>(false);
   const [selectedConsoleType, setSelectedConsoleType] = useState<string>("");
 
@@ -176,10 +151,39 @@ const CreateBookingForm: React.FC<CreateBookingFormProps> = ({
     if (formStep > 1) setFormStep((prev) => prev - 1);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Form submitted with data:", { selectedSlots, paymentType });
-    setShowForm(false);
+
+    const bookingData = {
+      consoleType: selectedConsoleType,
+      selectedSlots,
+      paymentType,
+    };
+
+    try {
+      const response = await fetch(
+        "https://hfg-booking.onrender.com/api/newBooking/vendor/1",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(bookingData),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to submit booking");
+      }
+
+      const data = await response.json();
+      console.log("Booking successful:", data);
+      alert("Booking successful!");
+      setShowForm(false);
+    } catch (error) {
+      console.error("Error submitting booking:", error);
+      alert("Error submitting booking. Please try again.");
+    }
   };
 
   return (
