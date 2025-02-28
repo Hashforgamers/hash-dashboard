@@ -887,6 +887,7 @@ function ListBooking() {
         startTime: booking.startTime || null, // Ensure to handle null values
         endTime: booking.endTime || null,
         status: booking.status, // Status from API
+        type: booking.type,
       }));
 
       // Set the bookings state after mapping
@@ -935,6 +936,7 @@ function ListBooking() {
       startTime: null,
       endTime: null,
       status: null,
+      type:null,
     }
   ]);
 
@@ -1150,19 +1152,8 @@ function ListBooking() {
                   </TableCell>
 
                   <TableCell>{getStatusBadge(booking.status)}</TableCell>
-                  <TableCell>
-                    {booking.status === "Not played" && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => startTimer(booking.id)}
-                      >
-                        Start
-                      </Button>
-                    )}
-                  </TableCell>
 
-                  {/* <TableCell>{getStatusBadge(booking.status)}</TableCell> */}
+                  <TableCell>{booking.type}</TableCell>
                   {/* Other cells */}
                 </motion.tr>
               ))}
