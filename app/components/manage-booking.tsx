@@ -47,37 +47,8 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
 import { Action as SonnerAction } from "sonner";
 import GridConsole from "./GridConsole"; // No curly braces for default export
-
-// const actions = [
-//   {
-//     type: "create",
-//     icon: CalendarPlus,
-//     label: "Create New Booking",
-//     description: "Book a new gaming session",
-//     gradient: "from-blue-500 to-blue-600"
-//   },
-//   {
-//     type: "change",
-//     icon: Edit,
-//     label: "Change Booking",
-//     description: "Modify existing booking details",
-//     gradient: "from-green-500 to-green-600"
-//   },
-//   {
-//     type: "reject",
-//     icon: XCircle,
-//     label: "Reject Booking",
-//     description: "Cancel and process refunds",
-//     gradient: "from-red-500 to-red-600"
-//   },
-//   {
-//     type: "list",
-//     icon: NotepadText,
-//     label: "List Booking",
-//     description: "View and manage all bookings",
-//     gradient: "from-purple-500 to-purple-600"
-//   },
-// ]
+import { error } from "console";
+import axios from "axios";
 
 const formSteps = [
   { id: 1, icon: Users, label: "Gamer Info" },
@@ -85,39 +56,6 @@ const formSteps = [
   { id: 3, icon: FileText, label: "Console" },
   { id: 4, icon: CreditCard, label: "Payment" },
 ];
-// const container = {
-//   hidden: { opacity: 0 },
-//   show: {
-//     opacity: 1,
-//     transition: {
-//       staggerChildren: 0.1
-//     }
-//   }
-// }
-
-// const item = {
-//   hidden: { y: 20, opacity: 0 },
-//   show: { y: 0, opacity: 1 }
-// }
-
-// const formVariants = {
-//   hidden: { opacity: 0, y: 20 },
-//   visible: {
-//     opacity: 1,
-//     y: 0,
-//     transition: {
-//       duration: 0.3,
-//       ease: "easeOut"
-//     }
-//   },
-//   exit: {
-//     opacity: 0,
-//     y: -20,
-//     transition: {
-//       duration: 0.2
-//     }
-//   }
-// }
 
 interface BookingAction {
   iconColor: string;
@@ -224,17 +162,40 @@ export function ManageBooking() {
     setSelectedAction(actionType === selectedAction ? null : actionType);
   };
 
+  async function fetchGames() {
+    try {
+      const response = await fetch(
+        "https://hfg-booking.onrender.com/api/getAllConsole/vendor/1"
+      ); // Replace with the actual API URL
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+      const games = await response.json();
+      console.log(games);
+      return games;
+    } catch (error) {
+      console.error("Error fetching games:", error);
+      return [];
+    }
+  }
+
+  const [game, setGame] = useState<any>([]);
+  useEffect(() => {
+    async function getGames() {
+      const data = await fetchGames();
+      setGame(data);
+    }
+    getGames();
+  }, []);
+
+  // console.log(game.games[0]);
+
   const renderForm = () => {
     switch (selectedAction) {
-      // case "create":
-      //   return <CreateBookingForm />;
       case "create":
-        // return (
-        //   <div className="bg-green-500">
-        //     <GridConsole setSelectedAction={setSelectedAction} />;
-        //   </div>
-        // );
-        return <GridConsole setSelectedAction={setSelectedAction} />;
+        return (
+          <GridConsole setSelectedAction={setSelectedAction} game={game} />
+        );
 
       case "change":
         return <ChangeBookingForm />;
@@ -314,284 +275,227 @@ export function ManageBooking() {
   );
 }
 
-function CreateBookingForm() {
-  const [selectedSlots, setSelectedSlots] = useState<string[]>([]);
-  const [formStep, setFormStep] = useState(1);
-  const totalSteps = 4;
+// function ChangeBookingForm() {
+//   const [bookingId, setBookingId] = useState("");
+//   const [isLoading, setIsLoading] = useState(false);
+//   const [bookingFound, setBookingFound] = useState(false);
 
-  const handleSlotClick = (slot: string) => {
-    setSelectedSlots((prev) =>
-      prev.includes(slot) ? prev.filter((s) => s !== slot) : [...prev, slot]
-    );
-  };
+//   const handleSearch = () => {
+//     setIsLoading(true);
+//     // Simulate API call
+//     setTimeout(() => {
+//       setIsLoading(false);
+//       setBookingFound(true);
+//     }, 1000);
+//   };
 
-  const nextStep = () => setFormStep((prev) => Math.min(prev + 1, totalSteps));
-  const prevStep = () => setFormStep((prev) => Math.max(prev - 1, 1));
+//   return (
+//     <form className="space-y-8">
+//       <div className="space-y-4">
+//         <h3 className="text-lg font-semibold text-primary">Search Booking</h3>
+//         <div className="flex space-x-2">
+//           <div className="flex-grow">
+//             <Input
+//               id="bookingId"
+//               placeholder="Enter Booking ID"
+//               value={bookingId}
+//               onChange={(e) => setBookingId(e.target.value)}
+//               className="transition-all duration-300 focus:ring-2 focus:ring-primary"
+//             />
+//           </div>
+//           <Button
+//             type="button"
+//             onClick={handleSearch}
+//             disabled={isLoading}
+//             className="min-w-[100px]"
+//           >
+//             {isLoading ? (
+//               <motion.div
+//                 animate={{ rotate: 360 }}
+//                 transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+//               >
+//                 <Search className="w-4 h-4" />
+//               </motion.div>
+//             ) : (
+//               <>
+//                 <Search className="w-4 h-4 mr-2" />
+//                 Search
+//               </>
+//             )}
+//           </Button>
+//         </div>
+//       </div>
 
-  return (
-    <form className="space-y-8">
-      <div className="flex items-center justify-between mb-8">
-        <h2 className="text-2xl font-bold">Create New Booking</h2>
-        <div className="flex items-center space-x-2">
-          {Array.from({ length: totalSteps }).map((_, i) => (
-            <div
-              key={i}
-              className={`h-2 w-12 rounded-full transition-colors duration-300 ${
-                i + 1 === formStep
-                  ? "bg-primary"
-                  : i + 1 < formStep
-                  ? "bg-primary/60"
-                  : "bg-primary/20"
-              }`}
-            />
-          ))}
-        </div>
-      </div>
+//       <AnimatePresence>
+//         {bookingFound && (
+//           <motion.div
+//             initial={{ opacity: 0, y: 20 }}
+//             animate={{ opacity: 1, y: 0 }}
+//             exit={{ opacity: 0, y: -20 }}
+//             className="space-y-8"
+//           >
+//             <form className="space-y-8">
+//               <div className="space-y-4">
+//                 <h3 className="text-lg font-semibold">Search Booking</h3>
+//                 <div className="flex space-x-2">
+//                   <div className="flex-grow">
+//                     <Input
+//                       id="bookingId"
+//                       placeholder="Enter Booking ID"
+//                       value={bookingId}
+//                       onChange={(e) => setBookingId(e.target.value)}
+//                     />
+//                   </div>
+//                   <Button type="button" onClick={handleSearch}>
+//                     <Search className="w-4 h-4 mr-2" />
+//                     Search
+//                   </Button>
+//                 </div>
+//               </div>
 
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={formStep}
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: -20 }}
-          transition={{ duration: 0.3 }}
-        >
-          {formStep === 1 && (
-            <div className="space-y-6">
-              <h3 className="text-lg font-semibold text-primary">
-                Gamer's Information
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="space-y-2">
-                  <Label htmlFor="name">Name</Label>
-                  <Input
-                    id="name"
-                    placeholder="Enter name"
-                    className="transition-all duration-300 focus:ring-2 focus:ring-primary"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="Enter email"
-                    className="transition-all duration-300 focus:ring-2 focus:ring-primary"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="phone">Phone Number</Label>
-                  <Input
-                    id="phone"
-                    type="tel"
-                    placeholder="Enter phone number"
-                    className="transition-all duration-300 focus:ring-2 focus:ring-primary"
-                  />
-                </div>
-              </div>
-            </div>
-          )}
+//               <div className="space-y-4">
+//                 <h3 className="text-lg font-semibold">Gamer's Information</h3>
+//                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+//                   <div className="space-y-2">
+//                     <Label htmlFor="name">Name</Label>
+//                     <Input id="name" defaultValue="John Doe" />
+//                   </div>
+//                   <div className="space-y-2">
+//                     <Label htmlFor="email">Email</Label>
+//                     <Input
+//                       id="email"
+//                       type="email"
+//                       defaultValue="john@example.com"
+//                     />
+//                   </div>
+//                   <div className="space-y-2">
+//                     <Label htmlFor="phone">Phone Number</Label>
+//                     <Input id="phone" type="tel" defaultValue="1234567890" />
+//                   </div>
+//                 </div>
+//               </div>
 
-          {formStep === 2 && (
-            <div className="space-y-6">
-              <h3 className="text-lg font-semibold text-primary">
-                Booking Details
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <Label htmlFor="bookingDate">Booking Date</Label>
-                  <Input
-                    id="bookingDate"
-                    type="date"
-                    className="transition-all duration-300 focus:ring-2 focus:ring-primary"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Slot Time</Label>
-                  <ScrollArea className="h-[300px] rounded-md border p-4">
-                    <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
-                      {Array.from({ length: 24 }, (_, i) => i).map((hour) => (
-                        <Button
-                          key={hour}
-                          variant={
-                            selectedSlots.includes(hour.toString())
-                              ? "default"
-                              : "outline"
-                          }
-                          className={`rounded-full transition-all duration-300 ${
-                            selectedSlots.includes(hour.toString())
-                              ? "bg-primary text-primary-foreground transform scale-105"
-                              : "hover:bg-primary/10"
-                          }`}
-                          onClick={() => handleSlotClick(hour.toString())}
-                        >
-                          <Clock className="w-4 h-4 mr-1" />
-                          {hour.toString().padStart(2, "0")}:00
-                        </Button>
-                      ))}
-                    </div>
-                  </ScrollArea>
-                </div>
-              </div>
-            </div>
-          )}
+//               <div className="space-y-4">
+//                 <h3 className="text-lg font-semibold">Booking Details</h3>
+//                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+//                   <div className="space-y-2">
+//                     <Label htmlFor="bookingDate">Booking Date</Label>
+//                     <Input
+//                       id="bookingDate"
+//                       type="date"
+//                       defaultValue="2023-06-15"
+//                     />
+//                   </div>
+//                   <div className="space-y-2">
+//                     <Label>Slot Time</Label>
+//                     <div className="grid grid-cols-6 gap-2">
+//                       {Array.from({ length: 24 }, (_, i) => i).map((hour) => (
+//                         <Button
+//                           key={hour}
+//                           variant="outline"
+//                           className={`rounded-full ${
+//                             hour === 14
+//                               ? "bg-primary text-primary-foreground"
+//                               : ""
+//                           }`}
+//                         >
+//                           {hour}:00
+//                         </Button>
+//                       ))}
+//                     </div>
+//                   </div>
+//                 </div>
+//               </div>
 
-          {formStep === 3 && (
-            <div className="space-y-6">
-              <h3 className="text-lg font-semibold text-primary">
-                Gaming Console Selection
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <Label htmlFor="consoleType">Choose Console</Label>
-                  <Select>
-                    <SelectTrigger
-                      id="consoleType"
-                      className="transition-all duration-300 focus:ring-2 focus:ring-primary"
-                    >
-                      <SelectValue placeholder="Select console type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="PC">Gaming PC</SelectItem>
-                      <SelectItem value="PS5">PlayStation 5</SelectItem>
-                      <SelectItem value="Xbox">Xbox Series X</SelectItem>
-                      <SelectItem value="VR">VR Headset</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="systemNumber">System Number</Label>
-                  <Select>
-                    <SelectTrigger
-                      id="systemNumber"
-                      className="transition-all duration-300 focus:ring-2 focus:ring-primary"
-                    >
-                      <SelectValue placeholder="Select system number" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="1">System 1 - Available</SelectItem>
-                      <SelectItem value="2">System 2 - Available</SelectItem>
-                      <SelectItem value="3">System 3 - In Use</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </div>
-          )}
+//               {/* Other sections similar to CreateBookingForm, but with pre-filled and disabled fields */}
 
-          {formStep === 4 && (
-            <div className="space-y-6">
-              <h3 className="text-lg font-semibold text-primary">
-                Payment Details
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <Label htmlFor="totalAmount">Total Amount</Label>
-                  <div className="relative">
-                    <Input
-                      id="totalAmount"
-                      type="number"
-                      value={selectedSlots.length * 100}
-                      readOnly
-                      className="pl-8"
-                    />
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
-                      $
-                    </span>
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="paymentMethod">Payment Method</Label>
-                  <Select>
-                    <SelectTrigger id="paymentMethod">
-                      <SelectValue placeholder="Select payment method" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="cash">Cash</SelectItem>
-                      <SelectItem value="card">Credit/Debit Card</SelectItem>
-                      <SelectItem value="online">Online Payment</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div className="space-y-4 mt-6">
-                <Label>Payment Status</Label>
-                <RadioGroup defaultValue="unpaid" className="flex space-x-4">
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="paid" id="paid" />
-                    <Label htmlFor="paid">Paid</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="unpaid" id="unpaid" />
-                    <Label htmlFor="unpaid">Unpaid</Label>
-                  </div>
-                </RadioGroup>
-              </div>
-
-              <div className="space-y-4 mt-6">
-                <Label htmlFor="additionalRequest">Additional Request</Label>
-                <Textarea
-                  id="additionalRequest"
-                  placeholder="Enter any special requests or requirements..."
-                  className="min-h-[100px] transition-all duration-300 focus:ring-2 focus:ring-primary"
-                />
-              </div>
-
-              <Alert className="mt-6">
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>
-                  Please review all details before confirming the booking.
-                </AlertDescription>
-              </Alert>
-
-              <div className="flex items-center space-x-2 mt-6">
-                <Checkbox id="terms" />
-                <Label htmlFor="terms" className="text-sm">
-                  I agree to the terms and conditions
-                </Label>
-              </div>
-            </div>
-          )}
-        </motion.div>
-      </AnimatePresence>
-
-      <div className="flex justify-between mt-8">
-        {formStep > 1 && (
-          <Button type="button" variant="outline" onClick={prevStep}>
-            Previous Step
-          </Button>
-        )}
-        {formStep < totalSteps ? (
-          <Button type="button" className="ml-auto" onClick={nextStep}>
-            Next Step
-          </Button>
-        ) : (
-          <Button type="submit" className="ml-auto">
-            Complete Booking
-          </Button>
-        )}
-      </div>
-    </form>
-  );
-}
+//               <Button type="submit">Update Booking</Button>
+//             </form>
+//           </motion.div>
+//         )}
+//       </AnimatePresence>
+//     </form>
+//   );
+// }
 
 function ChangeBookingForm() {
   const [bookingId, setBookingId] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [bookingFound, setBookingFound] = useState(false);
+  const [bookingData, setBookingData] = useState({
+    customer: { name: "", email: "", phone: "" },
+    booking_date: "",
+    selected_slots: [],
+    system: "",
+  });
 
-  const handleSearch = () => {
+  const handleSearch = async () => {
+    if (!bookingId) return;
+
     setIsLoading(true);
-    // Simulate API call
-    setTimeout(() => {
+    try {
+      const response = await fetch(
+        `https://hfg-booking.onrender.com/api/bookings/${bookingId}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+        }
+      );
+      const data = await response.json();
+
+      if (response.ok) {
+        setBookingData({
+          customer: data.customer || { name: "", email: "", phone: "" },
+          booking_date: data.booking_date || "",
+          selected_slots: data.selected_slots || [],
+          system: data.system || "",
+        });
+        setBookingFound(true);
+      } else {
+        setBookingFound(false);
+      }
+    } catch (error) {
+      console.error("Error fetching booking:", error);
+      setBookingFound(false);
+    } finally {
       setIsLoading(false);
-      setBookingFound(true);
-    }, 1000);
+    }
+  };
+
+  const handleUpdateBooking = async (e) => {
+    e.preventDefault();
+    if (!bookingData) return;
+
+    try {
+      const response = await fetch(
+        `https://hfg-booking.onrender.com/api/update_booking/${bookingId}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(bookingData),
+        }
+      );
+
+      const result = await response.json();
+      console.log("Update Response:", result);
+      if (response.ok) {
+        alert("Booking updated successfully!");
+      } else {
+        alert("Failed to update booking.");
+      }
+    } catch (error) {
+      console.error("Error updating booking:", error);
+    }
   };
 
   return (
-    <form className="space-y-8">
+    <form className="space-y-8" onSubmit={handleUpdateBooking}>
+      {/* Search Section */}
       <div className="space-y-4">
         <h3 className="text-lg font-semibold text-primary">Search Booking</h3>
         <div className="flex space-x-2">
@@ -627,98 +531,123 @@ function ChangeBookingForm() {
         </div>
       </div>
 
+      {/* Booking Details Form */}
       <AnimatePresence>
-        {bookingFound && (
+        {bookingFound && bookingData && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
             className="space-y-8"
           >
-            <form className="space-y-8">
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold">Search Booking</h3>
-                <div className="flex space-x-2">
-                  <div className="flex-grow">
-                    <Input
-                      id="bookingId"
-                      placeholder="Enter Booking ID"
-                      value={bookingId}
-                      onChange={(e) => setBookingId(e.target.value)}
-                    />
-                  </div>
-                  <Button type="button" onClick={handleSearch}>
-                    <Search className="w-4 h-4 mr-2" />
-                    Search
-                  </Button>
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold">Gamer's Information</h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="name">Name</Label>
+                  <Input
+                    id="name"
+                    value={bookingData.customer?.name || ""}
+                    onChange={(e) =>
+                      setBookingData((prev) => ({
+                        ...prev,
+                        customer: {
+                          ...prev.customer,
+                          name: e.target.value,
+                        },
+                      }))
+                    }
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={bookingData.customer?.email || ""}
+                    onChange={(e) =>
+                      setBookingData((prev) => ({
+                        ...prev,
+                        customer: {
+                          ...prev.customer,
+                          email: e.target.value,
+                        },
+                      }))
+                    }
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="phone">Phone Number</Label>
+                  <Input
+                    id="phone"
+                    type="tel"
+                    value={bookingData.customer?.phone || ""}
+                    onChange={(e) =>
+                      setBookingData((prev) => ({
+                        ...prev,
+                        customer: {
+                          ...prev.customer,
+                          phone: e.target.value,
+                        },
+                      }))
+                    }
+                  />
                 </div>
               </div>
+            </div>
 
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold">Gamer's Information</h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="name">Name</Label>
-                    <Input id="name" defaultValue="John Doe" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="email">Email</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      defaultValue="john@example.com"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="phone">Phone Number</Label>
-                    <Input id="phone" type="tel" defaultValue="1234567890" />
+            {/* Booking Details */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold">Booking Details</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="bookingDate">Booking Date</Label>
+                  <Input
+                    id="bookingDate"
+                    type="date"
+                    value={bookingData.booking_date || ""}
+                    onChange={(e) =>
+                      setBookingData((prev) => ({
+                        ...prev,
+                        booking_date: e.target.value,
+                      }))
+                    }
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Slot Time</Label>
+                  <div className="grid grid-cols-6 gap-2">
+                    {Array.from({ length: 24 }, (_, i) => i).map((hour) => (
+                      <Button
+                        key={hour}
+                        variant="outline"
+                        className={`rounded-full ${
+                          bookingData.selected_slots?.includes(`${hour}:00`)
+                            ? "bg-primary text-primary-foreground"
+                            : ""
+                        }`}
+                        onClick={() =>
+                          setBookingData((prev) => ({
+                            ...prev,
+                            selected_slots: [`${hour}:00`],
+                          }))
+                        }
+                      >
+                        {hour}:00
+                      </Button>
+                    ))}
                   </div>
                 </div>
               </div>
+            </div>
 
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold">Booking Details</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="bookingDate">Booking Date</Label>
-                    <Input
-                      id="bookingDate"
-                      type="date"
-                      defaultValue="2023-06-15"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Slot Time</Label>
-                    <div className="grid grid-cols-6 gap-2">
-                      {Array.from({ length: 24 }, (_, i) => i).map((hour) => (
-                        <Button
-                          key={hour}
-                          variant="outline"
-                          className={`rounded-full ${
-                            hour === 14
-                              ? "bg-primary text-primary-foreground"
-                              : ""
-                          }`}
-                        >
-                          {hour}:00
-                        </Button>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Other sections similar to CreateBookingForm, but with pre-filled and disabled fields */}
-
-              <Button type="submit">Update Booking</Button>
-            </form>
+            <Button type="submit">Update Booking</Button>
           </motion.div>
         )}
       </AnimatePresence>
     </form>
   );
 }
-
 function RejectBookingForm() {
   const [bookingId, setBookingId] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -937,6 +866,46 @@ function RejectBookingForm() {
 // Rest of the code remains the same...
 
 function ListBooking() {
+  const fetchData = async () => {
+    try {
+      const response = await axios.get(
+        "https://hfg-booking.onrender.com/api/getAllBooking/vendor/1/20250216/",
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      const mappedBookings = response.data.map((booking) => ({
+        id: booking.bookingId.toString(),  // Ensure the ID is a string
+        bookingDate: booking.bookingDate,
+        bookingTime: booking.bookingTime, // Keep the time format as it is
+        username: booking.userName,
+        consoleType: booking.consoleType, // Assuming the consoleType is the name, adjust as needed
+        bookedDate: booking.bookedDate,
+        startTime: booking.startTime || null, // Ensure to handle null values
+        endTime: booking.endTime || null,
+        status: booking.status, // Status from API
+        type: booking.type,
+      }));
+
+      // Set the bookings state after mapping
+      setBookings(mappedBookings);
+      setFilteredBookings(mappedBookings);
+      return response.data;
+    } catch (error) {
+      console.error(
+        "Error fetching data:",
+        error.response ? error.response.data : error.message
+      );
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+ 
   const [searchQuery, setSearchQuery] = useState("");
 
   const startTimer = (id: string) => {
@@ -958,115 +927,17 @@ function ListBooking() {
 
   const [bookings, setBookings] = useState([
     {
-      id: "1",
-      bookingDate: "2025-02-21",
-      bookingTime: "10:00 AM",
-      username: "User 1",
-      consoleType: "PC1",
-      bookedDate: "2025-02-20",
+      id: null,
+      bookingDate: null,
+      bookingTime: null,
+      username: null,
+      consoleType: null,
+      bookedDate: null,
       startTime: null,
       endTime: null,
-      status: "Not played",
-    },
-    {
-      id: "2",
-      bookingDate: "2025-02-21",
-      bookingTime: "11:00 AM",
-      username: "User 2",
-      consoleType: "PS5-2",
-      bookedDate: "2025-02-20",
-      startTime: Date.now() - 1800000, // 30 min ago
-      endTime: null,
-      status: "In progress",
-    },
-    {
-      id: "3",
-      bookingDate: "2025-02-21",
-      bookingTime: "12:00 PM",
-      username: "User 3",
-      consoleType: "Xbox-1",
-      bookedDate: "2025-02-19",
-      startTime: Date.now() - 7200000, // 2 hours ago
-      endTime: Date.now() - 3600000, // 1 hour ago
-      status: "Completed",
-    },
-    {
-      id: "4",
-      bookingDate: "2025-02-21",
-      bookingTime: "01:00 PM",
-      username: "User 4",
-      consoleType: "PC2",
-      bookedDate: "2025-02-19",
-      startTime: null,
-      endTime: null,
-      status: "Not played",
-    },
-    {
-      id: "5",
-      bookingDate: "2025-02-21",
-      bookingTime: "02:00 PM",
-      username: "User 5",
-      consoleType: "PS5-1",
-      bookedDate: "2025-02-18",
-      startTime: Date.now() - 3600000, // 1 hour ago
-      endTime: null,
-      status: "In progress",
-    },
-    {
-      id: "6",
-      bookingDate: "2025-02-21",
-      bookingTime: "03:00 PM",
-      username: "User 6",
-      consoleType: "Xbox-2",
-      bookedDate: "2025-02-18",
-      startTime: Date.now() - 10800000, // 3 hours ago
-      endTime: Date.now() - 7200000, // 2 hours ago
-      status: "Completed",
-    },
-    {
-      id: "7",
-      bookingDate: "2025-02-21",
-      bookingTime: "04:00 PM",
-      username: "User 7",
-      consoleType: "PC3",
-      bookedDate: "2025-02-17",
-      startTime: null,
-      endTime: null,
-      status: "Not played",
-    },
-    {
-      id: "8",
-      bookingDate: "2025-02-21",
-      bookingTime: "05:00 PM",
-      username: "User 8",
-      consoleType: "PS5-3",
-      bookedDate: "2025-02-17",
-      startTime: Date.now() - 5400000, // 1.5 hours ago
-      endTime: null,
-      status: "In progress",
-    },
-    {
-      id: "9",
-      bookingDate: "2025-02-21",
-      bookingTime: "06:00 PM",
-      username: "User 9",
-      consoleType: "Xbox-3",
-      bookedDate: "2025-02-16",
-      startTime: Date.now() - 14400000, // 4 hours ago
-      endTime: Date.now() - 10800000, // 3 hours ago
-      status: "Completed",
-    },
-    {
-      id: "10",
-      bookingDate: "2025-02-21",
-      bookingTime: "07:00 PM",
-      username: "User 10",
-      consoleType: "PC4",
-      bookedDate: "2025-02-16",
-      startTime: null,
-      endTime: null,
-      status: "Not played",
-    },
+      status: null,
+      type:null,
+    }
   ]);
 
   const [filteredBookings, setFilteredBookings] = useState(bookings);
@@ -1115,14 +986,28 @@ function ListBooking() {
     }
   };
 
+  // const getStatusBadge = (status: string) => {
+  //   const variants = {
+  //     "rejected": "warning",
+  //     "confirmed": "success",
+  //   };
+  //   return <Badge variant={variants[status]}>{status}</Badge>;
+  // };
   const getStatusBadge = (status: string) => {
     const variants = {
-      "Not played": "secondary",
-      "In progress": "warning",
-      Completed: "success",
+      "rejected": "bg-red-100 dark:bg-red-950",  // Red for rejected (light/dark mode)
+      "confirmed": "bg-emerald-100 dark:bg-emerald-950",  // Green for confirmed (light/dark mode)
     };
-    return <Badge variant={variants[status]}>{status}</Badge>;
+  
+    return <span className={`px-3 py-1 rounded-full ${variants[status] || 'bg-gray-300 text-black dark:bg-gray-700 dark:text-white'}`}>{status}</span>;
   };
+  
+
+  const formatTime = (time: string) => {
+    const [hours, minutes, seconds] = time.split(":");
+    return `${hours}:${minutes}`; // You can format it further if needed (e.g., `HH:mm`)
+  };
+  
 
   return (
     <div className="space-y-8">
@@ -1260,30 +1145,15 @@ function ListBooking() {
                   <TableCell>{booking.consoleType}</TableCell>
                   <TableCell>{booking.bookedDate}</TableCell>
                   <TableCell>
-                    {booking.startTime
-                      ? new Date(booking.startTime).toLocaleTimeString()
-                      : "Not started"}
+                  {booking.startTime ? formatTime(booking.startTime) : "Not started"}
                   </TableCell>
                   <TableCell>
-                    {booking.endTime
-                      ? new Date(booking.endTime).toLocaleTimeString()
-                      : "Not ended"}
+                  {booking.endTime ? formatTime(booking.endTime) : "Not ended"}
                   </TableCell>
 
                   <TableCell>{getStatusBadge(booking.status)}</TableCell>
-                  <TableCell>
-                    {booking.status === "Not played" && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => startTimer(booking.id)}
-                      >
-                        Start
-                      </Button>
-                    )}
-                  </TableCell>
 
-                  {/* <TableCell>{getStatusBadge(booking.status)}</TableCell> */}
+                  <TableCell>{booking.type}</TableCell>
                   {/* Other cells */}
                 </motion.tr>
               ))}
