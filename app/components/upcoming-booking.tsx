@@ -53,7 +53,6 @@ const bookings = [
     duration: "2hrs",
     status: "Paid",
   },];
-  },];
 
 const container = {
   hidden: { opacity: 0 },
