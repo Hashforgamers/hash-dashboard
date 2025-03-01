@@ -40,7 +40,7 @@ export function ConsoleGrid() {
     <Card className="h-[300px]">
       <CardHeader >
         <CardTitle >Console Availability</CardTitle>
-        <div className="flex space-x-2 flex items-center ">
+        <div className="flex space-x-2  items-center ">
           <Button
             variant="outline"
             size="sm"

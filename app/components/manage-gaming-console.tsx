@@ -89,6 +89,7 @@ export function ManageGamingConsole() {
 
   const handleConsoleTypeClick = (consoleType: string) => {
     setSelectedConsoleType(consoleType);
+   
   };
 
   const handleEditConsole = (console: any) => {
@@ -107,6 +108,7 @@ export function ManageGamingConsole() {
     }
   };
 
+
   const renderContent = () => {
     if (selectedAction === "add") {
       if (selectedConsoleType) {
@@ -120,6 +122,7 @@ export function ManageGamingConsole() {
           </motion.div>
         );
       }
+      
       return (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {consoleTypes.map((console) => (

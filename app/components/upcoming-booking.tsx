@@ -52,8 +52,8 @@ const bookings = [
     time: "12:00pm",
     duration: "2hrs",
     status: "Paid",
-  },
-];
+  },];
+  },];
 
 const container = {
   hidden: { opacity: 0 },
@@ -216,3 +216,4 @@ export function UpcomingBookings() {
     </>
   );
 }
+
