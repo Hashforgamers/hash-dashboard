@@ -1,5 +1,5 @@
 import { Monitor, Tv, Gamepad, Headset, Clock } from "lucide-react";
-import { useState } from "react";
+import { useState ,useEffect} from "react";
 import { AnimatePresence, motion } from "framer-motion";
 
 import {
@@ -20,6 +20,8 @@ type ConsoleType = {
   color: string;
   iconColor: string;
   description: string;
+  name:String,
+  id: number | null,
 };
 
 type GridConsoleProps = {
@@ -29,15 +31,18 @@ type GridConsoleProps = {
 type CreateBookingFormProps = {
   setShowForm: (show: boolean) => void;
   selectedConsoleType: string;
+  selectedConsoleTypeId:number;
 };
 
 const consoleTypes: ConsoleType[] = [
   {
-    type: "PC",
+    type: "Computer",
     icon: Monitor,
     color: "grey",
     iconColor: "#7c3aed",
     description: "Gaming PCs and Workstations",
+    name: "PC",
+    id:null,
   },
   {
     type: "PS5",
@@ -45,6 +50,8 @@ const consoleTypes: ConsoleType[] = [
     color: "grey",
     iconColor: "#2563eb",
     description: "PlayStation 5 Gaming Consoles",
+    name:"PS5",
+    id:null,
   },
   {
     type: "Xbox",
@@ -52,6 +59,8 @@ const consoleTypes: ConsoleType[] = [
     color: "grey",
     iconColor: "#059669",
     description: "Xbox Series Gaming Consoles",
+    name:"XBox",
+    id:null,
   },
   {
     type: "VR",
@@ -59,6 +68,8 @@ const consoleTypes: ConsoleType[] = [
     color: "grey",
     iconColor: "#ea580c",
     description: "Virtual Reality Systems",
+    name:"VR",
+    id:null,
   },
 ];
 
@@ -68,9 +79,36 @@ const GridConsole: React.FC<GridConsoleProps> = (
 ) => {
   const [showForm, setShowForm] = useState<boolean>(false);
   const [selectedConsoleType, setSelectedConsoleType] = useState<string>("");
+  const [selectedConsoleTypeId, setSelectedConsoleTypeId] = useState<number>(0);
+  const [availableConsoles, setAvailableConsoles] = useState<ConsoleType[]>([]);
 
-  const handleConsoleTypeClick = (type: string) => {
+  useEffect(() => {
+    const fetchAvailableConsoles = async () => {
+      try {
+        const response = await fetch("https://hfg-booking.onrender.com/api/getAllConsole/vendor/1");
+        const data = await response.json();
+        
+        // Update consoleTypes with the id from API response
+        const available = consoleTypes.map((console) => {
+          const matchedConsole = data.games.find((game: any) => game.console_name.toLowerCase() === console.type.toLowerCase());
+          if (matchedConsole) {
+            return { ...console, id: matchedConsole.id };
+          }
+          return console;
+        }).filter((console) => console.id !== null); // Only keep consoles with an id
+
+        setAvailableConsoles(available);
+      } catch (error) {
+        console.error("Error fetching consoles:", error);
+      }
+    };
+
+    fetchAvailableConsoles();
+  }, []);
+
+  const handleConsoleTypeClick = (type: string, id:number) => {
     setSelectedConsoleType(type);
+    setSelectedConsoleTypeId(id);
     setShowForm(true);
   };
 
@@ -86,9 +124,9 @@ const GridConsole: React.FC<GridConsoleProps> = (
           </button>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
-            {consoleTypes.map((console) => (
+            {availableConsoles.map((console) => (
               <motion.div
-                key={console.type}
+                key={console.id}
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 whileHover={{ scale: 1.02 }}
@@ -96,14 +134,14 @@ const GridConsole: React.FC<GridConsoleProps> = (
               >
                 <Card
                   className={`cursor-pointer transition-all hover:shadow-lg ${console.color}`}
-                  onClick={() => handleConsoleTypeClick(console.type)}
+                  onClick={() => handleConsoleTypeClick(console.type, console.id!)} // Use non-null assertion as we're filtering out null ids
                 >
                   <CardHeader>
                     <console.icon
                       className="w-8 h-8 mb-2"
                       style={{ color: console.iconColor }}
                     />
-                    <CardTitle>{console.type}</CardTitle>
+                    <CardTitle>{console.name}</CardTitle>
                     <CardDescription>{console.description}</CardDescription>
                   </CardHeader>
                 </Card>
@@ -115,6 +153,7 @@ const GridConsole: React.FC<GridConsoleProps> = (
         <CreateBookingForm
           setShowForm={setShowForm}
           selectedConsoleType={selectedConsoleType}
+          selectedConsoleTypeId={selectedConsoleTypeId}
         />
       )}
     </div>
@@ -124,16 +163,46 @@ const GridConsole: React.FC<GridConsoleProps> = (
 interface CreateBookingForm {
   setShowForm: (show: boolean) => void;
   selectedConsoleType: string;
+  selectedConsoleTypeId:number;
 }
 
 const CreateBookingForm: React.FC<CreateBookingFormProps> = ({
   setShowForm,
   selectedConsoleType,
+  selectedConsoleTypeId,
 }) => {
   const [selectedSlots, setSelectedSlots] = useState<string[]>([]);
   const [formStep, setFormStep] = useState<number>(1);
   const [paymentType, setPaymentType] = useState<string>("");
+  const [availableSlots, setAvailableSlots] = useState<any[]>([]);
+  const [selectedDate, setSelectedDate] = useState<string>(
+    new Date().toISOString().split("T")[0] // Default to today
+  );
+  const [name, setName] = useState<string>("");
+  const [email, setEmail] = useState<string>("");
+  const [phone, setPhone] = useState<string>("");
+
   const totalSteps = 3;
+
+  // Fetch available slots based on selected date
+  const fetchAvailableSlots = async (date: string) => {
+    try {
+      const response = await fetch(
+        `https://hfg-booking.onrender.com/api/getSlots/vendor/1/game/${selectedConsoleTypeId}/${date.replace(/-/g, "")}`
+      );
+      if (!response.ok) {
+        throw new Error("Failed to fetch slots");
+      }
+      const data = await response.json();
+      setAvailableSlots(data.slots || []);
+    } catch (error) {
+      console.error("Error fetching available slots:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchAvailableSlots(selectedDate);
+  }, [selectedDate, selectedConsoleTypeId]);
 
   const handleSlotClick = (slot: string) => {
     setSelectedSlots((prev) =>
@@ -156,7 +225,11 @@ const CreateBookingForm: React.FC<CreateBookingFormProps> = ({
 
     const bookingData = {
       consoleType: selectedConsoleType,
-      selectedSlots,
+      name,
+      email,
+      phone,
+      bookedDate: selectedDate,
+      slotId: selectedSlots,
       paymentType,
     };
 
@@ -227,11 +300,13 @@ const CreateBookingForm: React.FC<CreateBookingFormProps> = ({
                 Gamer's Information
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="space-y-2  ">
+                <div className="space-y-2">
                   <label htmlFor="name">Name :</label>
                   <input
                     id="name"
                     placeholder="Enter name"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
                     className="px-3 rounded py-1"
                   />
                 </div>
@@ -240,6 +315,8 @@ const CreateBookingForm: React.FC<CreateBookingFormProps> = ({
                   <input
                     id="email"
                     type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
                     className="px-3 rounded py-1"
                     placeholder="Enter email"
                   />
@@ -250,6 +327,8 @@ const CreateBookingForm: React.FC<CreateBookingFormProps> = ({
                     className="px-3 rounded py-1"
                     id="phone"
                     type="tel"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
                     placeholder="Enter phone number"
                   />
                 </div>
@@ -259,35 +338,42 @@ const CreateBookingForm: React.FC<CreateBookingFormProps> = ({
 
           {formStep === 2 && (
             <div className="space-y-6">
-              <h3 className="text-lg font-semibold text-primary">
-                Booking Details
-              </h3>
+              <h3 className="text-lg font-semibold text-primary">Booking Details</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <label htmlFor="bookingDate">Booking Date :</label>
                   <input
                     id="bookingDate"
                     type="date"
+                    value={selectedDate}
+                    onChange={(e) => setSelectedDate(e.target.value)}
                     min={new Date().toISOString().split("T")[0]}
                     className="px-3 rounded py-1"
                   />
                 </div>
                 <div className="space-y-2">
                   <label>Slot Time</label>
-                  <div className="h-[300px] rounded-md border p-4 overflow-y-auto">
+                  <div className="h-[200px] rounded-md border p-4 overflow-y-auto">
                     <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
-                      {Array.from({ length: 24 }, (_, i) => i).map((hour) => (
+                      {availableSlots.map((slot) => (
                         <button
-                          key={hour}
+                          key={slot.slot_id}
                           type="button"
                           className={`px-4 py-2 rounded-lg ${
-                            selectedSlots.includes(hour.toString())
-                              ? "bg-green-600 text-white"
-                              : "bg-gray-400 text-black"
+                            selectedSlots.includes(slot.slot_id)
+                              ? "bg-emerald-100 dark:bg-emerald-950" // Green if selected
+                              : slot.is_available
+                              ? "bg-gray-400 text-black" // Gray if available
+                              : "bg-red-100 dark:bg-red-950 cursor-not-allowed" // Red and disabled if not available
                           }`}
-                          onClick={() => handleSlotClick(hour.toString())}
+                          onClick={() => {
+                            if (slot.is_available) {
+                              handleSlotClick(slot.slot_id);
+                            }
+                          }}
+                          disabled={!slot.is_available} // Disable button if not available
                         >
-                          {hour.toString().padStart(2, "0")}:00
+                          {slot.start_time}
                         </button>
                       ))}
                     </div>
@@ -368,5 +454,6 @@ const CreateBookingForm: React.FC<CreateBookingFormProps> = ({
     </form>
   );
 };
+
 
 export default GridConsole;
