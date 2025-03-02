@@ -418,16 +418,242 @@ export function ManageBooking() {
 //   );
 // }
 
+// function ChangeBookingForm() {
+//   const [bookingId, setBookingId] = useState("");
+//   const [isLoading, setIsLoading] = useState(false);
+//   const [bookingFound, setBookingFound] = useState(false);
+//   const [bookingData, setBookingData] = useState({
+//     customer: { name: "", email: "", phone: "" },
+//     booking_date: "",
+//     selected_slots: [],
+//     system: "",
+//   });
+
+//   const handleSearch = async () => {
+//     if (!bookingId) return;
+
+//     setIsLoading(true);
+//     try {
+//       const response = await fetch(
+//         `https://hfg-booking.onrender.com/api/bookings/${bookingId}`,
+//         {
+//           method: "GET",
+//           headers: {
+//             "Content-Type": "application/json",
+//             Accept: "application/json",
+//           },
+//         }
+//       );
+//       const data = await response.json();
+
+//       if (response.ok) {
+//         setBookingData({
+//           customer: data.customer || { name: "", email: "", phone: "" },
+//           booking_date: data.booking_date || "",
+//           selected_slots: data.selected_slots || [],
+//           system: data.system || "",
+//         });
+//         setBookingFound(true);
+//       } else {
+//         setBookingFound(false);
+//       }
+//     } catch (error) {
+//       console.error("Error fetching booking:", error);
+//       setBookingFound(false);
+//     } finally {
+//       setIsLoading(false);
+//     }
+//   };
+
+//   const handleUpdateBooking = async (e) => {
+//     e.preventDefault();
+//     if (!bookingData) return;
+
+//     try {
+//       const response = await fetch(
+//         `https://hfg-booking.onrender.com/api/update_booking/${bookingId}`,
+//         {
+//           method: "PUT",
+//           headers: {
+//             "Content-Type": "application/json",
+//           },
+//           body: JSON.stringify(bookingData),
+//         }
+//       );
+
+//       const result = await response.json();
+//       console.log("Update Response:", result);
+//       if (response.ok) {
+//         alert("Booking updated successfully!");
+//       } else {
+//         alert("Failed to update booking.");
+//       }
+//     } catch (error) {
+//       console.error("Error updating booking:", error);
+//     }
+//   };
+
+//   return (
+//     <form className="space-y-8" onSubmit={handleUpdateBooking}>
+//       {/* Search Section */}
+//       <div className="space-y-4">
+//         <h3 className="text-lg font-semibold text-primary">Search Booking</h3>
+//         <div className="flex space-x-2">
+//           <div className="flex-grow">
+//             <Input
+//               id="bookingId"
+//               placeholder="Enter Booking ID"
+//               value={bookingId}
+//               onChange={(e) => setBookingId(e.target.value)}
+//               className="transition-all duration-300 focus:ring-2 focus:ring-primary"
+//             />
+//           </div>
+//           <Button
+//             type="button"
+//             onClick={handleSearch}
+//             disabled={isLoading}
+//             className="min-w-[100px]"
+//           >
+//             {isLoading ? (
+//               <motion.div
+//                 animate={{ rotate: 360 }}
+//                 transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+//               >
+//                 <Search className="w-4 h-4" />
+//               </motion.div>
+//             ) : (
+//               <>
+//                 <Search className="w-4 h-4 mr-2" />
+//                 Search
+//               </>
+//             )}
+//           </Button>
+//         </div>
+//       </div>
+
+//       {/* Booking Details Form */}
+//       <AnimatePresence>
+//         {bookingFound && bookingData && (
+//           <motion.div
+//             initial={{ opacity: 0, y: 20 }}
+//             animate={{ opacity: 1, y: 0 }}
+//             exit={{ opacity: 0, y: -20 }}
+//             className="space-y-8"
+//           >
+//             <div className="space-y-4">
+//               <h3 className="text-lg font-semibold">Gamer's Information</h3>
+//               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+//                 <div className="space-y-2">
+//                   <Label htmlFor="name">Name</Label>
+//                   <Input
+//                     id="name"
+//                     value={bookingData.customer?.name || ""}
+//                     onChange={(e) =>
+//                       setBookingData((prev) => ({
+//                         ...prev,
+//                         customer: {
+//                           ...prev.customer,
+//                           name: e.target.value,
+//                         },
+//                       }))
+//                     }
+//                   />
+//                 </div>
+//                 <div className="space-y-2">
+//                   <Label htmlFor="email">Email</Label>
+//                   <Input
+//                     id="email"
+//                     type="email"
+//                     value={bookingData.customer?.email || ""}
+//                     onChange={(e) =>
+//                       setBookingData((prev) => ({
+//                         ...prev,
+//                         customer: {
+//                           ...prev.customer,
+//                           email: e.target.value,
+//                         },
+//                       }))
+//                     }
+//                   />
+//                 </div>
+//                 <div className="space-y-2">
+//                   <Label htmlFor="phone">Phone Number</Label>
+//                   <Input
+//                     id="phone"
+//                     type="tel"
+//                     value={bookingData.customer?.phone || ""}
+//                     onChange={(e) =>
+//                       setBookingData((prev) => ({
+//                         ...prev,
+//                         customer: {
+//                           ...prev.customer,
+//                           phone: e.target.value,
+//                         },
+//                       }))
+//                     }
+//                   />
+//                 </div>
+//               </div>
+//             </div>
+
+//             {/* Booking Details */}
+//             <div className="space-y-4">
+//               <h3 className="text-lg font-semibold">Booking Details</h3>
+//               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+//                 <div className="space-y-2">
+//                   <Label htmlFor="bookingDate">Booking Date</Label>
+//                   <Input
+//                     id="bookingDate"
+//                     type="date"
+//                     value={bookingData.booking_date || ""}
+//                     onChange={(e) =>
+//                       setBookingData((prev) => ({
+//                         ...prev,
+//                         booking_date: e.target.value,
+//                       }))
+//                     }
+//                   />
+//                 </div>
+//                 <div className="space-y-2">
+//                   <Label>Slot Time</Label>
+//                   <div className="grid grid-cols-6 gap-2">
+//                     {Array.from({ length: 24 }, (_, i) => i).map((hour) => (
+//                       <Button
+//                         key={hour}
+//                         variant="outline"
+//                         className={`rounded-full ${
+//                           bookingData.selected_slots?.includes(`${hour}:00`)
+//                             ? "bg-primary text-primary-foreground"
+//                             : ""
+//                         }`}
+//                         onClick={() =>
+//                           setBookingData((prev) => ({
+//                             ...prev,
+//                             selected_slots: [`${hour}:00`],
+//                           }))
+//                         }
+//                       >
+//                         {hour}:00
+//                       </Button>
+//                     ))}
+//                   </div>
+//                 </div>
+//               </div>
+//             </div>
+
+//             <Button type="submit">Update Booking</Button>
+//           </motion.div>
+//         )}
+//       </AnimatePresence>
+//     </form>
+//   );
+// }
 function ChangeBookingForm() {
   const [bookingId, setBookingId] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [bookingFound, setBookingFound] = useState(false);
-  const [bookingData, setBookingData] = useState({
-    customer: { name: "", email: "", phone: "" },
-    booking_date: "",
-    selected_slots: [],
-    system: "",
-  });
+  const [bookingData, setBookingData] = useState(null);
+  const [availableSlots, setAvailableSlots] = useState([]);
 
   const handleSearch = async () => {
     if (!bookingId) return;
@@ -435,25 +661,26 @@ function ChangeBookingForm() {
     setIsLoading(true);
     try {
       const response = await fetch(
-        `https://hfg-booking.onrender.com/api/bookings/${bookingId}`,
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Accept: "application/json",
-          },
-        }
+        `https://hfg-booking.onrender.com/api/bookings/${bookingId}`
       );
       const data = await response.json();
+      console.log("Fetched Booking Data:", data);
 
-      if (response.ok) {
+      if (response.ok && data.success && data.booking) {
+        const { booking } = data;
         setBookingData({
-          customer: data.customer || { name: "", email: "", phone: "" },
-          booking_date: data.booking_date || "",
-          selected_slots: data.selected_slots || [],
-          system: data.system || "",
+          customer: booking.customer || { name: "", email: "", phone: "" },
+          booking_date: booking.date || "",
+          selected_slots: [`${booking.time_slot.start_time}`], // Preselect slot
+          system: booking.system || "",
+          vendorId: 1, // Hardcoded vendor ID (Update dynamically if needed)
+          consoleTypeId: booking.system?.split("-")[0] || 1, // Extract console type ID
         });
+
         setBookingFound(true);
+
+        // Fetch available slots for the given date
+        await fetchAvailableSlots(1, booking.game_id, booking.date);
       } else {
         setBookingFound(false);
       }
@@ -462,6 +689,22 @@ function ChangeBookingForm() {
       setBookingFound(false);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const fetchAvailableSlots = async (vendorId, consoleTypeId, date) => {
+    try {
+      const response = await fetch(
+        `https://hfg-booking.onrender.com/api/getSlots/vendor/${vendorId}/game/${consoleTypeId}/${date.replaceAll("-", "")}`
+      );
+      const data = await response.json();
+      console.log("Fetched Slots Data:", data);
+
+      if (response.ok && data.slots) {
+        setAvailableSlots(data.slots);
+      }
+    } catch (error) {
+      console.error("Error fetching available slots:", error);
     }
   };
 
@@ -499,155 +742,119 @@ function ChangeBookingForm() {
       <div className="space-y-4">
         <h3 className="text-lg font-semibold text-primary">Search Booking</h3>
         <div className="flex space-x-2">
-          <div className="flex-grow">
-            <Input
-              id="bookingId"
-              placeholder="Enter Booking ID"
-              value={bookingId}
-              onChange={(e) => setBookingId(e.target.value)}
-              className="transition-all duration-300 focus:ring-2 focus:ring-primary"
-            />
-          </div>
-          <Button
-            type="button"
-            onClick={handleSearch}
-            disabled={isLoading}
-            className="min-w-[100px]"
-          >
-            {isLoading ? (
-              <motion.div
-                animate={{ rotate: 360 }}
-                transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-              >
-                <Search className="w-4 h-4" />
-              </motion.div>
-            ) : (
-              <>
-                <Search className="w-4 h-4 mr-2" />
-                Search
-              </>
-            )}
+          <Input
+            id="bookingId"
+            placeholder="Enter Booking ID"
+            value={bookingId}
+            onChange={(e) => setBookingId(e.target.value)}
+            className="transition-all duration-300 focus:ring-2 focus:ring-primary"
+          />
+          <Button type="button" onClick={handleSearch} disabled={isLoading}>
+            {isLoading ? "Searching..." : "Search"}
           </Button>
         </div>
       </div>
 
-      {/* Booking Details Form */}
-      <AnimatePresence>
-        {bookingFound && bookingData && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="space-y-8"
-          >
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold">Gamer's Information</h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="name">Name</Label>
-                  <Input
-                    id="name"
-                    value={bookingData.customer?.name || ""}
-                    onChange={(e) =>
-                      setBookingData((prev) => ({
-                        ...prev,
-                        customer: {
-                          ...prev.customer,
-                          name: e.target.value,
-                        },
-                      }))
-                    }
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={bookingData.customer?.email || ""}
-                    onChange={(e) =>
-                      setBookingData((prev) => ({
-                        ...prev,
-                        customer: {
-                          ...prev.customer,
-                          email: e.target.value,
-                        },
-                      }))
-                    }
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="phone">Phone Number</Label>
-                  <Input
-                    id="phone"
-                    type="tel"
-                    value={bookingData.customer?.phone || ""}
-                    onChange={(e) =>
-                      setBookingData((prev) => ({
-                        ...prev,
-                        customer: {
-                          ...prev.customer,
-                          phone: e.target.value,
-                        },
-                      }))
-                    }
-                  />
-                </div>
-              </div>
+      {/* Booking Details */}
+      {bookingFound && bookingData && (
+        <div className="space-y-8">
+          <h3 className="text-lg font-semibold">Gamer's Information</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="name">Name</Label>
+              <Input
+                id="name"
+                value={bookingData.customer?.name || ""}
+                onChange={(e) =>
+                  setBookingData((prev) => ({
+                    ...prev,
+                    customer: { ...prev.customer, name: e.target.value },
+                  }))
+                }
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                value={bookingData.customer?.email || ""}
+                onChange={(e) =>
+                  setBookingData((prev) => ({
+                    ...prev,
+                    customer: { ...prev.customer, email: e.target.value },
+                  }))
+                }
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="phone">Phone Number</Label>
+              <Input
+                id="phone"
+                type="tel"
+                value={bookingData.customer?.phone || ""}
+                onChange={(e) =>
+                  setBookingData((prev) => ({
+                    ...prev,
+                    customer: { ...prev.customer, phone: e.target.value },
+                  }))
+                }
+              />
+            </div>
+          </div>
+
+          <h3 className="text-lg font-semibold">Booking Details</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="bookingDate">Booking Date</Label>
+              <Input
+                id="bookingDate"
+                type="date"
+                value={bookingData.booking_date || ""}
+                onChange={(e) =>
+                  setBookingData((prev) => ({
+                    ...prev,
+                    booking_date: e.target.value,
+                  }))
+                }
+              />
             </div>
 
-            {/* Booking Details */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold">Booking Details</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="bookingDate">Booking Date</Label>
-                  <Input
-                    id="bookingDate"
-                    type="date"
-                    value={bookingData.booking_date || ""}
-                    onChange={(e) =>
+            <div className="space-y-2">
+              <Label>Slot Time</Label>
+              <div className="grid grid-cols-6 gap-2">
+                {availableSlots.map((slot) => (
+                  <Button
+                    key={slot.slot_id}
+                    variant="outline"
+                    disabled={!slot.is_available}
+                    className={`rounded-full ${
+                      bookingData.selected_slots.includes(slot.start_time)
+                        ? "bg-primary text-primary-foreground"
+                        : ""
+                    }`}
+                    onClick={() =>
                       setBookingData((prev) => ({
                         ...prev,
-                        booking_date: e.target.value,
+                        selected_slots: [slot.start_time],
                       }))
                     }
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Slot Time</Label>
-                  <div className="grid grid-cols-6 gap-2">
-                    {Array.from({ length: 24 }, (_, i) => i).map((hour) => (
-                      <Button
-                        key={hour}
-                        variant="outline"
-                        className={`rounded-full ${
-                          bookingData.selected_slots?.includes(`${hour}:00`)
-                            ? "bg-primary text-primary-foreground"
-                            : ""
-                        }`}
-                        onClick={() =>
-                          setBookingData((prev) => ({
-                            ...prev,
-                            selected_slots: [`${hour}:00`],
-                          }))
-                        }
-                      >
-                        {hour}:00
-                      </Button>
-                    ))}
-                  </div>
-                </div>
+                  >
+                    {slot.start_time}
+                  </Button>
+                ))}
               </div>
             </div>
+          </div>
 
-            <Button type="submit">Update Booking</Button>
-          </motion.div>
-        )}
-      </AnimatePresence>
+          <Button type="submit">Update Booking</Button>
+        </div>
+      )}
     </form>
   );
 }
+
+
 function RejectBookingForm() {
   const [bookingId, setBookingId] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -950,10 +1157,14 @@ function ListBooking() {
     let sorted = [...filteredBookings];
     if (sortConfig) {
       sorted.sort((a, b) => {
-        if (a[sortConfig.key] < b[sortConfig.key]) {
+        // Compare booking dates
+        const dateA = new Date(a.bookingDate);
+        const dateB = new Date(b.bookingDate);
+        
+        if (dateA < dateB) {
           return sortConfig.direction === "asc" ? -1 : 1;
         }
-        if (a[sortConfig.key] > b[sortConfig.key]) {
+        if (dateA > dateB) {
           return sortConfig.direction === "asc" ? 1 : -1;
         }
         return 0;
@@ -961,6 +1172,7 @@ function ListBooking() {
     }
     setFilteredBookings(sorted);
   }, [sortConfig]);
+  
 
   const handleSort = (key: string) => {
     setSortConfig({
@@ -971,7 +1183,7 @@ function ListBooking() {
           : "asc",
     });
   };
-
+  
   const handleSearch = () => {
     if (searchQuery.trim() === "") {
       setFilteredBookings(bookings);
