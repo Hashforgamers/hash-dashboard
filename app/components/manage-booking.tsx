@@ -674,7 +674,7 @@ function ChangeBookingForm() {
           selected_slots: [`${booking.time_slot.start_time}`], // Preselect slot
           system: booking.system || "",
           vendorId: 1, // Hardcoded vendor ID (Update dynamically if needed)
-          consoleTypeId: booking.system?.split("-")[0] || 1, // Extract console type ID
+          consoleTypeId: booking.game_id, // Extract console type ID
         });
 
         setBookingFound(true);
@@ -737,7 +737,7 @@ function ChangeBookingForm() {
   };
 
   return (
-    <form className="space-y-8" onSubmit={handleUpdateBooking}>
+    <form className="space-y-8">
       {/* Search Section */}
       <div className="space-y-4">
         <h3 className="text-lg font-semibold text-primary">Search Booking</h3>
@@ -749,11 +749,31 @@ function ChangeBookingForm() {
             onChange={(e) => setBookingId(e.target.value)}
             className="transition-all duration-300 focus:ring-2 focus:ring-primary"
           />
-          <Button type="button" onClick={handleSearch} disabled={isLoading}>
-            {isLoading ? "Searching..." : "Search"}
+
+          <Button
+            type="button"
+            onClick={handleSearch}
+            disabled={isLoading}
+            className="min-w-[100px]"
+          >
+            {isLoading ? (
+              <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+              >
+                <Search className="w-4 h-4" />
+              </motion.div>
+            ) : (
+              <>
+                <Search className="w-4 h-4 mr-2" />
+                Search
+              </>
+            )}
           </Button>
+
         </div>
       </div>
+      
 
       {/* Booking Details */}
       {bookingFound && bookingData && (
@@ -847,7 +867,7 @@ function ChangeBookingForm() {
             </div>
           </div>
 
-          <Button type="submit">Update Booking</Button>
+          <Button onClick={handleUpdateBooking}>Update Booking</Button>
         </div>
       )}
     </form>
@@ -862,16 +882,57 @@ function RejectBookingForm() {
   const [rejectionReason, setRejectionReason] = useState("");
   const [repaymentType, setRepaymentType] = useState("");
   const [confirmReject, setConfirmReject] = useState(false);
+  const [bookingData, setBookingData] = useState(null);
 
-  const handleSearch = () => {
+  // const handleSearch = () => {
+  //   setIsLoading(true);
+  //   // Simulate API call
+  //   setTimeout(() => {
+  //     setIsLoading(false);
+  //     setBookingFound(true);
+  //   }, 1000);
+  // };
+
+  const handleSearch = async () => {
+    if (!bookingId) return;
+
     setIsLoading(true);
-    // Simulate API call
-    setTimeout(() => {
+    try {
+      const response = await fetch(
+        `https://hfg-booking.onrender.com/api/bookings/${bookingId}`
+      );
+      const data = await response.json();
+      console.log("Fetched Booking Data:", data);
+
+      if (response.ok && data.success && data.booking) {
+        const { booking } = data;
+        setBookingData({
+          customer: booking.customer || { name: "", email: "", phone: "" },
+          booking_date: booking.date || "",
+          booking_id: booking.booking_id,
+          selected_slots: [`${booking.time_slot.start_time}`], // Preselect slot
+          system: booking.system || "",
+          vendorId: 1, // Hardcoded vendor ID (Update dynamically if needed)
+          consoleTypeId: booking.game_id, // Extract console type ID
+          start_time: booking.time_slot.start_time,
+          end_time: booking.time_slot.end_time,
+          amount_paid:booking.amount_paid,
+        });
+
+        setBookingFound(true);
+
+      } else {
+        setBookingFound(false);
+      }
+    } catch (error) {
+      console.error("Error fetching booking:", error);
+      setBookingFound(false);
+    } finally {
       setIsLoading(false);
-      setBookingFound(true);
-    }, 1000);
+    }
   };
 
+  
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!confirmReject) {
@@ -924,7 +985,7 @@ function RejectBookingForm() {
       </div>
 
       <AnimatePresence>
-        {bookingFound && (
+        {bookingFound && bookingData &&(
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -943,19 +1004,19 @@ function RejectBookingForm() {
                         <span className="text-muted-foreground">
                           Booking ID
                         </span>
-                        <span className="font-medium">BK-2024-001</span>
+                        <span className="font-medium">{bookingData.booking_id || ""}</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-muted-foreground">Date</span>
-                        <span className="font-medium">March 15, 2024</span>
+                        <span className="font-medium">{bookingData.booking_date || ""}</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-muted-foreground">Time Slot</span>
-                        <span className="font-medium">14:00 - 16:00</span>
+                        <span className="font-medium">{bookingData.start_time || ""} - {bookingData.end_time || ""}</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-muted-foreground">System</span>
-                        <span className="font-medium">Gaming PC 1</span>
+                        <span className="font-medium">{bookingData.system || ""}</span>
                       </div>
                     </div>
                   </CardContent>
@@ -966,21 +1027,21 @@ function RejectBookingForm() {
                     <div className="space-y-4">
                       <div className="flex justify-between">
                         <span className="text-muted-foreground">Customer</span>
-                        <span className="font-medium">John Doe</span>
+                        <span className="font-medium">{bookingData.customer?.name || ""}</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-muted-foreground">Email</span>
-                        <span className="font-medium">john@example.com</span>
+                        <span className="font-medium">{bookingData.customer?.email || ""}</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-muted-foreground">Phone</span>
-                        <span className="font-medium">+1 234 567 890</span>
+                        <span className="font-medium">{bookingData.customer?.phone || ""}</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-muted-foreground">
                           Amount Paid
                         </span>
-                        <span className="font-medium">$50.00</span>
+                        <span className="font-medium">${bookingData.amount_paid || ""}</span>
                       </div>
                     </div>
                   </CardContent>
