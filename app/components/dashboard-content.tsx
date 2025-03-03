@@ -1,6 +1,6 @@
+import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BookingStats } from "./book-stats";
-import { RevenueChart } from "./revenue-chart";
 import { UpcomingBookings } from "./upcoming-booking";
 import { CurrentSlots } from "./current-slot";
 import { motion } from "framer-motion";
@@ -120,17 +120,14 @@ export function DashboardContent() {
       </div>
 
       <div className="grid gap-6 grid-cols-1 lg:grid-cols-4">
-        {/* Left Side - Stats and Graphs */}
+        {/* Left Side - Stats and Available Consoles */}
         <div className="lg:col-span-3 space-y-6">
-          <div className="grid gap-6 grid-cols-1 md:grid-cols-2">
-            <Card className="theme-card bg-card">
-              <BookingStats />
-            </Card>
-            <Card className="theme-card bg-card">
-              <RevenueChart />
-            </Card>
-          </div>
+          {/* Available Consoles - Now full width */}
+          <Card className="theme-card bg-card">
+            <BookingStats />
+          </Card>
 
+          {/* Current Slots - Moved up */}
           <Card className="theme-card bg-card">
             <CurrentSlots />
           </Card>
@@ -146,3 +143,13 @@ export function DashboardContent() {
     </motion.div>
   );
 }
+
+function App() {
+  return (
+    <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+      <DashboardContent />
+    </div>
+  );
+}
+
+export default App;

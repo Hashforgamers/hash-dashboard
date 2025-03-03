@@ -883,7 +883,7 @@ function RejectBookingForm() {
   const [repaymentType, setRepaymentType] = useState("");
   const [confirmReject, setConfirmReject] = useState(false);
   const [bookingData, setBookingData] = useState(null);
-
+  const [message, setMessage] = useState("");
   // const handleSearch = () => {
   //   setIsLoading(true);
   //   // Simulate API call
@@ -933,19 +933,60 @@ function RejectBookingForm() {
   };
 
   
-  const handleSubmit = (e: React.FormEvent) => {
+  // const handleSubmit = (e: React.FormEvent) => {
+  //   e.preventDefault();
+  //   if (!confirmReject) {
+  //     setConfirmReject(true);
+  //     return;
+  //   }
+  //   // Handle actual rejection
+  //   console.log("Booking rejected", {
+  //     bookingId,
+  //     rejectionReason,
+  //     repaymentType,
+  //   });
+  // };
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
     if (!confirmReject) {
       setConfirmReject(true);
       return;
     }
-    // Handle actual rejection
-    console.log("Booking rejected", {
-      bookingId,
-      rejectionReason,
-      repaymentType,
-    });
+
+    setIsLoading(true);
+    try {
+      const response = await fetch(
+        `https://hfg-booking.onrender.com/api/bookings/reject`,
+        {
+          method: "POST", // Change from DELETE to POST
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            booking_id: bookingId,
+            rejection_reason: rejectionReason,
+            repayment_type: repaymentType,
+          }),
+        }
+      );    
+
+      const result = await response.json();
+      console.log("Rejection Response:", result);
+
+      if (response.ok) {
+        setMessage(result.message || `Booking ${bookingId} rejected successfully.`);
+        setBookingData(null);
+        setConfirmReject(false);
+      } else {
+        setMessage(result.error || "Failed to reject booking.");
+      }
+    } catch (error) {
+      console.error("Error rejecting booking:", error);
+      setMessage("Error rejecting booking.");
+    } finally {
+      setIsLoading(false);
+    }
   };
+
 
   return (
     <form className="space-y-8" onSubmit={handleSubmit}>
