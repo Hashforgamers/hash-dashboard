@@ -69,8 +69,7 @@ const item = {
   show: { opacity: 1, x: 0 },
 };
 
-export function getIcon(system: string) {
-  console.log(system);
+export function getIcon(system: string): JSX.Element {
   if (system.includes("PS5"))
     return <Gamepad2 className="w-36 h-36 text-blue-400" />;
   if (system.includes("Xbox"))
@@ -78,29 +77,32 @@ export function getIcon(system: string) {
   return <Monitor className="w-36 h-36 text-white" />;
 }
 
-export function UpcomingBookings() {
-  const [startCard, setStartCard] = useState<boolean>(false);
-  const [SelectedSystem, setSelectedSystem] = useState<string>("");
-  function start(system: string) {
+export function UpcomingBookings(): JSX.Element {
+  const [startCard, setStartCard] = useState(false);
+  const [SelectedSystem, setSelectedSystem] = useState("");
+  
+  function start(system: string): void {
     setSelectedSystem(system);
     setStartCard(true);
   }
+  
   const [selectedPC, setSelectedPC] = useState<Set<number>>(new Set());
 
-  const handleClick = (index: number) => {
-    setSelectedPC((prev) => {
+  const handleClick = (index: number): void => {
+    setSelectedPC((prev: Set<number>) => {
       const newSet = new Set(prev);
       if (newSet.has(index)) {
-        newSet.delete(index); // Unselect if already selected
+        newSet.delete(index);
       } else {
-        newSet.add(index); // Select if not already selected
+        newSet.add(index);
       }
       return newSet;
     });
   };
+
   return (
     <>
-      {startCard && ( // ✅ Corrected conditional rendering
+      {startCard && (
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -108,11 +110,8 @@ export function UpcomingBookings() {
           className="fixed inset-0 flex items-center justify-center z-[9999] bg-black/50 backdrop-blur-md"
         >
           <div className="flex flex-col items-center gap-4">
-            {/* Green Background Div */}
             <Card className="p-6 bg-grey-200 text-white text-center shadow-lg rounded-md flex flex-wrap gap-4 justify-center w-3/4 relative min-h-[400px]">
-              {/* Close Button */}
               <div>
-                {" "}
                 <X
                   className="h-8 w-8 text-red-600 hover:text-white hover:bg-gray-500 p-1 rounded-full absolute top-2 right-1 cursor-pointer font-bold text-2xl"
                   onClick={() => {
@@ -122,7 +121,6 @@ export function UpcomingBookings() {
                 />
               </div>
 
-              {/* Animated Monitor Cards */}
               <div className="flex flex-wrap gap-4 justify-center">
                 {Array(5)
                   .fill(0)
@@ -148,13 +146,14 @@ export function UpcomingBookings() {
                   ))}
               </div>
 
-              <button className="w-1/2 bg-green-600  py-2 px-4 rounded-md font-semibold ">
+              <button className="w-1/2 bg-green-600 py-2 px-4 rounded-md font-semibold">
                 Submit
               </button>
             </Card>
           </div>
         </motion.div>
       )}
+
       <div className="p-4">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white">

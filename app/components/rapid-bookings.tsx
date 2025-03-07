@@ -1,10 +1,27 @@
 "use client";
-import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Monitor, Gamepad2, Gamepad, Headset, Search, Clock, Phone, User, CreditCard, Filter, X, ChevronDown, Wallet, GamepadIcon, AlertCircle } from 'lucide-react';
+import React, { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  Monitor,
+  Gamepad2,
+  Gamepad,
+  Headset,
+  Search,
+  Clock,
+  Phone,
+  User,
+  CreditCard,
+  Filter,
+  X,
+  ChevronDown,
+  Wallet,
+  GamepadIcon,
+  AlertCircle,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import axios from "axios";
 import {
   Select,
   SelectContent,
@@ -12,148 +29,317 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Card,
-  CardContent,
-} from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
+import { decode } from "punycode";
+import { jwtDecode } from "jwt-decode";
+import { RESPONSE_LIMIT_DEFAULT } from "next/dist/server/api-utils";
+import { Console } from "console";
+import { createEmptyCacheNode } from "next/dist/client/components/app-router";
 
-type Platform = 'PC' | 'PS5' | 'XBOX' | 'VR';
-type TimeSlot = { time: string; available: boolean };
-type SystemStatus = 'available' | 'occupied' | 'maintenance';
+type Platform = "PS5" | "XBOX" | "VR" | "PC";
+type TimeSlot = {
+  slot_id: string | number;
+  time: string;
+  available: boolean;
+};
+type SystemStatus = "available" | "occupied";
 
 interface System {
-  id: string;
-  type: Platform;
+  id: number;
   name: string;
-  icon: JSX.Element;
+  type: Platform;
+  icon: React.JSX.Element;
   price: string;
   status: SystemStatus;
-  number: number;
+  number: string;
+}
+
+interface Filters {
+  type: string;
+  status: SystemStatus | "all";
+  price: string;
 }
 
 function RapidBookings() {
-  const [name, setName] = useState("")
-  const [contactNumber, setContactNumber] = useState("")
-  const [selectedPlatform, setSelectedPlatform] = useState<Platform | null>(null);
-  const [paymentType, setPaymentType] = useState("")
+  const [name, setName] = useState("");
+  const [contactNumber, setContactNumber] = useState("");
+  const [selectedPlatform, setSelectedPlatform] = useState<Platform | null>(
+    null
+  );
+  const [paymentType, setPaymentType] = useState("");
   const [showBookingForm, setShowBookingForm] = useState(false);
   const [filterOpen, setFilterOpen] = useState(false);
-  const [consoleType, setConsoleType] = useState("")
+  const [consoleType, setConsoleType] = useState("");
   const [selectedSystem, setSelectedSystem] = useState<System | null>(null);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [errors, setErrors] = useState<Record<string, string>>({})
-  const [date, setDate] = useState("")
-  const [time, setTime] = useState("")
-  const [filters, setFilters] = useState({
-    type: 'all',
-    status: 'all',
-    price: 'all'
+  const [searchQuery, setSearchQuery] = useState("");
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [date, setDate] = useState("");
+  const [time, setTime] = useState("");
+  const [venodorId, setVendorId] = useState(1);
+  const [filters, setFilters] = useState<Filters>({
+    type: "all",
+    status: "all",
+    price: "all",
   });
   const [activeFilters, setActiveFilters] = useState(0);
+  const [rapidbooking, setrapidbooking] = useState<System[]>([]);
+  const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);
+  const [isLoadingSlots, setIsLoadingSlots] = useState(false);
 
   const validateForm = () => {
-    const newErrors: Record<string, string> = {}
+    const newErrors: Record<string, string> = {};
 
     if (name.length < 2) {
-      newErrors.name = "Name must be at least 2 characters"
+      newErrors.name = "Name must be at least 2 characters";
     }
 
     if (!/^\d{10}$/.test(contactNumber)) {
-      newErrors.contactNumber = "Please enter a valid 10-digit phone number"
+      newErrors.contactNumber = "Please enter a valid 10-digit phone number";
     }
 
     if (!consoleType) {
-      newErrors.consoleType = "Please select a console type"
+      newErrors.consoleType = "Please select a console type";
     }
 
     if (!paymentType) {
-      newErrors.paymentType = "Please select a payment type"
+      newErrors.paymentType = "Please select a payment type";
     }
 
-    const selectedDate = new Date(date)
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
+    const selectedDate = new Date(date);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
 
     if (!date || selectedDate < today) {
-      newErrors.date = "Please select a valid future date"
+      newErrors.date = "Please select a valid future date";
     }
 
     if (!time) {
-      newErrors.time = "Please select a time"
+      newErrors.time = "Please select a time";
     }
 
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+  useEffect(() => {
+    const get_data = async () => {
+      try {
+        const token = localStorage.getItem("jwtToken");
+        if (token) {
+          const decoded_token = jwtDecode<{ sub: { id: number } }>(token);
+          const vendor_id1 = decoded_token.sub.id;
+          setVendorId(vendor_id1);
+          console.log("vendorId", vendor_id1);
+          const response = await axios.get(
+            `https://hfg-dashboard.onrender.com/api/getAllDevice/vendor/${venodorId}`,
+            {
+              headers: {
+                "Content-Type": "application/json",
+              },
+            }
+          );
+
+          if (!response) {
+            throw new Error("NO respone from the server");
+          } else {
+            const data = await response.data;
+            console.log("data", data);
+            setrapidbooking(data);
+          }
+        }
+      } catch (error) {
+        console.error("Error in the getting vendorId", error);
+      }
+    };
+
+    get_data(); //function call
+  }, []);
+
+  const System_data: System[] = rapidbooking.map((item: any) => {
+    let systemData: System = {
+      id: parseInt(item.consoleId),
+      name: item.brand,
+      type: item.consoleType as Platform,
+      icon: <Monitor className="w-6 h-6" />,
+      price: "₹60/hr",
+      status: item.is_available ? "available" : "occupied",
+      number: item.console_type_id,
+    };
+
+    if (item.brand.trim() === "Microsoft") {
+      systemData.icon = <Gamepad className="w-6 h-6" />;
+      systemData.name = item.brand.trim();
+      systemData.price = "₹60/hr";
+    } else if (item.brand.trim().toLowerCase() === "sony") {
+      systemData.icon = <Gamepad2 className="w-6 h-6" />;
+      systemData.name = item.brand.trim();
+      systemData.price = "₹80/hr";
+    } else if (item.brand.trim() === "Meta") {
+      systemData.icon = <Headset className="w-6 h-6" />;
+      systemData.name = item.brand.trim();
+      systemData.price = "150/hr";
+    } else {
+      systemData.name = "Gaming PC";
+    }
+
+    return systemData;
+  });
+
+
+  function convert_Date(date:string){
+    let[hour,minute] = date.split(":");
+    let hoursname = parseInt(hour);
+    const bucket = hoursname >= 12 ? "PM" : "AM";
+    hoursname = hoursname % 12 || 12 ;
+    const data = `${hoursname}:${minute}${bucket}`;
+    return data;
   }
 
-  const systems: System[] = [
-    { id: 'pc1', type: 'PC', name: 'Gaming PC', icon: <Monitor className="w-6 h-6" />, price: '₹60/hr', status: 'available', number: 1 },
-    { id: 'pc2', type: 'PC', name: 'Gaming PC', icon: <Monitor className="w-6 h-6" />, price: '₹60/hr', status: 'occupied', number: 2 },
-    { id: 'pc3', type: 'PC', name: 'Gaming PC', icon: <Monitor className="w-6 h-6" />, price: '₹60/hr', status: 'available', number: 3 },
-    { id: 'ps1', type: 'PS5', name: 'PlayStation 5', icon: <Gamepad2 className="w-6 h-6" />, price: '₹80/hr', status: 'available', number: 1 },
-    { id: 'ps2', type: 'PS5', name: 'PlayStation 5', icon: <Gamepad2 className="w-6 h-6" />, price: '₹80/hr', status: 'maintenance', number: 2 },
-    { id: 'xbox1', type: 'XBOX', name: 'Xbox Series X', icon: <Gamepad className="w-6 h-6" />, price: '₹80/hr', status: 'available', number: 1 },
-    { id: 'xbox2', type: 'XBOX', name: 'Xbox Series X', icon: <Gamepad className="w-6 h-6" />, price: '₹80/hr', status: 'occupied', number: 2 },
-    { id: 'vr1', type: 'VR', name: 'VR Station', icon: <Headset className="w-6 h-6" />, price: '₹150/hr', status: 'available', number: 1 },
-  ];
+  const systems: System[] = System_data;
 
-  const timeSlots: TimeSlot[] = [
-    { time: '10:00 AM', available: true },
-    { time: '11:00 AM', available: true },
-    { time: '12:00 PM', available: false },
-    { time: '1:00 PM', available: true },
-    { time: '2:00 PM', available: true },
-    { time: '3:00 PM', available: false },
-  ];
+  const getTimeSlots = async (consoleTypeId: string) => {
+    setIsLoadingSlots(true);
+    try {
+      const response = await axios.get(
+        `https://hfg-booking.onrender.com/api/getSlotList/vendor/${venodorId}/game/${consoleTypeId}`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (response.data) {
+        const slots: TimeSlot[] = response.data.map((slot: any) => ({
+          slot_id: slot.slot_id || slot.id || String(slot.start_time),
+          time: convert_Date(slot.start_time),
+          available: slot.is_available,
+        }));
+        setTimeSlots(slots);
+      }
+    } catch (error) {
+      console.error("Error fetching time slots:", error);
+      // Set default time slots in case of error
+      setTimeSlots([
+        { slot_id: "1", time: "10:00 AM", available: true },
+        { slot_id: "2", time: "11:00 AM", available: true },
+        { slot_id: "3", time: "12:00 PM", available: false },
+        { slot_id: "4", time: "1:00 PM", available: true },
+        { slot_id: "5", time: "2:00 PM", available: true },
+        { slot_id: "6", time: "3:00 PM", available: false },
+      ]);
+    } finally {
+      setIsLoadingSlots(false);
+    }
+  };
 
   useEffect(() => {
     let count = 0;
-    if (filters.type !== 'all') count++;
-    if (filters.status !== 'all') count++;
-    if (filters.price !== 'all') count++;
+    if (filters.type !== "all") count++;
+    if (filters.status !== "all") count++;
+    if (filters.price !== "all") count++;
     setActiveFilters(count);
   }, [filters]);
 
   const resetFilters = () => {
     setFilters({
-      type: 'all',
-      status: 'all',
-      price: 'all'
+      type: "all",
+      status: "all",
+      price: "all",
     });
-    setSearchQuery('');
+    setSearchQuery("");
   };
 
   const handleBook = (system: System) => {
     setSelectedSystem(system);
     setShowBookingForm(true);
+    setConsoleType(system.type);
+    getTimeSlots(system.number);
   };
 
-  const filteredSystems = systems.filter(system => {
-    if (searchQuery && !system.name.toLowerCase().includes(searchQuery.toLowerCase())) return false;
-    if (filters.type !== 'all' && system.type !== filters.type) return false;
-    if (filters.status !== 'all' && system.status !== filters.status) return false;
-    if (filters.price === 'low' && parseInt(system.price) > 60) return false;
-    if (filters.price === 'high' && parseInt(system.price) < 60) return false;
+  const filteredSystems = systems.filter((system) => {
+    if (
+      searchQuery &&
+      !system.name.toLowerCase().includes(searchQuery.toLowerCase())
+    )
+      return false;
+    if (filters.type !== "all" && system.type !== filters.type) return false;
+    if (filters.status !== "all" && system.status !== filters.status)
+      return false;
+    if (filters.price === "low" && parseInt(system.price) > 60) return false;
+    if (filters.price === "high" && parseInt(system.price) < 60) return false;
     return true;
   });
 
   const getStatusColor = (status: SystemStatus) => {
-    switch (status) {
-      case 'available': return 'text-[#098637]';
-      case 'occupied': return 'text-red-500';
-      case 'maintenance': return 'text-yellow-500';
-      default: return 'text-gray-400';
-    }
+    return status === "available" ? "text-[#098637]" : "text-red-500";
   };
 
   const inputVariants = {
     hidden: { opacity: 0, x: -20 },
-    visible: { opacity: 1, x: 0 }
-  }
+    visible: { opacity: 1, x: 0 },
+  };
 
+  const handelBooking = async (e: React.FormEvent) => {
+    e.preventDefault();
+    console.log("Form submission started");
+
+    if (!validateForm()) {
+      console.log("Form validation failed", errors);
+      return;
+    }
+
+    try {
+      console.log("Making API request...");
+      console.log("Selected time:", time);
+      console.log("Available time slots:", timeSlots);
+      
+      const selectedSlot = timeSlots.find(slot => slot.time === time);
+      console.log("Selected slot:", selectedSlot);
+
+      if (!selectedSlot) {
+        throw new Error("No slot selected");
+      }
+
+      const payload = {
+        consoleType: selectedSystem?.type || consoleType,
+        name: name,
+        email: "demo@1example.com",
+        phone: contactNumber,
+        bookedDate: date,
+        slotId: [selectedSlot.slot_id.toString()],
+        paymentType: paymentType,
+        isRapidBooking: true,
+        consoleId: selectedSystem?.id.toString()
+      };
+
+      const response = await axios.post(
+        `https://hfg-booking.onrender.com/api/newBooking/vendor/${venodorId}`,
+        payload,
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      console.log("API Response:", response.data);
+
+      if (response.data) {
+        console.log("Booking successful:", response.data);
+        setShowBookingForm(false);
+        window.location.href = "/";
+      }
+    } catch (error: any) {
+      console.error("Error creating booking:", error);
+      console.error("Error details:", error.response?.data || error.message);
+    } finally {
+      // Close the modal regardless of success or failure
+      setShowBookingForm(false);
+    }
+  };
 
   return (
-    <motion.div 
+    <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       className="min-h-screen p-4 space-y-6"
@@ -189,9 +375,9 @@ function RapidBookings() {
                   onClick={() => setFilterOpen(!filterOpen)}
                   variant="outline"
                   className={`flex items-center gap-2 transition-all duration-300 ${
-                    filterOpen 
-                      ? 'bg-[#098637] text-white hover:bg-[#076d2a]' 
-                      : 'hover:border-[#098637] hover:text-[#098637]'
+                    filterOpen
+                      ? "bg-[#098637] text-white hover:bg-[#076d2a]"
+                      : "hover:border-[#098637] hover:text-[#098637]"
                   }`}
                 >
                   <Filter className="w-4 h-4" />
@@ -205,7 +391,11 @@ function RapidBookings() {
                       {activeFilters}
                     </motion.span>
                   )}
-                  <ChevronDown className={`w-4 h-4 transition-transform duration-300 ${filterOpen ? 'rotate-180' : ''}`} />
+                  <ChevronDown
+                    className={`w-4 h-4 transition-transform duration-300 ${
+                      filterOpen ? "rotate-180" : ""
+                    }`}
+                  />
                 </Button>
               </div>
             </div>
@@ -215,7 +405,7 @@ function RapidBookings() {
               {filterOpen && (
                 <motion.div
                   initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: 'auto', opacity: 1 }}
+                  animate={{ height: "auto", opacity: 1 }}
                   exit={{ height: 0, opacity: 0 }}
                   transition={{ duration: 0.3, ease: "easeInOut" }}
                   className="overflow-hidden"
@@ -223,10 +413,14 @@ function RapidBookings() {
                   <div className="pt-4 border-t">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                       <div className="space-y-2">
-                        <Label className="text-sm font-medium text-gray-700">System Type</Label>
+                        <Label className="text-sm font-medium text-gray-700">
+                          System Type
+                        </Label>
                         <Select
                           value={filters.type}
-                          onValueChange={(value) => setFilters({...filters, type: value})}
+                          onValueChange={(value) =>
+                            setFilters({ ...filters, type: value })
+                          }
                         >
                           <SelectTrigger className="w-full border-gray-200 focus:border-[#098637] focus:ring-[#098637]">
                             <SelectValue placeholder="All Systems" />
@@ -242,10 +436,17 @@ function RapidBookings() {
                       </div>
 
                       <div className="space-y-2">
-                        <Label className="text-sm font-medium text-gray-700">Status</Label>
+                        <Label className="text-sm font-medium text-gray-700">
+                          Status
+                        </Label>
                         <Select
                           value={filters.status}
-                          onValueChange={(value) => setFilters({...filters, status: value as SystemStatus})}
+                          onValueChange={(value) =>
+                            setFilters({
+                              ...filters,
+                              status: value as SystemStatus,
+                            })
+                          }
                         >
                           <SelectTrigger className="w-full border-gray-200 focus:border-[#098637] focus:ring-[#098637]">
                             <SelectValue placeholder="All Status" />
@@ -264,21 +465,19 @@ function RapidBookings() {
                                 Occupied
                               </div>
                             </SelectItem>
-                            <SelectItem value="maintenance">
-                              <div className="flex items-center gap-2">
-                                <span className="w-2 h-2 rounded-full bg-yellow-500" />
-                                Maintenance
-                              </div>
-                            </SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
 
                       <div className="space-y-2">
-                        <Label className="text-sm font-medium text-gray-700">Price Range</Label>
+                        <Label className="text-sm font-medium text-gray-700">
+                          Price Range
+                        </Label>
                         <Select
                           value={filters.price}
-                          onValueChange={(value) => setFilters({...filters, price: value})}
+                          onValueChange={(value) =>
+                            setFilters({ ...filters, price: value })
+                          }
                         >
                           <SelectTrigger className="w-full border-gray-200 focus:border-[#098637] focus:ring-[#098637]">
                             <SelectValue placeholder="All Prices" />
@@ -286,7 +485,9 @@ function RapidBookings() {
                           <SelectContent>
                             <SelectItem value="all">All Prices</SelectItem>
                             <SelectItem value="low">Under ₹60/hr</SelectItem>
-                            <SelectItem value="high">₹60/hr and above</SelectItem>
+                            <SelectItem value="high">
+                              ₹60/hr and above
+                            </SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
@@ -301,7 +502,7 @@ function RapidBookings() {
                           exit={{ opacity: 0, y: -10 }}
                           className="flex flex-wrap gap-2 mt-4 pt-4 border-t"
                         >
-                          {filters.type !== 'all' && (
+                          {filters.type !== "all" && (
                             <motion.span
                               initial={{ scale: 0 }}
                               animate={{ scale: 1 }}
@@ -310,14 +511,16 @@ function RapidBookings() {
                             >
                               Type: {filters.type}
                               <button
-                                onClick={() => setFilters({...filters, type: 'all'})}
+                                onClick={() =>
+                                  setFilters({ ...filters, type: "all" })
+                                }
                                 className="ml-2 hover:text-[#076d2a]"
                               >
                                 <X className="w-3 h-3" />
                               </button>
                             </motion.span>
                           )}
-                          {filters.status !== 'all' && (
+                          {filters.status !== "all" && (
                             <motion.span
                               initial={{ scale: 0 }}
                               animate={{ scale: 1 }}
@@ -326,23 +529,30 @@ function RapidBookings() {
                             >
                               Status: {filters.status}
                               <button
-                                onClick={() => setFilters({...filters, status: 'all'})}
+                                onClick={() =>
+                                  setFilters({ ...filters, status: "all" })
+                                }
                                 className="ml-2 hover:text-[#076d2a]"
                               >
                                 <X className="w-3 h-3" />
                               </button>
                             </motion.span>
                           )}
-                          {filters.price !== 'all' && (
+                          {filters.price !== "all" && (
                             <motion.span
                               initial={{ scale: 0 }}
                               animate={{ scale: 1 }}
                               exit={{ scale: 0 }}
                               className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-[#098637]/10 text-[#098637]"
                             >
-                              Price: {filters.price === 'low' ? 'Under ₹60/hr' : '₹60/hr and above'}
+                              Price:{" "}
+                              {filters.price === "low"
+                                ? "Under ₹60/hr"
+                                : "₹60/hr and above"}
                               <button
-                                onClick={() => setFilters({...filters, price: 'all'})}
+                                onClick={() =>
+                                  setFilters({ ...filters, price: "all" })
+                                }
                                 className="ml-2 hover:text-[#076d2a]"
                               >
                                 <X className="w-3 h-3" />
@@ -381,27 +591,38 @@ function RapidBookings() {
                   <div className="text-[#098637] transform transition-transform hover:scale-110">
                     {system.icon}
                   </div>
-                  <span className="font-semibold text-[#098637]">{system.price}</span>
+                  <span className="font-semibold text-[#098637]">
+                    {system.price}
+                  </span>
                 </div>
-                <h3 className="text-xl font-semibold mb-2">{system.name} #{system.number}</h3>
-                <p className={`mb-4 ${getStatusColor(system.status)} flex items-center gap-2`}>
-                  <span className={`w-2 h-2 rounded-full ${
-                    system.status === 'available' ? 'bg-[#098637]' :
-                    system.status === 'occupied' ? 'bg-red-500' :
-                    'bg-yellow-500'
-                  }`} />
-                  {system.status.charAt(0).toUpperCase() + system.status.slice(1)}
+                <h3 className="text-xl font-semibold mb-2">
+                  {system.name} #{system.number}
+                </h3>
+                <p
+                  className={`mb-4 ${getStatusColor(
+                    system.status
+                  )} flex items-center gap-2`}
+                >
+                  <span
+                    className={`w-2 h-2 rounded-full ${
+                      system.status === "available"
+                        ? "bg-[#098637]"
+                        : "bg-red-500"
+                    }`}
+                  />
+                  {system.status.charAt(0).toUpperCase() +
+                    system.status.slice(1)}
                 </p>
                 <Button
                   onClick={() => handleBook(system)}
-                  disabled={system.status !== 'available'}
+                  disabled={system.status !== "available"}
                   className={`w-full transition-all duration-300 ${
-                    system.status === 'available'
-                      ? 'bg-[#098637] hover:bg-[#076d2a] hover:scale-105'
-                      : 'bg-gray-300 cursor-not-allowed'
+                    system.status === "available"
+                      ? "bg-[#098637] hover:bg-[#076d2a] hover:scale-105"
+                      : "bg-gray-300 cursor-not-allowed"
                   }`}
                 >
-                  {system.status === 'available' ? 'Book Now' : 'Unavailable'}
+                  {system.status === "available" ? "Book Now" : "Unavailable"}
                 </Button>
               </motion.div>
             ))}
@@ -414,7 +635,9 @@ function RapidBookings() {
             className="max-w-2xl mx-auto border rounded-lg p-6 space-y-6"
           >
             <div className="flex justify-between items-center">
-              <h2 className="text-2xl font-bold">Book {selectedSystem?.name} #{selectedSystem?.number}</h2>
+              <h2 className="text-2xl font-bold">
+                Book {selectedSystem?.name} #{selectedSystem?.number}
+              </h2>
               <Button
                 variant="ghost"
                 size="icon"
@@ -435,7 +658,12 @@ function RapidBookings() {
                   <Label>Name</Label>
                   <div className="relative">
                     <User className="absolute left-3 top-3 text-gray-500 w-4 h-4" />
-                    <Input className="pl-9" placeholder="Enter your name" />
+                    <Input
+                      className="pl-9"
+                      placeholder="Enter your name"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                    />
                   </div>
                 </div>
 
@@ -443,50 +671,93 @@ function RapidBookings() {
                   <Label>Phone Number</Label>
                   <div className="relative">
                     <Phone className="absolute left-3 top-3 text-gray-500 w-4 h-4" />
-                    <Input className="pl-9" placeholder="Enter phone number" />
+                    <Input
+                      className="pl-9"
+                      placeholder="Enter phone number"
+                      value={contactNumber}
+                      onChange={(e) => setContactNumber(e.target.value)}
+                    />
                   </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Date</Label>
+                  <div className="relative">
+                    <Input
+                      type="date"
+                      className="pl-9"
+                      value={date}
+                      onChange={(e) => setDate(e.target.value)}
+                      min={new Date().toISOString().split("T")[0]}
+                    />
+                  </div>
+                  {errors.date && (
+                    <motion.p
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      className="text-xs text-red-500 mt-1"
+                    >
+                      {errors.date}
+                    </motion.p>
+                  )}
                 </div>
 
                 <div className="space-y-2">
                   <Label>Time Slot</Label>
                   <div className="grid grid-cols-3 gap-3">
-                    {timeSlots.map((slot, index) => (
-                      <motion.button
-                        key={index}
-                        whileHover={{ scale: slot.available ? 1.05 : 1 }}
-                        whileTap={{ scale: slot.available ? 0.95 : 1 }}
-                        type="button"
-                        disabled={!slot.available}
-                        className={`p-2 rounded-lg text-center transition-colors ${
-                          slot.available
-                            ? 'bg-[#098637] text-white hover:bg-[#076d2a]'
-                            : 'bg-gray-200 text-gray-500 cursor-not-allowed'
-                        }`}
-                      >
-                        {slot.time}
-                      </motion.button>
-                    ))}
+                    {isLoadingSlots ? (
+                      <div className="col-span-3 text-center py-4">
+                        Loading time slots...
+                      </div>
+                    ) : (
+                      timeSlots.map((slot, index) => (
+                        <motion.button
+                          key={index}
+                          whileHover={{ scale: slot.available ? 1.05 : 1 }}
+                          whileTap={{ scale: slot.available ? 0.95 : 1 }}
+                          type="button"
+                          disabled={!slot.available}
+                          onClick={() => setTime(slot.time)}
+                          className={`p-2 rounded-lg text-center transition-colors ${
+                            time === slot.time
+                              ? "bg-[#076d2a] text-white"
+                              : slot.available
+                              ? "bg-[#098637] text-white hover:bg-[#076d2a]"
+                              : "bg-gray-200 text-gray-500 cursor-not-allowed"
+                          }`}
+                        >
+                          {slot.time}
+                        </motion.button>
+                      ))
+                    )}
                   </div>
                 </div>
 
-                <motion.div 
+                <motion.div
                   className="space-y-2"
                   variants={inputVariants}
                   initial="hidden"
                   animate="visible"
                   transition={{ delay: 0.3 }}
                 >
-                  <Label htmlFor="consoleType" className="text-sm font-medium flex items-center gap-1">
-                    Console Type {errors.consoleType && <AlertCircle className="h-4 w-4 text-red-500" />}
+                  <Label
+                    htmlFor="consoleType"
+                    className="text-sm font-medium flex items-center gap-1"
+                  >
+                    Console Type{" "}
+                    {errors.consoleType && (
+                      <AlertCircle className="h-4 w-4 text-red-500" />
+                    )}
                   </Label>
                   <div className="relative">
                     <GamepadIcon className="absolute left-3 top-3 h-4 w-4 text-gray-500 pointer-events-none z-10" />
                     <Select value={consoleType} onValueChange={setConsoleType}>
-                      <SelectTrigger 
-                        id="consoleType" 
+                      <SelectTrigger
+                        id="consoleType"
                         className={`pl-9 transition-all duration-200 ${
-                          errors.consoleType ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : 
-                          'border-gray-300 focus:border-[#098637] focus:ring-[#098637]'
+                          errors.consoleType
+                            ? "border-red-500 focus:border-red-500 focus:ring-red-500"
+                            : "border-gray-300 focus:border-[#098637] focus:ring-[#098637]"
                         }`}
                       >
                         <SelectValue placeholder="Select console type" />
@@ -499,9 +770,9 @@ function RapidBookings() {
                     </Select>
                   </div>
                   {errors.consoleType && (
-                    <motion.p 
-                      initial={{ opacity: 0 }} 
-                      animate={{ opacity: 1 }} 
+                    <motion.p
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
                       className="text-xs text-red-500 mt-1"
                     >
                       {errors.consoleType}
@@ -558,7 +829,6 @@ function RapidBookings() {
                   </select>
                 </motion.div>
 
-
                 <div className="flex gap-4 pt-4">
                   <Button
                     type="button"
@@ -569,7 +839,8 @@ function RapidBookings() {
                     Cancel
                   </Button>
                   <Button
-                    type="submit"
+                    type="button"
+                    onClick={handelBooking}
                     className="w-1/2 bg-[#098637] hover:bg-[#076d2a]"
                   >
                     Confirm Booking

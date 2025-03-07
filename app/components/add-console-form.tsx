@@ -6,6 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useRouter } from "next/navigation";
+import { useEffect } from "react";
+import { jwtDecode } from "jwt-decode";
 
 import {
   Select,
@@ -154,11 +156,21 @@ const getHardWareSpecification = (
 };
 
 export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
-  const router = useRouter();
-  console.log(router);
+
+  const [vendorid, sevendorid] = useState(1);
+  useEffect(() => {
+    const token = localStorage.getItem("jwtToken");
+    if (token) {
+      const decoded_token = jwtDecode<{ sub: { id: number } }>(token);
+      const vendor_id1 = decoded_token.sub.id;
+      console.log(vendor_id1);
+      sevendorid(vendor_id1);
+    }
+  }, []);
   const [formdata, setformdata] = useState({
     availablegametype: consoleType,
-    vendorId: 1,
+    vendorId: vendorid,
+
     consoleDetails: {
       consoleNumber: "",
       ModelNumber: "",
@@ -192,7 +204,7 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
 
   const payload = {
     availablegametype: formdata.availablegametype,
-    vendorId: 1,
+    vendorId: vendorid,
     consoleDetails: {
       consoleNumber: formdata.consoleDetails.consoleNumber,
       modelNumber: formdata.consoleDetails.ModelNumber,
@@ -377,7 +389,7 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
                     }}
                   />
                 </div>
-                <div className="space-y-2">
+                {consoleType === "PC" ? (<div className="space-y-2">
                   <Label htmlFor="brand">Brand</Label>
                   <Input
                     id="brand"
@@ -393,14 +405,61 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
                       }));
                     }}
                   />
-                </div>
+                </div>):consoleType === "PS5" ?(<div className="space-y-2">
+                  <Label htmlFor="brand">Brand</Label>
+
+                  <Input
+                    id="brand"
+                    placeholder="Enter brand name"
+                    value={formdata.consoleDetails.Brand} // Bind value from state
+                    onChange={(e) => {
+                      setformdata((prev) => ({
+                        ...prev,
+                        consoleDetails: {
+                          ...prev.consoleDetails,
+                          Brand: e.target.value, // Update state on input change
+                        },
+                      }));
+                    }}
+
+                  />
+                </div>) :consoleType === "Xbox" ? (<div className="space-y-2">
+                  <Label htmlFor="brand">Brand</Label>
+                  <Input
+                    id="brand"
+                    placeholder="Enter brand name"
+                    value={formdata.consoleDetails.Brand} // Bind value from state
+                    onChange={(e) => {
+                      setformdata((prev) => ({
+                        ...prev,
+                        consoleDetails: {
+                          ...prev.consoleDetails,
+                          Brand: e.target.value, // Update state on input change
+                        },
+                      }));
+                    }}
+                  />
+                </div>):consoleType === "VR" ? (<div className="space-y-2">
+                  <Label htmlFor="brand">Brand</Label>
+                  <Input
+                    id="brand"
+                    placeholder="Enter brand name"
+                    value={formdata.consoleDetails.Brand} // Bind value from state
+                    onChange={(e) => {
+                      setformdata((prev) => ({
+                        ...prev,
+                        consoleDetails: {
+                          ...prev.consoleDetails,
+                          Brand: e.target.value, // Update state on input change
+                        },
+                      }));
+                    }}
+                  />
+                </div>):(<div>not found anything</div>)}
+                
                 <div className="space-y-2">
                   <Label htmlFor="consoleType">Console Type</Label>
-                  <Input
-                    id="consoleType"
-                    value={consoleType || ""}
-                    readOnly
-                  />
+                  <Input id="consoleType" value={consoleType || ""} readOnly />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="releaseDate">Release Date</Label>

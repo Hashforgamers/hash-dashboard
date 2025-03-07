@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+
 import {
   Select,
   SelectContent,
@@ -1248,6 +1249,8 @@ function ListBooking() {
       type:null,
     }
   ]);
+
+  // Empty dependency array means this runs once when component mounts
 
   const [filteredBookings, setFilteredBookings] = useState(bookings);
   const [sortConfig, setSortConfig] = useState<{
