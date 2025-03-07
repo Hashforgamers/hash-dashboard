@@ -7,6 +7,7 @@ import {
   Gamepad2,
   CalendarCheck,
   User,
+  Users,
 } from "lucide-react";
 import { Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
@@ -33,6 +34,7 @@ export function MainNav({
         { href: "/transaction", icon: Receipt, label: "Transaction Report" },
         { href: "/gaming", icon: Gamepad2, label: "Manage Gaming Console" },
         { href: "/booking", icon: CalendarCheck, label: "Manage Booking" },
+        { href: "/know-your-gamers", icon: Users, label: "Know Your Gamers" },
         { href: "/account", icon: User, label: "My Account" },
       ].map(({ href, icon: Icon, label }) => (
         <Link

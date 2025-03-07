@@ -41,6 +41,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+
 interface ConsoleListProps {
   onEdit: (console: any) => void;
 }
@@ -87,12 +88,16 @@ export function ConsoleList({ onEdit }: ConsoleListProps) {
     ram: item.ram || "N/A",
     storage: item.storage || "N/A",
     status: item.status || "Unknown",
+
     consoleModeltype: item.consoleModelType || "unknown",
+
   }));
 
   const handleDelete = async (id: number): Promise<void> => {
     try {
+
       const response = await axios.delete(
+
         `https://hfg-dashboard.onrender.com/api/console/1/${id}`
       );
       if (!response) {
@@ -100,6 +105,7 @@ export function ConsoleList({ onEdit }: ConsoleListProps) {
       } else {
         console.log(response.data.message);
         setdata((prevData) => prevData.filter((item: any) => item.id !== id));
+
       }
     } catch (error) {
       console.log("something while wrong to delete the data", error);
@@ -174,6 +180,7 @@ export function ConsoleList({ onEdit }: ConsoleListProps) {
                       <span className="font-medium truncate">
                         {console.processor}
                       </span>
+
 
                       <div className="flex items-center space-x-2">
                         <Gpu className="w-4 h-4 text-muted-foreground" />

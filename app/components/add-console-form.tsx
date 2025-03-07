@@ -138,6 +138,7 @@ const PS5playstation = [
   { value: "Ps5", label: "PS5 PRO" },
 ];
 
+
 const defaultSpecs = {
   processorType: "",
   graphicsCard: "",
@@ -155,6 +156,7 @@ const getHardWareSpecification = (
 };
 
 export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
+
   const [vendorid, sevendorid] = useState(1);
   useEffect(() => {
     const token = localStorage.getItem("jwtToken");
@@ -168,6 +170,7 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
   const [formdata, setformdata] = useState({
     availablegametype: consoleType,
     vendorId: vendorid,
+
     consoleDetails: {
       consoleNumber: "",
       ModelNumber: "",
@@ -232,6 +235,7 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
       accessories: formdata.additionalDetails.AccessoriesDetails,
     },
   };
+
 
   const handelfetch = async () => {
     try {
@@ -403,6 +407,7 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
                   />
                 </div>):consoleType === "PS5" ?(<div className="space-y-2">
                   <Label htmlFor="brand">Brand</Label>
+
                   <Input
                     id="brand"
                     placeholder="Enter brand name"
@@ -416,6 +421,7 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
                         },
                       }));
                     }}
+
                   />
                 </div>) :consoleType === "Xbox" ? (<div className="space-y-2">
                   <Label htmlFor="brand">Brand</Label>

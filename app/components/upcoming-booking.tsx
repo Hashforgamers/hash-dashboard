@@ -19,7 +19,7 @@ const bookings = [
     system: "PS5 | Set 5",
     time: "12:00pm",
     duration: "2hrs",
-    status: "Not Paid",
+    status: "Paid",
   },
   {
     id: 3,
@@ -52,8 +52,7 @@ const bookings = [
     time: "12:00pm",
     duration: "2hrs",
     status: "Paid",
-  },
-];
+  },];
 
 const container = {
   hidden: { opacity: 0 },

@@ -49,26 +49,19 @@ export default function LoginPreview() {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
-      const myHeaders = new Headers();
-      myHeaders.append("Content-Type", "application/json");
-
-      const raw = JSON.stringify({
-        email: values.email,
-        password: values.password,
-        parent_type: "vendor",
-      });
-
-      const requestOptions = {
+      const response = await fetch("https://hfg-login.onrender.com/api/login", {
         method: "POST",
-        headers: myHeaders,
-        body: raw,
-        redirect: "follow" as RequestRedirect,
-      };
-      const response = await fetch(
-        "https://thingproxy.freeboard.io/fetch/https://hfg-login.onrender.com/api/login",
-        // "https://hfg-login.onrender.com/api/login",
-        requestOptions
-      );
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: values.email,
+          password: values.password,
+          parent_type: "vendor",
+        }),
+        redirect: "follow",
+      });
+    
 
       const result = await response.json();
       if (response.status === 200) {
