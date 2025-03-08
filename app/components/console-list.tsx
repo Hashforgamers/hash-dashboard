@@ -28,25 +28,17 @@ import {
   MemoryStickIcon as Memory,
   HardDrive,
   Activity,
-  Package,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import axios from "axios";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-
 
 interface ConsoleListProps {
   onEdit: (console: any) => void;
 }
 export function ConsoleList({ onEdit }: ConsoleListProps) {
   const [data, setdata] = useState([]);
+
 
   useEffect(() => {
     const fetch_data = async () => {
@@ -60,11 +52,11 @@ export function ConsoleList({ onEdit }: ConsoleListProps) {
           setdata(response?.data);
         }
       } catch (error) {
-        console.error("error ocuurs", error);
+        console.error("error ocuurs",error);
       }
     };
 
-    fetch_data(); //function call here to fetch the data
+     fetch_data(); //function call here to fetch the data
   }, []);
 
   const consolelistdata = data.map((item: any) => ({
@@ -88,16 +80,11 @@ export function ConsoleList({ onEdit }: ConsoleListProps) {
     ram: item.ram || "N/A",
     storage: item.storage || "N/A",
     status: item.status || "Unknown",
-
-    consoleModeltype: item.consoleModelType || "unknown",
-
   }));
 
   const handleDelete = async (id: number): Promise<void> => {
     try {
-
-      const response = await axios.delete(
-
+       const response = await axios.delete(
         `https://hfg-dashboard.onrender.com/api/console/1/${id}`
       );
       if (!response) {
@@ -105,7 +92,7 @@ export function ConsoleList({ onEdit }: ConsoleListProps) {
       } else {
         console.log(response.data.message);
         setdata((prevData) => prevData.filter((item: any) => item.id !== id));
-
+        
       }
     } catch (error) {
       console.log("something while wrong to delete the data", error);
@@ -171,50 +158,31 @@ export function ConsoleList({ onEdit }: ConsoleListProps) {
                   </div>
                   <span className="font-medium truncate">{console.brand}</span>
 
-                  {console.type === "PC" ? (
-                    <>
-                      <div className="flex items-center space-x-2">
-                        <Cpu className="w-4 h-4 text-muted-foreground" />
-                        <span className="text-muted-foreground">CPU</span>
-                      </div>
-                      <span className="font-medium truncate">
-                        {console.processor}
-                      </span>
+                  <div className="flex items-center space-x-2">
+                    <Cpu className="w-4 h-4 text-muted-foreground" />
+                    <span className="text-muted-foreground">CPU</span>
+                  </div>
+                  <span className="font-medium truncate">
+                    {console.processor}
+                  </span>
 
+                  <div className="flex items-center space-x-2">
+                    <Gpu className="w-4 h-4 text-muted-foreground" />
+                    <span className="text-muted-foreground">GPU</span>
+                  </div>
+                  <span className="font-medium truncate">{console.gpu}</span>
 
-                      <div className="flex items-center space-x-2">
-                        <Gpu className="w-4 h-4 text-muted-foreground" />
-                        <span className="text-muted-foreground">GPU</span>
-                      </div>
-                      <span className="font-medium truncate">
-                        {console.gpu}
-                      </span>
+                  <div className="flex items-center space-x-2">
+                    <Memory className="w-4 h-4 text-muted-foreground" />
+                    <span className="text-muted-foreground">RAM</span>
+                  </div>
+                  <span className="font-medium">{console.ram}</span>
 
-                      <div className="flex items-center space-x-2">
-                        <Memory className="w-4 h-4 text-muted-foreground" />
-                        <span className="text-muted-foreground">RAM</span>
-                      </div>
-                      <span className="font-medium">{console.ram}</span>
-
-                      <div className="flex items-center space-x-2">
-                        <HardDrive className="w-4 h-4 text-muted-foreground" />
-                        <span className="text-muted-foreground">Storage</span>
-                      </div>
-                      <span className="font-medium">{console.storage}</span>
-                    </>
-                  ) : (
-                    <>
-                      <div className="flex items-center space-x-2">
-                        <Package className="w-4 h-4 text-muted-foreground" />
-                        <span className="text-muted-foreground">
-                          Model Type
-                        </span>
-                      </div>
-                      <span className="font-medium truncate">
-                        {console.consoleModeltype}
-                      </span>
-                    </>
-                  )}
+                  <div className="flex items-center space-x-2">
+                    <HardDrive className="w-4 h-4 text-muted-foreground" />
+                    <span className="text-muted-foreground">Storage</span>
+                  </div>
+                  <span className="font-medium">{console.storage}</span>
                 </div>
 
                 <div className="pt-2 flex items-center justify-between border-t">

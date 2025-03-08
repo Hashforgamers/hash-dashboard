@@ -151,7 +151,7 @@ const defaultSpecs = {
 const getHardWareSpecification = (
   consoleType: string
 ): Record<string, string> => {
-  const validTypes = ["PC", "PS5", "Xbox", "VR"];
+  const validTypes = ["pc", "ps5", "xbox", "vr"];
   return validTypes.includes(consoleType) ? { ...defaultSpecs } : {};
 };
 
@@ -247,7 +247,9 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
         console.log(`Something went wrong while sending post request`);
       } else {
         console.log(response?.data);
-        const data = (window.location.href = "http://localhost:3000/gaming");
+        const baseUrl = window.location.origin; // Get base URL
+        const gamingUrl = `${baseUrl}/gaming`; // Append /gaming
+        const data = (window.location.href = gamingUrl);
         console.log("data", data);
       }
     } catch (error) {
@@ -389,7 +391,7 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
                     }}
                   />
                 </div>
-                {consoleType === "PC" ? (<div className="space-y-2">
+                {consoleType === "pc" ? (<div className="space-y-2">
                   <Label htmlFor="brand">Brand</Label>
                   <Input
                     id="brand"
@@ -405,7 +407,7 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
                       }));
                     }}
                   />
-                </div>):consoleType === "PS5" ?(<div className="space-y-2">
+                </div>):consoleType === "ps5" ?(<div className="space-y-2">
                   <Label htmlFor="brand">Brand</Label>
 
                   <Input
@@ -423,7 +425,7 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
                     }}
 
                   />
-                </div>) :consoleType === "Xbox" ? (<div className="space-y-2">
+                </div>) :consoleType === "xbox" ? (<div className="space-y-2">
                   <Label htmlFor="brand">Brand</Label>
                   <Input
                     id="brand"
@@ -439,7 +441,7 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
                       }));
                     }}
                   />
-                </div>):consoleType === "VR" ? (<div className="space-y-2">
+                </div>):consoleType === "vr" ? (<div className="space-y-2">
                   <Label htmlFor="brand">Brand</Label>
                   <Input
                     id="brand"
@@ -502,7 +504,7 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
       case 2:
         return (
           <>
-            {consoleType === "PC" ? (
+            {consoleType === "pc" ? (
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
@@ -644,7 +646,7 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
                   </div>
                 </CardContent>
               </Card>
-            ) : consoleType === "PS5" ? (
+            ) : consoleType === "ps5" ? (
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
@@ -686,7 +688,7 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
                   </div>
                 </CardContent>
               </Card>
-            ) : consoleType === "Xbox" ? (
+            ) : consoleType === "xbox" ? (
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
@@ -728,7 +730,7 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
                   </div>
                 </CardContent>
               </Card>
-            ) : consoleType === "VR" ? (
+            ) : consoleType === "vr" ? (
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">

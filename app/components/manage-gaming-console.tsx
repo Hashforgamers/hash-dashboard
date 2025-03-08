@@ -46,28 +46,32 @@ const actions = [
 // Define the available console types (PC, PS5, Xbox, VR)
 const consoleTypes = [
   {
-    type: "PC",
+    type: "pc",
+    name: "PC",
     icon: Monitor,
     color: "bg-purple-100 dark:bg-purple-950",
     iconColor: "#7c3aed",
     description: "Gaming PCs and Workstations",
   },
   {
-    type: "PS5",
+    type: "ps5",
+    name:"PS5",
     icon: Tv,
     color: "bg-blue-100 dark:bg-blue-950",
     iconColor: "#2563eb",
     description: "PlayStation 5 Gaming Consoles",
   },
   {
-    type: "Xbox",
+    type: "xbox",
+    name: "Xbox",
     icon: Gamepad,
     color: "bg-green-100 dark:bg-green-950",
     iconColor: "#059669",
     description: "Xbox Series Gaming Consoles",
   },
   {
-    type: "VR",
+    type: "vr",
+    name: "VR",
     icon: Headset,
     color: "bg-orange-100 dark:bg-orange-950",
     iconColor: "#ea580c",
@@ -142,7 +146,7 @@ export function ManageGamingConsole() {
                     className="w-8 h-8 mb-2"
                     style={{ color: console.iconColor }}
                   />
-                  <CardTitle>{console.type}</CardTitle>
+                  <CardTitle>{console.name}</CardTitle>
                   <CardDescription>{console.description}</CardDescription>
                 </CardHeader>
               </Card>

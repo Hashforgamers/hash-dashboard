@@ -36,7 +36,7 @@ type CreateBookingFormProps = {
 
 const consoleTypes: ConsoleType[] = [
   {
-    type: "Computer",
+    type: "pc",
     icon: Monitor,
     color: "grey",
     iconColor: "#7c3aed",
@@ -45,7 +45,7 @@ const consoleTypes: ConsoleType[] = [
     id:null,
   },
   {
-    type: "PS5",
+    type: "ps5",
     icon: Tv,
     color: "grey",
     iconColor: "#2563eb",
@@ -54,7 +54,7 @@ const consoleTypes: ConsoleType[] = [
     id:null,
   },
   {
-    type: "Xbox",
+    type: "xbox",
     icon: Gamepad,
     color: "grey",
     iconColor: "#059669",
@@ -63,7 +63,7 @@ const consoleTypes: ConsoleType[] = [
     id:null,
   },
   {
-    type: "VR",
+    type: "vr",
     icon: Headset,
     color: "grey",
     iconColor: "#ea580c",
