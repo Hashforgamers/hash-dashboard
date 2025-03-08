@@ -1,24 +1,27 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BookingStats } from "./book-stats";
 import { UpcomingBookings } from "./upcoming-booking";
 import { CurrentSlots } from "./current-slot";
 import { motion } from "framer-motion";
-import { useState } from "react";
-import { 
-  DollarSign, 
-  CalendarCheck, 
-  WalletCards,
-  Eye,
-  EyeOff,
-  TrendingDown,
-  TrendingUp,
-  CheckCircle2
-} from "lucide-react";
+import { DollarSign, CalendarCheck, WalletCards, Eye, EyeOff, TrendingDown, TrendingUp, CheckCircle2 } from "lucide-react";
 
 export function DashboardContent() {
+  const [dashboardData, setDashboardData] = useState(null);
   const [showEarnings, setShowEarnings] = useState(false);
   const [showPending, setShowPending] = useState(false);
+
+  useEffect(() => {
+    // Fetch the data from the API
+    fetch('http://localhost:5056/api/getLandingPage/vendor/1')
+      .then(response => response.json())
+      .then(data => setDashboardData(data))
+      .catch(error => console.error("Error fetching data:", error));
+  }, []);
+
+  if (!dashboardData) {
+    return <div>Loading...</div>; // Render a loading state until the data is fetched
+  }
 
   return (
     <motion.div 
@@ -28,6 +31,7 @@ export function DashboardContent() {
     >
       {/* Stats Overview */}
       <div className="grid gap-6 grid-cols-1 md:grid-cols-3">
+        {/* Today's Earning Card */}
         <motion.div
           initial={{ x: -20, opacity: 0 }}
           animate={{ x: 0, opacity: 1 }}
@@ -52,16 +56,17 @@ export function DashboardContent() {
             </CardHeader>
             <CardContent>
               <div className="theme-title text-2xl font-bold">
-                {showEarnings ? "₹25,049" : "₹•••••"}
+                {showEarnings ? `₹${dashboardData.stats.todayEarnings}` : "₹•••••"}
               </div>
               <p className="theme-subtext text-xs mt-1 flex items-center space-x-1">
                 <TrendingDown className="h-4 w-4 text-red-500" />
-                <span>12% less than yesterday</span>
+                <span>{dashboardData.stats.todayEarningsChange}% less than yesterday</span>
               </p>
             </CardContent>
           </Card>
         </motion.div>
         
+        {/* Today's Bookings Card */}
         <motion.div
           initial={{ x: -20, opacity: 0 }}
           animate={{ x: 0, opacity: 1 }}
@@ -75,15 +80,16 @@ export function DashboardContent() {
               </div>
             </CardHeader>
             <CardContent>
-              <div className="theme-title text-2xl font-bold">128</div>
+              <div className="theme-title text-2xl font-bold">{dashboardData.stats.todayBookings}</div>
               <p className="theme-subtext text-xs mt-1 flex items-center space-x-1">
                 <TrendingUp className="h-4 w-4 text-green-500" />
-                <span>8% more than yesterday</span>
+                <span>{dashboardData.stats.todayBookingsChange}% more than yesterday</span>
               </p>
             </CardContent>
           </Card>
         </motion.div>
 
+        {/* Pending Amount Card */}
         <motion.div
           initial={{ x: -20, opacity: 0 }}
           animate={{ x: 0, opacity: 1 }}
@@ -108,35 +114,35 @@ export function DashboardContent() {
             </CardHeader>
             <CardContent>
               <div className="theme-title text-2xl font-bold">
-                {showPending ? "₹2,549" : "₹•••••"}
+                {showPending ? `₹${dashboardData.stats.pendingAmount}` : "₹•••••"}
               </div>
               <p className="theme-subtext text-xs mt-1 flex items-center space-x-1">
                 <CheckCircle2 className="h-4 w-4 text-green-500" />
-                <span>₹20,000 Cleared</span>
+                <span>₹{dashboardData.stats.clearedAmount} Cleared</span>
               </p>
             </CardContent>
           </Card>
         </motion.div>
       </div>
 
+      {/* Stats and Bookings Grid */}
       <div className="grid gap-6 grid-cols-1 lg:grid-cols-4">
-        {/* Left Side - Stats and Available Consoles */}
         <div className="lg:col-span-3 space-y-6">
-          {/* Available Consoles - Now full width */}
+          {/* Booking Stats Component */}
           <Card className="theme-card bg-card">
-            <BookingStats />
+            <BookingStats stats={dashboardData.bookingStats} />
           </Card>
 
-          {/* Current Slots - Moved up */}
+          {/* Current Slots Component */}
           <Card className="theme-card bg-card">
-            <CurrentSlots />
+            <CurrentSlots currentSlots={dashboardData.currentSlots} />
           </Card>
         </div>
 
-        {/* Right Side - Upcoming Bookings */}
+        {/* Upcoming Bookings Component */}
         <div className="lg:col-span-1">
           <Card className="theme-card bg-card sticky top-6">
-            <UpcomingBookings />
+            <UpcomingBookings upcomingBookings={dashboardData.upcomingBookings} />
           </Card>
         </div>
       </div>

@@ -1,73 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { motion } from "framer-motion";
 import { Play, Monitor, X, Gamepad2 } from "lucide-react";
-
 import { useState } from "react";
-
-const bookings = [
-  {
-    id: 1,
-    user: "Martin Dokidia",
-    system: "Xbox | Set 2",
-    time: "12:00pm",
-    duration: "2hrs",
-    status: "Paid",
-  },
-  {
-    id: 2,
-    user: "Kianna Botosh",
-    system: "PS5 | Set 5",
-    time: "12:00pm",
-    duration: "2hrs",
-    status: "Paid",
-  },
-  {
-    id: 3,
-    user: "Kadri Gouse",
-    system: "PC5",
-    time: "12:00pm",
-    duration: "2hrs",
-    status: "Paid",
-  },
-  {
-    id: 4,
-    user: "Martin Dokidia",
-    system: "Xbox | Set 2",
-    time: "12:00pm",
-    duration: "2hrs",
-    status: "Paid",
-  },
-  {
-    id: 5,
-    user: "Kianna Botosh",
-    system: "PS5 | Set 5",
-    time: "12:00pm",
-    duration: "2hrs",
-    status: "Not Paid",
-  },
-  {
-    id: 6,
-    user: "Kadri Gouse",
-    system: "PC5",
-    time: "12:00pm",
-    duration: "2hrs",
-    status: "Paid",
-  },];
-
-const container = {
-  hidden: { opacity: 0 },
-  show: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.1,
-    },
-  },
-};
-
-const item = {
-  hidden: { opacity: 0, x: 20 },
-  show: { opacity: 1, x: 0 },
-};
 
 export function getIcon(system: string): JSX.Element {
   if (system.includes("PS5"))
@@ -77,7 +11,7 @@ export function getIcon(system: string): JSX.Element {
   return <Monitor className="w-36 h-36 text-white" />;
 }
 
-export function UpcomingBookings(): JSX.Element {
+export function UpcomingBookings({ upcomingBookings }: { upcomingBookings: any[] }): JSX.Element {
   const [startCard, setStartCard] = useState(false);
   const [SelectedSystem, setSelectedSystem] = useState("");
   
@@ -85,7 +19,7 @@ export function UpcomingBookings(): JSX.Element {
     setSelectedSystem(system);
     setStartCard(true);
   }
-  
+
   const [selectedPC, setSelectedPC] = useState<Set<number>>(new Set());
 
   const handleClick = (index: number): void => {
@@ -98,6 +32,21 @@ export function UpcomingBookings(): JSX.Element {
       }
       return newSet;
     });
+  };
+
+  const container = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1,
+      },
+    },
+  };
+
+  const item = {
+    hidden: { opacity: 0, x: 20 },
+    show: { opacity: 1, x: 0 },
   };
 
   return (
@@ -170,42 +119,35 @@ export function UpcomingBookings(): JSX.Element {
           animate="show"
           className="space-y-4"
         >
-          {bookings.map((booking) => (
+          {upcomingBookings.map((booking) => (
             <motion.div
-              key={booking.id}
+              key={booking.bookingId}
               variants={item}
               className="bg-white dark:bg-zinc-900 rounded-lg p-4 border border-gray-200 dark:border-zinc-800 shadow"
             >
               <div className="flex items-center justify-between">
                 <div>
                   <h3 className="font-medium text-gray-800 dark:text-white">
-                    {booking.user}
+                    {booking.username}
                   </h3>
                   <p className="text-sm text-gray-500 dark:text-zinc-400">
-                    {booking.system}
+                    {booking.consoleType}
                   </p>
                 </div>
-                {booking.status === "Paid" ? (
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    className="flex items-center gap-2 px-3 py-1 bg-emerald-500 text-white rounded-md text-sm hover:bg-emerald-600 transition-colors"
-                    onClick={() => {
-                      start(booking.system);
-                    }}
-                  >
-                    <Play className="w-4 h-4" />
-                    Start
-                  </motion.button>
-                ) : (
-                  <span className="px-2 py-1 bg-red-500/10 text-red-500 rounded-md text-xs">
-                    Not Paid
-                  </span>
-                )}
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="flex items-center gap-2 px-3 py-1 bg-emerald-500 text-white rounded-md text-sm hover:bg-emerald-600 transition-colors"
+                  onClick={() => {
+                    start(booking.consoleType);
+                  }}
+                >
+                  <Play className="w-4 h-4" />
+                  Start
+                </motion.button>
               </div>
               <div className="mt-2 flex items-center justify-between text-sm text-gray-500 dark:text-zinc-400">
                 <span>{booking.time}</span>
-                <span>{booking.duration}</span>
               </div>
             </motion.div>
           ))}
@@ -214,4 +156,3 @@ export function UpcomingBookings(): JSX.Element {
     </>
   );
 }
-

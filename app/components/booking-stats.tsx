@@ -2,46 +2,46 @@ import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Monitor, Gamepad2, Gamepad, Headphones } from 'lucide-react';
 
-const platforms = [
-  {
-    name: "PC",
-    icon: Monitor,
-    total: 50,
-    booked: 30,
-    colorClass: "bg-blue-100 dark:bg-blue-900/20",
-    iconColorClass: "text-blue-500",
-    progressColorClass: "bg-blue-500",
-  },
-  {
-    name: "PS5",
-    icon: Gamepad2,
-    total: 30,
-    booked: 25,
-    colorClass: "bg-indigo-100 dark:bg-indigo-900/20",
-    iconColorClass: "text-indigo-500",
-    progressColorClass: "bg-indigo-500",
-  },
-  {
-    name: "Xbox",
-    icon: Gamepad,
-    total: 25,
-    booked: 15,
-    colorClass: "bg-emerald-100 dark:bg-emerald-900/20",
-    iconColorClass: "text-emerald-500",
-    progressColorClass: "bg-emerald-500",
-  },
-  {
-    name: "VR",
-    icon: Headphones,
-    total: 20,
-    booked: 10,
-    colorClass: "bg-amber-100 dark:bg-amber-900/20",
-    iconColorClass: "text-amber-500",
-    progressColorClass: "bg-amber-500",
-  },
-];
+export function BookingStats({ bookingStats }) {
+  const platforms = [
+    {
+      name: "PC",
+      icon: Monitor,
+      total: 50,
+      booked: bookingStats.pcBookings || 0, // Assuming `pcBookings` will be available in the bookingStats
+      colorClass: "bg-blue-100 dark:bg-blue-900/20",
+      iconColorClass: "text-blue-500",
+      progressColorClass: "bg-blue-500",
+    },
+    {
+      name: "PS5",
+      icon: Gamepad2,
+      total: 30,
+      booked: bookingStats.ps5Bookings || 0, // Similar assumptions for other platforms
+      colorClass: "bg-indigo-100 dark:bg-indigo-900/20",
+      iconColorClass: "text-indigo-500",
+      progressColorClass: "bg-indigo-500",
+    },
+    {
+      name: "Xbox",
+      icon: Gamepad,
+      total: 25,
+      booked: bookingStats.xboxBookings || 0, // Adjust based on your actual data structure
+      colorClass: "bg-emerald-100 dark:bg-emerald-900/20",
+      iconColorClass: "text-emerald-500",
+      progressColorClass: "bg-emerald-500",
+    },
+    {
+      name: "VR",
+      icon: Headphones,
+      total: 20,
+      booked: bookingStats.vrBookings || 0, // Adjust for VR as well
+      colorClass: "bg-amber-100 dark:bg-amber-900/20",
+      iconColorClass: "text-amber-500",
+      progressColorClass: "bg-amber-500",
+    },
+  ];
 
-export function BookingStats() {
   const totalUnits = platforms.reduce((acc, p) => acc + p.total, 0);
   const totalBooked = platforms.reduce((acc, p) => acc + p.booked, 0);
 
@@ -98,4 +98,3 @@ export function BookingStats() {
     </div>
   );
 }
-
