@@ -142,7 +142,7 @@ export function DashboardContent() {
         {/* Upcoming Bookings Component */}
         <div className="lg:col-span-1">
           <Card className="theme-card bg-card sticky top-6">
-            <UpcomingBookings upcomingBookings={dashboardData.upcomingBookings} />
+            <UpcomingBookings upcomingBookings={dashboardData.upcomingBookings} vendorId={dashboardData.vendorId}/>
           </Card>
         </div>
       </div>

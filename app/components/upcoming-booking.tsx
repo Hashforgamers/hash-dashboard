@@ -1,120 +1,194 @@
 import { Card } from "@/components/ui/card";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Play, Monitor, X, Gamepad2 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import axios from "axios";
 
 export function getIcon(system: string): JSX.Element {
-  if (system.includes("PS5"))
-    return <Gamepad2 className="w-36 h-36 text-blue-400" />;
-  if (system.includes("Xbox"))
-    return <Gamepad2 className="w-36 h-36 text-green-400" />;
-  return <Monitor className="w-36 h-36 text-white" />;
+  if (system.includes("PS5")) return <Gamepad2 className="w-24 h-24 text-blue-400 transition-colors duration-200" />;
+  if (system.includes("Xbox")) return <Gamepad2 className="w-24 h-24 text-green-400 transition-colors duration-200" />;
+  return <Monitor className="w-24 h-24 text-white transition-colors duration-200" />;
 }
 
-export function UpcomingBookings({ upcomingBookings }: { upcomingBookings: any[] }): JSX.Element {
+export function UpcomingBookings({
+  upcomingBookings,
+  gameId,
+  vendorId,
+  dashboardUrl,
+}: {
+  upcomingBookings: any[];
+  gameId: string;
+  vendorId: string;
+  dashboardUrl: string;
+}): JSX.Element {
   const [startCard, setStartCard] = useState(false);
-  const [SelectedSystem, setSelectedSystem] = useState("");
-  
-  function start(system: string): void {
+  const [selectedSystem, setSelectedSystem] = useState("");
+  const [availableConsoles, setAvailableConsoles] = useState<any[]>([]);
+  const [selectedConsole, setSelectedConsole] = useState<number | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const fetchAvailableConsoles = async (gameId: string, vendorId: string) => {
+    setIsLoading(true);
+    try {
+      const response = await axios.get(
+        `https://hfg-dashboard.onrender.com/api/getAllDevice/consoleTypeId/${gameId}/vendor/${vendorId}`
+      );
+      setAvailableConsoles(response.data.filter((console: any) => console.is_available));
+    } catch (error) {
+      console.error("Error fetching available consoles:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const start = (system: string, gameId: string) => {
     setSelectedSystem(system);
     setStartCard(true);
-  }
+    fetchAvailableConsoles(gameId, vendorId);
+  };
 
-  const [selectedPC, setSelectedPC] = useState<Set<number>>(new Set());
+  const handleConsoleSelection = (consoleId: number) => {
+    setSelectedConsole(consoleId);
+  };
 
-  const handleClick = (index: number): void => {
-    setSelectedPC((prev: Set<number>) => {
-      const newSet = new Set(prev);
-      if (newSet.has(index)) {
-        newSet.delete(index);
-      } else {
-        newSet.add(index);
+  const handleSubmit = async () => {
+    if (selectedConsole !== null) {
+      setIsLoading(true);
+      try {
+        await axios.post(
+          `${dashboardUrl}/api/updateDeviceStatus/consoleTypeId/${gameId}/console/${selectedConsole}/vendor/${vendorId}`
+        );
+        setStartCard(false);
+      } catch (error) {
+        console.error("Error updating console status:", error);
+      } finally {
+        setIsLoading(false);
       }
-      return newSet;
-    });
-  };
-
-  const container = {
-    hidden: { opacity: 0 },
-    show: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1,
-      },
-    },
-  };
-
-  const item = {
-    hidden: { opacity: 0, x: 20 },
-    show: { opacity: 1, x: 0 },
+    }
   };
 
   return (
     <>
-      {startCard && (
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
-          className="fixed inset-0 flex items-center justify-center z-[9999] bg-black/50 backdrop-blur-md"
-        >
-          <div className="flex flex-col items-center gap-4">
-            <Card className="p-6 bg-grey-200 text-white text-center shadow-lg rounded-md flex flex-wrap gap-4 justify-center w-3/4 relative min-h-[400px]">
-              <div>
-                <X
-                  className="h-8 w-8 text-red-600 hover:text-white hover:bg-gray-500 p-1 rounded-full absolute top-2 right-1 cursor-pointer font-bold text-2xl"
-                  onClick={() => {
-                    setStartCard(false);
-                    setSelectedPC(new Set());
-                  }}
-                />
-              </div>
+      <AnimatePresence>
+        {startCard && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 flex items-center justify-center z-[9999] bg-black/60 backdrop-blur-sm p-4"
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 20 }}
+              transition={{ 
+                duration: 0.2,
+                type: "spring",
+                stiffness: 300,
+                damping: 25
+              }}
+              className="w-full max-w-2xl"
+            >
+              <Card className="bg-white dark:bg-zinc-900 text-gray-900 dark:text-white shadow-xl rounded-xl overflow-hidden">
+                <div className="p-4 border-b border-gray-100 dark:border-zinc-800 flex items-center justify-between">
+                  <h2 className="text-lg font-semibold">Select Console</h2>
+                  <button
+                    onClick={() => setStartCard(false)}
+                    className="p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-zinc-800 transition-colors duration-200"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
 
-              <div className="flex flex-wrap gap-4 justify-center">
-                {Array(5)
-                  .fill(0)
-                  .map((_, index) => (
-                    <motion.div
-                      key={index}
-                      initial={{ opacity: 0, x: 50 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ duration: 0.5, delay: index * 0.1 }}
+                <div className="p-4">
+                  {isLoading ? (
+                    <div className="flex items-center justify-center h-48">
+                      <div className="animate-spin rounded-full h-8 w-8 border-2 border-emerald-500 border-t-transparent"></div>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                      {availableConsoles.map((console) => (
+                        <motion.div
+                          key={console.consoleId}
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                          transition={{ duration: 0.2 }}
+                        >
+                          <Card
+                            className={`group cursor-pointer transition-all duration-200 overflow-hidden ${
+                              selectedConsole === console.consoleId
+                                ? "ring-2 ring-emerald-500 dark:ring-emerald-400"
+                                : "hover:bg-gray-50 dark:hover:bg-zinc-800"
+                            }`}
+                            onClick={() => handleConsoleSelection(console.consoleId)}
+                          >
+                            <div className="p-4 flex flex-col items-center">
+                              <motion.div
+                                animate={{
+                                  scale: selectedConsole === console.consoleId ? 1.1 : 1,
+                                }}
+                                transition={{ duration: 0.2 }}
+                              >
+                                {getIcon(selectedSystem)}
+                              </motion.div>
+                              <div className="text-center mt-2">
+                                <h3 className="font-medium text-sm">{console.brand}</h3>
+                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                                  {console.consoleModelNumber}
+                                </p>
+                              </div>
+                            </div>
+                          </Card>
+                        </motion.div>
+                      ))}
+                    </div>
+                  )}
+
+                  <div className="mt-4 flex justify-end">
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                        selectedConsole && !isLoading
+                          ? "bg-emerald-500 hover:bg-emerald-600 text-white"
+                          : "bg-gray-100 dark:bg-zinc-800 text-gray-400 dark:text-gray-500 cursor-not-allowed"
+                      }`}
+                      onClick={handleSubmit}
+                      disabled={!selectedConsole || isLoading}
                     >
-                      <Card
-                        className={`w-52 h-52 flex flex-col justify-center items-center rounded-md cursor-pointer transition ${
-                          selectedPC.has(index) ? "bg-gray-500" : "bg-black"
-                        }`}
-                        onClick={() => handleClick(index)}
-                      >
-                        {getIcon(SelectedSystem)}
-                        <div className="text-lg text-white mt-2">
-                          {SelectedSystem}
-                        </div>
-                      </Card>
-                    </motion.div>
-                  ))}
-              </div>
+                      {isLoading ? (
+                        <span className="flex items-center gap-2">
+                          <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                          Processing...
+                        </span>
+                      ) : (
+                        "Start Session"
+                      )}
+                    </motion.button>
+                  </div>
+                </div>
+              </Card>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-              <button className="w-1/2 bg-green-600 py-2 px-4 rounded-md font-semibold">
-                Submit
-              </button>
-            </Card>
-          </div>
-        </motion.div>
-      )}
-
-      <div className="p-4">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-            Upcoming Bookings
-          </h2>
-          <button className="text-sm text-emerald-500 hover:text-emerald-400">
+      <div className="p-6">
+        <div className="flex items-center justify-between mb-8">
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Upcoming Bookings</h2>
+          <button className="text-sm text-emerald-500 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors duration-200">
             View all
           </button>
         </div>
 
         <motion.div
-          variants={container}
+          variants={{
+            hidden: { opacity: 0 },
+            show: { opacity: 1, transition: { staggerChildren: 0.1 } },
+          }}
           initial="hidden"
           animate="show"
           className="space-y-4"
@@ -122,31 +196,28 @@ export function UpcomingBookings({ upcomingBookings }: { upcomingBookings: any[]
           {upcomingBookings.map((booking) => (
             <motion.div
               key={booking.bookingId}
-              variants={item}
-              className="bg-white dark:bg-zinc-900 rounded-lg p-4 border border-gray-200 dark:border-zinc-800 shadow"
+              variants={{
+                hidden: { opacity: 0, y: 20 },
+                show: { opacity: 1, y: 0 },
+              }}
+              className="bg-white dark:bg-zinc-900 rounded-xl p-5 border border-gray-100 dark:border-zinc-800 shadow-sm hover:shadow-md transition-all duration-200"
             >
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="font-medium text-gray-800 dark:text-white">
-                    {booking.username}
-                  </h3>
-                  <p className="text-sm text-gray-500 dark:text-zinc-400">
-                    {booking.consoleType}
-                  </p>
+                  <h3 className="font-medium text-gray-900 dark:text-white">{booking.username}</h3>
+                  <p className="text-sm text-gray-500 dark:text-zinc-400 mt-1">{booking.consoleType}</p>
                 </div>
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  className="flex items-center gap-2 px-3 py-1 bg-emerald-500 text-white rounded-md text-sm hover:bg-emerald-600 transition-colors"
-                  onClick={() => {
-                    start(booking.consoleType);
-                  }}
+                  className="flex items-center gap-2 px-4 py-2 bg-emerald-500 text-white rounded-lg text-sm font-medium hover:bg-emerald-600 transition-colors duration-200"
+                  onClick={() => start(booking.consoleType, booking.game_id)}
                 >
                   <Play className="w-4 h-4" />
                   Start
                 </motion.button>
               </div>
-              <div className="mt-2 flex items-center justify-between text-sm text-gray-500 dark:text-zinc-400">
+              <div className="mt-3 flex items-center justify-between text-sm text-gray-500 dark:text-zinc-400">
                 <span>{booking.time}</span>
               </div>
             </motion.div>
@@ -156,3 +227,5 @@ export function UpcomingBookings({ upcomingBookings }: { upcomingBookings: any[]
     </>
   );
 }
+
+export default UpcomingBookings;
