@@ -134,7 +134,7 @@ export function DashboardContent() {
         <div className="lg:col-span-3 space-y-6">
           {/* Booking Stats Component */}
           <Card className="theme-card bg-card">
-            <BookingStats stats={dashboardData.bookingStats} />
+            <BookingStats stats={dashboardData.bookingStats} refreshSlots={refreshSlots} setRefreshSlots={setRefreshSlots}/>
           </Card>
 
           {/* Current Slots Component */}
