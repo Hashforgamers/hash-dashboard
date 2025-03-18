@@ -10,22 +10,28 @@ export function getIcon(system: string): JSX.Element {
   return <Monitor className="w-24 h-24 text-white transition-colors duration-200" />;
 }
 
+
 export function UpcomingBookings({
   upcomingBookings,
   gameId,
   vendorId,
   dashboardUrl,
+  setRefreshSlots, 
 }: {
   upcomingBookings: any[];
   gameId: string;
   vendorId: string;
   dashboardUrl: string;
+  setRefreshSlots: (prev: boolean) => void;
 }): JSX.Element {
   const [startCard, setStartCard] = useState(false);
   const [selectedSystem, setSelectedSystem] = useState("");
   const [availableConsoles, setAvailableConsoles] = useState<any[]>([]);
   const [selectedConsole, setSelectedConsole] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [selectedGameId, setSelectedGameId] = useState<string | null>(null);
+  const [selectedBookingId, setSelectedBookingId] = useState<string | null>(null);
+
 
   const fetchAvailableConsoles = async (gameId: string, vendorId: string) => {
     setIsLoading(true);
@@ -41,30 +47,41 @@ export function UpcomingBookings({
     }
   };
 
-  const start = (system: string, gameId: string) => {
+  const start = (system: string, gameId: string, bookingId: string) => {
     setSelectedSystem(system);
+    setSelectedGameId(gameId);
+    setSelectedBookingId(bookingId);
     setStartCard(true);
     fetchAvailableConsoles(gameId, vendorId);
   };
-
-  const handleConsoleSelection = (consoleId: number) => {
-    setSelectedConsole(consoleId);
-  };
-
+  
   const handleSubmit = async () => {
-    if (selectedConsole !== null) {
+    if (selectedConsole !== null && selectedGameId !== null && selectedBookingId !== null) {
       setIsLoading(true);
       try {
         await axios.post(
-          `${dashboardUrl}/api/updateDeviceStatus/consoleTypeId/${gameId}/console/${selectedConsole}/vendor/${vendorId}`
+          `https://hfg-dashboard.onrender.com/api/updateDeviceStatus/consoleTypeId/${selectedGameId}/console/${selectedConsole}/bookingId/${selectedBookingId}/vendor/${vendorId}`
         );
         setStartCard(false);
+        setRefreshSlots((prev) => {
+          console.log("I am Bhanu, previous value of refreshSlots:", prev);
+          return !prev;
+        });
+             
+        // ✅ Optional: Manually trigger a slot fetch if the parent isn't updating properly
+        fetchAvailableConsoles(); 
       } catch (error) {
         console.error("Error updating console status:", error);
       } finally {
         setIsLoading(false);
       }
     }
+  };
+  
+  
+  
+  const handleConsoleSelection = (consoleId: number) => {
+    setSelectedConsole(consoleId);
   };
 
   return (
@@ -211,7 +228,7 @@ export function UpcomingBookings({
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   className="flex items-center gap-2 px-4 py-2 bg-emerald-500 text-white rounded-lg text-sm font-medium hover:bg-emerald-600 transition-colors duration-200"
-                  onClick={() => start(booking.consoleType, booking.game_id)}
+                  onClick={() => start(booking.consoleType, booking.game_id, booking.bookingId)}
                 >
                   <Play className="w-4 h-4" />
                   Start

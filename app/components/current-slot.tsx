@@ -71,9 +71,11 @@ const calculateExtraTime = (endTime: string, date: string) => {
 };
 
 // Function to release the slot by calling the API
-const releaseSlot = async (consoleType, gameId, consoleId, vendorId) => {
+const releaseSlot = async (consoleType, gameId, consoleId, vendorId, setRefreshSlots) => {
   try {
-    const response = await fetch(`${dashboardUrl}/api/releaseDevice/consoleTypeId/${gameId}/console/${consoleId}/vendor/${vendorId}`, {
+    console.log("I'm releaseing the slot ",gameId," consoleId ",consoleId, "vendorId ",vendorId);
+
+    const response = await fetch(`https://hfg-dashboard.onrender.com/api/releaseDevice/consoleTypeId/${gameId}/console/${consoleId}/vendor/${vendorId}`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -82,6 +84,10 @@ const releaseSlot = async (consoleType, gameId, consoleId, vendorId) => {
     });
     if (response.ok) {
       alert("Slot released successfully!");
+      setRefreshSlots((prev) => {
+        console.log("I am Bhanu, previous value of refreshSlots in release Slot :", prev);
+        return !prev;
+      });
     } else {
       alert("Failed to release the slot.");
     }
@@ -96,7 +102,7 @@ const shakingEffect = (extraTime: number) => {
   return extraTime > 30 ? "animate-shake" : ""; // Trigger shaking after 30 seconds of extra time
 };
 
-export function CurrentSlots({ currentSlots }: { currentSlots: any[] }) {
+export function CurrentSlots({ currentSlots, refreshSlots, setRefreshSlots }: { currentSlots: any[]; refreshSlots: boolean; setRefreshSlots: (prev: boolean) => void; }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredSlots, setFilteredSlots] = useState(currentSlots);
 
@@ -134,6 +140,9 @@ export function CurrentSlots({ currentSlots }: { currentSlots: any[] }) {
   );
 
   useEffect(() => {
+    // Whenever refreshSlots or currentSlots changes, update filteredSlots
+    setFilteredSlots(currentSlots);
+    
     // Update the timers every second
     const intervalId = setInterval(() => {
       setTimers((prevTimers) =>
@@ -149,9 +158,11 @@ export function CurrentSlots({ currentSlots }: { currentSlots: any[] }) {
       );
     }, 1000);
 
+    console.log("In Current Slot")
     // Cleanup the interval on component unmount
     return () => clearInterval(intervalId);
-  }, [currentSlots]);
+  }, [refreshSlots, currentSlots]);
+
 
   // Search handler
   const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -240,7 +251,7 @@ export function CurrentSlots({ currentSlots }: { currentSlots: any[] }) {
                         <motion.button
                           whileHover={{ scale: 1.05 }}
                           whileTap={{ scale: 0.95 }}
-                          onClick={() => releaseSlot(slot.consoleType, slot.game_id, slot.slotId, slot.vendor_id)}
+                          onClick={() => releaseSlot(slot.consoleType, slot.game_id, slot.consoleNumber, 1, setRefreshSlots)} 
                           className="px-3 py-1 bg-red-500 text-white rounded-md text-sm hover:bg-red-600 transition-colors"
                         >
                           <RefreshCcw className="w-4 h-4 inline-block" /> Release

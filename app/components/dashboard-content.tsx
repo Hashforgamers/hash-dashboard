@@ -10,14 +10,18 @@ export function DashboardContent() {
   const [dashboardData, setDashboardData] = useState(null);
   const [showEarnings, setShowEarnings] = useState(false);
   const [showPending, setShowPending] = useState(false);
+  const [refreshSlots, setRefreshSlots] = useState(false);
 
   useEffect(() => {
     // Fetch the data from the API
-    fetch('http://localhost:5056/api/getLandingPage/vendor/1')
+    fetch('https://hfg-dashboard.onrender.com/api/getLandingPage/vendor/1')
       .then(response => response.json())
       .then(data => setDashboardData(data))
       .catch(error => console.error("Error fetching data:", error));
-  }, []);
+
+    console.log("Im in DashBoard COnetxt")
+  }, [refreshSlots]);
+
 
   if (!dashboardData) {
     return <div>Loading...</div>; // Render a loading state until the data is fetched
@@ -135,14 +139,14 @@ export function DashboardContent() {
 
           {/* Current Slots Component */}
           <Card className="theme-card bg-card">
-            <CurrentSlots currentSlots={dashboardData.currentSlots} />
+            <CurrentSlots currentSlots={dashboardData.currentSlots} refreshSlots={refreshSlots} setRefreshSlots={setRefreshSlots}/>
           </Card>
         </div>
 
         {/* Upcoming Bookings Component */}
         <div className="lg:col-span-1">
           <Card className="theme-card bg-card sticky top-6">
-            <UpcomingBookings upcomingBookings={dashboardData.upcomingBookings} vendorId={dashboardData.vendorId}/>
+            <UpcomingBookings upcomingBookings={dashboardData.upcomingBookings} vendorId={dashboardData.vendorId}  setRefreshSlots={setRefreshSlots}/>
           </Card>
         </div>
       </div>
