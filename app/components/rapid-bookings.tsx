@@ -73,7 +73,10 @@ function RapidBookings() {
   const [selectedSystem, setSelectedSystem] = useState<System | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [date, setDate] = useState("");
+  const [date, setDate] = useState(() => {
+    const today = new Date();
+    return today.toISOString().split("T")[0]; // Returns date in YYYY-MM-DD format
+  });  
   const [time, setTime] = useState("");
   const [venodorId, setVendorId] = useState(1);
   const [filters, setFilters] = useState<Filters>({
@@ -164,25 +167,33 @@ function RapidBookings() {
       status: item.is_available ? "available" : "occupied",
       number: item.console_type_id,
     };
-
-    if (item.brand.trim() === "Microsoft") {
-      systemData.icon = <Gamepad className="w-6 h-6" />;
-      systemData.name = item.brand.trim();
-      systemData.price = "₹60/hr";
-    } else if (item.brand.trim().toLowerCase() === "sony") {
-      systemData.icon = <Gamepad2 className="w-6 h-6" />;
-      systemData.name = item.brand.trim();
-      systemData.price = "₹80/hr";
-    } else if (item.brand.trim() === "Meta") {
-      systemData.icon = <Headset className="w-6 h-6" />;
-      systemData.name = item.brand.trim();
-      systemData.price = "150/hr";
-    } else {
-      systemData.name = "Gaming PC";
+  
+    // Map console type to the correct icon and price
+    switch (item.consoleTypeName) {
+      case "ps5":
+        systemData.icon = <Gamepad2 className="w-6 h-6" />;
+        systemData.price = "₹80/hr";
+        break;
+      case "xbox":
+        systemData.icon = <Gamepad className="w-6 h-6" />;
+        systemData.price = "₹60/hr";
+        break;
+      case "vr":
+        systemData.icon = <Headset className="w-6 h-6" />;
+        systemData.price = "₹150/hr";
+        break;
+      case "pc":
+        systemData.icon = <Monitor className="w-6 h-6" />;
+        systemData.price = "₹60/hr";
+        break;
+      default:
+        systemData.icon = <Monitor className="w-6 h-6" />;
+        systemData.price = "₹66/hr";
+        break;
     }
-
+  
     return systemData;
-  });
+  });  
 
 
   function convert_Date(date:string){
@@ -207,7 +218,7 @@ function RapidBookings() {
           },
         }
       );
-
+  
       if (response.data) {
         const slots: TimeSlot[] = response.data.map((slot: any) => ({
           slot_id: slot.slot_id || slot.id || String(slot.start_time),
@@ -218,19 +229,35 @@ function RapidBookings() {
       }
     } catch (error) {
       console.error("Error fetching time slots:", error);
-      // Set default time slots in case of error
-      setTimeSlots([
-        { slot_id: "1", time: "10:00 AM", available: true },
-        { slot_id: "2", time: "11:00 AM", available: true },
-        { slot_id: "3", time: "12:00 PM", available: false },
-        { slot_id: "4", time: "1:00 PM", available: true },
-        { slot_id: "5", time: "2:00 PM", available: true },
-        { slot_id: "6", time: "3:00 PM", available: false },
-      ]);
+  
+      // Set default time slots for the next 6 hours, starting from the next full hour, with availability as false
+      const defaultSlots: TimeSlot[] = [];
+      const currentDate = new Date();
+  
+      // Round up to the next full hour if the current minute is not 0
+      if (currentDate.getMinutes() !== 0) {
+        currentDate.setHours(currentDate.getHours() + 1);
+        currentDate.setMinutes(0);
+      }
+  
+      for (let i = 0; i < 6; i++) {
+        // Increment by one hour for each slot
+        const slotTime = new Date(currentDate);
+        slotTime.setHours(currentDate.getHours() + i);
+  
+        const timeString = convert_Date(slotTime.toTimeString().slice(0, 5)); // converting to 12-hour format
+        defaultSlots.push({
+          slot_id: String(i + 1),
+          time: timeString,
+          available: false, // availability set to false
+        });
+      }
+      setTimeSlots(defaultSlots);
     } finally {
       setIsLoadingSlots(false);
     }
   };
+  
 
   useEffect(() => {
     let count = 0;
@@ -262,7 +289,7 @@ function RapidBookings() {
       !system.name.toLowerCase().includes(searchQuery.toLowerCase())
     )
       return false;
-    if (filters.type !== "all" && system.type !== filters.type) return false;
+    if (filters.type !== "all" && system.consoleTypeName !== filters.type) return false;
     if (filters.status !== "all" && system.status !== filters.status)
       return false;
     if (filters.price === "low" && parseInt(system.price) > 60) return false;
@@ -427,10 +454,10 @@ function RapidBookings() {
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="all">All Systems</SelectItem>
-                            <SelectItem value="PC">PC</SelectItem>
-                            <SelectItem value="PS5">PlayStation 5</SelectItem>
-                            <SelectItem value="XBOX">Xbox Series X</SelectItem>
-                            <SelectItem value="VR">VR Station</SelectItem>
+                            <SelectItem value="pc">PC</SelectItem>
+                            <SelectItem value="ps5">PlayStation</SelectItem>
+                            <SelectItem value="xbox">Xbox</SelectItem>
+                            <SelectItem value="vr">VR Station</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
@@ -793,7 +820,7 @@ function RapidBookings() {
                   <select
                     value={paymentType}
                     onChange={(e) => setPaymentType(e.target.value)}
-                    className="w-full p-3 border rounded-lg text-gray-900 bg-white focus:ring-[#098637] focus:border-[#098637] transition-all duration-200"
+                    className="w-full p-3 border rounded-lg focus:ring-[#098637] focus:border-[#098637] transition-all duration-200"
                   >
                     <option value="credit">
                       <div className="flex items-center gap-2">

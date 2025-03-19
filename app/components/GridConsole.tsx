@@ -9,6 +9,8 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 
+import { X, User, Mail, Phone, Calendar, CreditCard, Wallet, ChevronLeft, ChevronRight } from 'lucide-react';
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -260,27 +262,33 @@ const CreateBookingForm: React.FC<CreateBookingFormProps> = ({
   };
 
   return (
-    <form className="space-y-8" onSubmit={handleSubmit}>
+    <div className="text-gray-900 dark:text-gray-100">
+    <form className="max-w-4xl mx-auto p-6 space-y-8" onSubmit={handleSubmit}>
       <div className="flex items-center justify-between mb-8">
         <button
           type="button"
-          className="w-8 h-8 font-xl rounded-md"
+          className="p-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full transition-colors"
           onClick={() => setShowForm(false)}
         >
-          X
+          <X className="w-6 h-6" />
         </button>
-        <h2 className="text-2xl font-bold">Create New Booking</h2>
+        <h2 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-emerald-600 to-emerald-400">
+          Create New Booking
+        </h2>
         <div className="flex items-center space-x-2">
           {Array.from({ length: totalSteps }).map((_, i) => (
-            <div
+            <motion.div
               key={i}
-              className={`h-2 w-12 rounded-full transition-colors duration-300 ${
+              className={`h-2 w-12 rounded-full ${
                 i + 1 === formStep
-                  ? "bg-primary"
+                  ? "bg-emerald-600"
                   : i + 1 < formStep
-                  ? "bg-primary/60"
-                  : "bg-primary/20"
+                  ? "bg-emerald-400"
+                  : "bg-gray-200 dark:bg-gray-700"
               }`}
+              initial={{ scale: 0.8 }}
+              animate={{ scale: i + 1 === formStep ? 1 : 0.8 }}
+              transition={{ duration: 0.2 }}
             />
           ))}
         </div>
@@ -289,92 +297,97 @@ const CreateBookingForm: React.FC<CreateBookingFormProps> = ({
       <AnimatePresence mode="wait">
         <motion.div
           key={formStep}
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: -20 }}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -20 }}
           transition={{ duration: 0.3 }}
+          className="space-y-6"
         >
           {formStep === 1 && (
             <div className="space-y-6">
-              <h3 className="text-lg font-semibold text-primary">
+              <h3 className="text-xl font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-2">
+                <User className="w-5 h-5" />
                 Gamer's Information
               </h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="space-y-2">
-                  <label htmlFor="name">Name :</label>
-                  <input
-                    id="name"
-                    placeholder="Enter name"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    className="px-3 rounded py-1"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label htmlFor="email">Email :</label>
-                  <input
-                    id="email"
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="px-3 rounded py-1"
-                    placeholder="Enter email"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label htmlFor="phone">Phone Number :</label>
-                  <input
-                    className="px-3 rounded py-1"
-                    id="phone"
-                    type="tel"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    placeholder="Enter phone number"
-                  />
-                </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {[
+                  { id: 'name', label: 'Name', value: name, setter: setName, type: 'text', icon: <User className="w-5 h-5" /> },
+                  { id: 'email', label: 'Email', value: email, setter: setEmail, type: 'email', icon: <Mail className="w-5 h-5" /> },
+                  { id: 'phone', label: 'Phone Number', value: phone, setter: setPhone, type: 'tel', icon: <Phone className="w-5 h-5" /> }
+                ].map(field => (
+                  <div key={field.id} className="space-y-2">
+                    <label htmlFor={field.id} className="block text-sm font-medium flex items-center gap-2">
+                      {field.icon}
+                      {field.label}
+                    </label>
+                    <input
+                      id={field.id}
+                      type={field.type}
+                      value={field.value}
+                      onChange={(e) => field.setter(e.target.value)}
+                      className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 
+                               bg-white dark:bg-gray-800 focus:ring-2 focus:ring-emerald-500 
+                               focus:border-transparent transition-colors"
+                      placeholder={`Enter ${field.label.toLowerCase()}`}
+                    />
+                  </div>
+                ))}
               </div>
             </div>
           )}
 
           {formStep === 2 && (
             <div className="space-y-6">
-              <h3 className="text-lg font-semibold text-primary">Booking Details</h3>
+              <h3 className="text-xl font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-2">
+                <Calendar className="w-5 h-5" />
+                Booking Details
+              </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <label htmlFor="bookingDate">Booking Date :</label>
+                  <label htmlFor="bookingDate" className="block text-sm font-medium flex items-center gap-2">
+                    <Calendar className="w-5 h-5" />
+                    Booking Date
+                  </label>
                   <input
                     id="bookingDate"
                     type="date"
                     value={selectedDate}
                     onChange={(e) => setSelectedDate(e.target.value)}
                     min={new Date().toISOString().split("T")[0]}
-                    className="px-3 rounded py-1"
+                    className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 
+                             bg-white dark:bg-gray-800 focus:ring-2 focus:ring-emerald-500 
+                             focus:border-transparent transition-colors"
                   />
                 </div>
                 <div className="space-y-2">
-                  <label>Slot Time</label>
-                  <div className="h-[200px] rounded-md border p-4 overflow-y-auto">
+                  <label className="block text-sm font-medium flex items-center gap-2">
+                    <Clock className="w-5 h-5" />
+                    Available Slots
+                  </label>
+                  <div className="h-[150px] rounded-lg border border-gray-300 dark:border-gray-600 p-4 overflow-y-auto">
                     <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
                       {availableSlots.map((slot) => (
-                        <button
+                        <motion.button
                           key={slot.slot_id}
                           type="button"
-                          className={`px-4 py-2 rounded-lg ${
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          className={`px-3 py-1 rounded-lg font-medium transition-colors ${
                             selectedSlots.includes(slot.slot_id)
-                              ? "bg-emerald-100 dark:bg-emerald-950" // Green if selected
+                              ? "bg-emerald-600 text-white"
                               : slot.is_available
-                              ? "bg-gray-400 text-black" // Gray if available
-                              : "bg-red-100 dark:bg-red-950 cursor-not-allowed" // Red and disabled if not available
+                              ? "bg-gray-100 dark:bg-gray-700 hover:bg-emerald-100 dark:hover:bg-emerald-900"
+                              : "bg-red-100 dark:bg-red-900 text-red-600 dark:text-red-300 cursor-not-allowed"
                           }`}
                           onClick={() => {
                             if (slot.is_available) {
                               handleSlotClick(slot.slot_id);
                             }
                           }}
-                          disabled={!slot.is_available} // Disable button if not available
+                          disabled={!slot.is_available}
                         >
-                          {slot.start_time}
-                        </button>
+                          {slot.start_time.slice(0, 5)}
+                        </motion.button>
                       ))}
                     </div>
                   </div>
@@ -385,38 +398,37 @@ const CreateBookingForm: React.FC<CreateBookingFormProps> = ({
 
           {formStep === 3 && (
             <div className="space-y-6">
-              <h3 className="text-lg font-semibold text-primary">
+              <h3 className="text-xl font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-2">
+                <CreditCard className="w-5 h-5" />
                 Payment Details
               </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <label htmlFor="totalAmount">
-                    {`Total Amount: ${selectedSlots.length * 100}`}
-                  </label>
+              <div className="space-y-4">
+                <div className="p-4 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800">
+                  <p className="text-lg font-medium flex items-center gap-2">
+                    <Wallet className="w-5 h-5" />
+                    Total Amount: ${selectedSlots.length * 100}
+                  </p>
                 </div>
-              </div>
-              <div className="flex items-center gap-1">
-                <label htmlFor="paymentType">Payment Type:</label>
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    className={`px-3 py-1 rounded-md text-white border-2 border-white ${
-                      paymentType === "Cash" ? "bg-green-600" : ""
-                    }`}
-                    onClick={() => setPaymentType("Cash")}
-                  >
-                    Cash
-                  </button>
-
-                  <button
-                    type="button"
-                    className={`px-3 py-1 rounded-md text-white border-2 border-white  ${
-                      paymentType === "Online" ? "bg-blue-600" : ""
-                    }`}
-                    onClick={() => setPaymentType("Online")}
-                  >
-                    Online
-                  </button>
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium">Payment Type</label>
+                  <div className="flex gap-4">
+                    {['Cash', 'Online'].map(type => (
+                      <motion.button
+                        key={type}
+                        type="button"
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => setPaymentType(type)}
+                        className={`px-6 py-2 rounded-lg font-medium transition-colors ${
+                          paymentType === type
+                            ? "bg-emerald-600 text-white"
+                            : "bg-gray-100 dark:bg-gray-700 hover:bg-emerald-100 dark:hover:bg-emerald-900"
+                        }`}
+                      >
+                        {type}
+                      </motion.button>
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>
@@ -424,34 +436,40 @@ const CreateBookingForm: React.FC<CreateBookingFormProps> = ({
         </motion.div>
       </AnimatePresence>
 
-      <div className="flex justify-between mt-8 ">
+      <div className="flex justify-between pt-8">
         {formStep > 1 && (
-          <button
+          <motion.button
             type="button"
             onClick={prevStep}
-            className="border-2 border-white rounded-md px-2 py-1 "
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className="px-6 py-2 rounded-lg font-medium bg-gray-200 dark:bg-gray-700 
+                     hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors flex items-center gap-2"
           >
-            Previous Step
-          </button>
+            <ChevronLeft className="w-4 h-4" />
+            Previous
+          </motion.button>
         )}
-        {formStep < totalSteps ? (
-          <button
-            type="button"
-            onClick={nextStep}
-            className="border-2 border-white rounded-md px-2 py-1 "
-          >
-            Next Step
-          </button>
-        ) : (
-          <button
-            type="submit"
-            className="border-2 border-white rounded-md px-2 py-1 "
-          >
-            Complete Booking
-          </button>
-        )}
+        <motion.button
+          type={formStep === totalSteps ? "submit" : "button"}
+          onClick={formStep < totalSteps ? nextStep : undefined}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          className="px-6 py-2 rounded-lg font-medium bg-emerald-600 text-white 
+                   hover:bg-emerald-700 transition-colors ml-auto flex items-center gap-2"
+        >
+          {formStep < totalSteps ? (
+            <>
+              Next
+              <ChevronRight className="w-4 h-4" />
+            </>
+          ) : (
+            'Complete Booking'
+          )}
+        </motion.button>
       </div>
     </form>
+  </div>
   );
 };
 
