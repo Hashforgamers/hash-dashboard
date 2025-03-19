@@ -1,3 +1,5 @@
+"use client";
+
 import { TransactionTable } from "../components/transaction-table";
 import { DashboardLayout } from "../components/dashboard-layout";
 
