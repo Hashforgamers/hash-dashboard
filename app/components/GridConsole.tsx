@@ -9,7 +9,7 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 
-import { X, User, Mail, Phone, Calendar, CreditCard, Wallet, ChevronLeft, ChevronRight } from 'lucide-react';
+import { X, User, Mail, Phone, Calendar, CreditCard, Wallet, ChevronLeft, ChevronRight , CheckCircle, Loader2} from 'lucide-react';
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -183,6 +183,8 @@ const CreateBookingForm: React.FC<CreateBookingFormProps> = ({
   const [name, setName] = useState<string>("");
   const [email, setEmail] = useState<string>("");
   const [phone, setPhone] = useState<string>("");
+  // Inside your component
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const totalSteps = 3;
 
@@ -224,6 +226,7 @@ const CreateBookingForm: React.FC<CreateBookingFormProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSubmitting(true);
 
     const bookingData = {
       consoleType: selectedConsoleType,
@@ -258,6 +261,8 @@ const CreateBookingForm: React.FC<CreateBookingFormProps> = ({
     } catch (error) {
       console.error("Error submitting booking:", error);
       alert("Error submitting booking. Please try again.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -453,18 +458,28 @@ const CreateBookingForm: React.FC<CreateBookingFormProps> = ({
         <motion.button
           type={formStep === totalSteps ? "submit" : "button"}
           onClick={formStep < totalSteps ? nextStep : undefined}
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          className="px-6 py-2 rounded-lg font-medium bg-emerald-600 text-white 
-                   hover:bg-emerald-700 transition-colors ml-auto flex items-center gap-2"
+          whileHover={{ scale: isSubmitting ? 1 : 1.05 }}
+          whileTap={{ scale: isSubmitting ? 1 : 0.95 }}
+          className={`px-6 py-2 rounded-lg font-medium bg-emerald-600 text-white 
+                      hover:bg-emerald-700 transition-colors ml-auto flex items-center gap-2
+                      ${isSubmitting ? "opacity-70 cursor-not-allowed" : ""}`}
+          disabled={isSubmitting}
         >
-          {formStep < totalSteps ? (
+          {isSubmitting ? (
+            <>
+              <Loader2 className="animate-spin w-4 h-4" />
+              Processing...
+            </>
+          ) : formStep < totalSteps ? (
             <>
               Next
               <ChevronRight className="w-4 h-4" />
             </>
           ) : (
-            'Complete Booking'
+            <>
+              Complete Booking
+              <CheckCircle className="w-4 h-4" />
+            </>
           )}
         </motion.button>
       </div>

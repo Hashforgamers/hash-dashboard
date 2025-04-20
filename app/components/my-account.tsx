@@ -46,14 +46,15 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export function MyAccount() {
-  const [cafeImages, setCafeImages] = useState<string[]>([
-    "https://images.unsplash.com/photo-1554118811-1e0d58224f24?q=80&w=2047&auto=format&fit=crop",
-    "https://images.unsplash.com/photo-1559925393-8be0ec4767c8?q=80&w=2071&auto=format&fit=crop",
-    "https://images.unsplash.com/photo-1453614512568-c4024d13c247?q=80&w=1932&auto=format&fit=crop",
-  ]);
+import axios from "axios"; // Make sure to install axios
 
-  const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+export function MyAccount() {
+  const [cafeImages, setCafeImages] = useState<string[]>([]);
+  const [page, setPage] = useState<string | null>("Profile");
+  const prevPageRef = useRef<string | null>(null);
+
+  const [data, setData] = useState<any>(null);
+  const [loading, setLoading] = useState<boolean>(true);
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -66,18 +67,35 @@ export function MyAccount() {
     }
   };
 
-  const [page, setPage] = useState<string | null>("Profile");
-  const prevPageRef = useRef<string | null>(null);
-
-  const handleViewInpage = (e:any) => {
-    const label = e.target.dataset.label;
-    setPage(label);
-  };
   const handleRemoveImage = (indexToRemove: number) => {
     setCafeImages((prevImages) =>
       prevImages.filter((_, index) => index !== indexToRemove)
     );
   };
+
+  const handleViewInpage = (e: any) => {
+    const label = e.target.dataset.label;
+    setPage(label);
+  };
+
+  useEffect(() => {
+    async function fetchVendorDashboard() {
+      try {
+        console.log("Start Fetch ")
+        const res = await axios.get("https://hfg-dashboard.onrender.com/api/vendor/1/dashboard");
+        setData(res.data);
+        setCafeImages(res.data?.cafeGallery?.images || []);
+        console.log("Data",data)
+      } catch (error) {
+        console.error("Error fetching dashboard data:", error);
+      } finally {
+        console.log("set Loading to ",loading)
+        setLoading(false);
+      }
+    }
+
+    fetchVendorDashboard();
+  }, []);
 
   useEffect(() => {
     if (prevPageRef.current !== page) {
@@ -85,6 +103,11 @@ export function MyAccount() {
     }
     prevPageRef.current = page;
   }, [page]);
+
+  if (loading) return <div>Loading...</div>;
+  if (!data) return <div>Failed to load data</div>;
+
+  const { navigation, cafeProfile, cafeGallery, businessDetails, operatingHours, billingDetails, verifiedDocuments } = data;
 
   return (
     <div className="min-h-screen bg-background">
@@ -136,220 +159,183 @@ export function MyAccount() {
           {/* Main Content */}
           <div className="col-span-12 md:col-span-9 space-y-3">
             <form className="space-y-6">
-              {page === "Profile" && (
-                <>
-                  <Card>
-                    <CardContent className="p-4">
-                      <div className="space-y-4">
-                        <div className="flex flex-col items-center space-y-3">
-                          {/* image in profile */}
-                          <div className="relative transition-transform duration-300 ease-in-out hover:scale-110">
-                            <div className="h-48 w-48 rounded-full p-[4px] bg-gradient-to-r from-red-500 via-green-500 to-yellow-500 animate-spin-slow">
-                              <div className="h-full w-full rounded-full bg-background flex items-center justify-center overflow-hidden ">
-                                <img
-                                  src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?q=80&w=2070&auto=format&fit=crop"
-                                  alt="Avatar"
-                                  className="h-full w-full object-cover rounded-full "
-                                />
-                              </div>
-                            </div>
-                          </div>
-
-                          <div className="text-center">
-                            <h3 className="font-medium">John's Cafe</h3>
-                            <p className="text-sm text-muted-foreground">
-                              Premium Member
-                            </p>
-                          </div>
-                        </div>
-                        <div className="space-y-2">
-                          <div className="flex items-center space-x-2 text-sm">
-                            <Globe className="h-4 w-4 text-muted-foreground" />
-                            <span>cafe.example.com</span>
-                          </div>
-                          <div className="flex items-center space-x-2 text-sm">
-                            <Mail className="h-4 w-4 text-muted-foreground" />
-                            <span>contact@cafe.example.com</span>
-                          </div>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Cafe Gallery</CardTitle>
-                      <CardDescription>
-                        Showcase your cafe's ambiance and offerings
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        {cafeImages.map((image, index) => (
-                          <div
-                            key={index}
-                            className="relative group aspect-square"
-                          >
+            {page === "Profile" && data.cafeProfile && (
+            <>
+              <Card>
+                <CardContent className="p-4">
+                  <div className="space-y-4">
+                    <div className="flex flex-col items-center space-y-3">
+                      {/* Profile Image */}
+                      <div className="relative transition-transform duration-300 ease-in-out hover:scale-110">
+                        <div className="h-48 w-48 rounded-full p-[4px] bg-gradient-to-r from-red-500 via-green-500 to-yellow-500 animate-spin-slow">
+                          <div className="h-full w-full rounded-full bg-background flex items-center justify-center overflow-hidden">
                             <img
-                              src={image}
-                              alt={`Cafe ${index + 1}`}
-                              className="w-full h-full object-cover rounded-md"
+                              src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?q=80&w=2070&auto=format&fit=crop"
+                              alt="Avatar"
+                              className="h-full w-full object-cover rounded-full"
                             />
-                            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-md flex items-center justify-center">
-                              <X
-                                className="absolute top-3 right-2 w-5 h-5  hover:bg-gray-500 cursor-pointer rounded-md"
-                                onClick={() => handleRemoveImage(index)}
-                              />
-
-                              <Button variant="secondary" size="sm">
-                                <Camera className="w-4 h-4 mr-2" />
-                                Edit
-                              </Button>
-                            </div>
                           </div>
-                        ))}
-                        <label className="aspect-square flex items-center justify-center border-2 border-dashed border-muted rounded-md cursor-pointer hover:border-primary/50 transition-colors">
-                          <input
-                            type="file"
-                            className="hidden"
-                            onChange={handleImageUpload}
-                            accept="image/*"
-                          />
-                          <div className="text-center">
-                            <Camera className="w-6 h-6 mx-auto text-muted-foreground" />
-                            <span className="text-sm text-muted-foreground mt-2">
-                              Add Photo
-                            </span>
-                          </div>
-                        </label>
+                        </div>
                       </div>
-                    </CardContent>
-                  </Card>
-                </>
-              )}
 
-              {/* Conditional Rendering for Cafe Gallery */}
-              {/* {page === "Cafe Gallery" && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Cafe Gallery</CardTitle>
-                    <CardDescription>
-                      Showcase your cafe's ambiance and offerings
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                      {cafeImages.map((image, index) => (
-                        <div
-                          key={index}
-                          className="relative group aspect-square"
-                        >
-                          <img
-                            src={image}
-                            alt={`Cafe ${index + 1}`}
-                            className="w-full h-full object-cover rounded-md"
+                      <div className="text-center">
+                        <h3 className="font-medium">{data.cafeProfile.name || "Cafe Name"}</h3>
+                        <p className="text-sm text-muted-foreground">
+                          {data.cafeProfile.membershipStatus || "Standard Member"}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="flex items-center space-x-2 text-sm">
+                        <Globe className="h-4 w-4 text-muted-foreground" />
+                        <span>{data.cafeProfile.website || "Not Available"}</span>
+                      </div>
+                      <div className="flex items-center space-x-2 text-sm">
+                        <Mail className="h-4 w-4 text-muted-foreground" />
+                        <span>{data.cafeProfile.email || "No Email Provided"}</span>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>{data.cafeProfile.name || "Cafe Gallery"}</CardTitle>
+                  <CardDescription>
+                    Showcase your cafe's ambiance and offerings
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    {data.cafeGallery.images?.map((image, index) => {
+                      // Try to extract file ID from either type of URL
+                      const fileIdMatch = image.match(/(?:\/d\/|id=)([a-zA-Z0-9_-]{10,})/);
+                      const fileId = fileIdMatch ? fileIdMatch[1] : null;
+
+                      // Build Google Drive direct image preview link or fallback to original
+                      const imageUrl = fileId
+                        ? `https://drive.google.com/file/d/${fileId}/preview`
+                        : image;
+
+                      return (
+                        <div key={index} className="relative group aspect-square">
+                          <iframe
+                            src={imageUrl}
+                            width="100%"
+                            height="150"
+                            className="rounded-md"
                           />
                           <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-md flex items-center justify-center">
                             <X
-                              className="absolute top-3 right-2 w-5 h-5 hover:text-red-600 cursor-pointer"
+                              className="absolute top-3 right-2 w-5 h-5 hover:bg-gray-500 cursor-pointer rounded-md"
                               onClick={() => handleRemoveImage(index)}
                             />
-
                             <Button variant="secondary" size="sm">
                               <Camera className="w-4 h-4 mr-2" />
                               Edit
                             </Button>
                           </div>
                         </div>
-                      ))}
-                      <label className="aspect-square flex items-center justify-center border-2 border-dashed border-muted rounded-md cursor-pointer hover:border-primary/50 transition-colors">
-                        <input
-                          type="file"
-                          className="hidden"
-                          onChange={handleImageUpload}
-                          accept="image/*"
-                        />
-                        <div className="text-center">
-                          <Camera className="w-6 h-6 mx-auto text-muted-foreground" />
-                          <span className="text-sm text-muted-foreground mt-2">
-                            Add Photo
-                          </span>
-                        </div>
-                      </label>
-                    </div>
-                  </CardContent>
-                </Card>
-              )} */}
+                      );
+                    })}
+                    <label className="aspect-square flex items-center justify-center border-2 border-dashed border-muted rounded-md cursor-pointer hover:border-primary/50 transition-colors">
+                      <input
+                        type="file"
+                        className="hidden"
+                        onChange={handleImageUpload}
+                        accept="image/*"
+                      />
+                      <div className="text-center">
+                        <Camera className="w-6 h-6 mx-auto text-muted-foreground" />
+                        <span className="text-sm text-muted-foreground mt-2">
+                          Add Photo
+                        </span>
+                      </div>
+                    </label>
+                  </div>
+                </CardContent>
+              </Card>
+            </>
+          )}
+
+
 
               {/* Conditional Rendering for Business Details */}
-              {page === "Business Details" && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Business Details</CardTitle>
-                    <CardDescription>
-                      Update your cafe's basic information
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div className="space-y-2">
-                        <Label>Business Name</Label>
-                        <Input defaultValue="John's Cafe" />
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Business Type</Label>
-                        <Select defaultValue="cafe">
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="cafe">Cafe</SelectItem>
-                            <SelectItem value="restaurant">
-                              Restaurant
-                            </SelectItem>
-                            <SelectItem value="bakery">Bakery</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Phone</Label>
-                        <Input type="tel" defaultValue="+1 (555) 000-0000" />
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Website</Label>
-                        <Input
-                          type="url"
-                          defaultValue="https://cafe.example.com"
-                        />
-                      </div>
-                      <div className="space-y-2 md:col-span-2">
-                        <Label>Address</Label>
-                        <Textarea defaultValue="123 Cafe Street, Food District, City, 12345" />
-                      </div>
+              {page === "Business Details" && data.businessDetails && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Business Details</CardTitle>
+                  <CardDescription>
+                    Update your cafe's basic information
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <Label>Business Name</Label>
+                      <Input
+                        defaultValue={data.businessDetails.businessName || "John's Cafe"}
+                      />
                     </div>
+                    <div className="space-y-2">
+                      <Label>Business Type</Label>
+                      <Select
+                        defaultValue={data.businessDetails.businessType || "cafe"}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="cafe">Cafe</SelectItem>
+                          <SelectItem value="restaurant">Restaurant</SelectItem>
+                          <SelectItem value="bakery">Bakery</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Phone</Label>
+                      <Input
+                        type="tel"
+                        defaultValue={data.businessDetails.phone || "+1 (555) 000-0000"}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Website</Label>
+                      <Input
+                        type="url"
+                        defaultValue={data.businessDetails.website || "https://cafe.example.com"}
+                      />
+                    </div>
+                    <div className="space-y-2 md:col-span-2">
+                      <Label>Address</Label>
+                      <Textarea
+                        defaultValue={data.businessDetails.address || "123 Cafe Street, Food District, City, 12345"}
+                      />
+                    </div>
+                  </div>
 
+                  <div className="space-y-4">
+                    <Label>Operating Hours</Label>
                     <div className="space-y-4">
-                      <Label>Operating Hours</Label>
-                      <div className="space-y-4">
-                        {days.map((day) => (
-                          <div
-                            key={day}
-                            className="flex items-center space-x-4"
-                          >
-                            <div className="w-20">
-                              <span className="text-sm font-medium">{day}</span>
-                            </div>
-                            <Checkbox id={`day-${day}`} defaultChecked />
-                            <div className="flex-1 grid grid-cols-2 gap-4">
-                              <Input type="time" defaultValue="09:00" />
-                              <Input type="time" defaultValue="18:00" />
-                            </div>
+                      {data.operatingHours?.map((entry, index) => (
+                        <div key={index} className="flex items-center space-x-4">
+                          <div className="w-20">
+                            <span className="text-sm font-medium">{entry.day}</span>
                           </div>
-                        ))}
-                      </div>
+                          <Checkbox id={`day-${entry.day}`} defaultChecked />
+                          <div className="flex-1 grid grid-cols-2 gap-4">
+                            <Input type="time" defaultValue={entry.open || "09:00"} />
+                            <Input type="time" defaultValue={entry.close || "18:00"} />
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                  </CardContent>
-                </Card>
-              )}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
 
               {/* Conditional Rendering for Subscription & Billing */}
               {page === "Billing" && (
@@ -434,76 +420,52 @@ export function MyAccount() {
 
               {/* Conditional Rendering for Verified Documents */}
               {page === "Verified Documents" && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Verified Documents</CardTitle>
-                    <CardDescription>
-                      Manage your business verification documents
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      {[
-                        {
-                          name: "Business License",
-                          status: "verified",
-                          expiry: "2025-12-31",
-                        },
-                        {
-                          name: "Food Safety Certificate",
-                          status: "verified",
-                          expiry: "2024-06-30",
-                        },
-                        {
-                          name: "Tax Registration",
-                          status: "verified",
-                          expiry: "2024-12-31",
-                        },
-                        {
-                          name: "Insurance Policy",
-                          status: "pending",
-                          expiry: "2024-12-31",
-                        },
-                      ].map((doc) => (
-                        <div
-                          key={doc.name}
-                          className="flex items-center justify-between p-4 rounded-lg border"
-                        >
-                          <div className="flex items-center space-x-4">
-                            <FileCheck
-                              className={cn(
-                                "h-5 w-5",
-                                doc.status === "verified"
-                                  ? "text-green-500"
-                                  : "text-yellow-500"
-                              )}
-                            />
-                            <div>
-                              <p className="font-medium">{doc.name}</p>
-                              <p className="text-sm text-muted-foreground">
-                                Expires: {doc.expiry}
-                              </p>
-                            </div>
-                          </div>
-                          <Badge
-                            variant={
+              <Card>
+                <CardHeader>
+                  <CardTitle>Verified Documents</CardTitle>
+                  <CardDescription>
+                    Manage your business verification documents
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {data.verifiedDocuments?.map((doc) => (
+                      <div
+                        key={doc.name}
+                        className="flex items-center justify-between p-4 rounded-lg border"
+                      >
+                        <div className="flex items-center space-x-4">
+                          <FileCheck
+                            className={cn(
+                              "h-5 w-5",
                               doc.status === "verified"
-                                ? "default"
-                                : "secondary"
-                            }
-                          >
-                            {doc.status}
-                          </Badge>
+                                ? "text-green-500"
+                                : "text-yellow-500"
+                            )}
+                          />
+                          <div>
+                            <p className="font-medium">{doc.name}</p>
+                            <p className="text-sm text-muted-foreground">
+                              Expires: {doc.expiry}
+                            </p>
+                          </div>
                         </div>
-                      ))}
-                      <Button variant="outline" className="w-full">
-                        <FileCheck className="mr-2 h-4 w-4" />
-                        Upload New Document
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
+                        <Badge
+                          variant={doc.status === "verified" ? "default" : "secondary"}
+                        >
+                          {doc.status}
+                        </Badge>
+                      </div>
+                    ))}
+                    <Button variant="outline" className="w-full">
+                      <FileCheck className="mr-2 h-4 w-4" />
+                      Upload New Document
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
 
               {/* Action Buttons */}
               <div className="flex justify-end space-x-4">

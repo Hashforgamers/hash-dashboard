@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-
+import { useState } from "react";
 import {
   Form,
   FormControl,
@@ -22,6 +22,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input1";
 import { PasswordInput } from "@/components/ui/password-input";
 
@@ -47,8 +48,11 @@ export default function LoginPreview() {
 
   const router = useRouter();
 
+  const [loading, setLoading] = useState(false);
+
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
+      setLoading(true);
       const response = await fetch("https://hfg-login.onrender.com/api/login", {
         method: "POST",
         headers: {
@@ -83,6 +87,8 @@ export default function LoginPreview() {
     } catch (error) {
       console.error("Form submission error", error);
       toast.error("Failed to submit the form. Please try again.");
+    } finally {
+      setLoading(false);
     }
   }
   return (
@@ -143,26 +149,15 @@ export default function LoginPreview() {
                     </FormItem>
                   )}
                 />
-                <FormField
-                  control={form.control}
-                  name="parent_type"
-                  render={({ field }) => (
-                    <FormItem className="grid gap-2">
-                      <FormLabel htmlFor="parent_type">Parent Type</FormLabel>
-                      <FormControl>
-                        <Input
-                          id="parent_type"
-                          placeholder="vendor"
-                          type="text"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
+                <Button type="submit" className="w-full" disabled={loading}>
+                  {loading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Submitting...
+                    </>
+                  ) : (
+                    "Submit"
                   )}
-                />
-                <Button type="submit" className="w-full">
-                  Submit
                 </Button>
               </div>
             </form>

@@ -32,6 +32,7 @@ import {
   CalendarClock,
   ListTodo,
   LucideIcon,
+  Loader2
 } from "lucide-react";
 import {
   Table,
@@ -276,385 +277,14 @@ export function ManageBooking() {
   );
 }
 
-// function ChangeBookingForm() {
-//   const [bookingId, setBookingId] = useState("");
-//   const [isLoading, setIsLoading] = useState(false);
-//   const [bookingFound, setBookingFound] = useState(false);
-
-//   const handleSearch = () => {
-//     setIsLoading(true);
-//     // Simulate API call
-//     setTimeout(() => {
-//       setIsLoading(false);
-//       setBookingFound(true);
-//     }, 1000);
-//   };
-
-//   return (
-//     <form className="space-y-8">
-//       <div className="space-y-4">
-//         <h3 className="text-lg font-semibold text-primary">Search Booking</h3>
-//         <div className="flex space-x-2">
-//           <div className="flex-grow">
-//             <Input
-//               id="bookingId"
-//               placeholder="Enter Booking ID"
-//               value={bookingId}
-//               onChange={(e) => setBookingId(e.target.value)}
-//               className="transition-all duration-300 focus:ring-2 focus:ring-primary"
-//             />
-//           </div>
-//           <Button
-//             type="button"
-//             onClick={handleSearch}
-//             disabled={isLoading}
-//             className="min-w-[100px]"
-//           >
-//             {isLoading ? (
-//               <motion.div
-//                 animate={{ rotate: 360 }}
-//                 transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-//               >
-//                 <Search className="w-4 h-4" />
-//               </motion.div>
-//             ) : (
-//               <>
-//                 <Search className="w-4 h-4 mr-2" />
-//                 Search
-//               </>
-//             )}
-//           </Button>
-//         </div>
-//       </div>
-
-//       <AnimatePresence>
-//         {bookingFound && (
-//           <motion.div
-//             initial={{ opacity: 0, y: 20 }}
-//             animate={{ opacity: 1, y: 0 }}
-//             exit={{ opacity: 0, y: -20 }}
-//             className="space-y-8"
-//           >
-//             <form className="space-y-8">
-//               <div className="space-y-4">
-//                 <h3 className="text-lg font-semibold">Search Booking</h3>
-//                 <div className="flex space-x-2">
-//                   <div className="flex-grow">
-//                     <Input
-//                       id="bookingId"
-//                       placeholder="Enter Booking ID"
-//                       value={bookingId}
-//                       onChange={(e) => setBookingId(e.target.value)}
-//                     />
-//                   </div>
-//                   <Button type="button" onClick={handleSearch}>
-//                     <Search className="w-4 h-4 mr-2" />
-//                     Search
-//                   </Button>
-//                 </div>
-//               </div>
-
-//               <div className="space-y-4">
-//                 <h3 className="text-lg font-semibold">Gamer's Information</h3>
-//                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-//                   <div className="space-y-2">
-//                     <Label htmlFor="name">Name</Label>
-//                     <Input id="name" defaultValue="John Doe" />
-//                   </div>
-//                   <div className="space-y-2">
-//                     <Label htmlFor="email">Email</Label>
-//                     <Input
-//                       id="email"
-//                       type="email"
-//                       defaultValue="john@example.com"
-//                     />
-//                   </div>
-//                   <div className="space-y-2">
-//                     <Label htmlFor="phone">Phone Number</Label>
-//                     <Input id="phone" type="tel" defaultValue="1234567890" />
-//                   </div>
-//                 </div>
-//               </div>
-
-//               <div className="space-y-4">
-//                 <h3 className="text-lg font-semibold">Booking Details</h3>
-//                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-//                   <div className="space-y-2">
-//                     <Label htmlFor="bookingDate">Booking Date</Label>
-//                     <Input
-//                       id="bookingDate"
-//                       type="date"
-//                       defaultValue="2023-06-15"
-//                     />
-//                   </div>
-//                   <div className="space-y-2">
-//                     <Label>Slot Time</Label>
-//                     <div className="grid grid-cols-6 gap-2">
-//                       {Array.from({ length: 24 }, (_, i) => i).map((hour) => (
-//                         <Button
-//                           key={hour}
-//                           variant="outline"
-//                           className={`rounded-full ${
-//                             hour === 14
-//                               ? "bg-primary text-primary-foreground"
-//                               : ""
-//                           }`}
-//                         >
-//                           {hour}:00
-//                         </Button>
-//                       ))}
-//                     </div>
-//                   </div>
-//                 </div>
-//               </div>
-
-//               {/* Other sections similar to CreateBookingForm, but with pre-filled and disabled fields */}
-
-//               <Button type="submit">Update Booking</Button>
-//             </form>
-//           </motion.div>
-//         )}
-//       </AnimatePresence>
-//     </form>
-//   );
-// }
-
-// function ChangeBookingForm() {
-//   const [bookingId, setBookingId] = useState("");
-//   const [isLoading, setIsLoading] = useState(false);
-//   const [bookingFound, setBookingFound] = useState(false);
-//   const [bookingData, setBookingData] = useState({
-//     customer: { name: "", email: "", phone: "" },
-//     booking_date: "",
-//     selected_slots: [],
-//     system: "",
-//   });
-
-//   const handleSearch = async () => {
-//     if (!bookingId) return;
-
-//     setIsLoading(true);
-//     try {
-//       const response = await fetch(
-//         `https://hfg-booking.onrender.com/api/bookings/${bookingId}`,
-//         {
-//           method: "GET",
-//           headers: {
-//             "Content-Type": "application/json",
-//             Accept: "application/json",
-//           },
-//         }
-//       );
-//       const data = await response.json();
-
-//       if (response.ok) {
-//         setBookingData({
-//           customer: data.customer || { name: "", email: "", phone: "" },
-//           booking_date: data.booking_date || "",
-//           selected_slots: data.selected_slots || [],
-//           system: data.system || "",
-//         });
-//         setBookingFound(true);
-//       } else {
-//         setBookingFound(false);
-//       }
-//     } catch (error) {
-//       console.error("Error fetching booking:", error);
-//       setBookingFound(false);
-//     } finally {
-//       setIsLoading(false);
-//     }
-//   };
-
-//   const handleUpdateBooking = async (e) => {
-//     e.preventDefault();
-//     if (!bookingData) return;
-
-//     try {
-//       const response = await fetch(
-//         `https://hfg-booking.onrender.com/api/update_booking/${bookingId}`,
-//         {
-//           method: "PUT",
-//           headers: {
-//             "Content-Type": "application/json",
-//           },
-//           body: JSON.stringify(bookingData),
-//         }
-//       );
-
-//       const result = await response.json();
-//       console.log("Update Response:", result);
-//       if (response.ok) {
-//         alert("Booking updated successfully!");
-//       } else {
-//         alert("Failed to update booking.");
-//       }
-//     } catch (error) {
-//       console.error("Error updating booking:", error);
-//     }
-//   };
-
-//   return (
-//     <form className="space-y-8" onSubmit={handleUpdateBooking}>
-//       {/* Search Section */}
-//       <div className="space-y-4">
-//         <h3 className="text-lg font-semibold text-primary">Search Booking</h3>
-//         <div className="flex space-x-2">
-//           <div className="flex-grow">
-//             <Input
-//               id="bookingId"
-//               placeholder="Enter Booking ID"
-//               value={bookingId}
-//               onChange={(e) => setBookingId(e.target.value)}
-//               className="transition-all duration-300 focus:ring-2 focus:ring-primary"
-//             />
-//           </div>
-//           <Button
-//             type="button"
-//             onClick={handleSearch}
-//             disabled={isLoading}
-//             className="min-w-[100px]"
-//           >
-//             {isLoading ? (
-//               <motion.div
-//                 animate={{ rotate: 360 }}
-//                 transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-//               >
-//                 <Search className="w-4 h-4" />
-//               </motion.div>
-//             ) : (
-//               <>
-//                 <Search className="w-4 h-4 mr-2" />
-//                 Search
-//               </>
-//             )}
-//           </Button>
-//         </div>
-//       </div>
-
-//       {/* Booking Details Form */}
-//       <AnimatePresence>
-//         {bookingFound && bookingData && (
-//           <motion.div
-//             initial={{ opacity: 0, y: 20 }}
-//             animate={{ opacity: 1, y: 0 }}
-//             exit={{ opacity: 0, y: -20 }}
-//             className="space-y-8"
-//           >
-//             <div className="space-y-4">
-//               <h3 className="text-lg font-semibold">Gamer's Information</h3>
-//               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-//                 <div className="space-y-2">
-//                   <Label htmlFor="name">Name</Label>
-//                   <Input
-//                     id="name"
-//                     value={bookingData.customer?.name || ""}
-//                     onChange={(e) =>
-//                       setBookingData((prev) => ({
-//                         ...prev,
-//                         customer: {
-//                           ...prev.customer,
-//                           name: e.target.value,
-//                         },
-//                       }))
-//                     }
-//                   />
-//                 </div>
-//                 <div className="space-y-2">
-//                   <Label htmlFor="email">Email</Label>
-//                   <Input
-//                     id="email"
-//                     type="email"
-//                     value={bookingData.customer?.email || ""}
-//                     onChange={(e) =>
-//                       setBookingData((prev) => ({
-//                         ...prev,
-//                         customer: {
-//                           ...prev.customer,
-//                           email: e.target.value,
-//                         },
-//                       }))
-//                     }
-//                   />
-//                 </div>
-//                 <div className="space-y-2">
-//                   <Label htmlFor="phone">Phone Number</Label>
-//                   <Input
-//                     id="phone"
-//                     type="tel"
-//                     value={bookingData.customer?.phone || ""}
-//                     onChange={(e) =>
-//                       setBookingData((prev) => ({
-//                         ...prev,
-//                         customer: {
-//                           ...prev.customer,
-//                           phone: e.target.value,
-//                         },
-//                       }))
-//                     }
-//                   />
-//                 </div>
-//               </div>
-//             </div>
-
-//             {/* Booking Details */}
-//             <div className="space-y-4">
-//               <h3 className="text-lg font-semibold">Booking Details</h3>
-//               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-//                 <div className="space-y-2">
-//                   <Label htmlFor="bookingDate">Booking Date</Label>
-//                   <Input
-//                     id="bookingDate"
-//                     type="date"
-//                     value={bookingData.booking_date || ""}
-//                     onChange={(e) =>
-//                       setBookingData((prev) => ({
-//                         ...prev,
-//                         booking_date: e.target.value,
-//                       }))
-//                     }
-//                   />
-//                 </div>
-//                 <div className="space-y-2">
-//                   <Label>Slot Time</Label>
-//                   <div className="grid grid-cols-6 gap-2">
-//                     {Array.from({ length: 24 }, (_, i) => i).map((hour) => (
-//                       <Button
-//                         key={hour}
-//                         variant="outline"
-//                         className={`rounded-full ${
-//                           bookingData.selected_slots?.includes(`${hour}:00`)
-//                             ? "bg-primary text-primary-foreground"
-//                             : ""
-//                         }`}
-//                         onClick={() =>
-//                           setBookingData((prev) => ({
-//                             ...prev,
-//                             selected_slots: [`${hour}:00`],
-//                           }))
-//                         }
-//                       >
-//                         {hour}:00
-//                       </Button>
-//                     ))}
-//                   </div>
-//                 </div>
-//               </div>
-//             </div>
-
-//             <Button type="submit">Update Booking</Button>
-//           </motion.div>
-//         )}
-//       </AnimatePresence>
-//     </form>
-//   );
-// }
 function ChangeBookingForm() {
   const [bookingId, setBookingId] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [bookingFound, setBookingFound] = useState(false);
   const [bookingData, setBookingData] = useState(null);
   const [availableSlots, setAvailableSlots] = useState([]);
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [isSubmitted, setIsSubmitted] = useState(false); // Track submission status
 
   const handleSearch = async () => {
     if (!bookingId) return;
@@ -668,6 +298,7 @@ function ChangeBookingForm() {
       console.log("Fetched Booking Data:", data);
 
       if (response.ok && data.success && data.booking) {
+        setIsSubmitted(false);
         const { booking } = data;
         setBookingData({
           customer: booking.customer || { name: "", email: "", phone: "" },
@@ -711,6 +342,7 @@ function ChangeBookingForm() {
 
   const handleUpdateBooking = async (e) => {
     e.preventDefault();
+    setIsUpdating(true);
     if (!bookingData) return;
 
     try {
@@ -728,12 +360,14 @@ function ChangeBookingForm() {
       const result = await response.json();
       console.log("Update Response:", result);
       if (response.ok) {
-        alert("Booking updated successfully!");
+        setIsSubmitted(true); // Mark as submitted
       } else {
         alert("Failed to update booking.");
       }
     } catch (error) {
       console.error("Error updating booking:", error);
+    }finally {
+      setIsUpdating(false);
     }
   };
 
@@ -771,13 +405,11 @@ function ChangeBookingForm() {
               </>
             )}
           </Button>
-
         </div>
       </div>
-      
 
       {/* Booking Details */}
-      {bookingFound && bookingData && (
+      {bookingFound && bookingData && !isSubmitted ? (
         <div className="space-y-8">
           <h3 className="text-lg font-semibold">Gamer's Information</h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -868,8 +500,22 @@ function ChangeBookingForm() {
             </div>
           </div>
 
-          <Button onClick={handleUpdateBooking}>Update Booking</Button>
+          <Button onClick={handleUpdateBooking} disabled={isUpdating}>
+            {isUpdating ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Updating...
+              </>
+            ) : (
+              "Update Booking"
+            )}
+          </Button>
         </div>
+      ) : null}
+
+      {/* Success Message After Update */}
+      {isSubmitted && (
+        <p>Booking has been successfully updated.</p> // Show success message after submission
       )}
     </form>
   );
@@ -878,22 +524,16 @@ function ChangeBookingForm() {
 
 function RejectBookingForm() {
   const [bookingId, setBookingId] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
   const [bookingFound, setBookingFound] = useState(false);
   const [rejectionReason, setRejectionReason] = useState("");
   const [repaymentType, setRepaymentType] = useState("");
-  const [confirmReject, setConfirmReject] = useState(false);
   const [bookingData, setBookingData] = useState(null);
   const [message, setMessage] = useState("");
-  // const handleSearch = () => {
-  //   setIsLoading(true);
-  //   // Simulate API call
-  //   setTimeout(() => {
-  //     setIsLoading(false);
-  //     setBookingFound(true);
-  //   }, 1000);
-  // };
-
+  const [confirmReject, setConfirmReject] = useState(false);
+  const [isConfirmingRejection, setIsConfirmingRejection] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSubmitted, setIsSubmitted] = useState(false); // Track submission status
+ 
   const handleSearch = async () => {
     if (!bookingId) return;
 
@@ -906,6 +546,7 @@ function RejectBookingForm() {
       console.log("Fetched Booking Data:", data);
 
       if (response.ok && data.success && data.booking) {
+        setIsSubmitted(false);
         const { booking } = data;
         setBookingData({
           customer: booking.customer || { name: "", email: "", phone: "" },
@@ -933,34 +574,23 @@ function RejectBookingForm() {
     }
   };
 
-  
-  // const handleSubmit = (e: React.FormEvent) => {
-  //   e.preventDefault();
-  //   if (!confirmReject) {
-  //     setConfirmReject(true);
-  //     return;
-  //   }
-  //   // Handle actual rejection
-  //   console.log("Booking rejected", {
-  //     bookingId,
-  //     rejectionReason,
-  //     repaymentType,
-  //   });
-  // };
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
+  
     if (!confirmReject) {
+      // Show the confirmation step when first clicked
       setConfirmReject(true);
       return;
     }
-
-    setIsLoading(true);
+  
+    setIsConfirmingRejection(true); // This disables the button during submission
+    setIsLoading(true); // Trigger loader state
+    
     try {
       const response = await fetch(
         `https://hfg-booking.onrender.com/api/bookings/reject`,
         {
-          method: "POST", // Change from DELETE to POST
+          method: "POST", // Use POST instead of DELETE
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             booking_id: bookingId,
@@ -968,208 +598,219 @@ function RejectBookingForm() {
             repayment_type: repaymentType,
           }),
         }
-      );    
-
-      const result = await response.json();
-      console.log("Rejection Response:", result);
-
+      );
+      
       if (response.ok) {
-        setMessage(result.message || `Booking ${bookingId} rejected successfully.`);
-        setBookingData(null);
-        setConfirmReject(false);
+        // Handle successful rejection here
+        setIsSubmitted(true); // Mark as submitted
+        console.log('Booking rejected');
       } else {
-        setMessage(result.error || "Failed to reject booking.");
+        // Handle error in rejection
+        console.error('Error rejecting booking');
       }
     } catch (error) {
-      console.error("Error rejecting booking:", error);
-      setMessage("Error rejecting booking.");
+      console.error("Error:", error);
     } finally {
-      setIsLoading(false);
+      setIsConfirmingRejection(false); // Reset after submission
+      setIsLoading(false); // Reset loader state
     }
   };
 
-
-  return (
-    <form className="space-y-8" onSubmit={handleSubmit}>
-      <div className="space-y-4">
-        <h3 className="text-lg font-semibold text-primary">Search Booking</h3>
-        <div className="flex space-x-2">
-          <div className="flex-grow">
-            <Input
-              id="bookingId"
-              placeholder="Enter Booking ID"
-              value={bookingId}
-              onChange={(e) => setBookingId(e.target.value)}
-              className="transition-all duration-300 focus:ring-2 focus:ring-primary"
-            />
+  return (    
+      <form className="space-y-8" onSubmit={handleSubmit}>
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold text-primary">Search Booking</h3>
+          <div className="flex space-x-2">
+            <div className="flex-grow">
+              <Input
+                id="bookingId"
+                placeholder="Enter Booking ID"
+                value={bookingId}
+                onChange={(e) => setBookingId(e.target.value)}
+                className="transition-all duration-300 focus:ring-2 focus:ring-primary"
+              />
+            </div>
+            <Button
+              type="button"
+              onClick={handleSearch}
+              disabled={isLoading}
+              className="min-w-[100px]"
+            >
+              {isLoading ? (
+                <motion.div
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                >
+                  <Search className="w-4 h-4" />
+                </motion.div>
+              ) : (
+                <>
+                  <Search className="w-4 h-4 mr-2" />
+                  Search
+                </>
+              )}
+            </Button>
           </div>
-          <Button
-            type="button"
-            onClick={handleSearch}
-            disabled={isLoading}
-            className="min-w-[100px]"
-          >
-            {isLoading ? (
-              <motion.div
-                animate={{ rotate: 360 }}
-                transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-              >
-                <Search className="w-4 h-4" />
-              </motion.div>
-            ) : (
-              <>
-                <Search className="w-4 h-4 mr-2" />
-                Search
-              </>
-            )}
-          </Button>
         </div>
-      </div>
-
-      <AnimatePresence>
-        {bookingFound && bookingData &&(
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="space-y-8"
-          >
-            <div className="space-y-6">
-              <h3 className="text-lg font-semibold text-primary">
-                Booking Information
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <Card>
-                  <CardContent className="pt-6">
-                    <div className="space-y-4">
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">
-                          Booking ID
-                        </span>
-                        <span className="font-medium">{bookingData.booking_id || ""}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Date</span>
-                        <span className="font-medium">{bookingData.booking_date || ""}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Time Slot</span>
-                        <span className="font-medium">{bookingData.start_time || ""} - {bookingData.end_time || ""}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">System</span>
-                        <span className="font-medium">{bookingData.system || ""}</span>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardContent className="pt-6">
-                    <div className="space-y-4">
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Customer</span>
-                        <span className="font-medium">{bookingData.customer?.name || ""}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Email</span>
-                        <span className="font-medium">{bookingData.customer?.email || ""}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Phone</span>
-                        <span className="font-medium">{bookingData.customer?.phone || ""}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">
-                          Amount Paid
-                        </span>
-                        <span className="font-medium">${bookingData.amount_paid || ""}</span>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            </div>
-
-            <div className="space-y-6">
-              <h3 className="text-lg font-semibold text-primary">
-                Rejection Details
-              </h3>
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="rejectionReason">Reason for Rejection</Label>
-                  <Textarea
-                    id="rejectionReason"
-                    value={rejectionReason}
-                    onChange={(e) => setRejectionReason(e.target.value)}
-                    placeholder="Please provide a detailed reason for rejecting this booking..."
-                    className="min-h-[100px] transition-all duration-300 focus:ring-2 focus:ring-primary"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="repaymentType">Repayment Method</Label>
-                  <Select
-                    value={repaymentType}
-                    onValueChange={setRepaymentType}
-                  >
-                    <SelectTrigger
-                      id="repaymentType"
-                      className="transition-all duration-300 focus:ring-2 focus:ring-primary"
-                    >
-                      <SelectValue placeholder="Select repayment method" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="refund">
-                        Full Refund to Original Payment Method
-                      </SelectItem>
-                      <SelectItem value="credit">Store Credit</SelectItem>
-                      <SelectItem value="reschedule">
-                        Reschedule to Another Date
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </div>
-
-            {confirmReject ? (
-              <Alert variant="destructive" className="mt-6">
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription className="flex items-center justify-between">
-                  <span>
-                    Are you sure you want to reject this booking? This action
-                    cannot be undone.
-                  </span>
-                  <div className="flex space-x-2 mt-2">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => setConfirmReject(false)}
-                    >
-                      Cancel
-                    </Button>
-                    <Button type="submit" variant="destructive">
-                      Confirm Rejection
-                    </Button>
-                  </div>
-                </AlertDescription>
-              </Alert>
-            ) : (
-              <Button
-                type="submit"
-                variant="destructive"
-                className="w-full"
-                disabled={!rejectionReason || !repaymentType}
+        {isSubmitted ? (
+          <p>Booking has been successfully rejected.</p> // Show success message after submission
+        ) : (
+          <AnimatePresence>
+            {bookingFound && bookingData &&(
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                className="space-y-8"
               >
-                <XCircle className="w-4 h-4 mr-2" />
-                Reject Booking
-              </Button>
+                <div className="space-y-6">
+                  <h3 className="text-lg font-semibold text-primary">
+                    Booking Information
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <Card>
+                      <CardContent className="pt-6">
+                        <div className="space-y-4">
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">
+                              Booking ID
+                            </span>
+                            <span className="font-medium">{bookingData.booking_id || ""}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Date</span>
+                            <span className="font-medium">{bookingData.booking_date || ""}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Time Slot</span>
+                            <span className="font-medium">{bookingData.start_time || ""} - {bookingData.end_time || ""}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">System</span>
+                            <span className="font-medium">{bookingData.system || ""}</span>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    <Card>
+                      <CardContent className="pt-6">
+                        <div className="space-y-4">
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Customer</span>
+                            <span className="font-medium">{bookingData.customer?.name || ""}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Email</span>
+                            <span className="font-medium">{bookingData.customer?.email || ""}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Phone</span>
+                            <span className="font-medium">{bookingData.customer?.phone || ""}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">
+                              Amount Paid
+                            </span>
+                            <span className="font-medium">${bookingData.amount_paid || ""}</span>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                </div>
+
+                <div className="space-y-6">
+                  <h3 className="text-lg font-semibold text-primary">
+                    Rejection Details
+                  </h3>
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="rejectionReason">Reason for Rejection</Label>
+                      <Textarea
+                        id="rejectionReason"
+                        value={rejectionReason}
+                        onChange={(e) => setRejectionReason(e.target.value)}
+                        placeholder="Please provide a detailed reason for rejecting this booking..."
+                        className="min-h-[100px] transition-all duration-300 focus:ring-2 focus:ring-primary"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="repaymentType">Repayment Method</Label>
+                      <Select
+                        value={repaymentType}
+                        onValueChange={setRepaymentType}
+                      >
+                        <SelectTrigger
+                          id="repaymentType"
+                          className="transition-all duration-300 focus:ring-2 focus:ring-primary"
+                        >
+                          <SelectValue placeholder="Select repayment method" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="refund">
+                            Full Refund to Original Payment Method
+                          </SelectItem>
+                          <SelectItem value="credit">Store Credit</SelectItem>
+                          <SelectItem value="reschedule">
+                            Reschedule to Another Date
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </div>
+
+                {confirmReject ? (
+                <Alert variant="destructive" className="mt-6">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription className="flex items-center justify-between">
+                      <span>
+                        Are you sure you want to reject this booking? This action cannot
+                        be undone.
+                      </span>
+                      <div className="flex space-x-2 mt-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => setConfirmReject(false)}
+                        >
+                          Cancel
+                        </Button>
+                        <Button
+                          type="submit"
+                          variant="destructive"
+                          disabled={isConfirmingRejection || isLoading}
+                        >
+                          {isConfirmingRejection || isLoading ? (
+                            <>
+                              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                              Confirming...
+                            </>
+                          ) : (
+                            "Confirm Rejection"
+                          )}
+                        </Button>
+                      </div>
+                    </AlertDescription>
+                  </Alert>
+                  ) : (
+                    <Button
+                      type="submit"
+                      variant="destructive"
+                      className="w-full"
+                      disabled={!rejectionReason || !repaymentType}
+                    >
+                      <XCircle className="w-4 h-4 mr-2" />
+                      Reject Booking
+                    </Button>
+                  )}
+              </motion.div>
             )}
-          </motion.div>
+          </AnimatePresence>
         )}
-      </AnimatePresence>
-    </form>
+      </form>
   );
 }
 

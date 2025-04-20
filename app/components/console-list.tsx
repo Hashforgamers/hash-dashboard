@@ -65,13 +65,13 @@ export function ConsoleList({ onEdit }: ConsoleListProps) {
     name: item.name || "Unknown Console",
     number: item.number || "N/A",
     icon:
-      item.type === "PS5"
+      item.type === "ps5"
         ? Monitor
-        : item.type === "PC"
+        : item.type === "pc"
         ? Cpu
-        : item.type === "Xbox"
+        : item.type === "xbox"
         ? Gamepad
-        : item.type == "VR"
+        : item.type == "vr"
         ? Headset
         : "none",
     brand: item.brand || "Unknown Brand",
@@ -99,12 +99,10 @@ export function ConsoleList({ onEdit }: ConsoleListProps) {
     }
   };
 
-  const getStatusVariant = (status: string) => {
+  const getStatusVariant = (status: boolean) => {
     switch (status) {
-      case "Available":
+      case true:
         return "success";
-      case "In Use":
-        return "info";
       default:
         return "warning";
     }
@@ -191,7 +189,7 @@ export function ConsoleList({ onEdit }: ConsoleListProps) {
                     <span className="text-muted-foreground">Status</span>
                   </div>
                   <Badge variant={getStatusVariant(console.status)}>
-                    {console.status}
+                    {console.status ? "Available" : "Not Available"}
                   </Badge>
                 </div>
               </div>
