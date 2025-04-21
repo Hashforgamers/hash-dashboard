@@ -178,13 +178,16 @@ export function TransactionTable() {
   }, [vendorId, token]);
 
   const metrics = useMemo(() => {
-    if (!transactions.length) return { total: 0, uniqueUsers: 0, pendingSettlements: 0 };
+    if (!transactions.length) return { total: 0, uniqueUsers: 0, pendingSettlements: 0,  cashTransactions: 0,};
 
     const total = transactions.reduce((sum, t) => sum + t.amount, 0);
     const uniqueUsers = new Set(transactions.map((t) => t.userName)).size;
     const pendingSettlements = transactions.filter((t) => t.settlementStatus === "pending").length;
+    const cashTransactions = transactions.filter(
+      (t) => t.modeOfPayment?.toLowerCase() === "cash"
+    ).length;
 
-    return { total, uniqueUsers, pendingSettlements };
+    return { total, uniqueUsers, pendingSettlements,  cashTransactions,};
   }, [transactions]);
 
   function downloadFilteredData() {
