@@ -81,15 +81,15 @@ export default function LoginPreview() {
 
         window.location.href = "/dashboard";
         console.log(result);
+        setLoading(false);
       } else {
         toast.error(result.message || "Login failed");
+        setLoading(false);
       }
     } catch (error) {
       console.error("Form submission error", error);
       toast.error("Failed to submit the form. Please try again.");
-    } finally {
-      setLoading(false);
-    }
+    } 
   }
   return (
     <div className="flex justify-center items-center min-h-screen w-full px-4">

@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState } from 'react';
-import { format } from 'date-fns';
+import React, { useEffect, useState } from "react";
+import { format } from "date-fns";
 import {
   Users,
   TrendingUp,
@@ -9,122 +9,114 @@ import {
   Clock,
   Search,
   Filter,
-  Download
-} from 'lucide-react';
+} from "lucide-react";
 
-const mockData = [
-  {
-    id: 1,
-    name: "John Doe",
-    contact: "9876543210",
-    totalSlots: 45,
-    totalAmount: 7500,
-    averagePerSlot: 167,
-    promoCodesUsed: 3,
-    discountAvailed: 1200,
-    netRevenue: 6300,
-    lastVisit: "2025-03-01",
-    membershipTier: "Gold",
-    notes: "Frequent player"
-  },
-  {
-    id: 2,
-    name: "Jane Smith",
-    contact: "9876543211",
-    totalSlots: 25,
-    totalAmount: 4200,
-    averagePerSlot: 168,
-    promoCodesUsed: 2,
-    discountAvailed: 800,
-    netRevenue: 3400,
-    lastVisit: "2025-02-28",
-    membershipTier: "Silver",
-    notes: "Casual player"
-  },
-  {
-    id: 3,
-    name: "Alex Roy",
-    contact: "9876543212",
-    totalSlots: 60,
-    totalAmount: 10500,
-    averagePerSlot: 175,
-    promoCodesUsed: 5,
-    discountAvailed: 2000,
-    netRevenue: 8500,
-    lastVisit: "2025-03-02",
-    membershipTier: "Platinum",
-    notes: "Loyal customer"
-  }
-];
+// Define icon mapping
+const iconMap = {
+  Users,
+  TrendingUp,
+  Award,
+  Clock,
+};
 
-const statsCards = [
-  {
-    title: "Total Gamers",
-    value: "2,549",
-    icon: Users,
-    change: "+12%",
-    color: "text-blue-600",
-    bgColor: "bg-blue-50"
-  },
-  {
-    title: "Average Revenue",
-    value: "₹1,250",
-    icon: TrendingUp,
-    change: "+8%",
-    color: "text-green-600",
-    bgColor: "bg-green-50"
-  },
-  {
-    title: "Premium Members",
-    value: "486",
-    icon: Award,
-    change: "+15%",
-    color: "text-purple-600",
-    bgColor: "bg-purple-50"
-  },
-  {
-    title: "Avg. Session Time",
-    value: "2.5 hrs",
-    icon: Clock,
-    change: "+5%",
-    color: "text-orange-600",
-    bgColor: "bg-orange-50"
-  }
-];
-
+// Replace mock data with dynamic API call
 export function KnowYourGamers() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedTier, setSelectedTier] = useState("all");
+  const [gamerData, setGamerData] = useState<any[]>([]);
+  const [stats, setStats] = useState<any[]>([
+    {
+      title: "Total Gamers",
+      value: "2,549",
+      icon: "Users",
+      change: "+12%",
+      color: "text-blue-600",
+      bgColor: "bg-blue-50",
+    },
+    {
+      title: "Average Revenue",
+      value: "₹1,250",
+      icon: "TrendingUp",
+      change: "+8%",
+      color: "text-green-600",
+      bgColor: "bg-green-50",
+    },
+    {
+      title: "Premium Members",
+      value: "486",
+      icon: "Award",
+      change: "+15%",
+      color: "text-purple-600",
+      bgColor: "bg-purple-50",
+    },
+    {
+      title: "Avg. Session Time",
+      value: "2.5 hrs",
+      icon: "Clock",
+      change: "+5%",
+      color: "text-orange-600",
+      bgColor: "bg-orange-50",
+    },
+  ]);
+  const [loading, setLoading] = useState(true);
 
-  const filteredData = mockData.filter(gamer => {
-    const matchesSearch = gamer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         gamer.contact.includes(searchTerm);
-    const matchesTier = selectedTier === "all" || gamer.membershipTier.toLowerCase() === selectedTier.toLowerCase();
+  useEffect(() => {
+    const fetchGamerData = async () => {
+      try {
+        const res = await fetch("http://localhost:5056/api/vendor/1/knowYourGamer");
+        const json = await res.json();
+
+        if (json && Array.isArray(json)) {
+          setGamerData(json);
+        }
+      } catch (err) {
+        console.error("Error fetching gamer data:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchGamerData();
+  }, []);
+
+  const filteredData = gamerData.filter((gamer) => {
+    const matchesSearch =
+      gamer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      gamer.contact.includes(searchTerm);
+    const matchesTier =
+      selectedTier === "all" ||
+      gamer.membershipTier.toLowerCase() === selectedTier.toLowerCase();
     return matchesSearch && matchesTier;
   });
 
+  if (loading) {
+    return <div className="text-center py-10 text-gray-500">Loading gamer data...</div>;
+  }
+
   return (
     <div className="space-y-6">
-
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {statsCards.map((stat, index) => (
-          <div key={index} className="bg-emerald-100 dark:bg-emerald-950  rounded-xl p-4 shadow-sm">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-500">{stat.title}</p>
-                <h3 className="text-2xl font-bold mt-1">{stat.value}</h3>
+        {stats.map((stat, index) => {
+          const Icon = iconMap[stat.icon as keyof typeof iconMap];
+          return (
+            <div key={index} className="bg-emerald-100 dark:bg-emerald-950 rounded-xl p-4 shadow-sm">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-500">{stat.title}</p>
+                  <h3 className="text-2xl font-bold mt-1">{stat.value}</h3>
+                </div>
+                <div className={`${stat.bgColor} p-3 rounded-full ${stat.color}`}>
+                  <Icon className="w-6 h-6" />
+                </div>
               </div>
-              <div className={`${stat.bgColor} p-3 rounded-full ${stat.color}`}>
-                <stat.icon className="w-6 h-6" />
+              <div className="mt-2 flex items-center text-sm">
+                <span className="text-green-500">{stat.change}</span>
+                <span className="text-gray-500 ml-1">vs last month</span>
               </div>
             </div>
-            <div className="mt-2 flex items-center text-sm">
-              <span className="text-green-500">{stat.change}</span>
-              <span className="text-gray-500 ml-1">vs last month</span>
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {/* Filters and Search */}
@@ -157,7 +149,7 @@ export function KnowYourGamers() {
       {/* Data Table */}
       <div className="rounded-lg shadow-sm overflow-x-auto">
         <table className="w-full">
-          <thead >
+          <thead>
             <tr>
               {[
                 "Customer ID",
@@ -171,9 +163,12 @@ export function KnowYourGamers() {
                 "Net Revenue",
                 "Last Visit",
                 "Tier",
-                "Notes"
+                "Notes",
               ].map((header) => (
-                <th key={header} className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                <th
+                  key={header}
+                  className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider"
+                >
                   {header}
                 </th>
               ))}
@@ -181,7 +176,7 @@ export function KnowYourGamers() {
           </thead>
           <tbody className="divide-y">
             {filteredData.map((gamer) => (
-              <tr key={gamer.id} >
+              <tr key={gamer.id}>
                 <td className="px-4 py-3 text-sm">{gamer.id}</td>
                 <td className="px-4 py-3 text-sm font-medium">{gamer.name}</td>
                 <td className="px-4 py-3 text-sm">{gamer.contact}</td>
@@ -191,12 +186,19 @@ export function KnowYourGamers() {
                 <td className="px-4 py-3 text-sm">{gamer.promoCodesUsed}</td>
                 <td className="px-4 py-3 text-sm">₹{gamer.discountAvailed.toLocaleString()}</td>
                 <td className="px-4 py-3 text-sm">₹{gamer.netRevenue.toLocaleString()}</td>
-                <td className="px-4 py-3 text-sm">{format(new Date(gamer.lastVisit), 'dd MMM yyyy')}</td>
                 <td className="px-4 py-3 text-sm">
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium
-                    ${gamer.membershipTier === 'Platinum' ? 'bg-purple-100 text-purple-800' :
-                      gamer.membershipTier === 'Gold' ? 'bg-yellow-100 text-yellow-800' :
-                      'bg-gray-100 text-gray-800'}`}>
+                  {gamer.lastVisit && format(new Date(gamer.lastVisit), "dd MMM yyyy")}
+                </td>
+                <td className="px-4 py-3 text-sm">
+                  <span
+                    className={`px-2 py-1 rounded-full text-xs font-medium
+                    ${gamer.membershipTier === "Platinum"
+                      ? "bg-purple-100 text-purple-800"
+                      : gamer.membershipTier === "Gold"
+                      ? "bg-yellow-100 text-yellow-800"
+                      : "bg-gray-100 text-gray-800"
+                    }`}
+                  >
                     {gamer.membershipTier}
                   </span>
                 </td>
