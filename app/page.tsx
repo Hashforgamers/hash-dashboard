@@ -9,24 +9,5 @@ import LogIn from "./login/page";
 export default function DashboardPage() {
   return (
     <LogIn />
-    // <DashboardLayout>
-    //   <TopBar />
-    //   <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
-    //     <Tabs defaultValue="gaming-cafe" className="space-y-4">
-    //       <TabsList>
-    //         <TabsTrigger value="gaming-cafe">
-    //           Gaming Cafe Management
-    //         </TabsTrigger>
-    //         <TabsTrigger value="product">Rapid Booking</TabsTrigger>
-    //       </TabsList>
-    //       <TabsContent value="gaming-cafe" className="space-y-4">
-    //         <DashboardContent />
-    //       </TabsContent>
-    //       <TabsContent value="product" className="space-y-4">
-    //         <RapidBookings />
-    //       </TabsContent>
-    //     </Tabs>
-    //   </div>
-    // </DashboardLayout>
   );
 }

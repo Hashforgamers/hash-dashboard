@@ -24,59 +24,66 @@ export function KnowYourGamers() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedTier, setSelectedTier] = useState("all");
   const [gamerData, setGamerData] = useState<any[]>([]);
-  const [stats, setStats] = useState<any[]>([
-    {
-      title: "Total Gamers",
-      value: "2,549",
-      icon: "Users",
-      change: "+12%",
-      color: "text-blue-600",
-      bgColor: "bg-blue-50",
-    },
-    {
-      title: "Average Revenue",
-      value: "₹1,250",
-      icon: "TrendingUp",
-      change: "+8%",
-      color: "text-green-600",
-      bgColor: "bg-green-50",
-    },
-    {
-      title: "Premium Members",
-      value: "486",
-      icon: "Award",
-      change: "+15%",
-      color: "text-purple-600",
-      bgColor: "bg-purple-50",
-    },
-    {
-      title: "Avg. Session Time",
-      value: "2.5 hrs",
-      icon: "Clock",
-      change: "+5%",
-      color: "text-orange-600",
-      bgColor: "bg-orange-50",
-    },
-  ]);
+  const [stats, setStats] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchGamerData = async () => {
+    const fetchStatsAndGamerData = async () => {
       try {
-        const res = await fetch("http://localhost:5056/api/vendor/1/knowYourGamer");
-        const json = await res.json();
+        const [gamerRes, statsRes] = await Promise.all([
+          fetch("http://localhost:5056/api/vendor/1/knowYourGamer"),
+          fetch("http://localhost:5056/api/vendor/1/knowYourGamer/stats"),
+        ]);
 
-        if (json && Array.isArray(json)) {
-          setGamerData(json);
+        const gamerJson = await gamerRes.json();
+        const statsJson = await statsRes.json();
+
+        if (Array.isArray(gamerJson)) {
+          setGamerData(gamerJson);
         }
+
+        setStats([
+          {
+            title: "Total Gamers",
+            value: statsJson.totalGamers.toLocaleString(),
+            icon: "Users",
+            change: statsJson.membersGrowth || "+0%",
+            color: "text-blue-600",
+            bgColor: "bg-blue-50",
+          },
+          {
+            title: "Average Revenue",
+            value: `₹${statsJson.averageRevenue.toLocaleString()}`,
+            icon: "TrendingUp",
+            change: statsJson.revenueGrowth || "+0%",
+            color: "text-green-600",
+            bgColor: "bg-green-50",
+          },
+          {
+            title: "Premium Members",
+            value: statsJson.premiumMembers.toLocaleString(),
+            icon: "Award",
+            change: statsJson.membersGrowth || "+0%",
+            color: "text-purple-600",
+            bgColor: "bg-purple-50",
+          },
+          {
+            title: "Avg. Session Time",
+            value: statsJson.avgSessionTime ?? "N/A",
+            icon: "Clock",
+            change: statsJson.sessionGrowth || "+0%",
+            color: "text-orange-600",
+            bgColor: "bg-orange-50",
+          },
+        ]);
       } catch (err) {
-        console.error("Error fetching gamer data:", err);
+        console.error("Error fetching data:", err);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchGamerData();
+    fetchStatsAndGamerData();
   }, []);
 
   const filteredData = gamerData.filter((gamer) => {

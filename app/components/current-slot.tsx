@@ -11,6 +11,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Loader2 } from "lucide-react";
 
 // Helper function to format the timer (HH:MM:SS)
 const formatTime = (seconds: number) => {
@@ -85,13 +86,14 @@ const releaseSlot = async (consoleType, gameId, consoleId, vendorId, setRefreshS
       body: JSON.stringify({ bookingStats: {} }), // Modify with actual body as per API requirements
     });
     if (response.ok) {
-      alert("Slot released successfully!");
+      // alert("Slot released successfully!");
       setRefreshSlots((prev) => {
         console.log("I am Bhanu, previous value of refreshSlots in release Slot :", prev);
         return !prev;
       });
     } else {
-      alert("Failed to release the slot.");
+      console.log("Failed to release the slot.");
+      // alert("Failed to release the slot.");
     }
   } catch (error) {
     console.error("Error releasing slot:", error);
@@ -107,6 +109,19 @@ const shakingEffect = (extraTime: number) => {
 export function CurrentSlots({ currentSlots, refreshSlots, setRefreshSlots }: { currentSlots: any[]; refreshSlots: boolean; setRefreshSlots: (prev: boolean) => void; }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredSlots, setFilteredSlots] = useState(currentSlots);
+
+  const [releasingSlots, setReleasingSlots] = useState<Record<string, boolean>>({});
+
+  const handleRelease = async (consoleType, gameId, consoleNumber, value, setRefreshSlots, slotId) => {
+    setReleasingSlots(prev => ({ ...prev, [slotId]: true }));
+    try {
+      await releaseSlot(consoleType, gameId, consoleNumber, value, setRefreshSlots);
+    } catch (error) {
+      console.error("Release error:", error);
+    } finally {
+      setReleasingSlots(prev => ({ ...prev, [slotId]: false }));
+    }
+  };
 
   const container = {
     hidden: { opacity: 0 },
@@ -250,14 +265,28 @@ export function CurrentSlots({ currentSlots, refreshSlots, setRefreshSlots }: { 
                       </TableCell>
 
                       <TableCell>
-                        <motion.button
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
-                          onClick={() => releaseSlot(slot.consoleType, slot.game_id, slot.consoleNumber, 1, setRefreshSlots)} 
-                          className="px-3 py-1 bg-red-500 text-white rounded-md text-sm hover:bg-red-600 transition-colors"
-                        >
-                          <RefreshCcw className="w-4 h-4 inline-block" /> Release
-                        </motion.button>
+                      <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() =>
+                          handleRelease(slot.consoleType, slot.game_id, slot.consoleNumber, 1, setRefreshSlots, slot.slotId)
+                        }
+                        className="px-3 py-1 bg-red-500 text-white rounded-md text-sm hover:bg-red-600 transition-colors flex items-center justify-center"
+                        disabled={releasingSlots[slot.slotId]}
+                      >
+                        {releasingSlots[slot.slotId] ? (
+                          <>
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            Releasing...
+                          </>
+                        ) : (
+                          <>
+                            <RefreshCcw className="w-4 h-4 mr-2" />
+                            Release
+                          </>
+                        )}
+                      </motion.button>
+
                       </TableCell>
                     </motion.tr>
                   );

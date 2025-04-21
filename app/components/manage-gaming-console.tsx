@@ -238,26 +238,6 @@ export function ManageGamingConsole() {
               </div>
               <p className="translate-x-4 width-24 text-lime-400">Go Back</p>
             </button>
-
-            // <Button
-            //   variant="ghost"
-            //   size="icon"
-            //   onClick={handleBack}
-            //   className="bg-transparent hover:bg-none hover:text-white transition-colors duration-300 flex items-center justify-center rounded-full"
-            //   style={{
-            //     height: "3rem",
-            //     width: "3rem",
-            //   }}
-            // >
-            //   <span
-            //     className="text-3xl font-bold rounded-full text-green-600 "
-            //     style={{
-            //       lineHeight: "2",
-            //     }}
-            //   >
-            //     &#x2190;
-            //   </span>
-            // </Button>
           )}
         </motion.div>
       </div>

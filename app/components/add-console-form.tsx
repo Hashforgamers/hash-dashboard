@@ -9,6 +9,8 @@ import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { jwtDecode } from "jwt-decode";
 
+import { Loader2 } from "lucide-react";
+
 import {
   Select,
   SelectContent,
@@ -238,6 +240,7 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
 
 
   const handelfetch = async () => {
+    setLoading(true);
     try {
       const response = await axios.post(
         "https://hfg-dashboard.onrender.com/api/addConsole",
@@ -254,6 +257,8 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
       }
     } catch (error) {
       console.log(`something went wrong`, error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -282,6 +287,7 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
 
   const [step, setStep] = useState(1);
   const totalSteps = 5;
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -1071,8 +1077,16 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
             type="submit"
             className="bg-green-500 hover:bg-green-600"
             onClick={handelfetch}
+            disabled={loading}
           >
-            Submit
+            {loading ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Submitting...
+              </>
+            ) : (
+              "Submit"
+            )}
           </Button>
         ) : (
           <Button
@@ -1087,3 +1101,4 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
     </form>
   );
 }
+
