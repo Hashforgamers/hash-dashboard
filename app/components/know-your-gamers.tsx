@@ -31,8 +31,8 @@ export function KnowYourGamers() {
     const fetchStatsAndGamerData = async () => {
       try {
         const [gamerRes, statsRes] = await Promise.all([
-          fetch("http://localhost:5056/api/vendor/1/knowYourGamer"),
-          fetch("http://localhost:5056/api/vendor/1/knowYourGamer/stats"),
+          fetch("https://hfg-dashboard.onrender.com/api/vendor/1/knowYourGamer"),
+          fetch("https://hfg-dashboard.onrender.com/api/vendor/1/knowYourGamer/stats"),
         ]);
 
         const gamerJson = await gamerRes.json();
