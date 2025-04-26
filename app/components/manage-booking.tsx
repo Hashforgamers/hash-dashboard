@@ -855,17 +855,17 @@ function RejectBookingForm() {
 // Rest of the code remains the same...
 
 function ListBooking() {
-    const [vendorId, setVendorId] = useState(null);
-  
-    // Decode token once when the component mounts
-    useEffect(() => {
-      const token = localStorage.getItem("jwtToken");
-  
-      if (token) {
-        const decoded_token = jwtDecode<{ sub: { id: number } }>(token);
-        setVendorId(decoded_token.sub.id);
-      }
-    }, []); // empty dependency, runs once on mount
+  const [vendorId, setVendorId] = useState(null);
+
+  // Decode token once when the component mounts
+  useEffect(() => {
+    const token = localStorage.getItem("jwtToken");
+
+    if (token) {
+      const decoded_token = jwtDecode<{ sub: { id: number } }>(token);
+      setVendorId(decoded_token.sub.id);
+    }
+  }, []); // empty dependency, runs once on mount
   
   const fetchData = async () => {
     try {
@@ -914,8 +914,11 @@ function ListBooking() {
   };
 
   useEffect(() => {
+    if (!vendorId) return; // 🚨 Don't fetch if vendorId is not ready
+  
     fetchData();
   }, [vendorId]);
+  
  
   const [searchQuery, setSearchQuery] = useState("");
 
