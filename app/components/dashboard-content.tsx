@@ -7,24 +7,35 @@ import { UpcomingBookings } from "./upcoming-booking";
 import { CurrentSlots } from "./current-slot";
 import { motion } from "framer-motion";
 import { DollarSign, CalendarCheck, WalletCards, Eye, EyeOff, TrendingDown, TrendingUp, CheckCircle2 } from "lucide-react";
+import { jwtDecode } from "jwt-decode";
 
 export function DashboardContent() {
   const [dashboardData, setDashboardData] = useState(null);
   const [showEarnings, setShowEarnings] = useState(false);
   const [showPending, setShowPending] = useState(false);
   const [refreshSlots, setRefreshSlots] = useState(false);
+  const [vendorId, setVendorId] = useState(null);
+
+  // Decode token once when the component mounts
+  useEffect(() => {
+    const token = localStorage.getItem("jwtToken");
+
+    if (token) {
+      const decoded_token = jwtDecode<{ sub: { id: number } }>(token);
+      setVendorId(decoded_token.sub.id);
+    }
+  }, []); // empty dependency, runs once on mount
+
 
   useEffect(() => {
     // Fetch the data from the API
-    fetch('https://hfg-dashboard.onrender.com/api/getLandingPage/vendor/1')
+    fetch(`https://hfg-dashboard.onrender.com/api/getLandingPage/vendor/${vendorId}`)
       .then(response => response.json())
       .then(data => setDashboardData(data))
       .catch(error => console.error("Error fetching data:", error));
-
-    console.log("Im in DashBoard COnetxt")
-  }, [refreshSlots]);
-
-
+      
+  }, [vendorId, refreshSlots]);
+  
   if (!dashboardData) {
     return <div>Loading...</div>; // Render a loading state until the data is fetched
   }

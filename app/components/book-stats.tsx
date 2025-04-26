@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Monitor, Gamepad2, Gamepad, Headphones } from 'lucide-react';
+import { jwtDecode } from "jwt-decode";
 
 // Static Payload (Platform Metadata)
 const platformMetadata = {
@@ -42,12 +43,23 @@ const platformMetadata = {
 export function BookingStats({ refreshSlots, setRefreshSlots }: { refreshSlots: boolean; setRefreshSlots: (prev: boolean) => void; }) {
   // State for dynamic data (from API)
   const [bookingInfo, setBookingInfo] = useState([]);
+  const [vendorId, setVendorId] = useState(null);
+
+    // Decode token once when the component mounts
+    useEffect(() => {
+      const token = localStorage.getItem("jwtToken");
+
+      if (token) {
+        const decoded_token = jwtDecode<{ sub: { id: number } }>(token);
+        setVendorId(decoded_token.sub.id);
+      }
+    }, []); // empty dependency, runs once on mount
 
   useEffect(() => {
     // Fetch dynamic data from API
     const fetchBookingData = async () => {
       try {
-        const response = await fetch(`https://hfg-dashboard.onrender.com/api/getConsoles/vendor/1`);
+        const response = await fetch(`https://hfg-dashboard.onrender.com/api/getConsoles/vendor/${vendorId}`);
         const data = await response.json();
         setBookingInfo(data); // API response is an array of console data
       } catch (error) {
@@ -56,7 +68,7 @@ export function BookingStats({ refreshSlots, setRefreshSlots }: { refreshSlots: 
     };
 
     fetchBookingData();
-  }, [refreshSlots]); // Re-fetch when vendorId changes
+  }, [vendorId, refreshSlots]); // Re-fetch when vendorId changes
 
   // Combine static and dynamic data
   const platforms = platformMetadata.platforms.map(metadata => {

@@ -11,6 +11,8 @@ import {
   Filter,
 } from "lucide-react";
 
+import { jwtDecode } from "jwt-decode";
+
 // Define icon mapping
 const iconMap = {
   Users,
@@ -27,12 +29,25 @@ export function KnowYourGamers() {
   const [stats, setStats] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const [vendorId, setVendorId] = useState(null);
+
+  // Decode token once when the component mounts
+  useEffect(() => {
+    const token = localStorage.getItem("jwtToken");
+
+    if (token) {
+      const decoded_token = jwtDecode<{ sub: { id: number } }>(token);
+      setVendorId(decoded_token.sub.id);
+    }
+  }, []); // empty dependency, runs once on mount
+
+
   useEffect(() => {
     const fetchStatsAndGamerData = async () => {
       try {
         const [gamerRes, statsRes] = await Promise.all([
-          fetch("https://hfg-dashboard.onrender.com/api/vendor/1/knowYourGamer"),
-          fetch("https://hfg-dashboard.onrender.com/api/vendor/1/knowYourGamer/stats"),
+          fetch(`https://hfg-dashboard.onrender.com/api/vendor/${vendorId}/knowYourGamer`),
+          fetch(`https://hfg-dashboard.onrender.com/api/vendor/${vendorId}/knowYourGamer/stats`),
         ]);
 
         const gamerJson = await gamerRes.json();
@@ -84,7 +99,7 @@ export function KnowYourGamers() {
     };
 
     fetchStatsAndGamerData();
-  }, []);
+  }, [vendorId]);
 
   const filteredData = gamerData.filter((gamer) => {
     const matchesSearch =

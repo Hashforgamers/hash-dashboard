@@ -232,7 +232,7 @@ export function RapidBooking() {
                 )}
               </motion.div>
 
-              {/* <motion.div 
+              <motion.div
                 className="space-y-2"
                 variants={inputVariants}
                 initial="hidden"
@@ -240,137 +240,46 @@ export function RapidBooking() {
                 transition={{ delay: 0.4 }}
               >
                 <Label className="text-sm font-medium flex items-center gap-1">
-                  Payment Method {errors.paymentType && <AlertCircle className="h-4 w-4 text-red-500" />}
+                  Payment Type
                 </Label>
-                <RadioGroup
+                <select
                   value={paymentType}
-                  onValueChange={setPaymentType}
-                  className="grid grid-cols-1 gap-3"
+                  onChange={(e) => setPaymentType(e.target.value)}
+                  className="w-full p-3 border rounded-lg text-gray-900 bg-white focus:ring-[#098637] focus:border-[#098637] transition-all duration-200"
                 >
-                  <Label
-                    htmlFor="credit"
-                    className={`flex items-center space-x-3 p-3 rounded-lg border cursor-pointer transition-all duration-200 ${
-                      paymentType === 'credit'
-                        ? 'border-[#098637] bg-[#098637]/5'
-                        : 'border-gray-200 hover:border-[#098637]/50'
-                    }`}
-                  >
-                    <RadioGroupItem value="credit" id="credit" />
-                    <CreditCard className="h-4 w-4 text-[#098637]" />
-                    <div className="space-y-1">
-                      <span className="font-medium">Credit/Debit Card</span>
-                      <p className="text-xs text-gray-500">Pay securely with your card</p>
+                  <option value="credit">
+                    <div className="flex items-center gap-2">
+                      <CreditCard className="h-4 w-4 text-[#098637]" />
+                      Credit/Debit Card
                     </div>
-                  </Label>
-
-                  <Label
-                    htmlFor="wallet"
-                    className={`flex items-center space-x-3 p-3 rounded-lg border cursor-pointer transition-all duration-200 ${
-                      paymentType === 'wallet'
-                        ? 'border-[#098637] bg-[#098637]/5'
-                        : 'border-gray-200 hover:border-[#098637]/50'
-                    }`}
-                  >
-                    <RadioGroupItem value="wallet" id="wallet" />
-                    <Wallet className="h-4 w-4 text-[#098637]" />
-                    <div className="space-y-1">
-                      <span className="font-medium">Digital Wallet</span>
-                      <p className="text-xs text-gray-500">Google Pay, Apple Pay, or PayPal</p>
+                  </option>
+                  <option value="wallet">
+                    <div className="flex items-center gap-2">
+                      <Wallet className="h-4 w-4 text-[#098637]" />
+                      Digital Wallet (Google Pay, Apple Pay, PayPal)
                     </div>
-                  </Label>
-
-                  <Label
-                    htmlFor="cash"
-                    className={`flex items-center space-x-3 p-3 rounded-lg border cursor-pointer transition-all duration-200 ${
-                      paymentType === 'cash'
-                        ? 'border-[#098637] bg-[#098637]/5'
-                        : 'border-gray-200 hover:border-[#098637]/50'
-                    }`}
-                  >
-                    <RadioGroupItem value="cash" id="cash" />
-                    <svg
-                      className="h-4 w-4 text-[#098637]"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"
-                      />
-                    </svg>
-                    <div className="space-y-1">
-                      <span className="font-medium">Cash</span>
-                      <p className="text-xs text-gray-500">Pay at location</p>
+                  </option>
+                  <option value="cash">
+                    <div className="flex items-center gap-2">
+                      <svg
+                        className="h-4 w-4 text-[#098637]"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"
+                        />
+                      </svg>
+                      Cash (Pay at location)
                     </div>
-                  </Label>
-                </RadioGroup>
-                {errors.paymentType && (
-                  <motion.p 
-                    initial={{ opacity: 0 }} 
-                    animate={{ opacity: 1 }} 
-                    className="text-xs text-red-500 mt-1"
-                  >
-                    {errors.paymentType}
-                  </motion.p>
-                )}
-              </motion.div> */}
-
-<motion.div
-  className="space-y-2"
-  variants={inputVariants}
-  initial="hidden"
-  animate="visible"
-  transition={{ delay: 0.4 }}
->
-  <Label className="text-sm font-medium flex items-center gap-1">
-    Payment Type
-  </Label>
-  <select
-    value={paymentType}
-    onChange={(e) => setPaymentType(e.target.value)}
-    className="w-full p-3 border rounded-lg text-gray-900 bg-white focus:ring-[#098637] focus:border-[#098637] transition-all duration-200"
-  >
-    <option value="credit">
-      <div className="flex items-center gap-2">
-        <CreditCard className="h-4 w-4 text-[#098637]" />
-        Credit/Debit Card
-      </div>
-    </option>
-    <option value="wallet">
-      <div className="flex items-center gap-2">
-        <Wallet className="h-4 w-4 text-[#098637]" />
-        Digital Wallet (Google Pay, Apple Pay, PayPal)
-      </div>
-    </option>
-    <option value="cash">
-      <div className="flex items-center gap-2">
-        <svg
-          className="h-4 w-4 text-[#098637]"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"
-          />
-        </svg>
-        Cash (Pay at location)
-      </div>
-    </option>
-  </select>
-</motion.div>
-
-
-
-
+                  </option>
+                </select>
+              </motion.div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

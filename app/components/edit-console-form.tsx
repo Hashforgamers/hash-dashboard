@@ -28,6 +28,8 @@ import {
   Plus,
 } from "lucide-react";
 import axios from "axios";
+import { jwtDecode } from "jwt-decode";
+
 interface EditConsoleFormProps {
   console: any;
   onClose: () => void;
@@ -47,8 +49,17 @@ export function EditConsoleForm({ console, onClose }: EditConsoleFormProps) {
   const [newRam, setNewRam] = useState("");
   const [newStorage, setNewStorage] = useState("");
   const [newStatus, setNewStatus] = useState("");
+  const [vendorId, setVendorId] = useState(null);
 
+  // Decode token once when the component mounts
+  useEffect(() => {
+    const token = localStorage.getItem("jwtToken");
 
+    if (token) {
+      const decoded_token = jwtDecode<{ sub: { id: number } }>(token);
+      setVendorId(decoded_token.sub.id);
+    }
+  }, []); // empty dependency, runs once on mount
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -122,10 +133,11 @@ export function EditConsoleForm({ console, onClose }: EditConsoleFormProps) {
     },
   };
 
+  
   const handleClick = async () => {
     try {
       const response = await axios.put(
-        "https://hfg-dashboard.onrender.com/api/console/update/vendor/1",
+        "https://hfg-dashboard.onrender.com/api/console/update/vendor/${vendorId}",
         edit_payload,{
           headers:{
             'Content-Type':"application/json"

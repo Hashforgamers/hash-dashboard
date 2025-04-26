@@ -76,8 +76,6 @@ const calculateExtraTime = (endTime: string, date: string) => {
 // Function to release the slot by calling the API
 const releaseSlot = async (consoleType, gameId, consoleId, vendorId, setRefreshSlots) => {
   try {
-    console.log("I'm releaseing the slot ",gameId," consoleId ",consoleId, "vendorId ",vendorId);
-
     const response = await fetch(`https://hfg-dashboard.onrender.com/api/releaseDevice/consoleTypeId/${gameId}/console/${consoleId}/vendor/${vendorId}`, {
       method: "POST",
       headers: {

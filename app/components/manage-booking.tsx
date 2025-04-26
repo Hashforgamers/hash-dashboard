@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { jwtDecode } from "jwt-decode";
 
 import {
   Select,
@@ -164,10 +165,23 @@ export function ManageBooking() {
     setSelectedAction(actionType === selectedAction ? null : actionType);
   };
 
+  const [vendorId, setVendorId] = useState(null);
+
+  // Decode token once when the component mounts
+  useEffect(() => {
+    const token = localStorage.getItem("jwtToken");
+
+    if (token) {
+      const decoded_token = jwtDecode<{ sub: { id: number } }>(token);
+      setVendorId(decoded_token.sub.id);
+    }
+  }, []); // empty dependency, runs once on mount
+
+
   async function fetchGames() {
     try {
       const response = await fetch(
-        "https://hfg-booking.onrender.com/api/getAllConsole/vendor/1"
+        `https://hfg-booking.onrender.com/api/getAllConsole/vendor/${vendorId}`
       ); // Replace with the actual API URL
       if (!response.ok) {
         throw new Error(`HTTP error! Status: ${response.status}`);
@@ -188,7 +202,7 @@ export function ManageBooking() {
       setGame(data);
     }
     getGames();
-  }, []);
+  }, [vendorId]);
 
   // console.log(game.games[0]);
 
@@ -285,6 +299,18 @@ function ChangeBookingForm() {
   const [availableSlots, setAvailableSlots] = useState([]);
   const [isUpdating, setIsUpdating] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false); // Track submission status
+  const [vendorId, setVendorId] = useState(null);
+
+  // Decode token once when the component mounts
+  useEffect(() => {
+    const token = localStorage.getItem("jwtToken");
+
+    if (token) {
+      const decoded_token = jwtDecode<{ sub: { id: number } }>(token);
+      setVendorId(decoded_token.sub.id);
+    }
+  }, []); // empty dependency, runs once on mount
+
 
   const handleSearch = async () => {
     if (!bookingId) return;
@@ -305,7 +331,7 @@ function ChangeBookingForm() {
           booking_date: booking.date || "",
           selected_slots: [`${booking.time_slot.start_time}`], // Preselect slot
           system: booking.system || "",
-          vendorId: 1, // Hardcoded vendor ID (Update dynamically if needed)
+          vendorId: vendorId, // Hardcoded vendor ID (Update dynamically if needed)
           consoleTypeId: booking.game_id, // Extract console type ID
         });
 
@@ -533,6 +559,18 @@ function RejectBookingForm() {
   const [isConfirmingRejection, setIsConfirmingRejection] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false); // Track submission status
+  const [vendorId, setVendorId] = useState(null);
+
+  // Decode token once when the component mounts
+  useEffect(() => {
+    const token = localStorage.getItem("jwtToken");
+
+    if (token) {
+      const decoded_token = jwtDecode<{ sub: { id: number } }>(token);
+      setVendorId(decoded_token.sub.id);
+    }
+  }, []); // empty dependency, runs once on mount
+
  
   const handleSearch = async () => {
     if (!bookingId) return;
@@ -554,7 +592,7 @@ function RejectBookingForm() {
           booking_id: booking.booking_id,
           selected_slots: [`${booking.time_slot.start_time}`], // Preselect slot
           system: booking.system || "",
-          vendorId: 1, // Hardcoded vendor ID (Update dynamically if needed)
+          vendorId: vendorId, // Hardcoded vendor ID (Update dynamically if needed)
           consoleTypeId: booking.game_id, // Extract console type ID
           start_time: booking.time_slot.start_time,
           end_time: booking.time_slot.end_time,
@@ -817,10 +855,32 @@ function RejectBookingForm() {
 // Rest of the code remains the same...
 
 function ListBooking() {
+    const [vendorId, setVendorId] = useState(null);
+  
+    // Decode token once when the component mounts
+    useEffect(() => {
+      const token = localStorage.getItem("jwtToken");
+  
+      if (token) {
+        const decoded_token = jwtDecode<{ sub: { id: number } }>(token);
+        setVendorId(decoded_token.sub.id);
+      }
+    }, []); // empty dependency, runs once on mount
+  
   const fetchData = async () => {
     try {
+      // Get the start of the month
+      const today = new Date();
+      const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+
+      // Format as YYYYMMDD
+      const formattedDate = startOfMonth
+        .toISOString() // "2025-04-01T00:00:00.000Z"
+        .slice(0, 10)   // "2025-04-01"
+        .replace(/-/g, ""); // "20250401"
+        
       const response = await axios.get(
-        "https://hfg-booking.onrender.com/api/getAllBooking/vendor/1/20250216/",
+        `https://hfg-booking.onrender.com/api/getAllBooking/vendor/${vendorId}/${formattedDate}/`,
         {
           headers: {
             "Content-Type": "application/json",
@@ -855,7 +915,7 @@ function ListBooking() {
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [vendorId]);
  
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -944,13 +1004,6 @@ function ListBooking() {
     }
   };
 
-  // const getStatusBadge = (status: string) => {
-  //   const variants = {
-  //     "rejected": "warning",
-  //     "confirmed": "success",
-  //   };
-  //   return <Badge variant={variants[status]}>{status}</Badge>;
-  // };
   const getStatusBadge = (status: string) => {
     const variants = {
       "rejected": "bg-red-100 dark:bg-red-950",  // Red for rejected (light/dark mode)

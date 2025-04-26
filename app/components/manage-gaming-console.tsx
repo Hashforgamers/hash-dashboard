@@ -22,6 +22,7 @@ import { AddConsoleForm } from "./add-console-form";
 import { ConsoleList } from "./console-list";
 import { EditConsoleForm } from "./edit-console-form";
 import { motion, AnimatePresence } from "framer-motion";
+import { jwtDecode } from "jwt-decode";
 
 // Define the available actions (Add and List)
 const actions = [

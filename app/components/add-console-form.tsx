@@ -159,7 +159,8 @@ const getHardWareSpecification = (
 
 export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
 
-  const [vendorid, sevendorid] = useState(1);
+  const [vendorid, sevendorid] = useState(null);
+
   useEffect(() => {
     const token = localStorage.getItem("jwtToken");
     if (token) {
@@ -169,6 +170,7 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
       sevendorid(vendor_id1);
     }
   }, []);
+
   const [formdata, setformdata] = useState({
     availablegametype: consoleType,
     vendorId: vendorid,

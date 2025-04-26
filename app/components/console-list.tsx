@@ -32,32 +32,47 @@ import {
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import axios from "axios";
+import { jwtDecode } from "jwt-decode";
+
 
 interface ConsoleListProps {
   onEdit: (console: any) => void;
 }
 export function ConsoleList({ onEdit }: ConsoleListProps) {
   const [data, setdata] = useState([]);
+  const [vendorId, setVendorId] = useState(null);
 
+  // Decode token once when the component mounts
+  useEffect(() => {
+    const token = localStorage.getItem("jwtToken");
+
+    if (token) {
+      const decoded_token = jwtDecode<{ sub: { id: number } }>(token);
+      setVendorId(decoded_token.sub.id);
+    }
+  }, []); // runs once on mount
 
   useEffect(() => {
     const fetch_data = async () => {
+      if (!vendorId) return; // Prevent calling API when vendorId is still null
+
       try {
         const response = await axios.get(
-          "https://hfg-dashboard.onrender.com/api/getConsoles/vendor/1"
+          `https://hfg-dashboard.onrender.com/api/getConsoles/vendor/${vendorId}`
         );
         if (!response) {
-          console.log("something went Wrong while fetching the data");
+          console.log("Something went wrong while fetching the data");
         } else {
-          setdata(response?.data);
+          setdata(response.data);
         }
       } catch (error) {
-        console.error("error ocuurs",error);
+        console.error("Error occurred while fetching consoles:", error);
       }
     };
 
-     fetch_data(); //function call here to fetch the data
-  }, []);
+    fetch_data(); // function call here to fetch the data
+  }, [vendorId]); // this will rerun when vendorId changes
+
 
   const consolelistdata = data.map((item: any) => ({
     id: item.id,
@@ -85,7 +100,7 @@ export function ConsoleList({ onEdit }: ConsoleListProps) {
   const handleDelete = async (id: number): Promise<void> => {
     try {
        const response = await axios.delete(
-        `https://hfg-dashboard.onrender.com/api/console/1/${id}`
+        `https://hfg-dashboard.onrender.com/api/console/${vendorId}/${id}`
       );
       if (!response) {
         console.log("something went wrong while deleting the data");

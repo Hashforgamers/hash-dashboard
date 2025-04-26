@@ -45,6 +45,7 @@ import {
   X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { jwtDecode } from "jwt-decode";
 
 import axios from "axios"; // Make sure to install axios
 
@@ -55,6 +56,17 @@ export function MyAccount() {
 
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState<boolean>(true);
+  const [vendorId, setVendorId] = useState(null);
+
+  // Decode token once when the component mounts
+  useEffect(() => {
+    const token = localStorage.getItem("jwtToken");
+
+    if (token) {
+      const decoded_token = jwtDecode<{ sub: { id: number } }>(token);
+      setVendorId(decoded_token.sub.id);
+    }
+  }, []); // empty dependency, runs once on mount
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -82,7 +94,7 @@ export function MyAccount() {
     async function fetchVendorDashboard() {
       try {
         console.log("Start Fetch ")
-        const res = await axios.get("https://hfg-dashboard.onrender.com/api/vendor/1/dashboard");
+        const res = await axios.get(`https://hfg-dashboard.onrender.com/api/vendor/${vendorId}/dashboard`);
         setData(res.data);
         setCafeImages(res.data?.cafeGallery?.images || []);
         console.log("Data",data)
@@ -95,7 +107,7 @@ export function MyAccount() {
     }
 
     fetchVendorDashboard();
-  }, []);
+  }, [vendorId]);
 
   useEffect(() => {
     if (prevPageRef.current !== page) {

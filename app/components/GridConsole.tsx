@@ -8,6 +8,7 @@ import {
   CardTitle,
   CardDescription,
 } from "@/components/ui/card";
+import { jwtDecode } from "jwt-decode";
 
 import { X, User, Mail, Phone, Calendar, CreditCard, Wallet, ChevronLeft, ChevronRight , CheckCircle, Loader2} from 'lucide-react';
 
@@ -83,11 +84,22 @@ const GridConsole: React.FC<GridConsoleProps> = (
   const [selectedConsoleType, setSelectedConsoleType] = useState<string>("");
   const [selectedConsoleTypeId, setSelectedConsoleTypeId] = useState<number>(0);
   const [availableConsoles, setAvailableConsoles] = useState<ConsoleType[]>([]);
+  const [vendorId, setVendorId] = useState(null);
+
+  // Decode token once when the component mounts
+  useEffect(() => {
+    const token = localStorage.getItem("jwtToken");
+
+    if (token) {
+      const decoded_token = jwtDecode<{ sub: { id: number } }>(token);
+      setVendorId(decoded_token.sub.id);
+    }
+  }, []); // empty dependency, runs once on mount
 
   useEffect(() => {
     const fetchAvailableConsoles = async () => {
       try {
-        const response = await fetch("https://hfg-booking.onrender.com/api/getAllConsole/vendor/1");
+        const response = await fetch(`https://hfg-booking.onrender.com/api/getAllConsole/vendor/${vendorId}`);
         const data = await response.json();
         
         // Update consoleTypes with the id from API response
@@ -106,7 +118,7 @@ const GridConsole: React.FC<GridConsoleProps> = (
     };
 
     fetchAvailableConsoles();
-  }, []);
+  }, [vendorId]);
 
   const handleConsoleTypeClick = (type: string, id:number) => {
     setSelectedConsoleType(type);
@@ -185,6 +197,18 @@ const CreateBookingForm: React.FC<CreateBookingFormProps> = ({
   const [phone, setPhone] = useState<string>("");
   // Inside your component
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [vendorId, setVendorId] = useState(null);
+
+  // Decode token once when the component mounts
+  useEffect(() => {
+    const token = localStorage.getItem("jwtToken");
+
+    if (token) {
+      const decoded_token = jwtDecode<{ sub: { id: number } }>(token);
+      setVendorId(decoded_token.sub.id);
+    }
+  }, []); // empty dependency, runs once on mount
+
 
   const totalSteps = 3;
 
@@ -192,7 +216,7 @@ const CreateBookingForm: React.FC<CreateBookingFormProps> = ({
   const fetchAvailableSlots = async (date: string) => {
     try {
       const response = await fetch(
-        `https://hfg-booking.onrender.com/api/getSlots/vendor/1/game/${selectedConsoleTypeId}/${date.replace(/-/g, "")}`
+        `https://hfg-booking.onrender.com/api/getSlots/vendor/${vendorId}/game/${selectedConsoleTypeId}/${date.replace(/-/g, "")}`
       );
       if (!response.ok) {
         throw new Error("Failed to fetch slots");
@@ -206,7 +230,7 @@ const CreateBookingForm: React.FC<CreateBookingFormProps> = ({
 
   useEffect(() => {
     fetchAvailableSlots(selectedDate);
-  }, [selectedDate, selectedConsoleTypeId]);
+  }, [vendorId, selectedDate, selectedConsoleTypeId]);
 
   const handleSlotClick = (slot: string) => {
     setSelectedSlots((prev) =>
@@ -240,7 +264,7 @@ const CreateBookingForm: React.FC<CreateBookingFormProps> = ({
 
     try {
       const response = await fetch(
-        "https://hfg-booking.onrender.com/api/newBooking/vendor/1",
+        `https://hfg-booking.onrender.com/api/newBooking/vendor/${vendorId}`,
         {
           method: "POST",
           headers: {
@@ -255,12 +279,9 @@ const CreateBookingForm: React.FC<CreateBookingFormProps> = ({
       }
 
       const data = await response.json();
-      console.log("Booking successful:", data);
-      alert("Booking successful!");
       setShowForm(false);
     } catch (error) {
       console.error("Error submitting booking:", error);
-      alert("Error submitting booking. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
