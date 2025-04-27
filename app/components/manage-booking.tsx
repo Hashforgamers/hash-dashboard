@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { jwtDecode } from "jwt-decode";
+import React from "react";
 
 import {
   Select,
@@ -874,7 +875,46 @@ function ListBooking() {
   const [searchQuery, setSearchQuery] = useState("");
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: "asc" | "desc" } | null>(null);
 
-
+  const [expandedDates, setExpandedDates] = useState<Record<string, boolean>>({});
+  const [expandedUsers, setExpandedUsers] = useState<Record<string, boolean>>({});
+  const [expandedStatuses, setExpandedStatuses] = useState<Record<string, boolean>>({});
+  
+  const toggleDate = (date: string) => {
+    setExpandedDates(prev => ({ ...prev, [date]: !prev[date] }));
+  };
+  
+  const toggleUser = (date_user: string) => {
+    setExpandedUsers(prev => ({ ...prev, [date_user]: !prev[date_user] }));
+  };
+  
+  const toggleStatus = (date_user_status: string) => {
+    setExpandedStatuses(prev => ({ ...prev, [date_user_status]: !prev[date_user_status] }));
+  };
+  
+  // Helper to group bookings
+  const groupedBookings = useMemo(() => {
+    const groups: Record<string, Record<string, Record<string, BookingType[]>>> = {};
+  
+    filteredBookings.forEach(booking => {
+      const bookedDate = booking.bookedDate;
+      const username = booking.username;
+      const status = booking.status;
+  
+      if (!groups[bookedDate]) {
+        groups[bookedDate] = {};
+      }
+      if (!groups[bookedDate][username]) {
+        groups[bookedDate][username] = {};
+      }
+      if (!groups[bookedDate][username][status]) {
+        groups[bookedDate][username][status] = [];
+      }
+      groups[bookedDate][username][status].push(booking);
+    });
+  
+    return groups;
+  }, [filteredBookings]);
+  
   // Decode token once when the component mounts
   useEffect(() => {
     const token = localStorage.getItem("jwtToken");
@@ -936,7 +976,6 @@ function ListBooking() {
   
     fetchData();
   }, [vendorId]);
-  
 
   const startTimer = (id: string) => {
     setBookings((prevBookings) =>
@@ -1018,7 +1057,6 @@ function ListBooking() {
     handleSearch();
   }, [searchQuery]);
   
-
   const getStatusBadge = (status: string) => {
     const variants = {
       "rejected": "bg-red-100 dark:bg-red-950",  // Red for rejected (light/dark mode)
@@ -1028,7 +1066,6 @@ function ListBooking() {
     return <span className={`px-3 py-1 rounded-full ${variants[status] || 'bg-gray-300 text-black dark:bg-gray-700 dark:text-white'}`}>{status}</span>;
   };
   
-
   const formatTime = (time: string | number) => {
     if (typeof time === "number") {
       const date = new Date(time);
@@ -1037,8 +1074,6 @@ function ListBooking() {
     const [hours, minutes] = time.split(":");
     return `${hours}:${minutes}`;
   };
-  
-  
 
   return (
     <div className="space-y-8">
@@ -1061,6 +1096,30 @@ function ListBooking() {
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead
+                className="font-semibold cursor-pointer hover:bg-muted/50 transition-colors"
+                onClick={() => handleSort("bookedDate")}
+              >
+                Booked Date{" "}
+                {sortConfig?.key === "id" &&
+                  (sortConfig.direction === "asc" ? "↑" : "↓")}
+              </TableHead>
+              <TableHead
+                className="font-semibold cursor-pointer hover:bg-muted/50 transition-colors"
+                onClick={() => handleSort("username")}
+              >
+                UserName{" "}
+                {sortConfig?.key === "id" &&
+                  (sortConfig.direction === "asc" ? "↑" : "↓")}
+              </TableHead>
+              <TableHead
+                className="font-semibold cursor-pointer hover:bg-muted/50 transition-colors"
+                onClick={() => handleSort("status")}
+              >
+                Status{" "}
+                {sortConfig?.key === "id" &&
+                  (sortConfig.direction === "asc" ? "↑" : "↓")}
+              </TableHead>
               <TableHead
                 className="font-semibold cursor-pointer hover:bg-muted/50 transition-colors"
                 onClick={() => handleSort("id")}
@@ -1087,28 +1146,13 @@ function ListBooking() {
               </TableHead>
               <TableHead
                 className="font-semibold cursor-pointer hover:bg-muted/50 transition-colors"
-                onClick={() => handleSort("username")}
-              >
-                UserName{" "}
-                {sortConfig?.key === "id" &&
-                  (sortConfig.direction === "asc" ? "↑" : "↓")}
-              </TableHead>
-              <TableHead
-                className="font-semibold cursor-pointer hover:bg-muted/50 transition-colors"
                 onClick={() => handleSort("consoleType")}
               >
                 Console Type{" "}
                 {sortConfig?.key === "id" &&
                   (sortConfig.direction === "asc" ? "↑" : "↓")}
               </TableHead>
-              <TableHead
-                className="font-semibold cursor-pointer hover:bg-muted/50 transition-colors"
-                onClick={() => handleSort("bookedDate")}
-              >
-                Booked Date{" "}
-                {sortConfig?.key === "id" &&
-                  (sortConfig.direction === "asc" ? "↑" : "↓")}
-              </TableHead>
+              
               <TableHead
                 className="font-semibold cursor-pointer hover:bg-muted/50 transition-colors"
                 onClick={() => handleSort("startTime")}
@@ -1127,14 +1171,6 @@ function ListBooking() {
               </TableHead>
               <TableHead
                 className="font-semibold cursor-pointer hover:bg-muted/50 transition-colors"
-                onClick={() => handleSort("status")}
-              >
-                Status{" "}
-                {sortConfig?.key === "id" &&
-                  (sortConfig.direction === "asc" ? "↑" : "↓")}
-              </TableHead>
-              <TableHead
-                className="font-semibold cursor-pointer hover:bg-muted/50 transition-colors"
                 onClick={() => handleSort("type")}
               >
                 Type{" "}
@@ -1144,40 +1180,62 @@ function ListBooking() {
             </TableRow>
           </TableHeader>
           <TableBody>
-          {filteredBookings.length === 0 ? (
-            <TableRow>
-              <TableCell colSpan={10} className="text-center py-4">
-                No bookings found.
-              </TableCell>
-            </TableRow>
-          ) : (
-            <AnimatePresence>
-              {filteredBookings.map((booking, index) => (
-                <motion.tr
-                  key={booking.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
-                  transition={{ delay: index * 0.1 }}
-                >
-                  <TableCell>{booking.id}</TableCell>
-                  <TableCell>{booking.bookingDate}</TableCell>
-                  <TableCell>{booking.bookingTime}</TableCell>
-                  <TableCell>{booking.username}</TableCell>
-                  <TableCell>{booking.consoleType}</TableCell>
-                  <TableCell>{booking.bookedDate}</TableCell>
-                  <TableCell>
-                    {booking.startTime ? formatTime(booking.startTime) : "Not started"}
-                  </TableCell>
-                  <TableCell>
-                    {booking.endTime ? formatTime(booking.endTime) : "Not ended"}
-                  </TableCell>
-                  <TableCell>{getStatusBadge(booking.status)}</TableCell>
-                  <TableCell>{booking.type}</TableCell>
-                </motion.tr>
-              ))}
-            </AnimatePresence>
-          )}
+          {Object.entries(groupedBookings).map(([bookedDate, users]) => (
+            <React.Fragment key={bookedDate}>
+              <TableRow className="bg-muted/50 cursor-pointer" onClick={() => toggleDate(bookedDate)}>
+                <TableCell colSpan={10} className="font-bold">
+                  {expandedDates[bookedDate] ? "▼" : "▶"} 
+                  &nbsp;{new Date(bookedDate).toDateString()} ({Object.values(users).reduce((acc, userStatuses) => acc + Object.values(userStatuses).flat().length, 0)})
+                </TableCell>
+              </TableRow>
+
+              {expandedDates[bookedDate] &&
+                Object.entries(users).map(([username, statuses]) => (
+                  <React.Fragment key={bookedDate + username}>
+                    <TableRow className="bg-muted/25 cursor-pointer" onClick={() => toggleUser(bookedDate + username)}>
+                      <TableCell colSpan={10} className="pl-8 font-semibold">
+                        {expandedUsers[bookedDate + username] ? "▼" : "▶"} 
+                        &nbsp;{username} ({Object.values(statuses).flat().length})
+                      </TableCell>
+                    </TableRow>
+
+                    {expandedUsers[bookedDate + username] &&
+                      Object.entries(statuses).map(([status, bookings]) => (
+                        <React.Fragment key={bookedDate + username + status}>
+                          <TableRow className="bg-muted/10 cursor-pointer" onClick={() => toggleStatus(bookedDate + username + status)}>
+                            <TableCell colSpan={10} className="pl-16 font-medium">
+                              {expandedStatuses[bookedDate + username + status] ? "▼" : "▶"} 
+                              &nbsp;{status} ({bookings.length})
+                            </TableCell>
+                          </TableRow>
+
+                          {expandedStatuses[bookedDate + username + status] &&
+                            bookings.map((booking, idx) => (
+                              <motion.tr
+                                key={booking.id}
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -20 }}
+                                transition={{ delay: idx * 0.05 }}
+                              >
+                                <TableCell>{booking.bookedDate}</TableCell>
+                                <TableCell>{booking.username}</TableCell>
+                                <TableCell>{getStatusBadge(booking.status)}</TableCell>
+                                <TableCell>{booking.id}</TableCell>
+                                <TableCell>{booking.bookingDate}</TableCell>
+                                <TableCell>{booking.bookingTime}</TableCell>
+                                <TableCell>{booking.consoleType}</TableCell>
+                                <TableCell>{booking.startTime ? formatTime(booking.startTime) : "Not started"}</TableCell>
+                                <TableCell>{booking.endTime ? formatTime(booking.endTime) : "Not ended"}</TableCell>
+                                <TableCell>{booking.type}</TableCell>
+                              </motion.tr>
+                            ))}
+                        </React.Fragment>
+                      ))}
+                  </React.Fragment>
+                ))}
+            </React.Fragment>
+          ))}
         </TableBody>
 
         </Table>
