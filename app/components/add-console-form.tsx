@@ -166,7 +166,6 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
     if (token) {
       const decoded_token = jwtDecode<{ sub: { id: number } }>(token);
       const vendor_id1 = decoded_token.sub.id;
-      console.log(vendor_id1);
       sevendorid(vendor_id1);
     }
   }, []);
@@ -243,6 +242,7 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
 
   const handelfetch = async () => {
     setLoading(true);
+    if (!vendorId) return; // 🚨 Don't fetch if vendorId is not ready
     try {
       const response = await axios.post(
         "https://hfg-dashboard.onrender.com/api/addConsole",

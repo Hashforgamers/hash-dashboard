@@ -855,7 +855,25 @@ function RejectBookingForm() {
 // Rest of the code remains the same...
 
 function ListBooking() {
-  const [vendorId, setVendorId] = useState(null);
+
+  interface BookingType {
+    id: string;
+    bookingDate: string;
+    bookingTime: string;
+    username: string;
+    consoleType: string;
+    bookedDate: string;
+    startTime: string | null;
+    endTime: string | null;
+    status: string;
+    type: string;
+  }
+  const [vendorId, setVendorId] = useState<number | null>(null);
+  const [bookings, setBookings] = useState<BookingType[]>([]);
+  const [filteredBookings, setFilteredBookings] = useState<BookingType[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [sortConfig, setSortConfig] = useState<{ key: string; direction: "asc" | "desc" } | null>(null);
+
 
   // Decode token once when the component mounts
   useEffect(() => {
@@ -919,8 +937,6 @@ function ListBooking() {
     fetchData();
   }, [vendorId]);
   
- 
-  const [searchQuery, setSearchQuery] = useState("");
 
   const startTimer = (id: string) => {
     setBookings((prevBookings) =>
@@ -939,45 +955,36 @@ function ListBooking() {
     );
   };
 
-  const [bookings, setBookings] = useState([
-    {
-      id: null,
-      bookingDate: null,
-      bookingTime: null,
-      username: null,
-      consoleType: null,
-      bookedDate: null,
-      startTime: null,
-      endTime: null,
-      status: null,
-      type:null,
-    }
-  ]);
-
-  // Empty dependency array means this runs once when component mounts
-
-  const [filteredBookings, setFilteredBookings] = useState(bookings);
-  const [sortConfig, setSortConfig] = useState<{
-    key: string;
-    direction: "asc" | "desc";
-  } | null>(null);
-
   useEffect(() => {
     let sorted = [...filteredBookings];
     if (sortConfig) {
-      sorted.sort((a, b) => {
-        // Compare booking dates
-        const dateA = new Date(a.bookingDate);
-        const dateB = new Date(b.bookingDate);
+      // sorted.sort((a, b) => {
+      //   // Compare booking dates
+      //   const dateA = new Date(a.bookingDate);
+      //   const dateB = new Date(b.bookingDate);
         
-        if (dateA < dateB) {
-          return sortConfig.direction === "asc" ? -1 : 1;
+      //   if (dateA < dateB) {
+      //     return sortConfig.direction === "asc" ? -1 : 1;
+      //   }
+      //   if (dateA > dateB) {
+      //     return sortConfig.direction === "asc" ? 1 : -1;
+      //   }
+      //   return 0;
+      // });
+      sorted.sort((a, b) => {
+        if (sortConfig.key === "bookingDate") {
+          const dateA = new Date(a.bookingDate);
+          const dateB = new Date(b.bookingDate);
+          return sortConfig.direction === "asc" ? dateA.getTime() - dateB.getTime() : dateB.getTime() - dateA.getTime();
+        } else {
+          const valueA = (a as any)[sortConfig.key]?.toString().toLowerCase() || "";
+          const valueB = (b as any)[sortConfig.key]?.toString().toLowerCase() || "";
+          if (valueA < valueB) return sortConfig.direction === "asc" ? -1 : 1;
+          if (valueA > valueB) return sortConfig.direction === "asc" ? 1 : -1;
+          return 0;
         }
-        if (dateA > dateB) {
-          return sortConfig.direction === "asc" ? 1 : -1;
-        }
-        return 0;
       });
+      
     }
     setFilteredBookings(sorted);
   }, [sortConfig]);
@@ -1007,6 +1014,11 @@ function ListBooking() {
     }
   };
 
+  useEffect(() => {
+    handleSearch();
+  }, [searchQuery]);
+  
+
   const getStatusBadge = (status: string) => {
     const variants = {
       "rejected": "bg-red-100 dark:bg-red-950",  // Red for rejected (light/dark mode)
@@ -1017,10 +1029,15 @@ function ListBooking() {
   };
   
 
-  const formatTime = (time: string) => {
-    const [hours, minutes, seconds] = time.split(":");
-    return `${hours}:${minutes}`; // You can format it further if needed (e.g., `HH:mm`)
+  const formatTime = (time: string | number) => {
+    if (typeof time === "number") {
+      const date = new Date(time);
+      return `${date.getHours().toString().padStart(2, "0")}:${date.getMinutes().toString().padStart(2, "0")}`;
+    }
+    const [hours, minutes] = time.split(":");
+    return `${hours}:${minutes}`;
   };
+  
   
 
   return (
@@ -1054,7 +1071,7 @@ function ListBooking() {
               </TableHead>
               <TableHead
                 className="font-semibold cursor-pointer hover:bg-muted/50 transition-colors"
-                onClick={() => handleSort("id")}
+                onClick={() => handleSort("bookingDate")}
               >
                 Booking Date{" "}
                 {sortConfig?.key === "id" &&
@@ -1062,7 +1079,7 @@ function ListBooking() {
               </TableHead>
               <TableHead
                 className="font-semibold cursor-pointer hover:bg-muted/50 transition-colors"
-                onClick={() => handleSort("id")}
+                onClick={() => handleSort("bookingTime")}
               >
                 Booking time{" "}
                 {sortConfig?.key === "id" &&
@@ -1070,7 +1087,7 @@ function ListBooking() {
               </TableHead>
               <TableHead
                 className="font-semibold cursor-pointer hover:bg-muted/50 transition-colors"
-                onClick={() => handleSort("id")}
+                onClick={() => handleSort("username")}
               >
                 UserName{" "}
                 {sortConfig?.key === "id" &&
@@ -1078,7 +1095,7 @@ function ListBooking() {
               </TableHead>
               <TableHead
                 className="font-semibold cursor-pointer hover:bg-muted/50 transition-colors"
-                onClick={() => handleSort("id")}
+                onClick={() => handleSort("consoleType")}
               >
                 Console Type{" "}
                 {sortConfig?.key === "id" &&
@@ -1086,7 +1103,7 @@ function ListBooking() {
               </TableHead>
               <TableHead
                 className="font-semibold cursor-pointer hover:bg-muted/50 transition-colors"
-                onClick={() => handleSort("id")}
+                onClick={() => handleSort("bookedDate")}
               >
                 Booked Date{" "}
                 {sortConfig?.key === "id" &&
@@ -1094,7 +1111,7 @@ function ListBooking() {
               </TableHead>
               <TableHead
                 className="font-semibold cursor-pointer hover:bg-muted/50 transition-colors"
-                onClick={() => handleSort("id")}
+                onClick={() => handleSort("startTime")}
               >
                 Start time{" "}
                 {sortConfig?.key === "id" &&
@@ -1102,7 +1119,7 @@ function ListBooking() {
               </TableHead>
               <TableHead
                 className="font-semibold cursor-pointer hover:bg-muted/50 transition-colors"
-                onClick={() => handleSort("id")}
+                onClick={() => handleSort("endTime")}
               >
                 End Timer{" "}
                 {sortConfig?.key === "id" &&
@@ -1110,7 +1127,7 @@ function ListBooking() {
               </TableHead>
               <TableHead
                 className="font-semibold cursor-pointer hover:bg-muted/50 transition-colors"
-                onClick={() => handleSort("id")}
+                onClick={() => handleSort("status")}
               >
                 Status{" "}
                 {sortConfig?.key === "id" &&
@@ -1118,7 +1135,7 @@ function ListBooking() {
               </TableHead>
               <TableHead
                 className="font-semibold cursor-pointer hover:bg-muted/50 transition-colors"
-                onClick={() => handleSort("id")}
+                onClick={() => handleSort("type")}
               >
                 Type{" "}
                 {sortConfig?.key === "id" &&
@@ -1127,6 +1144,13 @@ function ListBooking() {
             </TableRow>
           </TableHeader>
           <TableBody>
+          {filteredBookings.length === 0 ? (
+            <TableRow>
+              <TableCell colSpan={10} className="text-center py-4">
+                No bookings found.
+              </TableCell>
+            </TableRow>
+          ) : (
             <AnimatePresence>
               {filteredBookings.map((booking, index) => (
                 <motion.tr
@@ -1136,22 +1160,6 @@ function ListBooking() {
                   exit={{ opacity: 0, y: -20 }}
                   transition={{ delay: index * 0.1 }}
                 >
-                  {/* <TableCell>{booking.id}</TableCell>
-                  <TableCell>{booking.time}</TableCell>
-                  <TableCell>{booking.system}</TableCell>
-                  <TableCell>{booking.user}</TableCell>
-                  <TableCell>{booking.status}</TableCell>
-                  <TableCell>
-                    {booking.status === "Not played" && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => startTimer(booking.id)}
-                      >
-                        Start
-                      </Button>
-                    )}
-                  </TableCell> */}
                   <TableCell>{booking.id}</TableCell>
                   <TableCell>{booking.bookingDate}</TableCell>
                   <TableCell>{booking.bookingTime}</TableCell>
@@ -1159,20 +1167,19 @@ function ListBooking() {
                   <TableCell>{booking.consoleType}</TableCell>
                   <TableCell>{booking.bookedDate}</TableCell>
                   <TableCell>
-                  {booking.startTime ? formatTime(booking.startTime) : "Not started"}
+                    {booking.startTime ? formatTime(booking.startTime) : "Not started"}
                   </TableCell>
                   <TableCell>
-                  {booking.endTime ? formatTime(booking.endTime) : "Not ended"}
+                    {booking.endTime ? formatTime(booking.endTime) : "Not ended"}
                   </TableCell>
-
                   <TableCell>{getStatusBadge(booking.status)}</TableCell>
-
                   <TableCell>{booking.type}</TableCell>
-                  {/* Other cells */}
                 </motion.tr>
               ))}
             </AnimatePresence>
-          </TableBody>
+          )}
+        </TableBody>
+
         </Table>
       </div>
     </div>

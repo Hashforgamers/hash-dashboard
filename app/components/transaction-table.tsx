@@ -27,6 +27,7 @@ import {
 import { saveAs } from "file-saver";
 import { Badge } from "@/components/ui/badge";
 import { jwtDecode } from "jwt-decode";
+import React from "react";
 
 interface Transaction {
   id: number;
@@ -223,6 +224,68 @@ export function TransactionTable() {
     saveAs(blob, "filtered_transactions.csv");
   }
 
+  const groupByUser = (transactions) => {
+    const grouped = {};
+
+    transactions.forEach((tx) => {
+      if (!grouped[tx.userId]) {
+        grouped[tx.userId] = {
+          userName: tx.userName,
+          totalAmount: 0,
+          bookings: [],
+        };
+      }
+
+      grouped[tx.userId].totalAmount += tx.amount;
+      grouped[tx.userId].bookings.push(tx);
+    });
+
+    return grouped;
+  };
+
+  const [expandedDates, setExpandedDates] = useState<number[]>([]);
+  const [expandedUsers, setExpandedUsers] = useState<Record<string, number[]>>({});
+
+  
+  const toggleDateExpand = (dateKey: string) => {
+    setExpandedDates(prev =>
+      prev.includes(dateKey) ? prev.filter(d => d !== dateKey) : [...prev, dateKey]
+    );
+  };
+  
+  const toggleUserExpand = (dateKey: string, userId: number) => {
+    setExpandedUsers(prev => {
+      const currentExpanded = prev[dateKey] || [];
+      const isExpanded = currentExpanded.includes(userId);
+      const updatedUsers = isExpanded
+        ? currentExpanded.filter(id => id !== userId)
+        : [...currentExpanded, userId];
+  
+      return {
+        ...prev,
+        [dateKey]: updatedUsers,
+      };
+    });
+  };
+  
+  const groupedTransactions = groupByUser(filteredTransactions);
+  const groupedByDate = transactions.reduce((acc, transaction) => {
+    const { slotDate, userId, userName } = transaction;
+    if (!acc[slotDate]) {
+      acc[slotDate] = {};
+    }
+    if (!acc[slotDate][userId]) {
+      acc[slotDate][userId] = {
+        userName,
+        bookings: [],
+        totalAmount: 0,
+      };
+    }
+    acc[slotDate][userId].bookings.push(transaction);
+    acc[slotDate][userId].totalAmount += transaction.amount;
+    return acc;
+  }, {} as Record<string, Record<number, { userName: string; bookings: Transaction[]; totalAmount: number }>>);
+
 
   return (
     <div className="space-y-6 p-6">
@@ -390,63 +453,114 @@ export function TransactionTable() {
         initial="hidden"
         animate="visible"
         transition={{ duration: 0.3, delay: 0.5 }}
-        className="rounded-md border bg-card "
+        className="rounded-2xl border bg-card"
       >
-        <div className="max-h-[600px] overflow-auto ">
-          <Table>
-            <TableHeader>
+      <div className="max-h-[600px] overflow-x-auto overflow-y-auto rounded-2xl">
+          <Table className="min-w-full">
+            <TableHeader className="bg-muted">
               <TableRow>
-                <TableHead className="font-semibold">Slot Date</TableHead>
-                <TableHead className="font-semibold">Slot Time</TableHead>
-                <TableHead className="font-semibold">User Name</TableHead>
-                <TableHead className="font-semibold">Amount</TableHead>
-                <TableHead className="font-semibold">Mode of Payment</TableHead>
-                <TableHead className="font-semibold">Booking Type</TableHead>
-                <TableHead className="font-semibold">
-                  Settlement Status
-                </TableHead>
+                <TableHead className="font-semibold text-foreground">Slot Date</TableHead>
+                <TableHead className="font-semibold text-foreground">Slot Time</TableHead>
+                <TableHead className="font-semibold text-foreground">User Name</TableHead>
+                <TableHead className="font-semibold text-foreground">Amount</TableHead>
+                <TableHead className="font-semibold text-foreground">Mode of Payment</TableHead>
+                <TableHead className="font-semibold text-foreground">Booking Type</TableHead>
+                <TableHead className="font-semibold text-foreground">Settlement Status</TableHead>
               </TableRow>
             </TableHeader>
+
             <TableBody>
-              <AnimatePresence>
-                {filteredTransactions.map((transaction, index) => (
-                  <motion.tr
-                    key={`${transaction.id}-${index}`}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.2, delay: index * 0.03 }}
-                  >
-                    <TableCell>{transaction.slotDate}</TableCell>
-                    <TableCell>{transaction.slotTime}</TableCell>
-                    <TableCell className="font-medium">
-                      {transaction.userName}
-                    </TableCell>
-                    <TableCell>{transaction.amount.toFixed(2)}</TableCell>
-                    <TableCell>
-                      <Badge variant="secondary">
-                        {transaction.modeOfPayment}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline">{transaction.bookingType}</Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={
-                          transaction.settlementStatus === "done"
-                            ? "success"
-                            : transaction.settlementStatus === "pending"
-                            ? "warning"
-                            : "secondary"
-                        }
-                      >
-                        {transaction.settlementStatus}
-                      </Badge>
-                    </TableCell>
-                  </motion.tr>
-                ))}
-              </AnimatePresence>
+              {Object.entries(groupedByDate).map(([slotDate, usersGroup]) => {
+                const dayTotalAmount = Object.values(usersGroup).reduce((sum, userGroup) => sum + userGroup.totalAmount, 0);
+                const userCount = Object.keys(usersGroup).length;
+
+                return (
+                  <React.Fragment key={slotDate}>
+                    {/* Slot Date Row */}
+                    <motion.tr
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      onClick={() => toggleDateExpand(slotDate)}
+                      className="cursor-pointer hover:bg-muted-foreground/10 transition-colors"
+                    >
+                      <TableCell colSpan={2} className="text-primary">
+                        <span>{slotDate}</span> 
+                        <span>{expandedDates.includes(slotDate) ? "▲" : "▼"}</span>
+                      </TableCell>
+                      <TableCell colSpan={1} className="text-primary">
+                        <span>{userCount}</span>  
+                      </TableCell>
+                      <TableCell colSpan={4} className="ext-primary">
+                        <span>₹{dayTotalAmount.toFixed(2)}</span>
+                      </TableCell>
+                    </motion.tr>
+
+                    {/* Users under Slot Date */}
+                    <AnimatePresence>
+                      {expandedDates.includes(slotDate) &&
+                        Object.entries(usersGroup).map(([userId, userGroup]) => (
+                          <React.Fragment key={userId}>
+                            <motion.tr
+                              initial={{ opacity: 0 }}
+                              animate={{ opacity: 1 }}
+                              whileHover={{ scale: 1.01 }}
+                              onClick={() => toggleUserExpand(slotDate, Number(userId))}
+                              className="cursor-pointer hover:bg-muted-foreground/10 transition-colors dark:hover:bg-muted-foreground/20"
+                            >
+                              <TableCell colSpan={2} className="text-primary"></TableCell>
+                              <TableCell colSpan={1} className="text-primary">
+                                {userGroup.userName} {expandedUsers[slotDate]?.includes(Number(userId)) ? "▲" : "▼"}
+                              </TableCell>
+                              <TableCell colSpan={2} className="text-primary">
+                                ₹{userGroup.totalAmount.toFixed(2)}
+                              </TableCell>
+                              <TableCell colSpan={2}></TableCell>
+                            </motion.tr>
+
+                            {/* Bookings under User */}
+                            <AnimatePresence>
+                              {expandedUsers[slotDate]?.includes(Number(userId)) &&
+                                userGroup.bookings.map((transaction, index) => (
+                                  <motion.tr
+                                    key={transaction.id}
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, y: -10 }}
+                                    transition={{ duration: 0.2, delay: index * 0.03 }}
+                                    className="hover:bg-accent transition-colors dark:hover:bg-accent/30"
+                                  >
+                                    <TableCell>{transaction.slotDate}</TableCell>
+                                    <TableCell>{transaction.slotTime}</TableCell>
+                                    <TableCell>{transaction.userName}</TableCell>
+                                    <TableCell>₹{transaction.amount.toFixed(2)}</TableCell>
+                                    <TableCell>
+                                      <Badge variant="secondary">{transaction.modeOfPayment}</Badge>
+                                    </TableCell>
+                                    <TableCell>
+                                      <Badge variant="outline">{transaction.bookingType}</Badge>
+                                    </TableCell>
+                                    <TableCell>
+                                      <Badge
+                                        variant={
+                                          transaction.settlementStatus === "done"
+                                            ? "success"
+                                            : transaction.settlementStatus === "pending"
+                                            ? "warning"
+                                            : "secondary"
+                                        }
+                                      >
+                                        {transaction.settlementStatus}
+                                      </Badge>
+                                    </TableCell>
+                                  </motion.tr>
+                                ))}
+                            </AnimatePresence>
+                          </React.Fragment>
+                        ))}
+                    </AnimatePresence>
+                  </React.Fragment>
+                );
+              })}
             </TableBody>
           </Table>
         </div>
