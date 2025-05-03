@@ -28,6 +28,7 @@ export function DashboardContent() {
 
 
   useEffect(() => {
+    console.log("Printing the change in dash content");
     // Fetch the data from the API
     fetch(`https://hfg-dashboard.onrender.com/api/getLandingPage/vendor/${vendorId}`)
       .then(response => response.json())

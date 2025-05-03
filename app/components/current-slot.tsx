@@ -11,7 +11,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Loader2 } from "lucide-react";
+import { X, CheckCircle, Loader2 } from "lucide-react";
+import { CreditCard, IndianRupee, Smartphone } from "lucide-react";
 
 // Helper function to format the timer (HH:MM:SS)
 const formatTime = (seconds: number) => {
@@ -107,8 +108,39 @@ const shakingEffect = (extraTime: number) => {
 export function CurrentSlots({ currentSlots, refreshSlots, setRefreshSlots }: { currentSlots: any[]; refreshSlots: boolean; setRefreshSlots: (prev: boolean) => void; }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredSlots, setFilteredSlots] = useState(currentSlots);
-
   const [releasingSlots, setReleasingSlots] = useState<Record<string, boolean>>({});
+
+  const [showOverlay, setShowOverlay] = useState(false);
+  const [selectedSlot, setSelectedSlot] = useState<any>(null);
+  const [paymentMode, setPaymentMode] = useState("cash");
+  const [loading, setLoading] = useState(false);
+
+  const calculateExtraAmount = (extraSeconds: number, ratePerMinute = 2) => {
+    const extraMinutes = Math.ceil(extraSeconds / 60);
+    return extraMinutes * ratePerMinute;
+  };
+
+  const handleSettle = async () => {
+    if (!selectedSlot) return;
+    setLoading(true);
+    setReleasingSlots(prev => ({ ...prev, [selectedSlot.slotId]: true }));
+    try {
+      await releaseSlot(
+        selectedSlot.consoleType,
+        selectedSlot.game_id,
+        selectedSlot.consoleNumber,
+        1,
+        setRefreshSlots
+      );
+    } catch (err) {
+      console.error("Error during settlement:", err);
+    } finally {
+      setReleasingSlots(prev => ({ ...prev, [selectedSlot.slotId]: false }));
+      setShowOverlay(false);
+      setSelectedSlot(null);
+      setLoading(false);
+    }
+  };
 
   const handleRelease = async (consoleType, gameId, consoleNumber, value, setRefreshSlots, slotId) => {
     setReleasingSlots(prev => ({ ...prev, [slotId]: true }));
@@ -136,28 +168,34 @@ export function CurrentSlots({ currentSlots, refreshSlots, setRefreshSlots }: { 
     show: { opacity: 1, y: 0 },
   };
 
+  // Add a separate state for timer updates (instead of using currentSlots and refreshSlots)
   const [timers, setTimers] = useState(() =>
-    currentSlots.map((slot) => {
-      // Ensure the correct initialization of startTime, endTime, and date
-      const validStartTime = slot.startTime && slot.startTime !== "Invalid Date" ? slot.startTime : "00:00";
-      const validEndTime = slot.endTime && slot.endTime !== "Invalid Date" ? slot.endTime : "00:00";
-      const validDate = slot.date && slot.date !== "Invalid Date" ? slot.date : new Date().toISOString();  // Default to current date if invalid
-
-      return {
-        slotId: slot.slotId,
-        startTime: validStartTime,
-        endTime: validEndTime,
-        date: validDate,  // Ensure this is present
-        elapsedTime: calculateElapsedTime(validStartTime, validDate),
-        extraTime: calculateExtraTime(validEndTime, validDate),
-      };
-    })
+    currentSlots.map((slot) => ({
+      slotId: slot.slotId,
+      startTime: slot.startTime,
+      endTime: slot.endTime,
+      date: slot.date,  // Ensure this is present
+      elapsedTime: calculateElapsedTime(slot.startTime, slot.date),
+      extraTime: calculateExtraTime(slot.endTime, slot.date),
+    }))
   );
 
   useEffect(() => {
-    // Whenever refreshSlots or currentSlots changes, update filteredSlots
-    setFilteredSlots(currentSlots);
+     // Reset timers when refreshSlots changes
+    const updatedTimers = currentSlots.map((slot) => {
+      const elapsedTime = calculateElapsedTime(slot.startTime, slot.date);  // Calculate elapsed time
+      const extraTime = calculateExtraTime(slot.endTime, slot.date);  // Calculate extra time
+      return { ...slot, elapsedTime, extraTime };  // Update slot with elapsed and extra time
+    });
+
+    // Update the timers state
+    setTimers(updatedTimers);
     
+    // Whenever refreshSlots changes, update filteredSlots
+    setFilteredSlots(currentSlots);
+
+    console.log("Update the current slot time to reload");
+
     // Update the timers every second
     const intervalId = setInterval(() => {
       setTimers((prevTimers) =>
@@ -173,11 +211,11 @@ export function CurrentSlots({ currentSlots, refreshSlots, setRefreshSlots }: { 
       );
     }, 1000);
 
-    console.log("In Current Slot")
-    // Cleanup the interval on component unmount
-    return () => clearInterval(intervalId);
-  }, [refreshSlots, currentSlots]);
+    console.log("In Current Slot");
 
+    // Cleanup the interval on component unmount or when refreshSlots changes
+    return () => clearInterval(intervalId);
+  }, [refreshSlots, currentSlots]);  // This effect depends on refreshSlots and currentSlots
 
   // Search handler
   const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -266,9 +304,10 @@ export function CurrentSlots({ currentSlots, refreshSlots, setRefreshSlots }: { 
                       <motion.button
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
-                        onClick={() =>
-                          handleRelease(slot.consoleType, slot.game_id, slot.consoleNumber, 1, setRefreshSlots, slot.slotId)
-                        }
+                        onClick={() => {
+                          setSelectedSlot(slot);
+                          setShowOverlay(true);
+                        }}                        
                         className="px-3 py-1 bg-red-500 text-white rounded-md text-sm hover:bg-red-600 transition-colors flex items-center justify-center"
                         disabled={releasingSlots[slot.slotId]}
                       >
@@ -293,6 +332,93 @@ export function CurrentSlots({ currentSlots, refreshSlots, setRefreshSlots }: { 
             </Table>
           </div>
         </motion.div>
+        {showOverlay && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+            <div className="bg-white dark:bg-zinc-900 rounded-xl shadow-2xl p-6 w-full max-w-md space-y-6 animate-fade-in">
+              <h2 className="text-xl font-semibold text-center text-gray-800 dark:text-gray-100">
+                Extra Payment Required
+              </h2>
+
+              <div className="text-center text-lg font-medium text-red-600 dark:text-red-400">
+                ₹{calculateExtraAmount(timers.find(t => t.slotId === selectedSlot.slotId)?.extraTime || 0)} for extra time
+              </div>
+
+              {/* Payment Mode Cards */}
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Select Payment Mode
+                </label>
+                <div className="flex justify-between gap-3">
+                  <button
+                    onClick={() => setPaymentMode("cash")}
+                    className={`flex-1 flex flex-col items-center justify-center p-4 rounded-lg border ${
+                      paymentMode === "cash"
+                        ? "bg-emerald-100 dark:bg-emerald-700 border-emerald-600"
+                        : "border-zinc-300 dark:border-zinc-600"
+                    } hover:bg-emerald-50 dark:hover:bg-zinc-800 transition`}
+                  >
+                    <IndianRupee className="w-6 h-6 mb-1" />
+                    <span className="text-sm">Cash</span>
+                  </button>
+
+                  <button
+                    onClick={() => setPaymentMode("card")}
+                    className={`flex-1 flex flex-col items-center justify-center p-4 rounded-lg border ${
+                      paymentMode === "card"
+                        ? "bg-emerald-100 dark:bg-emerald-700 border-emerald-600"
+                        : "border-zinc-300 dark:border-zinc-600"
+                    } hover:bg-emerald-50 dark:hover:bg-zinc-800 transition`}
+                  >
+                    <CreditCard className="w-6 h-6 mb-1" />
+                    <span className="text-sm">Card</span>
+                  </button>
+
+                  <button
+                    onClick={() => setPaymentMode("upi")}
+                    className={`flex-1 flex flex-col items-center justify-center p-4 rounded-lg border ${
+                      paymentMode === "upi"
+                        ? "bg-emerald-100 dark:bg-emerald-700 border-emerald-600"
+                        : "border-zinc-300 dark:border-zinc-600"
+                    } hover:bg-emerald-50 dark:hover:bg-zinc-800 transition`}
+                  >
+                    <Smartphone className="w-6 h-6 mb-1" />
+                    <span className="text-sm">UPI</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex justify-end gap-3 mt-4">
+                <button
+                  onClick={() => setShowOverlay(false)}
+                  className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-zinc-900 hover:bg-gray-100 dark:hover:bg-zinc-800 transition-shadow shadow-sm hover:shadow-md"
+                  disabled={loading}
+                >
+                  <X className="w-4 h-4" />
+                  Cancel
+                </button>
+
+                <button
+                  onClick={handleSettle}
+                  className="inline-flex items-center justify-center gap-2 px-6 py-2 text-sm font-semibold text-white bg-emerald-600 rounded-md hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:ring-offset-2 dark:focus:ring-offset-zinc-900 transition-all shadow-md hover:shadow-lg disabled:opacity-60 disabled:cursor-not-allowed"
+                  disabled={loading}
+                >
+                  {loading ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Processing...
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle className="w-4 h-4" />
+                      Settle
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -67,9 +67,10 @@ export function UpcomingBookings({
           console.log("I am Bhanu, previous value of refreshSlots:", prev);
           return !prev;
         });
-             
+        
         // ✅ Optional: Manually trigger a slot fetch if the parent isn't updating properly
-        fetchAvailableConsoles(); 
+        fetchAvailableConsoles();
+
       } catch (error) {
         console.error("Error updating console status:", error);
       } finally {
@@ -77,8 +78,6 @@ export function UpcomingBookings({
       }
     }
   };
-  
-  
   
   const handleConsoleSelection = (consoleId: number) => {
     setSelectedConsole(consoleId);
