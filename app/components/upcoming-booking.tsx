@@ -1,14 +1,84 @@
 import { Card } from "@/components/ui/card";
 import { motion, AnimatePresence } from "framer-motion";
-import { Play, Monitor, X, Gamepad2 } from "lucide-react";
+import { Monitor, Play, X, Gamepad2 } from "lucide-react";
 import { useState, useEffect } from "react";
 import axios from "axios";
+import { parse, format } from 'date-fns';
 
 export function getIcon(system: string): JSX.Element {
   if (system.includes("PS5")) return <Gamepad2 className="w-24 h-24 text-blue-400 transition-colors duration-200" />;
-  if (system.includes("Xbox")) return <Gamepad2 className="w-24 h-24 text-green-400 transition-colors duration-200" />;
-  return <Monitor className="w-24 h-24 text-white transition-colors duration-200" />;
+  if (system.includes("Xbox")) return <Gamepad2 className="w-24 h-24 text-blue-400 transition-colors duration-200" />;
+  return <Monitor className="w-24 h-24 text-blue-400 transition-colors duration-200" />;
 }
+
+
+const mergeConsecutiveBookings = (bookings: any[]) => {
+  const parseTime = (time: string): Date => {
+    const [timePart, period] = time.trim().split(" ");
+    let [hours, minutes] = timePart.split(":").map(Number);
+
+    if (period === "PM" && hours < 12) hours += 12;
+    if (period === "AM" && hours === 12) hours = 0;
+
+    return new Date(1970, 0, 1, hours, minutes);
+  };
+
+  const formatTimeRange = (start: Date, end: Date): string => {
+    const to12Hour = (date: Date) => {
+      let hours = date.getHours();
+      const minutes = date.getMinutes().toString().padStart(2, "0");
+      const period = hours >= 12 ? "PM" : "AM";
+      hours = hours % 12 || 12;
+      return `${hours}:${minutes} ${period}`;
+    };
+    return `${to12Hour(start)} - ${to12Hour(end)}`;
+  };
+
+  // Group by userId + game_id + date
+  const grouped = bookings.reduce((acc: any, booking) => {
+    const key = `${booking.userId}_${booking.game_id}_${booking.date}`;
+    if (!acc[key]) acc[key] = [];
+    acc[key].push(booking);
+    return acc;
+  }, {});
+
+  const mergedResults: any[] = [];
+
+  for (const group of Object.values(grouped)) {
+    const sorted = (group as any[]).sort((a, b) => {
+      const aStart = parseTime(a.time.split(" - ")[0]);
+      const bStart = parseTime(b.time.split(" - ")[0]);
+      return aStart.getTime() - bStart.getTime();
+    });
+
+    let current = { ...sorted[0] };
+    let currentStart = parseTime(current.time.split(" - ")[0]);
+    let currentEnd = parseTime(current.time.split(" - ")[1]);
+
+    for (let i = 1; i < sorted.length; i++) {
+      const next = sorted[i];
+      const nextStart = parseTime(next.time.split(" - ")[0]);
+      const nextEnd = parseTime(next.time.split(" - ")[1]);
+
+      if (nextStart.getTime() <= currentEnd.getTime()) {
+        // Overlapping or consecutive
+        currentEnd = new Date(Math.max(currentEnd.getTime(), nextEnd.getTime()));
+      } else {
+        // Push current and start new one
+        current.time = formatTimeRange(currentStart, currentEnd);
+        mergedResults.push(current);
+        current = { ...next };
+        currentStart = nextStart;
+        currentEnd = nextEnd;
+      }
+    }
+
+    current.time = formatTimeRange(currentStart, currentEnd);
+    mergedResults.push(current);
+  }
+
+  return mergedResults;
+};
 
 
 export function UpcomingBookings({
@@ -16,7 +86,7 @@ export function UpcomingBookings({
   gameId,
   vendorId,
   dashboardUrl,
-  setRefreshSlots, 
+  setRefreshSlots,
 }: {
   upcomingBookings: any[];
   gameId: string;
@@ -32,6 +102,16 @@ export function UpcomingBookings({
   const [selectedGameId, setSelectedGameId] = useState<string | null>(null);
   const [selectedBookingId, setSelectedBookingId] = useState<string | null>(null);
 
+  // Merge the bookings before rendering
+  const mergedBookings = mergeConsecutiveBookings(upcomingBookings);
+
+  const start = (system: string, gameId: string, bookingId: string) => {
+    setSelectedSystem(system);
+    setSelectedGameId(gameId);
+    setSelectedBookingId(bookingId);
+    setStartCard(true);
+    fetchAvailableConsoles(gameId, vendorId);
+  };
 
   const fetchAvailableConsoles = async (gameId: string, vendorId: string) => {
     setIsLoading(true);
@@ -47,14 +127,6 @@ export function UpcomingBookings({
     }
   };
 
-  const start = (system: string, gameId: string, bookingId: string) => {
-    setSelectedSystem(system);
-    setSelectedGameId(gameId);
-    setSelectedBookingId(bookingId);
-    setStartCard(true);
-    fetchAvailableConsoles(gameId, vendorId);
-  };
-  
   const handleSubmit = async () => {
     if (selectedConsole !== null && selectedGameId !== null && selectedBookingId !== null) {
       setIsLoading(true);
@@ -63,14 +135,7 @@ export function UpcomingBookings({
           `https://hfg-dashboard.onrender.com/api/updateDeviceStatus/consoleTypeId/${selectedGameId}/console/${selectedConsole}/bookingId/${selectedBookingId}/vendor/${vendorId}`
         );
         setStartCard(false);
-        setRefreshSlots((prev) => {
-          console.log("I am Bhanu, previous value of refreshSlots:", prev);
-          return !prev;
-        });
-        
-        // ✅ Optional: Manually trigger a slot fetch if the parent isn't updating properly
-        fetchAvailableConsoles();
-
+        setRefreshSlots((prev) => !prev);
       } catch (error) {
         console.error("Error updating console status:", error);
       } finally {
@@ -78,7 +143,7 @@ export function UpcomingBookings({
       }
     }
   };
-  
+
   const handleConsoleSelection = (consoleId: number) => {
     setSelectedConsole(consoleId);
   };
@@ -98,11 +163,11 @@ export function UpcomingBookings({
               initial={{ scale: 0.95, opacity: 0, y: 20 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.95, opacity: 0, y: 20 }}
-              transition={{ 
+              transition={{
                 duration: 0.2,
                 type: "spring",
                 stiffness: 300,
-                damping: 25
+                damping: 25,
               }}
               className="w-full max-w-2xl"
             >
@@ -209,7 +274,7 @@ export function UpcomingBookings({
           animate="show"
           className="space-y-4"
         >
-          {upcomingBookings.map((booking) => (
+          {mergedBookings.map((booking) => (
             <motion.div
               key={booking.bookingId}
               variants={{
@@ -233,9 +298,8 @@ export function UpcomingBookings({
                   Start
                 </motion.button>
               </div>
-              <div className="mt-3 flex items-center justify-between text-sm text-gray-500 dark:text-zinc-400">
-                <span>{booking.time}</span>
-              </div>
+
+              <p className="text-sm text-gray-500 dark:text-zinc-400 mt-2">{booking.time}</p>
             </motion.div>
           ))}
         </motion.div>
@@ -243,5 +307,3 @@ export function UpcomingBookings({
     </>
   );
 }
-
-export default UpcomingBookings;
