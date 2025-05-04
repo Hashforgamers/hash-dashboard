@@ -13,6 +13,11 @@ import {
 } from "@/components/ui/table";
 import { X, CheckCircle, Loader2 } from "lucide-react";
 import { CreditCard, IndianRupee, Smartphone } from "lucide-react";
+import dayjs from "dayjs";
+import { differenceInMilliseconds, format } from 'date-fns';
+import { mergeConsecutiveSlots, mergeConsecutiveBookings , Booking} from "@/app/utils/slot-utils";
+import { FaCheck, FaPowerOff } from 'react-icons/fa'; // Import icons
+
 
 // Helper function to format the timer (HH:MM:SS)
 const formatTime = (seconds: number) => {
@@ -105,6 +110,15 @@ const shakingEffect = (extraTime: number) => {
   return extraTime > 30 ? "animate-shake" : ""; // Trigger shaking after 30 seconds of extra time
 };
 
+const enrichMergedSlots = (merged) =>
+  merged.map((slot) => ({
+    ...slot,
+    elapsedTime: calculateElapsedTime(slot.startTime, slot.date),
+    extraTime: calculateExtraTime(slot.endTime, slot.date),
+  }));
+
+
+  
 export function CurrentSlots({ currentSlots, refreshSlots, setRefreshSlots }: { currentSlots: any[]; refreshSlots: boolean; setRefreshSlots: (prev: boolean) => void; }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredSlots, setFilteredSlots] = useState(currentSlots);
@@ -114,6 +128,10 @@ export function CurrentSlots({ currentSlots, refreshSlots, setRefreshSlots }: { 
   const [selectedSlot, setSelectedSlot] = useState<any>(null);
   const [paymentMode, setPaymentMode] = useState("cash");
   const [loading, setLoading] = useState(false);
+  const mergedSlots = mergeConsecutiveSlots(currentSlots);
+
+  // In your component:
+  const mergedBookings = mergeConsecutiveBookings(currentSlots);
 
   const calculateExtraAmount = (extraSeconds: number, ratePerMinute = 2) => {
     const extraMinutes = Math.ceil(extraSeconds / 60);
@@ -181,21 +199,17 @@ export function CurrentSlots({ currentSlots, refreshSlots, setRefreshSlots }: { 
   );
 
   useEffect(() => {
-     // Reset timers when refreshSlots changes
+    // Reset timers when refreshSlots changes
     const updatedTimers = currentSlots.map((slot) => {
       const elapsedTime = calculateElapsedTime(slot.startTime, slot.date);  // Calculate elapsed time
       const extraTime = calculateExtraTime(slot.endTime, slot.date);  // Calculate extra time
       return { ...slot, elapsedTime, extraTime };  // Update slot with elapsed and extra time
     });
-
+  
     // Update the timers state
     setTimers(updatedTimers);
-    
-    // Whenever refreshSlots changes, update filteredSlots
-    setFilteredSlots(currentSlots);
-
-    console.log("Update the current slot time to reload");
-
+    setFilteredSlots(enrichMergedSlots(mergeConsecutiveSlots(currentSlots)));
+  
     // Update the timers every second
     const intervalId = setInterval(() => {
       setTimers((prevTimers) =>
@@ -210,19 +224,18 @@ export function CurrentSlots({ currentSlots, refreshSlots, setRefreshSlots }: { 
         })
       );
     }, 1000);
-
-    console.log("In Current Slot");
-
+  
     // Cleanup the interval on component unmount or when refreshSlots changes
     return () => clearInterval(intervalId);
-  }, [refreshSlots, currentSlots]);  // This effect depends on refreshSlots and currentSlots
-
+  }, [refreshSlots, currentSlots]);
+  
   // Search handler
   const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
     const query = event.target.value.toLowerCase();
     setSearchQuery(query);
 
-    const filtered = currentSlots.filter(
+    const mergedSlots = mergeConsecutiveSlots(currentSlots);
+    const filtered = mergedSlots.filter(
       (slot) =>
         slot.username.toLowerCase().includes(query) ||
         slot.consoleType.toLowerCase().includes(query)
@@ -270,65 +283,68 @@ export function CurrentSlots({ currentSlots, refreshSlots, setRefreshSlots }: { 
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredSlots.map((slot) => {
-                  const timer = timers.find((t) => t.slotId === slot.slotId);
-                  return (
-                    <motion.tr
-                      key={slot.slotId}
-                      variants={item}
-                      className="border-zinc-800 dark:border-zinc-700"
-                    >
-                      <TableCell className="text-gray-900 dark:text-white">{slot.username}</TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          {slot.type === "pc" && <Monitor className="w-4 h-4 text-emerald-500" />}
-                          {slot.type === "ps5" && <Gamepad2 className="w-4 h-4 text-blue-500" />}
-                          {slot.type === "xbox" && <Gamepad className="w-4 h-4 text-purple-500" />}
-                          {slot.consoleType}
-                        </div>
-                      </TableCell>
-                      <TableCell>{slot.startTime}</TableCell>
-                      <TableCell>{slot.endTime}</TableCell>
-                      <TableCell>
-                        <span className="font-mono">
-                          {timer ? formatTime(timer.extraTime) : "00:00:00"}
-                        </span>
-                      </TableCell>
-                      <TableCell>
-                        <span className={`font-mono ${shakingEffect(timer ? timer.extraTime : 0)}`}>
-                          {timer ? formatTime(timer.elapsedTime) : "00:00:00"}
-                        </span>
-                      </TableCell>
+              {mergedBookings.map((booking) => {
+                const timer = timers.find((t) => t.slotId === booking.slotId);
+                const isReleasing = releasingSlots[booking.slotId] || false;
+                const extraAmount = calculateExtraAmount(timer?.extraTime || 0);
 
-                      <TableCell>
-                      <motion.button
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
+                return (
+                  <TableRow
+                    key={booking.slotId}
+                    className={`transition-all duration-200 ease-in-out ${
+                      shakingEffect(timer?.extraTime || 0)
+                    }`}
+                  >
+                    <TableCell>{booking.username}</TableCell>
+                    <TableCell className="capitalize">{booking.consoleType}</TableCell>
+                    <TableCell>{booking.startTime}</TableCell>
+                    <TableCell>{booking.endTime}</TableCell>
+                    <TableCell>
+                      {timer?.extraTime > 0 ? (
+                        <span className="text-red-500">{formatTime(timer.extraTime)}</span>
+                      ) : (
+                        <span className="text-green-500">00:00:00</span>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <span className="text-blue-600 font-mono">{formatTime(timer?.elapsedTime || 0)}</span>
+                    </TableCell>
+                    <TableCell>
+                    {timer?.extraTime > 0 ? (
+                      <button
                         onClick={() => {
-                          setSelectedSlot(slot);
+                          setSelectedSlot(booking);
                           setShowOverlay(true);
-                        }}                        
-                        className="px-3 py-1 bg-red-500 text-white rounded-md text-sm hover:bg-red-600 transition-colors flex items-center justify-center"
-                        disabled={releasingSlots[slot.slotId]}
+                        }}
+                        className="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded text-sm flex items-center justify-center space-x-2 w-32"
                       >
-                        {releasingSlots[slot.slotId] ? (
-                          <>
-                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                            Releasing...
-                          </>
-                        ) : (
-                          <>
-                            <RefreshCcw className="w-4 h-4 mr-2" />
-                            Release
-                          </>
-                        )}
-                      </motion.button>
-
-                      </TableCell>
-                    </motion.tr>
-                  );
-                })}
-              </TableBody>
+                        <FaCheck className="w-4 h-4" />
+                        <span>Settle</span>
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() =>
+                          handleRelease(
+                            booking.consoleType,
+                            booking.game_id,
+                            booking.consoleNumber,
+                            1,
+                            setRefreshSlots,
+                            booking.slotId
+                          )
+                        }
+                        disabled={isReleasing}
+                        className="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded text-sm disabled:opacity-50 flex items-center justify-center space-x-2 w-32"
+                      >
+                        {isReleasing ? <Loader2 className="animate-spin w-4 h-4" /> : <FaPowerOff className="w-4 h-4" />}
+                        <span>{isReleasing ? "Releasing..." : "Release"}</span>
+                      </button>
+                    )}
+                  </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
             </Table>
           </div>
         </motion.div>
