@@ -11,7 +11,6 @@ export function getIcon(system: string): JSX.Element {
   return <Monitor className="w-24 h-24 text-blue-400 transition-colors duration-200" />;
 }
 
-
 const mergeConsecutiveBookings = (bookings: any[]) => {
   const parseTime = (time: string): Date => {
     const [timePart, period] = time.trim().split(" ");
@@ -54,6 +53,7 @@ const mergeConsecutiveBookings = (bookings: any[]) => {
     let current = { ...sorted[0] };
     let currentStart = parseTime(current.time.split(" - ")[0]);
     let currentEnd = parseTime(current.time.split(" - ")[1]);
+    let mergedIds = [current.bookingId];
 
     for (let i = 1; i < sorted.length; i++) {
       const next = sorted[i];
@@ -61,25 +61,27 @@ const mergeConsecutiveBookings = (bookings: any[]) => {
       const nextEnd = parseTime(next.time.split(" - ")[1]);
 
       if (nextStart.getTime() <= currentEnd.getTime()) {
-        // Overlapping or consecutive
         currentEnd = new Date(Math.max(currentEnd.getTime(), nextEnd.getTime()));
+        mergedIds.push(next.bookingId);
       } else {
-        // Push current and start new one
         current.time = formatTimeRange(currentStart, currentEnd);
+        current.merged_booking_ids = mergedIds;
         mergedResults.push(current);
+
         current = { ...next };
         currentStart = nextStart;
         currentEnd = nextEnd;
+        mergedIds = [next.bookingId];
       }
     }
 
     current.time = formatTimeRange(currentStart, currentEnd);
+    current.merged_booking_ids = mergedIds;
     mergedResults.push(current);
   }
 
   return mergedResults;
 };
-
 
 export function UpcomingBookings({
   upcomingBookings,
@@ -128,12 +130,37 @@ export function UpcomingBookings({
   };
 
   const handleSubmit = async () => {
-    if (selectedConsole !== null && selectedGameId !== null && selectedBookingId !== null) {
+    if (selectedConsole && selectedGameId && selectedBookingId) {
       setIsLoading(true);
+  
+      // Find the merged group for this booking
+      const selectedMergedBooking = mergedBookings.find(
+        (booking) => booking.bookingId === selectedBookingId || booking.merged_booking_ids?.includes(selectedBookingId)
+      );
+      const bookingIds = selectedMergedBooking?.merged_booking_ids || [selectedBookingId];
+  
+      const url =
+        bookingIds.length > 1
+          ? "https://hfg-dashboard.onrender.com/api/assignConsoleToMultipleBookings"
+          : `https://hfg-dashboard.onrender.com/api/updateDeviceStatus/consoleTypeId/${selectedGameId}/console/${selectedConsole}/bookingId/${selectedBookingId}/vendor/${vendorId}`;
+  
+      const payload =
+        bookingIds.length > 1
+          ? {
+              console_id: selectedConsole,
+              game_id: selectedGameId,
+              booking_ids: bookingIds,
+              vendor_id: vendorId,
+            }
+          : null;
+  
       try {
-        await axios.post(
-          `https://hfg-dashboard.onrender.com/api/updateDeviceStatus/consoleTypeId/${selectedGameId}/console/${selectedConsole}/bookingId/${selectedBookingId}/vendor/${vendorId}`
-        );
+        if (bookingIds.length > 1) {
+          await axios.post(url, payload);
+        } else {
+          await axios.post(url); // single mapping doesn't need a payload
+        }
+  
         setStartCard(false);
         setRefreshSlots((prev) => !prev);
       } catch (error) {
@@ -143,6 +170,7 @@ export function UpcomingBookings({
       }
     }
   };
+  
 
   const handleConsoleSelection = (consoleId: number) => {
     setSelectedConsole(consoleId);

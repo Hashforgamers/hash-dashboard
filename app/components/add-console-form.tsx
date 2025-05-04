@@ -159,20 +159,20 @@ const getHardWareSpecification = (
 
 export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
 
-  const [vendorid, sevendorid] = useState(null);
+  const [vendorId, setVendorId] = useState(null);
 
   useEffect(() => {
     const token = localStorage.getItem("jwtToken");
     if (token) {
       const decoded_token = jwtDecode<{ sub: { id: number } }>(token);
       const vendor_id1 = decoded_token.sub.id;
-      sevendorid(vendor_id1);
+      setVendorId(vendor_id1);
     }
   }, []);
 
   const [formdata, setformdata] = useState({
     availablegametype: consoleType,
-    vendorId: vendorid,
+    vendorId: vendorId,
 
     consoleDetails: {
       consoleNumber: "",
@@ -207,7 +207,7 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
 
   const payload = {
     availablegametype: formdata.availablegametype,
-    vendorId: vendorid,
+    vendorId: vendorId,
     consoleDetails: {
       consoleNumber: formdata.consoleDetails.consoleNumber,
       modelNumber: formdata.consoleDetails.ModelNumber,
