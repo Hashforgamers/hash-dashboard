@@ -138,11 +138,51 @@ export function CurrentSlots({ currentSlots, refreshSlots, setRefreshSlots }: { 
     return extraMinutes * ratePerMinute;
   };
 
+  const createExtraBooking = async (payload) => {
+    try {
+      const response = await fetch("https://hfg-booking.onrender.com/api/extraBooking", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+  
+      if (!response.ok) {
+        throw new Error("Failed to create extra booking");
+      }
+  
+      return await response.json(); // or response.text() if needed
+    } catch (error) {
+      console.error("Error creating extra booking:", error);
+      throw error;
+    }
+  };
+  
+
   const handleSettle = async () => {
     if (!selectedSlot) return;
     setLoading(true);
     setReleasingSlots(prev => ({ ...prev, [selectedSlot.slotId]: true }));
+  
+    const extraTime = calculateExtraTime(selectedSlot.endTime, selectedSlot.date);
+    const amount = calculateExtraAmount(extraTime);
+  
+    const extraBookingPayload = {
+      consoleNumber: selectedSlot.consoleNumber,
+      consoleType: selectedSlot.consoleType,
+      date: new Date().toISOString().split("T")[0],
+      slotId: selectedSlot.slotId,
+      userId: selectedSlot.userId,
+      username: selectedSlot.username,
+      amount: amount,
+      gameId: selectedSlot.game_id,
+      vendorId: 1, // Replace with dynamic value if needed
+      modeOfPayment: paymentMode,
+    };    
+  
     try {
+      await createExtraBooking(extraBookingPayload);
       await releaseSlot(
         selectedSlot.consoleType,
         selectedSlot.game_id,
@@ -159,6 +199,7 @@ export function CurrentSlots({ currentSlots, refreshSlots, setRefreshSlots }: { 
       setLoading(false);
     }
   };
+  
 
   const handleRelease = async (consoleType, gameId, consoleNumber, value, setRefreshSlots, slotId) => {
     setReleasingSlots(prev => ({ ...prev, [slotId]: true }));

@@ -192,17 +192,21 @@ export function TransactionTable() {
   }, [transactions]);
 
   function downloadFilteredData() {
-    // Convert the filtered transactions into CSV format
-    const header = [
+    const companyName = "Hash For Gamers Pvt. Ltd.";
+    const gstNumber = "GSTIN: 29ABCDE1234F1Z5"; // example, replace if needed
+    const reportTitle = "Transaction Report";
+    const reportDate = new Date().toLocaleDateString();
+  
+    const headers = [
       "Slot Date",
       "Slot Time",
       "User Name",
-      "Amount",
+      "Amount (INR)",
       "Mode of Payment",
       "Booking Type",
       "Settlement Status",
     ];
-
+  
     const rows = filteredTransactions.map((transaction) => [
       transaction.slotDate,
       transaction.slotTime,
@@ -212,16 +216,31 @@ export function TransactionTable() {
       transaction.bookingType,
       transaction.settlementStatus,
     ]);
-
-    // Combine the header and rows into CSV data
+  
+    const totalAmount = filteredTransactions.reduce((sum, t) => sum + t.amount, 0);
+    const gst = totalAmount * 0.18; // Assuming 18% GST
+    const totalWithGst = totalAmount + gst;
+  
+    const footer = [
+      [],
+      ["Subtotal", "", "", totalAmount.toFixed(2)],
+      ["GST (18%)", "", "", gst.toFixed(2)],
+      ["Total (INR)", "", "", totalWithGst.toFixed(2)],
+    ];
+  
     const csvContent = [
-      header.join(","),
+      `"${companyName}"`,
+      `"${gstNumber}"`,
+      `"${reportTitle} - ${reportDate}"`,
+      "",
+      headers.join(","),
       ...rows.map((row) => row.join(",")),
+      "",
+      ...footer.map((line) => line.join(",")),
     ].join("\n");
-
-    // Create a Blob from the CSV content and trigger download
+  
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8" });
-    saveAs(blob, "filtered_transactions.csv");
+    saveAs(blob, `transaction_report_${reportDate.replace(/\//g, "-")}.csv`);
   }
 
   const groupByUser = (transactions) => {
