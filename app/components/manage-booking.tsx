@@ -554,6 +554,7 @@ function RejectBookingForm() {
   const [bookingFound, setBookingFound] = useState(false);
   const [rejectionReason, setRejectionReason] = useState("");
   const [repaymentType, setRepaymentType] = useState("");
+  const [userEmail, setUserEmail] = useState("");
   const [bookingData, setBookingData] = useState(null);
   const [message, setMessage] = useState("");
   const [confirmReject, setConfirmReject] = useState(false);
@@ -591,14 +592,16 @@ function RejectBookingForm() {
           customer: booking.customer || { name: "", email: "", phone: "" },
           booking_date: booking.date || "",
           booking_id: booking.booking_id,
-          selected_slots: [`${booking.time_slot.start_time}`], // Preselect slot
+          selected_slots: [`${booking.time_slot.start_time}`],
           system: booking.system || "",
-          vendorId: vendorId, // Hardcoded vendor ID (Update dynamically if needed)
-          consoleTypeId: booking.game_id, // Extract console type ID
+          vendorId: vendorId,
+          consoleTypeId: booking.game_id,
           start_time: booking.time_slot.start_time,
           end_time: booking.time_slot.end_time,
-          amount_paid:booking.amount_paid,
+          amount_paid: booking.amount_paid,
         });
+        setUserEmail(booking.customer?.email || "");
+
 
         setBookingFound(true);
 
@@ -635,6 +638,7 @@ function RejectBookingForm() {
             booking_id: bookingId,
             rejection_reason: rejectionReason,
             repayment_type: repaymentType,
+            user_email: userEmail,
           }),
         }
       );
