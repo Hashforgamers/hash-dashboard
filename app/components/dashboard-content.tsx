@@ -78,7 +78,7 @@ export function DashboardContent() {
               </div>
               <p className="theme-subtext text-xs mt-1 flex items-center space-x-1">
                 <TrendingDown className="h-4 w-4 text-red-500" />
-                <span>{dashboardData.stats.todayEarningsChange}% less than yesterday</span>
+                <span>{dashboardData.stats.todayEarningsChange ?? 0}% less than yesterday</span>
               </p>
             </CardContent>
           </Card>
