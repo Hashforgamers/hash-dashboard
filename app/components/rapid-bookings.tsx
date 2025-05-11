@@ -78,7 +78,7 @@ function RapidBookings() {
     return today.toISOString().split("T")[0]; // Returns date in YYYY-MM-DD format
   });  
   const [time, setTime] = useState("");
-  const [venodorId, setVendorId] = useState(1);
+  const [vendorId, setVendorId] = useState(null);
   const [filters, setFilters] = useState<Filters>({
     type: "all",
     status: "all",
@@ -88,6 +88,16 @@ function RapidBookings() {
   const [rapidbooking, setrapidbooking] = useState<System[]>([]);
   const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);
   const [isLoadingSlots, setIsLoadingSlots] = useState(false);
+
+  // Decode token once when the component mounts
+  useEffect(() => {
+    const token = localStorage.getItem("jwtToken");
+    if (token) {
+      const decoded_token = jwtDecode<{ sub: { id: number } }>(token);
+      const vendor_id = decoded_token.sub.id;
+      setVendorId(vendor_id);
+    }
+  }, []);
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
@@ -123,39 +133,31 @@ function RapidBookings() {
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
+
   useEffect(() => {
-    const get_data = async () => {
-      try {
-        const token = localStorage.getItem("jwtToken");
-        if (token) {
-          const decoded_token = jwtDecode<{ sub: { id: number } }>(token);
-          const vendor_id1 = decoded_token.sub.id;
-          setVendorId(vendor_id1);
-          console.log("vendorId", vendor_id1);
+    if (vendorId !== null) {
+      const get_data = async () => {
+        try {
           const response = await axios.get(
-            `https://hfg-dashboard.onrender.com/api/getAllDevice/vendor/${venodorId}`,
+            `https://hfg-dashboard.onrender.com/api/getAllDevice/vendor/${vendorId}`,
             {
               headers: {
                 "Content-Type": "application/json",
               },
             }
           );
-
-          if (!response) {
-            throw new Error("NO respone from the server");
-          } else {
-            const data = await response.data;
-            console.log("data", data);
-            setrapidbooking(data);
-          }
+          const data = response.data;
+          console.log("data", data);
+          setrapidbooking(data);
+        } catch (error) {
+          console.error("Error fetching vendor data", error);
         }
-      } catch (error) {
-        console.error("Error in the getting vendorId", error);
-      }
-    };
+      };
 
-    get_data(); //function call
-  }, []);
+      get_data();
+    }
+  }, [vendorId]); // <- This ensures it runs only after vendorId is set
+
 
   const System_data: System[] = rapidbooking.map((item: any) => {
     let systemData: System = {
@@ -211,7 +213,7 @@ function RapidBookings() {
     setIsLoadingSlots(true);
     try {
       const response = await axios.get(
-        `https://hfg-booking.onrender.com/api/getSlotList/vendor/${venodorId}/game/${consoleTypeId}`,
+        `https://hfg-booking.onrender.com/api/getSlotList/vendor/${vendorId}/game/${consoleTypeId}`,
         {
           headers: {
             "Content-Type": "application/json",
@@ -340,7 +342,7 @@ function RapidBookings() {
       };
 
       const response = await axios.post(
-        `https://hfg-booking.onrender.com/api/newBooking/vendor/${venodorId}`,
+        `https://hfg-booking.onrender.com/api/newBooking/vendor/${vendorId}`,
         payload,
         {
           headers: {
