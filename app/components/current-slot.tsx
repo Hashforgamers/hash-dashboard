@@ -82,7 +82,7 @@ const calculateExtraTime = (endTime: string, date: string) => {
 // Function to release the slot by calling the API
 const releaseSlot = async (consoleType, gameId, consoleId, vendorId, setRefreshSlots) => {
   try {
-    const response = await fetch(`https://hfg-dashboard.onrender.com/api/releaseDevice/consoleTypeId/${gameId}/console/${consoleId}/vendor/${vendorId}`, {
+    const response = await fetch(`https://hfg-dashboard.onrender.com/api/releaseDevice/consoleTypeId/${gameId}/console/${consoleId}/vendor/2`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -229,7 +229,7 @@ export function CurrentSlots({ currentSlots, refreshSlots, setRefreshSlots }: { 
 
   // Add a separate state for timer updates (instead of using currentSlots and refreshSlots)
   const [timers, setTimers] = useState(() =>
-    currentSlots.map((slot) => ({
+    filteredSlots.map((slot) => ({
       slotId: slot.slotId,
       startTime: slot.startTime,
       endTime: slot.endTime,
@@ -325,64 +325,70 @@ export function CurrentSlots({ currentSlots, refreshSlots, setRefreshSlots }: { 
               </TableHeader>
               <TableBody>
               {mergedBookings.map((booking) => {
-                const timer = timers.find((t) => t.slotId === booking.slotId);
                 const isReleasing = releasingSlots[booking.slotId] || false;
-                const extraAmount = calculateExtraAmount(timer?.extraTime || 0);
 
+                const merged = mergedBookings.find(
+                  (mb) => Array.isArray(mb.bookings) && mb.bookings.some((b) => b.slotId === booking.slotId)
+                );
+
+                const mergedStartTime = merged?.bookings?.[0]?.startTime || booking.startTime;
+                const mergedEndTime =
+                  merged?.bookings?.[merged.bookings.length - 1]?.endTime || booking.endTime;
+                const mergedDate = merged?.bookings?.[0]?.date || booking.date;
+
+                const extraTime = calculateExtraTime(mergedEndTime, mergedDate);
+                const elapsedTime = calculateElapsedTime(mergedStartTime, mergedDate);
+                const extraAmount = calculateExtraAmount(extraTime);
                 return (
-                  <TableRow
-                    key={booking.slotId}
-                    className={`transition-all duration-200 ease-in-out ${
-                      shakingEffect(timer?.extraTime || 0)
-                    }`}
-                  >
+                  <TableRow key={booking.slotId}>
                     <TableCell>{booking.username}</TableCell>
                     <TableCell className="capitalize">{booking.consoleType}</TableCell>
                     <TableCell>{booking.startTime}</TableCell>
                     <TableCell>{booking.endTime}</TableCell>
                     <TableCell>
-                      {timer?.extraTime > 0 ? (
-                        <span className="text-red-500">{formatTime(timer.extraTime)}</span>
+                      {extraTime > 0 ? (
+                        <span className="text-red-500">{formatTime(extraTime)}</span>
                       ) : (
                         <span className="text-green-500">00:00:00</span>
                       )}
                     </TableCell>
                     <TableCell>
-                      <span className="text-blue-600 font-mono">{formatTime(timer?.elapsedTime || 0)}</span>
+                      <span className="text-blue-600 font-mono">{formatTime(elapsedTime)}</span>
                     </TableCell>
                     <TableCell>
-                    {timer?.extraTime > 0 ? (
-                      <button
-                        onClick={() => {
-                          setSelectedSlot(booking);
-                          setShowOverlay(true);
-                        }}
-                        className="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded text-sm flex items-center justify-center space-x-2 w-32"
-                      >
-                        <FaCheck className="w-4 h-4" />
-                        <span>Settle</span>
-                      </button>
-                    ) : (
-                      <button
-                        onClick={() =>
-                          handleRelease(
-                            booking.consoleType,
-                            booking.game_id,
-                            booking.consoleNumber,
-                            1,
-                            setRefreshSlots,
-                            booking.slotId
-                          )
-                        }
-                        disabled={isReleasing}
-                        className="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded text-sm disabled:opacity-50 flex items-center justify-center space-x-2 w-32"
-                      >
-                        {isReleasing ? <Loader2 className="animate-spin w-4 h-4" /> : <FaPowerOff className="w-4 h-4" />}
-                        <span>{isReleasing ? "Releasing..." : "Release"}</span>
-                      </button>
-                    )}
-                  </TableCell>
+                      {extraTime > 0 ? (
+                        <button
+                          onClick={() => {
+                            setSelectedSlot(booking);
+                            setShowOverlay(true);
+                          }}
+                          className="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded text-sm flex items-center justify-center space-x-2 w-32"
+                        >
+                          <FaCheck className="w-4 h-4" />
+                          <span>Settle</span>
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() =>
+                            handleRelease(
+                              booking.consoleType,
+                              booking.game_id,
+                              booking.consoleNumber,
+                              1,
+                              setRefreshSlots,
+                              booking.slotId
+                            )
+                          }
+                          disabled={isReleasing}
+                          className="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded text-sm disabled:opacity-50 flex items-center justify-center space-x-2 w-32"
+                        >
+                          {isReleasing ? <Loader2 className="animate-spin w-4 h-4" /> : <FaPowerOff className="w-4 h-4" />}
+                          <span>{isReleasing ? "Releasing..." : "Release"}</span>
+                        </button>
+                      )}
+                    </TableCell>
                   </TableRow>
+
                 );
               })}
             </TableBody>
