@@ -17,7 +17,7 @@ import dayjs from "dayjs";
 import { differenceInMilliseconds, format } from 'date-fns';
 import { mergeConsecutiveSlots, mergeConsecutiveBookings , Booking} from "@/app/utils/slot-utils";
 import { FaCheck, FaPowerOff } from 'react-icons/fa'; // Import icons
-
+import { jwtDecode } from "jwt-decode";
 
 // Helper function to format the timer (HH:MM:SS)
 const formatTime = (seconds: number) => {
@@ -82,7 +82,7 @@ const calculateExtraTime = (endTime: string, date: string) => {
 // Function to release the slot by calling the API
 const releaseSlot = async (consoleType, gameId, consoleId, vendorId, setRefreshSlots) => {
   try {
-    const response = await fetch(`https://hfg-dashboard.onrender.com/api/releaseDevice/consoleTypeId/${gameId}/console/${consoleId}/vendor/2`, {
+    const response = await fetch(`https://hfg-dashboard.onrender.com/api/releaseDevice/consoleTypeId/${gameId}/console/${consoleId}/vendor/${vendorId}`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -129,6 +129,7 @@ export function CurrentSlots({ currentSlots, refreshSlots, setRefreshSlots }: { 
   const [paymentMode, setPaymentMode] = useState("cash");
   const [loading, setLoading] = useState(false);
   const mergedSlots = mergeConsecutiveSlots(currentSlots);
+  const [vendorId, setVendorId] = useState(null);
 
   // In your component:
   const mergedBookings = mergeConsecutiveBookings(currentSlots);
@@ -137,6 +138,16 @@ export function CurrentSlots({ currentSlots, refreshSlots, setRefreshSlots }: { 
     const extraMinutes = Math.ceil(extraSeconds / 60);
     return extraMinutes * ratePerMinute;
   };
+
+  // Decode token once when the component mounts
+  useEffect(() => {
+    const token = localStorage.getItem("jwtToken");
+
+    if (token) {
+      const decoded_token = jwtDecode<{ sub: { id: number } }>(token);
+      setVendorId(decoded_token.sub.id);
+    }
+  }, []); // empty dependency, runs once on mount
 
   const createExtraBooking = async (payload) => {
     try {
@@ -177,7 +188,7 @@ export function CurrentSlots({ currentSlots, refreshSlots, setRefreshSlots }: { 
       username: selectedSlot.username,
       amount: amount,
       gameId: selectedSlot.game_id,
-      vendorId: 1, // Replace with dynamic value if needed
+      vendorId: vendorId, // Replace with dynamic value if needed
       modeOfPayment: paymentMode,
     };    
   
@@ -187,7 +198,7 @@ export function CurrentSlots({ currentSlots, refreshSlots, setRefreshSlots }: { 
         selectedSlot.consoleType,
         selectedSlot.game_id,
         selectedSlot.consoleNumber,
-        1,
+        vendorId,
         setRefreshSlots
       );
     } catch (err) {
@@ -374,7 +385,7 @@ export function CurrentSlots({ currentSlots, refreshSlots, setRefreshSlots }: { 
                               booking.consoleType,
                               booking.game_id,
                               booking.consoleNumber,
-                              1,
+                              vendorId,
                               setRefreshSlots,
                               booking.slotId
                             )
