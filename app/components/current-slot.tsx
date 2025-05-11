@@ -134,9 +134,10 @@ export function CurrentSlots({ currentSlots, refreshSlots, setRefreshSlots }: { 
   // In your component:
   const mergedBookings = mergeConsecutiveBookings(currentSlots);
 
-  const calculateExtraAmount = (extraSeconds: number, ratePerMinute = 2) => {
-    const extraMinutes = Math.ceil(extraSeconds / 60);
-    return extraMinutes * ratePerMinute;
+  const calculateExtraAmount = (extraSeconds: number, ratePerHour = 1) => {
+    const extraHours = extraSeconds / 3600;
+    console.log("extra Hour ", extraHours)
+    return Math.ceil(extraHours * ratePerHour);
   };
 
   // Decode token once when the component mounts
@@ -414,7 +415,20 @@ export function CurrentSlots({ currentSlots, refreshSlots, setRefreshSlots }: { 
               </h2>
 
               <div className="text-center text-lg font-medium text-red-600 dark:text-red-400">
-                ₹{calculateExtraAmount(timers.find(t => t.slotId === selectedSlot.slotId)?.extraTime || 0)} for extra time
+                ₹{(() => {
+                  const merged = mergedBookings.find(
+                    (mb) => Array.isArray(mb.bookings) && mb.bookings.some((b) => b.slotId === selectedSlot.slotId)
+                  );
+
+                  const mergedStartTime = merged?.bookings?.[0]?.startTime || selectedSlot.startTime;
+                  const mergedEndTime = merged?.bookings?.at(-1)?.endTime || selectedSlot.endTime;
+                  const mergedDate = merged?.bookings?.[0]?.date || selectedSlot.date;
+                  const rate = merged?.bookings?.[0]?.slot_price || selectedSlot.slot_price;
+
+                  const extraTime = calculateExtraTime(mergedEndTime, mergedDate);
+                  return calculateExtraAmount(extraTime, rate);
+
+                })()} for extra time
               </div>
 
               {/* Payment Mode Cards */}
