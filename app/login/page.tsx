@@ -53,7 +53,7 @@ export default function LoginPreview() {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
       setLoading(true);
-      const response = await fetch("https://hfg-login.onrender.com/api/login", {
+      const response = await fetch("https://hfg-login-1d4c.onrender.com/api/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
