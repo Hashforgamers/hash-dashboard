@@ -8,6 +8,7 @@ import { CurrentSlots } from "./current-slot";
 import { motion } from "framer-motion";
 import { DollarSign, CalendarCheck, WalletCards, Eye, EyeOff, TrendingDown, TrendingUp, CheckCircle2 } from "lucide-react";
 import { jwtDecode } from "jwt-decode";
+import { DASHBOARD_URL } from '@/src/config/env';
 
 export function DashboardContent() {
   const [dashboardData, setDashboardData] = useState(null);
@@ -30,7 +31,7 @@ export function DashboardContent() {
   useEffect(() => {
     console.log("Printing the change in dash content");
     // Fetch the data from the API
-    fetch(`https://hfg-dashboard.onrender.com/api/getLandingPage/vendor/${vendorId}`)
+    fetch(`${DASHBOARD_URL}/api/getLandingPage/vendor/${vendorId}`)
       .then(response => response.json())
       .then(data => setDashboardData(data))
       .catch(error => console.error("Error fetching data:", error));

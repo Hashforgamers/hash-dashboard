@@ -34,6 +34,8 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import { jwtDecode } from "jwt-decode";
 
+import { DASHBOARD_URL } from "@/src/config/env";
+
 
 interface ConsoleListProps {
   onEdit: (console: any) => void;
@@ -58,7 +60,7 @@ export function ConsoleList({ onEdit }: ConsoleListProps) {
 
       try {
         const response = await axios.get(
-          `https://hfg-dashboard.onrender.com/api/getConsoles/vendor/${vendorId}`
+          `${DASHBOARD_URL}/api/getConsoles/vendor/${vendorId}`
         );
         if (!response) {
           console.log("Something went wrong while fetching the data");
@@ -100,7 +102,7 @@ export function ConsoleList({ onEdit }: ConsoleListProps) {
   const handleDelete = async (id: number): Promise<void> => {
     try {
        const response = await axios.delete(
-        `https://hfg-dashboard.onrender.com/api/console/${vendorId}/${id}`
+        `${DASHBOARD_URL}/api/console/${vendorId}/${id}`
       );
       if (!response) {
         console.log("something went wrong while deleting the data");

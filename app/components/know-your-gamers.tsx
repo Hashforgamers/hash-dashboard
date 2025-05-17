@@ -11,6 +11,7 @@ import {
   Filter,
 } from "lucide-react";
 
+import { DASHBOARD_URL } from "@/src/config/env";
 import { jwtDecode } from "jwt-decode";
 
 // Define icon mapping
@@ -46,8 +47,8 @@ export function KnowYourGamers() {
     const fetchStatsAndGamerData = async () => {
       try {
         const [gamerRes, statsRes] = await Promise.all([
-          fetch(`https://hfg-dashboard.onrender.com/api/vendor/${vendorId}/knowYourGamer`),
-          fetch(`https://hfg-dashboard.onrender.com/api/vendor/${vendorId}/knowYourGamer/stats`),
+          fetch(`${DASHBOARD_URL}/api/vendor/${vendorId}/knowYourGamer`),
+          fetch(`${DASHBOARD_URL}/api/vendor/${vendorId}/knowYourGamer/stats`),
         ]);
 
         const gamerJson = await gamerRes.json();

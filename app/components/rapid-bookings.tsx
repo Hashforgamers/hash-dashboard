@@ -35,6 +35,7 @@ import { jwtDecode } from "jwt-decode";
 import { RESPONSE_LIMIT_DEFAULT } from "next/dist/server/api-utils";
 import { Console } from "console";
 import { createEmptyCacheNode } from "next/dist/client/components/app-router";
+import { BOOKING_URL, DASHBOARD_URL } from "@/src/config/env";
 
 type Platform = "PS5" | "XBOX" | "VR" | "PC";
 type TimeSlot = {
@@ -139,7 +140,7 @@ function RapidBookings() {
       const get_data = async () => {
         try {
           const response = await axios.get(
-            `https://hfg-dashboard.onrender.com/api/getAllDevice/vendor/${vendorId}`,
+            `${DASHBOARD_URL}/api/getAllDevice/vendor/${vendorId}`,
             {
               headers: {
                 "Content-Type": "application/json",
@@ -213,7 +214,7 @@ function RapidBookings() {
     setIsLoadingSlots(true);
     try {
       const response = await axios.get(
-        `https://hfg-booking.onrender.com/api/getSlotList/vendor/${vendorId}/game/${consoleTypeId}`,
+        `${BOOKING_URL}/api/getSlotList/vendor/${vendorId}/game/${consoleTypeId}`,
         {
           headers: {
             "Content-Type": "application/json",
@@ -342,7 +343,7 @@ function RapidBookings() {
       };
 
       const response = await axios.post(
-        `https://hfg-booking.onrender.com/api/newBooking/vendor/${vendorId}`,
+        `${BOOKING_URL}/api/newBooking/vendor/${vendorId}`,
         payload,
         {
           headers: {

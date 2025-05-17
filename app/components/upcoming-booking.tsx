@@ -4,6 +4,7 @@ import { Monitor, Play, X, Gamepad2 } from "lucide-react";
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { parse, format } from 'date-fns';
+import { DASHBOARD_URL } from "@/src/config/env";
 
 export function getIcon(system: string): JSX.Element {
   if (system.includes("PS5")) return <Gamepad2 className="w-24 h-24 text-blue-400 transition-colors duration-200" />;
@@ -119,7 +120,7 @@ export function UpcomingBookings({
     setIsLoading(true);
     try {
       const response = await axios.get(
-        `https://hfg-dashboard.onrender.com/api/getAllDevice/consoleTypeId/${gameId}/vendor/${vendorId}`
+        `${DASHBOARD_URL}/api/getAllDevice/consoleTypeId/${gameId}/vendor/${vendorId}`
       );
       setAvailableConsoles(response.data.filter((console: any) => console.is_available));
     } catch (error) {
@@ -141,8 +142,8 @@ export function UpcomingBookings({
   
       const url =
         bookingIds.length > 1
-          ? "https://hfg-dashboard.onrender.com/api/assignConsoleToMultipleBookings"
-          : `https://hfg-dashboard.onrender.com/api/updateDeviceStatus/consoleTypeId/${selectedGameId}/console/${selectedConsole}/bookingId/${selectedBookingId}/vendor/${vendorId}`;
+          ? `${DASHBOARD_URL}/api/assignConsoleToMultipleBookings`
+          : `${DASHBOARD_URL}/api/updateDeviceStatus/consoleTypeId/${selectedGameId}/console/${selectedConsole}/bookingId/${selectedBookingId}/vendor/${vendorId}`;
   
       const payload =
         bookingIds.length > 1

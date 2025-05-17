@@ -46,6 +46,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { jwtDecode } from "jwt-decode";
+import { DASHBOARD_URL } from "@/src/config/env";
 
 import axios from "axios"; // Make sure to install axios
 
@@ -94,7 +95,7 @@ export function MyAccount() {
     async function fetchVendorDashboard() {
       try {
         console.log("Start Fetch ")
-        const res = await axios.get(`https://hfg-dashboard.onrender.com/api/vendor/${vendorId}/dashboard`);
+        const res = await axios.get(`${DASHBOARD_URL}/api/vendor/${vendorId}/dashboard`);
         setData(res.data);
         setCafeImages(res.data?.cafeGallery?.images || []);
         console.log("Data",data)

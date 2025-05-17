@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Monitor, Gamepad2, Gamepad, Headphones } from 'lucide-react';
 import { jwtDecode } from "jwt-decode";
+import { DASHBOARD_URL } from '@/src/config/env';
 
 // Static Payload (Platform Metadata)
 const platformMetadata = {
@@ -59,7 +60,7 @@ export function BookingStats({ refreshSlots, setRefreshSlots }: { refreshSlots: 
     // Fetch dynamic data from API
     const fetchBookingData = async () => {
       try {
-        const response = await fetch(`https://hfg-dashboard.onrender.com/api/getConsoles/vendor/${vendorId}`);
+        const response = await fetch(`${DASHBOARD_URL}/api/getConsoles/vendor/${vendorId}`);
         const data = await response.json();
         setBookingInfo(data); // API response is an array of console data
       } catch (error) {
