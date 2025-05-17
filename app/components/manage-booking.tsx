@@ -50,10 +50,10 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
 import { Action as SonnerAction } from "sonner";
-import GridConsole from "./GridConsole"; // No curly braces for default export
 import { error } from "console";
 import axios from "axios";
 import { BOOKING_URL } from "@/src/config/env";
+import BookingSystem from "./BookingSystem";
 
 const formSteps = [
   { id: 1, icon: Users, label: "Gamer Info" },
@@ -212,7 +212,8 @@ export function ManageBooking() {
     switch (selectedAction) {
       case "create":
         return (
-          <GridConsole setSelectedAction={setSelectedAction} game={game} />
+          // <GridConsole setSelectedAction={setSelectedAction} game={game} />
+          <BookingSystem setSelectedAction={setSelectedAction} game={game}/>
         );
 
       case "change":
