@@ -38,50 +38,55 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
   // Vendor information from JWT token
   const [vendorId, setVendorId] = useState<number | null>(null);
 
-  // Fetch user details from Redis
-  const fetchUserDetails = async (identifier: string) => {
-    setIsLoadingUser(true);
-    try {
-      const response = await fetch(`${BOOKING_URL}/api/vendor/${vendorId}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ 
-          identifier,
-          redisUrl: 'rediss://red-d0hpfdidbo4c73dicadg:pKfNIbBN5g1GkX9RKZxig4yE9bQBRhdu@singapore-keyvalue.render.com:6379'
-        })
-      });
+  const [userList, setUserList] = useState<{ name: string; email: string; phone: string }[]>([]);
 
-      if (response.ok) {
-        const data = await response.json();
-        if (data.user) {
-          setName(data.user.name || '');
-          setEmail(data.user.email || '');
-          setPhone(data.user.phone || '');
-        }
-      }
-    } catch (error) {
-      console.error('Error fetching user details:', error);
-    } finally {
-      setIsLoadingUser(false);
-    }
+  const [emailSuggestions, setEmailSuggestions] = useState([]);
+  const [phoneSuggestions, setPhoneSuggestions] = useState([]);
+
+  const handleEmailInputChange = (value: string) => {
+    setEmail(value);
+    console.log("logging user", userList )
+    const suggestions = userList.filter(user =>
+      user.email.toLowerCase().includes(value.toLowerCase())
+    );
+    setEmailSuggestions(suggestions);
   };
 
-  // Handle input changes with Redis lookup
-  const handleInputChange = async (value: string, type: 'email' | 'phone') => {
-    if (type === 'email') {
-      setEmail(value);
-      if (value.includes('@')) {
-        await fetchUserDetails(value);
-      }
-    } else {
-      setPhone(value);
-      if (value.length >= 10) {
-        await fetchUserDetails(value);
+  const handlePhoneInputChange = (value: string) => {
+    setPhone(value);
+    const suggestions = userList.filter(user =>
+      user.phone.includes(value)
+    );
+    setPhoneSuggestions(suggestions);
+  };
+
+  useEffect(() => {
+    const token = localStorage.getItem("jwtToken");
+    if (token) {
+      try {
+        const decoded = jwtDecode<{ sub: { id: number } }>(token);
+        const vendorIdFromToken = decoded.sub.id;
+        setVendorId(vendorIdFromToken);
+
+        const fetchUsers = async () => {
+          try {
+            const response = await fetch(`${BOOKING_URL}/api/vendor/${vendorIdFromToken}/users`);
+            const data = await response.json();
+            console.log(data)
+            setUserList(data || []);
+          } catch (error) {
+            console.error("Error fetching users:", error);
+          }
+        };
+
+        fetchUsers();
+      } catch (error) {
+        console.error("Error decoding token:", error);
       }
     }
-  };
+  }, []);
+
+
 
   // Form validation
   const validateForm = () => {
@@ -98,18 +103,6 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
     return Object.keys(newErrors).length === 0;
   };
 
-  // Decode token once when the component mounts
-  useEffect(() => {
-    const token = localStorage.getItem("jwtToken");
-    if (token) {
-      try {
-        const decoded = jwtDecode<{ sub: { id: number } }>(token);
-        setVendorId(decoded.sub.id);
-      } catch (error) {
-        console.error("Error decoding token:", error);
-      }
-    }
-  }, []);
 
   // Fetch available slots
   useEffect(() => {
@@ -234,15 +227,35 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
                   <input
                     type="email"
                     value={email}
-                    onChange={(e) => handleInputChange(e.target.value, 'email')}
+                    onChange={(e) => handleEmailInputChange(e.target.value)}
+                    onBlur={() => setEmailSuggestions([])} // 👈 Add this
                     className={`w-full pl-9 pr-3 py-2 rounded-md border ${
                       errors.email ? "border-red-500" : "border-gray-300"
                     } text-sm`}
                     placeholder="Email Address"
+                    autoComplete="off"
                   />
                   <Mail className="w-4 h-4 text-gray-400 absolute left-3 top-2.5" />
                   {errors.email && (
                     <p className="mt-1 text-xs text-red-500">{errors.email}</p>
+                  )}
+                  {emailSuggestions.length > 0 && (
+                    <ul className="absolute z-10 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-md shadow-md w-full mt-1 text-sm max-h-40 overflow-y-auto">
+                      {emailSuggestions.map((user, idx) => (
+                        <li
+                          key={idx}
+                          className="px-3 py-2 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 cursor-pointer"
+                          onMouseDown={() => {
+                            setEmail(user.email);
+                            setName(user.name);
+                            setPhone(user.phone);
+                            setEmailSuggestions([]);
+                          }}
+                        >
+                          {user.email}
+                        </li>
+                      ))}
+                    </ul>
                   )}
                 </div>
 
@@ -250,17 +263,38 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
                   <input
                     type="tel"
                     value={phone}
-                    onChange={(e) => handleInputChange(e.target.value, 'phone')}
+                    onChange={(e) => handlePhoneInputChange(e.target.value)}
+                    onBlur={() => setPhoneSuggestions([])} // for phone
                     className={`w-full pl-9 pr-3 py-2 rounded-md border ${
                       errors.phone ? "border-red-500" : "border-gray-300"
                     } text-sm`}
                     placeholder="Phone Number"
+                    autoComplete="off"
                   />
                   <Phone className="w-4 h-4 text-gray-400 absolute left-3 top-2.5" />
                   {errors.phone && (
                     <p className="mt-1 text-xs text-red-500">{errors.phone}</p>
                   )}
+                  {phoneSuggestions.length > 0 && (
+                    <ul className="absolute z-10 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-md shadow-md w-full mt-1 text-sm max-h-40 overflow-y-auto">
+                      {phoneSuggestions.map((user, idx) => (
+                        <li
+                          key={idx}
+                          className="px-3 py-2 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 cursor-pointer"
+                          onMouseDown={() => {
+                            setPhone(user.phone);
+                            setName(user.name);
+                            setEmail(user.email);
+                            setPhoneSuggestions([]);
+                          }}
+                        >
+                          {user.phone}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                 </div>
+
 
                 {isLoadingUser ? (
                   <div className="flex items-center justify-center py-2">
