@@ -11,6 +11,8 @@ import { jwtDecode } from "jwt-decode";
 
 import { Loader2 } from "lucide-react";
 
+import { DASHBOARD_URL } from "@/src/config/env";
+
 import {
   Select,
   SelectContent,
@@ -245,7 +247,7 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
     if (!vendorId) return; // 🚨 Don't fetch if vendorId is not ready
     try {
       const response = await axios.post(
-        "https://hfg-dashboard.onrender.com/api/addConsole",
+        `${DASHBOARD_URL}/api/addConsole`,
         payload
       );
       if (!response) {

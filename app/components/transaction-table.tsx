@@ -28,6 +28,7 @@ import { saveAs } from "file-saver";
 import { Badge } from "@/components/ui/badge";
 import { jwtDecode } from "jwt-decode";
 import React from "react";
+import { DASHBOARD_URL} from "@/src/config/env";
 
 interface Transaction {
   id: number;
@@ -150,7 +151,7 @@ export function TransactionTable() {
   const fromDate = convertEpochToYYYYMMDD(issuedAt);
   const toDate = convertEpochToYYYYMMDD(expirationTime);
 
-    const apiUrl = `https://hfg-dashboard.onrender.com/api/transactionReport/${vendorId}/${fromDate}/${toDate}`;
+    const apiUrl = `${DASHBOARD_URL}/api/transactionReport/${vendorId}/${fromDate}/${toDate}`;
 
     try {
       const response = await fetch(apiUrl, {

@@ -25,6 +25,7 @@ import {
 import { Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input1";
 import { PasswordInput } from "@/components/ui/password-input";
+import { LOGIN_URL } from "@/src/config/env";
 
 // Updated schema to include parent_type
 const formSchema = z.object({
@@ -53,7 +54,7 @@ export default function LoginPreview() {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
       setLoading(true);
-      const response = await fetch("https://hfg-login-1d4c.onrender.com/api/login", {
+      const response = await fetch(`${LOGIN_URL}/api/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

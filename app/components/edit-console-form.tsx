@@ -29,6 +29,7 @@ import {
 } from "lucide-react";
 import axios from "axios";
 import { jwtDecode } from "jwt-decode";
+import { DASHBOARD_URL } from "@/src/config/env";
 
 interface EditConsoleFormProps {
   console: any;
@@ -137,7 +138,7 @@ export function EditConsoleForm({ console, onClose }: EditConsoleFormProps) {
   const handleClick = async () => {
     try {
       const response = await axios.put(
-        "https://hfg-dashboard.onrender.com/api/console/update/vendor/${vendorId}",
+        `${DASHBOARD_URL}/api/console/update/vendor/${vendorId}`,
         edit_payload,{
           headers:{
             'Content-Type':"application/json"

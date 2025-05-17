@@ -18,6 +18,7 @@ import { differenceInMilliseconds, format } from 'date-fns';
 import { mergeConsecutiveSlots, mergeConsecutiveBookings , Booking} from "@/app/utils/slot-utils";
 import { FaCheck, FaPowerOff } from 'react-icons/fa'; // Import icons
 import { jwtDecode } from "jwt-decode";
+import { BOOKING_URL, DASHBOARD_URL } from "@/src/config/env";
 
 // Helper function to format the timer (HH:MM:SS)
 const formatTime = (seconds: number) => {
@@ -82,7 +83,7 @@ const calculateExtraTime = (endTime: string, date: string) => {
 // Function to release the slot by calling the API
 const releaseSlot = async (consoleType, gameId, consoleId, vendorId, setRefreshSlots) => {
   try {
-    const response = await fetch(`https://hfg-dashboard.onrender.com/api/releaseDevice/consoleTypeId/${gameId}/console/${consoleId}/vendor/${vendorId}`, {
+    const response = await fetch(`${DASHBOARD_URL}/api/releaseDevice/consoleTypeId/${gameId}/console/${consoleId}/vendor/${vendorId}`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -152,7 +153,7 @@ export function CurrentSlots({ currentSlots, refreshSlots, setRefreshSlots }: { 
 
   const createExtraBooking = async (payload) => {
     try {
-      const response = await fetch("https://hfg-booking.onrender.com/api/extraBooking", {
+      const response = await fetch(`${BOOKING_URL}/api/extraBooking`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

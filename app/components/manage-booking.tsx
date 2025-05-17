@@ -53,6 +53,7 @@ import { Action as SonnerAction } from "sonner";
 import GridConsole from "./GridConsole"; // No curly braces for default export
 import { error } from "console";
 import axios from "axios";
+import { BOOKING_URL } from "@/src/config/env";
 
 const formSteps = [
   { id: 1, icon: Users, label: "Gamer Info" },
@@ -182,7 +183,7 @@ export function ManageBooking() {
   async function fetchGames() {
     try {
       const response = await fetch(
-        `https://hfg-booking.onrender.com/api/getAllConsole/vendor/${vendorId}`
+        `${BOOKING_URL}/api/getAllConsole/vendor/${vendorId}`
       ); // Replace with the actual API URL
       if (!response.ok) {
         throw new Error(`HTTP error! Status: ${response.status}`);
@@ -319,7 +320,7 @@ function ChangeBookingForm() {
     setIsLoading(true);
     try {
       const response = await fetch(
-        `https://hfg-booking.onrender.com/api/bookings/${bookingId}`
+        `${BOOKING_URL}/api/bookings/${bookingId}`
       );
       const data = await response.json();
       console.log("Fetched Booking Data:", data);
@@ -354,7 +355,7 @@ function ChangeBookingForm() {
   const fetchAvailableSlots = async (vendorId, consoleTypeId, date) => {
     try {
       const response = await fetch(
-        `https://hfg-booking.onrender.com/api/getSlots/vendor/${vendorId}/game/${consoleTypeId}/${date.replaceAll("-", "")}`
+        `${BOOKING_URL}/api/getSlots/vendor/${vendorId}/game/${consoleTypeId}/${date.replaceAll("-", "")}`
       );
       const data = await response.json();
       console.log("Fetched Slots Data:", data);
@@ -374,7 +375,7 @@ function ChangeBookingForm() {
 
     try {
       const response = await fetch(
-        `https://hfg-booking.onrender.com/api/update_booking/${bookingId}`,
+        `${BOOKING_URL}/api/update_booking/${bookingId}`,
         {
           method: "PUT",
           headers: {
@@ -580,7 +581,7 @@ function RejectBookingForm() {
     setIsLoading(true);
     try {
       const response = await fetch(
-        `https://hfg-booking.onrender.com/api/bookings/${bookingId}`
+        `${BOOKING_URL}/api/bookings/${bookingId}`
       );
       const data = await response.json();
       console.log("Fetched Booking Data:", data);
@@ -630,7 +631,7 @@ function RejectBookingForm() {
     
     try {
       const response = await fetch(
-        `https://hfg-booking.onrender.com/api/bookings/reject`,
+        `${BOOKING_URL}/api/bookings/reject`,
         {
           method: "POST", // Use POST instead of DELETE
           headers: { "Content-Type": "application/json" },
@@ -942,7 +943,7 @@ function ListBooking() {
         .replace(/-/g, ""); // "20250401"
         
       const response = await axios.get(
-        `https://hfg-booking.onrender.com/api/getAllBooking/vendor/${vendorId}/${formattedDate}/`,
+        `${BOOKING_URL}/api/getAllBooking/vendor/${vendorId}/${formattedDate}/`,
         {
           headers: {
             "Content-Type": "application/json",
