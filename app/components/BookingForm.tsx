@@ -241,8 +241,8 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
                     value={email}
                     onChange={(e) => handleEmailInputChange(e.target.value)}
                     onBlur={() => setEmailSuggestions([])} // 👈 Add this
-                    className={`w-full pl-9 pr-3 py-2 rounded-md border ${
-                      errors.email ? "border-red-500" : "border-gray-300"
+                    className={`w-full pl-9 pr-3 py-2 bg-transparent rounded-md border ${
+                      errors.email ? "border-red-500" : "border-gray-500"
                     } text-sm`}
                     placeholder="Email Address"
                     autoComplete="off"
@@ -277,8 +277,8 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
                     value={phone}
                     onChange={(e) => handlePhoneInputChange(e.target.value)}
                     onBlur={() => setPhoneSuggestions([])} // for phone
-                    className={`w-full pl-9 pr-3 py-2 rounded-md border ${
-                      errors.phone ? "border-red-500" : "border-gray-300"
+                    className={`w-full pl-9 pr-3 py-2 rounded-md bg-transparent border ${
+                      errors.phone ? "border-red-500" : "border-gray-500"
                     } text-sm`}
                     placeholder="Phone Number"
                     autoComplete="off"
@@ -318,8 +318,8 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
                       type="text"
                       value={name}
                       onChange={(e) => setName(e.target.value)}
-                      className={`w-full pl-9 pr-3 py-2 rounded-md border ${
-                        errors.name ? "border-red-500" : "border-gray-300"
+                      className={`w-full pl-9 pr-3 py-2 rounded-md bg-transparent border ${
+                        errors.name ? "border-red-500" : "border-gray-500"
                       } text-sm`}
                       placeholder="Full Name"
                     />
@@ -334,7 +334,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
 
             <div className=" p-4 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm">
               <h3 className="text-base font-semibold mb-3 text-emerald-600 flex items-center gap-2">
-                <Calendar className="w-4 h-4" />
+                <Calendar className="w-4 h-4 " />
                 Select Date
               </h3>
               <input
@@ -342,7 +342,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
                 value={selectedDate}
                 min={new Date().toISOString().split("T")[0]}
                 onChange={(e) => setSelectedDate(e.target.value)}
-                className="w-full px-3 py-2 rounded-md border border-gray-300 text-sm"
+                className="w-full px-3 py-2 rounded-md bg-transparent border border-gray-500 text-sm"
               />
             </div>
 
