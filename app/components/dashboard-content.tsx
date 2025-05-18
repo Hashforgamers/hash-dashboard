@@ -8,7 +8,7 @@ import { CurrentSlots } from "./current-slot";
 import { motion } from "framer-motion";
 import { DollarSign, CalendarCheck, WalletCards, Eye, EyeOff, TrendingDown, TrendingUp, CheckCircle2 } from "lucide-react";
 import { jwtDecode } from "jwt-decode";
-import { DASHBOARD_URL } from '@/src/config/env';
+import { BOOKING_URL, DASHBOARD_URL } from '@/src/config/env';
 
 export function DashboardContent() {
   const [dashboardData, setDashboardData] = useState(null);
@@ -36,6 +36,25 @@ export function DashboardContent() {
       .then(data => setDashboardData(data))
       .catch(error => console.error("Error fetching data:", error));
       
+    const fetchUsers = async () => {
+      const usersCacheKey = `userList`;
+      const cachedUsers = localStorage.getItem(usersCacheKey);
+
+      if (cachedUsers) {
+        console.log("Loaded user list from localStorage");
+      } else {
+        try {
+          const response = await fetch(`${BOOKING_URL}/api/vendor/${vendorId}/users`);
+          const data = await response.json();
+          localStorage.setItem(usersCacheKey, JSON.stringify(data));
+        } catch (error) {
+          console.error("Error fetching users:", error);
+        }
+      }
+    };
+
+    fetchUsers();
+
   }, [vendorId, refreshSlots]);
   
   if (!dashboardData) {

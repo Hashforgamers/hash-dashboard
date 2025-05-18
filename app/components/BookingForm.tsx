@@ -62,30 +62,42 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
 
   useEffect(() => {
     const token = localStorage.getItem("jwtToken");
-    if (token) {
-      try {
-        const decoded = jwtDecode<{ sub: { id: number } }>(token);
-        const vendorIdFromToken = decoded.sub.id;
-        setVendorId(vendorIdFromToken);
+    if (!token) return;
 
+    try {
+      const decoded = jwtDecode<{ sub: { id: number } }>(token);
+      const vendorIdFromToken = decoded.sub.id;
+      setVendorId(vendorIdFromToken);
+
+      const cachedUsers = localStorage.getItem("userList");
+
+      if (cachedUsers) {
+        // Load from localStorage
+        console.log("Setting from Cache")
+        setUserList(JSON.parse(cachedUsers));
+      } else {
+        // Fetch from API and store in localStorage
         const fetchUsers = async () => {
           try {
             const response = await fetch(`${BOOKING_URL}/api/vendor/${vendorIdFromToken}/users`);
             const data = await response.json();
-            console.log(data)
-            setUserList(data || []);
+            console.log("Fetched users:", data);
+
+            if (Array.isArray(data)) {
+              setUserList(data);
+              localStorage.setItem("userList", JSON.stringify(data));
+            }
           } catch (error) {
             console.error("Error fetching users:", error);
           }
         };
 
         fetchUsers();
-      } catch (error) {
-        console.error("Error decoding token:", error);
       }
+    } catch (error) {
+      console.error("Error decoding token:", error);
     }
   }, []);
-
 
 
   // Form validation
@@ -216,7 +228,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Left Column */}
           <div className="space-y-4">
-            <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm">
+            <div className=" p-4 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm">
               <h3 className="text-base font-semibold mb-3 text-emerald-600 flex items-center gap-2">
                 <User className="w-4 h-4" />
                 Customer Details
@@ -252,7 +264,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
                             setEmailSuggestions([]);
                           }}
                         >
-                          {user.email}
+                          {user.email} ({user.name})
                         </li>
                       ))}
                     </ul>
@@ -288,7 +300,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
                             setPhoneSuggestions([]);
                           }}
                         >
-                          {user.phone}
+                          {user.phone} ({user.name})
                         </li>
                       ))}
                     </ul>
@@ -320,7 +332,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
               </div>
             </div>
 
-            <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm">
+            <div className=" p-4 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm">
               <h3 className="text-base font-semibold mb-3 text-emerald-600 flex items-center gap-2">
                 <Calendar className="w-4 h-4" />
                 Select Date
@@ -334,7 +346,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
               />
             </div>
 
-            <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm">
+            <div className=" p-4 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm">
               <h3 className="text-base font-semibold mb-3 text-emerald-600 flex items-center gap-2">
                 <CreditCard className="w-4 h-4" />
                 Payment Method
@@ -378,7 +390,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
 
           {/* Right Column */}
           <div className="space-y-4">
-            <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm">
+            <div className=" p-4 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm">
               <div className="flex items-center justify-between mb-3">
                 <h3 className="text-base font-semibold text-emerald-600 flex items-center gap-2">
                   <Clock className="w-4 h-4" />
@@ -396,7 +408,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
                 </div>
               </div>
               
-              <div className="border border-gray-200 dark:border-gray-700 rounded-md p-3 bg-gray-50 dark:bg-gray-900">
+              <div className="border border-gray-200 dark:border-gray-700 rounded-md p-3 ">
                 {availableSlots.length === 0 ? (
                   <div className="text-center py-4 text-gray-500 dark:text-gray-400 text-sm">
                     <Clock className="w-5 h-5 mx-auto mb-1 opacity-50" />
@@ -418,7 +430,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
                           selectedSlots.includes(slot.slot_id)
                             ? "bg-emerald-500 text-white shadow-sm"
                             : slot.is_available
-                            ? "bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:bg-emerald-50 hover:border-emerald-200"
+                            ? " border border-gray-200 dark:border-gray-700 hover:bg-emerald-50 hover:border-emerald-200 dark:hover:bg-emerald-900 dark:hover:border-emerald-700"
                             : "bg-red-100 text-red-400 cursor-not-allowed opacity-60"
                         }`}
                       >
@@ -455,7 +467,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
               )}
             </div>
 
-            <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm">
+            <div className=" p-4 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm">
               <h3 className="text-base font-semibold mb-3 text-emerald-600">
                 Booking Summary
               </h3>

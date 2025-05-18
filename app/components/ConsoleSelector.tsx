@@ -107,7 +107,7 @@ const ConsoleSelector: React.FC<ConsoleSelectorProps> = ({ onSelectConsole }) =>
 
   return (
     <div className="p-6 md:p-8">
-      <h2 className="text-2xl font-bold mb-6 text-center text-gray-800 dark:text-gray-100">
+      <h2 className="text-2xl font-bold mb-6 text-center">
         Select Console Type
       </h2>
       
@@ -134,7 +134,7 @@ const ConsoleSelector: React.FC<ConsoleSelectorProps> = ({ onSelectConsole }) =>
               onClick={() => onSelectConsole(console)}
               className="cursor-pointer"
             >
-              <div className="border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 rounded-xl shadow-md hover:shadow-lg transition-all p-6">
+              <div className="border border-gray-200 dark:border-gray-700 rounded-xl shadow-md hover:shadow-lg transition-all p-6">
                 <div className="flex flex-col items-center text-center space-y-4">
                   <div className="w-16 h-16 flex items-center justify-center rounded-full bg-emerald-50 dark:bg-emerald-900/20">
                     <console.icon className="w-8 h-8" style={{ color: console.iconColor }} />
