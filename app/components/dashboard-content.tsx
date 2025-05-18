@@ -28,34 +28,46 @@ export function DashboardContent() {
   }, []); // empty dependency, runs once on mount
 
 
-  useEffect(() => {
-    console.log("Printing the change in dash content");
-    // Fetch the data from the API
-    fetch(`${DASHBOARD_URL}/api/getLandingPage/vendor/${vendorId}`)
-      .then(response => response.json())
-      .then(data => setDashboardData(data))
-      .catch(error => console.error("Error fetching data:", error));
-      
-    const fetchUsers = async () => {
-      const usersCacheKey = `userList`;
-      const cachedUsers = localStorage.getItem(usersCacheKey);
+useEffect(() => {
+  console.log("Printing the change in dash content");
 
-      if (cachedUsers) {
-        console.log("Loaded user list from localStorage");
+  // Fetch dashboard data
+  fetch(`${DASHBOARD_URL}/api/getLandingPage/vendor/${vendorId}`)
+    .then(response => response.json())
+    .then(data => setDashboardData(data))
+    .catch(error => console.error("Error fetching dashboard data:", error));
+
+    const fetchUsers = async () => {
+      const usersCacheKey = "userList";
+      const timestampKey = "userListTimestamp";
+      const cachedUsers = localStorage.getItem(usersCacheKey);
+      const cachedTimestamp = localStorage.getItem(timestampKey);
+      const { data, timestamp } = JSON.parse(cachedUsers);
+
+      const now = Date.now();
+      const isCacheValid = cachedTimestamp && (now - parseInt(timestamp, 10)) < 10 * 60 * 1000;
+
+      if (cachedUsers && isCacheValid) {
+        console.log("Loaded user list from valid cache");
       } else {
         try {
           const response = await fetch(`${BOOKING_URL}/api/vendor/${vendorId}/users`);
           const data = await response.json();
-          localStorage.setItem(usersCacheKey, JSON.stringify(data));
+          if (Array.isArray(data)) {
+            localStorage.setItem("userList", JSON.stringify({ data, timestamp: Date.now() }));
+            console.log("Fetched and cached fresh user list");
+          }
         } catch (error) {
           console.error("Error fetching users:", error);
         }
       }
     };
 
-    fetchUsers();
-
+    if (vendorId) {
+      fetchUsers();
+    }
   }, [vendorId, refreshSlots]);
+
   
   if (!dashboardData) {
     return <div>Loading...</div>; // Render a loading state until the data is fetched
@@ -94,11 +106,11 @@ export function DashboardContent() {
             </CardHeader>
             <CardContent>
               <div className="theme-title text-2xl font-bold">
-                {showEarnings ? `₹${dashboardData.stats.todayEarnings}` : "₹•••••"}
+                {showEarnings ? `₹${dashboardData?.stats?.todayEarnings ?? 0}` : "₹•••••"}
               </div>
               <p className="theme-subtext text-xs mt-1 flex items-center space-x-1">
                 <TrendingDown className="h-4 w-4 text-red-500" />
-                <span>{dashboardData.stats.todayEarningsChange ?? 0}% less than yesterday</span>
+                <span>{dashboardData?.stats?.todayEarningsChange ?? 0}% less than yesterday</span>
               </p>
             </CardContent>
           </Card>

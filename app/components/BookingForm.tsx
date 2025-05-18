@@ -69,29 +69,48 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
       const vendorIdFromToken = decoded.sub.id;
       setVendorId(vendorIdFromToken);
 
-      const cachedUsers = localStorage.getItem("userList");
+      const userCacheKey = `userList`;
+      const cachedData = localStorage.getItem(userCacheKey);
 
-      if (cachedUsers) {
-        // Load from localStorage
-        console.log("Setting from Cache")
-        setUserList(JSON.parse(cachedUsers));
-      } else {
-        // Fetch from API and store in localStorage
-        const fetchUsers = async () => {
-          try {
-            const response = await fetch(`${BOOKING_URL}/api/vendor/${vendorIdFromToken}/users`);
-            const data = await response.json();
-            console.log("Fetched users:", data);
+      const isCacheValid = (timestamp: number) => {
+        const now = Date.now();
+        const tenMinutes = 10 * 60 * 1000;
+        return now - timestamp < tenMinutes;
+      };
 
-            if (Array.isArray(data)) {
-              setUserList(data);
-              localStorage.setItem("userList", JSON.stringify(data));
-            }
-          } catch (error) {
-            console.error("Error fetching users:", error);
+      const fetchUsers = async () => {
+        try {
+          const response = await fetch(`${BOOKING_URL}/api/vendor/${vendorIdFromToken}/users`);
+          const data = await response.json();
+          console.log("Fetched users from API:", data);
+
+          if (Array.isArray(data)) {
+            setUserList(data);
+            localStorage.setItem(
+              userCacheKey,
+              JSON.stringify({ data, timestamp: Date.now() })
+            );
           }
-        };
+        } catch (error) {
+          console.error("Error fetching users:", error);
+        }
+      };
 
+      if (cachedData) {
+        try {
+          const { data, timestamp } = JSON.parse(cachedData);
+          if (isCacheValid(timestamp)) {
+            console.log("Loaded users from valid cache");
+            setUserList(data);
+          } else {
+            console.log("Cache expired, fetching new data");
+            fetchUsers();
+          }
+        } catch (parseError) {
+          console.error("Error parsing cached users:", parseError);
+          fetchUsers();
+        }
+      } else {
         fetchUsers();
       }
     } catch (error) {
@@ -147,7 +166,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateForm()) return;
-    
+
     setIsSubmitting(true);
     try {
       const response = await fetch(
@@ -157,7 +176,9 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             consoleType: selectedConsole.type,
-            name, email, phone,
+            name,
+            email,
+            phone,
             bookedDate: selectedDate,
             slotId: selectedSlots,
             paymentType,
@@ -166,7 +187,44 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
       );
 
       if (!response.ok) throw new Error("Failed to submit booking");
+
       setIsSubmitted(true);
+
+      // Check if the submitted user exists in cache
+      const userCacheKey = "userList";
+      const cached = localStorage.getItem(userCacheKey);
+
+      if (cached) {
+        try {
+          const { data, timestamp } = JSON.parse(cached);
+
+          const isUserExists = data.some(
+            (user: any) =>
+              user.email === email || user.phone === phone // Adjust logic as needed
+          );
+
+          if (!isUserExists) {
+            console.log("New user detected, updating cache...");
+            // Fetch updated user list and cache it
+            const usersResponse = await fetch(
+              `${BOOKING_URL}/api/vendor/${vendorId}/users`
+            );
+            const updatedUsers = await usersResponse.json();
+
+            if (Array.isArray(updatedUsers)) {
+              localStorage.setItem(
+                userCacheKey,
+                JSON.stringify({ data: updatedUsers, timestamp: Date.now() })
+              );
+            }
+          } else {
+            console.log("User already in cache. No update needed.");
+          }
+        } catch (err) {
+          console.error("Error checking or updating user cache:", err);
+        }
+      }
+
     } catch (error) {
       console.error("Error submitting booking:", error);
     } finally {
