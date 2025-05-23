@@ -1,18 +1,65 @@
 import { Card } from "@/components/ui/card";
 import { motion, AnimatePresence } from "framer-motion";
-import { Monitor, Play, X, Gamepad2, Calendar, Clock, User, ChevronRight } from "lucide-react";
-import { useState, useEffect } from "react";
+import { 
+  Monitor, Play, X, Gamepad2, Calendar, Clock, User, Search,
+  DollarSign, CalendarDays, Users, Timer, AlertCircle, Filter,
+  BadgeCheck, Calendar as CalendarIcon, ChevronDown
+} from "lucide-react";
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faIndianRupeeSign } from '@fortawesome/free-solid-svg-icons'
+
+import { useState, useEffect, useMemo } from "react";
 import axios from "axios";
-import { parse, format } from 'date-fns';
+import { format, parseISO, isToday, isTomorrow, startOfToday } from 'date-fns';
 import { DASHBOARD_URL } from "@/src/config/env";
 
 export function getIcon(system: string): JSX.Element {
-  if (system.includes("PS5")) return <Gamepad2 className="w-5 h-5 text-blue-500" />;
-  if (system.includes("Xbox")) return <Gamepad2 className="w-5 h-5 text-green-500" />;
+  if (system.toLowerCase().includes("ps5")) return <Gamepad2 className="w-5 h-5 text-blue-500" />;
+  if (system.toLowerCase().includes("xbox")) return <Gamepad2 className="w-5 h-5 text-green-500" />;
   return <Monitor className="w-5 h-5 text-purple-500" />;
 }
 
+const formatDate = (dateStr: string) => {
+  try {
+    const date = new Date(dateStr);
+    if (isToday(date)) return 'Today';
+    if (isTomorrow(date)) return 'Tomorrow';
+    return format(date, 'EEE, MMM d');
+  } catch (error) {
+    console.error("Date parsing error:", error);
+    return 'Invalid Date';
+  }
+};
+
+const getTimeOfDay = (time: string) => {
+  const hour = parseInt(time.split(":")[0]);
+  if (hour < 12) return "morning";
+  if (hour < 17) return "afternoon";
+  return "evening";
+};
+
+const getStatusColor = (status: string) => {
+  switch (status.toLowerCase()) {
+    case 'confirmed':
+      return 'bg-emerald-100 text-emerald-800';
+    case 'pending':
+      return 'bg-yellow-100 text-yellow-800';
+    case 'cancelled':
+      return 'bg-red-100 text-red-800';
+    default:
+      return 'bg-gray-100 text-gray-800';
+  }
+};
+
 const mergeConsecutiveBookings = (bookings: any[]) => {
+  // Group bookings by date first
+  const byDate = bookings.reduce((acc: any, booking) => {
+    const date = booking.date;
+    if (!acc[date]) acc[date] = [];
+    acc[date].push(booking);
+    return acc;
+  }, {});
+
   const parseTime = (time: string): Date => {
     const [timePart, period] = time.trim().split(" ");
     let [hours, minutes] = timePart.split(":").map(Number);
@@ -32,53 +79,63 @@ const mergeConsecutiveBookings = (bookings: any[]) => {
     return `${to12Hour(start)} - ${to12Hour(end)}`;
   };
 
-  const grouped = bookings.reduce((acc: any, booking) => {
-    const key = `${booking.userId}_${booking.game_id}_${booking.date}`;
-    if (!acc[key]) acc[key] = [];
-    acc[key].push(booking);
-    return acc;
-  }, {});
-
   const mergedResults: any[] = [];
 
-  for (const group of Object.values(grouped)) {
-    const sorted = (group as any[]).sort((a, b) => {
-      const aStart = parseTime(a.time.split(" - ")[0]);
-      const bStart = parseTime(b.time.split(" - ")[0]);
-      return aStart.getTime() - bStart.getTime();
-    });
+  // Process each date group
+  Object.entries(byDate).forEach(([date, dateBookings]) => {
+    const grouped = (dateBookings as any[]).reduce((acc: any, booking) => {
+      const key = `${booking.userId}_${booking.game_id}`;
+      if (!acc[key]) acc[key] = [];
+      acc[key].push(booking);
+      return acc;
+    }, {});
 
-    let current = { ...sorted[0] };
-    let currentStart = parseTime(current.time.split(" - ")[0]);
-    let currentEnd = parseTime(current.time.split(" - ")[1]);
-    let mergedIds = [current.bookingId];
+    Object.values(grouped).forEach((group: any) => {
+      const sorted = (group as any[]).sort((a, b) => {
+        const aStart = parseTime(a.time.split(" - ")[0]);
+        const bStart = parseTime(b.time.split(" - ")[0]);
+        return aStart.getTime() - bStart.getTime();
+      });
 
-    for (let i = 1; i < sorted.length; i++) {
-      const next = sorted[i];
-      const nextStart = parseTime(next.time.split(" - ")[0]);
-      const nextEnd = parseTime(next.time.split(" - ")[1]);
+      let current = { ...sorted[0] };
+      let currentStart = parseTime(current.time.split(" - ")[0]);
+      let currentEnd = parseTime(current.time.split(" - ")[1]);
+      let mergedIds = [current.bookingId];
+      let totalPrice = current.slot_price;
 
-      if (nextStart.getTime() <= currentEnd.getTime()) {
-        currentEnd = new Date(Math.max(currentEnd.getTime(), nextEnd.getTime()));
-        mergedIds.push(next.bookingId);
-      } else {
-        current.time = formatTimeRange(currentStart, currentEnd);
-        current.merged_booking_ids = mergedIds;
-        mergedResults.push(current);
+      for (let i = 1; i < sorted.length; i++) {
+        const next = sorted[i];
+        const nextStart = parseTime(next.time.split(" - ")[0]);
+        const nextEnd = parseTime(next.time.split(" - ")[1]);
 
-        current = { ...next };
-        currentStart = nextStart;
-        currentEnd = nextEnd;
-        mergedIds = [next.bookingId];
+        if (nextStart.getTime() <= currentEnd.getTime()) {
+          currentEnd = new Date(Math.max(currentEnd.getTime(), nextEnd.getTime()));
+          mergedIds.push(next.bookingId);
+          totalPrice += next.slot_price;
+        } else {
+          current.time = formatTimeRange(currentStart, currentEnd);
+          current.merged_booking_ids = mergedIds;
+          current.total_price = totalPrice;
+          current.duration = mergedIds.length;
+          mergedResults.push(current);
+
+          current = { ...next };
+          currentStart = nextStart;
+          currentEnd = nextEnd;
+          mergedIds = [next.bookingId];
+          totalPrice = next.slot_price;
+        }
       }
-    }
 
-    current.time = formatTimeRange(currentStart, currentEnd);
-    current.merged_booking_ids = mergedIds;
-    mergedResults.push(current);
-  }
+      current.time = formatTimeRange(currentStart, currentEnd);
+      current.merged_booking_ids = mergedIds;
+      current.total_price = totalPrice;
+      current.duration = mergedIds.length;
+      mergedResults.push(current);
+    });
+  });
 
-  return mergedResults;
+  return mergedResults.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 };
 
 export function UpcomingBookings({
@@ -101,8 +158,44 @@ export function UpcomingBookings({
   const [isLoading, setIsLoading] = useState(false);
   const [selectedGameId, setSelectedGameId] = useState<string | null>(null);
   const [selectedBookingId, setSelectedBookingId] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedDate, setSelectedDate] = useState(startOfToday().toISOString());
+  const [showFilters, setShowFilters] = useState(false);
+  const [timeFilter, setTimeFilter] = useState("all");
 
-  const mergedBookings = mergeConsecutiveBookings(upcomingBookings);
+  const filteredBookings = useMemo(() => {
+    let filtered = upcomingBookings;
+
+    // Filter by date
+    filtered = filtered.filter(booking => {
+      const bookingDate = new Date(booking.date);
+      const selected = new Date(selectedDate);
+      return bookingDate.toDateString() === selected.toDateString();
+    });
+
+    // Apply search
+    if (searchTerm) {
+      filtered = filtered.filter(booking => 
+        booking.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        booking.consoleType.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    // Apply time filter
+    if (timeFilter !== "all") {
+      filtered = filtered.filter(booking => {
+        const timeOfDay = getTimeOfDay(booking.time.split(" ")[0]);
+        return timeOfDay === timeFilter;
+      });
+    }
+
+    return filtered;
+  }, [upcomingBookings, searchTerm, selectedDate, timeFilter]);
+
+  const mergedBookings = useMemo(() => 
+    mergeConsecutiveBookings(filteredBookings),
+    [filteredBookings]
+  );
 
   const start = (system: string, gameId: string, bookingId: string) => {
     setSelectedSystem(system);
@@ -203,6 +296,12 @@ export function UpcomingBookings({
                     <div className="flex items-center justify-center h-48">
                       <div className="animate-spin rounded-full h-8 w-8 border-2 border-emerald-500 border-t-transparent"></div>
                     </div>
+                  ) : availableConsoles.length === 0 ? (
+                    <div className="text-center py-8">
+                      <AlertCircle className="w-12 h-12 text-amber-500 mx-auto mb-3" />
+                      <h3 className="text-lg font-medium mb-1">No Consoles Available</h3>
+                      <p className="text-gray-500 text-sm">All gaming consoles are currently in use.</p>
+                    </div>
                   ) : (
                     <div className="grid grid-cols-2 gap-4">
                       {availableConsoles.map((console) => (
@@ -259,55 +358,143 @@ export function UpcomingBookings({
         )}
       </AnimatePresence>
 
-      <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-zinc-800">
-        <h2 className="text-lg font-semibold flex items-center gap-2">
-          <Calendar className="w-5 h-5 text-emerald-500" />
-          Upcoming Bookings
-        </h2>
-        <button className="text-sm text-emerald-500 hover:text-emerald-600 font-medium flex items-center gap-1">
-          View all
-          <ChevronRight className="w-4 h-4" />
-        </button>
+      <div className="p-4 border-b border-gray-200 dark:border-zinc-800">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <Calendar className="w-5 h-5 text-emerald-500" />
+            <h2 className="text-lg font-semibold">Upcoming Bookings</h2>
+            <span className="ml-2 px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded-full text-xs font-medium">
+              {filteredBookings.length}
+            </span>
+          </div>
+        </div>
+
+        <div className="space-y-3">
+          <div className="flex items-center gap-4">
+            <input
+              type="date"
+              value={selectedDate.split('T')[0]}
+              onChange={(e) => setSelectedDate(new Date(e.target.value).toISOString())}
+              className="px-3 py-2 rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-colors"
+            />
+            
+            <div className="relative">
+              <button
+                onClick={() => setShowFilters(!showFilters)}
+                className="flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 dark:border-zinc-700 hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors"
+              >
+                <Filter className="w-4 h-4" />
+                <span>Filters</span>
+                <ChevronDown className="w-4 h-4" />
+              </button>
+
+              {showFilters && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 10 }}
+                  className="absolute top-full mt-2 right-0 w-48 bg-white dark:bg-zinc-800 rounded-lg shadow-lg border border-gray-200 dark:border-zinc-700 py-2 z-10"
+                >
+                  {['all', 'morning', 'afternoon', 'evening'].map((filter) => (
+                    <button
+                      key={filter}
+                      onClick={() => {
+                        setTimeFilter(filter);
+                        setShowFilters(false);
+                      }}
+                      className={`w-full px-4 py-2 text-left text-sm transition-colors ${
+                        timeFilter === filter
+                          ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600'
+                          : 'hover:bg-gray-50 dark:hover:bg-zinc-700'
+                      }`}
+                    >
+                      {filter.charAt(0).toUpperCase() + filter.slice(1)}
+                    </button>
+                  ))}
+                </motion.div>
+              )}
+            </div>
+          </div>
+
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <input
+              type="text"
+              placeholder="Search by name or console..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-9 pr-4 py-2 rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-colors"
+            />
+          </div>
+        </div>
       </div>
 
       <div className="flex-1 overflow-y-auto">
-        <div className="p-4 space-y-3">
-          {mergedBookings.map((booking) => (
-            <motion.div
-              key={booking.bookingId}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="bg-white dark:bg-zinc-800 rounded-lg border border-gray-200 dark:border-zinc-700 p-4 hover:shadow-md transition-all duration-200"
-            >
-              <div className="flex items-center justify-between gap-4">
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2 mb-2">
-                    <User className="w-4 h-4 text-gray-400" />
-                    <h3 className="font-medium truncate">{booking.username}</h3>
+        {mergedBookings.length === 0 ? (
+          <div className="flex flex-col items-center justify-center h-full py-12 text-gray-500">
+            <CalendarIcon className="w-12 h-12 mb-4 opacity-50" />
+            <p className="text-lg font-medium">No bookings found</p>
+            <p className="text-sm mt-1">Try adjusting your search or filters</p>
+          </div>
+        ) : (
+          <div className="p-4 space-y-3">
+            {mergedBookings.map((booking) => (
+              <motion.div
+                key={booking.bookingId}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-white dark:bg-zinc-800 rounded-lg border border-gray-200 dark:border-zinc-700 p-4 hover:shadow-md transition-all duration-200"
+              >
+                <div className="flex items-center justify-between gap-4">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2 mb-2">
+                      <User className="w-4 h-4 text-gray-400" />
+                      <h3 className="font-medium truncate">
+                        {booking.username || "Guest User"}
+                      </h3>
+                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${getStatusColor(booking.status)}`}>
+                        {booking.status}
+                      </span>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-4 mt-2">
+                      <div className="flex items-center gap-2 text-sm text-gray-500">
+                        {getIcon(booking.consoleType)}
+                        <span>{booking.consoleType}</span>
+                      </div>
+                      
+                      <div className="flex items-center gap-2 text-sm text-gray-500">
+                        <Clock className="w-4 h-4" />
+                        <span>{booking.time}</span>
+                      </div>
+                      
+                      <div className="flex items-center gap-2 text-sm text-gray-500">
+                        <Timer className="w-4 h-4" />
+                        <span>{booking.duration} hour{booking.duration > 1 ? 's' : ''}</span>
+                      </div>
+                      
+                      <div className="flex items-center gap-2 text-sm text-emerald-600 font-medium">
+                        {/* <DollarSign className="w-4 h-4" /> */}
+                        <FontAwesomeIcon icon={faIndianRupeeSign} className="w-4 h-4" />
+                        <span>{booking.total_price}</span>
+                      </div>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2 text-sm text-gray-500">
-                    {getIcon(booking.consoleType)}
-                    <span>{booking.consoleType}</span>
-                  </div>
-                  <div className="flex items-center gap-2 mt-1 text-sm text-gray-500">
-                    <Clock className="w-4 h-4" />
-                    <span>{booking.time}</span>
-                  </div>
+                  
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => start(booking.consoleType, booking.game_id, booking.bookingId)}
+                    className="flex items-center gap-2 px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg font-medium shadow-lg shadow-emerald-500/20 transition-all whitespace-nowrap"
+                  >
+                    <Play className="w-4 h-4" />
+                    Start
+                  </motion.button>
                 </div>
-                
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => start(booking.consoleType, booking.game_id, booking.bookingId)}
-                  className="flex items-center gap-2 px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg font-medium shadow-lg shadow-emerald-500/20 transition-all"
-                >
-                  <Play className="w-4 h-4" />
-                  Start
-                </motion.button>
-              </div>
-            </motion.div>
-          ))}
-        </div>
+              </motion.div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
