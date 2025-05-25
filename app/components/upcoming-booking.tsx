@@ -263,7 +263,7 @@ export function UpcomingBookings({
   };
 
   return (
-    <div className="h-full flex flex-col bg-gray-50 dark:bg-zinc-900 rounded-lg shadow-lg">
+    <div className="h-full flex flex-col bg-gray-50 dark:bg-zinc-900 rounded-lg shadow-lg px-4 md:px-6 max-w-screen-xl mx-auto w-full">
       <AnimatePresence>
         {startCard && (
           <motion.div
@@ -276,7 +276,7 @@ export function UpcomingBookings({
               initial={{ scale: 0.95, y: 20, opacity: 0 }}
               animate={{ scale: 1, y: 0, opacity: 1 }}
               exit={{ scale: 0.95, y: 20, opacity: 0 }}
-              className="w-full max-w-lg"
+              className="w-full max-w-md sm:max-w-lg"
             >
               <Card className="bg-white dark:bg-zinc-900 overflow-hidden border border-gray-200 dark:border-zinc-800">
                 <div className="p-4 border-b border-gray-200 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-800/50">
@@ -303,7 +303,7 @@ export function UpcomingBookings({
                       <p className="text-gray-500 text-sm">All gaming consoles are currently in use.</p>
                     </div>
                   ) : (
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       {availableConsoles.map((console) => (
                         <motion.div
                           key={console.consoleId}
