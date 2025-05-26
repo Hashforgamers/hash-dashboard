@@ -326,7 +326,7 @@ export function CurrentSlots({ currentSlots, refreshSlots, setRefreshSlots }: Cu
               value={searchQuery}
               onChange={handleSearch}
               placeholder="Search by name or console type..."
-              className="bg-white/50 border border-gray-300 rounded-lg pl-10 pr-4 py-2 text-sm text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 w-full md:w-64 transition-all duration-200 ease-in-out"
+              className="border bg-transparent rounded-lg pl-10 pr-4 py-2 text-sm text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 w-full md:w-64 transition-all duration-200 ease-in-out"
             />
           </div>
         </div>
@@ -336,50 +336,41 @@ export function CurrentSlots({ currentSlots, refreshSlots, setRefreshSlots }: Cu
           variants={container}
           initial="hidden"
           animate="show"
-          className="rounded-lg border border-gray-200 overflow-hidden shadow-sm bg-white"
+          className="rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden shadow-sm bg-white/10 dark:bg-white/5 backdrop-blur-sm"
         >
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50 dark:bg-gray-800">
+            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+              <thead className="bg-white/20 dark:bg-white/10 backdrop-blur-sm">
                 <tr>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400dark:text-gray-400 uppercase tracking-wider">
-                    Name
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400dark:text-gray-400 uppercase tracking-wider">
-                    System
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400dark:text-gray-400 uppercase tracking-wider">
-                    Time
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400dark:text-gray-400 uppercase tracking-wider">
-                    Progress
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400dark:text-gray-400 uppercase tracking-wider">
-                    Extra
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400dark:text-gray-400 uppercase tracking-wider">
-                    Action
-                  </th>
+                  {['Name', 'System', 'Time', 'Progress', 'Extra', 'Action'].map((heading) => (
+                    <th
+                      key={heading}
+                      scope="col"
+                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"
+                    >
+                      {heading}
+                    </th>
+                  ))}
                 </tr>
               </thead>
-              <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
+              <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                 <AnimatePresence>
                   {filteredSlots.map((booking) => {
                     const timer = timers.find(t => t.slotId === booking.slotId) || {
                       elapsedTime: 0,
                       extraTime: 0,
-                      duration: 3600 // Default 1 hour
+                      duration: 3600,
                     };
-                    
+
                     const isReleasing = releasingSlots[booking.slotId] || false;
                     const progress = Math.min(100, (timer.elapsedTime / timer.duration) * 100);
                     const hasExtraTime = timer.extraTime > 0;
-                    
+
                     return (
-                      <motion.tr 
+                      <motion.tr
                         key={booking.slotId}
                         variants={item}
-                        className={`${hasExtraTime && "bg-red-50"} hover:bg-gray-50 dark:bg-gray-800 transition-colors`}
+                        className={`${hasExtraTime ? "hover:bg-white/10 dark:hover:bg-white/5" : "hover:bg-white/10 dark:hover:bg-white/5"} transition-colors`}
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, x: -20 }}
@@ -387,14 +378,14 @@ export function CurrentSlots({ currentSlots, refreshSlots, setRefreshSlots }: Cu
                       >
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center">
-                            <div className="flex-shrink-0 h-10 w-10 bg-emerald-100 rounded-full flex items-center justify-center">
-                              <span className="text-emerald-700 font-medium text-sm">
+                            <div className="flex-shrink-0 h-10 w-10 bg-emerald-100 dark:bg-emerald-900 rounded-full flex items-center justify-center">
+                              <span className="text-emerald-700 dark:text-emerald-300 font-medium text-sm">
                                 {booking.username.slice(0, 2).toUpperCase()}
                               </span>
                             </div>
                             <div className="ml-4">
                               <div className="text-sm font-medium text-gray-900 dark:text-white">{booking.username}</div>
-                              <div className="text-sm text-gray-500 dark:text-gray-400dark:text-gray-400">Console #{booking.consoleNumber}</div>
+                              <div className="text-sm text-gray-500 dark:text-gray-400">Console #{booking.consoleNumber}</div>
                             </div>
                           </div>
                         </td>
@@ -404,7 +395,7 @@ export function CurrentSlots({ currentSlots, refreshSlots, setRefreshSlots }: Cu
                             <span className="text-sm text-gray-900 dark:text-white capitalize">{booking.consoleType}</span>
                           </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400dark:text-gray-400">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                           <div className="flex flex-col space-y-1">
                             <div className="flex items-center space-x-2">
                               <span className="text-gray-700 dark:text-gray-300 font-medium">Start:</span>
@@ -422,7 +413,7 @@ export function CurrentSlots({ currentSlots, refreshSlots, setRefreshSlots }: Cu
                               {formatTime(timer.elapsedTime)}
                             </div>
                             <div className="h-2 w-full bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                              <motion.div 
+                              <motion.div
                                 className={`h-full ${progress < 75 ? 'bg-emerald-500' : progress < 90 ? 'bg-yellow-500' : 'bg-red-500'}`}
                                 style={{ width: `${progress}%` }}
                                 initial={{ width: 0 }}
@@ -434,7 +425,7 @@ export function CurrentSlots({ currentSlots, refreshSlots, setRefreshSlots }: Cu
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           {hasExtraTime ? (
-                            <motion.div 
+                            <motion.div
                               className="text-red-600 font-medium"
                               initial={{ scale: 1 }}
                               animate={{ scale: [1, 1.05, 1] }}
@@ -490,9 +481,10 @@ export function CurrentSlots({ currentSlots, refreshSlots, setRefreshSlots }: Cu
                     );
                   })}
                 </AnimatePresence>
+
                 {filteredSlots.length === 0 && (
                   <tr>
-                    <td colSpan={6} className="px-6 py-10 text-center text-gray-500 dark:text-gray-400dark:text-gray-400">
+                    <td colSpan={6} className="px-6 py-10 text-center text-gray-500 dark:text-gray-400">
                       <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
