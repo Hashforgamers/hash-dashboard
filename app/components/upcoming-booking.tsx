@@ -369,64 +369,71 @@ export function UpcomingBookings({
           </div>
         </div>
 
-        <div className="space-y-3">
-          <div className="flex items-center gap-4">
-            <input
-              type="date"
-              value={selectedDate.split('T')[0]}
-              onChange={(e) => setSelectedDate(new Date(e.target.value).toISOString())}
-              className="px-3 py-2 rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-colors"
-            />
-            
-            <div className="relative">
-              <button
-                onClick={() => setShowFilters(!showFilters)}
-                className="flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 dark:border-zinc-700 hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors"
-              >
-                <Filter className="w-4 h-4" />
-                <span>Filters</span>
-                <ChevronDown className="w-4 h-4" />
-              </button>
+<div className="space-y-3">
+  {/* Date and Filter controls */}
+  <div className="flex flex-wrap gap-3">
+    {/* Date Picker */}
+    <input
+      type="date"
+      value={selectedDate.split('T')[0]}
+      onChange={(e) => setSelectedDate(new Date(e.target.value).toISOString())}
+      className="px-3 py-2 rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-colors w-full sm:w-auto"
+    />
 
-              {showFilters && (
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: 10 }}
-                  className="absolute top-full mt-2 right-0 w-48 bg-white dark:bg-zinc-800 rounded-lg shadow-lg border border-gray-200 dark:border-zinc-700 py-2 z-10"
-                >
-                  {['all', 'morning', 'afternoon', 'evening'].map((filter) => (
-                    <button
-                      key={filter}
-                      onClick={() => {
-                        setTimeFilter(filter);
-                        setShowFilters(false);
-                      }}
-                      className={`w-full px-4 py-2 text-left text-sm transition-colors ${
-                        timeFilter === filter
-                          ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600'
-                          : 'hover:bg-gray-50 dark:hover:bg-zinc-700'
-                      }`}
-                    >
-                      {filter.charAt(0).toUpperCase() + filter.slice(1)}
-                    </button>
-                  ))}
-                </motion.div>
-              )}
-            </div>
-          </div>
+    {/* Filter Button */}
+    <div className="relative w-full sm:w-auto">
+      <button
+        onClick={() => setShowFilters(!showFilters)}
+        className="flex items-center justify-between gap-2 px-3 py-2 rounded-lg border border-gray-200 dark:border-zinc-700 hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors w-full sm:w-auto"
+      >
+        <Filter className="w-4 h-4" />
+        <span>Filters</span>
+        <ChevronDown className="w-4 h-4" />
+      </button>
 
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-            <input
-              type="text"
-              placeholder="Search by name or console..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-colors"
-            />
-          </div>
-        </div>
+      {showFilters && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: 10 }}
+          className="absolute top-full mt-2 right-0 w-48 bg-white dark:bg-zinc-800 rounded-lg shadow-lg border border-gray-200 dark:border-zinc-700 py-2 z-10"
+        >
+          {['all', 'morning', 'afternoon', 'evening'].map((filter) => (
+            <button
+              key={filter}
+              onClick={() => {
+                setTimeFilter(filter);
+                setShowFilters(false);
+              }}
+              className={`w-full px-4 py-2 text-left text-sm transition-colors ${
+                timeFilter === filter
+                  ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600'
+                  : 'hover:bg-gray-50 dark:hover:bg-zinc-700'
+              }`}
+            >
+              {filter.charAt(0).toUpperCase() + filter.slice(1)}
+            </button>
+          ))}
+        </motion.div>
+      )}
+    </div>
+  </div>
+
+  {/* Search Input */}
+  <div className="relative">
+    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+    <input
+      type="text"
+      placeholder="Search by name or console..."
+      value={searchTerm}
+      onChange={(e) => setSearchTerm(e.target.value)}
+      className="w-full pl-9 pr-4 py-2 rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-colors"
+    />
+  </div>
+</div>
+
+
+
       </div>
 
       <div className="flex-1 overflow-y-auto">
@@ -437,63 +444,71 @@ export function UpcomingBookings({
             <p className="text-sm mt-1">Try adjusting your search or filters</p>
           </div>
         ) : (
-          <div className="p-4 space-y-3">
-            {mergedBookings.map((booking) => (
-              <motion.div
-                key={booking.bookingId}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="bg-white dark:bg-zinc-800 rounded-lg border border-gray-200 dark:border-zinc-700 p-4 hover:shadow-md transition-all duration-200"
-              >
-                <div className="flex items-center justify-between gap-4">
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2 mb-2">
-                      <User className="w-4 h-4 text-gray-400" />
-                      <h3 className="font-medium truncate">
-                        {booking.username || "Guest User"}
-                      </h3>
-                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${getStatusColor(booking.status)}`}>
-                        {booking.status}
+        <div className="p-4 space-y-4">
+          {mergedBookings.map((booking) => (
+            <motion.div
+              key={booking.bookingId}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-white dark:bg-zinc-800 rounded-lg border border-gray-200 dark:border-zinc-700 p-4 sm:p-6 hover:shadow-lg transition-shadow duration-300"
+            >
+              {/* Card content */}
+              <div className="flex flex-col gap-4">
+                
+                {/* Top: User + Info */}
+                <div className="flex flex-col space-y-2 text-sm sm:text-base text-gray-700 dark:text-gray-300">
+                  
+                  {/* Username + Status */}
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-0">
+                    <div className="flex items-center gap-2 font-semibold truncate">
+                      <User className="w-5 h-5 shrink-0" />
+                      <span className="truncate">{booking.username || "Guest User"}</span>
+                    </div>
+                    <span className={`px-2 py-0.5 rounded-full text-xs font-semibold self-start sm:self-center ${getStatusColor(booking.status)}`}>
+                      {booking.status}
+                    </span>
+                  </div>
+
+
+                  {/* Console, Time, Duration, Price */}
+                  <div className="flex flex-col gap-2">
+                    <div className="flex items-center gap-2">
+                      {getIcon(booking.consoleType)}
+                      <span>{booking.consoleType}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Clock className="w-4 h-4" />
+                      <span>{booking.time} - {booking.endTime}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Timer className="w-4 h-4" />
+                      <span>
+                        {booking.duration} hour{booking.duration > 1 ? "s" : ""}
+                      </span>
+                      <span className="text-emerald-600 font-semibold flex items-center gap-1">
+                        <FontAwesomeIcon icon={faIndianRupeeSign} className="w-4 h-4" />
+                        {booking.total_price}
                       </span>
                     </div>
-                    
-                    <div className="grid grid-cols-2 gap-4 mt-2">
-                      <div className="flex items-center gap-2 text-sm text-gray-500">
-                        {getIcon(booking.consoleType)}
-                        <span>{booking.consoleType}</span>
-                      </div>
-                      
-                      <div className="flex items-center gap-2 text-sm text-gray-500">
-                        <Clock className="w-4 h-4" />
-                        <span>{booking.time}</span>
-                      </div>
-                      
-                      <div className="flex items-center gap-2 text-sm text-gray-500">
-                        <Timer className="w-4 h-4" />
-                        <span>{booking.duration} hour{booking.duration > 1 ? 's' : ''}</span>
-                      </div>
-                      
-                      <div className="flex items-center gap-2 text-sm text-emerald-600 font-medium">
-                        {/* <DollarSign className="w-4 h-4" /> */}
-                        <FontAwesomeIcon icon={faIndianRupeeSign} className="w-4 h-4" />
-                        <span>{booking.total_price}</span>
-                      </div>
-                    </div>
                   </div>
-                  
+                </div>
+
+                {/* Bottom: Start Button */}
+                <div className="flex justify-end">
                   <motion.button
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                     onClick={() => start(booking.consoleType, booking.game_id, booking.bookingId)}
-                    className="flex items-center gap-2 px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg font-medium shadow-lg shadow-emerald-500/20 transition-all whitespace-nowrap"
+                    className="w-full sm:w-auto flex justify-center items-center gap-2 px-6 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg font-semibold shadow-md shadow-emerald-500/30 transition-all"
                   >
-                    <Play className="w-4 h-4" />
+                    <Play className="w-5 h-5" />
                     Start
                   </motion.button>
                 </div>
-              </motion.div>
-            ))}
-          </div>
+              </div>
+            </motion.div>
+          ))}
+        </div>
         )}
       </div>
     </div>

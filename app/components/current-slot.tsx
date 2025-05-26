@@ -307,7 +307,7 @@ export function CurrentSlots({ currentSlots, refreshSlots, setRefreshSlots }: Cu
         {/* Header and Search */}
         <div className="flex flex-col space-y-4 md:flex-row md:items-center md:justify-between">
           <div className="flex items-center space-x-2">
-            <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">Current Slots</h2>
+            <h2 className="text-2xl font-semibold text-gray-900 dark:text-white dark:text-white">Current Slots</h2>
             <motion.button 
               onClick={() => setRefreshSlots(prev => !prev)}
               whileTap={{ rotate: 360 }}
@@ -320,13 +320,13 @@ export function CurrentSlots({ currentSlots, refreshSlots, setRefreshSlots }: Cu
           </div>
 
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 w-4 h-4" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 dark:text-gray-400dark:text-gray-400 w-4 h-4" />
             <input
               type="text"
               value={searchQuery}
               onChange={handleSearch}
               placeholder="Search by name or console type..."
-              className="/50 border border-gray-300 rounded-lg pl-10 pr-4 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 w-full md:w-64 transition-all duration-200 ease-in-out"
+              className="bg-white/50 border border-gray-300 rounded-lg pl-10 pr-4 py-2 text-sm text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 w-full md:w-64 transition-all duration-200 ease-in-out"
             />
           </div>
         </div>
@@ -336,33 +336,33 @@ export function CurrentSlots({ currentSlots, refreshSlots, setRefreshSlots }: Cu
           variants={container}
           initial="hidden"
           animate="show"
-          className="rounded-lg border border-gray-200 overflow-hidden shadow-sm "
+          className="rounded-lg border border-gray-200 overflow-hidden shadow-sm bg-white"
         >
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
+              <thead className="bg-gray-50 dark:bg-gray-800">
                 <tr>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400dark:text-gray-400 uppercase tracking-wider">
                     Name
                   </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400dark:text-gray-400 uppercase tracking-wider">
                     System
                   </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400dark:text-gray-400 uppercase tracking-wider">
                     Time
                   </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400dark:text-gray-400 uppercase tracking-wider">
                     Progress
                   </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400dark:text-gray-400 uppercase tracking-wider">
                     Extra
                   </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400dark:text-gray-400 uppercase tracking-wider">
                     Action
                   </th>
                 </tr>
               </thead>
-              <tbody className=" divide-y divide-gray-200">
+              <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
                 <AnimatePresence>
                   {filteredSlots.map((booking) => {
                     const timer = timers.find(t => t.slotId === booking.slotId) || {
@@ -379,7 +379,7 @@ export function CurrentSlots({ currentSlots, refreshSlots, setRefreshSlots }: Cu
                       <motion.tr 
                         key={booking.slotId}
                         variants={item}
-                        className={`${hasExtraTime && "bg-red-50"} hover:bg-gray-50 transition-colors`}
+                        className={`${hasExtraTime && "bg-red-50"} hover:bg-gray-50 dark:bg-gray-800 transition-colors`}
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, x: -20 }}
@@ -393,25 +393,25 @@ export function CurrentSlots({ currentSlots, refreshSlots, setRefreshSlots }: Cu
                               </span>
                             </div>
                             <div className="ml-4">
-                              <div className="text-sm font-medium text-gray-900">{booking.username}</div>
-                              <div className="text-sm text-gray-500">Console #{booking.consoleNumber}</div>
+                              <div className="text-sm font-medium text-gray-900 dark:text-white">{booking.username}</div>
+                              <div className="text-sm text-gray-500 dark:text-gray-400dark:text-gray-400">Console #{booking.consoleNumber}</div>
                             </div>
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center space-x-2">
                             <ConsoleIcon type={booking.consoleType.toLowerCase()} />
-                            <span className="text-sm text-gray-900 capitalize">{booking.consoleType}</span>
+                            <span className="text-sm text-gray-900 dark:text-white capitalize">{booking.consoleType}</span>
                           </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400dark:text-gray-400">
                           <div className="flex flex-col space-y-1">
                             <div className="flex items-center space-x-2">
-                              <span className="text-gray-700 font-medium">Start:</span>
+                              <span className="text-gray-700 dark:text-gray-300 font-medium">Start:</span>
                               <span>{booking.startTime}</span>
                             </div>
                             <div className="flex items-center space-x-2">
-                              <span className="text-gray-700 font-medium">End:</span>
+                              <span className="text-gray-700 dark:text-gray-300 font-medium">End:</span>
                               <span>{booking.endTime}</span>
                             </div>
                           </div>
@@ -421,7 +421,7 @@ export function CurrentSlots({ currentSlots, refreshSlots, setRefreshSlots }: Cu
                             <div className="text-sm font-medium mb-1">
                               {formatTime(timer.elapsedTime)}
                             </div>
-                            <div className="h-2 w-full bg-gray-200 rounded-full overflow-hidden">
+                            <div className="h-2 w-full bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
                               <motion.div 
                                 className={`h-full ${progress < 75 ? 'bg-emerald-500' : progress < 90 ? 'bg-yellow-500' : 'bg-red-500'}`}
                                 style={{ width: `${progress}%` }}
@@ -492,13 +492,13 @@ export function CurrentSlots({ currentSlots, refreshSlots, setRefreshSlots }: Cu
                 </AnimatePresence>
                 {filteredSlots.length === 0 && (
                   <tr>
-                    <td colSpan={6} className="px-6 py-10 text-center text-gray-500">
+                    <td colSpan={6} className="px-6 py-10 text-center text-gray-500 dark:text-gray-400dark:text-gray-400">
                       <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         className="flex flex-col items-center"
                       >
-                        <Search className="w-12 h-12 text-gray-300 mb-2" />
+                        <Search className="w-12 h-12 text-gray-300 dark:text-gray-700 mb-2" />
                         <p className="text-lg">No active slots found</p>
                         <p className="text-sm">Try adjusting your search or check back later</p>
                       </motion.div>
@@ -520,7 +520,7 @@ export function CurrentSlots({ currentSlots, refreshSlots, setRefreshSlots }: Cu
               exit={{ opacity: 0 }}
             >
               <motion.div 
-                className=" rounded-xl shadow-2xl p-6 w-full max-w-md space-y-6"
+                className="bg-white rounded-xl shadow-2xl p-6 w-full max-w-md space-y-6"
                 initial={{ scale: 0.9, y: 20, opacity: 0 }}
                 animate={{ scale: 1, y: 0, opacity: 1 }}
                 exit={{ scale: 0.9, y: 20, opacity: 0 }}
@@ -530,7 +530,7 @@ export function CurrentSlots({ currentSlots, refreshSlots, setRefreshSlots }: Cu
                   <h2 className="text-xl font-semibold text-gray-800">
                     Extra Payment Required
                   </h2>
-                  <p className="text-sm text-gray-500 mt-1">
+                  <p className="text-sm text-gray-500 dark:text-gray-400dark:text-gray-400 mt-1">
                     The session has gone over the allotted time
                   </p>
                 </div>
@@ -554,7 +554,7 @@ export function CurrentSlots({ currentSlots, refreshSlots, setRefreshSlots }: Cu
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-900 mb-2">
                     Select Payment Mode
                   </label>
                   <div className="grid grid-cols-3 gap-3">
@@ -563,11 +563,11 @@ export function CurrentSlots({ currentSlots, refreshSlots, setRefreshSlots }: Cu
                       className={`flex flex-col items-center justify-center p-3 rounded-lg border ${
                         paymentMode === "cash"
                           ? "bg-emerald-100 border-emerald-500 ring-2 ring-emerald-500/30"
-                          : "border-gray-300 hover:bg-gray-50"
+                          : "border-gray-300 hover:bg-gray-50 bg-gray-50 text-gray-900"
                       } transition-all duration-200`}
                     >
-                      <IndianRupee className={`w-5 h-5 mb-1 ${paymentMode === "cash" ? "text-emerald-600" : "text-gray-500"}`} />
-                      <span className={`text-sm ${paymentMode === "cash" ? "text-emerald-700" : "text-gray-700"}`}>Cash</span>
+                      <IndianRupee className={`w-5 h-5 mb-1 ${paymentMode === "cash" ? "text-emerald-600" : "text-gray-500 dark:text-gray-400dark:text-gray-400"}`} />
+                      <span className={`text-sm ${paymentMode === "cash" ? "text-emerald-700" : "text-gray-700 dark:text-gray-300"}`}>Cash</span>
                     </button>
 
                     <button
@@ -575,11 +575,11 @@ export function CurrentSlots({ currentSlots, refreshSlots, setRefreshSlots }: Cu
                       className={`flex flex-col items-center justify-center p-3 rounded-lg border ${
                         paymentMode === "card"
                           ? "bg-emerald-100 border-emerald-500 ring-2 ring-emerald-500/30"
-                          : "border-gray-300 hover:bg-gray-50"
+                          : "border-gray-500 hover:bg-gray-50 bg-gray-50 text-gray-900"
                       } transition-all duration-200`}
                     >
-                      <CreditCard className={`w-5 h-5 mb-1 ${paymentMode === "card" ? "text-emerald-600" : "text-gray-500"}`} />
-                      <span className={`text-sm ${paymentMode === "card" ? "text-emerald-700" : "text-gray-700"}`}>Card</span>
+                      <CreditCard className={`w-5 h-5 mb-1 ${paymentMode === "card" ? "text-emerald-600" : "text-gray-500 dark:text-gray-400dark:text-gray-400"}`} />
+                      <span className={`text-sm ${paymentMode === "card" ? "text-emerald-700" : "text-gray-700 dark:text-gray-300"}`}>Card</span>
                     </button>
 
                     <button
@@ -587,11 +587,11 @@ export function CurrentSlots({ currentSlots, refreshSlots, setRefreshSlots }: Cu
                       className={`flex flex-col items-center justify-center p-3 rounded-lg border ${
                         paymentMode === "upi"
                           ? "bg-emerald-100 border-emerald-500 ring-2 ring-emerald-500/30"
-                          : "border-gray-300 hover:bg-gray-50"
+                          : "border-gray-300 hover:bg-gray-50 bg-gray-50 text-gray-900"
                       } transition-all duration-200`}
                     >
-                      <Smartphone className={`w-5 h-5 mb-1 ${paymentMode === "upi" ? "text-emerald-600" : "text-gray-500"}`} />
-                      <span className={`text-sm ${paymentMode === "upi" ? "text-emerald-700" : "text-gray-700"}`}>UPI</span>
+                      <Smartphone className={`w-5 h-5 mb-1 ${paymentMode === "upi" ? "text-emerald-600" : "text-gray-500 dark:text-gray-400dark:text-gray-400"}`} />
+                      <span className={`text-sm ${paymentMode === "upi" ? "text-emerald-700" : "text-gray-700 dark:text-gray-300"}`}>UPI</span>
                     </button>
                   </div>
                 </div>
@@ -599,7 +599,7 @@ export function CurrentSlots({ currentSlots, refreshSlots, setRefreshSlots }: Cu
                 <div className="flex justify-end gap-3 mt-6">
                   <button
                     onClick={() => setShowOverlay(false)}
-                    className="px-4 py-2 text-sm font-medium text-gray-700  border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400 transition-all duration-200 disabled:opacity-50"
+                    className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400 transition-all duration-200 disabled:opacity-50"
                     disabled={loading}
                   >
                     <span className="flex items-center gap-1">
