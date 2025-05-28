@@ -80,100 +80,69 @@ useEffect(() => {
       className="space-y-6"
     >
       {/* Stats Overview */}
-      <div className="grid gap-6 grid-cols-1 md:grid-cols-3">
-        {/* Today's Earning Card */}
-        <motion.div
-          initial={{ x: -20, opacity: 0 }}
-          animate={{ x: 0, opacity: 1 }}
-          transition={{ delay: 0.1 }}
-        >
-          <Card className="theme-card bg-gradient-to-br from-emerald-500/10 to-emerald-500/5">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <div className="flex items-center space-x-2">
-                <DollarSign className="h-5 w-5 text-emerald-500" />
-                <CardTitle className="theme-text text-emerald-500">Today's Earning</CardTitle>
-              </div>
-              <button 
-                onClick={() => setShowEarnings(!showEarnings)}
-                className="text-emerald-500 hover:text-emerald-600 transition-colors"
-              >
-                {showEarnings ? (
-                  <EyeOff className="h-5 w-5" />
-                ) : (
-                  <Eye className="h-5 w-5" />
-                )}
-              </button>
-            </CardHeader>
-            <CardContent>
-              <div className="theme-title text-2xl font-bold">
-                {showEarnings ? `₹${dashboardData?.stats?.todayEarnings ?? 0}` : "₹•••••"}
-              </div>
-              <p className="theme-subtext text-xs mt-1 flex items-center space-x-1">
-                <TrendingDown className="h-4 w-4 text-red-500" />
-                <span>{dashboardData?.stats?.todayEarningsChange ?? 0}% less than yesterday</span>
-              </p>
-            </CardContent>
-          </Card>
-        </motion.div>
-        
-        {/* Today's Bookings Card */}
-        <motion.div
-          initial={{ x: -20, opacity: 0 }}
-          animate={{ x: 0, opacity: 1 }}
-          transition={{ delay: 0.2 }}
-        >
-          <Card className="theme-card bg-gradient-to-br from-blue-500/10 to-blue-500/5">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <div className="flex items-center space-x-2">
-                <CalendarCheck className="h-5 w-5 text-blue-500" />
-                <CardTitle className="theme-text text-blue-500">Today's Bookings</CardTitle>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="theme-title text-2xl font-bold">{dashboardData.stats.todayBookings}</div>
-              <p className="theme-subtext text-xs mt-1 flex items-center space-x-1">
-                <TrendingUp className="h-4 w-4 text-green-500" />
-                <span>{dashboardData.stats.todayBookingsChange}% more than yesterday</span>
-              </p>
-            </CardContent>
-          </Card>
-        </motion.div>
+<div className="w-full h-[5vh] px-4 flex items-center justify-between gap-4 bg-transparent border-b dark:border-zinc-800 shadow-sm">
+  {/* Today's Earning */}
+  <motion.div
+    initial={{ opacity: 0, y: -10 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ delay: 0.1 }}
+    className="flex-1 flex items-center justify-start gap-3"
+  >
+    <DollarSign className="w-4 h-4 text-emerald-500" />
+    <span className="text-sm text-zinc-700 dark:text-zinc-300">Earnings:</span>
+    <span className="font-bold text-zinc-900 dark:text-white text-sm">
+      {showEarnings ? `₹${dashboardData?.stats?.todayEarnings ?? 0}` : "₹•••••"}
+    </span>
+    <button
+      onClick={() => setShowEarnings(!showEarnings)}
+      className="ml-2 text-emerald-500 hover:text-emerald-600 transition"
+    >
+      {showEarnings ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+    </button>
+  </motion.div>
 
-        {/* Pending Amount Card */}
-        <motion.div
-          initial={{ x: -20, opacity: 0 }}
-          animate={{ x: 0, opacity: 1 }}
-          transition={{ delay: 0.3 }}
-        >
-          <Card className="theme-card bg-gradient-to-br from-purple-500/10 to-purple-500/5">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <div className="flex items-center space-x-2">
-                <WalletCards className="h-5 w-5 text-purple-500" />
-                <CardTitle className="theme-text text-purple-500">Pending Amount</CardTitle>
-              </div>
-              <button 
-                onClick={() => setShowPending(!showPending)}
-                className="text-purple-500 hover:text-purple-600 transition-colors"
-              >
-                {showPending ? (
-                  <EyeOff className="h-5 w-5" />
-                ) : (
-                  <Eye className="h-5 w-5" />
-                )}
-              </button>
-            </CardHeader>
-            <CardContent>
-              <div className="theme-title text-2xl font-bold">
-                {showPending ? `₹${dashboardData.stats.pendingAmount}` : "₹•••••"}
-              </div>
-              <p className="theme-subtext text-xs mt-1 flex items-center space-x-1">
-                <CheckCircle2 className="h-4 w-4 text-green-500" />
-                <span>₹{dashboardData.stats.clearedAmount} Cleared</span>
-              </p>
-            </CardContent>
-          </Card>
-        </motion.div>
-      </div>
+  {/* Today's Bookings */}
+  <motion.div
+    initial={{ opacity: 0, y: -10 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ delay: 0.2 }}
+    className="flex-1 flex items-center justify-center gap-3"
+  >
+    <CalendarCheck className="w-4 h-4 text-blue-500" />
+    <span className="text-sm text-zinc-700 dark:text-zinc-300">Bookings:</span>
+    <span className="font-bold text-zinc-900 dark:text-white text-sm">
+      {dashboardData?.stats?.todayBookings ?? 0}
+    </span>
+    <span className="text-xs text-green-500 flex items-center gap-1">
+      <TrendingUp className="w-3 h-3" />
+      {dashboardData?.stats?.todayBookingsChange ?? 0}%
+    </span>
+  </motion.div>
+
+  {/* Pending Amount */}
+  <motion.div
+    initial={{ opacity: 0, y: -10 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ delay: 0.3 }}
+    className="flex-1 flex items-center justify-end gap-3"
+  >
+    <WalletCards className="w-4 h-4 text-purple-500" />
+    <span className="text-sm text-zinc-700 dark:text-zinc-300">Pending:</span>
+    <span className="font-bold text-zinc-900 dark:text-white text-sm">
+      {showPending ? `₹${dashboardData?.stats?.pendingAmount ?? 0}` : "₹•••••"}
+    </span>
+    <button
+      onClick={() => setShowPending(!showPending)}
+      className="ml-2 text-purple-500 hover:text-purple-600 transition"
+    >
+      {showPending ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+    </button>
+  </motion.div>
+</div>
+
+
+
+
 
       {/* Stats and Bookings Grid */}
       <div className="grid gap-6 grid-cols-1 lg:grid-cols-4">

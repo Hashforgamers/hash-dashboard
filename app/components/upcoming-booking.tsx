@@ -12,6 +12,7 @@ import { useState, useEffect, useMemo } from "react";
 import axios from "axios";
 import { format, parseISO, isToday, isTomorrow, startOfToday } from 'date-fns';
 import { DASHBOARD_URL } from "@/src/config/env";
+import ResponsiveSearchFilter from "./ResponsiveSearchFilter";
 
 export function getIcon(system: string): JSX.Element {
   if (system.toLowerCase().includes("ps5")) return <Gamepad2 className="w-5 h-5 text-blue-500" />;
@@ -159,7 +160,7 @@ export function UpcomingBookings({
   const [selectedGameId, setSelectedGameId] = useState<string | null>(null);
   const [selectedBookingId, setSelectedBookingId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedDate, setSelectedDate] = useState(startOfToday().toISOString());
+  const [selectedDate, setSelectedDate] = useState(format(startOfToday(), 'yyyy-MM-dd'));
   const [showFilters, setShowFilters] = useState(false);
   const [timeFilter, setTimeFilter] = useState("all");
 
@@ -175,9 +176,10 @@ export function UpcomingBookings({
 
     // Apply search
     if (searchTerm) {
+      const term = searchTerm.trim().toLowerCase();
       filtered = filtered.filter(booking => 
-        booking.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        booking.consoleType.toLowerCase().includes(searchTerm.toLowerCase())
+        (booking.username?.toLowerCase() || 'guest user').includes(term) ||
+        booking.consoleType?.toLowerCase().includes(term)
       );
     }
 
@@ -263,22 +265,22 @@ export function UpcomingBookings({
   };
 
   return (
-    <div className="h-full flex flex-col bg-gray-50 dark:bg-zinc-900 rounded-lg shadow-lg px-4 md:px-6 max-w-screen-xl mx-auto w-full">
+    <div className="h-full flex flex-col bg-transparent rounded-lg shadow-lg px-4 md:px-6 max-w-screen-xl mx-auto w-full">
       <AnimatePresence>
         {startCard && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 flex items-center justify-center z-[9999] bg-black/60 backdrop-blur-sm p-4"
+            className="fixed inset-0 flex items-center justify-center z-[9999] bg-transparent backdrop-blur-sm p-4"
           >
             <motion.div
               initial={{ scale: 0.95, y: 20, opacity: 0 }}
               animate={{ scale: 1, y: 0, opacity: 1 }}
               exit={{ scale: 0.95, y: 20, opacity: 0 }}
-              className="w-full max-w-md sm:max-w-lg"
+              className="w-full max-w-md sm:max-w-md"
             >
-              <Card className="bg-white dark:bg-zinc-900 overflow-hidden border border-gray-200 dark:border-zinc-800">
+              <Card className="bg-gray-50 dark:bg-zinc-900 overflow-hidden border border-gray-200 dark:border-zinc-800">
                 <div className="p-4 border-b border-gray-200 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-800/50">
                   <div className="flex items-center justify-between">
                     <h2 className="text-lg font-semibold">Select Gaming Console</h2>
@@ -291,7 +293,7 @@ export function UpcomingBookings({
                   </div>
                 </div>
 
-                <div className="p-6">
+                <div className="p-3">
                   {isLoading ? (
                     <div className="flex items-center justify-center h-48">
                       <div className="animate-spin rounded-full h-8 w-8 border-2 border-emerald-500 border-t-transparent"></div>
@@ -303,7 +305,7 @@ export function UpcomingBookings({
                       <p className="text-gray-500 text-sm">All gaming consoles are currently in use.</p>
                     </div>
                   ) : (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                       {availableConsoles.map((console) => (
                         <motion.div
                           key={console.consoleId}
@@ -333,7 +335,7 @@ export function UpcomingBookings({
                     whileTap={{ scale: 0.98 }}
                     onClick={handleSubmit}
                     disabled={!selectedConsole || isLoading}
-                    className={`w-full mt-6 py-2.5 rounded-lg font-medium flex items-center justify-center space-x-2 ${
+                    className={`w-full mt-6 py-1.5 rounded-lg font-medium flex items-center justify-center space-x-2 ${
                       selectedConsole && !isLoading
                         ? "bg-emerald-500 hover:bg-emerald-600 text-white"
                         : "bg-gray-100 text-gray-400 cursor-not-allowed"
@@ -359,7 +361,7 @@ export function UpcomingBookings({
       </AnimatePresence>
 
       <div className="p-4 border-b border-gray-200 dark:border-zinc-800">
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
             <Calendar className="w-5 h-5 text-emerald-500" />
             <h2 className="text-lg font-semibold">Upcoming Bookings</h2>
@@ -368,78 +370,20 @@ export function UpcomingBookings({
             </span>
           </div>
         </div>
-
-<div className="space-y-3">
-  {/* Date and Filter controls */}
-  <div className="flex flex-wrap gap-3">
-    {/* Date Picker */}
-    <input
-      type="date"
-      value={selectedDate.split('T')[0]}
-      onChange={(e) => setSelectedDate(new Date(e.target.value).toISOString())}
-      className="px-3 py-2 rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-colors w-full sm:w-auto"
-    />
-
-    {/* Filter Button */}
-    <div className="relative w-full sm:w-auto">
-      <button
-        onClick={() => setShowFilters(!showFilters)}
-        className="flex items-center justify-between gap-2 px-3 py-2 rounded-lg border border-gray-200 dark:border-zinc-700 hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors w-full sm:w-auto"
-      >
-        <Filter className="w-4 h-4" />
-        <span>Filters</span>
-        <ChevronDown className="w-4 h-4" />
-      </button>
-
-      {showFilters && (
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: 10 }}
-          className="absolute top-full mt-2 right-0 w-48 bg-white dark:bg-zinc-800 rounded-lg shadow-lg border border-gray-200 dark:border-zinc-700 py-2 z-10"
-        >
-          {['all', 'morning', 'afternoon', 'evening'].map((filter) => (
-            <button
-              key={filter}
-              onClick={() => {
-                setTimeFilter(filter);
-                setShowFilters(false);
-              }}
-              className={`w-full px-4 py-2 text-left text-sm transition-colors ${
-                timeFilter === filter
-                  ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600'
-                  : 'hover:bg-gray-50 dark:hover:bg-zinc-700'
-              }`}
-            >
-              {filter.charAt(0).toUpperCase() + filter.slice(1)}
-            </button>
-          ))}
-        </motion.div>
-      )}
-    </div>
-  </div>
-
-  {/* Search Input */}
-  <div className="relative">
-    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-    <input
-      type="text"
-      placeholder="Search by name or console..."
-      value={searchTerm}
-      onChange={(e) => setSearchTerm(e.target.value)}
-      className="w-full pl-9 pr-4 py-2 rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-colors"
-    />
-  </div>
-</div>
-
-
-
+        <ResponsiveSearchFilter
+          searchTerm={searchTerm}
+          setSearchTerm={setSearchTerm}
+          selectedDate={selectedDate}
+          setSelectedDate={setSelectedDate}
+          timeFilter={timeFilter}
+          setTimeFilter={setTimeFilter}
+        />
       </div>
 
       <div className="flex-1 overflow-y-auto">
         {mergedBookings.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full py-12 text-gray-500">
-            <CalendarIcon className="w-12 h-12 mb-4 opacity-50" />
+            <CalendarIcon className="w-12 h-12 mb-2 opacity-50" />
             <p className="text-lg font-medium">No bookings found</p>
             <p className="text-sm mt-1">Try adjusting your search or filters</p>
           </div>
@@ -450,25 +394,28 @@ export function UpcomingBookings({
               key={booking.bookingId}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="bg-white dark:bg-zinc-800 rounded-lg border border-gray-200 dark:border-zinc-700 p-4 sm:p-6 hover:shadow-lg transition-shadow duration-300"
+              className="bg-gray-50 dark:bg-zinc-900 rounded-lg border border-gray-200 dark:border-zinc-700 p-4 sm:p-3 hover:shadow-lg transition-shadow duration-300"
             >
               {/* Card content */}
-              <div className="flex flex-col gap-4">
+              <div className="flex flex-col gap-2 text-sm text-gray-700 dark:text-gray-300">
                 
                 {/* Top: User + Info */}
-                <div className="flex flex-col space-y-2 text-sm sm:text-base text-gray-700 dark:text-gray-300">
+                <div className="flex flex-col space-y-2">
                   
                   {/* Username + Status */}
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-0">
-                    <div className="flex items-center gap-2 font-semibold truncate">
-                      <User className="w-5 h-5 shrink-0" />
+                    <div className="flex items-center gap-2 font-medium truncate">
+                      <User className="w-4 h-4 shrink-0" />
                       <span className="truncate">{booking.username || "Guest User"}</span>
                     </div>
-                    <span className={`px-2 py-0.5 rounded-full text-xs font-semibold self-start sm:self-center ${getStatusColor(booking.status)}`}>
+                    <span
+                      className={`px-2 py-0.5 rounded-full text-xs font-semibold self-start sm:self-center ${getStatusColor(
+                        booking.status
+                      )}`}
+                    >
                       {booking.status}
                     </span>
                   </div>
-
 
                   {/* Console, Time, Duration, Price */}
                   <div className="flex flex-col gap-2">
@@ -485,8 +432,8 @@ export function UpcomingBookings({
                       <span>
                         {booking.duration} hour{booking.duration > 1 ? "s" : ""}
                       </span>
-                      <span className="text-emerald-600 font-semibold flex items-center gap-1">
-                        <FontAwesomeIcon icon={faIndianRupeeSign} className="w-4 h-4" />
+                      <span className="text-emerald-600 font-semibold flex items-center gap-1 text-sm">
+                        <FontAwesomeIcon icon={faIndianRupeeSign} className="w-3.5 h-3.5" />
                         {booking.total_price}
                       </span>
                     </div>
@@ -494,14 +441,16 @@ export function UpcomingBookings({
                 </div>
 
                 {/* Bottom: Start Button */}
-                <div className="flex justify-end">
+                <div className="flex justify-end mt-2">
                   <motion.button
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
-                    onClick={() => start(booking.consoleType, booking.game_id, booking.bookingId)}
-                    className="w-full sm:w-auto flex justify-center items-center gap-2 px-6 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg font-semibold shadow-md shadow-emerald-500/30 transition-all"
+                    onClick={() =>
+                      start(booking.consoleType, booking.game_id, booking.bookingId)
+                    }
+                    className="w-full sm:w-auto flex justify-center items-center gap-2 px-5 py-2 text-sm bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg font-semibold shadow-md shadow-emerald-500/30 transition-all"
                   >
-                    <Play className="w-5 h-5" />
+                    <Play className="w-4 h-4" />
                     Start
                   </motion.button>
                 </div>
