@@ -1,4 +1,5 @@
 "use client";
+
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -27,14 +28,14 @@ import { Input } from "@/components/ui/input1";
 import { PasswordInput } from "@/components/ui/password-input";
 import { LOGIN_URL } from "@/src/config/env";
 
-// Updated schema to include parent_type
+// Schema
 const formSchema = z.object({
   email: z.string().email({ message: "Invalid email address" }),
   password: z
     .string()
     .min(6, { message: "Password must be at least 6 characters long" })
     .regex(/[a-zA-Z0-9]/, { message: "Password must be alphanumeric" }),
-  parent_type: z.string().min(1, { message: "Parent type is required" }), // new field
+  parent_type: z.string().min(1, { message: "Parent type is required" }),
 });
 
 export default function LoginPreview() {
@@ -43,13 +44,13 @@ export default function LoginPreview() {
     defaultValues: {
       email: "",
       password: "",
-      parent_type: "vendor", // Default value
+      parent_type: "vendor",
     },
   });
 
   const router = useRouter();
-
   const [loading, setLoading] = useState(false);
+  const [loginError, setLoginError] = useState("");
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
@@ -66,35 +67,34 @@ export default function LoginPreview() {
         }),
         redirect: "follow",
       });
-    
 
       const result = await response.json();
+
       if (response.status === 200) {
         toast.success("Login successful!");
-        console.log(result);
         const token = result.data.token;
-        // const expirationTime = new Date().getTime() + 24 * 60 * 60 * 1000; // 1 day in milliseconds
-        const expiresIn = result.data.expires_in * 1000; // Convert seconds to milliseconds
+        const expiresIn = result.data.expires_in * 1000;
         const expirationTime = new Date().getTime() + expiresIn;
 
         localStorage.setItem("jwtToken", token);
         localStorage.setItem("tokenExpiration", expirationTime.toString());
 
+        setLoginError("");
         window.location.href = "/dashboard";
-        console.log(result);
-        setLoading(false);
       } else {
-        toast.error(result.message || "Login failed");
-        setLoading(false);
+        setLoginError(result?.message || "Invalid email or password");
       }
     } catch (error) {
       console.error("Form submission error", error);
-      toast.error("Failed to submit the form. Please try again.");
-    } 
+      setLoginError("Failed to submit the form. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   }
+
   return (
     <div className="flex justify-center items-center min-h-screen w-full px-4">
-      <Card className="mx-auto max-w-sm">
+      <Card className="mx-auto max-w-sm w-full">
         <CardHeader>
           <CardTitle className="text-2xl">Login</CardTitle>
           <CardDescription>
@@ -103,7 +103,7 @@ export default function LoginPreview() {
         </CardHeader>
         <CardContent>
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               <div className="grid gap-4">
                 <FormField
                   control={form.control}
@@ -118,6 +118,10 @@ export default function LoginPreview() {
                           type="email"
                           autoComplete="email"
                           {...field}
+                          onChange={(e) => {
+                            field.onChange(e);
+                            setLoginError("");
+                          }}
                         />
                       </FormControl>
                       <FormMessage />
@@ -144,6 +148,10 @@ export default function LoginPreview() {
                           placeholder="******"
                           autoComplete="current-password"
                           {...field}
+                          onChange={(e) => {
+                            field.onChange(e);
+                            setLoginError("");
+                          }}
                         />
                       </FormControl>
                       <FormMessage />
@@ -160,6 +168,9 @@ export default function LoginPreview() {
                     "Submit"
                   )}
                 </Button>
+                {loginError && (
+                  <p className="text-sm text-red-500 text-center">{loginError}</p>
+                )}
               </div>
             </form>
           </Form>

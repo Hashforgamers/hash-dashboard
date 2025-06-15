@@ -29,6 +29,7 @@ import { Badge } from "@/components/ui/badge";
 import { jwtDecode } from "jwt-decode";
 import React from "react";
 import { DASHBOARD_URL} from "@/src/config/env";
+import HashLoader from "./ui/HashLoader";
 
 interface Transaction {
   id: number;
@@ -50,6 +51,7 @@ function getToken() {
 
 export function TransactionTable() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [boolTrans, setBoolTrans] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [token, setToken] = useState<string | null>(null);
   const [vendorId, setVendorId] = useState<number | null>(null);
@@ -145,39 +147,80 @@ export function TransactionTable() {
     return `${year}${month}${day}`;
   }
 
-  async function fetchData(): Promise<void> {
-    if (!vendorId) return;
+  useEffect(() => {
+    const storedToken = getToken();
+    setToken(storedToken);
 
-  const fromDate = convertEpochToYYYYMMDD(issuedAt);
-  const toDate = convertEpochToYYYYMMDD(expirationTime);
-
-    const apiUrl = `${DASHBOARD_URL}/api/transactionReport/${vendorId}/${fromDate}/${toDate}`;
-
-    try {
-      const response = await fetch(apiUrl, {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! Status: ${response.status}`);
+    if (storedToken) {
+      try {
+        const decoded: any = jwtDecode(storedToken);
+        setVendorId(decoded?.sub?.id || null);
+        setIssuedAt(decoded?.iat || null);
+        setExpirationTime(decoded?.exp || null);
+      } catch (error) {
+        console.error("Invalid JWT Token:", error);
       }
-
-      const data: Transaction[] = await response.json();
-      setTransactions(data || []);
-    } catch (error) {
-      console.error("Error fetching data:", error);
     }
-  }
+  }, []);
 
   useEffect(() => {
-    if (vendorId) {
-      fetchData();
-    }
-  }, [vendorId, token]);
+    if (!vendorId || !issuedAt || !expirationTime || !token) return;
+
+    const CACHE_KEY = `transactions_${vendorId}`;
+    const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+    const POLL_INTERVAL = 60 * 1000; // 1 minute
+    let pollingInterval: NodeJS.Timeout;
+
+    const fromDate = convertEpochToYYYYMMDD(issuedAt);
+    const toDate = convertEpochToYYYYMMDD(expirationTime);
+    const apiUrl = `${DASHBOARD_URL}/api/transactionReport/${vendorId}/${fromDate}/${toDate}`;
+
+    const loadData = async (useCache: boolean) => {
+      setBoolTrans(true);
+      const now = Date.now();
+
+      try {
+        const cached = localStorage.getItem(CACHE_KEY);
+        if (useCache && cached) {
+          const parsed = JSON.parse(cached);
+          if (parsed.timestamp && now - parsed.timestamp < CACHE_TTL) {
+            setTransactions(parsed.data);
+            setBoolTrans(false);
+            console.log("Loaded transactions from cache");
+            return;
+          }
+        }
+
+        const response = await fetch(apiUrl, {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+
+        const data: Transaction[] = await response.json();
+        setTransactions(data || []);
+        localStorage.setItem(CACHE_KEY, JSON.stringify({ data, timestamp: now }));
+      } catch (error) {
+        console.error("Error fetching transactions:", error);
+      } finally {
+        setBoolTrans(false);
+      }
+    };
+
+    loadData(true); // Load initially from cache if available
+
+    pollingInterval = setInterval(() => {
+      loadData(false); // Always refresh on interval
+    }, POLL_INTERVAL);
+
+    return () => clearInterval(pollingInterval);
+  }, [vendorId, issuedAt, expirationTime, token]);
 
   const metrics = useMemo(() => {
     if (!transactions.length) return { total: 0, uniqueUsers: 0, pendingSettlements: 0,  cashTransactions: 0,};
@@ -306,6 +349,9 @@ export function TransactionTable() {
     return acc;
   }, {} as Record<string, Record<number, { userName: string; bookings: Transaction[]; totalAmount: number }>>);
 
+  if (boolTrans) {
+    return <HashLoader className="min-h-[500px]" />;
+  }
 
   return (
     <div className="space-y-6 p-6">

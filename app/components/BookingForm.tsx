@@ -19,6 +19,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
   const [email, setEmail] = useState<string>("");
   const [phone, setPhone] = useState<string>("");
   const [isLoadingUser, setIsLoadingUser] = useState<boolean>(false);
+  const [refreshDashboard, setRefreshDashboard] = useState(false);
   
   // Booking details
   const [selectedDate, setSelectedDate] = useState<string>(
@@ -52,6 +53,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
     setEmailSuggestions(suggestions);
   };
 
+  
   const handlePhoneInputChange = (value: string) => {
     setPhone(value);
     const suggestions = userList.filter(user =>
@@ -118,7 +120,6 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
     }
   }, []);
 
-
   // Form validation
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
@@ -133,7 +134,6 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
-
 
   // Fetch available slots
   useEffect(() => {
@@ -189,6 +189,11 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
       if (!response.ok) throw new Error("Failed to submit booking");
 
       setIsSubmitted(true);
+
+      // ✅ Notify dashboard to refresh immediately
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("refresh-dashboard"));
+      }
 
       // Check if the submitted user exists in cache
       const userCacheKey = "userList";

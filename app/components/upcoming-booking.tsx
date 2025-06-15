@@ -255,6 +255,10 @@ export function UpcomingBookings({
       } catch (error) {
         console.error("Error updating console status:", error);
       } finally {
+        // ✅ Notify dashboard to refresh immediately
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(new CustomEvent("refresh-dashboard"));
+        }
         setIsLoading(false);
       }
     }

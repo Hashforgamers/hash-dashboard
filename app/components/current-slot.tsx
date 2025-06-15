@@ -4,7 +4,8 @@ import { Search, CreditCard, IndianRupee, Smartphone, X, CheckCircle, Loader2 } 
 import { jwtDecode } from "jwt-decode";
 import { FaCheck, FaPowerOff } from 'react-icons/fa';
 import { BOOKING_URL, DASHBOARD_URL } from "@/src/config/env";
-
+import { mergeConsecutiveSlots, mergeConsecutiveBookings , Booking} from "@/app/utils/slot-utils";
+import HashLoader from './ui/HashLoader';
 
 // Helper function to format the timer (HH:MM:SS)
 const formatTime = (seconds: number) => {
@@ -98,6 +99,12 @@ const releaseSlot = async (consoleType: string, gameId: string, consoleId: strin
     
     if (response.ok) {
       setRefreshSlots((prev: boolean) => !prev);
+
+      // ✅ Notify dashboard to refresh immediately
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("refresh-dashboard"));
+      }
+
       return true;
     } else {
       console.log("Failed to release the slot.");
@@ -115,21 +122,6 @@ const calculateExtraAmount = (extraSeconds: number, ratePerHour = 1) => {
   return Math.ceil(extraHours * ratePerHour);
 };
 
-// Merge consecutive slots helper function
-const mergeConsecutiveSlots = (slots: any[]) => {
-  if (!slots || !slots.length) return [];
-  
-  // Implementation would go here
-  return slots;
-};
-
-// Merge consecutive bookings helper function
-const mergeConsecutiveBookings = (slots: any[]) => {
-  if (!slots || !slots.length) return [];
-  
-  // For demo purposes, just return the slots
-  return slots;
-};
 
 interface CurrentSlotsProps {
   currentSlots: any[];
@@ -261,6 +253,11 @@ export function CurrentSlots({ currentSlots, refreshSlots, setRefreshSlots }: Cu
     } catch (err) {
       console.error("Error during settlement:", err);
     } finally {
+      // ✅ Notify dashboard to refresh immediately
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("refresh-dashboard"));
+      }
+      
       setReleasingSlots(prev => ({ ...prev, [selectedSlot.slotId]: false }));
       setShowOverlay(false);
       setSelectedSlot(null);
@@ -302,329 +299,336 @@ export function CurrentSlots({ currentSlots, refreshSlots, setRefreshSlots }: Cu
   };
 
   return (
-    <div className="p-6">
-      <div className="space-y-6">
-        {/* Header and Search */}
-        <div className="flex flex-col space-y-4 md:flex-row md:items-center md:justify-between">
-          <div className="flex items-center space-x-2">
-            <h2 className="text-2xl font-semibold text-gray-900 dark:text-white dark:text-white">Current Slots</h2>
-            <motion.button 
-              onClick={() => setRefreshSlots(prev => !prev)}
-              whileTap={{ rotate: 360 }}
-              transition={{ duration: 0.5 }}
-              className="text-emerald-500 hover:text-emerald-600 transition-colors"
-              title="Refresh slots"
-            >
-              <RefreshIcon size={20} />
-            </motion.button>
+    <>
+    {currentSlots?.available ? (
+      <HashLoader></HashLoader>
+    ):(
+      <div className="p-6">
+        <div className="space-y-6">
+          {/* Header and Search */}
+          <div className="flex flex-col space-y-4 md:flex-row md:items-center md:justify-between">
+            <div className="flex items-center space-x-2">
+              <h2 className="text-2xl font-semibold text-gray-900 dark:text-white dark:text-white">Current Slots</h2>
+              <motion.button 
+                onClick={() => setRefreshSlots(prev => !prev)}
+                whileTap={{ rotate: 360 }}
+                transition={{ duration: 0.5 }}
+                className="text-emerald-500 hover:text-emerald-600 transition-colors"
+                title="Refresh slots"
+              >
+                <RefreshIcon size={20} />
+              </motion.button>
+            </div>
+
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 dark:text-gray-400dark:text-gray-400 w-4 h-4" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={handleSearch}
+                placeholder="Search by name or console type..."
+                className="border bg-transparent rounded-lg pl-10 pr-4 py-2 text-sm text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 w-full md:w-64 transition-all duration-200 ease-in-out"
+              />
+            </div>
           </div>
 
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 dark:text-gray-400dark:text-gray-400 w-4 h-4" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={handleSearch}
-              placeholder="Search by name or console type..."
-              className="border bg-transparent rounded-lg pl-10 pr-4 py-2 text-sm text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 w-full md:w-64 transition-all duration-200 ease-in-out"
-            />
-          </div>
-        </div>
-
-        {/* Table */}
-        <motion.div
-          variants={container}
-          initial="hidden"
-          animate="show"
-          className="rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden shadow-sm bg-white/10 dark:bg-white/5 backdrop-blur-sm"
-        >
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700 text-sm">
-              <thead className="bg-white/20 dark:bg-white/10 backdrop-blur-sm">
-                <tr>
-                  {['Name', 'System', 'Time', 'Progress', 'Extra', 'Action'].map((heading) => (
-                    <th
-                      key={heading}
-                      scope="col"
-                      className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"
-                    >
-                      {heading}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                <AnimatePresence>
-                  {filteredSlots.map((booking) => {
-                    const timer = timers.find(t => t.slotId === booking.slotId) || {
-                      elapsedTime: 0,
-                      extraTime: 0,
-                      duration: 3600,
-                    };
-                    const isReleasing = releasingSlots[booking.slotId] || false;
-                    const progress = Math.min(100, (timer.elapsedTime / timer.duration) * 100);
-                    const hasExtraTime = timer.extraTime > 0;
-
-                    return (
-                      <motion.tr
-                        key={booking.slotId}
-                        variants={item}
-                        className="hover:bg-white/10 dark:hover:bg-white/5 transition-colors"
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, x: -20 }}
-                        transition={{ duration: 0.3 }}
-                      >
-                        {/* Name */}
-                        <td className="px-4 py-4 whitespace-nowrap">
-                          <div className="flex items-center gap-3">
-                            <div className="h-9 w-9 bg-emerald-100 dark:bg-emerald-900 rounded-full flex items-center justify-center text-sm font-medium text-emerald-700 dark:text-emerald-300">
-                              <span className="text-emerald-700 dark:text-emerald-300 font-medium text-sm">
-                                {booking.username.slice(0, 2).toUpperCase()}
-                              </span>
-                            </div>
-                            <div>
-                              <div className="font-medium text-gray-900 dark:text-white">{booking.username}</div>
-                              <div className="text-xs text-gray-500 dark:text-gray-400">Console #{booking.consoleNumber}</div>
-                            </div>
-                          </div>
-                        </td>
-
-                        {/* System */}
-                        <td className="px-4 py-4 whitespace-nowrap">
-                          <div className="flex items-center space-x-2">
-                            <ConsoleIcon type={booking.consoleType.toLowerCase()} />
-                            <span className="capitalize">{booking.consoleType}</span>
-                          </div>
-                        </td>
-
-                        {/* Time */}
-                        <td className="px-4 py-4 whitespace-nowrap">
-                          <div className="space-y-1">
-                            <div className="flex items-center gap-1">
-                              <span className="text-gray-700 dark:text-gray-300 font-medium">Start:</span>
-                              <span>{booking.startTime}</span>
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <span className="text-gray-700 dark:text-gray-300 font-medium">End:</span>
-                              <span>{booking.endTime}</span>
-                            </div>
-                          </div>
-                        </td>
-
-                        {/* Progress */}
-                        <td className="px-4 py-4 whitespace-nowrap">
-                          <div className="space-y-1">
-                            <div className="font-medium">{formatTime(timer.elapsedTime)}</div>
-                            <div className="h-2 w-full bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                              <motion.div
-                                className={`h-full ${progress < 75 ? 'bg-emerald-500' : progress < 90 ? 'bg-yellow-500' : 'bg-red-500'}`}
-                                style={{ width: `${progress}%` }}
-                                initial={{ width: 0 }}
-                                animate={{ width: `${progress}%` }}
-                                transition={{ duration: 0.5 }}
-                              />
-                            </div>
-                          </div>
-                        </td>
-
-                        {/* Extra Time */}
-                        <td className="px-4 py-4 whitespace-nowrap">
-                          {hasExtraTime ? (
-                            <motion.div
-                              className="text-red-600 font-medium"
-                              initial={{ scale: 1 }}
-                              animate={{ scale: [1, 1.05, 1] }}
-                              transition={{ duration: 1, repeat: Infinity }}
-                            >
-                              {formatTime(timer.extraTime)}
-                            </motion.div>
-                          ) : (
-                            <span className="text-emerald-600">00:00:00</span>
-                          )}
-                        </td>
-
-                        {/* Action */}
-                        <td className="px-4 py-4 whitespace-nowrap">
-                          {hasExtraTime ? (
-                            <motion.button
-                              whileHover={{ scale: 1.05 }}
-                              whileTap={{ scale: 0.95 }}
-                              onClick={() => {
-                                setSelectedSlot(booking);
-                                setShowOverlay(true);
-                              }}
-                              className="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-md text-sm w-28 shadow-sm transition-all"
-                            >
-                              <div className="flex items-center justify-center gap-1">
-                                <FaCheck className="w-3.5 h-3.5" />
-                                Settle
-                              </div>
-                            </motion.button>
-                          ) : (
-                            <motion.button
-                              whileHover={{ scale: 1.05 }}
-                              whileTap={{ scale: 0.95 }}
-                              onClick={() =>
-                                handleRelease(
-                                  booking.consoleType,
-                                  booking.game_id,
-                                  booking.consoleNumber,
-                                  vendorId,
-                                  setRefreshSlots,
-                                  booking.slotId
-                                )
-                              }
-                              disabled={isReleasing}
-                              className="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-md text-sm w-28 disabled:opacity-50 shadow-sm transition-all"
-                            >
-                              <div className="flex items-center justify-center gap-1">
-                                {isReleasing ? (
-                                  <Loader2 className="animate-spin w-3.5 h-3.5" />
-                                ) : (
-                                  <FaPowerOff className="w-3.5 h-3.5" />
-                                )}
-                                <span>{isReleasing ? "Releasing..." : "Release"}</span>
-                              </div>
-                            </motion.button>
-                          )}
-                        </td>
-                      </motion.tr>
-                    );
-                  })}
-                </AnimatePresence>
-
-                {filteredSlots.length === 0 && (
-                  <tr>
-                    <td colSpan={6} className="px-4 py-10 text-center text-gray-500 dark:text-gray-400">
-                      <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        className="flex flex-col items-center space-y-1"
-                      >
-                        <Search className="w-10 h-10 text-gray-300 dark:text-gray-700" />
-                        <p className="text-base">No active slots found</p>
-                        <p className="text-sm">Try adjusting your search or check back later</p>
-                      </motion.div>
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </motion.div>
-
-
-        {/* Payment Overlay */}
-        <AnimatePresence>
-          {showOverlay && (
-          <motion.div 
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+          {/* Table */}
+          <motion.div
+            variants={container}
+            initial="hidden"
+            animate="show"
+            className="rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden shadow-sm bg-white/10 dark:bg-white/5 backdrop-blur-sm"
           >
-            <motion.div 
-              className="bg-gray-50 dark:bg-zinc-900 rounded-xl shadow-2xl p-6 w-full max-w-md space-y-6"
-              initial={{ scale: 0.9, y: 20, opacity: 0 }}
-              animate={{ scale: 1, y: 0, opacity: 1 }}
-              exit={{ scale: 0.9, y: 20, opacity: 0 }}
-              transition={{ type: "spring", damping: 25, stiffness: 350 }}
-            >
-              <div className="text-center">
-                <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-100">
-                  Extra Payment Required
-                </h2>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                  The session has gone over the allotted time
-                </p>
-              </div>
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700 text-sm">
+                <thead className="bg-white/20 dark:bg-white/10 backdrop-blur-sm">
+                  <tr>
+                    {['Name', 'System', 'Time', 'Progress', 'Extra', 'Action'].map((heading) => (
+                      <th
+                        key={heading}
+                        scope="col"
+                        className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"
+                      >
+                        {heading}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                  {Array.isArray(filteredSlots) && (
+                  <AnimatePresence>
+                    {filteredSlots.map((booking) => {
+                      const timer = timers.find(t => t.slotId === booking.slotId) || {
+                        elapsedTime: 0,
+                        extraTime: 0,
+                        duration: 3600,
+                      };
+                      const isReleasing = releasingSlots[booking.slotId] || false;
+                      const progress = Math.min(100, (timer.elapsedTime / timer.duration) * 100);
+                      const hasExtraTime = timer.extraTime > 0;
 
-              <div className="flex justify-between items-center bg-red-50 dark:bg-red-900/20 p-4 rounded-lg">
-                <div>
-                  <p className="text-sm text-gray-600 dark:text-gray-300">Extra time</p>
-                  <p className="text-xl font-medium text-red-600 dark:text-red-400">
-                    {selectedSlot && formatTime(calculateExtraTime(selectedSlot.endTime, selectedSlot.date))}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600 dark:text-gray-300">Amount due</p>
-                  <p className="text-xl font-medium text-red-600 dark:text-red-400">
-                    ₹{selectedSlot && calculateExtraAmount(
-                      calculateExtraTime(selectedSlot.endTime, selectedSlot.date),
-                      selectedSlot.slot_price || 100
-                    )}
-                  </p>
-                </div>
-              </div>
+                      return (
+                        <motion.tr
+                          key={booking.slotId}
+                          variants={item}
+                          className="hover:bg-white/10 dark:hover:bg-white/5 transition-colors"
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, x: -20 }}
+                          transition={{ duration: 0.3 }}
+                        >
+                          {/* Name */}
+                          <td className="px-4 py-4 whitespace-nowrap">
+                            <div className="flex items-center gap-3">
+                              <div className="h-9 w-9 bg-emerald-100 dark:bg-emerald-900 rounded-full flex items-center justify-center text-sm font-medium text-emerald-700 dark:text-emerald-300">
+                                <span className="text-emerald-700 dark:text-emerald-300 font-medium text-sm">
+                                  {booking.username.slice(0, 2).toUpperCase()}
+                                </span>
+                              </div>
+                              <div>
+                                <div className="font-medium text-gray-900 dark:text-white">{booking.username}</div>
+                                <div className="text-xs text-gray-500 dark:text-gray-400">Console #{booking.consoleNumber}</div>
+                              </div>
+                            </div>
+                          </td>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-900 dark:text-gray-200 mb-2">
-                  Select Payment Mode
-                </label>
-                <div className="grid grid-cols-3 gap-3">
-                  {[
-                    { key: "cash", label: "Cash", Icon: IndianRupee },
-                    { key: "card", label: "Card", Icon: CreditCard },
-                    { key: "upi", label: "UPI", Icon: Smartphone },
-                  ].map(({ key, label, Icon }) => (
-                    <button
-                      key={key}
-                      onClick={() => setPaymentMode(key)}
-                      className={`flex flex-col items-center justify-center p-3 rounded-lg border transition-all duration-200
-                        ${
-                          paymentMode === key
-                            ? "bg-emerald-100 dark:bg-emerald-900 border-emerald-500 ring-2 ring-emerald-500/30"
-                            : "border-gray-300 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 bg-gray-50 dark:bg-zinc-800 text-gray-900 dark:text-gray-100"
-                        }`}
-                    >
-                      <Icon className={`w-5 h-5 mb-1 ${paymentMode === key ? "text-emerald-600" : "text-gray-500 dark:text-gray-400"}`} />
-                      <span className={`text-sm ${paymentMode === key ? "text-emerald-700 dark:text-emerald-300" : "text-gray-700 dark:text-gray-300"}`}>
-                        {label}
-                      </span>
-                    </button>
-                  ))}
-                </div>
-              </div>
+                          {/* System */}
+                          <td className="px-4 py-4 whitespace-nowrap">
+                            <div className="flex items-center space-x-2">
+                              <ConsoleIcon type={booking.consoleType.toLowerCase()} />
+                              <span className="capitalize">{booking.consoleType}</span>
+                            </div>
+                          </td>
 
-              <div className="flex justify-end gap-3 mt-6">
-                <button
-                  onClick={() => setShowOverlay(false)}
-                  className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-zinc-800 border border-gray-300 dark:border-gray-700 rounded-md shadow-sm hover:bg-gray-50 dark:hover:bg-zinc-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400 transition-all duration-200 disabled:opacity-50"
-                  disabled={loading}
-                >
-                  <span className="flex items-center gap-1">
-                    <X className="w-4 h-4" />
-                    Cancel
-                  </span>
-                </button>
+                          {/* Time */}
+                          <td className="px-4 py-4 whitespace-nowrap">
+                            <div className="space-y-1">
+                              <div className="flex items-center gap-1">
+                                <span className="text-gray-700 dark:text-gray-300 font-medium">Start:</span>
+                                <span>{booking.startTime}</span>
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <span className="text-gray-700 dark:text-gray-300 font-medium">End:</span>
+                                <span>{booking.endTime}</span>
+                              </div>
+                            </div>
+                          </td>
 
-                <button
-                  onClick={handleSettle}
-                  className="px-6 py-2 text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 rounded-md shadow-sm transition-all duration-200 disabled:opacity-50"
-                  disabled={loading}
-                >
-                  <span className="flex items-center gap-2">
-                    {loading ? (
-                      <>
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                        Processing...
-                      </>
-                    ) : (
-                      <>
-                        <CheckCircle className="w-4 h-4" />
-                        Settle
-                      </>
-                    )}
-                  </span>
-                </button>
-              </div>
-            </motion.div>
+                          {/* Progress */}
+                          <td className="px-4 py-4 whitespace-nowrap">
+                            <div className="space-y-1">
+                              <div className="font-medium">{formatTime(timer.elapsedTime)}</div>
+                              <div className="h-2 w-full bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                                <motion.div
+                                  className={`h-full ${progress < 75 ? 'bg-emerald-500' : progress < 90 ? 'bg-yellow-500' : 'bg-red-500'}`}
+                                  style={{ width: `${progress}%` }}
+                                  initial={{ width: 0 }}
+                                  animate={{ width: `${progress}%` }}
+                                  transition={{ duration: 0.5 }}
+                                />
+                              </div>
+                            </div>
+                          </td>
+
+                          {/* Extra Time */}
+                          <td className="px-4 py-4 whitespace-nowrap">
+                            {hasExtraTime ? (
+                              <motion.div
+                                className="text-red-600 font-medium"
+                                initial={{ scale: 1 }}
+                                animate={{ scale: [1, 1.05, 1] }}
+                                transition={{ duration: 1, repeat: Infinity }}
+                              >
+                                {formatTime(timer.extraTime)}
+                              </motion.div>
+                            ) : (
+                              <span className="text-emerald-600">00:00:00</span>
+                            )}
+                          </td>
+
+                          {/* Action */}
+                          <td className="px-4 py-4 whitespace-nowrap">
+                            {hasExtraTime ? (
+                              <motion.button
+                                whileHover={{ scale: 1.05 }}
+                                whileTap={{ scale: 0.95 }}
+                                onClick={() => {
+                                  setSelectedSlot(booking);
+                                  setShowOverlay(true);
+                                }}
+                                className="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-md text-sm w-28 shadow-sm transition-all"
+                              >
+                                <div className="flex items-center justify-center gap-1">
+                                  <FaCheck className="w-3.5 h-3.5" />
+                                  Settle
+                                </div>
+                              </motion.button>
+                            ) : (
+                              <motion.button
+                                whileHover={{ scale: 1.05 }}
+                                whileTap={{ scale: 0.95 }}
+                                onClick={() =>
+                                  handleRelease(
+                                    booking.consoleType,
+                                    booking.game_id,
+                                    booking.consoleNumber,
+                                    vendorId,
+                                    setRefreshSlots,
+                                    booking.slotId
+                                  )
+                                }
+                                disabled={isReleasing}
+                                className="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-md text-sm w-28 disabled:opacity-50 shadow-sm transition-all"
+                              >
+                                <div className="flex items-center justify-center gap-1">
+                                  {isReleasing ? (
+                                    <Loader2 className="animate-spin w-3.5 h-3.5" />
+                                  ) : (
+                                    <FaPowerOff className="w-3.5 h-3.5" />
+                                  )}
+                                  <span>{isReleasing ? "Releasing..." : "Release"}</span>
+                                </div>
+                              </motion.button>
+                            )}
+                          </td>
+                        </motion.tr>
+                      );
+                    })}
+                  </AnimatePresence>
+                  )}
+                  {filteredSlots.length === 0 && (
+                    <tr>
+                      <td colSpan={6} className="px-4 py-10 text-center text-gray-500 dark:text-gray-400">
+                        <motion.div
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          className="flex flex-col items-center space-y-1"
+                        >
+                          <Search className="w-10 h-10 text-gray-300 dark:text-gray-700" />
+                          <p className="text-base">No active slots found</p>
+                          <p className="text-sm">Try adjusting your search or check back later</p>
+                        </motion.div>
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
           </motion.div>
-          )}
-        </AnimatePresence>
+
+
+          {/* Payment Overlay */}
+          <AnimatePresence>
+            {showOverlay && (
+            <motion.div 
+              className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+            >
+              <motion.div 
+                className="bg-gray-50 dark:bg-zinc-900 rounded-xl shadow-2xl p-6 w-full max-w-md space-y-6"
+                initial={{ scale: 0.9, y: 20, opacity: 0 }}
+                animate={{ scale: 1, y: 0, opacity: 1 }}
+                exit={{ scale: 0.9, y: 20, opacity: 0 }}
+                transition={{ type: "spring", damping: 25, stiffness: 350 }}
+              >
+                <div className="text-center">
+                  <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-100">
+                    Extra Payment Required
+                  </h2>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                    The session has gone over the allotted time
+                  </p>
+                </div>
+
+                <div className="flex justify-between items-center bg-red-50 dark:bg-red-900/20 p-4 rounded-lg">
+                  <div>
+                    <p className="text-sm text-gray-600 dark:text-gray-300">Extra time</p>
+                    <p className="text-xl font-medium text-red-600 dark:text-red-400">
+                      {selectedSlot && formatTime(calculateExtraTime(selectedSlot.endTime, selectedSlot.date))}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600 dark:text-gray-300">Amount due</p>
+                    <p className="text-xl font-medium text-red-600 dark:text-red-400">
+                      ₹{selectedSlot && calculateExtraAmount(
+                        calculateExtraTime(selectedSlot.endTime, selectedSlot.date),
+                        selectedSlot.slot_price || 100
+                      )}
+                    </p>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-900 dark:text-gray-200 mb-2">
+                    Select Payment Mode
+                  </label>
+                  <div className="grid grid-cols-3 gap-3">
+                    {[
+                      { key: "cash", label: "Cash", Icon: IndianRupee },
+                      { key: "card", label: "Card", Icon: CreditCard },
+                      { key: "upi", label: "UPI", Icon: Smartphone },
+                    ].map(({ key, label, Icon }) => (
+                      <button
+                        key={key}
+                        onClick={() => setPaymentMode(key)}
+                        className={`flex flex-col items-center justify-center p-3 rounded-lg border transition-all duration-200
+                          ${
+                            paymentMode === key
+                              ? "bg-emerald-100 dark:bg-emerald-900 border-emerald-500 ring-2 ring-emerald-500/30"
+                              : "border-gray-300 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 bg-gray-50 dark:bg-zinc-800 text-gray-900 dark:text-gray-100"
+                          }`}
+                      >
+                        <Icon className={`w-5 h-5 mb-1 ${paymentMode === key ? "text-emerald-600" : "text-gray-500 dark:text-gray-400"}`} />
+                        <span className={`text-sm ${paymentMode === key ? "text-emerald-700 dark:text-emerald-300" : "text-gray-700 dark:text-gray-300"}`}>
+                          {label}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="flex justify-end gap-3 mt-6">
+                  <button
+                    onClick={() => setShowOverlay(false)}
+                    className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-zinc-800 border border-gray-300 dark:border-gray-700 rounded-md shadow-sm hover:bg-gray-50 dark:hover:bg-zinc-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400 transition-all duration-200 disabled:opacity-50"
+                    disabled={loading}
+                  >
+                    <span className="flex items-center gap-1">
+                      <X className="w-4 h-4" />
+                      Cancel
+                    </span>
+                  </button>
+
+                  <button
+                    onClick={handleSettle}
+                    className="px-6 py-2 text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 rounded-md shadow-sm transition-all duration-200 disabled:opacity-50"
+                    disabled={loading}
+                  >
+                    <span className="flex items-center gap-2">
+                      {loading ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          Processing...
+                        </>
+                      ) : (
+                        <>
+                          <CheckCircle className="w-4 h-4" />
+                          Settle
+                        </>
+                      )}
+                    </span>
+                  </button>
+                </div>
+              </motion.div>
+            </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
       </div>
-    </div>
+    )}
+    </>
   );
 }
 

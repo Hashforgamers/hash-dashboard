@@ -49,6 +49,7 @@ import { jwtDecode } from "jwt-decode";
 import { DASHBOARD_URL } from "@/src/config/env";
 
 import axios from "axios"; // Make sure to install axios
+import HashLoader from "./ui/HashLoader";
 
 export function MyAccount() {
   const [cafeImages, setCafeImages] = useState<string[]>([]);
@@ -117,7 +118,7 @@ export function MyAccount() {
     prevPageRef.current = page;
   }, [page]);
 
-  if (loading) return <div>Loading...</div>;
+  if (loading) return <HashLoader className="min-h-[500px]"/>;
   if (!data) return <div>Failed to load data</div>;
 
   const { navigation, cafeProfile, cafeGallery, businessDetails, operatingHours, billingDetails, verifiedDocuments } = data;
