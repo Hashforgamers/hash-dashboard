@@ -496,7 +496,7 @@ export function CurrentSlots({ currentSlots, refreshSlots, setRefreshSlots }: Cu
                     })}
                   </AnimatePresence>
                   )}
-                  {filteredSlots.length === 0 && (
+                  {Array.isArray(filteredSlots) && filteredSlots.length === 0 && (
                     <tr>
                       <td colSpan={6} className="px-4 py-10 text-center text-gray-500 dark:text-gray-400">
                         <motion.div

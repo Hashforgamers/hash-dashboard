@@ -165,7 +165,7 @@ export function UpcomingBookings({
   const [timeFilter, setTimeFilter] = useState("all");
 
   const filteredBookings = useMemo(() => {
-    let filtered = upcomingBookings;
+    let filtered = upcomingBookings || [];
 
     // Filter by date
     filtered = filtered.filter(booking => {

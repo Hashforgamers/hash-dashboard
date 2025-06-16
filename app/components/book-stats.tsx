@@ -80,7 +80,6 @@ export function BookingStats({ refreshSlots, setRefreshSlots }) {
   return (
     <div className="p-4 space-y-4 w-full h-full">
       <div className="flex justify-between items-center">
-        <h2 className="text-lg font-semibold text-zinc-800 dark:text-zinc-100">Available Devices</h2>
         <div className="flex gap-2">
           {["all", ...platforms.map(p => p.name.toLowerCase())].map(tab => (
             <button

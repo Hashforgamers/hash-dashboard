@@ -162,25 +162,7 @@ function RapidBookings() {
 
   useEffect(() => {
     if (vendorId !== null) {
-      const get_data = async () => {
-        try {
-          const response = await axios.get(
-            `${DASHBOARD_URL}/api/getAllDevice/vendor/${vendorId}`,
-            {
-              headers: {
-                "Content-Type": "application/json",
-              },
-            }
-          );
-          const data = response.data;
-          console.log("data", data);
-          setrapidbooking(data);
-        } catch (error) {
-          console.error("Error fetching vendor data", error);
-        }
-      };
-
-      get_data();
+      getAllDevices(vendorId);
     }
   }, [vendorId]); // <- This ensures it runs only after vendorId is set
 
@@ -193,52 +175,28 @@ function RapidBookings() {
       const vendorIdFromToken = decoded.sub.id;
       setVendorId(vendorIdFromToken);
 
-      const userCacheKey = `userList`;
-      const cachedData = localStorage.getItem(userCacheKey);
-
+      const cachedData = localStorage.getItem("userList");
       const isCacheValid = (timestamp: number) => {
         const now = Date.now();
-        const tenMinutes = 10 * 60 * 1000;
-        return now - timestamp < tenMinutes;
-      };
-
-      const fetchUsers = async () => {
-        try {
-          const response = await fetch(`${BOOKING_URL}/api/vendor/${vendorIdFromToken}/users`);
-          const data = await response.json();
-          console.log("Fetched users from API:", data);
-
-          if (Array.isArray(data)) {
-            setUserList(data);
-            localStorage.setItem(
-              userCacheKey,
-              JSON.stringify({ data, timestamp: Date.now() })
-            );
-          }
-        } catch (error) {
-          console.error("Error fetching users:", error);
-        }
+        return now - timestamp < 10 * 60 * 1000; // 10 minutes
       };
 
       if (cachedData) {
         try {
           const { data, timestamp } = JSON.parse(cachedData);
           if (isCacheValid(timestamp)) {
-            console.log("Loaded users from valid cache");
             setUserList(data);
           } else {
-            console.log("Cache expired, fetching new data");
-            fetchUsers();
+            getAllUsers(vendorIdFromToken);
           }
-        } catch (parseError) {
-          console.error("Error parsing cached users:", parseError);
-          fetchUsers();
+        } catch (e) {
+          getAllUsers(vendorIdFromToken);
         }
       } else {
-        fetchUsers();
+        getAllUsers(vendorIdFromToken);
       }
-    } catch (error) {
-      console.error("Error decoding token:", error);
+    } catch (e) {
+      console.error("Token decode error", e);
     }
   }, []);
 
@@ -387,7 +345,48 @@ function RapidBookings() {
     visible: { opacity: 1, x: 0 },
   };
 
-  const handleBooking = async () => {
+  const getAllDevices = async (vendorId: number) => {
+    try {
+      const response = await axios.get(
+        `${DASHBOARD_URL}/api/getAllDevice/vendor/${vendorId}`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      const data = response.data;
+      console.log("Fetched devices:", data);
+      setrapidbooking(data);
+    } catch (error) {
+      console.error("Error fetching vendor devices", error);
+    }
+  };
+
+  const getAllUsers = async (vendorIdFromToken: number) => {
+    const userCacheKey = `userList`;
+
+    try {
+      const response = await fetch(`${BOOKING_URL}/api/vendor/${vendorIdFromToken}/users`);
+      const data = await response.json();
+      console.log("Fetched users from API:", data);
+
+      if (Array.isArray(data)) {
+        setUserList(data);
+        localStorage.setItem(
+          userCacheKey,
+          JSON.stringify({ data, timestamp: Date.now() })
+        );
+      }
+    } catch (error) {
+      console.error("Error fetching users:", error);
+    }
+  };
+
+
+  const handleBooking = async (e) => {
+    // e.preventDefault();
+    setLoading(true);
     console.log("Form submission started");
 
     if (!validateForm(selectedName, selectedSlots)) {
@@ -439,6 +438,12 @@ function RapidBookings() {
       if (response.data) {
         console.log("Booking successful:", response.data);
         setShowBookingForm(false);
+
+        // Re-fetch updated lists
+        if (vendorId) {
+          getAllDevices(vendorId);
+          getAllUsers(vendorId);
+        }
       }
     } catch (error: any) {
       console.error("Error creating booking:", error);
@@ -743,19 +748,20 @@ function RapidBookings() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="max-w-2xl mx-auto border rounded-lg p-6 space-y-6 bg-white dark:bg-gray-900"
+            className="max-w-2xl mx-auto border rounded-2xl p-6 space-y-6 bg-white dark:bg-gray-900 shadow-xl"
           >
-            <div className="flex justify-between items-center">
-              <h2 className="text-2xl font-bold">
+            {/* Header */}
+            <div className="flex justify-between items-center border-b pb-4">
+              <h2 className="text-2xl font-semibold text-gray-800 dark:text-white">
                 Book {selectedSystem?.name} #{selectedSystem?.consoleModelNumber}
               </h2>
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={() => setShowBookingForm(false)}
-                className="hover:bg-red-100 hover:text-red-500"
+                className="hover:bg-red-100 hover:text-red-600"
               >
-                <X className="h-4 w-4" />
+                <X className="h-5 w-5" />
               </Button>
             </div>
 
@@ -763,23 +769,23 @@ function RapidBookings() {
               <motion.div
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
-                className="space-y-4"
+                className="space-y-6"
               >
 
                 {/* Phone Field */}
-                <div className="space-y-2">
-                  <Label>Phone Number</Label>
+                <div className="space-y-1.5">
+                  <Label className="text-sm font-medium">Phone Number</Label>
                   <div className="relative">
-                    <Phone className="absolute left-3 top-3 text-gray-500 w-4 h-4" />
+                    <Phone className="absolute left-3 top-3 text-gray-400 w-4 h-4" />
                     <Input
-                      className="pl-9"
+                      className="pl-10"
                       placeholder="Enter phone number"
                       value={phone}
                       onChange={(e) => handlePhoneInputChange(e.target.value)}
                       onBlur={() => setTimeout(() => setPhoneSuggestions([]), 150)}
                     />
                     {phoneSuggestions.length > 0 && (
-                      <ul className="absolute z-10 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-md shadow-md w-full mt-1 text-sm max-h-40 overflow-y-auto">
+                      <ul className="absolute z-10 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg w-full mt-1 text-sm max-h-48 overflow-y-auto">
                         {phoneSuggestions.map((user, idx) => (
                           <li
                             key={idx}
@@ -788,7 +794,7 @@ function RapidBookings() {
                               setPhone(user.phone);
                               setName(user.name);
                               setEmail(user.email);
-                              setSelectedName(user); // this is the important part
+                              setSelectedName(user);
                               setPhoneSuggestions([]);
                               setNameSuggestions([]);
                               setContactNumber(user.phone);
@@ -801,26 +807,25 @@ function RapidBookings() {
                       </ul>
                     )}
                   </div>
+                  {formErrors.contactNumber && (
+                    <p className="text-red-500 text-sm">{formErrors.contactNumber}</p>
+                  )}
                 </div>
 
-                {formErrors.contactNumber && (
-                  <p className="text-red-500 text-sm mt-1">{formErrors.contactNumber}</p>
-                )}
-
                 {/* Name Field */}
-                <div className="space-y-2">
-                  <Label>Name</Label>
+                <div className="space-y-1.5">
+                  <Label className="text-sm font-medium">Name</Label>
                   <div className="relative">
-                    <User className="absolute left-3 top-3 text-gray-500 w-4 h-4" />
+                    <User className="absolute left-3 top-3 text-gray-400 w-4 h-4" />
                     <Input
-                      className="pl-9"
+                      className="pl-10"
                       placeholder="Enter your name"
                       value={name}
                       onChange={(e) => handleNameInputChange(e.target.value)}
                       onBlur={() => setTimeout(() => setNameSuggestions([]), 150)}
                     />
                     {nameSuggestions.length > 0 && (
-                      <ul className="absolute z-10 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-md shadow-md w-full mt-1 text-sm max-h-40 overflow-y-auto">
+                      <ul className="absolute z-10 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg w-full mt-1 text-sm max-h-48 overflow-y-auto">
                         {nameSuggestions.map((user, idx) => (
                           <li
                             key={idx}
@@ -829,7 +834,7 @@ function RapidBookings() {
                               setName(user.name);
                               setPhone(user.phone);
                               setEmail(user.email);
-                              setSelectedName(user); // this is the important part
+                              setSelectedName(user);
                               setNameSuggestions([]);
                               setPhoneSuggestions([]);
                               setUserId(user.id);
@@ -844,31 +849,30 @@ function RapidBookings() {
                 </div>
 
                 {/* Date Picker */}
-                <div className="space-y-2">
-                  <Label>Date</Label>
+                <div className="space-y-1.5">
+                  <Label className="text-sm font-medium">Date</Label>
                   <Input
                     type="date"
-                    className="pl-9"
+                    className="pl-3"
                     value={date}
                     onChange={(e) => setDate(e.target.value)}
                     min={new Date().toISOString().split("T")[0]}
                   />
                   {errors.date && (
-                    <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-xs text-red-500 mt-1">
+                    <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-sm text-red-500">
                       {errors.date}
                     </motion.p>
                   )}
                 </div>
 
                 {/* Time Slots */}
-                <div className="space-y-2">
-                  <Label>Time Slot</Label>
+                <div className="space-y-1.5">
+                  <Label className="text-sm font-medium">Select Time Slots</Label>
                   <div className="grid grid-cols-3 gap-3">
                     {isLoadingSlots ? (
-                      <div className="col-span-3 text-center py-4">Loading time slots...</div>
+                      <div className="col-span-3 text-center py-4 text-gray-500">Loading time slots...</div>
                     ) : (
                       timeSlots.map((slot, index) => (
-                        
                         <motion.button
                           key={index}
                           whileHover={{ scale: slot.available && !selectedSlots.includes(slot.time) ? 1.05 : 1 }}
@@ -876,83 +880,62 @@ function RapidBookings() {
                           type="button"
                           disabled={!slot.available}
                           onClick={() => {
-                            if (!slot.available) return; // do nothing if unavailable
-                            setSelectedSlots((prev) => {
-                              if (prev.includes(slot.time)) {
-                                // unselect it
-                                return prev.filter((t) => t !== slot.time);
-                              } else {
-                                // add it
-                                return [...prev, slot.time];
-                              }
-                            });
+                            if (!slot.available) return;
+                            setSelectedSlots((prev) =>
+                              prev.includes(slot.time)
+                                ? prev.filter((t) => t !== slot.time)
+                                : [...prev, slot.time]
+                            );
                           }}
-                          className={`p-2 rounded-lg text-center transition-colors
+                          className={`p-2 rounded-lg text-sm font-medium transition-colors text-center
                             ${
                               selectedSlots.includes(slot.time)
-                                ? "bg-gray-400 text-white cursor-pointer" // selected grey
+                                ? "bg-gray-400 text-white"
                                 : slot.available
-                                ? "bg-[#098637] text-white hover:bg-[#076d2a] cursor-pointer" // available green
-                                : "bg-gray-200 text-gray-500 cursor-not-allowed" // unavailable
-                            }
-                          `}
+                                ? "bg-[#098637] text-white hover:bg-[#076d2a]"
+                                : "bg-gray-200 text-gray-500 cursor-not-allowed"
+                            }`}
                         >
                           {slot.time}
                         </motion.button>
-
                       ))
                     )}
                   </div>
+                  {formErrors.time && (
+                    <p className="text-red-500 text-sm mt-1">{formErrors.time}</p>
+                  )}
                 </div>
-
-                {formErrors.time && (
-                  <p className="text-red-500 text-sm mt-1">{formErrors.time}</p>
-                )}
 
                 {/* Payment Method */}
                 <motion.div
-                  className="space-y-2"
+                  className="space-y-2 w-full"
                   variants={inputVariants}
                   initial="hidden"
                   animate="visible"
                   transition={{ delay: 0.4 }}
                 >
-                  <Label className="text-sm font-medium flex items-center gap-1">Payment Method</Label>
-                  <div className="flex gap-4">
-                    <button
-                      type="button"
-                      onClick={() => setPaymentType("credit")}
-                      className={`flex flex-col items-center p-3 rounded-lg border cursor-pointer transition-all
-                        ${paymentType === "credit" ? "border-[#098637] bg-[#e6f4ea]" : "border-gray-300 hover:border-[#098637]"}`}
-                      aria-label="Credit/Debit Card"
-                    >
-                      <CreditCard className="w-6 h-6 text-[#098637]" />
-                      <span className="text-xs mt-1">Card</span>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => setPaymentType("wallet")}
-                      className={`flex flex-col items-center p-3 rounded-lg border cursor-pointer transition-all
-                        ${paymentType === "wallet" ? "border-[#098637] bg-[#e6f4ea]" : "border-gray-300 hover:border-[#098637]"}`}
-                      aria-label="Digital Wallet"
-                    >
-                      <Wallet className="w-6 h-6 text-[#098637]" />
-                      <span className="text-xs mt-1">Wallet</span>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => setPaymentType("cash")}
-                      className={`flex flex-col items-center p-3 rounded-lg border cursor-pointer transition-all
-                        ${paymentType === "cash" ? "border-[#098637] bg-[#e6f4ea]" : "border-gray-300 hover:border-[#098637]"}`}
-                      aria-label="Cash"
-                    >
-                      <DollarSign className="w-6 h-6 text-[#098637]" />
-                      <span className="text-xs mt-1">Cash</span>
-                    </button>
+                  <Label className="text-sm font-medium">Payment Method</Label>
+                  <div className="grid grid-cols-3 gap-4">
+                    {[
+                      { key: "credit", label: "Card", icon: <CreditCard className="w-6 h-6" /> },
+                      { key: "wallet", label: "Wallet", icon: <Wallet className="w-6 h-6" /> },
+                      { key: "cash", label: "Cash", icon: <DollarSign className="w-6 h-6" /> },
+                    ].map(({ key, label, icon }) => (
+                      <button
+                        key={key}
+                        type="button"
+                        onClick={() => setPaymentType(key)}
+                        className={`flex flex-col items-center justify-center p-3 rounded-xl border transition-all w-full
+                          ${paymentType === key ? "border-[#098637] bg-[#e6f4ea]" : "border-gray-300 hover:border-[#098637]"}`}
+                        aria-label={label}
+                      >
+                        <span className="text-[#098637]">{icon}</span>
+                        <span className="text-xs mt-1">{label}</span>
+                      </button>
+                    ))}
                   </div>
                 </motion.div>
+
 
                 {/* Actions */}
                 <div className="flex gap-4 pt-4">
@@ -965,7 +948,6 @@ function RapidBookings() {
                   >
                     Cancel
                   </Button>
-
                   <Button
                     type="button"
                     onClick={(e) => handleBooking(e)}
@@ -973,13 +955,15 @@ function RapidBookings() {
                     disabled={loading}
                   >
                     {loading ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span className="flex items-center gap-2 justify-center">
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <span>Booking...</span>
+                      </span>
                     ) : (
                       "Confirm Booking"
                     )}
                   </Button>
                 </div>
-
               </motion.div>
             </form>
           </motion.div>
