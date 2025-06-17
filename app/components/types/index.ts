@@ -8,6 +8,7 @@ export interface ConsoleType {
   description: string;
   name: string;
   id: number | null;
+  price: number | null;
 }
 
 export interface Slot {

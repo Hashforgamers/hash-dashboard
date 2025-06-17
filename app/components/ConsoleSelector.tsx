@@ -23,6 +23,7 @@ const ConsoleSelector: React.FC<ConsoleSelectorProps> = ({ onSelectConsole }) =>
       description: "Gaming PCs and Workstations",
       name: "PC",
       id: null,
+      price: null,
     },
     {
       type: "ps5",
@@ -32,6 +33,7 @@ const ConsoleSelector: React.FC<ConsoleSelectorProps> = ({ onSelectConsole }) =>
       description: "PlayStation 5 Gaming Consoles",
       name: "PS5",
       id: null,
+      price: null,
     },
     {
       type: "xbox",
@@ -41,6 +43,7 @@ const ConsoleSelector: React.FC<ConsoleSelectorProps> = ({ onSelectConsole }) =>
       description: "Xbox Series Gaming Consoles",
       name: "Xbox",
       id: null,
+      price: null,
     },
     {
       type: "vr",
@@ -50,6 +53,7 @@ const ConsoleSelector: React.FC<ConsoleSelectorProps> = ({ onSelectConsole }) =>
       description: "Virtual Reality Systems",
       name: "VR",
       id: null,
+      price: null,
     },
   ];
 
@@ -89,7 +93,7 @@ const ConsoleSelector: React.FC<ConsoleSelectorProps> = ({ onSelectConsole }) =>
           );
           
           if (matchedConsole) {
-            return { ...console, id: matchedConsole.id };
+            return { ...console, id: matchedConsole.id, price: matchedConsole.console_price };
           }
           return console;
         }).filter((console) => console.id !== null);

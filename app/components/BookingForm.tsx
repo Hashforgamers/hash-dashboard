@@ -154,6 +154,8 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
     };
 
     fetchAvailableSlots();
+    console.log("AAla re ");
+    console.log(selectedConsole);
   }, [vendorId, selectedDate, selectedConsole.id]);
 
   const handleSlotClick = (slot: string) => {
@@ -555,12 +557,12 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
                 </div>
                 <div className="flex justify-between py-1 border-b border-gray-100">
                   <span className="text-gray-600 dark:text-gray-400">Rate:</span>
-                  <span className="font-medium">₹100/slot</span>
+                  <span className="font-medium">₹{selectedConsole.price}/slot</span>
                 </div>
                 <div className="flex justify-between py-1 text-base">
                   <span className="font-bold">Total:</span>
                   <span className="font-bold text-emerald-600">
-                    ₹{selectedSlots.length * 100}
+                    ₹{selectedSlots.length * selectedConsole.price}
                   </span>
                 </div>
               </div>

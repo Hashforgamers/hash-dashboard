@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Monitor,
@@ -13,13 +13,15 @@ import {
   TrendingUp,
   AlertCircle,
 } from "lucide-react";
+import { DASHBOARD_URL } from "@/src/config/env";
+import { jwtDecode } from "jwt-decode";
 
 interface ConsoleType {
   type: string;
   name: string;
   icon: React.ComponentType<any>;
-  color: string; // Tailwind classes for background
-  iconColor: string; // hex color for icon
+  color: string;
+  iconColor: string;
   description: string;
 }
 
@@ -82,10 +84,49 @@ export default function ConsolePricing() {
   const [isLoading, setIsLoading] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
-
+  const [vendorId, setVendorId] = useState<number | null>(null);
   const validatePrice = (value: number): boolean => {
     return value >= 0 && value <= 10000;
   };
+ useEffect(() => {
+    const token = localStorage.getItem("jwtToken");
+    if (token) {
+      const decoded_token = jwtDecode<{ sub: { id: number } }>(token);
+      setVendorId(decoded_token.sub.id);
+      console.log("Setting Vendor Id")
+    }
+  }, []);
+
+
+  useEffect(() => {
+    const fetchPricing = async () => {
+      try {
+
+        if (!vendorId) throw new Error("Vendor ID missing in token");
+
+        const res = await fetch(`${DASHBOARD_URL}/api/vendor/${vendorId}/console-pricing`);
+
+        if (!res.ok) throw new Error("Failed to fetch pricing");
+
+        const data = await res.json();
+
+        const newPrices: PricingState = {};
+        consoleTypes.forEach((console) => {
+          newPrices[console.type] = {
+            value: data[console.type] ?? 0,
+            isValid: true,
+            hasChanged: false,
+          };
+        });
+        setPrices(newPrices);
+      } catch (error) {
+        console.error("Error fetching prices:", error);
+      }
+    };
+
+    fetchPricing();
+  }, [vendorId]);
+
 
   const handlePriceChange = (consoleType: string, inputValue: string) => {
     const numericValue = parseFloat(inputValue) || 0;
@@ -116,26 +157,46 @@ export default function ConsolePricing() {
 
   const handleSave = async () => {
     const hasErrors = Object.values(errors).length > 0;
-    const hasInvalidPrices = Object.values(prices).some(
-      (price) => !price.isValid
-    );
+    const hasInvalidPrices = Object.values(prices).some((price) => !price.isValid);
 
     if (hasErrors || hasInvalidPrices) return;
 
     setIsLoading(true);
-    await new Promise((resolve) => setTimeout(resolve, 2000));
-    setIsLoading(false);
-    setShowSuccess(true);
 
-    setPrices((prev) => {
-      const newPrices = { ...prev };
-      Object.keys(newPrices).forEach((key) => {
-        newPrices[key].hasChanged = false;
+    try {
+      const payload = Object.entries(prices).reduce((acc, [key, val]) => {
+        acc[key] = val.value;
+        return acc;
+      }, {} as Record<string, number>);
+
+      console.log(`${DASHBOARD_URL}/api/${vendorId}/console-pricing`);
+
+      const response = await fetch(`${DASHBOARD_URL}/api/vendor/${vendorId}/console-pricing`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
       });
-      return newPrices;
-    });
 
-    setTimeout(() => setShowSuccess(false), 3000);
+      if (!response.ok) throw new Error("Failed to save pricing");
+
+      setShowSuccess(true);
+      setPrices((prev) => {
+        const newPrices = { ...prev };
+        Object.keys(newPrices).forEach((key) => {
+          newPrices[key].hasChanged = false;
+        });
+        return newPrices;
+      });
+
+      setTimeout(() => setShowSuccess(false), 3000);
+    } catch (error) {
+      console.error("Error saving pricing:", error);
+      alert("There was an error saving your changes.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const hasChanges = Object.values(prices).some((price) => price.hasChanged);
@@ -191,7 +252,6 @@ export default function ConsolePricing() {
                 whileHover={{ y: -5, scale: 1.02 }}
                 className="bg-white dark:bg-gray-900 rounded-xl shadow-lg overflow-hidden border border-gray-200 dark:border-gray-700 hover:shadow-xl transition-all duration-300"
               >
-                {/* Colored top section with background and icon color */}
                 <div className={`${console.color} p-4`}>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
@@ -210,7 +270,7 @@ export default function ConsolePricing() {
                         </p>
                       </div>
                     </div>
-                    {priceData.hasChanged && (
+                    {priceData?.hasChanged && (
                       <motion.div
                         initial={{ scale: 0 }}
                         animate={{ scale: 1 }}
@@ -233,12 +293,14 @@ export default function ConsolePricing() {
                       min="0"
                       max="10000"
                       step="0.01"
-                      value={priceData.value || ""}
-                      onChange={(e) => handlePriceChange(console.type, e.target.value)}
+                      value={priceData?.value ?? ""}
+                      onChange={(e) =>
+                        handlePriceChange(console.type, e.target.value)
+                      }
                       className={`w-full pl-10 pr-4 py-3 rounded-lg border-2 transition-all focus:outline-none focus:ring-0 ${
                         error
                           ? "border-red-300 focus:border-red-500 bg-red-50 dark:bg-red-950"
-                          : priceData.hasChanged
+                          : priceData?.hasChanged
                           ? "border-yellow-300 focus:border-yellow-500 bg-yellow-50 dark:bg-yellow-950"
                           : "border-gray-300 dark:border-gray-600 focus:border-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
                       }`}
@@ -265,7 +327,7 @@ export default function ConsolePricing() {
                       <div className="flex items-center gap-1">
                         <TrendingUp className="w-4 h-4 text-green-500" />
                         <span className="font-bold text-lg text-gray-900 dark:text-white">
-                          ${priceData.value.toFixed(2)}
+                          ${priceData?.value.toFixed(2)}
                         </span>
                       </div>
                     </div>
