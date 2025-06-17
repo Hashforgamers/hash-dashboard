@@ -282,7 +282,7 @@ export default function ConsolePricing() {
 
                 <div className="p-4">
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Price per Hour
+                    Price per Slots
                   </label>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
