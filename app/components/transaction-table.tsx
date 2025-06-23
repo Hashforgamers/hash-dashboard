@@ -521,7 +521,7 @@ export function TransactionTable() {
         transition={{ duration: 0.3, delay: 0.5 }}
         className="rounded-2xl border bg-card"
       >
-      <div className="max-h-[600px] overflow-x-auto overflow-y-auto rounded-2xl">
+        <div className="max-h-[600px] overflow-x-auto overflow-y-auto rounded-2xl">
           <Table className="min-w-full">
             <TableHeader className="bg-muted">
               <TableRow>
@@ -537,6 +537,7 @@ export function TransactionTable() {
 
             <TableBody>
               {Object.entries(groupedByDate).map(([slotDate, usersGroup]) => {
+                // Calculate total for the day and user count
                 const dayTotalAmount = Object.values(usersGroup).reduce((sum, userGroup) => sum + userGroup.totalAmount, 0);
                 const userCount = Object.keys(usersGroup).length;
 
@@ -549,80 +550,61 @@ export function TransactionTable() {
                       onClick={() => toggleDateExpand(slotDate)}
                       className="cursor-pointer hover:bg-muted-foreground/10 transition-colors"
                     >
-                      <TableCell colSpan={2} className="text-primary">
-                        <span>{slotDate}</span> 
+                      {/* Slot Date */}
+                      <TableCell colSpan={1} className="text-primary font-medium flex items-center justify-between">
+                        <span>{slotDate}</span>
                         <span>{expandedDates.includes(slotDate) ? "▲" : "▼"}</span>
                       </TableCell>
-                      <TableCell colSpan={1} className="text-primary">
-                        <span>{userCount}</span>  
-                      </TableCell>
-                      <TableCell colSpan={4} className="ext-primary">
-                        <span>₹{dayTotalAmount.toFixed(2)}</span>
+
+                      {/* Empty cells for columns between Date and Amount */}
+                      <TableCell colSpan={2}></TableCell>
+
+                      {/* Total Amount */}
+                      <TableCell colSpan={2} className="text-primary font-medium">
+                        ₹{dayTotalAmount.toFixed(2)}
                       </TableCell>
                     </motion.tr>
 
-                    {/* Users under Slot Date */}
+                    {/* Bookings under Slot Date */}
                     <AnimatePresence>
-                      {expandedDates.includes(slotDate) &&
-                        Object.entries(usersGroup).map(([userId, userGroup]) => (
-                          <React.Fragment key={userId}>
+                      {expandedDates.includes(slotDate) && (
+                        Object.values(usersGroup).flatMap(userGroup =>
+                          userGroup.bookings.map((transaction) => (
                             <motion.tr
-                              initial={{ opacity: 0 }}
-                              animate={{ opacity: 1 }}
-                              whileHover={{ scale: 1.01 }}
-                              onClick={() => toggleUserExpand(slotDate, Number(userId))}
-                              className="cursor-pointer hover:bg-muted-foreground/10 transition-colors dark:hover:bg-muted-foreground/20"
+                              key={transaction.id}
+                              initial={{ opacity: 0, y: 10 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0, y: -10 }}
+                              transition={{ duration: 0.2 }}
+                              className="hover:bg-accent transition-colors dark:hover:bg-accent/30"
                             >
-                              <TableCell colSpan={2} className="text-primary"></TableCell>
-                              <TableCell colSpan={1} className="text-primary">
-                                {userGroup.userName} {expandedUsers[slotDate]?.includes(Number(userId)) ? "▲" : "▼"}
+                              <TableCell>{transaction.slotDate}</TableCell>
+                              <TableCell>{transaction.slotTime}</TableCell>
+                              <TableCell>{transaction.userName}</TableCell>
+                              <TableCell>₹{transaction.amount.toFixed(2)}</TableCell>
+                              <TableCell>
+                                <Badge variant="secondary">{transaction.modeOfPayment}</Badge>
                               </TableCell>
-                              <TableCell colSpan={2} className="text-primary">
-                                ₹{userGroup.totalAmount.toFixed(2)}
+                              <TableCell>
+                                <Badge variant="outline">{transaction.bookingType}</Badge>
                               </TableCell>
-                              <TableCell colSpan={2}></TableCell>
+                              <TableCell>
+                                <Badge
+                                  variant={
+                                    transaction.settlementStatus === "done"
+                                      ? "success"
+                                      : transaction.settlementStatus === "pending"
+                                      ? "warning"
+                                      : "secondary"
+                                  }
+                                >
+                                  {transaction.settlementStatus}
+                                </Badge>
+                              </TableCell>
                             </motion.tr>
-
-                            {/* Bookings under User */}
-                            <AnimatePresence>
-                              {expandedUsers[slotDate]?.includes(Number(userId)) &&
-                                userGroup.bookings.map((transaction, index) => (
-                                  <motion.tr
-                                    key={transaction.id}
-                                    initial={{ opacity: 0, y: 10 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    exit={{ opacity: 0, y: -10 }}
-                                    transition={{ duration: 0.2, delay: index * 0.03 }}
-                                    className="hover:bg-accent transition-colors dark:hover:bg-accent/30"
-                                  >
-                                    <TableCell>{transaction.slotDate}</TableCell>
-                                    <TableCell>{transaction.slotTime}</TableCell>
-                                    <TableCell>{transaction.userName}</TableCell>
-                                    <TableCell>₹{transaction.amount.toFixed(2)}</TableCell>
-                                    <TableCell>
-                                      <Badge variant="secondary">{transaction.modeOfPayment}</Badge>
-                                    </TableCell>
-                                    <TableCell>
-                                      <Badge variant="outline">{transaction.bookingType}</Badge>
-                                    </TableCell>
-                                    <TableCell>
-                                      <Badge
-                                        variant={
-                                          transaction.settlementStatus === "done"
-                                            ? "success"
-                                            : transaction.settlementStatus === "pending"
-                                            ? "warning"
-                                            : "secondary"
-                                        }
-                                      >
-                                        {transaction.settlementStatus}
-                                      </Badge>
-                                    </TableCell>
-                                  </motion.tr>
-                                ))}
-                            </AnimatePresence>
-                          </React.Fragment>
-                        ))}
+                          ))
+                        )
+                      )}
                     </AnimatePresence>
                   </React.Fragment>
                 );
@@ -631,6 +613,7 @@ export function TransactionTable() {
           </Table>
         </div>
       </motion.div>
+
     </div>
   );
 }

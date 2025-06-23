@@ -33,6 +33,7 @@ const formatDate = (dateStr: string) => {
 };
 
 const getTimeOfDay = (time: string) => {
+  console.log("Alla ",time);
   const hour = parseInt(time.split(":")[0]);
   if (hour < 12) return "morning";
   if (hour < 17) return "afternoon";
@@ -185,6 +186,7 @@ export function UpcomingBookings({
 
     // Apply time filter
     if (timeFilter !== "all") {
+      console.log("aala idar",timeFilter)
       filtered = filtered.filter(booking => {
         const timeOfDay = getTimeOfDay(booking.time.split(" ")[0]);
         return timeOfDay === timeFilter;
