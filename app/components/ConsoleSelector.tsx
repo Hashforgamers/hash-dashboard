@@ -30,7 +30,7 @@ const ConsoleSelector: React.FC<ConsoleSelectorProps> = ({ onSelectConsole }) =>
       icon: Tv,
       color: "grey",
       iconColor: "#2563eb",
-      description: "PlayStation 5 Gaming Consoles",
+      description: "PlayStation 5 Consoles",
       name: "PS5",
       id: null,
       price: null,

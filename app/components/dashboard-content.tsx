@@ -14,7 +14,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   TabletSmartphone,
   ChevronRight,
-  DollarSign,
+  IndianRupee,
   CalendarCheck,
   WalletCards,
   Eye,
@@ -111,7 +111,7 @@ export function DashboardContent() {
               transition={{ delay: 0.1 }}
               className="flex-1 flex items-center justify-start gap-3"
             >
-              <DollarSign className="w-4 h-4 text-emerald-500" />
+              <IndianRupee className="w-4 h-4 text-emerald-500" />
               <span className="text-sm text-zinc-700 dark:text-zinc-300">Earnings:</span>
               <span className="font-bold text-zinc-900 dark:text-white text-sm">
                 {showEarnings ? `₹${dashboardData?.stats?.todayEarnings ?? 0}` : "₹•••••"}

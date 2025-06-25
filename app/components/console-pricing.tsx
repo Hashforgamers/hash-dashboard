@@ -9,9 +9,9 @@ import {
   Headset,
   Save,
   Check,
-  DollarSign,
   TrendingUp,
   AlertCircle,
+  IndianRupee
 } from "lucide-react";
 import { DASHBOARD_URL } from "@/src/config/env";
 import { jwtDecode } from "jwt-decode";
@@ -212,7 +212,7 @@ export default function ConsolePricing() {
         >
           <div className="flex items-center gap-3 mb-2">
             <div className="p-2">
-              <DollarSign className="w-6 h-6 text-black dark:text-white" />
+              <IndianRupee className="w-6 h-6 text-black dark:text-white" />
             </div>
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
               Console Pricing Manager
@@ -286,7 +286,7 @@ export default function ConsolePricing() {
                   </label>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <DollarSign className="h-4 w-4 text-gray-400 dark:text-gray-500" />
+                      <IndianRupee className="h-4 w-4 text-gray-400 dark:text-gray-500" />
                     </div>
                     <motion.input
                       type="number"
@@ -327,7 +327,7 @@ export default function ConsolePricing() {
                       <div className="flex items-center gap-1">
                         <TrendingUp className="w-4 h-4 text-green-500" />
                         <span className="font-bold text-lg text-gray-900 dark:text-white">
-                          ${priceData?.value.toFixed(2)}
+                          ₹{priceData?.value.toFixed(2)}
                         </span>
                       </div>
                     </div>
