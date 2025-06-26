@@ -171,7 +171,7 @@ export default function LoginPage() {
                         </FormLabel>
                         <Link
                           href="/login/forget-password"
-                          className="text-sm text-green-400 hover:text-green-300 transition-colors duration-200 hover:underline"
+                          className="hidden text-sm text-green-400 hover:text-green-300 transition-colors duration-200 hover:underline"
                         >
                           Forgot password?
                         </Link>
