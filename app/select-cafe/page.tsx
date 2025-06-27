@@ -6,6 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Store, BarChart3, Lock, Unlock } from "lucide-react";
+import { LOGIN_URL } from "@/src/config/env";
 
 export default function SelectCafePage() {
   const [cafes, setCafes] = useState<
@@ -20,11 +21,12 @@ export default function SelectCafePage() {
 
   useEffect(() => {
     const storedVendors = localStorage.getItem("vendors");
+    console.log("Aja", storedVendors);
     if (storedVendors) {
       try {
         const parsed = JSON.parse(storedVendors);
-        if (parsed.vendors && Array.isArray(parsed.vendors)) {
-          const loadedCafes = parsed.vendors.map((vendor: any) => ({
+        if (Array.isArray(parsed)) {
+          const loadedCafes = parsed.map((vendor: any) => ({
             id: String(vendor.id),
             name: vendor.cafe_name.trim(),
             type: "store",
@@ -48,6 +50,7 @@ export default function SelectCafePage() {
       setCafes([]);
     }
   }, []);
+
 
   const handleCafeClick = (id: string) => {
     setSelectedCafe(id);
@@ -73,7 +76,7 @@ export default function SelectCafePage() {
     setIsUnlocking(true);
 
     try {
-      const response = await fetch("{{login_url}}/api/validatePin", {
+      const response = await fetch(`${LOGIN_URL}/api/validatePin`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -88,7 +91,7 @@ export default function SelectCafePage() {
 
       if (response.ok && data.status === "success") {
         localStorage.setItem("selectedCafe", selectedCafeData.id);
-        localStorage.setItem("authToken", data.data.token);
+        localStorage.setItem("jwtToken", data.data.token);
 
         router.push("/dashboard");
       } else {

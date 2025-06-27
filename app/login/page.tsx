@@ -52,6 +52,38 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [loginError, setLoginError] = useState("");
 
+  function createDummyJWT(identity: { id: number; type: string; email: string }) {
+    const header = {
+      alg: "HS256",
+      typ: "JWT",
+    };
+
+    const payload = {
+      ...identity,
+      iat: Math.floor(Date.now() / 1000), // issued at (seconds)
+      exp: Math.floor(Date.now() / 1000) + 60 * 60, // expires in 1 hour (seconds)
+    };
+
+    function base64Encode(obj: object) {
+      return btoa(JSON.stringify(obj))
+        .replace(/=/g, "") // remove '=' padding
+        .replace(/\+/g, "-")
+        .replace(/\//g, "_");
+    }
+
+    const encodedHeader = base64Encode(header);
+    const encodedPayload = base64Encode(payload);
+    const signature = "dummy_signature"; // fake signature
+
+    return `${encodedHeader}.${encodedPayload}.${signature}`;
+  }
+
+  const identity = {
+    id: -1,
+    type: "vendor",
+    email: "dummy@hash.com",
+  };
+
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
       setLoading(true);
@@ -73,7 +105,15 @@ export default function LoginPage() {
         const vendors = result.vendors;
         if (Array.isArray(vendors) && vendors.length > 0) {
           localStorage.setItem("vendors", JSON.stringify(vendors));
-          // set dummy jwt we will override it in further page 
+
+          // Create and store dummy JWT token
+          const dummyToken = createDummyJWT(identity);
+          localStorage.setItem("jwtToken", dummyToken);
+
+          // Store expiration in milliseconds for your AuthProvider to check easily
+          const expirationMillis = Date.now() + 60 * 60 * 1000; // 1 hour from now
+          localStorage.setItem("tokenExpiration", expirationMillis.toString());
+
           toast.success("Login successful!");
           window.location.href = "/select-cafe";
         } else {
