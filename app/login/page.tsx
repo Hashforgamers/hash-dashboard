@@ -59,9 +59,7 @@ export default function LoginPage() {
 
       const response = await fetch(`${LOGIN_URL}/api/login`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           email: values.email,
           password: values.password,
@@ -71,21 +69,24 @@ export default function LoginPage() {
 
       const result = await response.json();
 
-      if (response.ok) {
-        toast.success("Login successful!");
-        const token = result.data.token;
-        const expiresIn = result.data.expires_in * 1000;
-        const expirationTime = Date.now() + expiresIn;
-
-        localStorage.setItem("jwtToken", token);
-        localStorage.setItem("tokenExpiration", expirationTime.toString());
-
-        window.location.href = "/dashboard";
+      if (response.ok && result.status === "success") {
+        const vendors = result.vendors;
+        if (Array.isArray(vendors) && vendors.length > 0) {
+          localStorage.setItem("vendors", JSON.stringify(vendors));
+          // set dummy jwt we will override it in further page 
+          toast.success("Login successful!");
+          window.location.href = "/select-cafe";
+        } else {
+          toast.error("No vendors found for this account.");
+          return;
+        }
       } else {
-        setLoginError(result.message || "Login failed");
-        toast.error(result.message || "Login failed");
+        const message = result.message || "Login failed";
+        setLoginError(message);
+        toast.error(message);
       }
     } catch (error) {
+      console.error("Login error:", error);
       setLoginError("Failed to submit the form. Please try again.");
       toast.error("Failed to submit the form. Please try again.");
     } finally {
