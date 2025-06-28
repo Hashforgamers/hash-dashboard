@@ -60,7 +60,7 @@ const consoleTypes = [
     icon: Tv,
     color: "bg-blue-100 dark:bg-blue-950",
     iconColor: "#2563eb",
-    description: "PlayStation 5 Gaming Consoles",
+    description: "PlayStation 5 ",
   },
   {
     type: "xbox",
@@ -68,7 +68,7 @@ const consoleTypes = [
     icon: Gamepad,
     color: "bg-green-100 dark:bg-green-950",
     iconColor: "#059669",
-    description: "Xbox Series Gaming Consoles",
+    description: "Xbox Series Consoles",
   },
   {
     type: "vr",

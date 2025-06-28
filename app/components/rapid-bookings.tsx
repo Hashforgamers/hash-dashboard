@@ -17,6 +17,9 @@ import {
   Wallet,
   GamepadIcon,
   AlertCircle,
+  Cash,
+  DollarSign,
+  Loader2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -63,6 +66,7 @@ interface Filters {
 
 function RapidBookings() {
   const [name, setName] = useState("");
+  const [userId, setUserId] = useState("");
   const [contactNumber, setContactNumber] = useState("");
   const [selectedPlatform, setSelectedPlatform] = useState<Platform | null>(
     null
@@ -78,6 +82,19 @@ function RapidBookings() {
     const today = new Date();
     return today.toISOString().split("T")[0]; // Returns date in YYYY-MM-DD format
   });  
+
+  const [selectedName, setSelectedName] = useState<any>(null);
+  const [selectedSlot, setSelectedSlot] = useState<any>(null);
+
+  const [selectedSlots, setSelectedSlots] = React.useState<string[]>([]);
+  const [userList, setUserList] = useState<{ name: string; email: string; phone: string }[]>([]);
+  const [nameSuggestions, setNameSuggestions] = useState<UserType[]>([]);
+  const [phoneSuggestions, setPhoneSuggestions] = useState<UserType[]>([]);
+  const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
+  const [formErrors, setFormErrors] = useState<{ contactNumber?: string; time?: string }>({});
+
+
   const [time, setTime] = useState("");
   const [vendorId, setVendorId] = useState(null);
   const [filters, setFilters] = useState<Filters>({
@@ -89,6 +106,34 @@ function RapidBookings() {
   const [rapidbooking, setrapidbooking] = useState<System[]>([]);
   const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);
   const [isLoadingSlots, setIsLoadingSlots] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [inputValue, setInputValue] = useState('');
+
+
+  const handleNameInputChange = (value: string) => {
+    setName(value);
+    if (!value) {
+      setNameSuggestions([]);
+      return;
+    }
+    const matches = userList.filter((user) =>
+      user.name.toLowerCase().includes(value.toLowerCase())
+    );
+    setNameSuggestions(matches.slice(0, 5)); // limit suggestions
+  };
+
+  const handlePhoneInputChange = (value: string) => {
+    setPhone(value);
+    if (!value) {
+      setPhoneSuggestions([]);
+      return;
+    }
+    const matches = userList.filter((user) =>
+      user.phone.includes(value)
+    );
+    setPhoneSuggestions(matches.slice(0, 5)); // limit suggestions
+  };
+
 
   // Decode token once when the component mounts
   useEffect(() => {
@@ -100,73 +145,77 @@ function RapidBookings() {
     }
   }, []);
 
-  const validateForm = () => {
-    const newErrors: Record<string, string> = {};
+  const validateForm = (selectedName: any, selectedSlots: string[]) => {
+    const errors: { contactNumber?: string; time?: string } = {};
 
-    if (name.length < 2) {
-      newErrors.name = "Name must be at least 2 characters";
+    console.log(selectedName);
+
+    const phoneToValidate = selectedName?.phone || phone;
+
+    console.log("Phone alla", phoneToValidate);
+
+    if (!/^\d{10}$/.test(phoneToValidate)) {
+      errors.contactNumber = "Please enter a valid 10-digit phone number";
+    }else{
+      setContactNumber(phoneToValidate)
     }
 
-    if (!/^\d{10}$/.test(contactNumber)) {
-      newErrors.contactNumber = "Please enter a valid 10-digit phone number";
+    if (!selectedSlots || selectedSlots.length === 0) {
+      errors.time = "Please select a time";
     }
 
-    if (!consoleType) {
-      newErrors.consoleType = "Please select a console type";
-    }
-
-    if (!paymentType) {
-      newErrors.paymentType = "Please select a payment type";
-    }
-
-    const selectedDate = new Date(date);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    if (!date || selectedDate < today) {
-      newErrors.date = "Please select a valid future date";
-    }
-
-    if (!time) {
-      newErrors.time = "Please select a time";
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
   };
 
   useEffect(() => {
     if (vendorId !== null) {
-      const get_data = async () => {
-        try {
-          const response = await axios.get(
-            `${DASHBOARD_URL}/api/getAllDevice/vendor/${vendorId}`,
-            {
-              headers: {
-                "Content-Type": "application/json",
-              },
-            }
-          );
-          const data = response.data;
-          console.log("data", data);
-          setrapidbooking(data);
-        } catch (error) {
-          console.error("Error fetching vendor data", error);
-        }
-      };
-
-      get_data();
+      getAllDevices(vendorId);
     }
   }, [vendorId]); // <- This ensures it runs only after vendorId is set
 
+  useEffect(() => {
+    const token = localStorage.getItem("jwtToken");
+    if (!token) return;
+
+    try {
+      const decoded = jwtDecode<{ sub: { id: number } }>(token);
+      const vendorIdFromToken = decoded.sub.id;
+      setVendorId(vendorIdFromToken);
+
+      const cachedData = localStorage.getItem("userList");
+      const isCacheValid = (timestamp: number) => {
+        const now = Date.now();
+        return now - timestamp < 10 * 60 * 1000; // 10 minutes
+      };
+
+      if (cachedData) {
+        try {
+          const { data, timestamp } = JSON.parse(cachedData);
+          if (isCacheValid(timestamp)) {
+            setUserList(data);
+          } else {
+            getAllUsers(vendorIdFromToken);
+          }
+        } catch (e) {
+          getAllUsers(vendorIdFromToken);
+        }
+      } else {
+        getAllUsers(vendorIdFromToken);
+      }
+    } catch (e) {
+      console.error("Token decode error", e);
+    }
+  }, []);
 
   const System_data: System[] = rapidbooking.map((item: any) => {
     let systemData: System = {
       id: parseInt(item.consoleId),
+      consoleModelNumber: item.consoleModelNumber,
       name: item.brand,
       type: item.consoleType as Platform,
       icon: <Monitor className="w-6 h-6" />,
-      price: "₹60/hr",
+      price: item.consolePrice,
       status: item.is_available ? "available" : "occupied",
       number: item.console_type_id,
     };
@@ -175,23 +224,18 @@ function RapidBookings() {
     switch (item.consoleTypeName) {
       case "ps5":
         systemData.icon = <Gamepad2 className="w-6 h-6" />;
-        systemData.price = "₹80/hr";
         break;
       case "xbox":
         systemData.icon = <Gamepad className="w-6 h-6" />;
-        systemData.price = "₹60/hr";
         break;
       case "vr":
         systemData.icon = <Headset className="w-6 h-6" />;
-        systemData.price = "₹150/hr";
         break;
       case "pc":
         systemData.icon = <Monitor className="w-6 h-6" />;
-        systemData.price = "₹60/hr";
         break;
       default:
         systemData.icon = <Monitor className="w-6 h-6" />;
-        systemData.price = "₹66/hr";
         break;
     }
   
@@ -309,37 +353,83 @@ function RapidBookings() {
     visible: { opacity: 1, x: 0 },
   };
 
-  const handelBooking = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const getAllDevices = async (vendorId: number) => {
+    try {
+      const response = await axios.get(
+        `${DASHBOARD_URL}/api/getAllDevice/vendor/${vendorId}`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      const data = response.data;
+      console.log("Fetched devices:", data);
+      setrapidbooking(data);
+    } catch (error) {
+      console.error("Error fetching vendor devices", error);
+    }
+  };
+
+  const getAllUsers = async (vendorIdFromToken: number) => {
+    const userCacheKey = `userList`;
+
+    try {
+      const response = await fetch(`${BOOKING_URL}/api/vendor/${vendorIdFromToken}/users`);
+      const data = await response.json();
+      console.log("Fetched users from API:", data);
+
+      if (Array.isArray(data)) {
+        setUserList(data);
+        localStorage.setItem(
+          userCacheKey,
+          JSON.stringify({ data, timestamp: Date.now() })
+        );
+      }
+    } catch (error) {
+      console.error("Error fetching users:", error);
+    }
+  };
+
+
+  const handleBooking = async (e) => {
+    // e.preventDefault();
+    setLoading(true);
     console.log("Form submission started");
 
-    if (!validateForm()) {
-      console.log("Form validation failed", errors);
+    if (!validateForm(selectedName, selectedSlots)) {
+      console.log("Form validation failed", formErrors);
       return;
     }
 
     try {
       console.log("Making API request...");
-      console.log("Selected time:", time);
+      console.log("Selected slots:", selectedSlots);
       console.log("Available time slots:", timeSlots);
-      
-      const selectedSlot = timeSlots.find(slot => slot.time === time);
-      console.log("Selected slot:", selectedSlot);
 
-      if (!selectedSlot) {
+
+      // Find the slot objects matching the selected slot times
+      const selectedSlotObjects = timeSlots.filter(slot => selectedSlots.includes(slot.time));
+      console.log("Selected slot objects:", selectedSlotObjects);
+
+      if (selectedSlotObjects.length === 0) {
         throw new Error("No slot selected");
       }
+
+      // Collect their slot_ids as strings
+      const slotIds = selectedSlotObjects.map(slot => slot.slot_id.toString());
 
       const payload = {
         consoleType: selectedSystem?.type || consoleType,
         name: name,
         email: "demo@1example.com",
-        phone: contactNumber,
+        phone: phone,
         bookedDate: date,
-        slotId: [selectedSlot.slot_id.toString()],
+        slotId: slotIds,
         paymentType: paymentType,
         isRapidBooking: true,
-        consoleId: selectedSystem?.id.toString()
+        consoleId: selectedSystem?.id.toString(),
+        userId: userId || null,
       };
 
       const response = await axios.post(
@@ -357,14 +447,19 @@ function RapidBookings() {
       if (response.data) {
         console.log("Booking successful:", response.data);
         setShowBookingForm(false);
-        window.location.href = "/";
+
+        // Re-fetch updated lists
+        if (vendorId) {
+          getAllDevices(vendorId);
+          getAllUsers(vendorId);
+        }
       }
     } catch (error: any) {
       console.error("Error creating booking:", error);
       console.error("Error details:", error.response?.data || error.message);
     } finally {
-      // Close the modal regardless of success or failure
       setShowBookingForm(false);
+      setLoading(false);
     }
   };
 
@@ -622,11 +717,11 @@ function RapidBookings() {
                     {system.icon}
                   </div>
                   <span className="font-semibold text-[#098637]">
-                    {system.price}
+                    {system.price}/slot
                   </span>
                 </div>
                 <h3 className="text-xl font-semibold mb-2">
-                  {system.name} #{system.number}
+                  #{system.consoleModelNumber}
                 </h3>
                 <p
                   className={`mb-4 ${getStatusColor(
@@ -658,227 +753,264 @@ function RapidBookings() {
             ))}
           </motion.div>
         ) : (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="max-w-2xl mx-auto border rounded-lg p-6 space-y-6"
-          >
-            <div className="flex justify-between items-center">
-              <h2 className="text-2xl font-bold">
-                Book {selectedSystem?.name} #{selectedSystem?.number}
-              </h2>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setShowBookingForm(false)}
-                className="hover:bg-red-100 hover:text-red-500"
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
+          <div className="max-w-5xl mx-auto flex flex-col md:flex-row gap-6">
+            {/* Booking Form */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="md:w-2/3 border rounded-2xl p-6 space-y-6 bg-white dark:bg-gray-900 shadow-xl"
+            >
+              {/* Header */}
+              <div className="flex justify-between items-center border-b pb-4">
+                <h2 className="text-2xl font-semibold text-gray-800 dark:text-white">
+                  Book {selectedSystem?.name} #{selectedSystem?.consoleModelNumber}
+                </h2>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setShowBookingForm(false)}
+                  className="hover:bg-red-100 hover:text-red-600"
+                >
+                  <X className="h-5 w-5" />
+                </Button>
+              </div>
 
-            <form className="space-y-6">
-              <motion.div
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                className="space-y-4"
-              >
-                <div className="space-y-2">
-                  <Label>Name</Label>
-                  <div className="relative">
-                    <User className="absolute left-3 top-3 text-gray-500 w-4 h-4" />
-                    <Input
-                      className="pl-9"
-                      placeholder="Enter your name"
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                    />
+              {/* Booking Form Fields */}
+              <form className="space-y-6">
+                <motion.div
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  className="space-y-6"
+                >
+                  {/* Phone Field */}
+                  <div className="space-y-1.5">
+                    <Label className="text-sm font-medium">Phone Number</Label>
+                    <div className="relative">
+                      <Phone className="absolute left-3 top-3 text-gray-400 w-4 h-4" />
+                      <Input
+                        className="pl-10"
+                        placeholder="Enter phone number"
+                        value={phone}
+                        onChange={(e) => handlePhoneInputChange(e.target.value)}
+                        onBlur={() => setTimeout(() => setPhoneSuggestions([]), 150)}
+                      />
+                      {phoneSuggestions.length > 0 && (
+                        <ul className="absolute z-10 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg w-full mt-1 text-sm max-h-48 overflow-y-auto">
+                          {phoneSuggestions.map((user, idx) => (
+                            <li
+                              key={idx}
+                              className="px-3 py-2 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 cursor-pointer"
+                              onMouseDown={() => {
+                                setPhone(user.phone);
+                                setName(user.name);
+                                setEmail(user.email);
+                                setSelectedName(user);
+                                setPhoneSuggestions([]);
+                                setNameSuggestions([]);
+                                setContactNumber(user.phone);
+                                setUserId(user.id);
+                              }}
+                            >
+                              {user.phone} ({user.name})
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                    {formErrors.contactNumber && (
+                      <p className="text-red-500 text-sm">{formErrors.contactNumber}</p>
+                    )}
                   </div>
-                </div>
 
-                <div className="space-y-2">
-                  <Label>Phone Number</Label>
-                  <div className="relative">
-                    <Phone className="absolute left-3 top-3 text-gray-500 w-4 h-4" />
-                    <Input
-                      className="pl-9"
-                      placeholder="Enter phone number"
-                      value={contactNumber}
-                      onChange={(e) => setContactNumber(e.target.value)}
-                    />
+                  {/* Name Field */}
+                  <div className="space-y-1.5">
+                    <Label className="text-sm font-medium">Name</Label>
+                    <div className="relative">
+                      <User className="absolute left-3 top-3 text-gray-400 w-4 h-4" />
+                      <Input
+                        className="pl-10"
+                        placeholder="Enter your name"
+                        value={name}
+                        onChange={(e) => handleNameInputChange(e.target.value)}
+                        onBlur={() => setTimeout(() => setNameSuggestions([]), 150)}
+                      />
+                      {nameSuggestions.length > 0 && (
+                        <ul className="absolute z-10 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg w-full mt-1 text-sm max-h-48 overflow-y-auto">
+                          {nameSuggestions.map((user, idx) => (
+                            <li
+                              key={idx}
+                              className="px-3 py-2 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 cursor-pointer"
+                              onMouseDown={() => {
+                                setName(user.name);
+                                setPhone(user.phone);
+                                setEmail(user.email);
+                                setSelectedName(user);
+                                setNameSuggestions([]);
+                                setPhoneSuggestions([]);
+                                setUserId(user.id);
+                              }}
+                            >
+                              {user.name} ({user.phone})
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
                   </div>
-                </div>
 
-                <div className="space-y-2">
-                  <Label>Date</Label>
-                  <div className="relative">
+                  {/* Date Picker */}
+                  <div className="space-y-1.5">
+                    <Label className="text-sm font-medium">Date</Label>
                     <Input
                       type="date"
-                      className="pl-9"
+                      className="pl-3"
                       value={date}
                       onChange={(e) => setDate(e.target.value)}
                       min={new Date().toISOString().split("T")[0]}
                     />
+                    {errors.date && (
+                      <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-sm text-red-500">
+                        {errors.date}
+                      </motion.p>
+                    )}
                   </div>
-                  {errors.date && (
-                    <motion.p
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      className="text-xs text-red-500 mt-1"
-                    >
-                      {errors.date}
-                    </motion.p>
-                  )}
-                </div>
 
-                <div className="space-y-2">
-                  <Label>Time Slot</Label>
-                  <div className="grid grid-cols-3 gap-3">
-                    {isLoadingSlots ? (
-                      <div className="col-span-3 text-center py-4">
-                        Loading time slots...
-                      </div>
-                    ) : (
-                      timeSlots.map((slot, index) => (
-                        <motion.button
-                          key={index}
-                          whileHover={{ scale: slot.available ? 1.05 : 1 }}
-                          whileTap={{ scale: slot.available ? 0.95 : 1 }}
+                  {/* Time Slots */}
+                  <div className="space-y-1.5">
+                    <Label className="text-sm font-medium">Select Time Slots</Label>
+                    <div className="grid grid-cols-3 gap-3">
+                      {isLoadingSlots ? (
+                        <div className="col-span-3 text-center py-4 text-gray-500">Loading time slots...</div>
+                      ) : (
+                        timeSlots.map((slot, index) => (
+                          <motion.button
+                            key={index}
+                            whileHover={{ scale: slot.available && !selectedSlots.includes(slot.time) ? 1.05 : 1 }}
+                            whileTap={{ scale: slot.available && !selectedSlots.includes(slot.time) ? 0.95 : 1 }}
+                            type="button"
+                            disabled={!slot.available}
+                            onClick={() => {
+                              if (!slot.available) return;
+                              setSelectedSlots((prev) =>
+                                prev.includes(slot.time)
+                                  ? prev.filter((t) => t !== slot.time)
+                                  : [...prev, slot.time]
+                              );
+                            }}
+                            className={`p-2 rounded-lg text-sm font-medium transition-colors text-center
+                              ${
+                                selectedSlots.includes(slot.time)
+                                  ? "bg-gray-400 text-white"
+                                  : slot.available
+                                  ? "bg-[#098637] text-white hover:bg-[#076d2a]"
+                                  : "bg-gray-200 text-gray-500 cursor-not-allowed"
+                              }`}
+                          >
+                            {slot.time}
+                          </motion.button>
+                        ))
+                      )}
+                    </div>
+                    {formErrors.time && (
+                      <p className="text-red-500 text-sm mt-1">{formErrors.time}</p>
+                    )}
+                  </div>
+
+                  {/* Payment Method */}
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium">Payment Method</Label>
+                    <div className="grid grid-cols-3 gap-4">
+                      {[
+                        { key: "credit", label: "Card", icon: <CreditCard className="w-6 h-6" /> },
+                        { key: "wallet", label: "Wallet", icon: <Wallet className="w-6 h-6" /> },
+                        { key: "cash", label: "Cash", icon: <DollarSign className="w-6 h-6" /> },
+                      ].map(({ key, label, icon }) => (
+                        <button
+                          key={key}
                           type="button"
-                          disabled={!slot.available}
-                          onClick={() => setTime(slot.time)}
-                          className={`p-2 rounded-lg text-center transition-colors ${
-                            time === slot.time
-                              ? "bg-[#076d2a] text-white"
-                              : slot.available
-                              ? "bg-[#098637] text-white hover:bg-[#076d2a]"
-                              : "bg-gray-200 text-gray-500 cursor-not-allowed"
-                          }`}
+                          onClick={() => setPaymentType(key)}
+                          className={`flex flex-col items-center justify-center p-3 rounded-xl border transition-all w-full
+                            ${paymentType === key ? "border-[#098637] bg-[#e6f4ea]" : "border-gray-300 hover:border-[#098637]"}`}
+                          aria-label={label}
                         >
-                          {slot.time}
-                        </motion.button>
-                      ))
-                    )}
+                          <span className="text-[#098637]">{icon}</span>
+                          <span className="text-xs mt-1">{label}</span>
+                        </button>
+                      ))}
+                    </div>
                   </div>
-                </div>
 
-                <motion.div
-                  className="space-y-2"
-                  variants={inputVariants}
-                  initial="hidden"
-                  animate="visible"
-                  transition={{ delay: 0.3 }}
-                >
-                  <Label
-                    htmlFor="consoleType"
-                    className="text-sm font-medium flex items-center gap-1"
-                  >
-                    Console Type{" "}
-                    {errors.consoleType && (
-                      <AlertCircle className="h-4 w-4 text-red-500" />
-                    )}
-                  </Label>
-                  <div className="relative">
-                    <GamepadIcon className="absolute left-3 top-3 h-4 w-4 text-gray-500 pointer-events-none z-10" />
-                    <Select value={consoleType} onValueChange={setConsoleType}>
-                      <SelectTrigger
-                        id="consoleType"
-                        className={`pl-9 transition-all duration-200 ${
-                          errors.consoleType
-                            ? "border-red-500 focus:border-red-500 focus:ring-red-500"
-                            : "border-gray-300 focus:border-[#098637] focus:ring-[#098637]"
-                        }`}
-                      >
-                        <SelectValue placeholder="Select console type" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="PC">Gaming PC</SelectItem>
-                        <SelectItem value="Xbox">Xbox Series X</SelectItem>
-                        <SelectItem value="VR">VR Headset</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  {errors.consoleType && (
-                    <motion.p
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      className="text-xs text-red-500 mt-1"
+                  {/* Form Actions */}
+                  <div className="flex gap-4 pt-4">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setShowBookingForm(false)}
+                      className="w-1/2"
+                      disabled={loading}
                     >
-                      {errors.consoleType}
-                    </motion.p>
-                  )}
+                      Cancel
+                    </Button>
+                    <Button
+                      type="button"
+                      onClick={handleBooking}
+                      className="w-1/2 bg-[#098637] hover:bg-[#076d2a]"
+                      disabled={loading}
+                    >
+                      {loading ? (
+                        <span className="flex items-center gap-2 justify-center">
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          Booking...
+                        </span>
+                      ) : (
+                        "Confirm Booking"
+                      )}
+                    </Button>
+                  </div>
                 </motion.div>
+              </form>
+            </motion.div>
 
-                <motion.div
-                  className="space-y-2"
-                  variants={inputVariants}
-                  initial="hidden"
-                  animate="visible"
-                  transition={{ delay: 0.4 }}
-                >
-                  <Label className="text-sm font-medium flex items-center gap-1">
-                    Payment Method
-                  </Label>
-                  <select
-                    value={paymentType}
-                    onChange={(e) => setPaymentType(e.target.value)}
-                    className="w-full p-3 border rounded-lg focus:ring-[#098637] focus:border-[#098637] transition-all duration-200"
-                  >
-                    <option value="credit">
-                      <div className="flex items-center gap-2">
-                        <CreditCard className="h-4 w-4 text-[#098637]" />
-                        Credit/Debit Card
-                      </div>
-                    </option>
-                    <option value="wallet">
-                      <div className="flex items-center gap-2">
-                        <Wallet className="h-4 w-4 text-[#098637]" />
-                        Digital Wallet (Google Pay, Apple Pay, PayPal)
-                      </div>
-                    </option>
-                    <option value="cash">
-                      <div className="flex items-center gap-2">
-                        <svg
-                          className="h-4 w-4 text-[#098637]"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                          xmlns="http://www.w3.org/2000/svg"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"
-                          />
-                        </svg>
-                        Cash (Pay at location)
-                      </div>
-                    </option>
-                  </select>
-                </motion.div>
-
-                <div className="flex gap-4 pt-4">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setShowBookingForm(false)}
-                    className="w-1/2"
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    type="button"
-                    onClick={handelBooking}
-                    className="w-1/2 bg-[#098637] hover:bg-[#076d2a]"
-                  >
-                    Confirm Booking
-                  </Button>
+            {/* Booking Summary */}
+            <div className="md:w-1/3 sticky top-24 space-y-4">
+              <div className="p-4 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm bg-white dark:bg-gray-900">
+                <h3 className="text-base font-semibold mb-3 text-emerald-600">Booking Summary</h3>
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span>Console:</span>
+                    <span className="font-medium">{selectedSystem?.name}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Model:</span>
+                    <span className="font-medium">#{selectedSystem?.consoleModelNumber}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Date:</span>
+                    <span className="font-medium">
+                      {new Date(date).toLocaleDateString('en-US', {
+                        month: 'short',
+                        day: 'numeric',
+                        year: 'numeric'
+                      })}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Slots:</span>
+                    <span className="font-medium">{selectedSlots.length}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Rate:</span>
+                    <span className="font-medium">₹{selectedSystem?.price}/slot</span>
+                  </div>
+                  <div className="flex justify-between pt-2 border-t font-bold">
+                    <span>Total:</span>
+                    <span className="text-emerald-600">₹{selectedSlots.length * selectedSystem?.price}</span>
+                  </div>
                 </div>
-              </motion.div>
-            </form>
-          </motion.div>
+              </div>
+            </div>
+          </div>
         )}
       </AnimatePresence>
     </motion.div>
@@ -886,3 +1018,4 @@ function RapidBookings() {
 }
 
 export default RapidBookings;
+

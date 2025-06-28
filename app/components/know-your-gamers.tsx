@@ -13,6 +13,7 @@ import {
 
 import { DASHBOARD_URL } from "@/src/config/env";
 import { jwtDecode } from "jwt-decode";
+import HashLoader from "./ui/HashLoader";
 
 // Define icon mapping
 const iconMap = {
@@ -29,23 +30,48 @@ export function KnowYourGamers() {
   const [gamerData, setGamerData] = useState<any[]>([]);
   const [stats, setStats] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [vendorId, setVendorId] = useState<number | null>(null);
 
-  const [vendorId, setVendorId] = useState(null);
+  const GAMER_CACHE_KEY = "gamerDataCache";
+  const STATS_CACHE_KEY = "gamerStatsCache";
+  const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+  const POLL_INTERVAL = 1 * 1000; // 1 minute
 
-  // Decode token once when the component mounts
   useEffect(() => {
     const token = localStorage.getItem("jwtToken");
-
     if (token) {
       const decoded_token = jwtDecode<{ sub: { id: number } }>(token);
       setVendorId(decoded_token.sub.id);
     }
-  }, []); // empty dependency, runs once on mount
-
+  }, []);
 
   useEffect(() => {
-    const fetchStatsAndGamerData = async () => {
+    if (!vendorId) return;
+
+    let pollingInterval: NodeJS.Timeout;
+
+    const loadGamerData = async (isInitial = false) => {
       try {
+        const now = Date.now();
+
+        // Try cache first
+        const cachedGamer = localStorage.getItem(GAMER_CACHE_KEY);
+        const cachedStats = localStorage.getItem(STATS_CACHE_KEY);
+        const gamerParsed = cachedGamer ? JSON.parse(cachedGamer) : null;
+        const statsParsed = cachedStats ? JSON.parse(cachedStats) : null;
+
+        const isCacheValid = (entry: any) =>
+          entry && entry.timestamp && now - entry.timestamp < CACHE_TTL;
+
+        if (isInitial && isCacheValid(gamerParsed) && isCacheValid(statsParsed)) {
+          setGamerData(gamerParsed.data);
+          setStats(statsParsed.data);
+          setLoading(false);
+          console.log("Loaded gamer data from cache");
+          return;
+        }
+
+        // Fetch fresh
         const [gamerRes, statsRes] = await Promise.all([
           fetch(`${DASHBOARD_URL}/api/vendor/${vendorId}/knowYourGamer`),
           fetch(`${DASHBOARD_URL}/api/vendor/${vendorId}/knowYourGamer/stats`),
@@ -56,12 +82,16 @@ export function KnowYourGamers() {
 
         if (Array.isArray(gamerJson)) {
           setGamerData(gamerJson);
+          localStorage.setItem(
+            GAMER_CACHE_KEY,
+            JSON.stringify({ data: gamerJson, timestamp: now })
+          );
         }
 
-        setStats([
+        const formattedStats = [
           {
             title: "Total Gamers",
-            value: statsJson.totalGamers.toLocaleString(),
+            value: statsJson.totalGamers?.toLocaleString() || "0",
             icon: "Users",
             change: statsJson.membersGrowth || "+0%",
             color: "text-blue-600",
@@ -69,7 +99,7 @@ export function KnowYourGamers() {
           },
           {
             title: "Average Revenue",
-            value: `₹${statsJson.averageRevenue.toLocaleString()}`,
+            value: `₹${statsJson.averageRevenue?.toLocaleString() || "0"}`,
             icon: "TrendingUp",
             change: statsJson.revenueGrowth || "+0%",
             color: "text-green-600",
@@ -77,7 +107,7 @@ export function KnowYourGamers() {
           },
           {
             title: "Premium Members",
-            value: statsJson.premiumMembers.toLocaleString(),
+            value: statsJson.premiumMembers?.toLocaleString() || "0",
             icon: "Award",
             change: statsJson.membersGrowth || "+0%",
             color: "text-purple-600",
@@ -91,15 +121,25 @@ export function KnowYourGamers() {
             color: "text-orange-600",
             bgColor: "bg-orange-50",
           },
-        ]);
+        ];
+
+        setStats(formattedStats);
+        localStorage.setItem(
+          STATS_CACHE_KEY,
+          JSON.stringify({ data: formattedStats, timestamp: now })
+        );
       } catch (err) {
-        console.error("Error fetching data:", err);
+        console.error("Error fetching gamer/stats:", err);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchStatsAndGamerData();
+    loadGamerData(true); // Initial load with cache
+
+    pollingInterval = setInterval(() => loadGamerData(false), POLL_INTERVAL);
+
+    return () => clearInterval(pollingInterval);
   }, [vendorId]);
 
   const filteredData = gamerData.filter((gamer) => {
@@ -112,9 +152,6 @@ export function KnowYourGamers() {
     return matchesSearch && matchesTier;
   });
 
-  if (loading) {
-    return <div className="text-center py-10 text-gray-500">Loading gamer data...</div>;
-  }
 
   return (
     <div className="space-y-6">
