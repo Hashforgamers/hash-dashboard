@@ -61,50 +61,67 @@ export default function SelectCafePage() {
 
   const selectedCafeData = cafes.find(cafe => cafe.id === selectedCafe);
 
-  const handleUnlock = async () => {
-    setError(null);
-    if (pin.length !== 4 || !/^\d+$/.test(pin)) {
-      setError("Please enter a valid 4-digit PIN.");
-      triggerShake();
-      return;
-    }
-    if (!selectedCafeData) {
-      setError("No cafe selected.");
-      return;
-    }
+const handleUnlock = async () => {
+  setError(null);
 
-    setIsUnlocking(true);
+  if (pin.length !== 4 || !/^\d+$/.test(pin)) {
+    setError("Please enter a valid 4-digit PIN.");
+    triggerShake();
+    return;
+  }
 
-    try {
-      const response = await fetch(`${LOGIN_URL}/api/validatePin`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          vendor_id: selectedCafeData.id,
-          pin,
-        }),
-      });
+  if (!selectedCafeData) {
+    setError("No cafe selected.");
+    return;
+  }
 
-      const data = await response.json();
+  setIsUnlocking(true);
 
-      if (response.ok && data.status === "success") {
-        localStorage.setItem("selectedCafe", selectedCafeData.id);
-        localStorage.setItem("jwtToken", data.data.token);
-
-        router.push("/dashboard");
-      } else {
-        setError(data.message || "Invalid PIN, please try again.");
-        triggerShake();
-      }
-    } catch (err) {
-      setError("Network error. Please try again.");
+  // Special case for Master Analytics
+  if (selectedCafeData.id === "master") {
+    if (pin === "2430") {
+      localStorage.setItem("selectedCafe", selectedCafeData.id);
+      // Use a dummy token or none, since analytics access may not need auth
+      localStorage.setItem("jwtToken", "dummy-master-token");
+      router.push("/master");
+    } else {
+      setError("Invalid Master PIN.");
       triggerShake();
     }
-
     setIsUnlocking(false);
-  };
+    return;
+  }
+
+  // Normal Cafe PIN check via API
+  try {
+    const response = await fetch(`${LOGIN_URL}/api/validatePin`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        vendor_id: selectedCafeData.id,
+        pin,
+      }),
+    });
+
+    const data = await response.json();
+
+    if (response.ok && data.status === "success") {
+      localStorage.setItem("selectedCafe", selectedCafeData.id);
+      localStorage.setItem("jwtToken", data.data.token);
+      router.push("/dashboard");
+    } else {
+      setError(data.message || "Invalid PIN, please try again.");
+      triggerShake();
+    }
+  } catch (err) {
+    setError("Network error. Please try again.");
+    triggerShake();
+  }
+
+  setIsUnlocking(false);
+};
 
   // Shake animation for error input
   function triggerShake() {

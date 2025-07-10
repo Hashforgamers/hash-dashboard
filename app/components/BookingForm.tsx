@@ -22,9 +22,16 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
   const [refreshDashboard, setRefreshDashboard] = useState(false);
   
   // Booking details
-  const [selectedDate, setSelectedDate] = useState<string>(
-    new Date().toISOString().split("T")[0]
-  );
+  const [selectedDate, setSelectedDate] = useState<string>(() => {
+    const now = new Date();
+
+    // Get UTC time + IST offset (5 hours 30 minutes = 330 minutes)
+    const istOffsetMs = 330 * 60 * 1000;
+    const istTime = new Date(now.getTime() + istOffsetMs);
+
+    return istTime.toISOString().split("T")[0]; // Format as YYYY-MM-DD
+  });
+
   const [selectedSlots, setSelectedSlots] = useState<string[]>([]);
   const [availableSlots, setAvailableSlots] = useState<any[]>([]);
   
@@ -144,18 +151,36 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
         const response = await fetch(
           `${BOOKING_URL}/api/getSlots/vendor/${vendorId}/game/${selectedConsole.id}/${selectedDate.replace(/-/g, "")}`
         );
-        
+
         if (!response.ok) throw new Error("Failed to fetch slots");
+
         const data = await response.json();
-        setAvailableSlots(data.slots || []);
+
+        // Step 1: Get current time in IST
+        const nowIST = new Date(
+          new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" })
+        );
+
+        // Step 2: Create datetime for each slot and compare
+        const filteredSlots = (data.slots || []).map((slot: any) => {
+          const slotDateTime = new Date(`${selectedDate}T${slot.start_time}+05:30`);
+          
+          const isPast = slotDateTime < nowIST;
+
+          return {
+            ...slot,
+            is_available: slot.is_available && !isPast // override availability
+          };
+        });
+
+        setAvailableSlots(filteredSlots);
       } catch (error) {
         console.error("Error fetching available slots:", error);
       }
     };
 
+
     fetchAvailableSlots();
-    console.log("AAla re ");
-    console.log(selectedConsole);
   }, [vendorId, selectedDate, selectedConsole.id]);
 
   const handleSlotClick = (slot: string) => {
