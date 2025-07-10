@@ -106,6 +106,9 @@ export default function LoginPage() {
         if (Array.isArray(vendors) && vendors.length > 0) {
           localStorage.setItem("vendors", JSON.stringify(vendors));
 
+          //Store Email id
+          localStorage.setItem("vendor_login_email", values.email);
+
           // Create and store dummy JWT token
           const dummyToken = createDummyJWT(identity);
           localStorage.setItem("jwtToken", dummyToken);

@@ -11,11 +11,13 @@ import {
   User,
   Users,
   DollarSign,
+  Moon,
+  Sun,
 } from "lucide-react";
-import { Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useState } from "react";
 import { ButtonDestructive } from "./log-out";
+
 export function MainNav({
   className,
   ...props
@@ -23,6 +25,15 @@ export function MainNav({
   const pathname = usePathname();
   const { setTheme, theme } = useTheme();
   const [isNavOpen, setIsNavOpen] = useState(false);
+
+  const clearStorageExceptVendor = () => {
+    const keysToKeep = ["vendor_login_email", "vendors"];
+    Object.keys(localStorage).forEach((key) => {
+      if (!keysToKeep.includes(key)) {
+        localStorage.removeItem(key);
+      }
+    });
+  };
 
   return (
     <nav
@@ -56,6 +67,22 @@ export function MainNav({
         </Link>
       ))}
 
+      {/* Select Cafe link */}
+      <Link
+        href="/select-cafe"
+        onClick={clearStorageExceptVendor}
+        className={cn(
+          "group flex items-center space-x-2 rounded-md px-3 py-2 text-sm font-medium transition-all hover:bg-accent hover:text-accent-foreground",
+          pathname === "/select-cafe"
+            ? "bg-accent text-accent-foreground"
+            : "text-muted-foreground"
+        )}
+      >
+        <LayoutDashboard className="h-5 w-5 shrink-0" />
+        <span className="hidden group-hover:inline-block">Select Cafe</span>
+      </Link>
+
+      {/* Theme toggle */}
       <button
         onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
         className={cn(
