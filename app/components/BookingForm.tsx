@@ -282,7 +282,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="max-w-sm w-full bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 text-center"
+          className="max-w-sm w-full bg-transparent dark:bg-transparent rounded-xl shadow-lg p-6 text-center"
         >
           <motion.div
             initial={{ scale: 0 }}
@@ -321,7 +321,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
   }
 
   return (
-    <div className="h-full flex flex-col bg-transparent bg-gradient-to-br from-emerald-50/50 via-white to-blue-50/50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+    <div className="h-full flex flex-col bg-transparent dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
       {/* Compact Header */}
       <motion.div 
         initial={{ opacity: 0, y: -10 }}
@@ -333,7 +333,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
             onClick={onBack}
-            className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-all duration-200"
+            className="p-1.5 hover:bg-gray-100 dark:hover:bg-transparent rounded-full transition-all duration-200"
           >
             <ChevronLeft className="w-5 h-5 text-gray-600 dark:text-gray-400" />
           </motion.button>
@@ -343,13 +343,14 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
             </h1>
           </div>
         </div>
-        <div className="flex items-center gap-2 bg-emerald-100 dark:bg-emerald-900/30 px-3 py-1 rounded-full">
-          <GameController2 className="w-4 h-4 text-emerald-600" />
+        <div className="flex items-center gap-2 bg-emerald-100/50 dark:bg-emerald-900/30 px-3 py-1 rounded-full">
+          <GameController2 className="w-4 h-4 text-emerald-600 dark:text-emerald-300" />
           <span className="text-emerald-700 dark:text-emerald-300 font-medium text-sm">
             ₹{selectedConsole.price}/slot
           </span>
         </div>
       </motion.div>
+
 
       {/* Compact Form Content */}
       <div className="flex-1 overflow-y-auto p-3">
@@ -383,7 +384,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
                         setFocusedInput("");
                         setEmailSuggestions([]);
                       }}
-                      className={`w-full pl-8 pr-2 py-2 bg-gray-50 dark:bg-gray-700 rounded border transition-all duration-200 text-sm ${
+                      className={`w-full pl-8 pr-2 py-2 bg-transparent rounded border transition-all duration-200 text-sm ${
                         errors.email 
                           ? "border-red-500 focus:border-red-500" 
                           : focusedInput === "email"
@@ -413,7 +414,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
                           initial={{ opacity: 0, y: -5 }}
                           animate={{ opacity: 1, y: 0 }}
                           exit={{ opacity: 0, y: -5 }}
-                          className="absolute z-20 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded shadow-lg w-full mt-1 max-h-32 overflow-y-auto"
+                          className="absolute z-20 bg-transparent border border-gray-200 dark:border-gray-700 rounded shadow-lg w-full mt-1 max-h-32 overflow-y-auto"
                         >
                           {emailSuggestions.map((user, idx) => (
                             <motion.li
@@ -453,7 +454,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
                         setFocusedInput("");
                         setPhoneSuggestions([]);
                       }}
-                      className={`w-full pl-8 pr-2 py-2 bg-gray-50 dark:bg-gray-700 rounded border transition-all duration-200 text-sm ${
+                      className={`w-full pl-8 pr-2 py-2 bg-transparent rounded border transition-all duration-200 text-sm ${
                         errors.phone 
                           ? "border-red-500 focus:border-red-500" 
                           : focusedInput === "phone"
@@ -526,7 +527,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
                           onChange={(e) => setName(e.target.value)}
                           onFocus={() => setFocusedInput("name")}
                           onBlur={() => setFocusedInput("")}
-                          className={`w-full pl-8 pr-2 py-2 bg-gray-50 dark:bg-gray-700 rounded border transition-all duration-200 text-sm ${
+                          className={`w-full pl-8 pr-2 py-2 bg-transparent rounded border transition-all duration-200 text-sm ${
                             errors.name 
                               ? "border-red-500 focus:border-red-500" 
                               : focusedInput === "name"
@@ -561,7 +562,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
                   initial={{ opacity: 0, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.1 }}
-                  className="bg-white dark:bg-gray-800 rounded-lg p-3 shadow-sm border border-gray-200 dark:border-gray-700"
+                  className="bg-transparent rounded-lg p-3 shadow-sm border border-gray-200 dark:border-gray-700"
                 >
                   <div className="flex items-center gap-2 mb-2">
                     <div className="p-1 bg-blue-100 dark:bg-blue-900/30 rounded">
@@ -577,7 +578,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
                     value={selectedDate}
                     min={new Date().toISOString().split("T")[0]}
                     onChange={(e) => setSelectedDate(e.target.value)}
-                    className="w-full px-2 py-2 bg-gray-50 dark:bg-gray-700 rounded border border-gray-200 dark:border-gray-600 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500/20 transition-all duration-200 text-sm"
+                    className="w-full px-2 py-2 bg-transparent dark:bg-transparent rounded border border-gray-200 dark:border-gray-600 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500/20 transition-all duration-200 text-sm"
                   />
                 </motion.div>
 
@@ -586,7 +587,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
                   initial={{ opacity: 0, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.2 }}
-                  className="bg-white dark:bg-gray-800 rounded-lg p-3 shadow-sm border border-gray-200 dark:border-gray-700"
+                  className="bg-transparent dark:bg-transparent rounded-lg p-3 shadow-sm border border-gray-200 dark:border-gray-700"
                 >
                   <div className="flex items-center gap-2 mb-2">
                     <div className="p-1 bg-yellow-100 dark:bg-yellow-900/30 rounded">
@@ -646,7 +647,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.3 }}
-                className="bg-white dark:bg-gray-800 rounded-lg p-3 shadow-sm border border-gray-200 dark:border-gray-700"
+                className="bg-transparent dark:bg-transparent rounded-lg p-3 shadow-sm border border-gray-200 dark:border-gray-700"
               >
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
@@ -674,7 +675,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
                   </div>
                 </div>
                 
-                <div className="bg-gray-50 dark:bg-gray-700 rounded p-2">
+                <div className="bg-transparent dark:bg-transparent rounded p-2">
                   {availableSlots.length === 0 ? (
                     <div className="text-center py-3 text-gray-500 dark:text-gray-400">
                       <Clock className="w-5 h-5 mx-auto mb-1 opacity-50" />
@@ -696,7 +697,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
                             selectedSlots.includes(slot.slot_id)
                               ? "bg-emerald-500 text-white shadow-sm transform scale-105"
                               : slot.is_available
-                              ? "bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 hover:border-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/30"
+                              ? "bg-transparent dark:bg-transparent border border-gray-200 dark:border-gray-600 hover:border-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/30"
                               : "bg-red-100 dark:bg-red-900/30 text-red-400 cursor-not-allowed opacity-60"
                           }`}
                         >
@@ -766,7 +767,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
                 initial={{ opacity: 0, x: 10 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.4 }}
-                className="bg-white dark:bg-gray-800 rounded-lg p-3 shadow-sm border border-gray-200 dark:border-gray-700"
+                className="bg-transparent dark:bg-transparent rounded-lg p-3 shadow-sm border border-gray-200 dark:border-gray-700"
               >
                 <div className="flex items-center gap-2 mb-3">
                   <div className="p-1 bg-indigo-100 dark:bg-indigo-900/30 rounded">
@@ -810,7 +811,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
                       value={waiveOffAmount}
                       onChange={(e) => setWaiveOffAmount(Number(e.target.value))}
                       placeholder="₹0"
-                      className="w-16 text-right px-1 py-0.5 rounded border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-white focus:border-emerald-500 focus:outline-none transition-colors text-xs"
+                      className="w-16 text-right px-1 py-0.5 rounded border border-gray-300 dark:border-gray-600 bg-transparent dark:bg-transparent text-gray-800 dark:text-white focus:border-emerald-500 focus:outline-none transition-colors text-xs"
                       min={0}
                     />
                   </div>
@@ -822,7 +823,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
                       value={extraControllerFare}
                       onChange={(e) => setExtraControllerFare(Number(e.target.value))}
                       placeholder="₹0"
-                      className="w-16 text-right px-1 py-0.5 rounded border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-white focus:border-emerald-500 focus:outline-none transition-colors text-xs"
+                      className="w-16 text-right px-1 py-0.5 rounded border border-gray-300 dark:border-gray-600 bg-transparent dark:bg-transparent text-gray-800 dark:text-white focus:border-emerald-500 focus:outline-none transition-colors text-xs"
                       min={0}
                     />
                   </div>
