@@ -20,6 +20,19 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
   const [phone, setPhone] = useState<string>("");
   const [isLoadingUser, setIsLoadingUser] = useState<boolean>(false);
   const [refreshDashboard, setRefreshDashboard] = useState(false);
+
+  // Add these state declarations at the top if not already present
+  const [waiveOffAmount, setWaiveOffAmount] = useState(0);
+  const [extraControllerFare, setExtraControllerFare] = useState(0);
+
+  const SummaryRow = ({ label, value, children }: { label: string; value?: React.ReactNode; children?: React.ReactNode }) => (
+  <div className="flex justify-between items-center">
+    <span className="text-gray-500 dark:text-gray-400">{label}</span>
+    {children ?? <span className="font-medium text-right">{value}</span>}
+  </div>
+);
+
+
   
   // Booking details
   const [selectedDate, setSelectedDate] = useState<string>(() => {
@@ -209,6 +222,8 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
             bookedDate: selectedDate,
             slotId: selectedSlots,
             paymentType,
+            waiveOffAmount, // new
+            extraControllerFare, // new
           }),
         }
       );
@@ -557,41 +572,60 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
               )}
             </div>
 
-            <div className=" p-4 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm">
-              <h3 className="text-base font-semibold mb-3 text-emerald-600">
+            <div className="p-5 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-lg bg-white dark:bg-gray-900 space-y-4">
+              <h3 className="text-lg font-semibold text-emerald-600 border-b border-gray-100 pb-2">
                 Booking Summary
               </h3>
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between py-1  border-gray-100">
-                  <span className="text-gray-600 dark:text-gray-400">Console:</span>
-                  <span className="font-medium">{selectedConsole.name}</span>
-                </div>
-                <div className="flex justify-between py-1  border-gray-100">
-                  <span className="text-gray-600 dark:text-gray-400">Date:</span>
-                  <span className="font-medium">
-                    {new Date(selectedDate).toLocaleDateString('en-US', {
-                      month: 'short',
-                      day: 'numeric',
-                      year: 'numeric'
-                    })}
-                  </span>
-                </div>
-                <div className="flex justify-between py-1border-gray-100">
-                  <span className="text-gray-600 dark:text-gray-400">Slots:</span>
-                  <span className="font-medium">{selectedSlots.length}</span>
-                </div>
-                <div className="flex justify-between py-1 border-b border-gray-100">
-                  <span className="text-gray-600 dark:text-gray-400">Rate:</span>
-                  <span className="font-medium">₹{selectedConsole.price}/slot</span>
-                </div>
-                <div className="flex justify-between py-1 text-base">
-                  <span className="font-bold">Total:</span>
-                  <span className="font-bold text-emerald-600">
-                    ₹{selectedSlots.length * selectedConsole.price}
+
+              <div className="space-y-3 text-sm text-gray-700 dark:text-gray-300">
+                <SummaryRow label="Console:" value={selectedConsole.name} />
+                <SummaryRow
+                  label="Date:"
+                  value={new Date(selectedDate).toLocaleDateString('en-US', {
+                    month: 'short',
+                    day: 'numeric',
+                    year: 'numeric',
+                  })}
+                />
+                <SummaryRow label="Slots:" value={selectedSlots.length} />
+                <SummaryRow label="Rate/Slot:" value={`₹${selectedConsole.price}`} />
+                
+                <SummaryRow label="Waive Off:">
+                  <input
+                    type="number"
+                    value={waiveOffAmount}
+                    onChange={(e) => setWaiveOffAmount(Number(e.target.value))}
+                    placeholder="₹0"
+                    className="w-24 px-2 py-1 rounded-md border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 text-right text-red-500"
+                    min={0}
+                  />
+                </SummaryRow>
+
+                <SummaryRow label="Extra Controller Fare:">
+                  <input
+                    value={extraControllerFare}
+                    onChange={(e) => setExtraControllerFare(Number(e.target.value))}
+                    placeholder="₹0"
+                    className="w-24 px-2 py-1 rounded-md border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 text-right text-blue-500"
+                    min={0}
+                  />
+                </SummaryRow>
+
+                <div className="flex justify-between items-center pt-4 mt-2 border-t border-gray-200 dark:border-gray-700 text-base font-semibold">
+                  <span className="text-gray-800 dark:text-gray-100">Total Payable:</span>
+                  <span className="text-emerald-600">
+                    ₹
+                    {Math.max(
+                      0,
+                      selectedSlots.length * selectedConsole.price -
+                        waiveOffAmount +
+                        extraControllerFare
+                    )}
                   </span>
                 </div>
               </div>
             </div>
+
           </div>
         </div>
 
