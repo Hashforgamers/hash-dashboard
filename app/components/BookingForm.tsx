@@ -414,7 +414,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
                           initial={{ opacity: 0, y: -5 }}
                           animate={{ opacity: 1, y: 0 }}
                           exit={{ opacity: 0, y: -5 }}
-                          className="absolute z-20 bg-transparent border border-gray-200 dark:border-gray-700 rounded shadow-lg w-full mt-1 max-h-32 overflow-y-auto"
+                          className="absolute z-20 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded shadow-lg w-full mt-1 max-h-32 overflow-y-auto"
                         >
                           {emailSuggestions.map((user, idx) => (
                             <motion.li
