@@ -1,10 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { jwtDecode } from 'jwt-decode';
-import { 
-  X, User, Mail, Phone, Calendar, CreditCard, 
-  Clock, Wallet, ChevronLeft, CheckCircle, Loader2 
-} from 'lucide-react';
+import { X, User, Mail, Phone, Calendar, CreditCard, Clock, Wallet, ChevronLeft, CheckCircle, Loader2, Sparkles, TowerControl as GameController2, Users, CalendarDays } from 'lucide-react';
 import { ConsoleType } from './types';
 import { BOOKING_URL } from '@/src/config/env';
 
@@ -24,14 +21,6 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
   // Add these state declarations at the top if not already present
   const [waiveOffAmount, setWaiveOffAmount] = useState(0);
   const [extraControllerFare, setExtraControllerFare] = useState(0);
-
-  const SummaryRow = ({ label, value, children }: { label: string; value?: React.ReactNode; children?: React.ReactNode }) => (
-  <div className="flex justify-between items-center">
-    <span className="text-gray-500 dark:text-gray-400">{label}</span>
-    {children ?? <span className="font-medium text-right">{value}</span>}
-  </div>
-);
-
 
   
   // Booking details
@@ -63,6 +52,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
 
   const [emailSuggestions, setEmailSuggestions] = useState([]);
   const [phoneSuggestions, setPhoneSuggestions] = useState([]);
+  const [focusedInput, setFocusedInput] = useState<string>("");
 
   const handleEmailInputChange = (value: string) => {
     setEmail(value);
@@ -279,380 +269,599 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
     }
   };
 
+  const totalAmount = Math.max(
+    0,
+    selectedSlots.length * selectedConsole.price -
+      waiveOffAmount +
+      extraControllerFare
+  );
+
   if (isSubmitted) {
     return (
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        className="p-6"
-      >
-        <div className="flex flex-col items-center space-y-4">
+      <div className="h-full flex items-center justify-center p-4">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="max-w-sm w-full bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 text-center"
+        >
           <motion.div
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             transition={{ type: "spring", stiffness: 200, damping: 20 }}
-            className="w-16 h-16 rounded-full bg-emerald-100 flex items-center justify-center"
+            className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-r from-emerald-500 to-green-500 flex items-center justify-center shadow-lg"
           >
-            <CheckCircle className="w-8 h-8 text-emerald-600" />
+            <CheckCircle className="w-8 h-8 text-white" />
           </motion.div>
           
-          <h2 className="text-xl font-bold text-gray-800">Booking Confirmed!</h2>
-          <p className="text-gray-600 dark:text-gray-400 text-center">
-            Your booking for {selectedConsole.name} has been successfully created.
+          <h2 className="text-xl font-bold text-gray-800 dark:text-white mb-2">
+            Booking Confirmed!
+          </h2>
+          <p className="text-gray-600 dark:text-gray-300 mb-4 text-sm">
+            Your booking for <span className="font-semibold text-emerald-600">{selectedConsole.name}</span> has been successfully created.
           </p>
+          
+          <div className="bg-emerald-50 dark:bg-emerald-900/20 rounded-lg p-3 mb-4">
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-gray-600 dark:text-gray-400">Total Amount:</span>
+              <span className="font-bold text-emerald-600 text-lg">₹{totalAmount}</span>
+            </div>
+          </div>
           
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={onBack}
-            className="px-4 py-2 bg-emerald-600 text-white rounded-lg font-medium hover:bg-emerald-700"
+            className="w-full px-4 py-2 bg-gradient-to-r from-emerald-600 to-green-600 text-white rounded-lg font-medium hover:from-emerald-700 hover:to-green-700 shadow-md transition-all duration-200"
           >
             Make Another Booking
           </motion.button>
-        </div>
-      </motion.div>
+        </motion.div>
+      </div>
     );
   }
 
   return (
-    <div className="p-4">
-      <div className="flex items-center mb-4">
-        <button
-          type="button"
-          onClick={onBack}
-          className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 dark:bg-gray-800 rounded-full transition-colors"
-        >
-          <ChevronLeft className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-        </button>
-        <h2 className="text-lg font-bold mx-auto pr-8 text-emerald-600">
-          Book {selectedConsole.name}
-        </h2>
-      </div>
+    <div className="h-full flex flex-col bg-transparent bg-gradient-to-br from-emerald-50/50 via-white to-blue-50/50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+      {/* Compact Header */}
+      <motion.div 
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex items-center justify-between p-3 bg-transparent border-b border-gray-200 dark:border-gray-700"
+      >
+        <div className="flex items-center gap-3">
+          <motion.button
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+            onClick={onBack}
+            className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-all duration-200"
+          >
+            <ChevronLeft className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+          </motion.button>
+          <div>
+            <h1 className="text-lg font-bold bg-transparent bg-gradient-to-r from-emerald-600 to-green-600 bg-clip-text text-transparent">
+              Book {selectedConsole.name}
+            </h1>
+          </div>
+        </div>
+        <div className="flex items-center gap-2 bg-emerald-100 dark:bg-emerald-900/30 px-3 py-1 rounded-full">
+          <GameController2 className="w-4 h-4 text-emerald-600" />
+          <span className="text-emerald-700 dark:text-emerald-300 font-medium text-sm">
+            ₹{selectedConsole.price}/slot
+          </span>
+        </div>
+      </motion.div>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Left Column */}
-          <div className="space-y-4">
-            <div className=" p-4 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm">
-              <h3 className="text-base font-semibold mb-3 text-emerald-600 flex items-center gap-2">
-                <User className="w-4 h-4" />
-                Customer Details
-              </h3>
-              
-              <div className="space-y-3">
-                <div className="relative">
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => handleEmailInputChange(e.target.value)}
-                    onBlur={() => setEmailSuggestions([])} // 👈 Add this
-                    className={`w-full pl-9 pr-3 py-2 bg-transparent rounded-md border ${
-                      errors.email ? "border-red-500" : "border-gray-500"
-                    } text-sm`}
-                    placeholder="Email Address"
-                    autoComplete="off"
-                  />
-                  <Mail className="w-4 h-4 text-gray-400 absolute left-3 top-2.5" />
-                  {errors.email && (
-                    <p className="mt-1 text-xs text-red-500">{errors.email}</p>
-                  )}
-                  {emailSuggestions.length > 0 && (
-                    <ul className="absolute z-10 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-md shadow-md w-full mt-1 text-sm max-h-40 overflow-y-auto">
-                      {emailSuggestions.map((user, idx) => (
-                        <li
-                          key={idx}
-                          className="px-3 py-2 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 cursor-pointer"
-                          onMouseDown={() => {
-                            setEmail(user.email);
-                            setName(user.name);
-                            setPhone(user.phone);
-                            setEmailSuggestions([]);
-                          }}
-                        >
-                          {user.email} ({user.name})
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
-
-                <div className="relative">
-                  <input
-                    type="tel"
-                    value={phone}
-                    onChange={(e) => handlePhoneInputChange(e.target.value)}
-                    onBlur={() => setPhoneSuggestions([])} // for phone
-                    className={`w-full pl-9 pr-3 py-2 rounded-md bg-transparent border ${
-                      errors.phone ? "border-red-500" : "border-gray-500"
-                    } text-sm`}
-                    placeholder="Phone Number"
-                    autoComplete="off"
-                  />
-                  <Phone className="w-4 h-4 text-gray-400 absolute left-3 top-2.5" />
-                  {errors.phone && (
-                    <p className="mt-1 text-xs text-red-500">{errors.phone}</p>
-                  )}
-                  {phoneSuggestions.length > 0 && (
-                    <ul className="absolute z-10 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-md shadow-md w-full mt-1 text-sm max-h-40 overflow-y-auto">
-                      {phoneSuggestions.map((user, idx) => (
-                        <li
-                          key={idx}
-                          className="px-3 py-2 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 cursor-pointer"
-                          onMouseDown={() => {
-                            setPhone(user.phone);
-                            setName(user.name);
-                            setEmail(user.email);
-                            setPhoneSuggestions([]);
-                          }}
-                        >
-                          {user.phone} ({user.name})
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
-
-
-                {isLoadingUser ? (
-                  <div className="flex items-center justify-center py-2">
-                    <Loader2 className="w-4 h-4 animate-spin text-emerald-600" />
+      {/* Compact Form Content */}
+      <div className="flex-1 overflow-y-auto p-3">
+        <form onSubmit={handleSubmit} className="space-y-3">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+            {/* Left Column - Customer & Date */}
+            <div className="lg:col-span-2 space-y-3">
+              {/* Customer Details - Compact */}
+              <motion.div 
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                className="bg-transparent rounded-lg p-3 shadow-sm border border-gray-200 dark:border-gray-700"
+              >
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="p-1 bg-emerald-100 dark:bg-emerald-900/30 rounded">
+                    <Users className="w-4 h-4 text-emerald-600" />
                   </div>
-                ) : (
+                  <h3 className="text-sm font-semibold text-gray-800 dark:text-white">
+                    Customer Information
+                  </h3>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
                   <div className="relative">
-                    <input
-                      type="text"
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      className={`w-full pl-9 pr-3 py-2 rounded-md bg-transparent border ${
-                        errors.name ? "border-red-500" : "border-gray-500"
-                      } text-sm`}
-                      placeholder="Full Name"
+                    <motion.input
+                      type="email"
+                      value={email}
+                      onChange={(e) => handleEmailInputChange(e.target.value)}
+                      onFocus={() => setFocusedInput("email")}
+                      onBlur={() => {
+                        setFocusedInput("");
+                        setEmailSuggestions([]);
+                      }}
+                      className={`w-full pl-8 pr-2 py-2 bg-gray-50 dark:bg-gray-700 rounded border transition-all duration-200 text-sm ${
+                        errors.email 
+                          ? "border-red-500 focus:border-red-500" 
+                          : focusedInput === "email"
+                          ? "border-emerald-500 focus:border-emerald-500"
+                          : "border-gray-200 dark:border-gray-600 focus:border-emerald-500"
+                      } focus:outline-none focus:ring-1 focus:ring-emerald-500/20`}
+                      placeholder="Email"
+                      autoComplete="off"
                     />
-                    <User className="w-4 h-4 text-gray-400 absolute left-3 top-2.5" />
-                    {errors.name && (
-                      <p className="mt-1 text-xs text-red-500">{errors.name}</p>
-                    )}
+                    <Mail className="w-4 h-4 text-gray-400 absolute left-2.5 top-2.5" />
+                    <AnimatePresence>
+                      {errors.email && (
+                        <motion.p
+                          initial={{ opacity: 0, y: -5 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -5 }}
+                          className="mt-1 text-xs text-red-500"
+                        >
+                          {errors.email}
+                        </motion.p>
+                      )}
+                    </AnimatePresence>
+                    
+                    <AnimatePresence>
+                      {emailSuggestions.length > 0 && (
+                        <motion.ul
+                          initial={{ opacity: 0, y: -5 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -5 }}
+                          className="absolute z-20 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded shadow-lg w-full mt-1 max-h-32 overflow-y-auto"
+                        >
+                          {emailSuggestions.map((user, idx) => (
+                            <motion.li
+                              key={idx}
+                              whileHover={{ backgroundColor: "rgba(16, 185, 129, 0.1)" }}
+                              className="px-2 py-1.5 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 cursor-pointer border-b border-gray-100 dark:border-gray-700 last:border-b-0 text-xs"
+                              onMouseDown={() => {
+                                setEmail(user.email);
+                                setName(user.name);
+                                setPhone(user.phone);
+                                setEmailSuggestions([]);
+                              }}
+                            >
+                              <div className="flex items-center gap-2">
+                                <div className="p-0.5 bg-emerald-100 dark:bg-emerald-900/30 rounded-full">
+                                  <User className="w-2.5 h-2.5 text-emerald-600" />
+                                </div>
+                                <div>
+                                  <p className="font-medium text-gray-800 dark:text-white">{user.name}</p>
+                                  <p className="text-gray-600 dark:text-gray-400">{user.email}</p>
+                                </div>
+                              </div>
+                            </motion.li>
+                          ))}
+                        </motion.ul>
+                      )}
+                    </AnimatePresence>
                   </div>
-                )}
-              </div>
-            </div>
 
-            <div className=" p-4 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm">
-              <h3 className="text-base font-semibold mb-3 text-emerald-600 flex items-center gap-2">
-                <Calendar className="w-4 h-4 " />
-                Select Date
-              </h3>
-              <input
-                type="date"
-                value={selectedDate}
-                min={new Date().toISOString().split("T")[0]}
-                onChange={(e) => setSelectedDate(e.target.value)}
-                className="w-full px-3 py-2 rounded-md bg-transparent border border-gray-500 text-sm"
-              />
-            </div>
+                  <div className="relative">
+                    <motion.input
+                      type="tel"
+                      value={phone}
+                      onChange={(e) => handlePhoneInputChange(e.target.value)}
+                      onFocus={() => setFocusedInput("phone")}
+                      onBlur={() => {
+                        setFocusedInput("");
+                        setPhoneSuggestions([]);
+                      }}
+                      className={`w-full pl-8 pr-2 py-2 bg-gray-50 dark:bg-gray-700 rounded border transition-all duration-200 text-sm ${
+                        errors.phone 
+                          ? "border-red-500 focus:border-red-500" 
+                          : focusedInput === "phone"
+                          ? "border-emerald-500 focus:border-emerald-500"
+                          : "border-gray-200 dark:border-gray-600 focus:border-emerald-500"
+                      } focus:outline-none focus:ring-1 focus:ring-emerald-500/20`}
+                      placeholder="Phone"
+                      autoComplete="off"
+                    />
+                    <Phone className="w-4 h-4 text-gray-400 absolute left-2.5 top-2.5" />
+                    <AnimatePresence>
+                      {errors.phone && (
+                        <motion.p
+                          initial={{ opacity: 0, y: -5 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -5 }}
+                          className="mt-1 text-xs text-red-500"
+                        >
+                          {errors.phone}
+                        </motion.p>
+                      )}
+                    </AnimatePresence>
+                    
+                    <AnimatePresence>
+                      {phoneSuggestions.length > 0 && (
+                        <motion.ul
+                          initial={{ opacity: 0, y: -5 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -5 }}
+                          className="absolute z-20 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded shadow-lg w-full mt-1 max-h-32 overflow-y-auto"
+                        >
+                          {phoneSuggestions.map((user, idx) => (
+                            <motion.li
+                              key={idx}
+                              whileHover={{ backgroundColor: "rgba(16, 185, 129, 0.1)" }}
+                              className="px-2 py-1.5 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 cursor-pointer border-b border-gray-100 dark:border-gray-700 last:border-b-0 text-xs"
+                              onMouseDown={() => {
+                                setPhone(user.phone);
+                                setName(user.name);
+                                setEmail(user.email);
+                                setPhoneSuggestions([]);
+                              }}
+                            >
+                              <div className="flex items-center gap-2">
+                                <div className="p-0.5 bg-emerald-100 dark:bg-emerald-900/30 rounded-full">
+                                  <User className="w-2.5 h-2.5 text-emerald-600" />
+                                </div>
+                                <div>
+                                  <p className="font-medium text-gray-800 dark:text-white">{user.name}</p>
+                                  <p className="text-gray-600 dark:text-gray-400">{user.phone}</p>
+                                </div>
+                              </div>
+                            </motion.li>
+                          ))}
+                        </motion.ul>
+                      )}
+                    </AnimatePresence>
+                  </div>
 
-            <div className=" p-4 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm">
-              <h3 className="text-base font-semibold mb-3 text-emerald-600 flex items-center gap-2">
-                <CreditCard className="w-4 h-4" />
-                Payment Method
-              </h3>
-              <div className="grid grid-cols-2 gap-3">
-                {['Cash', 'Online'].map(type => (
-                  <motion.button
-                    key={type}
-                    type="button"
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={() => {
-                      setPaymentType(type);
-                      if (errors.payment) setErrors(prev => ({...prev, payment: ""}));
-                    }}
-                    className={`px-3 py-2 rounded-md text-sm font-medium transition-all ${
-                      paymentType === type
-                        ? "bg-emerald-600 text-white shadow-sm"
-                        : "bg-gray-100  text-gray-800 hover:bg-gray-200 "
-                    }`}
-                  >
-                    {type === 'Cash' ? (
-                      <div className="flex items-center justify-center gap-1">
-                        <Wallet className="w-4 h-4" />
-                        Cash
+                  <div className="relative">
+                    {isLoadingUser ? (
+                      <div className="flex items-center justify-center py-2">
+                        <Loader2 className="w-4 h-4 animate-spin text-emerald-600" />
                       </div>
                     ) : (
-                      <div className="flex items-center justify-center gap-1">
-                        <CreditCard className="w-4 h-4" />
-                        Online
-                      </div>
+                      <>
+                        <motion.input
+                          type="text"
+                          value={name}
+                          onChange={(e) => setName(e.target.value)}
+                          onFocus={() => setFocusedInput("name")}
+                          onBlur={() => setFocusedInput("")}
+                          className={`w-full pl-8 pr-2 py-2 bg-gray-50 dark:bg-gray-700 rounded border transition-all duration-200 text-sm ${
+                            errors.name 
+                              ? "border-red-500 focus:border-red-500" 
+                              : focusedInput === "name"
+                              ? "border-emerald-500 focus:border-emerald-500"
+                              : "border-gray-200 dark:border-gray-600 focus:border-emerald-500"
+                          } focus:outline-none focus:ring-1 focus:ring-emerald-500/20`}
+                          placeholder="Full name"
+                        />
+                        <User className="w-4 h-4 text-gray-400 absolute left-2.5 top-2.5" />
+                        <AnimatePresence>
+                          {errors.name && (
+                            <motion.p
+                              initial={{ opacity: 0, y: -5 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0, y: -5 }}
+                              className="mt-1 text-xs text-red-500"
+                            >
+                              {errors.name}
+                            </motion.p>
+                          )}
+                        </AnimatePresence>
+                      </>
                     )}
-                  </motion.button>
-                ))}
-              </div>
-              {errors.payment && (
-                <p className="mt-1 text-xs text-red-500">{errors.payment}</p>
-              )}
-            </div>
-          </div>
-
-          {/* Right Column */}
-          <div className="space-y-4">
-            <div className=" p-4 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm">
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="text-base font-semibold text-emerald-600 flex items-center gap-2">
-                  <Clock className="w-4 h-4" />
-                  Time Slots
-                </h3>
-                <div className="flex items-center text-xs">
-                  <span className="flex items-center mr-2">
-                    <div className="w-2 h-2 bg-emerald-500 rounded-full mr-1"></div>
-                    <span className="text-gray-600 dark:text-gray-400">Selected</span>
-                  </span>
-                  <span className="flex items-center">
-                    <div className="w-2 h-2 bg-red-200 rounded-full mr-1"></div>
-                    <span className="text-gray-600 dark:text-gray-400">Unavailable</span>
-                  </span>
-                </div>
-              </div>
-              
-              <div className="border border-gray-200 dark:border-gray-700 rounded-md p-3 ">
-                {availableSlots.length === 0 ? (
-                  <div className="text-center py-4 text-gray-500 dark:text-gray-400 text-sm">
-                    <Clock className="w-5 h-5 mx-auto mb-1 opacity-50" />
-                    <p>No available slots</p>
                   </div>
-                ) : (
-                  <div className="grid grid-cols-4 gap-2">
-                    {availableSlots.map((slot) => (
+                </div>
+              </motion.div>
+
+              {/* Date & Payment Row */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {/* Date Selection - Compact */}
+                <motion.div 
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.1 }}
+                  className="bg-white dark:bg-gray-800 rounded-lg p-3 shadow-sm border border-gray-200 dark:border-gray-700"
+                >
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="p-1 bg-blue-100 dark:bg-blue-900/30 rounded">
+                      <CalendarDays className="w-4 h-4 text-blue-600" />
+                    </div>
+                    <h3 className="text-sm font-semibold text-gray-800 dark:text-white">
+                      Date
+                    </h3>
+                  </div>
+                  
+                  <input
+                    type="date"
+                    value={selectedDate}
+                    min={new Date().toISOString().split("T")[0]}
+                    onChange={(e) => setSelectedDate(e.target.value)}
+                    className="w-full px-2 py-2 bg-gray-50 dark:bg-gray-700 rounded border border-gray-200 dark:border-gray-600 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500/20 transition-all duration-200 text-sm"
+                  />
+                </motion.div>
+
+                {/* Payment Method - Compact */}
+                <motion.div 
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.2 }}
+                  className="bg-white dark:bg-gray-800 rounded-lg p-3 shadow-sm border border-gray-200 dark:border-gray-700"
+                >
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="p-1 bg-yellow-100 dark:bg-yellow-900/30 rounded">
+                      <CreditCard className="w-4 h-4 text-yellow-600" />
+                    </div>
+                    <h3 className="text-sm font-semibold text-gray-800 dark:text-white">
+                      Payment
+                    </h3>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-2">
+                    {['Cash', 'Online'].map(type => (
                       <motion.button
-                        key={slot.slot_id}
+                        key={type}
                         type="button"
-                        whileHover={{ scale: slot.is_available ? 1.05 : 1 }}
-                        whileTap={{ scale: slot.is_available ? 0.95 : 1 }}
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
                         onClick={() => {
-                          if (slot.is_available) handleSlotClick(slot.slot_id);
+                          setPaymentType(type);
+                          if (errors.payment) setErrors(prev => ({...prev, payment: ""}));
                         }}
-                        disabled={!slot.is_available}
-                        className={`px-2 py-1 rounded-md text-sm font-medium transition-colors ${
-                          selectedSlots.includes(slot.slot_id)
-                            ? "bg-emerald-500 text-white shadow-sm"
-                            : slot.is_available
-                            ? " border border-gray-200 dark:border-gray-700 hover:bg-emerald-50 hover:border-emerald-200 dark:hover:bg-emerald-900 dark:hover:border-emerald-700"
-                            : "bg-red-100 text-red-400 cursor-not-allowed opacity-60"
+                        className={`p-2 rounded border transition-all duration-200 text-xs ${
+                          paymentType === type
+                            ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300"
+                            : "border-gray-200 dark:border-gray-600 hover:border-emerald-300 hover:bg-emerald-50/50 dark:hover:bg-emerald-900/20"
                         }`}
                       >
-                        {slot.start_time.slice(0, 5)}
+                        <div className="flex items-center justify-center gap-1">
+                          {type === 'Cash' ? (
+                            <Wallet className="w-3 h-3" />
+                          ) : (
+                            <CreditCard className="w-3 h-3" />
+                          )}
+                          <span className="font-medium">{type}</span>
+                        </div>
                       </motion.button>
                     ))}
                   </div>
-                )}
-                {errors.slots && (
-                  <p className="mt-2 text-xs text-red-500">{errors.slots}</p>
-                )}
+                  
+                  <AnimatePresence>
+                    {errors.payment && (
+                      <motion.p
+                        initial={{ opacity: 0, y: -5 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -5 }}
+                        className="mt-1 text-xs text-red-500"
+                      >
+                        {errors.payment}
+                      </motion.p>
+                    )}
+                  </AnimatePresence>
+                </motion.div>
               </div>
 
-              {selectedSlots.length > 0 && (
-                <div className="mt-2">
-                  <div className="flex flex-wrap gap-1">
-                    {selectedSlots.map(slotId => {
-                      const slot = availableSlots.find(s => s.slot_id === slotId);
-                      return (
-                        <div key={slotId} className="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-md text-xs flex items-center">
-                          {slot?.start_time.slice(0, 5)}
-                          <button 
-                            type="button"
-                            onClick={() => handleSlotClick(slotId)}
-                            className="ml-1 text-emerald-600 hover:text-emerald-800"
-                          >
-                            <X size={12} />
-                          </button>
-                        </div>
-                      );
-                    })}
+              {/* Time Slots - Compact */}
+              <motion.div 
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.3 }}
+                className="bg-white dark:bg-gray-800 rounded-lg p-3 shadow-sm border border-gray-200 dark:border-gray-700"
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <div className="p-1 bg-purple-100 dark:bg-purple-900/30 rounded">
+                      <Clock className="w-4 h-4 text-purple-600" />
+                    </div>
+                    <h3 className="text-sm font-semibold text-gray-800 dark:text-white">
+                      Time Slots
+                    </h3>
+                  </div>
+                  
+                  <div className="flex items-center gap-3 text-xs">
+                    <div className="flex items-center gap-1">
+                      <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
+                      <span className="text-gray-600 dark:text-gray-400">Selected</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <div className="w-2 h-2 bg-gray-300 rounded-full"></div>
+                      <span className="text-gray-600 dark:text-gray-400">Available</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <div className="w-2 h-2 bg-red-300 rounded-full"></div>
+                      <span className="text-gray-600 dark:text-gray-400">Booked</span>
+                    </div>
                   </div>
                 </div>
-              )}
-            </div>
-
-            <div className="p-5 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-lg bg-white dark:bg-gray-900 space-y-4">
-              <h3 className="text-lg font-semibold text-emerald-600 border-b border-gray-100 pb-2">
-                Booking Summary
-              </h3>
-
-              <div className="space-y-3 text-sm text-gray-700 dark:text-gray-300">
-                <SummaryRow label="Console:" value={selectedConsole.name} />
-                <SummaryRow
-                  label="Date:"
-                  value={new Date(selectedDate).toLocaleDateString('en-US', {
-                    month: 'short',
-                    day: 'numeric',
-                    year: 'numeric',
-                  })}
-                />
-                <SummaryRow label="Slots:" value={selectedSlots.length} />
-                <SummaryRow label="Rate/Slot:" value={`₹${selectedConsole.price}`} />
                 
-                <SummaryRow label="Waive Off:">
-                  <input
-                    type="number"
-                    value={waiveOffAmount}
-                    onChange={(e) => setWaiveOffAmount(Number(e.target.value))}
-                    placeholder="₹0"
-                    className="w-24 px-2 py-1 rounded-md border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 text-right text-red-500"
-                    min={0}
-                  />
-                </SummaryRow>
-
-                <SummaryRow label="Extra Controller Fare:">
-                  <input
-                    value={extraControllerFare}
-                    onChange={(e) => setExtraControllerFare(Number(e.target.value))}
-                    placeholder="₹0"
-                    className="w-24 px-2 py-1 rounded-md border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 text-right text-blue-500"
-                    min={0}
-                  />
-                </SummaryRow>
-
-                <div className="flex justify-between items-center pt-4 mt-2 border-t border-gray-200 dark:border-gray-700 text-base font-semibold">
-                  <span className="text-gray-800 dark:text-gray-100">Total Payable:</span>
-                  <span className="text-emerald-600">
-                    ₹
-                    {Math.max(
-                      0,
-                      selectedSlots.length * selectedConsole.price -
-                        waiveOffAmount +
-                        extraControllerFare
+                <div className="bg-gray-50 dark:bg-gray-700 rounded p-2">
+                  {availableSlots.length === 0 ? (
+                    <div className="text-center py-3 text-gray-500 dark:text-gray-400">
+                      <Clock className="w-5 h-5 mx-auto mb-1 opacity-50" />
+                      <p className="text-xs">No available slots</p>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-6 sm:grid-cols-8 gap-1">
+                      {availableSlots.map((slot) => (
+                        <motion.button
+                          key={slot.slot_id}
+                          type="button"
+                          whileHover={{ scale: slot.is_available ? 1.05 : 1 }}
+                          whileTap={{ scale: slot.is_available ? 0.95 : 1 }}
+                          onClick={() => {
+                            if (slot.is_available) handleSlotClick(slot.slot_id);
+                          }}
+                          disabled={!slot.is_available}
+                          className={`p-1.5 rounded text-xs font-medium transition-all duration-200 ${
+                            selectedSlots.includes(slot.slot_id)
+                              ? "bg-emerald-500 text-white shadow-sm transform scale-105"
+                              : slot.is_available
+                              ? "bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 hover:border-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/30"
+                              : "bg-red-100 dark:bg-red-900/30 text-red-400 cursor-not-allowed opacity-60"
+                          }`}
+                        >
+                          {slot.start_time.slice(0, 5)}
+                        </motion.button>
+                      ))}
+                    </div>
+                  )}
+                  
+                  <AnimatePresence>
+                    {errors.slots && (
+                      <motion.p
+                        initial={{ opacity: 0, y: -5 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -5 }}
+                        className="mt-2 text-xs text-red-500"
+                      >
+                        {errors.slots}
+                      </motion.p>
                     )}
-                  </span>
+                  </AnimatePresence>
+
+                  <AnimatePresence>
+                    {selectedSlots.length > 0 && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: "auto" }}
+                        exit={{ opacity: 0, height: 0 }}
+                        className="mt-2 p-2 bg-emerald-50 dark:bg-emerald-900/30 rounded"
+                      >
+                        <p className="text-xs font-medium text-emerald-800 dark:text-emerald-200 mb-1">
+                          Selected:
+                        </p>
+                        <div className="flex flex-wrap gap-1">
+                          {selectedSlots.map(slotId => {
+                            const slot = availableSlots.find(s => s.slot_id === slotId);
+                            return (
+                              <motion.div
+                                key={slotId}
+                                initial={{ opacity: 0, scale: 0.8 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                className="bg-emerald-200 dark:bg-emerald-800 text-emerald-800 dark:text-emerald-200 px-2 py-0.5 rounded-full text-xs flex items-center gap-1"
+                              >
+                                {slot?.start_time.slice(0, 5)}
+                                <button 
+                                  type="button"
+                                  onClick={() => handleSlotClick(slotId)}
+                                  className="ml-0.5 text-emerald-600 hover:text-emerald-800 dark:text-emerald-400 dark:hover:text-emerald-200"
+                                >
+                                  <X size={10} />
+                                </button>
+                              </motion.div>
+                            );
+                          })}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
-              </div>
+              </motion.div>
             </div>
 
+            {/* Right Column - Summary */}
+            <div className="space-y-3">
+              {/* Booking Summary - Compact */}
+              <motion.div 
+                initial={{ opacity: 0, x: 10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.4 }}
+                className="bg-white dark:bg-gray-800 rounded-lg p-3 shadow-sm border border-gray-200 dark:border-gray-700"
+              >
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="p-1 bg-indigo-100 dark:bg-indigo-900/30 rounded">
+                    <Sparkles className="w-4 h-4 text-indigo-600" />
+                  </div>
+                  <h3 className="text-sm font-semibold text-gray-800 dark:text-white">
+                    Summary
+                  </h3>
+                </div>
+                
+                <div className="space-y-2 text-xs">
+                  <div className="flex justify-between items-center py-1 border-b border-gray-100 dark:border-gray-700">
+                    <span className="text-gray-600 dark:text-gray-400">Console:</span>
+                    <span className="font-medium text-gray-800 dark:text-white">{selectedConsole.name}</span>
+                  </div>
+                  
+                  <div className="flex justify-between items-center py-1 border-b border-gray-100 dark:border-gray-700">
+                    <span className="text-gray-600 dark:text-gray-400">Date:</span>
+                    <span className="font-medium text-gray-800 dark:text-white">
+                      {new Date(selectedDate).toLocaleDateString('en-US', {
+                        month: 'short',
+                        day: 'numeric',
+                      })}
+                    </span>
+                  </div>
+                  
+                  <div className="flex justify-between items-center py-1 border-b border-gray-100 dark:border-gray-700">
+                    <span className="text-gray-600 dark:text-gray-400">Slots:</span>
+                    <span className="font-medium text-gray-800 dark:text-white">{selectedSlots.length}</span>
+                  </div>
+                  
+                  <div className="flex justify-between items-center py-1 border-b border-gray-100 dark:border-gray-700">
+                    <span className="text-gray-600 dark:text-gray-400">Rate:</span>
+                    <span className="font-medium text-gray-800 dark:text-white">₹{selectedConsole.price}/slot</span>
+                  </div>
+                  
+                  <div className="flex justify-between items-center py-1 border-b border-gray-100 dark:border-gray-700">
+                    <span className="text-gray-600 dark:text-gray-400">Waive Off:</span>
+                    <input
+                      type="number"
+                      value={waiveOffAmount}
+                      onChange={(e) => setWaiveOffAmount(Number(e.target.value))}
+                      placeholder="₹0"
+                      className="w-16 text-right px-1 py-0.5 rounded border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-white focus:border-emerald-500 focus:outline-none transition-colors text-xs"
+                      min={0}
+                    />
+                  </div>
+                  
+                  <div className="flex justify-between items-center py-1 border-b border-gray-100 dark:border-gray-700">
+                    <span className="text-gray-600 dark:text-gray-400">Extra Controller:</span>
+                    <input
+                      type="number"
+                      value={extraControllerFare}
+                      onChange={(e) => setExtraControllerFare(Number(e.target.value))}
+                      placeholder="₹0"
+                      className="w-16 text-right px-1 py-0.5 rounded border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-white focus:border-emerald-500 focus:outline-none transition-colors text-xs"
+                      min={0}
+                    />
+                  </div>
+                  
+                  <div className="flex justify-between items-center py-2 bg-emerald-50 dark:bg-emerald-900/30 rounded px-2">
+                    <span className="font-bold text-gray-800 dark:text-white text-sm">Total:</span>
+                    <span className="font-bold text-lg text-emerald-600">₹{totalAmount}</span>
+                  </div>
+                </div>
+              </motion.div>
+            </div>
           </div>
-        </div>
 
-        <motion.button
-          type="submit"
-          whileHover={{ scale: isSubmitting ? 1 : 1.02 }}
-          whileTap={{ scale: isSubmitting ? 1 : 0.98 }}
-          className={`w-full py-2 rounded-lg font-medium text-white transition-colors ${
-            isSubmitting 
-              ? "bg-gray-400 cursor-not-allowed" 
-              : "bg-emerald-600 hover:bg-emerald-700 shadow-sm"
-          }`}
-          disabled={isSubmitting}
-        >
-          {isSubmitting ? (
-            <div className="flex items-center justify-center gap-2">
-              <Loader2 className="w-4 h-4 animate-spin" />
-              Processing...
-            </div>
-          ) : (
-            <div className="flex items-center justify-center gap-2">
-              <CheckCircle className="w-4 h-4" />
-              Complete Booking
-            </div>
-          )}
-        </motion.button>
-      </form>
+          {/* Compact Submit Button */}
+          <motion.button
+            type="submit"
+            whileHover={{ scale: isSubmitting ? 1 : 1.02 }}
+            whileTap={{ scale: isSubmitting ? 1 : 0.98 }}
+            className={`w-full py-2.5 rounded-lg font-bold text-white transition-all duration-200 shadow-md ${
+              isSubmitting 
+                ? "bg-gray-400 cursor-not-allowed" 
+                : "bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 hover:shadow-lg"
+            }`}
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? (
+              <div className="flex items-center justify-center gap-2">
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Processing...
+              </div>
+            ) : (
+              <div className="flex items-center justify-center gap-2">
+                <CheckCircle className="w-4 h-4" />
+                Complete Booking - ₹{totalAmount}
+              </div>
+            )}
+          </motion.button>
+        </form>
+      </div>
     </div>
   );
 };
