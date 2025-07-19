@@ -19,9 +19,9 @@ import {
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
+  CardDescription,
 } from "@/components/ui/card";
 import { Gamepad2, HardDrive, Wrench, DollarSign, Package } from "lucide-react";
 import axios from "axios";
@@ -33,7 +33,6 @@ import {
   XboxPlaystation,
   VRPlaystation,
   PS5playstation,
-  defaultSpecs
 } from "./constant";
 import { AddConsoleFormProps, FormData } from "./interfaces";
 import { getHardWareSpecification } from "./utils";
@@ -75,6 +74,8 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
   const [loading, setLoading] = useState(false);
   const [consoles, setConsoles] = useState<any[]>([]);
   const [selectedConsoleId, setSelectedConsoleId] = useState<string>("");
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [refresh, setRefresh] = useState(0);
 
   const router = useRouter();
 
@@ -89,6 +90,7 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
     }
   }, []);
 
+  // Fetch consoles and set consoleNumber
   useEffect(() => {
     if (vendorId) {
       const fetchConsoles = async () => {
@@ -96,25 +98,19 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
           const response = await axios.get(
             `${DASHBOARD_URL}/api/getConsoles/vendor/${vendorId}`
           );
-          console.log("API Response:", response.data);
-
-          console.log("consoleType ", consoleType);
           const fetchedConsoles = Array.isArray(response.data) ? response.data : [];
           setConsoles(fetchedConsoles);
 
           const sameTypeConsoles = fetchedConsoles.filter(
             (c) => c?.type === consoleType
           );
-          console.log("Filtered Consoles:", sameTypeConsoles);
-
           const maxConsoleNumber = sameTypeConsoles.length
             ? Math.max(
-                ...sameTypeConsoles.map((c) => {
-                  const consoleNumber = c?.number;
-                  return consoleNumber && !isNaN(parseInt(consoleNumber, 10))
-                    ? parseInt(consoleNumber, 10)
-                    : 0;
-                })
+                ...sameTypeConsoles.map((c) =>
+                  c?.number && !isNaN(parseInt(c.number, 10))
+                    ? parseInt(c.number, 10)
+                    : 0
+                )
               )
             : 0;
           setformdata((prev) => ({
@@ -131,9 +127,16 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
       };
       fetchConsoles();
     }
-  }, [vendorId, consoleType]);
+  }, [vendorId, consoleType, refresh]);
 
-  // Handle copying console data
+  // Hide success message after 3 seconds
+  useEffect(() => {
+    if (showSuccess) {
+      const timer = setTimeout(() => setShowSuccess(false), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [showSuccess]);
+
   const handleCopyConsole = async () => {
     if (!selectedConsoleId) return;
     try {
@@ -192,7 +195,6 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
       return;
     }
     try {
-      // Parse consoleNumber to extract the numeric part
       const consoleNumberStr = formdata.consoleDetails.consoleNumber.replace("console-", "");
       const consoleNumber = parseInt(consoleNumberStr, 10);
       if (isNaN(consoleNumber)) {
@@ -203,7 +205,7 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
         availablegametype: formdata.availablegametype,
         vendorId: vendorId,
         consoleDetails: {
-          consoleNumber: consoleNumber, // Send integer instead of string
+          consoleNumber: consoleNumber,
           modelNumber: formdata.consoleDetails.ModelNumber,
           serialNumber: formdata.consoleDetails.SerialNumber,
           brand: formdata.consoleDetails.Brand,
@@ -211,9 +213,7 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
           releaseDate: formdata.consoleDetails.ReleaseDate,
           description: formdata.consoleDetails.Description,
         },
-        hardwareSpecifications: {
-          ...formdata.hardwareSpecifications,
-        },
+        hardwareSpecifications: { ...formdata.hardwareSpecifications },
         maintenanceStatus: {
           availableStatus: formdata.maintenanceStatus.AvailableStatus,
           condition: formdata.maintenanceStatus.Condition,
@@ -233,14 +233,46 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
         },
       };
 
-      const response = await axios.post(
-        `${DASHBOARD_URL}/api/addConsole`,
-        payload
-      );
+      const response = await axios.post(`${DASHBOARD_URL}/api/addConsole`, payload);
       if (!response) {
         throw new Error("No response from server");
       }
-      router.push("/gaming");
+
+      // On success: show message, reset form, and go back to step 1
+      setShowSuccess(true);
+      setRefresh((prev) => prev + 1);
+      setformdata({
+        availablegametype: consoleType,
+        vendorId: vendorId,
+        consoleDetails: {
+          consoleNumber: "",
+          ModelNumber: "",
+          SerialNumber: "",
+          Brand: "",
+          consoleType: consoleType,
+          ReleaseDate: "",
+          Description: "",
+        },
+        hardwareSpecifications: getHardWareSpecification(consoleType),
+        maintenanceStatus: {
+          AvailableStatus: "",
+          Condition: "",
+          LastMaintenance: "",
+          NextScheduledMaintenance: "",
+          MaintenanceNotes: "",
+        },
+        priceAndCost: {
+          price: "",
+          Rentalprice: "",
+          Warrantyperiod: "",
+          InsuranceStatus: "",
+        },
+        additionalDetails: {
+          ListOfSupportedGames: "",
+          AccessoriesDetails: "",
+        },
+      });
+      setStep(1);
     } catch (error) {
       console.error("Error submitting console:", error);
       alert("Failed to add console. Please check the form and try again.");
@@ -999,6 +1031,11 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
 
   return (
     <form onSubmit={handleSubmit} className="max-w-4xl mx-auto py-8">
+      {showSuccess && (
+        <div className="bg-green-100 text-green-700 p-4 rounded mb-4">
+          Console added successfully!
+        </div>
+      )}
       {renderStepIndicator()}
       {renderStepContent()}
       <div className="flex justify-between mt-8">
