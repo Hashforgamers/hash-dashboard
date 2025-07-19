@@ -90,48 +90,48 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
   }, []);
 
   useEffect(() => {
-  if (vendorId) {
-    const fetchConsoles = async () => {
-      try {
-        const response = await axios.get(
-          `${DASHBOARD_URL}/api/getConsoles/vendor/${vendorId}`
-        );
-        console.log("API Response:", response.data); // Log the response
+    if (vendorId) {
+      const fetchConsoles = async () => {
+        try {
+          const response = await axios.get(
+            `${DASHBOARD_URL}/api/getConsoles/vendor/${vendorId}`
+          );
+          console.log("API Response:", response.data);
 
-        console.log("consoleType ",consoleType)
-        const fetchedConsoles = Array.isArray(response.data) ? response.data : [];
-        setConsoles(fetchedConsoles);
+          console.log("consoleType ", consoleType);
+          const fetchedConsoles = Array.isArray(response.data) ? response.data : [];
+          setConsoles(fetchedConsoles);
 
-        const sameTypeConsoles = fetchedConsoles.filter(
-          (c) => c?.type === consoleType
-        );
-        console.log("Filtered Consoles:", sameTypeConsoles); // Log filtered consoles
+          const sameTypeConsoles = fetchedConsoles.filter(
+            (c) => c?.type === consoleType
+          );
+          console.log("Filtered Consoles:", sameTypeConsoles);
 
-        const maxConsoleNumber = sameTypeConsoles.length
-          ? Math.max(
-              ...sameTypeConsoles.map((c) => {
-                const consoleNumber = c?.number;
-                return consoleNumber && !isNaN(parseInt(consoleNumber, 10))
-                  ? parseInt(consoleNumber, 10)
-                  : 0;
-              })
-            )
-          : 0;
-        setformdata((prev) => ({
-          ...prev,
-          consoleDetails: {
-            ...prev.consoleDetails,
-            consoleNumber: `console-${maxConsoleNumber + 1}`,
-          },
-        }));
-      } catch (error) {
-        console.error("Error fetching consoles:", error);
-        setConsoles([]);
-      }
-    };
-    fetchConsoles();
-  }
-}, [vendorId, consoleType]);
+          const maxConsoleNumber = sameTypeConsoles.length
+            ? Math.max(
+                ...sameTypeConsoles.map((c) => {
+                  const consoleNumber = c?.number;
+                  return consoleNumber && !isNaN(parseInt(consoleNumber, 10))
+                    ? parseInt(consoleNumber, 10)
+                    : 0;
+                })
+              )
+            : 0;
+          setformdata((prev) => ({
+            ...prev,
+            consoleDetails: {
+              ...prev.consoleDetails,
+              consoleNumber: `console-${maxConsoleNumber + 1}`,
+            },
+          }));
+        } catch (error) {
+          console.error("Error fetching consoles:", error);
+          setConsoles([]);
+        }
+      };
+      fetchConsoles();
+    }
+  }, [vendorId, consoleType]);
 
   // Handle copying console data
   const handleCopyConsole = async () => {
@@ -184,55 +184,66 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
     }
   };
 
-  const payload = {
-    availablegametype: formdata.availablegametype,
-    vendorId: vendorId,
-    consoleDetails: {
-      consoleNumber: formdata.consoleDetails.consoleNumber,
-      modelNumber: formdata.consoleDetails.ModelNumber,
-      serialNumber: formdata.consoleDetails.SerialNumber,
-      brand: formdata.consoleDetails.Brand,
-      consoleType: formdata.consoleDetails.consoleType,
-      releaseDate: formdata.consoleDetails.ReleaseDate,
-      description: formdata.consoleDetails.Description,
-    },
-    hardwareSpecifications: {
-      ...formdata.hardwareSpecifications,
-    },
-    maintenanceStatus: {
-      availableStatus: formdata.maintenanceStatus.AvailableStatus,
-      condition: formdata.maintenanceStatus.Condition,
-      lastMaintenance: formdata.maintenanceStatus.LastMaintenance,
-      nextMaintenance: formdata.maintenanceStatus.NextScheduledMaintenance,
-      maintenanceNotes: formdata.maintenanceStatus.MaintenanceNotes,
-    },
-    priceAndCost: {
-      price: parseFloat(formdata.priceAndCost.price) || 0,
-      rentalPrice: parseFloat(formdata.priceAndCost.Rentalprice) || 0,
-      warrantyPeriod: formdata.priceAndCost.Warrantyperiod,
-      insuranceStatus: formdata.priceAndCost.InsuranceStatus,
-    },
-    additionalDetails: {
-      supportedGames: formdata.additionalDetails.ListOfSupportedGames,
-      accessories: formdata.additionalDetails.AccessoriesDetails,
-    },
-  };
-
   const handelfetch = async () => {
     setLoading(true);
-    if (!vendorId) return;
+    if (!vendorId) {
+      alert("Vendor ID is missing. Please log in again.");
+      setLoading(false);
+      return;
+    }
     try {
+      // Parse consoleNumber to extract the numeric part
+      const consoleNumberStr = formdata.consoleDetails.consoleNumber.replace("console-", "");
+      const consoleNumber = parseInt(consoleNumberStr, 10);
+      if (isNaN(consoleNumber)) {
+        throw new Error("Invalid console number format");
+      }
+
+      const payload = {
+        availablegametype: formdata.availablegametype,
+        vendorId: vendorId,
+        consoleDetails: {
+          consoleNumber: consoleNumber, // Send integer instead of string
+          modelNumber: formdata.consoleDetails.ModelNumber,
+          serialNumber: formdata.consoleDetails.SerialNumber,
+          brand: formdata.consoleDetails.Brand,
+          consoleType: formdata.consoleDetails.consoleType,
+          releaseDate: formdata.consoleDetails.ReleaseDate,
+          description: formdata.consoleDetails.Description,
+        },
+        hardwareSpecifications: {
+          ...formdata.hardwareSpecifications,
+        },
+        maintenanceStatus: {
+          availableStatus: formdata.maintenanceStatus.AvailableStatus,
+          condition: formdata.maintenanceStatus.Condition,
+          lastMaintenance: formdata.maintenanceStatus.LastMaintenance,
+          nextMaintenance: formdata.maintenanceStatus.NextScheduledMaintenance,
+          maintenanceNotes: formdata.maintenanceStatus.MaintenanceNotes,
+        },
+        priceAndCost: {
+          price: parseFloat(formdata.priceAndCost.price) || 0,
+          rentalPrice: parseFloat(formdata.priceAndCost.Rentalprice) || 0,
+          warrantyPeriod: formdata.priceAndCost.Warrantyperiod,
+          insuranceStatus: formdata.priceAndCost.InsuranceStatus,
+        },
+        additionalDetails: {
+          supportedGames: formdata.additionalDetails.ListOfSupportedGames,
+          accessories: formdata.additionalDetails.AccessoriesDetails,
+        },
+      };
+
       const response = await axios.post(
         `${DASHBOARD_URL}/api/addConsole`,
         payload
       );
       if (!response) {
-        console.log("Something went wrong while sending post request");
-      } else {
-        router.push("/gaming");
+        throw new Error("No response from server");
       }
+      router.push("/gaming");
     } catch (error) {
-      console.log("Something went wrong", error);
+      console.error("Error submitting console:", error);
+      alert("Failed to add console. Please check the form and try again.");
     } finally {
       setLoading(false);
     }
@@ -309,33 +320,33 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-              <Label htmlFor="copyConsole">Copy From Existing Console</Label>
-              <div className="flex gap-2">
-                <Select
-                  value={selectedConsoleId}
-                  onValueChange={setSelectedConsoleId}
-                >
-                  <SelectTrigger id="copyConsole">
-                    <SelectValue placeholder="Select console to copy" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {consoles
-                      .filter((c) => c?.type === consoleType)
-                      .map((console) => (
-                        <SelectItem key={console.id} value={console.id.toString()}>
-                          {`console-${console.number}`} - {console.brand}
-                        </SelectItem>
-                      ))}
-                  </SelectContent>
-                </Select>
-                <Button
-                  onClick={handleCopyConsole}
-                  disabled={!selectedConsoleId}
-                >
-                  Copy Data
-                </Button>
+                <Label htmlFor="copyConsole">Copy From Existing Console</Label>
+                <div className="flex gap-2">
+                  <Select
+                    value={selectedConsoleId}
+                    onValueChange={setSelectedConsoleId}
+                  >
+                    <SelectTrigger id="copyConsole">
+                      <SelectValue placeholder="Select console to copy" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {consoles
+                        .filter((c) => c?.type === consoleType)
+                        .map((console) => (
+                          <SelectItem key={console.id} value={console.id.toString()}>
+                            {`console-${console.number}`} - {console.brand}
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
+                  <Button
+                    onClick={handleCopyConsole}
+                    disabled={!selectedConsoleId}
+                  >
+                    Copy Data
+                  </Button>
+                </div>
               </div>
-            </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="consoleNumber">Console Number</Label>
