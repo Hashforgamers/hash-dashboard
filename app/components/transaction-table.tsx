@@ -23,12 +23,15 @@ import {
   ClockIcon,
   FilterIcon,
   Download,
+  IndianRupee,
+  EyeOff,
+  Eye
 } from "lucide-react";
 import { saveAs } from "file-saver";
 import { Badge } from "@/components/ui/badge";
 import { jwtDecode } from "jwt-decode";
 import React from "react";
-import { DASHBOARD_URL} from "@/src/config/env";
+import { DASHBOARD_URL } from "@/src/config/env";
 import HashLoader from "./ui/HashLoader";
 
 interface Transaction {
@@ -64,6 +67,7 @@ export function TransactionTable() {
   });
   const [showFilter, setShowFilter] = useState(false);
 
+  const [showTotal, setShowTotal] = useState(false);
 
   const cardVariants = {
     hidden: { opacity: 0, y: 20 },
@@ -89,19 +93,19 @@ export function TransactionTable() {
         !filters.modeOfPayment ||
         (t.modeOfPayment &&
           t.modeOfPayment.toLowerCase().trim() ===
-            filters.modeOfPayment.toLowerCase().trim());
+          filters.modeOfPayment.toLowerCase().trim());
 
       const isBookingTypeValid =
         !filters.bookingType ||
         (t.bookingType &&
           t.bookingType.toLowerCase().trim() ===
-            filters.bookingType.toLowerCase().trim());
+          filters.bookingType.toLowerCase().trim());
 
       const isSettlementStatusValid =
         !filters.settlementStatus ||
         (t.settlementStatus &&
           t.settlementStatus.toLowerCase().trim() ===
-            filters.settlementStatus.toLowerCase().trim());
+          filters.settlementStatus.toLowerCase().trim());
 
       // Search term check (case-insensitive)
       const searchFields = [t.userName, t.modeOfPayment, t.bookingType].map(
@@ -222,17 +226,77 @@ export function TransactionTable() {
     return () => clearInterval(pollingInterval);
   }, [vendorId, issuedAt, expirationTime, token]);
 
+
+
   const metrics = useMemo(() => {
-    if (!transactions.length) return { total: 0, uniqueUsers: 0, pendingSettlements: 0,  cashTransactions: 0,};
+    if (!transactions.length) return {
+      total: 0,
+      uniqueUsers: 0,
+      pendingSettlements: 0,
+      cashTransactions: 0,
+      weeklyUserGrowth: 0,
+      revenueChange: 0,
+    };
 
     const total = transactions.reduce((sum, t) => sum + t.amount, 0);
-    const uniqueUsers = new Set(transactions.map((t) => t.userName)).size;
-    const pendingSettlements = transactions.filter((t) => t.settlementStatus === "pending").length;
-    const cashTransactions = transactions.filter(
-      (t) => t.modeOfPayment?.toLowerCase() === "cash"
-    ).length;
+    const uniqueUsers = new Set(transactions.map(t => t.userName)).size;
+    const pendingSettlements = transactions.filter(t => t.settlementStatus === "pending").length;
+    const cashTransactions = transactions.filter(t => t.modeOfPayment?.toLowerCase() === "cash").length;
 
-    return { total, uniqueUsers, pendingSettlements,  cashTransactions,};
+    const now = new Date();
+    const currentMonth = now.getMonth();
+    const currentYear = now.getFullYear();
+
+    const filterByMonth = (month: number, year: number) =>
+      transactions.filter(t => {
+        const d = new Date(t.slotDate);
+        return d.getMonth() === month && d.getFullYear() === year;
+      });
+
+    const currentMonthRevenue = filterByMonth(currentMonth, currentYear).reduce((sum, t) => sum + t.amount, 0);
+
+    let prevMonth = currentMonth - 1;
+    let prevYear = currentYear;
+    if (prevMonth < 0) {
+      prevMonth = 11;
+      prevYear--;
+    }
+
+    const prevMonthRevenue = filterByMonth(prevMonth, prevYear).reduce((sum, t) => sum + t.amount, 0);
+
+    const revenueChange = prevMonthRevenue
+      ? ((currentMonthRevenue - prevMonthRevenue) / prevMonthRevenue) * 100
+      : 0;
+
+    // weekly user growth
+    const startOfThisWeek = new Date(now);
+    startOfThisWeek.setDate(now.getDate() - now.getDay());
+    const startOfLastWeek = new Date(startOfThisWeek);
+    startOfLastWeek.setDate(startOfLastWeek.getDate() - 7);
+    const endOfLastWeek = new Date(startOfThisWeek);
+
+    const isInRange = (dateStr: string, start: Date, end: Date) => {
+      const d = new Date(dateStr);
+      return d >= start && d < end;
+    };
+
+    const usersThisWeek = new Set(
+      transactions.filter(t => isInRange(t.slotDate, startOfThisWeek, now)).map(t => t.userName)
+    );
+    const usersLastWeek = new Set(
+      transactions.filter(t => isInRange(t.slotDate, startOfLastWeek, endOfLastWeek)).map(t => t.userName)
+    );
+
+    const weeklyUserGrowth = usersThisWeek.size - usersLastWeek.size;
+
+    return {
+      total,
+      uniqueUsers,
+      pendingSettlements,
+      cashTransactions,
+      weeklyUserGrowth,
+      revenueChange,
+    };
   }, [transactions]);
 
   function downloadFilteredData() {
@@ -240,7 +304,7 @@ export function TransactionTable() {
     const gstNumber = "GSTIN: 29ABCDE1234F1Z5"; // example, replace if needed
     const reportTitle = "Transaction Report";
     const reportDate = new Date().toLocaleDateString();
-  
+
     const headers = [
       "Slot Date",
       "Slot Time",
@@ -250,7 +314,7 @@ export function TransactionTable() {
       "Booking Type",
       "Settlement Status",
     ];
-  
+
     const rows = filteredTransactions.map((transaction) => [
       transaction.slotDate,
       transaction.slotTime,
@@ -260,18 +324,18 @@ export function TransactionTable() {
       transaction.bookingType,
       transaction.settlementStatus,
     ]);
-  
+
     const totalAmount = filteredTransactions.reduce((sum, t) => sum + t.amount, 0);
     const gst = totalAmount * 0.18; // Assuming 18% GST
     const totalWithGst = totalAmount + gst;
-  
+
     const footer = [
       [],
       ["Subtotal", "", "", totalAmount.toFixed(2)],
       ["GST (18%)", "", "", gst.toFixed(2)],
       ["Total (INR)", "", "", totalWithGst.toFixed(2)],
     ];
-  
+
     const csvContent = [
       `"${companyName}"`,
       `"${gstNumber}"`,
@@ -282,7 +346,7 @@ export function TransactionTable() {
       "",
       ...footer.map((line) => line.join(",")),
     ].join("\n");
-  
+
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8" });
     saveAs(blob, `transaction_report_${reportDate.replace(/\//g, "-")}.csv`);
   }
@@ -308,14 +372,13 @@ export function TransactionTable() {
 
   const [expandedDates, setExpandedDates] = useState<number[]>([]);
   const [expandedUsers, setExpandedUsers] = useState<Record<string, number[]>>({});
-
   
   const toggleDateExpand = (dateKey: string) => {
     setExpandedDates(prev =>
       prev.includes(dateKey) ? prev.filter(d => d !== dateKey) : [...prev, dateKey]
     );
   };
-  
+
   const toggleUserExpand = (dateKey: string, userId: number) => {
     setExpandedUsers(prev => {
       const currentExpanded = prev[dateKey] || [];
@@ -323,14 +386,14 @@ export function TransactionTable() {
       const updatedUsers = isExpanded
         ? currentExpanded.filter(id => id !== userId)
         : [...currentExpanded, userId];
-  
+
       return {
         ...prev,
         [dateKey]: updatedUsers,
       };
     });
   };
-  
+
   const groupedTransactions = groupByUser(filteredTransactions);
   const groupedByDate = transactions.reduce((acc, transaction) => {
     const { slotDate, userId, userName } = transaction;
@@ -363,19 +426,29 @@ export function TransactionTable() {
           transition={{ duration: 0.3, delay: 0 }}
         >
           <Card className="relative overflow-hidden bg-gradient-to-br from-blue-500/20 via-blue-400/20 to-blue-300/20 dark:from-blue-500/30 dark:via-blue-400/30 dark:to-blue-300/20 border-blue-200 dark:border-blue-800 shadow-lg shadow-blue-500/5">
-            <div className="absolute inset-0 bg-grid-white/10 [mask-image:linear-gradient(0deg,white,rgba(255,255,255,0.6))]" />
+
+            <div className="absolute bg-grid-white/10 [mask-image:linear-gradient(0deg,white,rgba(255,255,255,0.6))]" />
+
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">
                 Total Revenue
               </CardTitle>
-              <DollarSignIcon className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+              <IndianRupee className="h-4 w-4 text-blue-600 dark:text-blue-400" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-blue-900 dark:text-blue-50">
-                ${metrics.total}
+              <div className=" flex items-center text-2xl font-bold text-blue-900 dark:text-blue-50">
+               
+                {showTotal ? `₹${metrics.total.toFixed(2)}` : "₹•••••"}
+                <button
+                  onClick={() => setShowTotal(!showTotal)}
+                  className="ml-2 text-emerald-500 hover:text-emerald-600 transition"
+                >
+                  {showTotal ? <EyeOff className="w-6 h-6" /> : <Eye className="w-6 h-6" />}
+                </button>
               </div>
               <p className="text-xs text-blue-600/80 dark:text-blue-400">
-                +20.1% from last month
+                {metrics.revenueChange >= 0 ? "+" : ""}
+                {metrics.revenueChange.toFixed(1)}% from last month
               </p>
             </CardContent>
           </Card>
@@ -400,7 +473,8 @@ export function TransactionTable() {
                 {metrics.uniqueUsers}
               </div>
               <p className="text-xs text-purple-600/80 dark:text-purple-400">
-                +12 since last week
+                {metrics.weeklyUserGrowth >= 0 ? "+" : ""}
+                {metrics.weeklyUserGrowth} since last week
               </p>
             </CardContent>
           </Card>
@@ -424,8 +498,10 @@ export function TransactionTable() {
               <div className="text-2xl font-bold text-amber-900 dark:text-amber-50">
                 {metrics.pendingSettlements}
               </div>
-              <p className="text-xs text-amber-600/80 dark:text-amber-400">
-                Requires attention
+              <p className="text-xs text-red-600/80 dark:text-red-400">
+                {metrics.pendingSettlements > 0
+                  ? `${metrics.pendingSettlements} pending settlements`
+                  : "All settled"}
               </p>
             </CardContent>
           </Card>
@@ -594,8 +670,8 @@ export function TransactionTable() {
                                     transaction.settlementStatus === "done"
                                       ? "success"
                                       : transaction.settlementStatus === "pending"
-                                      ? "warning"
-                                      : "secondary"
+                                        ? "warning"
+                                        : "secondary"
                                   }
                                 >
                                   {transaction.settlementStatus}

@@ -213,7 +213,7 @@ export function ManageBooking() {
       case "create":
         return (
           // <GridConsole setSelectedAction={setSelectedAction} game={game} />
-          <BookingSystem setSelectedAction={setSelectedAction} game={game}/>
+          <BookingSystem setSelectedAction={setSelectedAction} game={game} />
         );
 
       case "change":
@@ -243,13 +243,11 @@ export function ManageBooking() {
             onHoverEnd={() => setHoveredAction(null)}
           >
             <Card
-              className={`relative overflow-hidden cursor-pointer transition-all duration-300 hover:shadow-lg ${
-                action.color
-              } ${
-                selectedAction === action.type
+              className={`relative overflow-hidden cursor-pointer transition-all duration-300 hover:shadow-lg ${action.color
+                } ${selectedAction === action.type
                   ? "ring-2 ring-primary shadow-lg transform scale-[1.02]"
                   : "hover:scale-[1.02]"
-              }`}
+                }`}
               onClick={() => handleActionClick(action.type)}
             >
               <CardContent className="relative flex flex-col items-center justify-center p-6 text-center">
@@ -395,7 +393,7 @@ function ChangeBookingForm() {
       }
     } catch (error) {
       console.error("Error updating booking:", error);
-    }finally {
+    } finally {
       setIsUpdating(false);
     }
   };
@@ -510,11 +508,10 @@ function ChangeBookingForm() {
                     key={slot.slot_id}
                     variant="outline"
                     disabled={!slot.is_available}
-                    className={`rounded-full ${
-                      bookingData.selected_slots.includes(slot.start_time)
-                        ? "bg-primary text-primary-foreground"
-                        : ""
-                    }`}
+                    className={`rounded-full ${bookingData.selected_slots.includes(slot.start_time)
+                      ? "bg-primary text-primary-foreground"
+                      : ""
+                      }`}
                     onClick={() =>
                       setBookingData((prev) => ({
                         ...prev,
@@ -575,7 +572,7 @@ function RejectBookingForm() {
     }
   }, []); // empty dependency, runs once on mount
 
- 
+
   const handleSearch = async () => {
     if (!bookingId) return;
 
@@ -620,16 +617,16 @@ function RejectBookingForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-  
+
     if (!confirmReject) {
       // Show the confirmation step when first clicked
       setConfirmReject(true);
       return;
     }
-  
+
     setIsConfirmingRejection(true); // This disables the button during submission
     setIsLoading(true); // Trigger loader state
-    
+
     try {
       const response = await fetch(
         `${BOOKING_URL}/api/bookings/reject`,
@@ -644,7 +641,7 @@ function RejectBookingForm() {
           }),
         }
       );
-      
+
       if (response.ok) {
         // Handle successful rejection here
         setIsSubmitted(true); // Mark as submitted
@@ -661,201 +658,201 @@ function RejectBookingForm() {
     }
   };
 
-  return (    
-      <form className="space-y-8" onSubmit={handleSubmit}>
-        <div className="space-y-4">
-          <h3 className="text-lg font-semibold text-primary">Search Booking</h3>
-          <div className="flex space-x-2">
-            <div className="flex-grow">
-              <Input
-                id="bookingId"
-                placeholder="Enter Booking ID"
-                value={bookingId}
-                onChange={(e) => setBookingId(e.target.value)}
-                className="transition-all duration-300 focus:ring-2 focus:ring-primary"
-              />
-            </div>
-            <Button
-              type="button"
-              onClick={handleSearch}
-              disabled={isLoading}
-              className="min-w-[100px]"
-            >
-              {isLoading ? (
-                <motion.div
-                  animate={{ rotate: 360 }}
-                  transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                >
-                  <Search className="w-4 h-4" />
-                </motion.div>
-              ) : (
-                <>
-                  <Search className="w-4 h-4 mr-2" />
-                  Search
-                </>
-              )}
-            </Button>
+  return (
+    <form className="space-y-8" onSubmit={handleSubmit}>
+      <div className="space-y-4">
+        <h3 className="text-lg font-semibold text-primary">Search Booking</h3>
+        <div className="flex space-x-2">
+          <div className="flex-grow">
+            <Input
+              id="bookingId"
+              placeholder="Enter Booking ID"
+              value={bookingId}
+              onChange={(e) => setBookingId(e.target.value)}
+              className="transition-all duration-300 focus:ring-2 focus:ring-primary"
+            />
           </div>
-        </div>
-        {isSubmitted ? (
-          <p>Booking has been successfully rejected.</p> // Show success message after submission
-        ) : (
-          <AnimatePresence>
-            {bookingFound && bookingData &&(
+          <Button
+            type="button"
+            onClick={handleSearch}
+            disabled={isLoading}
+            className="min-w-[100px]"
+          >
+            {isLoading ? (
               <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                className="space-y-8"
+                animate={{ rotate: 360 }}
+                transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
               >
-                <div className="space-y-6">
-                  <h3 className="text-lg font-semibold text-primary">
-                    Booking Information
-                  </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <Card>
-                      <CardContent className="pt-6">
-                        <div className="space-y-4">
-                          <div className="flex justify-between">
-                            <span className="text-muted-foreground">
-                              Booking ID
-                            </span>
-                            <span className="font-medium">{bookingData.booking_id || ""}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-muted-foreground">Date</span>
-                            <span className="font-medium">{bookingData.booking_date || ""}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-muted-foreground">Time Slot</span>
-                            <span className="font-medium">{bookingData.start_time || ""} - {bookingData.end_time || ""}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-muted-foreground">System</span>
-                            <span className="font-medium">{bookingData.system || ""}</span>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-
-                    <Card>
-                      <CardContent className="pt-6">
-                        <div className="space-y-4">
-                          <div className="flex justify-between">
-                            <span className="text-muted-foreground">Customer</span>
-                            <span className="font-medium">{bookingData.customer?.name || ""}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-muted-foreground">Email</span>
-                            <span className="font-medium">{bookingData.customer?.email || ""}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-muted-foreground">Phone</span>
-                            <span className="font-medium">{bookingData.customer?.phone || ""}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-muted-foreground">
-                              Amount Paid
-                            </span>
-                            <span className="font-medium">${bookingData.amount_paid || ""}</span>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </div>
-                </div>
-
-                <div className="space-y-6">
-                  <h3 className="text-lg font-semibold text-primary">
-                    Rejection Details
-                  </h3>
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="rejectionReason">Reason for Rejection</Label>
-                      <Textarea
-                        id="rejectionReason"
-                        value={rejectionReason}
-                        onChange={(e) => setRejectionReason(e.target.value)}
-                        placeholder="Please provide a detailed reason for rejecting this booking..."
-                        className="min-h-[100px] transition-all duration-300 focus:ring-2 focus:ring-primary"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="repaymentType">Repayment Method</Label>
-                      <Select
-                        value={repaymentType}
-                        onValueChange={setRepaymentType}
-                      >
-                        <SelectTrigger
-                          id="repaymentType"
-                          className="transition-all duration-300 focus:ring-2 focus:ring-primary"
-                        >
-                          <SelectValue placeholder="Select repayment method" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="refund">
-                            Full Refund to Original Payment Method
-                          </SelectItem>
-                          <SelectItem value="credit">Store Credit</SelectItem>
-                          <SelectItem value="reschedule">
-                            Reschedule to Another Date
-                          </SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                </div>
-
-                {confirmReject ? (
-                <Alert variant="destructive" className="mt-6">
-                    <AlertCircle className="h-4 w-4" />
-                    <AlertDescription className="flex items-center justify-between">
-                      <span>
-                        Are you sure you want to reject this booking? This action cannot
-                        be undone.
-                      </span>
-                      <div className="flex space-x-2 mt-2">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          onClick={() => setConfirmReject(false)}
-                        >
-                          Cancel
-                        </Button>
-                        <Button
-                          type="submit"
-                          variant="destructive"
-                          disabled={isConfirmingRejection || isLoading}
-                        >
-                          {isConfirmingRejection || isLoading ? (
-                            <>
-                              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                              Confirming...
-                            </>
-                          ) : (
-                            "Confirm Rejection"
-                          )}
-                        </Button>
-                      </div>
-                    </AlertDescription>
-                  </Alert>
-                  ) : (
-                    <Button
-                      type="submit"
-                      variant="destructive"
-                      className="w-full"
-                      disabled={!rejectionReason || !repaymentType}
-                    >
-                      <XCircle className="w-4 h-4 mr-2" />
-                      Reject Booking
-                    </Button>
-                  )}
+                <Search className="w-4 h-4" />
               </motion.div>
+            ) : (
+              <>
+                <Search className="w-4 h-4 mr-2" />
+                Search
+              </>
             )}
-          </AnimatePresence>
-        )}
-      </form>
+          </Button>
+        </div>
+      </div>
+      {isSubmitted ? (
+        <p>Booking has been successfully rejected.</p> // Show success message after submission
+      ) : (
+        <AnimatePresence>
+          {bookingFound && bookingData && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="space-y-8"
+            >
+              <div className="space-y-6">
+                <h3 className="text-lg font-semibold text-primary">
+                  Booking Information
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <Card>
+                    <CardContent className="pt-6">
+                      <div className="space-y-4">
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">
+                            Booking ID
+                          </span>
+                          <span className="font-medium">{bookingData.booking_id || ""}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Date</span>
+                          <span className="font-medium">{bookingData.booking_date || ""}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Time Slot</span>
+                          <span className="font-medium">{bookingData.start_time || ""} - {bookingData.end_time || ""}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">System</span>
+                          <span className="font-medium">{bookingData.system || ""}</span>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardContent className="pt-6">
+                      <div className="space-y-4">
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Customer</span>
+                          <span className="font-medium">{bookingData.customer?.name || ""}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Email</span>
+                          <span className="font-medium">{bookingData.customer?.email || ""}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Phone</span>
+                          <span className="font-medium">{bookingData.customer?.phone || ""}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">
+                            Amount Paid
+                          </span>
+                          <span className="font-medium">${bookingData.amount_paid || ""}</span>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              </div>
+
+              <div className="space-y-6">
+                <h3 className="text-lg font-semibold text-primary">
+                  Rejection Details
+                </h3>
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="rejectionReason">Reason for Rejection</Label>
+                    <Textarea
+                      id="rejectionReason"
+                      value={rejectionReason}
+                      onChange={(e) => setRejectionReason(e.target.value)}
+                      placeholder="Please provide a detailed reason for rejecting this booking..."
+                      className="min-h-[100px] transition-all duration-300 focus:ring-2 focus:ring-primary"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="repaymentType">Repayment Method</Label>
+                    <Select
+                      value={repaymentType}
+                      onValueChange={setRepaymentType}
+                    >
+                      <SelectTrigger
+                        id="repaymentType"
+                        className="transition-all duration-300 focus:ring-2 focus:ring-primary"
+                      >
+                        <SelectValue placeholder="Select repayment method" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="refund">
+                          Full Refund to Original Payment Method
+                        </SelectItem>
+                        <SelectItem value="credit">Store Credit</SelectItem>
+                        <SelectItem value="reschedule">
+                          Reschedule to Another Date
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </div>
+
+              {confirmReject ? (
+                <Alert variant="destructive" className="mt-6">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription className="flex items-center justify-between">
+                    <span>
+                      Are you sure you want to reject this booking? This action cannot
+                      be undone.
+                    </span>
+                    <div className="flex space-x-2 mt-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setConfirmReject(false)}
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        type="submit"
+                        variant="destructive"
+                        disabled={isConfirmingRejection || isLoading}
+                      >
+                        {isConfirmingRejection || isLoading ? (
+                          <>
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            Confirming...
+                          </>
+                        ) : (
+                          "Confirm Rejection"
+                        )}
+                      </Button>
+                    </div>
+                  </AlertDescription>
+                </Alert>
+              ) : (
+                <Button
+                  type="submit"
+                  variant="destructive"
+                  className="w-full"
+                  disabled={!rejectionReason || !repaymentType}
+                >
+                  <XCircle className="w-4 h-4 mr-2" />
+                  Reject Booking
+                </Button>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
+      )}
+    </form>
   );
 }
 
@@ -884,28 +881,28 @@ function RejectBookingForm() {
 //   const [expandedDates, setExpandedDates] = useState<Record<string, boolean>>({});
 //   const [expandedUsers, setExpandedUsers] = useState<Record<string, boolean>>({});
 //   const [expandedStatuses, setExpandedStatuses] = useState<Record<string, boolean>>({});
-  
+
 //   const toggleDate = (date: string) => {
 //     setExpandedDates(prev => ({ ...prev, [date]: !prev[date] }));
 //   };
-  
+
 //   const toggleUser = (date_user: string) => {
 //     setExpandedUsers(prev => ({ ...prev, [date_user]: !prev[date_user] }));
 //   };
-  
+
 //   const toggleStatus = (date_user_status: string) => {
 //     setExpandedStatuses(prev => ({ ...prev, [date_user_status]: !prev[date_user_status] }));
 //   };
-  
+
 //   // Helper to group bookings
 //   const groupedBookings = useMemo(() => {
 //     const groups: Record<string, Record<string, Record<string, BookingType[]>>> = {};
-  
+
 //     filteredBookings.forEach(booking => {
 //       const bookedDate = booking.bookedDate;
 //       const username = booking.username;
 //       const status = booking.status;
-  
+
 //       if (!groups[bookedDate]) {
 //         groups[bookedDate] = {};
 //       }
@@ -917,10 +914,10 @@ function RejectBookingForm() {
 //       }
 //       groups[bookedDate][username][status].push(booking);
 //     });
-  
+
 //     return groups;
 //   }, [filteredBookings]);
-  
+
 //   // Decode token once when the component mounts
 //   useEffect(() => {
 //     const token = localStorage.getItem("jwtToken");
@@ -930,7 +927,7 @@ function RejectBookingForm() {
 //       setVendorId(decoded_token.sub.id);
 //     }
 //   }, []); // empty dependency, runs once on mount
-  
+
 //   const fetchData = async () => {
 //     try {
 //       // Get the start of the month
@@ -942,7 +939,7 @@ function RejectBookingForm() {
 //         .toISOString() // "2025-04-01T00:00:00.000Z"
 //         .slice(0, 10)   // "2025-04-01"
 //         .replace(/-/g, ""); // "20250401"
-        
+
 //       const response = await axios.get(
 //         `${BOOKING_URL}/api/getAllBooking/vendor/${vendorId}/${formattedDate}/`,
 //         {
@@ -979,7 +976,7 @@ function RejectBookingForm() {
 
 //   useEffect(() => {
 //     if (!vendorId) return; // 🚨 Don't fetch if vendorId is not ready
-  
+
 //     fetchData();
 //   }, [vendorId]);
 
@@ -1007,7 +1004,7 @@ function RejectBookingForm() {
 //       //   // Compare booking dates
 //       //   const dateA = new Date(a.bookingDate);
 //       //   const dateB = new Date(b.bookingDate);
-        
+
 //       //   if (dateA < dateB) {
 //       //     return sortConfig.direction === "asc" ? -1 : 1;
 //       //   }
@@ -1029,11 +1026,11 @@ function RejectBookingForm() {
 //           return 0;
 //         }
 //       });
-      
+
 //     }
 //     setFilteredBookings(sorted);
 //   }, [sortConfig]);
-  
+
 
 //   const handleSort = (key: string) => {
 //     setSortConfig({
@@ -1044,7 +1041,7 @@ function RejectBookingForm() {
 //           : "asc",
 //     });
 //   };
-  
+
 //   const handleSearch = () => {
 //     if (searchQuery.trim() === "") {
 //       setFilteredBookings(bookings);
@@ -1062,16 +1059,16 @@ function RejectBookingForm() {
 //   useEffect(() => {
 //     handleSearch();
 //   }, [searchQuery]);
-  
+
 //   const getStatusBadge = (status: string) => {
 //     const variants = {
 //       "rejected": "bg-red-100 dark:bg-red-950",  // Red for rejected (light/dark mode)
 //       "confirmed": "bg-emerald-100 dark:bg-emerald-950",  // Green for confirmed (light/dark mode)
 //     };
-  
+
 //     return <span className={`px-3 py-1 rounded-full ${variants[status] || 'bg-gray-300 text-black dark:bg-gray-700 dark:text-white'}`}>{status}</span>;
 //   };
-  
+
 //   const formatTime = (time: string | number) => {
 //     if (typeof time === "number") {
 //       const date = new Date(time);
@@ -1158,7 +1155,7 @@ function RejectBookingForm() {
 //                 {sortConfig?.key === "id" &&
 //                   (sortConfig.direction === "asc" ? "↑" : "↓")}
 //               </TableHead>
-              
+
 //               <TableHead
 //                 className="font-semibold cursor-pointer hover:bg-muted/50 transition-colors"
 //                 onClick={() => handleSort("startTime")}
@@ -1463,15 +1460,44 @@ function ListBooking() {
                       exit={{ opacity: 0, y: -20 }}
                       transition={{ delay: idx * 0.05 }}
                     >
-                      <TableCell>{booking.bookedDate}</TableCell>
+                      <TableCell><span>
+                        {new Date(booking.bookedDate).toLocaleDateString('en-GB', {
+                          weekday: 'short',
+                          day: '2-digit',
+                          month: 'short',
+                          year: 'numeric'
+                        })}
+                      </span>
+                      </TableCell>
+
                       <TableCell>{booking.username}</TableCell>
                       <TableCell>{getStatusBadge(booking.status)}</TableCell>
                       <TableCell>{booking.id}</TableCell>
                       <TableCell>{booking.bookingDate}</TableCell>
-                      <TableCell>{booking.bookingTime}</TableCell>
+                      <TableCell>
+                        {new Date(`1970-01-01T${booking.bookingTime}Z`).toLocaleTimeString('en-US', {
+                          hour: 'numeric',
+                          minute: 'numeric',
+                          hour12: true
+                        })}
+                      </TableCell>
                       <TableCell>{booking.consoleType}</TableCell>
-                      <TableCell>{booking.startTime ? formatTime(booking.startTime) : "Not started"}</TableCell>
-                      <TableCell>{booking.endTime ? formatTime(booking.endTime) : "Not ended"}</TableCell>
+                      <TableCell>{booking.startTime ?
+                        new Date(`1970-01-01T${booking.startTime}Z`).toLocaleTimeString('en-US', {
+                          hour: 'numeric',
+                          minute: 'numeric',
+                          hour12: true
+                        })
+                        : "Not started"}</TableCell>
+
+                      <TableCell>{booking.endTime ?
+                        new Date(`1970-01-01T${booking.endTime}Z`).toLocaleTimeString('en-US', {
+                          hour: 'numeric',
+                          minute: 'numeric',
+                          hour12: true
+                        })
+                        : "Not ended"}</TableCell>
+
                       <TableCell>{booking.type}</TableCell>
                     </motion.tr>
                   ))}
