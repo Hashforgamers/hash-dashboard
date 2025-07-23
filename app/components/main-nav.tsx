@@ -18,8 +18,13 @@ import { useTheme } from "next-themes";
 import { useState } from "react";
 import { ButtonDestructive } from "./log-out";
 
+interface MainNavProps extends React.HTMLAttributes<HTMLElement> {
+  onItemClick?: () => void; // ADDED: Callback to close mobile menu
+}
+
 export function MainNav({
   className,
+  onItemClick,
   ...props
 }: React.HTMLAttributes<HTMLElement>) {
   const pathname = usePathname();
@@ -55,6 +60,7 @@ export function MainNav({
         <Link
           key={href}
           href={href}
+          onClick={onItemClick}
           className={cn(
             "group flex items-center space-x-2 rounded-md px-3 py-2 text-sm font-medium transition-all hover:bg-accent hover:text-accent-foreground",
             pathname === href
@@ -63,14 +69,17 @@ export function MainNav({
           )}
         >
           <Icon className="h-5 w-5 shrink-0" />
-          <span className="hidden group-hover:inline-block">{label}</span>
+          <span className="block md:hidden md:group-hover:block whitespace-nowrap">{label}</span>
         </Link>
       ))}
 
       {/* Select Cafe link */}
       <Link
         href="/select-cafe"
-        onClick={clearStorageExceptVendor}
+        onClick={() => {
+          clearStorageExceptVendor();
+          onItemClick?.();
+        }}
         className={cn(
           "group flex items-center space-x-2 rounded-md px-3 py-2 text-sm font-medium transition-all hover:bg-accent hover:text-accent-foreground",
           pathname === "/select-cafe"
@@ -79,12 +88,12 @@ export function MainNav({
         )}
       >
         <LayoutDashboard className="h-5 w-5 shrink-0" />
-        <span className="hidden group-hover:inline-block">Select Cafe</span>
+        <span className="block md:hidden md:group-hover:block whitespace-nowrap">Select Cafe</span>
       </Link>
 
       {/* Theme toggle */}
       <button
-        onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+        onClick={() => {setTheme(theme === "dark" ? "light" : "dark"); onItemClick?.();}}
         className={cn(
           "group flex items-center space-x-2 rounded-md px-3 py-2 text-sm font-medium transition-all hover:bg-accent hover:text-accent-foreground"
         )}
@@ -103,7 +112,7 @@ export function MainNav({
             )}
           />
         </div>
-        <span className="hidden group-hover:inline-block">Toggle Theme</span>
+        <span className="block md:hidden md:group-hover:block whitespace-nowrap">Toggle Theme</span>
       </button>
 
       <ButtonDestructive />

@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Store, BarChart3, Lock, Unlock } from "lucide-react";
 import { LOGIN_URL } from "@/src/config/env";
+import { toast } from "sonner";
 
 export default function SelectCafePage() {
   const [cafes, setCafes] = useState<
@@ -17,6 +18,7 @@ export default function SelectCafePage() {
   const [showDialog, setShowDialog] = useState(false);
   const [isUnlocking, setIsUnlocking] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -61,67 +63,161 @@ export default function SelectCafePage() {
 
   const selectedCafeData = cafes.find(cafe => cafe.id === selectedCafe);
 
-const handleUnlock = async () => {
-  setError(null);
+    // ADDED: Enhanced fetch with retry logic for Render.com reliability
+  const fetchWithRetry = async (url: string, options: RequestInit, maxRetries = 3) => {
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      const controller = new AbortController();
+      // CHANGED: Longer timeout for first attempt to handle cold start
+      const timeout = attempt === 1 ? 30000 : 15000; // 30s first, 15s others
+      const timeoutId = setTimeout(() => controller.abort(), timeout);
 
-  if (pin.length !== 4 || !/^\d+$/.test(pin)) {
-    setError("Please enter a valid 4-digit PIN.");
-    triggerShake();
-    return;
-  }
+      try {
+        // ADDED: Show user feedback on first attempt
+        if (attempt === 1) {
+          toast.info("Validating PIN... This may take a moment.", { 
+            duration: 5000,
+            id: "pin-validation"
+          });
+        }
 
-  if (!selectedCafeData) {
-    setError("No cafe selected.");
-    return;
-  }
+        const response = await fetch(url, {
+          ...options,
+          signal: controller.signal,
+          // ADDED: Cache-busting headers to prevent stale responses
+          headers: {
+            ...options.headers,
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            "Pragma": "no-cache",
+            "Expires": "0",
+          },
+        });
 
-  setIsUnlocking(true);
+        clearTimeout(timeoutId);
+        toast.dismiss("pin-validation");
+        
+        return response;
+      } catch (error) {
+        clearTimeout(timeoutId);
+        toast.dismiss("pin-validation");
+        
+        if (attempt === maxRetries) throw error;
+        
+        // ADDED: Exponential backoff with user feedback
+        const delay = attempt === 1 ? 5000 : 2000; // 5s after first failure, 2s others
+        toast.info(`Connection failed. Retrying in ${delay/1000} seconds...`, { 
+          duration: delay - 500 
+        });
+        await new Promise(resolve => setTimeout(resolve, delay));
+      }
+    }
+  };
 
-  // Special case for Master Analytics
-  if (selectedCafeData.id === "master") {
-    if (pin === "2430") {
-      localStorage.setItem("selectedCafe", selectedCafeData.id);
-      // Use a dummy token or none, since analytics access may not need auth
-      localStorage.setItem("jwtToken", "dummy-master-token");
-      router.push("/master");
-    } else {
-      setError("Invalid Master PIN.");
+  // ENHANCED: Improved handleUnlock with retry logic and better error handling
+  const handleUnlock = async () => {
+    // ADDED: Prevent double submissions
+    if (isSubmitting) return;
+    
+    setError(null);
+
+    if (pin.length !== 4 || !/^\d+$/.test(pin)) {
+      setError("Please enter a valid 4-digit PIN.");
+      triggerShake();
+      return;
+    }
+
+    if (!selectedCafeData) {
+      setError("No cafe selected.");
+      return;
+    }
+
+    // ADDED: Set both submission states to prevent double clicks
+    setIsSubmitting(true);
+    setIsUnlocking(true);
+
+    // Special case for Master Analytics
+    if (selectedCafeData.id === "master") {
+      if (pin === "2430") {
+        localStorage.setItem("selectedCafe", selectedCafeData.id);
+        localStorage.setItem("jwtToken", "dummy-master-token");
+        
+        // ADDED: Set cookie for server-side auth consistency
+        const oneHour = 60 * 60;
+        document.cookie = `jwt=dummy-master-token; max-age=${oneHour}; path=/; SameSite=Lax; Secure`;
+        
+        // CHANGED: Use replace instead of push to prevent back button issues
+        router.replace("/master");
+      } else {
+        setError("Invalid Master PIN.");
+        triggerShake();
+      }
+      setIsUnlocking(false);
+      setIsSubmitting(false);
+      return;
+    }
+
+    // ENHANCED: Normal Cafe PIN check via API with retry logic
+    try {
+      // ADDED: Cache-busting timestamp
+      const timestamp = Date.now();
+      const validateUrl = `${LOGIN_URL}/api/validatePin?t=${timestamp}`;
+
+      const response = await fetchWithRetry(validateUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          vendor_id: selectedCafeData.id,
+          pin,
+          timestamp, // ADDED: Additional cache busting
+        }),
+      });
+
+      // ADDED: Better response validation
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status} ${response.statusText}`);
+      }
+
+      const data = await response.json();
+
+      if (data.status === "success") {
+        localStorage.setItem("selectedCafe", selectedCafeData.id);
+        localStorage.setItem("jwtToken", data.data.token);
+        
+        // ADDED: Set cookie for server-side auth consistency
+        const oneHour = 60 * 60;
+        document.cookie = `jwt=${data.data.token}; max-age=${oneHour}; path=/; SameSite=Lax; Secure`;
+        
+        toast.success("Access granted!");
+        
+        // CHANGED: Use replace instead of push to prevent back button issues
+        router.replace("/dashboard");
+      } else {
+        setError(data.message || "Invalid PIN, please try again.");
+        triggerShake();
+      }
+    } catch (err) {
+      console.error("PIN validation error:", err);
+      
+      // ADDED: Enhanced error handling with specific messages
+      let errorMessage = "Network error. Please try again.";
+      
+      if (err.name === 'AbortError') {
+        errorMessage = "Request timed out. The server may be starting up. Please try again.";
+      } else if (err.message.includes('503') || err.message.includes('502')) {
+        errorMessage = "Server is starting up. Please try again in a moment.";
+      } else if (err.message.includes('Failed to fetch') || err.message.includes('NetworkError')) {
+        errorMessage = "Network connection issue. Please check your internet connection.";
+      }
+      
+      setError(errorMessage);
       triggerShake();
     }
+
+    // ADDED: Always reset submission states
     setIsUnlocking(false);
-    return;
-  }
-
-  // Normal Cafe PIN check via API
-  try {
-    const response = await fetch(`${LOGIN_URL}/api/validatePin`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        vendor_id: selectedCafeData.id,
-        pin,
-      }),
-    });
-
-    const data = await response.json();
-
-    if (response.ok && data.status === "success") {
-      localStorage.setItem("selectedCafe", selectedCafeData.id);
-      localStorage.setItem("jwtToken", data.data.token);
-      router.push("/dashboard");
-    } else {
-      setError(data.message || "Invalid PIN, please try again.");
-      triggerShake();
-    }
-  } catch (err) {
-    setError("Network error. Please try again.");
-    triggerShake();
-  }
-
-  setIsUnlocking(false);
-};
+    setIsSubmitting(false);
+  };
 
   // Shake animation for error input
   function triggerShake() {
@@ -220,7 +316,7 @@ const handleUnlock = async () => {
 
             <Button
               onClick={handleUnlock}
-              disabled={pin.length !== 4 || isUnlocking}
+              disabled={pin.length !== 4 || isUnlocking || isSubmitting}
               className={`w-full h-12 text-white font-semibold rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 disabled:transform-none disabled:opacity-50 ${
                 selectedCafeData?.type === "analytics"
                   ? "bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 shadow-green-500/25"
@@ -230,7 +326,7 @@ const handleUnlock = async () => {
               {isUnlocking ? (
                 <div className="flex items-center justify-center space-x-2">
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                  <span>Unlocking...</span>
+                  <span>Validating PIN...</span>
                 </div>
               ) : (
                 `Access ${
