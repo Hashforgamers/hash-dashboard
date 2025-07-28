@@ -50,6 +50,7 @@ import { DASHBOARD_URL } from "@/src/config/env";
 
 import axios from "axios"; // Make sure to install axios
 import HashLoader from "./ui/HashLoader";
+import { useAnimateMini } from "framer-motion";
 
 export function MyAccount() {
   const [cafeImages, setCafeImages] = useState<string[]>([]);
@@ -138,24 +139,38 @@ export function MyAccount() {
     setPage(label);
   };
 
-  useEffect(() => {
+   useEffect(() => {
     async function fetchVendorDashboard() {
+      if (!vendorId) {
+        console.log("No vendorId available");
+        return;
+      }
+
       try {
-        console.log("Start Fetch ")
+        console.log("Fetching dashboard for vendor:", vendorId);
         const res = await axios.get(`${DASHBOARD_URL}/api/vendor/${vendorId}/dashboard`);
-        setData(res.data);
-        setCafeImages(res.data?.cafeGallery?.images || []);
-        console.log("Data",data)
+        console.log("API Response:", res.data);
+        
+        if (res.data.success) {
+          setData(res.data);
+          setData(res.data);
+          const images = res.data?.cafeGallery?.images || [];
+          console.log("Setting images:", images);
+          setCafeImages(images);
+        } else {
+          console.error("Dashboard API returned success: false");
+        }
       } catch (error) {
         console.error("Error fetching dashboard data:", error);
       } finally {
-        console.log("set Loading to ",loading)
         setLoading(false);
       }
     }
 
     fetchVendorDashboard();
   }, [vendorId]);
+
+
 
   useEffect(() => {
     if (prevPageRef.current !== page) {
