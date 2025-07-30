@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect ,useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { jwtDecode } from 'jwt-decode';
 import { X, User, Mail, Phone, Calendar, CreditCard, Clock, Wallet, ChevronLeft, CheckCircle, Loader2, Sparkles, TowerControl as GameController2, Users, CalendarDays } from 'lucide-react';
@@ -52,25 +52,116 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
 
   const [emailSuggestions, setEmailSuggestions] = useState([]);
   const [phoneSuggestions, setPhoneSuggestions] = useState([]);
+  const [nameSuggestions, setNameSuggestions] = useState([]);
   const [focusedInput, setFocusedInput] = useState<string>("");
 
-  const handleEmailInputChange = (value: string) => {
+  // Ref for blur timeout to manage delayed hiding of suggestions
+  const blurTimeoutRef = useRef<number | null>(null);
+
+
+    // Common function to filter suggestions by key and input value
+  const getSuggestions = (key, value) => {
+    if (!value.trim()) {
+      // Show all users if input is empty on focus
+      return userList;
+    }
+    return userList.filter((user) =>
+      user[key].toLowerCase().includes(value.toLowerCase())
+    );
+  };
+
+
+   // Handlers for input changes
+  const handleEmailInputChange = (value) => {
+    setEmail(value);
+    setEmailSuggestions(getSuggestions('email', value));
+    setFocusedInput('email');
+  };
+
+   const handlePhoneInputChange = (value) => {
+    setPhone(value);
+    setPhoneSuggestions(getSuggestions('phone', value));
+    setFocusedInput('phone');
+  };
+
+  const handleNameInputChange = (value) => {
+    setName(value);
+    setNameSuggestions(getSuggestions('name', value));
+    setFocusedInput('name');
+  };
+
+   // On focus handlers
+  const handleEmailFocus = () => {
+  if (blurTimeoutRef.current) {
+    clearTimeout(blurTimeoutRef.current);
+    blurTimeoutRef.current = null;
+  }
+  setFocusedInput("email");
+  setEmailSuggestions(getSuggestions("email", email));
+};
+
+const handlePhoneFocus = () => {
+  if (blurTimeoutRef.current) {
+    clearTimeout(blurTimeoutRef.current);
+    blurTimeoutRef.current = null;
+  }
+  setFocusedInput("phone");
+  setPhoneSuggestions(getSuggestions("phone", phone));
+};
+
+const handleNameFocus = () => {
+  if (blurTimeoutRef.current) {
+    clearTimeout(blurTimeoutRef.current);
+    blurTimeoutRef.current = null;
+  }
+  setFocusedInput("name");
+  setNameSuggestions(getSuggestions("name", name));
+};
+
+
+   // Handler to clear suggestions with delay (to allow clicks on suggestions)
+  const handleBlur = () => {
+    blurTimeoutRef.current = window.setTimeout(() => {
+      setFocusedInput("");
+      setEmailSuggestions([]);
+      setPhoneSuggestions([]);
+      setNameSuggestions([]);
+      blurTimeoutRef.current = null;
+    }, 150);
+  };
+
+   // On suggestion click handlers - clear timeout and autofill all inputs, clear suggestions and focus state
+  const handleSuggestionClick = (user: typeof userList[0]) => {
+    if (blurTimeoutRef.current) {
+      clearTimeout(blurTimeoutRef.current);
+      blurTimeoutRef.current = null;
+    }
+    setEmail(user.email);
+    setPhone(user.phone);
+    setName(user.name);
+    setEmailSuggestions([]);
+    setPhoneSuggestions([]);
+    setNameSuggestions([]);
+    setFocusedInput("");
+  };
+ 
+
+  {/**const handleEmailInputChange = (value: string) => {
     setEmail(value);
     console.log("logging user", userList )
     const suggestions = userList.filter(user =>
       user.email.toLowerCase().includes(value.toLowerCase())
     );
     setEmailSuggestions(suggestions);
-  };
+  };**/}
 
-  
-  const handlePhoneInputChange = (value: string) => {
+  {/**const handlePhoneInputChange = (value: string) => {
     setPhone(value);
     const suggestions = userList.filter(user =>
       user.phone.includes(value)
     );
     setPhoneSuggestions(suggestions);
-  };
+  };**/}
 
   useEffect(() => {
     const token = localStorage.getItem("jwtToken");
@@ -359,201 +450,185 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
             {/* Left Column - Customer & Date */}
             <div className="lg:col-span-2 space-y-3">
               {/* Customer Details - Compact */}
-              <motion.div 
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                className="bg-transparent rounded-lg p-3 shadow-sm border border-gray-200 dark:border-gray-700"
+
+              <motion.div
+  initial={{ opacity: 0, x: -10 }}
+  animate={{ opacity: 1, x: 0 }}
+  className="bg-transparent rounded-lg p-3 shadow-sm border border-gray-200 dark:border-gray-700"
+>
+  <div className="flex items-center gap-2 mb-3">
+    <div className="p-1 bg-emerald-100 dark:bg-emerald-900/30 rounded">
+      <Users className="w-4 h-4 text-emerald-600" />
+    </div>
+    <h3 className="text-sm font-semibold text-gray-800 dark:text-white">
+      Customer Information
+    </h3>
+  </div>
+
+  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+    {/* Email Input */}
+    <div className="relative">
+      <motion.input
+        type="email"
+        value={email}
+        onChange={(e) => handleEmailInputChange(e.target.value)}
+        onFocus={handleEmailFocus}
+        onBlur={handleBlur}
+        autoComplete="off"
+        placeholder="Email"
+        className={`w-full pl-8 pr-2 py-2 bg-transparent rounded border transition-all duration-200 text-sm ${
+          errors.email
+            ? "border-red-500 focus:border-red-500"
+            : focusedInput === "email"
+            ? "border-emerald-500 focus:border-emerald-500"
+            : "border-gray-200 dark:border-gray-600 focus:border-emerald-500"
+        } focus:outline-none focus:ring-1 focus:ring-emerald-500/20`}
+        style={{ boxSizing: "border-box" }}
+      />
+      <Mail className="w-4 h-4 text-gray-400 absolute left-2.5 top-2.5" />
+      <AnimatePresence>
+        {focusedInput === "email" && emailSuggestions.length > 0 && (
+          <motion.ul
+            initial={{ opacity: 0, y: -5 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -5 }}
+            className="absolute z-20 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded shadow-lg w-full mt-1 max-h-32 overflow-y-auto"
+          >
+            {emailSuggestions.map((user, idx) => (
+              <motion.li
+                key={idx}
+                whileHover={{ backgroundColor: "rgba(16, 185, 129, 0.1)" }}
+                className="px-2 py-1.5 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 cursor-pointer border-b border-gray-100 dark:border-gray-700 last:border-b-0 text-xs"
+                onMouseDown={() => handleSuggestionClick(user)}
               >
-                <div className="flex items-center gap-2 mb-3">
-                  <div className="p-1 bg-emerald-100 dark:bg-emerald-900/30 rounded">
-                    <Users className="w-4 h-4 text-emerald-600" />
+                <div className="flex items-center gap-2">
+                  <div className="p-0.5 bg-emerald-100 dark:bg-emerald-900/30 rounded-full">
+                    <User className="w-2.5 h-2.5 text-emerald-600" />
                   </div>
-                  <h3 className="text-sm font-semibold text-gray-800 dark:text-white">
-                    Customer Information
-                  </h3>
+                  <div>
+                    <p className="font-medium text-gray-800 dark:text-white">{user.name}</p>
+                    <p className="text-gray-600 dark:text-gray-400">{user.email}</p>
+                  </div>
                 </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-                  <div className="relative">
-                    <motion.input
-                      type="email"
-                      value={email}
-                      onChange={(e) => handleEmailInputChange(e.target.value)}
-                      onFocus={() => setFocusedInput("email")}
-                      onBlur={() => {
-                        setFocusedInput("");
-                        setEmailSuggestions([]);
-                      }}
-                      className={`w-full pl-8 pr-2 py-2 bg-transparent rounded border transition-all duration-200 text-sm ${
-                        errors.email 
-                          ? "border-red-500 focus:border-red-500" 
-                          : focusedInput === "email"
-                          ? "border-emerald-500 focus:border-emerald-500"
-                          : "border-gray-200 dark:border-gray-600 focus:border-emerald-500"
-                      } focus:outline-none focus:ring-1 focus:ring-emerald-500/20`}
-                      placeholder="Email"
-                      autoComplete="off"
-                    />
-                    <Mail className="w-4 h-4 text-gray-400 absolute left-2.5 top-2.5" />
-                    <AnimatePresence>
-                      {errors.email && (
-                        <motion.p
-                          initial={{ opacity: 0, y: -5 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0, y: -5 }}
-                          className="mt-1 text-xs text-red-500"
-                        >
-                          {errors.email}
-                        </motion.p>
-                      )}
-                    </AnimatePresence>
-                    
-                    <AnimatePresence>
-                      {emailSuggestions.length > 0 && (
-                        <motion.ul
-                          initial={{ opacity: 0, y: -5 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0, y: -5 }}
-                          className="absolute z-20 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded shadow-lg w-full mt-1 max-h-32 overflow-y-auto"
-                        >
-                          {emailSuggestions.map((user, idx) => (
-                            <motion.li
-                              key={idx}
-                              whileHover={{ backgroundColor: "rgba(16, 185, 129, 0.1)" }}
-                              className="px-2 py-1.5 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 cursor-pointer border-b border-gray-100 dark:border-gray-700 last:border-b-0 text-xs"
-                              onMouseDown={() => {
-                                setEmail(user.email);
-                                setName(user.name);
-                                setPhone(user.phone);
-                                setEmailSuggestions([]);
-                              }}
-                            >
-                              <div className="flex items-center gap-2">
-                                <div className="p-0.5 bg-emerald-100 dark:bg-emerald-900/30 rounded-full">
-                                  <User className="w-2.5 h-2.5 text-emerald-600" />
-                                </div>
-                                <div>
-                                  <p className="font-medium text-gray-800 dark:text-white">{user.name}</p>
-                                  <p className="text-gray-600 dark:text-gray-400">{user.email}</p>
-                                </div>
-                              </div>
-                            </motion.li>
-                          ))}
-                        </motion.ul>
-                      )}
-                    </AnimatePresence>
-                  </div>
+              </motion.li>
+            ))}
+          </motion.ul>
+        )}
+      </AnimatePresence>
+    </div>
 
-                  <div className="relative">
-                    <motion.input
-                      type="tel"
-                      value={phone}
-                      onChange={(e) => handlePhoneInputChange(e.target.value)}
-                      onFocus={() => setFocusedInput("phone")}
-                      onBlur={() => {
-                        setFocusedInput("");
-                        setPhoneSuggestions([]);
-                      }}
-                      className={`w-full pl-8 pr-2 py-2 bg-transparent rounded border transition-all duration-200 text-sm ${
-                        errors.phone 
-                          ? "border-red-500 focus:border-red-500" 
-                          : focusedInput === "phone"
-                          ? "border-emerald-500 focus:border-emerald-500"
-                          : "border-gray-200 dark:border-gray-600 focus:border-emerald-500"
-                      } focus:outline-none focus:ring-1 focus:ring-emerald-500/20`}
-                      placeholder="Phone"
-                      autoComplete="off"
-                    />
-                    <Phone className="w-4 h-4 text-gray-400 absolute left-2.5 top-2.5" />
-                    <AnimatePresence>
-                      {errors.phone && (
-                        <motion.p
-                          initial={{ opacity: 0, y: -5 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0, y: -5 }}
-                          className="mt-1 text-xs text-red-500"
-                        >
-                          {errors.phone}
-                        </motion.p>
-                      )}
-                    </AnimatePresence>
-                    
-                    <AnimatePresence>
-                      {phoneSuggestions.length > 0 && (
-                        <motion.ul
-                          initial={{ opacity: 0, y: -5 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0, y: -5 }}
-                          className="absolute z-20 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded shadow-lg w-full mt-1 max-h-32 overflow-y-auto"
-                        >
-                          {phoneSuggestions.map((user, idx) => (
-                            <motion.li
-                              key={idx}
-                              whileHover={{ backgroundColor: "rgba(16, 185, 129, 0.1)" }}
-                              className="px-2 py-1.5 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 cursor-pointer border-b border-gray-100 dark:border-gray-700 last:border-b-0 text-xs"
-                              onMouseDown={() => {
-                                setPhone(user.phone);
-                                setName(user.name);
-                                setEmail(user.email);
-                                setPhoneSuggestions([]);
-                              }}
-                            >
-                              <div className="flex items-center gap-2">
-                                <div className="p-0.5 bg-emerald-100 dark:bg-emerald-900/30 rounded-full">
-                                  <User className="w-2.5 h-2.5 text-emerald-600" />
-                                </div>
-                                <div>
-                                  <p className="font-medium text-gray-800 dark:text-white">{user.name}</p>
-                                  <p className="text-gray-600 dark:text-gray-400">{user.phone}</p>
-                                </div>
-                              </div>
-                            </motion.li>
-                          ))}
-                        </motion.ul>
-                      )}
-                    </AnimatePresence>
+    {/* Phone Input */}
+    <div className="relative">
+      <motion.input
+        type="tel"
+        value={phone}
+        onChange={(e) => handlePhoneInputChange(e.target.value)}
+        onFocus={handlePhoneFocus}
+        onBlur={handleBlur}
+        autoComplete="off"
+        placeholder="Phone"
+        className={`w-full pl-8 pr-2 py-2 bg-transparent rounded border transition-all duration-200 text-sm ${
+          errors.phone
+            ? "border-red-500 focus:border-red-500"
+            : focusedInput === "phone"
+            ? "border-emerald-500 focus:border-emerald-500"
+            : "border-gray-200 dark:border-gray-600 focus:border-emerald-500"
+        } focus:outline-none focus:ring-1 focus:ring-emerald-500/20`}
+      />
+      <Phone className="w-4 h-4 text-gray-400 absolute left-2.5 top-2.5" />
+      <AnimatePresence>
+        {focusedInput === "phone" && phoneSuggestions.length > 0 && (
+          <motion.ul
+            initial={{ opacity: 0, y: -5 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -5 }}
+            className="absolute z-20 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded shadow-lg w-full mt-1 max-h-32 overflow-y-auto"
+          >
+            {phoneSuggestions.map((user, idx) => (
+              <motion.li
+                key={idx}
+                whileHover={{ backgroundColor: "rgba(16, 185, 129, 0.1)" }}
+                className="px-2 py-1.5 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 cursor-pointer border-b border-gray-100 dark:border-gray-700 last:border-b-0 text-xs"
+                onMouseDown={() => handleSuggestionClick(user)}
+              >
+                <div className="flex items-center gap-2">
+                  <div className="p-0.5 bg-emerald-100 dark:bg-emerald-900/30 rounded-full">
+                    <User className="w-2.5 h-2.5 text-emerald-600" />
                   </div>
+                  <div>
+                    <p className="font-medium text-gray-800 dark:text-white">{user.name}</p>
+                    <p className="text-gray-600 dark:text-gray-400">{user.phone}</p>
+                  </div>
+                </div>
+              </motion.li>
+            ))}
+          </motion.ul>
+        )}
+      </AnimatePresence>
+    </div>
 
-                  <div className="relative">
-                    {isLoadingUser ? (
-                      <div className="flex items-center justify-center py-2">
-                        <Loader2 className="w-4 h-4 animate-spin text-emerald-600" />
+    {/* Full Name Input */}
+    <div className="relative">
+      {isLoadingUser ? (
+        <div className="flex items-center justify-center py-2">
+          <Loader2 className="w-4 h-4 animate-spin text-emerald-600" />
+        </div>
+      ) : (
+        <>
+          <motion.input
+            type="text"
+            value={name}
+            onChange={(e) => handleNameInputChange(e.target.value)}
+            onFocus={handleNameFocus}
+            onBlur={handleBlur}
+            placeholder="Full name"
+            className={`w-full pl-8 pr-2 py-2 bg-transparent rounded border transition-all duration-200 text-sm ${
+              errors.name
+                ? "border-red-500 focus:border-red-500"
+                : focusedInput === "name"
+                ? "border-emerald-500 focus:border-emerald-500"
+                : "border-gray-200 dark:border-gray-600 focus:border-emerald-500"
+            } focus:outline-none focus:ring-1 focus:ring-emerald-500/20`}
+          />
+          <User className="w-4 h-4 text-gray-400 absolute left-2.5 top-2.5" />
+          <AnimatePresence>
+            {focusedInput === "name" && nameSuggestions.length > 0 && (
+              <motion.ul
+                initial={{ opacity: 0, y: -5 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -5 }}
+                className="absolute z-20 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded shadow-lg w-full mt-1 max-h-32 overflow-y-auto"
+              >
+                {nameSuggestions.map((user, idx) => (
+                  <motion.li
+                    key={idx}
+                    whileHover={{ backgroundColor: "rgba(16, 185, 129, 0.1)" }}
+                    className="px-2 py-1.5 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 cursor-pointer border-b border-gray-100 dark:border-gray-700 last:border-b-0 text-xs"
+                    onMouseDown={() => handleSuggestionClick(user)}
+                  >
+                    <div className="flex items-center gap-2">
+                      <div className="p-0.5 bg-emerald-100 dark:bg-emerald-900/30 rounded-full">
+                        <User className="w-2.5 h-2.5 text-emerald-600" />
                       </div>
-                    ) : (
-                      <>
-                        <motion.input
-                          type="text"
-                          value={name}
-                          onChange={(e) => setName(e.target.value)}
-                          onFocus={() => setFocusedInput("name")}
-                          onBlur={() => setFocusedInput("")}
-                          className={`w-full pl-8 pr-2 py-2 bg-transparent rounded border transition-all duration-200 text-sm ${
-                            errors.name 
-                              ? "border-red-500 focus:border-red-500" 
-                              : focusedInput === "name"
-                              ? "border-emerald-500 focus:border-emerald-500"
-                              : "border-gray-200 dark:border-gray-600 focus:border-emerald-500"
-                          } focus:outline-none focus:ring-1 focus:ring-emerald-500/20`}
-                          placeholder="Full name"
-                        />
-                        <User className="w-4 h-4 text-gray-400 absolute left-2.5 top-2.5" />
-                        <AnimatePresence>
-                          {errors.name && (
-                            <motion.p
-                              initial={{ opacity: 0, y: -5 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              exit={{ opacity: 0, y: -5 }}
-                              className="mt-1 text-xs text-red-500"
-                            >
-                              {errors.name}
-                            </motion.p>
-                          )}
-                        </AnimatePresence>
-                      </>
-                    )}
-                  </div>
-                </div>
-              </motion.div>
+                      <div>
+                        <p className="font-medium text-gray-800 dark:text-white">{user.name}</p>
+                        <p className="text-gray-600 dark:text-gray-400">{user.email}</p>
+                      </div>
+                    </div>
+                  </motion.li>
+                ))}
+              </motion.ul>
+            )}
+          </AnimatePresence>
+        </>
+      )}
+    </div>
+  </div>
+</motion.div>
+
+
+
+
 
               {/* Date & Payment Row */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">

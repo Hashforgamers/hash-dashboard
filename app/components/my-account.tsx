@@ -139,34 +139,54 @@ export function MyAccount() {
     setPage(label);
   };
 
-   useEffect(() => {
+    // Fetch Vendor Dashboard whenever vendorId changes
+// Fetch vendor dashboard on vendorId change
+  useEffect(() => {
     async function fetchVendorDashboard() {
       if (!vendorId) {
         console.log("No vendorId available");
         return;
       }
 
+      setLoading(true);
       try {
         console.log("Fetching dashboard for vendor:", vendorId);
-        const res = await axios.get(`${DASHBOARD_URL}/api/vendor/${vendorId}/dashboard`);
+        const res = await axios.get(
+          `${DASHBOARD_URL}/api/vendor/${vendorId}/dashboard`
+        );
         console.log("API Response:", res.data);
-        
-        if (res.data.success) {
+         // Check existence of expected data since no `success` flag
+        if (res.data && res.data.cafeProfile) {
           setData(res.data);
-          setData(res.data);
-          const images = res.data?.cafeGallery?.images || [];
-          console.log("Setting images:", images);
+
+           // Updated image URL normalization
+          const imagesRaw = res.data.cafeGallery?.images || [];
+          const images = imagesRaw.map((imgUrl: string) => {
+            if (!imgUrl) return ""; // skip if somehow null/empty
+            if (imgUrl.startsWith("http")) {
+              return imgUrl;
+            } else {
+              // Prepend backend base URL (ensure no double slash)
+              return `${DASHBOARD_URL.replace(/\/$/, "")}${
+                imgUrl.startsWith("/") ? "" : "/"
+              }${imgUrl}`;
+            }
+          });
           setCafeImages(images);
+        {/**  const images = res.data.cafeGallery?.images || [];
+          console.log("Setting images:", images);
+          setCafeImages(images); **/}
         } else {
-          console.error("Dashboard API returned success: false");
+          console.error("Dashboard API returned no expected data:", res.data);
+          setData(null);
         }
       } catch (error) {
         console.error("Error fetching dashboard data:", error);
+        setData(null);
       } finally {
         setLoading(false);
       }
     }
-
     fetchVendorDashboard();
   }, [vendorId]);
 
