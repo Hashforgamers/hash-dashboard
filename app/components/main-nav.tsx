@@ -54,6 +54,7 @@ export function MainNav({
         { href: "/gaming", icon: Gamepad2, label: "Manage Gaming Console" },
         { href: "/booking", icon: CalendarCheck, label: "Manage Booking" },
         { href: "/know-your-gamers", icon: Users, label: "Know Your Gamers" },
+        { href: "/manage-extraservice", icon: Users, label: "Extra Services" },
         { href: "/console-pricing", icon: DollarSign, label: "Console Pricing" },
         { href: "/account", icon: User, label: "My Account" },
       ].map(({ href, icon: Icon, label }) => (

@@ -31,6 +31,7 @@ import {
   Lock,
   CreditCard,
   FileCheck,
+  FileText,
   Camera,
   Building2,
   Sparkles,
@@ -61,6 +62,9 @@ export function MyAccount() {
   const [loading, setLoading] = useState<boolean>(true);
   const [vendorId, setVendorId] = useState(null);
   const [uploadMessage, setUploadMessage] = useState<string | null>(null);
+
+  const [previewDocument, setPreviewDocument] = useState<string | null>(null);
+  const [previewDocumentName, setPreviewDocumentName] = useState<string>("");
 
   // Decode token once when the component mounts
   useEffect(() => {
@@ -96,7 +100,7 @@ export function MyAccount() {
 
     // Make POST request to your backend upload endpoint
     const response = await axios.post(
-      `${DASHBOARD_URL}/api/vendor/${vendorId}/add-image`,
+      `http://127.0.0.1:5052/api/vendor/${vendorId}/add-image`,
       formData,
       {
         headers: { "Content-Type": "multipart/form-data" },
@@ -139,6 +143,61 @@ export function MyAccount() {
     setPage(label);
   };
 
+  // Add these functions before your return statement
+const handleDocumentPreview = (documentUrl: string, documentName: string) => {
+  setPreviewDocument(documentUrl);
+  setPreviewDocumentName(documentName);
+};
+
+const closePreview = () => {
+  setPreviewDocument(null);
+  setPreviewDocumentName("");
+};
+
+// Document Preview Modal Component
+const DocumentPreviewModal = () => {
+  if (!previewDocument) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg p-4 max-w-5xl max-h-[90vh] w-full mx-4">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg font-medium">Preview: {previewDocumentName}</h3>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={closePreview}
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
+        <div className="w-full h-[70vh]">
+          <iframe
+            src={previewDocument}
+            className="w-full h-full border rounded"
+            title="Document Preview"
+          />
+        </div>
+        <div className="mt-4 flex justify-end space-x-2">
+          <Button
+            onClick={closePreview}
+            variant="outline"
+          >
+            Close
+          </Button>
+          <Button
+            onClick={() => window.open(previewDocument, '_blank')}
+            variant="default"
+          >
+            Open in New Tab
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+
     // Fetch Vendor Dashboard whenever vendorId changes
 // Fetch vendor dashboard on vendorId change
   useEffect(() => {
@@ -152,7 +211,7 @@ export function MyAccount() {
       try {
         console.log("Fetching dashboard for vendor:", vendorId);
         const res = await axios.get(
-          `${DASHBOARD_URL}/api/vendor/${vendorId}/dashboard`
+          `http://127.0.0.1:5052/api/vendor/${vendorId}/dashboard`
         );
         console.log("API Response:", res.data);
          // Check existence of expected data since no `success` flag
@@ -514,7 +573,7 @@ export function MyAccount() {
               )}
 
               {/* Conditional Rendering for Verified Documents */}
-              {page === "Verified Documents" && (
+            {/** {page === "Verified Documents" && (
               <Card>
                 <CardHeader>
                   <CardTitle>Verified Documents</CardTitle>
@@ -559,18 +618,128 @@ export function MyAccount() {
                   </div>
                 </CardContent>
               </Card>
-            )}
+            )}**/}
+
+            {/* Updated Verified Documents Section with Clickable Documents */}
+{/* Updated Verified Documents Section with Preview Functionality */}
+{page === "Verified Documents" && (
+  <Card>
+    <CardHeader>
+      <CardTitle>Verified Documents</CardTitle>
+      <CardDescription>
+        Manage and preview your uploaded business documents
+      </CardDescription>
+    </CardHeader>
+    <CardContent>
+      <div className="space-y-4">
+        {data.verifiedDocuments && data.verifiedDocuments.length > 0 ? (
+          data.verifiedDocuments.map((doc) => (
+            <div
+              key={doc.id || doc.name}
+              className="flex items-center justify-between p-4 rounded-lg border hover:bg-gray-50 transition-colors"
+            >
+              <div className="flex items-center space-x-4">
+                <FileText
+                  className={cn(
+                    "h-5 w-5",
+                    doc.status === "verified"
+                      ? "text-green-500"
+                      : doc.status === "rejected"
+                      ? "text-red-500"
+                      : "text-yellow-500"
+                  )}
+                />
+                <div>
+                  <button
+                    onClick={() => handleDocumentPreview(doc.documentUrl, doc.name)}
+                    className="font-medium text-blue-600 hover:text-blue-800 hover:underline cursor-pointer text-left"
+                    disabled={!doc.documentUrl}
+                    type="button"
+                  >
+                    {doc.name}
+                  </button>
+                  <div className="text-sm text-muted-foreground">
+                    <p>Status: <span className={cn(
+                      "font-medium",
+                      doc.status === "verified" ? "text-green-600" : 
+                      doc.status === "rejected" ? "text-red-600" : "text-yellow-600"
+                    )}>{doc.status}</span></p>
+                    {doc.uploadedAt && (
+                      <p>Uploaded: {new Date(doc.uploadedAt).toLocaleDateString()}</p>
+                    )}
+                    <p>Expires: {doc.expiry}</p>
+                  </div>
+                </div>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Badge
+                  variant={
+                    doc.status === "verified" 
+                      ? "default" 
+                      : doc.status === "rejected"
+                      ? "destructive"
+                      : "secondary"
+                  }
+                >
+                  {doc.status}
+                </Badge>
+                {doc.documentUrl && (
+                  <>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDocumentPreview(doc.documentUrl, doc.name)}
+                      type="button"
+                    >
+                      <FileText className="mr-1 h-4 w-4" />
+                      Preview
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => window.open(doc.documentUrl, '_blank')}
+                      type="button"
+                    >
+                      Open
+                    </Button>
+                  </>
+                )}
+              </div>
+            </div>
+          ))
+        ) : (
+          <div className="text-center py-8">
+            <FileText className="mx-auto h-12 w-12 text-gray-400" />
+            <h3 className="mt-2 text-sm font-medium text-gray-900">No documents uploaded</h3>
+            <p className="mt-1 text-sm text-gray-500">
+              Upload your business documents to get verified.
+            </p>
+          </div>
+        )}
+        <Button variant="outline" className="w-full">
+          <FileCheck className="mr-2 h-4 w-4" />
+          Upload New Document
+        </Button>
+      </div>
+    </CardContent>
+  </Card>
+)}
+
+
 
 
               {/* Action Buttons */}
-              <div className="flex justify-end space-x-4">
+              {/**<div className="flex justify-end space-x-4">
                 <Button variant="outline">Cancel</Button>
                 <Button>Save Changes</Button>
-              </div>
+              </div>**/}
             </form>
           </div>
         </div>
       </div>
+      <DocumentPreviewModal />
     </div>
   );
 }
+
+
