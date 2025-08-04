@@ -1,6 +1,7 @@
 import React from 'react'
-import { ManageExtraServices } from '../components/manageextra-service'
+
 import { DashboardLayout } from '../components/dashboard-layout'
+import ManageExtraServices from '../components/manageextra-service'
 
 const page = () => {
   return (

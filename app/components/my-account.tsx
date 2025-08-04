@@ -73,6 +73,7 @@ export function MyAccount() {
     if (token) {
       const decoded_token = jwtDecode<{ sub: { id: number } }>(token);
       setVendorId(decoded_token.sub.id);
+      console.log(vendorId)
     }
   }, []); // empty dependency, runs once on mount
 
@@ -211,7 +212,7 @@ const DocumentPreviewModal = () => {
       try {
         console.log("Fetching dashboard for vendor:", vendorId);
         const res = await axios.get(
-          `http://127.0.0.1:5052/api/vendor/${vendorId}/dashboard`
+          `${DASHBOARD_URL}/api/vendor/${vendorId}/dashboard`
         );
         console.log("API Response:", res.data);
          // Check existence of expected data since no `success` flag
