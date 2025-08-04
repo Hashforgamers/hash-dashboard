@@ -23,7 +23,8 @@ import { motion } from "framer-motion"
 import { Plus, Trash2, Edit3 } from "lucide-react"
 import Image from "next/image"
 import { jwtDecode } from "jwt-decode";
-import clsx from "clsx"
+import clsx from "clsx";
+import { DASHBOARD_URL } from "@/src/config/env";
 
 /* ------------------------------------------------------------------ */
 /* -----------------------  TYPE DEFINITIONS  ----------------------- */
@@ -65,7 +66,7 @@ interface MenuItemForm {
 /* ------------------------------------------------------------------ */
 
 // UPDATED: Changed port from 5056 to 5054 based on your Docker container
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? "http://127.0.0.1:5054/api"
+const API_BASE = `${DASHBOARD_URL}/api`;
 
 /* ------------------------------------------------------------------ */
 /* -------------------------  COMPONENT  ---------------------------- */
