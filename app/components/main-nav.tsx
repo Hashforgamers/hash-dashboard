@@ -60,7 +60,6 @@ export function MainNav({
         { href: "/manage-extraservice", icon: Users, label: "Extra Services" },
         { href: "/console-pricing", icon: DollarSign, label: "Console Pricing" },
         { href: "/account", icon: User, label: "My Account" },
-        { href: "/extras", icon: DollarSign, label: "Extra Service" },
         { href: "/pass", icon: DollarSign, label: "Manage Passes" },
       ].map(({ href, icon: Icon, label }) => (
         <Link
