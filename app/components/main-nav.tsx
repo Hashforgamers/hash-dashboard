@@ -1,3 +1,4 @@
+// app/components/main-nav.tsx
 "use client";
 
 import Link from "next/link";
@@ -15,7 +16,7 @@ import {
   Sun,
 } from "lucide-react";
 import { useTheme } from "next-themes";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ButtonDestructive } from "./log-out";
 
 export function MainNav({
@@ -27,13 +28,15 @@ export function MainNav({
   const [isNavOpen, setIsNavOpen] = useState(false);
 
   const clearStorageExceptVendor = () => {
-    const keysToKeep = ["vendor_login_email", "vendors"];
+    const keysToKeep = ["vendor_login_email", "vendors", "vendor_id"];
     Object.keys(localStorage).forEach((key) => {
       if (!keysToKeep.includes(key)) {
         localStorage.removeItem(key);
       }
     });
   };
+
+  // Example: if any menu or link needs vendorId, you can now use it here.
 
   return (
     <nav
@@ -51,6 +54,8 @@ export function MainNav({
         { href: "/know-your-gamers", icon: Users, label: "Know Your Gamers" },
         { href: "/console-pricing", icon: DollarSign, label: "Console Pricing" },
         { href: "/account", icon: User, label: "My Account" },
+        { href: "/extras", icon: DollarSign, label: "Extra Service" },
+        { href: "/pass", icon: DollarSign, label: "Manage Passes" },
       ].map(({ href, icon: Icon, label }) => (
         <Link
           key={href}
