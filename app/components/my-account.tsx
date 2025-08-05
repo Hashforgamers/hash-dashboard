@@ -31,6 +31,7 @@ import {
   Lock,
   CreditCard,
   FileCheck,
+  FileText,
   Camera,
   Building2,
   Sparkles,
@@ -50,6 +51,7 @@ import { DASHBOARD_URL } from "@/src/config/env";
 
 import axios from "axios"; // Make sure to install axios
 import HashLoader from "./ui/HashLoader";
+import { useAnimateMini } from "framer-motion";
 
 export function MyAccount() {
   const [cafeImages, setCafeImages] = useState<string[]>([]);
@@ -59,6 +61,10 @@ export function MyAccount() {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [vendorId, setVendorId] = useState(null);
+  const [uploadMessage, setUploadMessage] = useState<string | null>(null);
+
+  const [previewDocument, setPreviewDocument] = useState<string | null>(null);
+  const [previewDocumentName, setPreviewDocumentName] = useState<string>("");
 
   // Decode token once when the component mounts
   useEffect(() => {
@@ -67,10 +73,11 @@ export function MyAccount() {
     if (token) {
       const decoded_token = jwtDecode<{ sub: { id: number } }>(token);
       setVendorId(decoded_token.sub.id);
+      console.log(vendorId)
     }
   }, []); // empty dependency, runs once on mount
 
-  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+ /**  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
       const reader = new FileReader();
@@ -79,7 +86,52 @@ export function MyAccount() {
       };
       reader.readAsDataURL(file);
     }
-  };
+  }; **/
+
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const file = event.target.files?.[0];
+  if (!file || !vendorId) return;
+
+  // Prepare form data
+  const formData = new FormData();
+  formData.append("image", file);
+
+  try {
+    // Optionally: show some loader or disable input until upload completes
+
+    // Make POST request to your backend upload endpoint
+    const response = await axios.post(
+      `http://127.0.0.1:5052/api/vendor/${vendorId}/add-image`,
+      formData,
+      {
+        headers: { "Content-Type": "multipart/form-data" },
+      }
+    );
+
+    if (response.data.success) {
+      // On success, get uploaded image URL from response and update state
+      const uploadedImageUrl = response.data.image.url;
+
+      setCafeImages((prevImages) => [...prevImages, uploadedImageUrl]);
+      setUploadMessage("Image uploaded successfully!");
+
+    
+      setTimeout(() => setUploadMessage(null), 3000);
+    } else {
+      console.error("Upload failed:", response.data.message);
+      // Optionally: show error toast or message to user
+    }
+  } catch (error) {
+    console.error("Error uploading image:", error);
+    // Optionally: show error toast or message to user
+  } finally {
+    // Optionally: hide loader or re-enable input
+  }
+
+  // Reset file input value so same image can be re-uploaded if needed
+  event.target.value = "";
+};
+
 
   const handleRemoveImage = (indexToRemove: number) => {
     setCafeImages((prevImages) =>
@@ -92,24 +144,113 @@ export function MyAccount() {
     setPage(label);
   };
 
+  // Add these functions before your return statement
+const handleDocumentPreview = (documentUrl: string, documentName: string) => {
+  setPreviewDocument(documentUrl);
+  setPreviewDocumentName(documentName);
+};
+
+const closePreview = () => {
+  setPreviewDocument(null);
+  setPreviewDocumentName("");
+};
+
+// Document Preview Modal Component
+const DocumentPreviewModal = () => {
+  if (!previewDocument) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg p-4 max-w-5xl max-h-[90vh] w-full mx-4">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg font-medium">Preview: {previewDocumentName}</h3>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={closePreview}
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
+        <div className="w-full h-[70vh]">
+          <iframe
+            src={previewDocument}
+            className="w-full h-full border rounded"
+            title="Document Preview"
+          />
+        </div>
+        <div className="mt-4 flex justify-end space-x-2">
+          <Button
+            onClick={closePreview}
+            variant="outline"
+          >
+            Close
+          </Button>
+          <Button
+            onClick={() => window.open(previewDocument, '_blank')}
+            variant="default"
+          >
+            Open in New Tab
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+
+    // Fetch Vendor Dashboard whenever vendorId changes
+// Fetch vendor dashboard on vendorId change
   useEffect(() => {
     async function fetchVendorDashboard() {
+      if (!vendorId) {
+        console.log("No vendorId available");
+        return;
+      }
+
+      setLoading(true);
       try {
-        console.log("Start Fetch ")
-        const res = await axios.get(`${DASHBOARD_URL}/api/vendor/${vendorId}/dashboard`);
-        setData(res.data);
-        setCafeImages(res.data?.cafeGallery?.images || []);
-        console.log("Data",data)
+        console.log("Fetching dashboard for vendor:", vendorId);
+        const res = await axios.get(
+          `${DASHBOARD_URL}/api/vendor/${vendorId}/dashboard`
+        );
+        console.log("API Response:", res.data);
+         // Check existence of expected data since no `success` flag
+        if (res.data && res.data.cafeProfile) {
+          setData(res.data);
+
+           // Updated image URL normalization
+          const imagesRaw = res.data.cafeGallery?.images || [];
+          const images = imagesRaw.map((imgUrl: string) => {
+            if (!imgUrl) return ""; // skip if somehow null/empty
+            if (imgUrl.startsWith("http")) {
+              return imgUrl;
+            } else {
+              // Prepend backend base URL (ensure no double slash)
+              return `${DASHBOARD_URL.replace(/\/$/, "")}${
+                imgUrl.startsWith("/") ? "" : "/"
+              }${imgUrl}`;
+            }
+          });
+          setCafeImages(images);
+        {/**  const images = res.data.cafeGallery?.images || [];
+          console.log("Setting images:", images);
+          setCafeImages(images); **/}
+        } else {
+          console.error("Dashboard API returned no expected data:", res.data);
+          setData(null);
+        }
       } catch (error) {
         console.error("Error fetching dashboard data:", error);
+        setData(null);
       } finally {
-        console.log("set Loading to ",loading)
         setLoading(false);
       }
     }
-
     fetchVendorDashboard();
   }, [vendorId]);
+
+
 
   useEffect(() => {
     if (prevPageRef.current !== page) {
@@ -139,7 +280,7 @@ export function MyAccount() {
           <div className="col-span-12 md:col-span-3 space-y-4">
             {/* nav button element */}
             <Card>
-              <CardContent className="p-4">
+                    <CardContent className="p-4">
                 <nav className="space-y-2">
                   {[
                     { icon: User, label: "Profile" },
@@ -167,6 +308,8 @@ export function MyAccount() {
                   ))}
                 </nav>
               </CardContent>
+
+
             </Card>
           </div>
 
@@ -221,54 +364,52 @@ export function MyAccount() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    {data.cafeGallery.images?.map((image, index) => {
-                      // Try to extract file ID from either type of URL
-                      const fileIdMatch = image.match(/(?:\/d\/|id=)([a-zA-Z0-9_-]{10,})/);
-                      const fileId = fileIdMatch ? fileIdMatch[1] : null;
-
-                      // Build Google Drive direct image preview link or fallback to original
-                      const imageUrl = fileId
-                        ? `https://drive.google.com/file/d/${fileId}/preview`
-                        : image;
-
-                      return (
-                        <div key={index} className="relative group aspect-square">
-                          <iframe
-                            src={imageUrl}
-                            width="100%"
-                            height="150"
-                            className="rounded-md"
-                          />
-                          <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-md flex items-center justify-center">
-                            <X
-                              className="absolute top-3 right-2 w-5 h-5 hover:bg-gray-500 cursor-pointer rounded-md"
-                              onClick={() => handleRemoveImage(index)}
-                            />
-                            <Button variant="secondary" size="sm">
-                              <Camera className="w-4 h-4 mr-2" />
-                              Edit
-                            </Button>
-                          </div>
+                        {uploadMessage && (
+                           <div className="p-2 mb-4 text-green-700 bg-green-100 rounded">
+                            {uploadMessage}
                         </div>
-                      );
-                    })}
-                    <label className="aspect-square flex items-center justify-center border-2 border-dashed border-muted rounded-md cursor-pointer hover:border-primary/50 transition-colors">
-                      <input
-                        type="file"
-                        className="hidden"
-                        onChange={handleImageUpload}
-                        accept="image/*"
-                      />
-                      <div className="text-center">
+                        )}
+                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                           {/* Show ALL existing images FIRST */}
+                         {cafeImages.map((image, index) => {
+                        // Display as <img>, matching "Add Photo" label style (aspect-square)
+                     return (
+                            <div
+                               key={index}
+                                 className="relative group aspect-square flex items-center justify-center border-2 border-dashed border-muted rounded-md"
+                                   >
+                          <img
+                            src={image}
+                             alt={`Cafe Image ${index + 1}`}
+                              className="object-cover w-full h-full rounded-md"
+                             />
+                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-md flex items-center justify-center">
+                     <X
+                        className="absolute top-3 right-2 w-5 h-5 hover:bg-gray-500 cursor-pointer rounded-md"
+                        onClick={() => handleRemoveImage(index)}
+                            />
+                         {/* ...optional edit button... */}
+                       </div>
+                    </div>
+                     );
+                      })}
+
+                   {/* LAST: the "Add Photo" tile */}
+                       <label className="aspect-square flex items-center justify-center border-2 border-dashed border-muted rounded-md cursor-pointer hover:border-primary/50 transition-colors">
+                         <input
+                          type="file"
+                           className="hidden"
+                            onChange={handleImageUpload}
+                           accept="image/*"
+                            />
+                            <div className="text-center">
                         <Camera className="w-6 h-6 mx-auto text-muted-foreground" />
-                        <span className="text-sm text-muted-foreground mt-2">
-                          Add Photo
-                        </span>
-                      </div>
-                    </label>
-                  </div>
-                </CardContent>
+                           <span className="text-sm text-muted-foreground mt-2">Add Photo</span>
+                          </div>
+                         </label>
+                          </div>
+                      </CardContent>
+
               </Card>
             </>
           )}
@@ -433,7 +574,7 @@ export function MyAccount() {
               )}
 
               {/* Conditional Rendering for Verified Documents */}
-              {page === "Verified Documents" && (
+            {/** {page === "Verified Documents" && (
               <Card>
                 <CardHeader>
                   <CardTitle>Verified Documents</CardTitle>
@@ -478,18 +619,128 @@ export function MyAccount() {
                   </div>
                 </CardContent>
               </Card>
-            )}
+            )}**/}
+
+            {/* Updated Verified Documents Section with Clickable Documents */}
+{/* Updated Verified Documents Section with Preview Functionality */}
+{page === "Verified Documents" && (
+  <Card>
+    <CardHeader>
+      <CardTitle>Verified Documents</CardTitle>
+      <CardDescription>
+        Manage and preview your uploaded business documents
+      </CardDescription>
+    </CardHeader>
+    <CardContent>
+      <div className="space-y-4">
+        {data.verifiedDocuments && data.verifiedDocuments.length > 0 ? (
+          data.verifiedDocuments.map((doc) => (
+            <div
+              key={doc.id || doc.name}
+              className="flex items-center justify-between p-4 rounded-lg border hover:bg-gray-50 transition-colors"
+            >
+              <div className="flex items-center space-x-4">
+                <FileText
+                  className={cn(
+                    "h-5 w-5",
+                    doc.status === "verified"
+                      ? "text-green-500"
+                      : doc.status === "rejected"
+                      ? "text-red-500"
+                      : "text-yellow-500"
+                  )}
+                />
+                <div>
+                  <button
+                    onClick={() => handleDocumentPreview(doc.documentUrl, doc.name)}
+                    className="font-medium text-blue-600 hover:text-blue-800 hover:underline cursor-pointer text-left"
+                    disabled={!doc.documentUrl}
+                    type="button"
+                  >
+                    {doc.name}
+                  </button>
+                  <div className="text-sm text-muted-foreground">
+                    <p>Status: <span className={cn(
+                      "font-medium",
+                      doc.status === "verified" ? "text-green-600" : 
+                      doc.status === "rejected" ? "text-red-600" : "text-yellow-600"
+                    )}>{doc.status}</span></p>
+                    {doc.uploadedAt && (
+                      <p>Uploaded: {new Date(doc.uploadedAt).toLocaleDateString()}</p>
+                    )}
+                    <p>Expires: {doc.expiry}</p>
+                  </div>
+                </div>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Badge
+                  variant={
+                    doc.status === "verified" 
+                      ? "default" 
+                      : doc.status === "rejected"
+                      ? "destructive"
+                      : "secondary"
+                  }
+                >
+                  {doc.status}
+                </Badge>
+                {doc.documentUrl && (
+                  <>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDocumentPreview(doc.documentUrl, doc.name)}
+                      type="button"
+                    >
+                      <FileText className="mr-1 h-4 w-4" />
+                      Preview
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => window.open(doc.documentUrl, '_blank')}
+                      type="button"
+                    >
+                      Open
+                    </Button>
+                  </>
+                )}
+              </div>
+            </div>
+          ))
+        ) : (
+          <div className="text-center py-8">
+            <FileText className="mx-auto h-12 w-12 text-gray-400" />
+            <h3 className="mt-2 text-sm font-medium text-gray-900">No documents uploaded</h3>
+            <p className="mt-1 text-sm text-gray-500">
+              Upload your business documents to get verified.
+            </p>
+          </div>
+        )}
+        <Button variant="outline" className="w-full">
+          <FileCheck className="mr-2 h-4 w-4" />
+          Upload New Document
+        </Button>
+      </div>
+    </CardContent>
+  </Card>
+)}
+
+
 
 
               {/* Action Buttons */}
-              <div className="flex justify-end space-x-4">
+              {/**<div className="flex justify-end space-x-4">
                 <Button variant="outline">Cancel</Button>
                 <Button>Save Changes</Button>
-              </div>
+              </div>**/}
             </form>
           </div>
         </div>
       </div>
+      <DocumentPreviewModal />
     </div>
   );
 }
+
+

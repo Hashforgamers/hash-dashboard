@@ -6,7 +6,7 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import {
   Form,
@@ -27,7 +27,7 @@ import {
 import { Loader2, Shield, Gamepad2, Lock, Mail } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
-import { LOGIN_URL } from "@/src/config/env";
+import { LOGIN_URL } from "../../src/config/env";
 
 const formSchema = z.object({
   email: z.string().email({ message: "Invalid email address" }),
@@ -51,6 +51,8 @@ export default function LoginPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [loginError, setLoginError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const lastAttemptRef = useRef(0);
 
   function createDummyJWT(identity: { id: number; type: string; email: string }) {
     const header = {
@@ -83,59 +85,185 @@ export default function LoginPage() {
     type: "vendor",
     email: "dummy@hash.com",
   };
-
-  async function onSubmit(values: z.infer<typeof formSchema>) {
+  
+      // Complete session cleanup function
+  const clearSessionData = () => {
     try {
-      setLoading(true);
-      setLoginError("");
+      localStorage.removeItem("vendors");
+      localStorage.removeItem("vendor_login_email");
+      localStorage.removeItem("jwtToken");
+      localStorage.removeItem("tokenExpiration");
+      sessionStorage.clear();
+    } catch (error) {
+      console.warn("Error clearing session data:", error);
+    }
+  };
 
-      const response = await fetch(`${LOGIN_URL}/api/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: values.email,
-          password: values.password,
-          parent_type: "vendor",
-        }),
-      });
-
-      const result = await response.json();
-
-      if (response.ok && result.status === "success") {
-        const vendors = result.vendors;
-        if (Array.isArray(vendors) && vendors.length > 0) {
-          localStorage.setItem("vendors", JSON.stringify(vendors));
-
-          //Store Email id
-          localStorage.setItem("vendor_login_email", values.email);
-
-          // Create and store dummy JWT token
-          const dummyToken = createDummyJWT(identity);
-          localStorage.setItem("jwtToken", dummyToken);
-
-          // Store expiration in milliseconds for your AuthProvider to check easily
-          const expirationMillis = Date.now() + 60 * 60 * 1000; // 1 hour from now
-          localStorage.setItem("tokenExpiration", expirationMillis.toString());
-
-          toast.success("Login successful!");
-          window.location.href = "/select-cafe";
-        } else {
-          toast.error("No vendors found for this account.");
+   // Enhanced fetch with retry logic for Render.com
+    const fetchWithRetry = async (url: string, options: RequestInit, maxRetries = 3) => {
+      for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        const controller = new AbortController();
+        const timeout = attempt === 1 ? 45000 : 20000; // Longer timeout for first attempt
+        const timeoutId = setTimeout(() => controller.abort(), timeout);
+  
+        try {
+          if (attempt === 1) {
+            toast.info("Connecting to server... This may take up to 30 seconds.", { 
+              duration: 8000,
+              id: "server-connecting"
+            });
+          }
+  
+          const response = await fetch(url, {
+            ...options,
+            signal: controller.signal,
+            headers: {
+              ...options.headers,
+              "Cache-Control": "no-cache, no-store, must-revalidate",
+              "Pragma": "no-cache",
+              "Expires": "0",
+            },
+          });
+  
+          clearTimeout(timeoutId);
+          toast.dismiss("server-connecting");
+          
+          return response;
+        } catch (error) {
+          clearTimeout(timeoutId);
+          toast.dismiss("server-connecting");
+          
+          if (attempt === maxRetries) throw error;
+          
+          const delay = attempt === 1 ? 8000 : 3000;
+          toast.info(`Connection failed. Retrying in ${delay/1000} seconds...`, { 
+            duration: delay - 500 
+          });
+          await new Promise(resolve => setTimeout(resolve, delay));
+        }
+      }
+    };
+   
+      async function onSubmit(values: z.infer<typeof formSchema>) {
+        // Prevent double submissions
+        if (isSubmitting) return;
+        
+        // Rate limiting - prevent rapid submissions
+        const now = Date.now();
+        if (now - lastAttemptRef.current < 2000) {
+          toast.warning("Please wait before trying again.");
           return;
         }
-      } else {
-        const message = result.message || "Login failed";
-        setLoginError(message);
-        toast.error(message);
+        lastAttemptRef.current = now;
+    
+        try {
+          setIsSubmitting(true);
+          setLoading(true);
+          setLoginError("");
+    
+          // Clear any existing session data first
+          clearSessionData();
+    
+          // Add cache-busting timestamp
+          const timestamp = Date.now();
+          const loginUrl = `${LOGIN_URL}/api/login?t=${timestamp}`;
+    
+          const response = await fetchWithRetry(loginUrl, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Accept": "application/json",
+            },
+            body: JSON.stringify({
+              email: values.email,
+              password: values.password,
+              parent_type: "vendor",
+              timestamp: timestamp, // Additional cache busting
+            }),
+          });
+    
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status} ${response.statusText}`);
+          }
+    
+          const result = await response.json();
+    
+          if (result.status === "success") {
+            const vendors = result.vendors;
+            if (Array.isArray(vendors) && vendors.length > 0) {
+              // Small delay to ensure cleanup is complete
+              await new Promise(resolve => setTimeout(resolve, 100));
+              
+              // Store session data
+              localStorage.setItem("vendors", JSON.stringify(vendors));
+              localStorage.setItem("vendor_login_email", values.email);
+    
+              const dummyToken = createDummyJWT(identity);
+              localStorage.setItem("jwtToken", dummyToken);
+    
+              const expirationMillis = Date.now() + 60 * 60 * 1000;
+              localStorage.setItem("tokenExpiration", expirationMillis.toString());
+    
+              toast.success("Login successful!");
+              
+              // Use replace to avoid back button issues
+              window.location.replace("/select-cafe");
+            } else {
+              toast.error("No vendors found for this account.");
+              return;
+            }
+          } else {
+            const message = result.message || "Login failed";
+            setLoginError(message);
+            toast.error(message);
+          }
+        } catch (error) {
+          console.error("Login error:", error);
+          
+          let errorMessage = "Failed to submit the form. Please try again.";
+          
+          if (error.name === 'AbortError') {
+            errorMessage = "Server is taking too long to respond. Please try again in a moment.";
+          } else if (error.message.includes('503') || error.message.includes('502')) {
+            errorMessage = "Server is starting up. Please try again in a moment.";
+          } else if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+            errorMessage = "Network connection issue. Please check your internet connection.";
+          } else if (error.message.includes('SSL') || error.message.includes('certificate')) {
+            errorMessage = "SSL connection issue. Please try again.";
+          }
+          
+          setLoginError(errorMessage);
+          toast.error(errorMessage);
+        } finally {
+          setLoading(false);
+          setIsSubmitting(false);
+        }
       }
-    } catch (error) {
-      console.error("Login error:", error);
-      setLoginError("Failed to submit the form. Please try again.");
-      toast.error("Failed to submit the form. Please try again.");
-    } finally {
-      setLoading(false);
-    }
-  }
+        
+        // Check for session conflicts on component mount
+        useEffect(() => {
+          const checkSessionConflict = () => {
+            const hasVendors = localStorage.getItem("vendors");
+            const hasToken = localStorage.getItem("jwtToken");
+            const hasEmail = localStorage.getItem("vendor_login_email");
+            
+            // If partial session data exists, clear it all
+            if ((hasVendors && !hasToken) || (hasToken && !hasVendors) || (hasEmail && !hasToken)) {
+              console.warn("Detected partial session data, clearing...");
+              clearSessionData();
+            }
+          };
+      
+          checkSessionConflict();
+          
+          // Reset form completely
+          form.reset({
+            email: "",
+            password: "",
+            parent_type: "vendor",
+          });
+          setLoginError("");
+        }, [form]);
 
   return (
     <div className="min-h-screen bg-transparent flex items-center justify-center p-4 relative overflow-hidden">
