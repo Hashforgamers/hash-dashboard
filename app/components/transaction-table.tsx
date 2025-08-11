@@ -1,5 +1,4 @@
 "use client";
-
 import { useMemo, useState, useEffect } from "react";
 import {
   Table,
@@ -13,17 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { motion, AnimatePresence } from "framer-motion";
 import FilterComponent from "./filterComponenet";
 import { Input } from "@/components/ui/input";
-import {
-  ArrowUpIcon,
-  ArrowDownIcon,
-  SearchIcon,
-  DollarSignIcon,
-  CreditCardIcon,
-  UserIcon,
-  ClockIcon,
-  FilterIcon,
-  Download,
-} from "lucide-react";
+import { ArrowUpIcon, ArrowDownIcon, SearchIcon, DollarSignIcon, CreditCardIcon, UserIcon, ClockIcon, FilterIcon, Download } from 'lucide-react';
 import { saveAs } from "file-saver";
 import { Badge } from "@/components/ui/badge";
 import { jwtDecode } from "jwt-decode";
@@ -64,7 +53,6 @@ export function TransactionTable() {
   });
   const [showFilter, setShowFilter] = useState(false);
 
-
   const cardVariants = {
     hidden: { opacity: 0, y: 20 },
     visible: { opacity: 1, y: 0 },
@@ -74,6 +62,7 @@ export function TransactionTable() {
     hidden: { opacity: 0 },
     visible: { opacity: 1 },
   };
+
   const boxVariants = {
     hidden: { opacity: 1, scale: 0.5 },
     visible: { opacity: 1, scale: 1 },
@@ -83,7 +72,6 @@ export function TransactionTable() {
   const filteredTransactions = useMemo(() => {
     // Ensure transactions is always an array before filtering
     if (!Array.isArray(transactions)) return [];
-
     return transactions.filter((t) => {
       const isModeOfPaymentValid =
         !filters.modeOfPayment ||
@@ -107,7 +95,6 @@ export function TransactionTable() {
       const searchFields = [t.userName, t.modeOfPayment, t.bookingType].map(
         (field) => field.toLowerCase()
       );
-
       const isSearchMatch = searchFields.some((field) =>
         field.includes(searchTerm.toLowerCase())
       );
@@ -125,7 +112,6 @@ export function TransactionTable() {
   useEffect(() => {
     const storedToken = getToken();
     setToken(storedToken);
-
     if (storedToken) {
       try {
         const decoded: any = jwtDecode(storedToken);
@@ -150,7 +136,6 @@ export function TransactionTable() {
   useEffect(() => {
     const storedToken = getToken();
     setToken(storedToken);
-
     if (storedToken) {
       try {
         const decoded: any = jwtDecode(storedToken);
@@ -169,6 +154,7 @@ export function TransactionTable() {
     const CACHE_KEY = `transactions_${vendorId}`;
     const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
     const POLL_INTERVAL = 60 * 1000; // 1 minute
+
     let pollingInterval: NodeJS.Timeout;
 
     const fromDate = convertEpochToYYYYMMDD(issuedAt);
@@ -223,7 +209,7 @@ export function TransactionTable() {
   }, [vendorId, issuedAt, expirationTime, token]);
 
   const metrics = useMemo(() => {
-    if (!transactions.length) return { total: 0, uniqueUsers: 0, pendingSettlements: 0,  cashTransactions: 0,};
+    if (!transactions.length) return { total: 0, uniqueUsers: 0, pendingSettlements: 0, cashTransactions: 0 };
 
     const total = transactions.reduce((sum, t) => sum + t.amount, 0);
     const uniqueUsers = new Set(transactions.map((t) => t.userName)).size;
@@ -232,7 +218,7 @@ export function TransactionTable() {
       (t) => t.modeOfPayment?.toLowerCase() === "cash"
     ).length;
 
-    return { total, uniqueUsers, pendingSettlements,  cashTransactions,};
+    return { total, uniqueUsers, pendingSettlements, cashTransactions };
   }, [transactions]);
 
   function downloadFilteredData() {
@@ -240,7 +226,7 @@ export function TransactionTable() {
     const gstNumber = "GSTIN: 29ABCDE1234F1Z5"; // example, replace if needed
     const reportTitle = "Transaction Report";
     const reportDate = new Date().toLocaleDateString();
-  
+
     const headers = [
       "Slot Date",
       "Slot Time",
@@ -250,7 +236,7 @@ export function TransactionTable() {
       "Booking Type",
       "Settlement Status",
     ];
-  
+
     const rows = filteredTransactions.map((transaction) => [
       transaction.slotDate,
       transaction.slotTime,
@@ -260,18 +246,18 @@ export function TransactionTable() {
       transaction.bookingType,
       transaction.settlementStatus,
     ]);
-  
+
     const totalAmount = filteredTransactions.reduce((sum, t) => sum + t.amount, 0);
     const gst = totalAmount * 0.18; // Assuming 18% GST
     const totalWithGst = totalAmount + gst;
-  
+
     const footer = [
       [],
       ["Subtotal", "", "", totalAmount.toFixed(2)],
       ["GST (18%)", "", "", gst.toFixed(2)],
       ["Total (INR)", "", "", totalWithGst.toFixed(2)],
     ];
-  
+
     const csvContent = [
       `"${companyName}"`,
       `"${gstNumber}"`,
@@ -282,14 +268,13 @@ export function TransactionTable() {
       "",
       ...footer.map((line) => line.join(",")),
     ].join("\n");
-  
+
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8" });
     saveAs(blob, `transaction_report_${reportDate.replace(/\//g, "-")}.csv`);
   }
 
   const groupByUser = (transactions) => {
     const grouped = {};
-
     transactions.forEach((tx) => {
       if (!grouped[tx.userId]) {
         grouped[tx.userId] = {
@@ -298,24 +283,21 @@ export function TransactionTable() {
           bookings: [],
         };
       }
-
       grouped[tx.userId].totalAmount += tx.amount;
       grouped[tx.userId].bookings.push(tx);
     });
-
     return grouped;
   };
 
   const [expandedDates, setExpandedDates] = useState<number[]>([]);
   const [expandedUsers, setExpandedUsers] = useState<Record<string, number[]>>({});
 
-  
   const toggleDateExpand = (dateKey: string) => {
     setExpandedDates(prev =>
       prev.includes(dateKey) ? prev.filter(d => d !== dateKey) : [...prev, dateKey]
     );
   };
-  
+
   const toggleUserExpand = (dateKey: string, userId: number) => {
     setExpandedUsers(prev => {
       const currentExpanded = prev[dateKey] || [];
@@ -323,14 +305,14 @@ export function TransactionTable() {
       const updatedUsers = isExpanded
         ? currentExpanded.filter(id => id !== userId)
         : [...currentExpanded, userId];
-  
+
       return {
         ...prev,
         [dateKey]: updatedUsers,
       };
     });
   };
-  
+
   const groupedTransactions = groupByUser(filteredTransactions);
   const groupedByDate = transactions.reduce((acc, transaction) => {
     const { slotDate, userId, userName } = transaction;
@@ -354,27 +336,27 @@ export function TransactionTable() {
   }
 
   return (
-    <div className="space-y-6 p-6">
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+    <div className="space-y-6 p-4 md:p-6">
+      {/* <CHANGE> Updated metric cards to use default card styling instead of colorful gradients */}
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         <motion.div
           variants={cardVariants}
           initial="hidden"
           animate="visible"
           transition={{ duration: 0.3, delay: 0 }}
         >
-          <Card className="relative overflow-hidden bg-gradient-to-br from-blue-500/20 via-blue-400/20 to-blue-300/20 dark:from-blue-500/30 dark:via-blue-400/30 dark:to-blue-300/20 border-blue-200 dark:border-blue-800 shadow-lg shadow-blue-500/5">
-            <div className="absolute inset-0 bg-grid-white/10 [mask-image:linear-gradient(0deg,white,rgba(255,255,255,0.6))]" />
+          <Card className="rounded-lg bg-card border-border backdrop-blur-sm">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
                 Total Revenue
               </CardTitle>
-              <DollarSignIcon className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+              <DollarSignIcon className="h-4 w-4 text-emerald-400" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-blue-900 dark:text-blue-50">
-                ${metrics.total}
+              <div className="text-2xl font-bold text-foreground">
+                ₹{metrics.total}
               </div>
-              <p className="text-xs text-blue-600/80 dark:text-blue-400">
+              <p className="text-xs text-emerald-400">
                 +20.1% from last month
               </p>
             </CardContent>
@@ -387,19 +369,18 @@ export function TransactionTable() {
           animate="visible"
           transition={{ duration: 0.3, delay: 0.1 }}
         >
-          <Card className="relative overflow-hidden bg-gradient-to-br from-purple-500/20 via-purple-400/20 to-purple-300/20 dark:from-purple-500/30 dark:via-purple-400/30 dark:to-purple-300/20 border-purple-200 dark:border-purple-800 shadow-lg shadow-purple-500/5">
-            <div className="absolute inset-0 bg-grid-white/10 [mask-image:linear-gradient(0deg,white,rgba(255,255,255,0.6))]" />
+          <Card className="rounded-lg bg-card border-border backdrop-blur-sm">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
                 Unique Users
               </CardTitle>
-              <UserIcon className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+              <UserIcon className="h-4 w-4 text-primary" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-purple-900 dark:text-purple-50">
+              <div className="text-2xl font-bold text-foreground">
                 {metrics.uniqueUsers}
               </div>
-              <p className="text-xs text-purple-600/80 dark:text-purple-400">
+              <p className="text-xs text-emerald-400">
                 +12 since last week
               </p>
             </CardContent>
@@ -412,19 +393,18 @@ export function TransactionTable() {
           animate="visible"
           transition={{ duration: 0.3, delay: 0.2 }}
         >
-          <Card className="relative overflow-hidden bg-gradient-to-br from-amber-500/20 via-amber-400/20 to-amber-300/20 dark:from-amber-500/30 dark:via-amber-400/30 dark:to-amber-300/20 border-amber-200 dark:border-amber-800 shadow-lg shadow-amber-500/5">
-            <div className="absolute inset-0 bg-grid-white/10 [mask-image:linear-gradient(0deg,white,rgba(255,255,255,0.6))]" />
+          <Card className="rounded-lg bg-card border-border backdrop-blur-sm">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
                 Pending Settlements
               </CardTitle>
-              <ClockIcon className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+              <ClockIcon className="h-4 w-4 text-yellow-400" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-amber-900 dark:text-amber-50">
+              <div className="text-2xl font-bold text-foreground">
                 {metrics.pendingSettlements}
               </div>
-              <p className="text-xs text-amber-600/80 dark:text-amber-400">
+              <p className="text-xs text-yellow-400">
                 Requires attention
               </p>
             </CardContent>
@@ -437,19 +417,18 @@ export function TransactionTable() {
           animate="visible"
           transition={{ duration: 0.3, delay: 0.3 }}
         >
-          <Card className="relative overflow-hidden bg-gradient-to-br from-emerald-500/20 via-emerald-400/20 to-emerald-300/20 dark:from-emerald-500/30 dark:via-emerald-400/30 dark:to-emerald-300/20 border-emerald-200 dark:border-emerald-800 shadow-lg shadow-emerald-500/5">
-            <div className="absolute inset-0 bg-grid-white/10 [mask-image:linear-gradient(0deg,white,rgba(255,255,255,0.6))]" />
+          <Card className="rounded-lg bg-card border-border backdrop-blur-sm">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
                 Cash Transactions
               </CardTitle>
-              <CreditCardIcon className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+              <CreditCardIcon className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-emerald-900 dark:text-emerald-50">
+              <div className="text-2xl font-bold text-foreground">
                 {metrics.cashTransactions}
               </div>
-              <p className="text-xs text-emerald-600/80 dark:text-emerald-400">
+              <p className="text-xs text-muted-foreground">
                 {(
                   (metrics.cashTransactions / transactions.length) *
                   100
@@ -461,50 +440,50 @@ export function TransactionTable() {
         </motion.div>
       </div>
 
-      {/* Search Bar */}
-
+      {/* <CHANGE> Updated search bar and buttons for better responsiveness */}
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3, delay: 0.4 }}
-        className="flex items-center space-x-2"
+        className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3"
       >
         <div className="relative flex-1">
           <SearchIcon className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Search transactions..."
-            className="pl-8"
+            className="pl-8 rounded-lg bg-input border-border"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
-
-        <motion.button
-          whileHover={{ borderColor: "rgba(255,255,255,0.6)" }}
-          initial="hidden" // Initial state
-          animate="visible"
-          variants={boxVariants}
-          transition={{ duration: 0.1 }}
-          className=" flex px-3 py-2 border-2  rounded-md text-md text-muted-foreground  "
-          onClick={() => setShowFilter(!showFilter)}
-        >
-          <FilterIcon className="text-muted-foreground h-5 w-5 " />
-          <span className="px-1">filter</span>
-        </motion.button>
-        <motion.button
-          whileHover={{ borderColor: "rgba(255,255,255,0.6)" }}
-          initial="hidden" // Initial state
-          animate="visible"
-          variants={boxVariants}
-          transition={{ duration: 0.2 }}
-          className="flex px-3 py-2 border-2  rounded-md text-md text-muted-foreground "
-          onClick={downloadFilteredData}
-        >
-          <Download className="text-muted-foreground h-5 w-5 " />
-
-          <span className="px-1">Download </span>
-        </motion.button>
+        <div className="flex gap-2">
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            initial="hidden"
+            animate="visible"
+            variants={boxVariants}
+            transition={{ duration: 0.1 }}
+            className="flex items-center px-3 py-2 border border-border rounded-lg text-sm text-muted-foreground hover:bg-muted transition-colors"
+            onClick={() => setShowFilter(!showFilter)}
+          >
+            <FilterIcon className="h-4 w-4 mr-2" />
+            <span>Filter</span>
+          </motion.button>
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            initial="hidden"
+            animate="visible"
+            variants={boxVariants}
+            transition={{ duration: 0.2 }}
+            className="flex items-center px-3 py-2 border border-border rounded-lg text-sm text-muted-foreground hover:bg-muted transition-colors"
+            onClick={downloadFilteredData}
+          >
+            <Download className="h-4 w-4 mr-2" />
+            <span>Download</span>
+          </motion.button>
+        </div>
       </motion.div>
+
       <FilterComponent
         className="z-2"
         filters={filters}
@@ -513,34 +492,32 @@ export function TransactionTable() {
         setShowFilter={setShowFilter}
       />
 
-      {/* Transaction Table */}
+      {/* <CHANGE> Updated table styling to match Figma reference with proper dark theme */}
       <motion.div
         variants={tableVariants}
         initial="hidden"
         animate="visible"
         transition={{ duration: 0.3, delay: 0.5 }}
-        className="rounded-2xl border bg-card"
+        className="rounded-lg border border-border bg-card overflow-hidden"
       >
-        <div className="max-h-[600px] overflow-x-auto overflow-y-auto rounded-2xl">
+        <div className="max-h-[600px] overflow-x-auto overflow-y-auto">
           <Table className="min-w-full">
-            <TableHeader className="bg-muted">
-              <TableRow>
-                <TableHead className="font-semibold text-foreground">Slot Date</TableHead>
-                <TableHead className="font-semibold text-foreground">Slot Time</TableHead>
-                <TableHead className="font-semibold text-foreground">User Name</TableHead>
-                <TableHead className="font-semibold text-foreground">Amount</TableHead>
-                <TableHead className="font-semibold text-foreground">Mode of Payment</TableHead>
-                <TableHead className="font-semibold text-foreground">Booking Type</TableHead>
-                <TableHead className="font-semibold text-foreground">Settlement Status</TableHead>
+            <TableHeader className="bg-muted/50 sticky top-0">
+              <TableRow className="border-border hover:bg-transparent">
+                <TableHead className="font-semibold text-foreground px-4 py-3">Slot Date</TableHead>
+                <TableHead className="font-semibold text-foreground px-4 py-3">Slot Time</TableHead>
+                <TableHead className="font-semibold text-foreground px-4 py-3">User Name</TableHead>
+                <TableHead className="font-semibold text-foreground px-4 py-3">Amount</TableHead>
+                <TableHead className="font-semibold text-foreground px-4 py-3">Mode of Payment</TableHead>
+                <TableHead className="font-semibold text-foreground px-4 py-3">Booking Type</TableHead>
+                <TableHead className="font-semibold text-foreground px-4 py-3">Settlement Status</TableHead>
               </TableRow>
             </TableHeader>
-
             <TableBody>
               {Object.entries(groupedByDate).map(([slotDate, usersGroup]) => {
                 // Calculate total for the day and user count
                 const dayTotalAmount = Object.values(usersGroup).reduce((sum, userGroup) => sum + userGroup.totalAmount, 0);
                 const userCount = Object.keys(usersGroup).length;
-
                 return (
                   <React.Fragment key={slotDate}>
                     {/* Slot Date Row */}
@@ -548,23 +525,22 @@ export function TransactionTable() {
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       onClick={() => toggleDateExpand(slotDate)}
-                      className="cursor-pointer hover:bg-muted-foreground/10 transition-colors"
+                      className="cursor-pointer hover:bg-muted/30 transition-colors border-border"
                     >
                       {/* Slot Date */}
-                      <TableCell colSpan={1} className="text-primary font-medium flex items-center justify-between">
-                        <span>{slotDate}</span>
-                        <span>{expandedDates.includes(slotDate) ? "▲" : "▼"}</span>
+                      <TableCell colSpan={1} className="text-primary font-medium px-4 py-3">
+                        <div className="flex items-center justify-between">
+                          <span>{slotDate}</span>
+                          <span className="text-xs">{expandedDates.includes(slotDate) ? "▲" : "▼"}</span>
+                        </div>
                       </TableCell>
-
                       {/* Empty cells for columns between Date and Amount */}
-                      <TableCell colSpan={2}></TableCell>
-
+                      <TableCell colSpan={2} className="px-4 py-3"></TableCell>
                       {/* Total Amount */}
-                      <TableCell colSpan={2} className="text-primary font-medium">
+                      <TableCell colSpan={4} className="text-primary font-medium px-4 py-3">
                         ₹{dayTotalAmount.toFixed(2)}
                       </TableCell>
                     </motion.tr>
-
                     {/* Bookings under Slot Date */}
                     <AnimatePresence>
                       {expandedDates.includes(slotDate) && (
@@ -576,26 +552,33 @@ export function TransactionTable() {
                               animate={{ opacity: 1, y: 0 }}
                               exit={{ opacity: 0, y: -10 }}
                               transition={{ duration: 0.2 }}
-                              className="hover:bg-accent transition-colors dark:hover:bg-accent/30"
+                              className="hover:bg-muted/20 transition-colors border-border"
                             >
-                              <TableCell>{transaction.slotDate}</TableCell>
-                              <TableCell>{transaction.slotTime}</TableCell>
-                              <TableCell>{transaction.userName}</TableCell>
-                              <TableCell>₹{transaction.amount.toFixed(2)}</TableCell>
-                              <TableCell>
-                                <Badge variant="secondary">{transaction.modeOfPayment}</Badge>
+                              <TableCell className="px-4 py-3 text-muted-foreground">{transaction.slotDate}</TableCell>
+                              <TableCell className="px-4 py-3 text-muted-foreground">{transaction.slotTime}</TableCell>
+                              <TableCell className="px-4 py-3 text-foreground">{transaction.userName}</TableCell>
+                              <TableCell className="px-4 py-3 text-foreground font-medium">₹{transaction.amount.toFixed(2)}</TableCell>
+                              <TableCell className="px-4 py-3">
+                                <Badge variant="secondary" className="bg-muted text-muted-foreground">{transaction.modeOfPayment}</Badge>
                               </TableCell>
-                              <TableCell>
-                                <Badge variant="outline">{transaction.bookingType}</Badge>
+                              <TableCell className="px-4 py-3">
+                                <Badge variant="outline" className="border-border text-muted-foreground">{transaction.bookingType}</Badge>
                               </TableCell>
-                              <TableCell>
+                              <TableCell className="px-4 py-3">
                                 <Badge
                                   variant={
                                     transaction.settlementStatus === "done"
-                                      ? "success"
+                                      ? "default"
                                       : transaction.settlementStatus === "pending"
-                                      ? "warning"
-                                      : "secondary"
+                                      ? "secondary"
+                                      : "outline"
+                                  }
+                                  className={
+                                    transaction.settlementStatus === "done"
+                                      ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/30"
+                                      : transaction.settlementStatus === "pending"
+                                      ? "bg-yellow-500/20 text-yellow-400 border-yellow-500/30"
+                                      : "border-border text-muted-foreground"
                                   }
                                 >
                                   {transaction.settlementStatus}
@@ -613,7 +596,6 @@ export function TransactionTable() {
           </Table>
         </div>
       </motion.div>
-
     </div>
   );
 }

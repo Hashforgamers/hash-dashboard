@@ -1,5 +1,4 @@
 "use client";
-
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
@@ -9,7 +8,6 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { jwtDecode } from "jwt-decode";
 import React from "react";
-
 import {
   Select,
   SelectContent,
@@ -19,23 +17,7 @@ import {
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import {
-  CalendarPlus,
-  Edit,
-  XCircle,
-  Search,
-  NotepadText,
-  Clock,
-  AlertCircle,
-  Calendar,
-  Users,
-  CreditCard,
-  FileText,
-  CalendarClock,
-  ListTodo,
-  LucideIcon,
-  Loader2
-} from "lucide-react";
+import { CalendarPlus, Edit, XCircle, Search, NotepadText, Clock, AlertCircle, Calendar, Users, CreditCard, FileText, CalendarClock, ListTodo, type LucideIcon, Loader2 } from 'lucide-react';
 import {
   Table,
   TableBody,
@@ -44,7 +26,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -82,7 +63,8 @@ const actions: BookingAction[] = [
     label: "Create Booking",
     description: "Schedule a new appointment",
     icon: CalendarPlus,
-    color: "bg-blue-100 dark:bg-blue-950", // Solid colors for light and dark modes
+    // <CHANGE> Updated to use consistent card styling
+    color: "bg-card border-border", // Consistent card colors
     iconColor: "#2563eb", // Light blue for the icon
   },
   {
@@ -90,7 +72,8 @@ const actions: BookingAction[] = [
     label: "Change Booking",
     description: "Modify existing appointments",
     icon: CalendarClock,
-    color: "bg-purple-100 dark:bg-purple-950", // Solid purple colors
+    // <CHANGE> Updated to use consistent card styling
+    color: "bg-card border-border", // Consistent card colors
     iconColor: "#7c3aed", // Purple for the icon
   },
   {
@@ -98,7 +81,8 @@ const actions: BookingAction[] = [
     label: "Reject Booking",
     description: "Cancel or decline bookings",
     icon: XCircle,
-    color: "bg-red-100 dark:bg-red-950", // Solid red colors
+    // <CHANGE> Updated to use consistent card styling
+    color: "bg-card border-border", // Consistent card colors
     iconColor: "#ef4444", // Red for the icon
   },
   {
@@ -106,7 +90,8 @@ const actions: BookingAction[] = [
     label: "List Bookings",
     description: "View all appointments",
     icon: ListTodo,
-    color: "bg-emerald-100 dark:bg-emerald-950", // Solid green colors
+    // <CHANGE> Updated to use consistent card styling
+    color: "bg-card border-border", // Consistent card colors
     iconColor: "#059669", // Green for the icon
   },
 ];
@@ -172,13 +157,11 @@ export function ManageBooking() {
   // Decode token once when the component mounts
   useEffect(() => {
     const token = localStorage.getItem("jwtToken");
-
     if (token) {
       const decoded_token = jwtDecode<{ sub: { id: number } }>(token);
       setVendorId(decoded_token.sub.id);
     }
   }, []); // empty dependency, runs once on mount
-
 
   async function fetchGames() {
     try {
@@ -198,6 +181,7 @@ export function ManageBooking() {
   }
 
   const [game, setGame] = useState<any>([]);
+
   useEffect(() => {
     async function getGames() {
       const data = await fetchGames();
@@ -215,9 +199,8 @@ export function ManageBooking() {
           // <GridConsole setSelectedAction={setSelectedAction} game={game} />
           <BookingSystem setSelectedAction={setSelectedAction} game={game}/>
         );
-
       case "change":
-        return <ChangeBookingForm />;
+        return <ChangeBookingForm/>;
       case "reject":
         return <RejectBookingForm />;
       case "list":
@@ -243,7 +226,7 @@ export function ManageBooking() {
             onHoverEnd={() => setHoveredAction(null)}
           >
             <Card
-              className={`relative overflow-hidden cursor-pointer transition-all duration-300 hover:shadow-lg ${
+              className={`relative overflow-hidden cursor-pointer transition-all duration-300 hover:shadow-lg rounded-lg ${
                 action.color
               } ${
                 selectedAction === action.type
@@ -285,7 +268,6 @@ export function ManageBooking() {
             className="relative bg-card rounded-lg shadow-lg p-6 border dark:border-gray-800"
           >
             <div className="absolute inset-0 bg-gradient-to-br from-background/50 to-background rounded-lg " />
-
             <div className="relative">{renderForm()}</div>
           </motion.div>
         )}
@@ -293,6 +275,8 @@ export function ManageBooking() {
     </div>
   );
 }
+
+// ... existing code ...
 
 function ChangeBookingForm() {
   const [bookingId, setBookingId] = useState("");

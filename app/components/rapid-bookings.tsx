@@ -710,13 +710,13 @@ function RapidBookings() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.1 }}
-                className="border rounded-lg p-6 hover:border-[#098637] transition-all duration-300 hover:shadow-lg"
+                className="border rounded-lg p-6 bg-card transition-all duration-300 hover:shadow-lg"
               >
                 <div className="flex justify-between items-start mb-4">
-                  <div className="text-[#098637] transform transition-transform hover:scale-110">
+                  <div className="text-blue-600 transform transition-transform hover:scale-110">
                     {system.icon}
                   </div>
-                  <span className="font-semibold text-[#098637]">
+                  <span className="font-semibold text-blue-600">
                     {system.price}/slot
                   </span>
                 </div>
@@ -731,7 +731,7 @@ function RapidBookings() {
                   <span
                     className={`w-2 h-2 rounded-full ${
                       system.status === "available"
-                        ? "bg-[#098637]"
+                        ? "bg-green-600"
                         : "bg-red-500"
                     }`}
                   />
@@ -743,7 +743,7 @@ function RapidBookings() {
                   disabled={system.status !== "available"}
                   className={`w-full transition-all duration-300 ${
                     system.status === "available"
-                      ? "bg-[#098637] hover:bg-[#076d2a] hover:scale-105"
+                      ? "bg-blue-600 hover:bg-blue-600 hover:scale-105"
                       : "bg-gray-300 cursor-not-allowed"
                   }`}
                 >
