@@ -1,5 +1,5 @@
-import { ManageBooking } from "../components/manage-booking"
-import { DashboardLayout } from "../components/dashboard-layout"
+import { ManageBooking } from "../../components/manage-booking"
+import { DashboardLayout } from "../../(layout)/dashboard-layout"
 
 export default function ManageBookingPage() {
   return (

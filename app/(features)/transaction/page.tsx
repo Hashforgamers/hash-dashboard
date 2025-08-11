@@ -1,7 +1,7 @@
 "use client"
 
-import { TransactionTable } from "../components/transaction-table";
-import { DashboardLayout } from "../components/dashboard-layout";
+import { TransactionTable } from "../../components/transaction-table";
+import { DashboardLayout } from "../../(layout)/dashboard-layout";
 
 export default function TransactionReportPage() {
   return (

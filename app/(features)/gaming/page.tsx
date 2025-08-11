@@ -1,5 +1,5 @@
-import { ManageGamingConsole } from "../components/manage-gaming-console";
-import { DashboardLayout } from "../components/dashboard-layout";
+import { ManageGamingConsole } from "../../components/manage-gaming-console";
+import { DashboardLayout } from "../../(layout)/dashboard-layout";
 
 export default function ManageGamingConsolePage() {
   return (
