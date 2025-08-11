@@ -1,4 +1,4 @@
-import { DashboardLayout } from "../components/dashboard-layout";
+import { DashboardLayout } from "../(layout)/dashboard-layout";
 import ManageExtrasPageContent from "../components/manage-extras-page-content";
 
 export default function ManageExtras() {

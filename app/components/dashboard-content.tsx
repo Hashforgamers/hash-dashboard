@@ -1,182 +1,221 @@
-"use client";
+"use client"
 
-import React, { useEffect, useState } from "react";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { BookingStats } from "./book-stats";
-import { UpcomingBookings } from "./upcoming-booking";
-import { CurrentSlots } from "./current-slot";
-import { motion, AnimatePresence } from "framer-motion";
-import {
-  TabletSmartphone,
-  ChevronRight,
-  IndianRupee,
-  CalendarCheck,
-  WalletCards,
-  Eye,
-  EyeOff,
-  TrendingUp,
-  TrendingDown,
-  CheckCircle2,
-  TrendingUp as TrendingUpIcon,
-} from "lucide-react";
-import { jwtDecode } from "jwt-decode";
-import { BOOKING_URL, DASHBOARD_URL } from "@/src/config/env";
-import HashLoader from "./ui/HashLoader";
-import clsx from "clsx";
+import React, { useEffect, useState } from "react"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { BookingStats } from "./book-stats"
+import { UpcomingBookings } from "./upcoming-booking"
+import RapidBookings from "../components/rapid-bookings"
+import { CurrentSlots } from "./current-slot"
+import { motion, AnimatePresence } from "framer-motion"
+import { TabletSmartphone, ChevronRight, IndianRupee, CalendarCheck, WalletCards, Eye, EyeOff, TrendingUp, TrendingDown, CheckCircle2, TrendingUpIcon, Plus, RefreshCw, Zap } from 'lucide-react'
+import { jwtDecode } from "jwt-decode"
+import { BOOKING_URL, DASHBOARD_URL } from "@/src/config/env"
+import HashLoader from "./ui/HashLoader"
+import clsx from "clsx"
+import { Button } from "@/components/ui/button"
 
-export function DashboardContent() {
-  const [showBookingStats, setShowBookingStats] = useState(true);
-  const [showEarnings, setShowEarnings] = useState(false);
-  const [showPending, setShowPending] = useState(false);
-  const [refreshSlots, setRefreshSlots] = useState(false);
-  const [vendorId, setVendorId] = useState<number | null>(null);
-  const DASHBOARD_CACHE_KEY = "dashboardData";
-  const DASHBOARD_CACHE_TIME = 1 * 60 * 1000;
-  const DASHBOARD_POLL_INTERVAL = 5 * 1000;
-  const [refreshSignal, setRefreshSignal] = useState(false);
+interface DashboardContentProps {
+  activeTab: string
+  setActiveTab: (tab: string) => void
+}
+
+export function DashboardContent({ activeTab, setActiveTab }: DashboardContentProps) {
+  const [showBookingStats, setShowBookingStats] = useState(true)
+  const [showEarnings, setShowEarnings] = useState(false)
+  const [showPending, setShowPending] = useState(false)
+  const [refreshSlots, setRefreshSlots] = useState(false)
+  const [vendorId, setVendorId] = useState<number | null>(null)
+
+  const DASHBOARD_CACHE_KEY = "dashboardData"
+  const DASHBOARD_CACHE_TIME = 1 * 60 * 1000
+  const DASHBOARD_POLL_INTERVAL = 5 * 1000
+  const [refreshSignal, setRefreshSignal] = useState(false)
 
   function useDashboardData(vendorId: number | null, refreshSignal: boolean) {
-    const [dashboardData, setDashboardData] = useState(null);
+    const [dashboardData, setDashboardData] = useState(null)
 
     useEffect(() => {
-      if (!vendorId) return;
+      if (!vendorId) return
 
       const loadDashboardData = async (isInitial = false) => {
         try {
-          const cache = localStorage.getItem(DASHBOARD_CACHE_KEY);
-          const parsed = cache ? JSON.parse(cache) : null;
-          const now = Date.now();
+          const cache = localStorage.getItem(DASHBOARD_CACHE_KEY)
+          const parsed = cache ? JSON.parse(cache) : null
+          const now = Date.now()
 
           if (isInitial && parsed && now - parsed.timestamp < DASHBOARD_CACHE_TIME) {
-            setDashboardData(parsed.data);
-            console.log("Loaded dashboard from cache");
+            setDashboardData(parsed.data)
+            console.log("Loaded dashboard from cache")
           } else {
-            const response = await fetch(`${DASHBOARD_URL}/api/getLandingPage/vendor/${vendorId}`);
-            const data = await response.json();
-            setDashboardData(data);
-            localStorage.setItem(DASHBOARD_CACHE_KEY, JSON.stringify({ data, timestamp: now }));
-            console.log("Fetched and cached dashboard data");
+            const response = await fetch(`${DASHBOARD_URL}/api/getLandingPage/vendor/${vendorId}`)
+            const data = await response.json()
+            setDashboardData(data)
+            localStorage.setItem(DASHBOARD_CACHE_KEY, JSON.stringify({ data, timestamp: now }))
+            console.log("Fetched and cached dashboard data")
           }
         } catch (error) {
-          console.error("Error fetching dashboard data:", error);
+          console.error("Error fetching dashboard data:", error)
         }
-      };
+      }
 
-      loadDashboardData(true);
+      loadDashboardData(true)
+      const interval = setInterval(() => loadDashboardData(), DASHBOARD_POLL_INTERVAL)
+      return () => clearInterval(interval)
+    }, [vendorId, refreshSignal])
 
-      const interval = setInterval(() => loadDashboardData(), DASHBOARD_POLL_INTERVAL);
-      return () => clearInterval(interval);
-    }, [vendorId, refreshSignal]);
-
-    return dashboardData;
+    return dashboardData
   }
 
   useEffect(() => {
-    const token = localStorage.getItem("jwtToken");
+    const token = localStorage.getItem("jwtToken")
     if (token) {
-      const decoded_token = jwtDecode<{ sub: { id: number } }>(token);
-      setVendorId(decoded_token.sub.id);
+      const decoded_token = jwtDecode<{ sub: { id: number } }>(token)
+      setVendorId(decoded_token.sub.id)
     }
   }, []);
 
   useEffect(() => {
-    const handleRefresh = () => setRefreshSignal((prev) => !prev);
-    window.addEventListener("refresh-dashboard", handleRefresh);
-    return () => window.removeEventListener("refresh-dashboard", handleRefresh);
+    const handleRefresh = () => setRefreshSignal((prev) => !prev)
+    window.addEventListener("refresh-dashboard", handleRefresh)
+    return () => window.removeEventListener("refresh-dashboard", handleRefresh)
   }, []);
 
-  const dashboardData = useDashboardData(vendorId, refreshSignal);
+  const dashboardData = useDashboardData(vendorId, refreshSignal)
 
   if (!dashboardData) {
-    return <HashLoader />;
+    return <HashLoader className="py-[42vh]" />
   }
 
   return (
     <>
       {dashboardData?.available ? (
-        <HashLoader />
+        <HashLoader className="py-[50vh]"/>
       ) : (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
-          {/* Top Stats */}
-          <div className="w-full h-[5vh] px-4 flex items-center justify-between gap-4 bg-transparent border-b dark:border-zinc-800 shadow-sm">
-            {/* Earnings */}
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
-              className="flex-1 flex items-center justify-start gap-3"
-            >
-              <IndianRupee className="w-4 h-4 text-emerald-500" />
-              <span className="text-sm text-zinc-700 dark:text-zinc-300">Earnings:</span>
-              <span className="font-bold text-zinc-900 dark:text-white text-sm">
-                {showEarnings ? `₹${dashboardData?.stats?.todayEarnings ?? 0}` : "₹•••••"}
-              </span>
-              <button
-                onClick={() => setShowEarnings(!showEarnings)}
-                className="ml-2 text-emerald-500 hover:text-emerald-600 transition"
-              >
-                {showEarnings ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-              </button>
-            </motion.div>
-
-            {/* Bookings */}
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-              className="flex-1 flex items-center justify-center gap-3"
-            >
-              <CalendarCheck className="w-4 h-4 text-blue-500" />
-              <span className="text-sm text-zinc-700 dark:text-zinc-300">Bookings:</span>
-              <span className="font-bold text-zinc-900 dark:text-white text-sm">
-                {dashboardData?.stats?.todayBookings ?? 0}
-              </span>
-              <span className="text-xs text-green-500 flex items-center gap-1">
-                <TrendingUp className="w-3 h-3" />
-                {dashboardData?.stats?.todayBookingsChange ?? 0}%
-              </span>
-            </motion.div>
-
-            {/* Pending */}
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-              className="flex-1 flex items-center justify-end gap-3"
-            >
-              <WalletCards className="w-4 h-4 text-purple-500" />
-              <span className="text-sm text-zinc-700 dark:text-zinc-300">Pending:</span>
-              <span className="font-bold text-zinc-900 dark:text-white text-sm">
-                {showPending ? `₹${dashboardData?.stats?.pendingAmount ?? 0}` : "₹•••••"}
-              </span>
-              <button
-                onClick={() => setShowPending(!showPending)}
-                className="ml-2 text-purple-500 hover:text-purple-600 transition"
-              >
-                {showPending ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-              </button>
-            </motion.div>
-          </div>
-
-          {/* Grid Layout */}
-          <div
-            className={clsx(
-              "grid gap-6 grid-cols-1 transition-[grid-template-columns] duration-300",
-              showBookingStats ? "lg:grid-cols-4" : "lg:grid-cols-3"
-            )}
+        <div className="min-h-screen bg-background text-foreground p-4 md:p-6">
+          {/* Header */}
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex flex-col md:flex-row md:items-center justify-between mb-8"
           >
-            <div
-              className={clsx(
-                "space-y-6",
-                showBookingStats ? "lg:col-span-3" : "lg:col-span-2"
-              )}
-            >
-              {/* Booking Stats */}
+            <div className="mb-4 md:mb-0">
+              <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-2">Dashboard</h1>
+            </div>
+            
+            <div className="flex items-center gap-3">
+              {/* Rapid Booking Button - switches to rapid booking tab */}
+              <Button 
+                onClick={() => setActiveTab("product")}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors duration-200"
+              >
+                <Zap className="w-4 h-4 mr-2" />
+                Rapid Booking
+              </Button>
+              <button className="p-2 bg-card hover:bg-muted rounded-lg transition-colors duration-200">
+                <RefreshCw className="w-5 h-5 text-muted-foreground" />
+              </button>
+            </div>
+          </motion.div>
+
+          {/* Top Stats Cards */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 mb-8"
+          >
+            {/* Earnings Card */}
+            <Card className="bg-card border-border backdrop-blur-sm">
+              <CardContent className="p-4 md:p-6">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-emerald-500/20 rounded-lg">
+                      <IndianRupee className="w-5 h-5 text-emerald-400" />
+                    </div>
+                    <div>
+                      <p className="text-muted-foreground text-sm font-medium">Earnings</p>
+                      <div className="flex items-center gap-2">
+                        <p className="text-xl md:text-2xl font-bold text-foreground">
+                          {showEarnings ? `₹${dashboardData?.stats?.todayEarnings ?? 0}` : "₹•••••"}
+                        </p>
+                        <button
+                          onClick={() => setShowEarnings(!showEarnings)}
+                          className="text-emerald-400 hover:text-emerald-300 transition-colors"
+                        >
+                          {showEarnings ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <TrendingUp className="w-5 h-5 text-emerald-400 mb-1" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Bookings Card */}
+            <Card className="bg-card border-border backdrop-blur-sm">
+              <CardContent className="p-4 md:p-6">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-blue-500/20 rounded-lg">
+                      <CalendarCheck className="w-5 h-5 text-blue-400" />
+                    </div>
+                    <div>
+                      <p className="text-muted-foreground text-sm font-medium">Bookings</p>
+                      <p className="text-xl md:text-2xl font-bold text-foreground">
+                        {dashboardData?.stats?.todayBookings ?? 0}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="flex items-center gap-1 text-green-400 text-sm font-medium">
+                      <TrendingUp className="w-4 h-4" />
+                      {dashboardData?.stats?.todayBookingsChange ?? 0}%
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Pending Card */}
+            <Card className="bg-card border-border backdrop-blur-sm">
+              <CardContent className="p-4 md:p-6">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-yellow-500/20 rounded-lg">
+                      <WalletCards className="w-5 h-5 text-yellow-400" />
+                    </div>
+                    <div>
+                      <p className="text-muted-foreground text-sm font-medium">Pending</p>
+                      <div className="flex items-center gap-2">
+                        <p className="text-xl md:text-2xl font-bold text-foreground">
+                          {showPending ? `₹${dashboardData?.stats?.pendingAmount ?? 0}` : "₹•••••"}
+                        </p>
+                        <button
+                          onClick={() => setShowPending(!showPending)}
+                          className="text-yellow-400 hover:text-yellow-300 transition-colors"
+                        >
+                          {showPending ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="w-3 h-3 bg-yellow-400 rounded-full animate-pulse"></div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+
+          {/* Main Content Grid */}
+          <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
+            {/* Left Column - Available Devices & Current Slots */}
+            <div className="xl:col-span-3 space-y-6">
+              {/* Available Devices */}
               <AnimatePresence>
                 {showBookingStats && (
                   <motion.div
@@ -186,69 +225,103 @@ export function DashboardContent() {
                     exit={{ x: -20, opacity: 0 }}
                     transition={{ duration: 0.25 }}
                   >
-                    <Card className="theme-card bg-card">
-                      <div className="flex items-center justify-between p-2 border-b">
-                        <h3 className="text-sm font-semibold">Available Devices</h3>
-                        <button
-                          onClick={() => setShowBookingStats(false)}
-                          className="p-1 hover:bg-muted rounded"
-                        >
-                          <ChevronRight className="w-4 h-4 rotate-180" />
-                        </button>
-                      </div>
-                      <BookingStats
-                        stats={dashboardData.bookingStats}
-                        refreshSlots={refreshSlots}
-                        setRefreshSlots={setRefreshSlots}
-                      />
+                    <Card className="bg-card border-border backdrop-blur-sm">
+                      <CardHeader className="flex flex-row items-center justify-between pb-4">
+                        <CardTitle className="text-lg font-semibold text-foreground">Available Devices</CardTitle>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => setRefreshSlots(!refreshSlots)}
+                            className="p-2 hover:bg-muted rounded-lg transition-colors"
+                          >
+                            <RefreshCw className="w-4 h-4 text-muted-foreground" />
+                          </button>
+                          <button
+                            onClick={() => setShowBookingStats(false)}
+                            className="p-2 hover:bg-muted rounded-lg transition-colors"
+                          >
+                            <ChevronRight className="w-4 h-4 text-muted-foreground rotate-180" />
+                          </button>
+                        </div>
+                      </CardHeader>
+                      <CardContent>
+                        <BookingStats
+                          stats={dashboardData.bookingStats}
+                          refreshSlots={refreshSlots}
+                          setRefreshSlots={setRefreshSlots}
+                        />
+                      </CardContent>
                     </Card>
                   </motion.div>
                 )}
               </AnimatePresence>
 
               {/* Current Slots */}
-              <Card className="theme-card bg-card">
-                <CurrentSlots
-                  currentSlots={dashboardData.currentSlots}
-                  refreshSlots={refreshSlots}
-                  setRefreshSlots={setRefreshSlots}
-                />
-              </Card>
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+              >
+                <Card className="bg-card border-border backdrop-blur-sm">
+                  <CardHeader>
+                    <CardTitle className="text-lg font-semibold text-foreground"></CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <CurrentSlots
+                      currentSlots={dashboardData.currentSlots}
+                      refreshSlots={refreshSlots}
+                      setRefreshSlots={setRefreshSlots}
+                    />
+                  </CardContent>
+                </Card>
+              </motion.div>
             </div>
 
-            {/* Upcoming Bookings Sidebar - always visible, no expand/collapse */}
-            <aside className="lg:col-span-1">
-              <Card className="theme-card bg-card sticky top-6">
-                <UpcomingBookings
-                  upcomingBookings={dashboardData.upcomingBookings}
-                  vendorId={dashboardData.vendorId}
-                  setRefreshSlots={setRefreshSlots}
-                />
+            {/* Right Column - Upcoming Bookings */}
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.4 }}
+              className="xl:col-span-1"
+            >
+              <Card className="bg-card border-border h-full backdrop-blur-sm sticky top-6">
+                <CardHeader className="flex flex-row items-center justify-between pb-4">
+                  <CardTitle className="text-lg font-semibold text-foreground"></CardTitle>
+                  {/**<RefreshCw className="w-4 h-4 text-muted-foreground" />**/}
+                </CardHeader>
+                <CardContent>
+                  <UpcomingBookings
+                    upcomingBookings={dashboardData.upcomingBookings}
+                    vendorId={dashboardData.vendorId}
+                    setRefreshSlots={setRefreshSlots}
+                  />
+                </CardContent>
               </Card>
-            </aside>
+            </motion.div>
           </div>
 
-          {/* Floating Buttons for Booking Stats only */}
+          {/* Floating Action Button */}
           {!showBookingStats && (
-            <button
+            <motion.button
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
               onClick={() => setShowBookingStats(true)}
-              className="fixed bottom-6 right-6 p-3 rounded-full bg-indigo-600 text-white shadow-lg hover:bg-indigo-700"
+              className="fixed bottom-6 right-6 p-4 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-200 z-50"
             >
-              <TrendingUpIcon className="w-5 h-5" />
-            </button>
+              <TrendingUpIcon className="w-6 h-6" />
+            </motion.button>
           )}
-        </motion.div>
+        </div>
       )}
     </>
-  );
+  )
 }
 
 function App() {
   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-      <DashboardContent />
+    <div className="min-h-screen bg-background">
+      <DashboardContent activeTab="gaming-cafe" setActiveTab={() => {}} />
     </div>
-  );
+  )
 }
 
-export default App;
+export default App

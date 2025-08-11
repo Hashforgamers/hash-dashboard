@@ -1,5 +1,4 @@
 "use client";
-
 import { useState } from "react";
 import {
   Card,
@@ -9,29 +8,20 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import {
-  PlusCircle,
-  List,
-  Monitor,
-  Gamepad,
-  Tv,
-  Headset,
-  ArrowLeft,
-} from "lucide-react";
+import { PlusCircle, List, Monitor, Gamepad, Tv, Headset, ArrowLeft } from 'lucide-react';
 import { AddConsoleForm } from "./add-console-form";
 import { ConsoleList } from "./console-list";
 import { EditConsoleForm } from "./edit-console-form";
 import { motion, AnimatePresence } from "framer-motion";
 import { jwtDecode } from "jwt-decode";
 
-// Define the available actions (Add and List)
+// <CHANGE> Updated actions to use consistent card styling instead of different colors
 const actions = [
   {
     type: "add",
     icon: PlusCircle,
     label: "Add New Console",
     description: "Register a new gaming console in the system",
-    color: "bg-emerald-100 dark:bg-emerald-950",
     iconColor: "#059669",
   },
   {
@@ -39,34 +29,30 @@ const actions = [
     icon: List,
     label: "List Consoles",
     description: "View and manage existing consoles",
-    color: "bg-blue-100 dark:bg-blue-950",
     iconColor: "#2563eb",
   },
 ];
 
-// Define the available console types (PC, PS5, Xbox, VR)
+// <CHANGE> Updated console types to use consistent card styling instead of different colors
 const consoleTypes = [
   {
     type: "pc",
     name: "PC",
     icon: Monitor,
-    color: "bg-purple-100 dark:bg-purple-950",
     iconColor: "#7c3aed",
     description: "Gaming PCs and Workstations",
   },
   {
     type: "ps5",
-    name:"PS5",
+    name: "PS5",
     icon: Tv,
-    color: "bg-blue-100 dark:bg-blue-950",
     iconColor: "#2563eb",
-    description: "PlayStation 5 ",
+    description: "PlayStation 5",
   },
   {
     type: "xbox",
     name: "Xbox",
     icon: Gamepad,
-    color: "bg-green-100 dark:bg-green-950",
     iconColor: "#059669",
     description: "Xbox Series Consoles",
   },
@@ -74,7 +60,6 @@ const consoleTypes = [
     type: "vr",
     name: "VR",
     icon: Headset,
-    color: "bg-orange-100 dark:bg-orange-950",
     iconColor: "#ea580c",
     description: "Virtual Reality Systems",
   },
@@ -94,7 +79,6 @@ export function ManageGamingConsole() {
 
   const handleConsoleTypeClick = (consoleType: string) => {
     setSelectedConsoleType(consoleType);
-   
   };
 
   const handleEditConsole = (console: any) => {
@@ -113,7 +97,6 @@ export function ManageGamingConsole() {
     }
   };
 
-
   const renderContent = () => {
     if (selectedAction === "add") {
       if (selectedConsoleType) {
@@ -127,9 +110,9 @@ export function ManageGamingConsole() {
           </motion.div>
         );
       }
-      
+
       return (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
           {consoleTypes.map((console) => (
             <motion.div
               key={console.type}
@@ -139,16 +122,16 @@ export function ManageGamingConsole() {
               transition={{ duration: 0.2 }}
             >
               <Card
-                className={`cursor-pointer transition-all hover:shadow-lg ${console.color}`}
+                className="cursor-pointer transition-all hover:shadow-lg bg-card border-border rounded-lg hover:bg-accent/50"
                 onClick={() => handleConsoleTypeClick(console.type)}
               >
-                <CardHeader>
+                <CardHeader className="p-4 md:p-6">
                   <console.icon
-                    className="w-8 h-8 mb-2"
+                    className="w-6 h-6 md:w-8 md:h-8 mb-2"
                     style={{ color: console.iconColor }}
                   />
-                  <CardTitle>{console.name}</CardTitle>
-                  <CardDescription>{console.description}</CardDescription>
+                  <CardTitle className="text-foreground text-lg md:text-xl">{console.name}</CardTitle>
+                  <CardDescription className="text-muted-foreground text-sm">{console.description}</CardDescription>
                 </CardHeader>
               </Card>
             </motion.div>
@@ -156,6 +139,7 @@ export function ManageGamingConsole() {
         </div>
       );
     }
+
     if (selectedAction === "list") {
       return (
         <motion.div
@@ -167,8 +151,9 @@ export function ManageGamingConsole() {
         </motion.div>
       );
     }
+
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
         {actions.map((action) => (
           <motion.div
             key={action.type}
@@ -178,20 +163,20 @@ export function ManageGamingConsole() {
             transition={{ duration: 0.2 }}
           >
             <Card
-              className={`cursor-pointer transition-all hover:shadow-lg ${
-                action.color
-              } ${selectedAction === action.type ? "ring-2 ring-primary" : ""}`}
+              className={`cursor-pointer transition-all hover:shadow-lg bg-card border-border rounded-lg hover:bg-accent/50 ${
+                selectedAction === action.type ? "ring-2 ring-primary" : ""
+              }`}
               onClick={() => handleActionClick(action.type)}
             >
-              <CardHeader>
+              <CardHeader className="p-4 md:p-6">
                 {selectedAction === null && (
                   <action.icon
-                    className="w-8 h-8 mb-2"
+                    className="w-6 h-6 md:w-8 md:h-8 mb-2"
                     style={{ color: action.iconColor }}
                   />
                 )}
-                <CardTitle>{action.label}</CardTitle>
-                <CardDescription>{action.description}</CardDescription>
+                <CardTitle className="text-foreground text-lg md:text-xl">{action.label}</CardTitle>
+                <CardDescription className="text-muted-foreground text-sm">{action.description}</CardDescription>
               </CardHeader>
             </Card>
           </motion.div>
@@ -201,53 +186,56 @@ export function ManageGamingConsole() {
   };
 
   return (
-    <div className="container mx-auto py-8 px-4">
-      <div
-        className="inline-flex items-center mb-10"
-        style={{ position: "relative", height: "auto" }}
-      >
-        <motion.div
-          className="flex items-center justify-center p-1 -ml-4"
-          style={{ position: "absolute", left: "-56px" }}
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1.0, scale: 1.0 }}
-          whileHover={{ scale: 1.1 }}
-          transition={{ duration: 0.3 }}
+    <div className="min-h-screen bg-background text-foreground">
+      <div className="container mx-auto py-6 md:py-8 px-4">
+        <div
+          className="inline-flex items-center mb-8 md:mb-10"
+          style={{ position: "relative", height: "auto" }}
         >
-          {(selectedAction === "add" || selectedAction === "list") && (
-            <button
-              type="button"
-              onClick={handleBack}
-              className=" text-center w-24 rounded-2xl  relative text-lime-100 text-sm   group"
-            >
-              <div className="bg-lime-400 rounded-xl h- w-1/4 grid place-items-center absolute left-0 top-0 group-hover:w-full z-10 duration-500">
-                <svg
-                  width="25px"
-                  height="25px"
-                  viewBox="0 0 1024 1024"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    fill="#000000"
-                    d="M224 480h640a32 32 0 1 1 0 64H224a32 32 0 0 1 0-64z"
-                  ></path>
-                  <path
-                    fill="#000000"
-                    d="m237.248 512 265.408 265.344a32 32 0 0 1-45.312 45.312l-288-288a32 32 0 0 1 0-45.312l288-288a32 32 0 1 1 45.312 45.312L237.248 512z"
-                  ></path>
-                </svg>
-              </div>
-              <p className="translate-x-4 width-24 text-lime-400">Go Back</p>
-            </button>
-          )}
-        </motion.div>
+          <motion.div
+            className="flex items-center justify-center p-1 -ml-4"
+            style={{ position: "absolute", left: "-56px" }}
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1.0, scale: 1.0 }}
+            whileHover={{ scale: 1.1 }}
+            transition={{ duration: 0.3 }}
+          >
+            {(selectedAction === "add" || selectedAction === "list") && (
+              <button
+                type="button"
+                onClick={handleBack}
+                className="text-center w-20 md:w-24 rounded-2xl relative text-lime-100 text-xs md:text-sm group"
+              >
+                <div className="bg-lime-400 rounded-xl h-8 md:h-10 w-1/4 grid place-items-center absolute left-0 top-0 group-hover:w-full z-10 duration-500">
+                  <svg
+                    width="20px"
+                    height="20px"
+                    className="md:w-6 md:h-6"
+                    viewBox="0 0 1024 1024"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      fill="#000000"
+                      d="M224 480h640a32 32 0 1 1 0 64H224a32 32 0 0 1 0-64z"
+                    ></path>
+                    <path
+                      fill="#000000"
+                      d="m237.248 512 265.408 265.344a32 32 0 0 1-45.312 45.312l-288-288a32 32 0 0 1 0-45.312l288-288a32 32 0 1 1 45.312 45.312L237.248 512z"
+                    ></path>
+                  </svg>
+                </div>
+                <p className="translate-x-3 md:translate-x-4 text-lime-400">Go Back</p>
+              </button>
+            )}
+          </motion.div>
+        </div>
+
+        <AnimatePresence mode="wait">{renderContent()}</AnimatePresence>
+
+        {editingConsole && (
+          <EditConsoleForm console={editingConsole} onClose={handleCloseEdit} />
+        )}
       </div>
-
-      <AnimatePresence mode="wait">{renderContent()}</AnimatePresence>
-
-      {editingConsole && (
-        <EditConsoleForm console={editingConsole} onClose={handleCloseEdit} />
-      )}
     </div>
   );
 }

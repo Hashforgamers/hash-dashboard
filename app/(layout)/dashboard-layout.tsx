@@ -4,7 +4,7 @@ import { useState } from "react"
 import { Moon, Sun, Hash , Menu, X  } from 'lucide-react'
 import { useTheme } from "next-themes"
 import { Button } from "@/components/ui/button"
-import { MainNav } from "./main-nav"
+import { MainNav } from "../components/main-nav"
 import Image from "next/image"
 
 export function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -48,7 +48,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
                <aside className={`
                   fixed md:relative z-30 md:z-auto
                   w-64 md:w-[60px] md:hover:w-64 group
-                  bg-card border-r border-border p-4 
+                  bg-background border-r border-border p-4 
                   transition-all duration-300 ease-in-out overflow-hidden
                   h-full md:h-auto
                    ${isNavOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
@@ -60,8 +60,8 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
             <Image
               src="/whitehashlogo.png"
               alt="Hash Logo - Dark Mode"
-              width={100}
-              height={100}
+              width={40}
+              height={40}
               className="shrink-0 hidden dark:block"
             />
             {/* Light mode logo (black logo) */}
@@ -94,4 +94,3 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
     </div>
   )
 }
-

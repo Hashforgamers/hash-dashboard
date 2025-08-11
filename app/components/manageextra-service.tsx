@@ -1,5 +1,4 @@
 "use client"
-
 import React, { useEffect, useState } from "react"
 import {
   Card,
@@ -20,16 +19,15 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { motion } from "framer-motion"
-import { Plus, Trash2, Edit3 } from "lucide-react"
+import { Plus, Trash2, Edit3, Loader2, UtensilsCrossed, Coffee } from 'lucide-react'
 import Image from "next/image"
 import { jwtDecode } from "jwt-decode";
 import clsx from "clsx";
 import { DASHBOARD_URL } from "@/src/config/env";
 
 /* ------------------------------------------------------------------ */
-/* -----------------------  TYPE DEFINITIONS  ----------------------- */
+/* -----------------------    TYPE DEFINITIONS    ----------------------- */
 /* ------------------------------------------------------------------ */
-
 interface ExtraServiceMenu {
   id: number
   name: string
@@ -46,8 +44,7 @@ interface ExtraServiceCategory {
   items: ExtraServiceMenu[]
 }
 
-/* ----------  Forms ---------- */
-
+/* ----------    Forms ---------- */
 interface CategoryForm {
   name: string
   description: string
@@ -56,24 +53,33 @@ interface CategoryForm {
 interface MenuItemForm {
   name: string
   description: string
-  price: string                // keep as string for input binding
+  price: string          // keep as string for input binding
   imageFile?: File | null
   is_active: boolean
 }
 
 /* ------------------------------------------------------------------ */
-/* ----------------------------  CONFIG  ---------------------------- */
+/* ----------------------------    CONFIG    ---------------------------- */
 /* ------------------------------------------------------------------ */
-
-// UPDATED: Changed port from 5056 to 5054 based on your Docker container
 const API_BASE = `${DASHBOARD_URL}/api`;
 
-/* ------------------------------------------------------------------ */
-/* -------------------------  COMPONENT  ---------------------------- */
-/* ------------------------------------------------------------------ */
+// <CHANGE> Added category icons mapping for visual distinction
+const getCategoryIcon = (categoryName: string) => {
+  const name = categoryName.toLowerCase();
+  if (name.includes('food') || name.includes('snack')) {
+    return <UtensilsCrossed className="w-5 h-5 text-orange-400" />;
+  }
+  if (name.includes('drink') || name.includes('beverage')) {
+    return <Coffee className="w-5 h-5 text-blue-400" />;
+  }
+  return <UtensilsCrossed className="w-5 h-5 text-primary" />;
+};
 
+/* ------------------------------------------------------------------ */
+/* -------------------------    COMPONENT    ---------------------------- */
+/* ------------------------------------------------------------------ */
 export default function ManageExtraServices() {
-  /* -----------------  STATE  ----------------- */
+  /* -----------------    STATE    ----------------- */
   const [categories, setCategories] = useState<ExtraServiceCategory[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -96,19 +102,16 @@ export default function ManageExtraServices() {
   const [vendorId, setVendorId] = useState<number | null>(null)
   const [menuLoading, setMenuLoading] = useState(false)
 
-  /* -----------------  HELPERS  ----------------- */
-
+  /* -----------------    HELPERS    ----------------- */
   const fetchCategories = async () => {
     if (!vendorId) {
       console.log('VendorId not available, skipping fetch')
       return
     }
-
     try {
       setLoading(true)
       setError(null)
       console.log('Fetching categories from:', `${API_BASE}/vendor/${vendorId}/extra-services`)
-      
       const res = await fetch(`${API_BASE}/vendor/${vendorId}/extra-services`)
       if (!res.ok) {
         throw new Error(`HTTP ${res.status}: ${res.statusText}`)
@@ -124,38 +127,31 @@ export default function ManageExtraServices() {
     }
   }
 
-  /* -----------------  CRUD CALLS  ----------------- */
-
+  /* -----------------    CRUD CALLS    ----------------- */
   const createCategory = async () => {
     if (!categoryForm.name.trim()) {
       alert('Category name is required')
       return
     }
-
     if (!vendorId) {
       alert('Vendor ID not found')
       return
     }
-
     try {
       setCategoryLoading(true)
       const payload = { name: categoryForm.name.trim(), description: categoryForm.description.trim() }
       console.log('Creating category:', payload)
-      
       const res = await fetch(`${API_BASE}/vendor/${vendorId}/extra-services/category`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       })
-      
       if (!res.ok) {
         const errorData = await res.json().catch(() => ({ error: 'Unknown error' }))
         throw new Error(errorData.error || `HTTP ${res.status}`)
       }
-      
       const result = await res.json()
       console.log('Category created:', result)
-      
       setShowCategoryDlg(false)
       setCategoryForm({ name: "", description: "" })
       await fetchCategories()
@@ -171,20 +167,16 @@ export default function ManageExtraServices() {
     if (!confirm('Are you sure you want to delete this category and all its menu items?')) {
       return
     }
-
     if (!vendorId) return
-
     try {
       console.log('Deleting category:', categoryId)
       const res = await fetch(`${API_BASE}/vendor/${vendorId}/extra-services/category/${categoryId}`, {
         method: "DELETE",
       })
-      
       if (!res.ok) {
         const errorData = await res.json().catch(() => ({ error: 'Unknown error' }))
         throw new Error(errorData.error || `HTTP ${res.status}`)
       }
-      
       console.log('Category deleted successfully')
       await fetchCategories()
     } catch (err) {
@@ -198,9 +190,7 @@ export default function ManageExtraServices() {
       alert('Name and price are required')
       return
     }
-
     if (activeCategoryId == null || !vendorId) return
-
     try {
       setMenuLoading(true)
       const form = new FormData()
@@ -211,22 +201,17 @@ export default function ManageExtraServices() {
         form.append("image", menuForm.imageFile)
         console.log('Including image file:', menuForm.imageFile.name)
       }
-
       console.log('Creating menu item for category:', activeCategoryId)
-
       const res = await fetch(
         `${API_BASE}/vendor/${vendorId}/extra-services/category/${activeCategoryId}/menu`,
         { method: "POST", body: form }
       )
-      
       if (!res.ok) {
         const errorData = await res.json().catch(() => ({ error: 'Unknown error' }))
         throw new Error(errorData.error || `HTTP ${res.status}`)
       }
-      
       const result = await res.json()
       console.log('Menu item created:', result)
-      
       setShowMenuDlg(false)
       setMenuForm({
         name: "",
@@ -248,21 +233,17 @@ export default function ManageExtraServices() {
     if (!confirm('Are you sure you want to delete this menu item?')) {
       return
     }
-
     if (!vendorId) return
-
     try {
       console.log('Deleting menu item:', menuId, 'from category:', categoryId)
       const res = await fetch(
         `${API_BASE}/vendor/${vendorId}/extra-services/category/${categoryId}/menu/${menuId}`,
         { method: "DELETE" }
       )
-      
       if (!res.ok) {
         const errorData = await res.json().catch(() => ({ error: 'Unknown error' }))
         throw new Error(errorData.error || `HTTP ${res.status}`)
       }
-      
       console.log('Menu item deleted successfully')
       await fetchCategories()
     } catch (err) {
@@ -271,20 +252,17 @@ export default function ManageExtraServices() {
     }
   }
 
-  /* -----------------  IMAGE HANDLER  ----------------- */
-
+  /* -----------------    IMAGE HANDLER    ----------------- */
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     console.log('Image selected:', file?.name)
     setMenuForm((prev) => ({ ...prev, imageFile: file }))
   }
 
-  /* -----------------  EFFECTS  ----------------- */
-
+  /* -----------------    EFFECTS    ----------------- */
   // Decode token once when the component mounts
   useEffect(() => {
     const token = localStorage.getItem("jwtToken");
-
     if (token) {
       try {
         const decoded_token = jwtDecode<{ sub: { id: number } }>(token);
@@ -308,52 +286,45 @@ export default function ManageExtraServices() {
     }
   }, [vendorId]) // This will trigger when vendorId changes
 
-  /* -----------------  UI  ----------------- */
-
+  /* -----------------    UI    ----------------- */
   return (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="min-h-screen bg-background p-6 space-y-6"
+      className="min-h-screen bg-background text-foreground p-4 md:p-6 space-y-6"
     >
-      {/* ----------  HEADER  ---------- */}
+      {/* ----------    HEADER    ---------- */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
-        className="flex items-center justify-between mb-8"
+        className="flex flex-col md:flex-row md:items-center justify-between mb-8"
       >
         <div>
-          <h1 className="text-3xl font-bold mb-2">Manage Extra Services</h1>
+          <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-2">Manage Extra Services</h1>
           <p className="text-muted-foreground">
             Create categories and add menu items
           </p>
-          {vendorId && (
-            <p className="text-xs text-muted-foreground mt-1">
-            
-            </p>
-          )}
         </div>
-
-        <Button 
+        <Button
           onClick={() => setShowCategoryDlg(true)}
           disabled={loading || !vendorId}
-          className="bg-emerald-600 hover:bg-emerald-700"
+          className="bg-blue-600 hover:bg-primary/90 text-primary-foreground px-4 py-2 rounded-lg font-medium transition-colors duration-200"
         >
           <Plus className="w-4 h-4 mr-2" />
           New Category
         </Button>
       </motion.div>
 
-      {/* ----------  ERROR STATE  ---------- */}
+      {/* ----------    ERROR STATE    ---------- */}
       {error && (
-        <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4">
-          <p className="text-destructive font-medium">Error loading categories:</p>
-          <p className="text-destructive text-sm mt-1">{error}</p>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="mt-2"
+        <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4 text-destructive">
+          <p className="font-medium">Error loading categories:</p>
+          <p className="text-sm mt-1">{error}</p>
+          <Button
+            variant="outline"
+            size="sm"
+            className="mt-2 border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
             onClick={fetchCategories}
             disabled={!vendorId}
           >
@@ -362,7 +333,7 @@ export default function ManageExtraServices() {
         </div>
       )}
 
-      {/* ----------  LOADING STATE WHEN NO VENDOR ID  ---------- */}
+      {/* ----------    LOADING STATE WHEN NO VENDOR ID    ---------- */}
       {!vendorId && !error && (
         <div className="text-center py-12">
           <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -370,7 +341,7 @@ export default function ManageExtraServices() {
         </div>
       )}
 
-      {/* ----------  CATEGORY LIST  ---------- */}
+      {/* ----------    CATEGORY LIST    ---------- */}
       {vendorId && (
         loading ? (
           <div className="text-center py-12">
@@ -380,8 +351,8 @@ export default function ManageExtraServices() {
         ) : categories.length === 0 ? (
           <div className="text-center py-12">
             <p className="text-muted-foreground">No categories found.</p>
-            <Button 
-              className="mt-4 bg-emerald-600 hover:bg-emerald-700" 
+            <Button
+              className="mt-4 bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-2 rounded-lg font-medium transition-colors duration-200"
               onClick={() => setShowCategoryDlg(true)}
             >
               Create Your First Category
@@ -396,81 +367,81 @@ export default function ManageExtraServices() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.05 * i }}
               >
-                <Card className="theme-card">
-                  <CardHeader className="pb-3">
+                <Card className="bg-card border border-border rounded-lg shadow-lg">
+                  <CardHeader className="pb-4">
                     <div className="flex items-center justify-between">
-                      <div>
-                        <CardTitle className="text-xl font-semibold">
-                          {cat.name}
-                        </CardTitle>
-                        {cat.description && (
-                          <p className="text-sm text-muted-foreground">{cat.description}</p>
-                        )}
-                        <p className="text-xs text-muted-foreground mt-1">
-                          {cat.items.length} item{cat.items.length !== 1 ? 's' : ''}
-                        </p>
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-muted/20 rounded-lg">
+                          {getCategoryIcon(cat.name)}
+                        </div>
+                        <div>
+                          <CardTitle className="text-xl font-semibold text-foreground">
+                            {cat.name}
+                          </CardTitle>
+                          {cat.description && (
+                            <p className="text-sm text-muted-foreground mt-1">{cat.description}</p>
+                          )}
+                        </div>
                       </div>
-
                       <Button
                         size="icon"
                         variant="ghost"
                         onClick={() => deleteCategory(cat.id)}
-                        className="text-muted-foreground hover:text-destructive"
+                        className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg"
                       >
                         <Trash2 className="w-5 h-5" />
                       </Button>
                     </div>
                   </CardHeader>
-
                   <CardContent>
-                    {/* --------  menu grid  -------- */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                    {/* --------    menu grid with slightly smaller cards    -------- */}
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                      {/* Existing menu items - SLIGHTLY SMALLER */}
                       {cat.items.map((item, idx) => (
                         <motion.div
                           key={item.id}
                           initial={{ opacity: 0, scale: 0.9 }}
                           animate={{ opacity: 1, scale: 1 }}
                           transition={{ delay: 0.04 * idx }}
+                          className="w-[220px]" // Slightly smaller width (was larger before)
                         >
-                          <Card
-                            className={clsx(
-                              "overflow-hidden hover:shadow-lg transition-shadow",
-                              "bg-card border"
-                            )}
-                          >
+                          <Card className="overflow-hidden hover:shadow-lg transition-shadow duration-300 bg-muted/30 border border-border rounded-lg">
                             <CardContent className="p-0">
+                              {/* Image section - slightly smaller */}
                               <div className="aspect-video relative">
                                 <Image
                                   alt={item.name}
-                                  src={item.image ?? "/placeholder.svg"}
+                                  src={item.image ?? "/placeholder.svg?height=140&width=220&query=food item"}
                                   fill
-                                  className="object-cover"
+                                  className="object-cover rounded-t-lg"
                                 />
-                                <div className="absolute top-2 right-2 flex gap-1">
+                                <div className="absolute top-2 right-2">
                                   <Button
                                     size="icon"
                                     variant="secondary"
-                                    className="w-8 h-8 bg-white/80 hover:bg-white"
+                                    className="w-7 h-7 bg-background/80 hover:bg-background text-destructive hover:text-destructive-foreground rounded-lg"
                                     onClick={() => deleteMenuItem(cat.id, item.id)}
                                   >
-                                    <Trash2 className="w-3 h-3 text-destructive" />
+                                    <Trash2 className="w-3.5 h-3.5" />
                                   </Button>
                                 </div>
                               </div>
-                              <div className="p-4 space-y-1">
-                                <h3 className="font-semibold">{item.name}</h3>
+                              
+                              {/* Content section - slightly smaller padding */}
+                              <div className="p-3 space-y-2">
+                                <h3 className="font-semibold text-foreground text-sm">{item.name}</h3>
                                 {item.description && (
-                                  <p className="text-sm text-muted-foreground line-clamp-2">
+                                  <p className="text-xs text-muted-foreground line-clamp-2">
                                     {item.description}
                                   </p>
                                 )}
-                                <div className="flex items-center justify-between">
-                                  <p className="font-bold text-primary">₹{item.price}</p>
+                                <div className="flex items-center justify-between pt-1">
+                                  <p className="font-bold text-foreground text-base">₹{item.price}</p>
                                   <span className={clsx(
-                                    "px-2 py-1 rounded-full text-xs",
-                                    item.is_active 
-                                      ? "bg-green-100 text-green-800" 
-                                      : "bg-gray-100 text-gray-600"
+                                    "px-1.5 py-0.5 rounded-full text-xs font-medium",
+                                    item.is_active
+                                      ? "bg-green-500/20 text-green-400"
+                                      : "bg-muted/20 text-muted-foreground"
                                   )}>
                                     {item.is_active ? "Active" : "Inactive"}
                                   </span>
@@ -480,28 +451,39 @@ export default function ManageExtraServices() {
                           </Card>
                         </motion.div>
                       ))}
-                    </div>
-
-                    {/* --------  add menu item  -------- */}
-                    <div className="flex justify-center">
-                      <Button
-                        variant="outline"
-                        className="border-emerald-600 text-emerald-600 hover:bg-emerald-600 hover:text-white px-6 py-2 bg-transparent"
-                        onClick={() => {
-                          setActiveCategoryId(cat.id)
-                          setMenuForm({
-                            name: "",
-                            description: "",
-                            price: "",
-                            imageFile: undefined,
-                            is_active: true,
-                          })
-                          setShowMenuDlg(true)
-                        }}
+                      
+                      {/* Add Menu Card - EXACT SAME SIZE as item cards */}
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ delay: 0.04 * cat.items.length }}
+                        className="w-[220px]" // Same width as item cards
                       >
-                        <Plus className="w-4 h-4 mr-2" />
-                        Add Menu Item
-                      </Button>
+                        <Card className="overflow-hidden h-[220px] hover:shadow-lg transition-shadow duration-300 bg-muted/30 border-2 border-dashed border-muted-foreground/50 hover:border-primary/70 cursor-pointer rounded-lg">
+                          <CardContent 
+                            className="p-0 h-full flex items-center justify-center"
+                            onClick={() => {
+                              setActiveCategoryId(cat.id)
+                              setMenuForm({
+                                name: "",
+                                description: "",
+                                price: "",
+                                imageFile: undefined,
+                                is_active: true,
+                              })
+                              setShowMenuDlg(true)
+                            }}
+                          >
+                            {/* Match the aspect ratio of item cards exactly */}
+                            <div className="aspect-video w-full flex flex-col items-center justify-center text-muted-foreground">
+                              <div className="text-center">
+                                <Plus className="w-10 h-10 mx-auto mb-2" />
+                                <span className="text-sm font-medium">Add Menu</span>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      </motion.div>
                     </div>
                   </CardContent>
                 </Card>
@@ -512,21 +494,19 @@ export default function ManageExtraServices() {
       )}
 
       {/* ============================================================ */}
-      {/* ====================  CATEGORY DIALOG  ===================== */}
+      {/* ====================    CATEGORY DIALOG    ===================== */}
       {/* ============================================================ */}
-
       <Dialog open={showCategoryDlg} onOpenChange={setShowCategoryDlg}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-[425px] bg-card/95 backdrop-blur-md border border-border shadow-2xl rounded-lg">
           <DialogHeader>
-            <DialogTitle>New Category</DialogTitle>
-            <DialogDescription>
+            <DialogTitle className="text-foreground">New Category</DialogTitle>
+            <DialogDescription className="text-muted-foreground">
               Enter a name and description for your new category.
             </DialogDescription>
           </DialogHeader>
-
           <div className="space-y-4 py-2">
             <div>
-              <Label htmlFor="cat-name">Name *</Label>
+              <Label htmlFor="cat-name" className="text-foreground">Name *</Label>
               <Input
                 id="cat-name"
                 value={categoryForm.name}
@@ -535,11 +515,11 @@ export default function ManageExtraServices() {
                 }
                 placeholder="e.g. Food, Drinks, Snacks"
                 disabled={categoryLoading}
+                className="bg-input border-input text-foreground placeholder:text-muted-foreground rounded-lg"
               />
             </div>
-
             <div>
-              <Label htmlFor="cat-desc">Description</Label>
+              <Label htmlFor="cat-desc" className="text-foreground">Description</Label>
               <Input
                 id="cat-desc"
                 value={categoryForm.description}
@@ -551,44 +531,50 @@ export default function ManageExtraServices() {
                 }
                 placeholder="Optional description"
                 disabled={categoryLoading}
+                className="bg-input border-input text-foreground placeholder:text-muted-foreground rounded-lg"
               />
             </div>
           </div>
-
           <DialogFooter>
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               onClick={() => setShowCategoryDlg(false)}
               disabled={categoryLoading}
+              className="border-border text-foreground hover:bg-muted hover:text-foreground rounded-lg"
             >
               Cancel
             </Button>
-            <Button 
+            <Button
               onClick={createCategory}
               disabled={categoryLoading || !categoryForm.name.trim()}
+              className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg"
             >
-              {categoryLoading ? 'Creating...' : 'Create Category'}
+              {categoryLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Creating...
+                </>
+              ) : (
+                'Create Category'
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
       {/* ============================================================ */}
-      {/* ====================  MENU ITEM DIALOG  ==================== */}
+      {/* ====================    MENU ITEM DIALOG    ==================== */}
       {/* ============================================================ */}
-
       <Dialog open={showMenuDlg} onOpenChange={setShowMenuDlg}>
-        <DialogContent className="sm:max-w-[500px]">
+        <DialogContent className="sm:max-w-[500px] bg-card/95 backdrop-blur-md border border-border shadow-2xl rounded-lg">
           <DialogHeader>
-            <DialogTitle>New Menu Item</DialogTitle>
-            <DialogDescription>
+            <DialogTitle className="text-foreground">New Menu Item</DialogTitle>
+            <DialogDescription className="text-muted-foreground">
               Add a new item to your category.
             </DialogDescription>
           </DialogHeader>
-
           <div className="space-y-4 py-2">
             <div>
-              <Label>Name *</Label>
+              <Label className="text-foreground">Name *</Label>
               <Input
                 value={menuForm.name}
                 onChange={(e) =>
@@ -596,11 +582,11 @@ export default function ManageExtraServices() {
                 }
                 placeholder="e.g. Burger, Coffee"
                 disabled={menuLoading}
+                className="bg-input border-input text-foreground placeholder:text-muted-foreground rounded-lg"
               />
             </div>
-
             <div>
-              <Label>Description</Label>
+              <Label className="text-foreground">Description</Label>
               <Textarea
                 value={menuForm.description}
                 onChange={(e) =>
@@ -609,11 +595,11 @@ export default function ManageExtraServices() {
                 placeholder="Optional description"
                 disabled={menuLoading}
                 rows={3}
+                className="bg-input border-input text-foreground placeholder:text-muted-foreground rounded-lg"
               />
             </div>
-
             <div>
-              <Label>Price (₹) *</Label>
+              <Label className="text-foreground">Price (₹) *</Label>
               <Input
                 type="number"
                 value={menuForm.price}
@@ -624,16 +610,17 @@ export default function ManageExtraServices() {
                 min="0"
                 step="0.01"
                 disabled={menuLoading}
+                className="bg-input border-input text-foreground placeholder:text-muted-foreground rounded-lg"
               />
             </div>
-
             <div>
-              <Label>Image (optional)</Label>
-              <Input 
-                type="file" 
-                accept="image/*" 
+              <Label className="text-foreground">Image (optional)</Label>
+              <Input
+                type="file"
+                accept="image/*"
                 onChange={handleImageSelect}
                 disabled={menuLoading}
+                className="bg-input border-input text-foreground file:text-primary rounded-lg"
               />
               {menuForm.imageFile && (
                 <p className="text-sm mt-1 text-muted-foreground">
@@ -642,20 +629,27 @@ export default function ManageExtraServices() {
               )}
             </div>
           </div>
-
           <DialogFooter>
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               onClick={() => setShowMenuDlg(false)}
               disabled={menuLoading}
+              className="border-border text-foreground hover:bg-muted hover:text-foreground rounded-lg"
             >
               Cancel
             </Button>
-            <Button 
+            <Button
               onClick={createMenuItem}
               disabled={menuLoading || !menuForm.name.trim() || !menuForm.price.trim()}
+              className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg"
             >
-              {menuLoading ? 'Creating...' : 'Create Item'}
+              {menuLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Creating...
+                </>
+              ) : (
+                'Create Item'
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
