@@ -12,9 +12,10 @@ import {
   Users,
   DollarSign,
   Moon,
-  UtensilsCrossed,
   Sun,
-  Store
+  UtensilsCrossed,
+  Store ,
+   Ticket
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useState } from "react";
@@ -53,20 +54,21 @@ export function MainNav({
       <div className="flex flex-col space-y-2">
         {[
           { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
+           { href: "/gaming", icon: Gamepad2, label: "Manage Gaming Console" },
+             { href: "/booking", icon: CalendarCheck, label: "Manage Booking" },
           { href: "/transaction", icon: Receipt, label: "Transaction Report" },
-          { href: "/gaming", icon: Gamepad2, label: "Manage Gaming Console" },
-          { href: "/booking", icon: CalendarCheck, label: "Manage Booking" },
-          { href: "/manage-extraservice", icon: UtensilsCrossed, label: "Extra Services" },
+         
+           { href: "/manage-extraservice", icon: UtensilsCrossed , label: "Extra Services" },
           { href: "/know-your-gamers", icon: Users, label: "Know Your Gamers" },
           { href: "/console-pricing", icon: DollarSign, label: "Console Pricing" },
-        
+             { href: "/pass", icon:  Ticket, label: "Manage Passes" },
         ].map(({ href, icon: Icon, label }) => (
           <Link
             key={href}
             href={href}
             onClick={onItemClick}
             className={cn(
-              "group flex items-center space-x-2 rounded-md px-3 py-2 text-sm font-medium  hover:text-accent-foreground transition-all",
+              "group flex items-center space-x-2 rounded-md px-3 py-2 text-sm font-medium transition-all hover:bg-accent hover:text-accent-foreground",
               "md:pl-[4px]",
               pathname === href
                 ? "bg-accent text-accent-foreground"
@@ -81,7 +83,7 @@ export function MainNav({
 
       {/* Bottom section - Fixed order: Select Cafe, Toggle, then Logout */}
       <div className="flex flex-col space-y-2 mt-auto">
-        <Link
+         <Link
           href="/account"
           onClick={onItemClick}
           className={cn(

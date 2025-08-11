@@ -309,7 +309,7 @@ export default function ManageExtraServices() {
         <Button
           onClick={() => setShowCategoryDlg(true)}
           disabled={loading || !vendorId}
-          className="bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-2 rounded-lg font-medium transition-colors duration-200"
+          className="bg-blue-600 hover:bg-primary/90 text-primary-foreground px-4 py-2 rounded-lg font-medium transition-colors duration-200"
         >
           <Plus className="w-4 h-4 mr-2" />
           New Category
