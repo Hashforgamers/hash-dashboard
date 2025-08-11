@@ -1,6 +1,6 @@
 import React, { useState, useEffect ,useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import jwtDecode from 'jwt-decode';
+import {jwtDecode} from 'jwt-decode';
 import {
   X,
   User,
