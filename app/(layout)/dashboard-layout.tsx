@@ -68,8 +68,8 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
             <Image
               src="/blackhashlogo.png"
               alt="Hash Logo - Light Mode"
-              width={100}
-              height={100}
+              width={40}
+              height={40}
               className="shrink-0 dark:hidden"
             />
           </div>
