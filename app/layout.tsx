@@ -3,6 +3,11 @@ import { AuthProvider } from "./AuthProvider";
 
 import "./globals.css";
 
+export const metadata ={
+  title:"Hash for Gamers",
+  description:"Gaming Cafe Booking App"
+}
+
 export default function RootLayout({
   children,
 }: {

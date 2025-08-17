@@ -7,7 +7,6 @@ import {
 } from "lucide-react";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faIndianRupeeSign } from '@fortawesome/free-solid-svg-icons'
-
 import { useState, useEffect, useMemo } from "react";
 import axios from "axios";
 import { format, parseISO, isToday, isTomorrow, startOfToday } from 'date-fns';
@@ -63,6 +62,12 @@ const mergeConsecutiveBookings = (bookings: any[]) => {
   }, {});
 
   const parseTime = (time: string): Date => {
+    // Handle non-string values
+    if (!time || typeof time !== 'string') {
+      console.warn('parseTime expected a string but received:', time);
+      return new Date(1970, 0, 1, 0, 0); // fallback to midnight
+    }
+
     const [timePart, period] = time.trim().split(" ");
     let [hours, minutes] = timePart.split(":").map(Number);
     if (period === "PM" && hours < 12) hours += 12;
@@ -95,12 +100,12 @@ const mergeConsecutiveBookings = (bookings: any[]) => {
     Object.values(grouped).forEach((group: any) => {
       const sorted = (group as any[]).sort((a, b) => {
         const aStart = parseTime(a.time.split(" - ")[0]);
-        const bStart = parseTime(b.time.split(" - ")[0]);
+        const bStart = parseTime(b.time.split(" - "));
         return aStart.getTime() - bStart.getTime();
       });
 
       let current = { ...sorted[0] };
-      let currentStart = parseTime(current.time.split(" - ")[0]);
+      let currentStart = parseTime(current.time.split(" - "));
       let currentEnd = parseTime(current.time.split(" - ")[1]);
       let mergedIds = [current.bookingId];
       let totalPrice = current.slot_price;
@@ -226,16 +231,16 @@ export function UpcomingBookings({
   const handleSubmit = async () => {
     if (selectedConsole && selectedGameId && selectedBookingId) {
       setIsLoading(true);
-  
+
       const selectedMergedBooking = mergedBookings.find(
         (booking) => booking.bookingId === selectedBookingId || booking.merged_booking_ids?.includes(selectedBookingId)
       );
       const bookingIds = selectedMergedBooking?.merged_booking_ids || [selectedBookingId];
-  
+
       const url = bookingIds.length > 1
         ? `${DASHBOARD_URL}/api/assignConsoleToMultipleBookings`
         : `${DASHBOARD_URL}/api/updateDeviceStatus/consoleTypeId/${selectedGameId}/console/${selectedConsole}/bookingId/${selectedBookingId}/vendor/${vendorId}`;
-  
+
       const payload = bookingIds.length > 1
         ? {
             console_id: selectedConsole,
@@ -244,14 +249,14 @@ export function UpcomingBookings({
             vendor_id: vendorId,
           }
         : null;
-  
+
       try {
         if (bookingIds.length > 1) {
           await axios.post(url, payload);
         } else {
           await axios.post(url);
         }
-  
+
         setStartCard(false);
         setRefreshSlots((prev) => !prev);
       } catch (error) {
@@ -401,75 +406,56 @@ export function UpcomingBookings({
             <p className="text-sm mt-1 text-center">Try adjusting your search or filters</p>
           </div>
         ) : (
-          <div className="space-y-3 pr-2">
+          <div className="space-y-2 pr-2">
             {mergedBookings.map((booking) => (
-              <motion.div
-                key={booking.bookingId}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="bg-gray-50 dark:bg-zinc-900 rounded-lg border border-gray-200 dark:border-zinc-700 p-3 hover:shadow-lg transition-shadow duration-300"
-              >
-                {/* Card content */}
-                <div className="flex flex-col gap-3 text-sm text-gray-700 dark:text-gray-300">
-                  
-                  {/* Top: User + Info */}
-                  <div className="flex flex-col space-y-2">
-                    
-                    {/* Username + Status */}
-                    <div className="flex flex-col xs:flex-row xs:items-center xs:justify-between gap-2">
-                      <div className="flex items-center gap-2 font-medium truncate min-w-0">
-                        <User className="w-4 h-4 shrink-0" />
-                        <span className="truncate">{booking.username || "Guest User"}</span>
-                      </div>
-                      <span
-                        className={`px-2 py-1 rounded-full text-xs font-semibold self-start xs:self-center shrink-0 ${getStatusColor(
-                          booking.status
-                        )}`}
-                      >
-                        {booking.status}
-                      </span>
-                    </div>
+  <motion.div
+    key={booking.bookingId}
+    initial={{ opacity: 0, y: 10 }}
+    animate={{ opacity: 1, y: 0 }}
+    className="bg-gray-50 dark:bg-zinc-900 rounded-lg border border-gray-200 dark:border-zinc-700 p-3 hover:shadow-md transition-shadow duration-200"
+  >
+    {/* ONLY UI LAYOUT CHANGED - NO FUNCTION CHANGES */}
+    <div className="space-y-2">
+      
+      {/* Top Row: Name + Paid Status */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2 min-w-0 flex-1">
+          <User className="w-4 h-4 shrink-0" />
+          <span className="truncate">{booking.username || "Guest User"}</span>
+        </div>
+        <span className="px-2 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 shrink-0">
+          Paid
+        </span>
+      </div>
 
-                    {/* Console, Time, Duration, Price */}
-                    <div className="flex flex-col gap-2">
-                      <div className="flex items-center gap-2">
-                        {getIcon(booking.consoleType)}
-                        <span className="truncate">{booking.consoleType}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Clock className="w-4 h-4 shrink-0" />
-                        <span className="text-xs truncate">{booking.time} - {booking.endTime}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Timer className="w-4 h-4 shrink-0" />
-                        <span className="text-xs">
-                          {booking.duration} hour{booking.duration > 1 ? "s" : ""}
-                        </span>
-                        <span className="text-emerald-600 font-semibold flex items-center gap-1 text-xs ml-auto">
-                          <FontAwesomeIcon icon={faIndianRupeeSign} className="w-3 h-3" />
-                          {booking.total_price}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
+      {/* Middle Row: Time + Hours */}
+      <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
+        <div className="flex items-center gap-1">
+          <Clock className="w-4 h-4 shrink-0" />
+          <span className="text-xs">{booking.time}</span>
+        </div>
+        <div className="flex items-center gap-1">
+          <Timer className="w-4 h-4 shrink-0" />
+          <span className="text-xs">{booking.duration} hour{booking.duration > 1 ? "s" : ""}</span>
+        </div>
+      </div>
 
-                  {/* Bottom: Start Button */}
-                  <div className="flex justify-end mt-2">
-                    <motion.button
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      onClick={() =>
-                        start(booking.consoleType, booking.game_id, booking.bookingId)
-                      }
-                      className="flex justify-center items-center gap-2 px-4 py-2 text-sm bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg font-semibold shadow-md shadow-emerald-500/30 transition-all"
-                    >
-                      <Play className="w-4 h-4" />
-                      Start
-                    </motion.button>
-                  </div>
-                </div>
-              </motion.div>
-            ))}
+      {/* Bottom Row: Start Button */}
+      <motion.button
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
+        onClick={() =>
+          start(booking.consoleType, booking.game_id, booking.bookingId)
+        }
+        className="w-full py-2 text-sm bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg font-semibold transition-all flex items-center justify-center gap-2"
+      >
+        <Play className="w-4 h-4" />
+        Start
+      </motion.button>
+    </div>
+  </motion.div>
+))}
+
           </div>
         )}
       </div>

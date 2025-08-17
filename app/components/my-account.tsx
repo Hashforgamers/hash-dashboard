@@ -65,7 +65,7 @@ const handleProfileImageUpload = async (event: React.ChangeEvent<HTMLInputElemen
 
   try {
     const response = await axios.post(
-      `${VENDOR_ONBOARD_URL}/api/vendor/${vendorId}/update-profile-image`,
+      `${DASHBOARD_URL}/api/vendor/${vendorId}/update-profile-image`,
       formData,
       {
         headers: { "Content-Type": "multipart/form-data" },

@@ -287,7 +287,7 @@ export function DashboardContent({ activeTab, setActiveTab }: DashboardContentPr
   <Card className="bg-card border-border backdrop-blur-sm sticky top-6">
     <CardHeader className="flex flex-row items-center justify-between pb-4">
       <CardTitle className="text-lg font-semibold text-foreground">
-        Upcoming Bookings
+        
       </CardTitle>
     </CardHeader>
     <CardContent className="p-0">
