@@ -277,26 +277,32 @@ export function DashboardContent({ activeTab, setActiveTab }: DashboardContentPr
             </div>
 
             {/* Right Column - Upcoming Bookings */}
-            <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.4 }}
-              className="xl:col-span-1"
-            >
-              <Card className="bg-card border-border h-full backdrop-blur-sm sticky top-6">
-                <CardHeader className="flex flex-row items-center justify-between pb-4">
-                  <CardTitle className="text-lg font-semibold text-foreground"></CardTitle>
-                  {/**<RefreshCw className="w-4 h-4 text-muted-foreground" />**/}
-                </CardHeader>
-                <CardContent>
-                  <UpcomingBookings
-                    upcomingBookings={dashboardData.upcomingBookings}
-                    vendorId={dashboardData.vendorId}
-                    setRefreshSlots={setRefreshSlots}
-                  />
-                </CardContent>
-              </Card>
-            </motion.div>
+         {/* Right Column - Upcoming Bookings */}
+<motion.div
+  initial={{ opacity: 0, x: 20 }}
+  animate={{ opacity: 1, x: 0 }}
+  transition={{ delay: 0.4 }}
+  className="xl:col-span-1"
+>
+  <Card className="bg-card border-border backdrop-blur-sm sticky top-6">
+    <CardHeader className="flex flex-row items-center justify-between pb-4">
+      <CardTitle className="text-lg font-semibold text-foreground">
+        
+      </CardTitle>
+    </CardHeader>
+    <CardContent className="p-0">
+      {/* Fixed height container with scroll */}
+      <div className="h-[500px] overflow-y-auto px-6 pb-6">
+        <UpcomingBookings
+          upcomingBookings={dashboardData.upcomingBookings}
+          vendorId={dashboardData.vendorId}
+          setRefreshSlots={setRefreshSlots}
+        />
+      </div>
+    </CardContent>
+  </Card>
+</motion.div>
+
           </div>
 
           {/* Floating Action Button */}
