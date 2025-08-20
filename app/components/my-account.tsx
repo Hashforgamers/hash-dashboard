@@ -22,7 +22,7 @@ import {
 } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { User, MapPin, Calendar, Clock, Mail, Phone, Lock, CreditCard, FileCheck, FileText, Camera, Building2, Sparkles, Shield, BellRing, Wallet, Settings, Globe, Coffee, ImageIcon, Save , Edit,  Ghost, X, Loader2 } from 'lucide-react';
+import { User, MapPin, Calendar, Clock, Mail, Phone, Lock,  FileCheck, FileText, Camera, Building2, Sparkles, Shield, BellRing, Wallet, Settings, Globe, Coffee, ImageIcon, Save , Edit,  Ghost, X, Loader2, CreditCard , DollarSign } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import { jwtDecode } from "jwt-decode";
 import { DASHBOARD_URL } from "@/src/config/env";
@@ -30,6 +30,8 @@ import {VENDOR_ONBOARD_URL} from "@/src/config/env"
 import axios from "axios";
 import HashLoader from "./ui/HashLoader";
 import { motion } from "framer-motion";
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faIndianRupeeSign } from '@fortawesome/free-solid-svg-icons'
 
 export function MyAccount() {
   const [cafeImages, setCafeImages] = useState<string[]>([]);
@@ -51,6 +53,290 @@ export function MyAccount() {
 const [profileImage, setProfileImage] = useState<string>("");
 const [uploadingProfile, setUploadingProfile] = useState<boolean>(false);
 const [profileUploadMessage, setProfileUploadMessage] = useState<string | null>(null);
+
+// Add these state variables after your existing ones
+const [editingBusinessField, setEditingBusinessField] = useState<string | null>(null);
+const [businessFormData, setBusinessFormData] = useState<any>({});
+const [savingBusinessField, setSavingBusinessField] = useState<string | null>(null);
+
+// Bank Transfer Details state
+const [bankDetails, setBankDetails] = useState(null);
+const [loadingBank, setLoadingBank] = useState(false);
+const [bankForm, setBankForm] = useState({
+  accountHolderName: '',
+  bankName: '',
+  accountNumber: '',
+  ifscCode: '',
+  upiId: '',
+});
+const [editingBank, setEditingBank] = useState(false);
+const [savingBank, setSavingBank] = useState(false);
+
+// Payout state
+const [payouts, setPayouts] = useState([]);
+const [loadingPayouts, setLoadingPayouts] = useState(false);
+const [payoutPage, setPayoutPage] = useState(1);
+const [payoutTotalPages, setPayoutTotalPages] = useState(1);
+
+// Add these new state variables after your existing bank states
+const [showPaymentDialog, setShowPaymentDialog] = useState(false);
+const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('bank'); // 'bank' or 'upi'
+const [tempPaymentSelection, setTempPaymentSelection] = useState('bank');
+
+// Fetch bank details
+const fetchBankDetails = async () => {
+  if (!vendorId) return;
+  setLoadingBank(true);
+  try {
+    const res = await axios.get(`${DASHBOARD_URL}/api/vendor/${vendorId}/bank-details`);
+    if (res.data.success) {
+      setBankDetails(res.data.bankDetails);
+      setBankForm({
+        accountHolderName: res.data.bankDetails.accountHolderName || '',
+        bankName: res.data.bankDetails.bankName || '',
+        accountNumber: res.data.bankDetails.fullAccountNumber || '',
+        ifscCode: res.data.bankDetails.ifscCode || '',
+        upiId: res.data.bankDetails.upiId || '',
+      });
+    }
+  } catch (error) {
+    console.error('Error fetching bank details:', error);
+    setBankDetails(null);
+  } finally {
+    setLoadingBank(false);
+  }
+};
+
+// Fetch payouts
+const fetchPayouts = async (page = 1) => {
+  if (!vendorId) return;
+  setLoadingPayouts(true);
+  try {
+    const res = await axios.get(`${DASHBOARD_URL}/api/vendor/${vendorId}/payouts?page=${page}&per_page=10`);
+    if (res.data.success && Array.isArray(res.data.payouts)) {
+      setPayouts(res.data.payouts);
+      setPayoutTotalPages(res.data.pagination?.total_pages || 1);
+    } else {
+      setPayouts([]); // Fallback to empty array
+      setPayoutTotalPages(1);
+    }
+    } catch (error) {
+    console.error('Error fetching payouts:', error);
+    setPayouts([]); // Fallback to empty array on error
+    setPayoutTotalPages(1);
+  } finally {
+    setLoadingPayouts(false);
+  }
+};
+
+// Handle bank form changes
+const handleBankFormChange = (field, value) => {
+  setBankForm(prev => ({ ...prev, [field]: value }));
+};
+
+// Save bank details
+const handleSaveBankDetails = async () => {
+  setSavingBank(true);
+  try {
+    let dataToSend = {};
+    
+    // Conditional validation and data preparation
+    if (selectedPaymentMethod === 'bank') {
+      // Validate bank account fields
+      if (!bankForm.accountHolderName?.trim()) {
+        alert('Account holder name is required');
+        setSavingBank(false);
+        return;
+      }
+      if (!bankForm.bankName?.trim()) {
+        alert('Bank name is required');
+        setSavingBank(false);
+        return;
+      }
+      if (!bankForm.accountNumber?.trim()) {
+        alert('Account number is required');
+        setSavingBank(false);
+        return;
+      }
+      if (!bankForm.ifscCode?.trim() || bankForm.ifscCode.length !== 11) {
+        alert('Valid IFSC code (11 characters) is required');
+        setSavingBank(false);
+        return;
+      }
+      
+      // Prepare bank account data
+      dataToSend = {
+        accountHolderName: bankForm.accountHolderName.trim(),
+        bankName: bankForm.bankName.trim(),
+        accountNumber: bankForm.accountNumber.trim(),
+        ifscCode: bankForm.ifscCode.toUpperCase().trim(),
+        upiId: bankForm.upiId?.trim() || null // Optional UPI with bank
+      };
+    } else {
+      // Validate UPI ID only
+      if (!bankForm.upiId?.trim()) {
+        alert('UPI ID is required');
+        setSavingBank(false);
+        return;
+      }
+      
+      // Prepare UPI-only data
+      dataToSend = {
+        upiId: bankForm.upiId.trim(),
+        // Explicitly set bank fields as null/empty for UPI-only
+        accountHolderName: null,
+        bankName: null,
+        accountNumber: null,
+        ifscCode: null
+      };
+    }
+
+    console.log('Sending payment data:', dataToSend); // Debug log
+
+    const response = await axios.post(`${DASHBOARD_URL}/api/vendor/${vendorId}/bank-details`, dataToSend);
+    
+    if (response.data.success) {
+      alert(`${selectedPaymentMethod === 'bank' ? 'Bank account' : 'UPI'} details saved successfully!`);
+      setEditingBank(false);
+      fetchBankDetails();
+    } else {
+      alert(response.data.message || 'Failed to save payment details');
+    }
+  } catch (error) {
+    console.error('Error saving payment details:', error);
+    const errorMessage = error.response?.data?.error || 
+                        error.response?.data?.message || 
+                        'Failed to save payment details. Please try again.';
+    alert(errorMessage);
+  } finally {
+    setSavingBank(false);
+  }
+};
+
+
+
+// Add this to your existing useEffect or create a new one
+useEffect(() => {
+  if (page === "Bank Transfer") {
+    fetchBankDetails();
+  } else if (page === "Payout History") {
+    fetchPayouts(payoutPage);
+  } else if (page === "Operating Hours") {
+    // Initialize hours data if needed
+    if (!hoursData.length && data?.operatingHours) {
+      const transformedHours = data.operatingHours.map(entry => ({
+        day: entry.day,
+        open: entry.open || "09:00",
+        close: entry.close || "18:00", 
+        slotDurationMinutes: entry.slotDurationMinutes || 30,
+        isEnabled: entry.isEnabled !== undefined ? entry.isEnabled : true,
+        hasChanges: false
+      }));
+      setHoursData(transformedHours);
+    }
+  }
+}, [page, vendorId, payoutPage]);
+
+
+
+
+// Add these handler functions after your existing ones
+const handleEditBusinessField = (field: string) => {
+  setEditingBusinessField(field);
+  // Initialize form data with current values from API data
+  setBusinessFormData({
+    businessName: businessDetails.businessName || data?.cafeProfile?.name || "John's Cafe",
+    businessType: businessDetails.businessType || "cafe", 
+    phone: businessDetails.phone || "",
+    website: businessDetails.website || "",
+    address: businessDetails.address || ""
+  });
+};
+
+const handleBusinessFieldChange = (field: string, value: string) => {
+  setBusinessFormData(prev => ({
+    ...prev,
+    [field]: value
+  }));
+};
+
+const handleSaveBusinessField = async (field: string) => {
+  setSavingBusinessField(field);
+  
+  try {
+    if (!vendorId) {
+      throw new Error('Vendor ID not available');
+    }
+
+    // Prepare the data to send - only send the field being updated
+    const updateData = {
+      [field]: businessFormData[field]
+    };
+
+    console.log(`Saving ${field}:`, updateData);
+
+    // Call your new API endpoint
+    const response = await axios.patch(
+      `${DASHBOARD_URL}/api/vendor/${vendorId}/business-details`,
+      updateData,
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          // Add authorization header if needed
+          // 'Authorization': `Bearer ${localStorage.getItem('jwtToken')}`
+        }
+      }
+    );
+
+    if (response.data.success) {
+      // Success notification
+      alert(`${field} updated successfully!`);
+      
+      // Update local data to reflect the change
+      setData(prevData => ({
+        ...prevData,
+        businessDetails: {
+          ...prevData.businessDetails,
+          [field]: businessFormData[field]
+        },
+        // Also update cafeProfile name if businessName was changed
+        ...(field === 'businessName' && {
+          cafeProfile: {
+            ...prevData.cafeProfile,
+            name: businessFormData[field]
+          }
+        })
+      }));
+      
+      setEditingBusinessField(null);
+      
+      // Optionally refresh the entire dashboard data
+      // window.dispatchEvent(new Event('refresh-dashboard'));
+      
+    } else {
+      throw new Error(response.data.message || 'Update failed');
+    }
+    
+  } catch (error: any) {
+    console.error('Error saving business field:', error);
+    
+    // Better error handling
+    const errorMessage = error.response?.data?.error || 
+                        error.response?.data?.message || 
+                        error.message || 
+                        'Error saving changes. Please try again.';
+    
+    alert(`Error updating ${field}: ${errorMessage}`);
+  } finally {
+    setSavingBusinessField(null);
+  }
+};
+
+const handleCancelBusinessEdit = () => {
+  setEditingBusinessField(null);
+  setBusinessFormData({});
+};
+
 
 // Profile image upload handler
 const handleProfileImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -686,8 +972,11 @@ const toast = {
                   {[
                     { icon: ImageIcon, label: "Cafe Gallery" },
                     { icon: Building2, label: "Business Details" },
-                    { icon: Wallet, label: "Billing" },
+                    { icon: Clock, label: "Operating Hours" },  
+                    
                     { icon: FileCheck, label: "Verified Documents" },
+                    { icon: CreditCard, label: "Bank Transfer" },  
+                    { icon: DollarSign, label: "Payout History" }, 
                   ].map((item, index) => (
                     <motion.div
                       key={item.label}
@@ -785,7 +1074,7 @@ const toast = {
                 </div>
               )}
 
-              {page === "Business Details" && businessDetails && (
+              {/**  {page === "Business Details" && businessDetails && (
                 <Card className="bg-card border border-border shadow-lg">
                   <CardHeader>
                     <CardTitle className="text-foreground">Business Details</CardTitle>
@@ -840,147 +1129,253 @@ const toast = {
                           className="bg-input border-input text-foreground placeholder:text-muted-foreground"
                         />
                       </div>
-                    </div>
+                    </div> **/}
+                    {page === "Business Details" && businessDetails && (
+  <Card className="bg-card border border-border shadow-lg">
+    <CardHeader>
+      <CardTitle className="text-foreground">Business Details</CardTitle>
+      <CardDescription className="text-muted-foreground">
+        Update your cafe's basic information
+      </CardDescription>
+    </CardHeader>
+    <CardContent className="space-y-6">
+      
+      {/* Editable Business Details */}
+      <div className="space-y-4">
+        {[
+          { key: 'phone', label: 'Phone', type: 'tel', value: businessDetails.phone || "+1 (555) 000-0000" },
+          { key: 'website', label: 'Website', type: 'url', value: businessDetails.website || "https://cafe.example.com" },
+          { key: 'address', label: 'Address', type: 'textarea', value: businessDetails.address || "123 Cafe Street, Food District, City, 12345" }
+        ].map((field) => (
+          <div key={field.key} className="flex items-center space-x-3 p-3 rounded-lg border border-border hover:bg-muted/20 transition-colors">
+            
+            {/* Field Label and Content */}
+            <div className="flex-1 space-y-1">
+              <Label className="text-sm font-medium text-foreground">{field.label}</Label>
+              
+              {editingBusinessField === field.key ? (
+                // Edit Mode
+                <div className="space-y-2">
+                  {field.type === 'textarea' ? (
+                    <Textarea
+                      value={businessFormData[field.key] || ''}
+                      onChange={(e) => handleBusinessFieldChange(field.key, e.target.value)}
+                      className="bg-input border-input text-foreground resize-none"
+                      rows={3}
+                    />
+                  ) : (
+                    <Input
+                      type={field.type}
+                      value={businessFormData[field.key] || ''}
+                      onChange={(e) => handleBusinessFieldChange(field.key, e.target.value)}
+                      className="bg-input border-input text-foreground"
+                    />
+                  )}
+                </div>
+              ) : (
+                // View Mode
+                <p className="text-sm text-muted-foreground break-words">
+                  {field.value || `No ${field.label.toLowerCase()} provided`}
+                </p>
+              )}
+            </div>
 
-                    {/* Updated Operating Hours Section */}
-
-{/* Updated Operating Hours Section */}
-{/* Updated Operating Hours Section */}
-<div className="space-y-4">
-  <Label className="text-foreground">Operating Hours</Label>
-  
-  <div className="space-y-3">
-    {hoursData.map((entry: HoursEntry, index: number) => (
-      <div key={index} className="flex items-center space-x-3 p-3 rounded-lg border border-border hover:bg-muted/20 transition-colors">
-        {/* Day Name */}
-        <div className="w-20">
-          <span className="text-sm font-medium text-foreground capitalize">{entry.day}</span>
-        </div>
-        
-        {/* Enable/Disable Checkbox */}
-        <Checkbox 
-          id={`day-${entry.day}`}
-          checked={entry.isEnabled}
-          onCheckedChange={(checked) => handleSlotToggle(entry.day, checked as boolean)}
-          className="border-border data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground"
-          disabled={editingSlot !== null && editingSlot !== entry.day}
-        />
-        
-        {/* Time Inputs */}
-        <div className="flex-1 grid grid-cols-2 gap-3">
-          <Input 
-            type="time" 
-            value={entry.open || "09:00"}
-            onChange={(e) => handleTimeChange(entry.day, 'open', e.target.value)}
-            className={`bg-input border-input text-foreground ${!entry.isEnabled ? 'opacity-50' : ''}`}
-            disabled={editingSlot !== entry.day || !entry.isEnabled}
-          />
-          <Input 
-            type="time" 
-            value={entry.close || "18:00"}
-            onChange={(e) => handleTimeChange(entry.day, 'close', e.target.value)}
-            className={`bg-input border-input text-foreground ${!entry.isEnabled ? 'opacity-50' : ''}`}
-            disabled={editingSlot !== entry.day || !entry.isEnabled}
-          />
-        </div>
-        
-        {/* Slot Duration Input */}
-        <div className="flex items-center gap-1">
-          <Label className="text-xs text-muted-foreground whitespace-nowrap">Duration:</Label>
-          <div className="flex items-center">
-            <Input
-              type="number"
-              value={entry.slotDurationMinutes || 30}
-              onChange={(e) => handleSlotDurationChange(entry.day, parseInt(e.target.value) || 30)}
-              className={`w-16 bg-input border-input text-foreground text-center rounded-r-none border-r-0 ${!entry.isEnabled ? 'opacity-50' : ''}`}
-              disabled={editingSlot !== entry.day || !entry.isEnabled}
-              min="15"
-              max="240"
-              step="15"
-            />
-            <div className="flex items-center justify-center mx-[-16px] px-2 py-1.5 bg-muted/50 border border-input rounded-r-md border-l-0 min-w-[32px]">
-              <span className="text-xs text-muted-foreground mx-[-10px] ">min</span>
+            {/* Edit/Save/Cancel Buttons */}
+            <div className="flex items-center space-x-2 shrink-0">
+              {editingBusinessField === field.key ? (
+                <>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleSaveBusinessField(field.key)}
+                    disabled={savingBusinessField === field.key}
+                    className="border-green-500/50 text-green-600 hover:bg-green-500/10 hover:border-green-500 disabled:opacity-50"
+                  >
+                    {savingBusinessField === field.key ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <>
+                        <Save className="h-4 w-4 mr-1" />
+                        Save
+                      </>
+                    )}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleCancelBusinessEdit}
+                    disabled={savingBusinessField === field.key}
+                    className="border-gray-500/50 text-gray-600 hover:bg-gray-500/10 hover:border-gray-500"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </>
+              ) : (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleEditBusinessField(field.key)}
+                  disabled={editingBusinessField !== null}
+                  className="text-muted-foreground hover:text-foreground hover:bg-muted p-2"
+                >
+                  <Edit className="h-4 w-4" />
+                </Button>
+              )}
             </div>
           </div>
-        </div>
-        
-        {/* Edit/Save Buttons */}
-        <div className="flex items-center space-x-2 shrink-0">
-          {editingSlot === entry.day ? (
-            <>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => handleSaveSlot(entry.day)}
-                disabled={savingSlot === entry.day}
-                className="border-green-500/50 text-green-600 hover:bg-green-500/10 hover:border-green-500 disabled:opacity-50"
-              >
-                {savingSlot === entry.day ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <>
-                    <Save className="h-4 w-4 mr-1" />
-                    Save
-                  </>
-                )}
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={handleCancelEdit}
-                disabled={savingSlot === entry.day}
-                className="border-gray-500/50 text-gray-600 hover:bg-gray-500/10 hover:border-gray-500"
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            </>
-          ) : (
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={() => handleEditSlot(entry.day)}
-              disabled={editingSlot !== null}
-              className="text-muted-foreground hover:text-foreground hover:bg-muted p-2"
-            >
-              <Edit className="h-4 w-4" />
-            </Button>
-          )}
+        ))}
+      </div>
+
+      {/* Non-editable Business Details */}
+      <div className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="p-3 rounded-lg border border-border bg-muted/10">
+            <Label className="text-sm font-medium text-foreground">Business Name</Label>
+            <p className="text-sm text-muted-foreground mt-1">
+              {businessDetails.businessName || "John's Cafe"}
+            </p>
+          </div>
+          <div className="p-3 rounded-lg border border-border bg-muted/10">
+            <Label className="text-sm font-medium text-foreground">Business Type</Label>
+            <p className="text-sm text-muted-foreground mt-1 capitalize">
+              {businessDetails.businessType || "cafe"}
+            </p>
+          </div>
         </div>
       </div>
-    ))}
-  </div>
-</div>
+    </CardContent>
+  </Card>
+)}
 
+{page === "Operating Hours" && (
+  <Card className="bg-card border border-border shadow-lg">
+    <CardHeader>
+      <CardTitle className="text-foreground flex items-center gap-2">
+        <Clock className="w-5 h-5" />
+        Operating Hours
+      </CardTitle>
+      <CardDescription className="text-muted-foreground">
+        Manage your cafe's working hours and slot durations
+      </CardDescription>
+    </CardHeader>
+    <CardContent className="space-y-6">
+      <div className="space-y-4">
+        <Label className="text-foreground">Operating Hours</Label>
+        
+        <div className="space-y-3">
+          {hoursData.map((entry, index) => (
+            <div key={index} className="flex items-center space-x-3 p-3 rounded-lg border border-border hover:bg-muted/20 transition-colors">
+              {/* Day Name */}
+              <div className="w-20">
+                <span className="text-sm font-medium text-foreground capitalize">{entry.day}</span>
+              </div>
+              
+              {/* Enable/Disable Checkbox */}
+              <Checkbox 
+                id={`day-${entry.day}`}
+                checked={entry.isEnabled}
+                onCheckedChange={(checked) => handleSlotToggle(entry.day, checked)}
+                className="border-border data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground"
+                disabled={editingSlot !== null && editingSlot !== entry.day}
+              />
+              
+              {/* Time Inputs */}
+              <div className="flex-1 grid grid-cols-2 gap-3">
+                <Input 
+                  type="time" 
+                  value={entry.open || "09:00"}
+                  onChange={(e) => handleTimeChange(entry.day, 'open', e.target.value)}
+                  className={`bg-input border-input text-foreground ${!entry.isEnabled ? 'opacity-50' : ''}`}
+                  disabled={editingSlot !== entry.day || !entry.isEnabled}
+                />
+                <Input 
+                  type="time" 
+                  value={entry.close || "18:00"}
+                  onChange={(e) => handleTimeChange(entry.day, 'close', e.target.value)}
+                  className={`bg-input border-input text-foreground ${!entry.isEnabled ? 'opacity-50' : ''}`}
+                  disabled={editingSlot !== entry.day || !entry.isEnabled}
+                />
+              </div>
+              
+              {/* Slot Duration Input */}
+              <div className="flex items-center gap-1">
+                <Label className="text-xs text-muted-foreground whitespace-nowrap">Duration:</Label>
+                <div className="flex items-center">
+                  <Input
+                    type="number"
+                    value={entry.slotDurationMinutes || 30}
+                    onChange={(e) => handleSlotDurationChange(entry.day, parseInt(e.target.value) || 30)}
+                    className={`w-16 bg-input border-input text-foreground text-center rounded-r-none border-r-0 ${!entry.isEnabled ? 'opacity-50' : ''}`}
+                    disabled={editingSlot !== entry.day || !entry.isEnabled}
+                    min="15"
+                    max="240"
+                    step="15"
+                  />
+                  <div className="flex items-center justify-center mx-[-16px] px-2 py-1.5 bg-muted/50 border border-input rounded-r-md border-l-0 min-w-[32px]">
+                    <span className="text-xs text-muted-foreground mx-[-10px]">min</span>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Edit/Save Buttons */}
+              <div className="flex items-center space-x-2 shrink-0">
+                {editingSlot === entry.day ? (
+                  <>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleSaveSlot(entry.day)}
+                      disabled={savingSlot === entry.day}
+                      className="border-green-500/50 text-green-600 hover:bg-green-500/10 hover:border-green-500 disabled:opacity-50"
+                    >
+                      {savingSlot === entry.day ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <>
+                          <Save className="h-4 w-4 mr-1" />
+                          Save
+                        </>
+                      )}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={handleCancelEdit}
+                      disabled={savingSlot === entry.day}
+                      className="border-gray-500/50 text-gray-600 hover:bg-gray-500/10 hover:border-gray-500"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </>
+                ) : (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleEditSlot(entry.day)}
+                    disabled={editingSlot !== null}
+                    className="text-muted-foreground hover:text-foreground hover:bg-muted p-2"
+                  >
+                    <Edit className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </CardContent>
+  </Card>
+)}
 
+                
 
-
-
-
-                   {/** <div className="space-y-4">
-                      <Label className="text-foreground">Operating Hours</Label>
-                      <div className="space-y-4">
-                        {operatingHours?.map((entry: any, index: number) => (
-                          <div key={index} className="flex items-center space-x-4">
-                            <div className="w-20">
-                              <span className="text-sm font-medium text-foreground">{entry.day}</span>
-                            </div>
-                            <Checkbox id={`day-${entry.day}`} defaultChecked className="border-border data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground" />
-                            <div className="flex-1 grid grid-cols-2 gap-4">
-                              <Input type="time" defaultValue={entry.open || "09:00"} className="bg-input border-input text-foreground" />
-                              <Input type="time" defaultValue={entry.close || "18:00"} className="bg-input border-input text-foreground" />
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div> **/}
-                  </CardContent>
-                </Card>
-              )}
-
-              {page === "Billing" && billingDetails && (
+            {/**   {page === "Billing" && billingDetails && (
                 <Card className="bg-card border border-border shadow-lg">
                   <CardHeader>
                     <CardTitle className="text-foreground">Subscription & Billing</CardTitle>
@@ -1057,7 +1452,7 @@ const toast = {
                     </div>
                   </CardContent>
                 </Card>
-              )}
+            )} **/}
 
               {page === "Verified Documents" && (
                 <Card className="bg-card border border-border shadow-lg">
@@ -1169,6 +1564,492 @@ const toast = {
                 </Card>
               )}
 
+
+
+
+{/* ADD BANK TRANSFER SECTION */}
+{page === "Bank Transfer" && (
+  <Card className="bg-card border border-border shadow-lg">
+    <CardHeader>
+      <CardTitle className="text-foreground flex items-center gap-2">
+        <CreditCard className="w-5 h-5" />
+        Bank Transfer Details
+      </CardTitle>
+      <CardDescription className="text-muted-foreground">
+        Manage your payment details for payouts
+      </CardDescription>
+    </CardHeader>
+    <CardContent className="space-y-6">
+      {loadingBank ? (
+        <div className="flex items-center justify-center py-8">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <span className="ml-2">Loading payment details...</span>
+        </div>
+      ) : editingBank ? (
+        // Edit Form
+        <div className="space-y-4">
+          {/* Show selected payment method indicator */}
+          <div className="flex items-center justify-between p-3 bg-muted/20 rounded-lg">
+            <div className="flex items-center gap-2">
+              <Badge variant="outline" className="text-xs">
+                {selectedPaymentMethod === 'bank' ? 'Bank Account' : 'UPI Payment'}
+              </Badge>
+              <span className="text-xs text-muted-foreground">
+                {selectedPaymentMethod === 'bank' 
+                  ? 'Complete bank account details' 
+                  : 'UPI ID for payments'
+                }
+              </span>
+            </div>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setEditingBank(false);
+                setShowPaymentDialog(true);
+              }}
+              className="text-xs text-muted-foreground hover:text-foreground"
+            >
+              Change Method
+            </Button>
+          </div>
+
+          {selectedPaymentMethod === 'bank' ? (
+            // Bank Account Fields
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label className="text-foreground">Account Holder Name *</Label>
+                <Input
+                  value={bankForm.accountHolderName || ''}
+                  onChange={(e) => handleBankFormChange('accountHolderName', e.target.value)}
+                  placeholder="Enter account holder name"
+                  className="bg-input border-input text-foreground"
+                  required
+                />
+              </div>
+              <div>
+                <Label className="text-foreground">Bank Name *</Label>
+                <Input
+                  value={bankForm.bankName || ''}
+                  onChange={(e) => handleBankFormChange('bankName', e.target.value)}
+                  placeholder="Enter bank name"
+                  className="bg-input border-input text-foreground"
+                  required
+                />
+              </div>
+              <div>
+                <Label className="text-foreground">Account Number *</Label>
+                <Input
+                  value={bankForm.accountNumber || ''}
+                  onChange={(e) => handleBankFormChange('accountNumber', e.target.value)}
+                  placeholder="Enter account number"
+                  className="bg-input border-input text-foreground"
+                  required
+                />
+              </div>
+              <div>
+                <Label className="text-foreground">IFSC Code *</Label>
+                <Input
+                  value={bankForm.ifscCode || ''}
+                  onChange={(e) => handleBankFormChange('ifscCode', e.target.value.toUpperCase())}
+                  placeholder="Enter IFSC code"
+                  maxLength={11}
+                  className="bg-input border-input text-foreground"
+                  required
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  11-character IFSC code (e.g., SBIN0000123)
+                </p>
+              </div>
+              <div className="md:col-span-2">
+                <Label className="text-foreground">UPI ID (Optional)</Label>
+                <Input
+                  value={bankForm.upiId || ''}
+                  onChange={(e) => handleBankFormChange('upiId', e.target.value)}
+                  placeholder="Enter UPI ID (optional)"
+                  className="bg-input border-input text-foreground"
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  You can also add UPI ID as backup payment method
+                </p>
+              </div>
+            </div>
+          ) : (
+            // UPI Only Fields
+            <div className="space-y-4">
+              <div>
+                <Label className="text-foreground">UPI ID *</Label>
+                <Input
+                  value={bankForm.upiId || ''}
+                  onChange={(e) => handleBankFormChange('upiId', e.target.value)}
+                  placeholder="Enter UPI ID (e.g., yourname@paytm)"
+                  className="bg-input border-input text-foreground"
+                  required
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Enter your UPI ID like yourname@paytm, yourname@phonepe, yourname@gpay, etc.
+                </p>
+              </div>
+              <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                <p className="text-sm text-blue-800 dark:text-blue-200">
+                  <strong>Note:</strong> With UPI payment method, you'll receive payouts directly to your UPI ID. 
+                  Make sure the UPI ID is active and linked to your bank account.
+                </p>
+              </div>
+            </div>
+          )}
+          
+          <div className="flex gap-4">
+            <Button 
+              type="button"
+              onClick={handleSaveBankDetails} 
+              disabled={savingBank}
+              className="bg-emerald-500 hover:bg-emerald-600 text-white"
+            >
+              {savingBank ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <Save className="h-4 w-4 mr-2" />
+                  Save Details
+                </>
+              )}
+            </Button>
+            <Button 
+              type="button"
+              variant="outline" 
+              onClick={() => setEditingBank(false)}
+              disabled={savingBank}
+              className="border-border text-foreground hover:bg-muted"
+            >
+              <X className="h-4 w-4 mr-2" />
+              Cancel
+            </Button>
+          </div>
+        </div>
+      ) : bankDetails ? (
+        // Display Mode - Shows only saved data
+        <div className="space-y-4">
+          <div className="flex items-center gap-2 mb-4">
+            <Badge variant="outline" className="text-xs">
+              {bankDetails.upiId && !bankDetails.accountNumber 
+                ? 'UPI Payment' 
+                : bankDetails.accountNumber && !bankDetails.upiId
+                ? 'Bank Account'
+                : bankDetails.accountNumber && bankDetails.upiId
+                ? 'Bank Account + UPI'
+                : 'Payment Details'
+              }
+            </Badge>
+            <Badge className={`text-xs ${
+              bankDetails.verificationStatus === 'VERIFIED' 
+                ? 'bg-green-500/20 text-green-400' 
+                : bankDetails.verificationStatus === 'REJECTED'
+                ? 'bg-red-500/20 text-red-400'
+                : 'bg-yellow-500/20 text-yellow-400'
+            }`}>
+              {bankDetails.verificationStatus || 'PENDING'}
+            </Badge>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Show bank details only if account number exists */}
+            {bankDetails.accountNumber && (
+              <>
+                <div>
+                  <Label className="text-sm text-muted-foreground">Account Holder Name</Label>
+                  <p className="text-foreground font-medium">{bankDetails.accountHolderName}</p>
+                </div>
+                <div>
+                  <Label className="text-sm text-muted-foreground">Bank Name</Label>
+                  <p className="text-foreground font-medium">{bankDetails.bankName}</p>
+                </div>
+                <div>
+                  <Label className="text-sm text-muted-foreground">Account Number</Label>
+                  <p className="text-foreground font-medium">{bankDetails.accountNumber}</p>
+                </div>
+                <div>
+                  <Label className="text-sm text-muted-foreground">IFSC Code</Label>
+                  <p className="text-foreground font-medium">{bankDetails.ifscCode}</p>
+                </div>
+              </>
+            )}
+            
+            {/* Always show UPI if available */}
+            {bankDetails.upiId && (
+              <div className={bankDetails.accountNumber ? "" : "md:col-span-2"}>
+                <Label className="text-sm text-muted-foreground">UPI ID</Label>
+                <p className="text-foreground font-medium">{bankDetails.upiId}</p>
+              </div>
+            )}
+            
+            {/* Show message if no data available */}
+            {!bankDetails.accountNumber && !bankDetails.upiId && (
+              <div className="md:col-span-2 text-center py-4">
+                <p className="text-muted-foreground">No payment details available</p>
+              </div>
+            )}
+          </div>
+          
+          <div className="flex gap-3">
+            <Button 
+              type="button"
+              onClick={() => setShowPaymentDialog(true)}
+              className="bg-primary hover:bg-primary/90 text-primary-foreground"
+            >
+              <Edit className="h-4 w-4 mr-2" />
+              Edit Payment Details
+            </Button>
+            {bankDetails.verificationStatus === 'PENDING' && (
+              <Button 
+                type="button"
+                variant="outline"
+                className="border-amber-200 text-amber-600 hover:bg-amber-50"
+                disabled
+              >
+                <Clock className="h-4 w-4 mr-2" />
+                Verification Pending
+              </Button>
+            )}
+          </div>
+        </div>
+      ) : (
+        // No Bank Details
+        <div className="text-center py-8">
+          <CreditCard className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+          <h3 className="text-lg font-medium text-foreground mb-2">No Payment Details Found</h3>
+          <p className="text-muted-foreground mb-4">Add your payment details to receive payouts</p>
+          <Button 
+            type="button"
+            onClick={() => setShowPaymentDialog(true)}
+            className="bg-emerald-500 hover:bg-emerald-600 text-white"
+          >
+            <CreditCard className="h-4 w-4 mr-2" />
+            Add Payment Details
+          </Button>
+        </div>
+      )}
+
+      {/* Payment Method Selection Dialog */}
+      {showPaymentDialog && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.9 }}
+            className="bg-card rounded-lg p-6 max-w-md w-full mx-auto shadow-2xl border border-border"
+          >
+            <div className="space-y-4">
+              <div>
+                <h3 className="text-lg font-semibold text-foreground mb-2">
+                  Select Payment Method
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  Choose what type of payment method you want to add for receiving payouts
+                </p>
+              </div>
+
+              <div className="space-y-3">
+                <div 
+                  className={`flex items-start space-x-3 p-4 rounded-lg border cursor-pointer transition-colors ${
+                    tempPaymentSelection === 'bank' 
+                      ? 'border-primary bg-primary/10' 
+                      : 'border-border hover:bg-muted/20'
+                  }`}
+                  onClick={() => setTempPaymentSelection('bank')}
+                >
+                  <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center mt-1 ${
+                    tempPaymentSelection === 'bank' ? 'border-primary' : 'border-border'
+                  }`}>
+                    {tempPaymentSelection === 'bank' && (
+                      <div className="w-2 h-2 rounded-full bg-primary"></div>
+                    )}
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <CreditCard className="w-4 h-4 text-primary" />
+                      <p className="font-medium text-foreground">Bank Account</p>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Add complete bank details including account holder name, bank name, account number & IFSC code
+                    </p>
+                  </div>
+                </div>
+
+                <div 
+                  className={`flex items-start space-x-3 p-4 rounded-lg border cursor-pointer transition-colors ${
+                    tempPaymentSelection === 'upi' 
+                      ? 'border-primary bg-primary/10' 
+                      : 'border-border hover:bg-muted/20'
+                  }`}
+                  onClick={() => setTempPaymentSelection('upi')}
+                >
+                  <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center mt-1 ${
+                    tempPaymentSelection === 'upi' ? 'border-primary' : 'border-border'
+                  }`}>
+                    {tempPaymentSelection === 'upi' && (
+                      <div className="w-2 h-2 rounded-full bg-primary"></div>
+                    )}
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <DollarSign className="w-4 h-4 text-green-500" />
+                      <p className="font-medium text-foreground">UPI ID</p>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Quick setup with just your UPI ID (e.g., yourname@paytm, yourname@phonepe)
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setShowPaymentDialog(false)}
+                  className="flex-1 border-border text-foreground hover:bg-muted"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="button"
+                  onClick={() => {
+                    setSelectedPaymentMethod(tempPaymentSelection);
+                    setShowPaymentDialog(false);
+                    setEditingBank(true);
+                  }}
+                  className="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white"
+                >
+                  Continue
+                </Button>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      )}
+    </CardContent>
+  </Card>
+)}
+
+
+
+{/* ADD PAYOUT HISTORY SECTION */}
+{page === "Payout History" && (
+  <Card className="bg-card border border-border shadow-lg">
+    <CardHeader>
+      <CardTitle className="text-foreground flex items-center gap-2">
+        <DollarSign className="w-5 h-5" />
+        Payout History
+      </CardTitle>
+      <CardDescription className="text-muted-foreground">
+        View your payout transaction history
+      </CardDescription>
+    </CardHeader>
+    <CardContent>
+      {loadingPayouts ? (
+        <div className="flex items-center justify-center py-8">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <span className="ml-2">Loading payout history...</span>
+        </div>
+      ) : (Array.isArray(payouts) && payouts.length > 0) ? (
+        <div className="space-y-4">
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse border border-border rounded-lg">
+              <thead>
+                <tr className="bg-muted">
+                  <th className="border border-border px-4 py-3 text-left text-sm font-medium text-foreground">Date</th>
+                  <th className="border border-border px-4 py-3 text-left text-sm font-medium text-foreground">Amount</th>
+                  <th className="border border-border px-4 py-3 text-left text-sm font-medium text-foreground">Mode</th>
+                  <th className="border border-border px-4 py-3 text-left text-sm font-medium text-foreground">UTR Number</th>
+                  <th className="border border-border px-4 py-3 text-left text-sm font-medium text-foreground">Status</th>
+                  <th className="border border-border px-4 py-3 text-left text-sm font-medium text-foreground">Remarks</th>
+                </tr>
+              </thead>
+              <tbody>
+                {payouts.map((payout, index) => (
+                  <tr key={payout?.id || index} className={index % 2 === 0 ? 'bg-background' : 'bg-muted/20'}>
+                    <td className="border border-border px-4 py-3 text-sm">
+                      {payout?.payoutDate ? new Date(payout.payoutDate).toLocaleDateString('en-IN') : '-'}
+                    </td>
+                    <td className="border border-border px-4 py-3 text-sm font-medium">
+                      <FontAwesomeIcon icon={faIndianRupeeSign} className="w-3 h-3 mr-1" />
+                      {payout?.amount ? parseFloat(payout.amount).toFixed(2) : '0.00'}
+                    </td>
+                    <td className="border border-border px-4 py-3 text-sm">
+                      <Badge variant="outline" className="text-xs">
+                        {payout?.transferMode || 'N/A'}
+                      </Badge>
+                    </td>
+                    <td className="border border-border px-4 py-3 text-sm">
+                      {payout?.utrNumber || '-'}
+                    </td>
+                    <td className="border border-border px-4 py-3 text-sm">
+                      <Badge className={`${
+                        payout?.status === 'SUCCESS' 
+                          ? 'bg-green-500/20 text-green-400' 
+                          : payout?.status === 'FAILED'
+                          ? 'bg-red-500/20 text-red-400'
+                          : 'bg-yellow-500/20 text-yellow-400'
+                      }`}>
+                        {payout?.status || 'PENDING'}
+                      </Badge>
+                    </td>
+                    <td className="border border-border px-4 py-3 text-sm text-muted-foreground">
+                      {payout?.remarks || '-'}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Pagination */}
+          {payoutTotalPages > 1 && (
+            <div className="flex items-center justify-center gap-2 mt-6">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setPayoutPage(Math.max(1, payoutPage - 1))}
+                disabled={payoutPage === 1}
+                className="border-border text-foreground hover:bg-muted"
+              >
+                Previous
+              </Button>
+              <span className="px-3 py-1 text-sm text-muted-foreground">
+                Page {payoutPage} of {payoutTotalPages}
+              </span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setPayoutPage(Math.min(payoutTotalPages, payoutPage + 1))}
+                disabled={payoutPage === payoutTotalPages}
+                className="border-border text-foreground hover:bg-muted"
+              >
+                Next
+              </Button>
+            </div>
+          )}
+        </div>
+      ) : (
+        <div className="text-center py-8">
+          <DollarSign className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+          <h3 className="text-lg font-medium text-foreground mb-2">No Payout History</h3>
+          <p className="text-muted-foreground">Your payout transactions will appear here</p>
+        </div>
+      )}
+    </CardContent>
+  </Card>
+)}
+
+
+
+  
+
               {/* Action Buttons */}
               {/**<div className="flex justify-end space-x-4">
                 <Button variant="outline" className="border-border text-foreground hover:bg-muted hover:text-foreground">Cancel</Button>
@@ -1180,6 +2061,11 @@ const toast = {
       </div>
       <DocumentPreviewModal />
       <UpdatingOverlay visible={savingSlot !== null} />
+
+   
+
     </div>
+
+  
   );
 }
