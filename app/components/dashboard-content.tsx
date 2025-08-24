@@ -14,6 +14,7 @@ import { BOOKING_URL, DASHBOARD_URL } from "@/src/config/env"
 import HashLoader from "./ui/HashLoader"
 import clsx from "clsx"
 import { Button } from "@/components/ui/button"
+import {NotificationButton} from "../components/NotificationButton"
 
 interface DashboardContentProps {
   activeTab: string
@@ -105,6 +106,7 @@ export function DashboardContent({ activeTab, setActiveTab }: DashboardContentPr
             
             <div className="flex items-center gap-3">
               {/* Rapid Booking Button - switches to rapid booking tab */}
+              <NotificationButton vendorId={vendorId} />
               <Button 
                 onClick={() => setActiveTab("product")}
                 className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors duration-200"

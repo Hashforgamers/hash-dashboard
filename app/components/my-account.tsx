@@ -32,6 +32,7 @@ import HashLoader from "./ui/HashLoader";
 import { motion } from "framer-motion";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faIndianRupeeSign } from '@fortawesome/free-solid-svg-icons'
+import { OTPVerificationModal } from "./otpVerificationModal";
 
 export function MyAccount() {
   const [cafeImages, setCafeImages] = useState<string[]>([]);
@@ -43,6 +44,8 @@ export function MyAccount() {
   const [uploadMessage, setUploadMessage] = useState<string | null>(null);
   const [previewDocument, setPreviewDocument] = useState<string | null>(null);
   const [previewDocumentName, setPreviewDocumentName] = useState<string>("");
+  const [cafeImageObjects, setCafeImageObjects] = useState<{id: number, url: string, public_id: string}[]>([]);
+
 
   // New state for operating hours editing
   const [editingSlot, setEditingSlot] = useState<string | null>(null);
@@ -82,6 +85,46 @@ const [payoutTotalPages, setPayoutTotalPages] = useState(1);
 const [showPaymentDialog, setShowPaymentDialog] = useState(false);
 const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('bank'); // 'bank' or 'upi'
 const [tempPaymentSelection, setTempPaymentSelection] = useState('bank');
+
+// Add these state variables to your MyAccount component
+const [otpModalOpen, setOtpModalOpen] = useState(false);
+const [pendingPage, setPendingPage] = useState(null);
+const [verifiedPages, setVerifiedPages] = useState(new Set());
+
+// Add OTP verification functions
+const checkPageVerification = async (pageType) => {
+  try {
+    const response = await axios.get(`${VENDOR_ONBOARD_URL}/api/vendor/${vendorId}/check-verification?page_type=${pageType}`);
+    return response.data.is_verified;
+  } catch (error) {
+    console.error('Error checking verification:', error);
+    return false;
+  }
+};
+
+const handleRestrictedPageClick = async (pageName) => {
+  const pageType = pageName === "Bank Transfer" ? "bank_transfer" : "payout_history";
+  
+  // Check if already verified
+  const isVerified = await checkPageVerification(pageType);
+  
+  if (isVerified || verifiedPages.has(pageType)) {
+    setPage(pageName);
+  } else {
+    setPendingPage(pageName);
+    setOtpModalOpen(true);
+  }
+};
+
+const handleOTPVerifySuccess = () => {
+  const pageType = pendingPage === "Bank Transfer" ? "bank_transfer" : "payout_history";
+  setVerifiedPages(prev => new Set([...prev, pageType]));
+  setPage(pendingPage);
+  setPendingPage(null);
+};
+
+
+
 
 // Fetch bank details
 const fetchBankDetails = async () => {
@@ -702,11 +745,13 @@ const toast = {
     );
   };
 
-  const handleViewInpage = (e: React.MouseEvent<HTMLButtonElement>) => {
+  const handleViewInpage = async (e: React.MouseEvent<HTMLButtonElement>) => {
     const label = e.currentTarget.dataset.label;
-    if (label) {
-      setPage(label);
-    }
+    if (label === "Bank Transfer" || label === "Payout History") {
+    await handleRestrictedPageClick(label);
+  } else {
+    setPage(label);
+  }
   };
 
   const handleDocumentPreview = (documentUrl: string, documentName: string) => {
@@ -770,51 +815,195 @@ const toast = {
   };
 
   // Fetch vendor dashboard on vendorId change
-  useEffect(() => {
-    async function fetchVendorDashboard() {
-      if (!vendorId) {
-        console.log("No vendorId available");
-        return;
-      }
-      setLoading(true);
-      try {
-        console.log("Fetching dashboard for vendor:", vendorId);
-        const res = await axios.get(
-          `${DASHBOARD_URL}/api/vendor/${vendorId}/dashboard`
-        );
-        console.log("API Response:", res.data);
-
-          // Set profile image
-        const profileImg = res.data.cafeProfile.profileImage || "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?q=80&w=2070&auto=format&fit=crop";
-        setProfileImage(profileImg);
-
-        if (res.data && res.data.cafeProfile) {
-          setData(res.data);
-          const imagesRaw = res.data.cafeGallery?.images || [];
-          const images = imagesRaw.map((imgUrl: string) => {
-            if (!imgUrl) return "";
-            if (imgUrl.startsWith("http")) {
-              return imgUrl;
-            } else {
-              return `${DASHBOARD_URL.replace(/\/$/, "")}${
-                imgUrl.startsWith("/") ? "" : "/"
-              }${imgUrl}`;
-            }
-          });
-          setCafeImages(images);
-        } else {
-          console.error("Dashboard API returned no expected data:", res.data);
-          setData(null);
-        }
-      } catch (error) {
-        console.error("Error fetching dashboard data:", error);
-        setData(null);
-      } finally {
-        setLoading(false);
-      }
+ useEffect(() => {
+  async function fetchVendorDashboard() {
+    if (!vendorId) {
+      console.log("No vendorId available");
+      return;
     }
-    fetchVendorDashboard();
-  }, [vendorId]);
+    setLoading(true);
+    try {
+      console.log("Fetching dashboard for vendor:", vendorId);
+      const res = await axios.get(
+        `${DASHBOARD_URL}/api/vendor/${vendorId}/dashboard`
+      );
+      console.log("API Response:", res.data);
+
+      // Set profile image
+      const profileImg = res.data.cafeProfile.profileImage || "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?q=80&w=2070&auto=format&fit=crop";
+      setProfileImage(profileImg);
+
+      if (res.data && res.data.cafeProfile) {
+        setData(res.data);
+        
+        const imagesData = res.data.cafeGallery?.images || [];
+        console.log("Images data:", imagesData); // Debug log
+        
+        // Check if images are objects with IDs or just URLs
+        if (imagesData.length > 0 && typeof imagesData[0] === 'object' && imagesData.id) {
+          // New format: objects with IDs
+          console.log("Using image objects format");
+          setCafeImageObjects(imagesData);
+          const imageUrls = imagesData.map((img: any) => img.url || "").filter(Boolean);
+          setCafeImages(imageUrls);
+        } else {
+          // Old format: just URLs or mixed format - handle safely
+          console.log("Using URL format");
+          setCafeImageObjects([]);
+          
+          const images = imagesData
+            .filter((item: any) => item !== null && item !== undefined) // Remove null/undefined
+            .map((item: any) => {
+              let imgUrl = "";
+              
+              // Handle different data types
+              if (typeof item === 'string') {
+                imgUrl = item;
+              } else if (typeof item === 'object' && item.url) {
+                imgUrl = item.url;
+              } else if (typeof item === 'object' && item.path) {
+                imgUrl = item.path;
+              } else {
+                console.warn("Unexpected image data format:", item);
+                return "";
+              }
+              
+              // Skip empty strings
+              if (!imgUrl || imgUrl.trim() === "") return "";
+              
+              // Handle URL formatting
+              if (imgUrl.startsWith("http")) {
+                return imgUrl;
+              } else {
+                return `${DASHBOARD_URL.replace(/\/$/, "")}${
+                  imgUrl.startsWith("/") ? "" : "/"
+                }${imgUrl}`;
+              }
+            })
+            .filter(Boolean); // Remove empty strings
+            
+          setCafeImages(images);
+        }
+      } else {
+        console.error("Dashboard API returned no expected data:", res.data);
+        setData(null);
+      }
+    } catch (error) {
+      console.error("Error fetching dashboard data:", error);
+      setData(null);
+    } finally {
+      setLoading(false);
+    }
+  }
+  fetchVendorDashboard();
+}, [vendorId]);
+
+
+const handleDeleteImageByUrl = async (imageIndex: number) => {
+  console.log('handleDeleteImageByUrl called with index:', imageIndex);
+  
+  if (!vendorId) {
+    console.log('No vendorId available');
+    return;
+  }
+
+  setUploadMessage("Deleting image...");
+
+  try {
+    const imageUrl = cafeImages[imageIndex];
+    console.log('Attempting to delete image URL:', imageUrl);
+    
+    if (!imageUrl) {
+      throw new Error("Image URL not found");
+    }
+
+    const response = await axios.delete(
+      `${VENDOR_ONBOARD_URL}/api/vendor/${vendorId}/delete-image-by-url`,
+      {
+        data: { imageUrl: imageUrl },
+        headers: { "Content-Type": "application/json" },
+      }
+    );
+
+    console.log('Delete response:', response.data);
+
+    if (response.data.success) {
+      setCafeImages((prevImages) =>
+        prevImages.filter((_, index) => index !== imageIndex)
+      );
+      
+      setUploadMessage("Image deleted successfully!");
+      setTimeout(() => setUploadMessage(null), 3000);
+    } else {
+      throw new Error(response.data.message || 'Delete failed');
+    }
+  } catch (error: any) {
+    console.error("Error deleting image:", error);
+    const errorMessage = error.response?.data?.message || 
+                        error.message || 
+                        'Error deleting image. Please try again.';
+    setUploadMessage(errorMessage);
+    setTimeout(() => setUploadMessage(null), 5000);
+  }
+};
+
+
+
+  // Updated delete function using image IDs
+const handleDeleteImage = async (imageIndex: number) => {
+  if (!vendorId || !cafeImageObjects[imageIndex]) return;
+
+  // Show loading state
+  setUploadMessage("Deleting image...");
+
+  try {
+    const imageId = cafeImageObjects[imageIndex]?.id;
+    
+    if (!imageId) {
+      throw new Error("Image ID not found");
+    }
+
+    const response = await axios.delete(
+      `${VENDOR_ONBOARD_URL}/api/vendor/${vendorId}/delete-image/${imageId}`
+    );
+
+    if (response.data.success) {
+      // Remove image from both arrays
+      setCafeImages((prevImages) =>
+        prevImages.filter((_, index) => index !== imageIndex)
+      );
+      
+      setCafeImageObjects((prevImages) =>
+        prevImages.filter((_, index) => index !== imageIndex)
+      );
+      
+      // Show success message
+      setUploadMessage("Image deleted successfully!");
+      setTimeout(() => setUploadMessage(null), 3000);
+      
+      // Optional: Update with remaining images from backend
+      if (response.data.remaining_images) {
+        const remainingUrls = response.data.remaining_images.map((img: any) => img.url);
+        setCafeImages(remainingUrls);
+        setCafeImageObjects(response.data.remaining_images);
+      }
+      
+    } else {
+      throw new Error(response.data.message || 'Delete failed');
+    }
+  } catch (error: any) {
+    console.error("Error deleting image:", error);
+    const errorMessage = error.response?.data?.message || 
+                        error.message || 
+                        'Error deleting image. Please try again.';
+    setUploadMessage(errorMessage);
+    setTimeout(() => setUploadMessage(null), 5000);
+  }
+};
+
+
+
+
 
   useEffect(() => {
     if (prevPageRef.current !== page) {
@@ -1013,66 +1202,136 @@ const toast = {
             className="col-span-12 md:col-span-9 space-y-6"
           >
             <form className="space-y-6">
-              {page === "Cafe Gallery" && (
-                <div>
-                  {/* Cafe Gallery - Now in main content */}
-                  <Card className="bg-card border border-border shadow-lg" >
-                    <CardHeader>
-                      <CardTitle className="text-foreground">Cafe Gallery</CardTitle>
-                      <CardDescription className="text-muted-foreground" >
-                        Showcase your cafe's ambiance and offerings
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      {uploadMessage && (
-                        <div className={cn(
-                          "p-3 rounded-md text-sm font-medium",
-                          uploadMessage.includes("successfully") ? "bg-green-500/20 text-green-400" : "bg-red-500/20 text-red-400"
-                        )}>
-                          {uploadMessage}
-                        </div>
-                      )}
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        {cafeImages.map((image, index) => (
-                          <div
-                            key={index}
-                            className="relative group aspect-square flex items-center justify-center border border-border rounded-md overflow-hidden shadow-sm"
-                          >
-                            <img
-                              src={image || "/placeholder.svg"}
-                              alt={`Cafe Image ${index + 1}`}
-                              className="object-cover w-full h-full rounded-md"
-                            />
-                            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-md flex items-center justify-center">
-                              <Button
-                                size="icon"
-                                variant="ghost"
-                                className="absolute top-2 right-2 text-white hover:bg-white/20"
-                                onClick={() => handleRemoveImage(index)}
-                              >
-                                <X className="w-5 h-5" />
-                                <span className="sr-only">Remove image</span>
-                              </Button>
-                            </div>
-                          </div>
-                        ))}
-                        <label className="aspect-square flex flex-col items-center justify-center border-2 border-dashed border-muted-foreground/50 rounded-md cursor-pointer hover:border-primary/70 transition-colors duration-200 bg-muted/20 text-muted-foreground">
-                          <input
-                            type="file"
-                            className="hidden"
-                            onChange={handleImageUpload}
-                            accept="image/*"
-                          />
-                          <div className="text-center">
-                            <Camera className="w-8 h-8 mx-auto mb-2" />
-                            <span className="text-sm font-medium">Add Photo</span>
-                          </div>
-                        </label>
-                      </div>
-                    </CardContent>
-                  </Card>
+
+ {page === "Cafe Gallery" && (
+  <div>
+    <Card className="bg-card border border-border shadow-lg">
+      <CardHeader>
+        <CardTitle className="text-foreground">Cafe Gallery</CardTitle>
+        <CardDescription className="text-muted-foreground">
+          Showcase your cafe's ambiance and offerings
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {uploadMessage && (
+          <div className={cn(
+            "p-3 rounded-md text-sm font-medium",
+            uploadMessage.includes("successfully") || uploadMessage.includes("deleted") 
+              ? "bg-green-500/20 text-green-400" 
+              : uploadMessage.includes("Uploading") || uploadMessage.includes("Deleting")
+              ? "bg-blue-500/20 text-blue-400"
+              : "bg-red-500/20 text-red-400"
+          )}>
+            {uploadMessage}
+          </div>
+        )}
+        
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {cafeImages.map((image, index) => (
+            <div
+              key={index}
+              className="relative group aspect-square flex items-center justify-center border border-border rounded-md overflow-hidden shadow-sm"
+            >
+              <img
+                src={image || "/placeholder.svg"}
+                alt={`Cafe Image ${index + 1}`}
+                className="object-cover w-full h-full rounded-md"
+              />
+              <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-md flex items-center justify-center">
+                {/* Delete Button */}
+                <Button
+                  type="button"  // Prevent form submission
+                  size="icon"
+                  variant="ghost"
+                  className="absolute top-2 right-2 text-white hover:bg-red-500/80 hover:text-white transition-colors"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log('Delete button clicked for index:', index); // Debug log
+                    
+                    // Use appropriate delete function
+                    if (cafeImageObjects.length > 0 && cafeImageObjects[index]?.id) {
+                      handleDeleteImage(index);
+                    } else {
+                      handleDeleteImageByUrl(index);
+                    }
+                  }}
+                  disabled={uploadMessage?.includes("Deleting")}
+                  title="Delete image"
+                >
+                  {uploadMessage?.includes("Deleting") ? (
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                  ) : (
+                    <X className="w-5 h-5" />
+                  )}
+                  <span className="sr-only">Remove image</span>
+                </Button>
+                
+                {/* View Full Size Button */}
+                <Button
+                  type="button"
+                  size="icon"
+                  variant="ghost"
+                  className="absolute top-2 left-2 text-white hover:bg-blue-500/80 hover:text-white transition-colors opacity-0 group-hover:opacity-100"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    window.open(image, '_blank');
+                  }}
+                  title="View full size"
+                >
+                  <ImageIcon className="w-5 h-5" />
+                  <span className="sr-only">View full size</span>
+                </Button>
+                
+                {/* Image Info Overlay */}
+                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-2">
+                  <p className="text-white text-xs font-medium">Image {index + 1}</p>
                 </div>
+              </div>
+            </div>
+          ))}
+          
+          {/* Add Photo Button */}
+          <label className="aspect-square flex flex-col items-center justify-center border-2 border-dashed border-muted-foreground/50 rounded-md cursor-pointer hover:border-primary/70 transition-colors duration-200 bg-muted/20 text-muted-foreground">
+            <input
+              type="file"
+              className="hidden"
+              onChange={handleImageUpload}
+              accept="image/*"
+              disabled={uploadMessage?.includes("Uploading") || uploadMessage?.includes("Deleting")}
+            />
+            <div className="text-center">
+              {uploadMessage?.includes("Uploading") ? (
+                <>
+                  <Loader2 className="w-8 h-8 mx-auto mb-2 animate-spin" />
+                  <span className="text-sm font-medium">Uploading...</span>
+                </>
+              ) : (
+                <>
+                  <Camera className="w-8 h-8 mx-auto mb-2" />
+                  <span className="text-sm font-medium">Add Photo</span>
+                </>
               )}
+            </div>
+          </label>
+        </div>
+        
+        {/* Gallery Stats */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between pt-4 border-t border-border space-y-2 sm:space-y-0">
+          <div className="text-sm text-muted-foreground">
+            {cafeImages.length} / 12 images uploaded
+          </div>
+          <div className="text-xs text-muted-foreground">
+            Supported formats: JPG, PNG, WebP (Max 5MB each)
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  </div>
+)}
+
+
 
               {/**  {page === "Business Details" && businessDetails && (
                 <Card className="bg-card border border-border shadow-lg">
@@ -2061,6 +2320,19 @@ const toast = {
       </div>
       <DocumentPreviewModal />
       <UpdatingOverlay visible={savingSlot !== null} />
+
+      
+<OTPVerificationModal
+  isOpen={otpModalOpen}
+  onClose={() => {
+    setOtpModalOpen(false);
+    setPendingPage(null);
+  }}
+  onVerifySuccess={handleOTPVerifySuccess}
+  vendorId={vendorId}
+  pageType={pendingPage === "Bank Transfer" ? "bank_transfer" : "payout_history"}
+  pageName={pendingPage}
+/>
 
    
 
