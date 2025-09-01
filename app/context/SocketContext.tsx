@@ -1,5 +1,6 @@
 "use client"
 
+import { SOCKET_URL } from '@/src/config/env'
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react'
 import { io, Socket } from 'socket.io-client'
 
@@ -24,7 +25,7 @@ export const SocketProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   useEffect(() => {
     console.log('🔌 Creating single socket connection...')
     
-    const newSocket = io('wss://hfg-dashboard-h9qq.onrender.com', {
+    const newSocket = io(`${SOCKET_URL}`, {
       transports: ['websocket', 'polling'],
       autoConnect: true,
       reconnection: true,
