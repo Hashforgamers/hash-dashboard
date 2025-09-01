@@ -32,6 +32,7 @@ import HashLoader from "./ui/HashLoader";
 import { motion } from "framer-motion";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faIndianRupeeSign } from '@fortawesome/free-solid-svg-icons'
+import { OTPVerificationModal } from "./otpVerificationModal";
 
 export function MyAccount() {
   const [cafeImages, setCafeImages] = useState<string[]>([]);
@@ -43,6 +44,8 @@ export function MyAccount() {
   const [uploadMessage, setUploadMessage] = useState<string | null>(null);
   const [previewDocument, setPreviewDocument] = useState<string | null>(null);
   const [previewDocumentName, setPreviewDocumentName] = useState<string>("");
+  const [cafeImageObjects, setCafeImageObjects] = useState<{id: number, url: string, public_id: string}[]>([]);
+
 
   // New state for operating hours editing
   const [editingSlot, setEditingSlot] = useState<string | null>(null);
@@ -82,6 +85,166 @@ const [payoutTotalPages, setPayoutTotalPages] = useState(1);
 const [showPaymentDialog, setShowPaymentDialog] = useState(false);
 const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('bank'); // 'bank' or 'upi'
 const [tempPaymentSelection, setTempPaymentSelection] = useState('bank');
+
+// Add these state variables to your MyAccount component
+const [otpModalOpen, setOtpModalOpen] = useState(false);
+const [pendingPage, setPendingPage] = useState(null);
+const [verifiedPages, setVerifiedPages] = useState(new Set());
+
+// Add these state variables after your existing bank states
+const [paymentMethods, setPaymentMethods] = useState([]);
+const [loadingPaymentMethods, setLoadingPaymentMethods] = useState(false);
+const [togglingMethod, setTogglingMethod] = useState(null);
+const [paymentMethodError, setPaymentMethodError] = useState(null);
+const [paymentMethodSuccess, setPaymentMethodSuccess] = useState(null);
+const [otpLoading, setOtpLoading] = useState(false);
+
+
+
+// Fetch payment methods for vendor
+// Fetch all available payment methods and vendor's selections
+// Updated fetch function
+const fetchPaymentMethods = async () => {
+  if (!vendorId) return;
+  setLoadingPaymentMethods(true);
+  setPaymentMethodError(null);
+  
+  try {
+    const response = await axios.get(`${DASHBOARD_URL}/api/vendor/${vendorId}/paymentMethods`);
+    
+    if (response.data.success) {
+      setPaymentMethods(response.data.payment_methods);
+    } else {
+      throw new Error(response.data.error || 'Failed to fetch payment methods');
+    }
+  } catch (error) {
+    console.error('Error fetching payment methods:', error);
+    const errorMessage = error.response?.data?.error || 
+                        error.message || 
+                        'Failed to load payment methods';
+    setPaymentMethodError(errorMessage);
+    
+    // If no payment methods exist, try to initialize them
+    if (error.response?.status === 404 || errorMessage.includes('not found')) {
+      await initializePaymentMethods();
+    }
+  } finally {
+    setLoadingPaymentMethods(false);
+  }
+};
+
+// Toggle payment method
+const handleTogglePaymentMethod = async (payMethodId, currentState) => {
+  if (!vendorId) return;
+  
+  setTogglingMethod(payMethodId);
+  setPaymentMethodError(null);
+  setPaymentMethodSuccess(null);
+  
+  try {
+    const response = await axios.post(
+      `${DASHBOARD_URL}/api/vendor/${vendorId}/paymentMethods/toggle`,
+      { pay_method_id: payMethodId },
+      {
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      }
+    );
+
+    if (response.data.success) {
+      // Update the local state
+      setPaymentMethods(prevMethods => 
+        prevMethods.map(method => 
+          method.pay_method_id === payMethodId 
+            ? { ...method, is_enabled: response.data.data.is_enabled }
+            : method
+        )
+      );
+      
+      // Show success message
+      setPaymentMethodSuccess(response.data.message);
+      setTimeout(() => setPaymentMethodSuccess(null), 3000);
+    } else {
+      throw new Error(response.data.error || 'Failed to toggle payment method');
+    }
+  } catch (error) {
+    console.error('Error toggling payment method:', error);
+    const errorMessage = error.response?.data?.error || 
+                        error.message || 
+                        'Failed to update payment method';
+    setPaymentMethodError(errorMessage);
+    setTimeout(() => setPaymentMethodError(null), 5000);
+  } finally {
+    setTogglingMethod(null);
+  }
+};
+
+
+
+// Initialize payment methods if they don't exist
+const initializePaymentMethods = async () => {
+  try {
+    setPaymentMethodError(null);
+    const response = await axios.post(`${DASHBOARD_URL}/api/payment-methods/initialize`);
+    
+    if (response.data.success) {
+      // After initialization, fetch the payment methods again
+      setTimeout(() => {
+        fetchPaymentMethods();
+      }, 500);
+    }
+  } catch (error) {
+    console.error('Error initializing payment methods:', error);
+    setPaymentMethodError('Failed to initialize payment methods. Please contact support.');
+  }
+};
+
+
+
+// Clear messages
+const clearPaymentMethodMessages = () => {
+  setPaymentMethodError(null);
+  setPaymentMethodSuccess(null);
+};
+
+
+// Add OTP verification functions
+const checkPageVerification = async (pageType) => {
+  try {
+    const response = await axios.get(`${VENDOR_ONBOARD_URL}/api/vendor/${vendorId}/check-verification?page_type=${pageType}`);
+    return response.data.is_verified;
+  } catch (error) {
+    console.error('Error checking verification:', error);
+    return false;
+  }
+};
+
+const handleRestrictedPageClick = async (pageName) => {
+  setOtpLoading(true);
+  const pageType = pageName === "Bank Transfer" ? "bank_transfer" : "payout_history";
+  
+  // Check if already verified
+  const isVerified = await checkPageVerification(pageType);
+  setOtpLoading(false);
+  
+  if (isVerified || verifiedPages.has(pageType)) {
+    setPage(pageName);
+  } else {
+    setPendingPage(pageName);
+    setOtpModalOpen(true);
+  }
+};
+
+const handleOTPVerifySuccess = () => {
+  const pageType = pendingPage === "Bank Transfer" ? "bank_transfer" : "payout_history";
+  setVerifiedPages(prev => new Set([...prev, pageType]));
+  setPage(pendingPage);
+  setPendingPage(null);
+};
+
+
+
 
 // Fetch bank details
 const fetchBankDetails = async () => {
@@ -219,6 +382,7 @@ const handleSaveBankDetails = async () => {
 useEffect(() => {
   if (page === "Bank Transfer") {
     fetchBankDetails();
+    fetchPaymentMethods(); // Add this line
   } else if (page === "Payout History") {
     fetchPayouts(payoutPage);
   } else if (page === "Operating Hours") {
@@ -702,11 +866,13 @@ const toast = {
     );
   };
 
-  const handleViewInpage = (e: React.MouseEvent<HTMLButtonElement>) => {
+  const handleViewInpage = async (e: React.MouseEvent<HTMLButtonElement>) => {
     const label = e.currentTarget.dataset.label;
-    if (label) {
-      setPage(label);
-    }
+    if (label === "Bank Transfer" || label === "Payout History") {
+    await handleRestrictedPageClick(label);
+  } else {
+    setPage(label);
+  }
   };
 
   const handleDocumentPreview = (documentUrl: string, documentName: string) => {
@@ -770,51 +936,195 @@ const toast = {
   };
 
   // Fetch vendor dashboard on vendorId change
-  useEffect(() => {
-    async function fetchVendorDashboard() {
-      if (!vendorId) {
-        console.log("No vendorId available");
-        return;
-      }
-      setLoading(true);
-      try {
-        console.log("Fetching dashboard for vendor:", vendorId);
-        const res = await axios.get(
-          `${DASHBOARD_URL}/api/vendor/${vendorId}/dashboard`
-        );
-        console.log("API Response:", res.data);
-
-          // Set profile image
-        const profileImg = res.data.cafeProfile.profileImage || "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?q=80&w=2070&auto=format&fit=crop";
-        setProfileImage(profileImg);
-
-        if (res.data && res.data.cafeProfile) {
-          setData(res.data);
-          const imagesRaw = res.data.cafeGallery?.images || [];
-          const images = imagesRaw.map((imgUrl: string) => {
-            if (!imgUrl) return "";
-            if (imgUrl.startsWith("http")) {
-              return imgUrl;
-            } else {
-              return `${DASHBOARD_URL.replace(/\/$/, "")}${
-                imgUrl.startsWith("/") ? "" : "/"
-              }${imgUrl}`;
-            }
-          });
-          setCafeImages(images);
-        } else {
-          console.error("Dashboard API returned no expected data:", res.data);
-          setData(null);
-        }
-      } catch (error) {
-        console.error("Error fetching dashboard data:", error);
-        setData(null);
-      } finally {
-        setLoading(false);
-      }
+ useEffect(() => {
+  async function fetchVendorDashboard() {
+    if (!vendorId) {
+      console.log("No vendorId available");
+      return;
     }
-    fetchVendorDashboard();
-  }, [vendorId]);
+    setLoading(true);
+    try {
+      console.log("Fetching dashboard for vendor:", vendorId);
+      const res = await axios.get(
+        `${DASHBOARD_URL}/api/vendor/${vendorId}/dashboard`
+      );
+      console.log("API Response:", res.data);
+
+      // Set profile image
+      const profileImg = res.data.cafeProfile.profileImage || "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?q=80&w=2070&auto=format&fit=crop";
+      setProfileImage(profileImg);
+
+      if (res.data && res.data.cafeProfile) {
+        setData(res.data);
+        
+        const imagesData = res.data.cafeGallery?.images || [];
+        console.log("Images data:", imagesData); // Debug log
+        
+        // Check if images are objects with IDs or just URLs
+        if (imagesData.length > 0 && typeof imagesData[0] === 'object' && imagesData.id) {
+          // New format: objects with IDs
+          console.log("Using image objects format");
+          setCafeImageObjects(imagesData);
+          const imageUrls = imagesData.map((img: any) => img.url || "").filter(Boolean);
+          setCafeImages(imageUrls);
+        } else {
+          // Old format: just URLs or mixed format - handle safely
+          console.log("Using URL format");
+          setCafeImageObjects([]);
+          
+          const images = imagesData
+            .filter((item: any) => item !== null && item !== undefined) // Remove null/undefined
+            .map((item: any) => {
+              let imgUrl = "";
+              
+              // Handle different data types
+              if (typeof item === 'string') {
+                imgUrl = item;
+              } else if (typeof item === 'object' && item.url) {
+                imgUrl = item.url;
+              } else if (typeof item === 'object' && item.path) {
+                imgUrl = item.path;
+              } else {
+                console.warn("Unexpected image data format:", item);
+                return "";
+              }
+              
+              // Skip empty strings
+              if (!imgUrl || imgUrl.trim() === "") return "";
+              
+              // Handle URL formatting
+              if (imgUrl.startsWith("http")) {
+                return imgUrl;
+              } else {
+                return `${DASHBOARD_URL.replace(/\/$/, "")}${
+                  imgUrl.startsWith("/") ? "" : "/"
+                }${imgUrl}`;
+              }
+            })
+            .filter(Boolean); // Remove empty strings
+            
+          setCafeImages(images);
+        }
+      } else {
+        console.error("Dashboard API returned no expected data:", res.data);
+        setData(null);
+      }
+    } catch (error) {
+      console.error("Error fetching dashboard data:", error);
+      setData(null);
+    } finally {
+      setLoading(false);
+    }
+  }
+  fetchVendorDashboard();
+}, [vendorId]);
+
+
+const handleDeleteImageByUrl = async (imageIndex: number) => {
+  console.log('handleDeleteImageByUrl called with index:', imageIndex);
+  
+  if (!vendorId) {
+    console.log('No vendorId available');
+    return;
+  }
+
+  setUploadMessage("Deleting image...");
+
+  try {
+    const imageUrl = cafeImages[imageIndex];
+    console.log('Attempting to delete image URL:', imageUrl);
+    
+    if (!imageUrl) {
+      throw new Error("Image URL not found");
+    }
+
+    const response = await axios.delete(
+      `${VENDOR_ONBOARD_URL}/api/vendor/${vendorId}/delete-image-by-url`,
+      {
+        data: { imageUrl: imageUrl },
+        headers: { "Content-Type": "application/json" },
+      }
+    );
+
+    console.log('Delete response:', response.data);
+
+    if (response.data.success) {
+      setCafeImages((prevImages) =>
+        prevImages.filter((_, index) => index !== imageIndex)
+      );
+      
+      setUploadMessage("Image deleted successfully!");
+      setTimeout(() => setUploadMessage(null), 3000);
+    } else {
+      throw new Error(response.data.message || 'Delete failed');
+    }
+  } catch (error: any) {
+    console.error("Error deleting image:", error);
+    const errorMessage = error.response?.data?.message || 
+                        error.message || 
+                        'Error deleting image. Please try again.';
+    setUploadMessage(errorMessage);
+    setTimeout(() => setUploadMessage(null), 5000);
+  }
+};
+
+
+
+  // Updated delete function using image IDs
+const handleDeleteImage = async (imageIndex: number) => {
+  if (!vendorId || !cafeImageObjects[imageIndex]) return;
+
+  // Show loading state
+  setUploadMessage("Deleting image...");
+
+  try {
+    const imageId = cafeImageObjects[imageIndex]?.id;
+    
+    if (!imageId) {
+      throw new Error("Image ID not found");
+    }
+
+    const response = await axios.delete(
+      `${VENDOR_ONBOARD_URL}/api/vendor/${vendorId}/delete-image/${imageId}`
+    );
+
+    if (response.data.success) {
+      // Remove image from both arrays
+      setCafeImages((prevImages) =>
+        prevImages.filter((_, index) => index !== imageIndex)
+      );
+      
+      setCafeImageObjects((prevImages) =>
+        prevImages.filter((_, index) => index !== imageIndex)
+      );
+      
+      // Show success message
+      setUploadMessage("Image deleted successfully!");
+      setTimeout(() => setUploadMessage(null), 3000);
+      
+      // Optional: Update with remaining images from backend
+      if (response.data.remaining_images) {
+        const remainingUrls = response.data.remaining_images.map((img: any) => img.url);
+        setCafeImages(remainingUrls);
+        setCafeImageObjects(response.data.remaining_images);
+      }
+      
+    } else {
+      throw new Error(response.data.message || 'Delete failed');
+    }
+  } catch (error: any) {
+    console.error("Error deleting image:", error);
+    const errorMessage = error.response?.data?.message || 
+                        error.message || 
+                        'Error deleting image. Please try again.';
+    setUploadMessage(errorMessage);
+    setTimeout(() => setUploadMessage(null), 5000);
+  }
+};
+
+
+
+
 
   useEffect(() => {
     if (prevPageRef.current !== page) {
@@ -825,6 +1135,66 @@ const toast = {
 
   if (loading) return <HashLoader className="min-h-[500px]" />;
   if (!data) return <div className="text-center text-destructive p-8">Failed to load data. Please try again later.</div>;
+
+  // Add this Toggle Switch component before your main component
+const ToggleSwitch = ({ 
+  enabled, 
+  onToggle, 
+  disabled = false, 
+  loading = false,
+  size = "default" 
+}) => {
+  const sizeClasses = {
+    sm: "w-8 h-4",
+    default: "w-11 h-6",
+    lg: "w-14 h-7"
+  };
+
+  const thumbSizeClasses = {
+    sm: "w-3 h-3",
+    default: "w-5 h-5", 
+    lg: "w-6 h-6"
+  };
+
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      disabled={disabled || loading}
+      className={cn(
+        "relative inline-flex shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2",
+        sizeClasses[size],
+        enabled 
+          ? "bg-primary" 
+          : "bg-gray-200 dark:bg-gray-700",
+        disabled && "opacity-50 cursor-not-allowed"
+      )}
+      role="switch"
+      aria-checked={enabled}
+    >
+      <span className="sr-only">Toggle setting</span>
+      <span
+        className={cn(
+          "pointer-events-none relative inline-block rounded-full bg-white shadow transform ring-0 transition duration-200 ease-in-out",
+          thumbSizeClasses[size],
+          enabled 
+            ? size === "sm" ? "translate-x-4" : size === "lg" ? "translate-x-7" : "translate-x-5"
+            : "translate-x-0"
+        )}
+      >
+        {loading && (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <Loader2 className={cn(
+              "animate-spin text-gray-400",
+              size === "sm" ? "w-2 h-2" : size === "lg" ? "w-4 h-4" : "w-3 h-3"
+            )} />
+          </div>
+        )}
+      </span>
+    </button>
+  );
+};
+
 
   const { navigation, cafeProfile, businessDetails, operatingHours, billingDetails, verifiedDocuments } = data;
 
@@ -1013,66 +1383,136 @@ const toast = {
             className="col-span-12 md:col-span-9 space-y-6"
           >
             <form className="space-y-6">
-              {page === "Cafe Gallery" && (
-                <div>
-                  {/* Cafe Gallery - Now in main content */}
-                  <Card className="bg-card border border-border shadow-lg" >
-                    <CardHeader>
-                      <CardTitle className="text-foreground">Cafe Gallery</CardTitle>
-                      <CardDescription className="text-muted-foreground" >
-                        Showcase your cafe's ambiance and offerings
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      {uploadMessage && (
-                        <div className={cn(
-                          "p-3 rounded-md text-sm font-medium",
-                          uploadMessage.includes("successfully") ? "bg-green-500/20 text-green-400" : "bg-red-500/20 text-red-400"
-                        )}>
-                          {uploadMessage}
-                        </div>
-                      )}
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        {cafeImages.map((image, index) => (
-                          <div
-                            key={index}
-                            className="relative group aspect-square flex items-center justify-center border border-border rounded-md overflow-hidden shadow-sm"
-                          >
-                            <img
-                              src={image || "/placeholder.svg"}
-                              alt={`Cafe Image ${index + 1}`}
-                              className="object-cover w-full h-full rounded-md"
-                            />
-                            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-md flex items-center justify-center">
-                              <Button
-                                size="icon"
-                                variant="ghost"
-                                className="absolute top-2 right-2 text-white hover:bg-white/20"
-                                onClick={() => handleRemoveImage(index)}
-                              >
-                                <X className="w-5 h-5" />
-                                <span className="sr-only">Remove image</span>
-                              </Button>
-                            </div>
-                          </div>
-                        ))}
-                        <label className="aspect-square flex flex-col items-center justify-center border-2 border-dashed border-muted-foreground/50 rounded-md cursor-pointer hover:border-primary/70 transition-colors duration-200 bg-muted/20 text-muted-foreground">
-                          <input
-                            type="file"
-                            className="hidden"
-                            onChange={handleImageUpload}
-                            accept="image/*"
-                          />
-                          <div className="text-center">
-                            <Camera className="w-8 h-8 mx-auto mb-2" />
-                            <span className="text-sm font-medium">Add Photo</span>
-                          </div>
-                        </label>
-                      </div>
-                    </CardContent>
-                  </Card>
+
+ {page === "Cafe Gallery" && (
+  <div>
+    <Card className="bg-card border border-border shadow-lg">
+      <CardHeader>
+        <CardTitle className="text-foreground">Cafe Gallery</CardTitle>
+        <CardDescription className="text-muted-foreground">
+          Showcase your cafe's ambiance and offerings
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {uploadMessage && (
+          <div className={cn(
+            "p-3 rounded-md text-sm font-medium",
+            uploadMessage.includes("successfully") || uploadMessage.includes("deleted") 
+              ? "bg-green-500/20 text-green-400" 
+              : uploadMessage.includes("Uploading") || uploadMessage.includes("Deleting")
+              ? "bg-blue-500/20 text-blue-400"
+              : "bg-red-500/20 text-red-400"
+          )}>
+            {uploadMessage}
+          </div>
+        )}
+        
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {cafeImages.map((image, index) => (
+            <div
+              key={index}
+              className="relative group aspect-square flex items-center justify-center border border-border rounded-md overflow-hidden shadow-sm"
+            >
+              <img
+                src={image || "/placeholder.svg"}
+                alt={`Cafe Image ${index + 1}`}
+                className="object-cover w-full h-full rounded-md"
+              />
+              <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-md flex items-center justify-center">
+                {/* Delete Button */}
+                <Button
+                  type="button"  // Prevent form submission
+                  size="icon"
+                  variant="ghost"
+                  className="absolute top-2 right-2 text-white hover:bg-red-500/80 hover:text-white transition-colors"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log('Delete button clicked for index:', index); // Debug log
+                    
+                    // Use appropriate delete function
+                    if (cafeImageObjects.length > 0 && cafeImageObjects[index]?.id) {
+                      handleDeleteImage(index);
+                    } else {
+                      handleDeleteImageByUrl(index);
+                    }
+                  }}
+                  disabled={uploadMessage?.includes("Deleting")}
+                  title="Delete image"
+                >
+                  {uploadMessage?.includes("Deleting") ? (
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                  ) : (
+                    <X className="w-5 h-5" />
+                  )}
+                  <span className="sr-only">Remove image</span>
+                </Button>
+                
+                {/* View Full Size Button */}
+                <Button
+                  type="button"
+                  size="icon"
+                  variant="ghost"
+                  className="absolute top-2 left-2 text-white hover:bg-blue-500/80 hover:text-white transition-colors opacity-0 group-hover:opacity-100"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    window.open(image, '_blank');
+                  }}
+                  title="View full size"
+                >
+                  <ImageIcon className="w-5 h-5" />
+                  <span className="sr-only">View full size</span>
+                </Button>
+                
+                {/* Image Info Overlay */}
+                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-2">
+                  <p className="text-white text-xs font-medium">Image {index + 1}</p>
                 </div>
+              </div>
+            </div>
+          ))}
+          
+          {/* Add Photo Button */}
+          <label className="aspect-square flex flex-col items-center justify-center border-2 border-dashed border-muted-foreground/50 rounded-md cursor-pointer hover:border-primary/70 transition-colors duration-200 bg-muted/20 text-muted-foreground">
+            <input
+              type="file"
+              className="hidden"
+              onChange={handleImageUpload}
+              accept="image/*"
+              disabled={uploadMessage?.includes("Uploading") || uploadMessage?.includes("Deleting")}
+            />
+            <div className="text-center">
+              {uploadMessage?.includes("Uploading") ? (
+                <>
+                  <Loader2 className="w-8 h-8 mx-auto mb-2 animate-spin" />
+                  <span className="text-sm font-medium">Uploading...</span>
+                </>
+              ) : (
+                <>
+                  <Camera className="w-8 h-8 mx-auto mb-2" />
+                  <span className="text-sm font-medium">Add Photo</span>
+                </>
               )}
+            </div>
+          </label>
+        </div>
+        
+        {/* Gallery Stats */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between pt-4 border-t border-border space-y-2 sm:space-y-0">
+          <div className="text-sm text-muted-foreground">
+            {cafeImages.length} / 12 images uploaded
+          </div>
+          <div className="text-xs text-muted-foreground">
+            Supported formats: JPG, PNG, WebP (Max 5MB each)
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  </div>
+)}
+
+
 
               {/**  {page === "Business Details" && businessDetails && (
                 <Card className="bg-card border border-border shadow-lg">
@@ -1936,6 +2376,270 @@ const toast = {
   </Card>
 )}
 
+{/* UPDATED PAYMENT METHODS CARD - Shows ALL available methods from payment_method table */}
+{page === "Bank Transfer" && (
+  <Card className="bg-card border border-border shadow-lg">
+    <CardHeader>
+      <CardTitle className="text-foreground flex items-center gap-2">
+        <Settings className="w-5 h-5" />
+        Payment Methods
+      </CardTitle>
+      <CardDescription className="text-muted-foreground">
+        Select which payment methods you want to accept at your cafe
+      </CardDescription>
+    </CardHeader>
+    <CardContent className="space-y-6">
+      {/* Success/Error Messages */}
+      {paymentMethodSuccess && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex items-center gap-2 p-3 rounded-md bg-green-500/20 text-green-400 border border-green-500/30"
+        >
+          <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+          <span className="text-sm font-medium">{paymentMethodSuccess}</span>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={clearPaymentMethodMessages}
+            className="ml-auto h-6 w-6 p-0 text-green-400 hover:text-green-300"
+          >
+            <X className="h-3 w-3" />
+          </Button>
+        </motion.div>
+      )}
+
+      {paymentMethodError && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex items-center gap-2 p-3 rounded-md bg-red-500/20 text-red-400 border border-red-500/30"
+        >
+          <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
+          <span className="text-sm font-medium">{paymentMethodError}</span>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={clearPaymentMethodMessages}
+            className="ml-auto h-6 w-6 p-0 text-red-400 hover:text-red-300"
+          >
+            <X className="h-3 w-3" />
+          </Button>
+        </motion.div>
+      )}
+
+      {/* Loading State */}
+      {loadingPaymentMethods ? (
+        <div className="flex items-center justify-center py-12">
+          <div className="flex flex-col items-center gap-3">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <span className="text-sm text-muted-foreground">Loading payment methods...</span>
+          </div>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {/* Available Payment Methods */}
+          {Array.isArray(paymentMethods) && paymentMethods.length > 0 ? (
+            <>
+              {/* Header Info */}
+              <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg border border-border">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                  <span className="text-sm font-medium text-foreground">
+                    Available Payment Methods ({paymentMethods.length})
+                  </span>
+                </div>
+                <Badge variant="outline" className="text-xs">
+                  {paymentMethods.filter(m => m.is_enabled).length} Active
+                </Badge>
+              </div>
+              
+              {/* Payment Method List */}
+              <div className="space-y-3">
+                {paymentMethods.map((method, index) => (
+                  <motion.div
+                    key={method.pay_method_id}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.1 }}
+                    className="group"
+                  >
+                    <div className={cn(
+                      "flex items-center justify-between p-4 rounded-xl border transition-all duration-200 hover:shadow-md",
+                      method.is_enabled 
+                        ? "border-primary/50 bg-gradient-to-r from-primary/5 to-primary/10" 
+                        : "border-border bg-gradient-to-r from-transparent to-muted/20 hover:border-primary/30"
+                    )}>
+                      {/* Method Info */}
+                      <div className="flex items-center space-x-4">
+                        <div className="flex-shrink-0">
+                          {method.method_name === 'pay_at_cafe' ? (
+                            <div className={cn(
+                              "w-12 h-12 rounded-xl flex items-center justify-center border transition-colors",
+                              method.is_enabled 
+                                ? "bg-gradient-to-br from-blue-500/30 to-blue-600/30 border-blue-500/50" 
+                                : "bg-gradient-to-br from-blue-500/10 to-blue-600/10 border-blue-500/20"
+                            )}>
+                              <Coffee className={cn(
+                                "w-6 h-6 transition-colors",
+                                method.is_enabled ? "text-blue-600" : "text-blue-400"
+                              )} />
+                            </div>
+                          ) : (
+                            <div className={cn(
+                              "w-12 h-12 rounded-xl flex items-center justify-center border transition-colors",
+                              method.is_enabled 
+                                ? "bg-gradient-to-br from-purple-500/30 to-purple-600/30 border-purple-500/50" 
+                                : "bg-gradient-to-br from-purple-500/10 to-purple-600/10 border-purple-500/20"
+                            )}>
+                              <CreditCard className={cn(
+                                "w-6 h-6 transition-colors",
+                                method.is_enabled ? "text-purple-600" : "text-purple-400"
+                              )} />
+                            </div>
+                          )}
+                        </div>
+                        
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <h4 className="font-semibold text-foreground">
+                              {method.display_name}
+                            </h4>
+                            {method.is_enabled && (
+                              <Badge 
+                                variant="default"
+                                className="bg-green-500/20 text-green-500 border-green-500/30 text-xs"
+                              >
+                                Active
+                              </Badge>
+                            )}
+                          </div>
+                          <p className="text-sm text-muted-foreground">
+                            {method.description}
+                          </p>
+                          
+                          {/* Show registration info */}
+                          <div className="mt-2 flex items-center gap-1 text-xs">
+                            <div className={cn(
+                              "w-1 h-1 rounded-full",
+                              method.is_enabled ? "bg-green-500" : "bg-gray-400"
+                            )}></div>
+                            <span className={cn(
+                              method.is_enabled ? "text-green-600" : "text-gray-500"
+                            )}>
+                              {method.is_enabled ? "Registered for your cafe" : "Not registered"}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Toggle Switch */}
+                      <div className="flex items-center space-x-4">
+                        {/* Status Text */}
+                        <div className="text-right min-w-[70px]">
+                          {togglingMethod === method.pay_method_id ? (
+                            <span className="text-xs text-primary font-medium">
+                              {method.is_enabled ? 'Removing...' : 'Adding...'}
+                            </span>
+                          ) : (
+                            <span className={cn(
+                              "text-xs font-semibold",
+                              method.is_enabled ? "text-green-500" : "text-gray-400"
+                            )}>
+                              {method.is_enabled ? 'ACTIVE' : 'INACTIVE'}
+                            </span>
+                          )}
+                        </div>
+                        
+                        {/* Toggle Switch */}
+                        <ToggleSwitch
+                          enabled={method.is_enabled}
+                          onToggle={() => handleTogglePaymentMethod(method.pay_method_id, method.is_enabled)}
+                          disabled={togglingMethod !== null && togglingMethod !== method.pay_method_id}
+                          loading={togglingMethod === method.pay_method_id}
+                          size="default"
+                        />
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+              
+              {/* Summary Footer */}
+              <div className="mt-6 p-4 bg-gradient-to-r from-muted/20 to-muted/40 rounded-lg border border-border">
+                <div className="flex items-start gap-3">
+                  <div className="w-5 h-5 bg-blue-500/20 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-sm font-medium text-foreground">Registration Status</span>
+                      <Badge 
+                        variant={paymentMethods.filter(m => m.is_enabled).length > 0 ? "default" : "secondary"}
+                        className={cn(
+                          "text-xs",
+                          paymentMethods.filter(m => m.is_enabled).length > 0 
+                            ? "bg-green-500/20 text-green-500 border-green-500/30" 
+                            : "bg-amber-500/20 text-amber-600 border-amber-500/30"
+                        )}
+                      >
+                        {paymentMethods.filter(m => m.is_enabled).length > 0 ? 'Ready' : 'Setup Required'}
+                      </Badge>
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      {paymentMethods.filter(m => m.is_enabled).length === 0 ? (
+                        <span className="text-amber-600">⚠️ Register at least one payment method to accept payments.</span>
+                      ) : (
+                        <>
+                          <span className="text-green-600">✅ Registered methods: </span>
+                          <span className="font-medium">
+                            {paymentMethods.filter(m => m.is_enabled).map(m => m.display_name).join(', ')}
+                          </span>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </>
+          ) : (
+            <div className="text-center py-12">
+              <div className="w-16 h-16 bg-muted/50 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Settings className="h-8 w-8 text-muted-foreground" />
+              </div>
+              <h3 className="text-lg font-medium text-foreground mb-2">No Payment Methods Available</h3>
+              <p className="text-muted-foreground mb-6 max-w-sm mx-auto">
+                No payment methods are available in the system. Please contact support.
+              </p>
+              <Button 
+                type="button"
+                onClick={fetchPaymentMethods}
+                disabled={loadingPaymentMethods}
+                className="bg-primary hover:bg-primary/90 text-primary-foreground"
+              >
+                {loadingPaymentMethods ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Refreshing...
+                  </>
+                ) : (
+                  <>
+                    <Settings className="h-4 w-4 mr-2" />
+                    Refresh
+                  </>
+                )}
+              </Button>
+            </div>
+          )}
+        </div>
+      )}
+    </CardContent>
+  </Card>
+)}
+
+
+
+
 
 
 {/* ADD PAYOUT HISTORY SECTION */}
@@ -2061,6 +2765,27 @@ const toast = {
       </div>
       <DocumentPreviewModal />
       <UpdatingOverlay visible={savingSlot !== null} />
+
+ {otpLoading && (
+  <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+    <div className="w-20 h-20 border-4 border-t-transparent animate-spin rounded-full border-t-2 border-b-2 border-emerald-500"></div>
+  </div>
+)}
+
+
+
+      
+<OTPVerificationModal
+  isOpen={otpModalOpen}
+  onClose={() => {
+    setOtpModalOpen(false);
+    setPendingPage(null);
+  }}
+  onVerifySuccess={handleOTPVerifySuccess}
+  vendorId={vendorId}
+  pageType={pendingPage === "Bank Transfer" ? "bank_transfer" : "payout_history"}
+  pageName={pendingPage}
+/>
 
    
 

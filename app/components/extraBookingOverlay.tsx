@@ -9,7 +9,7 @@ interface ExtraBookingOverlayProps {
   selectedSlot: any | null;
   vendorId: number | null;
   setRefreshSlots: (value: boolean | ((prev: boolean) => boolean)) => void;
-  setSelectedSlot: (value: any | null) => void; // Added setSelectedSlot prop
+  setSelectedSlot: (value: any | null) => void;
   calculateExtraTime: (endTime: string, date: string) => number;
   calculateExtraAmount: (extraSeconds: number, ratePerHour: number) => number;
   formatTime: (seconds: number) => string;
@@ -22,7 +22,7 @@ const ExtraBookingOverlay: React.FC<ExtraBookingOverlayProps> = ({
   selectedSlot,
   vendorId,
   setRefreshSlots,
-  setSelectedSlot, // Added to props
+  setSelectedSlot,
   calculateExtraTime,
   calculateExtraAmount,
   formatTime,
@@ -62,12 +62,13 @@ const ExtraBookingOverlay: React.FC<ExtraBookingOverlayProps> = ({
     }
   };
 
-  // Handle settle function for extra time
+  // ✅ FIXED: Handle settle function with IMMEDIATE UI updates (exactly like release button)
   const handleSettle = async () => {
     if (!selectedSlot || !vendorId) {
       setWaiveOffError("Invalid slot or vendor information");
       return;
     }
+
     setLoading(true);
     const extraTime = calculateExtraTime(selectedSlot.endTime, selectedSlot.date);
     const amount = calculateExtraAmount(extraTime, selectedSlot.slot_price || 100);
@@ -88,30 +89,60 @@ const ExtraBookingOverlay: React.FC<ExtraBookingOverlayProps> = ({
     };
 
     try {
+      console.log('💰 Starting settle process...');
       await createExtraBooking(extraBookingPayload);
-      await releaseSlot(
+      console.log('💰 Extra booking created successfully');
+
+      const success = await releaseSlot(
         selectedSlot.consoleType,
         selectedSlot.game_id,
         selectedSlot.consoleNumber,
         vendorId,
         setRefreshSlots
       );
-    } catch (err) {
-      setWaiveOffError("Failed to process payment. Please try again.");
-    } finally {
-      if (typeof window !== "undefined") {
-        window.dispatchEvent(new CustomEvent("refresh-dashboard"));
+      console.log('💰 Release slot result:', success);
+
+      if (success) {
+        // ✅ CRITICAL: On SUCCESS - Update UI immediately (exactly like release button)
+        console.log('💰 Settle successful - updating UI immediately');
+        
+        // ✅ Trigger refresh to update both CurrentSlots and BookingStats
+        setRefreshSlots((prev) => !prev);
+        
+        // ✅ Dispatch global refresh event
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(new CustomEvent("refresh-dashboard"));
+        }
+        
+        // ✅ Close overlay and reset state IMMEDIATELY (like release button)
+        setShowOverlay(false);
+        setSelectedSlot(null);
+        setWaiveOffAmount("");
+        setWaiveOffError("");
+        setLoading(false);
+        
+        console.log('💰 UI updated immediately - settle complete');
+        
+      } else {
+        // ✅ Release failed - show error, don't close overlay
+        console.log('💰 Release slot failed');
+        setWaiveOffError("Failed to release slot. Please try again.");
+        setLoading(false);
       }
-      setShowOverlay(false);
-      setSelectedSlot(null); // Now defined via props
+
+    } catch (err) {
+      console.error('💰 Settle process failed:', err);
+      
+      // ✅ On ERROR - Show error, don't close overlay (let user retry)
+      setWaiveOffError("Failed to process payment. Please try again.");
       setLoading(false);
-      setWaiveOffAmount("");
-      setWaiveOffError("");
+      
+      // ✅ Don't close overlay on error - let user try again
     }
   };
 
   // Handle waive-off amount change with validation
-  const handleWaiveOffChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleWaiveOffChange = (e: React.ChangeEvent<HTMLInputValue>) => {
     if (!selectedSlot) return;
     const value = e.target.value;
     // Allow only numbers and decimals (e.g., "123.45" or "")
@@ -256,7 +287,11 @@ const ExtraBookingOverlay: React.FC<ExtraBookingOverlayProps> = ({
 
             <div className="flex justify-end gap-4">
               <motion.button
-                onClick={() => setShowOverlay(false)}
+                onClick={() => {
+                  setShowOverlay(false);
+                  setWaiveOffAmount("");
+                  setWaiveOffError("");
+                }}
                 className="px-5 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-zinc-900 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm hover:bg-gray-50 dark:hover:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400 transition-all duration-200 disabled:opacity-50"
                 disabled={loading}
                 whileHover={{ scale: 1.05 }}

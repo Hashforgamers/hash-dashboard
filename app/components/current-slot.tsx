@@ -7,19 +7,17 @@ import { BOOKING_URL, DASHBOARD_URL } from "@/src/config/env";
 import { mergeConsecutiveBookings } from "@/app/utils/slot-utils";
 import HashLoader from './ui/HashLoader';
 import ExtraBookingOverlay from "./extraBookingOverlay";
+import { useSocket } from "../context/SocketContext";
 
-// Helper function to format the timer (HH:MM:SS)
+// Keep all your existing helper functions
 const formatTime = (seconds: number) => {
-  if (isNaN(seconds) || seconds < 0) {
-    return "00:00:00";
-  }
+  if (isNaN(seconds) || seconds < 0) return "00:00:00";
   const hours = Math.floor(seconds / 3600);
   const minutes = Math.floor((seconds % 3600) / 60);
   const secs = seconds % 60;
   return `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
 };
 
-// Function to calculate the elapsed time from the start time
 const calculateElapsedTime = (startTime: string, date: string) => {
   if (!startTime) return 0;
   const currentTime = new Date();
@@ -33,7 +31,6 @@ const calculateElapsedTime = (startTime: string, date: string) => {
   return Math.floor((currentTime.getTime() - startDate.getTime()) / 1000);
 };
 
-// Function to calculate the extra time (difference between end time and current time)
 const calculateExtraTime = (endTime: string, date: string) => {
   if (!endTime) return 0;
   const currentTime = new Date();
@@ -47,7 +44,6 @@ const calculateExtraTime = (endTime: string, date: string) => {
   return Math.max(Math.floor((currentTime.getTime() - endDate.getTime()) / 1000), 0);
 };
 
-// Function to calculate booking duration in seconds
 const calculateDuration = (startTime: string, endTime: string) => {
   if (!startTime || !endTime) return 0;
   const parseTimeToMinutes = (timeStr: string) => {
@@ -62,23 +58,21 @@ const calculateDuration = (startTime: string, endTime: string) => {
   return (endMinutes - startMinutes) * 60;
 };
 
-// Function to calculate extra amount based on time
 const calculateExtraAmount = (extraSeconds: number, ratePerHour = 1) => {
   const extraHours = extraSeconds / 3600;
   return Math.ceil(extraHours * ratePerHour);
 };
 
-// Function to release the slot by calling the API
 const releaseSlot = async (consoleType: string, gameId: string, consoleId: string, vendorId: any, setRefreshSlots: any) => {
   try {
+    console.log('🔄 Client: Calling release API for console:', consoleId);
     const response = await fetch(`${DASHBOARD_URL}/api/releaseDevice/consoleTypeId/${gameId}/console/${consoleId}/vendor/${vendorId}`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ bookingStats: {} }),
     });
     if (response.ok) {
+      console.log('✅ Client: Release API call successful');
       setRefreshSlots((prev: boolean) => !prev);
       if (typeof window !== "undefined") {
         window.dispatchEvent(new CustomEvent("refresh-dashboard"));
@@ -87,7 +81,7 @@ const releaseSlot = async (consoleType: string, gameId: string, consoleId: strin
     }
     throw new Error("Failed to release the slot.");
   } catch (error) {
-    console.error("Error releasing slot:", error);
+    console.error("❌ Client: Error calling release API:", error);
     return false;
   }
 };
@@ -98,7 +92,10 @@ interface CurrentSlotsProps {
   setRefreshSlots: (value: boolean | ((prev: boolean) => boolean)) => void;
 }
 
-export function CurrentSlots({ currentSlots, refreshSlots, setRefreshSlots }: CurrentSlotsProps) {
+export function CurrentSlots({ currentSlots: initialSlots, refreshSlots, setRefreshSlots }: CurrentSlotsProps) {
+  const { socket, isConnected, joinVendor } = useSocket()
+  
+  const [currentSlots, setCurrentSlots] = useState(initialSlots || [])
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredSlots, setFilteredSlots] = useState(currentSlots);
   const [releasingSlots, setReleasingSlots] = useState<Record<string, boolean>>({});
@@ -109,7 +106,7 @@ export function CurrentSlots({ currentSlots, refreshSlots, setRefreshSlots }: Cu
   const [error, setError] = useState<string>("");
   const tableRef = useRef<HTMLTableElement>(null);
 
-  // Decode token to get vendorId
+  // Get vendorId
   useEffect(() => {
     const token = localStorage.getItem("jwtToken");
     if (token) {
@@ -125,14 +122,90 @@ export function CurrentSlots({ currentSlots, refreshSlots, setRefreshSlots }: Cu
     }
   }, []);
 
+  // Update from props
+  useEffect(() => {
+    if (initialSlots && Array.isArray(initialSlots)) {
+      setCurrentSlots(initialSlots)
+    }
+  }, [initialSlots])
+
+  // ✅ Socket listeners (keep your existing working code)
+  useEffect(() => {
+    if (!socket || !vendorId || !isConnected) return
+
+    joinVendor(vendorId)
+    socket.off('current_slot');
+    socket.off('console_availability');
+
+    function handleCurrentSlot(data: any) {
+      const dataVendorId = parseInt(data.vendorId || data.vendor_id)
+      const shouldProcess = dataVendorId === vendorId || !data.vendorId;
+      
+      if (shouldProcess) {
+        const newSlot = {
+          slotId: data.slotId,
+          bookingId: data.bookId,
+          username: data.username,
+          consoleType: data.consoleType,
+          consoleNumber: data.consoleNumber,
+          game_id: data.game_id,
+          startTime: data.startTime,
+          endTime: data.endTime,
+          date: data.date,
+          status: 'active',
+          slot_price: data.slot_price,
+          userId: data.userId
+        }
+        
+        setCurrentSlots(prevSlots => {
+          const exists = prevSlots.some(slot => 
+            slot.slotId === newSlot.slotId || 
+            slot.bookingId === newSlot.bookingId ||
+            (slot.consoleNumber === newSlot.consoleNumber && slot.status === 'active')
+          )
+          
+          if (!exists) {
+            return [newSlot, ...prevSlots]
+          } else {
+            return prevSlots
+          }
+        })
+      }
+    }
+
+    function handleConsoleAvailability(data: any) {
+      const dataVendorId = parseInt(data.vendorId || data.vendor_id)
+      if (dataVendorId === vendorId) {
+        setRefreshSlots(prev => !prev);
+        
+        if (data.is_available === true) {
+          setCurrentSlots(prevSlots => {
+            const updated = prevSlots.filter(slot => 
+              slot.consoleNumber !== data.console_id.toString()
+            )
+            return updated
+          })
+        }
+      }
+    }
+
+    socket.on('current_slot', handleCurrentSlot)
+    socket.on('console_availability', handleConsoleAvailability)
+
+    return () => {
+      socket.off('current_slot', handleCurrentSlot)
+      socket.off('console_availability', handleConsoleAvailability)
+    }
+  }, [socket, vendorId, isConnected, joinVendor, setRefreshSlots])
+
   // Update filtered slots and timers
   useEffect(() => {
     const mergedSlots = mergeConsecutiveBookings(currentSlots);
     const filtered = searchQuery
       ? mergedSlots.filter(
           (slot) =>
-            slot.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            slot.consoleType.toLowerCase().includes(searchQuery.toLowerCase())
+            (slot.username || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+            (slot.consoleType || '').toLowerCase().includes(searchQuery.toLowerCase())
         )
       : mergedSlots;
     setFilteredSlots(filtered);
@@ -142,9 +215,9 @@ export function CurrentSlots({ currentSlots, refreshSlots, setRefreshSlots }: Cu
       startTime: slot.startTime,
       endTime: slot.endTime,
       date: slot.date,
-      elapsedTime: calculateElapsedTime(slot.startTime, slot.date),
-      extraTime: calculateExtraTime(slot.endTime, slot.date),
-      duration: calculateDuration(slot.startTime, slot.endTime),
+      elapsedTime: calculateElapsedTime(slot.startTime || '', slot.date || ''),
+      extraTime: calculateExtraTime(slot.endTime || '', slot.date || ''),
+      duration: calculateDuration(slot.startTime || '', slot.endTime || ''),
     }));
     setTimers(initialTimers);
   }, [currentSlots, searchQuery]);
@@ -155,8 +228,8 @@ export function CurrentSlots({ currentSlots, refreshSlots, setRefreshSlots }: Cu
       setTimers((prevTimers) =>
         prevTimers.map((timer) => ({
           ...timer,
-          elapsedTime: calculateElapsedTime(timer.startTime, timer.date),
-          extraTime: calculateExtraTime(timer.endTime, timer.date),
+          elapsedTime: calculateElapsedTime(timer.startTime || '', timer.date || ''),
+          extraTime: calculateExtraTime(timer.endTime || '', timer.date || ''),
         }))
       );
     }, 1000);
@@ -168,7 +241,9 @@ export function CurrentSlots({ currentSlots, refreshSlots, setRefreshSlots }: Cu
     setReleasingSlots((prev) => ({ ...prev, [slotId]: true }));
     try {
       const success = await releaseSlot(consoleType, gameId, consoleNumber, vendorId, setRefreshSlots);
-      if (!success) {
+      if (success) {
+        setCurrentSlots(prev => prev.filter(slot => slot.slotId !== slotId))
+      } else {
         setError("Failed to release slot. Please try again.");
       }
     } catch (error) {
@@ -178,79 +253,59 @@ export function CurrentSlots({ currentSlots, refreshSlots, setRefreshSlots }: Cu
     }
   };
 
-  // Handle search
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
-    setError(""); // Clear errors on search
+    setError("");
   };
 
-  // Animation variants
-  const container = {
-    hidden: { opacity: 0 },
-    show: { opacity: 1, transition: { staggerChildren: 0.05 } },
-  };
-
-  const item = {
-    hidden: { opacity: 0, y: 20 },
-    show: { opacity: 1, y: 0 },
-  };
+  const container = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.05 } } };
+  const item = { hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } };
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
+    <div className="space-y-3">
       {currentSlots?.available ? (
-        <div className="flex justify-center items-center h-64">
+        <div className="flex justify-center items-center h-32">
           <HashLoader />
         </div>
       ) : (
-        <div className="space-y-6">
-          {/* Header and Search */}
-          <div className="flex flex-col space-y-4 md:flex-row md:items-center md:justify-between">
-            <div className="flex items-center space-x-3">
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Current Slots</h2>
-              <motion.button
-                onClick={() => setRefreshSlots((prev) => !prev)}
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ rotate: 360 }}
-                transition={{ duration: 0.3 }}
-                className="text-emerald-600 hover:text-emerald-700 transition-colors"
-                title="Refresh slots"
-                aria-label="Refresh slots"
-              >
-                <RefreshCw size={20} />
-              </motion.button>
+        <>
+          {/* ✅ COMPACT: Minimal header with just search and green indicator */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`} 
+                   title={isConnected ? 'Real-time connected' : 'Connecting...'} />
+              <span className="text-md text-white">Current Slots ({filteredSlots.length})</span>
             </div>
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 dark:text-gray-400 w-5 h-5" />
+              <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-500 w-4 h-4" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={handleSearch}
-                placeholder="Search by name or console type..."
-                className="w-full md:w-72 pl-10 pr-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-zinc-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-emerald-500 transition-all duration-200"
-                aria-label="Search slots"
+                placeholder="Search by name or console..."
+                className="w-64 pl-8 pr-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-zinc-800 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-emerald-500"
               />
             </div>
           </div>
 
-          {/* Error Message */}
           {error && (
             <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 p-3 rounded-lg text-sm"
+              className="bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 p-2 rounded-md text-sm"
             >
               {error}
             </motion.div>
           )}
 
-          {/* Table */}
+          {/* ✅ COMPACT: Table with reduced padding */}
           <motion.div
             variants={container}
             initial="hidden"
             animate="show"
-            className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white/50 dark:bg-zinc-800/50 backdrop-blur-sm shadow-md"
+            className="rounded-md border border-gray-200 dark:border-gray-700 bg-white/50 dark:bg-zinc-800/50 backdrop-blur-sm shadow-sm"
           >
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto h-[300px]">
               <table ref={tableRef} className="min-w-full divide-y divide-gray-200 dark:divide-gray-700 text-sm">
                 <thead className="bg-gray-50 dark:bg-zinc-900/50">
                   <tr>
@@ -258,7 +313,7 @@ export function CurrentSlots({ currentSlots, refreshSlots, setRefreshSlots }: Cu
                       <th
                         key={heading}
                         scope="col"
-                        className="px-6 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider"
+                        className="px-3 py-2 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider"
                       >
                         {heading}
                       </th>
@@ -267,7 +322,7 @@ export function CurrentSlots({ currentSlots, refreshSlots, setRefreshSlots }: Cu
                 </thead>
                 <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                   {Array.isArray(filteredSlots) && filteredSlots.length > 0 ? (
-                    <AnimatePresence>
+                    <AnimatePresence mode="popLayout">
                       {filteredSlots.map((booking) => {
                         const timer = timers.find((t) => t.slotId === booking.slotId) || {
                           elapsedTime: 0,
@@ -280,7 +335,7 @@ export function CurrentSlots({ currentSlots, refreshSlots, setRefreshSlots }: Cu
 
                         return (
                           <motion.tr
-                            key={booking.slotId}
+                            key={`${booking.slotId}-${booking.bookingId}`}
                             variants={item}
                             className="hover:bg-gray-100 dark:hover:bg-zinc-700/50 transition-colors"
                             initial={{ opacity: 0, y: 20 }}
@@ -288,46 +343,44 @@ export function CurrentSlots({ currentSlots, refreshSlots, setRefreshSlots }: Cu
                             exit={{ opacity: 0, x: -20 }}
                             transition={{ duration: 0.3 }}
                           >
-                            {/* Name */}
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <div className="flex items-center gap-3">
-                                <div className="h-10 w-10 bg-emerald-100 dark:bg-emerald-900/50 rounded-full flex items-center justify-center text-sm font-medium text-emerald-700 dark:text-emerald-300">
-                                  {booking.username.slice(0, 2).toUpperCase()}
+                            {/* ✅ COMPACT: Name - reduced padding */}
+                            <td className="px-3 py-2">
+                              <div className="flex items-center gap-2">
+                                <div className="h-8 w-8 bg-emerald-100 dark:bg-emerald-900/50 rounded-full flex items-center justify-center text-xs font-medium text-emerald-700 dark:text-emerald-300">
+                                  {(booking.username || 'Guest').slice(0, 2).toUpperCase()}
                                 </div>
                                 <div>
-                                  <div className="font-semibold text-gray-900 dark:text-white">{booking.username}</div>
-                                  <div className="text-xs text-gray-500 dark:text-gray-400">Console #{booking.consoleNumber}</div>
+                                  <div className="font-medium text-gray-900 dark:text-white text-sm">{booking.username || 'Guest'}</div>
+                                  <div className="text-xs text-gray-500 dark:text-gray-400">#{booking.consoleNumber}</div>
                                 </div>
                               </div>
                             </td>
 
-                            {/* System */}
-                            <td className="px-6 py-4 whitespace-nowrap">
+                            {/* ✅ COMPACT: System */}
+                            <td className="px-3 py-2">
                               <div className="flex items-center space-x-2">
-                                <Gamepad2 className={`w-5 h-5 ${booking.consoleType.toLowerCase() === 'playstation' ? 'text-blue-600' : booking.consoleType.toLowerCase() === 'xbox' ? 'text-green-600' : 'text-red-600'}`} />
-                                <span className="capitalize text-gray-900 dark:text-gray-100">{booking.consoleType}</span>
+                                <Gamepad2 className={`w-4 h-4 ${
+                                  (booking.consoleType || '').toLowerCase().includes('playstation') || 
+                                  (booking.consoleType || '').toLowerCase().includes('ps') ? 'text-blue-600' : 
+                                  (booking.consoleType || '').toLowerCase().includes('xbox') ? 'text-green-600' : 'text-red-600'
+                                }`} />
+                                <span className="text-sm text-gray-900 dark:text-gray-100">{booking.consoleType || 'Gaming Console'}</span>
                               </div>
                             </td>
 
-                            {/* Time */}
-                            <td className="px-6 py-4 whitespace-nowrap">
+                            {/* ✅ COMPACT: Time */}
+                            <td className="px-3 py-2">
+                              <div className="text-xs space-y-1">
+                                <div><span className="text-gray-600">Start:</span> {booking.startTime || 'N/A'}</div>
+                                <div><span className="text-gray-600">End:</span> {booking.endTime || 'N/A'}</div>
+                              </div>
+                            </td>
+
+                            {/* ✅ COMPACT: Progress */}
+                            <td className="px-3 py-2">
                               <div className="space-y-1">
-                                <div className="flex items-center gap-1">
-                                  <span className="text-gray-700 dark:text-gray-300 font-medium">Start:</span>
-                                  <span>{booking.startTime}</span>
-                                </div>
-                                <div className="flex items-center gap-1">
-                                  <span className="text-gray-700 dark:text-gray-300 font-medium">End:</span>
-                                  <span>{booking.endTime}</span>
-                                </div>
-                              </div>
-                            </td>
-
-                            {/* Progress */}
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <div className="space-y-2">
-                                <div className="font-medium text-gray-900 dark:text-gray-100">{formatTime(timer.elapsedTime)}</div>
-                                <div className="h-2.5 w-24 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                                <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{formatTime(timer.elapsedTime)}</div>
+                                <div className="h-2 w-20 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
                                   <motion.div
                                     className={`h-full ${progress < 75 ? 'bg-emerald-500' : progress < 90 ? 'bg-yellow-500' : 'bg-red-500'}`}
                                     style={{ width: `${progress}%` }}
@@ -339,59 +392,55 @@ export function CurrentSlots({ currentSlots, refreshSlots, setRefreshSlots }: Cu
                               </div>
                             </td>
 
-                            {/* Extra Time */}
-                            <td className="px-6 py-4 whitespace-nowrap">
+                            {/* ✅ COMPACT: Extra Time */}
+                            <td className="px-3 py-2">
                               {hasExtraTime ? (
-                                <motion.div
-                                  className="text-red-600 dark:text-red-400 font-medium"
-                                  initial={{ scale: 1 }}
-                                  animate={{ scale: [1, 1.05, 1] }}
-                                  transition={{ duration: 1, repeat: Infinity }}
-                                >
+                                <div className="text-red-600 dark:text-red-400 font-medium text-sm">
                                   {formatTime(timer.extraTime)}
-                                </motion.div>
+                                </div>
                               ) : (
-                                <span className="text-emerald-600 dark:text-emerald-400">00:00:00</span>
+                                <span className="text-emerald-600 dark:text-emerald-400 text-sm">00:00:00</span>
                               )}
                             </td>
 
-                            {/* Action */}
-                            <td className="px-6 py-4 whitespace-nowrap">
+                            {/* ✅ COMPACT: Action - smaller buttons */}
+                            <td className="px-3 py-2">
                               {hasExtraTime ? (
-                                <motion.button
-                                  whileHover={{ scale: 1.05 }}
-                                  whileTap={{ scale: 0.95 }}
+                                <button
                                   onClick={() => {
                                     setSelectedSlot(booking);
                                     setShowOverlay(true);
                                     setError("");
                                   }}
-                                  className="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-md text-sm w-28 shadow-sm transition-all duration-200"
-                                  aria-label={`Settle extra time for ${booking.username}`}
+                                  className="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded text-xs w-20 transition-colors"
                                 >
                                   <div className="flex items-center justify-center gap-1">
-                                    <FaCheck className="w-4 h-4" />
+                                    <FaCheck className="w-3 h-3" />
                                     Settle
                                   </div>
-                                </motion.button>
+                                </button>
                               ) : (
-                                <motion.button
-                                  whileHover={{ scale: 1.05 }}
-                                  whileTap={{ scale: 0.95 }}
-                                  onClick={() => handleRelease(booking.consoleType, booking.game_id, booking.consoleNumber, vendorId, setRefreshSlots, booking.slotId)}
+                                <button
+                                  onClick={() => handleRelease(
+                                    booking.consoleType || '', 
+                                    booking.game_id || '', 
+                                    booking.consoleNumber || '', 
+                                    vendorId, 
+                                    setRefreshSlots, 
+                                    booking.slotId
+                                  )}
                                   disabled={isReleasing || !vendorId}
-                                  className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-md text-sm w-28 disabled:opacity-50 shadow-sm transition-all duration-200"
-                                  aria-label={`Release slot for ${booking.username}`}
+                                  className="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1 rounded text-xs w-20 disabled:opacity-50 transition-colors"
                                 >
                                   <div className="flex items-center justify-center gap-1">
                                     {isReleasing ? (
-                                      <Loader2 className="animate-spin w-4 h-4" />
+                                      <Loader2 className="animate-spin w-3 h-3" />
                                     ) : (
-                                      <FaPowerOff className="w-4 h-4" />
+                                      <FaPowerOff className="w-3 h-3" />
                                     )}
-                                    <span>{isReleasing ? "Releasing..." : "Release"}</span>
+                                    <span>{isReleasing ? "..." : "Release"}</span>
                                   </div>
-                                </motion.button>
+                                </button>
                               )}
                             </td>
                           </motion.tr>
@@ -400,15 +449,17 @@ export function CurrentSlots({ currentSlots, refreshSlots, setRefreshSlots }: Cu
                     </AnimatePresence>
                   ) : (
                     <tr>
-                      <td colSpan={6} className="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
+                      <td colSpan={6} className="px-3 py-8 text-center text-gray-500 dark:text-gray-400">
                         <motion.div
                           initial={{ opacity: 0 }}
                           animate={{ opacity: 1 }}
                           className="flex flex-col items-center space-y-2"
                         >
-                          <Search className="w-12 h-12 text-gray-300 dark:text-gray-600" />
-                          <p className="text-base font-medium">No active slots found</p>
-                          <p className="text-sm">Try adjusting your search or check back later</p>
+                          <Search className="w-8 h-8 text-gray-300 dark:text-gray-600" />
+                          <p className="text-sm font-medium">No active slots found</p>
+                          <p className="text-xs">
+                            {isConnected ? "Waiting for new sessions..." : "Check connection"}
+                          </p>
                         </motion.div>
                       </td>
                     </tr>
@@ -417,21 +468,20 @@ export function CurrentSlots({ currentSlots, refreshSlots, setRefreshSlots }: Cu
               </table>
             </div>
           </motion.div>
-
-          {/* ExtraBookingOverlay */}
+          
           <ExtraBookingOverlay
             showOverlay={showOverlay}
             setShowOverlay={setShowOverlay}
             selectedSlot={selectedSlot}
             vendorId={vendorId}
             setRefreshSlots={setRefreshSlots}
-            setSelectedSlot={setSelectedSlot} // Added
+            setSelectedSlot={setSelectedSlot}
             calculateExtraTime={calculateExtraTime}
             calculateExtraAmount={calculateExtraAmount}
             formatTime={formatTime}
             releaseSlot={releaseSlot}
           />
-        </div>
+        </>
       )}
     </div>
   );
