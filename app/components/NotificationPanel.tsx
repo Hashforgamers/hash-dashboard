@@ -42,6 +42,8 @@ interface NotificationPanelProps {
   onClose: () => void
   notifications: PayAtCafeNotification[]
   onRemoveNotification: (bookingId: number) => void
+  socket?: any // ✅ ADDED: Socket for emitting events
+  onBookingAccepted?: (bookingData: any) => void // ✅ ADDED: Callback for UI update
 }
 
 export function NotificationPanel({ 
@@ -49,16 +51,31 @@ export function NotificationPanel({
   isOpen, 
   onClose,
   notifications,
-  onRemoveNotification
+  onRemoveNotification,
+  socket, // ✅ ADDED
+  onBookingAccepted // ✅ ADDED
 }: NotificationPanelProps) {
-  const [processingBookings, setProcessingBookings] = useState<Set<number>>(new Set())
+  // ✅ FIXED: Separate processing state for each action
+  const [processingAction, setProcessingAction] = useState<{
+    bookingId: number | null
+    action: 'accept' | 'reject' | null
+  }>({
+    bookingId: null,
+    action: null
+  })
 
-  // Accept booking using separate API
+  // ✅ FIXED: Accept booking with proper button states and real-time update
   const handleAccept = async (notification: PayAtCafeNotification) => {
-    if (processingBookings.has(notification.bookingId)) return
+    if (processingAction.bookingId) return // Prevent multiple actions
     
     try {
-      setProcessingBookings(prev => new Set([...prev, notification.bookingId]))
+      // ✅ Set processing state - only accept button shows loader, reject gets disabled
+      setProcessingAction({
+        bookingId: notification.bookingId,
+        action: 'accept'
+      })
+      
+      console.log(`🔄 Processing accept for booking ${notification.bookingId}`)
       
       const response = await fetch(`${BOOKING_URL}/api/pay-at-cafe/accept`, {
         method: 'POST',
@@ -74,7 +91,45 @@ export function NotificationPanel({
       const result = await response.json()
       
       if (response.ok && result.success) {
+        // ✅ Remove notification from panel
         onRemoveNotification(notification.bookingId)
+        
+        // ✅ CRITICAL: Emit socket event for real-time upcoming bookings update
+        if (socket) {
+          console.log('📡 Emitting booking_accepted event for real-time update')
+          socket.emit('booking_accepted', {
+            bookingId: notification.bookingId,
+            vendorId: vendorId,
+            userId: notification.userId,
+            username: notification.username,
+            game_id: notification.game_id,
+            consoleType: notification.consoleType,
+            date: notification.date,
+            time: notification.time,
+            status: 'Confirmed',
+            booking_status: 'upcoming'
+          })
+        }
+        
+        // ✅ CRITICAL: Trigger upcoming bookings update callback
+        if (onBookingAccepted) {
+          const bookingData = {
+            bookingId: notification.bookingId,
+            slotId: notification.slotId,
+            username: notification.username,
+            userId: notification.userId,
+            game: notification.game.game_name,
+            game_id: notification.game_id,
+            consoleType: notification.consoleType,
+            date: notification.date,
+            time: notification.time,
+            status: 'Confirmed',
+            statusLabel: 'Confirmed'
+          }
+          console.log('📅 Triggering upcoming bookings update with:', bookingData)
+          onBookingAccepted(bookingData)
+        }
+        
         showToast('✅ Booking accepted and confirmed! Customer can visit the cafe.', 'success')
         console.log(`✅ Booking ${notification.bookingId} confirmed successfully`)
       } else {
@@ -84,23 +139,28 @@ export function NotificationPanel({
       console.error('Error accepting booking:', error)
       showToast('❌ Error accepting booking. Please try again.', 'error')
     } finally {
-      setProcessingBookings(prev => {
-        const newSet = new Set(prev)
-        newSet.delete(notification.bookingId)
-        return newSet
+      // ✅ Reset processing state
+      setProcessingAction({
+        bookingId: null,
+        action: null
       })
     }
   }
 
-  // Reject booking using separate API (NO PROMPT - DIRECT REJECTION)
+  // ✅ FIXED: Reject booking with proper button states
   const handleReject = async (notification: PayAtCafeNotification) => {
-    if (processingBookings.has(notification.bookingId)) return
-    
-    // No prompt - directly reject with default reason
-    const reason = 'Rejected by vendor'
+    if (processingAction.bookingId) return // Prevent multiple actions
     
     try {
-      setProcessingBookings(prev => new Set([...prev, notification.bookingId]))
+      // ✅ Set processing state - only reject button shows loader, accept gets disabled
+      setProcessingAction({
+        bookingId: notification.bookingId,
+        action: 'reject'
+      })
+      
+      console.log(`🔄 Processing reject for booking ${notification.bookingId}`)
+      
+      const reason = 'Rejected by vendor'
       
       const response = await fetch(`${BOOKING_URL}/api/pay-at-cafe/reject`, {
         method: 'POST',
@@ -127,10 +187,10 @@ export function NotificationPanel({
       console.error('Error rejecting booking:', error)
       showToast('❌ Error rejecting booking. Please try again.', 'error')
     } finally {
-      setProcessingBookings(prev => {
-        const newSet = new Set(prev)
-        newSet.delete(notification.bookingId)
-        return newSet
+      // ✅ Reset processing state
+      setProcessingAction({
+        bookingId: null,
+        action: null
       })
     }
   }
@@ -242,7 +302,10 @@ export function NotificationPanel({
               ) : (
                 <div>
                   {notifications.map((notification, index) => {
-                    const isProcessing = processingBookings.has(notification.bookingId)
+                    // ✅ FIXED: Determine button states based on current processing action
+                    const isThisBookingProcessing = processingAction.bookingId === notification.bookingId
+                    const isAcceptProcessing = isThisBookingProcessing && processingAction.action === 'accept'
+                    const isRejectProcessing = isThisBookingProcessing && processingAction.action === 'reject'
                     
                     return (
                       <motion.div
@@ -252,7 +315,7 @@ export function NotificationPanel({
                         exit={{ opacity: 0, x: 20 }}
                         transition={{ delay: index * 0.1 }}
                         className={`p-4 ${index !== notifications.length - 1 ? 'border-b border-border' : ''} ${
-                          isProcessing ? 'opacity-75 pointer-events-none' : ''
+                          isThisBookingProcessing ? 'opacity-75' : ''
                         }`}
                       >
                         <div className="space-y-3">
@@ -298,32 +361,32 @@ export function NotificationPanel({
                             </div>
                           </div>
 
-                          {/* Action Buttons */}
+                          {/* ✅ FIXED: Action Buttons with proper loading states */}
                           <div className="flex gap-2">
                             <Button
                               onClick={() => handleAccept(notification)}
-                              disabled={isProcessing}
+                              disabled={isThisBookingProcessing} // ✅ Disable both buttons during any processing
                               className="flex-1 bg-green-600 hover:bg-green-700 text-white h-9 text-sm"
                             >
-                              {isProcessing ? (
+                              {isAcceptProcessing ? (
                                 <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
                               ) : (
                                 <Check className="w-4 h-4 mr-2" />
                               )}
-                              Accept
+                              {isAcceptProcessing ? 'Accepting...' : 'Accept'}
                             </Button>
                             <Button
                               onClick={() => handleReject(notification)}
-                              disabled={isProcessing}
+                              disabled={isThisBookingProcessing} // ✅ Disable both buttons during any processing
                               variant="destructive"
                               className="flex-1 h-9 text-sm"
                             >
-                              {isProcessing ? (
+                              {isRejectProcessing ? (
                                 <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
                               ) : (
                                 <X className="w-4 h-4 mr-2" />
                               )}
-                              Reject
+                              {isRejectProcessing ? 'Rejecting...' : 'Reject'}
                             </Button>
                           </div>
                         </div>

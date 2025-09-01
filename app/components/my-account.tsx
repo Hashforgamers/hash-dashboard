@@ -91,6 +91,124 @@ const [otpModalOpen, setOtpModalOpen] = useState(false);
 const [pendingPage, setPendingPage] = useState(null);
 const [verifiedPages, setVerifiedPages] = useState(new Set());
 
+// Add these state variables after your existing bank states
+const [paymentMethods, setPaymentMethods] = useState([]);
+const [loadingPaymentMethods, setLoadingPaymentMethods] = useState(false);
+const [togglingMethod, setTogglingMethod] = useState(null);
+const [paymentMethodError, setPaymentMethodError] = useState(null);
+const [paymentMethodSuccess, setPaymentMethodSuccess] = useState(null);
+const [otpLoading, setOtpLoading] = useState(false);
+
+
+
+// Fetch payment methods for vendor
+// Fetch all available payment methods and vendor's selections
+// Updated fetch function
+const fetchPaymentMethods = async () => {
+  if (!vendorId) return;
+  setLoadingPaymentMethods(true);
+  setPaymentMethodError(null);
+  
+  try {
+    const response = await axios.get(`${DASHBOARD_URL}/api/vendor/${vendorId}/paymentMethods`);
+    
+    if (response.data.success) {
+      setPaymentMethods(response.data.payment_methods);
+    } else {
+      throw new Error(response.data.error || 'Failed to fetch payment methods');
+    }
+  } catch (error) {
+    console.error('Error fetching payment methods:', error);
+    const errorMessage = error.response?.data?.error || 
+                        error.message || 
+                        'Failed to load payment methods';
+    setPaymentMethodError(errorMessage);
+    
+    // If no payment methods exist, try to initialize them
+    if (error.response?.status === 404 || errorMessage.includes('not found')) {
+      await initializePaymentMethods();
+    }
+  } finally {
+    setLoadingPaymentMethods(false);
+  }
+};
+
+// Toggle payment method
+const handleTogglePaymentMethod = async (payMethodId, currentState) => {
+  if (!vendorId) return;
+  
+  setTogglingMethod(payMethodId);
+  setPaymentMethodError(null);
+  setPaymentMethodSuccess(null);
+  
+  try {
+    const response = await axios.post(
+      `${DASHBOARD_URL}/api/vendor/${vendorId}/paymentMethods/toggle`,
+      { pay_method_id: payMethodId },
+      {
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      }
+    );
+
+    if (response.data.success) {
+      // Update the local state
+      setPaymentMethods(prevMethods => 
+        prevMethods.map(method => 
+          method.pay_method_id === payMethodId 
+            ? { ...method, is_enabled: response.data.data.is_enabled }
+            : method
+        )
+      );
+      
+      // Show success message
+      setPaymentMethodSuccess(response.data.message);
+      setTimeout(() => setPaymentMethodSuccess(null), 3000);
+    } else {
+      throw new Error(response.data.error || 'Failed to toggle payment method');
+    }
+  } catch (error) {
+    console.error('Error toggling payment method:', error);
+    const errorMessage = error.response?.data?.error || 
+                        error.message || 
+                        'Failed to update payment method';
+    setPaymentMethodError(errorMessage);
+    setTimeout(() => setPaymentMethodError(null), 5000);
+  } finally {
+    setTogglingMethod(null);
+  }
+};
+
+
+
+// Initialize payment methods if they don't exist
+const initializePaymentMethods = async () => {
+  try {
+    setPaymentMethodError(null);
+    const response = await axios.post(`${DASHBOARD_URL}/api/payment-methods/initialize`);
+    
+    if (response.data.success) {
+      // After initialization, fetch the payment methods again
+      setTimeout(() => {
+        fetchPaymentMethods();
+      }, 500);
+    }
+  } catch (error) {
+    console.error('Error initializing payment methods:', error);
+    setPaymentMethodError('Failed to initialize payment methods. Please contact support.');
+  }
+};
+
+
+
+// Clear messages
+const clearPaymentMethodMessages = () => {
+  setPaymentMethodError(null);
+  setPaymentMethodSuccess(null);
+};
+
+
 // Add OTP verification functions
 const checkPageVerification = async (pageType) => {
   try {
@@ -103,10 +221,12 @@ const checkPageVerification = async (pageType) => {
 };
 
 const handleRestrictedPageClick = async (pageName) => {
+  setOtpLoading(true);
   const pageType = pageName === "Bank Transfer" ? "bank_transfer" : "payout_history";
   
   // Check if already verified
   const isVerified = await checkPageVerification(pageType);
+  setOtpLoading(false);
   
   if (isVerified || verifiedPages.has(pageType)) {
     setPage(pageName);
@@ -262,6 +382,7 @@ const handleSaveBankDetails = async () => {
 useEffect(() => {
   if (page === "Bank Transfer") {
     fetchBankDetails();
+    fetchPaymentMethods(); // Add this line
   } else if (page === "Payout History") {
     fetchPayouts(payoutPage);
   } else if (page === "Operating Hours") {
@@ -1014,6 +1135,66 @@ const handleDeleteImage = async (imageIndex: number) => {
 
   if (loading) return <HashLoader className="min-h-[500px]" />;
   if (!data) return <div className="text-center text-destructive p-8">Failed to load data. Please try again later.</div>;
+
+  // Add this Toggle Switch component before your main component
+const ToggleSwitch = ({ 
+  enabled, 
+  onToggle, 
+  disabled = false, 
+  loading = false,
+  size = "default" 
+}) => {
+  const sizeClasses = {
+    sm: "w-8 h-4",
+    default: "w-11 h-6",
+    lg: "w-14 h-7"
+  };
+
+  const thumbSizeClasses = {
+    sm: "w-3 h-3",
+    default: "w-5 h-5", 
+    lg: "w-6 h-6"
+  };
+
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      disabled={disabled || loading}
+      className={cn(
+        "relative inline-flex shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2",
+        sizeClasses[size],
+        enabled 
+          ? "bg-primary" 
+          : "bg-gray-200 dark:bg-gray-700",
+        disabled && "opacity-50 cursor-not-allowed"
+      )}
+      role="switch"
+      aria-checked={enabled}
+    >
+      <span className="sr-only">Toggle setting</span>
+      <span
+        className={cn(
+          "pointer-events-none relative inline-block rounded-full bg-white shadow transform ring-0 transition duration-200 ease-in-out",
+          thumbSizeClasses[size],
+          enabled 
+            ? size === "sm" ? "translate-x-4" : size === "lg" ? "translate-x-7" : "translate-x-5"
+            : "translate-x-0"
+        )}
+      >
+        {loading && (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <Loader2 className={cn(
+              "animate-spin text-gray-400",
+              size === "sm" ? "w-2 h-2" : size === "lg" ? "w-4 h-4" : "w-3 h-3"
+            )} />
+          </div>
+        )}
+      </span>
+    </button>
+  );
+};
+
 
   const { navigation, cafeProfile, businessDetails, operatingHours, billingDetails, verifiedDocuments } = data;
 
@@ -2195,6 +2376,270 @@ const handleDeleteImage = async (imageIndex: number) => {
   </Card>
 )}
 
+{/* UPDATED PAYMENT METHODS CARD - Shows ALL available methods from payment_method table */}
+{page === "Bank Transfer" && (
+  <Card className="bg-card border border-border shadow-lg">
+    <CardHeader>
+      <CardTitle className="text-foreground flex items-center gap-2">
+        <Settings className="w-5 h-5" />
+        Payment Methods
+      </CardTitle>
+      <CardDescription className="text-muted-foreground">
+        Select which payment methods you want to accept at your cafe
+      </CardDescription>
+    </CardHeader>
+    <CardContent className="space-y-6">
+      {/* Success/Error Messages */}
+      {paymentMethodSuccess && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex items-center gap-2 p-3 rounded-md bg-green-500/20 text-green-400 border border-green-500/30"
+        >
+          <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+          <span className="text-sm font-medium">{paymentMethodSuccess}</span>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={clearPaymentMethodMessages}
+            className="ml-auto h-6 w-6 p-0 text-green-400 hover:text-green-300"
+          >
+            <X className="h-3 w-3" />
+          </Button>
+        </motion.div>
+      )}
+
+      {paymentMethodError && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex items-center gap-2 p-3 rounded-md bg-red-500/20 text-red-400 border border-red-500/30"
+        >
+          <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
+          <span className="text-sm font-medium">{paymentMethodError}</span>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={clearPaymentMethodMessages}
+            className="ml-auto h-6 w-6 p-0 text-red-400 hover:text-red-300"
+          >
+            <X className="h-3 w-3" />
+          </Button>
+        </motion.div>
+      )}
+
+      {/* Loading State */}
+      {loadingPaymentMethods ? (
+        <div className="flex items-center justify-center py-12">
+          <div className="flex flex-col items-center gap-3">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <span className="text-sm text-muted-foreground">Loading payment methods...</span>
+          </div>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {/* Available Payment Methods */}
+          {Array.isArray(paymentMethods) && paymentMethods.length > 0 ? (
+            <>
+              {/* Header Info */}
+              <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg border border-border">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                  <span className="text-sm font-medium text-foreground">
+                    Available Payment Methods ({paymentMethods.length})
+                  </span>
+                </div>
+                <Badge variant="outline" className="text-xs">
+                  {paymentMethods.filter(m => m.is_enabled).length} Active
+                </Badge>
+              </div>
+              
+              {/* Payment Method List */}
+              <div className="space-y-3">
+                {paymentMethods.map((method, index) => (
+                  <motion.div
+                    key={method.pay_method_id}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.1 }}
+                    className="group"
+                  >
+                    <div className={cn(
+                      "flex items-center justify-between p-4 rounded-xl border transition-all duration-200 hover:shadow-md",
+                      method.is_enabled 
+                        ? "border-primary/50 bg-gradient-to-r from-primary/5 to-primary/10" 
+                        : "border-border bg-gradient-to-r from-transparent to-muted/20 hover:border-primary/30"
+                    )}>
+                      {/* Method Info */}
+                      <div className="flex items-center space-x-4">
+                        <div className="flex-shrink-0">
+                          {method.method_name === 'pay_at_cafe' ? (
+                            <div className={cn(
+                              "w-12 h-12 rounded-xl flex items-center justify-center border transition-colors",
+                              method.is_enabled 
+                                ? "bg-gradient-to-br from-blue-500/30 to-blue-600/30 border-blue-500/50" 
+                                : "bg-gradient-to-br from-blue-500/10 to-blue-600/10 border-blue-500/20"
+                            )}>
+                              <Coffee className={cn(
+                                "w-6 h-6 transition-colors",
+                                method.is_enabled ? "text-blue-600" : "text-blue-400"
+                              )} />
+                            </div>
+                          ) : (
+                            <div className={cn(
+                              "w-12 h-12 rounded-xl flex items-center justify-center border transition-colors",
+                              method.is_enabled 
+                                ? "bg-gradient-to-br from-purple-500/30 to-purple-600/30 border-purple-500/50" 
+                                : "bg-gradient-to-br from-purple-500/10 to-purple-600/10 border-purple-500/20"
+                            )}>
+                              <CreditCard className={cn(
+                                "w-6 h-6 transition-colors",
+                                method.is_enabled ? "text-purple-600" : "text-purple-400"
+                              )} />
+                            </div>
+                          )}
+                        </div>
+                        
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <h4 className="font-semibold text-foreground">
+                              {method.display_name}
+                            </h4>
+                            {method.is_enabled && (
+                              <Badge 
+                                variant="default"
+                                className="bg-green-500/20 text-green-500 border-green-500/30 text-xs"
+                              >
+                                Active
+                              </Badge>
+                            )}
+                          </div>
+                          <p className="text-sm text-muted-foreground">
+                            {method.description}
+                          </p>
+                          
+                          {/* Show registration info */}
+                          <div className="mt-2 flex items-center gap-1 text-xs">
+                            <div className={cn(
+                              "w-1 h-1 rounded-full",
+                              method.is_enabled ? "bg-green-500" : "bg-gray-400"
+                            )}></div>
+                            <span className={cn(
+                              method.is_enabled ? "text-green-600" : "text-gray-500"
+                            )}>
+                              {method.is_enabled ? "Registered for your cafe" : "Not registered"}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Toggle Switch */}
+                      <div className="flex items-center space-x-4">
+                        {/* Status Text */}
+                        <div className="text-right min-w-[70px]">
+                          {togglingMethod === method.pay_method_id ? (
+                            <span className="text-xs text-primary font-medium">
+                              {method.is_enabled ? 'Removing...' : 'Adding...'}
+                            </span>
+                          ) : (
+                            <span className={cn(
+                              "text-xs font-semibold",
+                              method.is_enabled ? "text-green-500" : "text-gray-400"
+                            )}>
+                              {method.is_enabled ? 'ACTIVE' : 'INACTIVE'}
+                            </span>
+                          )}
+                        </div>
+                        
+                        {/* Toggle Switch */}
+                        <ToggleSwitch
+                          enabled={method.is_enabled}
+                          onToggle={() => handleTogglePaymentMethod(method.pay_method_id, method.is_enabled)}
+                          disabled={togglingMethod !== null && togglingMethod !== method.pay_method_id}
+                          loading={togglingMethod === method.pay_method_id}
+                          size="default"
+                        />
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+              
+              {/* Summary Footer */}
+              <div className="mt-6 p-4 bg-gradient-to-r from-muted/20 to-muted/40 rounded-lg border border-border">
+                <div className="flex items-start gap-3">
+                  <div className="w-5 h-5 bg-blue-500/20 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-sm font-medium text-foreground">Registration Status</span>
+                      <Badge 
+                        variant={paymentMethods.filter(m => m.is_enabled).length > 0 ? "default" : "secondary"}
+                        className={cn(
+                          "text-xs",
+                          paymentMethods.filter(m => m.is_enabled).length > 0 
+                            ? "bg-green-500/20 text-green-500 border-green-500/30" 
+                            : "bg-amber-500/20 text-amber-600 border-amber-500/30"
+                        )}
+                      >
+                        {paymentMethods.filter(m => m.is_enabled).length > 0 ? 'Ready' : 'Setup Required'}
+                      </Badge>
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      {paymentMethods.filter(m => m.is_enabled).length === 0 ? (
+                        <span className="text-amber-600">⚠️ Register at least one payment method to accept payments.</span>
+                      ) : (
+                        <>
+                          <span className="text-green-600">✅ Registered methods: </span>
+                          <span className="font-medium">
+                            {paymentMethods.filter(m => m.is_enabled).map(m => m.display_name).join(', ')}
+                          </span>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </>
+          ) : (
+            <div className="text-center py-12">
+              <div className="w-16 h-16 bg-muted/50 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Settings className="h-8 w-8 text-muted-foreground" />
+              </div>
+              <h3 className="text-lg font-medium text-foreground mb-2">No Payment Methods Available</h3>
+              <p className="text-muted-foreground mb-6 max-w-sm mx-auto">
+                No payment methods are available in the system. Please contact support.
+              </p>
+              <Button 
+                type="button"
+                onClick={fetchPaymentMethods}
+                disabled={loadingPaymentMethods}
+                className="bg-primary hover:bg-primary/90 text-primary-foreground"
+              >
+                {loadingPaymentMethods ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Refreshing...
+                  </>
+                ) : (
+                  <>
+                    <Settings className="h-4 w-4 mr-2" />
+                    Refresh
+                  </>
+                )}
+              </Button>
+            </div>
+          )}
+        </div>
+      )}
+    </CardContent>
+  </Card>
+)}
+
+
+
+
 
 
 {/* ADD PAYOUT HISTORY SECTION */}
@@ -2320,6 +2765,14 @@ const handleDeleteImage = async (imageIndex: number) => {
       </div>
       <DocumentPreviewModal />
       <UpdatingOverlay visible={savingSlot !== null} />
+
+ {otpLoading && (
+  <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+    <div className="w-20 h-20 border-4 border-t-transparent animate-spin rounded-full border-t-2 border-b-2 border-emerald-500"></div>
+  </div>
+)}
+
+
 
       
 <OTPVerificationModal
