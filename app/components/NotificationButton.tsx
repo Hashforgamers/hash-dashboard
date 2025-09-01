@@ -5,23 +5,26 @@ import { Bell } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { NotificationPanel } from './NotificationPanel'
-import { io, Socket } from 'socket.io-client'
+import { useSocket } from '../context/SocketContext'
 import { BOOKING_URL } from '@/src/config/env'
 
 interface NotificationButtonProps {
   vendorId: number | null
+  onBookingAccepted?: (bookingData: any) => void // ✅ ADDED: Callback for upstream booking updates
 }
 
-export function NotificationButton({ vendorId }: NotificationButtonProps) {
+export function NotificationButton({ 
+  vendorId, 
+  onBookingAccepted 
+}: NotificationButtonProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [unreadCount, setUnreadCount] = useState(0)
   const [connectionStatus, setConnectionStatus] = useState<'disconnected' | 'connected' | 'joined_room'>('disconnected')
   const [notifications, setNotifications] = useState([])
   
-  // Use useRef to persist socket connection across renders
-  const socketRef = useRef<Socket | null>(null)
+  const { socket, isConnected, joinVendor } = useSocket()
 
-  // Fetch existing pending bookings on component mount
+  // Fetch existing pending bookings
   const fetchPendingBookings = async () => {
     if (!vendorId) return
     
@@ -45,108 +48,102 @@ export function NotificationButton({ vendorId }: NotificationButtonProps) {
     }
   }
 
-  // Socket.IO connection - Connect once and keep alive
+  // ✅ FIXED: Socket event handling with immediate updates and booking acceptance
   useEffect(() => {
-    // Only create socket if we don't have one and vendorId exists
-    if (!socketRef.current && vendorId) {
-      console.log(`🔌 Creating persistent Socket.IO connection for vendor ${vendorId}...`)
-      
-      const newSocket = io('wss://hfg-booking-hmnx.onrender.com', {
-        transports: ['websocket', 'polling'],
-        timeout: 20000,
-        reconnection: true,
-        reconnectionAttempts: Infinity,
-        reconnectionDelay: 1000
-      })
-      
-      // Connection events
-      newSocket.on('connect', () => {
-        console.log('✅ Socket.IO connected')
-        setConnectionStatus('connected')
-        
-        // Join vendor-specific room
-        newSocket.emit('connect_vendor', { vendor_id: vendorId })
-        console.log(`🏪 Emitted connect_vendor for vendor ${vendorId}`)
-      })
-      
-      newSocket.on('disconnect', () => {
-        console.log('❌ Socket.IO disconnected')
-        setConnectionStatus('disconnected')
-      })
+    if (!socket || !isConnected || !vendorId) {
+      setConnectionStatus('disconnected')
+      return
+    }
 
-      newSocket.on('connect_error', (error) => {
-        console.error('❌ Socket connection error:', error)
-        setConnectionStatus('disconnected')
-      })
+    console.log(`🔌 Setting up notification events for vendor ${vendorId}...`)
+    
+    setConnectionStatus('connected')
+    joinVendor(vendorId)
+    setConnectionStatus('joined_room')
 
-      // Listen for booking events (real-time pay-at-cafe notifications)
-      newSocket.on('booking', (data) => {
-        console.log('📥 Received booking event:', data)
+    // ✅ FIXED: Immediate notification updates
+    const handleBooking = (data: any) => {
+      console.log('📥 Received booking event via bridge:', data)
+      
+      if (data.vendorId === vendorId && data.status === 'pending_acceptance') {
+        console.log('🔔 Pay at cafe notification:', data)
         
-        // Check if it's a pay at cafe booking for this vendor
-        if (data.vendorId === vendorId && data.status === 'pending_acceptance') {
-          console.log('🔔 Pay at cafe notification:', data)
-          
-          // Add to notifications array (avoid duplicates)
-          setNotifications(prev => {
-            const exists = prev.some(n => n.bookingId === data.bookingId)
-            if (!exists) {
-              return [data, ...prev]
-            }
-            return prev
+        // ✅ Add notification immediately
+        setNotifications(prev => {
+          const exists = prev.some((n: any) => n.bookingId === data.bookingId)
+          if (!exists) {
+            console.log('📥 Adding notification immediately')
+            return [data, ...prev]
+          }
+          return prev
+        })
+        
+        // ✅ Update count immediately
+        setUnreadCount(prev => prev + 1)
+        
+        // Show browser notification
+        if (Notification.permission === 'granted') {
+          const notification = new Notification('New Pay at Cafe Request', {
+            body: `${data.username} wants to book ${data.game?.game_name || 'a game'} for ₹${data.game?.single_slot_price || data.slot_price?.single_slot_price}`,
+            icon: '/favicon.ico',
+            tag: `pay_at_cafe_${data.bookingId}`,
+            requireInteraction: true
           })
           
-          // Update unread count
-          setUnreadCount(prev => prev + 1)
-          setConnectionStatus('joined_room')
-          
-          // Show browser notification if permission granted
-          if (Notification.permission === 'granted') {
-            const notification = new Notification('New Pay at Cafe Request', {
-              body: `${data.username} wants to book ${data.game?.game_name || 'a game'} for ₹${data.game?.single_slot_price || data.slot_price?.single_slot_price}`,
-              icon: '/favicon.ico',
-              tag: `pay_at_cafe_${data.bookingId}`,
-              requireInteraction: true
-            })
-            
-            setTimeout(() => notification.close(), 10000)
-          }
+          setTimeout(() => notification.close(), 10000)
         }
-      })
-
-      // Listen for acceptance/rejection events to decrease count
-      newSocket.on('pay_at_cafe_accepted', (data) => {
-        console.log('✅ Booking accepted:', data)
-        setNotifications(prev => prev.filter(n => n.bookingId !== data.bookingId))
-        setUnreadCount(prev => Math.max(0, prev - 1))
-      })
-
-      newSocket.on('pay_at_cafe_rejected', (data) => {
-        console.log('❌ Booking rejected:', data)
-        setNotifications(prev => prev.filter(n => n.bookingId !== data.bookingId))
-        setUnreadCount(prev => Math.max(0, prev - 1))
-      })
-      
-      // Store socket in ref
-      socketRef.current = newSocket
-      
-      // Request notification permission
-      if ('Notification' in window && Notification.permission === 'default') {
-        Notification.requestPermission().then(permission => {
-          console.log('Notification permission:', permission)
-        })
       }
     }
+
+    // ✅ ADDED: Listen for booking acceptance events from NotificationPanel
+    const handleBookingAccepted = (data: any) => {
+      console.log('✅ Booking accepted event received from NotificationPanel:', data)
+      
+      // Remove from notifications
+      setNotifications(prev => prev.filter((n: any) => n.bookingId !== data.bookingId))
+      setUnreadCount(prev => Math.max(0, prev - 1))
+      
+      // ✅ CRITICAL: Trigger upstream booking update (for upcoming bookings)
+      if (onBookingAccepted) {
+        console.log('📅 Triggering upstream booking update')
+        onBookingAccepted(data)
+      }
+    }
+
+    // ✅ FIXED: Immediate acceptance/rejection updates
+    const handlePayAtCafeAccepted = (data: any) => {
+      console.log('✅ Booking accepted via bridge:', data)
+      setNotifications(prev => prev.filter((n: any) => n.bookingId !== data.bookingId))
+      setUnreadCount(prev => Math.max(0, prev - 1))
+    }
+
+    const handlePayAtCafeRejected = (data: any) => {
+      console.log('❌ Booking rejected via bridge:', data)
+      setNotifications(prev => prev.filter((n: any) => n.bookingId !== data.bookingId))
+      setUnreadCount(prev => Math.max(0, prev - 1))
+    }
+
+    // Register event listeners
+    socket.on('booking', handleBooking)
+    socket.on('booking_accepted', handleBookingAccepted) // ✅ ADDED: Listen for acceptance events from panel
+    socket.on('pay_at_cafe_accepted', handlePayAtCafeAccepted)
+    socket.on('pay_at_cafe_rejected', handlePayAtCafeRejected)
     
-    // Cleanup only when component unmounts or vendorId changes
-    return () => {
-      if (socketRef.current) {
-        console.log('🧹 Cleaning up Socket.IO connection...')
-        socketRef.current.disconnect()
-        socketRef.current = null
-      }
+    // Request notification permission
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission().then(permission => {
+        console.log('Notification permission:', permission)
+      })
     }
-  }, [vendorId])
+
+    // Cleanup
+    return () => {
+      socket.off('booking', handleBooking)
+      socket.off('booking_accepted', handleBookingAccepted) // ✅ ADDED
+      socket.off('pay_at_cafe_accepted', handlePayAtCafeAccepted)
+      socket.off('pay_at_cafe_rejected', handlePayAtCafeRejected)
+    }
+  }, [socket, isConnected, vendorId, joinVendor, onBookingAccepted]) // ✅ ADDED onBookingAccepted dependency
 
   // Fetch pending bookings when vendorId is available
   useEffect(() => {
@@ -158,23 +155,39 @@ export function NotificationButton({ vendorId }: NotificationButtonProps) {
   // Handle panel close
   const handleClose = () => {
     setIsOpen(false)
-    // Reset unread count when panel is closed (assuming user has seen notifications)
     setUnreadCount(0)
   }
 
-  // Handle notification removal (for accept/reject actions)
+  // Handle notification removal
   const handleRemoveNotification = (bookingId: number) => {
-    setNotifications(prev => prev.filter(n => n.bookingId !== bookingId))
+    setNotifications(prev => prev.filter((n: any) => n.bookingId !== bookingId))
     setUnreadCount(prev => Math.max(0, prev - 1))
+  }
+
+  // ✅ ADDED: Handle booking acceptance from NotificationPanel
+  const handleBookingAcceptedFromPanel = (bookingData: any) => {
+    console.log('🎯 Booking accepted from NotificationPanel:', bookingData)
+    
+    // ✅ CRITICAL: Emit socket event for real-time updates across components
+    if (socket) {
+      console.log('📡 Emitting booking_accepted event via socket')
+      socket.emit('booking_accepted', bookingData)
+    }
+    
+    // ✅ CRITICAL: Also trigger upstream callback for parent components
+    if (onBookingAccepted) {
+      console.log('📅 Triggering upstream callback for booking acceptance')
+      onBookingAccepted(bookingData)
+    }
   }
 
   // Get connection status color and text
   const getConnectionStatusInfo = () => {
     switch (connectionStatus) {
       case 'joined_room':
-        return { color: 'bg-green-500', title: 'Connected to vendor room - Live notifications active' }
+        return { color: 'bg-green-500', title: 'Connected - Live notifications active' }
       case 'connected':
-        return { color: 'bg-yellow-500', title: 'Connected to server - Joining vendor room...' }
+        return { color: 'bg-yellow-500', title: 'Connected - Joining vendor room...' }
       case 'disconnected':
         return { color: 'bg-red-500', title: 'Disconnected - Attempting to reconnect...' }
       default:
@@ -211,7 +224,6 @@ export function NotificationButton({ vendorId }: NotificationButtonProps) {
           )}
         </Button>
         
-        {/* Connection Status Indicator */}
         <div 
           className={`absolute -bottom-1 -right-1 w-3 h-3 rounded-full border-2 border-white ${statusInfo.color} ${
             connectionStatus === 'disconnected' ? 'animate-pulse' : ''
@@ -226,6 +238,8 @@ export function NotificationButton({ vendorId }: NotificationButtonProps) {
         onClose={handleClose}
         notifications={notifications}
         onRemoveNotification={handleRemoveNotification}
+        socket={socket} // ✅ ADDED: Pass socket to NotificationPanel
+        onBookingAccepted={handleBookingAcceptedFromPanel} // ✅ ADDED: Handle booking acceptance
       />
     </>
   )

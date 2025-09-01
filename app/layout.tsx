@@ -2,6 +2,7 @@ import { ThemeProvider } from "next-themes";
 import { AuthProvider } from "./AuthProvider";
 
 import "./globals.css";
+import { SocketProvider } from "./context/SocketContext";
 
 export const metadata ={
   title:"Hash for Gamers",
@@ -21,7 +22,9 @@ export default function RootLayout({
           {" "}
           {/* Wrap inside AuthProvider */}
           <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+          <SocketProvider>
             {children}
+            </SocketProvider>
           </ThemeProvider>
         </AuthProvider>
       </body>

@@ -60,8 +60,8 @@ export function BookingStats({ bookingStats }) {
             const available = platform.total - platform.booked;
             const bookedPercentage = (platform.booked / platform.total) * 100;
             const Icon = platform.icon;
-
-            return (
+          
+          return (
               <div key={platform.name} className="space-y-2">
                 <div className="flex items-center justify-between"> 
                   <div className="flex items-center gap-3">
@@ -93,7 +93,7 @@ export function BookingStats({ bookingStats }) {
               </div>
             );
           })}
-        </div>
+          </div>
       </div>
     </div>
   );
