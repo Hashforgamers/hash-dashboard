@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react'
 import { io, Socket } from 'socket.io-client'
-
+import { NEXT_PUBLIC_SOCKET_BOOKING_URL } from "@/src/config/env"
 interface SocketContextValue {
   socket: Socket | null
   isConnected: boolean
@@ -24,7 +24,7 @@ export const SocketProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   useEffect(() => {
     console.log('🔌 Creating single socket connection...')
     
-    const newSocket = io('wss://hfg-dashboard-h9qq.onrender.com', {
+    const newSocket = io(`${NEXT_PUBLIC_SOCKET_BOOKING_URL}`, {
       transports: ['websocket', 'polling'],
       autoConnect: true,
       reconnection: true,
