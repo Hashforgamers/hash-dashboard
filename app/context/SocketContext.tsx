@@ -28,6 +28,7 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     console.log('🔌 Creating single socket connection...')
     
+    console.log(`Trying to connect ${SOCKET_URL}`)
     const newSocket = io(`${SOCKET_URL}`, {
       transports: ['websocket', 'polling'],
       autoConnect: true,
