@@ -1,8 +1,9 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useState, ReactNode } from "react";
-import { io, Socket } from "socket.io-client";
-import { NEXT_PUBLIC_SOCKET_BOOKING_URL } from "@/src/config/env";
+
+import { SOCKET_URL } from '@/src/config/env'
+import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react'
+import { io, Socket } from 'socket.io-client'
 
 interface SocketContextValue {
   socket: Socket | null;
@@ -25,15 +26,10 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
   const [isConnected, setIsConnected] = useState(false);
 
   useEffect(() => {
-    if (!NEXT_PUBLIC_SOCKET_BOOKING_URL) {
-      console.error("❌ Missing NEXT_PUBLIC_SOCKET_BOOKING_URL");
-      return;
-    }
-
-    console.log("🔌 Creating socket connection...");
-
-    const newSocket: Socket = io(NEXT_PUBLIC_SOCKET_BOOKING_URL, {
-      transports: ["websocket", "polling"],
+    console.log('🔌 Creating single socket connection...')
+    
+    const newSocket = io(`${SOCKET_URL}`, {
+      transports: ['websocket', 'polling'],
       autoConnect: true,
       reconnection: true,
       reconnectionAttempts: 5,
