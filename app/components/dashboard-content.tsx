@@ -1,5 +1,6 @@
 "use client"
 
+
 import React, { useEffect, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { BookingStats } from "./book-stats"
@@ -14,10 +15,12 @@ import { Button } from "@/components/ui/button"
 import {NotificationButton} from "../components/NotificationButton"
 import { useSocket } from "../context/SocketContext"
 
+
 interface DashboardContentProps {
   activeTab: string
   setActiveTab: (tab: string) => void
 }
+
 
 // ✅ NEW: Platform metadata for devices
 const platformMetadata = {
@@ -53,6 +56,7 @@ const platformMetadata = {
   ]
 };
 
+
 export function DashboardContent({ activeTab, setActiveTab }: DashboardContentProps) {
   const [showBookingStats, setShowBookingStats] = useState(true)
   const [showEarnings, setShowEarnings] = useState(false)
@@ -61,6 +65,7 @@ export function DashboardContent({ activeTab, setActiveTab }: DashboardContentPr
   const [vendorId, setVendorId] = useState<number | null>(null)
   const [dashboardData, setDashboardData] = useState<any>(null)
   const [upcomingBookingsRefresh, setUpcomingBookingsRefresh] = useState(false)
+  const [latestBookingEvent, setLatestBookingEvent] = useState<any>(null)
   
   // ✅ NEW: Analytics/Devices tab state
   const [activeTopTab, setActiveTopTab] = useState<'analytics' | 'devices'>('analytics')
@@ -77,7 +82,9 @@ export function DashboardContent({ activeTab, setActiveTab }: DashboardContentPr
     lastUpdate?: string;
   }>({})
 
+
   const { socket, isConnected, joinVendor } = useSocket()
+
 
   // ✅ CRITICAL: Handle booking acceptance for real-time upcoming bookings update
   const handleBookingAccepted = (bookingData: any) => {
@@ -91,6 +98,7 @@ export function DashboardContent({ activeTab, setActiveTab }: DashboardContentPr
     }
   }
 
+
   useEffect(() => {
     const token = localStorage.getItem("jwtToken")
     if (token) {
@@ -103,6 +111,7 @@ export function DashboardContent({ activeTab, setActiveTab }: DashboardContentPr
       }
     }
   }, [])
+
 
   // ✅ Load initial dashboard data
   useEffect(() => {
@@ -120,8 +129,10 @@ export function DashboardContent({ activeTab, setActiveTab }: DashboardContentPr
       }
     }
 
+
     loadInitialData()
   }, [vendorId])
+
 
   // ✅ NEW: Fetch device booking data
   useEffect(() => {
@@ -137,15 +148,19 @@ export function DashboardContent({ activeTab, setActiveTab }: DashboardContentPr
       }
     };
 
+
     fetchBookingData();
   }, [vendorId, refreshSlots]);
+
 
   // ✅ ADDED: Listen to booking events for real-time dashboard updates
   useEffect(() => {
     if (!socket || !vendorId || !isConnected) return
 
+
     console.log('📊 Dashboard: Setting up booking event listener for real-time stats updates')
     joinVendor(vendorId)
+
 
     // ✅ Function to fetch fresh dashboard stats
     const fetchFreshStats = async () => {
@@ -175,12 +190,22 @@ export function DashboardContent({ activeTab, setActiveTab }: DashboardContentPr
       }
     }
 
+
     // ✅ Listen to booking events and update stats when status is confirmed
     function handleBookingEvent(data: any) {
       console.log('📅 Booking event received:', data)
       
       if (data.vendorId === vendorId) {
         const status = (data.status || '').toLowerCase()
+
+
+        // ✅ CRITICAL: Pass booking event to NotificationButton
+    if (data.status === 'pending_acceptance') {
+      console.log('🔔 Dashboard: Passing pay-at-cafe event to NotificationButton')
+      setLatestBookingEvent(data) // This will trigger NotificationButton update
+    }
+
+
         
         if (status === 'confirmed' || status === 'paid' || status === 'completed') {
           console.log('✅ Booking confirmed/paid/completed - updating dashboard stats')
@@ -215,6 +240,7 @@ export function DashboardContent({ activeTab, setActiveTab }: DashboardContentPr
       }
     }
 
+
     // ✅ Also listen to upcoming_booking events (when bookings are created)
     function handleUpcomingBookingEvent(data: any) {
       console.log('📅 Upcoming booking event received:', data)
@@ -224,6 +250,7 @@ export function DashboardContent({ activeTab, setActiveTab }: DashboardContentPr
         fetchFreshStats()
       }
     }
+
 
     // ✅ Listen to console_availability events (when sessions end, earnings might update)
     function handleConsoleAvailabilityEvent(data: any) {
@@ -239,10 +266,12 @@ export function DashboardContent({ activeTab, setActiveTab }: DashboardContentPr
       }
     }
 
+
     // ✅ Register event listeners
     socket.on('booking', handleBookingEvent)
     socket.on('upcoming_booking', handleUpcomingBookingEvent)
     socket.on('console_availability', handleConsoleAvailabilityEvent)
+
 
     return () => {
       console.log('🧹 Cleaning up dashboard booking listeners')
@@ -252,12 +281,14 @@ export function DashboardContent({ activeTab, setActiveTab }: DashboardContentPr
     }
   }, [socket, vendorId, isConnected, joinVendor, dashboardData?.stats])
 
+
   // Handle refresh events
   useEffect(() => {
     const handleRefresh = () => setRefreshSlots(prev => !prev)
     window.addEventListener("refresh-dashboard", handleRefresh)
     return () => window.removeEventListener("refresh-dashboard", handleRefresh)
   }, [])
+
 
   // ✅ Compute final stats values (real-time data takes priority)
   const currentStats = {
@@ -267,6 +298,7 @@ export function DashboardContent({ activeTab, setActiveTab }: DashboardContentPr
     todayBookingsChange: realTimeStats.todayBookingsChange ?? dashboardData?.stats?.todayBookingsChange ?? 0
   }
 
+
   // ✅ NEW: Process device data for display
   const platforms = platformMetadata.platforms.map(metadata => {
     const platformBooking = bookingInfo.filter(b => b.type === metadata.type);
@@ -275,9 +307,11 @@ export function DashboardContent({ activeTab, setActiveTab }: DashboardContentPr
     return { ...metadata, total, booked };
   });
 
+
   if (!dashboardData) {
     return <HashLoader className="py-[42vh]" />
   }
+
 
   return (
     <>
@@ -310,7 +344,7 @@ export function DashboardContent({ activeTab, setActiveTab }: DashboardContentPr
             </div>
             
             <div className="flex items-center gap-3">
-              <NotificationButton vendorId={vendorId} onBookingAccepted={handleBookingAccepted}/>
+              <NotificationButton vendorId={vendorId} onBookingAccepted={handleBookingAccepted} latestBookingEvent={latestBookingEvent}/>
               <Button 
                 onClick={() => setActiveTab("product")}
                 className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors duration-200"
@@ -323,6 +357,7 @@ export function DashboardContent({ activeTab, setActiveTab }: DashboardContentPr
               </button>
             </div>
           </motion.div>
+
 
           {/* Main Layout Grid */}
           <div className="grid grid-cols-1 xl:grid-cols-4 gap-4">
@@ -357,6 +392,7 @@ export function DashboardContent({ activeTab, setActiveTab }: DashboardContentPr
                   Devices
                 </button>
               </motion.div>
+
 
               {/* ✅ NEW: Tab Content */}
               <AnimatePresence mode="wait">
@@ -402,6 +438,7 @@ export function DashboardContent({ activeTab, setActiveTab }: DashboardContentPr
                       </Card>
                     </motion.div>
 
+
                     <motion.div animate={{ scale: realTimeStats.lastUpdate ? [1, 1.05, 1] : 1 }} transition={{ duration: 0.5 }}>
                       <Card className="bg-card border-border h-[13.8vh] backdrop-blur-sm">
                         <CardContent className="p-3 lex flex-col justify-center">
@@ -431,6 +468,7 @@ export function DashboardContent({ activeTab, setActiveTab }: DashboardContentPr
                         </CardContent>
                       </Card>
                     </motion.div>
+
 
                     <motion.div animate={{ scale: realTimeStats.lastUpdate ? [1, 1.05, 1] : 1 }} transition={{ duration: 0.5 }}>
                       <Card className="bg-card border-border h-[13.8vh] backdrop-blur-sm">
@@ -466,6 +504,7 @@ export function DashboardContent({ activeTab, setActiveTab }: DashboardContentPr
                   </motion.div>
                 )}
 
+
                 {activeTopTab === 'devices' && (
                   <motion.div
                     key="devices"
@@ -482,6 +521,7 @@ export function DashboardContent({ activeTab, setActiveTab }: DashboardContentPr
                         ? Math.round((platform.booked / platform.total) * 100)
                         : 0;
                       const Icon = platform.icon;
+
 
                       return (
                         <motion.div
@@ -508,6 +548,7 @@ export function DashboardContent({ activeTab, setActiveTab }: DashboardContentPr
                             </span>
                           </div>
 
+
                           {/* ✅ FIXED: Slim progress bar (h-1 instead of h-2) */}
                           <div className="w-full h-1 rounded-full bg-zinc-200 dark:bg-zinc-700">
                             <div
@@ -515,6 +556,7 @@ export function DashboardContent({ activeTab, setActiveTab }: DashboardContentPr
                               style={{ width: `${bookedPercentage}%`, backgroundColor: platform.color }}
                             />
                           </div>
+
 
                           <div className="mt-2 text-xs flex justify-between text-zinc-600 dark:text-zinc-400">
                             <span>Booked: {platform.booked}</span>
@@ -526,6 +568,7 @@ export function DashboardContent({ activeTab, setActiveTab }: DashboardContentPr
                   </motion.div>
                 )}
               </AnimatePresence>
+
 
               {/* ✅ MOVED: Current Slots - Now shows when Devices tab is active */}
               <motion.div
@@ -544,6 +587,7 @@ export function DashboardContent({ activeTab, setActiveTab }: DashboardContentPr
                 </Card>
               </motion.div>
             </div>
+
 
             {/* Right Column - Upcoming Bookings */}
             <motion.div
@@ -572,6 +616,7 @@ export function DashboardContent({ activeTab, setActiveTab }: DashboardContentPr
   )
 }
 
+
 function App() {
   return (
     <div className="min-h-screen bg-background">
@@ -580,4 +625,5 @@ function App() {
   )
 }
 
-export default App
+
+export default App 
