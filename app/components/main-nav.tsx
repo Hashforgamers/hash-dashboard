@@ -15,7 +15,8 @@ import {
   Sun,
   UtensilsCrossed,
   Store ,
-   Ticket
+   Ticket,
+   ShoppingBag
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useState } from "react";
@@ -62,6 +63,7 @@ export function MainNav({
           { href: "/know-your-gamers", icon: Users, label: "Know Your Gamers" },
           { href: "/console-pricing", icon: DollarSign, label: "Console Pricing" },
              { href: "/pass", icon:  Ticket, label: "Manage Passes" },
+             {href: "/store", icon: ShoppingBag , label:"Store"}
         ].map(({ href, icon: Icon, label }) => (
           <Link
             key={href}
