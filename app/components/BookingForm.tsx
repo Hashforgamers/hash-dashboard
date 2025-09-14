@@ -1,6 +1,6 @@
-import React, { useState, useEffect ,useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import {jwtDecode} from 'jwt-decode';
+import { jwtDecode } from 'jwt-decode';
 import {
   X,
   User,
@@ -16,13 +16,25 @@ import {
   Sparkles,
   TowerControl as GameController2,
   Users,
+  IndianRupee,
+  Plus
 } from 'lucide-react';
 import { ConsoleType } from './types';
 import { BOOKING_URL } from '@/src/config/env';
+import MealSelector from './mealSelector';
 
 interface BookingFormProps {
   selectedConsole: ConsoleType;
   onBack: () => void;
+}
+
+interface SelectedMeal {
+  menu_item_id: number;
+  name: string;
+  price: number;
+  quantity: number;
+  total: number;
+  category: string;
 }
 
 const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) => {
@@ -33,27 +45,19 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
   const [isLoadingUser, setIsLoadingUser] = useState<boolean>(false);
   const [refreshDashboard, setRefreshDashboard] = useState(false);
 
-  // Extras (sample static list for demo, replace with backend fetch if needed)
-  const availableExtras = [
-    { id: 1, name: 'Coke', price: 60 },
-    { id: 2, name: 'Popcorn', price: 100 },
-    { id: 3, name: 'French Fries', price: 120 },
-  ];
-  const [selectedExtras, setSelectedExtras] = useState<number[]>([]);
+  // Meal selection states
+  const [selectedMeals, setSelectedMeals] = useState<SelectedMeal[]>([]);
+  const [isMealSelectorOpen, setIsMealSelectorOpen] = useState(false);
 
-  // Add these state declarations at the top if not already present
+  // Booking details
   const [waiveOffAmount, setWaiveOffAmount] = useState(0);
   const [extraControllerFare, setExtraControllerFare] = useState(0);
 
-  // Booking details
   const [selectedDate, setSelectedDate] = useState<string>(() => {
     const now = new Date();
-
-    // Get UTC time + IST offset (5 hours 30 minutes = 330 minutes)
     const istOffsetMs = 330 * 60 * 1000;
     const istTime = new Date(now.getTime() + istOffsetMs);
-
-    return istTime.toISOString().split('T')[0]; // Format as YYYY-MM-DD
+    return istTime.toISOString().split('T')[0];
   });
 
   const [selectedSlots, setSelectedSlots] = useState<string[]>([]);
@@ -77,14 +81,19 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
   const [nameSuggestions, setNameSuggestions] = useState([]);
   const [focusedInput, setFocusedInput] = useState<string>("");
 
-  // Ref for blur timeout to manage delayed hiding of suggestions
   const blurTimeoutRef = useRef<number | null>(null);
 
+  // Calculate totals including meals
+  const mealsTotal = selectedMeals.reduce((sum, meal) => sum + meal.total, 0);
 
-    // Common function to filter suggestions by key and input value
+  const totalAmount = Math.max(
+    0,
+    selectedSlots.length * selectedConsole.price - waiveOffAmount + extraControllerFare + mealsTotal
+  );
+
+  // Common function to filter suggestions by key and input value
   const getSuggestions = (key, value) => {
     if (!value.trim()) {
-      // Show all users if input is empty on focus
       return userList;
     }
     return userList.filter((user) =>
@@ -92,15 +101,14 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
     );
   };
 
-
-   // Handlers for input changes
+  // Handlers for input changes
   const handleEmailInputChange = (value) => {
     setEmail(value);
     setEmailSuggestions(getSuggestions('email', value));
     setFocusedInput('email');
   };
 
-   const handlePhoneInputChange = (value) => {
+  const handlePhoneInputChange = (value) => {
     setPhone(value);
     setPhoneSuggestions(getSuggestions('phone', value));
     setFocusedInput('phone');
@@ -112,36 +120,35 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
     setFocusedInput('name');
   };
 
-   // On focus handlers
+  // On focus handlers
   const handleEmailFocus = () => {
-  if (blurTimeoutRef.current) {
-    clearTimeout(blurTimeoutRef.current);
-    blurTimeoutRef.current = null;
-  }
-  setFocusedInput("email");
-  setEmailSuggestions(getSuggestions("email", email));
-};
+    if (blurTimeoutRef.current) {
+      clearTimeout(blurTimeoutRef.current);
+      blurTimeoutRef.current = null;
+    }
+    setFocusedInput("email");
+    setEmailSuggestions(getSuggestions("email", email));
+  };
 
-const handlePhoneFocus = () => {
-  if (blurTimeoutRef.current) {
-    clearTimeout(blurTimeoutRef.current);
-    blurTimeoutRef.current = null;
-  }
-  setFocusedInput("phone");
-  setPhoneSuggestions(getSuggestions("phone", phone));
-};
+  const handlePhoneFocus = () => {
+    if (blurTimeoutRef.current) {
+      clearTimeout(blurTimeoutRef.current);
+      blurTimeoutRef.current = null;
+    }
+    setFocusedInput("phone");
+    setPhoneSuggestions(getSuggestions("phone", phone));
+  };
 
-const handleNameFocus = () => {
-  if (blurTimeoutRef.current) {
-    clearTimeout(blurTimeoutRef.current);
-    blurTimeoutRef.current = null;
-  }
-  setFocusedInput("name");
-  setNameSuggestions(getSuggestions("name", name));
-};
+  const handleNameFocus = () => {
+    if (blurTimeoutRef.current) {
+      clearTimeout(blurTimeoutRef.current);
+      blurTimeoutRef.current = null;
+    }
+    setFocusedInput("name");
+    setNameSuggestions(getSuggestions("name", name));
+  };
 
-
-   // Handler to clear suggestions with delay (to allow clicks on suggestions)
+  // Handler to clear suggestions with delay
   const handleBlur = () => {
     blurTimeoutRef.current = window.setTimeout(() => {
       setFocusedInput("");
@@ -152,7 +159,7 @@ const handleNameFocus = () => {
     }, 150);
   };
 
-   // On suggestion click handlers - clear timeout and autofill all inputs, clear suggestions and focus state
+  // On suggestion click handlers
   const handleSuggestionClick = (user: typeof userList[0]) => {
     if (blurTimeoutRef.current) {
       clearTimeout(blurTimeoutRef.current);
@@ -166,22 +173,6 @@ const handleNameFocus = () => {
     setNameSuggestions([]);
     setFocusedInput("");
   };
- 
-
-  {/**const handleEmailInputChange = (value: string) => {
-    setEmail(value);
-    console.log("logging user", userList )
-    const suggestions = userList.filter(user =>
-      user.email.toLowerCase().includes(value.toLowerCase())
-    );
-    setEmailSuggestions(suggestions);
-  };**/}
-
-  {/**const handlePhoneInputChange = (value: string) => {
-    setPhone(value);
-    const suggestions = userList.filter((user) => user.phone.includes(value));
-    setPhoneSuggestions(suggestions);
-  };**/}
 
   useEffect(() => {
     const token = localStorage.getItem('jwtToken');
@@ -205,7 +196,6 @@ const handleNameFocus = () => {
         try {
           const response = await fetch(`${BOOKING_URL}/api/vendor/${vendorIdFromToken}/users`);
           const data = await response.json();
-          // console.log('Fetched users from API:', data);
 
           if (Array.isArray(data)) {
             setUserList(data);
@@ -223,10 +213,8 @@ const handleNameFocus = () => {
         try {
           const { data, timestamp } = JSON.parse(cachedData);
           if (isCacheValid(timestamp)) {
-            // console.log('Loaded users from valid cache');
             setUserList(data);
           } else {
-            // console.log('Cache expired, fetching new data');
             fetchUsers();
           }
         } catch (parseError) {
@@ -270,20 +258,17 @@ const handleNameFocus = () => {
 
         const data = await response.json();
 
-        // Step 1: Get current time in IST
         const nowIST = new Date(
           new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' })
         );
 
-        // Step 2: Create datetime for each slot and compare
         const filteredSlots = (data.slots || []).map((slot: any) => {
           const slotDateTime = new Date(`${selectedDate}T${slot.start_time}+05:30`);
-
           const isPast = slotDateTime < nowIST;
 
           return {
             ...slot,
-            is_available: slot.is_available && !isPast, // override availability
+            is_available: slot.is_available && !isPast,
           };
         });
 
@@ -303,22 +288,6 @@ const handleNameFocus = () => {
     if (errors.slots) setErrors((prev) => ({ ...prev, slots: '' }));
   };
 
-  // Handle extras checkbox toggle
-  const handleExtraToggle = (id: number) => {
-    setSelectedExtras((prev) =>
-      prev.includes(id) ? prev.filter((extraId) => extraId !== id) : [...prev, id]
-    );
-  };
-
-  const extrasTotal = selectedExtras
-    .map((id) => availableExtras.find((extra) => extra.id === id)?.price || 0)
-    .reduce((a, b) => a + b, 0);
-
-  const totalAmount = Math.max(
-    0,
-    selectedSlots.length * selectedConsole.price - waiveOffAmount + extraControllerFare + extrasTotal
-  );
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateForm()) return;
@@ -336,54 +305,60 @@ const handleNameFocus = () => {
           bookedDate: selectedDate,
           slotId: selectedSlots,
           paymentType,
-          waiveOffAmount, // new
-          extraControllerFare, // new
-          extras: selectedExtras, // new extras here
+          waiveOffAmount,
+          extraControllerFare,
+          selectedMeals: selectedMeals.map(meal => ({
+            menu_item_id: meal.menu_item_id,
+            quantity: meal.quantity
+          }))
         }),
       });
 
       if (!response.ok) throw new Error('Failed to submit booking');
 
-      setIsSubmitted(true);
+      const result = await response.json();
+      
+      if (result.success) {
+        setIsSubmitted(true);
 
-      // ✅ Notify dashboard to refresh immediately
-      if (typeof window !== 'undefined') {
-        window.dispatchEvent(new CustomEvent('refresh-dashboard'));
-      }
-
-      // Check if the submitted user exists in cache
-      const userCacheKey = 'userList';
-      const cached = localStorage.getItem(userCacheKey);
-
-      if (cached) {
-        try {
-          const { data, timestamp } = JSON.parse(cached);
-
-          const isUserExists = data.some(
-            (user: any) => user.email === email || user.phone === phone // Adjust logic as needed
-          );
-
-          if (!isUserExists) {
-            // console.log('New user detected, updating cache...');
-            // Fetch updated user list and cache it
-            const usersResponse = await fetch(`${BOOKING_URL}/api/vendor/${vendorId}/users`);
-            const updatedUsers = await usersResponse.json();
-
-            if (Array.isArray(updatedUsers)) {
-              localStorage.setItem(
-                userCacheKey,
-                JSON.stringify({ data: updatedUsers, timestamp: Date.now() })
-              );
-            }
-          } else {
-            // console.log('User already in cache. No update needed.');
-          }
-        } catch (err) {
-          console.error('Error checking or updating user cache:', err);
+        // ✅ Notify dashboard to refresh immediately
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('refresh-dashboard'));
         }
+
+        // Check if the submitted user exists in cache
+        const userCacheKey = 'userList';
+        const cached = localStorage.getItem(userCacheKey);
+
+        if (cached) {
+          try {
+            const { data, timestamp } = JSON.parse(cached);
+
+            const isUserExists = data.some(
+              (user: any) => user.email === email || user.phone === phone
+            );
+
+            if (!isUserExists) {
+              const usersResponse = await fetch(`${BOOKING_URL}/api/vendor/${vendorId}/users`);
+              const updatedUsers = await usersResponse.json();
+
+              if (Array.isArray(updatedUsers)) {
+                localStorage.setItem(
+                  userCacheKey,
+                  JSON.stringify({ data: updatedUsers, timestamp: Date.now() })
+                );
+              }
+            }
+          } catch (err) {
+            console.error('Error checking or updating user cache:', err);
+          }
+        }
+      } else {
+        alert(`Error: ${result.message}`);
       }
     } catch (error) {
       console.error('Error submitting booking:', error);
+      alert('Failed to create booking');
     } finally {
       setIsSubmitting(false);
     }
@@ -416,13 +391,11 @@ const handleNameFocus = () => {
 
           <div className="bg-emerald-50 dark:bg-emerald-900/20 rounded-lg p-3 mb-4 text-xs text-left">
             <div className="flex justify-between items-center py-1">
-              <span className="text-gray-600 dark:text-gray-400">Extras:</span>
+              <span className="text-gray-600 dark:text-gray-400">Meals & Extras:</span>
               <span className="font-medium text-gray-800 dark:text-white">
-                {selectedExtras.length === 0
+                {selectedMeals.length === 0
                   ? 'None'
-                  : selectedExtras
-                      .map((id) => availableExtras.find((e) => e.id === id)?.name)
-                      .join(', ')}
+                  : selectedMeals.map(meal => `${meal.name} (${meal.quantity})`).join(', ')}
               </span>
             </div>
             <div className="flex justify-between items-center py-1">
@@ -482,185 +455,180 @@ const handleNameFocus = () => {
             {/* Left Column - Customer & Date */}
             <div className="lg:col-span-2 space-y-3">
               {/* Customer Details - Compact */}
-
               <motion.div
-  initial={{ opacity: 0, x: -10 }}
-  animate={{ opacity: 1, x: 0 }}
-  className="bg-transparent rounded-lg p-3 shadow-sm border border-gray-200 dark:border-gray-700"
->
-  <div className="flex items-center gap-2 mb-3">
-    <div className="p-1 bg-emerald-100 dark:bg-emerald-900/30 rounded">
-      <Users className="w-4 h-4 text-emerald-600" />
-    </div>
-    <h3 className="text-sm font-semibold text-gray-800 dark:text-white">
-      Customer Information
-    </h3>
-  </div>
-
-  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-    {/* Email Input */}
-    <div className="relative">
-      <motion.input
-        type="email"
-        value={email}
-        onChange={(e) => handleEmailInputChange(e.target.value)}
-        onFocus={handleEmailFocus}
-        onBlur={handleBlur}
-        autoComplete="off"
-        placeholder="Email"
-        className={`w-full pl-8 pr-2 py-2 bg-transparent rounded border transition-all duration-200 text-sm ${
-          errors.email
-            ? "border-red-500 focus:border-red-500"
-            : focusedInput === "email"
-            ? "border-emerald-500 focus:border-emerald-500"
-            : "border-gray-200 dark:border-gray-600 focus:border-emerald-500"
-        } focus:outline-none focus:ring-1 focus:ring-emerald-500/20`}
-        style={{ boxSizing: "border-box" }}
-      />
-      <Mail className="w-4 h-4 text-gray-400 absolute left-2.5 top-2.5" />
-      <AnimatePresence>
-        {focusedInput === "email" && emailSuggestions.length > 0 && (
-          <motion.ul
-            initial={{ opacity: 0, y: -5 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -5 }}
-            className="absolute z-20 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded shadow-lg w-full mt-1 max-h-32 overflow-y-auto"
-          >
-            {emailSuggestions.map((user, idx) => (
-              <motion.li
-                key={idx}
-                whileHover={{ backgroundColor: "rgba(16, 185, 129, 0.1)" }}
-                className="px-2 py-1.5 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 cursor-pointer border-b border-gray-100 dark:border-gray-700 last:border-b-0 text-xs"
-                onMouseDown={() => handleSuggestionClick(user)}
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                className="bg-transparent rounded-lg p-3 shadow-sm border border-gray-200 dark:border-gray-700"
               >
-                <div className="flex items-center gap-2">
-                  <div className="p-0.5 bg-emerald-100 dark:bg-emerald-900/30 rounded-full">
-                    <User className="w-2.5 h-2.5 text-emerald-600" />
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="p-1 bg-emerald-100 dark:bg-emerald-900/30 rounded">
+                    <Users className="w-4 h-4 text-emerald-600" />
                   </div>
-                  <div>
-                    <p className="font-medium text-gray-800 dark:text-white">{user.name}</p>
-                    <p className="text-gray-600 dark:text-gray-400">{user.email}</p>
+                  <h3 className="text-sm font-semibold text-gray-800 dark:text-white">
+                    Customer Information
+                  </h3>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {/* Email Input */}
+                  <div className="relative">
+                    <motion.input
+                      type="email"
+                      value={email}
+                      onChange={(e) => handleEmailInputChange(e.target.value)}
+                      onFocus={handleEmailFocus}
+                      onBlur={handleBlur}
+                      autoComplete="off"
+                      placeholder="Email"
+                      className={`w-full pl-8 pr-2 py-2 bg-transparent rounded border transition-all duration-200 text-sm ${
+                        errors.email
+                          ? "border-red-500 focus:border-red-500"
+                          : focusedInput === "email"
+                          ? "border-emerald-500 focus:border-emerald-500"
+                          : "border-gray-200 dark:border-gray-600 focus:border-emerald-500"
+                      } focus:outline-none focus:ring-1 focus:ring-emerald-500/20`}
+                      style={{ boxSizing: "border-box" }}
+                    />
+                    <Mail className="w-4 h-4 text-gray-400 absolute left-2.5 top-2.5" />
+                    <AnimatePresence>
+                      {focusedInput === "email" && emailSuggestions.length > 0 && (
+                        <motion.ul
+                          initial={{ opacity: 0, y: -5 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -5 }}
+                          className="absolute z-20 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded shadow-lg w-full mt-1 max-h-32 overflow-y-auto"
+                        >
+                          {emailSuggestions.map((user, idx) => (
+                            <motion.li
+                              key={idx}
+                              whileHover={{ backgroundColor: "rgba(16, 185, 129, 0.1)" }}
+                              className="px-2 py-1.5 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 cursor-pointer border-b border-gray-100 dark:border-gray-700 last:border-b-0 text-xs"
+                              onMouseDown={() => handleSuggestionClick(user)}
+                            >
+                              <div className="flex items-center gap-2">
+                                <div className="p-0.5 bg-emerald-100 dark:bg-emerald-900/30 rounded-full">
+                                  <User className="w-2.5 h-2.5 text-emerald-600" />
+                                </div>
+                                <div>
+                                  <p className="font-medium text-gray-800 dark:text-white">{user.name}</p>
+                                  <p className="text-gray-600 dark:text-gray-400">{user.email}</p>
+                                </div>
+                              </div>
+                            </motion.li>
+                          ))}
+                        </motion.ul>
+                      )}
+                    </AnimatePresence>
+                  </div>
+
+                  {/* Phone Input */}
+                  <div className="relative">
+                    <motion.input
+                      type="tel"
+                      value={phone}
+                      onChange={(e) => handlePhoneInputChange(e.target.value)}
+                      onFocus={handlePhoneFocus}
+                      onBlur={handleBlur}
+                      autoComplete="off"
+                      placeholder="Phone"
+                      className={`w-full pl-8 pr-2 py-2 bg-transparent rounded border transition-all duration-200 text-sm ${
+                        errors.phone
+                          ? "border-red-500 focus:border-red-500"
+                          : focusedInput === "phone"
+                          ? "border-emerald-500 focus:border-emerald-500"
+                          : "border-gray-200 dark:border-gray-600 focus:border-emerald-500"
+                      } focus:outline-none focus:ring-1 focus:ring-emerald-500/20`}
+                    />
+                    <Phone className="w-4 h-4 text-gray-400 absolute left-2.5 top-2.5" />
+                    <AnimatePresence>
+                      {focusedInput === "phone" && phoneSuggestions.length > 0 && (
+                        <motion.ul
+                          initial={{ opacity: 0, y: -5 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -5 }}
+                          className="absolute z-20 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded shadow-lg w-full mt-1 max-h-32 overflow-y-auto"
+                        >
+                          {phoneSuggestions.map((user, idx) => (
+                            <motion.li
+                              key={idx}
+                              whileHover={{ backgroundColor: "rgba(16, 185, 129, 0.1)" }}
+                              className="px-2 py-1.5 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 cursor-pointer border-b border-gray-100 dark:border-gray-700 last:border-b-0 text-xs"
+                              onMouseDown={() => handleSuggestionClick(user)}
+                            >
+                              <div className="flex items-center gap-2">
+                                <div className="p-0.5 bg-emerald-100 dark:bg-emerald-900/30 rounded-full">
+                                  <User className="w-2.5 h-2.5 text-emerald-600" />
+                                </div>
+                                <div>
+                                  <p className="font-medium text-gray-800 dark:text-white">{user.name}</p>
+                                  <p className="text-gray-600 dark:text-gray-400">{user.phone}</p>
+                                </div>
+                              </div>
+                            </motion.li>
+                          ))}
+                        </motion.ul>
+                      )}
+                    </AnimatePresence>
+                  </div>
+
+                  {/* Full Name Input */}
+                  <div className="relative">
+                    {isLoadingUser ? (
+                      <div className="flex items-center justify-center py-2">
+                        <Loader2 className="w-4 h-4 animate-spin text-emerald-600" />
+                      </div>
+                    ) : (
+                      <>
+                        <motion.input
+                          type="text"
+                          value={name}
+                          onChange={(e) => handleNameInputChange(e.target.value)}
+                          onFocus={handleNameFocus}
+                          onBlur={handleBlur}
+                          placeholder="Full name"
+                          className={`w-full pl-8 pr-2 py-2 bg-transparent rounded border transition-all duration-200 text-sm ${
+                            errors.name
+                              ? "border-red-500 focus:border-red-500"
+                              : focusedInput === "name"
+                              ? "border-emerald-500 focus:border-emerald-500"
+                              : "border-gray-200 dark:border-gray-600 focus:border-emerald-500"
+                          } focus:outline-none focus:ring-1 focus:ring-emerald-500/20`}
+                        />
+                        <User className="w-4 h-4 text-gray-400 absolute left-2.5 top-2.5" />
+                        <AnimatePresence>
+                          {focusedInput === "name" && nameSuggestions.length > 0 && (
+                            <motion.ul
+                              initial={{ opacity: 0, y: -5 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0, y: -5 }}
+                              className="absolute z-20 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded shadow-lg w-full mt-1 max-h-32 overflow-y-auto"
+                            >
+                              {nameSuggestions.map((user, idx) => (
+                                <motion.li
+                                  key={idx}
+                                  whileHover={{ backgroundColor: "rgba(16, 185, 129, 0.1)" }}
+                                  className="px-2 py-1.5 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 cursor-pointer border-b border-gray-100 dark:border-gray-700 last:border-b-0 text-xs"
+                                  onMouseDown={() => handleSuggestionClick(user)}
+                                >
+                                  <div className="flex items-center gap-2">
+                                    <div className="p-0.5 bg-emerald-100 dark:bg-emerald-900/30 rounded-full">
+                                      <User className="w-2.5 h-2.5 text-emerald-600" />
+                                    </div>
+                                    <div>
+                                      <p className="font-medium text-gray-800 dark:text-white">{user.name}</p>
+                                      <p className="text-gray-600 dark:text-gray-400">{user.email}</p>
+                                    </div>
+                                  </div>
+                                </motion.li>
+                              ))}
+                            </motion.ul>
+                          )}
+                        </AnimatePresence>
+                      </>
+                    )}
                   </div>
                 </div>
-              </motion.li>
-            ))}
-          </motion.ul>
-        )}
-      </AnimatePresence>
-    </div>
-
-    {/* Phone Input */}
-    <div className="relative">
-      <motion.input
-        type="tel"
-        value={phone}
-        onChange={(e) => handlePhoneInputChange(e.target.value)}
-        onFocus={handlePhoneFocus}
-        onBlur={handleBlur}
-        autoComplete="off"
-        placeholder="Phone"
-        className={`w-full pl-8 pr-2 py-2 bg-transparent rounded border transition-all duration-200 text-sm ${
-          errors.phone
-            ? "border-red-500 focus:border-red-500"
-            : focusedInput === "phone"
-            ? "border-emerald-500 focus:border-emerald-500"
-            : "border-gray-200 dark:border-gray-600 focus:border-emerald-500"
-        } focus:outline-none focus:ring-1 focus:ring-emerald-500/20`}
-      />
-      <Phone className="w-4 h-4 text-gray-400 absolute left-2.5 top-2.5" />
-      <AnimatePresence>
-        {focusedInput === "phone" && phoneSuggestions.length > 0 && (
-          <motion.ul
-            initial={{ opacity: 0, y: -5 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -5 }}
-            className="absolute z-20 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded shadow-lg w-full mt-1 max-h-32 overflow-y-auto"
-          >
-            {phoneSuggestions.map((user, idx) => (
-              <motion.li
-                key={idx}
-                whileHover={{ backgroundColor: "rgba(16, 185, 129, 0.1)" }}
-                className="px-2 py-1.5 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 cursor-pointer border-b border-gray-100 dark:border-gray-700 last:border-b-0 text-xs"
-                onMouseDown={() => handleSuggestionClick(user)}
-              >
-                <div className="flex items-center gap-2">
-                  <div className="p-0.5 bg-emerald-100 dark:bg-emerald-900/30 rounded-full">
-                    <User className="w-2.5 h-2.5 text-emerald-600" />
-                  </div>
-                  <div>
-                    <p className="font-medium text-gray-800 dark:text-white">{user.name}</p>
-                    <p className="text-gray-600 dark:text-gray-400">{user.phone}</p>
-                  </div>
-                </div>
-              </motion.li>
-            ))}
-          </motion.ul>
-        )}
-      </AnimatePresence>
-    </div>
-
-    {/* Full Name Input */}
-    <div className="relative">
-      {isLoadingUser ? (
-        <div className="flex items-center justify-center py-2">
-          <Loader2 className="w-4 h-4 animate-spin text-emerald-600" />
-        </div>
-      ) : (
-        <>
-          <motion.input
-            type="text"
-            value={name}
-            onChange={(e) => handleNameInputChange(e.target.value)}
-            onFocus={handleNameFocus}
-            onBlur={handleBlur}
-            placeholder="Full name"
-            className={`w-full pl-8 pr-2 py-2 bg-transparent rounded border transition-all duration-200 text-sm ${
-              errors.name
-                ? "border-red-500 focus:border-red-500"
-                : focusedInput === "name"
-                ? "border-emerald-500 focus:border-emerald-500"
-                : "border-gray-200 dark:border-gray-600 focus:border-emerald-500"
-            } focus:outline-none focus:ring-1 focus:ring-emerald-500/20`}
-          />
-          <User className="w-4 h-4 text-gray-400 absolute left-2.5 top-2.5" />
-          <AnimatePresence>
-            {focusedInput === "name" && nameSuggestions.length > 0 && (
-              <motion.ul
-                initial={{ opacity: 0, y: -5 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -5 }}
-                className="absolute z-20 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded shadow-lg w-full mt-1 max-h-32 overflow-y-auto"
-              >
-                {nameSuggestions.map((user, idx) => (
-                  <motion.li
-                    key={idx}
-                    whileHover={{ backgroundColor: "rgba(16, 185, 129, 0.1)" }}
-                    className="px-2 py-1.5 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 cursor-pointer border-b border-gray-100 dark:border-gray-700 last:border-b-0 text-xs"
-                    onMouseDown={() => handleSuggestionClick(user)}
-                  >
-                    <div className="flex items-center gap-2">
-                      <div className="p-0.5 bg-emerald-100 dark:bg-emerald-900/30 rounded-full">
-                        <User className="w-2.5 h-2.5 text-emerald-600" />
-                      </div>
-                      <div>
-                        <p className="font-medium text-gray-800 dark:text-white">{user.name}</p>
-                        <p className="text-gray-600 dark:text-gray-400">{user.email}</p>
-                      </div>
-                    </div>
-                  </motion.li>
-                ))}
-              </motion.ul>
-            )}
-          </AnimatePresence>
-        </>
-      )}
-    </div>
-  </div>
-</motion.div>
-
-
-
-
+              </motion.div>
 
               {/* Date & Payment Row */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -921,25 +889,50 @@ const handleNameFocus = () => {
                     />
                   </div>
 
-                  {/* Extras Selection */}
-                  <div className="flex flex-col py-1 border-b border-gray-100 dark:border-gray-700">
-                    <span className="text-gray-600 dark:text-gray-400 mb-1">Extras:</span>
-                    <div className="flex flex-col gap-1 max-h-28 overflow-y-auto px-1">
-                      {availableExtras.map((extra) => (
-                        <label key={extra.id} className="flex items-center gap-2 text-xs">
-                          <input
-                            type="checkbox"
-                            checked={selectedExtras.includes(extra.id)}
-                            onChange={() => handleExtraToggle(extra.id)}
-                            className="accent-emerald-600 dark:accent-emerald-400"
-                          />
-                          <span>
-                            {extra.name} <span className="text-gray-400">₹{extra.price}</span>
-                          </span>
-                        </label>
-                      ))}
+                  {/* Meals Selection - Replace the existing extras section */}
+                  <div className="flex justify-between items-center py-1 border-b border-gray-100 dark:border-gray-700">
+                    <span className="text-gray-600 dark:text-gray-400">Meals & Extras:</span>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setIsMealSelectorOpen(true)}
+                        className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-emerald-100 to-green-100 dark:from-emerald-900/30 dark:to-green-900/30 text-emerald-700 dark:text-emerald-300 rounded-lg text-xs hover:from-emerald-200 hover:to-green-200 dark:hover:from-emerald-900/50 dark:hover:to-green-900/50 transition-all duration-200 border border-emerald-200 dark:border-emerald-700"
+                      >
+                        <Plus className="w-3 h-3" />
+                        {selectedMeals.length === 0 ? 'Add Meals' : `${selectedMeals.length} Selected`}
+                      </button>
                     </div>
                   </div>
+
+                  {/* Display selected meals with better formatting */}
+                  {selectedMeals.length > 0 && (
+                    <div className="py-2 border-b border-gray-100 dark:border-gray-700">
+                      <div className="space-y-2">
+                        {selectedMeals.map(meal => (
+                          <div key={meal.menu_item_id} className="bg-emerald-50 dark:bg-emerald-900/20 rounded-lg p-2">
+                            <div className="flex justify-between items-start">
+                              <div className="flex-1">
+                                <span className="font-medium text-emerald-800 dark:text-emerald-200 text-xs">
+                                  {meal.name}
+                                </span>
+                                <div className="text-xs text-emerald-600 dark:text-emerald-400 mt-1">
+                                  {meal.category} • ₹{meal.price} × {meal.quantity}
+                                </div>
+                              </div>
+                              <span className="font-bold text-emerald-700 dark:text-emerald-300 text-xs">
+                                ₹{meal.total}
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+                        <div className="text-right pt-1 border-t border-emerald-200 dark:border-emerald-700">
+                          <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">
+                            Meals Total: ₹{mealsTotal}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
 
                   <div className="flex justify-between items-center py-2 bg-emerald-50 dark:bg-emerald-900/30 rounded px-2">
                     <span className="font-bold text-gray-800 dark:text-white text-sm">Total:</span>
@@ -976,6 +969,15 @@ const handleNameFocus = () => {
           </motion.button>
         </form>
       </div>
+
+      {/* Add the MealSelector component */}
+      <MealSelector
+        vendorId={vendorId || 0}
+        isOpen={isMealSelectorOpen}
+        onClose={() => setIsMealSelectorOpen(false)}
+        onConfirm={setSelectedMeals}
+        initialSelectedMeals={selectedMeals}
+      />
     </div>
   );
 };

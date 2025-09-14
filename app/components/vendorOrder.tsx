@@ -50,7 +50,7 @@ const VendorOrderPage: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`${VENDOR_ONBOARD_URL}/api/vendor/products`);
+      const res = await fetch(`http://127.0.0.1:5052/api/vendor/products`);
       if (!res.ok) throw new Error('Failed to load products');
       const data = await res.json();
       const mapped: Product[] = data.map((p: any) => ({
@@ -110,7 +110,7 @@ const VendorOrderPage: React.FC = () => {
           collaborator_id,
           items,
         };
-        const res = await fetch(`${VENDOR_ONBOARD_URL}/api/orders`, {
+        const res = await fetch(`http://127.0.0.1:5052/api/orders`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload),
