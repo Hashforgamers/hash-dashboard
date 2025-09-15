@@ -10,7 +10,7 @@ import {
   ChefHat,
   Loader2
 } from "lucide-react";
-import { BOOKING_URL } from "../../src/config/env";
+import { BOOKING_URL, DASHBOARD_URL } from "../../src/config/env";
 
 interface MealImage {
   id: number;
@@ -86,16 +86,18 @@ const MealSelector: React.FC<MealSelectorProps> = ({
     setError("");
     try {
       const response = await fetch(
-        `http://127.0.0.1:5054/api/vendor/${vendorId}/extra-services`
+        `${DASHBOARD_URL}/api/vendor/${vendorId}/extra-services`
       );
       const data = await response.json();
+      console.log(data)
       if (data.success) {
         setCategories(data.categories || []);
         if (data.categories && data.categories.length > 0) {
           setSelectedCategory(data.categories[0].id);
         }
       } else {
-        setError("Failed to load meals");
+        setError("failed to load meals");
+        console.log(error)
       }
     } catch (err) {
       console.error(err);

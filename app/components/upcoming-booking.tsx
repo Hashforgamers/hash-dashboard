@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { 
   Monitor, Play, X, Gamepad2, Calendar, Clock, User, Search,
   DollarSign, CalendarDays, Users, Timer, AlertCircle, Filter,
-  BadgeCheck, Calendar as CalendarIcon, ChevronDown, RefreshCw
+  BadgeCheck, Calendar as CalendarIcon, ChevronDown, RefreshCw, UtensilsCrossed
 } from "lucide-react";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faIndianRupeeSign } from '@fortawesome/free-solid-svg-icons'
@@ -573,6 +573,11 @@ export function UpcomingBookings({
                         <Timer className="w-3 h-3 shrink-0" />
                         <span>{booking.duration || 1}hr</span>
                       </div>
+                       {booking.hasMeals && (
+                        <div className="flex items-center gap-1 ml-auto">
+                         <UtensilsCrossed className="w-4 h-5 mr-2 my-1 text-emerald-600" title="Meals/Extras included" />
+                         </div>
+                       )}
                     </div>
 
                     {/* ✅ COMPACT: Start button - smaller */}
