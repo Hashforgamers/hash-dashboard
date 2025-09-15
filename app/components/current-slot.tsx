@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, Gamepad2, Loader2, RefreshCw } from "lucide-react";
+import { Search, Gamepad2, Loader2, RefreshCw, UtensilsCrossed } from "lucide-react";
 import { jwtDecode } from "jwt-decode";
 import { FaCheck, FaPowerOff } from 'react-icons/fa';
 import { BOOKING_URL, DASHBOARD_URL } from "@/src/config/env";
@@ -353,6 +353,11 @@ export function CurrentSlots({ currentSlots: initialSlots, refreshSlots, setRefr
                                   <div className="font-medium text-gray-900 dark:text-white text-sm">{booking.username || 'Guest'}</div>
                                   <div className="text-xs text-gray-500 dark:text-gray-400">#{booking.consoleNumber}</div>
                                 </div>
+                                {booking.hasMeals && (
+                                   <div className="flex items-center gap-1 ml-auto">
+                                   <UtensilsCrossed className="w-4 h-4 text-emerald-600" title="Meals/Extras included" />
+                                    </div>
+                                 )}
                               </div>
                             </td>
 
