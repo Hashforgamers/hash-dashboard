@@ -262,28 +262,33 @@ export function CurrentSlots({ currentSlots: initialSlots, refreshSlots, setRefr
   const item = { hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } };
 
   return (
-    <div className="space-y-3">
+    // 🚀 RESPONSIVE: Full height container with proper overflow control
+    <div className="h-full flex flex-col min-h-0 overflow-hidden">
       {currentSlots?.available ? (
-        <div className="flex justify-center items-center h-32">
+        <div className="flex justify-center items-center h-full">
           <HashLoader />
         </div>
       ) : (
         <>
-          {/* ✅ COMPACT: Minimal header with just search and green indicator */}
-          <div className="flex items-center justify-between">
+          {/* 🚀 RESPONSIVE: Header with responsive spacing and sizing */}
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-2 sm:pb-3 gap-2 sm:gap-4 flex-shrink-0">
             <div className="flex items-center gap-2">
               <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`} 
                    title={isConnected ? 'Real-time connected' : 'Connecting...'} />
-              <span className="text-md text-white">Current Slots ({filteredSlots.length})</span>
+              <span className="text-xs sm:text-sm md:text-base font-semibold text-white">
+                Current Slots ({filteredSlots.length})
+              </span>
             </div>
-            <div className="relative">
-              <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-500 w-4 h-4" />
+            
+            {/* 🚀 RESPONSIVE: Search input with adaptive width */}
+            <div className="relative w-full sm:w-auto">
+              <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-500 w-3 sm:w-4 h-3 sm:h-4" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={handleSearch}
                 placeholder="Search by name or console..."
-                className="w-64 pl-8 pr-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-zinc-800 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-emerald-500"
+                className="w-full sm:w-48 md:w-64 pl-7 sm:pl-8 pr-3 py-1.5 sm:py-2 text-xs sm:text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-zinc-800 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-emerald-500"
               />
             </div>
           </div>
@@ -292,28 +297,28 @@ export function CurrentSlots({ currentSlots: initialSlots, refreshSlots, setRefr
             <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 p-2 rounded-md text-sm"
+              className="bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 p-2 rounded-md text-xs sm:text-sm mb-2 flex-shrink-0"
             >
               {error}
             </motion.div>
           )}
 
-          {/* ✅ COMPACT: Table with reduced padding */}
+          {/* 🚀 RESPONSIVE: Table container with proper height constraints */}
           <motion.div
             variants={container}
             initial="hidden"
             animate="show"
-            className="rounded-md border border-gray-200 dark:border-gray-700 bg-white/50 dark:bg-zinc-800/50 backdrop-blur-sm shadow-sm"
+            className="flex-1 min-h-0 rounded-md border border-gray-200 dark:border-gray-700 bg-white/50 dark:bg-zinc-800/50 backdrop-blur-sm shadow-sm overflow-hidden"
           >
-            <div className="overflow-x-auto h-[300px]">
-              <table ref={tableRef} className="min-w-full divide-y divide-gray-200 dark:divide-gray-700 text-sm">
-                <thead className="bg-gray-50 dark:bg-zinc-900/50">
+            <div className="h-full overflow-y-auto">
+              <table ref={tableRef} className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                <thead className="bg-gray-50 dark:bg-zinc-900/50 sticky top-0 z-10">
                   <tr>
                     {['Name', 'System', 'Time', 'Progress', 'Extra', 'Action'].map((heading) => (
                       <th
                         key={heading}
                         scope="col"
-                        className="px-3 py-2 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider"
+                        className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider"
                       >
                         {heading}
                       </th>
@@ -343,49 +348,65 @@ export function CurrentSlots({ currentSlots: initialSlots, refreshSlots, setRefr
                             exit={{ opacity: 0, x: -20 }}
                             transition={{ duration: 0.3 }}
                           >
-                            {/* ✅ COMPACT: Name - reduced padding */}
-                            <td className="px-3 py-2">
-                              <div className="flex items-center gap-2">
-                                <div className="h-8 w-8 bg-emerald-100 dark:bg-emerald-900/50 rounded-full flex items-center justify-center text-xs font-medium text-emerald-700 dark:text-emerald-300">
+                            {/* 🚀 RESPONSIVE: Name cell with adaptive sizing */}
+                            <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-3">
+                              <div className="flex items-center gap-1 sm:gap-2">
+                                <div className="h-6 w-6 sm:h-8 sm:w-8 bg-emerald-100 dark:bg-emerald-900/50 rounded-full flex items-center justify-center text-xs font-medium text-emerald-700 dark:text-emerald-300 flex-shrink-0">
                                   {(booking.username || 'Guest').slice(0, 2).toUpperCase()}
                                 </div>
-                                <div>
-                                  <div className="font-medium text-gray-900 dark:text-white text-sm">{booking.username || 'Guest'}</div>
-                                  <div className="text-xs text-gray-500 dark:text-gray-400">#{booking.consoleNumber}</div>
+                                <div className="min-w-0 flex-1">
+                                  <div className="font-medium text-gray-900 dark:text-white text-xs sm:text-sm truncate">
+                                    {booking.username || 'Guest'}
+                                  </div>
+                                  <div className="text-xs text-gray-500 dark:text-gray-400">
+                                    #{booking.consoleNumber}
+                                  </div>
                                 </div>
                                 {booking.hasMeals && (
-                                   <div className="flex items-center gap-1 ml-auto">
-                                   <UtensilsCrossed className="w-4 h-4 text-emerald-600" title="Meals/Extras included" />
-                                    </div>
-                                 )}
+                                  <div className="flex items-center gap-1 flex-shrink-0">
+                                    <UtensilsCrossed className="w-3 h-3 sm:w-4 sm:h-4 text-emerald-600" title="Meals/Extras included" />
+                                  </div>
+                                )}
                               </div>
                             </td>
 
-                            {/* ✅ COMPACT: System */}
-                            <td className="px-3 py-2">
-                              <div className="flex items-center space-x-2">
-                                <Gamepad2 className={`w-4 h-4 ${
+                            {/* 🚀 RESPONSIVE: System cell */}
+                            <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-3">
+                              <div className="flex items-center space-x-1 sm:space-x-2">
+                                <Gamepad2 className={`w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0 ${
                                   (booking.consoleType || '').toLowerCase().includes('playstation') || 
                                   (booking.consoleType || '').toLowerCase().includes('ps') ? 'text-blue-600' : 
                                   (booking.consoleType || '').toLowerCase().includes('xbox') ? 'text-green-600' : 'text-red-600'
                                 }`} />
-                                <span className="text-sm text-gray-900 dark:text-gray-100">{booking.consoleType || 'Gaming Console'}</span>
+                                <span className="text-xs sm:text-sm text-gray-900 dark:text-gray-100 truncate">
+                                  {booking.consoleType || 'Gaming Console'}
+                                </span>
                               </div>
                             </td>
 
-                            {/* ✅ COMPACT: Time */}
-                            <td className="px-3 py-2">
-                              <div className="text-xs space-y-1">
-                                <div><span className="text-gray-600">Start:</span> {booking.startTime || 'N/A'}</div>
-                                <div><span className="text-gray-600">End:</span> {booking.endTime || 'N/A'}</div>
+                            {/* 🚀 RESPONSIVE: Time cell */}
+                            <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-3">
+                              <div className="text-xs space-y-0.5 sm:space-y-1">
+                                <div className="truncate">
+                                  <span className="text-gray-600 hidden sm:inline">Start:</span>
+                                  <span className="text-gray-600 sm:hidden">S:</span>{' '}
+                                  {booking.startTime || 'N/A'}
+                                </div>
+                                <div className="truncate">
+                                  <span className="text-gray-600 hidden sm:inline">End:</span>
+                                  <span className="text-gray-600 sm:hidden">E:</span>{' '}
+                                  {booking.endTime || 'N/A'}
+                                </div>
                               </div>
                             </td>
 
-                            {/* ✅ COMPACT: Progress */}
-                            <td className="px-3 py-2">
+                            {/* 🚀 RESPONSIVE: Progress cell */}
+                            <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-3">
                               <div className="space-y-1">
-                                <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{formatTime(timer.elapsedTime)}</div>
-                                <div className="h-2 w-20 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                                <div className="text-xs sm:text-sm font-medium text-gray-900 dark:text-gray-100">
+                                  {formatTime(timer.elapsedTime)}
+                                </div>
+                                <div className="h-1.5 sm:h-2 w-16 sm:w-20 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
                                   <motion.div
                                     className={`h-full ${progress < 75 ? 'bg-emerald-500' : progress < 90 ? 'bg-yellow-500' : 'bg-red-500'}`}
                                     style={{ width: `${progress}%` }}
@@ -397,19 +418,21 @@ export function CurrentSlots({ currentSlots: initialSlots, refreshSlots, setRefr
                               </div>
                             </td>
 
-                            {/* ✅ COMPACT: Extra Time */}
-                            <td className="px-3 py-2">
+                            {/* 🚀 RESPONSIVE: Extra Time cell */}
+                            <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-3">
                               {hasExtraTime ? (
-                                <div className="text-red-600 dark:text-red-400 font-medium text-sm">
+                                <div className="text-red-600 dark:text-red-400 font-medium text-xs sm:text-sm">
                                   {formatTime(timer.extraTime)}
                                 </div>
                               ) : (
-                                <span className="text-emerald-600 dark:text-emerald-400 text-sm">00:00:00</span>
+                                <span className="text-emerald-600 dark:text-emerald-400 text-xs sm:text-sm">
+                                  00:00:00
+                                </span>
                               )}
                             </td>
 
-                            {/* ✅ COMPACT: Action - smaller buttons */}
-                            <td className="px-3 py-2">
+                            {/* 🚀 RESPONSIVE: Action cell with adaptive button sizing */}
+                            <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-3">
                               {hasExtraTime ? (
                                 <button
                                   onClick={() => {
@@ -417,11 +440,12 @@ export function CurrentSlots({ currentSlots: initialSlots, refreshSlots, setRefr
                                     setShowOverlay(true);
                                     setError("");
                                   }}
-                                  className="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded text-xs w-20 transition-colors"
+                                  className="bg-yellow-500 hover:bg-yellow-600 text-white px-2 sm:px-3 py-1 rounded text-xs w-16 sm:w-20 transition-colors"
                                 >
                                   <div className="flex items-center justify-center gap-1">
-                                    <FaCheck className="w-3 h-3" />
-                                    Settle
+                                    <FaCheck className="w-2 h-2 sm:w-3 sm:h-3" />
+                                    <span className="hidden sm:inline">Settle</span>
+                                    <span className="sm:hidden">Set</span>
                                   </div>
                                 </button>
                               ) : (
@@ -435,15 +459,16 @@ export function CurrentSlots({ currentSlots: initialSlots, refreshSlots, setRefr
                                     booking.slotId
                                   )}
                                   disabled={isReleasing || !vendorId}
-                                  className="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1 rounded text-xs w-20 disabled:opacity-50 transition-colors"
+                                  className="bg-emerald-600 hover:bg-emerald-700 text-white px-2 sm:px-3 py-1 rounded text-xs w-16 sm:w-20 disabled:opacity-50 transition-colors"
                                 >
                                   <div className="flex items-center justify-center gap-1">
                                     {isReleasing ? (
-                                      <Loader2 className="animate-spin w-3 h-3" />
+                                      <Loader2 className="animate-spin w-2 h-2 sm:w-3 sm:h-3" />
                                     ) : (
-                                      <FaPowerOff className="w-3 h-3" />
+                                      <FaPowerOff className="w-2 h-2 sm:w-3 sm:h-3" />
                                     )}
-                                    <span>{isReleasing ? "..." : "Release"}</span>
+                                    <span className="hidden sm:inline">{isReleasing ? "..." : "Release"}</span>
+                                    <span className="sm:hidden">{isReleasing ? "..." : "Rel"}</span>
                                   </div>
                                 </button>
                               )}
@@ -454,14 +479,14 @@ export function CurrentSlots({ currentSlots: initialSlots, refreshSlots, setRefr
                     </AnimatePresence>
                   ) : (
                     <tr>
-                      <td colSpan={6} className="px-3 py-8 text-center text-gray-500 dark:text-gray-400">
+                      <td colSpan={6} className="px-2 sm:px-3 md:px-4 py-6 sm:py-8 text-center text-gray-500 dark:text-gray-400">
                         <motion.div
                           initial={{ opacity: 0 }}
                           animate={{ opacity: 1 }}
                           className="flex flex-col items-center space-y-2"
                         >
-                          <Search className="w-8 h-8 text-gray-300 dark:text-gray-600" />
-                          <p className="text-sm font-medium">No active slots found</p>
+                          <Search className="w-6 h-6 sm:w-8 sm:h-8 text-gray-300 dark:text-gray-600" />
+                          <p className="text-xs sm:text-sm font-medium">No active slots found</p>
                           <p className="text-xs">
                             {isConnected ? "Waiting for new sessions..." : "Check connection"}
                           </p>

@@ -14,7 +14,7 @@ import { DASHBOARD_URL } from "@/src/config/env";
 import ResponsiveSearchFilter from "./ResponsiveSearchFilter";
 import { useSocket } from "../context/SocketContext";
 
-// Keep all your existing helper functions exactly the same
+// Helper function for getting platform icons
 export function getIcon(system?: string | null): JSX.Element {
   const sys = (system || "").toLowerCase();
   
@@ -23,6 +23,7 @@ export function getIcon(system?: string | null): JSX.Element {
   return <Monitor className="w-4 h-4 text-purple-500" />;
 }
 
+// Helper function for date formatting
 const formatDate = (dateStr: string) => {
   try {
     const date = new Date(dateStr);
@@ -35,6 +36,7 @@ const formatDate = (dateStr: string) => {
   }
 };
 
+// Helper function for getting time of day
 const getTimeOfDay = (time: string) => {
   if (!time) return "all";
   
@@ -44,6 +46,7 @@ const getTimeOfDay = (time: string) => {
   return "evening";
 };
 
+// Helper function for merging consecutive bookings
 const mergeConsecutiveBookings = (bookings: any[]) => {
   if (!bookings || !Array.isArray(bookings) || bookings.length === 0) {
     return [];
@@ -140,6 +143,7 @@ const mergeConsecutiveBookings = (bookings: any[]) => {
   return mergedResults.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 };
 
+// Component props interface
 interface UpcomingBookingsProps {
   upcomingBookings: any[];
   vendorId?: string;
@@ -158,7 +162,7 @@ export function UpcomingBookings({
   
   const [upcomingBookings, setUpcomingBookings] = useState(Array.isArray(initialBookings) ? initialBookings : [])
 
-  // Existing state - keep all the same
+  // State for modal and console selection
   const [startCard, setStartCard] = useState(false);
   const [selectedSystem, setSelectedSystem] = useState("");
   const [availableConsoles, setAvailableConsoles] = useState<any[]>([]);
@@ -166,11 +170,13 @@ export function UpcomingBookings({
   const [isLoading, setIsLoading] = useState(false);
   const [selectedGameId, setSelectedGameId] = useState<string | null>(null);
   const [selectedBookingId, setSelectedBookingId] = useState<string | null>(null);
+  
+  // State for filtering
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedDate, setSelectedDate] = useState(format(startOfToday(), 'yyyy-MM-dd'));
   const [timeFilter, setTimeFilter] = useState("all");
 
-  // ✅ Keep all your existing useEffect hooks exactly the same
+  // Update bookings when props change
   useEffect(() => {
     if (Array.isArray(initialBookings)) {
       console.log('📅 UpcomingBookings: Updating from props with', initialBookings.length, 'bookings')
@@ -178,6 +184,7 @@ export function UpcomingBookings({
     }
   }, [initialBookings])
 
+  // Refresh bookings when triggered
   useEffect(() => {
     const fetchLatestBookings = async () => {
       if (!vendorId) return
@@ -201,6 +208,7 @@ export function UpcomingBookings({
     }
   }, [refreshTrigger, vendorId])
 
+  // Socket listeners for real-time updates
   useEffect(() => {
     if (!socket || !vendorId || !isConnected) return
 
@@ -290,7 +298,7 @@ export function UpcomingBookings({
     }
   }, [socket, vendorId, isConnected, joinVendor])
 
-  // Keep all your existing functions exactly the same
+  // Filter bookings based on search and date
   const filteredBookings = useMemo(() => {
     if (!Array.isArray(upcomingBookings)) return [];
     
@@ -325,11 +333,13 @@ export function UpcomingBookings({
     return filtered;
   }, [upcomingBookings, searchTerm, selectedDate, timeFilter]);
 
+  // Merge consecutive bookings
   const mergedBookings = useMemo(() => 
     mergeConsecutiveBookings(filteredBookings),
     [filteredBookings]
   );
 
+  // Start session handler
   const start = (system: string, gameId: string, bookingId: string) => {
     setSelectedSystem(system);
     setSelectedGameId(gameId);
@@ -338,6 +348,7 @@ export function UpcomingBookings({
     fetchAvailableConsoles(gameId, vendorId);
   };
 
+  // Fetch available consoles
   const fetchAvailableConsoles = async (gameId: string, vendorId?: string) => {
     if (!vendorId) return;
     
@@ -355,6 +366,7 @@ export function UpcomingBookings({
     }
   };
 
+  // Handle session start submission
   const handleSubmit = async () => {
     if (selectedConsole && selectedGameId && selectedBookingId) {
       setIsLoading(true);
@@ -402,28 +414,30 @@ export function UpcomingBookings({
     }
   };
 
+  // Handle console selection
   const handleConsoleSelection = (consoleId: number) => {
     setSelectedConsole(consoleId);
   };
 
   return (
-    <div className="h-full flex flex-col">
+    // 🚀 FIXED: Proper flex container structure
+    <div className="h-full flex flex-col overflow-hidden">
       <AnimatePresence>
         {startCard && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 flex items-center justify-center z-[9999] bg-transparent backdrop-blur-sm p-4"
+            className="fixed inset-0 flex items-center justify-center z-[9999] bg-transparent backdrop-blur-sm p-2 sm:p-4"
           >
             <motion.div
               initial={{ scale: 0.95, y: 20, opacity: 0 }}
               animate={{ scale: 1, y: 0, opacity: 1 }}
               exit={{ scale: 0.95, y: 20, opacity: 0 }}
-              className="w-full max-w-md"
+              className="w-full max-w-xs sm:max-w-md md:max-w-lg"
             >
               <Card className="bg-gray-50 dark:bg-zinc-900 overflow-hidden border border-gray-200 dark:border-zinc-800">
-                <div className="p-3 border-b border-gray-200 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-800/50">
+                <div className="p-2 sm:p-3 border-b border-gray-200 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-800/50">
                   <div className="flex items-center justify-between">
                     <h2 className="text-sm font-semibold">Select Console</h2>
                     <button
@@ -435,9 +449,9 @@ export function UpcomingBookings({
                   </div>
                 </div>
 
-                <div className="p-3">
+                <div className="p-2 sm:p-3">
                   {isLoading ? (
-                    <div className="flex items-center justify-center h-32">
+                    <div className="flex items-center justify-center h-24 sm:h-32">
                       <div className="animate-spin rounded-full h-6 w-6 border-2 border-emerald-500 border-t-transparent"></div>
                     </div>
                   ) : availableConsoles.length === 0 ? (
@@ -458,7 +472,7 @@ export function UpcomingBookings({
                             selectedConsole === console.consoleId
                               ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20"
                               : "border-gray-200 dark:border-zinc-800 hover:border-emerald-500/50"
-                          } p-3 transition-all duration-200`}
+                          } p-2 sm:p-3 transition-all duration-200`}
                         >
                           <div className="flex items-center space-x-2">
                             {getIcon(selectedSystem)}
@@ -477,7 +491,7 @@ export function UpcomingBookings({
                     whileTap={{ scale: 0.98 }}
                     onClick={handleSubmit}
                     disabled={!selectedConsole || isLoading}
-                    className={`w-full mt-4 py-2 rounded-lg text-sm font-medium flex items-center justify-center space-x-2 ${
+                    className={`w-full mt-4 py-2 sm:py-3 rounded-lg text-xs sm:text-sm font-medium flex items-center justify-center space-x-2 ${
                       selectedConsole && !isLoading
                         ? "bg-emerald-500 hover:bg-emerald-600 text-white"
                         : "bg-gray-100 text-gray-400 cursor-not-allowed"
@@ -502,19 +516,19 @@ export function UpcomingBookings({
         )}
       </AnimatePresence>
 
-      {/* ✅ COMPACT: Minimal header with just connection indicator and title */}
-      <div className="flex items-center justify-between pb-3 shrink-0">
+      {/* Header - Fixed height */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-2 sm:pb-3 gap-2 sm:gap-4 flex-shrink-0">
         <div className="flex items-center gap-2">
           <div className={`w-2 mt-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`} />
-          <h3 className="text-sm font-semibold text-foreground mt-2">Upcoming Bookings</h3>
+          <h3 className="text-xs sm:text-sm font-semibold text-foreground mt-2">Upcoming Bookings</h3>
           <span className="px-2 py-0.5 bg-emerald-100 mt-2 text-emerald-800 rounded-full text-xs">
             {filteredBookings.length}
           </span>
         </div>
       </div>
 
-      {/* ✅ COMPACT: Simplified search - smaller */}
-      <div className="pb-3 shrink-0">
+      {/* Search Filter - Fixed height */}
+      <div className="pb-2 sm:pb-3 flex-shrink-0">
         <ResponsiveSearchFilter
           searchTerm={searchTerm}
           setSearchTerm={setSearchTerm}
@@ -525,10 +539,10 @@ export function UpcomingBookings({
         />
       </div>
 
-      {/* ✅ COMPACT: Scrollable content with smaller padding */}
+      {/* 🚀 FIXED: Scrollable content area that takes remaining space */}
       <div className="flex-1 overflow-y-auto min-h-0">
         {mergedBookings.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full py-6 px-3 text-gray-500">
+          <div className="h-full flex flex-col items-center justify-center py-6 px-3 text-gray-500">
             <CalendarIcon className="w-8 h-8 mb-2 opacity-50" />
             <p className="text-sm font-medium">No bookings found</p>
             <p className="text-xs mt-1 text-center">
@@ -536,66 +550,68 @@ export function UpcomingBookings({
             </p>
           </div>
         ) : (
-          <div className="space-y-2 pr-1">
-            <AnimatePresence mode="popLayout">
-              {mergedBookings.map((booking, index) => (
-                <motion.div
-                  key={booking.bookingId}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, x: -50 }}
-                  layout
-                  transition={{ 
-                    duration: 0.3, 
-                    delay: index * 0.02 
-                  }}
-                  className="bg-gray-50 dark:bg-zinc-900 rounded-lg border border-gray-200 dark:border-zinc-700 p-2 hover:shadow-sm transition-shadow duration-200"
-                >
-                  <div className="space-y-2">
-                    {/* ✅ COMPACT: User info with smaller elements */}
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2 min-w-0 flex-1">
-                        <User className="w-3 h-3 shrink-0" />
-                        <span className="truncate text-sm font-medium">{booking.username || "Guest User"}</span>
+          <div className="h-full overflow-y-auto">
+            <div className="space-y-2 sm:space-y-3 lg:space-y-4 p-2 sm:p-4">
+              <AnimatePresence mode="popLayout">
+                {mergedBookings.map((booking, index) => (
+                  <motion.div
+                    key={booking.bookingId}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, x: -50 }}
+                    layout
+                    transition={{ 
+                      duration: 0.3, 
+                      delay: index * 0.02 
+                    }}
+                    className="bg-gray-50 dark:bg-zinc-900 rounded-lg sm:rounded-xl border border-gray-200 dark:border-zinc-700 p-2 sm:p-4 hover:shadow-sm transition-shadow duration-200"
+                  >
+                    <div className="space-y-2">
+                      {/* User info row */}
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2 min-w-0 flex-1">
+                          <User className="w-3 h-3 shrink-0" />
+                          <span className="truncate text-xs sm:text-sm font-medium">{booking.username || "Guest User"}</span>
+                        </div>
+                        <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800 shrink-0">
+                          Paid
+                        </span>
                       </div>
-                      <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800 shrink-0">
-                        Paid
-                      </span>
-                    </div>
 
-                    {/* ✅ COMPACT: Time and duration info - smaller */}
-                    <div className="flex items-center gap-3 text-xs text-gray-600 dark:text-gray-400">
-                      <div className="flex items-center gap-1">
-                        <Clock className="w-3 h-3 shrink-0" />
-                        <span>{booking.time || 'No time set'}</span>
+                      {/* Time/duration row */}
+                      <div className="flex flex-wrap gap-3 text-xs text-gray-600 dark:text-gray-400">
+                        <div className="flex items-center gap-1">
+                          <Clock className="w-3 h-3 shrink-0" />
+                          <span>{booking.time || 'No time set'}</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Timer className="w-3 h-3 shrink-0" />
+                          <span>{booking.duration || 1}hr</span>
+                        </div>
+                        {booking.hasMeals && (
+                          <div className="flex items-center gap-1 ml-auto">
+                            <UtensilsCrossed className="w-4 h-5 mr-2 my-1 text-emerald-600" title="Meals/Extras included" />
+                          </div>
+                        )}
                       </div>
-                      <div className="flex items-center gap-1">
-                        <Timer className="w-3 h-3 shrink-0" />
-                        <span>{booking.duration || 1}hr</span>
-                      </div>
-                       {booking.hasMeals && (
-                        <div className="flex items-center gap-1 ml-auto">
-                         <UtensilsCrossed className="w-4 h-5 mr-2 my-1 text-emerald-600" title="Meals/Extras included" />
-                         </div>
-                       )}
-                    </div>
 
-                    {/* ✅ COMPACT: Start button - smaller */}
-                    <motion.button
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      onClick={() =>
-                        start(booking.consoleType || "", booking.game_id, booking.bookingId)
-                      }
-                      className="w-full py-1.5 text-xs bg-emerald-500 hover:bg-emerald-600 text-white rounded-md font-medium transition-all flex items-center justify-center gap-2"
-                    >
-                      <Play className="w-3 h-3" />
-                      Start
-                    </motion.button>
-                  </div>
-                </motion.div>
-              ))}
-            </AnimatePresence>
+                      {/* Start button */}
+                      <motion.button
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        onClick={() =>
+                          start(booking.consoleType || "", booking.game_id, booking.bookingId)
+                        }
+                        className="w-full py-1.5 sm:py-2 text-xs sm:text-sm bg-emerald-500 hover:bg-emerald-600 text-white rounded-md font-medium transition-all flex items-center justify-center gap-2"
+                      >
+                        <Play className="w-3 h-3" />
+                        Start
+                      </motion.button>
+                    </div>
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+            </div>
           </div>
         )}
       </div>

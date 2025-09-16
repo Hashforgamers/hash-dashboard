@@ -62,9 +62,10 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
 
   const [selectedSlots, setSelectedSlots] = useState<string[]>([]);
   const [availableSlots, setAvailableSlots] = useState<any[]>([]);
+  const [isLoadingSlots, setIsLoadingSlots] = useState<boolean>(false); // New state for slots loading
 
-  // Payment
-  const [paymentType, setPaymentType] = useState<string>('');
+  // Payment - Set Cash as default
+  const [paymentType, setPaymentType] = useState<string>('Cash'); // ✅ Default to Cash
 
   // Submission state
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
@@ -244,11 +245,12 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
     return Object.keys(newErrors).length === 0;
   };
 
-  // Fetch available slots
+  // Fetch available slots with loading state
   useEffect(() => {
     if (!vendorId || !selectedConsole.id) return;
 
     const fetchAvailableSlots = async () => {
+      setIsLoadingSlots(true); // ✅ Start loading
       try {
         const response = await fetch(
           `${BOOKING_URL}/api/getSlots/vendor/${vendorId}/game/${selectedConsole.id}/${selectedDate.replace(/-/g, '')}`
@@ -275,6 +277,8 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
         setAvailableSlots(filteredSlots);
       } catch (error) {
         console.error('Error fetching available slots:', error);
+      } finally {
+        setIsLoadingSlots(false); // ✅ Stop loading
       }
     };
 
@@ -670,7 +674,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
                   </div>
 
                   <div className="grid grid-cols-2 gap-2">
-                    {['Cash', 'Online'].map((type) => (
+                    {['Cash', 'UPI'].map((type) => ( // ✅ Changed "Online" to "UPI"
                       <motion.button
                         key={type}
                         type="button"
@@ -741,7 +745,13 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
                 </div>
 
                 <div className="bg-transparent dark:bg-transparent rounded p-2">
-                  {availableSlots.length === 0 ? (
+                  {/* ✅ Show loader while fetching slots */}
+                  {isLoadingSlots ? (
+                    <div className="text-center py-6">
+                      <Loader2 className="w-6 h-6 mx-auto mb-2 animate-spin text-emerald-600" />
+                      <p className="text-xs text-gray-500 dark:text-gray-400">Loading time slots...</p>
+                    </div>
+                  ) : availableSlots.length === 0 ? (
                     <div className="text-center py-3 text-gray-500 dark:text-gray-400">
                       <Clock className="w-5 h-5 mx-auto mb-1 opacity-50" />
                       <p className="text-xs">No available slots</p>
