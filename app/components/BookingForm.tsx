@@ -52,6 +52,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
   // Booking details
   const [waiveOffAmount, setWaiveOffAmount] = useState(0);
   const [extraControllerFare, setExtraControllerFare] = useState(0);
+  const [autoWaiveOffAmount, setAutoWaiveOffAmount] = useState(0); // ✅ New state for automatic wave-off
 
   const [selectedDate, setSelectedDate] = useState<string>(() => {
     const now = new Date();
@@ -62,10 +63,10 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
 
   const [selectedSlots, setSelectedSlots] = useState<string[]>([]);
   const [availableSlots, setAvailableSlots] = useState<any[]>([]);
-  const [isLoadingSlots, setIsLoadingSlots] = useState<boolean>(false); // New state for slots loading
+  const [isLoadingSlots, setIsLoadingSlots] = useState<boolean>(false);
 
   // Payment - Set Cash as default
-  const [paymentType, setPaymentType] = useState<string>('Cash'); // ✅ Default to Cash
+  const [paymentType, setPaymentType] = useState<string>('Cash');
 
   // Submission state
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
@@ -87,10 +88,46 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
   // Calculate totals including meals
   const mealsTotal = selectedMeals.reduce((sum, meal) => sum + meal.total, 0);
 
+  // ✅ Modified total calculation to include automatic wave-off
   const totalAmount = Math.max(
     0,
-    selectedSlots.length * selectedConsole.price - waiveOffAmount + extraControllerFare + mealsTotal
+    selectedSlots.length * selectedConsole.price - waiveOffAmount - autoWaiveOffAmount + extraControllerFare + mealsTotal
   );
+
+  // ✅ New function to calculate automatic wave-off amount
+  const calculateAutoWaiveOff = (slots: string[], slotsData: any[]) => {
+    const nowIST = new Date(
+      new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' })
+    );
+    
+    let totalAutoWaiveOff = 0;
+    
+    slots.forEach(slotId => {
+      const slotData = slotsData.find(s => s.slot_id === slotId);
+      if (!slotData) return;
+      
+      const slotDateTime = new Date(`${selectedDate}T${slotData.start_time}+05:30`);
+      const slotEndTime = new Date(`${selectedDate}T${slotData.end_time}+05:30`);
+      const slotMidpoint = new Date(slotDateTime.getTime() + (slotEndTime.getTime() - slotDateTime.getTime()) / 2);
+      
+      // If current time is past the slot's midpoint, add half of slot price to wave-off
+      if (nowIST > slotMidpoint && nowIST < slotEndTime) {
+        totalAutoWaiveOff += selectedConsole.price / 2;
+      }
+    });
+    
+    return totalAutoWaiveOff;
+  };
+
+  // ✅ Update automatic wave-off when selected slots change
+  useEffect(() => {
+    if (selectedSlots.length > 0 && availableSlots.length > 0) {
+      const autoWaiveOff = calculateAutoWaiveOff(selectedSlots, availableSlots);
+      setAutoWaiveOffAmount(autoWaiveOff);
+    } else {
+      setAutoWaiveOffAmount(0);
+    }
+  }, [selectedSlots, availableSlots, selectedConsole.price, selectedDate]);
 
   // Common function to filter suggestions by key and input value
   const getSuggestions = (key, value) => {
@@ -245,12 +282,12 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
     return Object.keys(newErrors).length === 0;
   };
 
-  // Fetch available slots with loading state
+  // ✅ Modified fetchAvailableSlots with new slot availability logic
   useEffect(() => {
     if (!vendorId || !selectedConsole.id) return;
 
     const fetchAvailableSlots = async () => {
-      setIsLoadingSlots(true); // ✅ Start loading
+      setIsLoadingSlots(true);
       try {
         const response = await fetch(
           `${BOOKING_URL}/api/getSlots/vendor/${vendorId}/game/${selectedConsole.id}/${selectedDate.replace(/-/g, '')}`
@@ -264,9 +301,21 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
           new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' })
         );
 
-        const filteredSlots = (data.slots || []).map((slot: any) => {
-          const slotDateTime = new Date(`${selectedDate}T${slot.start_time}+05:30`);
-          const isPast = slotDateTime < nowIST;
+        // ✅ Modified filtering logic - slot only closes when next slot starts
+        const filteredSlots = (data.slots || []).map((slot: any, index: number) => {
+          const nextSlot = data.slots[index + 1];
+          
+          let isPast = false;
+          
+          if (nextSlot) {
+            // Slot is considered past only when the next slot's start time has arrived
+            const nextSlotDateTime = new Date(`${selectedDate}T${nextSlot.start_time}+05:30`);
+            isPast = nowIST >= nextSlotDateTime;
+          } else {
+            // For the last slot of the day, use the original logic (slot end time)
+            const slotEndTime = new Date(`${selectedDate}T${slot.end_time}+05:30`);
+            isPast = nowIST >= slotEndTime;
+          }
 
           return {
             ...slot,
@@ -278,7 +327,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
       } catch (error) {
         console.error('Error fetching available slots:', error);
       } finally {
-        setIsLoadingSlots(false); // ✅ Stop loading
+        setIsLoadingSlots(false);
       }
     };
 
@@ -309,7 +358,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
           bookedDate: selectedDate,
           slotId: selectedSlots,
           paymentType,
-          waiveOffAmount,
+          waiveOffAmount: waiveOffAmount + autoWaiveOffAmount, // ✅ Include automatic wave-off in total
           extraControllerFare,
           selectedMeals: selectedMeals.map(meal => ({
             menu_item_id: meal.menu_item_id,
@@ -674,7 +723,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
                   </div>
 
                   <div className="grid grid-cols-2 gap-2">
-                    {['Cash', 'UPI'].map((type) => ( // ✅ Changed "Online" to "UPI"
+                    {['Cash', 'UPI'].map((type) => (
                       <motion.button
                         key={type}
                         type="button"
@@ -876,7 +925,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
                   </div>
 
                   <div className="flex justify-between items-center py-1 border-b border-gray-100 dark:border-gray-700">
-                    <span className="text-gray-600 dark:text-gray-400">Waive Off:</span>
+                    <span className="text-gray-600 dark:text-gray-400">Manual Waive Off:</span>
                     <input
                       type="number"
                       value={waiveOffAmount}
@@ -886,6 +935,14 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
                       min={0}
                     />
                   </div>
+
+                  {/* ✅ New row for automatic wave-off */}
+                  {autoWaiveOffAmount > 0 && (
+                    <div className="flex justify-between items-center py-1 border-b border-gray-100 dark:border-gray-700">
+                      <span className="text-gray-600 dark:text-gray-400">Auto Waive Off:</span>
+                      <span className="font-medium text-orange-600 dark:text-orange-400">₹{autoWaiveOffAmount}</span>
+                    </div>
+                  )}
 
                   <div className="flex justify-between items-center py-1 border-b border-gray-100 dark:border-gray-700">
                     <span className="text-gray-600 dark:text-gray-400">Extra Controller:</span>
