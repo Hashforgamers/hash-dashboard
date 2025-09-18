@@ -12,6 +12,7 @@ import axios from "axios";
 import { format, parseISO, isToday, isTomorrow, startOfToday } from 'date-fns';
 import { DASHBOARD_URL } from "@/src/config/env";
 import ResponsiveSearchFilter from "./ResponsiveSearchFilter";
+import MealDetailsModal from "./mealsDetailmodal";
 import { useSocket } from "../context/SocketContext";
 
 // Helper function for getting platform icons
@@ -419,6 +420,30 @@ export function UpcomingBookings({
     setSelectedConsole(consoleId);
   };
 
+  // Add state for the modal
+const [mealDetailsModal, setMealDetailsModal] = useState({
+  isOpen: false,
+  bookingId: '',
+  customerName: ''
+});
+
+// Add click handler
+const handleMealIconClick = (bookingId: string, customerName: string) => {
+  setMealDetailsModal({
+    isOpen: true,
+    bookingId,
+    customerName
+  });
+};
+
+const closeMealDetailsModal = () => {
+  setMealDetailsModal({
+    isOpen: false,
+    bookingId: '',
+    customerName: ''
+  });
+};
+
   return (
     // 🚀 FIXED: Proper flex container structure
     <div className="h-full flex flex-col overflow-hidden">
@@ -588,11 +613,18 @@ export function UpcomingBookings({
                           <Timer className="w-3 h-3 shrink-0" />
                           <span>{booking.duration || 1}hr</span>
                         </div>
-                        {booking.hasMeals && (
-                          <div className="flex items-center gap-1 ml-auto">
-                            <UtensilsCrossed className="w-4 h-5 mr-2 my-1 text-emerald-600" title="Meals/Extras included" />
-                          </div>
-                        )}
+                      {booking.hasMeals && (
+                            <button
+                           onClick={(e) => {
+                            e.stopPropagation();
+                       handleMealIconClick(booking.bookingId, booking.username || 'Guest User');
+                       }}
+                        className="flex items-center gap-1 ml-auto hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-full p-1 transition-colors group"
+                        title="View meal details"
+                                   >
+                                  <UtensilsCrossed className="w-4 h-4 text-emerald-600 group-hover:text-emerald-700 transition-colors" />
+                              </button>
+                            )}
                       </div>
 
                       {/* Start button */}
@@ -615,6 +647,16 @@ export function UpcomingBookings({
           </div>
         )}
       </div>
+      
+      <MealDetailsModal
+            isOpen={mealDetailsModal.isOpen}
+              onClose={closeMealDetailsModal}
+                 bookingId={mealDetailsModal.bookingId}
+               customerName={mealDetailsModal.customerName}
+              />
     </div>
+
   );
+
 }
+
