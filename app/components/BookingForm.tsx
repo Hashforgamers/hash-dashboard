@@ -43,7 +43,6 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
   const [email, setEmail] = useState<string>('');
   const [phone, setPhone] = useState<string>('');
   const [isLoadingUser, setIsLoadingUser] = useState<boolean>(false);
-  const [refreshDashboard, setRefreshDashboard] = useState(false);
 
   // Meal selection states
   const [selectedMeals, setSelectedMeals] = useState<SelectedMeal[]>([]);
@@ -52,7 +51,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
   // Booking details
   const [waiveOffAmount, setWaiveOffAmount] = useState(0);
   const [extraControllerFare, setExtraControllerFare] = useState(0);
-  const [autoWaiveOffAmount, setAutoWaiveOffAmount] = useState(0); // ✅ New state for automatic wave-off
+  const [autoWaiveOffAmount, setAutoWaiveOffAmount] = useState(0);
 
   const [selectedDate, setSelectedDate] = useState<string>(() => {
     const now = new Date();
@@ -76,25 +75,33 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
   // Vendor information from JWT token
   const [vendorId, setVendorId] = useState<number | null>(null);
 
+  // User suggestion states
   const [userList, setUserList] = useState<{ name: string; email: string; phone: string }[]>([]);
-
-  const [emailSuggestions, setEmailSuggestions] = useState([]);
-  const [phoneSuggestions, setPhoneSuggestions] = useState([]);
-  const [nameSuggestions, setNameSuggestions] = useState([]);
+  const [emailSuggestions, setEmailSuggestions] = useState<{ name: string; email: string; phone: string }[]>([]);
+  const [phoneSuggestions, setPhoneSuggestions] = useState<{ name: string; email: string; phone: string }[]>([]);
+  const [nameSuggestions, setNameSuggestions] = useState<{ name: string; email: string; phone: string }[]>([]);
   const [focusedInput, setFocusedInput] = useState<string>("");
 
   const blurTimeoutRef = useRef<number | null>(null);
 
+  // ✅ FIXED: Log the selected console on component mount
+  useEffect(() => {
+    console.log('📋 BookingForm mounted with selected console:', selectedConsole);
+    console.log('📋 Selected console type:', selectedConsole.type);
+    console.log('📋 Selected console ID:', selectedConsole.id);
+    console.log('📋 Selected console price:', selectedConsole.price);
+  }, [selectedConsole]);
+
   // Calculate totals including meals
   const mealsTotal = selectedMeals.reduce((sum, meal) => sum + meal.total, 0);
-
-  // ✅ Modified total calculation to include automatic wave-off
+  const consolePrice = selectedConsole.price || 0;
+  
   const totalAmount = Math.max(
     0,
-    selectedSlots.length * selectedConsole.price - waiveOffAmount - autoWaiveOffAmount + extraControllerFare + mealsTotal
+    selectedSlots.length * consolePrice - waiveOffAmount - autoWaiveOffAmount + extraControllerFare + mealsTotal
   );
 
-  // ✅ New function to calculate automatic wave-off amount
+  // Calculate automatic wave-off amount
   const calculateAutoWaiveOff = (slots: string[], slotsData: any[]) => {
     const nowIST = new Date(
       new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' })
@@ -110,16 +117,15 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
       const slotEndTime = new Date(`${selectedDate}T${slotData.end_time}+05:30`);
       const slotMidpoint = new Date(slotDateTime.getTime() + (slotEndTime.getTime() - slotDateTime.getTime()) / 2);
       
-      // If current time is past the slot's midpoint, add half of slot price to wave-off
       if (nowIST > slotMidpoint && nowIST < slotEndTime) {
-        totalAutoWaiveOff += selectedConsole.price / 2;
+        totalAutoWaiveOff += consolePrice / 2;
       }
     });
     
     return totalAutoWaiveOff;
   };
 
-  // ✅ Update automatic wave-off when selected slots change
+  // Update automatic wave-off when selected slots change
   useEffect(() => {
     if (selectedSlots.length > 0 && availableSlots.length > 0) {
       const autoWaiveOff = calculateAutoWaiveOff(selectedSlots, availableSlots);
@@ -127,45 +133,119 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
     } else {
       setAutoWaiveOffAmount(0);
     }
-  }, [selectedSlots, availableSlots, selectedConsole.price, selectedDate]);
+  }, [selectedSlots, availableSlots, consolePrice, selectedDate]);
+
+  // Fetch vendor ID when component mounts
+  useEffect(() => {
+    const token = localStorage.getItem('jwtToken');
+    if (!token) return;
+
+    try {
+      const decoded = jwtDecode<{ sub: { id: number } }>(token);
+      const vendorIdFromToken = decoded.sub.id;
+      setVendorId(vendorIdFromToken);
+    } catch (error) {
+      console.error('Error decoding token:', error);
+    }
+  }, []);
+
+  // Fetch user list
+  useEffect(() => {
+    if (!vendorId) return;
+    
+    const userCacheKey = `userList`;
+    const cachedData = localStorage.getItem(userCacheKey);
+
+    const isCacheValid = (timestamp: number) => {
+      const now = Date.now();
+      const tenMinutes = 10 * 60 * 1000;
+      return now - timestamp < tenMinutes;
+    };
+
+    const fetchUsers = async () => {
+      try {
+        console.log('👥 Fetching users for vendor:', vendorId);
+        const response = await fetch(`${BOOKING_URL}/api/vendor/${vendorId}/users`);
+        const data = await response.json();
+
+        if (Array.isArray(data)) {
+          console.log('👥 Users fetched:', data.length);
+          setUserList(data);
+          localStorage.setItem(
+            userCacheKey,
+            JSON.stringify({ data, timestamp: Date.now() })
+          );
+        } else {
+          console.warn('⚠️ Users API returned non-array:', data);
+        }
+      } catch (error) {
+        console.error('❌ Error fetching users:', error);
+      }
+    };
+
+    if (cachedData) {
+      try {
+        const { data, timestamp } = JSON.parse(cachedData);
+        if (isCacheValid(timestamp)) {
+          console.log('👥 Using cached users:', data.length);
+          setUserList(data);
+        } else {
+          console.log('👥 Cache expired, fetching fresh users');
+          fetchUsers();
+        }
+      } catch (parseError) {
+        console.error('Error parsing cached users:', parseError);
+        fetchUsers();
+      }
+    } else {
+      fetchUsers();
+    }
+  }, [vendorId]);
 
   // Common function to filter suggestions by key and input value
-  const getSuggestions = (key, value) => {
+  const getSuggestions = (key: keyof typeof userList[0], value: string) => {
     if (!value.trim()) {
       return userList;
     }
-    return userList.filter((user) =>
+    
+    const filtered = userList.filter((user) =>
       user[key].toLowerCase().includes(value.toLowerCase())
     );
+    
+    return filtered;
   };
 
   // Handlers for input changes
-  const handleEmailInputChange = (value) => {
+  const handleEmailInputChange = (value: string) => {
     setEmail(value);
-    setEmailSuggestions(getSuggestions('email', value));
+    const suggestions = getSuggestions('email', value);
+    setEmailSuggestions(suggestions);
     setFocusedInput('email');
   };
 
-  const handlePhoneInputChange = (value) => {
+  const handlePhoneInputChange = (value: string) => {
     setPhone(value);
-    setPhoneSuggestions(getSuggestions('phone', value));
+    const suggestions = getSuggestions('phone', value);
+    setPhoneSuggestions(suggestions);
     setFocusedInput('phone');
   };
 
-  const handleNameInputChange = (value) => {
+  const handleNameInputChange = (value: string) => {
     setName(value);
-    setNameSuggestions(getSuggestions('name', value));
+    const suggestions = getSuggestions('name', value);
+    setNameSuggestions(suggestions);
     setFocusedInput('name');
   };
 
-  // On focus handlers
+  // Focus handlers
   const handleEmailFocus = () => {
     if (blurTimeoutRef.current) {
       clearTimeout(blurTimeoutRef.current);
       blurTimeoutRef.current = null;
     }
     setFocusedInput("email");
-    setEmailSuggestions(getSuggestions("email", email));
+    const suggestions = getSuggestions("email", email);
+    setEmailSuggestions(suggestions);
   };
 
   const handlePhoneFocus = () => {
@@ -174,7 +254,8 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
       blurTimeoutRef.current = null;
     }
     setFocusedInput("phone");
-    setPhoneSuggestions(getSuggestions("phone", phone));
+    const suggestions = getSuggestions("phone", phone);
+    setPhoneSuggestions(suggestions);
   };
 
   const handleNameFocus = () => {
@@ -183,7 +264,8 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
       blurTimeoutRef.current = null;
     }
     setFocusedInput("name");
-    setNameSuggestions(getSuggestions("name", name));
+    const suggestions = getSuggestions("name", name);
+    setNameSuggestions(suggestions);
   };
 
   // Handler to clear suggestions with delay
@@ -212,60 +294,17 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
     setFocusedInput("");
   };
 
-  useEffect(() => {
-    const token = localStorage.getItem('jwtToken');
-    if (!token) return;
+  // Meal selection handlers
+  const handleMealSelectorConfirm = (meals: SelectedMeal[]) => {
+    console.log('🍽️ Meals confirmed:', meals);
+    setSelectedMeals(meals);
+    setIsMealSelectorOpen(false);
+  };
 
-    try {
-      const decoded = jwtDecode<{ sub: { id: number } }>(token);
-      const vendorIdFromToken = decoded.sub.id;
-      setVendorId(vendorIdFromToken);
-
-      const userCacheKey = `userList`;
-      const cachedData = localStorage.getItem(userCacheKey);
-
-      const isCacheValid = (timestamp: number) => {
-        const now = Date.now();
-        const tenMinutes = 10 * 60 * 1000;
-        return now - timestamp < tenMinutes;
-      };
-
-      const fetchUsers = async () => {
-        try {
-          const response = await fetch(`${BOOKING_URL}/api/vendor/${vendorIdFromToken}/users`);
-          const data = await response.json();
-
-          if (Array.isArray(data)) {
-            setUserList(data);
-            localStorage.setItem(
-              userCacheKey,
-              JSON.stringify({ data, timestamp: Date.now() })
-            );
-          }
-        } catch (error) {
-          console.error('Error fetching users:', error);
-        }
-      };
-
-      if (cachedData) {
-        try {
-          const { data, timestamp } = JSON.parse(cachedData);
-          if (isCacheValid(timestamp)) {
-            setUserList(data);
-          } else {
-            fetchUsers();
-          }
-        } catch (parseError) {
-          console.error('Error parsing cached users:', parseError);
-          fetchUsers();
-        }
-      } else {
-        fetchUsers();
-      }
-    } catch (error) {
-      console.error('Error decoding token:', error);
-    }
-  }, []);
+  const handleMealSelectorClose = () => {
+    console.log('🍽️ Meal selector closed');
+    setIsMealSelectorOpen(false);
+  };
 
   // Form validation
   const validateForm = () => {
@@ -282,37 +321,45 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
     return Object.keys(newErrors).length === 0;
   };
 
-  // ✅ Modified fetchAvailableSlots with new slot availability logic
+  // ✅ FIXED: Fetch available slots using selectedConsole.id directly
   useEffect(() => {
     if (!vendorId || !selectedConsole.id) return;
 
     const fetchAvailableSlots = async () => {
       setIsLoadingSlots(true);
       try {
+        console.log('🕐 Fetching slots for:', {
+          vendorId,
+          gameId: selectedConsole.id,
+          consoleType: selectedConsole.type,
+          date: selectedDate
+        });
+
         const response = await fetch(
           `${BOOKING_URL}/api/getSlots/vendor/${vendorId}/game/${selectedConsole.id}/${selectedDate.replace(/-/g, '')}`
         );
 
-        if (!response.ok) throw new Error('Failed to fetch slots');
+        if (!response.ok) {
+          console.error('❌ Slots API error:', response.status, response.statusText);
+          throw new Error('Failed to fetch slots');
+        }
 
         const data = await response.json();
+        console.log('🕐 Slots API response:', data);
 
         const nowIST = new Date(
           new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' })
         );
 
-        // ✅ Modified filtering logic - slot only closes when next slot starts
         const filteredSlots = (data.slots || []).map((slot: any, index: number) => {
           const nextSlot = data.slots[index + 1];
           
           let isPast = false;
           
           if (nextSlot) {
-            // Slot is considered past only when the next slot's start time has arrived
             const nextSlotDateTime = new Date(`${selectedDate}T${nextSlot.start_time}+05:30`);
             isPast = nowIST >= nextSlotDateTime;
           } else {
-            // For the last slot of the day, use the original logic (slot end time)
             const slotEndTime = new Date(`${selectedDate}T${slot.end_time}+05:30`);
             isPast = nowIST >= slotEndTime;
           }
@@ -326,13 +373,14 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
         setAvailableSlots(filteredSlots);
       } catch (error) {
         console.error('Error fetching available slots:', error);
+        setAvailableSlots([]);
       } finally {
         setIsLoadingSlots(false);
       }
     };
 
     fetchAvailableSlots();
-  }, [vendorId, selectedDate, selectedConsole.id]);
+  }, [vendorId, selectedDate, selectedConsole.id]); // ✅ Use selectedConsole.id directly
 
   const handleSlotClick = (slot: string) => {
     setSelectedSlots((prev) =>
@@ -341,24 +389,33 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
     if (errors.slots) setErrors((prev) => ({ ...prev, slots: '' }));
   };
 
+  // ✅ FIXED: Handle form submission with correct console type
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateForm()) return;
 
     setIsSubmitting(true);
     try {
+      console.log('🚀 Submitting booking with:', {
+        consoleType: selectedConsole.type,
+        consoleId: selectedConsole.id,
+        consoleName: selectedConsole.name,
+        vendorId,
+        selectedMeals: selectedMeals.length
+      });
+
       const response = await fetch(`${BOOKING_URL}/api/newBooking/vendor/${vendorId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          consoleType: selectedConsole.type,
+          consoleType: selectedConsole.type, // ✅ Use the console type from ConsoleSelector
           name,
           email,
           phone,
           bookedDate: selectedDate,
           slotId: selectedSlots,
           paymentType,
-          waiveOffAmount: waiveOffAmount + autoWaiveOffAmount, // ✅ Include automatic wave-off in total
+          waiveOffAmount: waiveOffAmount + autoWaiveOffAmount,
           extraControllerFare,
           selectedMeals: selectedMeals.map(meal => ({
             menu_item_id: meal.menu_item_id,
@@ -374,12 +431,11 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
       if (result.success) {
         setIsSubmitted(true);
 
-        // ✅ Notify dashboard to refresh immediately
         if (typeof window !== 'undefined') {
           window.dispatchEvent(new CustomEvent('refresh-dashboard'));
         }
 
-        // Check if the submitted user exists in cache
+        // Cache management
         const userCacheKey = 'userList';
         const cached = localStorage.getItem(userCacheKey);
 
@@ -444,6 +500,10 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
 
           <div className="bg-emerald-50 dark:bg-emerald-900/20 rounded-lg p-3 mb-4 text-xs text-left">
             <div className="flex justify-between items-center py-1">
+              <span className="text-gray-600 dark:text-gray-400">Console Type:</span>
+              <span className="font-medium text-gray-800 dark:text-white">{selectedConsole.type}</span>
+            </div>
+            <div className="flex justify-between items-center py-1">
               <span className="text-gray-600 dark:text-gray-400">Meals & Extras:</span>
               <span className="font-medium text-gray-800 dark:text-white">
                 {selectedMeals.length === 0
@@ -491,12 +551,14 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
             <h1 className="text-lg font-bold bg-transparent bg-gradient-to-r from-emerald-600 to-green-600 bg-clip-text text-transparent">
               Book {selectedConsole.name}
             </h1>
+            {/* ✅ Debug info */}
+            <p className="text-xs text-gray-500">Type: {selectedConsole.type} | ID: {selectedConsole.id}</p>
           </div>
         </div>
         <div className="flex items-center gap-2 bg-emerald-100/50 dark:bg-emerald-900/30 px-3 py-1 rounded-full">
           <GameController2 className="w-4 h-4 text-emerald-600 dark:text-emerald-300" />
           <span className="text-emerald-700 dark:text-emerald-300 font-medium text-sm">
-            ₹{selectedConsole.price}/slot
+            ₹{consolePrice}/slot
           </span>
         </div>
       </motion.div>
@@ -505,9 +567,9 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
       <div className="flex-1 overflow-y-auto p-3">
         <form onSubmit={handleSubmit} className="space-y-3">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
-            {/* Left Column - Customer & Date */}
+            {/* Left Column - Customer Details */}
             <div className="lg:col-span-2 space-y-3">
-              {/* Customer Details - Compact */}
+              {/* Customer Details */}
               <motion.div
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -624,7 +686,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
                     </AnimatePresence>
                   </div>
 
-                  {/* Full Name Input */}
+                  {/* Name Input */}
                   <div className="relative">
                     {isLoadingUser ? (
                       <div className="flex items-center justify-center py-2">
@@ -685,7 +747,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
 
               {/* Date & Payment Row */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {/* Date Selection - Compact */}
+                {/* Date Selection */}
                 <motion.div
                   initial={{ opacity: 0, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
@@ -708,7 +770,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
                   />
                 </motion.div>
 
-                {/* Payment Method - Compact */}
+                {/* Payment Method */}
                 <motion.div
                   initial={{ opacity: 0, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
@@ -746,23 +808,10 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
                       </motion.button>
                     ))}
                   </div>
-
-                  <AnimatePresence>
-                    {errors.payment && (
-                      <motion.p
-                        initial={{ opacity: 0, y: -5 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -5 }}
-                        className="mt-1 text-xs text-red-500"
-                      >
-                        {errors.payment}
-                      </motion.p>
-                    )}
-                  </AnimatePresence>
                 </motion.div>
               </div>
 
-              {/* Time Slots - Compact */}
+              {/* Time Slots */}
               <motion.div
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -794,7 +843,6 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
                 </div>
 
                 <div className="bg-transparent dark:bg-transparent rounded p-2">
-                  {/* ✅ Show loader while fetching slots */}
                   {isLoadingSlots ? (
                     <div className="text-center py-6">
                       <Loader2 className="w-6 h-6 mx-auto mb-2 animate-spin text-emerald-600" />
@@ -804,6 +852,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
                     <div className="text-center py-3 text-gray-500 dark:text-gray-400">
                       <Clock className="w-5 h-5 mx-auto mb-1 opacity-50" />
                       <p className="text-xs">No available slots</p>
+                      <p className="text-xs mt-1">Try a different date</p>
                     </div>
                   ) : (
                     <div className="grid grid-cols-6 sm:grid-cols-8 gap-1">
@@ -884,7 +933,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
 
             {/* Right Column - Summary */}
             <div className="space-y-3">
-              {/* Booking Summary - Compact */}
+              {/* Booking Summary */}
               <motion.div
                 initial={{ opacity: 0, x: 10 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -905,6 +954,11 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
                   </div>
 
                   <div className="flex justify-between items-center py-1 border-b border-gray-100 dark:border-gray-700">
+                    <span className="text-gray-600 dark:text-gray-400">Type:</span>
+                    <span className="font-medium text-gray-800 dark:text-white">{selectedConsole.type}</span>
+                  </div>
+
+                  <div className="flex justify-between items-center py-1 border-b border-gray-100 dark:border-gray-700">
                     <span className="text-gray-600 dark:text-gray-400">Date:</span>
                     <span className="font-medium text-gray-800 dark:text-white">
                       {new Date(selectedDate).toLocaleDateString('en-US', {
@@ -921,7 +975,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
 
                   <div className="flex justify-between items-center py-1 border-b border-gray-100 dark:border-gray-700">
                     <span className="text-gray-600 dark:text-gray-400">Rate:</span>
-                    <span className="font-medium text-gray-800 dark:text-white">₹{selectedConsole.price}/slot</span>
+                    <span className="font-medium text-gray-800 dark:text-white">₹{consolePrice}/slot</span>
                   </div>
 
                   <div className="flex justify-between items-center py-1 border-b border-gray-100 dark:border-gray-700">
@@ -936,7 +990,6 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
                     />
                   </div>
 
-                  {/* ✅ New row for automatic wave-off */}
                   {autoWaiveOffAmount > 0 && (
                     <div className="flex justify-between items-center py-1 border-b border-gray-100 dark:border-gray-700">
                       <span className="text-gray-600 dark:text-gray-400">Auto Waive Off:</span>
@@ -956,13 +1009,16 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
                     />
                   </div>
 
-                  {/* Meals Selection - Replace the existing extras section */}
+                  {/* Meals Selection */}
                   <div className="flex justify-between items-center py-1 border-b border-gray-100 dark:border-gray-700">
                     <span className="text-gray-600 dark:text-gray-400">Meals & Extras:</span>
                     <div className="flex items-center gap-2">
                       <button
                         type="button"
-                        onClick={() => setIsMealSelectorOpen(true)}
+                        onClick={() => {
+                          console.log('🍽️ Opening meal selector');
+                          setIsMealSelectorOpen(true);
+                        }}
                         className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-emerald-100 to-green-100 dark:from-emerald-900/30 dark:to-green-900/30 text-emerald-700 dark:text-emerald-300 rounded-lg text-xs hover:from-emerald-200 hover:to-green-200 dark:hover:from-emerald-900/50 dark:hover:to-green-900/50 transition-all duration-200 border border-emerald-200 dark:border-emerald-700"
                       >
                         <Plus className="w-3 h-3" />
@@ -971,7 +1027,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
                     </div>
                   </div>
 
-                  {/* Display selected meals with better formatting */}
+                  {/* Display selected meals */}
                   {selectedMeals.length > 0 && (
                     <div className="py-2 border-b border-gray-100 dark:border-gray-700">
                       <div className="space-y-2">
@@ -1010,7 +1066,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
             </div>
           </div>
 
-          {/* Compact Submit Button */}
+          {/* Submit Button */}
           <motion.button
             type="submit"
             whileHover={{ scale: isSubmitting ? 1 : 1.02 }}
@@ -1037,12 +1093,12 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
         </form>
       </div>
 
-      {/* Add the MealSelector component */}
+      {/* MealSelector */}
       <MealSelector
         vendorId={vendorId || 0}
         isOpen={isMealSelectorOpen}
-        onClose={() => setIsMealSelectorOpen(false)}
-        onConfirm={setSelectedMeals}
+        onClose={handleMealSelectorClose}
+        onConfirm={handleMealSelectorConfirm}
         initialSelectedMeals={selectedMeals}
       />
     </div>
