@@ -7,6 +7,7 @@ import { BOOKING_URL, DASHBOARD_URL } from "@/src/config/env";
 import { mergeConsecutiveBookings } from "@/app/utils/slot-utils";
 import HashLoader from './ui/HashLoader';
 import ExtraBookingOverlay from "./extraBookingOverlay";
+import MealDetailsModal from "./mealsDetailmodal";
 import { useSocket } from "../context/SocketContext";
 
 // Keep all your existing helper functions
@@ -106,6 +107,13 @@ export function CurrentSlots({ currentSlots: initialSlots, refreshSlots, setRefr
   const [error, setError] = useState<string>("");
   const tableRef = useRef<HTMLTableElement>(null);
 
+  // Add state for meal details modal
+  const [mealDetailsModal, setMealDetailsModal] = useState({
+    isOpen: false,
+    bookingId: '',
+    customerName: ''
+  });
+
   // Get vendorId
   useEffect(() => {
     const token = localStorage.getItem("jwtToken");
@@ -129,7 +137,7 @@ export function CurrentSlots({ currentSlots: initialSlots, refreshSlots, setRefr
     }
   }, [initialSlots])
 
-  // ✅ Socket listeners (keep your existing working code)
+  // Socket listeners (keep your existing working code)
   useEffect(() => {
     if (!socket || !vendorId || !isConnected) return
 
@@ -154,7 +162,8 @@ export function CurrentSlots({ currentSlots: initialSlots, refreshSlots, setRefr
           date: data.date,
           status: 'active',
           slot_price: data.slot_price,
-          userId: data.userId
+          userId: data.userId,
+          hasMeals: data.hasMeals
         }
         
         setCurrentSlots(prevSlots => {
@@ -222,6 +231,19 @@ export function CurrentSlots({ currentSlots: initialSlots, refreshSlots, setRefr
     setTimers(initialTimers);
   }, [currentSlots, searchQuery]);
 
+  // ✅ FIXED: Move debug logging to separate useEffect to prevent infinite logging
+  useEffect(() => {
+    if (filteredSlots.length > 0) {
+      const sampleSlot = filteredSlots[0];
+      console.log('🔍 CurrentSlots sample booking structure:', {
+        bookingId: sampleSlot.bookingId,
+        bookId: sampleSlot.bookId,
+        hasMeals: sampleSlot.hasMeals,
+        username: sampleSlot.username
+      });
+    }
+  }, [filteredSlots.length]); // Only log when number of slots changes
+
   // Update timers every second
   useEffect(() => {
     const intervalId = setInterval(() => {
@@ -236,9 +258,9 @@ export function CurrentSlots({ currentSlots: initialSlots, refreshSlots, setRefr
     return () => clearInterval(intervalId);
   }, []);
 
-  // Handle release slot
-  const handleRelease = async (consoleType: string, gameId: string, consoleNumber: string, vendorId: any, setRefreshSlots: any, slotId: string) => {
-    setReleasingSlots((prev) => ({ ...prev, [slotId]: true }));
+  // Handle release slot with unique identifier
+  const handleRelease = async (consoleType: string, gameId: string, consoleNumber: string, vendorId: any, setRefreshSlots: any, slotId: string, uniqueKey: string) => {
+    setReleasingSlots((prev) => ({ ...prev, [uniqueKey]: true }));
     try {
       const success = await releaseSlot(consoleType, gameId, consoleNumber, vendorId, setRefreshSlots);
       if (success) {
@@ -249,7 +271,7 @@ export function CurrentSlots({ currentSlots: initialSlots, refreshSlots, setRefr
     } catch (error) {
       setError("Error releasing slot. Please try again.");
     } finally {
-      setReleasingSlots((prev) => ({ ...prev, [slotId]: false }));
+      setReleasingSlots((prev) => ({ ...prev, [uniqueKey]: false }));
     }
   };
 
@@ -258,11 +280,39 @@ export function CurrentSlots({ currentSlots: initialSlots, refreshSlots, setRefr
     setError("");
   };
 
+  // ✅ FIXED: Meal modal handlers with better error handling
+  const handleMealIconClick = (bookingId: string, customerName: string) => {
+    console.log('🍽️ CurrentSlots: Meal icon clicked', { 
+      originalBookingId: bookingId, 
+      customerName,
+      isValidId: Boolean(bookingId && bookingId !== 'undefined')
+    });
+
+    if (!bookingId || bookingId === 'undefined') {
+      console.error('❌ Invalid booking ID for meal details');
+      setError('Cannot load meal details - invalid booking ID');
+      return;
+    }
+
+    setMealDetailsModal({
+      isOpen: true,
+      bookingId: bookingId,
+      customerName: customerName || 'Guest User'
+    });
+  };
+
+  const closeMealDetailsModal = () => {
+    setMealDetailsModal({
+      isOpen: false,
+      bookingId: '',
+      customerName: ''
+    });
+  };
+
   const container = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.05 } } };
   const item = { hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } };
 
   return (
-    // 🚀 RESPONSIVE: Full height container with proper overflow control
     <div className="h-full flex flex-col min-h-0 overflow-hidden">
       {currentSlots?.available ? (
         <div className="flex justify-center items-center h-full">
@@ -270,7 +320,7 @@ export function CurrentSlots({ currentSlots: initialSlots, refreshSlots, setRefr
         </div>
       ) : (
         <>
-          {/* 🚀 RESPONSIVE: Header with responsive spacing and sizing */}
+          {/* Header with responsive spacing and sizing */}
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-2 sm:pb-3 gap-2 sm:gap-4 flex-shrink-0">
             <div className="flex items-center gap-2">
               <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`} 
@@ -280,7 +330,6 @@ export function CurrentSlots({ currentSlots: initialSlots, refreshSlots, setRefr
               </span>
             </div>
             
-            {/* 🚀 RESPONSIVE: Search input with adaptive width */}
             <div className="relative w-full sm:w-auto">
               <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-500 w-3 sm:w-4 h-3 sm:h-4" />
               <input
@@ -303,7 +352,7 @@ export function CurrentSlots({ currentSlots: initialSlots, refreshSlots, setRefr
             </motion.div>
           )}
 
-          {/* 🚀 RESPONSIVE: Table container with proper height constraints */}
+          {/* Table container with proper height constraints */}
           <motion.div
             variants={container}
             initial="hidden"
@@ -328,19 +377,21 @@ export function CurrentSlots({ currentSlots: initialSlots, refreshSlots, setRefr
                 <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                   {Array.isArray(filteredSlots) && filteredSlots.length > 0 ? (
                     <AnimatePresence mode="popLayout">
-                      {filteredSlots.map((booking) => {
+                      {filteredSlots.map((booking, index) => {
                         const timer = timers.find((t) => t.slotId === booking.slotId) || {
                           elapsedTime: 0,
                           extraTime: 0,
                           duration: 3600,
                         };
-                        const isReleasing = releasingSlots[booking.slotId] || false;
+                        
+                        const uniqueKey = `${booking.slotId}-${booking.bookingId || booking.bookId}-${booking.consoleNumber}`;
+                        const isReleasing = releasingSlots[uniqueKey] || false;
                         const progress = Math.min(100, (timer.elapsedTime / timer.duration) * 100);
                         const hasExtraTime = timer.extraTime > 0;
 
                         return (
                           <motion.tr
-                            key={`${booking.slotId}-${booking.bookingId}`}
+                            key={uniqueKey}
                             variants={item}
                             className="hover:bg-gray-100 dark:hover:bg-zinc-700/50 transition-colors"
                             initial={{ opacity: 0, y: 20 }}
@@ -348,7 +399,7 @@ export function CurrentSlots({ currentSlots: initialSlots, refreshSlots, setRefr
                             exit={{ opacity: 0, x: -20 }}
                             transition={{ duration: 0.3 }}
                           >
-                            {/* 🚀 RESPONSIVE: Name cell with adaptive sizing */}
+                            {/* Name cell with meal icon */}
                             <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-3">
                               <div className="flex items-center gap-1 sm:gap-2">
                                 <div className="h-6 w-6 sm:h-8 sm:w-8 bg-emerald-100 dark:bg-emerald-900/50 rounded-full flex items-center justify-center text-xs font-medium text-emerald-700 dark:text-emerald-300 flex-shrink-0">
@@ -362,15 +413,25 @@ export function CurrentSlots({ currentSlots: initialSlots, refreshSlots, setRefr
                                     #{booking.consoleNumber}
                                   </div>
                                 </div>
+                                {/* ✅ FIXED: Use the correct booking ID and ensure it's valid */}
                                 {booking.hasMeals && (
-                                  <div className="flex items-center gap-1 flex-shrink-0">
-                                    <UtensilsCrossed className="w-3 h-3 sm:w-4 sm:h-4 text-emerald-600" title="Meals/Extras included" />
-                                  </div>
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      // ✅ Use bookingId from socket data (mapped from bookId)
+                                      const bookingIdToUse = String(booking.bookingId || booking.bookId || '');
+                                      handleMealIconClick(bookingIdToUse, booking.username || 'Guest User');
+                                    }}
+                                    className="flex items-center gap-1 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-full p-1 transition-colors group flex-shrink-0"
+                                    title="View meal details"
+                                  >
+                                    <UtensilsCrossed className="w-3 h-3 sm:w-4 sm:h-4 text-emerald-600 group-hover:text-emerald-700 transition-colors" />
+                                  </button>
                                 )}
                               </div>
                             </td>
 
-                            {/* 🚀 RESPONSIVE: System cell */}
+                            {/* System cell */}
                             <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-3">
                               <div className="flex items-center space-x-1 sm:space-x-2">
                                 <Gamepad2 className={`w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0 ${
@@ -384,7 +445,7 @@ export function CurrentSlots({ currentSlots: initialSlots, refreshSlots, setRefr
                               </div>
                             </td>
 
-                            {/* 🚀 RESPONSIVE: Time cell */}
+                            {/* Time cell */}
                             <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-3">
                               <div className="text-xs space-y-0.5 sm:space-y-1">
                                 <div className="truncate">
@@ -400,7 +461,7 @@ export function CurrentSlots({ currentSlots: initialSlots, refreshSlots, setRefr
                               </div>
                             </td>
 
-                            {/* 🚀 RESPONSIVE: Progress cell */}
+                            {/* Progress cell */}
                             <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-3">
                               <div className="space-y-1">
                                 <div className="text-xs sm:text-sm font-medium text-gray-900 dark:text-gray-100">
@@ -418,7 +479,7 @@ export function CurrentSlots({ currentSlots: initialSlots, refreshSlots, setRefr
                               </div>
                             </td>
 
-                            {/* 🚀 RESPONSIVE: Extra Time cell */}
+                            {/* Extra Time cell */}
                             <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-3">
                               {hasExtraTime ? (
                                 <div className="text-red-600 dark:text-red-400 font-medium text-xs sm:text-sm">
@@ -431,7 +492,7 @@ export function CurrentSlots({ currentSlots: initialSlots, refreshSlots, setRefr
                               )}
                             </td>
 
-                            {/* 🚀 RESPONSIVE: Action cell with adaptive button sizing */}
+                            {/* Action cell with unique loading state */}
                             <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-3">
                               {hasExtraTime ? (
                                 <button
@@ -456,7 +517,8 @@ export function CurrentSlots({ currentSlots: initialSlots, refreshSlots, setRefr
                                     booking.consoleNumber || '', 
                                     vendorId, 
                                     setRefreshSlots, 
-                                    booking.slotId
+                                    booking.slotId,
+                                    uniqueKey
                                   )}
                                   disabled={isReleasing || !vendorId}
                                   className="bg-emerald-600 hover:bg-emerald-700 text-white px-2 sm:px-3 py-1 rounded text-xs w-16 sm:w-20 disabled:opacity-50 transition-colors"
@@ -510,6 +572,14 @@ export function CurrentSlots({ currentSlots: initialSlots, refreshSlots, setRefr
             calculateExtraAmount={calculateExtraAmount}
             formatTime={formatTime}
             releaseSlot={releaseSlot}
+          />
+          
+          {/* MealDetailsModal */}
+          <MealDetailsModal
+            isOpen={mealDetailsModal.isOpen}
+            onClose={closeMealDetailsModal}
+            bookingId={mealDetailsModal.bookingId}
+            customerName={mealDetailsModal.customerName}
           />
         </>
       )}

@@ -15,7 +15,6 @@ import { EditConsoleForm } from "./edit-console-form";
 import { motion, AnimatePresence } from "framer-motion";
 import { jwtDecode } from "jwt-decode";
 
-// <CHANGE> Updated actions to use consistent card styling instead of different colors
 const actions = [
   {
     type: "add",
@@ -33,7 +32,6 @@ const actions = [
   },
 ];
 
-// <CHANGE> Updated console types to use consistent card styling instead of different colors
 const consoleTypes = [
   {
     type: "pc",
@@ -67,9 +65,7 @@ const consoleTypes = [
 
 export function ManageGamingConsole() {
   const [selectedAction, setSelectedAction] = useState<string | null>(null);
-  const [selectedConsoleType, setSelectedConsoleType] = useState<string | null>(
-    null
-  );
+  const [selectedConsoleType, setSelectedConsoleType] = useState<string | null>(null);
   const [editingConsole, setEditingConsole] = useState<any | null>(null);
 
   const handleActionClick = (actionType: string) => {
@@ -105,6 +101,7 @@ export function ManageGamingConsole() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
+            className="w-full"
           >
             <AddConsoleForm consoleType={selectedConsoleType} />
           </motion.div>
@@ -146,6 +143,7 @@ export function ManageGamingConsole() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -20 }}
+          className="w-full"
         >
           <ConsoleList onEdit={handleEditConsole} />
         </motion.div>
@@ -186,52 +184,50 @@ export function ManageGamingConsole() {
   };
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <div className="container mx-auto py-6 md:py-8 px-4">
-        <div
-          className="inline-flex items-center mb-8 md:mb-10"
-          style={{ position: "relative", height: "auto" }}
-        >
-          <motion.div
-            className="flex items-center justify-center p-1 -ml-4"
-            style={{ position: "absolute", left: "-56px" }}
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1.0, scale: 1.0 }}
-            whileHover={{ scale: 1.1 }}
-            transition={{ duration: 0.3 }}
-          >
-            {(selectedAction === "add" || selectedAction === "list") && (
-              <button
-                type="button"
-                onClick={handleBack}
-                className="text-center w-20 md:w-24 rounded-2xl relative text-lime-100 text-xs md:text-sm group"
+    <div className="w-full bg-background text-foreground">
+      {/* Container with proper constraints */}
+      <div className="max-w-7xl mx-auto px-4 py-6 md:py-8">
+        {/* Back Button Section */}
+        {(selectedAction === "add" || selectedAction === "list") && (
+          <div className="mb-6">
+            <motion.button
+              type="button"
+              onClick={handleBack}
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              whileHover={{ scale: 1.05 }}
+              transition={{ duration: 0.3 }}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-lime-400 text-lime-900 rounded-lg hover:bg-lime-500 transition-all duration-200 font-medium"
+            >
+              <svg
+                width="20px"
+                height="20px"
+                viewBox="0 0 1024 1024"
+                xmlns="http://www.w3.org/2000/svg"
+                className="rotate-0"
               >
-                <div className="bg-lime-400 rounded-xl h-8 md:h-10 w-1/4 grid place-items-center absolute left-0 top-0 group-hover:w-full z-10 duration-500">
-                  <svg
-                    width="20px"
-                    height="20px"
-                    className="md:w-6 md:h-6"
-                    viewBox="0 0 1024 1024"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path
-                      fill="#000000"
-                      d="M224 480h640a32 32 0 1 1 0 64H224a32 32 0 0 1 0-64z"
-                    ></path>
-                    <path
-                      fill="#000000"
-                      d="m237.248 512 265.408 265.344a32 32 0 0 1-45.312 45.312l-288-288a32 32 0 0 1 0-45.312l288-288a32 32 0 1 1 45.312 45.312L237.248 512z"
-                    ></path>
-                  </svg>
-                </div>
-                <p className="translate-x-3 md:translate-x-4 text-lime-400">Go Back</p>
-              </button>
-            )}
-          </motion.div>
-        </div>
+                <path
+                  fill="currentColor"
+                  d="M224 480h640a32 32 0 1 1 0 64H224a32 32 0 0 1 0-64z"
+                />
+                <path
+                  fill="currentColor"
+                  d="m237.248 512 265.408 265.344a32 32 0 0 1-45.312 45.312l-288-288a32 32 0 0 1 0-45.312l288-288a32 32 0 1 1 45.312 45.312L237.248 512z"
+                />
+              </svg>
+              Go Back
+            </motion.button>
+          </div>
+        )}
 
-        <AnimatePresence mode="wait">{renderContent()}</AnimatePresence>
+        {/* Content Area */}
+        <AnimatePresence mode="wait">
+          <div className="w-full">
+            {renderContent()}
+          </div>
+        </AnimatePresence>
 
+        {/* Edit Modal */}
         {editingConsole && (
           <EditConsoleForm console={editingConsole} onClose={handleCloseEdit} />
         )}
