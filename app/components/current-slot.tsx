@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, Gamepad2, Loader2, RefreshCw, UtensilsCrossed } from "lucide-react";
+import { Search, Gamepad2, Loader2, RefreshCw, UtensilsCrossed, Plus } from "lucide-react";
 import { jwtDecode } from "jwt-decode";
 import { FaCheck, FaPowerOff } from 'react-icons/fa';
 import { BOOKING_URL, DASHBOARD_URL } from "@/src/config/env";
@@ -10,7 +10,7 @@ import ExtraBookingOverlay from "./extraBookingOverlay";
 import MealDetailsModal from "./mealsDetailmodal";
 import { useSocket } from "../context/SocketContext";
 
-// Keep all your existing helper functions
+// Keep all your existing helper functions unchanged
 const formatTime = (seconds: number) => {
   if (isNaN(seconds) || seconds < 0) return "00:00:00";
   const hours = Math.floor(seconds / 3600);
@@ -107,12 +107,17 @@ export function CurrentSlots({ currentSlots: initialSlots, refreshSlots, setRefr
   const [error, setError] = useState<string>("");
   const tableRef = useRef<HTMLTableElement>(null);
 
-  // Add state for meal details modal
+  // ✅ ENHANCED: Updated meal details modal state with mode and meal status tracking
   const [mealDetailsModal, setMealDetailsModal] = useState({
     isOpen: false,
     bookingId: '',
-    customerName: ''
+    customerName: '',
+    mode: 'view' as 'view' | 'add',
+    hasExistingMeals: false
   });
+
+  // ✅ NEW: Track which bookings have meals locally for instant UI updates
+  const [bookingMealStatus, setBookingMealStatus] = useState<Record<string, boolean>>({});
 
   // Get vendorId
   useEffect(() => {
@@ -134,8 +139,48 @@ export function CurrentSlots({ currentSlots: initialSlots, refreshSlots, setRefr
   useEffect(() => {
     if (initialSlots && Array.isArray(initialSlots)) {
       setCurrentSlots(initialSlots)
+      
+      // ✅ Initialize meal status tracking
+      const mealStatus: Record<string, boolean> = {};
+      initialSlots.forEach(slot => {
+        if (slot.bookingId || slot.bookId) {
+          const bookingId = String(slot.bookingId || slot.bookId);
+          mealStatus[bookingId] = Boolean(slot.hasMeals);
+        }
+      });
+      setBookingMealStatus(mealStatus);
     }
   }, [initialSlots])
+
+  // ✅ ENHANCED: Listen for meal addition events to update UI immediately
+  useEffect(() => {
+    const handleMealAdded = (event: CustomEvent) => {
+      const { bookingId } = event.detail || {};
+      if (bookingId) {
+        console.log('🍽️ Meal added event received for booking:', bookingId);
+        setBookingMealStatus(prev => ({
+          ...prev,
+          [String(bookingId)]: true
+        }));
+        
+        // Also update the currentSlots to reflect hasMeals = true
+        setCurrentSlots(prev => 
+          prev.map(slot => {
+            const slotBookingId = String(slot.bookingId || slot.bookId || '');
+            if (slotBookingId === String(bookingId)) {
+              return { ...slot, hasMeals: true };
+            }
+            return slot;
+          })
+        );
+      }
+    };
+
+    window.addEventListener('meal-added', handleMealAdded as EventListener);
+    return () => {
+      window.removeEventListener('meal-added', handleMealAdded as EventListener);
+    };
+  }, []);
 
   // Socket listeners (keep your existing working code)
   useEffect(() => {
@@ -174,6 +219,13 @@ export function CurrentSlots({ currentSlots: initialSlots, refreshSlots, setRefr
           )
           
           if (!exists) {
+            // ✅ Update meal status tracking for new slots
+            const bookingId = String(newSlot.bookingId);
+            setBookingMealStatus(prev => ({
+              ...prev,
+              [bookingId]: Boolean(newSlot.hasMeals)
+            }));
+            
             return [newSlot, ...prevSlots]
           } else {
             return prevSlots
@@ -231,7 +283,7 @@ export function CurrentSlots({ currentSlots: initialSlots, refreshSlots, setRefr
     setTimers(initialTimers);
   }, [currentSlots, searchQuery]);
 
-  // ✅ FIXED: Move debug logging to separate useEffect to prevent infinite logging
+  // Debug logging (unchanged)
   useEffect(() => {
     if (filteredSlots.length > 0) {
       const sampleSlot = filteredSlots[0];
@@ -242,7 +294,7 @@ export function CurrentSlots({ currentSlots: initialSlots, refreshSlots, setRefr
         username: sampleSlot.username
       });
     }
-  }, [filteredSlots.length]); // Only log when number of slots changes
+  }, [filteredSlots.length]);
 
   // Update timers every second
   useEffect(() => {
@@ -280,7 +332,7 @@ export function CurrentSlots({ currentSlots: initialSlots, refreshSlots, setRefr
     setError("");
   };
 
-  // ✅ FIXED: Meal modal handlers with better error handling
+  // ✅ ENHANCED: Meal icon click handler for existing meals
   const handleMealIconClick = (bookingId: string, customerName: string) => {
     console.log('🍽️ CurrentSlots: Meal icon clicked', { 
       originalBookingId: bookingId, 
@@ -297,16 +349,49 @@ export function CurrentSlots({ currentSlots: initialSlots, refreshSlots, setRefr
     setMealDetailsModal({
       isOpen: true,
       bookingId: bookingId,
-      customerName: customerName || 'Guest User'
+      customerName: customerName || 'Guest User',
+      mode: 'view',
+      hasExistingMeals: true
     });
   };
 
+  // ✅ NEW: Add food click handler for bookings without meals
+  const handleAddFoodClick = (bookingId: string, customerName: string) => {
+    console.log('➕ CurrentSlots: Add food clicked', { 
+      bookingId, 
+      customerName,
+      isValidId: Boolean(bookingId && bookingId !== 'undefined')
+    });
+
+    if (!bookingId || bookingId === 'undefined') {
+      console.error('❌ Invalid booking ID for adding food');
+      setError('Cannot add food - invalid booking ID');
+      return;
+    }
+
+    setMealDetailsModal({
+      isOpen: true,
+      bookingId: bookingId,
+      customerName: customerName || 'Guest User',
+      mode: 'add',
+      hasExistingMeals: false
+    });
+  };
+
+  // ✅ ENHANCED: Modal close handler with meal status refresh
   const closeMealDetailsModal = () => {
     setMealDetailsModal({
       isOpen: false,
       bookingId: '',
-      customerName: ''
+      customerName: '',
+      mode: 'view',
+      hasExistingMeals: false
     });
+    
+    // ✅ Emit event to refresh dashboard and update meal status
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('refresh-dashboard'));
+    }
   };
 
   const container = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.05 } } };
@@ -389,6 +474,10 @@ export function CurrentSlots({ currentSlots: initialSlots, refreshSlots, setRefr
                         const progress = Math.min(100, (timer.elapsedTime / timer.duration) * 100);
                         const hasExtraTime = timer.extraTime > 0;
 
+                        // ✅ ENHANCED: Check meal status from both original data and local tracking
+                        const bookingIdToCheck = String(booking.bookingId || booking.bookId || '');
+                        const hasMeals = bookingMealStatus[bookingIdToCheck] ?? booking.hasMeals ?? false;
+
                         return (
                           <motion.tr
                             key={uniqueKey}
@@ -399,7 +488,7 @@ export function CurrentSlots({ currentSlots: initialSlots, refreshSlots, setRefr
                             exit={{ opacity: 0, x: -20 }}
                             transition={{ duration: 0.3 }}
                           >
-                            {/* Name cell with meal icon */}
+                            {/* ✅ ENHANCED: Name cell with dynamic meal/add food buttons */}
                             <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-3">
                               <div className="flex items-center gap-1 sm:gap-2">
                                 <div className="h-6 w-6 sm:h-8 sm:w-8 bg-emerald-100 dark:bg-emerald-900/50 rounded-full flex items-center justify-center text-xs font-medium text-emerald-700 dark:text-emerald-300 flex-shrink-0">
@@ -413,25 +502,52 @@ export function CurrentSlots({ currentSlots: initialSlots, refreshSlots, setRefr
                                     #{booking.consoleNumber}
                                   </div>
                                 </div>
-                                {/* ✅ FIXED: Use the correct booking ID and ensure it's valid */}
-                                {booking.hasMeals && (
-                                  <button
+                                
+                                {/* ✅ ENHANCED: Conditional rendering of meal/add food buttons */}
+                                {hasMeals ? (
+                                  // Show food icon for users who have meals
+                                  <motion.button
+                                    initial={{ scale: 0 }}
+                                    animate={{ scale: 1 }}
+                                    whileHover={{ scale: 1.1 }}
+                                    whileTap={{ scale: 0.9 }}
                                     onClick={(e) => {
                                       e.stopPropagation();
-                                      // ✅ Use bookingId from socket data (mapped from bookId)
-                                      const bookingIdToUse = String(booking.bookingId || booking.bookId || '');
-                                      handleMealIconClick(bookingIdToUse, booking.username || 'Guest User');
+                                      handleMealIconClick(bookingIdToCheck, booking.username || 'Guest User');
                                     }}
-                                    className="flex items-center gap-1 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-full p-1 transition-colors group flex-shrink-0"
-                                    title="View meal details"
+                                    className="flex items-center gap-1 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-full p-1.5 transition-all duration-200 group flex-shrink-0"
+                                    title="View meals & add more"
                                   >
                                     <UtensilsCrossed className="w-3 h-3 sm:w-4 sm:h-4 text-emerald-600 group-hover:text-emerald-700 transition-colors" />
-                                  </button>
+                                    <span className="text-xs text-emerald-600 group-hover:text-emerald-700 font-medium hidden sm:inline">
+                                      Meals
+                                    </span>
+                                  </motion.button>
+                                ) : (
+                                  // Show add food button for users who haven't ordered meals
+                                  <motion.button
+                                    initial={{ scale: 0 }}
+                                    animate={{ scale: 1 }}
+                                    whileHover={{ scale: 1.1 }}
+                                    whileTap={{ scale: 0.9 }}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleAddFoodClick(bookingIdToCheck, booking.username || 'Guest User');
+                                    }}
+                                    className="flex items-center gap-1 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-full p-1 sm:p-1.5 transition-all duration-200 group border border-dashed border-blue-300 dark:border-blue-600 flex-shrink-0"
+                                    title="Add meals to this booking"
+                                  >
+                                    <Plus className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-blue-600 group-hover:text-blue-700 transition-colors" />
+                                    <UtensilsCrossed className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-blue-600 group-hover:text-blue-700 transition-colors" />
+                                    <span className="text-xs text-blue-600 group-hover:text-blue-700 font-medium hidden sm:inline">
+                                      Add
+                                    </span>
+                                  </motion.button>
                                 )}
                               </div>
                             </td>
 
-                            {/* System cell */}
+                            {/* System cell - unchanged */}
                             <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-3">
                               <div className="flex items-center space-x-1 sm:space-x-2">
                                 <Gamepad2 className={`w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0 ${
@@ -445,7 +561,7 @@ export function CurrentSlots({ currentSlots: initialSlots, refreshSlots, setRefr
                               </div>
                             </td>
 
-                            {/* Time cell */}
+                            {/* Time cell - unchanged */}
                             <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-3">
                               <div className="text-xs space-y-0.5 sm:space-y-1">
                                 <div className="truncate">
@@ -461,7 +577,7 @@ export function CurrentSlots({ currentSlots: initialSlots, refreshSlots, setRefr
                               </div>
                             </td>
 
-                            {/* Progress cell */}
+                            {/* Progress cell - unchanged */}
                             <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-3">
                               <div className="space-y-1">
                                 <div className="text-xs sm:text-sm font-medium text-gray-900 dark:text-gray-100">
@@ -479,7 +595,7 @@ export function CurrentSlots({ currentSlots: initialSlots, refreshSlots, setRefr
                               </div>
                             </td>
 
-                            {/* Extra Time cell */}
+                            {/* Extra Time cell - unchanged */}
                             <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-3">
                               {hasExtraTime ? (
                                 <div className="text-red-600 dark:text-red-400 font-medium text-xs sm:text-sm">
@@ -492,7 +608,7 @@ export function CurrentSlots({ currentSlots: initialSlots, refreshSlots, setRefr
                               )}
                             </td>
 
-                            {/* Action cell with unique loading state */}
+                            {/* Action cell - unchanged */}
                             <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-3">
                               {hasExtraTime ? (
                                 <button
@@ -574,12 +690,15 @@ export function CurrentSlots({ currentSlots: initialSlots, refreshSlots, setRefr
             releaseSlot={releaseSlot}
           />
           
-          {/* MealDetailsModal */}
+          {/* ✅ ENHANCED: MealDetailsModal with updated props */}
           <MealDetailsModal
             isOpen={mealDetailsModal.isOpen}
             onClose={closeMealDetailsModal}
             bookingId={mealDetailsModal.bookingId}
             customerName={mealDetailsModal.customerName}
+            initialMode={mealDetailsModal.mode}
+            hasExistingMeals={mealDetailsModal.hasExistingMeals}
+            vendorId={String(vendorId || '')}
           />
         </>
       )}

@@ -84,14 +84,6 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
 
   const blurTimeoutRef = useRef<number | null>(null);
 
-  // ✅ FIXED: Log the selected console on component mount
-  useEffect(() => {
-    console.log('📋 BookingForm mounted with selected console:', selectedConsole);
-    console.log('📋 Selected console type:', selectedConsole.type);
-    console.log('📋 Selected console ID:', selectedConsole.id);
-    console.log('📋 Selected console price:', selectedConsole.price);
-  }, [selectedConsole]);
-
   // Calculate totals including meals
   const mealsTotal = selectedMeals.reduce((sum, meal) => sum + meal.total, 0);
   const consolePrice = selectedConsole.price || 0;
@@ -101,7 +93,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
     selectedSlots.length * consolePrice - waiveOffAmount - autoWaiveOffAmount + extraControllerFare + mealsTotal
   );
 
-  // Calculate automatic wave-off amount
+  // ✅ ENHANCED: Calculate automatic wave-off amount based on elapsed time
   const calculateAutoWaiveOff = (slots: string[], slotsData: any[]) => {
     const nowIST = new Date(
       new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' })
@@ -115,14 +107,52 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
       
       const slotDateTime = new Date(`${selectedDate}T${slotData.start_time}+05:30`);
       const slotEndTime = new Date(`${selectedDate}T${slotData.end_time}+05:30`);
-      const slotMidpoint = new Date(slotDateTime.getTime() + (slotEndTime.getTime() - slotDateTime.getTime()) / 2);
       
-      if (nowIST > slotMidpoint && nowIST < slotEndTime) {
-        totalAutoWaiveOff += consolePrice / 2;
+      // Calculate slot duration in minutes
+      const slotDurationMs = slotEndTime.getTime() - slotDateTime.getTime();
+      const slotDurationMinutes = slotDurationMs / (1000 * 60);
+      
+      console.log(`🕐 Slot Analysis for ${slotData.start_time}-${slotData.end_time}:`, {
+        slotId,
+        slotDurationMinutes,
+        currentTime: nowIST.toLocaleTimeString('en-IN'),
+        slotStart: slotDateTime.toLocaleTimeString('en-IN'),
+        slotEnd: slotEndTime.toLocaleTimeString('en-IN')
+      });
+      
+      // Check if booking is made during the slot time
+      if (nowIST >= slotDateTime && nowIST < slotEndTime) {
+        // Calculate elapsed time since slot started
+        const elapsedMs = nowIST.getTime() - slotDateTime.getTime();
+        const elapsedMinutes = elapsedMs / (1000 * 60);
+        
+        // Calculate wave-off percentage based on elapsed time
+        const elapsedPercentage = elapsedMinutes / slotDurationMinutes;
+        const waveOffAmount = consolePrice * elapsedPercentage;
+        
+        console.log(`💰 Wave-off Calculation:`, {
+          elapsedMinutes: Math.round(elapsedMinutes * 10) / 10,
+          totalSlotMinutes: slotDurationMinutes,
+          elapsedPercentage: Math.round(elapsedPercentage * 100) + '%',
+          waveOffAmount: Math.round(waveOffAmount),
+          consolePrice
+        });
+        
+        totalAutoWaiveOff += waveOffAmount;
+      }
+      // If booking is made before slot starts, no wave-off
+      else if (nowIST < slotDateTime) {
+        console.log(`⏰ Booking made in advance for ${slotData.start_time} - no wave-off needed`);
+      }
+      // If booking is made after slot ends, full wave-off (shouldn't happen with proper filtering)
+      else if (nowIST >= slotEndTime) {
+        console.log(`⚠️ Slot ${slotData.start_time} already ended - full wave-off applied`);
+        totalAutoWaiveOff += consolePrice;
       }
     });
     
-    return totalAutoWaiveOff;
+    // Round to nearest rupee
+    return Math.round(totalAutoWaiveOff);
   };
 
   // Update automatic wave-off when selected slots change
@@ -164,22 +194,18 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
 
     const fetchUsers = async () => {
       try {
-        console.log('👥 Fetching users for vendor:', vendorId);
         const response = await fetch(`${BOOKING_URL}/api/vendor/${vendorId}/users`);
         const data = await response.json();
 
         if (Array.isArray(data)) {
-          console.log('👥 Users fetched:', data.length);
           setUserList(data);
           localStorage.setItem(
             userCacheKey,
             JSON.stringify({ data, timestamp: Date.now() })
           );
-        } else {
-          console.warn('⚠️ Users API returned non-array:', data);
         }
       } catch (error) {
-        console.error('❌ Error fetching users:', error);
+        console.error('Error fetching users:', error);
       }
     };
 
@@ -187,14 +213,11 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
       try {
         const { data, timestamp } = JSON.parse(cachedData);
         if (isCacheValid(timestamp)) {
-          console.log('👥 Using cached users:', data.length);
           setUserList(data);
         } else {
-          console.log('👥 Cache expired, fetching fresh users');
           fetchUsers();
         }
       } catch (parseError) {
-        console.error('Error parsing cached users:', parseError);
         fetchUsers();
       }
     } else {
@@ -296,13 +319,11 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
 
   // Meal selection handlers
   const handleMealSelectorConfirm = (meals: SelectedMeal[]) => {
-    console.log('🍽️ Meals confirmed:', meals);
     setSelectedMeals(meals);
     setIsMealSelectorOpen(false);
   };
 
   const handleMealSelectorClose = () => {
-    console.log('🍽️ Meal selector closed');
     setIsMealSelectorOpen(false);
   };
 
@@ -321,31 +342,22 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
     return Object.keys(newErrors).length === 0;
   };
 
-  // ✅ FIXED: Fetch available slots using selectedConsole.id directly
+  // Fetch available slots using selectedConsole.id directly
   useEffect(() => {
     if (!vendorId || !selectedConsole.id) return;
 
     const fetchAvailableSlots = async () => {
       setIsLoadingSlots(true);
       try {
-        console.log('🕐 Fetching slots for:', {
-          vendorId,
-          gameId: selectedConsole.id,
-          consoleType: selectedConsole.type,
-          date: selectedDate
-        });
-
         const response = await fetch(
           `${BOOKING_URL}/api/getSlots/vendor/${vendorId}/game/${selectedConsole.id}/${selectedDate.replace(/-/g, '')}`
         );
 
         if (!response.ok) {
-          console.error('❌ Slots API error:', response.status, response.statusText);
           throw new Error('Failed to fetch slots');
         }
 
         const data = await response.json();
-        console.log('🕐 Slots API response:', data);
 
         const nowIST = new Date(
           new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' })
@@ -380,7 +392,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
     };
 
     fetchAvailableSlots();
-  }, [vendorId, selectedDate, selectedConsole.id]); // ✅ Use selectedConsole.id directly
+  }, [vendorId, selectedDate, selectedConsole.id]);
 
   const handleSlotClick = (slot: string) => {
     setSelectedSlots((prev) =>
@@ -389,26 +401,17 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
     if (errors.slots) setErrors((prev) => ({ ...prev, slots: '' }));
   };
 
-  // ✅ FIXED: Handle form submission with correct console type
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateForm()) return;
 
     setIsSubmitting(true);
     try {
-      console.log('🚀 Submitting booking with:', {
-        consoleType: selectedConsole.type,
-        consoleId: selectedConsole.id,
-        consoleName: selectedConsole.name,
-        vendorId,
-        selectedMeals: selectedMeals.length
-      });
-
       const response = await fetch(`${BOOKING_URL}/api/newBooking/vendor/${vendorId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          consoleType: selectedConsole.type, // ✅ Use the console type from ConsoleSelector
+          consoleType: selectedConsole.type,
           name,
           email,
           phone,
@@ -532,7 +535,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
 
   return (
     <div className="h-full flex flex-col bg-transparent dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
-      {/* Compact Header */}
+      {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
@@ -551,7 +554,6 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
             <h1 className="text-lg font-bold bg-transparent bg-gradient-to-r from-emerald-600 to-green-600 bg-clip-text text-transparent">
               Book {selectedConsole.name}
             </h1>
-            {/* ✅ Debug info */}
             <p className="text-xs text-gray-500">Type: {selectedConsole.type} | ID: {selectedConsole.id}</p>
           </div>
         </div>
@@ -563,7 +565,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
         </div>
       </motion.div>
 
-      {/* Compact Form Content */}
+      {/* Form Content */}
       <div className="flex-1 overflow-y-auto p-3">
         <form onSubmit={handleSubmit} className="space-y-3">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
@@ -990,10 +992,16 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
                     />
                   </div>
 
+                  {/* ✅ Enhanced Auto Waive Off Display */}
                   {autoWaiveOffAmount > 0 && (
-                    <div className="flex justify-between items-center py-1 border-b border-gray-100 dark:border-gray-700">
-                      <span className="text-gray-600 dark:text-gray-400">Auto Waive Off:</span>
-                      <span className="font-medium text-orange-600 dark:text-orange-400">₹{autoWaiveOffAmount}</span>
+                    <div className="flex justify-between items-center py-1 border-b border-gray-100 dark:border-gray-700 bg-orange-50 dark:bg-orange-900/20 rounded px-2">
+                      <span className="text-orange-600 dark:text-orange-400 font-medium">⏰ Auto Waive Off:</span>
+                      <div className="text-right">
+                        <span className="font-bold text-orange-600 dark:text-orange-400">₹{Math.round(autoWaiveOffAmount)}</span>
+                        <div className="text-xs text-orange-500 dark:text-orange-300">
+                          (Time-based discount)
+                        </div>
+                      </div>
                     </div>
                   )}
 
@@ -1015,10 +1023,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
                     <div className="flex items-center gap-2">
                       <button
                         type="button"
-                        onClick={() => {
-                          console.log('🍽️ Opening meal selector');
-                          setIsMealSelectorOpen(true);
-                        }}
+                        onClick={() => setIsMealSelectorOpen(true)}
                         className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-emerald-100 to-green-100 dark:from-emerald-900/30 dark:to-green-900/30 text-emerald-700 dark:text-emerald-300 rounded-lg text-xs hover:from-emerald-200 hover:to-green-200 dark:hover:from-emerald-900/50 dark:hover:to-green-900/50 transition-all duration-200 border border-emerald-200 dark:border-emerald-700"
                       >
                         <Plus className="w-3 h-3" />

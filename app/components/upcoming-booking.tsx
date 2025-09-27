@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { 
   Monitor, Play, X, Gamepad2, Calendar, Clock, User, Search,
   DollarSign, CalendarDays, Users, Timer, AlertCircle, Filter,
-  BadgeCheck, Calendar as CalendarIcon, ChevronDown, RefreshCw, UtensilsCrossed
+  BadgeCheck, Calendar as CalendarIcon, ChevronDown, RefreshCw, UtensilsCrossed, Plus
 } from "lucide-react";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faIndianRupeeSign } from '@fortawesome/free-solid-svg-icons'
@@ -15,7 +15,6 @@ import ResponsiveSearchFilter from "./ResponsiveSearchFilter";
 import MealDetailsModal from "./mealsDetailmodal";
 import { useSocket } from "../context/SocketContext";
 
-
 // Helper function for getting platform icons
 export function getIcon(system?: string | null): JSX.Element {
   const sys = (system || "").toLowerCase();
@@ -24,7 +23,6 @@ export function getIcon(system?: string | null): JSX.Element {
   if (sys.includes("xbox")) return <Gamepad2 className="w-4 h-4 text-green-500" />;
   return <Monitor className="w-4 h-4 text-purple-500" />;
 }
-
 
 // Helper function for date formatting
 const formatDate = (dateStr: string) => {
@@ -39,7 +37,6 @@ const formatDate = (dateStr: string) => {
   }
 };
 
-
 // Helper function for getting time of day
 const getTimeOfDay = (time: string) => {
   if (!time) return "all";
@@ -50,13 +47,11 @@ const getTimeOfDay = (time: string) => {
   return "evening";
 };
 
-
 // Helper function for merging consecutive bookings
 const mergeConsecutiveBookings = (bookings: any[]) => {
   if (!bookings || !Array.isArray(bookings) || bookings.length === 0) {
     return [];
   }
-
 
   const byDate = bookings.reduce((acc: any, booking) => {
     const date = booking?.date || new Date().toISOString().split('T')[0];
@@ -65,13 +60,11 @@ const mergeConsecutiveBookings = (bookings: any[]) => {
     return acc;
   }, {});
 
-
   const parseTime = (time: string): Date => {
     if (!time || typeof time !== 'string') {
       console.warn('parseTime expected a string but received:', time);
       return new Date(1970, 0, 1, 0, 0);
     }
-
 
     const [timePart, period] = time.trim().split(" ");
     let [hours, minutes] = timePart.split(":").map(Number);
@@ -79,7 +72,6 @@ const mergeConsecutiveBookings = (bookings: any[]) => {
     if (period === "AM" && hours === 12) hours = 0;
     return new Date(1970, 0, 1, hours, minutes);
   };
-
 
   const formatTimeRange = (start: Date, end: Date): string => {
     const to12Hour = (date: Date) => {
@@ -92,9 +84,7 @@ const mergeConsecutiveBookings = (bookings: any[]) => {
     return `${to12Hour(start)} - ${to12Hour(end)}`;
   };
 
-
   const mergedResults: any[] = [];
-
 
   Object.entries(byDate).forEach(([date, dateBookings]) => {
     const grouped = (dateBookings as any[]).reduce((acc: any, booking) => {
@@ -106,7 +96,6 @@ const mergeConsecutiveBookings = (bookings: any[]) => {
       return acc;
     }, {});
 
-
     Object.values(grouped).forEach((group: any) => {
       const sorted = (group as any[]).sort((a, b) => {
         const aStart = parseTime(a.time?.split(" - ")[0] || "");
@@ -114,19 +103,16 @@ const mergeConsecutiveBookings = (bookings: any[]) => {
         return aStart.getTime() - bStart.getTime();
       });
 
-
       let current = { ...sorted[0] };
       let currentStart = parseTime(current.time?.split(" - ")[0] || "");
       let currentEnd = parseTime(current.time?.split(" - ")[1] || "");
       let mergedIds = [current.bookingId];
       let totalPrice = current.slot_price || 0;
 
-
       for (let i = 1; i < sorted.length; i++) {
         const next = sorted[i];
         const nextStart = parseTime(next.time?.split(" - ")[0] || "");
         const nextEnd = parseTime(next.time?.split(" - ")[1] || "");
-
 
         if (nextStart.getTime() <= currentEnd.getTime()) {
           currentEnd = new Date(Math.max(currentEnd.getTime(), nextEnd.getTime()));
@@ -139,7 +125,6 @@ const mergeConsecutiveBookings = (bookings: any[]) => {
           current.duration = mergedIds.length;
           mergedResults.push(current);
 
-
           current = { ...next };
           currentStart = nextStart;
           currentEnd = nextEnd;
@@ -147,7 +132,6 @@ const mergeConsecutiveBookings = (bookings: any[]) => {
           totalPrice = next.slot_price || 0;
         }
       }
-
 
       current.time = formatTimeRange(currentStart, currentEnd);
       current.merged_booking_ids = mergedIds;
@@ -157,10 +141,8 @@ const mergeConsecutiveBookings = (bookings: any[]) => {
     });
   });
 
-
   return mergedResults.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 };
-
 
 // Component props interface
 interface UpcomingBookingsProps {
@@ -169,7 +151,6 @@ interface UpcomingBookingsProps {
   setRefreshSlots: (prev: boolean) => void;
   refreshTrigger?: boolean;
 }
-
 
 export function UpcomingBookings({
   upcomingBookings: initialBookings,
@@ -181,7 +162,6 @@ export function UpcomingBookings({
   const { socket, isConnected, joinVendor } = useSocket()
   
   const [upcomingBookings, setUpcomingBookings] = useState(Array.isArray(initialBookings) ? initialBookings : [])
-
 
   // State for modal and console selection
   const [startCard, setStartCard] = useState(false);
@@ -197,14 +177,14 @@ export function UpcomingBookings({
   const [selectedDate, setSelectedDate] = useState(format(startOfToday(), 'yyyy-MM-dd'));
   const [timeFilter, setTimeFilter] = useState("all");
 
-
-  // Add state for the modal
+  // ✅ ENHANCED: Enhanced meal modal state with add food capability
   const [mealDetailsModal, setMealDetailsModal] = useState({
     isOpen: false,
     bookingId: '',
-    customerName: ''
+    customerName: '',
+    mode: 'view' as 'view' | 'add', // New mode to distinguish between viewing and adding
+    hasExistingMeals: false
   });
-
 
   // Update bookings when props change
   useEffect(() => {
@@ -213,7 +193,6 @@ export function UpcomingBookings({
       setUpcomingBookings(initialBookings)
     }
   }, [initialBookings])
-
 
   // Refresh bookings when triggered
   useEffect(() => {
@@ -234,27 +213,22 @@ export function UpcomingBookings({
       }
     }
 
-
     if (refreshTrigger !== undefined) {
       fetchLatestBookings()
     }
   }, [refreshTrigger, vendorId])
 
-
   // Socket listeners for real-time updates
   useEffect(() => {
     if (!socket || !vendorId || !isConnected) return
-
 
     console.log('📅 UpcomingBookings: Setting up socket listeners...')
     
     joinVendor(parseInt(vendorId))
 
-
     socket.off('upcoming_booking');
     socket.off('booking');
     socket.off('booking_accepted');
-
 
     function handleUpcomingBooking(data: any) {
       console.log('📅 Real-time upcoming booking:', data)
@@ -277,7 +251,6 @@ export function UpcomingBookings({
         })
       }
     }
-
 
     function handleBookingUpdate(data: any) {
       console.log('🔄 Booking update:', data)
@@ -306,7 +279,6 @@ export function UpcomingBookings({
       }
     }
 
-
     function handleBookingAccepted(data: any) {
       console.log('✅ Booking accepted from notification panel:', data)
       
@@ -324,11 +296,9 @@ export function UpcomingBookings({
       }
     }
 
-
     socket.on('upcoming_booking', handleUpcomingBooking)
     socket.on('booking', handleBookingUpdate)
     socket.on('booking_accepted', handleBookingAccepted)
-
 
     return () => {
       console.log('🧹 Cleaning up UpcomingBookings listeners')
@@ -338,13 +308,11 @@ export function UpcomingBookings({
     }
   }, [socket, vendorId, isConnected, joinVendor])
 
-
   // Filter bookings based on search and date
   const filteredBookings = useMemo(() => {
     if (!Array.isArray(upcomingBookings)) return [];
     
     let filtered = upcomingBookings.filter(booking => booking && booking.date);
-
 
     filtered = filtered.filter(booking => {
       try {
@@ -357,7 +325,6 @@ export function UpcomingBookings({
       }
     });
 
-
     if (searchTerm) {
       const term = searchTerm.trim().toLowerCase();
       filtered = filtered.filter(booking => 
@@ -366,7 +333,6 @@ export function UpcomingBookings({
       );
     }
 
-
     if (timeFilter !== "all") {
       filtered = filtered.filter(booking => {
         const timeOfDay = getTimeOfDay(booking.time?.split(" ")[0]);
@@ -374,17 +340,14 @@ export function UpcomingBookings({
       });
     }
 
-
     return filtered;
   }, [upcomingBookings, searchTerm, selectedDate, timeFilter]);
-
 
   // Merge consecutive bookings
   const mergedBookings = useMemo(() => 
     mergeConsecutiveBookings(filteredBookings),
     [filteredBookings]
   );
-
 
   // 🔧 MOVED: Add debugging to see booking data structure AFTER mergedBookings is defined
   useEffect(() => {
@@ -393,11 +356,11 @@ export function UpcomingBookings({
       console.log('📊 All booking game_ids:', mergedBookings.map(b => ({
         bookingId: b.bookingId,
         game_id: b.game_id,
-        consoleType: b.consoleType
+        consoleType: b.consoleType,
+        hasMeals: b.hasMeals
       })));
     }
   }, [mergedBookings]);
-
 
   // Enhanced start session handler with debugging
   const start = (system: string, gameId: string, bookingId: string) => {
@@ -419,7 +382,6 @@ export function UpcomingBookings({
     setStartCard(true);
     fetchAvailableConsoles(gameId, vendorId);
   };
-
 
   // Enhanced fetch available consoles with comprehensive debugging
   const fetchAvailableConsoles = async (gameId: string, vendorId?: string) => {
@@ -509,23 +471,19 @@ export function UpcomingBookings({
     }
   };
 
-
   // Handle session start submission
   const handleSubmit = async () => {
     if (selectedConsole && selectedGameId && selectedBookingId) {
       setIsLoading(true);
-
 
       const selectedMergedBooking = mergedBookings.find(
         (booking) => booking.bookingId === selectedBookingId || booking.merged_booking_ids?.includes(selectedBookingId)
       );
       const bookingIds = selectedMergedBooking?.merged_booking_ids || [selectedBookingId];
 
-
       const url = bookingIds.length > 1
         ? `${DASHBOARD_URL}/api/assignConsoleToMultipleBookings`
         : `${DASHBOARD_URL}/api/updateDeviceStatus/consoleTypeId/${selectedGameId}/console/${selectedConsole}/bookingId/${selectedBookingId}/vendor/${vendorId}`;
-
 
       const payload = bookingIds.length > 1
         ? {
@@ -536,14 +494,12 @@ export function UpcomingBookings({
           }
         : null;
 
-
       try {
         if (bookingIds.length > 1) {
           await axios.post(url, payload);
         } else {
           await axios.post(url);
         }
-
 
         setStartCard(false);
         setRefreshSlots((prev) => !prev);
@@ -563,31 +519,45 @@ export function UpcomingBookings({
     }
   };
 
-
   // Handle console selection
   const handleConsoleSelection = (consoleId: number) => {
     setSelectedConsole(consoleId);
   };
 
-
-  // Add click handler
-  const handleMealIconClick = (bookingId: string, customerName: string) => {
+  // ✅ ENHANCED: Enhanced meal/food icon click handlers
+  const handleFoodIconClick = (bookingId: string, customerName: string, hasMeals: boolean) => {
+    console.log('🍽️ Food icon clicked:', { bookingId, customerName, hasMeals });
+    
     setMealDetailsModal({
       isOpen: true,
       bookingId,
-      customerName
+      customerName,
+      mode: 'view', // Always start in view mode, modal can switch to add
+      hasExistingMeals: hasMeals
     });
   };
 
+  const handleAddFoodClick = (bookingId: string, customerName: string) => {
+    console.log('➕ Add food clicked:', { bookingId, customerName });
+    
+    setMealDetailsModal({
+      isOpen: true,
+      bookingId,
+      customerName,
+      mode: 'add', // Direct add mode
+      hasExistingMeals: false
+    });
+  };
 
   const closeMealDetailsModal = () => {
     setMealDetailsModal({
       isOpen: false,
       bookingId: '',
-      customerName: ''
+      customerName: '',
+      mode: 'view',
+      hasExistingMeals: false
     });
   };
-
 
   return (
     // 🚀 FIXED: Proper flex container structure
@@ -618,7 +588,6 @@ export function UpcomingBookings({
                     </button>
                   </div>
                 </div>
-
 
                 <div className="p-2 sm:p-3">
                   {isLoading ? (
@@ -664,7 +633,6 @@ export function UpcomingBookings({
                     </div>
                   )}
 
-
                   <motion.button
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
@@ -695,7 +663,6 @@ export function UpcomingBookings({
         )}
       </AnimatePresence>
 
-
       {/* Header - Fixed height */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-2 sm:pb-3 gap-2 sm:gap-4 flex-shrink-0">
         <div className="flex items-center gap-2">
@@ -706,7 +673,6 @@ export function UpcomingBookings({
           </span>
         </div>
       </div>
-
 
       {/* Search Filter - Fixed height */}
       <div className="pb-2 sm:pb-3 flex-shrink-0">
@@ -719,7 +685,6 @@ export function UpcomingBookings({
           setTimeFilter={setTimeFilter}
         />
       </div>
-
 
       {/* 🚀 FIXED: Scrollable content area that takes remaining space */}
       <div className="flex-1 overflow-y-auto min-h-0">
@@ -760,7 +725,6 @@ export function UpcomingBookings({
                         </span>
                       </div>
 
-
                       {/* Time/duration row */}
                       <div className="flex flex-wrap gap-3 text-xs text-gray-600 dark:text-gray-400">
                         <div className="flex items-center gap-1">
@@ -771,20 +735,47 @@ export function UpcomingBookings({
                           <Timer className="w-3 h-3 shrink-0" />
                           <span>{booking.duration || 1}hr</span>
                         </div>
-                        {booking.hasMeals && (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleMealIconClick(booking.bookingId, booking.username || 'Guest User');
-                            }}
-                            className="flex items-center gap-1 ml-auto hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-full p-1 transition-colors group"
-                            title="View meal details"
-                          >
-                            <UtensilsCrossed className="w-4 h-4 text-emerald-600 group-hover:text-emerald-700 transition-colors" />
-                          </button>
-                        )}
+                        
+                        {/* ✅ ENHANCED: Food/Meal icons - Conditional rendering */}
+                        <div className="flex items-center gap-2 ml-auto">
+                          {booking.hasMeals ? (
+                            // Show food icon for users who have ordered meals
+                            <motion.button
+                              whileHover={{ scale: 1.1 }}
+                              whileTap={{ scale: 0.9 }}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleFoodIconClick(booking.bookingId, booking.username || 'Guest User', true);
+                              }}
+                              className="flex items-center gap-1 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-full p-1.5 transition-all duration-200 group"
+                              title="View meals & add more"
+                            >
+                              <UtensilsCrossed className="w-4 h-4 text-emerald-600 group-hover:text-emerald-700 transition-colors" />
+                              <span className="text-xs text-emerald-600 group-hover:text-emerald-700 font-medium">
+                                Meals
+                              </span>
+                            </motion.button>
+                          ) : (
+                            // Show add food icon for users who haven't ordered meals
+                            <motion.button
+                              whileHover={{ scale: 1.1 }}
+                              whileTap={{ scale: 0.9 }}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleAddFoodClick(booking.bookingId, booking.username || 'Guest User');
+                              }}
+                              className="flex items-center gap-1 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-full p-1.5 transition-all duration-200 group border border-dashed border-blue-300 dark:border-blue-600"
+                              title="Add meals to this booking"
+                            >
+                              <Plus className="w-3 h-3 text-blue-600 group-hover:text-blue-700 transition-colors" />
+                              <UtensilsCrossed className="w-3 h-3 text-blue-600 group-hover:text-blue-700 transition-colors" />
+                              <span className="text-xs text-blue-600 group-hover:text-blue-700 font-medium">
+                                Add
+                              </span>
+                            </motion.button>
+                          )}
+                        </div>
                       </div>
-
 
                       {/* Start button */}
                       <motion.button
@@ -807,11 +798,15 @@ export function UpcomingBookings({
         )}
       </div>
       
+      {/* ✅ ENHANCED: Pass additional props to MealDetailsModal */}
       <MealDetailsModal
         isOpen={mealDetailsModal.isOpen}
         onClose={closeMealDetailsModal}
         bookingId={mealDetailsModal.bookingId}
         customerName={mealDetailsModal.customerName}
+        initialMode={mealDetailsModal.mode}
+        hasExistingMeals={mealDetailsModal.hasExistingMeals}
+        vendorId={vendorId}
       />
     </div>
   );

@@ -33,7 +33,7 @@ interface ExtraServiceMenu {
   name: string
   description: string
   price: number
-  image?: string | null    // Cloudinary URL (primary image) – optional
+  image?: string | null
   is_active: boolean
 }
 
@@ -44,7 +44,6 @@ interface ExtraServiceCategory {
   items: ExtraServiceMenu[]
 }
 
-/* ----------    Forms ---------- */
 interface CategoryForm {
   name: string
   description: string
@@ -53,7 +52,7 @@ interface CategoryForm {
 interface MenuItemForm {
   name: string
   description: string
-  price: string          // keep as string for input binding
+  price: string
   imageFile?: File | null
   is_active: boolean
 }
@@ -63,7 +62,6 @@ interface MenuItemForm {
 /* ------------------------------------------------------------------ */
 const API_BASE = `${DASHBOARD_URL}/api`;
 
-// <CHANGE> Added category icons mapping for visual distinction
 const getCategoryIcon = (categoryName: string) => {
   const name = categoryName.toLowerCase();
   if (name.includes('food') || name.includes('snack')) {
@@ -79,10 +77,14 @@ const getCategoryIcon = (categoryName: string) => {
 /* -------------------------    COMPONENT    ---------------------------- */
 /* ------------------------------------------------------------------ */
 export default function ManageExtraServices() {
-  /* -----------------    STATE    ----------------- */
+  // Prevent hydration mismatch with isClient state
+  const [isClient, setIsClient] = useState(false)
+  
+  // State initialization with safe defaults
   const [categories, setCategories] = useState<ExtraServiceCategory[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [vendorId, setVendorId] = useState<number | null>(null)
 
   /* Category form */
   const [showCategoryDlg, setShowCategoryDlg] = useState(false)
@@ -99,7 +101,6 @@ export default function ManageExtraServices() {
     is_active: true,
   })
   const [activeCategoryId, setActiveCategoryId] = useState<number | null>(null)
-  const [vendorId, setVendorId] = useState<number | null>(null)
   const [menuLoading, setMenuLoading] = useState(false)
 
   /* -----------------    HELPERS    ----------------- */
@@ -108,20 +109,88 @@ export default function ManageExtraServices() {
       console.log('VendorId not available, skipping fetch')
       return
     }
+    
     try {
       setLoading(true)
       setError(null)
+      
       console.log('Fetching categories from:', `${API_BASE}/vendor/${vendorId}/extra-services`)
+      
       const res = await fetch(`${API_BASE}/vendor/${vendorId}/extra-services`)
+      
       if (!res.ok) {
         throw new Error(`HTTP ${res.status}: ${res.statusText}`)
       }
-      const data: ExtraServiceCategory[] = await res.json()
-      console.log('Categories fetched:', data)
-      setCategories(data)
+      
+      const data = await res.json()
+      console.log('Raw API response:', data)
+      
+      // Check if API call was successful
+      if (!data || !data.success) {
+        throw new Error(data?.message || 'API request failed')
+      }
+      
+      // Extract categories from the response object
+      const categoriesData = data.categories
+      
+      if (!Array.isArray(categoriesData)) {
+        console.error('Categories is not an array:', typeof categoriesData, categoriesData)
+        throw new Error('Invalid categories data format')
+      }
+      
+      // Transform API response to match component's expected format
+      const validatedCategories: ExtraServiceCategory[] = categoriesData.map((cat: any, index: number) => {
+        if (!cat || typeof cat !== 'object') {
+          console.warn(`Invalid category at index ${index}:`, cat)
+          return null
+        }
+        
+        // Transform menus to items with correct image handling
+        const transformedItems: ExtraServiceMenu[] = Array.isArray(cat.menus) 
+          ? cat.menus.map((menu: any) => {
+              if (!menu || typeof menu !== 'object') {
+                console.warn('Invalid menu item:', menu)
+                return null
+              }
+              
+              // Get the first image URL if images array exists
+              let imageUrl: string | null = null
+              if (Array.isArray(menu.images) && menu.images.length > 0) {
+                const firstImage = menu.images[0]
+                imageUrl = firstImage?.image_url || null
+              }
+              
+              return {
+                id: menu.id || 0,
+                name: menu.name || 'Untitled Item',
+                description: menu.description || '',
+                price: menu.price || 0,
+                image: imageUrl, // Single image URL (first from images array)
+                is_active: menu.is_active !== false // Default to true if not specified
+              }
+            }).filter(Boolean) // Remove null entries
+          : []
+        
+        // Create validated category
+        const validatedCategory: ExtraServiceCategory = {
+          id: cat.id || index + 1,
+          name: cat.name || `Category ${index + 1}`,
+          description: cat.description || '',
+          items: transformedItems // Use 'items' as expected by the component
+        }
+        
+        return validatedCategory
+      }).filter(Boolean) as ExtraServiceCategory[]
+      
+      console.log('Categories transformed and validated:', validatedCategories)
+      setCategories(validatedCategories)
+      
     } catch (err) {
       console.error('Error fetching categories:', err)
-      setError(err instanceof Error ? err.message : 'Failed to fetch categories')
+      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch categories'
+      setError(errorMessage)
+      // Always ensure categories is an array, even on error
+      setCategories([])
     } finally {
       setLoading(false)
     }
@@ -137,19 +206,23 @@ export default function ManageExtraServices() {
       alert('Vendor ID not found')
       return
     }
+    
     try {
       setCategoryLoading(true)
       const payload = { name: categoryForm.name.trim(), description: categoryForm.description.trim() }
       console.log('Creating category:', payload)
+      
       const res = await fetch(`${API_BASE}/vendor/${vendorId}/extra-services/category`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       })
+      
       if (!res.ok) {
         const errorData = await res.json().catch(() => ({ error: 'Unknown error' }))
         throw new Error(errorData.error || `HTTP ${res.status}`)
       }
+      
       const result = await res.json()
       console.log('Category created:', result)
       setShowCategoryDlg(false)
@@ -168,15 +241,18 @@ export default function ManageExtraServices() {
       return
     }
     if (!vendorId) return
+    
     try {
       console.log('Deleting category:', categoryId)
       const res = await fetch(`${API_BASE}/vendor/${vendorId}/extra-services/category/${categoryId}`, {
         method: "DELETE",
       })
+      
       if (!res.ok) {
         const errorData = await res.json().catch(() => ({ error: 'Unknown error' }))
         throw new Error(errorData.error || `HTTP ${res.status}`)
       }
+      
       console.log('Category deleted successfully')
       await fetchCategories()
     } catch (err) {
@@ -191,25 +267,30 @@ export default function ManageExtraServices() {
       return
     }
     if (activeCategoryId == null || !vendorId) return
+    
     try {
       setMenuLoading(true)
       const form = new FormData()
       form.append("name", menuForm.name.trim())
       form.append("price", menuForm.price.trim())
       form.append("description", menuForm.description.trim())
+      
       if (menuForm.imageFile) {
         form.append("image", menuForm.imageFile)
         console.log('Including image file:', menuForm.imageFile.name)
       }
+      
       console.log('Creating menu item for category:', activeCategoryId)
       const res = await fetch(
         `${API_BASE}/vendor/${vendorId}/extra-services/category/${activeCategoryId}/menu`,
         { method: "POST", body: form }
       )
+      
       if (!res.ok) {
         const errorData = await res.json().catch(() => ({ error: 'Unknown error' }))
         throw new Error(errorData.error || `HTTP ${res.status}`)
       }
+      
       const result = await res.json()
       console.log('Menu item created:', result)
       setShowMenuDlg(false)
@@ -234,16 +315,19 @@ export default function ManageExtraServices() {
       return
     }
     if (!vendorId) return
+    
     try {
       console.log('Deleting menu item:', menuId, 'from category:', categoryId)
       const res = await fetch(
         `${API_BASE}/vendor/${vendorId}/extra-services/category/${categoryId}/menu/${menuId}`,
         { method: "DELETE" }
       )
+      
       if (!res.ok) {
         const errorData = await res.json().catch(() => ({ error: 'Unknown error' }))
         throw new Error(errorData.error || `HTTP ${res.status}`)
       }
+      
       console.log('Menu item deleted successfully')
       await fetchCategories()
     } catch (err) {
@@ -260,31 +344,75 @@ export default function ManageExtraServices() {
   }
 
   /* -----------------    EFFECTS    ----------------- */
-  // Decode token once when the component mounts
+  // Handle client-side mounting to prevent hydration issues
   useEffect(() => {
-    const token = localStorage.getItem("jwtToken");
-    if (token) {
-      try {
-        const decoded_token = jwtDecode<{ sub: { id: number } }>(token);
-        console.log('Decoded token:', decoded_token)
-        setVendorId(decoded_token.sub.id);
-        console.log('Vendor ID set to:', decoded_token.sub.id)
-      } catch (error) {
-        console.error('Error decoding token:', error)
-        setError('Invalid authentication token')
-      }
-    } else {
-      setError('No authentication token found')
-    }
-  }, []);
+    setIsClient(true)
+  }, [])
 
-  // Fetch categories when vendorId is available
+  // Only access localStorage after client-side mounting
   useEffect(() => {
-    if (vendorId) {
-      console.log('VendorId available, fetching categories...')
-      fetchCategories()
+    if (!isClient) return
+    
+    try {
+      const token = localStorage.getItem("jwtToken");
+      if (!token) {
+        setError('No authentication token found')
+        return
+      }
+      
+      const decoded_token = jwtDecode<{ sub: { id: number } }>(token);
+      
+      if (!decoded_token?.sub?.id) {
+        throw new Error('Invalid token structure')
+      }
+      
+      console.log('Decoded token:', decoded_token)
+      setVendorId(decoded_token.sub.id);
+      console.log('Vendor ID set to:', decoded_token.sub.id)
+      
+    } catch (error) {
+      console.error('Error decoding token:', error)
+      setError('Invalid authentication token')
     }
-  }, [vendorId]) // This will trigger when vendorId changes
+  }, [isClient]);
+
+  // Fetch categories when vendorId is available and client is mounted
+  useEffect(() => {
+    if (vendorId && isClient) {
+      console.log('VendorId available, fetching categories...')
+      fetchCategories().catch(err => {
+        console.error('Unhandled error in fetchCategories:', err)
+        setError('Unexpected error occurred while fetching data')
+      })
+    }
+  }, [vendorId, isClient])
+
+  // Prevent hydration mismatch by not rendering until client-side
+  if (!isClient) {
+    // Return the same loading structure that would appear on client
+    return (
+      <div className="min-h-screen bg-background text-foreground p-2 sm:p-4 md:p-6 space-y-4 sm:space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 sm:mb-8 gap-4">
+          <div className="min-w-0 flex-1">
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground mb-1 sm:mb-2 truncate">
+              Manage Extra Services
+            </h1>
+            <p className="text-sm sm:text-base text-muted-foreground">
+              Create categories and add menu items
+            </p>
+          </div>
+          <Button disabled className="bg-blue-600 hover:bg-primary/90 text-primary-foreground px-3 sm:px-4 py-2 rounded-lg font-medium transition-colors duration-200 whitespace-nowrap">
+            <Plus className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+            <span className="text-sm sm:text-base">New Category</span>
+          </Button>
+        </div>
+        <div className="text-center py-8 sm:py-12">
+          <div className="inline-block animate-spin rounded-full h-6 w-6 sm:h-8 sm:w-8 border-b-2 border-primary"></div>
+          <p className="text-muted-foreground mt-2 text-sm sm:text-base">Loading...</p>
+        </div>
+      </div>
+    )
+  }
 
   /* -----------------    UI    ----------------- */
   return (
@@ -293,7 +421,7 @@ export default function ManageExtraServices() {
       animate={{ opacity: 1 }}
       className="min-h-screen bg-background text-foreground p-2 sm:p-4 md:p-6 space-y-4 sm:space-y-6"
     >
-      {/* ----------    HEADER - RESPONSIVE    ---------- */}
+      {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -318,16 +446,19 @@ export default function ManageExtraServices() {
         </Button>
       </motion.div>
 
-      {/* ----------    ERROR STATE - RESPONSIVE    ---------- */}
+      {/* Error State */}
       {error && (
         <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-3 sm:p-4 text-destructive">
-          <p className="font-medium text-sm sm:text-base">Error loading categories:</p>
+          <p className="font-medium text-sm sm:text-base">Error:</p>
           <p className="text-xs sm:text-sm mt-1 break-words">{error}</p>
           <Button
             variant="outline"
             size="sm"
             className="mt-2 border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground text-xs sm:text-sm"
-            onClick={fetchCategories}
+            onClick={() => {
+              setError(null)
+              if (vendorId) fetchCategories()
+            }}
             disabled={!vendorId}
           >
             Try Again
@@ -335,7 +466,7 @@ export default function ManageExtraServices() {
         </div>
       )}
 
-      {/* ----------    LOADING STATE WHEN NO VENDOR ID - RESPONSIVE    ---------- */}
+      {/* Loading State */}
       {!vendorId && !error && (
         <div className="text-center py-8 sm:py-12">
           <div className="inline-block animate-spin rounded-full h-6 w-6 sm:h-8 sm:w-8 border-b-2 border-primary"></div>
@@ -343,167 +474,181 @@ export default function ManageExtraServices() {
         </div>
       )}
 
-      {/* ----------    CATEGORY LIST - FULLY RESPONSIVE    ---------- */}
+      {/* Category List */}
       {vendorId && (
         loading ? (
           <div className="text-center py-8 sm:py-12">
             <div className="inline-block animate-spin rounded-full h-6 w-6 sm:h-8 sm:w-8 border-b-2 border-primary"></div>
             <p className="text-muted-foreground mt-2 text-sm sm:text-base">Loading categories...</p>
           </div>
-        ) : categories.length === 0 ? (
+        ) : !Array.isArray(categories) || categories.length === 0 ? (
           <div className="text-center py-8 sm:py-12">
-            <p className="text-muted-foreground text-sm sm:text-base">No categories found.</p>
-            <Button
-              className="mt-4 bg-primary hover:bg-primary/90 text-primary-foreground px-3 sm:px-4 py-2 rounded-lg font-medium transition-colors duration-200 text-sm sm:text-base"
-              onClick={() => setShowCategoryDlg(true)}
-            >
-              Create Your First Category
-            </Button>
+            <p className="text-muted-foreground text-sm sm:text-base">
+              {!Array.isArray(categories) ? 'Invalid data format' : 'No categories found.'}
+            </p>
+            {Array.isArray(categories) && (
+              <Button
+                className="mt-4 bg-primary hover:bg-primary/90 text-primary-foreground px-3 sm:px-4 py-2 rounded-lg font-medium transition-colors duration-200 text-sm sm:text-base"
+                onClick={() => setShowCategoryDlg(true)}
+              >
+                Create Your First Category
+              </Button>
+            )}
           </div>
         ) : (
           <div className="space-y-4 sm:space-y-6">
-            {categories.map((cat, i) => (
-              <motion.div
-                key={cat.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.05 * i }}
-              >
-                <Card className="bg-card border border-border rounded-lg shadow-lg">
-                  <CardHeader className="pb-3 sm:pb-4 p-3 sm:p-6">
-                    <div className="flex items-start sm:items-center justify-between gap-3">
-                      <div className="flex items-start sm:items-center gap-2 sm:gap-3 min-w-0 flex-1">
-                        <div className="p-1.5 sm:p-2 bg-muted/20 rounded-lg shrink-0">
-                          {getCategoryIcon(cat.name)}
+            {categories.map((cat, i) => {
+              // Additional safety validation for each category
+              if (!cat || typeof cat !== 'object' || !cat.id) {
+                console.warn('Skipping invalid category:', cat)
+                return null
+              }
+              
+              return (
+                <motion.div
+                  key={cat.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.05 * i }}
+                >
+                  <Card className="bg-card border border-border rounded-lg shadow-lg">
+                    <CardHeader className="pb-3 sm:pb-4 p-3 sm:p-6">
+                      <div className="flex items-start sm:items-center justify-between gap-3">
+                        <div className="flex items-start sm:items-center gap-2 sm:gap-3 min-w-0 flex-1">
+                          <div className="p-1.5 sm:p-2 bg-muted/20 rounded-lg shrink-0">
+                            {getCategoryIcon(cat.name || 'category')}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <CardTitle className="text-lg sm:text-xl font-semibold text-foreground truncate">
+                              {cat.name || 'Untitled Category'}
+                            </CardTitle>
+                            {cat.description && (
+                              <p className="text-xs sm:text-sm text-muted-foreground mt-1 line-clamp-2">
+                                {cat.description}
+                              </p>
+                            )}
+                          </div>
                         </div>
-                        <div className="min-w-0 flex-1">
-                          <CardTitle className="text-lg sm:text-xl font-semibold text-foreground truncate">
-                            {cat.name}
-                          </CardTitle>
-                          {cat.description && (
-                            <p className="text-xs sm:text-sm text-muted-foreground mt-1 line-clamp-2">
-                              {cat.description}
-                            </p>
-                          )}
-                        </div>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          onClick={() => deleteCategory(cat.id)}
+                          className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg w-8 h-8 sm:w-10 sm:h-10 shrink-0"
+                        >
+                          <Trash2 className="w-3 h-3 sm:w-5 sm:h-5" />
+                        </Button>
                       </div>
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        onClick={() => deleteCategory(cat.id)}
-                        className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg w-8 h-8 sm:w-10 sm:h-10 shrink-0"
-                      >
-                        <Trash2 className="w-3 h-3 sm:w-5 sm:h-5" />
-                      </Button>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="p-3 sm:p-6 pt-0">
-                    {/* --------    FULLY RESPONSIVE GRID    -------- */}
-                    <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3 sm:gap-4">
-                      {/* Existing menu items - RESPONSIVE */}
-                      {cat.items.map((item, idx) => (
+                    </CardHeader>
+                    <CardContent className="p-3 sm:p-6 pt-0">
+                      <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3 sm:gap-4">
+                        {/* Safe mapping with comprehensive validation */}
+                        {Array.isArray(cat.items) && cat.items.map((item, idx) => {
+                          // Validate each item before rendering
+                          if (!item || typeof item !== 'object' || !item.id) {
+                            console.warn('Skipping invalid menu item:', item)
+                            return null
+                          }
+                          
+                          return (
+                            <motion.div
+                              key={item.id}
+                              initial={{ opacity: 0, scale: 0.9 }}
+                              animate={{ opacity: 1, scale: 1 }}
+                              transition={{ delay: 0.04 * idx }}
+                              className="w-full max-w-[280px] mx-auto"
+                            >
+                              <Card className="overflow-hidden hover:shadow-lg transition-shadow duration-300 bg-muted/30 border border-border rounded-lg w-full">
+                                <CardContent className="p-0">
+                                  <div className="aspect-video relative">
+                                    <Image
+                                      alt={item.name || 'Menu item'}
+                                      src={item.image ?? "/placeholder.svg?height=140&width=220&query=food item"}
+                                      fill
+                                      className="object-cover rounded-t-lg"
+                                    />
+                                    <div className="absolute top-1 right-1 sm:top-2 sm:right-2">
+                                      <Button
+                                        size="icon"
+                                        variant="secondary"
+                                        className="w-6 h-6 sm:w-7 sm:h-7 bg-background/80 hover:bg-background text-destructive hover:text-destructive-foreground rounded-lg"
+                                        onClick={() => deleteMenuItem(cat.id, item.id)}
+                                      >
+                                        <Trash2 className="w-2.5 h-2.5 sm:w-3.5 sm:h-3.5" />
+                                      </Button>
+                                    </div>
+                                  </div>
+                                  
+                                  <div className="p-2 sm:p-3 space-y-1 sm:space-y-2">
+                                    <h3 className="font-semibold text-foreground text-xs sm:text-sm truncate">
+                                      {item.name || 'Untitled Item'}
+                                    </h3>
+                                    {item.description && (
+                                      <p className="text-xs text-muted-foreground line-clamp-2">
+                                        {item.description}
+                                      </p>
+                                    )}
+                                    <div className="flex items-center justify-between pt-1">
+                                      <p className="font-bold text-foreground text-sm sm:text-base">
+                                        ₹{item.price || 0}
+                                      </p>
+                                      <span className={clsx(
+                                        "px-1 sm:px-1.5 py-0.5 rounded-full text-xs font-medium shrink-0",
+                                        item.is_active
+                                          ? "bg-green-500/20 text-green-400"
+                                          : "bg-muted/20 text-muted-foreground"
+                                      )}>
+                                        {item.is_active ? "Active" : "Inactive"}
+                                      </span>
+                                    </div>
+                                  </div>
+                                </CardContent>
+                              </Card>
+                            </motion.div>
+                          )
+                        })}
+                        
+                        {/* Add Menu Card */}
                         <motion.div
-                          key={item.id}
                           initial={{ opacity: 0, scale: 0.9 }}
                           animate={{ opacity: 1, scale: 1 }}
-                          transition={{ delay: 0.04 * idx }}
+                          transition={{ delay: 0.04 * (Array.isArray(cat.items) ? cat.items.length : 0) }}
                           className="w-full max-w-[280px] mx-auto"
                         >
-                          <Card className="overflow-hidden hover:shadow-lg transition-shadow duration-300 bg-muted/30 border border-border rounded-lg w-full">
-                            <CardContent className="p-0">
-                              {/* Image section - responsive */}
-                              <div className="aspect-video relative">
-                                <Image
-                                  alt={item.name}
-                                  src={item.image ?? "/placeholder.svg?height=140&width=220&query=food item"}
-                                  fill
-                                  className="object-cover rounded-t-lg"
-                                />
-                                <div className="absolute top-1 right-1 sm:top-2 sm:right-2">
-                                  <Button
-                                    size="icon"
-                                    variant="secondary"
-                                    className="w-6 h-6 sm:w-7 sm:h-7 bg-background/80 hover:bg-background text-destructive hover:text-destructive-foreground rounded-lg"
-                                    onClick={() => deleteMenuItem(cat.id, item.id)}
-                                  >
-                                    <Trash2 className="w-2.5 h-2.5 sm:w-3.5 sm:h-3.5" />
-                                  </Button>
-                                </div>
-                              </div>
-                              
-                              {/* Content section - responsive padding */}
-                              <div className="p-2 sm:p-3 space-y-1 sm:space-y-2">
-                                <h3 className="font-semibold text-foreground text-xs sm:text-sm truncate">
-                                  {item.name}
-                                </h3>
-                                {item.description && (
-                                  <p className="text-xs text-muted-foreground line-clamp-2">
-                                    {item.description}
-                                  </p>
-                                )}
-                                <div className="flex items-center justify-between pt-1">
-                                  <p className="font-bold text-foreground text-sm sm:text-base">
-                                    ₹{item.price}
-                                  </p>
-                                  <span className={clsx(
-                                    "px-1 sm:px-1.5 py-0.5 rounded-full text-xs font-medium shrink-0",
-                                    item.is_active
-                                      ? "bg-green-500/20 text-green-400"
-                                      : "bg-muted/20 text-muted-foreground"
-                                  )}>
-                                    {item.is_active ? "Active" : "Inactive"}
-                                  </span>
+                          <Card className="overflow-hidden hover:shadow-lg transition-shadow duration-300 bg-muted/30 border-2 border-dashed border-muted-foreground/50 hover:border-primary/70 cursor-pointer rounded-lg w-full">
+                            <CardContent 
+                              className="p-0 h-full flex items-center justify-center min-h-[120px] sm:min-h-[140px]"
+                              onClick={() => {
+                                setActiveCategoryId(cat.id)
+                                setMenuForm({
+                                  name: "",
+                                  description: "",
+                                  price: "",
+                                  imageFile: undefined,
+                                  is_active: true,
+                                })
+                                setShowMenuDlg(true)
+                              }}
+                            >
+                              <div className="aspect-video w-full flex flex-col items-center justify-center text-muted-foreground p-2 sm:p-4">
+                                <div className="text-center">
+                                  <Plus className="w-8 h-8 sm:w-10 sm:h-10 mx-auto mb-1 sm:mb-2" />
+                                  <span className="text-xs sm:text-sm font-medium">Add Menu</span>
                                 </div>
                               </div>
                             </CardContent>
                           </Card>
                         </motion.div>
-                      ))}
-                      
-                      {/* Add Menu Card - RESPONSIVE SAME SIZE */}
-                      <motion.div
-                        initial={{ opacity: 0, scale: 0.9 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        transition={{ delay: 0.04 * cat.items.length }}
-                        className="w-full max-w-[280px] mx-auto"
-                      >
-                        <Card className="overflow-hidden hover:shadow-lg transition-shadow duration-300 bg-muted/30 border-2 border-dashed border-muted-foreground/50 hover:border-primary/70 cursor-pointer rounded-lg w-full">
-                          <CardContent 
-                            className="p-0 h-full flex items-center justify-center min-h-[120px] sm:min-h-[140px]"
-                            onClick={() => {
-                              setActiveCategoryId(cat.id)
-                              setMenuForm({
-                                name: "",
-                                description: "",
-                                price: "",
-                                imageFile: undefined,
-                                is_active: true,
-                              })
-                              setShowMenuDlg(true)
-                            }}
-                          >
-                            {/* Match the aspect ratio of item cards exactly */}
-                            <div className="aspect-video w-full flex flex-col items-center justify-center text-muted-foreground p-2 sm:p-4">
-                              <div className="text-center">
-                                <Plus className="w-8 h-8 sm:w-10 sm:h-10 mx-auto mb-1 sm:mb-2" />
-                                <span className="text-xs sm:text-sm font-medium">Add Menu</span>
-                              </div>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      </motion.div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              )
+            })}
           </div>
         )
       )}
 
-      {/* ============================================================ */}
-      {/* ====================    RESPONSIVE DIALOGS    ==================== */}
-      {/* ============================================================ */}
+      {/* Category Dialog */}
       <Dialog open={showCategoryDlg} onOpenChange={setShowCategoryDlg}>
         <DialogContent className="sm:max-w-[425px] w-[95vw] max-h-[90vh] bg-card/95 backdrop-blur-md border border-border shadow-2xl rounded-lg">
           <DialogHeader>
@@ -570,9 +715,7 @@ export default function ManageExtraServices() {
         </DialogContent>
       </Dialog>
 
-      {/* ============================================================ */}
-      {/* ====================    RESPONSIVE MENU ITEM DIALOG    ==================== */}
-      {/* ============================================================ */}
+      {/* Menu Item Dialog */}
       <Dialog open={showMenuDlg} onOpenChange={setShowMenuDlg}>
         <DialogContent className="sm:max-w-[500px] w-[95vw] max-h-[90vh] bg-card/95 backdrop-blur-md border border-border shadow-2xl rounded-lg">
           <DialogHeader>
