@@ -2006,705 +2006,712 @@ const ToggleSwitch = ({
 
 
 
-
-{/* ADD BANK TRANSFER SECTION */}
+{/* BANK TRANSFER PAGE - COMPLETE WITH BOTH SECTIONS */}
 {page === "Bank Transfer" && (
-  <Card className="bg-card border border-border shadow-lg">
-    <CardHeader>
-      <CardTitle className="text-foreground flex items-center gap-2">
-        <CreditCard className="w-5 h-5" />
-        Bank Transfer Details
-      </CardTitle>
-      <CardDescription className="text-muted-foreground">
-        Manage your payment details for payouts
-      </CardDescription>
-    </CardHeader>
-    <CardContent className="space-y-6">
-      {loadingBank ? (
-        <div className="flex items-center justify-center py-8">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <span className="ml-2">Loading payment details...</span>
-        </div>
-      ) : editingBank ? (
-        // Edit Form
-        <div className="space-y-4">
-          {/* Show selected payment method indicator */}
-          <div className="flex items-center justify-between p-3 bg-muted/20 rounded-lg">
-            <div className="flex items-center gap-2">
-              <Badge variant="outline" className="text-xs">
-                {selectedPaymentMethod === 'bank' ? 'Bank Account' : 'UPI Payment'}
-              </Badge>
-              <span className="text-xs text-muted-foreground">
-                {selectedPaymentMethod === 'bank' 
-                  ? 'Complete bank account details' 
-                  : 'UPI ID for payments'
-                }
-              </span>
-            </div>
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={() => {
-                setEditingBank(false);
-                setShowPaymentDialog(true);
-              }}
-              className="text-xs text-muted-foreground hover:text-foreground"
-            >
-              Change Method
-            </Button>
+  <>
+    {/* FIRST CARD - BANK TRANSFER DETAILS */}
+    <Card className="content-card shadow-lg mb-6">
+      <CardHeader>
+        <CardTitle className="card-title flex items-center gap-2">
+          <CreditCard className="icon-lg" />
+          Bank Transfer Details
+        </CardTitle>
+        <CardDescription className="body-text-muted">
+          Manage your payment details for payouts
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="content-card-padding">
+        {loadingBank ? (
+          <div className="flex items-center justify-center py-8">
+            <Loader2 className="icon-xl animate-spin text-primary" />
+            <span className="body-text-muted ml-2">Loading payment details...</span>
           </div>
-
-          {selectedPaymentMethod === 'bank' ? (
-            // Bank Account Fields
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label className="text-foreground">Account Holder Name *</Label>
-                <Input
-                  value={bankForm.accountHolderName || ''}
-                  onChange={(e) => handleBankFormChange('accountHolderName', e.target.value)}
-                  placeholder="Enter account holder name"
-                  className="bg-input border-input text-foreground"
-                  required
-                />
-              </div>
-              <div>
-                <Label className="text-foreground">Bank Name *</Label>
-                <Input
-                  value={bankForm.bankName || ''}
-                  onChange={(e) => handleBankFormChange('bankName', e.target.value)}
-                  placeholder="Enter bank name"
-                  className="bg-input border-input text-foreground"
-                  required
-                />
-              </div>
-              <div>
-                <Label className="text-foreground">Account Number *</Label>
-                <Input
-                  value={bankForm.accountNumber || ''}
-                  onChange={(e) => handleBankFormChange('accountNumber', e.target.value)}
-                  placeholder="Enter account number"
-                  className="bg-input border-input text-foreground"
-                  required
-                />
-              </div>
-              <div>
-                <Label className="text-foreground">IFSC Code *</Label>
-                <Input
-                  value={bankForm.ifscCode || ''}
-                  onChange={(e) => handleBankFormChange('ifscCode', e.target.value.toUpperCase())}
-                  placeholder="Enter IFSC code"
-                  maxLength={11}
-                  className="bg-input border-input text-foreground"
-                  required
-                />
-                <p className="text-xs text-muted-foreground mt-1">
-                  11-character IFSC code (e.g., SBIN0000123)
-                </p>
-              </div>
-              <div className="md:col-span-2">
-                <Label className="text-foreground">UPI ID (Optional)</Label>
-                <Input
-                  value={bankForm.upiId || ''}
-                  onChange={(e) => handleBankFormChange('upiId', e.target.value)}
-                  placeholder="Enter UPI ID (optional)"
-                  className="bg-input border-input text-foreground"
-                />
-                <p className="text-xs text-muted-foreground mt-1">
-                  You can also add UPI ID as backup payment method
-                </p>
-              </div>
-            </div>
-          ) : (
-            // UPI Only Fields
-            <div className="space-y-4">
-              <div>
-                <Label className="text-foreground">UPI ID *</Label>
-                <Input
-                  value={bankForm.upiId || ''}
-                  onChange={(e) => handleBankFormChange('upiId', e.target.value)}
-                  placeholder="Enter UPI ID (e.g., yourname@paytm)"
-                  className="bg-input border-input text-foreground"
-                  required
-                />
-                <p className="text-xs text-muted-foreground mt-1">
-                  Enter your UPI ID like yourname@paytm, yourname@phonepe, yourname@gpay, etc.
-                </p>
-              </div>
-              <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-                <p className="text-sm text-blue-800 dark:text-blue-200">
-                  <strong>Note:</strong> With UPI payment method, you'll receive payouts directly to your UPI ID. 
-                  Make sure the UPI ID is active and linked to your bank account.
-                </p>
-              </div>
-            </div>
-          )}
-          
-          <div className="flex gap-4">
-            <Button 
-              type="button"
-              onClick={handleSaveBankDetails} 
-              disabled={savingBank}
-              className="bg-emerald-500 hover:bg-emerald-600 text-white"
-            >
-              {savingBank ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                  Saving...
-                </>
-              ) : (
-                <>
-                  <Save className="h-4 w-4 mr-2" />
-                  Save Details
-                </>
-              )}
-            </Button>
-            <Button 
-              type="button"
-              variant="outline" 
-              onClick={() => setEditingBank(false)}
-              disabled={savingBank}
-              className="border-border text-foreground hover:bg-muted"
-            >
-              <X className="h-4 w-4 mr-2" />
-              Cancel
-            </Button>
-          </div>
-        </div>
-      ) : bankDetails ? (
-        // Display Mode - Shows only saved data
-        <div className="space-y-4">
-          <div className="flex items-center gap-2 mb-4">
-            <Badge variant="outline" className="text-xs">
-              {bankDetails.upiId && !bankDetails.accountNumber 
-                ? 'UPI Payment' 
-                : bankDetails.accountNumber && !bankDetails.upiId
-                ? 'Bank Account'
-                : bankDetails.accountNumber && bankDetails.upiId
-                ? 'Bank Account + UPI'
-                : 'Payment Details'
-              }
-            </Badge>
-            <Badge className={`text-xs ${
-              bankDetails.verificationStatus === 'VERIFIED' 
-                ? 'bg-green-500/20 text-green-400' 
-                : bankDetails.verificationStatus === 'REJECTED'
-                ? 'bg-red-500/20 text-red-400'
-                : 'bg-yellow-500/20 text-yellow-400'
-            }`}>
-              {bankDetails.verificationStatus || 'PENDING'}
-            </Badge>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Show bank details only if account number exists */}
-            {bankDetails.accountNumber && (
-              <>
-                <div>
-                  <Label className="text-sm text-muted-foreground">Account Holder Name</Label>
-                  <p className="text-foreground font-medium">{bankDetails.accountHolderName}</p>
-                </div>
-                <div>
-                  <Label className="text-sm text-muted-foreground">Bank Name</Label>
-                  <p className="text-foreground font-medium">{bankDetails.bankName}</p>
-                </div>
-                <div>
-                  <Label className="text-sm text-muted-foreground">Account Number</Label>
-                  <p className="text-foreground font-medium">{bankDetails.accountNumber}</p>
-                </div>
-                <div>
-                  <Label className="text-sm text-muted-foreground">IFSC Code</Label>
-                  <p className="text-foreground font-medium">{bankDetails.ifscCode}</p>
-                </div>
-              </>
-            )}
-            
-            {/* Always show UPI if available */}
-            {bankDetails.upiId && (
-              <div className={bankDetails.accountNumber ? "" : "md:col-span-2"}>
-                <Label className="text-sm text-muted-foreground">UPI ID</Label>
-                <p className="text-foreground font-medium">{bankDetails.upiId}</p>
-              </div>
-            )}
-            
-            {/* Show message if no data available */}
-            {!bankDetails.accountNumber && !bankDetails.upiId && (
-              <div className="md:col-span-2 text-center py-4">
-                <p className="text-muted-foreground">No payment details available</p>
-              </div>
-            )}
-          </div>
-          
-          <div className="flex gap-3">
-            <Button 
-              type="button"
-              onClick={() => setShowPaymentDialog(true)}
-              className="bg-primary hover:bg-primary/90 text-primary-foreground"
-            >
-              <Edit className="h-4 w-4 mr-2" />
-              Edit Payment Details
-            </Button>
-            {bankDetails.verificationStatus === 'PENDING' && (
-              <Button 
-                type="button"
-                variant="outline"
-                className="border-amber-200 text-amber-600 hover:bg-amber-50"
-                disabled
-              >
-                <Clock className="h-4 w-4 mr-2" />
-                Verification Pending
-              </Button>
-            )}
-          </div>
-        </div>
-      ) : (
-        // No Bank Details
-        <div className="text-center py-8">
-          <CreditCard className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-          <h3 className="text-lg font-medium text-foreground mb-2">No Payment Details Found</h3>
-          <p className="text-muted-foreground mb-4">Add your payment details to receive payouts</p>
-          <Button 
-            type="button"
-            onClick={() => setShowPaymentDialog(true)}
-            className="bg-emerald-500 hover:bg-emerald-600 text-white"
-          >
-            <CreditCard className="h-4 w-4 mr-2" />
-            Add Payment Details
-          </Button>
-        </div>
-      )}
-
-      {/* Payment Method Selection Dialog */}
-      {showPaymentDialog && (
-        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.9 }}
-            className="bg-card rounded-lg p-6 max-w-md w-full mx-auto shadow-2xl border border-border"
-          >
-            <div className="space-y-4">
-              <div>
-                <h3 className="text-lg font-semibold text-foreground mb-2">
-                  Select Payment Method
-                </h3>
-                <p className="text-sm text-muted-foreground">
-                  Choose what type of payment method you want to add for receiving payouts
-                </p>
-              </div>
-
-              <div className="space-y-3">
-                <div 
-                  className={`flex items-start space-x-3 p-4 rounded-lg border cursor-pointer transition-colors ${
-                    tempPaymentSelection === 'bank' 
-                      ? 'border-primary bg-primary/10' 
-                      : 'border-border hover:bg-muted/20'
-                  }`}
-                  onClick={() => setTempPaymentSelection('bank')}
-                >
-                  <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center mt-1 ${
-                    tempPaymentSelection === 'bank' ? 'border-primary' : 'border-border'
-                  }`}>
-                    {tempPaymentSelection === 'bank' && (
-                      <div className="w-2 h-2 rounded-full bg-primary"></div>
-                    )}
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <CreditCard className="w-4 h-4 text-primary" />
-                      <p className="font-medium text-foreground">Bank Account</p>
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      Add complete bank details including account holder name, bank name, account number & IFSC code
-                    </p>
-                  </div>
-                </div>
-
-                <div 
-                  className={`flex items-start space-x-3 p-4 rounded-lg border cursor-pointer transition-colors ${
-                    tempPaymentSelection === 'upi' 
-                      ? 'border-primary bg-primary/10' 
-                      : 'border-border hover:bg-muted/20'
-                  }`}
-                  onClick={() => setTempPaymentSelection('upi')}
-                >
-                  <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center mt-1 ${
-                    tempPaymentSelection === 'upi' ? 'border-primary' : 'border-border'
-                  }`}>
-                    {tempPaymentSelection === 'upi' && (
-                      <div className="w-2 h-2 rounded-full bg-primary"></div>
-                    )}
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <DollarSign className="w-4 h-4 text-green-500" />
-                      <p className="font-medium text-foreground">UPI ID</p>
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      Quick setup with just your UPI ID (e.g., yourname@paytm, yourname@phonepe)
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex gap-3 pt-4">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setShowPaymentDialog(false)}
-                  className="flex-1 border-border text-foreground hover:bg-muted"
-                >
-                  Cancel
-                </Button>
-                <Button
-                  type="button"
-                  onClick={() => {
-                    setSelectedPaymentMethod(tempPaymentSelection);
-                    setShowPaymentDialog(false);
-                    setEditingBank(true);
-                  }}
-                  className="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white"
-                >
-                  Continue
-                </Button>
-              </div>
-            </div>
-          </motion.div>
-        </div>
-      )}
-    </CardContent>
-  </Card>
-)}
-
-{/* UPDATED PAYMENT METHODS CARD - Shows ALL available methods from payment_method table */}
-{page === "Bank Transfer" && (
-  <Card className="bg-card border border-border shadow-lg">
-    <CardHeader>
-      <CardTitle className="text-foreground flex items-center gap-2">
-        <Settings className="w-5 h-5" />
-        Payment Methods
-      </CardTitle>
-      <CardDescription className="text-muted-foreground">
-        Select which payment methods you want to accept at your cafe
-      </CardDescription>
-    </CardHeader>
-    <CardContent className="space-y-6">
-      {/* Success/Error Messages */}
-      {paymentMethodSuccess && (
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="flex items-center gap-2 p-3 rounded-md bg-green-500/20 text-green-400 border border-green-500/30"
-        >
-          <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-          <span className="text-sm font-medium">{paymentMethodSuccess}</span>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={clearPaymentMethodMessages}
-            className="ml-auto h-6 w-6 p-0 text-green-400 hover:text-green-300"
-          >
-            <X className="h-3 w-3" />
-          </Button>
-        </motion.div>
-      )}
-
-      {paymentMethodError && (
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="flex items-center gap-2 p-3 rounded-md bg-red-500/20 text-red-400 border border-red-500/30"
-        >
-          <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
-          <span className="text-sm font-medium">{paymentMethodError}</span>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={clearPaymentMethodMessages}
-            className="ml-auto h-6 w-6 p-0 text-red-400 hover:text-red-300"
-          >
-            <X className="h-3 w-3" />
-          </Button>
-        </motion.div>
-      )}
-
-      {/* Loading State */}
-      {loadingPaymentMethods ? (
-        <div className="flex items-center justify-center py-12">
-          <div className="flex flex-col items-center gap-3">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            <span className="text-sm text-muted-foreground">Loading payment methods...</span>
-          </div>
-        </div>
-      ) : (
-        <div className="space-y-4">
-          {/* Available Payment Methods */}
-          {Array.isArray(paymentMethods) && paymentMethods.length > 0 ? (
-            <>
-              {/* Header Info */}
-              <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg border border-border">
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                  <span className="text-sm font-medium text-foreground">
-                    Available Payment Methods ({paymentMethods.length})
-                  </span>
-                </div>
-                <Badge variant="outline" className="text-xs">
-                  {paymentMethods.filter(m => m.is_enabled).length} Active
+        ) : editingBank ? (
+          // EDIT FORM
+          <div className="space-y-4">
+            {/* Show selected payment method indicator */}
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 bg-muted/20 rounded-lg gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
+                <Badge variant="outline" className="badge-text">
+                  {selectedPaymentMethod === 'bank' ? 'Bank Account' : 'UPI Payment'}
                 </Badge>
+                <span className="body-text-small">
+                  {selectedPaymentMethod === 'bank' 
+                    ? 'Complete bank account details' 
+                    : 'UPI ID for payments'
+                  }
+                </span>
               </div>
-              
-              {/* Payment Method List */}
-              <div className="space-y-3">
-                {paymentMethods.map((method, index) => (
-                  <motion.div
-                    key={method.pay_method_id}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.1 }}
-                    className="group"
-                  >
-                    <div className={cn(
-                      "flex items-center justify-between p-4 rounded-xl border transition-all duration-200 hover:shadow-md",
-                      method.is_enabled 
-                        ? "border-primary/50 bg-gradient-to-r from-primary/5 to-primary/10" 
-                        : "border-border bg-gradient-to-r from-transparent to-muted/20 hover:border-primary/30"
-                    )}>
-                      {/* Method Info */}
-                      <div className="flex items-center space-x-4">
-                        <div className="flex-shrink-0">
-                          {method.method_name === 'pay_at_cafe' ? (
-                            <div className={cn(
-                              "w-12 h-12 rounded-xl flex items-center justify-center border transition-colors",
-                              method.is_enabled 
-                                ? "bg-gradient-to-br from-blue-500/30 to-blue-600/30 border-blue-500/50" 
-                                : "bg-gradient-to-br from-blue-500/10 to-blue-600/10 border-blue-500/20"
-                            )}>
-                              <Coffee className={cn(
-                                "w-6 h-6 transition-colors",
-                                method.is_enabled ? "text-blue-600" : "text-blue-400"
-                              )} />
-                            </div>
-                          ) : (
-                            <div className={cn(
-                              "w-12 h-12 rounded-xl flex items-center justify-center border transition-colors",
-                              method.is_enabled 
-                                ? "bg-gradient-to-br from-purple-500/30 to-purple-600/30 border-purple-500/50" 
-                                : "bg-gradient-to-br from-purple-500/10 to-purple-600/10 border-purple-500/20"
-                            )}>
-                              <CreditCard className={cn(
-                                "w-6 h-6 transition-colors",
-                                method.is_enabled ? "text-purple-600" : "text-purple-400"
-                              )} />
-                            </div>
-                          )}
-                        </div>
-                        
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1">
-                            <h4 className="font-semibold text-foreground">
-                              {method.display_name}
-                            </h4>
-                            {method.is_enabled && (
-                              <Badge 
-                                variant="default"
-                                className="bg-green-500/20 text-green-500 border-green-500/30 text-xs"
-                              >
-                                Active
-                              </Badge>
-                            )}
-                          </div>
-                          <p className="text-sm text-muted-foreground">
-                            {method.description}
-                          </p>
-                          
-                          {/* Show registration info */}
-                          <div className="mt-2 flex items-center gap-1 text-xs">
-                            <div className={cn(
-                              "w-1 h-1 rounded-full",
-                              method.is_enabled ? "bg-green-500" : "bg-gray-400"
-                            )}></div>
-                            <span className={cn(
-                              method.is_enabled ? "text-green-600" : "text-gray-500"
-                            )}>
-                              {method.is_enabled ? "Registered for your cafe" : "Not registered"}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setEditingBank(false);
+                  setShowPaymentDialog(true);
+                }}
+                className="btn-secondary whitespace-nowrap"
+              >
+                Change Method
+              </Button>
+            </div>
 
-                      {/* Toggle Switch */}
-                      <div className="flex items-center space-x-4">
-                        {/* Status Text */}
-                        <div className="text-right min-w-[70px]">
-                          {togglingMethod === method.pay_method_id ? (
-                            <span className="text-xs text-primary font-medium">
-                              {method.is_enabled ? 'Removing...' : 'Adding...'}
-                            </span>
-                          ) : (
-                            <span className={cn(
-                              "text-xs font-semibold",
-                              method.is_enabled ? "text-green-500" : "text-gray-400"
-                            )}>
-                              {method.is_enabled ? 'ACTIVE' : 'INACTIVE'}
-                            </span>
-                          )}
-                        </div>
-                        
-                        {/* Toggle Switch */}
-                        <ToggleSwitch
-                          enabled={method.is_enabled}
-                          onToggle={() => handleTogglePaymentMethod(method.pay_method_id, method.is_enabled)}
-                          disabled={togglingMethod !== null && togglingMethod !== method.pay_method_id}
-                          loading={togglingMethod === method.pay_method_id}
-                          size="default"
-                        />
-                      </div>
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-              
-              {/* Summary Footer */}
-              <div className="mt-6 p-4 bg-gradient-to-r from-muted/20 to-muted/40 rounded-lg border border-border">
-                <div className="flex items-start gap-3">
-                  <div className="w-5 h-5 bg-blue-500/20 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="text-sm font-medium text-foreground">Registration Status</span>
-                      <Badge 
-                        variant={paymentMethods.filter(m => m.is_enabled).length > 0 ? "default" : "secondary"}
-                        className={cn(
-                          "text-xs",
-                          paymentMethods.filter(m => m.is_enabled).length > 0 
-                            ? "bg-green-500/20 text-green-500 border-green-500/30" 
-                            : "bg-amber-500/20 text-amber-600 border-amber-500/30"
-                        )}
-                      >
-                        {paymentMethods.filter(m => m.is_enabled).length > 0 ? 'Ready' : 'Setup Required'}
-                      </Badge>
-                    </div>
-                    <div className="text-sm text-muted-foreground">
-                      {paymentMethods.filter(m => m.is_enabled).length === 0 ? (
-                        <span className="text-amber-600">⚠️ Register at least one payment method to accept payments.</span>
-                      ) : (
-                        <>
-                          <span className="text-green-600">✅ Registered methods: </span>
-                          <span className="font-medium">
-                            {paymentMethods.filter(m => m.is_enabled).map(m => m.display_name).join(', ')}
-                          </span>
-                        </>
-                      )}
-                    </div>
-                  </div>
+            {selectedPaymentMethod === 'bank' ? (
+              // BANK ACCOUNT FIELDS
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label className="form-label">Account Holder Name *</Label>
+                  <Input
+                    value={bankForm.accountHolderName || ''}
+                    onChange={(e) => handleBankFormChange('accountHolderName', e.target.value)}
+                    placeholder="Enter account holder name"
+                    className="input-field"
+                    required
+                  />
+                </div>
+                <div>
+                  <Label className="form-label">Bank Name *</Label>
+                  <Input
+                    value={bankForm.bankName || ''}
+                    onChange={(e) => handleBankFormChange('bankName', e.target.value)}
+                    placeholder="Enter bank name"
+                    className="input-field"
+                    required
+                  />
+                </div>
+                <div>
+                  <Label className="form-label">Account Number *</Label>
+                  <Input
+                    value={bankForm.accountNumber || ''}
+                    onChange={(e) => handleBankFormChange('accountNumber', e.target.value)}
+                    placeholder="Enter account number"
+                    className="input-field"
+                    required
+                  />
+                </div>
+                <div>
+                  <Label className="form-label">IFSC Code *</Label>
+                  <Input
+                    value={bankForm.ifscCode || ''}
+                    onChange={(e) => handleBankFormChange('ifscCode', e.target.value.toUpperCase())}
+                    placeholder="Enter IFSC code"
+                    maxLength={11}
+                    className="input-field"
+                    required
+                  />
+                  <p className="body-text-small mt-1">
+                    11-character IFSC code (e.g., SBIN0000123)
+                  </p>
+                </div>
+                <div className="md:col-span-2">
+                  <Label className="form-label">UPI ID (Optional)</Label>
+                  <Input
+                    value={bankForm.upiId || ''}
+                    onChange={(e) => handleBankFormChange('upiId', e.target.value)}
+                    placeholder="Enter UPI ID (optional)"
+                    className="input-field"
+                  />
+                  <p className="body-text-small mt-1">
+                    You can also add UPI ID as backup payment method
+                  </p>
                 </div>
               </div>
-            </>
-          ) : (
-            <div className="text-center py-12">
-              <div className="w-16 h-16 bg-muted/50 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Settings className="h-8 w-8 text-muted-foreground" />
+            ) : (
+              // UPI ONLY FIELDS
+              <div className="space-y-4">
+                <div>
+                  <Label className="form-label">UPI ID *</Label>
+                  <Input
+                    value={bankForm.upiId || ''}
+                    onChange={(e) => handleBankFormChange('upiId', e.target.value)}
+                    placeholder="Enter UPI ID (e.g., yourname@paytm)"
+                    className="input-field"
+                    required
+                  />
+                  <p className="body-text-small mt-1">
+                    Enter your UPI ID like yourname@paytm, yourname@phonepe, yourname@gpay, etc.
+                  </p>
+                </div>
+                <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                  <p className="body-text-small text-blue-800 dark:text-blue-200">
+                    <strong>Note:</strong> With UPI payment method, you'll receive payouts directly to your UPI ID. 
+                    Make sure the UPI ID is active and linked to your bank account.
+                  </p>
+                </div>
               </div>
-              <h3 className="text-lg font-medium text-foreground mb-2">No Payment Methods Available</h3>
-              <p className="text-muted-foreground mb-6 max-w-sm mx-auto">
-                No payment methods are available in the system. Please contact support.
-              </p>
+            )}
+            
+            <div className="flex flex-col sm:flex-row gap-3">
               <Button 
                 type="button"
-                onClick={fetchPaymentMethods}
-                disabled={loadingPaymentMethods}
-                className="bg-primary hover:bg-primary/90 text-primary-foreground"
+                onClick={handleSaveBankDetails} 
+                disabled={savingBank}
+                className="btn-primary"
               >
-                {loadingPaymentMethods ? (
+                {savingBank ? (
                   <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Refreshing...
+                    <Loader2 className="icon-md animate-spin mr-2" />
+                    Saving...
                   </>
                 ) : (
                   <>
-                    <Settings className="h-4 w-4 mr-2" />
-                    Refresh
+                    <Save className="icon-md mr-2" />
+                    Save Details
                   </>
                 )}
               </Button>
+              <Button 
+                type="button"
+                variant="outline" 
+                onClick={() => setEditingBank(false)}
+                disabled={savingBank}
+                className="btn-secondary"
+              >
+                <X className="icon-md mr-2" />
+                Cancel
+              </Button>
             </div>
-          )}
-        </div>
-      )}
-    </CardContent>
-  </Card>
+          </div>
+        ) : bankDetails ? (
+          // DISPLAY MODE
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 mb-4 flex-wrap">
+              <Badge variant="outline" className="badge-text">
+                {bankDetails.upiId && !bankDetails.accountNumber 
+                  ? 'UPI Payment' 
+                  : bankDetails.accountNumber && !bankDetails.upiId
+                  ? 'Bank Account'
+                  : bankDetails.accountNumber && bankDetails.upiId
+                  ? 'Bank Account + UPI'
+                  : 'Payment Details'
+                }
+              </Badge>
+              <Badge className={`badge-text ${
+                bankDetails.verificationStatus === 'VERIFIED' 
+                  ? 'bg-green-500/20 text-green-400' 
+                  : bankDetails.verificationStatus === 'REJECTED'
+                  ? 'bg-red-500/20 text-red-400'
+                  : 'bg-yellow-500/20 text-yellow-400'
+              }`}>
+                {bankDetails.verificationStatus || 'PENDING'}
+              </Badge>
+            </div>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              {/* Show bank details only if account number exists */}
+              {bankDetails.accountNumber && (
+                <>
+                  <div>
+                    <Label className="form-label-small">Account Holder Name</Label>
+                    <p className="body-text font-medium break-words">{bankDetails.accountHolderName}</p>
+                  </div>
+                  <div>
+                    <Label className="form-label-small">Bank Name</Label>
+                    <p className="body-text font-medium break-words">{bankDetails.bankName}</p>
+                  </div>
+                  <div>
+                    <Label className="form-label-small">Account Number</Label>
+                    <p className="body-text font-medium break-words">{bankDetails.accountNumber}</p>
+                  </div>
+                  <div>
+                    <Label className="form-label-small">IFSC Code</Label>
+                    <p className="body-text font-medium break-words">{bankDetails.ifscCode}</p>
+                  </div>
+                </>
+              )}
+              
+              {/* Always show UPI if available */}
+              {bankDetails.upiId && (
+                <div className={bankDetails.accountNumber ? "" : "sm:col-span-2"}>
+                  <Label className="form-label-small">UPI ID</Label>
+                  <p className="body-text font-medium break-words">{bankDetails.upiId}</p>
+                </div>
+              )}
+              
+              {/* Show message if no data available */}
+              {!bankDetails.accountNumber && !bankDetails.upiId && (
+                <div className="sm:col-span-2 text-center py-4">
+                  <p className="body-text-muted">No payment details available</p>
+                </div>
+              )}
+            </div>
+            
+            <div className="flex flex-col sm:flex-row gap-3">
+              <Button 
+                type="button"
+                onClick={() => setShowPaymentDialog(true)}
+                className="btn-primary"
+              >
+                <Edit className="icon-md mr-2" />
+                Edit Payment Details
+              </Button>
+              {bankDetails.verificationStatus === 'PENDING' && (
+                <Button 
+                  type="button"
+                  variant="outline"
+                  className="border-amber-200 text-amber-600 hover:bg-amber-50"
+                  disabled
+                >
+                  <Clock className="icon-md mr-2" />
+                  Verification Pending
+                </Button>
+              )}
+            </div>
+          </div>
+        ) : (
+          // NO BANK DETAILS
+          <div className="text-center py-8">
+            <CreditCard className="mx-auto icon-xl text-muted-foreground mb-4" />
+            <h3 className="section-title mb-2">No Payment Details Found</h3>
+            <p className="body-text-muted mb-4">Add your payment details to receive payouts</p>
+            <Button 
+              type="button"
+              onClick={() => setShowPaymentDialog(true)}
+              className="btn-primary"
+            >
+              <CreditCard className="icon-md mr-2" />
+              Add Payment Details
+            </Button>
+          </div>
+        )}
+
+        {/* PAYMENT METHOD SELECTION DIALOG */}
+        {showPaymentDialog && (
+          <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              className="content-card max-w-md w-full mx-auto shadow-2xl"
+            >
+              <div className="content-card-padding space-y-4">
+                <div>
+                  <h3 className="section-title mb-2">
+                    Select Payment Method
+                  </h3>
+                  <p className="body-text-muted">
+                    Choose what type of payment method you want to add for receiving payouts
+                  </p>
+                </div>
+
+                <div className="space-y-3">
+                  <div 
+                    className={`flex items-start space-x-3 p-4 rounded-lg border cursor-pointer transition-colors ${
+                      tempPaymentSelection === 'bank' 
+                        ? 'border-primary bg-primary/10' 
+                        : 'border-border hover:bg-muted/20'
+                    }`}
+                    onClick={() => setTempPaymentSelection('bank')}
+                  >
+                    <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center mt-1 flex-shrink-0 ${
+                      tempPaymentSelection === 'bank' ? 'border-primary' : 'border-border'
+                    }`}>
+                      {tempPaymentSelection === 'bank' && (
+                        <div className="w-2 h-2 rounded-full bg-primary"></div>
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <CreditCard className="icon-md text-primary flex-shrink-0" />
+                        <p className="body-text font-medium">Bank Account</p>
+                      </div>
+                      <p className="body-text-small break-words">
+                        Add complete bank details including account holder name, bank name, account number & IFSC code
+                      </p>
+                    </div>
+                  </div>
+
+                  <div 
+                    className={`flex items-start space-x-3 p-4 rounded-lg border cursor-pointer transition-colors ${
+                      tempPaymentSelection === 'upi' 
+                        ? 'border-primary bg-primary/10' 
+                        : 'border-border hover:bg-muted/20'
+                    }`}
+                    onClick={() => setTempPaymentSelection('upi')}
+                  >
+                    <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center mt-1 flex-shrink-0 ${
+                      tempPaymentSelection === 'upi' ? 'border-primary' : 'border-border'
+                    }`}>
+                      {tempPaymentSelection === 'upi' && (
+                        <div className="w-2 h-2 rounded-full bg-primary"></div>
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <DollarSign className="icon-md text-green-500 flex-shrink-0" />
+                        <p className="body-text font-medium">UPI ID</p>
+                      </div>
+                      <p className="body-text-small break-words">
+                        Quick setup with just your UPI ID (e.g., yourname@paytm, yourname@phonepe)
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex flex-col sm:flex-row gap-3 pt-4">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setShowPaymentDialog(false)}
+                    className="btn-secondary flex-1"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="button"
+                    onClick={() => {
+                      setSelectedPaymentMethod(tempPaymentSelection);
+                      setShowPaymentDialog(false);
+                      setEditingBank(true);
+                    }}
+                    className="btn-primary flex-1"
+                  >
+                    Continue
+                  </Button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+
+    {/* SECOND CARD - PAYMENT METHODS */}
+    <Card className="content-card shadow-lg">
+      <CardHeader>
+        <CardTitle className="card-title flex items-center gap-2">
+          <Settings className="icon-lg" />
+          Payment Methods
+        </CardTitle>
+        <CardDescription className="body-text-muted">
+          Select which payment methods you want to accept at your cafe
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="content-card-padding">
+        {/* Success/Error Messages */}
+        {paymentMethodSuccess && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex items-center gap-2 p-3 rounded-md bg-green-500/20 text-green-400 border border-green-500/30 mb-4"
+          >
+            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+            <span className="body-text-small font-medium flex-1 break-words">{paymentMethodSuccess}</span>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={clearPaymentMethodMessages}
+              className="ml-auto h-6 w-6 p-0 text-green-400 hover:text-green-300 flex-shrink-0"
+            >
+              <X className="icon-xs" />
+            </Button>
+          </motion.div>
+        )}
+
+        {paymentMethodError && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex items-center gap-2 p-3 rounded-md bg-red-500/20 text-red-400 border border-red-500/30 mb-4"
+          >
+            <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
+            <span className="body-text-small font-medium flex-1 break-words">{paymentMethodError}</span>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={clearPaymentMethodMessages}
+              className="ml-auto h-6 w-6 p-0 text-red-400 hover:text-red-300 flex-shrink-0"
+            >
+              <X className="icon-xs" />
+            </Button>
+          </motion.div>
+        )}
+
+        {/* Loading State */}
+        {loadingPaymentMethods ? (
+          <div className="flex items-center justify-center py-12">
+            <div className="flex flex-col items-center gap-3">
+              <Loader2 className="icon-xl animate-spin text-primary" />
+              <span className="body-text-small">Loading payment methods...</span>
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {/* Available Payment Methods */}
+            {Array.isArray(paymentMethods) && paymentMethods.length > 0 ? (
+              <>
+                {/* Header Info */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between p-3 bg-muted/30 rounded-lg border border-border gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0"></div>
+                    <span className="body-text font-medium">
+                      Available Payment Methods ({paymentMethods.length})
+                    </span>
+                  </div>
+                  <Badge variant="outline" className="badge-text w-fit">
+                    {paymentMethods.filter(m => m.is_enabled).length} Active
+                  </Badge>
+                </div>
+                
+                {/* Payment Method List */}
+                <div className="space-y-3">
+                  {paymentMethods.map((method, index) => (
+                    <motion.div
+                      key={method.pay_method_id}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.1 }}
+                      className="group"
+                    >
+                      <div className={cn(
+                        "flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 rounded-xl border transition-all duration-200 hover:shadow-md gap-3",
+                        method.is_enabled 
+                          ? "border-primary/50 bg-gradient-to-r from-primary/5 to-primary/10" 
+                          : "border-border bg-gradient-to-r from-transparent to-muted/20 hover:border-primary/30"
+                      )}>
+                        {/* Method Info */}
+                        <div className="flex items-start sm:items-center space-x-4 flex-1 min-w-0 w-full sm:w-auto">
+                          <div className="flex-shrink-0">
+                            {method.method_name === 'pay_at_cafe' ? (
+                              <div className={cn(
+                                "w-12 h-12 rounded-xl flex items-center justify-center border transition-colors",
+                                method.is_enabled 
+                                  ? "bg-gradient-to-br from-blue-500/30 to-blue-600/30 border-blue-500/50" 
+                                  : "bg-gradient-to-br from-blue-500/10 to-blue-600/10 border-blue-500/20"
+                              )}>
+                                <Coffee className={cn(
+                                  "icon-lg transition-colors",
+                                  method.is_enabled ? "text-blue-600" : "text-blue-400"
+                                )} />
+                              </div>
+                            ) : (
+                              <div className={cn(
+                                "w-12 h-12 rounded-xl flex items-center justify-center border transition-colors",
+                                method.is_enabled 
+                                  ? "bg-gradient-to-br from-purple-500/30 to-purple-600/30 border-purple-500/50" 
+                                  : "bg-gradient-to-br from-purple-500/10 to-purple-600/10 border-purple-500/20"
+                              )}>
+                                <CreditCard className={cn(
+                                  "icon-lg transition-colors",
+                                  method.is_enabled ? "text-purple-600" : "text-purple-400"
+                                )} />
+                              </div>
+                            )}
+                          </div>
+                          
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-1 flex-wrap">
+                              <h4 className="body-text font-semibold break-words">
+                                {method.display_name}
+                              </h4>
+                              {method.is_enabled && (
+                                <Badge 
+                                  variant="default"
+                                  className="bg-green-500/20 text-green-500 border-green-500/30 badge-text"
+                                >
+                                  Active
+                                </Badge>
+                              )}
+                            </div>
+                            <p className="body-text-small break-words">
+                              {method.description}
+                            </p>
+                            
+                            {/* Show registration info */}
+                            <div className="mt-2 flex items-center gap-1 body-text-small flex-wrap">
+                              <div className={cn(
+                                "w-1 h-1 rounded-full flex-shrink-0",
+                                method.is_enabled ? "bg-green-500" : "bg-gray-400"
+                              )}></div>
+                              <span className={cn(
+                                method.is_enabled ? "text-green-600" : "text-gray-500"
+                              )}>
+                                {method.is_enabled ? "Registered for your cafe" : "Not registered"}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Toggle Switch */}
+                        <div className="flex items-center space-x-3 sm:space-x-4 w-full sm:w-auto sm:ml-auto">
+                          {/* Status Text */}
+                          <div className="text-left sm:text-right min-w-[70px] flex-1 sm:flex-initial">
+                            {togglingMethod === method.pay_method_id ? (
+                              <span className="body-text-small text-primary font-medium">
+                                {method.is_enabled ? 'Removing...' : 'Adding...'}
+                              </span>
+                            ) : (
+                              <span className={cn(
+                                "body-text-small font-semibold",
+                                method.is_enabled ? "text-green-500" : "text-gray-400"
+                              )}>
+                                {method.is_enabled ? 'ACTIVE' : 'INACTIVE'}
+                              </span>
+                            )}
+                          </div>
+                          
+                          {/* Toggle Switch */}
+                          <div className="flex-shrink-0">
+                            <ToggleSwitch
+                              enabled={method.is_enabled}
+                              onToggle={() => handleTogglePaymentMethod(method.pay_method_id, method.is_enabled)}
+                              disabled={togglingMethod !== null && togglingMethod !== method.pay_method_id}
+                              loading={togglingMethod === method.pay_method_id}
+                              size="default"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+                
+                {/* Summary Footer */}
+                <div className="mt-6 p-4 bg-gradient-to-r from-muted/20 to-muted/40 rounded-lg border border-border">
+                  <div className="flex flex-col sm:flex-row items-start gap-3">
+                    <div className="w-5 h-5 bg-blue-500/20 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1 flex-wrap">
+                        <span className="body-text font-medium">Registration Status</span>
+                        <Badge 
+                          variant={paymentMethods.filter(m => m.is_enabled).length > 0 ? "default" : "secondary"}
+                          className={cn(
+                            "badge-text",
+                            paymentMethods.filter(m => m.is_enabled).length > 0 
+                              ? "bg-green-500/20 text-green-500 border-green-500/30" 
+                              : "bg-amber-500/20 text-amber-600 border-amber-500/30"
+                          )}
+                        >
+                          {paymentMethods.filter(m => m.is_enabled).length > 0 ? 'Ready' : 'Setup Required'}
+                        </Badge>
+                      </div>
+                      <div className="body-text-small break-words">
+                        {paymentMethods.filter(m => m.is_enabled).length === 0 ? (
+                          <span className="text-amber-600">⚠️ Register at least one payment method to accept payments.</span>
+                        ) : (
+                          <>
+                            <span className="text-green-600">✅ Registered methods: </span>
+                            <span className="font-medium">
+                              {paymentMethods.filter(m => m.is_enabled).map(m => m.display_name).join(', ')}
+                            </span>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <div className="text-center py-12">
+                <div className="w-16 h-16 bg-muted/50 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Settings className="icon-xl text-muted-foreground" />
+                </div>
+                <h3 className="section-title mb-2">No Payment Methods Available</h3>
+                <p className="body-text-muted mb-6 max-w-sm mx-auto">
+                  No payment methods are available in the system. Please contact support.
+                </p>
+                <Button 
+                  type="button"
+                  onClick={fetchPaymentMethods}
+                  disabled={loadingPaymentMethods}
+                  className="btn-primary"
+                >
+                  {loadingPaymentMethods ? (
+                    <>
+                      <Loader2 className="icon-md mr-2 animate-spin" />
+                      Refreshing...
+                    </>
+                  ) : (
+                    <>
+                      <Settings className="icon-md mr-2" />
+                      Refresh
+                    </>
+                  )}
+                </Button>
+              </div>
+            )}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  </>
 )}
 
 
-
-
-
-
-{/* ADD PAYOUT HISTORY SECTION */}
+{/* ==================== PAYOUT HISTORY PAGE ==================== */}
 {page === "Payout History" && (
-  <Card className="bg-card border border-border shadow-lg">
+  <Card className="content-card shadow-lg">
     <CardHeader>
-      <CardTitle className="text-foreground flex items-center gap-2">
-        <DollarSign className="w-5 h-5" />
+      <CardTitle className="card-title flex items-center gap-2">
+        <DollarSign className="icon-lg" />
         Payout History
       </CardTitle>
-      <CardDescription className="text-muted-foreground">
+      <CardDescription className="body-text-muted">
         View your payout transaction history
       </CardDescription>
     </CardHeader>
-    <CardContent>
+    <CardContent className="content-card-padding">
       {loadingPayouts ? (
         <div className="flex items-center justify-center py-8">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <span className="ml-2">Loading payout history...</span>
+          <Loader2 className="icon-xl animate-spin text-primary" />
+          <span className="body-text-muted ml-2">Loading payout history...</span>
         </div>
-      ) : (Array.isArray(payouts) && payouts.length > 0) ? (
+      ) : Array.isArray(payouts) && payouts.length > 0 ? (
         <div className="space-y-4">
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse border border-border rounded-lg">
+          {/* ✅ FIXED: Add overflow wrapper for table */}
+          <div className="overflow-x-auto -mx-4 sm:-mx-6 px-4 sm:px-6">
+            <table className="w-full min-w-[800px] border-collapse border border-border rounded-lg">
               <thead>
-                <tr className="bg-muted">
-                  <th className="border border-border px-4 py-3 text-left text-sm font-medium text-foreground">Date</th>
-                  <th className="border border-border px-4 py-3 text-left text-sm font-medium text-foreground">Amount</th>
-                  <th className="border border-border px-4 py-3 text-left text-sm font-medium text-foreground">Mode</th>
-                  <th className="border border-border px-4 py-3 text-left text-sm font-medium text-foreground">UTR Number</th>
-                  <th className="border border-border px-4 py-3 text-left text-sm font-medium text-foreground">Status</th>
-                  <th className="border border-border px-4 py-3 text-left text-sm font-medium text-foreground">Remarks</th>
+                <tr className="table-header">
+                  <th className="table-cell table-header-text text-left whitespace-nowrap">Date</th>
+                  <th className="table-cell table-header-text text-left whitespace-nowrap">Amount</th>
+                  <th className="table-cell table-header-text text-left whitespace-nowrap">Mode</th>
+                  <th className="table-cell table-header-text text-left whitespace-nowrap">UTR Number</th>
+                  <th className="table-cell table-header-text text-left whitespace-nowrap">Status</th>
+                  <th className="table-cell table-header-text text-left whitespace-nowrap">Remarks</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-border">
                 {payouts.map((payout, index) => (
-                  <tr key={payout?.id || index} className={index % 2 === 0 ? 'bg-background' : 'bg-muted/20'}>
-                    <td className="border border-border px-4 py-3 text-sm">
-                      {payout?.payoutDate ? new Date(payout.payoutDate).toLocaleDateString('en-IN') : '-'}
+                  <tr
+                    key={payout?.id || index}
+                    className="table-row"
+                  >
+                    <td className="table-cell table-cell-text whitespace-nowrap">
+                      {payout?.payoutDate
+                        ? new Date(payout.payoutDate).toLocaleDateString("en-IN")
+                        : "-"}
                     </td>
-                    <td className="border border-border px-4 py-3 text-sm font-medium">
+                    <td className="table-cell table-cell-text font-medium whitespace-nowrap">
                       <FontAwesomeIcon icon={faIndianRupeeSign} className="w-3 h-3 mr-1" />
-                      {payout?.amount ? parseFloat(payout.amount).toFixed(2) : '0.00'}
+                      {payout?.amount ? parseFloat(payout.amount).toFixed(2) : "0.00"}
                     </td>
-                    <td className="border border-border px-4 py-3 text-sm">
-                      <Badge variant="outline" className="text-xs">
-                        {payout?.transferMode || 'N/A'}
+                    <td className="table-cell table-cell-text whitespace-nowrap">
+                      <Badge variant="outline" className="badge-text">
+                        {payout?.transferMode || "NA"}
                       </Badge>
                     </td>
-                    <td className="border border-border px-4 py-3 text-sm">
-                      {payout?.utrNumber || '-'}
+                    <td className="table-cell table-cell-text whitespace-nowrap">
+                      {payout?.utrNumber || "-"}
                     </td>
-                    <td className="border border-border px-4 py-3 text-sm">
-                      <Badge className={`${
-                        payout?.status === 'SUCCESS' 
-                          ? 'bg-green-500/20 text-green-400' 
-                          : payout?.status === 'FAILED'
-                          ? 'bg-red-500/20 text-red-400'
-                          : 'bg-yellow-500/20 text-yellow-400'
-                      }`}>
-                        {payout?.status || 'PENDING'}
+                    <td className="table-cell whitespace-nowrap">
+                      <Badge
+                        className={cn(
+                          "badge-text",
+                          payout?.status === "SUCCESS"
+                            ? "bg-green-500/20 text-green-400"
+                            : payout?.status === "FAILED"
+                            ? "bg-red-500/20 text-red-400"
+                            : "bg-yellow-500/20 text-yellow-400"
+                        )}
+                      >
+                        {payout?.status || "PENDING"}
                       </Badge>
                     </td>
-                    <td className="border border-border px-4 py-3 text-sm text-muted-foreground">
-                      {payout?.remarks || '-'}
+                    <td className="table-cell table-cell-text max-w-[200px] truncate">
+                      {payout?.remarks || "-"}
                     </td>
                   </tr>
                 ))}
@@ -2712,27 +2719,32 @@ const ToggleSwitch = ({
             </table>
           </div>
 
+          {/* Mobile scroll indicator */}
+          <div className="block sm:hidden text-center body-text-small text-muted-foreground border-t border-border pt-3">
+            ← Scroll horizontally to view all columns →
+          </div>
+
           {/* Pagination */}
           {payoutTotalPages > 1 && (
-            <div className="flex items-center justify-center gap-2 mt-6">
+            <div className="flex items-center justify-center gap-2 pt-4 flex-wrap">
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => setPayoutPage(Math.max(1, payoutPage - 1))}
                 disabled={payoutPage === 1}
-                className="border-border text-foreground hover:bg-muted"
+                className="btn-secondary"
               >
                 Previous
               </Button>
-              <span className="px-3 py-1 text-sm text-muted-foreground">
+              <span className="body-text-small text-muted-foreground px-3">
                 Page {payoutPage} of {payoutTotalPages}
               </span>
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => setPayoutPage(Math.min(payoutTotalPages, payoutPage + 1))}
-                disabled={payoutPage === payoutTotalPages}
-                className="border-border text-foreground hover:bg-muted"
+                disabled={payoutPage >= payoutTotalPages}
+                className="btn-secondary"
               >
                 Next
               </Button>
@@ -2740,10 +2752,10 @@ const ToggleSwitch = ({
           )}
         </div>
       ) : (
-        <div className="text-center py-8">
+        <div className="text-center py-12">
           <DollarSign className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-          <h3 className="text-lg font-medium text-foreground mb-2">No Payout History</h3>
-          <p className="text-muted-foreground">Your payout transactions will appear here</p>
+          <h3 className="section-title mb-2">No Payout History</h3>
+          <p className="body-text-muted">Your payout transactions will appear here</p>
         </div>
       )}
     </CardContent>
@@ -2752,9 +2764,10 @@ const ToggleSwitch = ({
 
 
 
-  
 
-              {/* Action Buttons */}
+
+
+                {/* Action Buttons */}
               {/**<div className="flex justify-end space-x-4">
                 <Button variant="outline" className="border-border text-foreground hover:bg-muted hover:text-foreground">Cancel</Button>
                 <Button type="submit" className="bg-primary hover:bg-primary/90 text-primary-foreground">Save Changes</Button>

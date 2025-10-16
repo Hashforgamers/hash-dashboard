@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { 
+  Dot, 
   MoreVertical, 
   Plus, 
   Monitor, 
@@ -32,7 +33,7 @@ import { ConsoleType } from './types'
 import MealSelector from './mealSelector'
 
 type PillColor = "green" | "blue" | "purple" | "yellow" | "red"
-type ConsoleFilter = "PC" | "PS5" | "Xbox" | "VR"
+type ConsoleFilter = "all" | "PC" | "PS5" | "Xbox" | "VR"
 
 interface SelectedSlot {
   slot_id: number
@@ -67,6 +68,7 @@ interface SlotBookingFormProps {
   availableConsoles: ConsoleType[]
 }
 
+// Booking Form Component - Using your exact BookingForm patterns
 function SlotBookingForm({ 
   isOpen, 
   onClose, 
@@ -80,6 +82,7 @@ function SlotBookingForm({
     selectedSlots 
   })
 
+  // Form states matching your BookingForm exactly
   const [name, setName] = useState<string>('')
   const [email, setEmail] = useState<string>('')
   const [phone, setPhone] = useState<string>('')
@@ -93,6 +96,7 @@ function SlotBookingForm({
   const [isSubmitted, setIsSubmitted] = useState<boolean>(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
 
+  // User suggestion states matching your exact pattern
   const [userList, setUserList] = useState<{ name: string; email: string; phone: string }[]>([])
   const [emailSuggestions, setEmailSuggestions] = useState<{ name: string; email: string; phone: string }[]>([])
   const [phoneSuggestions, setPhoneSuggestions] = useState<{ name: string; email: string; phone: string }[]>([])
@@ -100,6 +104,7 @@ function SlotBookingForm({
   const [focusedInput, setFocusedInput] = useState<string>('')
   const blurTimeoutRef = useRef<number | null>(null)
 
+  // Get vendor ID using your exact pattern
   const getVendorIdFromToken = (): number | null => {
     console.log('🔍 Getting vendor ID from token...')
     const token = localStorage.getItem('jwtToken')
@@ -119,6 +124,7 @@ function SlotBookingForm({
     }
   }
 
+  // Calculate auto waive-off using your exact logic
   const calculateAutoWaiveOff = (slots: SelectedSlot[]) => {
     console.log('💰 Calculating auto waive-off for slots:', slots)
     
@@ -133,6 +139,7 @@ function SlotBookingForm({
       const slotDateTime = new Date(`${slot.date}T${slot.start_time}+05:30`)
       const slotEndTime = new Date(`${slot.date}T${slot.end_time}+05:30`)
       
+      // Calculate slot duration in minutes
       const slotDurationMs = slotEndTime.getTime() - slotDateTime.getTime()
       const slotDurationMinutes = slotDurationMs / (1000 * 60)
       
@@ -144,10 +151,13 @@ function SlotBookingForm({
         slotEnd: slotEndTime.toLocaleTimeString('en-IN')
       })
       
+      // Check if booking is made during the slot time
       if (nowIST >= slotDateTime && nowIST < slotEndTime) {
+        // Calculate elapsed time since slot started
         const elapsedMs = nowIST.getTime() - slotDateTime.getTime()
         const elapsedMinutes = elapsedMs / (1000 * 60)
         
+        // Calculate wave-off percentage based on elapsed time
         const elapsedPercentage = elapsedMinutes / slotDurationMinutes
         const waveOffAmount = slot.console_price * elapsedPercentage
         
@@ -175,6 +185,7 @@ function SlotBookingForm({
     return finalWaveOff
   }
 
+  // Update automatic wave-off when selected slots change
   useEffect(() => {
     if (selectedSlots.length > 0) {
       const autoWaiveOff = calculateAutoWaiveOff(selectedSlots)
@@ -184,6 +195,7 @@ function SlotBookingForm({
     }
   }, [selectedSlots])
 
+  // Fetch user list with caching (your exact pattern)
   useEffect(() => {
     if (!isOpen) return
 
@@ -243,6 +255,7 @@ function SlotBookingForm({
     }
   }, [isOpen])
 
+  // User suggestion functions (your exact pattern)
   const getSuggestions = (key: keyof typeof userList[0], value: string) => {
     if (!value.trim()) {
       return userList
@@ -255,6 +268,7 @@ function SlotBookingForm({
     return filtered
   }
 
+  // Input handlers
   const handleEmailInputChange = (value: string) => {
     setEmail(value)
     const suggestions = getSuggestions('email', value)
@@ -276,6 +290,7 @@ function SlotBookingForm({
     setFocusedInput('name')
   }
 
+  // Focus handlers (your exact pattern)
   const handleEmailFocus = () => {
     if (blurTimeoutRef.current) {
       clearTimeout(blurTimeoutRef.current)
@@ -331,6 +346,7 @@ function SlotBookingForm({
     setFocusedInput("")
   }
 
+  // Meal selection handlers (your exact pattern)
   const handleMealSelectorConfirm = (meals: SelectedMeal[]) => {
     console.log('🍽️ Meals confirmed:', meals)
     setSelectedMeals(meals)
@@ -342,6 +358,7 @@ function SlotBookingForm({
     setIsMealSelectorOpen(false)
   }
 
+  // Calculate totals including meals (your exact pattern)
   const mealsTotal = selectedMeals.reduce((sum, meal) => sum + meal.total, 0)
   const consoleTotal = selectedSlots.reduce((sum, slot) => sum + slot.console_price, 0)
   const totalAmount = Math.max(
@@ -358,6 +375,7 @@ function SlotBookingForm({
     totalAmount
   })
 
+  // Form validation (your exact pattern)
   const validateForm = () => {
     console.log('✅ Validating form...')
     const newErrors: Record<string, string> = {}
@@ -374,6 +392,7 @@ function SlotBookingForm({
     return Object.keys(newErrors).length === 0
   }
 
+  // Handle form submission (your exact API pattern)
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     console.log('🚀 Form submission started')
@@ -394,6 +413,7 @@ function SlotBookingForm({
     console.log('📝 Preparing booking data...')
 
     try {
+      // Use your exact booking data structure
       const bookingData = {
         consoleType: selectedSlots[0]?.console_name || '',
         name,
@@ -436,6 +456,7 @@ function SlotBookingForm({
           window.dispatchEvent(new CustomEvent('refresh-dashboard'))
         }
 
+        // Cache management (your exact pattern)
         const userCacheKey = 'userList'
         const cached = localStorage.getItem(userCacheKey)
 
@@ -477,6 +498,7 @@ function SlotBookingForm({
     }
   }
 
+  // Success screen (your exact pattern)
   if (isSubmitted) {
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
@@ -540,6 +562,7 @@ function SlotBookingForm({
   }
 
   if (!isOpen) return null
+
   return (
     <AnimatePresence>
       <motion.div
@@ -554,6 +577,7 @@ function SlotBookingForm({
           exit={{ scale: 0.9, opacity: 0 }}
           className="w-full max-w-6xl max-h-[95vh] overflow-y-auto bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-2xl"
         >
+          {/* Header */}
           <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
             <h2 className="text-2xl font-bold text-gray-800 dark:text-white">New Slot Booking</h2>
             <button
@@ -567,7 +591,9 @@ function SlotBookingForm({
           <div className="p-6">
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* Left Column - Customer Details & Slots */}
                 <div className="lg:col-span-2 space-y-6">
+                  {/* Selected Slots Summary */}
                   <Card className="p-4 bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-700">
                     <h3 className="text-lg font-semibold text-emerald-800 dark:text-emerald-200 mb-3">Selected Time Slots</h3>
                     <div className="space-y-2">
@@ -589,6 +615,7 @@ function SlotBookingForm({
                     </div>
                   </Card>
 
+                  {/* Customer Details */}
                   <Card className="p-6 bg-gray-50 dark:bg-gray-700/30">
                     <div className="flex items-center gap-2 mb-4">
                       <div className="p-1 bg-emerald-100 dark:bg-emerald-900/30 rounded">
@@ -598,6 +625,7 @@ function SlotBookingForm({
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      {/* Email Input with Suggestions */}
                       <div className="relative">
                         <input
                           type="email"
@@ -650,6 +678,7 @@ function SlotBookingForm({
                         {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
                       </div>
 
+                      {/* Phone Input with Suggestions */}
                       <div className="relative">
                         <input
                           type="tel"
@@ -702,6 +731,7 @@ function SlotBookingForm({
                         {errors.phone && <p className="text-red-500 text-xs mt-1">{errors.phone}</p>}
                       </div>
 
+                      {/* Name Input with Suggestions */}
                       <div className="relative">
                         <input
                           type="text"
@@ -755,6 +785,7 @@ function SlotBookingForm({
                     </div>
                   </Card>
 
+                  {/* Payment Method */}
                   <Card className="p-6 bg-gray-50 dark:bg-gray-700/30">
                     <div className="flex items-center gap-2 mb-4">
                       <div className="p-1 bg-yellow-100 dark:bg-yellow-900/30 rounded">
@@ -792,7 +823,9 @@ function SlotBookingForm({
                   </Card>
                 </div>
 
+                {/* Right Column - Summary & Pricing */}
                 <div className="space-y-6">
+                  {/* Booking Summary & Pricing */}
                   <Card className="p-6 bg-gray-50 dark:bg-gray-700/30">
                     <div className="flex items-center gap-2 mb-4">
                       <div className="p-1 bg-indigo-100 dark:bg-indigo-900/30 rounded">
@@ -819,6 +852,7 @@ function SlotBookingForm({
                         />
                       </div>
 
+                      {/* Auto Waive Off Display */}
                       {autoWaiveOffAmount > 0 && (
                         <div className="flex justify-between items-center py-2 border-b border-gray-200 dark:border-gray-600 bg-orange-50 dark:bg-orange-900/20 rounded-lg px-3">
                           <span className="text-orange-600 dark:text-orange-400 font-medium">⏰ Auto Waive Off:</span>
@@ -843,6 +877,7 @@ function SlotBookingForm({
                         />
                       </div>
 
+                      {/* Meals Section */}
                       <div className="flex justify-between items-center py-2 border-b border-gray-200 dark:border-gray-600">
                         <span className="text-gray-600 dark:text-gray-400">Meals & Extras:</span>
                         <button
@@ -855,6 +890,7 @@ function SlotBookingForm({
                         </button>
                       </div>
 
+                      {/* Display selected meals */}
                       {selectedMeals.length > 0 && (
                         <div className="py-2 border-b border-gray-200 dark:border-gray-600">
                           <div className="space-y-2">
@@ -893,6 +929,7 @@ function SlotBookingForm({
                 </div>
               </div>
 
+              {/* Submit Button */}
               <div className="flex gap-4 pt-6 border-t border-gray-200 dark:border-gray-700">
                 <Button
                   type="button"
@@ -923,6 +960,7 @@ function SlotBookingForm({
             </form>
           </div>
 
+          {/* MealSelector using your exact pattern */}
           <MealSelector
             vendorId={getVendorIdFromToken() || 0}
             isOpen={isMealSelectorOpen}
@@ -936,6 +974,7 @@ function SlotBookingForm({
   )
 }
 
+// Slot Pill Component with green selection
 function SlotPill({
   label,
   color,
@@ -953,18 +992,18 @@ function SlotPill({
 }) {
   const colorClasses: Record<PillColor, string> = {
     green: selected 
-      ? "bg-emerald-600 text-white ring-2 ring-emerald-400 shadow-lg" 
-      : "bg-emerald-600 text-white hover:bg-emerald-700",
+      ? "bg-emerald-600 text-white ring-2 ring-emerald-500 ring-offset-2 shadow-lg transform scale-105" 
+      : "bg-emerald-500/90 text-white ring-1 ring-emerald-400/20 shadow-sm shadow-emerald-500/25 hover:bg-emerald-600",
     blue: selected 
-      ? "bg-emerald-600 text-white ring-2 ring-emerald-400 shadow-lg"
-      : "bg-blue-600 text-white hover:bg-blue-700", 
+      ? "bg-blue-600 text-white ring-2 ring-blue-500 ring-offset-2 shadow-lg transform scale-105"
+      : "bg-blue-500/90 text-white ring-1 ring-blue-400/20 shadow-sm shadow-blue-500/25 hover:bg-blue-600", 
     purple: selected 
-      ? "bg-emerald-600 text-white ring-2 ring-emerald-400 shadow-lg"
-      : "bg-purple-600 text-white hover:bg-purple-700",
+      ? "bg-violet-600 text-white ring-2 ring-violet-500 ring-offset-2 shadow-lg transform scale-105"
+      : "bg-violet-500/90 text-white ring-1 ring-violet-400/20 shadow-sm shadow-violet-500/25 hover:bg-violet-600",
     yellow: selected 
-      ? "bg-emerald-600 text-white ring-2 ring-emerald-400 shadow-lg"
-      : "bg-yellow-500 text-white hover:bg-yellow-600",
-    red: "bg-red-600 text-white",
+      ? "bg-amber-600 text-white ring-2 ring-amber-500 ring-offset-2 shadow-lg transform scale-105"
+      : "bg-amber-500/90 text-white ring-1 ring-amber-400/20 shadow-sm shadow-amber-500/25 hover:bg-amber-600",
+    red: "bg-red-500/90 text-white ring-1 ring-red-400/20 shadow-sm shadow-red-500/25",
   }
 
   return (
@@ -972,18 +1011,19 @@ function SlotPill({
       onClick={onClick}
       disabled={disabled}
       className={cn(
-        "w-full h-full min-h-[36px] flex items-center justify-center rounded-md text-[10px] font-bold uppercase tracking-wide",
-        "transition-all duration-200 cursor-pointer",
+        "inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-semibold",
+        "transition-all duration-200 hover:scale-105 cursor-pointer",
         disabled && "cursor-not-allowed opacity-60",
         colorClasses[color],
       )}
     >
-      {Icon ? <Icon className="h-3 w-3 mr-0.5" /> : null}
-      <span className="truncate">{label}</span>
+      {Icon ? <Icon className="h-3 w-3 opacity-90" /> : null}
+      {label}
     </button>
   )
 }
 
+// Segmented Button Component
 function SegmentedButton({
   children,
   active = false,
@@ -1000,19 +1040,20 @@ function SegmentedButton({
       type="button"
       onClick={onClick}
       className={cn(
-        "inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium uppercase",
-        "transition-all duration-200",
+        "inline-flex items-center gap-2 rounded-full px-4 py-2.5 text-sm font-medium",
+        "transition-all duration-200 hover:scale-105",
         active
-          ? "bg-blue-600 text-white shadow-md"
-          : "bg-gray-700 text-gray-300 hover:bg-gray-600 border border-gray-600",
+          ? "bg-emerald-600 text-white shadow-lg shadow-emerald-500/25"
+          : "bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 hover:text-gray-900 dark:hover:text-white border border-gray-300 dark:border-gray-600",
       )}
     >
-      {Icon ? <Icon className="h-3.5 w-3.5" /> : null}
+      {Icon ? <Icon className="h-4 w-4" /> : null}
       {children}
     </button>
   )
 }
 
+// Top Bar Component
 function TopBar({ 
   selectedSlots, 
   onNewBooking 
@@ -1020,12 +1061,14 @@ function TopBar({
   selectedSlots: SelectedSlot[], 
   onNewBooking: () => void 
 }) {
+  console.log('🎯 TopBar rendered with selected slots:', selectedSlots.length)
+  
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
+    <div className="flex flex-wrap items-center justify-between gap-3">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-white">Slot Management</h1>
-        <p className="text-sm text-gray-400 mt-1">
-          Manage and monitor console bookings.
+        <h1 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white">Slot Management</h1>
+        <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+          Manage and create future console bookings for current day + next 2 days.
         </p>
       </div>
 
@@ -1034,11 +1077,11 @@ function TopBar({
           onClick={onNewBooking}
           disabled={selectedSlots.length === 0}
           className={cn(
-            "rounded-lg text-white shadow-lg transition-all duration-200",
-            "px-5 py-2 text-sm font-semibold",
+            "rounded-lg text-white shadow-lg transition-all duration-200 hover:scale-105",
+            "px-6 py-2.5 font-semibold",
             selectedSlots.length > 0 
-              ? "bg-blue-600 hover:bg-blue-700"
-              : "bg-gray-500 cursor-not-allowed"
+              ? "bg-emerald-600 hover:bg-emerald-700 shadow-emerald-500/25"
+              : "bg-gray-400 cursor-not-allowed"
           )}
         >
           <Plus className="mr-2 h-4 w-4" />
@@ -1047,15 +1090,16 @@ function TopBar({
         <Button 
           variant="outline"
           size="icon" 
-          className="rounded-lg border-gray-600 bg-gray-700 hover:bg-gray-600"
+          className="rounded-lg border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600"
         >
-          <MoreVertical className="h-4 w-4 text-gray-300" />
+          <MoreVertical className="h-4 w-4 text-gray-600 dark:text-gray-300" />
         </Button>
       </div>
     </div>
   )
 }
 
+// Console Filter Component
 function ConsoleFilter({
   selectedConsole,
   onConsoleChange,
@@ -1063,7 +1107,10 @@ function ConsoleFilter({
   selectedConsole: ConsoleFilter
   onConsoleChange: (gameConsole: ConsoleFilter) => void
 }) {
+  console.log('🎮 ConsoleFilter rendered with selected:', selectedConsole)
+  
   const consoleIcons = {
+    all: Dot,
     PC: Monitor,
     PS5: MonitorPlay,
     Xbox: Gamepad,
@@ -1071,18 +1118,21 @@ function ConsoleFilter({
   }
 
   return (
-    <Card className="rounded-xl border border-gray-700 bg-gray-800/50 backdrop-blur-sm p-4 mb-6">
-      <div className="flex items-center gap-3">
-        <span className="text-xs font-medium text-gray-400 uppercase">Select Console</span>
-        <div className="flex flex-wrap items-center gap-2">
+    <Card className="mt-6 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/50 backdrop-blur-sm p-6">
+      <div className="flex flex-col gap-4">
+        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Select Console Type</span>
+        <div className="flex flex-wrap items-center gap-3">
           {Object.entries(consoleIcons).map(([key, Icon]) => (
             <SegmentedButton 
               key={key}
               active={selectedConsole === key} 
               icon={Icon}
-              onClick={() => onConsoleChange(key as ConsoleFilter)}
+              onClick={() => {
+                console.log('🎮 Console filter changed to:', key)
+                onConsoleChange(key as ConsoleFilter)
+              }}
             >
-              {key}
+              {key === 'all' ? 'All' : key}
             </SegmentedButton>
           ))}
         </div>
@@ -1091,6 +1141,7 @@ function ConsoleFilter({
   )
 }
 
+// FIXED: Proper HORIZONTAL Grid Layout Component
 function ScheduleGrid({
   availableConsoles,
   selectedConsole,
@@ -1106,6 +1157,7 @@ function ScheduleGrid({
   allSlots: { [key: string]: any[] }
   isLoading: boolean
 }) {
+  // Generate current day + next 2 days (total 3 days) - FIXED VERSION
   const getNext3Days = () => {
     const days = []
     for (let i = 0; i < 3; i++) {
@@ -1117,38 +1169,58 @@ function ScheduleGrid({
       const day = String(targetDate.getDate()).padStart(2, '0')
       
       const fullDate = `${year}-${month}-${day}`
-      const displayDate = `${day}/${month}`
+      const displayDate = targetDate.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit' })
+      const longDisplayDate = targetDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
       
-      days.push({ date: displayDate, fullDate })
+      console.log(`📅 Day ${i}: Generated ${fullDate} (Display: ${displayDate})`)
+      
+      days.push({
+        date: displayDate,
+        fullDate,
+        displayDate: longDisplayDate
+      })
     }
     
+    console.log('📅 All days generated correctly:', days)
     return days
   }
 
   const days = getNext3Days()
 
+  // Extract unique times from all available slots - shows your dynamic times (09:00, 09:30, etc.)
   const uniqueTimes = React.useMemo(() => {
+    console.log('🕐 Calculating unique times from allSlots:', Object.keys(allSlots))
     const allTimes = new Set<string>()
     
     Object.values(allSlots).forEach(daySlots => {
+      console.log(`🕐 Processing ${daySlots.length} slots for time extraction`)
       daySlots.forEach(slot => {
-        const startTime = slot.start_time.slice(0, 5)
+        const startTime = slot.start_time.slice(0, 5) // "HH:MM"
         allTimes.add(startTime)
+        console.log(`🕐 Added time: ${startTime}`)
       })
     })
     
+    // Sort times chronologically
     const sortedTimes = Array.from(allTimes).sort((a, b) => {
       const [aHour, aMin] = a.split(':').map(Number)
       const [bHour, bMin] = b.split(':').map(Number)
       return (aHour * 60 + aMin) - (bHour * 60 + bMin)
     })
     
+    console.log('🕐 Unique times from slots:', sortedTimes)
     return sortedTimes
   }, [allSlots])
 
+  // Filter consoles based on selection
   const filteredConsoles = availableConsoles.filter(gameConsole => {
-    return gameConsole.type === selectedConsole
+    if (selectedConsole === 'all') return true
+    const match = gameConsole.type === selectedConsole
+    console.log(`🎮 Console filter check: ${gameConsole.type} === ${selectedConsole} = ${match}`)
+    return match
   })
+
+  console.log('🎮 Filtered consoles:', filteredConsoles.length, filteredConsoles.map(c => c.type))
 
   const getConsoleIcon = (consoleType: string) => {
     switch (consoleType) {
@@ -1166,43 +1238,44 @@ function ScheduleGrid({
     return colors[consoleId % colors.length]
   }
 
-  {/**const isSlotSelected = (slotId: number) => {
+  const isSlotSelected = (slotId: number) => {
     return selectedSlots.some(slot => slot.slot_id === slotId)
   }
 
   const handleSlotClick = (dayData: any, time: string, gameConsole: ConsoleType) => {
-  const daySlots = allSlots[dayData.fullDate] || []
-  
-  const matchingSlot = daySlots.find(slot => {
-    const slotStartTime = slot.start_time.slice(0, 5)
-    return slotStartTime === time && slot.console_id === gameConsole.id && slot.is_available
-  })
-
-  if (!matchingSlot) return
-
-  const selectedSlot: SelectedSlot = {
-    slot_id: matchingSlot.slot_id,
-    date: dayData.fullDate,
-    start_time: matchingSlot.start_time,
-    end_time: matchingSlot.end_time,
-    console_id: gameConsole.id!,
-    console_name: gameConsole.name,
-    console_price: matchingSlot.single_slot_price || gameConsole.price!
-  }
-
-  onSlotSelect(selectedSlot)
-}
-
-
-   const handleSlotClick = (dayData: any, time: string, gameConsole: ConsoleType) => {
-    const daySlots = allSlots[dayData.fullDate] || []
+    console.log('🎯 Slot clicked:', { 
+      date: dayData.fullDate, 
+      time, 
+      gameConsole: gameConsole.name,
+      consoleId: gameConsole.id 
+    })
     
+    const daySlots = allSlots[dayData.fullDate] || []
+    console.log(`📋 Available slots for ${dayData.fullDate}:`, daySlots.length)
+    
+    // Show all slots for debugging
+    console.log(`📋 All slots for ${dayData.fullDate}:`, daySlots.map(s => ({
+      slot_id: s.slot_id,
+      start_time: s.start_time,
+      console_id: s.console_id,
+      console_name: s.console_name || gameConsole.name,
+      is_available: s.is_available
+    })))
+
+    // Find the slot that matches the time and gameConsole
     const matchingSlot = daySlots.find(slot => {
-      const slotStartTime = slot.start_time.slice(0, 5)
-      return slotStartTime === time && slot.console_id === gameConsole.id && slot.is_available
+      const slotStartTime = slot.start_time.slice(0, 5) // "HH:MM"
+      const slotMatches = slotStartTime === time && slot.console_id === gameConsole.id && slot.is_available
+      console.log(`🔍 Checking slot: ${slot.start_time} (${slotStartTime}) vs ${time}, gameConsole ${slot.console_id} vs ${gameConsole.id}, available: ${slot.is_available} = ${slotMatches}`)
+      return slotMatches
     })
 
-    if (!matchingSlot) return
+    if (!matchingSlot) {
+      console.log('❌ No matching available slot found')
+      return
+    }
+
+    console.log('✅ Matching slot found:', matchingSlot)
 
     const selectedSlot: SelectedSlot = {
       slot_id: matchingSlot.slot_id,
@@ -1214,117 +1287,17 @@ function ScheduleGrid({
       console_price: matchingSlot.single_slot_price || gameConsole.price!
     }
 
-    onSlotSelect(selectedSlot)
-  } **/}
-
-  {/**if (isLoading) {
-    return (
-      <Card className="rounded-2xl border border-gray-700 bg-gray-800/30 backdrop-blur-sm overflow-hidden">
-        <div className="flex items-center justify-center py-12">
-          <div className="text-center">
-            <Loader2 className="w-8 h-8 animate-spin text-blue-500 mx-auto mb-3" />
-            <p className="text-gray-300">Loading available slots...</p>
-          </div>
-        </div>
-      </Card>
-    )
-  }
-
-  const rows = days.map(day => {
-    const daySlots = allSlots[day.fullDate] || []
-
-    return {
-      date: day.date,
-      fullDate: day.fullDate,
-      cells: uniqueTimes.map((time, timeIndex) => {
-        if (filteredConsoles.length === 0) {
-          return <span key={timeIndex} />
-        }
-
-        const timeSlots: React.ReactNode[] = []
-        
-        filteredConsoles.forEach(gameConsole => {
-          const consoleSlots = daySlots.filter(slot => {
-            const slotStartTime = slot.start_time.slice(0, 5)
-            return slotStartTime === time && slot.console_id === gameConsole.id
-          })
-
-          if (consoleSlots.length === 0) return
-
-          const availableSlots = consoleSlots.filter(slot => slot.is_available)
-          const bookedSlots = consoleSlots.filter(slot => !slot.is_available)
-
-          availableSlots.forEach(slot => {
-            const isSelected = isSlotSelected(slot.slot_id)
-            
-            timeSlots.push(
-              <div key={slot.slot_id} className="w-full h-full min-h-[40px]">
-                <SlotPill
-                  label={gameConsole.name}
-                  color={getConsoleColor(gameConsole.id)}
-                  icon={getConsoleIcon(gameConsole.type)}
-                  onClick={() => handleSlotClick(day, time, gameConsole)}
-                  selected={isSelected}
-                />
-              </div>
-            )
-          }) 
-
-          bookedSlots.forEach((slot, index) => {
-            timeSlots.push(
-              <div 
-                key={`booked-${gameConsole.id}-${index}`} 
-                className="w-full h-full min-h-[40px] flex items-center justify-center bg-red-600 text-white rounded-md"
-              >
-                <X className="h-5 w-5 stroke-[3]" />
-              </div>
-            )
-          })
-        })
-
-        return (
-          <div key={`${day.fullDate}-${timeIndex}`} className="flex flex-row flex-wrap gap-1 items-stretch h-full p-1">
-            {timeSlots}
-          </div>
-        )
-      }),
-    }
-  }) **/}
-
-    const isSlotSelected = (slotId: number, date: string) => {
-    return selectedSlots.some(slot => slot.slot_id === slotId && slot.date === date)
-  }
-
-  const handleSlotClick = (dayData: any, time: string, gameConsole: ConsoleType) => {
-    const daySlots = allSlots[dayData.fullDate] || []
-    
-    const matchingSlot = daySlots.find(slot => {
-      const slotStartTime = slot.start_time.slice(0, 5)
-      return slotStartTime === time && slot.console_id === gameConsole.id && slot.is_available
-    })
-
-    if (!matchingSlot) return
-
-    const selectedSlot: SelectedSlot = {
-      slot_id: matchingSlot.slot_id,
-      date: dayData.fullDate,
-      start_time: matchingSlot.start_time,
-      end_time: matchingSlot.end_time,
-      console_id: gameConsole.id!,
-      console_name: gameConsole.name,
-      console_price: matchingSlot.single_slot_price || gameConsole.price!
-    }
-
+    console.log('🎯 Calling onSlotSelect with:', selectedSlot)
     onSlotSelect(selectedSlot)
   }
 
   if (isLoading) {
     return (
-      <Card className="rounded-2xl border border-gray-700 bg-gray-800/30 backdrop-blur-sm overflow-hidden">
+      <Card className="mt-6 rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/30 backdrop-blur-sm overflow-hidden">
         <div className="flex items-center justify-center py-12">
           <div className="text-center">
-            <Loader2 className="w-8 h-8 animate-spin text-blue-500 mx-auto mb-3" />
-            <p className="text-gray-300">Loading available slots...</p>
+            <Loader2 className="w-8 h-8 animate-spin text-emerald-500 mx-auto mb-3" />
+            <p className="text-gray-600 dark:text-gray-300">Loading available slots...</p>
           </div>
         </div>
       </Card>
@@ -1332,59 +1305,70 @@ function ScheduleGrid({
   }
 
   const rows = days.map(day => {
+    console.log(`📅 Processing day: ${day.fullDate}`)
     const daySlots = allSlots[day.fullDate] || []
+    console.log(`📋 Day ${day.fullDate} has ${daySlots.length} slots`)
 
     return {
       date: day.date,
-      fullDate: day.fullDate,
+      displayDate: day.displayDate,
       cells: uniqueTimes.map((time, timeIndex) => {
         if (filteredConsoles.length === 0) {
           return <span key={timeIndex} />
         }
 
+        // For each time slot, show available consoles
         const timeSlots: React.ReactNode[] = []
         
         filteredConsoles.forEach(gameConsole => {
+          // Find slots for this gameConsole at this time
           const consoleSlots = daySlots.filter(slot => {
             const slotStartTime = slot.start_time.slice(0, 5)
             return slotStartTime === time && slot.console_id === gameConsole.id
           })
 
-          if (consoleSlots.length === 0) return
+          console.log(`🕐 Time ${time}, Console ${gameConsole.name}: found ${consoleSlots.length} slots`)
 
+          if (consoleSlots.length === 0) {
+            // No slots available for this gameConsole at this time - show nothing
+            return
+          }
+
+          // Show available slots
           const availableSlots = consoleSlots.filter(slot => slot.is_available)
           const bookedSlots = consoleSlots.filter(slot => !slot.is_available)
 
+          console.log(`📊 Time ${time}, Console ${gameConsole.name}: ${availableSlots.length} available, ${bookedSlots.length} booked`)
+
           availableSlots.forEach(slot => {
-            const isSelected = isSlotSelected(slot.slot_id, day.fullDate) // Fixed: pass date too
+            const isSelected = isSlotSelected(slot.slot_id)
+            console.log(`🎯 Slot ${slot.slot_id} selected: ${isSelected}`)
             
             timeSlots.push(
-              <div key={`${day.fullDate}-${slot.slot_id}`} className="w-full h-full min-h-[40px]">
-                <SlotPill
-                  label={gameConsole.name}
-                  color={getConsoleColor(gameConsole.id)}
-                  icon={getConsoleIcon(gameConsole.type)}
-                  onClick={() => handleSlotClick(day, time, gameConsole)}
-                  selected={isSelected}
-                />
-              </div>
+              <SlotPill
+                key={slot.slot_id}
+                label={gameConsole.name}
+                color={getConsoleColor(gameConsole.id)}
+                icon={getConsoleIcon(gameConsole.type)}
+                onClick={() => handleSlotClick(day, time, gameConsole)}
+                selected={isSelected}
+              />
             )
-          }) 
+          })
 
+          // Show red X for booked slots (your requirement)
           bookedSlots.forEach((slot, index) => {
             timeSlots.push(
-              <div 
-                key={`booked-${day.fullDate}-${gameConsole.id}-${index}`} 
-                className="w-full h-full min-h-[40px] flex items-center justify-center bg-red-600 text-white rounded-md"
-              >
-                <X className="h-5 w-5 stroke-[3]" />
-              </div>
+              <span key={`booked-${gameConsole.id}-${index}`} className="text-red-400 font-bold text-lg text-center">
+                ×
+              </span>
             )
           })
         })
 
+        // FIXED: Horizontal layout without JSX comment in return
         return (
-          <div key={`${day.fullDate}-${timeIndex}`} className="flex flex-row flex-wrap gap-1 items-stretch h-full p-1">
+          <div key={timeIndex} className="flex flex-row flex-wrap gap-1 justify-center items-center">
             {timeSlots}
           </div>
         )
@@ -1392,14 +1376,16 @@ function ScheduleGrid({
     }
   })
 
+  console.log('📅 Generated rows for rendering:', rows.length)
 
   if (uniqueTimes.length === 0) {
     return (
-      <Card className="rounded-2xl border border-gray-700 bg-gray-800/30 backdrop-blur-sm overflow-hidden">
+      <Card className="mt-6 rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/30 backdrop-blur-sm overflow-hidden">
         <div className="flex items-center justify-center py-12">
           <div className="text-center">
-            <CalendarDays className="w-12 h-12 text-gray-500 mx-auto mb-3" />
-            <p className="text-gray-300">No slots available</p>
+            <CalendarDays className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+            <p className="text-gray-600 dark:text-gray-300">No slots available</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">Check back later or select different consoles</p>
           </div>
         </div>
       </Card>
@@ -1407,33 +1393,38 @@ function ScheduleGrid({
   }
 
   return (
-    <Card className="rounded-2xl border border-gray-700 bg-gray-800/30 backdrop-blur-sm overflow-hidden">
+    <Card className="mt-6 rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/30 backdrop-blur-sm overflow-hidden">
       <div className="overflow-x-auto">
+        {/* FIXED: Proper horizontal grid layout */}
         <div className="min-w-max">
-          <div className="grid gap-2 p-4 pb-3 bg-gray-800/50" style={{ gridTemplateColumns: `80px repeat(${uniqueTimes.length}, minmax(110px, 1fr))` }}>
-            <div className="text-xs font-semibold text-gray-400 uppercase">Date</div>
+          {/* Header row with time columns */}  
+          <div className="grid gap-2 p-6 pb-4" style={{ gridTemplateColumns: `120px repeat(${uniqueTimes.length}, minmax(100px, 1fr))` }}>
+            <div className="text-sm font-medium text-gray-500 dark:text-gray-400">Date</div>
             {uniqueTimes.map((time) => (
-              <div key={time} className="text-sm font-bold text-gray-200 text-center">
+              <div key={time} className="text-sm font-semibold text-gray-800 dark:text-gray-200 text-center">
                 {time}
               </div>
             ))}
           </div>
 
-          <div className="border-t border-gray-700">
+          {/* Data rows for each date */}
+          <div className="border-t border-gray-200 dark:border-gray-700">
             {rows.map((row) => (
               <div 
-                key={row.fullDate}
-                className="grid gap-2 p-4 py-3 border-b border-gray-700/50 last:border-b-0 hover:bg-gray-700/20 transition-colors" 
-                style={{ gridTemplateColumns: `80px repeat(${uniqueTimes.length}, minmax(110px, 1fr))` }}
+                key={row.date} 
+                className="grid gap-2 p-6 py-4 border-b border-gray-100 dark:border-gray-700/50 last:border-b-0" 
+                style={{ gridTemplateColumns: `120px repeat(${uniqueTimes.length}, minmax(100px, 1fr))` }}
               >
-                <div className="flex items-center text-sm font-bold text-white bg-gray-700/50 rounded-lg px-2 py-2 justify-center">
+                {/* Date column */}
+                <div className="flex items-center text-sm font-semibold text-gray-800 dark:text-gray-200 bg-gray-100 dark:bg-gray-800/50 rounded-lg px-3 py-2">
                   {row.date}
                 </div>
                 
+                {/* Time slot columns */}
                 {row.cells.map((content, idx) => (
                   <div
-                    key={`${row.fullDate}-cell-${idx}`}
-                    className="min-h-[44px] rounded-lg border border-gray-700 bg-gray-800/50 backdrop-blur-sm"
+                    key={idx}
+                    className="min-h-16 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/30 backdrop-blur-sm flex items-center justify-center px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-200"
                   >
                     {content}
                   </div>
@@ -1447,52 +1438,46 @@ function ScheduleGrid({
   )
 }
 
+// Recent Bookings Component
 function RecentBookings({ bookings }: { bookings: any[] }) {
   return (
     <section className="mt-12">
-      <h2 className="text-xl font-bold tracking-tight text-white mb-4">Selected Slot Bookings</h2>
+      <h2 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">Recent Slot Bookings</h2>
 
-      <Card className="overflow-hidden rounded-2xl border border-gray-700 bg-gray-800/30 backdrop-blur-sm">
+      <Card className="mt-6 overflow-hidden rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/30 backdrop-blur-sm">
         <div className="w-full overflow-x-auto">
           <table className="min-w-full text-sm">
             <thead>
-              <tr className="bg-gray-700/50 text-gray-200">
-                <th className="px-6 py-3 text-left text-xs font-semibold uppercase">Booking ID</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold uppercase">Name</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold uppercase">Contact Number</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold uppercase">Email ID</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold uppercase">Meal Selected</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold uppercase">Actions</th>
+              <tr className="bg-gray-50 dark:bg-gray-700/50 text-gray-800 dark:text-gray-200">
+                <th className="px-6 py-4 text-left font-semibold">Booking ID</th>
+                <th className="px-6 py-4 text-left font-semibold">Name</th>
+                <th className="px-6 py-4 text-left font-semibold">Contact</th>
+                <th className="px-6 py-4 text-left font-semibold">Date & Time</th>
+                <th className="px-6 py-4 text-left font-semibold">Console</th>
+                <th className="px-6 py-4 text-left font-semibold">Amount</th>
+                <th className="px-6 py-4 text-left font-semibold">Status</th>
               </tr>
             </thead>
             <tbody>
               {bookings.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-8 text-center text-gray-400">
-                    No bookings selected
+                  <td colSpan={7} className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
+                    No recent bookings found
                   </td>
                 </tr>
               ) : (
                 bookings.map((booking, index) => (
-                  <tr key={booking.id || index} className="border-t border-gray-700 hover:bg-gray-700/30 transition-colors">
-                    <td className="px-6 py-4 font-semibold text-blue-400">#{booking.id}</td>
-                    <td className="px-6 py-4 text-gray-200">{booking.name}</td>
-                    <td className="px-6 py-4 text-gray-300">{booking.phone}</td>
-                    <td className="px-6 py-4 text-gray-300">{booking.email || 'N/A'}</td>
-                    <td className="px-6 py-4 text-gray-300">{booking.meal || '1-Coc'}</td>
+                  <tr key={booking.id || index} className="border-t border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
+                    <td className="px-6 py-4 font-semibold text-emerald-600 dark:text-emerald-400">#{booking.id}</td>
+                    <td className="px-6 py-4 text-gray-900 dark:text-gray-200">{booking.name}</td>
+                    <td className="px-6 py-4 text-gray-700 dark:text-gray-300">{booking.phone}</td>
+                    <td className="px-6 py-4 text-gray-700 dark:text-gray-300">{booking.date} {booking.time}</td>
+                    <td className="px-6 py-4 text-gray-700 dark:text-gray-300">{booking.console_name}</td>
+                    <td className="px-6 py-4 text-gray-700 dark:text-gray-300">₹{booking.total_amount}</td>
                     <td className="px-6 py-4">
-                      <div className="flex items-center gap-2">
-                        <button className="p-1.5 hover:bg-gray-700 rounded text-blue-400 transition-colors">
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                          </svg>
-                        </button>
-                        <button className="p-1.5 hover:bg-gray-700 rounded text-red-400 transition-colors">
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                          </svg>
-                        </button>
-                      </div>
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400">
+                        Confirmed
+                      </span>
                     </td>
                   </tr>
                 ))
@@ -1505,8 +1490,11 @@ function RecentBookings({ bookings }: { bookings: any[] }) {
   )
 }
 
+// Main Slot Management Component
 export default function SlotManagement() {
-  const [selectedConsole, setSelectedConsole] = useState<ConsoleFilter>("PC")
+  console.log('🚀 SlotManagement component mounted')
+  
+  const [selectedConsole, setSelectedConsole] = useState<ConsoleFilter>("all")
   const [selectedSlots, setSelectedSlots] = useState<SelectedSlot[]>([])
   const [showBookingForm, setShowBookingForm] = useState(false)
   const [availableConsoles, setAvailableConsoles] = useState<ConsoleType[]>([])
@@ -1514,24 +1502,35 @@ export default function SlotManagement() {
   const [recentBookings, setRecentBookings] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
 
+  // Get vendor ID using your exact pattern
   const getVendorIdFromToken = (): number | null => {
+    console.log('🔍 Getting vendor ID from token in main component...')
     const token = localStorage.getItem('jwtToken')
-    if (!token) return null
+    if (!token) {
+      console.log('❌ No JWT token found in main component')
+      return null
+    }
     try {
       const decoded = jwtDecode<{ sub: { id: number } }>(token)
-      return decoded.sub.id
+      console.log('🔓 Decoded token in main component:', decoded)
+      const vendorId = decoded.sub.id
+      console.log('🏪 Extracted vendor ID in main component:', vendorId)
+      return vendorId
     } catch (error) {
-      console.error('❌ Error decoding token:', error)
+      console.error('❌ Error decoding token in main component:', error)
       return null
     }
   }
 
-  {/**useEffect(() => {
+  // Your exact data fetching logic
+  useEffect(() => {
     let isMounted = true
 
     const fetchDataOnce = async () => {
+      console.log('🔄 Starting fetchData...')
       const vendorId = getVendorIdFromToken()
       if (!vendorId) {
+        console.log('❌ No vendor ID, stopping fetchData')
         if (isMounted) setIsLoading(false)
         return
       }
@@ -1540,12 +1539,17 @@ export default function SlotManagement() {
       
       try {
         setIsLoading(true)
+        console.log('📡 Starting data fetch for vendor:', vendorId)
         
+        // 1. First, fetch available consoles
+        console.log('🎮 Fetching consoles...')
         const consolesResponse = await fetch(`${BOOKING_URL}/api/getAllConsole/vendor/${vendorId}`)
+        console.log('🎮 Consoles API response status:', consolesResponse.status)
         
         if (!isMounted) return
         
         if (!consolesResponse.ok) {
+          console.error('❌ Failed to fetch consoles:', consolesResponse.status)
           if (isMounted) {
             setIsLoading(false)
             setAvailableConsoles([])
@@ -1555,7 +1559,9 @@ export default function SlotManagement() {
         }
 
         const data = await consolesResponse.json()
+        console.log('🎮 Consoles API response data:', data)
         
+        // Process consoles first
         const consoleTemplate = [
           { type: "PC", name: "PC Gaming", icon: Monitor, iconColor: "#7c3aed" },
           { type: "PS5", name: "PlayStation 5", icon: Tv, iconColor: "#2563eb" },
@@ -1568,6 +1574,8 @@ export default function SlotManagement() {
             const apiName = (game.console_name || '').toLowerCase()
             const templateType = template.type.toLowerCase()
             
+            console.log(`🔍 Matching gameConsole: API="${apiName}" vs Template="${templateType}"`)
+            
             return apiName.includes(templateType) || 
                    (templateType === 'pc' && (apiName.includes('gaming') || apiName.includes('computer'))) ||
                    (templateType === 'ps5' && (apiName.includes('playstation') || apiName.includes('sony'))) ||
@@ -1576,6 +1584,7 @@ export default function SlotManagement() {
           })
           
           if (matchedConsole) {
+            console.log(`✅ MATCHED ${template.type}:`, matchedConsole)
             return {
               type: template.type,
               name: matchedConsole.console_name,
@@ -1590,10 +1599,14 @@ export default function SlotManagement() {
           return null
         }).filter(Boolean) as ConsoleType[]
         
+        console.log('🎮 Final available consoles:', availableConsoles)
+        
         if (!isMounted) return
         setAvailableConsoles(availableConsoles)
 
+        // Wait for gameConsole state to update before fetching slots
         if (availableConsoles.length === 0) {
+          console.log('❌ No consoles available, cannot fetch slots')
           if (isMounted) {
             setAllSlots({})
             setIsLoading(false)
@@ -1601,8 +1614,11 @@ export default function SlotManagement() {
           return
         }
 
+        // 2. Now fetch slots for each gameConsole and date
+        console.log('📅 Fetching slots for current + next 2 days...')
         const slotsData: { [key: string]: any[] } = {}
 
+        // Generate dates
         const dates = []
         for (let i = 0; i < 3; i++) {
           const today = new Date()
@@ -1616,74 +1632,130 @@ export default function SlotManagement() {
           const formattedDate = `${year}${month}${day}`
           
           dates.push({ dateString, formattedDate })
+          console.log(`📅 Date ${i}: ${dateString} (API format: ${formattedDate})`)
         }
 
+        // Fetch slots for each date sequentially to avoid race conditions
         for (const { dateString, formattedDate } of dates) {
           if (!isMounted) return
           
+          console.log(`\n📅 === FETCHING SLOTS FOR ${dateString} ===`)
           const daySlots: any[] = []
           
+          // Fetch slots for each gameConsole for this date
           for (const gameConsole of availableConsoles) {
             if (!gameConsole.id || !isMounted) continue
             
+            console.log(`🎮 Fetching slots for ${gameConsole.name} (ID: ${gameConsole.id}) on ${dateString}`)
+            
             try {
               const apiUrl = `${BOOKING_URL}/api/getSlots/vendor/${vendorId}/game/${gameConsole.id}/${formattedDate}`
+              console.log(`📡 API URL: ${apiUrl}`)
               
               const slotsResponse = await fetch(apiUrl)
+              console.log(`📡 Response status: ${slotsResponse.status}`)
               
               if (!isMounted) return
               
               if (slotsResponse.ok) {
                 const slotData = await slotsResponse.json()
+                console.log(`📦 Slot data received:`, {
+                  gameConsole: gameConsole.name,
+                  date: dateString,
+                  slotsCount: slotData.slots?.length || 0,
+                  firstFewSlots: slotData.slots?.slice(0, 3) || []
+                })
                 
                 if (slotData.slots && Array.isArray(slotData.slots)) {
+                  // Better time filtering with logging
                   const nowIST = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }))
+                  console.log(`🕐 Current IST: ${nowIST.toLocaleTimeString('en-IN')} for date ${dateString}`)
                   
-                  const processedSlots = slotData.slots.map((slot: any) => {
+                  const processedSlots = slotData.slots.map((slot: any, index: number) => {
+                    // Create the full slot object with all required fields
                     const processedSlot = {
                       ...slot,
                       console_id: gameConsole.id,
                       console_name: gameConsole.name,
                       date: dateString,
+                      // Keep original availability for future dates, apply time filter only for today
                       is_available: slot.is_available
                     }
                     
+                    // Only apply time filtering for today's date
                     if (dateString === dates[0].dateString) {
                       const slotEndTime = new Date(`${dateString}T${slot.end_time}+05:30`)
                       const isPast = nowIST >= slotEndTime
                       
                       if (isPast) {
+                        console.log(`⏰ Slot ${slot.slot_id} (${slot.start_time}-${slot.end_time}) is past, marking unavailable`)
                         processedSlot.is_available = false
                       }
                     }
                     
+                    console.log(`📝 Processed slot ${slot.slot_id}: ${slot.start_time}-${slot.end_time}, available: ${processedSlot.is_available}`)
                     return processedSlot
                   })
                   
+                  console.log(`✅ Processed ${processedSlots.length} slots for ${gameConsole.name} on ${dateString}`)
+                  console.log(`   Available slots: ${processedSlots.filter(s => s.is_available).length}`)
+                  console.log(`   Sample processed slots:`, processedSlots.slice(0, 2))
+                  
                   daySlots.push(...processedSlots)
+                } else {
+                  console.log(`⚠️ No slots array in response for ${gameConsole.name} on ${dateString}`)
                 }
+              } else {
+                console.log(`❌ API error for ${gameConsole.name} on ${dateString}: ${slotsResponse.status}`)
+                const errorText = await slotsResponse.text()
+                console.log(`❌ Error details:`, errorText)
               }
             } catch (error) {
-              console.error(`Error fetching slots for ${gameConsole.name}:`, error)
+              console.error(`💥 Exception fetching slots for ${gameConsole.name} on ${dateString}:`, error)
             }
           }
           
+          // Store slots for this date
           slotsData[dateString] = daySlots
+          console.log(`📋 STORED ${daySlots.length} total slots for ${dateString}`)
+          console.log(`   Available slots for ${dateString}: ${daySlots.filter(s => s.is_available).length}`)
+          console.log(`   Unique start times: ${[...new Set(daySlots.map(s => s.start_time.slice(0, 5)))].sort()}`)
         }
 
+        // Update state with all slot data at once
         if (isMounted) {
+          console.log('\n📋 === FINAL SLOT DATA SUMMARY ===')
+          Object.entries(slotsData).forEach(([date, slots]) => {
+            console.log(`${date}: ${slots.length} total slots, ${slots.filter(s => s.is_available).length} available`)
+            const times = [...new Set(slots.map(s => s.start_time.slice(0, 5)))].sort()
+            console.log(`  Times: ${times.join(', ')}`)
+          })
+          
           setAllSlots(slotsData)
+          console.log('✅ All slots state updated')
         }
 
+        // Set mock recent bookings
         if (isMounted) {
-          setRecentBookings([])
+          setRecentBookings([
+            {
+              id: 1001,
+              name: "John Doe",
+              phone: "9876543210",
+              date: "01/10/2025",
+              time: "14:00",
+              console_name: "PS5",
+              total_amount: 200
+            }
+          ])
         }
 
       } catch (error) {
-        console.error('Error in fetchData:', error)
+        console.error('💥 Error in fetchData:', error)
       } finally {
         if (isMounted) {
           setIsLoading(false)
+          console.log('🏁 fetchData completed')
         }
       }
     }
@@ -1693,188 +1765,12 @@ export default function SlotManagement() {
     return () => {
       isMounted = false
     }
-  }, []) **/}
+  }, []) // Empty dependency array
 
-  useEffect(() => {
-  let isMounted = true
-
-  const fetchDataOnce = async () => {
-    const vendorId = getVendorIdFromToken()
-    if (!vendorId) {
-      if (isMounted) setIsLoading(false)
-      return
-    }
-
-    if (!isMounted) return
-    
-    try {
-      setIsLoading(true)
-      
-      const consolesResponse = await fetch(`${BOOKING_URL}/api/getAllConsole/vendor/${vendorId}`)
-      
-      if (!isMounted) return
-      
-      if (!consolesResponse.ok) {
-        if (isMounted) {
-          setIsLoading(false)
-          setAvailableConsoles([])
-          setAllSlots({})
-        }
-        return
-      }
-
-      const data = await consolesResponse.json()
-      
-      const consoleTemplate = [
-        { type: "PC", name: "PC Gaming", icon: Monitor, iconColor: "#7c3aed" },
-        { type: "PS5", name: "PlayStation 5", icon: Tv, iconColor: "#2563eb" },
-        { type: "Xbox", name: "Xbox Series", icon: Gamepad, iconColor: "#059669" },
-        { type: "VR", name: "VR Gaming", icon: Headset, iconColor: "#ea580c" },
-      ]
-      
-      const availableConsoles = consoleTemplate.map(template => {
-        const matchedConsole = data.games?.find((game: any) => {
-          const apiName = (game.console_name || '').toLowerCase()
-          const templateType = template.type.toLowerCase()
-          
-          return apiName.includes(templateType) || 
-                 (templateType === 'pc' && (apiName.includes('gaming') || apiName.includes('computer'))) ||
-                 (templateType === 'ps5' && (apiName.includes('playstation') || apiName.includes('sony'))) ||
-                 (templateType === 'xbox' && (apiName.includes('series') || apiName.includes('microsoft'))) ||
-                 (templateType === 'vr' && (apiName.includes('virtual') || apiName.includes('reality')))
-        })
-        
-        if (matchedConsole) {
-          return {
-            type: template.type,
-            name: matchedConsole.console_name,
-            id: matchedConsole.id,
-            price: matchedConsole.console_price,
-            icon: template.icon,
-            iconColor: template.iconColor,
-            color: "grey" as const,
-            description: `${template.type} Gaming Console`
-          }
-        }
-        return null
-      }).filter(Boolean) as ConsoleType[]
-      
-      if (!isMounted) return
-      setAvailableConsoles(availableConsoles)
-
-      if (availableConsoles.length === 0) {
-        if (isMounted) {
-          setAllSlots({})
-          setIsLoading(false)
-        }
-        return
-      }
-
-      // Generate dates array
-      const dates = []
-      for (let i = 0; i < 3; i++) {
-        const today = new Date()
-        const targetDate = new Date(today.getFullYear(), today.getMonth(), today.getDate() + i)
-        
-        const year = targetDate.getFullYear()
-        const month = String(targetDate.getMonth() + 1).padStart(2, '0')
-        const day = String(targetDate.getDate()).padStart(2, '0')
-        
-        const dateString = `${year}-${month}-${day}`
-        const formattedDate = `${year}${month}${day}`
-        
-        dates.push({ dateString, formattedDate })
-      }
-
-      // ✅ FIXED: Fetch all slots in parallel instead of sequentially
-      const allFetchPromises = dates.flatMap(({ dateString, formattedDate }) =>
-        availableConsoles.map(async (gameConsole) => {
-          if (!gameConsole.id) return null
-
-          try {
-            const apiUrl = `${BOOKING_URL}/api/getSlots/vendor/${vendorId}/game/${gameConsole.id}/${formattedDate}`
-            const slotsResponse = await fetch(apiUrl)
-
-            if (!slotsResponse.ok) return null
-
-            const slotData = await slotsResponse.json()
-
-            if (slotData.slots && Array.isArray(slotData.slots)) {
-              const nowIST = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }))
-
-              const processedSlots = slotData.slots.map((slot: any) => {
-                const processedSlot = {
-                  ...slot,
-                  console_id: gameConsole.id,
-                  console_name: gameConsole.name,
-                  date: dateString,
-                  is_available: slot.is_available
-                }
-
-                // Only check if it's today
-                if (dateString === dates[0].dateString) {
-                  const slotEndTime = new Date(`${dateString}T${slot.end_time}+05:30`)
-                  const isPast = nowIST >= slotEndTime
-
-                  if (isPast) {
-                    processedSlot.is_available = false
-                  }
-                }
-
-                return processedSlot
-              })
-
-              return { dateString, slots: processedSlots }
-            }
-          } catch (error) {
-            console.error(`Error fetching slots for ${gameConsole.name} on ${dateString}:`, error)
-          }
-
-          return null
-        })
-      )
-
-      // Wait for all API calls to complete in parallel
-      const results = await Promise.all(allFetchPromises)
-
-      if (!isMounted) return
-
-      // Group slots by date
-      const slotsData: { [key: string]: any[] } = {}
-      dates.forEach(({ dateString }) => {
-        slotsData[dateString] = []
-      })
-
-      results.forEach(result => {
-        if (result && result.dateString && result.slots) {
-          slotsData[result.dateString].push(...result.slots)
-        }
-      })
-
-      if (isMounted) {
-        setAllSlots(slotsData)
-        setRecentBookings([])
-      }
-
-    } catch (error) {
-      console.error('Error in fetchData:', error)
-    } finally {
-      if (isMounted) {
-        setIsLoading(false)
-      }
-    }
-  }
-
-  fetchDataOnce()
-
-  return () => {
-    isMounted = false
-  }
-}, [])
-
-
+  // Separate event listener effect
   useEffect(() => {
     const handleBookingUpdated = () => {
+      console.log('📡 Received refresh-dashboard event, reloading page...')
       window.location.reload()
     }
 
@@ -1882,41 +1778,52 @@ export default function SlotManagement() {
     return () => window.removeEventListener('refresh-dashboard', handleBookingUpdated)
   }, [])
 
+  // Handle slot selection
   const handleSlotSelect = (slot: SelectedSlot) => {
+    console.log('🎯 handleSlotSelect called with:', slot)
+    
     const isSelected = selectedSlots.some(s => s.slot_id === slot.slot_id)
+    console.log('🎯 Slot is currently selected:', isSelected)
 
     if (isSelected) {
-      setSelectedSlots(selectedSlots.filter(s => s.slot_id !== slot.slot_id))
+      const newSelectedSlots = selectedSlots.filter(s => s.slot_id !== slot.slot_id)
+      console.log('🎯 Removing slot, new selection:', newSelectedSlots.length)
+      setSelectedSlots(newSelectedSlots)
     } else {
-      setSelectedSlots([...selectedSlots, slot])
+      const newSelectedSlots = [...selectedSlots, slot]
+      console.log('🎯 Adding slot, new selection:', newSelectedSlots.length)
+      setSelectedSlots(newSelectedSlots)
     }
   }
 
   const handleNewBooking = () => {
+    console.log('🎯 handleNewBooking called with slots:', selectedSlots.length)
     if (selectedSlots.length > 0) {
       setShowBookingForm(true)
     }
   }
 
   const handleBookingComplete = () => {
+    console.log('🎯 handleBookingComplete called')
     setSelectedSlots([])
     window.location.reload()
   }
 
   if (isLoading) {
     return (
-      <main className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
+      <main className="min-h-screen bg-gray-50 dark:bg-gradient-to-br dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 flex items-center justify-center">
         <div className="text-center">
-          <Loader2 className="w-12 h-12 animate-spin text-blue-500 mx-auto mb-4" />
-          <p className="text-slate-300">Loading slot data...</p>
+          <Loader2 className="w-12 h-12 animate-spin text-emerald-500 mx-auto mb-4" />
+          <p className="text-gray-600 dark:text-slate-300">Loading slot data...</p>
+          <p className="text-sm text-gray-500 dark:text-slate-400 mt-2">Fetching consoles and available slots...</p>
         </div>
       </main>
     )
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
-      <div className="mx-auto w-full max-w-[1600px] p-6 md:p-8">
+    <main className="min-h-screen bg-gray-50 dark:bg-gradient-to-br dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
+      <div className="mx-auto w-full max-w-[1400px] p-6 md:p-8">
         <TopBar selectedSlots={selectedSlots} onNewBooking={handleNewBooking} />
         <ConsoleFilter selectedConsole={selectedConsole} onConsoleChange={setSelectedConsole} />
         <ScheduleGrid
@@ -1932,7 +1839,10 @@ export default function SlotManagement() {
 
       <SlotBookingForm
         isOpen={showBookingForm}
-        onClose={() => setShowBookingForm(false)}
+        onClose={() => {
+          console.log('🎯 Closing booking form')
+          setShowBookingForm(false)
+        }}
         selectedSlots={selectedSlots}
         onBookingComplete={handleBookingComplete}
         availableConsoles={availableConsoles}

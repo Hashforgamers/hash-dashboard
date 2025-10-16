@@ -19,7 +19,7 @@ interface DashboardContentProps {
   setActiveTab: (tab: string) => void
 }
 
-// Platform metadata remains the same...
+// Platform metadata
 const platformMetadata = {
   platforms: [
     {
@@ -54,7 +54,7 @@ const platformMetadata = {
 };
 
 export function DashboardContent({ activeTab, setActiveTab }: DashboardContentProps) {
-  // All existing state remains the same...
+  // State
   const [showBookingStats, setShowBookingStats] = useState(true)
   const [showEarnings, setShowEarnings] = useState(false)
   const [showPending, setShowPending] = useState(false)
@@ -75,7 +75,7 @@ export function DashboardContent({ activeTab, setActiveTab }: DashboardContentPr
 
   const { socket, isConnected, joinVendor } = useSocket()
 
-  // All existing useEffect hooks remain the same...
+  // Booking accepted handler
   const handleBookingAccepted = (bookingData: any) => {
     console.log('🎯 Booking accepted - updating upcoming bookings:', bookingData)
     setUpcomingBookingsRefresh(prev => !prev)
@@ -87,6 +87,7 @@ export function DashboardContent({ activeTab, setActiveTab }: DashboardContentPr
     }
   }
 
+  // Decode JWT token
   useEffect(() => {
     const token = localStorage.getItem("jwtToken")
     if (token) {
@@ -100,6 +101,7 @@ export function DashboardContent({ activeTab, setActiveTab }: DashboardContentPr
     }
   }, [])
 
+  // Load initial dashboard data
   useEffect(() => {
     const loadInitialData = async () => {
       if (!vendorId) return
@@ -118,6 +120,7 @@ export function DashboardContent({ activeTab, setActiveTab }: DashboardContentPr
     loadInitialData()
   }, [vendorId])
 
+  // Fetch booking data
   useEffect(() => {
     const fetchBookingData = async () => {
       if (!vendorId) return;
@@ -134,7 +137,7 @@ export function DashboardContent({ activeTab, setActiveTab }: DashboardContentPr
     fetchBookingData();
   }, [vendorId, refreshSlots]);
 
-  // All socket listeners remain the same...
+  // Socket listeners
   useEffect(() => {
     if (!socket || !vendorId || !isConnected) return
 
@@ -241,12 +244,14 @@ export function DashboardContent({ activeTab, setActiveTab }: DashboardContentPr
     }
   }, [socket, vendorId, isConnected, joinVendor, dashboardData?.stats])
 
+  // Refresh dashboard event listener
   useEffect(() => {
     const handleRefresh = () => setRefreshSlots(prev => !prev)
     window.addEventListener("refresh-dashboard", handleRefresh)
     return () => window.removeEventListener("refresh-dashboard", handleRefresh)
   }, [])
 
+  // Current stats
   const currentStats = {
     todayEarnings: realTimeStats.todayEarnings ?? dashboardData?.stats?.todayEarnings ?? 0,
     todayBookings: realTimeStats.todayBookings ?? dashboardData?.stats?.todayBookings ?? 0,
@@ -254,6 +259,7 @@ export function DashboardContent({ activeTab, setActiveTab }: DashboardContentPr
     todayBookingsChange: realTimeStats.todayBookingsChange ?? dashboardData?.stats?.todayBookingsChange ?? 0
   }
 
+  // Platform stats
   const platforms = platformMetadata.platforms.map(metadata => {
     const platformBooking = bookingInfo.filter(b => b.type === metadata.type);
     const total = platformBooking.length;
@@ -270,9 +276,8 @@ export function DashboardContent({ activeTab, setActiveTab }: DashboardContentPr
       {dashboardData?.available ? (
         <HashLoader className="py-[50vh]"/>
       ) : (
-        // 🚀 FIXED: Root container with proper viewport height
         <div className="h-screen bg-background text-foreground p-2 sm:p-4 md:p-6 flex flex-col">
-          {/* Header - Fixed height */}
+          {/* Header */}
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -289,7 +294,6 @@ export function DashboardContent({ activeTab, setActiveTab }: DashboardContentPr
                     className="text-xs text-green-600 font-medium"
                     title={`Last updated: ${realTimeStats.lastUpdate}`}
                   >
-                  
                   </motion.div>
                 )}
               </div>
@@ -297,7 +301,7 @@ export function DashboardContent({ activeTab, setActiveTab }: DashboardContentPr
             
             <div className="flex items-center gap-3">
               <NotificationButton vendorId={vendorId} onBookingAccepted={handleBookingAccepted} latestBookingEvent={latestBookingEvent}/>
-              <Button 
+              {/**<Button 
                 onClick={() => setActiveTab("product")}
                 className="bg-blue-600 hover:bg-blue-700 text-white px-3 sm:px-4 py-2 rounded-lg font-medium transition-colors duration-200 text-sm"
               >
@@ -306,15 +310,15 @@ export function DashboardContent({ activeTab, setActiveTab }: DashboardContentPr
               </Button>
               <button className="p-2 bg-card hover:bg-muted rounded-lg transition-colors duration-200">
                 <RefreshCw className="w-4 sm:w-5 h-4 sm:h-5 text-muted-foreground" />
-              </button>
+              </button>**/}
             </div>
           </motion.div>
 
-          {/* 🚀 FIXED: Main Layout Grid with flex-1 to take remaining height */}
+          {/* Main Layout Grid */}
           <div className="grid grid-cols-1 xl:grid-cols-4 gap-3 sm:gap-4 flex-1 min-h-0">
             {/* Left Column */}
             <div className="xl:col-span-3 space-y-3 sm:space-y-4 flex flex-col min-h-0">
-              {/* Tab Navigation - Fixed height */}
+              {/* Tab Navigation */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -344,7 +348,7 @@ export function DashboardContent({ activeTab, setActiveTab }: DashboardContentPr
                 </button>
               </motion.div>
 
-              {/* Analytics/Devices Cards - Fixed height */}
+              {/* Analytics/Devices Cards */}
               <AnimatePresence mode="wait">
                 {activeTopTab === 'analytics' && (
                   <motion.div
@@ -353,98 +357,123 @@ export function DashboardContent({ activeTab, setActiveTab }: DashboardContentPr
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: -20 }}
                     transition={{ duration: 0.3 }}
-                    className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 sm:gap-3 flex-shrink-0"
+                    className="flex gap-2 sm:gap-3 flex-shrink-0"
                   >
-                    {/* Analytics Cards */}
-                    <motion.div animate={{ scale: realTimeStats.lastUpdate ? [1, 1.05, 1] : 1 }} transition={{ duration: 0.5 }}>
-                      <Card className="bg-card border-border h-[10vh] sm:h-[12vh] md:h-[13.8vh] backdrop-blur-sm">
-                        <CardContent className="p-2 sm:p-3 flex flex-col justify-center">
-                          <div className="flex items-center justify-between">
+                    {/* Earnings Card */}
+                    <motion.div 
+                      animate={{ scale: realTimeStats.lastUpdate ? [1, 1.05, 1] : 1 }} 
+                      transition={{ duration: 0.5 }}
+                      className="flex-1"
+                    >
+                      <Card className="bg-card border-border backdrop-blur-sm rounded-lg shadow-sm h-full">
+                        <CardContent className="p-2 sm:p-3">
+                          <div className="flex items-center justify-between mb-1 sm:mb-2">
                             <div className="flex items-center gap-1 sm:gap-2">
-                              <div className="p-1 sm:p-1.5 bg-emerald-500/20 mt-2 sm:mt-3 rounded-lg">
-                                <IndianRupee className="w-2 sm:w-3 h-2 sm:h-3 text-emerald-400" />
+                              <div className="p-1 sm:p-1.5 rounded-full bg-emerald-500/20">
+                                <IndianRupee className="w-3 sm:w-4 h-3 sm:h-4 text-emerald-400" />
                               </div>
-                              <div>
-                                <p className="text-muted-foreground text-xs sm:text-sm mt-2 sm:mt-3 font-medium">Earnings</p>
-                                <div className="flex items-center gap-1 sm:gap-2">
-                                  <motion.p 
-                                    key={currentStats.todayEarnings}
-                                    initial={{ scale: 0.8, opacity: 0.5 }}
-                                    animate={{ scale: 1, opacity: 1 }}
-                                    transition={{ duration: 0.3 }}
-                                    className="text-xs sm:text-sm font-bold text-foreground"
-                                  >
-                                    {showEarnings ? `₹${currentStats.todayEarnings}` : "₹•••••"}
-                                  </motion.p>
-                                  <button onClick={() => setShowEarnings(!showEarnings)} className="text-emerald-400 hover:text-emerald-300 transition-colors">
-                                    {showEarnings ? <EyeOff className="w-2 sm:w-3 h-2 sm:h-3" /> : <Eye className="w-2 sm:w-3 h-2 sm:h-3" />}
-                                  </button>
-                                </div>
-                              </div>
+                              <span className="text-xs sm:text-sm font-medium text-foreground">Earnings</span>
                             </div>
-                            <TrendingUp className="w-2 sm:w-3 h-2 sm:h-3 text-emerald-400" />
+                            <button onClick={() => setShowEarnings(!showEarnings)} className="text-emerald-400 hover:text-emerald-300 transition-colors">
+                              {showEarnings ? <EyeOff className="w-3 sm:w-4 h-3 sm:h-4" /> : <Eye className="w-3 sm:w-4 h-3 sm:h-4" />}
+                            </button>
                           </div>
-                        </CardContent>
-                      </Card>
-                    </motion.div>
-
-                    <motion.div animate={{ scale: realTimeStats.lastUpdate ? [1, 1.05, 1] : 1 }} transition={{ duration: 0.5 }}>
-                      <Card className="bg-card border-border h-[10vh] sm:h-[12vh] md:h-[13.8vh] backdrop-blur-sm">
-                        <CardContent className="p-2 sm:p-3 flex flex-col justify-center">
+                          
                           <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-1 sm:gap-2">
-                              <div className="p-1 sm:p-1.5 bg-blue-500/20 mt-2 sm:mt-3 rounded-lg">
-                                <CalendarCheck className="w-2 sm:w-3 h-2 sm:h-3 text-blue-400" />
-                              </div>
-                              <div>
-                                <p className="text-muted-foreground text-xs sm:text-sm mt-2 sm:mt-3 font-medium">Bookings</p>
-                                <motion.p 
-                                  key={currentStats.todayBookings}
-                                  initial={{ scale: 0.8, opacity: 0.5 }}
-                                  animate={{ scale: 1, opacity: 1 }}
-                                  transition={{ duration: 0.3 }}
-                                  className="text-xs sm:text-sm font-bold text-foreground"
-                                >
-                                  {currentStats.todayBookings}
-                                </motion.p>
-                              </div>
-                            </div>
-                            <div className="flex items-center gap-1 text-green-400 text-xs sm:text-sm font-medium">
-                              <TrendingUp className="w-1.5 sm:w-2 h-1.5 sm:h-2" />
-                              {currentStats.todayBookingsChange}%
+                            <motion.p 
+                              key={currentStats.todayEarnings}
+                              initial={{ scale: 0.8, opacity: 0.5 }}
+                              animate={{ scale: 1, opacity: 1 }}
+                              transition={{ duration: 0.3 }}
+                              className="text-lg sm:text-xl font-bold text-foreground"
+                            >
+                              {showEarnings ? `₹${currentStats.todayEarnings}` : "₹•••••"}
+                            </motion.p>
+                            
+                            <div className="flex items-center gap-1 text-xs text-emerald-400">
+                              <TrendingUp className="w-3 h-3" />
+                              <span>Today</span>
                             </div>
                           </div>
                         </CardContent>
                       </Card>
                     </motion.div>
 
-                    <motion.div animate={{ scale: realTimeStats.lastUpdate ? [1, 1.05, 1] : 1 }} transition={{ duration: 0.5 }}>
-                      <Card className="bg-card border-border h-[10vh] sm:h-[12vh] md:h-[13.8vh] backdrop-blur-sm">
-                        <CardContent className="p-2 sm:p-3 flex flex-col justify-center">
-                          <div className="flex items-center justify-between">
+                    {/* Bookings Card */}
+                    <motion.div 
+                      animate={{ scale: realTimeStats.lastUpdate ? [1, 1.05, 1] : 1 }} 
+                      transition={{ duration: 0.5 }}
+                      className="flex-1"
+                    >
+                      <Card className="bg-card border-border backdrop-blur-sm rounded-lg shadow-sm h-full">
+                        <CardContent className="p-2 sm:p-3">
+                          <div className="flex items-center justify-between mb-1 sm:mb-2">
                             <div className="flex items-center gap-1 sm:gap-2">
-                              <div className="p-1 sm:p-1.5 mt-2 sm:mt-3 bg-yellow-500/20 rounded-lg">
-                                <WalletCards className="w-2 sm:w-3 h-2 sm:h-3 text-yellow-400" />
+                              <div className="p-1 sm:p-1.5 rounded-full bg-blue-500/20">
+                                <CalendarCheck className="w-3 sm:w-4 h-3 sm:h-4 text-blue-400" />
                               </div>
-                              <div>
-                                <p className="text-muted-foreground text-xs sm:text-sm mt-2 sm:mt-3 font-medium">Pending</p>
-                                <div className="flex items-center gap-1 sm:gap-2">
-                                  <motion.p 
-                                    key={currentStats.pendingAmount}
-                                    initial={{ scale: 0.8, opacity: 0.5 }}
-                                    animate={{ scale: 1, opacity: 1 }}
-                                    transition={{ duration: 0.3 }}
-                                    className="text-xs sm:text-sm font-bold text-foreground"
-                                  >
-                                    {showPending ? `₹${currentStats.pendingAmount}` : "₹•••••"}
-                                  </motion.p>
-                                  <button onClick={() => setShowPending(!showPending)} className="text-yellow-400 hover:text-yellow-300 transition-colors">
-                                    {showPending ? <EyeOff className="w-2 sm:w-3 h-2 sm:h-3" /> : <Eye className="w-2 sm:w-3 h-2 sm:h-3" />}
-                                  </button>
-                                </div>
-                              </div>
+                              <span className="text-xs sm:text-sm font-medium text-foreground">Bookings</span>
                             </div>
-                            <div className="w-1.5 sm:w-2 h-1.5 sm:h-2 bg-yellow-400 rounded-full animate-pulse"></div>
+                            <span className="text-xs font-bold text-green-400">
+                              +{currentStats.todayBookingsChange}%
+                            </span>
+                          </div>
+                          
+                          <div className="flex items-center justify-between">
+                            <motion.p 
+                              key={currentStats.todayBookings}
+                              initial={{ scale: 0.8, opacity: 0.5 }}
+                              animate={{ scale: 1, opacity: 1 }}
+                              transition={{ duration: 0.3 }}
+                              className="text-lg sm:text-xl font-bold text-foreground"
+                            >
+                              {currentStats.todayBookings}
+                            </motion.p>
+                            
+                            <div className="flex items-center gap-1 text-xs text-blue-400">
+                              <TrendingUp className="w-3 h-3" />
+                              <span>Today</span>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </motion.div>
+
+                    {/* Pending Card */}
+                    <motion.div 
+                      animate={{ scale: realTimeStats.lastUpdate ? [1, 1.05, 1] : 1 }} 
+                      transition={{ duration: 0.5 }}
+                      className="flex-1"
+                    >
+                      <Card className="bg-card border-border backdrop-blur-sm rounded-lg shadow-sm h-full">
+                        <CardContent className="p-2 sm:p-3">
+                          <div className="flex items-center justify-between mb-1 sm:mb-2">
+                            <div className="flex items-center gap-1 sm:gap-2">
+                              <div className="p-1 sm:p-1.5 rounded-full bg-yellow-500/20">
+                                <WalletCards className="w-3 sm:w-4 h-3 sm:h-4 text-yellow-400" />
+                              </div>
+                              <span className="text-xs sm:text-sm font-medium text-foreground">Pending</span>
+                            </div>
+                            <button onClick={() => setShowPending(!showPending)} className="text-yellow-400 hover:text-yellow-300 transition-colors">
+                              {showPending ? <EyeOff className="w-3 sm:w-4 h-3 sm:h-4" /> : <Eye className="w-3 sm:w-4 h-3 sm:h-4" />}
+                            </button>
+                          </div>
+                          
+                          <div className="flex items-center justify-between">
+                            <motion.p 
+                              key={currentStats.pendingAmount}
+                              initial={{ scale: 0.8, opacity: 0.5 }}
+                              animate={{ scale: 1, opacity: 1 }}
+                              transition={{ duration: 0.3 }}
+                              className="text-lg sm:text-xl font-bold text-foreground"
+                            >
+                              {showPending ? `₹${currentStats.pendingAmount}` : "₹•••••"}
+                            </motion.p>
+                            
+                            <div className="flex items-center gap-1 text-xs text-yellow-400">
+                              <div className="w-2 h-2 bg-yellow-400 rounded-full animate-pulse"></div>
+                              <span>Today</span>
+                            </div>
                           </div>
                         </CardContent>
                       </Card>
@@ -474,7 +503,7 @@ export function DashboardContent({ activeTab, setActiveTab }: DashboardContentPr
                           initial={{ opacity: 0, y: 10 }}
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ duration: 0.3 }}
-                          className="bg-white dark:bg-zinc-900 rounded-lg p-2 sm:p-3 shadow-sm border"
+                          className="bg-white dark:bg-card rounded-lg p-2 sm:p-3 shadow-sm border"
                         >
                           <div className="flex items-center justify-between mb-1 sm:mb-2">
                             <div className="flex items-center gap-1 sm:gap-2">
@@ -511,7 +540,7 @@ export function DashboardContent({ activeTab, setActiveTab }: DashboardContentPr
                 )}
               </AnimatePresence>
 
-              {/* 🚀 FIXED: Current Slots with flex-1 to take remaining space */}
+              {/* Current Slots */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -530,12 +559,12 @@ export function DashboardContent({ activeTab, setActiveTab }: DashboardContentPr
               </motion.div>
             </div>
 
-            {/* 🚀 RIGHT COLUMN - UPCOMING BOOKINGS with matching height structure */}
+            {/* Right Column - Upcoming Bookings */}
             <motion.div
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.4 }}
-              className="xl:col-span-1 flex flex-col min-h-0"
+              className="xl:col-span-1 flex flex-col min-h-0 mt-14"
             >
               <Card className="bg-card border-border backdrop-blur-sm flex-1 min-h-0">
                 <CardContent className="p-0 h-full overflow-hidden">

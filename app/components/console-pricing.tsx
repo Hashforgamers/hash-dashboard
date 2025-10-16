@@ -31,7 +31,7 @@ const consoleTypes: ConsoleType[] = [
     name: "PC",
     icon: Monitor,
     color: "bg-purple-100 dark:bg-purple-950",
-    iconColor: "#7c3aed",
+    iconColor:"bg-card",
     description: "Gaming PCs and Workstations",
   },
   {
@@ -85,10 +85,12 @@ export default function ConsolePricing() {
   const [showSuccess, setShowSuccess] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [vendorId, setVendorId] = useState<number | null>(null);
+  
   const validatePrice = (value: number): boolean => {
     return value >= 0 && value <= 10000;
   };
- useEffect(() => {
+  
+  useEffect(() => {
     const token = localStorage.getItem("jwtToken");
     if (token) {
       const decoded_token = jwtDecode<{ sub: { id: number } }>(token);
@@ -97,11 +99,9 @@ export default function ConsolePricing() {
     }
   }, []);
 
-
   useEffect(() => {
     const fetchPricing = async () => {
       try {
-
         if (!vendorId) throw new Error("Vendor ID missing in token");
 
         const res = await fetch(`${DASHBOARD_URL}/api/vendor/${vendorId}/console-pricing`);
@@ -127,7 +127,6 @@ export default function ConsolePricing() {
     fetchPricing();
   }, [vendorId]);
 
-
   const handlePriceChange = (consoleType: string, inputValue: string) => {
     const numericValue = parseFloat(inputValue) || 0;
     const isValid = validatePrice(numericValue);
@@ -150,7 +149,7 @@ export default function ConsolePricing() {
     } else {
       setErrors((prev) => ({
         ...prev,
-        [consoleType]: "Price must be between $0 and $10,000",
+        [consoleType]: "Price must be between ₹0 and ₹10,000",
       }));
     }
   };
@@ -203,26 +202,28 @@ export default function ConsolePricing() {
   const canSave = hasChanges && Object.values(errors).length === 0;
 
   return (
-    <div className="min-h-screen bg-transparent p-6">
+    <div className="page-container">
       <div className="max-w-6xl mx-auto">
+        {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
+          className="page-header"
         >
-          <div className="flex items-center gap-3 mb-2">
-            <div className="p-2">
-              <IndianRupee className="w-6 h-6 text-black dark:text-white" />
+          <div className="page-title-section">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="icon-container bg-blue-100 dark:bg-blue-900/30">
+                <IndianRupee className="icon-lg text-blue-600" />
+              </div>
+              <h1 className="page-title">Console Pricing Manager</h1>
             </div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-              Console Pricing Manager
-            </h1>
+            <p className="page-subtitle">
+              Manage dynamic pricing for your gaming console services
+            </p>
           </div>
-          <p className="text-gray-600 dark:text-gray-400">
-            Manage dynamic pricing for your gaming console services
-          </p>
         </motion.div>
 
+        {/* Success Toast */}
         <AnimatePresence>
           {showSuccess && (
             <motion.div
@@ -231,13 +232,14 @@ export default function ConsolePricing() {
               exit={{ opacity: 0, y: -50, scale: 0.95 }}
               className="fixed top-4 right-4 z-50 bg-green-500 text-white p-4 rounded-lg shadow-lg flex items-center gap-2"
             >
-              <Check className="w-5 h-5" />
-              <span className="font-medium">Pricing updated successfully!</span>
+              <Check className="icon-lg" />
+              <span className="body-text font-medium">Pricing updated successfully!</span>
             </motion.div>
           )}
         </AnimatePresence>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-8">
+        {/* Console Cards Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-compact mb-8">
           {consoleTypes.map((console, index) => {
             const priceData = prices[console.type];
             const error = errors[console.type];
@@ -250,24 +252,21 @@ export default function ConsolePricing() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.1 }}
                 whileHover={{ y: -5, scale: 1.02 }}
-                className="bg-white dark:bg-gray-900 rounded-xl shadow-lg overflow-hidden border border-gray-200 dark:border-gray-700 hover:shadow-xl transition-all duration-300"
+                className="content-card shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300"
               >
+                {/* Card Header with Icon */}
                 <div className={`${console.color} p-4`}>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <div
-                        className="p-2 rounded-lg bg-white/20 dark:bg-black/20 backdrop-blur-sm"
+                        className="icon-container bg-white/20 dark:bg-black/20 backdrop-blur-sm"
                         style={{ color: console.iconColor }}
                       >
-                        <IconComponent className="w-6 h-6" />
+                        <IconComponent className="icon-lg" />
                       </div>
                       <div>
-                        <h3 className="font-semibold text-gray-900 dark:text-white">
-                          {console.name}
-                        </h3>
-                        <p className="text-sm text-gray-700 dark:text-gray-300">
-                          {console.description}
-                        </p>
+                        <h3 className="card-title">{console.name}</h3>
+                        <p className="body-text-small">{console.description}</p>
                       </div>
                     </div>
                     {priceData?.hasChanged && (
@@ -280,13 +279,13 @@ export default function ConsolePricing() {
                   </div>
                 </div>
 
+                {/* Card Body */}
                 <div className="p-4">
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Price per Slots
-                  </label>
+                  <label className="form-label mb-2">Price per Slot</label>
+                  
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <IndianRupee className="h-4 w-4 text-gray-400 dark:text-gray-500" />
+                      <IndianRupee className="icon-md text-gray-400 dark:text-gray-500" />
                     </div>
                     <motion.input
                       type="number"
@@ -302,31 +301,33 @@ export default function ConsolePricing() {
                           ? "border-red-300 focus:border-red-500 bg-red-50 dark:bg-red-950"
                           : priceData?.hasChanged
                           ? "border-yellow-300 focus:border-yellow-500 bg-yellow-50 dark:bg-yellow-950"
-                          : "border-gray-300 dark:border-gray-600 focus:border-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                          : "input-field"
                       }`}
                       placeholder="0.00"
                       whileFocus={{ scale: 1.02 }}
                     />
                   </div>
+                  
                   {error && (
                     <motion.div
                       initial={{ opacity: 0, height: 0 }}
                       animate={{ opacity: 1, height: "auto" }}
-                      className="mt-2 flex items-center gap-1 text-red-600 dark:text-red-400 text-sm"
+                      className="mt-2 flex items-center gap-1 text-red-600 dark:text-red-400 body-text-small"
                     >
-                      <AlertCircle className="w-4 h-4" />
+                      <AlertCircle className="icon-sm" />
                       <span>{error}</span>
                     </motion.div>
                   )}
 
-                  <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3 mt-4">
+                  {/* Current Rate Display */}
+                  <div className="form-card mt-4">
                     <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-600 dark:text-gray-400">
+                      <span className="body-text-small text-muted-foreground">
                         Current Rate
                       </span>
                       <div className="flex items-center gap-1">
-                        <TrendingUp className="w-4 h-4 text-green-500" />
-                        <span className="font-bold text-lg text-gray-900 dark:text-white">
+                        <TrendingUp className="icon-sm text-green-500" />
+                        <span className="price-small">
                           ₹{priceData?.value.toFixed(2)}
                         </span>
                       </div>
@@ -338,6 +339,7 @@ export default function ConsolePricing() {
           })}
         </div>
 
+        {/* Save Button */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -351,7 +353,7 @@ export default function ConsolePricing() {
             whileTap={canSave ? { scale: 0.95 } : {}}
             className={`flex items-center gap-3 px-8 py-4 rounded-xl font-semibold text-lg transition-all duration-300 ${
               canSave
-                ? "bg-blue-500 text-white shadow-lg hover:shadow-xl"
+                ? "btn-primary shadow-lg hover:shadow-xl"
                 : "bg-gray-300 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed"
             }`}
           >
@@ -366,18 +368,19 @@ export default function ConsolePricing() {
               </>
             ) : (
               <>
-                <Save className="w-5 h-5" />
+                <Save className="icon-lg" />
                 <span>Save Pricing Changes</span>
               </>
             )}
           </motion.button>
         </motion.div>
 
+        {/* Footer Note */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.7 }}
-          className="mt-8 text-center text-gray-500 dark:text-gray-400 text-sm"
+          className="mt-8 text-center body-text-muted"
         >
           <p>Changes will be applied immediately to all active gaming sessions</p>
         </motion.div>
