@@ -1,5 +1,6 @@
 "use client";
 
+
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -29,24 +30,30 @@ import {
   HardDrive,
   Activity,
 } from "lucide-react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { jwtDecode } from "jwt-decode";
+import  HashLoader  from "./ui/HashLoader";
 
 import { DASHBOARD_URL } from "@/src/config/env";
+
 
 
 interface ConsoleListProps {
   onEdit: (console: any) => void;
 }
+
 export function ConsoleList({ onEdit }: ConsoleListProps) {
   const [data, setdata] = useState([]);
   const [vendorId, setVendorId] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+
 
   // Decode token once when the component mounts
   useEffect(() => {
     const token = localStorage.getItem("jwtToken");
+
 
     if (token) {
       const decoded_token = jwtDecode<{ sub: { id: number } }>(token);
@@ -54,9 +61,12 @@ export function ConsoleList({ onEdit }: ConsoleListProps) {
     }
   }, []); // runs once on mount
 
+
   useEffect(() => {
     const fetch_data = async () => {
       if (!vendorId) return; // Prevent calling API when vendorId is still null
+
+      setIsLoading(true); // Start loading
 
       try {
         const response = await axios.get(
@@ -69,11 +79,15 @@ export function ConsoleList({ onEdit }: ConsoleListProps) {
         }
       } catch (error) {
         console.error("Error occurred while fetching consoles:", error);
+      } finally {
+        setIsLoading(false); // Stop loading
       }
     };
 
+
     fetch_data(); // function call here to fetch the data
   }, [vendorId]); // this will rerun when vendorId changes
+
 
 
   const consolelistdata = data.map((item: any) => ({
@@ -99,9 +113,10 @@ export function ConsoleList({ onEdit }: ConsoleListProps) {
     status: item.status || "Unknown",
   }));
 
+
   const handleDelete = async (id: number): Promise<void> => {
     try {
-       const response = await axios.delete(
+      const response = await axios.delete(
         `${DASHBOARD_URL}/api/console/${vendorId}/${id}`
       );
       if (!response) {
@@ -109,12 +124,12 @@ export function ConsoleList({ onEdit }: ConsoleListProps) {
       } else {
         console.log(response.data.message);
         setdata((prevData) => prevData.filter((item: any) => item.id !== id));
-        
       }
     } catch (error) {
       console.log("something while wrong to delete the data", error);
     }
   };
+
 
   const getStatusVariant = (status: boolean) => {
     switch (status) {
@@ -124,6 +139,7 @@ export function ConsoleList({ onEdit }: ConsoleListProps) {
         return "warning";
     }
   };
+
 
   const container = {
     hidden: { opacity: 0 },
@@ -135,10 +151,38 @@ export function ConsoleList({ onEdit }: ConsoleListProps) {
     },
   };
 
+
   const item = {
     hidden: { y: 20, opacity: 0 },
     show: { y: 0, opacity: 1 },
   };
+
+
+  // Show loading screen while fetching data
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="flex flex-col items-center gap-4">
+          <HashLoader color="#a3e635" size={60} />
+          <p className="text-lg font-medium text-foreground">Loading consoles...</p>
+        </div>
+      </div>
+    );
+  }
+
+
+  // Show message if no consoles found
+  if (!isLoading && consolelistdata.length === 0) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <p className="text-lg font-medium text-muted-foreground">No consoles found</p>
+          <p className="text-sm text-muted-foreground mt-2">Add a new console to get started</p>
+        </div>
+      </div>
+    );
+  }
+
 
   return (
     <motion.div
@@ -165,6 +209,7 @@ export function ConsoleList({ onEdit }: ConsoleListProps) {
                 </div>
               </div>
 
+
               <div className="flex-grow space-y-2.5 text-sm">
                 <div className="grid grid-cols-2 gap-x-4 gap-y-2">
                   <div className="flex items-center space-x-2">
@@ -172,6 +217,7 @@ export function ConsoleList({ onEdit }: ConsoleListProps) {
                     <span className="text-muted-foreground">Brand</span>
                   </div>
                   <span className="font-medium truncate">{console.brand}</span>
+
 
                   <div className="flex items-center space-x-2">
                     <Cpu className="w-4 h-4 text-muted-foreground" />
@@ -181,11 +227,13 @@ export function ConsoleList({ onEdit }: ConsoleListProps) {
                     {console.processor}
                   </span>
 
+
                   <div className="flex items-center space-x-2">
                     <Gpu className="w-4 h-4 text-muted-foreground" />
                     <span className="text-muted-foreground">GPU</span>
                   </div>
                   <span className="font-medium truncate">{console.gpu}</span>
+
 
                   <div className="flex items-center space-x-2">
                     <Memory className="w-4 h-4 text-muted-foreground" />
@@ -193,12 +241,14 @@ export function ConsoleList({ onEdit }: ConsoleListProps) {
                   </div>
                   <span className="font-medium">{console.ram}</span>
 
+
                   <div className="flex items-center space-x-2">
                     <HardDrive className="w-4 h-4 text-muted-foreground" />
                     <span className="text-muted-foreground">Storage</span>
                   </div>
                   <span className="font-medium">{console.storage}</span>
                 </div>
+
 
                 <div className="pt-2 flex items-center justify-between border-t">
                   <div className="flex items-center space-x-2">
@@ -210,6 +260,7 @@ export function ConsoleList({ onEdit }: ConsoleListProps) {
                   </Badge>
                 </div>
               </div>
+
 
               <div className="flex justify-end space-x-2 mt-4 opacity-0 group-hover:opacity-100 transition-opacity">
                 <Button

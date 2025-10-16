@@ -28,7 +28,8 @@ import { Loader2, Shield, Gamepad2, Lock, Mail } from 'lucide-react';
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
 import { LOGIN_URL } from "../../../src/config/env";
-import { useTheme } from "next-themes"; // Import useTheme
+import { useTheme } from "next-themes";
+
 
 const formSchema = z.object({
   email: z.string().email({ message: "Invalid email address" }),
@@ -38,6 +39,7 @@ const formSchema = z.object({
     .regex(/[a-zA-Z0-9]/, { message: "Password must be alphanumeric" }),
   parent_type: z.string().min(1, { message: "Parent type is required" }),
 });
+
 
 export default function LoginPage() {
   const form = useForm<z.infer<typeof formSchema>>({
@@ -53,7 +55,13 @@ export default function LoginPage() {
   const [loginError, setLoginError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const lastAttemptRef = useRef(0);
-  const { theme } = useTheme(); // Get current theme
+  const { resolvedTheme } = useTheme(); // Use resolvedTheme instead of theme
+  const [mounted, setMounted] = useState(false); // Add mounted state
+
+  // Set mounted to true after component mounts on client
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   function createDummyJWT(identity: { id: number; type: string; email: string }) {
     const header = {
@@ -62,26 +70,27 @@ export default function LoginPage() {
     };
     const payload = {
       ...identity,
-      iat: Math.floor(Date.now() / 1000), // issued at (seconds)
-      exp: Math.floor(Date.now() / 1000) + 60 * 60, // expires in 1 hour (seconds)
+      iat: Math.floor(Date.now() / 1000),
+      exp: Math.floor(Date.now() / 1000) + 60 * 60,
     };
     function base64Encode(obj: object) {
       return btoa(JSON.stringify(obj))
-        .replace(/=/g, "") // remove '=' padding
+        .replace(/=/g, "")
         .replace(/\+/g, "-")
         .replace(/\//g, "_");
     }
     const encodedHeader = base64Encode(header);
     const encodedPayload = base64Encode(payload);
-    const signature = "dummy_signature"; // fake signature
+    const signature = "dummy_signature";
     return `${encodedHeader}.${encodedPayload}.${signature}`;
   }
+
   const identity = {
     id: -1,
     type: "vendor",
     email: "dummy@hash.com",
   };
-        // Complete session cleanup function
+
   const clearSessionData = () => {
     try {
       localStorage.removeItem("vendors");
@@ -93,167 +102,192 @@ export default function LoginPage() {
       console.warn("Error clearing session data:", error);
     }
   };
-    // Enhanced fetch with retry logic for Render.com
-    const fetchWithRetry = async (url: string, options: RequestInit, maxRetries = 3) => {
-      for (let attempt = 1; attempt <= maxRetries; attempt++) {
-        const controller = new AbortController();
-        const timeout = attempt === 1 ? 45000 : 20000; // Longer timeout for first attempt
-        const timeoutId = setTimeout(() => controller.abort(), timeout);
-          try {
-            if (attempt === 1) {
-              toast.info("Connecting to server... This may take up to 30 seconds.", {
-                duration: 8000,
-                id: "server-connecting"
-              });
-            }
-            const response = await fetch(url, {
-              ...options,
-              signal: controller.signal,
-              headers: {
-                ...options.headers,
-                "Cache-Control": "no-cache, no-store, must-revalidate",
-                "Pragma": "no-cache",
-                "Expires": "0",
-              },
-            });
-            clearTimeout(timeoutId);
-            toast.dismiss("server-connecting");
-            return response;
-        } catch (error) {
-            clearTimeout(timeoutId);
-            toast.dismiss("server-connecting");
-            if (attempt === maxRetries) throw error;
-            const delay = attempt === 1 ? 8000 : 3000;
-            toast.info(`Connection failed. Retrying in ${delay/1000} seconds...`, {
-              duration: delay - 500
-            });
-            await new Promise(resolve => setTimeout(resolve, delay));
+
+  const fetchWithRetry = async (url: string, options: RequestInit, maxRetries = 3) => {
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      const controller = new AbortController();
+      const timeout = attempt === 1 ? 45000 : 20000;
+      const timeoutId = setTimeout(() => controller.abort(), timeout);
+
+      try {
+        if (attempt === 1) {
+          toast.info("Connecting to server... This may take up to 30 seconds.", {
+            duration: 8000,
+            id: "server-connecting"
+          });
         }
+
+        const response = await fetch(url, {
+          ...options,
+          signal: controller.signal,
+          headers: {
+            ...options.headers,
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            "Pragma": "no-cache",
+            "Expires": "0",
+          },
+        });
+
+        clearTimeout(timeoutId);
+        toast.dismiss("server-connecting");
+        return response;
+      } catch (error) {
+        clearTimeout(timeoutId);
+        toast.dismiss("server-connecting");
+
+        if (attempt === maxRetries) throw error;
+
+        const delay = attempt === 1 ? 8000 : 3000;
+        toast.info(`Connection failed. Retrying in ${delay/1000} seconds...`, {
+          duration: delay - 500
+        });
+        await new Promise(resolve => setTimeout(resolve, delay));
       }
-    };
-    async function onSubmit(values: z.infer<typeof formSchema>) {
-        // Prevent double submissions
-        if (isSubmitting) return;
-        // Rate limiting - prevent rapid submissions
-        const now = Date.now();
-        if (now - lastAttemptRef.current < 2000) {
-          toast.warning("Please wait before trying again.");
+    }
+  };
+
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    if (isSubmitting) return;
+
+    const now = Date.now();
+    if (now - lastAttemptRef.current < 2000) {
+      toast.warning("Please wait before trying again.");
+      return;
+    }
+    lastAttemptRef.current = now;
+
+    try {
+      setIsSubmitting(true);
+      setLoading(true);
+      setLoginError("");
+
+      clearSessionData();
+
+      const timestamp = Date.now();
+      const loginUrl = `${LOGIN_URL}/api/login?t=${timestamp}`;
+
+      const response = await fetchWithRetry(loginUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json",
+        },
+        body: JSON.stringify({
+          email: values.email,
+          password: values.password,
+          parent_type: "vendor",
+          timestamp: timestamp,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status} ${response.statusText}`);
+      }
+
+      const result = await response.json();
+
+      if (result.status === "success") {
+        const vendors = result.vendors;
+        if (Array.isArray(vendors) && vendors.length > 0) {
+          await new Promise(resolve => setTimeout(resolve, 100));
+
+          localStorage.setItem("vendors", JSON.stringify(vendors));
+          localStorage.setItem("vendor_login_email", values.email);
+
+          const dummyToken = createDummyJWT(identity);
+          localStorage.setItem("jwtToken", dummyToken);
+
+          const expirationMillis = Date.now() + 60 * 60 * 1000;
+          localStorage.setItem("tokenExpiration", expirationMillis.toString());
+
+          toast.success("Login successful!");
+          window.location.replace("/select-cafe");
+        } else {
+          toast.error("No vendors found for this account.");
           return;
         }
-        lastAttemptRef.current = now;
-        try {
-          setIsSubmitting(true);
-          setLoading(true);
-          setLoginError("");
-          // Clear any existing session data first
-          clearSessionData();
-          // Add cache-busting timestamp
-          const timestamp = Date.now();
-          const loginUrl = `${LOGIN_URL}/api/login?t=${timestamp}`;
-          const response = await fetchWithRetry(loginUrl, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "Accept": "application/json",
-            },
-            body: JSON.stringify({
-              email: values.email,
-              password: values.password,
-              parent_type: "vendor",
-              timestamp: timestamp, // Additional cache busting
-            }),
-          });
-          if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status} ${response.statusText}`);
-          }
-          const result = await response.json();
-          if (result.status === "success") {
-            const vendors = result.vendors;
-            if (Array.isArray(vendors) && vendors.length > 0) {
-              // Small delay to ensure cleanup is complete
-              await new Promise(resolve => setTimeout(resolve, 100));
-              // Store session data
-              localStorage.setItem("vendors", JSON.stringify(vendors));
-              localStorage.setItem("vendor_login_email", values.email);
-              const dummyToken = createDummyJWT(identity);
-              localStorage.setItem("jwtToken", dummyToken);
-              const expirationMillis = Date.now() + 60 * 60 * 1000;
-              localStorage.setItem("tokenExpiration", expirationMillis.toString());
-              toast.success("Login successful!");
-              // Use replace to avoid back button issues
-              window.location.replace("/select-cafe");
-            } else {
-              toast.error("No vendors found for this account.");
-              return;
-            }
-          } else {
-            const message = result.message || "Login failed";
-            setLoginError(message);
-            toast.error(message);
-          }
-        } catch (error) {
-          console.error("Login error:", error);
-          let errorMessage = "Failed to submit the form. Please try again.";
-          if (error.name === 'AbortError') {
-            errorMessage = "Server is taking too long to respond. Please try again in a moment.";
-          } else if (error.message.includes('503') || error.message.includes('502')) {
-            errorMessage = "Server is starting up. Please try again in a moment.";
-          } else if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
-            errorMessage = "Network connection issue. Please check your internet connection.";
-          } else if (error.message.includes('SSL') || error.message.includes('certificate')) {
-            errorMessage = "SSL connection issue. Please try again.";
-          }
-          setLoginError(errorMessage);
-          toast.error(errorMessage);
-        } finally {
-          setLoading(false);
-          setIsSubmitting(false);
-        }
+      } else {
+        const message = result.message || "Login failed";
+        setLoginError(message);
+        toast.error(message);
       }
-        // Check for session conflicts on component mount
-        useEffect(() => {
-          const checkSessionConflict = () => {
-            const hasVendors = localStorage.getItem("vendors");
-            const hasToken = localStorage.getItem("jwtToken");
-            const hasEmail = localStorage.getItem("vendor_login_email");
-            // If partial session data exists, clear it all
-            if ((hasVendors && !hasToken) || (hasToken && !hasVendors) || (hasEmail && !hasToken)) {
-              console.warn("Detected partial session data, clearing...");
-              clearSessionData();
-            }
-          };
-          checkSessionConflict();
-          // Reset form completely
-          form.reset({
-            email: "",
-            password: "",
-            parent_type: "vendor",
-          });
-          setLoginError("");
-        }, [form]);
+    } catch (error) {
+      console.error("Login error:", error);
+      let errorMessage = "Failed to submit the form. Please try again.";
+
+      if (error.name === 'AbortError') {
+        errorMessage = "Server is taking too long to respond. Please try again in a moment.";
+      } else if (error.message.includes('503') || error.message.includes('502')) {
+        errorMessage = "Server is starting up. Please try again in a moment.";
+      } else if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+        errorMessage = "Network connection issue. Please check your internet connection.";
+      } else if (error.message.includes('SSL') || error.message.includes('certificate')) {
+        errorMessage = "SSL connection issue. Please try again.";
+      }
+
+      setLoginError(errorMessage);
+      toast.error(errorMessage);
+    } finally {
+      setLoading(false);
+      setIsSubmitting(false);
+    }
+  }
+
+  useEffect(() => {
+    const checkSessionConflict = () => {
+      const hasVendors = localStorage.getItem("vendors");
+      const hasToken = localStorage.getItem("jwtToken");
+      const hasEmail = localStorage.getItem("vendor_login_email");
+
+      if ((hasVendors && !hasToken) || (hasToken && !hasVendors) || (hasEmail && !hasToken)) {
+        console.warn("Detected partial session data, clearing...");
+        clearSessionData();
+      }
+    };
+
+    checkSessionConflict();
+
+    form.reset({
+      email: "",
+      password: "",
+      parent_type: "vendor",
+    });
+    setLoginError("");
+  }, [form]);
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4 relative overflow-hidden">
-      {/* Optional animated background */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-green-400/10 rounded-full blur-3xl animate-pulse"></div>
         <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-400/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
         <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-green-400/5 rounded-full blur-3xl animate-pulse delay-500"></div>
       </div>
-      {/* Optional grid pattern */}
       <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.01)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.01)_1px,transparent_1px)] bg-[size:50px_50px] pointer-events-none"></div>
+      
       <div className="relative z-10 w-full max-w-md">
         <Card className="bg-card/50 border border-border shadow-2xl backdrop-blur-md">
           <CardHeader className="text-center pb-8">
             <div className="flex justify-center mb-6">
               <div className="relative">
-                <Image
-                  src={theme === 'dark' ? "/whitehashlogo.png" : "/blackhashlogo.png"} // Dynamic logo based on theme
-                  alt="Hash for Gamers"
-                  width={120}
-                  height={120}
-                  className="drop-shadow-2xl"
-                />
+                {/* Only render the themed image after mounting on client */}
+                {!mounted ? (
+                  // Placeholder with transparent base64 image to prevent layout shift
+                  <Image
+                    src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"
+                    alt="Hash for Gamers"
+                    width={120}
+                    height={120}
+                    className="drop-shadow-2xl"
+                  />
+                ) : (
+                  <Image
+                    src={resolvedTheme === 'dark' ? "/whitehashlogo.png" : "/blackhashlogo.png"}
+                    alt="Hash for Gamers"
+                    width={120}
+                    height={120}
+                    className="drop-shadow-2xl"
+                  />
+                )}
                 <div className="absolute inset-0 bg-green-400/20 rounded-full blur-xl animate-pulse"></div>
               </div>
             </div>
@@ -353,7 +387,6 @@ export default function LoginPage() {
                 </Button>
               </form>
             </Form>
-            {/* Trust indicators */}
             <div className="flex items-center justify-center gap-4 pt-4">
               <div className="flex items-center gap-2 text-muted-foreground text-xs">
                 <Shield className="w-3 h-3" />

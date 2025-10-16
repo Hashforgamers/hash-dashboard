@@ -8,12 +8,14 @@ import {
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faIndianRupeeSign } from '@fortawesome/free-solid-svg-icons'
 import { useState, useEffect, useMemo } from "react";
+import { createPortal } from "react-dom"; // ✅ ADD THIS IMPORT
 import axios from "axios";
 import { format, parseISO, isToday, isTomorrow, startOfToday } from 'date-fns';
 import { DASHBOARD_URL } from "@/src/config/env";
 import ResponsiveSearchFilter from "./ResponsiveSearchFilter";
 import MealDetailsModal from "./mealsDetailmodal";
 import { useSocket } from "../context/SocketContext";
+
 
 // Helper function for getting platform icons
 export function getIcon(system?: string | null): JSX.Element {
@@ -23,6 +25,7 @@ export function getIcon(system?: string | null): JSX.Element {
   if (sys.includes("xbox")) return <Gamepad2 className="w-4 h-4 text-green-500" />;
   return <Monitor className="w-4 h-4 text-purple-500" />;
 }
+
 
 // Helper function for date formatting
 const formatDate = (dateStr: string) => {
@@ -37,6 +40,7 @@ const formatDate = (dateStr: string) => {
   }
 };
 
+
 // Helper function for getting time of day
 const getTimeOfDay = (time: string) => {
   if (!time) return "all";
@@ -46,6 +50,7 @@ const getTimeOfDay = (time: string) => {
   if (hour < 17) return "afternoon";
   return "evening";
 };
+
 
 // Helper function for merging consecutive bookings
 const mergeConsecutiveBookings = (bookings: any[]) => {
@@ -144,6 +149,7 @@ const mergeConsecutiveBookings = (bookings: any[]) => {
   return mergedResults.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 };
 
+
 // Component props interface
 interface UpcomingBookingsProps {
   upcomingBookings: any[];
@@ -151,6 +157,7 @@ interface UpcomingBookingsProps {
   setRefreshSlots: (prev: boolean) => void;
   refreshTrigger?: boolean;
 }
+
 
 export function UpcomingBookings({
   upcomingBookings: initialBookings,
@@ -177,12 +184,20 @@ export function UpcomingBookings({
   const [selectedDate, setSelectedDate] = useState(format(startOfToday(), 'yyyy-MM-dd'));
   const [timeFilter, setTimeFilter] = useState("all");
 
+  // ✅ State for checking if component is mounted (for portal)
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+    return () => setIsMounted(false);
+  }, []);
+
   // ✅ ENHANCED: Enhanced meal modal state with add food capability
   const [mealDetailsModal, setMealDetailsModal] = useState({
     isOpen: false,
     bookingId: '',
     customerName: '',
-    mode: 'view' as 'view' | 'add', // New mode to distinguish between viewing and adding
+    mode: 'view' as 'view' | 'add',
     hasExistingMeals: false
   });
 
@@ -409,10 +424,9 @@ export function UpcomingBookings({
           model: c.consoleModelNumber,
           available: c.is_available,
           status: c.status,
-          raw: c // Include full object for debugging
+          raw: c
         })));
         
-        // Try different filtering approaches to debug
         console.log('🔍 Checking is_available values:', response.data.map(c => ({
           id: c.consoleId,
           is_available: c.is_available,
@@ -420,7 +434,6 @@ export function UpcomingBookings({
           stringValue: String(c.is_available)
         })));
         
-        // Filter with multiple approaches
         const strictFilter = response.data.filter((console: any) => console?.is_available === true);
         const looseFilter = response.data.filter((console: any) => console?.is_available);
         const stringFilter = response.data.filter((console: any) => 
@@ -431,7 +444,6 @@ export function UpcomingBookings({
         console.log('✅ Loose filter (truthy):', looseFilter.length, 'consoles'); 
         console.log('✅ String filter ("true"):', stringFilter.length, 'consoles');
         
-        // Use the filter that returns results, preferring strict
         let availableOnly = strictFilter;
         if (availableOnly.length === 0 && looseFilter.length > 0) {
           availableOnly = looseFilter;
@@ -532,7 +544,7 @@ export function UpcomingBookings({
       isOpen: true,
       bookingId,
       customerName,
-      mode: 'view', // Always start in view mode, modal can switch to add
+      mode: 'view',
       hasExistingMeals: hasMeals
     });
   };
@@ -544,7 +556,7 @@ export function UpcomingBookings({
       isOpen: true,
       bookingId,
       customerName,
-      mode: 'add', // Direct add mode
+      mode: 'add',
       hasExistingMeals: false
     });
   };
@@ -560,254 +572,256 @@ export function UpcomingBookings({
   };
 
   return (
-    // 🚀 FIXED: Proper flex container structure
-    <div className="h-full flex flex-col overflow-hidden">
-      <AnimatePresence>
-        {startCard && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 flex items-center justify-center z-[9999] bg-transparent backdrop-blur-sm p-2 sm:p-4"
-          >
+    <>
+      {/* 🚀 FIXED: Proper flex container structure */}
+      <div className="h-full flex flex-col overflow-hidden">
+        <AnimatePresence>
+          {startCard && (
             <motion.div
-              initial={{ scale: 0.95, y: 20, opacity: 0 }}
-              animate={{ scale: 1, y: 0, opacity: 1 }}
-              exit={{ scale: 0.95, y: 20, opacity: 0 }}
-              className="w-full max-w-xs sm:max-w-md md:max-w-lg"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 flex items-center justify-center z-[9999] bg-transparent backdrop-blur-sm p-2 sm:p-4"
             >
-              <Card className="bg-gray-50 dark:bg-zinc-900 overflow-hidden border border-gray-200 dark:border-zinc-800">
-                <div className="p-2 sm:p-3 border-b border-gray-200 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-800/50">
-                  <div className="flex items-center justify-between">
-                    <h2 className="text-sm font-semibold">Select Console</h2>
-                    <button
-                      onClick={() => setStartCard(false)}
-                      className="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-zinc-700"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
+              <motion.div
+                initial={{ scale: 0.95, y: 20, opacity: 0 }}
+                animate={{ scale: 1, y: 0, opacity: 1 }}
+                exit={{ scale: 0.95, y: 20, opacity: 0 }}
+                className="w-full max-w-xs sm:max-w-md md:max-w-lg"
+              >
+                <Card className="bg-gray-50 dark:bg-zinc-900 overflow-hidden border border-gray-200 dark:border-zinc-800">
+                  <div className="p-2 sm:p-3 border-b border-gray-200 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-800/50">
+                    <div className="flex items-center justify-between">
+                      <h2 className="text-sm font-semibold">Select Console</h2>
+                      <button
+                        onClick={() => setStartCard(false)}
+                        className="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-zinc-700"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
                   </div>
-                </div>
 
-                <div className="p-2 sm:p-3">
-                  {isLoading ? (
-                    <div className="flex items-center justify-center h-24 sm:h-32">
-                      <div className="animate-spin rounded-full h-6 w-6 border-2 border-emerald-500 border-t-transparent"></div>
-                    </div>
-                  ) : availableConsoles.length === 0 ? (
-                    <div className="text-center py-6">
-                      <AlertCircle className="w-8 h-8 text-amber-500 mx-auto mb-2" />
-                      <h3 className="text-sm font-medium mb-1">No Consoles Available</h3>
-                      <p className="text-gray-500 text-xs">All consoles are in use.</p>
-                      {/* Debug info - remove in production */}
-                      <div className="mt-4 p-2 bg-gray-100 dark:bg-zinc-800 rounded text-xs text-left">
-                        <p>Debug Info:</p>
-                        <p>GameId: {selectedGameId}</p>
-                        <p>VendorId: {vendorId}</p>
-                        <p>Check console for API response details</p>
+                  <div className="p-2 sm:p-3">
+                    {isLoading ? (
+                      <div className="flex items-center justify-center h-24 sm:h-32">
+                        <div className="animate-spin rounded-full h-6 w-6 border-2 border-emerald-500 border-t-transparent"></div>
                       </div>
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                      {availableConsoles.map((console) => (
-                        <motion.div
-                          key={console.consoleId}
+                    ) : availableConsoles.length === 0 ? (
+                      <div className="text-center py-6">
+                        <AlertCircle className="w-8 h-8 text-amber-500 mx-auto mb-2" />
+                        <h3 className="text-sm font-medium mb-1">No Consoles Available</h3>
+                        <p className="text-gray-500 text-xs">All consoles are in use.</p>
+                        <div className="mt-4 p-2 bg-gray-100 dark:bg-zinc-800 rounded text-xs text-left">
+                          <p>Debug Info:</p>
+                          <p>GameId: {selectedGameId}</p>
+                          <p>VendorId: {vendorId}</p>
+                          <p>Check console for API response details</p>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        {availableConsoles.map((console) => (
+                          <motion.div
+                            key={console.consoleId}
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                            onClick={() => handleConsoleSelection(console.consoleId)}
+                            className={`cursor-pointer rounded-lg border ${
+                              selectedConsole === console.consoleId
+                                ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20"
+                                : "border-gray-200 dark:border-zinc-800 hover:border-emerald-500/50"
+                            } p-2 sm:p-3 transition-all duration-200`}
+                          >
+                            <div className="flex items-center space-x-2">
+                              {getIcon(selectedSystem)}
+                              <div>
+                                <h3 className="text-sm font-medium">{console.brand}</h3>
+                                <p className="text-xs text-gray-500">{console.consoleModelNumber}</p>
+                              </div>
+                            </div>
+                          </motion.div>
+                        ))}
+                      </div>
+                    )}
+
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={handleSubmit}
+                      disabled={!selectedConsole || isLoading}
+                      className={`w-full mt-4 py-2 sm:py-3 rounded-lg text-xs sm:text-sm font-medium flex items-center justify-center space-x-2 ${
+                        selectedConsole && !isLoading
+                          ? "bg-emerald-500 hover:bg-emerald-600 text-white"
+                          : "bg-gray-100 text-gray-400 cursor-not-allowed"
+                      }`}
+                    >
+                      {isLoading ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                          <span>Processing...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Play className="w-4 h-4" />
+                          <span>Start Session</span>
+                        </>
+                      )}
+                    </motion.button>
+                  </div>
+                </Card>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Header - Fixed height */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-2 sm:pb-3 gap-2 sm:gap-4 flex-shrink-0">
+          <div className="flex items-center gap-2 px-3 py-2">
+            <div className={`w-2 mt-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`} />
+            <h3 className="text-xs sm:text-sm font-semibold text-foreground mt-2">Upcoming Bookings</h3>
+            <span className="px-2 py-0.5 bg-emerald-100 mt-2 text-emerald-800 rounded-full text-xs">
+              {filteredBookings.length}
+            </span>
+          </div>
+        </div>
+
+        {/* Search Filter - Fixed height */}
+        <div className="pb-2 sm:pb-3 flex-shrink-0">
+          <ResponsiveSearchFilter
+            searchTerm={searchTerm}
+            setSearchTerm={setSearchTerm}
+            selectedDate={selectedDate}
+            setSelectedDate={setSelectedDate}
+            timeFilter={timeFilter}
+            setTimeFilter={setTimeFilter}
+          />
+        </div>
+
+        {/* 🚀 FIXED: Scrollable content area that takes remaining space */}
+        <div className="flex-1 overflow-y-auto min-h-0">
+          {mergedBookings.length === 0 ? (
+            <div className="h-full flex flex-col items-center justify-center py-6 px-3 text-gray-500">
+              <CalendarIcon className="w-8 h-8 mb-2 opacity-50" />
+              <p className="text-sm font-medium">No bookings found</p>
+              <p className="text-xs mt-1 text-center">
+                {isConnected ? "Waiting for bookings..." : "Check filters"}
+              </p>
+            </div>
+          ) : (
+            <div className="h-full overflow-y-auto">
+              <div className="space-y-2 sm:space-y-3 lg:space-y-4 p-2 sm:p-4">
+                <AnimatePresence mode="popLayout">
+                  {mergedBookings.map((booking, index) => (
+                    <motion.div
+                      key={booking.bookingId}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, x: -50 }}
+                      layout
+                      transition={{ 
+                        duration: 0.3, 
+                        delay: index * 0.02 
+                      }}
+                      className="bg-gray-50 dark:bg-card rounded-lg sm:rounded-xl border border-gray-200 dark:border-zinc-700 p-2 sm:p-4 hover:shadow-sm transition-shadow duration-200"
+                    >
+                      <div className="space-y-2">
+                        {/* User info row */}
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2 min-w-0 flex-1">
+                            <User className="w-3 h-3 shrink-0" />
+                            <span className="truncate text-xs sm:text-sm font-medium">{booking.username || "Guest User"}</span>
+                          </div>
+                          <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800 shrink-0">
+                            Paid
+                          </span>
+                        </div>
+
+                        {/* Time/duration row */}
+                        <div className="flex flex-wrap gap-3 text-xs text-gray-600 dark:text-gray-400">
+                          <div className="flex items-center gap-1">
+                            <Clock className="w-3 h-3 shrink-0" />
+                            <span>{booking.time || 'No time set'}</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <Timer className="w-3 h-3 shrink-0" />
+                            <span>{booking.duration || 1}hr</span>
+                          </div>
+                          
+                          {/* ✅ ENHANCED: Food/Meal icons - Conditional rendering */}
+                          <div className="flex items-center gap-2 ml-auto">
+                            {booking.hasMeals ? (
+                              <motion.button
+                                whileHover={{ scale: 1.1 }}
+                                whileTap={{ scale: 0.9 }}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleFoodIconClick(booking.bookingId, booking.username || 'Guest User', true);
+                                }}
+                                className="flex items-center gap-1 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-full p-1.5 transition-all duration-200 group"
+                                title="View meals & add more"
+                              >
+                                <UtensilsCrossed className="w-4 h-4 text-emerald-600 group-hover:text-emerald-700 transition-colors" />
+                                <span className="text-xs text-emerald-600 group-hover:text-emerald-700 font-medium">
+                                  Meals
+                                </span>
+                              </motion.button>
+                            ) : (
+                              <motion.button
+                                whileHover={{ scale: 1.1 }}
+                                whileTap={{ scale: 0.9 }}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleAddFoodClick(booking.bookingId, booking.username || 'Guest User');
+                                }}
+                                className="flex items-center gap-1 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-full p-1.5 transition-all duration-200 group border border-dashed border-blue-300 dark:border-blue-600"
+                                title="Add meals to this booking"
+                              >
+                                <Plus className="w-3 h-3 text-blue-600 group-hover:text-blue-700 transition-colors" />
+                                <UtensilsCrossed className="w-3 h-3 text-blue-600 group-hover:text-blue-700 transition-colors" />
+                                <span className="text-xs text-blue-600 group-hover:text-blue-700 font-medium">
+                                  Add
+                                </span>
+                              </motion.button>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Start button */}
+                        <motion.button
                           whileHover={{ scale: 1.02 }}
                           whileTap={{ scale: 0.98 }}
-                          onClick={() => handleConsoleSelection(console.consoleId)}
-                          className={`cursor-pointer rounded-lg border ${
-                            selectedConsole === console.consoleId
-                              ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20"
-                              : "border-gray-200 dark:border-zinc-800 hover:border-emerald-500/50"
-                          } p-2 sm:p-3 transition-all duration-200`}
+                          onClick={() =>
+                            start(booking.consoleType || "", booking.game_id, booking.bookingId)
+                          }
+                          className="w-full py-1.5 sm:py-2 text-xs sm:text-sm bg-emerald-500 hover:bg-emerald-600 text-white rounded-md font-medium transition-all flex items-center justify-center gap-2"
                         >
-                          <div className="flex items-center space-x-2">
-                            {getIcon(selectedSystem)}
-                            <div>
-                              <h3 className="text-sm font-medium">{console.brand}</h3>
-                              <p className="text-xs text-gray-500">{console.consoleModelNumber}</p>
-                            </div>
-                          </div>
-                        </motion.div>
-                      ))}
-                    </div>
-                  )}
-
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={handleSubmit}
-                    disabled={!selectedConsole || isLoading}
-                    className={`w-full mt-4 py-2 sm:py-3 rounded-lg text-xs sm:text-sm font-medium flex items-center justify-center space-x-2 ${
-                      selectedConsole && !isLoading
-                        ? "bg-emerald-500 hover:bg-emerald-600 text-white"
-                        : "bg-gray-100 text-gray-400 cursor-not-allowed"
-                    }`}
-                  >
-                    {isLoading ? (
-                      <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
-                        <span>Processing...</span>
-                      </>
-                    ) : (
-                      <>
-                        <Play className="w-4 h-4" />
-                        <span>Start Session</span>
-                      </>
-                    )}
-                  </motion.button>
-                </div>
-              </Card>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Header - Fixed height */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-2 sm:pb-3 gap-2 sm:gap-4 flex-shrink-0">
-        <div className="flex items-center gap-2">
-          <div className={`w-2 mt-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`} />
-          <h3 className="text-xs sm:text-sm font-semibold text-foreground mt-2">Upcoming Bookings</h3>
-          <span className="px-2 py-0.5 bg-emerald-100 mt-2 text-emerald-800 rounded-full text-xs">
-            {filteredBookings.length}
-          </span>
+                          <Play className="w-3 h-3" />
+                          Start
+                        </motion.button>
+                      </div>
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
+              </div>
+            </div>
+          )}
         </div>
       </div>
-
-      {/* Search Filter - Fixed height */}
-      <div className="pb-2 sm:pb-3 flex-shrink-0">
-        <ResponsiveSearchFilter
-          searchTerm={searchTerm}
-          setSearchTerm={setSearchTerm}
-          selectedDate={selectedDate}
-          setSelectedDate={setSelectedDate}
-          timeFilter={timeFilter}
-          setTimeFilter={setTimeFilter}
-        />
-      </div>
-
-      {/* 🚀 FIXED: Scrollable content area that takes remaining space */}
-      <div className="flex-1 overflow-y-auto min-h-0">
-        {mergedBookings.length === 0 ? (
-          <div className="h-full flex flex-col items-center justify-center py-6 px-3 text-gray-500">
-            <CalendarIcon className="w-8 h-8 mb-2 opacity-50" />
-            <p className="text-sm font-medium">No bookings found</p>
-            <p className="text-xs mt-1 text-center">
-              {isConnected ? "Waiting for bookings..." : "Check filters"}
-            </p>
-          </div>
-        ) : (
-          <div className="h-full overflow-y-auto">
-            <div className="space-y-2 sm:space-y-3 lg:space-y-4 p-2 sm:p-4">
-              <AnimatePresence mode="popLayout">
-                {mergedBookings.map((booking, index) => (
-                  <motion.div
-                    key={booking.bookingId}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, x: -50 }}
-                    layout
-                    transition={{ 
-                      duration: 0.3, 
-                      delay: index * 0.02 
-                    }}
-                    className="bg-gray-50 dark:bg-zinc-900 rounded-lg sm:rounded-xl border border-gray-200 dark:border-zinc-700 p-2 sm:p-4 hover:shadow-sm transition-shadow duration-200"
-                  >
-                    <div className="space-y-2">
-                      {/* User info row */}
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2 min-w-0 flex-1">
-                          <User className="w-3 h-3 shrink-0" />
-                          <span className="truncate text-xs sm:text-sm font-medium">{booking.username || "Guest User"}</span>
-                        </div>
-                        <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800 shrink-0">
-                          Paid
-                        </span>
-                      </div>
-
-                      {/* Time/duration row */}
-                      <div className="flex flex-wrap gap-3 text-xs text-gray-600 dark:text-gray-400">
-                        <div className="flex items-center gap-1">
-                          <Clock className="w-3 h-3 shrink-0" />
-                          <span>{booking.time || 'No time set'}</span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <Timer className="w-3 h-3 shrink-0" />
-                          <span>{booking.duration || 1}hr</span>
-                        </div>
-                        
-                        {/* ✅ ENHANCED: Food/Meal icons - Conditional rendering */}
-                        <div className="flex items-center gap-2 ml-auto">
-                          {booking.hasMeals ? (
-                            // Show food icon for users who have ordered meals
-                            <motion.button
-                              whileHover={{ scale: 1.1 }}
-                              whileTap={{ scale: 0.9 }}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleFoodIconClick(booking.bookingId, booking.username || 'Guest User', true);
-                              }}
-                              className="flex items-center gap-1 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-full p-1.5 transition-all duration-200 group"
-                              title="View meals & add more"
-                            >
-                              <UtensilsCrossed className="w-4 h-4 text-emerald-600 group-hover:text-emerald-700 transition-colors" />
-                              <span className="text-xs text-emerald-600 group-hover:text-emerald-700 font-medium">
-                                Meals
-                              </span>
-                            </motion.button>
-                          ) : (
-                            // Show add food icon for users who haven't ordered meals
-                            <motion.button
-                              whileHover={{ scale: 1.1 }}
-                              whileTap={{ scale: 0.9 }}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleAddFoodClick(booking.bookingId, booking.username || 'Guest User');
-                              }}
-                              className="flex items-center gap-1 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-full p-1.5 transition-all duration-200 group border border-dashed border-blue-300 dark:border-blue-600"
-                              title="Add meals to this booking"
-                            >
-                              <Plus className="w-3 h-3 text-blue-600 group-hover:text-blue-700 transition-colors" />
-                              <UtensilsCrossed className="w-3 h-3 text-blue-600 group-hover:text-blue-700 transition-colors" />
-                              <span className="text-xs text-blue-600 group-hover:text-blue-700 font-medium">
-                                Add
-                              </span>
-                            </motion.button>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Start button */}
-                      <motion.button
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
-                        onClick={() =>
-                          start(booking.consoleType || "", booking.game_id, booking.bookingId)
-                        }
-                        className="w-full py-1.5 sm:py-2 text-xs sm:text-sm bg-emerald-500 hover:bg-emerald-600 text-white rounded-md font-medium transition-all flex items-center justify-center gap-2"
-                      >
-                        <Play className="w-3 h-3" />
-                        Start
-                      </motion.button>
-                    </div>
-                  </motion.div>
-                ))}
-              </AnimatePresence>
-            </div>
-          </div>
-        )}
-      </div>
       
-      {/* ✅ ENHANCED: Pass additional props to MealDetailsModal */}
-      <MealDetailsModal
-        isOpen={mealDetailsModal.isOpen}
-        onClose={closeMealDetailsModal}
-        bookingId={mealDetailsModal.bookingId}
-        customerName={mealDetailsModal.customerName}
-        initialMode={mealDetailsModal.mode}
-        hasExistingMeals={mealDetailsModal.hasExistingMeals}
-        vendorId={vendorId}
-      />
-    </div>
+      {/* ✅ FIXED: Render modal using Portal at document root level */}
+      {isMounted && createPortal(
+        <MealDetailsModal
+          isOpen={mealDetailsModal.isOpen}
+          onClose={closeMealDetailsModal}
+          bookingId={mealDetailsModal.bookingId}
+          customerName={mealDetailsModal.customerName}
+          initialMode={mealDetailsModal.mode}
+          hasExistingMeals={mealDetailsModal.hasExistingMeals}
+          vendorId={vendorId}
+        />,
+        document.body
+      )}
+    </>
   );
 }
