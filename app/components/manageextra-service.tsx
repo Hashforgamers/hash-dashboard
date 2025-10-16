@@ -25,6 +25,7 @@ import { jwtDecode } from "jwt-decode";
 import clsx from "clsx";
 import { DASHBOARD_URL } from "@/src/config/env";
 
+
 /* ------------------------------------------------------------------ */
 /* -----------------------    TYPE DEFINITIONS    ----------------------- */
 /* ------------------------------------------------------------------ */
@@ -37,6 +38,7 @@ interface ExtraServiceMenu {
   is_active: boolean
 }
 
+
 interface ExtraServiceCategory {
   id: number
   name: string
@@ -44,10 +46,12 @@ interface ExtraServiceCategory {
   items: ExtraServiceMenu[]
 }
 
+
 interface CategoryForm {
   name: string
   description: string
 }
+
 
 interface MenuItemForm {
   name: string
@@ -57,21 +61,24 @@ interface MenuItemForm {
   is_active: boolean
 }
 
+
 /* ------------------------------------------------------------------ */
 /* ----------------------------    CONFIG    ---------------------------- */
 /* ------------------------------------------------------------------ */
 const API_BASE = `${DASHBOARD_URL}/api`;
 
+
 const getCategoryIcon = (categoryName: string) => {
   const name = categoryName.toLowerCase();
   if (name.includes('food') || name.includes('snack')) {
-    return <UtensilsCrossed className="w-4 h-4 sm:w-5 sm:h-5 text-orange-400" />;
+    return <UtensilsCrossed className="icon-lg text-orange-400" />;
   }
   if (name.includes('drink') || name.includes('beverage')) {
-    return <Coffee className="w-4 h-4 sm:w-5 sm:h-5 text-blue-400" />;
+    return <Coffee className="icon-lg text-blue-400" />;
   }
-  return <UtensilsCrossed className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />;
+  return <UtensilsCrossed className="icon-lg text-primary" />;
 };
+
 
 /* ------------------------------------------------------------------ */
 /* -------------------------    COMPONENT    ---------------------------- */
@@ -86,10 +93,12 @@ export default function ManageExtraServices() {
   const [error, setError] = useState<string | null>(null)
   const [vendorId, setVendorId] = useState<number | null>(null)
 
+
   /* Category form */
   const [showCategoryDlg, setShowCategoryDlg] = useState(false)
   const [categoryForm, setCategoryForm] = useState<CategoryForm>({ name: "", description: "" })
   const [categoryLoading, setCategoryLoading] = useState(false)
+
 
   /* Menu item form */
   const [showMenuDlg, setShowMenuDlg] = useState(false)
@@ -102,6 +111,7 @@ export default function ManageExtraServices() {
   })
   const [activeCategoryId, setActiveCategoryId] = useState<number | null>(null)
   const [menuLoading, setMenuLoading] = useState(false)
+
 
   /* -----------------    HELPERS    ----------------- */
   const fetchCategories = async () => {
@@ -196,6 +206,7 @@ export default function ManageExtraServices() {
     }
   }
 
+
   /* -----------------    CRUD CALLS    ----------------- */
   const createCategory = async () => {
     if (!categoryForm.name.trim()) {
@@ -236,6 +247,7 @@ export default function ManageExtraServices() {
     }
   }
 
+
   const deleteCategory = async (categoryId: number) => {
     if (!confirm('Are you sure you want to delete this category and all its menu items?')) {
       return
@@ -260,6 +272,7 @@ export default function ManageExtraServices() {
       alert(err instanceof Error ? err.message : 'Failed to delete category')
     }
   }
+
 
   const createMenuItem = async () => {
     if (!menuForm.name.trim() || !menuForm.price.trim()) {
@@ -310,6 +323,7 @@ export default function ManageExtraServices() {
     }
   }
 
+
   const deleteMenuItem = async (categoryId: number, menuId: number) => {
     if (!confirm('Are you sure you want to delete this menu item?')) {
       return
@@ -336,6 +350,7 @@ export default function ManageExtraServices() {
     }
   }
 
+
   /* -----------------    IMAGE HANDLER    ----------------- */
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -343,11 +358,13 @@ export default function ManageExtraServices() {
     setMenuForm((prev) => ({ ...prev, imageFile: file }))
   }
 
+
   /* -----------------    EFFECTS    ----------------- */
   // Handle client-side mounting to prevent hydration issues
   useEffect(() => {
     setIsClient(true)
   }, [])
+
 
   // Only access localStorage after client-side mounting
   useEffect(() => {
@@ -376,6 +393,7 @@ export default function ManageExtraServices() {
     }
   }, [isClient]);
 
+
   // Fetch categories when vendorId is available and client is mounted
   useEffect(() => {
     if (vendorId && isClient) {
@@ -387,70 +405,73 @@ export default function ManageExtraServices() {
     }
   }, [vendorId, isClient])
 
+
   // Prevent hydration mismatch by not rendering until client-side
   if (!isClient) {
     // Return the same loading structure that would appear on client
     return (
-      <div className="min-h-screen bg-background text-foreground p-2 sm:p-4 md:p-6 space-y-4 sm:space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 sm:mb-8 gap-4">
-          <div className="min-w-0 flex-1">
-            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground mb-1 sm:mb-2 truncate">
+      <div className="page-container section-spacing">
+        <div className="page-header">
+          <div className="page-title-section">
+            <h1 className="page-title">
               Manage Extra Services
             </h1>
-            <p className="text-sm sm:text-base text-muted-foreground">
+            <p className="page-subtitle">
               Create categories and add menu items
             </p>
           </div>
-          <Button disabled className="bg-blue-600 hover:bg-primary/90 text-primary-foreground px-3 sm:px-4 py-2 rounded-lg font-medium transition-colors duration-200 whitespace-nowrap">
-            <Plus className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-            <span className="text-sm sm:text-base">New Category</span>
+          <Button disabled className="btn-primary">
+            <Plus className="icon-md mr-2" />
+            <span>New Category</span>
           </Button>
         </div>
         <div className="text-center py-8 sm:py-12">
           <div className="inline-block animate-spin rounded-full h-6 w-6 sm:h-8 sm:w-8 border-b-2 border-primary"></div>
-          <p className="text-muted-foreground mt-2 text-sm sm:text-base">Loading...</p>
+          <p className="body-text-muted mt-2">Loading...</p>
         </div>
       </div>
     )
   }
+
 
   /* -----------------    UI    ----------------- */
   return (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="min-h-screen bg-background text-foreground p-2 sm:p-4 md:p-6 space-y-4 sm:space-y-6"
+      className="page-container section-spacing"
     >
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
-        className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 sm:mb-8 gap-4"
+        className="page-header"
       >
-        <div className="min-w-0 flex-1">
-          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground mb-1 sm:mb-2 truncate">
+        <div className="page-title-section">
+          <h1 className="page-title">
             Manage Extra Services
           </h1>
-          <p className="text-sm sm:text-base text-muted-foreground">
+          <p className="page-subtitle">
             Create categories and add menu items
           </p>
         </div>
         <Button
           onClick={() => setShowCategoryDlg(true)}
           disabled={loading || !vendorId}
-          className="bg-blue-600 hover:bg-primary/90 text-primary-foreground px-3 sm:px-4 py-2 rounded-lg font-medium transition-colors duration-200 whitespace-nowrap"
+          className="btn-primary"
         >
-          <Plus className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-          <span className="text-sm sm:text-base">New Category</span>
+          <Plus className="icon-md mr-2" />
+          <span>New Category</span>
         </Button>
       </motion.div>
+
 
       {/* Error State */}
       {error && (
         <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-3 sm:p-4 text-destructive">
-          <p className="font-medium text-sm sm:text-base">Error:</p>
-          <p className="text-xs sm:text-sm mt-1 break-words">{error}</p>
+          <p className="body-text font-medium">Error:</p>
+          <p className="body-text-muted mt-1 break-words">{error}</p>
           <Button
             variant="outline"
             size="sm"
@@ -466,29 +487,31 @@ export default function ManageExtraServices() {
         </div>
       )}
 
+
       {/* Loading State */}
       {!vendorId && !error && (
         <div className="text-center py-8 sm:py-12">
           <div className="inline-block animate-spin rounded-full h-6 w-6 sm:h-8 sm:w-8 border-b-2 border-primary"></div>
-          <p className="text-muted-foreground mt-2 text-sm sm:text-base">Loading authentication...</p>
+          <p className="body-text-muted mt-2">Loading authentication...</p>
         </div>
       )}
+
 
       {/* Category List */}
       {vendorId && (
         loading ? (
           <div className="text-center py-8 sm:py-12">
             <div className="inline-block animate-spin rounded-full h-6 w-6 sm:h-8 sm:w-8 border-b-2 border-primary"></div>
-            <p className="text-muted-foreground mt-2 text-sm sm:text-base">Loading categories...</p>
+            <p className="body-text-muted mt-2">Loading categories...</p>
           </div>
         ) : !Array.isArray(categories) || categories.length === 0 ? (
           <div className="text-center py-8 sm:py-12">
-            <p className="text-muted-foreground text-sm sm:text-base">
+            <p className="body-text-muted">
               {!Array.isArray(categories) ? 'Invalid data format' : 'No categories found.'}
             </p>
             {Array.isArray(categories) && (
               <Button
-                className="mt-4 bg-primary hover:bg-primary/90 text-primary-foreground px-3 sm:px-4 py-2 rounded-lg font-medium transition-colors duration-200 text-sm sm:text-base"
+                className="mt-4 btn-primary"
                 onClick={() => setShowCategoryDlg(true)}
               >
                 Create Your First Category
@@ -496,7 +519,7 @@ export default function ManageExtraServices() {
             )}
           </div>
         ) : (
-          <div className="space-y-4 sm:space-y-6">
+          <div className="section-spacing">
             {categories.map((cat, i) => {
               // Additional safety validation for each category
               if (!cat || typeof cat !== 'object' || !cat.id) {
@@ -511,19 +534,19 @@ export default function ManageExtraServices() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.05 * i }}
                 >
-                  <Card className="bg-card border border-border rounded-lg shadow-lg">
-                    <CardHeader className="pb-3 sm:pb-4 p-3 sm:p-6">
+                  <Card className="content-card shadow-lg">
+                    <CardHeader className="content-card-padding pb-3 sm:pb-4">
                       <div className="flex items-start sm:items-center justify-between gap-3">
                         <div className="flex items-start sm:items-center gap-2 sm:gap-3 min-w-0 flex-1">
-                          <div className="p-1.5 sm:p-2 bg-muted/20 rounded-lg shrink-0">
+                          <div className="icon-container bg-muted/20 shrink-0">
                             {getCategoryIcon(cat.name || 'category')}
                           </div>
                           <div className="min-w-0 flex-1">
-                            <CardTitle className="text-lg sm:text-xl font-semibold text-foreground truncate">
+                            <CardTitle className="card-title truncate">
                               {cat.name || 'Untitled Category'}
                             </CardTitle>
                             {cat.description && (
-                              <p className="text-xs sm:text-sm text-muted-foreground mt-1 line-clamp-2">
+                              <p className="card-subtitle mt-1 line-clamp-2">
                                 {cat.description}
                               </p>
                             )}
@@ -535,12 +558,12 @@ export default function ManageExtraServices() {
                           onClick={() => deleteCategory(cat.id)}
                           className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg w-8 h-8 sm:w-10 sm:h-10 shrink-0"
                         >
-                          <Trash2 className="w-3 h-3 sm:w-5 sm:h-5" />
+                          <Trash2 className="icon-lg" />
                         </Button>
                       </div>
                     </CardHeader>
-                    <CardContent className="p-3 sm:p-6 pt-0">
-                      <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3 sm:gap-4">
+                    <CardContent className="content-card-padding pt-0">
+                      <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-compact">
                         {/* Safe mapping with comprehensive validation */}
                         {Array.isArray(cat.items) && cat.items.map((item, idx) => {
                           // Validate each item before rendering
@@ -557,7 +580,7 @@ export default function ManageExtraServices() {
                               transition={{ delay: 0.04 * idx }}
                               className="w-full max-w-[280px] mx-auto"
                             >
-                              <Card className="overflow-hidden hover:shadow-lg transition-shadow duration-300 bg-muted/30 border border-border rounded-lg w-full">
+                              <Card className="content-card overflow-hidden hover:shadow-lg transition-shadow duration-300 bg-muted/30 w-full">
                                 <CardContent className="p-0">
                                   <div className="aspect-video relative">
                                     <Image
@@ -573,22 +596,22 @@ export default function ManageExtraServices() {
                                         className="w-6 h-6 sm:w-7 sm:h-7 bg-background/80 hover:bg-background text-destructive hover:text-destructive-foreground rounded-lg"
                                         onClick={() => deleteMenuItem(cat.id, item.id)}
                                       >
-                                        <Trash2 className="w-2.5 h-2.5 sm:w-3.5 sm:h-3.5" />
+                                        <Trash2 className="icon-sm" />
                                       </Button>
                                     </div>
                                   </div>
                                   
-                                  <div className="p-2 sm:p-3 space-y-1 sm:space-y-2">
-                                    <h3 className="font-semibold text-foreground text-xs sm:text-sm truncate">
+                                  <div className="p-tight space-y-1 sm:space-y-2">
+                                    <h3 className="body-text font-semibold truncate">
                                       {item.name || 'Untitled Item'}
                                     </h3>
                                     {item.description && (
-                                      <p className="text-xs text-muted-foreground line-clamp-2">
+                                      <p className="body-text-small line-clamp-2">
                                         {item.description}
                                       </p>
                                     )}
                                     <div className="flex items-center justify-between pt-1">
-                                      <p className="font-bold text-foreground text-sm sm:text-base">
+                                      <p className="price-small">
                                         ₹{item.price || 0}
                                       </p>
                                       <span className={clsx(
@@ -614,7 +637,7 @@ export default function ManageExtraServices() {
                           transition={{ delay: 0.04 * (Array.isArray(cat.items) ? cat.items.length : 0) }}
                           className="w-full max-w-[280px] mx-auto"
                         >
-                          <Card className="overflow-hidden hover:shadow-lg transition-shadow duration-300 bg-muted/30 border-2 border-dashed border-muted-foreground/50 hover:border-primary/70 cursor-pointer rounded-lg w-full">
+                          <Card className="content-card overflow-hidden hover:shadow-lg transition-shadow duration-300 bg-muted/30 border-2 border-dashed border-muted-foreground/50 hover:border-primary/70 cursor-pointer w-full">
                             <CardContent 
                               className="p-0 h-full flex items-center justify-center min-h-[120px] sm:min-h-[140px]"
                               onClick={() => {
@@ -631,8 +654,8 @@ export default function ManageExtraServices() {
                             >
                               <div className="aspect-video w-full flex flex-col items-center justify-center text-muted-foreground p-2 sm:p-4">
                                 <div className="text-center">
-                                  <Plus className="w-8 h-8 sm:w-10 sm:h-10 mx-auto mb-1 sm:mb-2" />
-                                  <span className="text-xs sm:text-sm font-medium">Add Menu</span>
+                                  <Plus className="icon-xl mx-auto mb-1 sm:mb-2" />
+                                  <span className="body-text font-medium">Add Menu</span>
                                 </div>
                               </div>
                             </CardContent>
@@ -648,18 +671,19 @@ export default function ManageExtraServices() {
         )
       )}
 
+
       {/* Category Dialog */}
       <Dialog open={showCategoryDlg} onOpenChange={setShowCategoryDlg}>
         <DialogContent className="sm:max-w-[425px] w-[95vw] max-h-[90vh] bg-card/95 backdrop-blur-md border border-border shadow-2xl rounded-lg">
           <DialogHeader>
-            <DialogTitle className="text-foreground text-lg sm:text-xl">New Category</DialogTitle>
-            <DialogDescription className="text-muted-foreground text-sm">
+            <DialogTitle className="section-title">New Category</DialogTitle>
+            <DialogDescription className="body-text-muted">
               Enter a name and description for your new category.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-2 overflow-y-auto">
             <div>
-              <Label htmlFor="cat-name" className="text-foreground text-sm">Name *</Label>
+              <Label htmlFor="cat-name" className="form-label">Name *</Label>
               <Input
                 id="cat-name"
                 value={categoryForm.name}
@@ -668,11 +692,11 @@ export default function ManageExtraServices() {
                 }
                 placeholder="e.g. Food, Drinks, Snacks"
                 disabled={categoryLoading}
-                className="bg-input border-input text-foreground placeholder:text-muted-foreground rounded-lg text-sm"
+                className="input-field"
               />
             </div>
             <div>
-              <Label htmlFor="cat-desc" className="text-foreground text-sm">Description</Label>
+              <Label htmlFor="cat-desc" className="form-label">Description</Label>
               <Input
                 id="cat-desc"
                 value={categoryForm.description}
@@ -684,7 +708,7 @@ export default function ManageExtraServices() {
                 }
                 placeholder="Optional description"
                 disabled={categoryLoading}
-                className="bg-input border-input text-foreground placeholder:text-muted-foreground rounded-lg text-sm"
+                className="input-field"
               />
             </div>
           </div>
@@ -693,18 +717,18 @@ export default function ManageExtraServices() {
               variant="outline"
               onClick={() => setShowCategoryDlg(false)}
               disabled={categoryLoading}
-              className="border-border text-foreground hover:bg-muted hover:text-foreground rounded-lg w-full sm:w-auto text-sm"
+              className="btn-secondary w-full sm:w-auto"
             >
               Cancel
             </Button>
             <Button
               onClick={createCategory}
               disabled={categoryLoading || !categoryForm.name.trim()}
-              className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg w-full sm:w-auto text-sm"
+              className="btn-primary w-full sm:w-auto"
             >
               {categoryLoading ? (
                 <>
-                  <Loader2 className="mr-2 h-3 w-3 sm:h-4 sm:w-4 animate-spin" /> 
+                  <Loader2 className="icon-md mr-2 animate-spin" /> 
                   Creating...
                 </>
               ) : (
@@ -715,18 +739,19 @@ export default function ManageExtraServices() {
         </DialogContent>
       </Dialog>
 
+
       {/* Menu Item Dialog */}
       <Dialog open={showMenuDlg} onOpenChange={setShowMenuDlg}>
         <DialogContent className="sm:max-w-[500px] w-[95vw] max-h-[90vh] bg-card/95 backdrop-blur-md border border-border shadow-2xl rounded-lg">
           <DialogHeader>
-            <DialogTitle className="text-foreground text-lg sm:text-xl">New Menu Item</DialogTitle>
-            <DialogDescription className="text-muted-foreground text-sm">
+            <DialogTitle className="section-title">New Menu Item</DialogTitle>
+            <DialogDescription className="body-text-muted">
               Add a new item to your category.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-2 overflow-y-auto max-h-[60vh]">
             <div>
-              <Label className="text-foreground text-sm">Name *</Label>
+              <Label className="form-label">Name *</Label>
               <Input
                 value={menuForm.name}
                 onChange={(e) =>
@@ -734,11 +759,11 @@ export default function ManageExtraServices() {
                 }
                 placeholder="e.g. Burger, Coffee"
                 disabled={menuLoading}
-                className="bg-input border-input text-foreground placeholder:text-muted-foreground rounded-lg text-sm"
+                className="input-field"
               />
             </div>
             <div>
-              <Label className="text-foreground text-sm">Description</Label>
+              <Label className="form-label">Description</Label>
               <Textarea
                 value={menuForm.description}
                 onChange={(e) =>
@@ -747,11 +772,11 @@ export default function ManageExtraServices() {
                 placeholder="Optional description"
                 disabled={menuLoading}
                 rows={3}
-                className="bg-input border-input text-foreground placeholder:text-muted-foreground rounded-lg text-sm resize-none"
+                className="textarea-field"
               />
             </div>
             <div>
-              <Label className="text-foreground text-sm">Price (₹) *</Label>
+              <Label className="form-label">Price (₹) *</Label>
               <Input
                 type="number"
                 value={menuForm.price}
@@ -762,20 +787,20 @@ export default function ManageExtraServices() {
                 min="0"
                 step="0.01"
                 disabled={menuLoading}
-                className="bg-input border-input text-foreground placeholder:text-muted-foreground rounded-lg text-sm"
+                className="input-field"
               />
             </div>
             <div>
-              <Label className="text-foreground text-sm">Image (optional)</Label>
+              <Label className="form-label">Image (optional)</Label>
               <Input
                 type="file"
                 accept="image/*"
                 onChange={handleImageSelect}
                 disabled={menuLoading}
-                className="bg-input border-input text-foreground file:text-primary rounded-lg text-sm"
+                className="input-field file:text-primary"
               />
               {menuForm.imageFile && (
-                <p className="text-xs mt-1 text-muted-foreground break-all">
+                <p className="body-text-small mt-1 break-all">
                   📸 {menuForm.imageFile.name} ({(menuForm.imageFile.size / 1024).toFixed(1)} KB)
                 </p>
               )}
@@ -786,18 +811,18 @@ export default function ManageExtraServices() {
               variant="outline"
               onClick={() => setShowMenuDlg(false)}
               disabled={menuLoading}
-              className="border-border text-foreground hover:bg-muted hover:text-foreground rounded-lg w-full sm:w-auto text-sm"
+              className="btn-secondary w-full sm:w-auto"
             >
               Cancel
             </Button>
             <Button
               onClick={createMenuItem}
               disabled={menuLoading || !menuForm.name.trim() || !menuForm.price.trim()}
-              className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg w-full sm:w-auto text-sm"
+              className="btn-primary w-full sm:w-auto"
             >
               {menuLoading ? (
                 <>
-                  <Loader2 className="mr-2 h-3 w-3 sm:h-4 sm:w-4 animate-spin" /> 
+                  <Loader2 className="icon-md mr-2 animate-spin" /> 
                   Creating...
                 </>
               ) : (

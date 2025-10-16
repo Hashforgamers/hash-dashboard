@@ -131,7 +131,7 @@ export function KnowYourGamers() {
         {stats.map((stat, index) => {
           const Icon = iconMap[stat.icon as keyof typeof iconMap]
           return (
-            <div key={index} className="bg-card text-card-foreground rounded-lg p-4 shadow-sm border">
+            <div key={index} className="bg-card text-card-foreground rounded-lg p-4 shadow-sm border border-border">
               <div className="flex items-center justify-between">
                 <div className="min-w-0 flex-1">
                   <p className="text-sm text-muted-foreground truncate">{stat.title}</p>
@@ -151,7 +151,7 @@ export function KnowYourGamers() {
       </div>
 
       {/* Filters and Search */}
-      <div className="bg-card text-card-foreground rounded-lg border shadow-sm">
+      <div className="bg-card text-card-foreground rounded-lg border border-border shadow-sm">
         <div className="flex flex-col sm:flex-row gap-4 p-4">
           <div className="flex-1 relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5" />
@@ -180,7 +180,7 @@ export function KnowYourGamers() {
       </div>
 
       {/* Data Table */}
-      <div className="bg-card text-card-foreground rounded-lg border shadow-sm">
+      <div className="bg-card text-card-foreground rounded-lg border border-border shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[1200px]">
             <thead>
