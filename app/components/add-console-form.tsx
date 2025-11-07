@@ -1,5 +1,6 @@
 "use client";
 
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,7 +29,6 @@ import {
   HardDrive, 
   Wrench, 
   DollarSign, 
-  Package,
   CheckCircle2,
   Save,
   Copy
@@ -45,6 +45,7 @@ import {
 } from "./constant";
 import { AddConsoleFormProps, FormData } from "./interfaces";
 import { getHardWareSpecification } from "./utils";
+
 
 export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
   const [vendorId, setVendorId] = useState<number | null>(null);
@@ -85,7 +86,9 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
   const [showSuccess, setShowSuccess] = useState(false);
   const [refresh, setRefresh] = useState(0);
 
+
   const router = useRouter();
+
 
   // Fetch vendor ID
   useEffect(() => {
@@ -98,6 +101,7 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
     }
   }, []);
 
+
   // Fetch consoles and set consoleNumber
   useEffect(() => {
     if (vendorId) {
@@ -108,6 +112,7 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
           );
           const fetchedConsoles = Array.isArray(response.data) ? response.data : [];
           setConsoles(fetchedConsoles);
+
 
           const sameTypeConsoles = fetchedConsoles.filter(
             (c) => c?.type === consoleType
@@ -137,6 +142,7 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
     }
   }, [vendorId, consoleType, refresh]);
 
+
   // Hide success message after 3 seconds
   useEffect(() => {
     if (showSuccess) {
@@ -145,6 +151,7 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
     }
   }, [showSuccess]);
 
+
   const handleCopyConsole = async () => {
     if (!selectedConsoleId) return;
     try {
@@ -152,6 +159,7 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
         `${DASHBOARD_URL}/api/console/${selectedConsoleId}`
       );
       const consoleData = response.data;
+
 
       setformdata({
         ...formdata,
@@ -195,6 +203,7 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
     }
   };
 
+
   const handelfetch = async () => {
     setLoading(true);
     if (!vendorId) {
@@ -209,6 +218,7 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
         throw new Error("Invalid console number format");
       }
 
+
       const payload = {
         availablegametype: formdata.availablegametype,
         vendorId: vendorId,
@@ -219,7 +229,7 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
           brand: formdata.consoleDetails.Brand,
           consoleType: formdata.consoleDetails.consoleType,
           releaseDate: formdata.consoleDetails.ReleaseDate,
-          description: formdata.consoleDetails.Description,
+          description: "",
         },
         hardwareSpecifications: { ...formdata.hardwareSpecifications },
         maintenanceStatus: {
@@ -227,7 +237,7 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
           condition: formdata.maintenanceStatus.Condition,
           lastMaintenance: formdata.maintenanceStatus.LastMaintenance,
           nextMaintenance: formdata.maintenanceStatus.NextScheduledMaintenance,
-          maintenanceNotes: formdata.maintenanceStatus.MaintenanceNotes,
+          maintenanceNotes: "",
         },
         priceAndCost: {
           price: parseFloat(formdata.priceAndCost.price) || 0,
@@ -236,15 +246,17 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
           insuranceStatus: formdata.priceAndCost.InsuranceStatus,
         },
         additionalDetails: {
-          supportedGames: formdata.additionalDetails.ListOfSupportedGames,
-          accessories: formdata.additionalDetails.AccessoriesDetails,
+          supportedGames: "",
+          accessories: "",
         },
       };
+
 
       const response = await axios.post(`${DASHBOARD_URL}/api/addConsole`, payload);
       if (!response) {
         throw new Error("No response from server");
       }
+
 
       // On success: show message, reset form
       setShowSuccess(true);
@@ -288,17 +300,21 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
     }
   };
 
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     handelfetch();
   };
+
 
   const renderHardwareSpecifications = () => {
     if (consoleType === "pc") {
       return (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-2">
-            <Label htmlFor="processorType">Processor Type</Label>
+            <Label htmlFor="processorType">
+              Processor Type <span className="text-red-500">*</span>
+            </Label>
             <Select
               value={formdata.hardwareSpecifications?.processorType || ""}
               onValueChange={(value) =>
@@ -324,7 +340,9 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
             </Select>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="graphicsCard">Graphics Card</Label>
+            <Label htmlFor="graphicsCard">
+              Graphics Card <span className="text-red-500">*</span>
+            </Label>
             <Select
               value={formdata.hardwareSpecifications.graphicsCard}
               onValueChange={(value) =>
@@ -350,7 +368,9 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
             </Select>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="ramSize">RAM Size</Label>
+            <Label htmlFor="ramSize">
+              RAM Size <span className="text-red-500">*</span>
+            </Label>
             <Select
               value={formdata.hardwareSpecifications.ramSize}
               onValueChange={(value) =>
@@ -376,7 +396,9 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
             </Select>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="storageCapacity">Storage Capacity</Label>
+            <Label htmlFor="storageCapacity">
+              Storage Capacity <span className="text-red-500">*</span>
+            </Label>
             <Select
               value={formdata.hardwareSpecifications.storageCapacity}
               onValueChange={(value) =>
@@ -402,7 +424,9 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
             </Select>
           </div>
           <div className="space-y-2 md:col-span-2">
-            <Label htmlFor="connectivity">Connectivity</Label>
+            <Label htmlFor="connectivity">
+              Connectivity <span className="text-red-500">*</span>
+            </Label>
             <Input
               id="connectivity"
               placeholder="Enter connectivity options"
@@ -416,6 +440,7 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
                   },
                 }))
               }
+              required
             />
           </div>
         </div>
@@ -423,7 +448,9 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
     } else if (consoleType === "ps5") {
       return (
         <div className="space-y-2">
-          <Label htmlFor="playstationType">Types of PS5 PlayStation</Label>
+          <Label htmlFor="playstationType">
+            Types of PS5 PlayStation <span className="text-red-500">*</span>
+          </Label>
           <Select
             value={formdata.hardwareSpecifications.consoleModelType}
             onValueChange={(value) =>
@@ -452,7 +479,9 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
     } else if (consoleType === "xbox") {
       return (
         <div className="space-y-2">
-          <Label htmlFor="playstationType">Types of Xbox PlayStation</Label>
+          <Label htmlFor="playstationType">
+            Types of Xbox PlayStation <span className="text-red-500">*</span>
+          </Label>
           <Select
             value={formdata.hardwareSpecifications.consoleModelType}
             onValueChange={(value) =>
@@ -481,7 +510,9 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
     } else if (consoleType === "vr") {
       return (
         <div className="space-y-2">
-          <Label htmlFor="playstationType">Types of VR Playstation</Label>
+          <Label htmlFor="playstationType">
+            Types of VR Playstation <span className="text-red-500">*</span>
+          </Label>
           <Select
             value={formdata.hardwareSpecifications.consoleModelType}
             onValueChange={(value) =>
@@ -511,6 +542,7 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
     return <div>Hardware specifications not available for this console type</div>;
   };
 
+
   return (
     <div className="w-full">
       {/* Success Message */}
@@ -521,6 +553,7 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
         </div>
       )}
 
+
       {/* Header */}
       <div className="text-center mb-8">
         <h1 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
@@ -530,6 +563,7 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
           Fill out the information below to add a new console to your gaming cafe inventory
         </p>
       </div>
+
 
       <form onSubmit={handleSubmit} className="space-y-6">
         
@@ -579,6 +613,7 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
           </CardContent>
         </Card>
 
+
         {/* Section 2: Console Details */}
         <Card className="shadow-md">
           <CardHeader className="bg-gradient-to-r from-emerald-50 to-green-50 dark:from-emerald-900/20 dark:to-green-900/20">
@@ -593,16 +628,21 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
           <CardContent className="pt-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
-                <Label htmlFor="consoleNumber">Console Number</Label>
+                <Label htmlFor="consoleNumber">
+                  Console Number <span className="text-red-500">*</span>
+                </Label>
                 <Input
                   id="consoleNumber"
                   value={formdata.consoleDetails.consoleNumber}
                   readOnly
                   className="bg-gray-100 dark:bg-gray-800 font-medium"
+                  required
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="modelNumber">Model Number</Label>
+                <Label htmlFor="modelNumber">
+                  Model Number <span className="text-red-500">*</span>
+                </Label>
                 <Input
                   id="modelNumber"
                   placeholder="Enter model number"
@@ -616,10 +656,13 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
                       },
                     }));
                   }}
+                  required
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="serialNumber">Serial Number</Label>
+                <Label htmlFor="serialNumber">
+                  Serial Number <span className="text-red-500">*</span>
+                </Label>
                 <Input
                   id="serialNumber"
                   placeholder="Enter serial number"
@@ -633,10 +676,13 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
                       },
                     }));
                   }}
+                  required
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="brand">Brand</Label>
+                <Label htmlFor="brand">
+                  Brand <span className="text-red-500">*</span>
+                </Label>
                 <Input
                   id="brand"
                   placeholder="Enter brand name"
@@ -650,19 +696,25 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
                       },
                     }));
                   }}
+                  required
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="consoleType">Console Type</Label>
+                <Label htmlFor="consoleType">
+                  Console Type <span className="text-red-500">*</span>
+                </Label>
                 <Input 
                   id="consoleType" 
                   value={consoleType || ""} 
                   readOnly 
                   className="bg-gray-100 dark:bg-gray-800 font-medium"
+                  required
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="releaseDate">Release Date</Label>
+                <Label htmlFor="releaseDate">
+                  Release Date <span className="text-red-500">*</span>
+                </Label>
                 <Input
                   id="releaseDate"
                   type="date"
@@ -676,30 +728,13 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
                       },
                     }))
                   }
+                  required
                 />
               </div>
             </div>
-            <div className="mt-6 space-y-2">
-              <Label htmlFor="description">Description</Label>
-              <Textarea
-                id="description"
-                placeholder="Enter console description and additional notes"
-                value={formdata.consoleDetails.Description}
-                onChange={(e) =>
-                  setformdata((prev) => ({
-                    ...prev,
-                    consoleDetails: {
-                      ...prev.consoleDetails,
-                      Description: e.target.value,
-                    },
-                  }))
-                }
-                rows={4}
-                className="resize-none"
-              />
-            </div>
           </CardContent>
         </Card>
+
 
         {/* Section 3: Hardware Specifications */}
         <Card className="shadow-md">
@@ -717,6 +752,7 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
           </CardContent>
         </Card>
 
+
         {/* Section 4: Maintenance & Status */}
         <Card className="shadow-md">
           <CardHeader className="bg-gradient-to-r from-orange-50 to-red-50 dark:from-orange-900/20 dark:to-red-900/20">
@@ -731,7 +767,9 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
           <CardContent className="pt-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
-                <Label htmlFor="availableStatus">Available Status</Label>
+                <Label htmlFor="availableStatus">
+                  Available Status <span className="text-red-500">*</span>
+                </Label>
                 <Select
                   value={formdata.maintenanceStatus.AvailableStatus}
                   onValueChange={(value) =>
@@ -755,7 +793,9 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="condition">Condition</Label>
+                <Label htmlFor="condition">
+                  Condition <span className="text-red-500">*</span>
+                </Label>
                 <Select
                   value={formdata.maintenanceStatus.Condition}
                   onValueChange={(value) =>
@@ -780,7 +820,9 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="lastMaintenance">Last Maintenance</Label>
+                <Label htmlFor="lastMaintenance">
+                  Last Maintenance <span className="text-red-500">*</span>
+                </Label>
                 <Input
                   id="lastMaintenance"
                   type="date"
@@ -794,10 +836,13 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
                       },
                     }))
                   }
+                  required
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="nextMaintenance">Next Scheduled Maintenance</Label>
+                <Label htmlFor="nextMaintenance">
+                  Next Scheduled Maintenance <span className="text-red-500">*</span>
+                </Label>
                 <Input
                   id="nextMaintenance"
                   type="date"
@@ -811,30 +856,13 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
                       },
                     }))
                   }
+                  required
                 />
               </div>
             </div>
-            <div className="mt-6 space-y-2">
-              <Label htmlFor="maintenanceNotes">Maintenance Notes</Label>
-              <Textarea
-                id="maintenanceNotes"
-                placeholder="Enter maintenance notes and history"
-                value={formdata.maintenanceStatus.MaintenanceNotes}
-                onChange={(e) =>
-                  setformdata((prev) => ({
-                    ...prev,
-                    maintenanceStatus: {
-                      ...prev.maintenanceStatus,
-                      MaintenanceNotes: e.target.value,
-                    },
-                  }))
-                }
-                rows={4}
-                className="resize-none"
-              />
-            </div>
           </CardContent>
         </Card>
+
 
         {/* Section 5: Price & Cost */}
         <Card className="shadow-md">
@@ -850,7 +878,9 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
           <CardContent className="pt-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
-                <Label htmlFor="price">Purchase Price</Label>
+                <Label htmlFor="price">
+                  Purchase Price <span className="text-red-500">*</span>
+                </Label>
                 <Input
                   id="price"
                   type="number"
@@ -865,10 +895,13 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
                       },
                     }))
                   }
+                  required
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="rentalPrice">Rental Price (per hour/slot)</Label>
+                <Label htmlFor="rentalPrice">
+                  Rental Price (per hour/slot) <span className="text-red-500">*</span>
+                </Label>
                 <Input
                   id="rentalPrice"
                   type="number"
@@ -883,10 +916,13 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
                       },
                     }))
                   }
+                  required
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="warrantyPeriod">Warranty Period</Label>
+                <Label htmlFor="warrantyPeriod">
+                  Warranty Period <span className="text-red-500">*</span>
+                </Label>
                 <Input
                   id="warrantyPeriod"
                   placeholder="e.g., 2 years, 24 months"
@@ -900,10 +936,13 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
                       },
                     }))
                   }
+                  required
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="insuranceStatus">Insurance Status</Label>
+                <Label htmlFor="insuranceStatus">
+                  Insurance Status <span className="text-red-500">*</span>
+                </Label>
                 <Select
                   value={formdata.priceAndCost.InsuranceStatus}
                   onValueChange={(value) =>
@@ -929,58 +968,6 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
           </CardContent>
         </Card>
 
-        {/* Section 6: Additional Details */}
-        <Card className="shadow-md">
-          <CardHeader className="bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20">
-            <CardTitle className="flex items-center gap-3">
-              <Package className="w-6 h-6 text-indigo-600" />
-              Additional Details
-            </CardTitle>
-            <CardDescription className="text-base">
-              Enter games and accessories information
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="pt-6">
-            <div className="space-y-6">
-              <div className="space-y-2">
-                <Label htmlFor="supportedGames">List of Supported Games</Label>
-                <Textarea
-                  id="supportedGames"
-                  placeholder="Enter supported games, separated by commas or new lines"
-                  className="min-h-[120px] resize-none"
-                  value={formdata.additionalDetails.ListOfSupportedGames}
-                  onChange={(e) =>
-                    setformdata((prev) => ({
-                      ...prev,
-                      additionalDetails: {
-                        ...prev.additionalDetails,
-                        ListOfSupportedGames: e.target.value,
-                      },
-                    }))
-                  }
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="accessories">Accessories Details</Label>
-                <Textarea
-                  id="accessories"
-                  placeholder="List all included accessories (controllers, cables, headsets, etc.)"
-                  className="min-h-[120px] resize-none"
-                  value={formdata.additionalDetails.AccessoriesDetails}
-                  onChange={(e) =>
-                    setformdata((prev) => ({
-                      ...prev,
-                      additionalDetails: {
-                        ...prev.additionalDetails,
-                        AccessoriesDetails: e.target.value,
-                      },
-                    }))
-                  }
-                />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
 
         {/* Submit Button */}
         <div className="flex justify-center py-8">
