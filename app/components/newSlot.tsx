@@ -67,6 +67,82 @@ interface SlotBookingFormProps {
   availableConsoles: ConsoleType[]
 }
 
+// ============= OPTIMIZATION 1: Request Cache =============
+const requestCache = new Map<string, { data: any; timestamp: number }>()
+const CACHE_TTL = 5 * 60 * 1000 // 5 minutes
+
+function getCachedData(key: string) {
+  const cached = requestCache.get(key)
+  if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+    return cached.data
+  }
+  return null
+}
+
+function setCachedData(key: string, data: any) {
+  requestCache.set(key, { data, timestamp: Date.now() })
+}
+
+// ============= OPTIMIZATION 2: Request Deduplication =============
+const pendingRequests = new Map<string, Promise<any>>()
+
+async function fetchWithDedup(url: string): Promise<any> {
+  const cached = getCachedData(url)
+  if (cached) {
+    console.log(`✅ Cache hit: ${url}`)
+    return cached
+  }
+
+  if (pendingRequests.has(url)) {
+    console.log(`⏳ Deduped request: ${url}`)
+    return pendingRequests.get(url)
+  }
+
+  const promise = fetch(url)
+    .then(res => res.json())
+    .then(data => {
+      setCachedData(url, data)
+      pendingRequests.delete(url)
+      return data
+    })
+    .catch(err => {
+      pendingRequests.delete(url)
+      throw err
+    })
+
+  pendingRequests.set(url, promise)
+  return promise
+}
+
+// ============= OPTIMIZATION 3: Batch API Call =============
+async function fetchSlotsBatch(vendorId: number, gameIds: number[], dates: string[]) {
+  const url = `${BOOKING_URL}/api/getSlotList/vendor/${vendorId}/batch`
+  
+  const cacheKey = `batch:${vendorId}:${gameIds.join(',')}:${dates.join(',')}`
+  const cached = getCachedData(cacheKey)
+  if (cached) {
+    console.log(`✅ Batch cache hit`)
+    return cached
+  }
+  
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ games: gameIds, dates })
+    })
+    
+    if (!response.ok) throw new Error('Batch fetch failed')
+    
+    const data = await response.json()
+    setCachedData(cacheKey, data)
+    return data
+  } catch (error) {
+    console.error('Batch fetch error:', error)
+    return null
+  }
+}
+
 function SlotBookingForm({ 
   isOpen, 
   onClose, 
@@ -540,6 +616,7 @@ function SlotBookingForm({
   }
 
   if (!isOpen) return null
+
   return (
     <AnimatePresence>
       <motion.div
@@ -1028,7 +1105,6 @@ function TopBar({
           Manage and monitor console bookings.
         </p>
       </div>
-
       <div className="flex items-center gap-3">
         <Button
           onClick={onNewBooking}
@@ -1166,132 +1242,7 @@ function ScheduleGrid({
     return colors[consoleId % colors.length]
   }
 
-  {/**const isSlotSelected = (slotId: number) => {
-    return selectedSlots.some(slot => slot.slot_id === slotId)
-  }
-
-  const handleSlotClick = (dayData: any, time: string, gameConsole: ConsoleType) => {
-  const daySlots = allSlots[dayData.fullDate] || []
-  
-  const matchingSlot = daySlots.find(slot => {
-    const slotStartTime = slot.start_time.slice(0, 5)
-    return slotStartTime === time && slot.console_id === gameConsole.id && slot.is_available
-  })
-
-  if (!matchingSlot) return
-
-  const selectedSlot: SelectedSlot = {
-    slot_id: matchingSlot.slot_id,
-    date: dayData.fullDate,
-    start_time: matchingSlot.start_time,
-    end_time: matchingSlot.end_time,
-    console_id: gameConsole.id!,
-    console_name: gameConsole.name,
-    console_price: matchingSlot.single_slot_price || gameConsole.price!
-  }
-
-  onSlotSelect(selectedSlot)
-}
-
-
-   const handleSlotClick = (dayData: any, time: string, gameConsole: ConsoleType) => {
-    const daySlots = allSlots[dayData.fullDate] || []
-    
-    const matchingSlot = daySlots.find(slot => {
-      const slotStartTime = slot.start_time.slice(0, 5)
-      return slotStartTime === time && slot.console_id === gameConsole.id && slot.is_available
-    })
-
-    if (!matchingSlot) return
-
-    const selectedSlot: SelectedSlot = {
-      slot_id: matchingSlot.slot_id,
-      date: dayData.fullDate,
-      start_time: matchingSlot.start_time,
-      end_time: matchingSlot.end_time,
-      console_id: gameConsole.id!,
-      console_name: gameConsole.name,
-      console_price: matchingSlot.single_slot_price || gameConsole.price!
-    }
-
-    onSlotSelect(selectedSlot)
-  } **/}
-
-  {/**if (isLoading) {
-    return (
-      <Card className="rounded-2xl border border-gray-700 bg-gray-800/30 backdrop-blur-sm overflow-hidden">
-        <div className="flex items-center justify-center py-12">
-          <div className="text-center">
-            <Loader2 className="w-8 h-8 animate-spin text-blue-500 mx-auto mb-3" />
-            <p className="text-gray-300">Loading available slots...</p>
-          </div>
-        </div>
-      </Card>
-    )
-  }
-
-  const rows = days.map(day => {
-    const daySlots = allSlots[day.fullDate] || []
-
-    return {
-      date: day.date,
-      fullDate: day.fullDate,
-      cells: uniqueTimes.map((time, timeIndex) => {
-        if (filteredConsoles.length === 0) {
-          return <span key={timeIndex} />
-        }
-
-        const timeSlots: React.ReactNode[] = []
-        
-        filteredConsoles.forEach(gameConsole => {
-          const consoleSlots = daySlots.filter(slot => {
-            const slotStartTime = slot.start_time.slice(0, 5)
-            return slotStartTime === time && slot.console_id === gameConsole.id
-          })
-
-          if (consoleSlots.length === 0) return
-
-          const availableSlots = consoleSlots.filter(slot => slot.is_available)
-          const bookedSlots = consoleSlots.filter(slot => !slot.is_available)
-
-          availableSlots.forEach(slot => {
-            const isSelected = isSlotSelected(slot.slot_id)
-            
-            timeSlots.push(
-              <div key={slot.slot_id} className="w-full h-full min-h-[40px]">
-                <SlotPill
-                  label={gameConsole.name}
-                  color={getConsoleColor(gameConsole.id)}
-                  icon={getConsoleIcon(gameConsole.type)}
-                  onClick={() => handleSlotClick(day, time, gameConsole)}
-                  selected={isSelected}
-                />
-              </div>
-            )
-          }) 
-
-          bookedSlots.forEach((slot, index) => {
-            timeSlots.push(
-              <div 
-                key={`booked-${gameConsole.id}-${index}`} 
-                className="w-full h-full min-h-[40px] flex items-center justify-center bg-red-600 text-white rounded-md"
-              >
-                <X className="h-5 w-5 stroke-[3]" />
-              </div>
-            )
-          })
-        })
-
-        return (
-          <div key={`${day.fullDate}-${timeIndex}`} className="flex flex-row flex-wrap gap-1 items-stretch h-full p-1">
-            {timeSlots}
-          </div>
-        )
-      }),
-    }
-  }) **/}
-
-    const isSlotSelected = (slotId: number, date: string) => {
+  const isSlotSelected = (slotId: number, date: string) => {
     return selectedSlots.some(slot => slot.slot_id === slotId && slot.date === date)
   }
 
@@ -1356,7 +1307,7 @@ function ScheduleGrid({
           const bookedSlots = consoleSlots.filter(slot => !slot.is_available)
 
           availableSlots.forEach(slot => {
-            const isSelected = isSlotSelected(slot.slot_id, day.fullDate) // Fixed: pass date too
+            const isSelected = isSlotSelected(slot.slot_id, day.fullDate)
             
             timeSlots.push(
               <div key={`${day.fullDate}-${slot.slot_id}`} className="w-full h-full min-h-[40px]">
@@ -1391,7 +1342,6 @@ function ScheduleGrid({
       }),
     }
   })
-
 
   if (uniqueTimes.length === 0) {
     return (
@@ -1513,6 +1463,8 @@ export default function SlotManagement() {
   const [allSlots, setAllSlots] = useState<{ [key: string]: any[] }>({})
   const [recentBookings, setRecentBookings] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  
+  const hasFetchedRef = useRef(false)
 
   const getVendorIdFromToken = (): number | null => {
     const token = localStorage.getItem('jwtToken')
@@ -1526,45 +1478,37 @@ export default function SlotManagement() {
     }
   }
 
-  {/**useEffect(() => {
-    let isMounted = true
+  useEffect(() => {
+    if (hasFetchedRef.current) {
+      console.log("⚠️ Skipping duplicate fetch")
+      return
+    }
 
     const fetchDataOnce = async () => {
       const vendorId = getVendorIdFromToken()
       if (!vendorId) {
-        if (isMounted) setIsLoading(false)
+        setIsLoading(false)
         return
       }
 
-      if (!isMounted) return
+      hasFetchedRef.current = true
+      setIsLoading(true)
       
       try {
-        setIsLoading(true)
+        console.time("⏱️ Total fetch time")
         
-        const consolesResponse = await fetch(`${BOOKING_URL}/api/getAllConsole/vendor/${vendorId}`)
-        
-        if (!isMounted) return
-        
-        if (!consolesResponse.ok) {
-          if (isMounted) {
-            setIsLoading(false)
-            setAvailableConsoles([])
-            setAllSlots({})
-          }
-          return
-        }
-
-        const data = await consolesResponse.json()
+        console.log("📡 Fetching consoles...")
+        const consolesData = await fetchWithDedup(`${BOOKING_URL}/api/getAllConsole/vendor/${vendorId}`)
         
         const consoleTemplate = [
-          { type: "PC", name: "PC Gaming", icon: Monitor, iconColor: "#7c3aed" },
-          { type: "PS5", name: "PlayStation 5", icon: Tv, iconColor: "#2563eb" },
-          { type: "Xbox", name: "Xbox Series", icon: Gamepad, iconColor: "#059669" },
-          { type: "VR", name: "VR Gaming", icon: Headset, iconColor: "#ea580c" },
+          { type: "PC" as ConsoleFilter, name: "PC Gaming", icon: Monitor, iconColor: "#7c3aed" },
+          { type: "PS5" as ConsoleFilter, name: "PlayStation 5", icon: Tv, iconColor: "#2563eb" },
+          { type: "Xbox" as ConsoleFilter, name: "Xbox Series", icon: Gamepad, iconColor: "#059669" },
+          { type: "VR" as ConsoleFilter, name: "VR Gaming", icon: Headset, iconColor: "#ea580c" },
         ]
         
         const availableConsoles = consoleTemplate.map(template => {
-          const matchedConsole = data.games?.find((game: any) => {
+          const matchedConsole = consolesData.games?.find((game: any) => {
             const apiName = (game.console_name || '').toLowerCase()
             const templateType = template.type.toLowerCase()
             
@@ -1590,291 +1534,129 @@ export default function SlotManagement() {
           return null
         }).filter(Boolean) as ConsoleType[]
         
-        if (!isMounted) return
         setAvailableConsoles(availableConsoles)
 
         if (availableConsoles.length === 0) {
-          if (isMounted) {
-            setAllSlots({})
-            setIsLoading(false)
-          }
+          setAllSlots({})
+          setIsLoading(false)
           return
         }
 
-        const slotsData: { [key: string]: any[] } = {}
-
-        const dates = []
+        const dates: string[] = []
         for (let i = 0; i < 3; i++) {
           const today = new Date()
           const targetDate = new Date(today.getFullYear(), today.getMonth(), today.getDate() + i)
-          
           const year = targetDate.getFullYear()
           const month = String(targetDate.getMonth() + 1).padStart(2, '0')
           const day = String(targetDate.getDate()).padStart(2, '0')
-          
-          const dateString = `${year}-${month}-${day}`
-          const formattedDate = `${year}${month}${day}`
-          
-          dates.push({ dateString, formattedDate })
+          dates.push(`${year}-${month}-${day}`)
         }
 
-        for (const { dateString, formattedDate } of dates) {
-          if (!isMounted) return
+        console.log("📡 Attempting batch fetch...")
+        const gameIds = availableConsoles.map(c => c.id!).filter(Boolean)
+        const batchData = await fetchSlotsBatch(vendorId, gameIds, dates)
+
+        if (batchData && Object.keys(batchData).length > 0) {
+          console.log("✅ Batch fetch successful!")
+          const processedSlots: { [key: string]: any[] } = {}
           
-          const daySlots: any[] = []
-          
-          for (const gameConsole of availableConsoles) {
-            if (!gameConsole.id || !isMounted) continue
-            
-            try {
-              const apiUrl = `${BOOKING_URL}/api/getSlots/vendor/${vendorId}/game/${gameConsole.id}/${formattedDate}`
-              
-              const slotsResponse = await fetch(apiUrl)
-              
-              if (!isMounted) return
-              
-              if (slotsResponse.ok) {
-                const slotData = await slotsResponse.json()
+          for (const [dateStr, slots] of Object.entries(batchData)) {
+            processedSlots[dateStr] = (slots as any[]).map((slot: any) => {
+              const console = availableConsoles.find(c => c.id === slot.game_id || c.id === slot.consoleid)
+              return {
+                slot_id: slot.slotid,
+                start_time: slot.starttime,
+                end_time: slot.endtime,
+                is_available: slot.isavailable,
+                console_id: slot.consoleid || slot.game_id,
+                console_name: console?.name || "",
+                single_slot_price: slot.singleslotprice,
+                date: dateStr,
+              }
+            })
+          }
+
+          setAllSlots(processedSlots)
+        } else {
+          console.log("⚠️ Batch not available, using parallel fetches...")
+          const nowIST = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }))
+
+          const allFetchPromises = dates.flatMap((dateString) =>
+            availableConsoles.map(async (gameConsole) => {
+              if (!gameConsole.id) return null
+
+              try {
+                const formattedDate = dateString.replace(/-/g, "")
+                const apiUrl = `${BOOKING_URL}/api/getSlots/vendor/${vendorId}/game/${gameConsole.id}/${formattedDate}`
                 
+                const slotData = await fetchWithDedup(apiUrl)
+
                 if (slotData.slots && Array.isArray(slotData.slots)) {
-                  const nowIST = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }))
-                  
                   const processedSlots = slotData.slots.map((slot: any) => {
                     const processedSlot = {
                       ...slot,
                       console_id: gameConsole.id,
                       console_name: gameConsole.name,
                       date: dateString,
-                      is_available: slot.is_available
+                      is_available: slot.is_available,
                     }
-                    
-                    if (dateString === dates[0].dateString) {
+
+                    if (dateString === dates[0]) {
                       const slotEndTime = new Date(`${dateString}T${slot.end_time}+05:30`)
                       const isPast = nowIST >= slotEndTime
-                      
+
                       if (isPast) {
                         processedSlot.is_available = false
                       }
                     }
-                    
+
                     return processedSlot
                   })
-                  
-                  daySlots.push(...processedSlots)
-                }
-              }
-            } catch (error) {
-              console.error(`Error fetching slots for ${gameConsole.name}:`, error)
-            }
-          }
-          
-          slotsData[dateString] = daySlots
-        }
 
-        if (isMounted) {
+                  return { dateString, slots: processedSlots }
+                }
+              } catch (error) {
+                console.error(`Error fetching slots for ${gameConsole.name} on ${dateString}:`, error)
+              }
+
+              return null
+            })
+          )
+
+          const results = await Promise.all(allFetchPromises)
+
+          const slotsData: { [key: string]: any[] } = {}
+          dates.forEach((dateString) => {
+            slotsData[dateString] = []
+          })
+
+          results.forEach(result => {
+            if (result && result.dateString && result.slots) {
+              slotsData[result.dateString].push(...result.slots)
+            }
+          })
+
           setAllSlots(slotsData)
         }
 
-        if (isMounted) {
-          setRecentBookings([])
-        }
+        console.timeEnd("⏱️ Total fetch time")
+        setRecentBookings([])
 
       } catch (error) {
         console.error('Error in fetchData:', error)
       } finally {
-        if (isMounted) {
-          setIsLoading(false)
-        }
+        setIsLoading(false)
       }
     }
 
     fetchDataOnce()
-
-    return () => {
-      isMounted = false
-    }
-  }, []) **/}
-
-  useEffect(() => {
-  let isMounted = true
-
-  const fetchDataOnce = async () => {
-    const vendorId = getVendorIdFromToken()
-    if (!vendorId) {
-      if (isMounted) setIsLoading(false)
-      return
-    }
-
-    if (!isMounted) return
-    
-    try {
-      setIsLoading(true)
-      
-      const consolesResponse = await fetch(`${BOOKING_URL}/api/getAllConsole/vendor/${vendorId}`)
-      
-      if (!isMounted) return
-      
-      if (!consolesResponse.ok) {
-        if (isMounted) {
-          setIsLoading(false)
-          setAvailableConsoles([])
-          setAllSlots({})
-        }
-        return
-      }
-
-      const data = await consolesResponse.json()
-      
-      const consoleTemplate = [
-        { type: "PC", name: "PC Gaming", icon: Monitor, iconColor: "#7c3aed" },
-        { type: "PS5", name: "PlayStation 5", icon: Tv, iconColor: "#2563eb" },
-        { type: "Xbox", name: "Xbox Series", icon: Gamepad, iconColor: "#059669" },
-        { type: "VR", name: "VR Gaming", icon: Headset, iconColor: "#ea580c" },
-      ]
-      
-      const availableConsoles = consoleTemplate.map(template => {
-        const matchedConsole = data.games?.find((game: any) => {
-          const apiName = (game.console_name || '').toLowerCase()
-          const templateType = template.type.toLowerCase()
-          
-          return apiName.includes(templateType) || 
-                 (templateType === 'pc' && (apiName.includes('gaming') || apiName.includes('computer'))) ||
-                 (templateType === 'ps5' && (apiName.includes('playstation') || apiName.includes('sony'))) ||
-                 (templateType === 'xbox' && (apiName.includes('series') || apiName.includes('microsoft'))) ||
-                 (templateType === 'vr' && (apiName.includes('virtual') || apiName.includes('reality')))
-        })
-        
-        if (matchedConsole) {
-          return {
-            type: template.type,
-            name: matchedConsole.console_name,
-            id: matchedConsole.id,
-            price: matchedConsole.console_price,
-            icon: template.icon,
-            iconColor: template.iconColor,
-            color: "grey" as const,
-            description: `${template.type} Gaming Console`
-          }
-        }
-        return null
-      }).filter(Boolean) as ConsoleType[]
-      
-      if (!isMounted) return
-      setAvailableConsoles(availableConsoles)
-
-      if (availableConsoles.length === 0) {
-        if (isMounted) {
-          setAllSlots({})
-          setIsLoading(false)
-        }
-        return
-      }
-
-      // Generate dates array
-      const dates = []
-      for (let i = 0; i < 3; i++) {
-        const today = new Date()
-        const targetDate = new Date(today.getFullYear(), today.getMonth(), today.getDate() + i)
-        
-        const year = targetDate.getFullYear()
-        const month = String(targetDate.getMonth() + 1).padStart(2, '0')
-        const day = String(targetDate.getDate()).padStart(2, '0')
-        
-        const dateString = `${year}-${month}-${day}`
-        const formattedDate = `${year}${month}${day}`
-        
-        dates.push({ dateString, formattedDate })
-      }
-
-      // ✅ FIXED: Fetch all slots in parallel instead of sequentially
-      const allFetchPromises = dates.flatMap(({ dateString, formattedDate }) =>
-        availableConsoles.map(async (gameConsole) => {
-          if (!gameConsole.id) return null
-
-          try {
-            const apiUrl = `${BOOKING_URL}/api/getSlots/vendor/${vendorId}/game/${gameConsole.id}/${formattedDate}`
-            const slotsResponse = await fetch(apiUrl)
-
-            if (!slotsResponse.ok) return null
-
-            const slotData = await slotsResponse.json()
-
-            if (slotData.slots && Array.isArray(slotData.slots)) {
-              const nowIST = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }))
-
-              const processedSlots = slotData.slots.map((slot: any) => {
-                const processedSlot = {
-                  ...slot,
-                  console_id: gameConsole.id,
-                  console_name: gameConsole.name,
-                  date: dateString,
-                  is_available: slot.is_available
-                }
-
-                // Only check if it's today
-                if (dateString === dates[0].dateString) {
-                  const slotEndTime = new Date(`${dateString}T${slot.end_time}+05:30`)
-                  const isPast = nowIST >= slotEndTime
-
-                  if (isPast) {
-                    processedSlot.is_available = false
-                  }
-                }
-
-                return processedSlot
-              })
-
-              return { dateString, slots: processedSlots }
-            }
-          } catch (error) {
-            console.error(`Error fetching slots for ${gameConsole.name} on ${dateString}:`, error)
-          }
-
-          return null
-        })
-      )
-
-      // Wait for all API calls to complete in parallel
-      const results = await Promise.all(allFetchPromises)
-
-      if (!isMounted) return
-
-      // Group slots by date
-      const slotsData: { [key: string]: any[] } = {}
-      dates.forEach(({ dateString }) => {
-        slotsData[dateString] = []
-      })
-
-      results.forEach(result => {
-        if (result && result.dateString && result.slots) {
-          slotsData[result.dateString].push(...result.slots)
-        }
-      })
-
-      if (isMounted) {
-        setAllSlots(slotsData)
-        setRecentBookings([])
-      }
-
-    } catch (error) {
-      console.error('Error in fetchData:', error)
-    } finally {
-      if (isMounted) {
-        setIsLoading(false)
-      }
-    }
-  }
-
-  fetchDataOnce()
-
-  return () => {
-    isMounted = false
-  }
-}, [])
-
+  }, [])
 
   useEffect(() => {
     const handleBookingUpdated = () => {
+      hasFetchedRef.current = false
+      requestCache.clear()
+      pendingRequests.clear()
       window.location.reload()
     }
 
@@ -1883,10 +1665,10 @@ export default function SlotManagement() {
   }, [])
 
   const handleSlotSelect = (slot: SelectedSlot) => {
-    const isSelected = selectedSlots.some(s => s.slot_id === slot.slot_id)
+    const isSelected = selectedSlots.some(s => s.slot_id === slot.slot_id && s.date === slot.date)
 
     if (isSelected) {
-      setSelectedSlots(selectedSlots.filter(s => s.slot_id !== slot.slot_id))
+      setSelectedSlots(selectedSlots.filter(s => !(s.slot_id === slot.slot_id && s.date === slot.date)))
     } else {
       setSelectedSlots([...selectedSlots, slot])
     }
@@ -1900,6 +1682,9 @@ export default function SlotManagement() {
 
   const handleBookingComplete = () => {
     setSelectedSlots([])
+    hasFetchedRef.current = false
+    requestCache.clear()
+    pendingRequests.clear()
     window.location.reload()
   }
 
