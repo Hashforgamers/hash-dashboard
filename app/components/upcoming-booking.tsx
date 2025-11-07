@@ -744,8 +744,8 @@ export function UpcomingBookings({
                             <span>{booking.time || 'No time set'}</span>
                           </div>
                           <div className="flex items-center gap-1">
-                            <Timer className="w-3 h-3 shrink-0" />
-                            <span>{booking.duration || 1}hr</span>
+                            {/**<Timer className="w-3 h-3 shrink-0" />**/}
+                           {/** <span>{booking.duration || 1}hr</span> **/}
                           </div>
                           
                           {/* ✅ ENHANCED: Food/Meal icons - Conditional rendering */}
