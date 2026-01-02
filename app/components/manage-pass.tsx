@@ -14,8 +14,7 @@ import {
   DialogClose,
   DialogTitle,
 } from "@/components/ui/dialog";
-
-import { BadgeCheck, Pencil, Trash2, PlusCircle, Loader2 } from "lucide-react";
+import { BadgeCheck, Pencil, Trash2, PlusCircle, Loader2, Clock, Calendar } from "lucide-react";
 import { DASHBOARD_URL } from "@/src/config/env";
 
 function Loader() {
@@ -27,19 +26,30 @@ const VENDOR_ID =
     ? localStorage.getItem("selectedCafe")
     : "1";
 
-// You may want to cache pass types from API
+// Updated types to support hour-based passes
 type PassType = {
   id: number;
   name: string;
   description?: string;
 };
+
 type CafePass = {
   id: number;
   name: string;
   price: number;
-  days_valid: number;
   description?: string;
-  pass_type: string;
+  pass_type?: string;
+  
+  // Support both pass modes
+  pass_mode: 'date_based' | 'hour_based';
+  
+  // BOTH types need days_valid (expiry)
+  days_valid: number;
+  
+  // Hour-based specific fields
+  total_hours?: number;
+  hour_calculation_mode?: 'actual_duration' | 'vendor_config';
+  hours_per_slot?: number;
 };
 
 export default function ManagePassesPage() {
@@ -52,47 +62,87 @@ export default function ManagePassesPage() {
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
-      const [typesRes, passesRes] = await Promise.all([
-        axios.get(`${DASHBOARD_URL}/api/pass_types`),
-        axios.get(`${DASHBOARD_URL}/api/vendor/${VENDOR_ID}/passes`)
-      ]);
-      setPassTypes(typesRes.data);
-      setPasses(passesRes.data);
-      setLoading(false);
+      try {
+        const [typesRes, passesRes] = await Promise.all([
+          axios.get(`${DASHBOARD_URL}/api/pass_types`),
+          axios.get(`${DASHBOARD_URL}/api/vendor/${VENDOR_ID}/passes`)
+        ]);
+        setPassTypes(typesRes.data);
+        
+        // Handle both response formats
+        const passesData = passesRes.data.passes || passesRes.data;
+        setPasses(passesData);
+      } catch (error) {
+        console.error("Failed to fetch data:", error);
+      } finally {
+        setLoading(false);
+      }
     };
     fetchData();
   }, []);
 
   // CRUD handlers
   const handleAddPass = async (
-    data: Omit<CafePass, "id" | "pass_type"> & { pass_type_id: number },
+    data: Omit<CafePass, "id" | "pass_type">,
     close: () => void
   ) => {
-    await axios.post(`${DASHBOARD_URL}/api/vendor/${VENDOR_ID}/passes`, data);
-    const { data: passesRes } = await axios.get(`${DASHBOARD_URL}/api/vendor/${VENDOR_ID}/passes`);
-    setPasses(passesRes);
-    close();
+    try {
+      // ✅ FIXED: Use correct URL without /create
+      await axios.post(`${DASHBOARD_URL}/api/vendor/${VENDOR_ID}/passes`, data);
+      
+      // Refresh passes list
+      const { data: passesRes } = await axios.get(`${DASHBOARD_URL}/api/vendor/${VENDOR_ID}/passes`);
+      const passesData = passesRes.passes || passesRes;
+      setPasses(passesData);
+      close();
+    } catch (error: any) {
+      console.error("Failed to create pass:", error);
+      const errorMsg = error.response?.data?.error || "Failed to create pass";
+      alert(`Error: ${errorMsg}`);
+    }
   };
 
   const handleEditPass = async (
     id: number,
-    data: Omit<CafePass, "id" | "pass_type"> & { pass_type_id: number },
+    data: Partial<CafePass>,
     close: () => void
   ) => {
-    await axios.put(`${DASHBOARD_URL}/api/vendor/${VENDOR_ID}/passes/${id}`, data);
-    const { data: passesRes } = await axios.get(`${DASHBOARD_URL}/api/vendor/${VENDOR_ID}/passes`);
-    setPasses(passesRes);
-    close();
+    try {
+      await axios.put(`${DASHBOARD_URL}/api/vendor/${VENDOR_ID}/passes/${id}`, data);
+      
+      // Refresh passes list
+      const { data: passesRes } = await axios.get(`${DASHBOARD_URL}/api/vendor/${VENDOR_ID}/passes`);
+      const passesData = passesRes.passes || passesRes;
+      setPasses(passesData);
+      close();
+    } catch (error: any) {
+      console.error("Failed to update pass:", error);
+      const errorMsg = error.response?.data?.error || "Failed to update pass";
+      alert(`Error: ${errorMsg}`);
+    }
   };
 
   const handleDeletePass = async (id: number) => {
-    setDeletingId(id); // disables delete button and shows loader
-    await axios.delete(`${DASHBOARD_URL}/api/vendor/${VENDOR_ID}/passes/${id}`);
-    // Refresh passes after deactivation
-    const { data: passesRes } = await axios.get(`${DASHBOARD_URL}/api/vendor/${VENDOR_ID}/passes`);
-    setPasses(passesRes);
-    setDeletingId(null);
+    setDeletingId(id);
+    try {
+      await axios.delete(`${DASHBOARD_URL}/api/vendor/${VENDOR_ID}/passes/${id}`);
+      
+      // Refresh passes after deactivation
+      const { data: passesRes } = await axios.get(`${DASHBOARD_URL}/api/vendor/${VENDOR_ID}/passes`);
+      const passesData = passesRes.passes || passesRes;
+      setPasses(passesData);
+    } catch (error: any) {
+      console.error("Failed to delete pass:", error);
+      const errorMsg = error.response?.data?.error || "Failed to delete pass";
+      alert(`Error: ${errorMsg}`);
+    } finally {
+      setDeletingId(null);
+    }
   };
+
+  // Separate passes by mode
+  const datePasses = passes.filter(p => p.pass_mode === 'date_based');
+  const hourPasses = passes.filter(p => p.pass_mode === 'hour_based');
 
   return (
     <div className="page-container">
@@ -104,7 +154,7 @@ export default function ManagePassesPage() {
             <span className="truncate">Manage Cafe Passes</span>
           </h1>
           <p className="page-subtitle mt-1">
-            Create and manage cafe membership passes
+            Create date-based and hour-based membership passes
           </p>
         </div>
         <AddPassDialog passTypes={passTypes} onSave={handleAddPass} />
@@ -119,7 +169,7 @@ export default function ManagePassesPage() {
           </div>
         </div>
       ) : (
-        <div className="w-full">
+        <div className="w-full space-y-8">
           {passes.length === 0 ? (
             <div className="rounded-lg border-2 border-dashed border-muted-foreground/25 p-8 sm:p-12 text-center">
               <BadgeCheck className="icon-xl text-muted-foreground/50 mx-auto mb-4" />
@@ -130,60 +180,53 @@ export default function ManagePassesPage() {
               <AddPassDialog passTypes={passTypes} onSave={handleAddPass} />
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-compact">
-              {passes.map(pass => (
-                <Card key={pass.id} className="content-card shadow-lg hover:shadow-xl transition-shadow duration-300">
-                  <CardHeader className="flex flex-row items-start justify-between content-card-padding-compact border-b border-border">
-                    <div className="min-w-0 flex-1 pr-2">
-                      <h2 className="card-title truncate">{pass.name}</h2>
-                      <div className="body-text-small flex items-center gap-2 mt-1">
-                        <BadgeCheck className="icon-sm text-blue-500 shrink-0" />
-                        <span className="truncate">{pass.pass_type}</span>
-                        <span className="shrink-0">• Valid {pass.days_valid} days</span>
-                      </div>
-                      {pass.description && (
-                        <div className="mt-1 sm:mt-2 body-text-small line-clamp-2">
-                          {pass.description}
-                        </div>
-                      )}
-                    </div>
-                    <div className="flex gap-1 shrink-0">
-                      <EditPassDialog passTypes={passTypes} passObj={pass} onSave={handleEditPass} />
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        onClick={() => handleDeletePass(pass.id)}
-                        disabled={deletingId === pass.id}
-                        aria-label={`Delete pass ${pass.name}`}
-                        className="w-8 h-8 sm:w-9 sm:h-9 hover:bg-destructive/10"
-                      >
-                        {deletingId === pass.id ? (
-                          <Loader />
-                        ) : (
-                          <Trash2 className="icon-md text-destructive" />
-                        )}
-                      </Button>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="content-card-padding">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <div className="price-medium text-primary">₹{pass.price}</div>
-                        <div className="body-text-small">
-                          Per {pass.days_valid} day{pass.days_valid > 1 ? 's' : ''}
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <div className="body-text-small">Valid for</div>
-                        <div className="body-text font-semibold">
-                          {pass.days_valid} day{pass.days_valid > 1 ? 's' : ''}
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+            <>
+              {/* Hour-Based Passes Section */}
+              {hourPasses.length > 0 && (
+                <div>
+                  <div className="flex items-center gap-2 mb-4">
+                    <Clock className="icon-lg text-blue-500" />
+                    <h2 className="text-xl font-semibold">Hour-Based Passes</h2>
+                    <span className="text-sm text-muted-foreground">({hourPasses.length})</span>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-compact">
+                    {hourPasses.map(pass => (
+                      <PassCard 
+                        key={pass.id} 
+                        pass={pass} 
+                        passTypes={passTypes}
+                        onEdit={handleEditPass}
+                        onDelete={handleDeletePass}
+                        deletingId={deletingId}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Date-Based Passes Section */}
+              {datePasses.length > 0 && (
+                <div>
+                  <div className="flex items-center gap-2 mb-4">
+                    <Calendar className="icon-lg text-emerald-500" />
+                    <h2 className="text-xl font-semibold">Date-Based Passes</h2>
+                    <span className="text-sm text-muted-foreground">({datePasses.length})</span>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-compact">
+                    {datePasses.map(pass => (
+                      <PassCard 
+                        key={pass.id} 
+                        pass={pass} 
+                        passTypes={passTypes}
+                        onEdit={handleEditPass}
+                        onDelete={handleDeletePass}
+                        deletingId={deletingId}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </div>
       )}
@@ -191,64 +234,165 @@ export default function ManagePassesPage() {
   );
 }
 
-// --- Add/Edit Pass Dialogs ---
+// --- Pass Card Component ---
+function PassCard({ 
+  pass, 
+  passTypes,
+  onEdit, 
+  onDelete, 
+  deletingId 
+}: { 
+  pass: CafePass; 
+  passTypes: PassType[];
+  onEdit: (id: number, data: any, close: () => void) => Promise<void>;
+  onDelete: (id: number) => Promise<void>;
+  deletingId: number | null;
+}) {
+  const isHourBased = pass.pass_mode === 'hour_based';
+  
+  return (
+    <Card className="content-card shadow-lg hover:shadow-xl transition-shadow duration-300">
+      <CardHeader className="flex flex-row items-start justify-between content-card-padding-compact border-b border-border">
+        <div className="min-w-0 flex-1 pr-2">
+          <h2 className="card-title truncate">{pass.name}</h2>
+          <div className="body-text-small flex items-center gap-2 mt-1">
+            {isHourBased ? (
+              <>
+                <Clock className="icon-sm text-blue-500 shrink-0" />
+                <span className="truncate">Hour-Based</span>
+                <span className="shrink-0">• {pass.total_hours}hrs</span>
+              </>
+            ) : (
+              <>
+                <Calendar className="icon-sm text-emerald-500 shrink-0" />
+                <span className="truncate">{pass.pass_type || 'Date-Based'}</span>
+                <span className="shrink-0">• {pass.days_valid} days</span>
+              </>
+            )}
+          </div>
+          {/* ✅ FIXED: Show expiry for hour-based passes */}
+          {isHourBased && (
+            <div className="mt-1 text-xs text-muted-foreground">
+              Valid for {pass.days_valid} days
+            </div>
+          )}
+          {pass.description && (
+            <div className="mt-1 sm:mt-2 body-text-small line-clamp-2">
+              {pass.description}
+            </div>
+          )}
+        </div>
+        <div className="flex gap-1 shrink-0">
+          <EditPassDialog passTypes={passTypes} passObj={pass} onSave={onEdit} />
+          <Button
+            size="icon"
+            variant="ghost"
+            onClick={() => onDelete(pass.id)}
+            disabled={deletingId === pass.id}
+            aria-label={`Delete pass ${pass.name}`}
+            className="w-8 h-8 sm:w-9 sm:h-9 hover:bg-destructive/10"
+          >
+            {deletingId === pass.id ? (
+              <Loader />
+            ) : (
+              <Trash2 className="icon-md text-destructive" />
+            )}
+          </Button>
+        </div>
+      </CardHeader>
+      <CardContent className="content-card-padding">
+        <div className="flex items-center justify-between">
+          <div>
+            <div className="price-medium text-primary">₹{pass.price}</div>
+            <div className="body-text-small">
+              {isHourBased ? `${pass.total_hours}hrs in ${pass.days_valid}d` : `${pass.days_valid} days`}
+            </div>
+          </div>
+          <div className="text-right">
+            {isHourBased ? (
+              <>
+                <div className="body-text-small">Total Hours</div>
+                <div className="body-text font-semibold">{pass.total_hours}hrs</div>
+                <div className="text-xs text-muted-foreground mt-1">
+                  {pass.hour_calculation_mode === 'actual_duration' ? 'Actual Time' : 'Per Slot'}
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="body-text-small">Valid for</div>
+                <div className="body-text font-semibold">
+                  {pass.days_valid} day{pass.days_valid > 1 ? 's' : ''}
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
 
+// --- Add Pass Dialog ---
 function AddPassDialog({
   passTypes,
   onSave,
 }: {
-  passTypes: { id: number; name: string; description: string }[];
+  passTypes: PassType[];
   onSave: (data: any, close: () => void) => Promise<void>;
 }) {
   const [open, setOpen] = useState(false);
+  const [passMode, setPassMode] = useState<'date_based' | 'hour_based'>('date_based');
   const [form, setForm] = useState({
     name: "",
     price: "",
-    days: "",
     description: "",
     pass_type_id: "",
+    days_valid: "",  // ✅ Required for BOTH types
+    total_hours: "",
+    hour_calculation_mode: "actual_duration",
+    hours_per_slot: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  // Handle pass type change and auto-fill days
-  const handlePassTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const selectedId = e.target.value;
-    setForm((f) => ({
-      ...f,
-      pass_type_id: selectedId,
-    }));
-
-    // Find the selected pass type object
-    const selectedPassType = passTypes.find((pt) => String(pt.id) === selectedId);
-    if (selectedPassType) {
-      // Extract number of days from description (e.g. "Valid for 1 day")
-      const match = selectedPassType.description.match(/(\d+)/);
-      const daysValue = match ? match[1] : "";
-      setForm((f) => ({
-        ...f,
-        days: daysValue,
-      }));
-    } else {
-      setForm((f) => ({ ...f, days: "" }));
-    }
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    await onSave(
-      {
-        name: form.name,
-        price: Number(form.price),
-        days_valid: Number(form.days),
-        description: form.description,
-        pass_type_id: Number(form.pass_type_id),
-      },
-      () => {
-        setOpen(false);
-        setForm({ name: "", price: "", days: "", description: "", pass_type_id: "" });
-      }
-    );
+    
+    // ✅ FIXED: days_valid required for both types
+    const baseData = {
+      name: form.name,
+      price: Number(form.price),
+      days_valid: Number(form.days_valid),  // Always include
+      description: form.description || undefined,
+      pass_mode: passMode,
+      pass_type_id: form.pass_type_id ? Number(form.pass_type_id) : undefined,
+    };
+    
+    const payload = passMode === 'hour_based'
+      ? {
+          ...baseData,
+          total_hours: Number(form.total_hours),
+          hour_calculation_mode: form.hour_calculation_mode,
+          hours_per_slot: form.hour_calculation_mode === 'vendor_config' 
+            ? Number(form.hours_per_slot) 
+            : undefined,
+        }
+      : baseData;
+    
+    await onSave(payload, () => {
+      setOpen(false);
+      setForm({
+        name: "",
+        price: "",
+        description: "",
+        pass_type_id: "",
+        days_valid: "",
+        total_hours: "",
+        hour_calculation_mode: "actual_duration",
+        hours_per_slot: "",
+      });
+      setPassMode('date_based');
+    });
     setIsSubmitting(false);
   };
 
@@ -261,11 +405,41 @@ function AddPassDialog({
           <span className="xs:hidden">New</span>
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[500px] w-[95vw] max-h-[90vh] bg-card/95 backdrop-blur-md border border-border shadow-2xl rounded-lg">
+      <DialogContent className="sm:max-w-[550px] w-[95vw] max-h-[90vh] bg-card/95 backdrop-blur-md border border-border shadow-2xl rounded-lg">
         <DialogTitle className="section-title">Add New Pass</DialogTitle>
-        <form onSubmit={handleSubmit} className="space-y-4 overflow-y-auto max-h-[70vh]">
+        <form onSubmit={handleSubmit} className="space-y-4 overflow-y-auto max-h-[70vh] px-1">
+          
+          {/* Pass Mode Selector */}
+          <div className="flex gap-2 p-1 bg-muted rounded-lg">
+            <button
+              type="button"
+              onClick={() => setPassMode('date_based')}
+              className={`flex-1 py-2 px-3 rounded-md text-sm font-medium transition-colors ${
+                passMode === 'date_based'
+                  ? 'bg-primary text-primary-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              <Calendar className="icon-sm inline mr-1" />
+              Date-Based
+            </button>
+            <button
+              type="button"
+              onClick={() => setPassMode('hour_based')}
+              className={`flex-1 py-2 px-3 rounded-md text-sm font-medium transition-colors ${
+                passMode === 'hour_based'
+                  ? 'bg-primary text-primary-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              <Clock className="icon-sm inline mr-1" />
+              Hour-Based
+            </button>
+          </div>
+
+          {/* Common Fields */}
           <div>
-            <Label htmlFor="pass-name" className="form-label">Name *</Label>
+            <Label htmlFor="pass-name" className="form-label">Pass Name *</Label>
             <Input
               id="pass-name"
               value={form.name}
@@ -273,65 +447,140 @@ function AddPassDialog({
               required
               disabled={isSubmitting}
               className="input-field"
-              placeholder="e.g. Daily Pass, Weekly Pass"
+              placeholder={passMode === 'date_based' ? 'e.g., Monthly Pass' : 'e.g., 10 Hour Pack'}
             />
           </div>
-          <div>
-            <Label htmlFor="pass-type" className="form-label">Pass Type *</Label>
-            <select
-              id="pass-type"
-              className="select-field"
-              required
-              value={form.pass_type_id}
-              onChange={handlePassTypeChange}
-              disabled={isSubmitting}
-            >
-              <option value="">Select type</option>
-              {passTypes.map((pt) => (
-                <option key={pt.id} value={pt.id}>
-                  {pt.name} ({pt.description})
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <Label htmlFor="pass-days" className="form-label">Number of days *</Label>
-            <Input
-              id="pass-days"
-              type="number"
-              min={1}
-              value={form.days}
-              onChange={(e) => setForm((f) => ({ ...f, days: e.target.value }))}
-              disabled={isSubmitting}
-              className="input-field"
-              placeholder="e.g. 1, 7, 30"
-            />
-          </div>
+
           <div>
             <Label htmlFor="pass-price" className="form-label">Price (₹) *</Label>
             <Input
               id="pass-price"
               type="number"
               min={0}
+              step={0.01}
               value={form.price}
               onChange={(e) => setForm((f) => ({ ...f, price: e.target.value }))}
               required
               disabled={isSubmitting}
               className="input-field"
-              placeholder="e.g. 100, 500"
+              placeholder="e.g., 500"
             />
           </div>
+
+          {/* ✅ FIXED: Always show days_valid for BOTH types */}
           <div>
-            <Label htmlFor="pass-description" className="form-label">Description (optional)</Label>
+            <Label htmlFor="pass-days" className="form-label">
+              {passMode === 'date_based' ? 'Validity Period (days) *' : 'Expiry Period (days) *'}
+            </Label>
+            <Input
+              id="pass-days"
+              type="number"
+              min={1}
+              value={form.days_valid}
+              onChange={(e) => setForm((f) => ({ ...f, days_valid: e.target.value }))}
+              required
+              disabled={isSubmitting}
+              className="input-field"
+              placeholder={passMode === 'date_based' ? 'e.g., 30' : 'e.g., 90'}
+            />
+            <p className="text-xs text-muted-foreground mt-1">
+              {passMode === 'date_based' 
+                ? 'Unlimited play for this many days' 
+                : 'Hours must be used within this period'}
+            </p>
+          </div>
+
+          <div>
+            <Label htmlFor="pass-type" className="form-label">Pass Type</Label>
+            <select
+              id="pass-type"
+              className="select-field"
+              value={form.pass_type_id}
+              onChange={(e) => setForm((f) => ({ ...f, pass_type_id: e.target.value }))}
+              disabled={isSubmitting}
+            >
+              <option value="">Select type (optional)</option>
+              {passTypes.map((pt) => (
+                <option key={pt.id} value={pt.id}>
+                  {pt.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Hour-Based Specific Fields */}
+          {passMode === 'hour_based' && (
+            <>
+              <div>
+                <Label htmlFor="total-hours" className="form-label">Total Hours *</Label>
+                <Input
+                  id="total-hours"
+                  type="number"
+                  min={0.5}
+                  step={0.5}
+                  value={form.total_hours}
+                  onChange={(e) => setForm((f) => ({ ...f, total_hours: e.target.value }))}
+                  required
+                  disabled={isSubmitting}
+                  className="input-field"
+                  placeholder="e.g., 10"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="calc-mode" className="form-label">Hour Calculation Mode *</Label>
+                <select
+                  id="calc-mode"
+                  className="select-field"
+                  value={form.hour_calculation_mode}
+                  onChange={(e) => setForm((f) => ({ ...f, hour_calculation_mode: e.target.value }))}
+                  disabled={isSubmitting}
+                >
+                  <option value="actual_duration">Actual Duration (slot time)</option>
+                  <option value="vendor_config">Fixed Hours Per Slot</option>
+                </select>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {form.hour_calculation_mode === 'actual_duration'
+                    ? 'Hours deducted based on slot duration (e.g., 1.5hr slot = 1.5hrs)'
+                    : 'Fixed hours per slot regardless of duration'}
+                </p>
+              </div>
+
+              {form.hour_calculation_mode === 'vendor_config' && (
+                <div>
+                  <Label htmlFor="hours-per-slot" className="form-label">Hours Per Slot *</Label>
+                  <Input
+                    id="hours-per-slot"
+                    type="number"
+                    min={0.5}
+                    step={0.5}
+                    value={form.hours_per_slot}
+                    onChange={(e) => setForm((f) => ({ ...f, hours_per_slot: e.target.value }))}
+                    required
+                    disabled={isSubmitting}
+                    className="input-field"
+                    placeholder="e.g., 1"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Each booking will deduct this many hours
+                  </p>
+                </div>
+              )}
+            </>
+          )}
+
+          <div>
+            <Label htmlFor="pass-description" className="form-label">Description</Label>
             <Input
               id="pass-description"
               value={form.description}
               onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
               disabled={isSubmitting}
               className="input-field"
-              placeholder="Brief description of the pass"
+              placeholder="Brief description"
             />
           </div>
+
           <div className="flex flex-col sm:flex-row justify-end gap-2 pt-4">
             <DialogClose asChild>
               <Button variant="outline" disabled={isSubmitting} className="btn-secondary w-full sm:w-auto">
@@ -346,10 +595,10 @@ function AddPassDialog({
               {isSubmitting ? (
                 <>
                   <Loader2 className="icon-md mr-2 animate-spin" />
-                  Adding...
+                  Creating...
                 </>
               ) : (
-                "Add Pass"
+                "Create Pass"
               )}
             </Button>
           </div>
@@ -359,15 +608,26 @@ function AddPassDialog({
   );
 }
 
-function EditPassDialog({ passObj, passTypes, onSave }:
-  { passObj: CafePass, passTypes: PassType[], onSave: (id: number, data: any, close: () => void) => Promise<void> }) {
+// --- Edit Pass Dialog ---
+function EditPassDialog({ 
+  passObj, 
+  passTypes, 
+  onSave 
+}: {
+  passObj: CafePass;
+  passTypes: PassType[];
+  onSave: (id: number, data: any, close: () => void) => Promise<void>;
+}) {
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({
-    name: passObj.name, 
-    price: String(passObj.price), 
-    days_valid: String(passObj.days_valid),
-    description: passObj.description ?? "", 
-    pass_type_id: ""
+    name: passObj.name,
+    price: String(passObj.price),
+    description: passObj.description ?? "",
+    pass_type_id: "",
+    days_valid: String(passObj.days_valid || ""),
+    total_hours: String(passObj.total_hours || ""),
+    hour_calculation_mode: passObj.hour_calculation_mode || "actual_duration",
+    hours_per_slot: String(passObj.hours_per_slot || ""),
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -375,24 +635,40 @@ function EditPassDialog({ passObj, passTypes, onSave }:
     setForm({
       name: passObj.name,
       price: String(passObj.price),
-      days_valid: String(passObj.days_valid),
       description: passObj.description ?? "",
-      pass_type_id: passTypes.find(pt => pt.name === passObj.pass_type)?.id?.toString() || ""
+      pass_type_id: passTypes.find(pt => pt.name === passObj.pass_type)?.id?.toString() || "",
+      days_valid: String(passObj.days_valid || ""),
+      total_hours: String(passObj.total_hours || ""),
+      hour_calculation_mode: passObj.hour_calculation_mode || "actual_duration",
+      hours_per_slot: String(passObj.hours_per_slot || ""),
     });
-    // eslint-disable-next-line
-  }, [passObj]);
+  }, [passObj, passTypes]);
 
-  const handleSubmit = async (e: any) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    await onSave(passObj.id, { 
-      ...form, 
-      price: Number(form.price), 
-      days_valid: Number(form.days_valid), 
-      pass_type_id: Number(form.pass_type_id) 
-    }, () => setOpen(false));
+
+    const payload: any = {
+      name: form.name,
+      price: Number(form.price),
+      days_valid: Number(form.days_valid),  // ✅ Always include
+      description: form.description || undefined,
+      pass_type_id: form.pass_type_id ? Number(form.pass_type_id) : undefined,
+    };
+
+    if (passObj.pass_mode === 'hour_based') {
+      payload.total_hours = Number(form.total_hours);
+      payload.hour_calculation_mode = form.hour_calculation_mode;
+      if (form.hour_calculation_mode === 'vendor_config') {
+        payload.hours_per_slot = Number(form.hours_per_slot);
+      }
+    }
+
+    await onSave(passObj.id, payload, () => setOpen(false));
     setIsSubmitting(false);
   };
+
+  const isHourBased = passObj.pass_mode === 'hour_based';
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -402,8 +678,10 @@ function EditPassDialog({ passObj, passTypes, onSave }:
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[500px] w-[95vw] max-h-[90vh] bg-card/95 backdrop-blur-md border border-border shadow-2xl rounded-lg">
-        <DialogTitle className="section-title">Edit Pass</DialogTitle>
-        <form onSubmit={handleSubmit} className="space-y-4 overflow-y-auto max-h-[70vh]">
+        <DialogTitle className="section-title">
+          Edit {isHourBased ? 'Hour-Based' : 'Date-Based'} Pass
+        </DialogTitle>
+        <form onSubmit={handleSubmit} className="space-y-4 overflow-y-auto max-h-[70vh] px-1">
           <div>
             <Label className="form-label">Name *</Label>
             <Input 
@@ -414,26 +692,13 @@ function EditPassDialog({ passObj, passTypes, onSave }:
               className="input-field"
             />
           </div>
-          <div>
-            <Label className="form-label">Pass Type *</Label>
-            <select
-              className="select-field"
-              required
-              value={form.pass_type_id}
-              onChange={e => setForm(f => ({ ...f, pass_type_id: e.target.value }))}
-              disabled={isSubmitting}
-            >
-              <option value="">Select type</option>
-              {passTypes.map(pt => (
-                <option key={pt.id} value={pt.id}>{pt.name}</option>
-              ))}
-            </select>
-          </div>
+
           <div>
             <Label className="form-label">Price (₹) *</Label>
             <Input 
               type="number" 
-              min="1" 
+              min="0" 
+              step="0.01"
               value={form.price} 
               onChange={e => setForm(f => ({ ...f, price: e.target.value }))} 
               required 
@@ -441,8 +706,12 @@ function EditPassDialog({ passObj, passTypes, onSave }:
               className="input-field"
             />
           </div>
+
+          {/* ✅ FIXED: Always show days_valid */}
           <div>
-            <Label className="form-label">Validity (days) *</Label>
+            <Label className="form-label">
+              {isHourBased ? 'Expiry Period (days) *' : 'Validity Period (days) *'}
+            </Label>
             <Input 
               type="number" 
               min="1" 
@@ -452,9 +721,77 @@ function EditPassDialog({ passObj, passTypes, onSave }:
               disabled={isSubmitting}
               className="input-field"
             />
+            <p className="text-xs text-muted-foreground mt-1">
+              {isHourBased 
+                ? 'Hours must be used within this period' 
+                : 'Unlimited play for this period'}
+            </p>
           </div>
+
           <div>
-            <Label className="form-label">Description (optional)</Label>
+            <Label className="form-label">Pass Type</Label>
+            <select
+              className="select-field"
+              value={form.pass_type_id}
+              onChange={e => setForm(f => ({ ...f, pass_type_id: e.target.value }))}
+              disabled={isSubmitting}
+            >
+              <option value="">Select type (optional)</option>
+              {passTypes.map(pt => (
+                <option key={pt.id} value={pt.id}>{pt.name}</option>
+              ))}
+            </select>
+          </div>
+
+          {isHourBased && (
+            <>
+              <div>
+                <Label className="form-label">Total Hours *</Label>
+                <Input 
+                  type="number" 
+                  min="0.5" 
+                  step="0.5"
+                  value={form.total_hours} 
+                  onChange={e => setForm(f => ({ ...f, total_hours: e.target.value }))} 
+                  required 
+                  disabled={isSubmitting}
+                  className="input-field"
+                />
+              </div>
+
+              <div>
+                <Label className="form-label">Hour Calculation Mode *</Label>
+                <select
+                  className="select-field"
+                  value={form.hour_calculation_mode}
+                  onChange={e => setForm(f => ({ ...f, hour_calculation_mode: e.target.value }))}
+                  disabled={isSubmitting}
+                >
+                  <option value="actual_duration">Actual Duration</option>
+                  <option value="vendor_config">Fixed Hours Per Slot</option>
+                </select>
+              </div>
+
+              {form.hour_calculation_mode === 'vendor_config' && (
+                <div>
+                  <Label className="form-label">Hours Per Slot *</Label>
+                  <Input 
+                    type="number" 
+                    min="0.5" 
+                    step="0.5"
+                    value={form.hours_per_slot} 
+                    onChange={e => setForm(f => ({ ...f, hours_per_slot: e.target.value }))} 
+                    required 
+                    disabled={isSubmitting}
+                    className="input-field"
+                  />
+                </div>
+              )}
+            </>
+          )}
+
+          <div>
+            <Label className="form-label">Description</Label>
             <Input 
               value={form.description} 
               onChange={e => setForm(f => ({ ...f, description: e.target.value }))} 
@@ -462,6 +799,7 @@ function EditPassDialog({ passObj, passTypes, onSave }:
               className="input-field"
             />
           </div>
+
           <div className="flex flex-col sm:flex-row justify-end gap-2 pt-4">
             <DialogClose asChild>
               <Button variant="outline" disabled={isSubmitting} className="btn-secondary w-full sm:w-auto">
