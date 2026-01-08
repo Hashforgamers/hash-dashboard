@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect, useRef } from "react"
+import React, { useState, useEffect, useRef, useMemo } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { jwtDecode } from 'jwt-decode'
 
@@ -25,7 +25,10 @@ import {
   Headset,
   CalendarDays,
   Users,
-  Sparkles
+  Sparkles,
+  Lock,
+  Ticket,
+  AlertCircle
 } from "lucide-react"
 import { BOOKING_URL } from '@/src/config/env'
 import { ConsoleType } from './types'
@@ -43,6 +46,32 @@ interface SelectedSlot {
   console_name: string
   console_price: number
 }
+
+import { Textarea } from "@/components/ui/textarea"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { Search, CalendarClock, XCircle, ListTodo } from "lucide-react"
+import axios from "axios"
 
 interface SelectedMeal {
   menu_item_id: number
@@ -116,7 +145,7 @@ async function fetchWithDedup(url: string): Promise<any> {
 
 // ============= OPTIMIZATION 3: Batch API Call =============
 async function fetchSlotsBatch(vendorId: number, gameIds: number[], dates: string[]) {
-  const url = `${BOOKING_URL}/api/getSlotList/vendor/${vendorId}/batch`
+  const url = `${BOOKING_URL}/api/getSlotsBatch/vendor/${vendorId}`  // ✅ CORRECT ENDPOINT
   
   const cacheKey = `batch:${vendorId}:${gameIds.join(',')}:${dates.join(',')}`
   const cached = getCachedData(cacheKey)
@@ -129,19 +158,31 @@ async function fetchSlotsBatch(vendorId: number, gameIds: number[], dates: strin
     const response = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ games: gameIds, dates })
+      body: JSON.stringify({ 
+        game_ids: gameIds,  // ✅ CORRECT KEY NAME
+        dates: dates 
+      })
     })
     
-    if (!response.ok) throw new Error('Batch fetch failed')
+    if (!response.ok) {
+      const errorText = await response.text()
+      console.error('❌ Batch API error:', errorText)
+      throw new Error(`Batch fetch failed: ${response.status}`)
+    }
     
     const data = await response.json()
+    console.log('✅ Batch fetch successful:', data)
     setCachedData(cacheKey, data)
     return data
   } catch (error) {
-    console.error('Batch fetch error:', error)
-    return null
+    console.error('❌ Batch fetch error:', error)
+    throw error  // ✅ THROW ERROR instead of returning null
   }
 }
+
+// Update this constant
+const PAYMENT_TYPES = ['Cash', 'UPI', 'Pass'] as const  // Add 'Pass'
+
 
 function SlotBookingForm({ 
   isOpen, 
@@ -160,6 +201,11 @@ function SlotBookingForm({
   const [email, setEmail] = useState<string>('')
   const [phone, setPhone] = useState<string>('')
   const [paymentType, setPaymentType] = useState<string>('Cash')
+  const [passUid, setPassUid] = useState('')
+  const [validatedPass, setValidatedPass] = useState<any>(null)
+  const [isValidatingPass, setIsValidatingPass] = useState(false)
+  const [passError, setPassError] = useState('')
+  const [isPrivateMode, setIsPrivateMode] = useState<boolean>(false)
   const [waiveOffAmount, setWaiveOffAmount] = useState<number>(0)
   const [extraControllerFare, setExtraControllerFare] = useState<number>(0)
   const [autoWaiveOffAmount, setAutoWaiveOffAmount] = useState<number>(0)
@@ -175,6 +221,7 @@ function SlotBookingForm({
   const [nameSuggestions, setNameSuggestions] = useState<{ name: string; email: string; phone: string }[]>([])
   const [focusedInput, setFocusedInput] = useState<string>('')
   const blurTimeoutRef = useRef<number | null>(null)
+
 
   const getVendorIdFromToken = (): number | null => {
     console.log('🔍 Getting vendor ID from token...')
@@ -250,6 +297,57 @@ function SlotBookingForm({
     console.log('💰 Total auto waive-off calculated:', finalWaveOff)
     return finalWaveOff
   }
+
+  // Add this NEW function
+
+
+const validatePass = async (uid: string) => {
+
+      const vendorId = getVendorIdFromToken()
+    if (!vendorId) {
+     
+      return null;
+    }
+
+
+  if (!uid.trim() || !vendorId) return
+  
+  setIsValidatingPass(true)
+  setPassError('')
+  
+  try {
+    const response = await fetch(`${BOOKING_URL}/api/pass/validate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        pass_uid: uid.trim(),
+        vendor_id: vendorId,
+      }),
+    })
+    
+    const data = await response.json()
+    
+    if (response.ok && data.valid) {
+      setValidatedPass(data.pass)
+      setPassError('')
+      
+      // Check if pass has enough hours
+      const hoursNeeded = selectedSlots.length * 0.5  // Assuming 30min slots
+      if (hoursNeeded > data.pass.remaining_hours) {
+        setPassError(`Insufficient hours. Need ${hoursNeeded} hrs, available ${data.pass.remaining_hours} hrs`)
+      }
+    } else {
+      setPassError(data.error || 'Invalid pass')
+      setValidatedPass(null)
+    }
+  } catch (err) {
+    setPassError('Failed to validate pass')
+    setValidatedPass(null)
+  } finally {
+    setIsValidatingPass(false)
+  }
+}
+
 
   useEffect(() => {
     if (selectedSlots.length > 0) {
@@ -445,6 +543,17 @@ function SlotBookingForm({
     if (selectedSlots.length === 0) newErrors.slots = 'Please select at least one time slot'
     if (!paymentType) newErrors.payment = 'Please select a payment method'
 
+     // Validate pass if Pass payment is selected
+  if (paymentType === 'Pass') {
+    if (!passUid.trim()) {
+      newErrors.pass = 'Please enter pass UID'
+    } else if (!validatedPass) {
+      newErrors.pass = 'Please validate the pass first'
+    } else if (passError) {
+      newErrors.pass = passError
+    }
+  }
+
     setErrors(newErrors)
     console.log('✅ Form validation result:', { isValid: Object.keys(newErrors).length === 0, errors: newErrors })
     return Object.keys(newErrors).length === 0
@@ -470,6 +579,33 @@ function SlotBookingForm({
     console.log('📝 Preparing booking data...')
 
     try {
+
+      if (paymentType === 'Pass' && validatedPass) {
+      const hoursToDeduct = selectedSlots.length * 0.5
+      
+      const passRedeemResponse = await fetch(`${BOOKING_URL}/api/pass/redeem/dashboard`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          pass_uid: passUid.trim(),
+          vendor_id: vendorId,
+          hours_to_deduct: hoursToDeduct,
+          session_start: selectedSlots[0]?.start_time.slice(0, 5),
+          session_end: selectedSlots[selectedSlots.length - 1]?.end_time.slice(0, 5),
+          notes: `Booking for ${selectedSlots[0]?.console_name} - ${selectedSlots.length} slots`,
+        }),
+      })
+      
+      const passRedeemData = await passRedeemResponse.json()
+      
+      if (!passRedeemResponse.ok || !passRedeemData.success) {
+        alert(`Pass redemption failed: ${passRedeemData.error}`)
+        setIsSubmitting(false)
+        return
+      }
+    }
+
+
       const bookingData = {
         consoleType: selectedSlots[0]?.console_name || '',
         name,
@@ -483,7 +619,8 @@ function SlotBookingForm({
         selectedMeals: selectedMeals.map(meal => ({
           menu_item_id: meal.menu_item_id,
           quantity: meal.quantity
-        }))
+        })),
+        bookingMode: isPrivateMode ? 'private' : 'regular',
       }
 
       console.log('📤 Submitting booking data:', bookingData)
@@ -832,41 +969,218 @@ function SlotBookingForm({
                     </div>
                   </Card>
 
-                  <Card className="p-6 bg-gray-50 dark:bg-gray-700/30">
-                    <div className="flex items-center gap-2 mb-4">
-                      <div className="p-1 bg-yellow-100 dark:bg-yellow-900/30 rounded">
-                        <CreditCard className="w-4 h-4 text-yellow-600" />
-                      </div>
-                      <h3 className="text-lg font-semibold text-gray-800 dark:text-white">Payment Method</h3>
-                    </div>
+                  {/* PRIVATE BOOKING TOGGLE - ADD THIS ENTIRE SECTION */}
+<Card className="p-4 bg-gray-50 dark:bg-gray-700/30">
+  <div className="flex items-center justify-between">
+    {/* Left Side - Icon and Text */}
+    <div className="flex items-center gap-3">
+      <div className={cn(
+        "p-2 rounded-lg transition-all duration-300",
+        isPrivateMode 
+          ? "bg-gradient-to-br from-purple-500 to-pink-500" 
+          : "bg-gray-300 dark:bg-gray-600"
+      )}>
+        {isPrivateMode ? (
+          <Lock className="w-5 h-5 text-white" />
+        ) : (
+          <Users className="w-5 h-5 text-gray-600 dark:text-gray-300" />
+        )}
+      </div>
+      
+      <div>
+        <h3 className="text-sm font-bold text-gray-800 dark:text-white flex items-center gap-2">
+          {isPrivateMode ? (
+            <>
+              <span className="text-purple-600 dark:text-purple-400">Private Booking</span>
+              <span className="text-xs bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 px-2 py-0.5 rounded-full font-medium">
+                Manual Mode
+              </span>
+            </>
+          ) : (
+            <>
+              <span className="text-gray-700 dark:text-gray-300">Regular Booking</span>
+              <span className="text-xs bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 px-2 py-0.5 rounded-full font-medium">
+                Standard Mode
+              </span>
+            </>
+          )}
+        </h3>
+        <p className="text-xs text-gray-600 dark:text-gray-400 mt-0.5">
+          {isPrivateMode 
+            ? 'Walk-in or manual booking for internal tracking' 
+            : 'Online booking with standard workflow'}
+        </p>
+      </div>
+    </div>
+    
+    {/* Right Side - Toggle Switch */}
+    <motion.button
+      type="button"
+      onClick={() => setIsPrivateMode(!isPrivateMode)}
+      whileTap={{ scale: 0.95 }}
+      className={cn(
+        "relative inline-flex h-8 w-14 items-center rounded-full transition-all duration-300",
+        "focus:outline-none focus:ring-2 focus:ring-offset-2",
+        isPrivateMode 
+          ? "bg-gradient-to-r from-purple-600 to-pink-600 focus:ring-purple-500" 
+          : "bg-gray-300 dark:bg-gray-600 focus:ring-gray-400"
+      )}
+    >
+      <span className="sr-only">Toggle private mode</span>
+      <motion.span
+        animate={{ x: isPrivateMode ? 28 : 4 }}
+        transition={{ type: "spring", stiffness: 500, damping: 30 }}
+        className="inline-block h-6 w-6 transform rounded-full bg-white shadow-lg"
+      />
+    </motion.button>
+  </div>
+  
+  {/* Info Banner - Shows when Private mode is active */}
+  <AnimatePresence>
+    {isPrivateMode && (
+      <motion.div
+        initial={{ opacity: 0, height: 0 }}
+        animate={{ opacity: 1, height: 'auto' }}
+        exit={{ opacity: 0, height: 0 }}
+        className="mt-3 flex items-start gap-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg p-2.5 border border-purple-200 dark:border-purple-700"
+      >
+        <AlertCircle className="w-4 h-4 text-purple-600 dark:text-purple-400 flex-shrink-0 mt-0.5" />
+        <div className="flex-1">
+          <p className="text-xs text-purple-800 dark:text-purple-200">
+            <strong>Private Mode Active:</strong> This booking will be marked as a private/walk-in booking for internal tracking.
+          </p>
+        </div>
+      </motion.div>
+    )}
+  </AnimatePresence>
+</Card>
 
-                    <div className="grid grid-cols-2 gap-4">
-                      {(['Cash', 'UPI'] as const).map((type) => (
-                        <motion.button
-                          key={type}
-                          type="button"
-                          whileHover={{ scale: 1.02 }}
-                          whileTap={{ scale: 0.98 }}
-                          onClick={() => {
-                            setPaymentType(type)
-                            if (errors.payment) setErrors((prev) => ({ ...prev, payment: '' }))
-                          }}
-                          className={cn(
-                            "p-4 rounded-lg border transition-all duration-200",
-                            paymentType === type
-                              ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300'
-                              : 'border-gray-300 dark:border-gray-600 hover:border-emerald-300 hover:bg-emerald-50/50 dark:hover:bg-emerald-900/20'
-                          )}
-                        >
-                          <div className="flex items-center justify-center gap-2">
-                            {type === 'Cash' ? <Wallet className="w-5 h-5" /> : <CreditCard className="w-5 h-5" />}
-                            <span className="font-medium">{type}</span>
-                          </div>
-                        </motion.button>
-                      ))}
-                    </div>
-                    {errors.payment && <p className="text-red-500 text-sm mt-2">{errors.payment}</p>}
-                  </Card>
+
+                  <Card className="p-6 bg-gray-50 dark:bg-gray-700/30">
+  <div className="flex items-center gap-2 mb-4">
+    <div className="p-1 bg-yellow-100 dark:bg-yellow-900/30 rounded">
+      <CreditCard className="w-4 h-4 text-yellow-600" />
+    </div>
+    <h3 className="text-lg font-semibold text-gray-800 dark:text-white">Payment Method</h3>
+  </div>
+  
+  {/* Payment Type Buttons */}
+  <div className="grid grid-cols-3 gap-4">
+    {PAYMENT_TYPES.map((type) => (
+      <motion.button
+        key={type}
+        type="button"
+        whileHover={{ scale: 1.02 }}
+        whileTap={{ scale: 0.98 }}
+        onClick={() => {
+          setPaymentType(type)
+          if (type !== 'Pass') {
+            setPassUid('')
+            setValidatedPass(null)
+            setPassError('')
+          }
+          if (errors.payment) setErrors((prev) => ({ ...prev, payment: '' }))
+        }}
+        className={cn(
+          "p-4 rounded-lg border transition-all duration-200",
+          paymentType === type
+            ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300'
+            : 'border-gray-300 dark:border-gray-600 hover:border-emerald-300 hover:bg-emerald-50/50 dark:hover:bg-emerald-900/20'
+        )}
+      >
+        <div className="flex items-center justify-center gap-2">
+          {type === 'Cash' && <Wallet className="w-5 h-5" />}
+          {type === 'UPI' && <CreditCard className="w-5 h-5" />}
+          {type === 'Pass' && <Ticket className="w-5 h-5" />}
+          <span className="font-medium">{type}</span>
+        </div>
+      </motion.button>
+    ))}
+  </div>
+  
+  {/* Pass UID Input - Shows when Pass is selected */}
+  <AnimatePresence>
+    {paymentType === 'Pass' && (
+      <motion.div
+        initial={{ opacity: 0, height: 0 }}
+        animate={{ opacity: 1, height: 'auto' }}
+        exit={{ opacity: 0, height: 0 }}
+        className="mt-4 space-y-2"
+      >
+        <div className="relative">
+          <input
+            type="text"
+            value={passUid}
+            onChange={(e) => setPassUid(e.target.value.toUpperCase())}
+            onBlur={() => {
+              if (passUid.trim()) validatePass(passUid)
+            }}
+            placeholder="Enter Pass UID (HFG-XXXXXXXXXXXX)"
+            className="w-full px-3 py-2 bg-white dark:bg-gray-800 rounded border border-gray-300 dark:border-gray-600 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500/20 transition-all duration-200 text-sm"
+          />
+          {isValidatingPass && (
+            <Loader2 className="w-4 h-4 animate-spin text-emerald-600 absolute right-3 top-2.5" />
+          )}
+        </div>
+        
+        {/* Validated Pass Details */}
+        {validatedPass && !passError && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-emerald-50 dark:bg-emerald-900/20 rounded-lg p-2 border border-emerald-200 dark:border-emerald-700"
+          >
+            <div className="flex items-start gap-2">
+              <CheckCircle className="w-4 h-4 text-emerald-600 flex-shrink-0 mt-0.5" />
+              <div className="flex-1 text-xs space-y-1">
+                <p className="font-semibold text-emerald-800 dark:text-emerald-200">
+                  {validatedPass.pass_name}
+                </p>
+                <div className="flex justify-between text-emerald-700 dark:text-emerald-300">
+                  <span>Hours Available</span>
+                  <span className="font-bold">
+                    {validatedPass.remaining_hours}/{validatedPass.total_hours}
+                  </span>
+                </div>
+                {selectedSlots.length > 0 && (
+                  <div className="flex justify-between text-emerald-600 dark:text-emerald-400">
+                    <span>Hours Needed</span>
+                    <span className="font-bold">{selectedSlots.length * 0.5} hrs</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          </motion.div>
+        )}
+        
+        {/* Error Message */}
+        {passError && (
+          <motion.p
+            initial={{ opacity: 0, y: -5 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-xs text-red-500 flex items-center gap-1"
+          >
+            <X className="w-3 h-3" />
+            {passError}
+          </motion.p>
+        )}
+        
+        {errors.pass && (
+          <motion.p
+            initial={{ opacity: 0, y: -5 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-xs text-red-500"
+          >
+            {errors.pass}
+          </motion.p>
+        )}
+      </motion.div>
+    )}
+  </AnimatePresence>
+  
+  {errors.payment && <p className="text-red-500 text-sm mt-2">{errors.payment}</p>}
+</Card>
+
                 </div>
 
                 <div className="space-y-6">
@@ -1097,6 +1411,41 @@ function TopBar({
   selectedSlots: SelectedSlot[], 
   onNewBooking: () => void 
 }) {
+  const [menuOpen, setMenuOpen] = useState(false)
+  const [showManageView, setShowManageView] = useState<'change' | 'reject' | 'list' | null>(null)
+  
+  // Conditional rendering for management views
+  if (showManageView) {
+    return (
+      <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm p-4">
+        <div className="max-w-6xl mx-auto mt-8">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-2xl font-bold text-white">
+              {showManageView === 'change' && 'Change Booking'}
+              {showManageView === 'reject' && 'Reject Booking'}
+              {showManageView === 'list' && 'List Bookings'}
+            </h2>
+            <Button
+              variant="ghost"
+              onClick={() => setShowManageView(null)}
+              className="text-white hover:bg-white/10"
+            >
+              <X className="w-5 h-5 mr-2" />
+              Back
+            </Button>
+          </div>
+
+          <Card className="bg-white dark:bg-gray-800 shadow-2xl">
+            {showManageView === 'change' && <ChangeBookingForm />}
+            {showManageView === 'reject' && <RejectBookingForm />}
+            {showManageView === 'list' && <ListBooking />}
+          </Card>
+        </div>
+      </div>
+    )
+  }
+
+  // Main TopBar return
   return (
     <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
       <div>
@@ -1120,17 +1469,47 @@ function TopBar({
           <Plus className="mr-2 h-4 w-4" />
           New Booking {selectedSlots.length > 0 && `(${selectedSlots.length})`}
         </Button>
-        <Button 
-          variant="outline"
-          size="icon" 
-          className="rounded-lg border-gray-600 bg-gray-700 hover:bg-gray-600"
-        >
-          <MoreVertical className="h-4 w-4 text-gray-300" />
-        </Button>
+
+        {/* Dropdown Menu for Manage Bookings */}
+        <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
+          <DropdownMenuTrigger asChild>
+            <Button 
+              variant="outline"
+              size="icon" 
+              className="rounded-lg border-gray-600 bg-gray-700 hover:bg-gray-600"
+            >
+              <MoreVertical className="w-5 h-5" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuItem onClick={() => {
+              setShowManageView('change');
+              setMenuOpen(false);
+            }}>
+              <CalendarClock className="w-4 h-4 mr-2" />
+              Change Booking
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => {
+              setShowManageView('reject');
+              setMenuOpen(false);
+            }}>
+              <XCircle className="w-4 h-4 mr-2" />
+              Reject Booking
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => {
+              setShowManageView('list');
+              setMenuOpen(false);
+            }}>
+              <ListTodo className="w-4 h-4 mr-2" />
+              List Bookings
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </div>
   )
 }
+
 
 function ConsoleFilter({
   selectedConsole,
@@ -1455,6 +1834,803 @@ function RecentBookings({ bookings }: { bookings: any[] }) {
   )
 }
 
+
+
+// ==================== CHANGE BOOKING FORM ====================
+function ChangeBookingForm() {
+  const [bookingId, setBookingId] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [bookingFound, setBookingFound] = useState(false);
+  const [bookingData, setBookingData] = useState(null);
+  const [availableSlots, setAvailableSlots] = useState([]);
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [isSubmitted, setIsSubmitted] = useState(false);
+  const [vendorId, setVendorId] = useState(null);
+
+  useEffect(() => {
+    const token = localStorage.getItem("jwtToken");
+    if (token) {
+      const decoded_token = jwtDecode(token);
+      setVendorId(decoded_token.sub.id);
+    }
+  }, []);
+
+  const handleSearch = async () => {
+    if (!bookingId) return;
+
+    setIsLoading(true);
+    try {
+      const response = await fetch(`${BOOKING_URL}/api/bookings/${bookingId}`);
+      const data = await response.json();
+
+      if (response.ok && data.success && data.booking) {
+        setIsSubmitted(false);
+        const { booking } = data;
+        setBookingData({
+          customer: booking.customer || { name: "", email: "", phone: "" },
+          booking_date: booking.date || "",
+          selected_slots: [`${booking.time_slot.start_time}`],
+          system: booking.system || "",
+          vendorId: vendorId,
+          consoleTypeId: booking.game_id,
+        });
+
+        setBookingFound(true);
+        await fetchAvailableSlots(1, booking.game_id, booking.date);
+      } else {
+        setBookingFound(false);
+      }
+    } catch (error) {
+      console.error("Error fetching booking:", error);
+      setBookingFound(false);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const fetchAvailableSlots = async (vendorId, consoleTypeId, date) => {
+    try {
+      const response = await fetch(
+        `${BOOKING_URL}/api/getSlots/vendor/${vendorId}/game/${consoleTypeId}/${date.replaceAll("-", "")}`
+      );
+      const data = await response.json();
+
+      if (response.ok && data.slots) {
+        setAvailableSlots(data.slots);
+      }
+    } catch (error) {
+      console.error("Error fetching available slots:", error);
+    }
+  };
+
+  const handleUpdateBooking = async (e) => {
+    e.preventDefault();
+    setIsUpdating(true);
+    if (!bookingData) return;
+
+    try {
+      const response = await fetch(
+        `${BOOKING_URL}/api/update_booking/${bookingId}`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(bookingData),
+        }
+      );
+
+      const result = await response.json();
+      if (response.ok) {
+        setIsSubmitted(true);
+      } else {
+        alert("Failed to update booking.");
+      }
+    } catch (error) {
+      console.error("Error updating booking:", error);
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  return (
+    <div className="p-6">
+      <form className="space-y-8">
+        {/* Search Section */}
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold text-gray-800 dark:text-white">Search Booking</h3>
+          <div className="flex space-x-2">
+            <input
+              id="bookingId"
+              placeholder="Enter Booking ID"
+              value={bookingId}
+              onChange={(e) => setBookingId(e.target.value)}
+              className="flex-1 px-4 py-3 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 text-gray-800 dark:text-white"
+            />
+
+            <Button
+              type="button"
+              onClick={handleSearch}
+              disabled={isLoading}
+              className="min-w-[100px] bg-emerald-600 hover:bg-emerald-700"
+            >
+              {isLoading ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <>
+                  <Search className="w-4 h-4 mr-2" />
+                  Search
+                </>
+              )}
+            </Button>
+          </div>
+        </div>
+
+        {/* Booking Details */}
+        {bookingFound && bookingData && !isSubmitted ? (
+          <div className="space-y-8">
+            <h3 className="text-lg font-semibold text-gray-800 dark:text-white">
+              Gamer's Information
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Name</label>
+                <input
+                  value={bookingData.customer?.name || ""}
+                  onChange={(e) =>
+                    setBookingData((prev) => ({
+                      ...prev,
+                      customer: { ...prev.customer, name: e.target.value },
+                    }))
+                  }
+                  className="w-full px-4 py-3 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 text-gray-800 dark:text-white"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Email</label>
+                <input
+                  type="email"
+                  value={bookingData.customer?.email || ""}
+                  onChange={(e) =>
+                    setBookingData((prev) => ({
+                      ...prev,
+                      customer: { ...prev.customer, email: e.target.value },
+                    }))
+                  }
+                  className="w-full px-4 py-3 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 text-gray-800 dark:text-white"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Phone Number</label>
+                <input
+                  type="tel"
+                  value={bookingData.customer?.phone || ""}
+                  onChange={(e) =>
+                    setBookingData((prev) => ({
+                      ...prev,
+                      customer: { ...prev.customer, phone: e.target.value },
+                    }))
+                  }
+                  className="w-full px-4 py-3 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 text-gray-800 dark:text-white"
+                />
+              </div>
+            </div>
+
+            <h3 className="text-lg font-semibold text-gray-800 dark:text-white">
+              Booking Details
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Booking Date</label>
+                <input
+                  type="date"
+                  value={bookingData.booking_date || ""}
+                  onChange={(e) =>
+                    setBookingData((prev) => ({
+                      ...prev,
+                      booking_date: e.target.value,
+                    }))
+                  }
+                  className="w-full px-4 py-3 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 text-gray-800 dark:text-white"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Slot Time</label>
+                <div className="grid grid-cols-6 gap-2">
+                  {availableSlots.map((slot) => (
+                    <Button
+                      key={slot.slot_id}
+                      type="button"
+                      variant="outline"
+                      disabled={!slot.is_available}
+                      className={`rounded-full text-xs ${
+                        bookingData.selected_slots.includes(slot.start_time)
+                          ? "bg-emerald-600 text-white hover:bg-emerald-700"
+                          : ""
+                      }`}
+                      onClick={() =>
+                        setBookingData((prev) => ({
+                          ...prev,
+                          selected_slots: [slot.start_time],
+                        }))
+                      }
+                    >
+                      {slot.start_time}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <Button 
+              onClick={handleUpdateBooking} 
+              disabled={isUpdating}
+              className="bg-emerald-600 hover:bg-emerald-700"
+            >
+              {isUpdating ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Updating...
+                </>
+              ) : (
+                "Update Booking"
+              )}
+            </Button>
+          </div>
+        ) : null}
+
+        {/* Success Message */}
+        {isSubmitted && (
+          <Alert className="bg-emerald-50 dark:bg-emerald-900/20 border-emerald-500">
+            <CheckCircle className="h-4 w-4 text-emerald-600" />
+            <AlertDescription className="text-emerald-700 dark:text-emerald-300">
+              Booking has been successfully updated.
+            </AlertDescription>
+          </Alert>
+        )}
+      </form>
+    </div>
+  );
+}
+
+// ==================== REJECT BOOKING FORM ====================
+function RejectBookingForm() {
+  const [bookingId, setBookingId] = useState("");
+  const [bookingFound, setBookingFound] = useState(false);
+  const [rejectionReason, setRejectionReason] = useState("");
+  const [repaymentType, setRepaymentType] = useState("");
+  const [userEmail, setUserEmail] = useState("");
+  const [bookingData, setBookingData] = useState(null);
+  const [confirmReject, setConfirmReject] = useState(false);
+  const [isConfirmingRejection, setIsConfirmingRejection] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSubmitted, setIsSubmitted] = useState(false);
+  const [vendorId, setVendorId] = useState(null);
+
+  useEffect(() => {
+    const token = localStorage.getItem("jwtToken");
+    if (token) {
+      const decoded_token = jwtDecode(token);
+      setVendorId(decoded_token.sub.id);
+    }
+  }, []);
+
+  const handleSearch = async () => {
+    if (!bookingId) return;
+
+    setIsLoading(true);
+    try {
+      const response = await fetch(`${BOOKING_URL}/api/bookings/${bookingId}`);
+      const data = await response.json();
+
+      if (response.ok && data.success && data.booking) {
+        setIsSubmitted(false);
+        const { booking } = data;
+        setBookingData({
+          customer: booking.customer || { name: "", email: "", phone: "" },
+          booking_date: booking.date || "",
+          booking_id: booking.booking_id,
+          selected_slots: [`${booking.time_slot.start_time}`],
+          system: booking.system || "",
+          vendorId: vendorId,
+          consoleTypeId: booking.game_id,
+          start_time: booking.time_slot.start_time,
+          end_time: booking.time_slot.end_time,
+          amount_paid: booking.amount_paid,
+        });
+        setUserEmail(booking.customer?.email || "");
+        setBookingFound(true);
+      } else {
+        setBookingFound(false);
+      }
+    } catch (error) {
+      console.error("Error fetching booking:", error);
+      setBookingFound(false);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    if (!confirmReject) {
+      setConfirmReject(true);
+      return;
+    }
+
+    setIsConfirmingRejection(true);
+    setIsLoading(true);
+
+    try {
+      const response = await fetch(`${BOOKING_URL}/api/bookings/reject`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          booking_id: bookingId,
+          rejection_reason: rejectionReason,
+          repayment_type: repaymentType,
+          user_email: userEmail,
+        }),
+      });
+
+      if (response.ok) {
+        setIsSubmitted(true);
+      } else {
+        console.error("Error rejecting booking");
+      }
+    } catch (error) {
+      console.error("Error:", error);
+    } finally {
+      setIsConfirmingRejection(false);
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <div className="p-6">
+      <form className="space-y-8" onSubmit={handleSubmit}>
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold text-gray-800 dark:text-white">Search Booking</h3>
+          <div className="flex space-x-2">
+            <input
+              placeholder="Enter Booking ID"
+              value={bookingId}
+              onChange={(e) => setBookingId(e.target.value)}
+              className="flex-1 px-4 py-3 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 text-gray-800 dark:text-white"
+            />
+            <Button
+              type="button"
+              onClick={handleSearch}
+              disabled={isLoading}
+              className="min-w-[100px] bg-emerald-600 hover:bg-emerald-700"
+            >
+              {isLoading ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <>
+                  <Search className="w-4 h-4 mr-2" />
+                  Search
+                </>
+              )}
+            </Button>
+          </div>
+        </div>
+
+        {isSubmitted ? (
+          <Alert className="bg-emerald-50 dark:bg-emerald-900/20 border-emerald-500">
+            <CheckCircle className="h-4 w-4 text-emerald-600" />
+            <AlertDescription className="text-emerald-700 dark:text-emerald-300">
+              Booking has been successfully rejected.
+            </AlertDescription>
+          </Alert>
+        ) : (
+          <AnimatePresence>
+            {bookingFound && bookingData && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                className="space-y-8"
+              >
+                <div className="space-y-6">
+                  <h3 className="text-lg font-semibold text-gray-800 dark:text-white">
+                    Booking Information
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <Card className="bg-gray-50 dark:bg-gray-700/30 p-6">
+                      <div className="space-y-4">
+                        <div className="flex justify-between">
+                          <span className="text-gray-600 dark:text-gray-400">Booking ID</span>
+                          <span className="font-medium text-gray-800 dark:text-white">
+                            {bookingData.booking_id || ""}
+                          </span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600 dark:text-gray-400">Date</span>
+                          <span className="font-medium text-gray-800 dark:text-white">
+                            {bookingData.booking_date || ""}
+                          </span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600 dark:text-gray-400">Time Slot</span>
+                          <span className="font-medium text-gray-800 dark:text-white">
+                            {bookingData.start_time || ""} - {bookingData.end_time || ""}
+                          </span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600 dark:text-gray-400">System</span>
+                          <span className="font-medium text-gray-800 dark:text-white">
+                            {bookingData.system || ""}
+                          </span>
+                        </div>
+                      </div>
+                    </Card>
+
+                    <Card className="bg-gray-50 dark:bg-gray-700/30 p-6">
+                      <div className="space-y-4">
+                        <div className="flex justify-between">
+                          <span className="text-gray-600 dark:text-gray-400">Customer</span>
+                          <span className="font-medium text-gray-800 dark:text-white">
+                            {bookingData.customer?.name || ""}
+                          </span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600 dark:text-gray-400">Email</span>
+                          <span className="font-medium text-gray-800 dark:text-white">
+                            {bookingData.customer?.email || ""}
+                          </span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600 dark:text-gray-400">Phone</span>
+                          <span className="font-medium text-gray-800 dark:text-white">
+                            {bookingData.customer?.phone || ""}
+                          </span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600 dark:text-gray-400">Amount Paid</span>
+                          <span className="font-medium text-gray-800 dark:text-white">
+                            ₹{bookingData.amount_paid || ""}
+                          </span>
+                        </div>
+                      </div>
+                    </Card>
+                  </div>
+                </div>
+
+                <div className="space-y-6">
+                  <h3 className="text-lg font-semibold text-gray-800 dark:text-white">
+                    Rejection Details
+                  </h3>
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Reason for Rejection
+                      </label>
+                      <textarea
+                        value={rejectionReason}
+                        onChange={(e) => setRejectionReason(e.target.value)}
+                        placeholder="Please provide a detailed reason for rejecting this booking..."
+                        className="w-full min-h-[100px] px-4 py-3 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 text-gray-800 dark:text-white resize-none"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Repayment Method
+                      </label>
+                      <Select value={repaymentType} onValueChange={setRepaymentType}>
+                        <SelectTrigger className="bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600">
+                          <SelectValue placeholder="Select repayment method" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="refund">
+                            Full Refund to Original Payment Method
+                          </SelectItem>
+                          <SelectItem value="credit">Store Credit</SelectItem>
+                          <SelectItem value="reschedule">
+                            Reschedule to Another Date
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </div>
+
+                {confirmReject ? (
+                  <Alert variant="destructive" className="mt-6">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription className="flex items-center justify-between">
+                      <span>
+                        Are you sure you want to reject this booking? This action cannot be undone.
+                      </span>
+                      <div className="flex space-x-2 mt-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => setConfirmReject(false)}
+                        >
+                          Cancel
+                        </Button>
+                        <Button
+                          type="submit"
+                          variant="destructive"
+                          disabled={isConfirmingRejection || isLoading}
+                        >
+                          {isConfirmingRejection || isLoading ? (
+                            <>
+                              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                              Confirming...
+                            </>
+                          ) : (
+                            "Confirm Rejection"
+                          )}
+                        </Button>
+                      </div>
+                    </AlertDescription>
+                  </Alert>
+                ) : (
+                  <Button
+                    type="submit"
+                    variant="destructive"
+                    className="w-full"
+                    disabled={!rejectionReason || !repaymentType}
+                  >
+                    <XCircle className="w-4 h-4 mr-2" />
+                    Reject Booking
+                  </Button>
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        )}
+      </form>
+    </div>
+  );
+}
+
+// ==================== LIST BOOKING COMPONENT ====================
+function ListBooking() {
+  interface BookingType {
+    id: string;
+    bookingDate: string;
+    bookingTime: string;
+    username: string;
+    consoleType: string;
+    bookedDate: string;
+    startTime: string | null;
+    endTime: string | null;
+    status: string;
+    type: string;
+  }
+
+  const [vendorId, setVendorId] = useState(null);
+  const [bookings, setBookings] = useState([]);
+  const [filteredBookings, setFilteredBookings] = useState([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [sortConfig, setSortConfig] = useState(null);
+  const [expandedDates, setExpandedDates] = useState({});
+
+  const toggleDate = (date) => {
+    setExpandedDates((prev) => ({ ...prev, [date]: !prev[date] }));
+  };
+
+  const groupedBookings = useMemo(() => {
+    const groups = {};
+    filteredBookings.forEach((booking) => {
+      const bookedDate = booking.bookedDate;
+      if (!groups[bookedDate]) {
+        groups[bookedDate] = [];
+      }
+      groups[bookedDate].push(booking);
+    });
+    return groups;
+  }, [filteredBookings]);
+
+  useEffect(() => {
+    const token = localStorage.getItem("jwtToken");
+    if (token) {
+      const decoded_token = jwtDecode(token);
+      setVendorId(decoded_token.sub.id);
+    }
+  }, []);
+
+  const fetchData = async () => {
+    try {
+      const today = new Date();
+      const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+      const formattedDate = startOfMonth.toISOString().slice(0, 10).replace(/-/g, "");
+      const response = await axios.get(
+        `${BOOKING_URL}/api/getAllBooking/vendor/${vendorId}/${formattedDate}/`,
+        { headers: { "Content-Type": "application/json" } }
+      );
+
+      const mappedBookings = response.data.map((booking) => ({
+        id: booking.bookingId.toString(),
+        bookingDate: booking.bookingDate,
+        bookingTime: booking.bookingTime,
+        username: booking.userName,
+        consoleType: booking.consoleType,
+        bookedDate: booking.bookedDate,
+        startTime: booking.startTime || null,
+        endTime: booking.endTime || null,
+        status: booking.status,
+        type: booking.type,
+      }));
+
+      setBookings(mappedBookings);
+      setFilteredBookings(mappedBookings);
+    } catch (error) {
+      console.error("Error fetching data:", error.response ? error.response.data : error.message);
+    }
+  };
+
+  useEffect(() => {
+    if (!vendorId) return;
+    fetchData();
+  }, [vendorId]);
+
+  useEffect(() => {
+    if (!sortConfig) return;
+    const sorted = [...filteredBookings].sort((a, b) => {
+      if (sortConfig.key === "bookingDate") {
+        const dateA = new Date(a.bookingDate);
+        const dateB = new Date(b.bookingDate);
+        return sortConfig.direction === "asc"
+          ? dateA.getTime() - dateB.getTime()
+          : dateB.getTime() - dateA.getTime();
+      } else {
+        const valueA = a[sortConfig.key]?.toString().toLowerCase() || "";
+        const valueB = b[sortConfig.key]?.toString().toLowerCase() || "";
+        if (valueA < valueB) return sortConfig.direction === "asc" ? -1 : 1;
+        if (valueA > valueB) return sortConfig.direction === "asc" ? 1 : -1;
+        return 0;
+      }
+    });
+    setFilteredBookings(sorted);
+  }, [sortConfig]);
+
+  const handleSort = (key) => {
+    setSortConfig((prev) => ({
+      key,
+      direction: prev?.key === key && prev.direction === "asc" ? "desc" : "asc",
+    }));
+  };
+
+  const handleSearch = () => {
+    if (!searchQuery.trim()) {
+      setFilteredBookings(bookings);
+    } else {
+      const lower = searchQuery.toLowerCase();
+      const results = bookings.filter((booking) =>
+        Object.values(booking).some((value) => value.toString().toLowerCase().includes(lower))
+      );
+      setFilteredBookings(results);
+    }
+  };
+
+  useEffect(() => {
+    handleSearch();
+  }, [searchQuery]);
+
+  const getStatusBadge = (status) => {
+    const variants = {
+      rejected: "bg-red-100 dark:bg-red-950 text-red-700 dark:text-red-300",
+      confirmed: "bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300",
+    };
+    return (
+      <span
+        className={`px-3 py-1 rounded-full text-xs font-medium ${
+          variants[status] || "bg-gray-300 text-gray-700 dark:bg-gray-700 dark:text-gray-300"
+        }`}
+      >
+        {status}
+      </span>
+    );
+  };
+
+  const formatTime = (time) => {
+    if (typeof time === "number") {
+      const date = new Date(time);
+      return `${date.getHours().toString().padStart(2, "0")}:${date
+        .getMinutes()
+        .toString()
+        .padStart(2, "0")}`;
+    }
+    const [hours, minutes] = time.split(":");
+    return `${hours}:${minutes}`;
+  };
+
+  return (
+    <div className="p-6 space-y-6">
+      <div className="flex items-center space-x-4">
+        <input
+          placeholder="Search bookings..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="flex-1 px-4 py-3 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 text-gray-800 dark:text-white"
+        />
+        <Button onClick={handleSearch} className="bg-emerald-600 hover:bg-emerald-700">
+          <Search className="w-4 h-4 mr-2" />
+          Search
+        </Button>
+      </div>
+
+      <div className="rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+        <Table>
+          <TableHeader>
+            <TableRow className="bg-gray-50 dark:bg-gray-700/50">
+              {[
+                { label: "Booked Date", key: "bookedDate" },
+                { label: "Username", key: "username" },
+                { label: "Status", key: "status" },
+                { label: "Booking ID", key: "id" },
+                { label: "Booking Date", key: "bookingDate" },
+                { label: "Booking Time", key: "bookingTime" },
+                { label: "Console Type", key: "consoleType" },
+                { label: "Start Time", key: "startTime" },
+                { label: "End Time", key: "endTime" },
+                { label: "Type", key: "type" },
+              ].map(({ label, key }) => (
+                <TableHead
+                  key={key}
+                  className="font-semibold cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                  onClick={() => handleSort(key)}
+                >
+                  {label}{" "}
+                  {sortConfig?.key === key && (sortConfig.direction === "asc" ? "↑" : "↓")}
+                </TableHead>
+              ))}
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {Object.entries(groupedBookings).map(([bookedDate, bookings]) => (
+              <React.Fragment key={bookedDate}>
+                <TableRow
+                  className="bg-gray-100 dark:bg-gray-700/30 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700/50"
+                  onClick={() => toggleDate(bookedDate)}
+                >
+                  <TableCell colSpan={10} className="font-bold text-gray-800 dark:text-white">
+                    {expandedDates[bookedDate] ? "▼" : "▶"}{" "}
+                    {new Date(bookedDate).toDateString()} ({bookings.length})
+                  </TableCell>
+                </TableRow>
+
+                {expandedDates[bookedDate] &&
+                  bookings.map((booking, idx) => (
+                    <motion.tr
+                      key={booking.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -20 }}
+                      transition={{ delay: idx * 0.05 }}
+                      className="hover:bg-gray-50 dark:hover:bg-gray-700/20"
+                    >
+                      <TableCell>{booking.bookedDate}</TableCell>
+                      <TableCell>{booking.username}</TableCell>
+                      <TableCell>{getStatusBadge(booking.status)}</TableCell>
+                      <TableCell>{booking.id}</TableCell>
+                      <TableCell>{booking.bookingDate}</TableCell>
+                      <TableCell>{booking.bookingTime}</TableCell>
+                      <TableCell>{booking.consoleType}</TableCell>
+                      <TableCell>
+                        {booking.startTime ? formatTime(booking.startTime) : "Not started"}
+                      </TableCell>
+                      <TableCell>
+                        {booking.endTime ? formatTime(booking.endTime) : "Not ended"}
+                      </TableCell>
+                      <TableCell>{booking.type}</TableCell>
+                    </motion.tr>
+                  ))}
+              </React.Fragment>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+    </div>
+  );
+}
+
+
 export default function SlotManagement() {
   const [selectedConsole, setSelectedConsole] = useState<ConsoleFilter>("PC")
   const [selectedSlots, setSelectedSlots] = useState<SelectedSlot[]>([])
@@ -1464,7 +2640,8 @@ export default function SlotManagement() {
   const [recentBookings, setRecentBookings] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
   
-  const hasFetchedRef = useRef(false)
+const hasFetchedRef = useRef(false)
+const abortControllerRef = useRef<AbortController | null>(null)
 
   const getVendorIdFromToken = (): number | null => {
     const token = localStorage.getItem('jwtToken')
@@ -1478,179 +2655,236 @@ export default function SlotManagement() {
     }
   }
 
-  useEffect(() => {
-    if (hasFetchedRef.current) {
-      console.log("⚠️ Skipping duplicate fetch")
+ useEffect(() => {
+  if (hasFetchedRef.current) {
+    console.log("⚠️ Skipping duplicate fetch")
+    return
+  }
+
+  const fetchDataOnce = async () => {
+    const vendorId = getVendorIdFromToken()
+    if (!vendorId) {
+      setIsLoading(false)
       return
     }
 
-    const fetchDataOnce = async () => {
-      const vendorId = getVendorIdFromToken()
-      if (!vendorId) {
+    hasFetchedRef.current = true
+    abortControllerRef.current = new AbortController()
+    const signal = abortControllerRef.current.signal
+    setIsLoading(true)
+    
+    try {
+      console.time("⏱️ Total fetch time")
+      
+      // Step 1: Fetch consoles
+      console.log("📡 Fetching consoles...")
+      const consolesData = await fetchWithDedup(`${BOOKING_URL}/api/getAllConsole/vendor/${vendorId}`)
+      
+      const consoleTemplate = [
+        { type: "PC" as ConsoleFilter, name: "PC Gaming", icon: Monitor, iconColor: "#7c3aed" },
+        { type: "PS5" as ConsoleFilter, name: "PlayStation 5", icon: Tv, iconColor: "#2563eb" },
+        { type: "Xbox" as ConsoleFilter, name: "Xbox Series", icon: Gamepad, iconColor: "#059669" },
+        { type: "VR" as ConsoleFilter, name: "VR Gaming", icon: Headset, iconColor: "#ea580c" },
+      ]
+      
+      const availableConsoles = consoleTemplate.map(template => {
+        const matchedConsole = consolesData.games?.find((game: any) => {
+          const apiName = (game.console_name || '').toLowerCase()
+          const templateType = template.type.toLowerCase()
+          
+          return apiName.includes(templateType) || 
+                 (templateType === 'pc' && (apiName.includes('gaming') || apiName.includes('computer'))) ||
+                 (templateType === 'ps5' && (apiName.includes('playstation') || apiName.includes('sony'))) ||
+                 (templateType === 'xbox' && (apiName.includes('series') || apiName.includes('microsoft'))) ||
+                 (templateType === 'vr' && (apiName.includes('virtual') || apiName.includes('reality')))
+        })
+        
+        if (matchedConsole) {
+          return {
+            type: template.type,
+            name: matchedConsole.console_name,
+            id: matchedConsole.id,
+            price: matchedConsole.console_price,
+            icon: template.icon,
+            iconColor: template.iconColor,
+            color: "grey" as const,
+            description: `${template.type} Gaming Console`
+          }
+        }
+        return null
+      }).filter(Boolean) as ConsoleType[]
+      
+      setAvailableConsoles(availableConsoles)
+      console.log("✅ Available consoles:", availableConsoles)
+
+      if (availableConsoles.length === 0) {
+        console.log("⚠️ No consoles available")
+        setAllSlots({})
         setIsLoading(false)
         return
       }
 
-      hasFetchedRef.current = true
-      setIsLoading(true)
-      
-      try {
-        console.time("⏱️ Total fetch time")
-        
-        console.log("📡 Fetching consoles...")
-        const consolesData = await fetchWithDedup(`${BOOKING_URL}/api/getAllConsole/vendor/${vendorId}`)
-        
-        const consoleTemplate = [
-          { type: "PC" as ConsoleFilter, name: "PC Gaming", icon: Monitor, iconColor: "#7c3aed" },
-          { type: "PS5" as ConsoleFilter, name: "PlayStation 5", icon: Tv, iconColor: "#2563eb" },
-          { type: "Xbox" as ConsoleFilter, name: "Xbox Series", icon: Gamepad, iconColor: "#059669" },
-          { type: "VR" as ConsoleFilter, name: "VR Gaming", icon: Headset, iconColor: "#ea580c" },
-        ]
-        
-        const availableConsoles = consoleTemplate.map(template => {
-          const matchedConsole = consolesData.games?.find((game: any) => {
-            const apiName = (game.console_name || '').toLowerCase()
-            const templateType = template.type.toLowerCase()
-            
-            return apiName.includes(templateType) || 
-                   (templateType === 'pc' && (apiName.includes('gaming') || apiName.includes('computer'))) ||
-                   (templateType === 'ps5' && (apiName.includes('playstation') || apiName.includes('sony'))) ||
-                   (templateType === 'xbox' && (apiName.includes('series') || apiName.includes('microsoft'))) ||
-                   (templateType === 'vr' && (apiName.includes('virtual') || apiName.includes('reality')))
-          })
-          
-          if (matchedConsole) {
-            return {
-              type: template.type,
-              name: matchedConsole.console_name,
-              id: matchedConsole.id,
-              price: matchedConsole.console_price,
-              icon: template.icon,
-              iconColor: template.iconColor,
-              color: "grey" as const,
-              description: `${template.type} Gaming Console`
-            }
-          }
-          return null
-        }).filter(Boolean) as ConsoleType[]
-        
-        setAvailableConsoles(availableConsoles)
-
-        if (availableConsoles.length === 0) {
-          setAllSlots({})
-          setIsLoading(false)
-          return
-        }
-
-        const dates: string[] = []
-        for (let i = 0; i < 3; i++) {
-          const today = new Date()
-          const targetDate = new Date(today.getFullYear(), today.getMonth(), today.getDate() + i)
-          const year = targetDate.getFullYear()
-          const month = String(targetDate.getMonth() + 1).padStart(2, '0')
-          const day = String(targetDate.getDate()).padStart(2, '0')
-          dates.push(`${year}-${month}-${day}`)
-        }
-
-        console.log("📡 Attempting batch fetch...")
-        const gameIds = availableConsoles.map(c => c.id!).filter(Boolean)
-        const batchData = await fetchSlotsBatch(vendorId, gameIds, dates)
-
-        if (batchData && Object.keys(batchData).length > 0) {
-          console.log("✅ Batch fetch successful!")
-          const processedSlots: { [key: string]: any[] } = {}
-          
-          for (const [dateStr, slots] of Object.entries(batchData)) {
-            processedSlots[dateStr] = (slots as any[]).map((slot: any) => {
-              const console = availableConsoles.find(c => c.id === slot.game_id || c.id === slot.consoleid)
-              return {
-                slot_id: slot.slotid,
-                start_time: slot.starttime,
-                end_time: slot.endtime,
-                is_available: slot.isavailable,
-                console_id: slot.consoleid || slot.game_id,
-                console_name: console?.name || "",
-                single_slot_price: slot.singleslotprice,
-                date: dateStr,
-              }
-            })
-          }
-
-          setAllSlots(processedSlots)
-        } else {
-          console.log("⚠️ Batch not available, using parallel fetches...")
-          const nowIST = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }))
-
-          const allFetchPromises = dates.flatMap((dateString) =>
-            availableConsoles.map(async (gameConsole) => {
-              if (!gameConsole.id) return null
-
-              try {
-                const formattedDate = dateString.replace(/-/g, "")
-                const apiUrl = `${BOOKING_URL}/api/getSlots/vendor/${vendorId}/game/${gameConsole.id}/${formattedDate}`
-                
-                const slotData = await fetchWithDedup(apiUrl)
-
-                if (slotData.slots && Array.isArray(slotData.slots)) {
-                  const processedSlots = slotData.slots.map((slot: any) => {
-                    const processedSlot = {
-                      ...slot,
-                      console_id: gameConsole.id,
-                      console_name: gameConsole.name,
-                      date: dateString,
-                      is_available: slot.is_available,
-                    }
-
-                    if (dateString === dates[0]) {
-                      const slotEndTime = new Date(`${dateString}T${slot.end_time}+05:30`)
-                      const isPast = nowIST >= slotEndTime
-
-                      if (isPast) {
-                        processedSlot.is_available = false
-                      }
-                    }
-
-                    return processedSlot
-                  })
-
-                  return { dateString, slots: processedSlots }
-                }
-              } catch (error) {
-                console.error(`Error fetching slots for ${gameConsole.name} on ${dateString}:`, error)
-              }
-
-              return null
-            })
-          )
-
-          const results = await Promise.all(allFetchPromises)
-
-          const slotsData: { [key: string]: any[] } = {}
-          dates.forEach((dateString) => {
-            slotsData[dateString] = []
-          })
-
-          results.forEach(result => {
-            if (result && result.dateString && result.slots) {
-              slotsData[result.dateString].push(...result.slots)
-            }
-          })
-
-          setAllSlots(slotsData)
-        }
-
-        console.timeEnd("⏱️ Total fetch time")
-        setRecentBookings([])
-
-      } catch (error) {
-        console.error('Error in fetchData:', error)
-      } finally {
-        setIsLoading(false)
+      // Step 2: Generate dates (next 3 days)
+      const dates: string[] = []
+      for (let i = 0; i < 3; i++) {
+        const today = new Date()
+        const targetDate = new Date(today.getFullYear(), today.getMonth(), today.getDate() + i)
+        const year = targetDate.getFullYear()
+        const month = String(targetDate.getMonth() + 1).padStart(2, '0')
+        const day = String(targetDate.getDate()).padStart(2, '0')
+        dates.push(`${year}-${month}-${day}`)
       }
-    }
+      console.log("📅 Dates to fetch:", dates)
 
-    fetchDataOnce()
-  }, [])
+      // Step 3: Fetch slots with BATCH API 🚀
+      console.log("📡 Fetching slots with BATCH API...")
+      const nowIST = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }))
+
+try {
+  // Prepare batch request
+  const gameIds = availableConsoles.map(c => c.id).filter(Boolean) as number[]
+  const batchDates = dates.map(d => d.replace(/-/g, ""))
+  
+  console.log("🚀 Batch request:", { vendorId, gameIds, dates: batchDates })
+  
+  // 🔥 USE THE fetchSlotsBatch FUNCTION
+  const batchData = await fetchSlotsBatch(vendorId, gameIds, batchDates)
+  console.log("✅ Batch data received:", batchData)
+
+
+        
+        // Process batch response
+        const slotsData: { [key: string]: any[] } = {}
+        dates.forEach((dateString) => {
+          slotsData[dateString] = []
+        })
+        
+        // Map batch results to frontend format
+        for (const [dateKey, slots] of Object.entries(batchData)) {
+          // Convert YYYYMMDD back to YYYY-MM-DD
+          const dateString = `${dateKey.slice(0, 4)}-${dateKey.slice(4, 6)}-${dateKey.slice(6, 8)}`
+          
+          if (Array.isArray(slots)) {
+            const processedSlots = slots.map((slot: any) => {
+              const gameConsole = availableConsoles.find(c => c.id === slot.console_id)
+              
+              const processedSlot = {
+                ...slot,
+                console_id: slot.console_id,
+                console_name: gameConsole?.name || 'Unknown Console',
+                date: dateString,
+                is_available: slot.is_available,
+              }
+              
+              // Mark past slots as unavailable (today only)
+              if (dateString === dates[0]) {
+                const slotEndTime = new Date(`${dateString}T${slot.end_time}+05:30`)
+                const isPast = nowIST >= slotEndTime
+                
+                if (isPast) {
+                  processedSlot.is_available = false
+                }
+              }
+              
+              return processedSlot
+            })
+            
+            slotsData[dateString] = processedSlots
+          }
+        }
+        
+        console.log("✅ Final slots data:", slotsData)
+        setAllSlots(slotsData)
+        
+      } catch (batchError: any) {
+        if (batchError.name === 'AbortError') {
+          throw batchError
+        }
+        
+        // Fallback to old method if batch fails
+        console.error("❌ Batch fetch failed, falling back to individual requests:", batchError)
+        console.log("⚠️ Using parallel fetches as fallback...")
+        
+        const allFetchPromises = dates.flatMap((dateString) =>
+          availableConsoles.map(async (gameConsole) => {
+            if (!gameConsole.id) return null
+
+            try {
+              const formattedDate = dateString.replace(/-/g, "")
+              const apiUrl = `${BOOKING_URL}/api/getSlots/vendor/${vendorId}/game/${gameConsole.id}/${formattedDate}`
+              
+              const slotData = await fetchWithDedup(apiUrl)
+
+              if (slotData.slots && Array.isArray(slotData.slots)) {
+                const processedSlots = slotData.slots.map((slot: any) => {
+                  const processedSlot = {
+                    ...slot,
+                    console_id: gameConsole.id,
+                    console_name: gameConsole.name,
+                    date: dateString,
+                    is_available: slot.is_available,
+                  }
+
+                  if (dateString === dates[0]) {
+                    const slotEndTime = new Date(`${dateString}T${slot.end_time}+05:30`)
+                    const isPast = nowIST >= slotEndTime
+
+                    if (isPast) {
+                      processedSlot.is_available = false
+                    }
+                  }
+
+                  return processedSlot
+                })
+
+                return { dateString, slots: processedSlots }
+              }
+            } catch (error) {
+              console.error(`❌ Error fetching slots for ${gameConsole.name} on ${dateString}:`, error)
+            }
+
+            return null
+          })
+        )
+
+        const results = await Promise.all(allFetchPromises)
+
+        const slotsData: { [key: string]: any[] } = {}
+        dates.forEach((dateString) => {
+          slotsData[dateString] = []
+        })
+
+        results.forEach(result => {
+          if (result && result.dateString && result.slots) {
+            slotsData[result.dateString].push(...result.slots)
+          }
+        })
+
+        setAllSlots(slotsData)
+      }
+
+      console.timeEnd("⏱️ Total fetch time")
+      setRecentBookings([])
+
+    } catch (error: any) {
+      if (error.name !== 'AbortError') {
+        console.error('❌ Error in fetchData:', error)
+      }
+    } finally {
+      setIsLoading(false)
+      console.log("✅ Loading complete")
+    }
+  }
+
+  fetchDataOnce()
+  
+  return () => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort()
+    }
+  }
+}, [])
+
 
   useEffect(() => {
     const handleBookingUpdated = () => {
