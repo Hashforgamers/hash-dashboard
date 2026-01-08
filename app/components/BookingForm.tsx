@@ -18,7 +18,9 @@ import {
   Users,
   IndianRupee,
   Plus,
-  Ticket  // ← Add this import
+  Ticket,  // ← Add this import
+  AlertCircle,
+  Lock
 } from 'lucide-react';
 import { ConsoleType } from './types';
 import { BOOKING_URL } from '@/src/config/env';
@@ -89,6 +91,9 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
   const [phoneSuggestions, setPhoneSuggestions] = useState<{ name: string; email: string; phone: string }[]>([]);
   const [nameSuggestions, setNameSuggestions] = useState<{ name: string; email: string; phone: string }[]>([]);
   const [focusedInput, setFocusedInput] = useState<string>("");
+  // Add this with your other state declarations
+const [isPrivateMode, setIsPrivateMode] = useState<boolean>(false);
+
 
   const blurTimeoutRef = useRef<number | null>(null);
 
@@ -527,7 +532,8 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
           selectedMeals: selectedMeals.map(meal => ({
             menu_item_id: meal.menu_item_id,
             quantity: meal.quantity
-          }))
+          })),
+          bookingMode: isPrivateMode ? 'private' : 'regular',
         }),
       });
 
@@ -620,6 +626,15 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
                 <span className="font-medium text-emerald-600">{calculateHoursForSlots()} hrs</span>
               </div>
             )}
+
+            <div className="flex justify-between items-center py-1">
+  <span className="text-gray-600 dark:text-gray-400">Booking Type</span>
+  <span className={`font-medium ${isPrivateMode ? 'text-purple-600' : 'text-emerald-600'}`}>
+    {isPrivateMode ? 'Private' : 'Regular'}
+  </span>
+</div>
+
+
             <div className="flex justify-between items-center py-1">
               <span className="text-gray-600 dark:text-gray-400">Meals & Extras:</span>
               <span className="font-medium text-gray-800 dark:text-white">
@@ -680,6 +695,131 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
           </span>
         </div>
       </motion.div>
+
+      {/* 🆕 PRIVATE MODE TOGGLE - Place this after the header motion.div, before Customer Information */}
+<motion.div
+  initial={{ opacity: 0, y: -10 }}
+  animate={{ opacity: 1, y: 0 }}
+  className="mx-3 mt-3 mb-2"
+>
+  <div className={`rounded-lg p-3 border transition-all duration-300 ${
+    isPrivateMode
+      ? 'bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 border-purple-300 dark:border-purple-600 shadow-md'
+      : 'bg-gray-50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700'
+  }`}>
+    <div className="flex items-center justify-between">
+      {/* Left Side - Icon and Text */}
+      <div className="flex items-center gap-3">
+        <motion.div 
+          animate={{
+            scale: isPrivateMode ? [1, 1.1, 1] : 1,
+          }}
+          transition={{ duration: 0.3 }}
+          className={`p-2 rounded-lg transition-all duration-300 ${
+            isPrivateMode 
+              ? 'bg-gradient-to-br from-purple-500 to-pink-500 shadow-lg shadow-purple-500/50' 
+              : 'bg-gray-300 dark:bg-gray-600'
+          }`}
+        >
+          {isPrivateMode ? (
+            <Lock className="w-5 h-5 text-white" />
+          ) : (
+            <Users className="w-5 h-5 text-gray-600 dark:text-gray-300" />
+          )}
+        </motion.div>
+        
+        <div>
+          <h3 className="text-sm font-bold text-gray-800 dark:text-white flex items-center gap-2">
+            {isPrivateMode ? (
+              <>
+                <span className="text-purple-600 dark:text-purple-400">Private Booking</span>
+                <motion.span
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  className="text-xs bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 px-2 py-0.5 rounded-full font-medium"
+                >
+                  Manual Mode
+                </motion.span>
+              </>
+            ) : (
+              <>
+                <span className="text-gray-700 dark:text-gray-300">Regular Booking</span>
+                <span className="text-xs bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 px-2 py-0.5 rounded-full font-medium">
+                  Standard Mode
+                </span>
+              </>
+            )}
+          </h3>
+          <p className="text-xs text-gray-600 dark:text-gray-400 mt-0.5">
+            {isPrivateMode 
+              ? 'Walk-in or manual booking for internal tracking' 
+              : 'Online booking with standard workflow'}
+          </p>
+        </div>
+      </div>
+
+      {/* Right Side - Toggle Switch */}
+      <motion.button
+        type="button"
+        onClick={() => setIsPrivateMode(!isPrivateMode)}
+        whileTap={{ scale: 0.95 }}
+        className={`relative inline-flex h-8 w-14 items-center rounded-full transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 ${
+          isPrivateMode 
+            ? 'bg-gradient-to-r from-purple-600 to-pink-600 focus:ring-purple-500' 
+            : 'bg-gray-300 dark:bg-gray-600 focus:ring-gray-400'
+        }`}
+      >
+        <span className="sr-only">Toggle private mode</span>
+        <motion.span
+          animate={{
+            x: isPrivateMode ? 28 : 4,
+          }}
+          transition={{ 
+            type: 'spring', 
+            stiffness: 500, 
+            damping: 30 
+          }}
+          className={`inline-block h-6 w-6 transform rounded-full shadow-lg ${
+            isPrivateMode ? 'bg-white' : 'bg-white'
+          }`}
+        >
+          {/* Optional: Add icon inside toggle */}
+          <div className="flex items-center justify-center h-full">
+            {isPrivateMode ? (
+              <Lock className="w-3 h-3 text-purple-600" />
+            ) : (
+              <Users className="w-3 h-3 text-gray-600" />
+            )}
+          </div>
+        </motion.span>
+      </motion.button>
+    </div>
+
+    {/* Info Banner - Shows when Private mode is active */}
+    <AnimatePresence>
+      {isPrivateMode && (
+        <motion.div
+          initial={{ opacity: 0, height: 0, marginTop: 0 }}
+          animate={{ opacity: 1, height: 'auto', marginTop: 12 }}
+          exit={{ opacity: 0, height: 0, marginTop: 0 }}
+          transition={{ duration: 0.2 }}
+          className="overflow-hidden"
+        >
+          <div className="flex items-start gap-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg p-2.5 border border-purple-200 dark:border-purple-700">
+            <AlertCircle className="w-4 h-4 text-purple-600 dark:text-purple-400 flex-shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <p className="text-xs text-purple-800 dark:text-purple-200">
+                <strong>Private Mode Active:</strong> This booking will be marked as a private/walk-in booking 
+                for internal tracking. All slot availability and payment rules apply normally.
+              </p>
+            </div>
+          </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  </div>
+</motion.div>
+
 
       {/* Form Content */}
       <div className="flex-1 overflow-y-auto p-3">
