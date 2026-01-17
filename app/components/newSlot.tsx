@@ -45,6 +45,7 @@ interface SelectedSlot {
   console_id: number
   console_name: string
   console_price: number
+  available_count: number
 }
 
 import { Textarea } from "@/components/ui/textarea"
@@ -215,6 +216,8 @@ function SlotBookingForm({
   const [isSubmitted, setIsSubmitted] = useState<boolean>(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
 
+
+
   const [userList, setUserList] = useState<{ name: string; email: string; phone: string }[]>([])
   const [emailSuggestions, setEmailSuggestions] = useState<{ name: string; email: string; phone: string }[]>([])
   const [phoneSuggestions, setPhoneSuggestions] = useState<{ name: string; email: string; phone: string }[]>([])
@@ -241,6 +244,9 @@ function SlotBookingForm({
       return null
     }
   }
+
+
+
 
   const calculateAutoWaiveOff = (slots: SelectedSlot[]) => {
     console.log('💰 Calculating auto waive-off for slots:', slots)
@@ -357,6 +363,9 @@ const validatePass = async (uid: string) => {
       setAutoWaiveOffAmount(0)
     }
   }, [selectedSlots])
+
+
+
 
   useEffect(() => {
     if (!isOpen) return
@@ -625,62 +634,69 @@ const validatePass = async (uid: string) => {
 
       console.log('📤 Submitting booking data:', bookingData)
 
-      const response = await fetch(`${BOOKING_URL}/api/newBooking/vendor/${vendorId}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(bookingData),
-      })
+const response = await fetch(`${BOOKING_URL}/api/newBooking/vendor/${vendorId}`, {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify(bookingData),
+})
 
-      console.log('📥 API response status:', response.status)
+console.log('📥 API response status:', response.status)
 
-      if (!response.ok) {
-        throw new Error('Failed to submit booking')
-      }
+// ✅ FIX: Check response.ok first (status 200-299 means success)
+if (!response.ok) {
+  const errorData = await response.json().catch(() => ({}))
+  throw new Error(errorData.message || 'Failed to submit booking')
+}
 
-      const result = await response.json()
-      console.log('📥 API response data:', result)
-      
-      if (result.success) {
-        console.log('✅ Booking created successfully!')
-        setIsSubmitted(true)
+const result = await response.json()
+console.log('📥 API response data:', result)
 
-        if (typeof window !== 'undefined') {
-          console.log('📡 Dispatching refresh-dashboard event')
-          window.dispatchEvent(new CustomEvent('refresh-dashboard'))
+// ✅ FIX: If response.ok is true, treat as success regardless of result.success
+// This handles cases where backend returns different success formats
+if (response.ok || result.success === true || result.success === 'true') {
+  console.log('✅ Booking created successfully!')
+  setIsSubmitted(true)
+
+  if (typeof window !== 'undefined') {
+    console.log('📡 Dispatching refresh-dashboard event')
+    window.dispatchEvent(new CustomEvent('refresh-dashboard'))
+  }
+
+  // Update user cache
+  const userCacheKey = 'userList'
+  const cached = localStorage.getItem(userCacheKey)
+
+  if (cached) {
+    try {
+      const { data, timestamp } = JSON.parse(cached)
+
+      const isUserExists = data.some(
+        (user: any) => user.email === email || user.phone === phone
+      )
+
+      if (!isUserExists) {
+        console.log('👤 New user detected, refreshing user cache...')
+        const usersResponse = await fetch(`${BOOKING_URL}/api/vendor/${vendorId}/users`)
+        const updatedUsers = await usersResponse.json()
+
+        if (Array.isArray(updatedUsers)) {
+          localStorage.setItem(
+            userCacheKey,
+            JSON.stringify({ data: updatedUsers, timestamp: Date.now() })
+          )
+          console.log('✅ User cache updated with new user')
         }
-
-        const userCacheKey = 'userList'
-        const cached = localStorage.getItem(userCacheKey)
-
-        if (cached) {
-          try {
-            const { data, timestamp } = JSON.parse(cached)
-
-            const isUserExists = data.some(
-              (user: any) => user.email === email || user.phone === phone
-            )
-
-            if (!isUserExists) {
-              console.log('👤 New user detected, refreshing user cache...')
-              const usersResponse = await fetch(`${BOOKING_URL}/api/vendor/${vendorId}/users`)
-              const updatedUsers = await usersResponse.json()
-
-              if (Array.isArray(updatedUsers)) {
-                localStorage.setItem(
-                  userCacheKey,
-                  JSON.stringify({ data: updatedUsers, timestamp: Date.now() })
-                )
-                console.log('✅ User cache updated with new user')
-              }
-            }
-          } catch (err) {
-            console.error('❌ Error checking or updating user cache:', err)
-          }
-        }
-      } else {
-        console.log('❌ Booking creation failed:', result.message)
-        alert(`Error: ${result.message}`)
       }
+    } catch (err) {
+      console.error('❌ Error checking or updating user cache:', err)
+    }
+  }
+} else {
+  // Only show error if response was not ok
+  console.log('❌ Unexpected response format:', result)
+  alert(`Error: ${result.message || 'Unexpected response from server'}`)
+}
+
     } catch (error) {
       console.error('❌ Error submitting booking:', error)
       alert('Failed to create booking')
@@ -1642,7 +1658,8 @@ function ScheduleGrid({
       end_time: matchingSlot.end_time,
       console_id: gameConsole.id!,
       console_name: gameConsole.name,
-      console_price: matchingSlot.single_slot_price || gameConsole.price!
+      console_price: matchingSlot.single_slot_price || gameConsole.price!,
+      available_count: matchingSlot.available_slot || 0,
     }
 
     onSlotSelect(selectedSlot)
@@ -1682,35 +1699,44 @@ function ScheduleGrid({
 
           if (consoleSlots.length === 0) return
 
-          const availableSlots = consoleSlots.filter(slot => slot.is_available)
-          const bookedSlots = consoleSlots.filter(slot => !slot.is_available)
-
-          availableSlots.forEach(slot => {
-            const isSelected = isSlotSelected(slot.slot_id, day.fullDate)
-            
+          const slot = consoleSlots[0] // Get first slot for this console/time
+          const isSelected = isSlotSelected(slot.slot_id, day.fullDate)
+          
+          // ✅ Check if time has passed
+          const nowIST = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }))
+          const slotEndTime = new Date(`${day.fullDate}T${slot.end_time}+05:30`)
+          const isPastTime = nowIST >= slotEndTime
+          
+          // ✅ Check if fully booked
+          const isFullyBooked = (slot.available_slot || 0) === 0
+          
+          // ❌ Show RED X for both expired and fully booked
+          if (isPastTime || isFullyBooked) {
             timeSlots.push(
-              <div key={`${day.fullDate}-${slot.slot_id}`} className="w-full h-full min-h-[40px]">
-                <SlotPill
-                  label={gameConsole.name}
-                  color={getConsoleColor(gameConsole.id)}
-                  icon={getConsoleIcon(gameConsole.type)}
-                  onClick={() => handleSlotClick(day, time, gameConsole)}
-                  selected={isSelected}
-                />
-              </div>
-            )
-          }) 
-
-          bookedSlots.forEach((slot, index) => {
-            timeSlots.push(
-              <div 
-                key={`booked-${day.fullDate}-${gameConsole.id}-${index}`} 
-                className="w-full h-full min-h-[40px] flex items-center justify-center bg-red-600 text-white rounded-md"
+              <div
+                key={`unavailable-${day.fullDate}-${gameConsole.id}`}
+                className="w-full h-full min-h-[40px] flex items-center justify-center bg-red-600 text-white rounded-md cursor-not-allowed"
+                title={isPastTime ? "Time expired" : "Fully booked"}
               >
                 <X className="h-5 w-5 stroke-[3]" />
               </div>
             )
-          })
+          }
+          // ✅ Show available slots with count
+          else {
+            timeSlots.push(
+              <div key={`${day.fullDate}-${slot.slot_id}`} className="w-full h-full min-h-[40px]">
+                <SlotPill
+                  label={`${gameConsole.name} - ${slot.available_slot}`}
+                  color={getConsoleColor(gameConsole.id)}
+                  icon={getConsoleIcon(gameConsole.type)}
+                  onClick={() => handleSlotClick(day, time, gameConsole)}
+                  selected={isSelected}
+                  disabled={false}
+                />
+              </div>
+            )
+          }
         })
 
         return (
@@ -1776,63 +1802,127 @@ function ScheduleGrid({
   )
 }
 
-function RecentBookings({ bookings }: { bookings: any[] }) {
-  return (
-    <section className="mt-12">
-      <h2 className="text-xl font-bold tracking-tight text-white mb-4">Selected Slot Bookings</h2>
 
-      <Card className="overflow-hidden rounded-2xl border border-gray-700 bg-gray-800/30 backdrop-blur-sm">
-        <div className="w-full overflow-x-auto">
-          <table className="min-w-full text-sm">
-            <thead>
-              <tr className="bg-gray-700/50 text-gray-200">
-                <th className="px-6 py-3 text-left text-xs font-semibold uppercase">Booking ID</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold uppercase">Name</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold uppercase">Contact Number</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold uppercase">Email ID</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold uppercase">Meal Selected</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold uppercase">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {bookings.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="px-6 py-8 text-center text-gray-400">
-                    No bookings selected
-                  </td>
-                </tr>
-              ) : (
-                bookings.map((booking, index) => (
-                  <tr key={booking.id || index} className="border-t border-gray-700 hover:bg-gray-700/30 transition-colors">
-                    <td className="px-6 py-4 font-semibold text-blue-400">#{booking.id}</td>
-                    <td className="px-6 py-4 text-gray-200">{booking.name}</td>
-                    <td className="px-6 py-4 text-gray-300">{booking.phone}</td>
-                    <td className="px-6 py-4 text-gray-300">{booking.email || 'N/A'}</td>
-                    <td className="px-6 py-4 text-gray-300">{booking.meal || '1-Coc'}</td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-2">
-                        <button className="p-1.5 hover:bg-gray-700 rounded text-blue-400 transition-colors">
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                          </svg>
-                        </button>
-                        <button className="p-1.5 hover:bg-gray-700 rounded text-red-400 transition-colors">
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                          </svg>
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+function RecentBookings({ 
+  bookings, 
+  isLoading 
+}: { 
+  bookings: any[], 
+  isLoading: boolean 
+}) {
+  if (isLoading) {
+    return (
+      <Card className="p-6 mt-2 bg-gray-50 dark:bg-gray-700/30">
+        <div className="flex items-center justify-center py-8">
+          <Loader2 className="w-6 h-6 animate-spin text-emerald-500" />
+          <span className="ml-2 text-gray-600 dark:text-gray-400">Loading bookings...</span>
         </div>
       </Card>
-    </section>
+    )
+  }
+
+  if (bookings.length === 0) {
+    return (
+      <Card className="p-6 mt-2 bg-gray-50 dark:bg-gray-700/30">
+        <div className="flex flex-col items-center justify-center py-8 text-center">
+          <div className="p-3 bg-gray-200 dark:bg-gray-600 rounded-full mb-3">
+            <AlertCircle className="w-6 h-6 text-gray-500 dark:text-gray-400" />
+          </div>
+          <p className="text-gray-600 dark:text-gray-400 font-medium">No bookings for selected slot</p>
+          <p className="text-sm text-gray-500 dark:text-gray-500 mt-1">
+            This slot is available for new bookings
+          </p>
+        </div>
+      </Card>
+    )
+  }
+
+  return (
+    <Card className="p-4 mt-2 bg-gray-50 dark:bg-gray-700/30">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-lg font-semibold text-gray-800 dark:text-white flex items-center gap-2">
+          <CalendarDays className="w-5 h-5 text-emerald-600" />
+          Selected Slot Bookings
+          <span className="text-sm font-normal text-gray-500">({bookings.length} Active)</span>
+        </h3>
+      </div>
+
+      <div className="overflow-x-auto">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="text-gray-700 dark:text-gray-300">Booking ID</TableHead>
+              <TableHead className="text-gray-700 dark:text-gray-300">Customer Details</TableHead>
+              <TableHead className="text-gray-700 dark:text-gray-300">Status</TableHead>
+              <TableHead className="text-gray-700 dark:text-gray-300">Meal Selection</TableHead>
+              <TableHead className="text-gray-700 dark:text-gray-300">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {bookings.map((booking) => (
+              <TableRow key={booking.booking_id} className="hover:bg-gray-100 dark:hover:bg-gray-600/30">
+                <TableCell className="font-medium text-emerald-600 dark:text-emerald-400">
+                  {booking.booking_fid}
+                </TableCell>
+                <TableCell>
+                  <div className="flex flex-col gap-1">
+                    <span className="font-medium text-gray-800 dark:text-white flex items-center gap-1">
+                      <User className="w-3 h-3" />
+                      {booking.customer_name}
+                    </span>
+                    <span className="text-xs text-gray-600 dark:text-gray-400 flex items-center gap-1">
+                      <Mail className="w-3 h-3" />
+                      {booking.customer_email}
+                    </span>
+                    <span className="text-xs text-gray-600 dark:text-gray-400 flex items-center gap-1">
+                      <Phone className="w-3 h-3" />
+                      {booking.customer_phone}
+                    </span>
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <span className={cn(
+                    "px-2 py-1 rounded-full text-xs font-medium",
+                    booking.status === 'confirmed' && "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
+                    booking.status === 'checked_in' && "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400",
+                    booking.status === 'pending_verified' && "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
+                    booking.status === 'completed' && "bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-400"
+                  )}>
+                    {booking.status === 'checked_in' ? 'Checked-In' : 
+                     booking.status === 'pending_verified' ? 'Pending' :
+                     booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
+                  </span>
+                </TableCell>
+                <TableCell>
+                  <div className="flex items-center gap-1 text-sm text-gray-700 dark:text-gray-300">
+                    {booking.meals && booking.meals.length > 0 ? (
+                      <div className="flex items-center gap-1">
+                        <Sparkles className="w-4 h-4 text-emerald-600" />
+                        {booking.meal_selection}
+                      </div>
+                    ) : (
+                      <span className="text-gray-500 italic">No meal selected</span>
+                    )}
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-900/30"
+                  >
+                    View Details
+                  </Button>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+    </Card>
   )
 }
+
 
 
 
@@ -2639,6 +2729,8 @@ export default function SlotManagement() {
   const [allSlots, setAllSlots] = useState<{ [key: string]: any[] }>({})
   const [recentBookings, setRecentBookings] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
+    const [slotBookings, setSlotBookings] = useState<any[]>([])
+const [isLoadingBookings, setIsLoadingBookings] = useState(false)
   
 const hasFetchedRef = useRef(false)
 const abortControllerRef = useRef<AbortController | null>(null)
@@ -2654,6 +2746,40 @@ const abortControllerRef = useRef<AbortController | null>(null)
       return null
     }
   }
+
+    const fetchSlotBookings = async (slotIds: number[], date: string) => {
+  const vendorId = getVendorIdFromToken()
+  if (!vendorId || slotIds.length === 0) {
+    setSlotBookings([])
+    return
+  }
+  
+  setIsLoadingBookings(true)
+  console.log('🔍 Fetching bookings for slots:', slotIds, 'date:', date)
+  
+  try {
+    const slotIdsParam = slotIds.join(',')
+    const response = await fetch(
+      `${BOOKING_URL}/api/vendor/${vendorId}/slot-bookings?slot_ids=${slotIdsParam}&date=${date}`
+    )
+    
+    const data = await response.json()
+    console.log('📥 Slot bookings response:', data)
+    
+    if (data.success && data.bookings) {
+      setSlotBookings(data.bookings)
+      console.log('✅ Loaded', data.bookings.length, 'bookings')
+    } else {
+      setSlotBookings([])
+      console.log('📭 No bookings found')
+    }
+  } catch (error) {
+    console.error('❌ Error fetching slot bookings:', error)
+    setSlotBookings([])
+  } finally {
+    setIsLoadingBookings(false)
+  }
+}
 
  useEffect(() => {
   if (hasFetchedRef.current) {
@@ -2769,12 +2895,14 @@ try {
               const gameConsole = availableConsoles.find(c => c.id === slot.console_id)
               
               const processedSlot = {
-                ...slot,
-                console_id: slot.console_id,
-                console_name: gameConsole?.name || 'Unknown Console',
-                date: dateString,
-                is_available: slot.is_available,
-              }
+  ...slot,
+  console_id: slot.console_id,  // ✅ FIXED: Underscore naming
+  console_name: gameConsole?.name || "Unknown Console",  // ✅ FIXED
+  date: dateString,
+  is_available: (slot.available_slot || 0) > 0,  // ✅ FIXED: Check count
+  available_slot: slot.available_slot || 0,  // ✅ FIXED: Store count with fallback
+}
+
               
               // Mark past slots as unavailable (today only)
               if (dateString === dates[0]) {
@@ -2885,6 +3013,17 @@ try {
   }
 }, [])
 
+  // Fetch bookings when slots are selected
+useEffect(() => {
+  if (selectedSlots.length > 0) {
+    const slotIds = selectedSlots.map(slot => slot.slot_id)
+    const date = selectedSlots[0].date // All slots should have same date
+    fetchSlotBookings(slotIds, date)
+  } else {
+    setSlotBookings([])
+  }
+}, [selectedSlots])
+
 
   useEffect(() => {
     const handleBookingUpdated = () => {
@@ -2924,7 +3063,7 @@ try {
 
   if (isLoading) {
     return (
-      <main className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
+      <main className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="w-12 h-12 animate-spin text-blue-500 mx-auto mb-4" />
           <p className="text-slate-300">Loading slot data...</p>
@@ -2934,8 +3073,8 @@ try {
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
-      <div className="mx-auto w-full max-w-[1600px] p-6 md:p-8">
+    <main className="min-h-screen bg-background">
+      <div className="mx-auto w-full max-w-full p-6 md:p-8">
         <TopBar selectedSlots={selectedSlots} onNewBooking={handleNewBooking} />
         <ConsoleFilter selectedConsole={selectedConsole} onConsoleChange={setSelectedConsole} />
         <ScheduleGrid
@@ -2946,7 +3085,12 @@ try {
           allSlots={allSlots}
           isLoading={isLoading}
         />
-        <RecentBookings bookings={recentBookings} />
+         <RecentBookings 
+  bookings={slotBookings} 
+  isLoading={isLoadingBookings} 
+/>
+
+
       </div>
 
       <SlotBookingForm
