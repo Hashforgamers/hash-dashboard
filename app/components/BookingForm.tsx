@@ -17,7 +17,10 @@ import {
   TowerControl as GameController2,
   Users,
   IndianRupee,
-  Plus
+  Plus,
+  Ticket,  // ← Add this import
+  AlertCircle,
+  Lock
 } from 'lucide-react';
 import { ConsoleType } from './types';
 import { BOOKING_URL } from '@/src/config/env';
@@ -64,8 +67,15 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
   const [availableSlots, setAvailableSlots] = useState<any[]>([]);
   const [isLoadingSlots, setIsLoadingSlots] = useState<boolean>(false);
 
-  // Payment - Set Cash as default
+  // Payment - Add Pass option
+  const PAYMENT_TYPES = ['Cash', 'UPI', 'Pass']; // ← Updated
   const [paymentType, setPaymentType] = useState<string>('Cash');
+
+  // ✅ Pass payment states
+  const [passUid, setPassUid] = useState("");
+  const [validatedPass, setValidatedPass] = useState<any>(null);
+  const [isValidatingPass, setIsValidatingPass] = useState(false);
+  const [passError, setPassError] = useState("");
 
   // Submission state
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
@@ -81,6 +91,9 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
   const [phoneSuggestions, setPhoneSuggestions] = useState<{ name: string; email: string; phone: string }[]>([]);
   const [nameSuggestions, setNameSuggestions] = useState<{ name: string; email: string; phone: string }[]>([]);
   const [focusedInput, setFocusedInput] = useState<string>("");
+  // Add this with your other state declarations
+const [isPrivateMode, setIsPrivateMode] = useState<boolean>(false);
+
 
   const blurTimeoutRef = useRef<number | null>(null);
 
@@ -93,7 +106,72 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
     selectedSlots.length * consolePrice - waiveOffAmount - autoWaiveOffAmount + extraControllerFare + mealsTotal
   );
 
-  // ✅ ENHANCED: Calculate automatic wave-off amount based on elapsed time
+  // ✅ Calculate hours needed for selected slots
+  const calculateHoursForSlots = () => {
+    if (selectedSlots.length === 0 || availableSlots.length === 0) return 0;
+
+    let totalHours = 0;
+
+    selectedSlots.forEach((slotId) => {
+      const slot = availableSlots.find((s: any) => s.slot_id === slotId);
+      if (!slot) return;
+
+      const startTime = new Date(`${selectedDate}T${slot.start_time}+05:30`);
+      const endTime = new Date(`${selectedDate}T${slot.end_time}+05:30`);
+
+      const durationMs = endTime.getTime() - startTime.getTime();
+      const durationHours = durationMs / (1000 * 60 * 60);
+
+      totalHours += durationHours;
+    });
+
+    return Math.round(totalHours * 2) / 2; // Round to nearest 0.5
+  };
+
+  // ✅ Validate pass when UID is entered
+  const validatePass = async (uid: string) => {
+    if (!uid.trim() || !vendorId) return;
+
+    setIsValidatingPass(true);
+    setPassError("");
+
+    try {
+      const response = await fetch(`${BOOKING_URL}/api/pass/validate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          pass_uid: uid.trim(),
+          vendor_id: vendorId,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.valid) {
+        setValidatedPass(data.pass);
+        setPassError("");
+        
+        // Calculate hours needed for selected slots
+        const hoursNeeded = calculateHoursForSlots();
+        
+        if (hoursNeeded > 0 && data.pass.remaining_hours < hoursNeeded) {
+          setPassError(
+            `Insufficient hours. Need ${hoursNeeded} hrs, available ${data.pass.remaining_hours} hrs`
+          );
+        }
+      } else {
+        setPassError(data.error || "Invalid pass");
+        setValidatedPass(null);
+      }
+    } catch (err) {
+      setPassError("Failed to validate pass");
+      setValidatedPass(null);
+    } finally {
+      setIsValidatingPass(false);
+    }
+  };
+
+  // ENHANCED: Calculate automatic wave-off amount based on elapsed time
   const calculateAutoWaiveOff = (slots: string[], slotsData: any[]) => {
     const nowIST = new Date(
       new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' })
@@ -112,14 +190,6 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
       const slotDurationMs = slotEndTime.getTime() - slotDateTime.getTime();
       const slotDurationMinutes = slotDurationMs / (1000 * 60);
       
-      console.log(`🕐 Slot Analysis for ${slotData.start_time}-${slotData.end_time}:`, {
-        slotId,
-        slotDurationMinutes,
-        currentTime: nowIST.toLocaleTimeString('en-IN'),
-        slotStart: slotDateTime.toLocaleTimeString('en-IN'),
-        slotEnd: slotEndTime.toLocaleTimeString('en-IN')
-      });
-      
       // Check if booking is made during the slot time
       if (nowIST >= slotDateTime && nowIST < slotEndTime) {
         // Calculate elapsed time since slot started
@@ -130,23 +200,9 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
         const elapsedPercentage = elapsedMinutes / slotDurationMinutes;
         const waveOffAmount = consolePrice * elapsedPercentage;
         
-        console.log(`💰 Wave-off Calculation:`, {
-          elapsedMinutes: Math.round(elapsedMinutes * 10) / 10,
-          totalSlotMinutes: slotDurationMinutes,
-          elapsedPercentage: Math.round(elapsedPercentage * 100) + '%',
-          waveOffAmount: Math.round(waveOffAmount),
-          consolePrice
-        });
-        
         totalAutoWaiveOff += waveOffAmount;
       }
-      // If booking is made before slot starts, no wave-off
-      else if (nowIST < slotDateTime) {
-        console.log(`⏰ Booking made in advance for ${slotData.start_time} - no wave-off needed`);
-      }
-      // If booking is made after slot ends, full wave-off (shouldn't happen with proper filtering)
       else if (nowIST >= slotEndTime) {
-        console.log(`⚠️ Slot ${slotData.start_time} already ended - full wave-off applied`);
         totalAutoWaiveOff += consolePrice;
       }
     });
@@ -164,6 +220,20 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
       setAutoWaiveOffAmount(0);
     }
   }, [selectedSlots, availableSlots, consolePrice, selectedDate]);
+
+  // ✅ Revalidate pass when slots change
+  useEffect(() => {
+    if (paymentType === "Pass" && validatedPass && passUid) {
+      const hoursNeeded = calculateHoursForSlots();
+      if (hoursNeeded > 0 && validatedPass.remaining_hours < hoursNeeded) {
+        setPassError(
+          `Insufficient hours. Need ${hoursNeeded} hrs, available ${validatedPass.remaining_hours} hrs`
+        );
+      } else if (passError.includes("Insufficient hours")) {
+        setPassError("");
+      }
+    }
+  }, [selectedSlots, paymentType, validatedPass]);
 
   // Fetch vendor ID when component mounts
   useEffect(() => {
@@ -327,7 +397,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
     setIsMealSelectorOpen(false);
   };
 
-  // Form validation
+  // ✅ Updated Form validation - includes pass validation
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
 
@@ -337,6 +407,17 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
     if (!phone.trim()) newErrors.phone = 'Phone number is required';
     if (selectedSlots.length === 0) newErrors.slots = 'Please select at least one time slot';
     if (!paymentType) newErrors.payment = 'Please select a payment method';
+
+    // ✅ Validate pass if Pass payment is selected
+    if (paymentType === "Pass") {
+      if (!passUid.trim()) {
+        newErrors.pass = "Please enter pass UID";
+      } else if (!validatedPass) {
+        newErrors.pass = "Please validate the pass first";
+      } else if (passError) {
+        newErrors.pass = passError;
+      }
+    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -401,12 +482,40 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
     if (errors.slots) setErrors((prev) => ({ ...prev, slots: '' }));
   };
 
+  // ✅ Updated Submit handler - includes pass redemption
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateForm()) return;
 
     setIsSubmitting(true);
     try {
+      // ✅ If payment is Pass, redeem pass first
+      if (paymentType === "Pass" && validatedPass) {
+        const hoursToDeduct = calculateHoursForSlots();
+
+        const passRedeemResponse = await fetch(`${BOOKING_URL}/api/pass/redeem/dashboard`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            pass_uid: passUid.trim(),
+            vendor_id: vendorId,
+            hours_to_deduct: hoursToDeduct,
+            session_start: availableSlots.find((s: any) => s.slot_id === selectedSlots[0])?.start_time.slice(0, 5),
+            session_end: availableSlots.find((s: any) => s.slot_id === selectedSlots[selectedSlots.length - 1])?.end_time.slice(0, 5),
+            notes: `Booking for ${selectedConsole.name} - ${selectedSlots.length} slots`,
+          }),
+        });
+
+        const passRedeemData = await passRedeemResponse.json();
+
+        if (!passRedeemResponse.ok || !passRedeemData.success) {
+          alert(`Pass redemption failed: ${passRedeemData.error}`);
+          setIsSubmitting(false);
+          return;
+        }
+      }
+
+      // Create booking
       const response = await fetch(`${BOOKING_URL}/api/newBooking/vendor/${vendorId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -417,13 +526,14 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
           phone,
           bookedDate: selectedDate,
           slotId: selectedSlots,
-          paymentType,
+          paymentType, // Will be "Pass" if pass payment
           waiveOffAmount: waiveOffAmount + autoWaiveOffAmount,
           extraControllerFare,
           selectedMeals: selectedMeals.map(meal => ({
             menu_item_id: meal.menu_item_id,
             quantity: meal.quantity
-          }))
+          })),
+          bookingMode: isPrivateMode ? 'private' : 'regular',
         }),
       });
 
@@ -507,6 +617,25 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
               <span className="font-medium text-gray-800 dark:text-white">{selectedConsole.type}</span>
             </div>
             <div className="flex justify-between items-center py-1">
+              <span className="text-gray-600 dark:text-gray-400">Payment:</span>
+              <span className="font-medium text-gray-800 dark:text-white">{paymentType}</span>
+            </div>
+            {paymentType === "Pass" && validatedPass && (
+              <div className="flex justify-between items-center py-1">
+                <span className="text-gray-600 dark:text-gray-400">Hours Deducted:</span>
+                <span className="font-medium text-emerald-600">{calculateHoursForSlots()} hrs</span>
+              </div>
+            )}
+
+            <div className="flex justify-between items-center py-1">
+  <span className="text-gray-600 dark:text-gray-400">Booking Type</span>
+  <span className={`font-medium ${isPrivateMode ? 'text-purple-600' : 'text-emerald-600'}`}>
+    {isPrivateMode ? 'Private' : 'Regular'}
+  </span>
+</div>
+
+
+            <div className="flex justify-between items-center py-1">
               <span className="text-gray-600 dark:text-gray-400">Meals & Extras:</span>
               <span className="font-medium text-gray-800 dark:text-white">
                 {selectedMeals.length === 0
@@ -514,10 +643,12 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
                   : selectedMeals.map(meal => `${meal.name} (${meal.quantity})`).join(', ')}
               </span>
             </div>
-            <div className="flex justify-between items-center py-1">
-              <span className="text-gray-600 dark:text-gray-400">Total Amount:</span>
-              <span className="font-bold text-emerald-600 text-lg">₹{totalAmount}</span>
-            </div>
+            {paymentType !== "Pass" && (
+              <div className="flex justify-between items-center py-1">
+                <span className="text-gray-600 dark:text-gray-400">Total Amount:</span>
+                <span className="font-bold text-emerald-600 text-lg">₹{totalAmount}</span>
+              </div>
+            )}
           </div>
 
           <motion.button
@@ -564,6 +695,131 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
           </span>
         </div>
       </motion.div>
+
+      {/* 🆕 PRIVATE MODE TOGGLE - Place this after the header motion.div, before Customer Information */}
+<motion.div
+  initial={{ opacity: 0, y: -10 }}
+  animate={{ opacity: 1, y: 0 }}
+  className="mx-3 mt-3 mb-2"
+>
+  <div className={`rounded-lg p-3 border transition-all duration-300 ${
+    isPrivateMode
+      ? 'bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 border-purple-300 dark:border-purple-600 shadow-md'
+      : 'bg-gray-50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700'
+  }`}>
+    <div className="flex items-center justify-between">
+      {/* Left Side - Icon and Text */}
+      <div className="flex items-center gap-3">
+        <motion.div 
+          animate={{
+            scale: isPrivateMode ? [1, 1.1, 1] : 1,
+          }}
+          transition={{ duration: 0.3 }}
+          className={`p-2 rounded-lg transition-all duration-300 ${
+            isPrivateMode 
+              ? 'bg-gradient-to-br from-purple-500 to-pink-500 shadow-lg shadow-purple-500/50' 
+              : 'bg-gray-300 dark:bg-gray-600'
+          }`}
+        >
+          {isPrivateMode ? (
+            <Lock className="w-5 h-5 text-white" />
+          ) : (
+            <Users className="w-5 h-5 text-gray-600 dark:text-gray-300" />
+          )}
+        </motion.div>
+        
+        <div>
+          <h3 className="text-sm font-bold text-gray-800 dark:text-white flex items-center gap-2">
+            {isPrivateMode ? (
+              <>
+                <span className="text-purple-600 dark:text-purple-400">Private Booking</span>
+                <motion.span
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  className="text-xs bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 px-2 py-0.5 rounded-full font-medium"
+                >
+                  Manual Mode
+                </motion.span>
+              </>
+            ) : (
+              <>
+                <span className="text-gray-700 dark:text-gray-300">Regular Booking</span>
+                <span className="text-xs bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 px-2 py-0.5 rounded-full font-medium">
+                  Standard Mode
+                </span>
+              </>
+            )}
+          </h3>
+          <p className="text-xs text-gray-600 dark:text-gray-400 mt-0.5">
+            {isPrivateMode 
+              ? 'Walk-in or manual booking for internal tracking' 
+              : 'Online booking with standard workflow'}
+          </p>
+        </div>
+      </div>
+
+      {/* Right Side - Toggle Switch */}
+      <motion.button
+        type="button"
+        onClick={() => setIsPrivateMode(!isPrivateMode)}
+        whileTap={{ scale: 0.95 }}
+        className={`relative inline-flex h-8 w-14 items-center rounded-full transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 ${
+          isPrivateMode 
+            ? 'bg-gradient-to-r from-purple-600 to-pink-600 focus:ring-purple-500' 
+            : 'bg-gray-300 dark:bg-gray-600 focus:ring-gray-400'
+        }`}
+      >
+        <span className="sr-only">Toggle private mode</span>
+        <motion.span
+          animate={{
+            x: isPrivateMode ? 28 : 4,
+          }}
+          transition={{ 
+            type: 'spring', 
+            stiffness: 500, 
+            damping: 30 
+          }}
+          className={`inline-block h-6 w-6 transform rounded-full shadow-lg ${
+            isPrivateMode ? 'bg-white' : 'bg-white'
+          }`}
+        >
+          {/* Optional: Add icon inside toggle */}
+          <div className="flex items-center justify-center h-full">
+            {isPrivateMode ? (
+              <Lock className="w-3 h-3 text-purple-600" />
+            ) : (
+              <Users className="w-3 h-3 text-gray-600" />
+            )}
+          </div>
+        </motion.span>
+      </motion.button>
+    </div>
+
+    {/* Info Banner - Shows when Private mode is active */}
+    <AnimatePresence>
+      {isPrivateMode && (
+        <motion.div
+          initial={{ opacity: 0, height: 0, marginTop: 0 }}
+          animate={{ opacity: 1, height: 'auto', marginTop: 12 }}
+          exit={{ opacity: 0, height: 0, marginTop: 0 }}
+          transition={{ duration: 0.2 }}
+          className="overflow-hidden"
+        >
+          <div className="flex items-start gap-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg p-2.5 border border-purple-200 dark:border-purple-700">
+            <AlertCircle className="w-4 h-4 text-purple-600 dark:text-purple-400 flex-shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <p className="text-xs text-purple-800 dark:text-purple-200">
+                <strong>Private Mode Active:</strong> This booking will be marked as a private/walk-in booking 
+                for internal tracking. All slot availability and payment rules apply normally.
+              </p>
+            </div>
+          </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  </div>
+</motion.div>
+
 
       {/* Form Content */}
       <div className="flex-1 overflow-y-auto p-3">
@@ -772,7 +1028,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
                   />
                 </motion.div>
 
-                {/* Payment Method */}
+                {/* ✅ Payment Method - UPDATED WITH PASS */}
                 <motion.div
                   initial={{ opacity: 0, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
@@ -786,8 +1042,8 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
                     <h3 className="text-sm font-semibold text-gray-800 dark:text-white">Payment</h3>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-2">
-                    {['Cash', 'UPI'].map((type) => (
+                  <div className="grid grid-cols-3 gap-2">
+                    {PAYMENT_TYPES.map((type) => (
                       <motion.button
                         key={type}
                         type="button"
@@ -795,7 +1051,14 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
                         whileTap={{ scale: 0.98 }}
                         onClick={() => {
                           setPaymentType(type);
-                          if (errors.payment) setErrors((prev) => ({ ...prev, payment: '' }));
+                          if (type !== "Pass") {
+                            setPassUid("");
+                            setValidatedPass(null);
+                            setPassError("");
+                          }
+                          if (errors.payment) {
+                            setErrors((prev) => ({ ...prev, payment: "" }));
+                          }
                         }}
                         className={`p-2 rounded border transition-all duration-200 text-xs ${
                           paymentType === type
@@ -804,12 +1067,100 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
                         }`}
                       >
                         <div className="flex items-center justify-center gap-1">
-                          {type === 'Cash' ? <Wallet className="w-3 h-3" /> : <CreditCard className="w-3 h-3" />}
+                          {type === 'Cash' ? (
+                            <Wallet className="w-3 h-3" />
+                          ) : type === 'UPI' ? (
+                            <CreditCard className="w-3 h-3" />
+                          ) : (
+                            <Ticket className="w-3 h-3" />
+                          )}
                           <span className="font-medium">{type}</span>
                         </div>
                       </motion.button>
                     ))}
                   </div>
+
+                  {/* ✅ Pass UID Input - Shows when Pass is selected */}
+                  <AnimatePresence>
+                    {paymentType === "Pass" && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: "auto" }}
+                        exit={{ opacity: 0, height: 0 }}
+                        className="mt-3 space-y-2"
+                      >
+                        <div className="relative">
+                          <input
+                            type="text"
+                            value={passUid}
+                            onChange={(e) => setPassUid(e.target.value.toUpperCase())}
+                            onBlur={() => {
+                              if (passUid.trim()) {
+                                validatePass(passUid);
+                              }
+                            }}
+                            placeholder="Enter Pass UID (HFG-XXXXXXXXXXXX)"
+                            className="w-full px-3 py-2 bg-white dark:bg-gray-800 rounded border border-gray-300 dark:border-gray-600 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500/20 transition-all duration-200 text-sm"
+                          />
+                          {isValidatingPass && (
+                            <Loader2 className="w-4 h-4 animate-spin text-emerald-600 absolute right-3 top-2.5" />
+                          )}
+                        </div>
+
+                        {/* Validated Pass Details */}
+                        {validatedPass && !passError && (
+                          <motion.div
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            className="bg-emerald-50 dark:bg-emerald-900/20 rounded-lg p-2 border border-emerald-200 dark:border-emerald-700"
+                          >
+                            <div className="flex items-start gap-2">
+                              <CheckCircle className="w-4 h-4 text-emerald-600 flex-shrink-0 mt-0.5" />
+                              <div className="flex-1 text-xs space-y-1">
+                                <p className="font-semibold text-emerald-800 dark:text-emerald-200">
+                                  {validatedPass.pass_name}
+                                </p>
+                                <div className="flex justify-between text-emerald-700 dark:text-emerald-300">
+                                  <span>Hours Available:</span>
+                                  <span className="font-bold">
+                                    {validatedPass.remaining_hours} / {validatedPass.total_hours}
+                                  </span>
+                                </div>
+                                {selectedSlots.length > 0 && (
+                                  <div className="flex justify-between text-emerald-600 dark:text-emerald-400">
+                                    <span>Hours Needed:</span>
+                                    <span className="font-bold">{calculateHoursForSlots()} hrs</span>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </motion.div>
+                        )}
+
+                        {/* Error Message */}
+                        {passError && (
+                          <motion.p
+                            initial={{ opacity: 0, y: -5 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="text-xs text-red-500 flex items-center gap-1"
+                          >
+                            <X className="w-3 h-3" />
+                            {passError}
+                          </motion.p>
+                        )}
+
+                        {errors.pass && (
+                          <motion.p
+                            initial={{ opacity: 0, y: -5 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="text-xs text-red-500"
+                          >
+                            {errors.pass}
+                          </motion.p>
+                        )}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </motion.div>
               </div>
 
@@ -980,42 +1331,70 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
                     <span className="font-medium text-gray-800 dark:text-white">₹{consolePrice}/slot</span>
                   </div>
 
+                  {/* ✅ Payment Method in Summary */}
                   <div className="flex justify-between items-center py-1 border-b border-gray-100 dark:border-gray-700">
-                    <span className="text-gray-600 dark:text-gray-400">Manual Waive Off:</span>
-                    <input
-                      type="number"
-                      value={waiveOffAmount}
-                      onChange={(e) => setWaiveOffAmount(Number(e.target.value))}
-                      placeholder="₹0"
-                      className="w-16 text-right px-1 py-0.5 rounded border border-gray-300 dark:border-gray-600 bg-transparent dark:bg-transparent text-gray-800 dark:text-white focus:border-emerald-500 focus:outline-none transition-colors text-xs"
-                      min={0}
-                    />
+                    <span className="text-gray-600 dark:text-gray-400">Payment:</span>
+                    <span className="font-medium text-gray-800 dark:text-white">
+                      {paymentType}
+                      {paymentType === "Pass" && validatedPass && (
+                        <span className="text-xs text-emerald-600 ml-1">
+                          (✓ Verified)
+                        </span>
+                      )}
+                    </span>
                   </div>
 
-                  {/* ✅ Enhanced Auto Waive Off Display */}
-                  {autoWaiveOffAmount > 0 && (
-                    <div className="flex justify-between items-center py-1 border-b border-gray-100 dark:border-gray-700 bg-orange-50 dark:bg-orange-900/20 rounded px-2">
-                      <span className="text-orange-600 dark:text-orange-400 font-medium">⏰ Auto Waive Off:</span>
-                      <div className="text-right">
-                        <span className="font-bold text-orange-600 dark:text-orange-400">₹{Math.round(autoWaiveOffAmount)}</span>
-                        <div className="text-xs text-orange-500 dark:text-orange-300">
-                          (Time-based discount)
-                        </div>
-                      </div>
+                  {/* ✅ Show hours deduction for Pass payment */}
+                  {paymentType === "Pass" && validatedPass && selectedSlots.length > 0 && (
+                    <div className="flex justify-between items-center py-1 border-b border-gray-100 dark:border-gray-700 bg-emerald-50 dark:bg-emerald-900/20 rounded px-2">
+                      <span className="text-emerald-600 dark:text-emerald-400 text-xs">
+                        Hours to Deduct:
+                      </span>
+                      <span className="font-bold text-emerald-600 dark:text-emerald-400 text-xs">
+                        {calculateHoursForSlots()} hrs
+                      </span>
                     </div>
                   )}
 
-                  <div className="flex justify-between items-center py-1 border-b border-gray-100 dark:border-gray-700">
-                    <span className="text-gray-600 dark:text-gray-400">Extra Controller:</span>
-                    <input
-                      type="number"
-                      value={extraControllerFare}
-                      onChange={(e) => setExtraControllerFare(Number(e.target.value))}
-                      placeholder="₹0"
-                      className="w-16 text-right px-1 py-0.5 rounded border border-gray-300 dark:border-gray-600 bg-transparent dark:bg-transparent text-gray-800 dark:text-white focus:border-emerald-500 focus:outline-none transition-colors text-xs"
-                      min={0}
-                    />
-                  </div>
+                  {paymentType !== "Pass" && (
+                    <>
+                      <div className="flex justify-between items-center py-1 border-b border-gray-100 dark:border-gray-700">
+                        <span className="text-gray-600 dark:text-gray-400">Manual Waive Off:</span>
+                        <input
+                          type="number"
+                          value={waiveOffAmount}
+                          onChange={(e) => setWaiveOffAmount(Number(e.target.value))}
+                          placeholder="₹0"
+                          className="w-16 text-right px-1 py-0.5 rounded border border-gray-300 dark:border-gray-600 bg-transparent dark:bg-transparent text-gray-800 dark:text-white focus:border-emerald-500 focus:outline-none transition-colors text-xs"
+                          min={0}
+                        />
+                      </div>
+
+                      {autoWaiveOffAmount > 0 && (
+                        <div className="flex justify-between items-center py-1 border-b border-gray-100 dark:border-gray-700 bg-orange-50 dark:bg-orange-900/20 rounded px-2">
+                          <span className="text-orange-600 dark:text-orange-400 font-medium">⏰ Auto Waive Off:</span>
+                          <div className="text-right">
+                            <span className="font-bold text-orange-600 dark:text-orange-400">₹{Math.round(autoWaiveOffAmount)}</span>
+                            <div className="text-xs text-orange-500 dark:text-orange-300">
+                              (Time-based discount)
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      <div className="flex justify-between items-center py-1 border-b border-gray-100 dark:border-gray-700">
+                        <span className="text-gray-600 dark:text-gray-400">Extra Controller:</span>
+                        <input
+                          type="number"
+                          value={extraControllerFare}
+                          onChange={(e) => setExtraControllerFare(Number(e.target.value))}
+                          placeholder="₹0"
+                          className="w-16 text-right px-1 py-0.5 rounded border border-gray-300 dark:border-gray-600 bg-transparent dark:bg-transparent text-gray-800 dark:text-white focus:border-emerald-500 focus:outline-none transition-colors text-xs"
+                          min={0}
+                        />
+                      </div>
+                    </>
+                  )}
 
                   {/* Meals Selection */}
                   <div className="flex justify-between items-center py-1 border-b border-gray-100 dark:border-gray-700">
@@ -1062,10 +1441,19 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
                     </div>
                   )}
 
-                  <div className="flex justify-between items-center py-2 bg-emerald-50 dark:bg-emerald-900/30 rounded px-2">
-                    <span className="font-bold text-gray-800 dark:text-white text-sm">Total:</span>
-                    <span className="font-bold text-lg text-emerald-600">₹{totalAmount}</span>
-                  </div>
+                  {paymentType !== "Pass" && (
+                    <div className="flex justify-between items-center py-2 bg-emerald-50 dark:bg-emerald-900/30 rounded px-2">
+                      <span className="font-bold text-gray-800 dark:text-white text-sm">Total:</span>
+                      <span className="font-bold text-lg text-emerald-600">₹{totalAmount}</span>
+                    </div>
+                  )}
+
+                  {paymentType === "Pass" && (
+                    <div className="flex justify-between items-center py-2 bg-emerald-50 dark:bg-emerald-900/30 rounded px-2">
+                      <span className="font-bold text-gray-800 dark:text-white text-sm">Payment:</span>
+                      <span className="font-bold text-lg text-emerald-600">Pass (No charge)</span>
+                    </div>
+                  )}
                 </div>
               </motion.div>
             </div>
@@ -1091,7 +1479,10 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
             ) : (
               <div className="flex items-center justify-center gap-2">
                 <CheckCircle className="w-4 h-4" />
-                Complete Booking - ₹{totalAmount}
+                {paymentType === "Pass" 
+                  ? `Complete Booking - ${calculateHoursForSlots()} hrs`
+                  : `Complete Booking - ₹${totalAmount}`
+                }
               </div>
             )}
           </motion.button>
