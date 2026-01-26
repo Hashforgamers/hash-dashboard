@@ -20,25 +20,32 @@ import {
   CheckCircle2,
   XCircle,
   ArrowLeft,
+  Image as ImageIcon,
 } from "lucide-react";
 import { jwtDecode } from "jwt-decode";
-import {  DASHBOARD_URL } from "@/src/config/env";
+import { DASHBOARD_URL } from "@/src/config/env";
 
 // Types
 interface Game {
   id: number;
   name: string;
   description?: string;
-  category?: string;
+  genre?: string;
+  platform?: string;
   image_url?: string;
+  cloudinary_public_id?: string;
+  esrb_rating?: string;
+  multiplayer?: boolean;
 }
 
 interface VendorGame {
   id: number;
   vendor_id: number;
   game_id: number;
+  console_type: string; // ✅ Changed from console_id
   price_per_hour: number;
   is_available: boolean;
+  max_slots: number;
   created_at?: string;
 }
 
@@ -46,6 +53,13 @@ interface VendorGameWithDetails {
   vendor_game: VendorGame;
   game: Game;
 }
+
+// Console types available
+const CONSOLE_TYPES = [
+  { value: 'pc', label: 'PC', icon: '💻', color: 'bg-blue-500' },
+  { value: 'ps5', label: 'PlayStation 5', icon: '🎮', color: 'bg-indigo-500' },
+  { value: 'xbox', label: 'Xbox', icon: '🎯', color: 'bg-green-500' },
+];
 
 export default function GamesManagementPage() {
   const [vendorId, setVendorId] = useState<number | null>(null);
@@ -55,7 +69,9 @@ export default function GamesManagementPage() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedGame, setSelectedGame] = useState<Game | null>(null);
+  const [selectedConsoleType, setSelectedConsoleType] = useState<string>(""); // ✅ Changed
   const [pricePerHour, setPricePerHour] = useState<number>(50);
+  const [maxSlots, setMaxSlots] = useState<number>(1);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -83,16 +99,19 @@ export default function GamesManagementPage() {
       const response = await fetch(
         `${DASHBOARD_URL}/vendor/${vendorId}/games`
       );
-      
+
       if (!response.ok) {
         throw new Error("Failed to fetch vendor games");
       }
 
       const data = await response.json();
+      console.log("Vendor games data:", data);
       setVendorGames(data);
     } catch (err) {
       console.error("Error fetching vendor games:", err);
-      setError("Failed to load your games. Please try again.");
+      if (vendorGames.length === 0) {
+        setVendorGames([]);
+      }
     } finally {
       setLoading(false);
     }
@@ -102,15 +121,17 @@ export default function GamesManagementPage() {
   const fetchAllGames = async () => {
     try {
       const response = await fetch(`${DASHBOARD_URL}/games`);
-      
+
       if (!response.ok) {
         throw new Error("Failed to fetch games");
       }
 
       const data = await response.json();
+      console.log("All games data:", data);
       setAllGames(data);
     } catch (err) {
       console.error("Error fetching all games:", err);
+      setError("Failed to load available games.");
     }
   };
 
@@ -123,7 +144,10 @@ export default function GamesManagementPage() {
 
   // Add game to vendor
   const handleAddGame = async () => {
-    if (!selectedGame || !vendorId) return;
+    if (!selectedGame || !vendorId || !selectedConsoleType) {
+      setError("Please select a console type and set the price");
+      return;
+    }
 
     try {
       setSubmitting(true);
@@ -137,40 +161,45 @@ export default function GamesManagementPage() {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
+            console_type: selectedConsoleType, // ✅ Changed from console_id
             price_per_hour: pricePerHour,
+            max_slots: maxSlots,
           }),
         }
       );
 
       if (!response.ok) {
-        throw new Error("Failed to add game");
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to add game");
       }
 
       setSuccess(`${selectedGame.name} added successfully!`);
       setShowAddModal(false);
       setSelectedGame(null);
+      setSelectedConsoleType(""); // ✅ Changed
       setPricePerHour(50);
-      
+      setMaxSlots(1);
+
       // Refresh vendor games list
       await fetchVendorGames();
 
       // Clear success message after 3 seconds
       setTimeout(() => setSuccess(null), 3000);
-    } catch (err) {
+    } catch (err: any) {
       console.error("Error adding game:", err);
-      setError("Failed to add game. Please try again.");
+      setError(err.message || "Failed to add game. Please try again.");
     } finally {
       setSubmitting(false);
     }
   };
 
-  // Filter games that are not already added
-  const availableGames = allGames.filter(
-    (game) => !vendorGames.some((vg) => vg.game.id === game.id)
-  );
+  // Get console type display info
+  const getConsoleInfo = (consoleType: string) => {
+    return CONSOLE_TYPES.find(c => c.value === consoleType.toLowerCase()) || CONSOLE_TYPES[0];
+  };
 
   // Filter games based on search
-  const filteredAvailableGames = availableGames.filter((game) =>
+  const filteredAvailableGames = allGames.filter((game) =>
     game.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -263,56 +292,88 @@ export default function GamesManagementPage() {
           </motion.div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {vendorGames.map((vg, index) => (
-              <motion.div
-                key={vg.vendor_game.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.05 }}
-              >
-                <Card className="bg-card border-border hover:shadow-lg transition-all duration-300 h-full">
-                  <CardHeader>
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <CardTitle className="text-lg text-foreground">
-                          {vg.game.name}
-                        </CardTitle>
-                        {vg.game.category && (
-                          <CardDescription className="mt-1">
-                            {vg.game.category}
-                          </CardDescription>
-                        )}
-                      </div>
+            {vendorGames.map((vg, index) => {
+              const consoleInfo = getConsoleInfo(vg.vendor_game.console_type);
+              return (
+                <motion.div
+                  key={vg.vendor_game.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.05 }}
+                >
+                  <Card className="bg-card border-border hover:shadow-lg transition-all duration-300 h-full overflow-hidden">
+                    {/* Game Image */}
+                    <div className="relative w-full h-48 bg-gradient-to-br from-purple-500 to-blue-600 overflow-hidden">
+                      {vg.game.image_url ? (
+                        <img
+                          src={vg.game.image_url}
+                          alt={vg.game.name}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <ImageIcon className="w-16 h-16 text-white/50" />
+                        </div>
+                      )}
                       <div
-                        className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        className={`absolute top-2 right-2 px-2 py-1 rounded-full text-xs font-medium backdrop-blur-sm ${
                           vg.vendor_game.is_available
-                            ? "bg-green-500/20 text-green-600"
-                            : "bg-red-500/20 text-red-600"
+                            ? "bg-green-500/80 text-white"
+                            : "bg-red-500/80 text-white"
                         }`}
                       >
                         {vg.vendor_game.is_available ? "Available" : "Unavailable"}
                       </div>
                     </div>
-                  </CardHeader>
-                  <CardContent>
-                    {vg.game.description && (
-                      <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
-                        {vg.game.description}
-                      </p>
-                    )}
-                    <div className="flex items-center gap-2 text-primary font-semibold">
-                      <IndianRupee className="w-4 h-4" />
-                      <span className="text-lg">
-                        {vg.vendor_game.price_per_hour}
-                      </span>
-                      <span className="text-sm text-muted-foreground font-normal">
-                        / hour
-                      </span>
-                    </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ))}
+
+                    <CardHeader>
+                      <CardTitle className="text-lg text-foreground">
+                        {vg.game.name}
+                      </CardTitle>
+                      {vg.game.genre && (
+                        <CardDescription className="mt-1">
+                          {vg.game.genre}
+                        </CardDescription>
+                      )}
+                    </CardHeader>
+
+                    <CardContent>
+                      {vg.game.description && (
+                        <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
+                          {vg.game.description}
+                        </p>
+                      )}
+
+                      {/* Console Type Badge */}
+                      <div className={`flex items-center gap-2 mb-3 px-3 py-2 rounded-lg border ${consoleInfo.color}/10 ${consoleInfo.color}/20`}>
+                        <span className="text-2xl">{consoleInfo.icon}</span>
+                        <div className="flex-1">
+                          <p className={`text-sm font-medium ${consoleInfo.color.replace('bg-', 'text-')}`}>
+                            {consoleInfo.label}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Pricing */}
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2 text-primary font-semibold">
+                          <IndianRupee className="w-4 h-4" />
+                          <span className="text-lg">
+                            {vg.vendor_game.price_per_hour}
+                          </span>
+                          <span className="text-sm text-muted-foreground font-normal">
+                            / hour
+                          </span>
+                        </div>
+                        <div className="text-sm text-muted-foreground">
+                          Slots: {vg.vendor_game.max_slots}
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              );
+            })}
           </div>
         )}
 
@@ -327,21 +388,23 @@ export default function GamesManagementPage() {
               onClick={() => {
                 setShowAddModal(false);
                 setSelectedGame(null);
+                setSelectedConsoleType("");
                 setSearchTerm("");
+                setError(null);
               }}
             >
               <motion.div
                 initial={{ scale: 0.95, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 0.95, opacity: 0 }}
-                className="bg-background rounded-lg shadow-xl max-w-2xl w-full max-h-[80vh] overflow-hidden"
+                className="bg-background rounded-lg shadow-xl max-w-4xl w-full max-h-[85vh] overflow-hidden"
                 onClick={(e) => e.stopPropagation()}
               >
                 {/* Modal Header */}
                 <div className="p-6 border-b border-border">
                   <div className="flex items-center justify-between">
                     <h2 className="text-2xl font-bold text-foreground">
-                      Add New Game
+                      {selectedGame ? "Configure Game" : "Select a Game"}
                     </h2>
                     <Button
                       variant="ghost"
@@ -349,7 +412,9 @@ export default function GamesManagementPage() {
                       onClick={() => {
                         setShowAddModal(false);
                         setSelectedGame(null);
+                        setSelectedConsoleType("");
                         setSearchTerm("");
+                        setError(null);
                       }}
                     >
                       <XCircle className="w-5 h-5" />
@@ -358,7 +423,7 @@ export default function GamesManagementPage() {
                 </div>
 
                 {/* Modal Content */}
-                <div className="p-6 overflow-y-auto max-h-[calc(80vh-180px)]">
+                <div className="p-6 overflow-y-auto max-h-[calc(85vh-180px)]">
                   {!selectedGame ? (
                     <>
                       {/* Search */}
@@ -375,33 +440,49 @@ export default function GamesManagementPage() {
                         </div>
                       </div>
 
-                      {/* Available Games List */}
-                      <div className="space-y-2">
+                      {/* Available Games Grid */}
+                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
                         {filteredAvailableGames.length === 0 ? (
-                          <p className="text-center text-muted-foreground py-8">
-                            No games available to add
+                          <p className="col-span-full text-center text-muted-foreground py-8">
+                            {searchTerm
+                              ? "No games found matching your search"
+                              : "No games available"}
                           </p>
                         ) : (
                           filteredAvailableGames.map((game) => (
                             <motion.div
                               key={game.id}
-                              whileHover={{ scale: 1.02 }}
-                              className="p-4 bg-card border border-border rounded-lg cursor-pointer hover:bg-accent transition-colors"
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
+                              className="bg-card border border-border rounded-lg cursor-pointer hover:border-primary transition-all overflow-hidden"
                               onClick={() => setSelectedGame(game)}
                             >
-                              <h3 className="font-semibold text-foreground">
-                                {game.name}
-                              </h3>
-                              {game.description && (
-                                <p className="text-sm text-muted-foreground mt-1 line-clamp-1">
-                                  {game.description}
-                                </p>
-                              )}
-                              {game.category && (
-                                <span className="inline-block mt-2 px-2 py-1 bg-primary/10 text-primary text-xs rounded">
-                                  {game.category}
-                                </span>
-                              )}
+                              {/* Game Image */}
+                              <div className="relative w-full h-32 bg-gradient-to-br from-purple-500 to-blue-600">
+                                {game.image_url ? (
+                                  <img
+                                    src={game.image_url}
+                                    alt={game.name}
+                                    className="w-full h-full object-cover"
+                                  />
+                                ) : (
+                                  <div className="w-full h-full flex items-center justify-center">
+                                    <ImageIcon className="w-8 h-8 text-white/50" />
+                                  </div>
+                                )}
+                              </div>
+
+                              {/* Game Info */}
+                              <div className="p-3">
+                                <h3 className="font-semibold text-foreground text-sm line-clamp-1">
+                                  {game.name}
+                                </h3>
+                                {game.genre && (
+                                  <p className="text-xs text-muted-foreground mt-1">
+                                    {game.genre}
+                                  </p>
+                                )}
+                              </div>
                             </motion.div>
                           ))
                         )}
@@ -409,48 +490,133 @@ export default function GamesManagementPage() {
                     </>
                   ) : (
                     <>
-                      {/* Selected Game Details */}
+                      {/* Selected Game Configuration */}
                       <Button
                         variant="ghost"
-                        onClick={() => setSelectedGame(null)}
+                        onClick={() => {
+                          setSelectedGame(null);
+                          setSelectedConsoleType("");
+                          setError(null);
+                        }}
                         className="mb-4"
                       >
                         <ArrowLeft className="w-4 h-4 mr-2" />
                         Back to games
                       </Button>
 
-                      <Card className="bg-card border-border mb-6">
+                      <Card className="bg-card border-border mb-6 overflow-hidden">
+                        {/* Game Image */}
+                        <div className="relative w-full h-56 bg-gradient-to-br from-purple-500 to-blue-600">
+                          {selectedGame.image_url ? (
+                            <img
+                              src={selectedGame.image_url}
+                              alt={selectedGame.name}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center">
+                              <ImageIcon className="w-16 h-16 text-white/50" />
+                            </div>
+                          )}
+                        </div>
+
                         <CardHeader>
-                          <CardTitle>{selectedGame.name}</CardTitle>
+                          <CardTitle className="text-xl">{selectedGame.name}</CardTitle>
                           {selectedGame.description && (
-                            <CardDescription>
+                            <CardDescription className="text-base">
                               {selectedGame.description}
                             </CardDescription>
                           )}
+                          <div className="flex gap-2 mt-3 flex-wrap">
+                            {selectedGame.genre && (
+                              <span className="px-3 py-1 bg-primary/10 text-primary text-sm rounded-full">
+                                {selectedGame.genre}
+                              </span>
+                            )}
+                            {selectedGame.platform && (
+                              <span className="px-3 py-1 bg-blue-500/10 text-blue-600 text-sm rounded-full">
+                                {selectedGame.platform}
+                              </span>
+                            )}
+                            {selectedGame.multiplayer && (
+                              <span className="px-3 py-1 bg-green-500/10 text-green-600 text-sm rounded-full">
+                                Multiplayer
+                              </span>
+                            )}
+                          </div>
                         </CardHeader>
                       </Card>
 
-                      {/* Price Input */}
-                      <div>
-                        <label className="block text-sm font-medium text-foreground mb-2">
-                          Price per Hour (₹)
-                        </label>
-                        <div className="relative">
-                          <IndianRupee className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                      {/* Configuration Form */}
+                      <div className="space-y-4">
+                        {/* Console Type Selection */}
+                        <div>
+                          <label className="block text-sm font-medium text-foreground mb-3">
+                            Select Console Type *
+                          </label>
+                          <div className="grid grid-cols-3 gap-3">
+                            {CONSOLE_TYPES.map((console) => (
+                              <motion.div
+                                key={console.value}
+                                whileHover={{ scale: 1.05 }}
+                                whileTap={{ scale: 0.95 }}
+                                onClick={() => setSelectedConsoleType(console.value)}
+                                className={`p-4 rounded-lg border-2 cursor-pointer transition-all text-center ${
+                                  selectedConsoleType === console.value
+                                    ? `${console.color} border-current text-white`
+                                    : 'border-border bg-card hover:border-primary'
+                                }`}
+                              >
+                                <div className="text-3xl mb-2">{console.icon}</div>
+                                <div className="text-sm font-medium">{console.label}</div>
+                              </motion.div>
+                            ))}
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-2">
+                            Choose which platform this game will be available on
+                          </p>
+                        </div>
+
+                        {/* Price Input */}
+                        <div>
+                          <label className="block text-sm font-medium text-foreground mb-2">
+                            Price per Hour (₹) *
+                          </label>
+                          <div className="relative">
+                            <IndianRupee className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                            <input
+                              type="number"
+                              min="0"
+                              step="10"
+                              value={pricePerHour}
+                              onChange={(e) =>
+                                setPricePerHour(Number(e.target.value))
+                              }
+                              className="w-full pl-10 pr-4 py-3 bg-muted border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-foreground"
+                            />
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-2">
+                            Set the hourly rental rate for this game
+                          </p>
+                        </div>
+
+                        {/* Max Slots Input */}
+                        <div>
+                          <label className="block text-sm font-medium text-foreground mb-2">
+                            Maximum Slots *
+                          </label>
                           <input
                             type="number"
-                            min="0"
-                            step="10"
-                            value={pricePerHour}
-                            onChange={(e) =>
-                              setPricePerHour(Number(e.target.value))
-                            }
-                            className="w-full pl-10 pr-4 py-2 bg-muted border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-foreground"
+                            min="1"
+                            max="10"
+                            value={maxSlots}
+                            onChange={(e) => setMaxSlots(Number(e.target.value))}
+                            className="w-full px-4 py-3 bg-muted border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-foreground"
                           />
+                          <p className="text-xs text-muted-foreground mt-2">
+                            How many people can play this game simultaneously?
+                          </p>
                         </div>
-                        <p className="text-xs text-muted-foreground mt-2">
-                          Set the hourly rate for this game
-                        </p>
                       </div>
                     </>
                   )}
@@ -463,7 +629,10 @@ export default function GamesManagementPage() {
                       variant="outline"
                       onClick={() => {
                         setSelectedGame(null);
+                        setSelectedConsoleType("");
                         setPricePerHour(50);
+                        setMaxSlots(1);
+                        setError(null);
                       }}
                       disabled={submitting}
                     >
@@ -471,7 +640,12 @@ export default function GamesManagementPage() {
                     </Button>
                     <Button
                       onClick={handleAddGame}
-                      disabled={submitting || pricePerHour <= 0}
+                      disabled={
+                        submitting ||
+                        !selectedConsoleType ||
+                        pricePerHour <= 0 ||
+                        maxSlots < 1
+                      }
                       className="bg-primary hover:bg-primary/90"
                     >
                       {submitting ? (
