@@ -915,7 +915,7 @@ export default function ManagePassesPage() {
     // 2. Get the correct Vendor ID from LocalStorage
     const savedId = localStorage.getItem("selectedCafe") || "1";
     setActiveVendorId(savedId);
-
+  
     const fetchData = async () => {
       setLoading(true);
       try {

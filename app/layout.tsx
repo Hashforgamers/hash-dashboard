@@ -17,7 +17,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head />
-      <body>
+      <body className="bg-background text-foreground">
         <AuthProvider>
           {" "}
           {/* Wrap inside AuthProvider */}
