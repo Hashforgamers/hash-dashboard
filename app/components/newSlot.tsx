@@ -28,7 +28,8 @@ import {
   Sparkles,
   Lock,
   Ticket,
-  AlertCircle
+  AlertCircle,
+  Clock
 } from "lucide-react"
 import { BOOKING_URL } from '@/src/config/env'
 import { ConsoleType } from './types'
@@ -1568,7 +1569,8 @@ function ScheduleGrid({
   selectedSlots,
   onSlotSelect,
   allSlots,
-  isLoading
+  isLoading,
+  fetchSlotBookings
 }: {
   availableConsoles: ConsoleType[]
   selectedConsole: ConsoleFilter
@@ -1576,6 +1578,7 @@ function ScheduleGrid({
   onSlotSelect: (slot: SelectedSlot) => void
   allSlots: { [key: string]: any[] }
   isLoading: boolean
+  fetchSlotBookings: (slotIds: number[], date: string) => Promise<void>
 }) {
   const getNext3Days = () => {
     const days = []
@@ -1642,28 +1645,44 @@ function ScheduleGrid({
   }
 
   const handleSlotClick = (dayData: any, time: string, gameConsole: ConsoleType) => {
-    const daySlots = allSlots[dayData.fullDate] || []
-    
-    const matchingSlot = daySlots.find(slot => {
-      const slotStartTime = slot.start_time.slice(0, 5)
-      return slotStartTime === time && slot.console_id === gameConsole.id && slot.is_available
-    })
+  const daySlots = allSlots[dayData.fullDate] || []
+  
+  const matchingSlot = daySlots.find(slot => {
+    const slotStartTime = slot.start_time.slice(0, 5)
+    return slotStartTime === time && slot.console_id === gameConsole.id
+  })
 
-    if (!matchingSlot) return
+  if (!matchingSlot) return
 
-    const selectedSlot: SelectedSlot = {
-      slot_id: matchingSlot.slot_id,
-      date: dayData.fullDate,
-      start_time: matchingSlot.start_time,
-      end_time: matchingSlot.end_time,
-      console_id: gameConsole.id!,
-      console_name: gameConsole.name,
-      console_price: matchingSlot.single_slot_price || gameConsole.price!,
-      available_count: matchingSlot.available_slot || 0,
-    }
+  // ✅ NEW: Check if slot is in the past
+  const nowIST = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }))
+  const slotEndTime = new Date(`${dayData.fullDate}T${matchingSlot.end_time}+05:30`)
+  const isPastTime = nowIST >= slotEndTime
 
+  const selectedSlot: SelectedSlot = {
+    slot_id: matchingSlot.slot_id,
+    date: dayData.fullDate,
+    start_time: matchingSlot.start_time,
+    end_time: matchingSlot.end_time,
+    console_id: gameConsole.id!,
+    console_name: gameConsole.name,
+    console_price: matchingSlot.single_slot_price || gameConsole.price!,
+    available_count: matchingSlot.available_slot || 0,
+  }
+
+  // ✅ NEW: For past slots, just fetch bookings (don't add to selection for new booking)
+  if (isPastTime) {
+    console.log('🕒 Past slot clicked, fetching past bookings...')
+    fetchSlotBookings([matchingSlot.slot_id], dayData.fullDate)
+    return // Don't add to selected slots
+  }
+
+  // ✅ For active slots, allow selection for new booking
+  if (matchingSlot.is_available) {
     onSlotSelect(selectedSlot)
   }
+}
+
 
   if (isLoading) {
     return (
@@ -1711,17 +1730,33 @@ function ScheduleGrid({
           const isFullyBooked = (slot.available_slot || 0) === 0
           
           // ❌ Show RED X for both expired and fully booked
-          if (isPastTime || isFullyBooked) {
-            timeSlots.push(
-              <div
-                key={`unavailable-${day.fullDate}-${gameConsole.id}`}
-                className="w-full h-full min-h-[40px] flex items-center justify-center bg-red-600 text-white rounded-md cursor-not-allowed"
-                title={isPastTime ? "Time expired" : "Fully booked"}
-              >
-                <X className="h-5 w-5 stroke-[3]" />
-              </div>
-            )
-          }
+         // ✅ Show GREY for PAST slots (clickable) and RED for FULLY BOOKED
+if (isPastTime) {
+  // PAST SLOT - Grey and clickable
+  timeSlots.push(
+    <div
+      key={`past-${day.fullDate}-${gameConsole.id}`}
+      onClick={() => handleSlotClick(day, time, gameConsole)} // ✅ Make clickable
+      className="w-full h-full min-h-[40px] flex items-center justify-center bg-gray-500 dark:bg-gray-600 text-white rounded-md cursor-pointer hover:bg-gray-600 dark:hover:bg-gray-700 transition-colors"
+      title="Past slot - Click to view past bookings"
+    >
+      <Clock className="h-4 w-4 mr-1" />
+      <span className="text-xs font-semibold">PAST</span>
+    </div>
+  )
+} else if (isFullyBooked) {
+  // FULLY BOOKED - Red X (not clickable)
+  timeSlots.push(
+    <div
+      key={`unavailable-${day.fullDate}-${gameConsole.id}`}
+      className="w-full h-full min-h-[40px] flex items-center justify-center bg-red-600 text-white rounded-md cursor-not-allowed"
+      title="Fully booked"
+    >
+      <X className="h-5 w-5 stroke-[3]" />
+    </div>
+  )
+}
+
           // ✅ Show available slots with count
           else {
             timeSlots.push(
@@ -1810,6 +1845,12 @@ function RecentBookings({
   bookings: any[], 
   isLoading: boolean 
 }) {
+  // ✅ Determine if these are past bookings
+  const hasPastBookings = bookings.some(b => 
+    b.status === 'completed' || b.status === 'rejected' || b.status === 'cancelled'
+  )
+  const bookingType = hasPastBookings ? 'Past' : 'Active'
+  
   if (isLoading) {
     return (
       <Card className="p-6 mt-2 bg-gray-50 dark:bg-gray-700/30">
@@ -1828,9 +1869,13 @@ function RecentBookings({
           <div className="p-3 bg-gray-200 dark:bg-gray-600 rounded-full mb-3">
             <AlertCircle className="w-6 h-6 text-gray-500 dark:text-gray-400" />
           </div>
-          <p className="text-gray-600 dark:text-gray-400 font-medium">No bookings for selected slot</p>
+          <p className="text-gray-600 dark:text-gray-400 font-medium">
+            No {hasPastBookings ? 'past' : 'active'} bookings for selected slot
+          </p>
           <p className="text-sm text-gray-500 dark:text-gray-500 mt-1">
-            This slot is available for new bookings
+            {hasPastBookings 
+              ? 'This past slot has no booking history'
+              : 'This slot is available for new bookings'}
           </p>
         </div>
       </Card>
@@ -1841,10 +1886,29 @@ function RecentBookings({
     <Card className="p-4 mt-2 bg-gray-50 dark:bg-gray-700/30">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-semibold text-gray-800 dark:text-white flex items-center gap-2">
-          <CalendarDays className="w-5 h-5 text-emerald-600" />
-          Selected Slot Bookings
-          <span className="text-sm font-normal text-gray-500">({bookings.length} Active)</span>
+          {/* ✅ Show different icon based on booking type */}
+          {hasPastBookings ? (
+            <Clock className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+          ) : (
+            <CalendarDays className="w-5 h-5 text-emerald-600" />
+          )}
+          
+          {/* ✅ Show "Past" or "Active" in title */}
+          <span className={hasPastBookings ? "text-gray-700 dark:text-gray-300" : ""}>
+            {bookingType} Slot Bookings
+          </span>
+          
+          <span className="text-sm font-normal text-gray-500">
+            ({bookings.length} {bookingType})
+          </span>
         </h3>
+        
+        {/* ✅ Show badge for past bookings */}
+        {hasPastBookings && (
+          <span className="px-3 py-1 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-full text-xs font-medium">
+            History
+          </span>
+        )}
       </div>
 
       <div className="overflow-x-auto">
@@ -1853,6 +1917,7 @@ function RecentBookings({
             <TableRow>
               <TableHead className="text-gray-700 dark:text-gray-300">Booking ID</TableHead>
               <TableHead className="text-gray-700 dark:text-gray-300">Customer Details</TableHead>
+              <TableHead className="text-gray-700 dark:text-gray-300">Time</TableHead>
               <TableHead className="text-gray-700 dark:text-gray-300">Status</TableHead>
               <TableHead className="text-gray-700 dark:text-gray-300">Meal Selection</TableHead>
               <TableHead className="text-gray-700 dark:text-gray-300">Actions</TableHead>
@@ -1860,10 +1925,19 @@ function RecentBookings({
           </TableHeader>
           <TableBody>
             {bookings.map((booking) => (
-              <TableRow key={booking.booking_id} className="hover:bg-gray-100 dark:hover:bg-gray-600/30">
+              <TableRow 
+                key={booking.booking_id} 
+                className={cn(
+                  "hover:bg-gray-100 dark:hover:bg-gray-600/30",
+                  hasPastBookings && "opacity-80" // Slightly fade past bookings
+                )}
+              >
+                {/* Booking ID */}
                 <TableCell className="font-medium text-emerald-600 dark:text-emerald-400">
                   {booking.booking_fid}
                 </TableCell>
+                
+                {/* Customer Details */}
                 <TableCell>
                   <div className="flex flex-col gap-1">
                     <span className="font-medium text-gray-800 dark:text-white flex items-center gap-1">
@@ -1880,38 +1954,64 @@ function RecentBookings({
                     </span>
                   </div>
                 </TableCell>
+                
+                {/* ✅ NEW: Time Column */}
+                <TableCell>
+                  <div className="flex flex-col gap-1">
+                    <span className="text-xs text-gray-700 dark:text-gray-300 font-medium">
+                      {booking.slot_start_time?.slice(0, 5)} - {booking.slot_end_time?.slice(0, 5)}
+                    </span>
+                    <span className="text-xs text-gray-500">
+                      {new Date(booking.booking_date).toLocaleDateString('en-GB')}
+                    </span>
+                  </div>
+                </TableCell>
+                
+                {/* Status */}
                 <TableCell>
                   <span className={cn(
                     "px-2 py-1 rounded-full text-xs font-medium",
+                    // ✅ Enhanced status colors
                     booking.status === 'confirmed' && "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
                     booking.status === 'checked_in' && "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400",
                     booking.status === 'pending_verified' && "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
-                    booking.status === 'completed' && "bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-400"
+                    booking.status === 'completed' && "bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300",
+                    booking.status === 'cancelled' && "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
+                    booking.status === 'rejected' && "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
                   )}>
                     {booking.status === 'checked_in' ? 'Checked-In' : 
                      booking.status === 'pending_verified' ? 'Pending' :
                      booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
                   </span>
                 </TableCell>
+                
+                {/* Meal Selection */}
                 <TableCell>
                   <div className="flex items-center gap-1 text-sm text-gray-700 dark:text-gray-300">
                     {booking.meals && booking.meals.length > 0 ? (
                       <div className="flex items-center gap-1">
                         <Sparkles className="w-4 h-4 text-emerald-600" />
-                        {booking.meal_selection}
+                        <span className="text-xs">{booking.meal_selection}</span>
                       </div>
                     ) : (
-                      <span className="text-gray-500 italic">No meal selected</span>
+                      <span className="text-gray-500 italic text-xs">No meal selected</span>
                     )}
                   </div>
                 </TableCell>
+                
+                {/* Actions */}
                 <TableCell>
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-900/30"
+                    className={cn(
+                      "text-xs",
+                      hasPastBookings 
+                        ? "text-gray-600 hover:text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700" 
+                        : "text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-900/30"
+                    )}
                   >
-                    View Details
+                    {hasPastBookings ? 'View History' : 'View Details'}
                   </Button>
                 </TableCell>
               </TableRow>
@@ -1919,9 +2019,53 @@ function RecentBookings({
           </TableBody>
         </Table>
       </div>
+      
+      {/* ✅ NEW: Summary Footer */}
+      <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-600 flex items-center justify-between">
+        <div className="text-sm text-gray-600 dark:text-gray-400">
+          {hasPastBookings ? (
+            <span className="flex items-center gap-2">
+              <Clock className="w-4 h-4" />
+              Historical records for this time slot
+            </span>
+          ) : (
+            <span className="flex items-center gap-2">
+              <CalendarDays className="w-4 h-4" />
+              Currently active bookings
+            </span>
+          )}
+        </div>
+        
+        {/* Status breakdown */}
+        <div className="flex items-center gap-3 text-xs">
+          {['confirmed', 'checked_in', 'pending_verified', 'completed', 'cancelled'].map(status => {
+            const count = bookings.filter(b => b.status === status).length
+            if (count === 0) return null
+            
+            return (
+              <span key={status} className="flex items-center gap-1">
+                <span className={cn(
+                  "w-2 h-2 rounded-full",
+                  status === 'confirmed' && "bg-green-500",
+                  status === 'checked_in' && "bg-orange-500",
+                  status === 'pending_verified' && "bg-blue-500",
+                  status === 'completed' && "bg-gray-500",
+                  status === 'cancelled' && "bg-red-500"
+                )} />
+                <span className="text-gray-600 dark:text-gray-400">
+                  {status === 'checked_in' ? 'Checked-In' : 
+                   status === 'pending_verified' ? 'Pending' :
+                   status.charAt(0).toUpperCase() + status.slice(1)}: {count}
+                </span>
+              </span>
+            )
+          })}
+        </div>
+      </div>
     </Card>
   )
 }
+
 
 
 
@@ -2747,7 +2891,7 @@ const abortControllerRef = useRef<AbortController | null>(null)
     }
   }
 
-    const fetchSlotBookings = async (slotIds: number[], date: string) => {
+const fetchSlotBookings = async (slotIds: number[], date: string) => {
   const vendorId = getVendorIdFromToken()
   if (!vendorId || slotIds.length === 0) {
     setSlotBookings([])
@@ -2757,10 +2901,18 @@ const abortControllerRef = useRef<AbortController | null>(null)
   setIsLoadingBookings(true)
   console.log('🔍 Fetching bookings for slots:', slotIds, 'date:', date)
   
+  // ✅ Check if querying past slots
+  const nowIST = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }))
+  const queryDate = new Date(date)
+  const isPastDate = queryDate < new Date(nowIST.toISOString().split('T')[0])
+  
   try {
     const slotIdsParam = slotIds.join(',')
+    // ✅ Add status filter for past bookings
+    const statusParam = isPastDate ? '&include_completed=true' : ''
+    
     const response = await fetch(
-      `${BOOKING_URL}/api/vendor/${vendorId}/slot-bookings?slot_ids=${slotIdsParam}&date=${date}`
+      `${BOOKING_URL}/api/vendor/${vendorId}/slot-bookings?slot_ids=${slotIdsParam}&date=${date}${statusParam}`
     )
     
     const data = await response.json()
@@ -2768,7 +2920,7 @@ const abortControllerRef = useRef<AbortController | null>(null)
     
     if (data.success && data.bookings) {
       setSlotBookings(data.bookings)
-      console.log('✅ Loaded', data.bookings.length, 'bookings')
+      console.log(`✅ Loaded ${data.bookings.length} ${isPastDate ? 'past' : 'active'} bookings`)
     } else {
       setSlotBookings([])
       console.log('📭 No bookings found')
@@ -2780,6 +2932,7 @@ const abortControllerRef = useRef<AbortController | null>(null)
     setIsLoadingBookings(false)
   }
 }
+
 
  useEffect(() => {
   if (hasFetchedRef.current) {
@@ -3084,6 +3237,7 @@ useEffect(() => {
           onSlotSelect={handleSlotSelect}
           allSlots={allSlots}
           isLoading={isLoading}
+          fetchSlotBookings={fetchSlotBookings}
         />
          <RecentBookings 
   bookings={slotBookings} 
