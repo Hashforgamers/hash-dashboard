@@ -16,7 +16,8 @@ import {
   UtensilsCrossed,
   Store ,
    Ticket,
-   ShoppingBag
+   ShoppingBag,
+   Laptop
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useState } from "react";
@@ -55,7 +56,7 @@ export function MainNav({
       <div className="flex flex-col space-y-2">
         {[
           { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
-           { href: "/gaming", icon: Gamepad2, label: "Manage Gaming Console" },
+           { href: "/gaming", icon: Laptop, label: "Manage Gaming Console" },
              { href: "/booking", icon: CalendarCheck, label: "Manage Booking" },
           { href: "/transaction", icon: Receipt, label: "Transaction Report" },
          
@@ -64,6 +65,7 @@ export function MainNav({
           { href: "/console-pricing", icon: DollarSign, label: "Console Pricing" },
              { href: "/pass", icon:  Ticket, label: "Manage Passes" },
              {href: "/store", icon: ShoppingBag , label:"Store"},
+             {href: "/games", icon: Gamepad2 , label:"Games"},
            
         ].map(({ href, icon: Icon, label }) => (
           <Link
