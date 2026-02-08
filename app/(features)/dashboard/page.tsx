@@ -9,11 +9,13 @@ import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { motion } from "framer-motion"
 import { Gamepad2, Zap } from 'lucide-react'
+import { SubscriptionGuard } from "../../components/SubscriptionGuard"
 
 export default function DashboardPage1() {
   const [activeTab, setActiveTab] = useState("gaming-cafe")
 
   return (
+    <SubscriptionGuard>
     <DashboardLayout>
       <div className="flex-1 min-h-screen bg-background">
         <motion.div
@@ -67,5 +69,6 @@ export default function DashboardPage1() {
         </motion.div>
       </div>
     </DashboardLayout>
+    </SubscriptionGuard>
   )
 }
