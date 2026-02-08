@@ -40,6 +40,8 @@ export default function SubscriptionPage() {
   const [currentSubscription, setCurrentSubscription] = useState<any>(null)
   const [failedPayment, setFailedPayment] = useState<FailedPayment | null>(null)
   const [retrying, setRetrying] = useState(false)
+  const [pollingOrderId, setPollingOrderId] = useState<string | null>(null)
+  const [pollingPackage, setPollingPackage] = useState<{code: string, name: string, action: string} | null>(null)
   const { vendorId, refreshStatus } = useSubscription()
   const router = useRouter()
 
@@ -66,6 +68,104 @@ export default function SubscriptionPage() {
     loadData()
   }, [vendorId])
 
+  // Payment polling effect
+  useEffect(() => {
+    if (!pollingOrderId || !pollingPackage || !vendorId) return
+
+    console.log('🔄 Starting payment polling for order:', pollingOrderId)
+    
+    let attempts = 0
+    const maxAttempts = 60 // Poll for 2 minutes (60 * 2 seconds)
+    
+    const pollInterval = setInterval(async () => {
+      attempts++
+      
+      try {
+        console.log(`🔍 Polling attempt ${attempts}/${maxAttempts}`)
+        
+        // Check payment status via backend
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_DASHBOARD_URL}/api/vendors/${vendorId}/subscription/check-payment/${pollingOrderId}`
+        )
+        
+        const data = await response.json()
+        
+        console.log('📊 Poll result:', data)
+        
+        if (data.paid && data.payment_id) {
+          console.log('✅ Payment detected! Payment ID:', data.payment_id)
+          
+          // Clear polling
+          clearInterval(pollInterval)
+          setPollingOrderId(null)
+          
+          toast.success("Payment detected! Activating subscription...")
+          
+          // Manually activate subscription using payment ID
+          try {
+            const activateResponse = await subscriptionApi.verifyPayment(vendorId, {
+              razorpay_order_id: pollingOrderId,
+              razorpay_payment_id: data.payment_id,
+              razorpay_signature: 'polled_payment', // Dummy signature
+              package_code: pollingPackage.code,
+              action: pollingPackage.action as "new" | "renew"
+            })
+            
+            if (activateResponse.success) {
+              toast.success("Subscription activated successfully! 🎉")
+              setPollingPackage(null)
+              setProcessing(null)
+              await refreshStatus()
+              setTimeout(() => router.push("/dashboard"), 2000)
+            } else {
+              throw new Error(activateResponse.error)
+            }
+          } catch (error: any) {
+            console.error('❌ Activation failed:', error)
+            toast.error(`Activation failed: ${error.message}. Payment ID: ${data.payment_id}`)
+            
+            // Save for manual retry
+            setFailedPayment({
+              paymentId: data.payment_id,
+              orderId: pollingOrderId,
+              signature: 'polled_payment',
+              packageCode: pollingPackage.code,
+              packageName: pollingPackage.name,
+              amount: data.amount
+            })
+            
+            setProcessing(null)
+          }
+        } else if (attempts >= maxAttempts) {
+          console.log('⏱️ Polling timeout')
+          clearInterval(pollInterval)
+          setPollingOrderId(null)
+          setPollingPackage(null)
+          setProcessing(null)
+          
+          toast.error(
+            "Payment confirmation timeout. If you completed the payment, please contact support with Order ID: " + pollingOrderId,
+            { duration: 10000 }
+          )
+        }
+      } catch (error) {
+        console.error('❌ Polling error:', error)
+        
+        if (attempts >= maxAttempts) {
+          clearInterval(pollInterval)
+          setPollingOrderId(null)
+          setPollingPackage(null)
+          setProcessing(null)
+        }
+      }
+    }, 2000) // Poll every 2 seconds
+    
+    // Cleanup
+    return () => {
+      clearInterval(pollInterval)
+    }
+  }, [pollingOrderId, pollingPackage, vendorId])
+
   async function loadData() {
     if (!vendorId) return
 
@@ -89,7 +189,6 @@ export default function SubscriptionPage() {
           setCurrentSubscription(subResponse)
         }
       } catch (error) {
-        // No subscription - that's okay for first time users
         console.log("No existing subscription found")
       }
     } catch (error: any) {
@@ -131,7 +230,19 @@ export default function SubscriptionPage() {
         throw new Error(orderResponse.error || "Failed to create order")
       }
 
-      // Store payment context for handler
+      // Start polling for payment (especially useful for QR payments)
+      setPollingOrderId(orderResponse.order_id)
+      setPollingPackage({
+        code: pkg.code,
+        name: pkg.name,
+        action
+      })
+      
+      toast.info("Scan QR code or pay online. We'll detect your payment automatically.", {
+        duration: 5000
+      })
+
+      // Store payment context
       const paymentContext = {
         vendorId,
         packageCode: pkg.code,
@@ -143,16 +254,20 @@ export default function SubscriptionPage() {
 
       console.log('💾 Payment Context:', paymentContext)
 
-      // Create Razorpay options with wrapped handlers
+      // Create Razorpay options
       const options = createRazorpayOptions(
         orderResponse.order_id,
         orderResponse.amount,
         pkg.name,
         orderResponse.key_id,
         async (response: RazorpayResponse) => {
-          // Success handler - payment completed
-          console.log('✅ Payment Success Handler Called')
+          // Success handler - payment completed via modal
+          console.log('✅ Payment Success Handler Called (Modal Payment)')
           console.log('📦 Razorpay Response:', response)
+          
+          // Stop polling since we got direct callback
+          setPollingOrderId(null)
+          setPollingPackage(null)
           
           try {
             await verifyAndActivate(
@@ -165,7 +280,6 @@ export default function SubscriptionPage() {
           } catch (error: any) {
             console.error('❌ Verification failed in handler:', error)
             
-            // Save failed payment for retry
             setFailedPayment({
               paymentId: response.razorpay_payment_id,
               orderId: response.razorpay_order_id,
@@ -182,16 +296,24 @@ export default function SubscriptionPage() {
           }
         },
         () => {
-          // Dismiss handler - payment cancelled
-          console.log('❌ Payment Dismissed/Cancelled')
-          setProcessing(null)
-          toast.info("Payment cancelled")
+          // Dismiss handler - Don't stop polling!
+          console.log('❌ Payment Modal Dismissed')
+          
+          // DON'T stop polling - user might have scanned QR before closing
+          toast.info("Waiting for payment confirmation...", { duration: 3000 })
+          
+          // Only reset processing after a delay to allow polling to work
+          setTimeout(() => {
+            if (!pollingOrderId) {
+              setProcessing(null)
+            }
+          }, 3000)
         }
       )
 
       console.log('⚙️ Opening Razorpay with options:', {
         ...options,
-        key: options.key.slice(0, 15) + '...' // Mask key in logs
+        key: options.key.slice(0, 15) + '...'
       })
 
       await openRazorpay(options)
@@ -199,6 +321,8 @@ export default function SubscriptionPage() {
       console.error("❌ Payment error:", error)
       toast.error(error.message || "Failed to process payment")
       setProcessing(null)
+      setPollingOrderId(null)
+      setPollingPackage(null)
     }
   }
 
@@ -345,6 +469,23 @@ export default function SubscriptionPage() {
             Select the perfect subscription plan for your gaming cafe
           </p>
         </div>
+
+        {/* Polling Status */}
+        {pollingOrderId && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+          >
+            <Alert className="border-primary">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              <AlertTitle>Waiting for payment...</AlertTitle>
+              <AlertDescription>
+                <p>Complete your payment and we'll automatically detect it.</p>
+                <p className="text-xs font-mono mt-2 opacity-70">Order ID: {pollingOrderId}</p>
+              </AlertDescription>
+            </Alert>
+          </motion.div>
+        )}
 
         {/* Failed Payment Alert */}
         {failedPayment && (
@@ -528,7 +669,7 @@ export default function SubscriptionPage() {
           ))}
         </div>
 
-        {/* Dev Mode Notice - Only show if price is 1 */}
+        {/* Dev Mode Notice */}
         {packages.length > 0 && packages[0].price === 1 && (
           <div className="text-center text-sm text-muted-foreground">
             <p>🔧 Testing Mode: Subscriptions are ₹1 for 1 day</p>
