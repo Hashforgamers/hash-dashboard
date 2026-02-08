@@ -3,6 +3,7 @@ import { AuthProvider } from "./AuthProvider";
 
 import "./globals.css";
 import { SocketProvider } from "./context/SocketContext";
+import { SubscriptionProvider } from "./context/SubscriptionContext";
 
 export const metadata ={
   title:"Hash for Gamers",
@@ -23,7 +24,9 @@ export default function RootLayout({
           {/* Wrap inside AuthProvider */}
           <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={true}>
           <SocketProvider>
+            <SubscriptionProvider>
             {children}
+            </SubscriptionProvider>
             </SocketProvider>
           </ThemeProvider>
         </AuthProvider>
