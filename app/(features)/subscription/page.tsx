@@ -90,55 +90,56 @@ export default function SubscriptionPage() {
     }
   }
 
-  async function handleSubscribe(pkg: Package) {
-    if (!vendorId) {
-      toast.error("Vendor not selected")
-      return
-    }
-
-    // Free package - no payment needed
-    if (pkg.is_free || pkg.price === 0) {
-      toast.info("This is a free package. Contact support for activation.")
-      return
-    }
-
-    setProcessing(pkg.code)
-
-    try {
-      // Determine if it's a renewal or new subscription
-      const action = currentSubscription ? "renew" : "new"
-
-      // Create Razorpay order
-      toast.info("Creating payment order...")
-      const orderResponse = await subscriptionApi.createOrder(vendorId, pkg.code, action)
-
-      if (!orderResponse.success) {
-        throw new Error(orderResponse.error || "Failed to create order")
-      }
-
-      // Open Razorpay payment
-      const options = createRazorpayOptions(
-        orderResponse.order_id,
-        orderResponse.amount,
-        pkg.name,
-        async (response: RazorpayResponse) => {
-          // Payment successful - verify and activate
-          await verifyAndActivate(response, pkg.code, action)
-        },
-        () => {
-          // Payment dismissed
-          setProcessing(null)
-          toast.info("Payment cancelled")
-        }
-      )
-
-      await openRazorpay(options)
-    } catch (error: any) {
-      console.error("Payment error:", error)
-      toast.error(error.message || "Failed to process payment")
-      setProcessing(null)
-    }
+async function handleSubscribe(pkg: Package) {
+  if (!vendorId) {
+    toast.error("Vendor not selected")
+    return
   }
+
+  if (pkg.is_free || pkg.price === 0) {
+    toast.info("This is a free package. Contact support for activation.")
+    return
+  }
+
+  setProcessing(pkg.code)
+
+  try {
+    const action = currentSubscription ? "renew" : "new"
+
+    toast.info("Creating payment order...")
+    const orderResponse = await subscriptionApi.createOrder(vendorId, pkg.code, action)
+
+    console.log('📦 Order Response:', orderResponse)
+
+    if (!orderResponse.success) {
+      throw new Error(orderResponse.error || "Failed to create order")
+    }
+
+    // ✅ Use key from backend response
+    const options = createRazorpayOptions(
+      orderResponse.order_id,
+      orderResponse.amount,
+      pkg.name,
+      orderResponse.key_id,  // ✅ ADD: Pass key from backend
+      async (response: RazorpayResponse) => {
+        await verifyAndActivate(response, pkg.code, action)
+      },
+      () => {
+        setProcessing(null)
+        toast.info("Payment cancelled")
+      }
+    )
+
+    console.log('⚙️ Razorpay Options:', options)
+
+    await openRazorpay(options)
+  } catch (error: any) {
+    console.error("Payment error:", error)
+    toast.error(error.message || "Failed to process payment")
+    setProcessing(null)
+  }
+}
+
 
   async function verifyAndActivate(
     paymentResponse: RazorpayResponse,
