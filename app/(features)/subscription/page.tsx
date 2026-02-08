@@ -8,8 +8,9 @@ import { useSubscription } from "@/hooks/useSubscription"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Check, Loader2, Sparkles, Crown, Zap, ArrowLeft } from "lucide-react"
+import { Check, Loader2, Sparkles, Crown, Zap, ArrowLeft, AlertCircle, RefreshCw } from "lucide-react"
 import { motion } from "framer-motion"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 
 interface Package {
   id: number
@@ -23,19 +24,29 @@ interface Package {
   features: any
 }
 
+interface FailedPayment {
+  paymentId: string
+  orderId: string
+  signature: string
+  packageCode: string
+  packageName: string
+  amount: number
+}
+
 export default function SubscriptionPage() {
   const [packages, setPackages] = useState<Package[]>([])
   const [loading, setLoading] = useState(true)
   const [processing, setProcessing] = useState<string | null>(null)
   const [currentSubscription, setCurrentSubscription] = useState<any>(null)
+  const [failedPayment, setFailedPayment] = useState<FailedPayment | null>(null)
+  const [retrying, setRetrying] = useState(false)
   const { vendorId, refreshStatus } = useSubscription()
   const router = useRouter()
 
-  // ✅ Check vendor selection first
+  // Check vendor selection first
   useEffect(() => {
     const selectedCafe = localStorage.getItem("selectedCafe")
     
-    // Redirect if no cafe selected or master analytics
     if (!selectedCafe) {
       toast.error("Please select a cafe first")
       router.push("/select-cafe")
@@ -51,13 +62,12 @@ export default function SubscriptionPage() {
 
   // Fetch packages and current subscription
   useEffect(() => {
-    if (!vendorId) return // ✅ Don't load if no vendor yet
-
+    if (!vendorId) return
     loadData()
   }, [vendorId])
 
   async function loadData() {
-    if (!vendorId) return // ✅ Safety check
+    if (!vendorId) return
 
     try {
       setLoading(true)
@@ -90,63 +100,122 @@ export default function SubscriptionPage() {
     }
   }
 
-async function handleSubscribe(pkg: Package) {
-  if (!vendorId) {
-    toast.error("Vendor not selected")
-    return
-  }
-
-  if (pkg.is_free || pkg.price === 0) {
-    toast.info("This is a free package. Contact support for activation.")
-    return
-  }
-
-  setProcessing(pkg.code)
-
-  try {
-    const action = currentSubscription ? "renew" : "new"
-
-    toast.info("Creating payment order...")
-    const orderResponse = await subscriptionApi.createOrder(vendorId, pkg.code, action)
-
-    console.log('📦 Order Response:', orderResponse)
-
-    if (!orderResponse.success) {
-      throw new Error(orderResponse.error || "Failed to create order")
+  async function handleSubscribe(pkg: Package) {
+    if (!vendorId) {
+      toast.error("Vendor not selected")
+      return
     }
 
-    // ✅ Use key from backend response
-    const options = createRazorpayOptions(
-      orderResponse.order_id,
-      orderResponse.amount,
-      pkg.name,
-      orderResponse.key_id,  // ✅ ADD: Pass key from backend
-      async (response: RazorpayResponse) => {
-        await verifyAndActivate(response, pkg.code, action)
-      },
-      () => {
-        setProcessing(null)
-        toast.info("Payment cancelled")
+    if (pkg.is_free || pkg.price === 0) {
+      toast.info("This is a free package. Contact support for activation.")
+      return
+    }
+
+    setProcessing(pkg.code)
+
+    try {
+      const action = currentSubscription ? "renew" : "new"
+
+      console.log('🔵 Initiating payment for:', {
+        vendor: vendorId,
+        package: pkg.code,
+        action
+      })
+
+      toast.info("Creating payment order...")
+      const orderResponse = await subscriptionApi.createOrder(vendorId, pkg.code, action)
+
+      console.log('📦 Order Response:', orderResponse)
+
+      if (!orderResponse.success) {
+        throw new Error(orderResponse.error || "Failed to create order")
       }
-    )
 
-    console.log('⚙️ Razorpay Options:', options)
+      // Store payment context for handler
+      const paymentContext = {
+        vendorId,
+        packageCode: pkg.code,
+        packageName: pkg.name,
+        amount: orderResponse.amount,
+        action,
+        keyId: orderResponse.key_id
+      }
 
-    await openRazorpay(options)
-  } catch (error: any) {
-    console.error("Payment error:", error)
-    toast.error(error.message || "Failed to process payment")
-    setProcessing(null)
+      console.log('💾 Payment Context:', paymentContext)
+
+      // Create Razorpay options with wrapped handlers
+      const options = createRazorpayOptions(
+        orderResponse.order_id,
+        orderResponse.amount,
+        pkg.name,
+        orderResponse.key_id,
+        async (response: RazorpayResponse) => {
+          // Success handler - payment completed
+          console.log('✅ Payment Success Handler Called')
+          console.log('📦 Razorpay Response:', response)
+          
+          try {
+            await verifyAndActivate(
+              response, 
+              paymentContext.packageCode, 
+              paymentContext.packageName,
+              paymentContext.amount,
+              paymentContext.action
+            )
+          } catch (error: any) {
+            console.error('❌ Verification failed in handler:', error)
+            
+            // Save failed payment for retry
+            setFailedPayment({
+              paymentId: response.razorpay_payment_id,
+              orderId: response.razorpay_order_id,
+              signature: response.razorpay_signature,
+              packageCode: paymentContext.packageCode,
+              packageName: paymentContext.packageName,
+              amount: paymentContext.amount
+            })
+            
+            toast.error(
+              `Payment succeeded but verification failed. Payment ID: ${response.razorpay_payment_id.slice(0, 20)}...`,
+              { duration: 10000 }
+            )
+          }
+        },
+        () => {
+          // Dismiss handler - payment cancelled
+          console.log('❌ Payment Dismissed/Cancelled')
+          setProcessing(null)
+          toast.info("Payment cancelled")
+        }
+      )
+
+      console.log('⚙️ Opening Razorpay with options:', {
+        ...options,
+        key: options.key.slice(0, 15) + '...' // Mask key in logs
+      })
+
+      await openRazorpay(options)
+    } catch (error: any) {
+      console.error("❌ Payment error:", error)
+      toast.error(error.message || "Failed to process payment")
+      setProcessing(null)
+    }
   }
-}
-
 
   async function verifyAndActivate(
     paymentResponse: RazorpayResponse,
     packageCode: string,
+    packageName: string,
+    amount: number,
     action: "new" | "renew"
   ) {
     try {
+      console.log('🔵 Starting payment verification...')
+      console.log('📦 Payment Response:', paymentResponse)
+      console.log('📦 Package:', packageCode)
+      console.log('📦 Action:', action)
+      console.log('📦 Vendor:', vendorId)
+      
       toast.info("Verifying payment...")
       
       const verifyResponse = await subscriptionApi.verifyPayment(vendorId!, {
@@ -155,8 +224,13 @@ async function handleSubscribe(pkg: Package) {
         action,
       })
 
+      console.log('🟢 Verify Response:', verifyResponse)
+
       if (verifyResponse.success) {
         toast.success("Subscription activated successfully! 🎉")
+        
+        // Clear any failed payment state
+        setFailedPayment(null)
         
         // Refresh subscription status
         await refreshStatus()
@@ -166,17 +240,63 @@ async function handleSubscribe(pkg: Package) {
           router.push("/dashboard")
         }, 2000)
       } else {
+        console.error('❌ Verification failed:', verifyResponse)
         throw new Error(verifyResponse.error || "Verification failed")
       }
     } catch (error: any) {
-      console.error("Verification error:", error)
-      toast.error(error.message || "Failed to activate subscription. Please contact support.")
+      console.error("❌ Verification error:", error)
+      console.error("❌ Error details:", {
+        message: error.message,
+        stack: error.stack
+      })
+      
+      // Re-throw to be caught by payment handler
+      throw error
     } finally {
       setProcessing(null)
     }
   }
 
-  // ✅ Loading state
+  async function retryVerification() {
+    if (!failedPayment || !vendorId) return
+
+    setRetrying(true)
+
+    try {
+      console.log('🔄 Retrying verification for:', failedPayment)
+      
+      toast.info("Retrying payment verification...")
+      
+      const verifyResponse = await subscriptionApi.verifyPayment(vendorId, {
+        razorpay_order_id: failedPayment.orderId,
+        razorpay_payment_id: failedPayment.paymentId,
+        razorpay_signature: failedPayment.signature,
+        package_code: failedPayment.packageCode,
+        action: "new"
+      })
+
+      console.log('🟢 Retry Response:', verifyResponse)
+
+      if (verifyResponse.success) {
+        toast.success("Subscription activated successfully! 🎉")
+        setFailedPayment(null)
+        await refreshStatus()
+        setTimeout(() => router.push("/dashboard"), 2000)
+      } else {
+        throw new Error(verifyResponse.error || "Verification failed")
+      }
+    } catch (error: any) {
+      console.error("❌ Retry failed:", error)
+      toast.error(
+        `Retry failed: ${error.message}. Please contact support with Payment ID: ${failedPayment.paymentId}`,
+        { duration: 10000 }
+      )
+    } finally {
+      setRetrying(false)
+    }
+  }
+
+  // Loading state
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -188,7 +308,7 @@ async function handleSubscribe(pkg: Package) {
     )
   }
 
-  // ✅ No packages state
+  // No packages state
   if (packages.length === 0) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background p-4">
@@ -225,6 +345,58 @@ async function handleSubscribe(pkg: Package) {
             Select the perfect subscription plan for your gaming cafe
           </p>
         </div>
+
+        {/* Failed Payment Alert */}
+        {failedPayment && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+          >
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Payment Verification Failed</AlertTitle>
+              <AlertDescription className="space-y-3">
+                <p>
+                  Your payment of ₹{failedPayment.amount} for <strong>{failedPayment.packageName}</strong> was successful, 
+                  but we couldn't verify it automatically.
+                </p>
+                <p className="text-xs font-mono bg-background/50 p-2 rounded">
+                  Payment ID: {failedPayment.paymentId}
+                </p>
+                <div className="flex gap-2 pt-2">
+                  <Button 
+                    onClick={retryVerification} 
+                    disabled={retrying}
+                    size="sm"
+                    variant="outline"
+                  >
+                    {retrying ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Retrying...
+                      </>
+                    ) : (
+                      <>
+                        <RefreshCw className="w-4 h-4 mr-2" />
+                        Retry Verification
+                      </>
+                    )}
+                  </Button>
+                  <Button 
+                    onClick={() => {
+                      navigator.clipboard.writeText(failedPayment.paymentId)
+                      toast.success("Payment ID copied to clipboard")
+                    }}
+                    size="sm"
+                    variant="ghost"
+                  >
+                    Copy Payment ID
+                  </Button>
+                </div>
+              </AlertDescription>
+            </Alert>
+          </motion.div>
+        )}
 
         {/* Current Subscription Status */}
         {currentSubscription && (
@@ -356,10 +528,12 @@ async function handleSubscribe(pkg: Package) {
           ))}
         </div>
 
-        {/* Dev Mode Notice */}
-        <div className="text-center text-sm text-muted-foreground">
-          <p>🔧 Development Mode: Subscriptions valid for 1 day at ₹1 for testing</p>
-        </div>
+        {/* Dev Mode Notice - Only show if price is 1 */}
+        {packages.length > 0 && packages[0].price === 1 && (
+          <div className="text-center text-sm text-muted-foreground">
+            <p>🔧 Testing Mode: Subscriptions are ₹1 for 1 day</p>
+          </div>
+        )}
 
         {/* Back to Dashboard Button */}
         <div className="flex justify-center">
