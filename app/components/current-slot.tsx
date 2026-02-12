@@ -583,7 +583,7 @@ export function CurrentSlots({ currentSlots: initialSlots, refreshSlots, setRefr
                                 <div className="text-xs sm:text-sm font-medium text-gray-900 dark:text-gray-100">
                                   {formatTime(timer.elapsedTime)}
                                 </div>
-                                <div className="h-1.5 sm:h-2 w-16 sm:w-20 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                                <div className="h-1.5 sm:h-1 w-16 sm:w-20 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
                                   <motion.div
                                     className={`h-full ${progress < 75 ? 'bg-emerald-500' : progress < 90 ? 'bg-yellow-500' : 'bg-red-500'}`}
                                     style={{ width: `${progress}%` }}
