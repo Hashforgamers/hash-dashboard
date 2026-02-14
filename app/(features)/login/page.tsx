@@ -193,6 +193,7 @@ export default function LoginPage() {
 
           localStorage.setItem("vendors", JSON.stringify(vendors));
           localStorage.setItem("vendor_login_email", values.email);
+          localStorage.setItem("vendor_account_email", values.email);
 
           const dummyToken = createDummyJWT(identity);
           localStorage.setItem("jwtToken", dummyToken);
