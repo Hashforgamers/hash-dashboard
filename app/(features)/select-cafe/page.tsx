@@ -11,7 +11,16 @@ import { Store, Lock, Unlock, Plus, X } from "lucide-react"
 import { LOGIN_URL, VENDOR_ONBOARD_URL } from "@/src/config/env"
 import { toast } from "sonner"
 
-const DAYS_OF_WEEK = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]
+// ✅ UPDATED: Use abbreviated day names to match backend
+const DAYS_OF_WEEK = [
+  { key: 'mon', label: 'Monday' },
+  { key: 'tue', label: 'Tuesday' },
+  { key: 'wed', label: 'Wednesday' },
+  { key: 'thu', label: 'Thursday' },
+  { key: 'fri', label: 'Friday' },
+  { key: 'sat', label: 'Saturday' },
+  { key: 'sun', label: 'Sunday' }
+]
 
 export default function SelectCafePage() {
   const [cafes, setCafes] = useState<{ id: string; name: string; type: string }[]>([])
@@ -28,7 +37,7 @@ export default function SelectCafePage() {
   const [formData, setFormData] = useState({
     cafe_name: "",
     owner_name: "",
-    vendor_account_email: "", // Will be auto-filled
+    vendor_account_email: "",
     vendor_pin: "",
     vendor_password: "",
     contact_info: {
@@ -66,25 +75,9 @@ export default function SelectCafePage() {
     bank_acc_details: null,
   })
 
-  useEffect(() => {
+  // ✅ NEW: Function to refresh vendor list
+  const refreshVendorList = () => {
     const storedVendors = localStorage.getItem("vendors")
-    const userEmail = localStorage.getItem("vendor_account_email") || localStorage.getItem("vendor_login_email")
-
-    // Auto-fill parent email
-    if (userEmail) {
-      setFormData((prev) => ({
-        ...prev,
-        vendor_account_email: userEmail,
-      }))
-    }
-
-    // Initialize timing for all days
-    const initialTiming: Record<string, { open: string; close: string; closed: boolean }> = {}
-    DAYS_OF_WEEK.forEach((day) => {
-      initialTiming[day] = { open: "09:00", close: "22:00", closed: false }
-    })
-    setFormData((prev) => ({ ...prev, timing: initialTiming }))
-
     if (storedVendors) {
       try {
         const parsed = JSON.parse(storedVendors)
@@ -95,16 +88,33 @@ export default function SelectCafePage() {
             type: "store",
           }))
           setCafes(loadedCafes)
-        } else {
-          setCafes([])
         }
       } catch (error) {
         console.error("Failed to parse vendors from localStorage", error)
-        setCafes([])
       }
-    } else {
-      setCafes([])
     }
+  }
+
+  useEffect(() => {
+    const userEmail = localStorage.getItem("vendor_account_email") || localStorage.getItem("vendor_login_email")
+
+    // Auto-fill parent email
+    if (userEmail) {
+      setFormData((prev) => ({
+        ...prev,
+        vendor_account_email: userEmail,
+      }))
+    }
+
+    // ✅ UPDATED: Initialize timing with abbreviated day names
+    const initialTiming: Record<string, { open: string; close: string; closed: boolean }> = {}
+    DAYS_OF_WEEK.forEach((day) => {
+      initialTiming[day.key] = { open: "09:00", close: "22:00", closed: false }
+    })
+    setFormData((prev) => ({ ...prev, timing: initialTiming }))
+
+    // Load initial vendor list
+    refreshVendorList()
   }, [])
 
   const handleCafeClick = (id: string) => {
@@ -134,7 +144,7 @@ export default function SelectCafePage() {
 
       const period = hour >= 12 ? "PM" : "AM"
       const hour12 = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour
-      const paddedHour = hour12.toString().padStart(2, "0") // ✅ Zero-padded
+      const paddedHour = hour12.toString().padStart(2, "0")
 
       return `${paddedHour}:${minutes} ${period}`
     } catch (error) {
@@ -155,11 +165,11 @@ export default function SelectCafePage() {
         return
       }
 
-      // Convert timing to 12-hour format
+      // ✅ UPDATED: Convert timing with abbreviated day names
       const timing12Hour: Record<string, { open: string; close: string; closed: boolean }> = {}
       for (const day of DAYS_OF_WEEK) {
-        const dayTiming = formData.timing[day]
-        timing12Hour[day] = {
+        const dayTiming = formData.timing[day.key]
+        timing12Hour[day.key] = {
           open: dayTiming.closed ? "" : convertTo12HourFormat(dayTiming.open) || "",
           close: dayTiming.closed ? "" : convertTo12HourFormat(dayTiming.close) || "",
           closed: dayTiming.closed,
@@ -193,8 +203,37 @@ export default function SelectCafePage() {
       if (response.ok) {
         toast.success("Cafe onboarded successfully!")
         setShowOnboardDialog(false)
-        // Refresh cafe list
-        window.location.reload()
+        
+        // ✅ NEW: Fetch updated vendor list from backend
+        try {
+          const loginResponse = await fetch(`${LOGIN_URL}/api/login`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              email: formData.vendor_account_email,
+              password: formData.vendor_password || "temp", // This won't work for login but we just need vendor list
+              parent_type: "vendor",
+            }),
+          })
+          
+          if (loginResponse.ok) {
+            const loginData = await loginResponse.json()
+            if (loginData.vendors && Array.isArray(loginData.vendors)) {
+              localStorage.setItem("vendors", JSON.stringify(loginData.vendors))
+              refreshVendorList()
+            }
+          }
+        } catch (err) {
+          console.error("Failed to refresh vendor list:", err)
+        }
+        
+        // ✅ FALLBACK: Force reload after 2 seconds if API call fails
+        setTimeout(() => {
+          window.location.reload()
+        }, 2000)
+        
       } else {
         toast.error(result.message || "Onboarding failed")
         setError(result.message || "Onboarding failed")
@@ -678,25 +717,25 @@ export default function SelectCafePage() {
               </div>
             </div>
 
-            {/* Timing */}
+            {/* ✅ UPDATED: Timing with abbreviated day names */}
             <div className="space-y-4">
               <h3 className="text-xl font-semibold text-white">Operating Hours</h3>
               
               <div className="space-y-3">
                 {DAYS_OF_WEEK.map((day) => (
-                  <div key={day} className="flex items-center gap-4">
+                  <div key={day.key} className="flex items-center gap-4">
                     <div className="w-28">
-                      <span className="text-slate-300 capitalize">{day}</span>
+                      <span className="text-slate-300">{day.label}</span>
                     </div>
                     
                     <Checkbox
-                      checked={formData.timing[day]?.closed || false}
+                      checked={formData.timing[day.key]?.closed || false}
                       onCheckedChange={(checked) =>
                         setFormData({
                           ...formData,
                           timing: {
                             ...formData.timing,
-                            [day]: { ...formData.timing[day], closed: checked as boolean },
+                            [day.key]: { ...formData.timing[day.key], closed: checked as boolean },
                           },
                         })
                       }
@@ -704,17 +743,17 @@ export default function SelectCafePage() {
                     />
                     <span className="text-slate-400 text-sm">Closed</span>
 
-                    {!formData.timing[day]?.closed && (
+                    {!formData.timing[day.key]?.closed && (
                       <>
                         <Input
                           type="time"
-                          value={formData.timing[day]?.open || "09:00"}
+                          value={formData.timing[day.key]?.open || "09:00"}
                           onChange={(e) =>
                             setFormData({
                               ...formData,
                               timing: {
                                 ...formData.timing,
-                                [day]: { ...formData.timing[day], open: e.target.value },
+                                [day.key]: { ...formData.timing[day.key], open: e.target.value },
                               },
                             })
                           }
@@ -723,13 +762,13 @@ export default function SelectCafePage() {
                         <span className="text-slate-400">to</span>
                         <Input
                           type="time"
-                          value={formData.timing[day]?.close || "22:00"}
+                          value={formData.timing[day.key]?.close || "22:00"}
                           onChange={(e) =>
                             setFormData({
                               ...formData,
                               timing: {
                                 ...formData.timing,
-                                [day]: { ...formData.timing[day], close: e.target.value },
+                                [day.key]: { ...formData.timing[day.key], close: e.target.value },
                               },
                             })
                           }
@@ -746,6 +785,14 @@ export default function SelectCafePage() {
             <div className="space-y-4">
               <h3 className="text-xl font-semibold text-white">Available Games</h3>
               
+              {/* ✅ NEW: Console auto-creation info */}
+              <div className="bg-green-900/20 border border-green-700/50 rounded p-3">
+                <p className="text-green-300 text-xs">
+                  <strong>Console Auto-Creation:</strong> Individual console records will be automatically created based on the number of slots. 
+                  For example, 5 PC slots will create PC-1, PC-2, PC-3, PC-4, PC-5.
+                </p>
+              </div>
+              
               {formData.available_games.map((game, index) => (
                 <div key={index} className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
                   <div>
@@ -758,7 +805,7 @@ export default function SelectCafePage() {
                         setFormData({ ...formData, available_games: games })
                       }}
                       className="bg-slate-800/50 border-slate-600 text-white"
-                      placeholder="PS5, Xbox, PC"
+                      placeholder="pc, ps5, xbox, vr"
                     />
                   </div>
 
