@@ -22,6 +22,7 @@ import {
   ArrowLeft,
   Image as ImageIcon,
   Monitor,
+  Tag,
 } from "lucide-react";
 import { jwtDecode } from "jwt-decode";
 import { DASHBOARD_URL } from "@/src/config/env";
@@ -60,6 +61,11 @@ interface VendorGame {
     model_number: string;
     vendor_game_id: number;
     price_per_hour: number;
+    is_offer: boolean;
+    default_price: number;
+    offer_name?: string;
+    discount_percentage?: number;
+    valid_until?: string;
   }[];
   avg_price: number;
 }
@@ -68,6 +74,7 @@ interface PlatformType {
   id: number;
   platform_type: string;
   total_consoles: number;
+  single_slot_price: number;
   consoles: Console[];
 }
 
@@ -87,20 +94,20 @@ export default function GamesManagementPage() {
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  
-  // Modal state - 2 STEPS: Game → Console Selection + Price
+
+  // Modal state
   const [selectedGame, setSelectedGame] = useState<Game | null>(null);
   const [selectedPlatform, setSelectedPlatform] = useState<string>("");
+  const [selectedPlatformPrice, setSelectedPlatformPrice] = useState<number>(0); // ✅ auto price
   const [availableConsoles, setAvailableConsoles] = useState<Console[]>([]);
   const [selectedConsoleIds, setSelectedConsoleIds] = useState<number[]>([]);
-  const [pricePerHour, setPricePerHour] = useState<number>(50);
-  
+
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [searchLoading, setSearchLoading] = useState(false);
 
-  // Modal steps: 1 = game, 2 = platform + consoles + price
+  // Modal steps: 1 = game, 2 = platform + consoles
   const [modalStep, setModalStep] = useState<1 | 2>(1);
 
   // Extract vendor ID from JWT
@@ -120,14 +127,11 @@ export default function GamesManagementPage() {
   // Fetch platform types
   const fetchPlatformTypes = async () => {
     if (!vendorId) return;
-
     try {
       const response = await fetch(
         `${DASHBOARD_URL}/vendor/${vendorId}/available-games`
       );
-
       if (!response.ok) throw new Error("Failed to fetch platforms");
-
       const data = await response.json();
       setPlatformTypes(data);
     } catch (err) {
@@ -138,15 +142,12 @@ export default function GamesManagementPage() {
   // Fetch vendor games
   const fetchVendorGames = async () => {
     if (!vendorId) return;
-
     try {
       setLoading(true);
       const response = await fetch(
         `${DASHBOARD_URL}/vendor/${vendorId}/vendor-games`
       );
-
       if (!response.ok) throw new Error("Failed to fetch vendor games");
-
       const data = await response.json();
       setVendorGames(data);
     } catch (err) {
@@ -160,14 +161,11 @@ export default function GamesManagementPage() {
   // Fetch consoles for selected platform
   const fetchConsolesForPlatform = async (platformType: string) => {
     if (!vendorId) return;
-
     try {
       const response = await fetch(
         `${DASHBOARD_URL}/vendor/${vendorId}/platforms/${platformType}/consoles`
       );
-
       if (!response.ok) throw new Error("Failed to fetch consoles");
-
       const data = await response.json();
       setAvailableConsoles(data);
     } catch (err) {
@@ -184,11 +182,8 @@ export default function GamesManagementPage() {
       const url = search
         ? `${DASHBOARD_URL}/games?search=${encodeURIComponent(search)}`
         : `${DASHBOARD_URL}/games`;
-
       const response = await fetch(url);
-
       if (!response.ok) throw new Error("Failed to fetch games");
-
       const data = await response.json();
       setAllGames(data);
     } catch (err) {
@@ -205,7 +200,6 @@ export default function GamesManagementPage() {
       const timer = setTimeout(() => {
         fetchGames(searchTerm);
       }, 300);
-
       return () => clearTimeout(timer);
     }
   }, [searchTerm, modalStep]);
@@ -218,10 +212,17 @@ export default function GamesManagementPage() {
     }
   }, [vendorId]);
 
-  // Handle platform selection
+  // Handle platform selection — ✅ also sets price from platformTypes
   const handlePlatformSelect = async (platformType: string) => {
     setSelectedPlatform(platformType);
     setSelectedConsoleIds([]);
+
+    // ✅ Auto-set price from the selected platform's single_slot_price
+    const platform = platformTypes.find(
+      (p) => p.platform_type === platformType
+    );
+    setSelectedPlatformPrice(platform?.single_slot_price ?? 0);
+
     await fetchConsolesForPlatform(platformType.toLowerCase());
   };
 
@@ -234,7 +235,7 @@ export default function GamesManagementPage() {
     );
   };
 
-  // Add game to consoles
+  // Add game to consoles — ✅ no price_per_hour sent
   const handleAddGame = async () => {
     if (!selectedGame || !vendorId || selectedConsoleIds.length === 0) {
       setError("Please select at least one console");
@@ -249,13 +250,11 @@ export default function GamesManagementPage() {
         `${DASHBOARD_URL}/vendor/${vendorId}/vendor-games`,
         {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             game_id: selectedGame.id,
             console_ids: selectedConsoleIds,
-            price_per_hour: pricePerHour,
+            // ✅ price_per_hour removed — backend derives it from AvailableGame
           }),
         }
       );
@@ -269,7 +268,6 @@ export default function GamesManagementPage() {
       setSuccess(result.message);
       resetModal();
       await fetchVendorGames();
-
       setTimeout(() => setSuccess(null), 3000);
     } catch (err: any) {
       console.error("Error adding game:", err);
@@ -280,19 +278,19 @@ export default function GamesManagementPage() {
   };
 
   // Delete vendor game
-  const handleDeleteVendorGame = async (vendorGameId: number, gameName: string, consoleNumber: number) => {
+  const handleDeleteVendorGame = async (
+    vendorGameId: number,
+    gameName: string,
+    consoleNumber: number
+  ) => {
     if (!confirm(`Remove ${gameName} from Console #${consoleNumber}?`)) return;
 
     try {
       const response = await fetch(
         `${DASHBOARD_URL}/vendor/${vendorId}/vendor-games/${vendorGameId}`,
-        {
-          method: "DELETE",
-        }
+        { method: "DELETE" }
       );
-
       if (!response.ok) throw new Error("Failed to delete game");
-
       setSuccess(`Game removed successfully!`);
       await fetchVendorGames();
       setTimeout(() => setSuccess(null), 3000);
@@ -308,10 +306,10 @@ export default function GamesManagementPage() {
     setModalStep(1);
     setSelectedGame(null);
     setSelectedPlatform("");
+    setSelectedPlatformPrice(0);
     setAvailableConsoles([]);
     setSelectedConsoleIds([]);
     setSearchTerm("");
-    setPricePerHour(50);
     setError(null);
   };
 
@@ -415,7 +413,8 @@ export default function GamesManagementPage() {
             <CardHeader>
               <CardTitle>Your Games</CardTitle>
               <CardDescription>
-                {vendorGames.length} game{vendorGames.length !== 1 ? "s" : ""} configured across your consoles
+                {vendorGames.length} game{vendorGames.length !== 1 ? "s" : ""}{" "}
+                configured across your consoles
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -482,16 +481,31 @@ export default function GamesManagementPage() {
                         <td className="py-3 px-4">
                           <div className="flex flex-wrap gap-1">
                             {vg.consoles.map((console) => {
-                              const consoleInfo = getConsoleInfo(console.console_type);
+                              const consoleInfo = getConsoleInfo(
+                                console.console_type
+                              );
                               return (
                                 <div
                                   key={console.vendor_game_id}
                                   className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs bg-muted border border-border group relative"
                                 >
                                   <span>{consoleInfo.icon}</span>
-                                  <span className="font-medium">#{console.console_number}</span>
-                                  <span className="text-muted-foreground">
-                                    (₹{console.price_per_hour}/hr)
+                                  <span className="font-medium">
+                                    #{console.console_number}
+                                  </span>
+                                  {/* ✅ Show offer price in orange, normal in default */}
+                                  <span
+                                    className={
+                                      console.is_offer
+                                        ? "text-orange-500 font-semibold"
+                                        : "text-muted-foreground"
+                                    }
+                                  >
+                                    (₹{console.price_per_hour}/hr
+                                    {console.is_offer && (
+                                      <Tag className="w-3 h-3 inline ml-1" />
+                                    )}
+                                    )
                                   </span>
                                   <button
                                     onClick={() =>
@@ -519,7 +533,8 @@ export default function GamesManagementPage() {
                         <td className="py-3 px-4">
                           <div className="flex items-center justify-center gap-2">
                             <span className="text-xs text-muted-foreground">
-                              {vg.total_consoles} console{vg.total_consoles !== 1 ? "s" : ""}
+                              {vg.total_consoles} console
+                              {vg.total_consoles !== 1 ? "s" : ""}
                             </span>
                           </div>
                         </td>
@@ -532,7 +547,7 @@ export default function GamesManagementPage() {
           </Card>
         )}
 
-        {/* Add Game Modal - 2 STEPS ONLY */}
+        {/* Add Game Modal */}
         <AnimatePresence>
           {showAddModal && (
             <motion.div
@@ -558,7 +573,8 @@ export default function GamesManagementPage() {
                       </h2>
                       <p className="text-sm text-muted-foreground mt-1">
                         {modalStep === 1 && "Step 1: Select a game"}
-                        {modalStep === 2 && "Step 2: Choose platform & consoles, set price"}
+                        {modalStep === 2 &&
+                          "Step 2: Choose platform & consoles"}
                       </p>
                     </div>
                     <Button variant="ghost" size="icon" onClick={resetModal}>
@@ -667,7 +683,7 @@ export default function GamesManagementPage() {
                     </motion.div>
                   )}
 
-                  {/* STEP 2: Platform Selection + Console Selection + Price (ALL IN ONE) */}
+                  {/* STEP 2: Platform + Console Selection */}
                   {modalStep === 2 && selectedGame && (
                     <motion.div
                       initial={{ opacity: 0, x: -20 }}
@@ -680,6 +696,7 @@ export default function GamesManagementPage() {
                           setModalStep(1);
                           setSelectedGame(null);
                           setSelectedPlatform("");
+                          setSelectedPlatformPrice(0);
                           setAvailableConsoles([]);
                           setSelectedConsoleIds([]);
                         }}
@@ -728,7 +745,7 @@ export default function GamesManagementPage() {
                         </div>
                       </Card>
 
-                      {/* Platform Selection - Small Icons */}
+                      {/* Platform Selection */}
                       <div>
                         <label className="block text-sm font-semibold text-foreground mb-3">
                           1. Select Platform
@@ -737,20 +754,26 @@ export default function GamesManagementPage() {
                           <div className="text-center py-8 bg-muted/30 rounded-lg">
                             <Monitor className="w-10 h-10 mx-auto text-muted-foreground/50 mb-2" />
                             <p className="text-sm text-muted-foreground">
-                              No platforms configured. Please add consoles first.
+                              No platforms configured. Please add consoles
+                              first.
                             </p>
                           </div>
                         ) : (
                           <div className="flex gap-3 flex-wrap">
                             {platformTypes.map((platform) => {
-                              const info = getConsoleInfo(platform.platform_type);
-                              const isSelected = selectedPlatform === platform.platform_type;
+                              const info = getConsoleInfo(
+                                platform.platform_type
+                              );
+                              const isSelected =
+                                selectedPlatform === platform.platform_type;
                               return (
                                 <motion.button
                                   key={platform.id}
                                   whileHover={{ scale: 1.05 }}
                                   whileTap={{ scale: 0.95 }}
-                                  onClick={() => handlePlatformSelect(platform.platform_type)}
+                                  onClick={() =>
+                                    handlePlatformSelect(platform.platform_type)
+                                  }
                                   className={`flex items-center gap-2 px-4 py-3 rounded-lg border-2 transition-all ${
                                     isSelected
                                       ? "border-primary bg-primary/10 shadow-md"
@@ -759,9 +782,16 @@ export default function GamesManagementPage() {
                                 >
                                   <span className="text-2xl">{info.icon}</span>
                                   <div className="text-left">
-                                    <div className="font-semibold text-sm">{info.label}</div>
+                                    <div className="font-semibold text-sm">
+                                      {info.label}
+                                    </div>
                                     <div className="text-xs text-muted-foreground">
-                                      {platform.total_consoles} console{platform.total_consoles !== 1 ? "s" : ""}
+                                      {platform.total_consoles} console
+                                      {platform.total_consoles !== 1 ? "s" : ""}
+                                    </div>
+                                    {/* ✅ Show platform price on button */}
+                                    <div className="text-xs text-primary font-semibold mt-0.5">
+                                      ₹{platform.single_slot_price}/slot
                                     </div>
                                   </div>
                                   {isSelected && (
@@ -774,6 +804,27 @@ export default function GamesManagementPage() {
                         )}
                       </div>
 
+                      {/* ✅ Auto Price Display — read-only, no input */}
+                      {selectedPlatform && selectedPlatformPrice > 0 && (
+                        <div className="flex items-center gap-3 p-4 bg-primary/5 border border-primary/20 rounded-lg">
+                          <IndianRupee className="w-5 h-5 text-primary" />
+                          <div>
+                            <p className="text-sm font-semibold text-foreground">
+                              Price per slot:{" "}
+                              <span className="text-primary">
+                                ₹{selectedPlatformPrice}
+                              </span>
+                            </p>
+                            <p className="text-xs text-muted-foreground mt-0.5">
+                              Automatically set from{" "}
+                              {getConsoleInfo(selectedPlatform).label} platform
+                              pricing. To change it, update the platform price
+                              in Console Pricing.
+                            </p>
+                          </div>
+                        </div>
+                      )}
+
                       {/* Console Selection */}
                       {selectedPlatform && availableConsoles.length > 0 && (
                         <div>
@@ -782,7 +833,9 @@ export default function GamesManagementPage() {
                           </label>
                           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
                             {availableConsoles.map((console) => {
-                              const isSelected = selectedConsoleIds.includes(console.id);
+                              const isSelected = selectedConsoleIds.includes(
+                                console.id
+                              );
                               const info = getConsoleInfo(console.console_type);
                               return (
                                 <motion.div
@@ -806,7 +859,9 @@ export default function GamesManagementPage() {
                                     />
                                     <div className="flex-1">
                                       <div className="flex items-center gap-2 mb-1">
-                                        <span className="text-xl">{info.icon}</span>
+                                        <span className="text-xl">
+                                          {info.icon}
+                                        </span>
                                         <span className="font-bold text-foreground">
                                           Console #{console.console_number}
                                         </span>
@@ -825,35 +880,11 @@ export default function GamesManagementPage() {
                           </div>
                           {selectedConsoleIds.length > 0 && (
                             <p className="text-sm text-primary font-medium mt-3 text-center">
-                              ✓ {selectedConsoleIds.length} console{selectedConsoleIds.length !== 1 ? "s" : ""} selected
+                              ✓ {selectedConsoleIds.length} console
+                              {selectedConsoleIds.length !== 1 ? "s" : ""}{" "}
+                              selected
                             </p>
                           )}
-                        </div>
-                      )}
-
-                      {/* Price Input */}
-                      {selectedConsoleIds.length > 0 && (
-                        <div>
-                          <label className="block text-sm font-semibold text-foreground mb-3">
-                            3. Set Price per Hour
-                          </label>
-                          <div className="relative max-w-xs">
-                            <IndianRupee className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                            <input
-                              type="number"
-                              min="0"
-                              step="10"
-                              value={pricePerHour}
-                              onChange={(e) =>
-                                setPricePerHour(Number(e.target.value))
-                              }
-                              className="w-full pl-11 pr-4 py-3 bg-muted border-2 border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-foreground text-lg font-semibold"
-                              autoFocus
-                            />
-                          </div>
-                          <p className="text-xs text-muted-foreground mt-2">
-                            This price will apply to all selected consoles
-                          </p>
                         </div>
                       )}
                     </motion.div>
@@ -867,13 +898,19 @@ export default function GamesManagementPage() {
                       <div className="text-sm text-muted-foreground">
                         {selectedPlatform && (
                           <span className="inline-flex items-center gap-1">
-                            {getConsoleInfo(selectedPlatform).icon} {getConsoleInfo(selectedPlatform).label}
+                            {getConsoleInfo(selectedPlatform).icon}{" "}
+                            {getConsoleInfo(selectedPlatform).label}
                             {selectedConsoleIds.length > 0 && (
-                              <> • {selectedConsoleIds.length} console{selectedConsoleIds.length !== 1 ? "s" : ""}</>
+                              <>
+                                {" "}
+                                • {selectedConsoleIds.length} console
+                                {selectedConsoleIds.length !== 1 ? "s" : ""}
+                              </>
                             )}
-                            {pricePerHour > 0 && selectedConsoleIds.length > 0 && (
-                              <> • ₹{pricePerHour}/hr</>
-                            )}
+                            {selectedPlatformPrice > 0 &&
+                              selectedConsoleIds.length > 0 && (
+                                <> • ₹{selectedPlatformPrice}/slot</>
+                              )}
                           </span>
                         )}
                       </div>
@@ -890,7 +927,9 @@ export default function GamesManagementPage() {
                     {modalStep === 2 && (
                       <Button
                         onClick={handleAddGame}
-                        disabled={submitting || selectedConsoleIds.length === 0 || pricePerHour <= 0}
+                        disabled={
+                          submitting || selectedConsoleIds.length === 0
+                        }
                         className="bg-primary hover:bg-primary/90"
                       >
                         {submitting ? (
@@ -901,7 +940,8 @@ export default function GamesManagementPage() {
                         ) : (
                           <>
                             <Plus className="w-4 h-4 mr-2" />
-                            Add Game to {selectedConsoleIds.length} Console{selectedConsoleIds.length !== 1 ? "s" : ""}
+                            Add Game to {selectedConsoleIds.length} Console
+                            {selectedConsoleIds.length !== 1 ? "s" : ""}
                           </>
                         )}
                       </Button>
