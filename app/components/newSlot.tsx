@@ -31,7 +31,7 @@ import {
   AlertCircle,
   Clock
 } from "lucide-react"
-import { BOOKING_URL } from '@/src/config/env'
+import { BOOKING_URL, DASHBOARD_URL } from '@/src/config/env'
 import { ConsoleType } from './types'
 import MealSelector from './mealSelector'
 
@@ -48,6 +48,18 @@ interface SelectedSlot {
   console_price: number
   available_count: number
 }
+
+// ADD THIS NEW INTERFACE
+interface ActivePricingEntry {
+  available_game_id: number
+  console_type: string
+  price: number
+  is_offer: boolean
+  default_price: number
+  offer_name?: string
+  discount_percentage?: number
+}
+
 
 import { Textarea } from "@/components/ui/textarea"
 import {
@@ -216,6 +228,8 @@ function SlotBookingForm({
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false)
   const [isSubmitted, setIsSubmitted] = useState<boolean>(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const [activePricing, setActivePricing] = useState<Record<string, ActivePricingEntry>>({})
+
 
 
 
@@ -366,6 +380,28 @@ const validatePass = async (uid: string) => {
   }, [selectedSlots])
 
 
+// ADD THIS ENTIRE BLOCK
+useEffect(() => {
+  if (!isOpen) return
+
+  const vendorId = getVendorIdFromToken()
+  if (!vendorId) return
+
+  const fetchActivePricing = async () => {
+    try {
+      const res = await fetch(`${DASHBOARD_URL}/api/vendor/${vendorId}/active-pricing`)
+      const data = await res.json()
+      if (data.success) {
+        console.log('🏷️ Active pricing loaded:', data.pricing)
+        setActivePricing(data.pricing)
+      }
+    } catch (err) {
+      console.error('❌ Failed to fetch active pricing:', err)
+    }
+  }
+
+  fetchActivePricing()
+}, [isOpen])
 
 
   useEffect(() => {
@@ -521,13 +557,26 @@ const validatePass = async (uid: string) => {
     setIsMealSelectorOpen(false)
   }
 
+  // ADD THIS HELPER
+const getEffectivePrice = (slot: SelectedSlot): number => {
+  const key = slot.console_name.toLowerCase()  // e.g. "ps5", "pc gaming"
+  // Try exact key first, then partial match
+  const pricingEntry = activePricing[key] || 
+    Object.values(activePricing).find(p => 
+      p.console_type.toLowerCase() === slot.console_name.toLowerCase()
+    )
+  if (pricingEntry) return pricingEntry.price
+  return slot.console_price
+}
+
+
   const handleMealSelectorClose = () => {
     console.log('🍽️ Meal selector closed')
     setIsMealSelectorOpen(false)
   }
 
   const mealsTotal = selectedMeals.reduce((sum, meal) => sum + meal.total, 0)
-  const consoleTotal = selectedSlots.reduce((sum, slot) => sum + slot.console_price, 0)
+  const consoleTotal = selectedSlots.reduce((sum, slot) => sum + getEffectivePrice(slot), 0)
   const totalAmount = Math.max(
     0,
     consoleTotal - waiveOffAmount - autoWaiveOffAmount + extraControllerFare + mealsTotal
@@ -807,9 +856,35 @@ if (response.ok || result.success === true || result.success === 'true') {
                           <span className="text-gray-700 dark:text-gray-300">
                             <strong>{new Date(slot.date).toLocaleDateString('en-GB')}</strong> • {slot.start_time.slice(0, 5)}-{slot.end_time.slice(0, 5)} • {slot.console_name}
                           </span>
-                          <span className="text-emerald-600 dark:text-emerald-400 font-semibold">
-                            ₹{slot.console_price}
-                          </span>
+                          {/* REPLACE THE SPAN ABOVE WITH THIS */}
+<span className="flex items-center gap-2 font-semibold">
+  {(() => {
+    const key = slot.console_name.toLowerCase()
+    const entry = activePricing[key] || 
+      Object.values(activePricing).find(p => 
+        p.console_type.toLowerCase() === slot.console_name.toLowerCase()
+      )
+    const isOffer = entry?.is_offer
+    return (
+      <>
+        {isOffer && (
+          <span className="line-through text-gray-400 text-xs">
+            ₹{slot.console_price}
+          </span>
+        )}
+        <span className={isOffer ? "text-orange-500" : "text-emerald-600 dark:text-emerald-400"}>
+          ₹{getEffectivePrice(slot)}
+        </span>
+        {isOffer && (
+          <span className="text-xs bg-orange-100 dark:bg-orange-900/30 text-orange-600 px-1.5 py-0.5 rounded-full">
+            🏷️ {entry?.offer_name}
+          </span>
+        )}
+      </>
+    )
+  })()}
+</span>
+
                         </div>
                       ))}
                       <div className="text-right pt-2 border-t border-emerald-200 dark:border-emerald-700">
