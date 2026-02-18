@@ -7,33 +7,22 @@ import {
   Tv,
   Gamepad,
   Headset,
-  Save,
   Check,
-  TrendingUp,
-  AlertCircle,
   IndianRupee,
   Plus,
   Calendar,
   Clock,
-  Tag,
-  Percent,
-  Edit2,
+  Pencil,
   Trash2,
   X,
-  ChevronDown,
   Sparkles,
-  Info,
-  Pencil,
-  BadgeCheck,
   PlusCircle,
   Loader2,
   LayoutGrid,
-  Table as TableIcon
+  Table as TableIcon,
 } from "lucide-react";
 import { DASHBOARD_URL } from "@/src/config/env";
 import { jwtDecode } from "jwt-decode";
-
-// UI Components from Shadcn
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -53,32 +42,32 @@ const consoleTypes: ConsoleType[] = [
     type: "pc",
     name: "PC",
     icon: Monitor,
-    color: "bg-purple-100 dark:bg-purple-950",
-    iconColor: "bg-card",
+    color: "bg-purple-500/10",
+    iconColor: "#a855f7",
     description: "Gaming PCs and Workstations",
   },
   {
     type: "ps5",
     name: "PS5",
     icon: Tv,
-    color: "bg-blue-100 dark:bg-blue-950",
-    iconColor: "#2563eb",
+    color: "bg-blue-500/10",
+    iconColor: "#3b82f6",
     description: "PlayStation 5 Gaming Consoles",
   },
   {
     type: "xbox",
     name: "Xbox",
     icon: Gamepad,
-    color: "bg-green-100 dark:bg-green-950",
-    iconColor: "#059669",
+    color: "bg-emerald-500/10",
+    iconColor: "#10b981",
     description: "Xbox Series Gaming Consoles",
   },
   {
     type: "vr",
     name: "VR",
     icon: Headset,
-    color: "bg-orange-100 dark:bg-orange-950",
-    iconColor: "#ea580c",
+    color: "bg-yellow-500/10",
+    iconColor: "#f59e0b",
     description: "Virtual Reality Systems",
   },
 ];
@@ -120,29 +109,29 @@ interface AvailableGame {
 export default function ConsolePricing() {
   const [prices, setPrices] = useState<PricingState>(() => {
     const initialPrices: PricingState = {};
-    consoleTypes.forEach((console) => {
-      initialPrices[console.type] = {
-        value: 0,
-        isValid: true,
-        hasChanged: false,
-      };
+    consoleTypes.forEach((c) => {
+      initialPrices[c.type] = { value: 0, isValid: true, hasChanged: false };
     });
     return initialPrices;
   });
 
   const [isLoading, setIsLoading] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [vendorId, setVendorId] = useState<number | null>(null);
-
   const [activeTab, setActiveTab] = useState<"default" | "offers">("default");
-  const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid'); // Added View Mode
+  const [viewMode, setViewMode] = useState<"grid" | "table">("grid");
   const [offers, setOffers] = useState<PricingOffer[]>([]);
   const [availableGames, setAvailableGames] = useState<AvailableGame[]>([]);
   const [isLoadingOffers, setIsLoadingOffers] = useState(false);
   const [showOfferForm, setShowOfferForm] = useState(false);
   const [editingOffer, setEditingOffer] = useState<PricingOffer | null>(null);
-  const [successMessage, setSuccessMessage] = useState("");
+
+  // ✅ Separate loading states for create and update
+  const [isCreatingOffer, setIsCreatingOffer] = useState(false);
+  const [isUpdatingOffer, setIsUpdatingOffer] = useState(false);
+  const [deletingOfferId, setDeletingOfferId] = useState<number | null>(null);
 
   const [offerForm, setOfferForm] = useState({
     available_game_id: "",
@@ -155,9 +144,7 @@ export default function ConsolePricing() {
     offer_description: "",
   });
 
-  const validatePrice = (value: number): boolean => {
-    return value >= 0 && value <= 10000;
-  };
+  const validatePrice = (value: number) => value >= 0 && value <= 10000;
 
   useEffect(() => {
     const token = localStorage.getItem("jwtToken");
@@ -172,26 +159,22 @@ export default function ConsolePricing() {
   }, []);
 
   useEffect(() => {
+    if (!vendorId) return;
     const fetchPricing = async () => {
       try {
-        if (!vendorId) return;
         const res = await fetch(`${DASHBOARD_URL}/api/vendor/${vendorId}/console-pricing`);
-        if (!res.ok) throw new Error("Failed to fetch pricing");
+        if (!res.ok) throw new Error("Failed");
         const data = await res.json();
         const newPrices: PricingState = {};
-        consoleTypes.forEach((console) => {
-          newPrices[console.type] = {
-            value: data[console.type] ?? 0,
-            isValid: true,
-            hasChanged: false,
-          };
+        consoleTypes.forEach((c) => {
+          newPrices[c.type] = { value: data[c.type] ?? 0, isValid: true, hasChanged: false };
         });
         setPrices(newPrices);
       } catch (error) {
         console.error("Error fetching prices:", error);
       }
     };
-    if (vendorId) fetchPricing();
+    fetchPricing();
   }, [vendorId]);
 
   useEffect(() => {
@@ -206,7 +189,7 @@ export default function ConsolePricing() {
     setIsLoadingOffers(true);
     try {
       const res = await fetch(`${DASHBOARD_URL}/api/vendor/${vendorId}/pricing-offers`);
-      if (!res.ok) throw new Error("Failed to fetch offers");
+      if (!res.ok) throw new Error("Failed");
       const data = await res.json();
       setOffers(data.offers || []);
     } catch (error) {
@@ -221,48 +204,57 @@ export default function ConsolePricing() {
     if (!vendorId) return;
     try {
       const res = await fetch(`${DASHBOARD_URL}/api/vendor/${vendorId}/available-games`);
-      if (!res.ok) throw new Error("Failed to fetch");
+      if (!res.ok) throw new Error("Failed");
       const data = await res.json();
-      let gamesArray: AvailableGame[] = Array.isArray(data) ? data : (data.games || data.available_games || data.data || []);
+      const gamesArray: AvailableGame[] = Array.isArray(data)
+        ? data
+        : data.games || data.available_games || data.data || [];
       setAvailableGames(gamesArray);
     } catch (error) {
       setAvailableGames([]);
     }
   };
 
+  const showToast = (message: string) => {
+    setSuccessMessage(message);
+    setShowSuccess(true);
+    setTimeout(() => setShowSuccess(false), 3000);
+  };
+
   const handlePriceChange = (consoleType: string, inputValue: string) => {
     const numericValue = parseFloat(inputValue) || 0;
     const isValid = validatePrice(numericValue);
-    setPrices(prev => ({
+    setPrices((prev) => ({
       ...prev,
-      [consoleType]: { value: numericValue, isValid, hasChanged: true }
+      [consoleType]: { value: numericValue, isValid, hasChanged: true },
     }));
     if (isValid) {
-      setErrors(prev => { const n = { ...prev }; delete n[consoleType]; return n; });
+      setErrors((prev) => { const n = { ...prev }; delete n[consoleType]; return n; });
     } else {
-      setErrors(prev => ({ ...prev, [consoleType]: "Price must be between ₹0 and ₹10,000" }));
+      setErrors((prev) => ({ ...prev, [consoleType]: "Price must be between ₹0 and ₹10,000" }));
     }
   };
 
   const handleSave = async () => {
-    if (Object.values(errors).length > 0 || Object.values(prices).some(p => !p.isValid)) return;
+    if (Object.values(errors).length > 0 || Object.values(prices).some((p) => !p.isValid)) return;
     setIsLoading(true);
     try {
-      const payload = Object.entries(prices).reduce((acc, [key, val]) => { acc[key] = val.value; return acc; }, {} as Record<string, number>);
+      const payload = Object.entries(prices).reduce(
+        (acc, [key, val]) => { acc[key] = val.value; return acc; },
+        {} as Record<string, number>
+      );
       const response = await fetch(`${DASHBOARD_URL}/api/vendor/${vendorId}/console-pricing`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
       if (!response.ok) throw new Error("Failed");
-      setSuccessMessage("Pricing updated successfully!");
-      setShowSuccess(true);
-      setPrices(prev => {
+      showToast("Pricing updated successfully!");
+      setPrices((prev) => {
         const n = { ...prev };
-        Object.keys(n).forEach(k => n[k].hasChanged = false);
+        Object.keys(n).forEach((k) => (n[k].hasChanged = false));
         return n;
       });
-      setTimeout(() => setShowSuccess(false), 3000);
     } catch (error) {
       alert("Error saving changes.");
     } finally {
@@ -272,6 +264,7 @@ export default function ConsolePricing() {
 
   const handleCreateOffer = async () => {
     if (!vendorId) return;
+    setIsCreatingOffer(true); // ✅ loader on
     try {
       const response = await fetch(`${DASHBOARD_URL}/api/vendor/${vendorId}/pricing-offers`, {
         method: "POST",
@@ -288,55 +281,62 @@ export default function ConsolePricing() {
         }),
       });
       if (!response.ok) throw new Error("Failed");
-      setSuccessMessage("Offer created successfully!");
-      setShowSuccess(true);
-      setTimeout(() => setShowSuccess(false), 3000);
+      showToast("Offer created successfully!");
       setShowOfferForm(false);
       resetOfferForm();
       fetchOffers();
     } catch (error: any) {
-      alert(error.message || "Error");
+      alert(error.message || "Error creating offer");
+    } finally {
+      setIsCreatingOffer(false); // ✅ loader off
     }
   };
 
   const handleUpdateOffer = async () => {
     if (!vendorId || !editingOffer) return;
+    setIsUpdatingOffer(true); // ✅ loader on
     try {
-      const response = await fetch(`${DASHBOARD_URL}/api/vendor/${vendorId}/pricing-offers/${editingOffer.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          offered_price: parseFloat(offerForm.offered_price),
-          start_date: offerForm.start_date,
-          start_time: offerForm.start_time,
-          end_date: offerForm.end_date,
-          end_time: offerForm.end_time,
-          offer_name: offerForm.offer_name,
-          offer_description: offerForm.offer_description || null,
-        }),
-      });
+      const response = await fetch(
+        `${DASHBOARD_URL}/api/vendor/${vendorId}/pricing-offers/${editingOffer.id}`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            offered_price: parseFloat(offerForm.offered_price),
+            start_date: offerForm.start_date,
+            start_time: offerForm.start_time,
+            end_date: offerForm.end_date,
+            end_time: offerForm.end_time,
+            offer_name: offerForm.offer_name,
+            offer_description: offerForm.offer_description || null,
+          }),
+        }
+      );
       if (!response.ok) throw new Error("Failed");
-      setSuccessMessage("Offer updated!");
-      setShowSuccess(true);
-      setTimeout(() => setShowSuccess(false), 3000);
+      showToast("Offer updated successfully!");
       setShowOfferForm(false);
       resetOfferForm();
       fetchOffers();
     } catch (error) {
-      alert("Error");
+      alert("Error updating offer");
+    } finally {
+      setIsUpdatingOffer(false); // ✅ loader off
     }
   };
 
   const handleDeleteOffer = async (id: number) => {
-    if (!vendorId || !confirm("Are you sure?")) return;
+    if (!vendorId || !confirm("Are you sure you want to delete this offer?")) return;
+    setDeletingOfferId(id); // ✅ loader on for this specific row
     try {
-      await fetch(`${DASHBOARD_URL}/api/vendor/${vendorId}/pricing-offers/${id}`, { method: "DELETE" });
-      setSuccessMessage("Deleted!");
-      setShowSuccess(true);
-      setTimeout(() => setShowSuccess(false), 3000);
+      await fetch(`${DASHBOARD_URL}/api/vendor/${vendorId}/pricing-offers/${id}`, {
+        method: "DELETE",
+      });
+      showToast("Offer deleted!");
       fetchOffers();
     } catch (error) {
-      alert("Error");
+      alert("Error deleting offer");
+    } finally {
+      setDeletingOfferId(null); // ✅ loader off
     }
   };
 
@@ -356,314 +356,549 @@ export default function ConsolePricing() {
   };
 
   const resetOfferForm = () => {
-    setOfferForm({ available_game_id: "", offered_price: "", start_date: "", start_time: "", end_date: "", end_time: "", offer_name: "", offer_description: "" });
+    setOfferForm({
+      available_game_id: "",
+      offered_price: "",
+      start_date: "",
+      start_time: "",
+      end_date: "",
+      end_time: "",
+      offer_name: "",
+      offer_description: "",
+    });
     setEditingOffer(null);
   };
 
-  const getConsoleIcon = (type: string) => consoleTypes.find(c => c.type === type.toLowerCase())?.icon || Monitor;
-  const canSave = Object.values(prices).some(p => p.hasChanged) && Object.values(errors).length === 0;
+  const getConsoleIcon = (type: string) =>
+    consoleTypes.find((c) => c.type === type.toLowerCase())?.icon || Monitor;
+
+  const canSave =
+    Object.values(prices).some((p) => p.hasChanged) &&
+    Object.values(errors).length === 0;
 
   return (
-    <div className="w-full text-left p-4">
-      <div className="w-full max-w-7xl mx-0">
-        {/* Header */}
-        <div className="mb-8 w-full">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="p-2 bg-blue-100 rounded-lg">
-                <IndianRupee className="text-blue-500 w-6 h-6" />
-            </div>
-            <h1 className="text-2xl font-bold flex items-center gap-2 tracking-tight">
-               Console Pricing Manager
-            </h1>
-          </div>
-          <p className="text-muted-foreground text-sm">Manage rates and promotional special offers</p>
-        </div>
+    <div className="page-container">
 
-        <AnimatePresence>
-          {showSuccess && (
-            <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="fixed top-4 right-4 bg-green-500 text-white p-4 rounded-lg shadow-lg z-50 flex items-center gap-2 font-medium">
-              <Check className="w-5 h-5" /> <span>{successMessage}</span>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Tab Container */}
-        <div className="flex gap-2 mb-8 bg-muted/50 p-1 rounded-lg w-fit border border-border">
-          <button onClick={() => setActiveTab("default")} className={`px-6 py-2 rounded-md transition-all text-sm font-semibold ${activeTab === 'default' ? 'bg-white shadow-sm text-blue-600 border border-border' : 'text-muted-foreground hover:text-foreground'}`}>Default Pricing</button>
-          <button onClick={() => setActiveTab("offers")} className={`px-6 py-2 rounded-md transition-all text-sm font-semibold ${activeTab === 'offers' ? 'bg-white shadow-sm text-blue-600 border border-border' : 'text-muted-foreground hover:text-foreground'}`}>Promotional Offers</button>
-        </div>
-
-        {activeTab === "default" && (
-          <div className="w-full">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-              {consoleTypes.map((console) => (
-                <div key={console.type} className="bg-card rounded-xl shadow-sm border border-border p-4 hover:shadow-md transition-all">
-                  <div className={`p-3 rounded-lg ${console.color} mb-4 flex items-center gap-3 border border-border/20`}>
-                    <console.icon className="w-5 h-5" style={{ color: console.iconColor }} />
-                    <span className="font-bold text-sm">{console.name}</span>
-                  </div>
-                  <label className="text-xs font-bold uppercase text-muted-foreground mb-2 block">Price per Slot</label>
-                  <div className="relative">
-                    <IndianRupee className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
-                    <Input
-                      type="number"
-                      value={prices[console.type]?.value}
-                      onChange={(e) => handlePriceChange(console.type, e.target.value)}
-                      className="w-full pl-9 bg-muted/20"
-                    />
-                  </div>
-                  {errors[console.type] && <p className="text-destructive text-[10px] font-bold mt-1 uppercase italic tracking-tighter">{errors[console.type]}</p>}
-                </div>
-              ))}
-            </div>
-            <Button onClick={handleSave} disabled={!canSave || isLoading} className="btn-primary px-8 py-6 rounded-lg font-bold shadow-lg transition-all active:scale-95">
-              {isLoading ? "Updating..." : "Save Pricing Changes"}
-            </Button>
-          </div>
+      {/* ✅ Success Toast */}
+      <AnimatePresence>
+        {showSuccess && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="fixed top-4 right-4 z-50 flex items-center gap-2 bg-emerald-600 text-white px-4 py-3 rounded-lg shadow-xl font-medium text-sm"
+          >
+            <Check className="w-4 h-4" />
+            <span>{successMessage}</span>
+          </motion.div>
         )}
+      </AnimatePresence>
 
-        {/* Offers Content */}
-        {activeTab === "offers" && (
-          <div className="w-full space-y-6">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 w-full">
-              <div className="flex items-center gap-4">
-                <div className="flex items-center gap-2">
-                  <Clock className="w-5 h-5 text-blue-500" />
-                  <h2 className="text-xl font-semibold tracking-tight">Active Promotions</h2>
-                </div>
-                
-                {/* VIEW TOGGLE BAR - NEW */}
-                <div className="flex gap-1 bg-muted p-1 rounded-lg border border-border ml-4">
-                  <button 
-                    onClick={() => setViewMode('grid')}
-                    className={`p-1.5 rounded-md transition-all ${viewMode === 'grid' ? 'bg-white shadow-sm text-blue-600' : 'text-muted-foreground hover:text-foreground'}`}
-                  >
-                    <LayoutGrid className="w-4 h-4" />
-                  </button>
-                  <button 
-                    onClick={() => setViewMode('table')}
-                    className={`p-1.5 rounded-md transition-all ${viewMode === 'table' ? 'bg-white shadow-sm text-blue-600' : 'text-muted-foreground hover:text-foreground'}`}
-                  >
-                    <TableIcon className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
-
-              <Button onClick={() => setShowOfferForm(true)} className="btn-primary gap-2 px-6 shadow-md transition-all active:scale-95">
-                <PlusCircle className="w-4 h-4" /> New Offer
-              </Button>
+      {/* ✅ Page Header */}
+      <div className="page-header">
+        <div className="page-title-section">
+          <div className="flex items-center gap-3 mb-1">
+            <div className="icon-blue p-2 rounded-lg">
+              <IndianRupee className="icon-lg text-blue-400" />
             </div>
-
-            {isLoadingOffers ? (
-               <div className="w-full text-center py-20 flex flex-col items-center gap-2">
-                   <Loader2 className="animate-spin text-blue-500 w-10 h-10" />
-                   <p className="text-muted-foreground text-sm font-medium tracking-wide">Loading active offers...</p>
-               </div>
-            ) : offers.length === 0 ? (
-              <div className="w-full py-20 text-center bg-muted/10 rounded-2xl border-2 border-dashed border-border flex flex-col items-center">
-                <Sparkles className="w-12 h-12 text-muted-foreground/20 mb-3" />
-                <h3 className="font-bold text-lg text-foreground/70">No active offers yet</h3>
-                <p className="text-muted-foreground text-sm mb-4">Add your first promotional offer to attract more customers</p>
-                <Button variant="outline" onClick={() => setShowOfferForm(true)}>Add New Offer</Button>
-              </div>
-            ) : viewMode === 'grid' ? (
-              /* GRID VIEW */
-              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4">
-                {offers.map((offer) => {
-                  const Icon = getConsoleIcon(offer.console_type);
-                  return (
-                    <Card key={offer.id} className="content-card shadow-lg hover:shadow-xl transition-all duration-300 border border-border overflow-hidden flex flex-col">
-                      <CardHeader className="flex flex-row items-start justify-between p-4 border-b border-border bg-muted/20">
-                        <div className="min-w-0 flex-1 pr-2">
-                          <h2 className="card-title truncate text-lg font-bold tracking-tight text-foreground">{offer.offer_name}</h2>
-                          <div className="text-[11px] text-muted-foreground mt-1 flex items-center gap-1.5 uppercase font-bold tracking-widest">
-                            <Icon className="w-3.5 h-3.5 text-blue-500 shrink-0" />
-                            <span className="truncate">{offer.console_type}</span>
-                            {offer.is_currently_active && (
-                              <span className="flex items-center gap-1 text-emerald-600 ml-1.5 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20">
-                                <span className="w-1.5 h-1.5 bg-emerald-600 rounded-full animate-pulse"></span>
-                                LIVE
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                        <div className="flex gap-1 shrink-0">
-                          <Button variant="ghost" size="icon" onClick={() => handleEditOffer(offer)} className="w-8 h-8 hover:bg-emerald-50 transition-colors">
-                            <Pencil className="w-4 h-4 text-emerald-600" />
-                          </Button>
-                          <Button variant="ghost" size="icon" onClick={() => handleDeleteOffer(offer.id)} className="w-8 h-8 hover:bg-destructive/10 transition-colors">
-                            <Trash2 className="w-4 h-4 text-destructive" />
-                          </Button>
-                        </div>
-                      </CardHeader>
-                      <CardContent className="p-4 space-y-5">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <div className="text-2xl font-black text-blue-600 tracking-tighter leading-none">₹{offer.offered_price}</div>
-                            <div className="text-[10px] text-muted-foreground font-black uppercase mt-1 tracking-tight">Offer Rate</div>
-                          </div>
-                          <div className="text-right">
-                             <div className="text-sm font-bold text-red-400/80 line-through leading-none">₹{offer.default_price}</div>
-                             <div className="bg-emerald-500/10 text-emerald-600 text-[10px] px-2 py-0.5 rounded-full font-black mt-1.5 inline-block border border-emerald-500/20">
-                                {offer.discount_percentage}% OFF
-                             </div>
-                          </div>
-                        </div>
-                        <div className="pt-3 border-t border-dashed border-border space-y-2">
-                           <div className="flex items-center gap-2 text-[11px] font-bold text-muted-foreground/80">
-                              <Calendar className="w-3.5 h-3.5 text-blue-500/70" />
-                              <span>{offer.start_date} to {offer.end_date}</span>
-                           </div>
-                           <div className="flex items-center gap-2 text-[11px] font-bold text-muted-foreground/80">
-                              <Clock className="w-3.5 h-3.5 text-blue-500/70" />
-                              <span>{offer.start_time} - {offer.end_time}</span>
-                           </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  );
-                })}
-              </div>
-            ) : (
-              /* TABLE VIEW - NEW */
-              <OffersTable 
-                offers={offers} 
-                onEdit={handleEditOffer} 
-                onDelete={handleDeleteOffer} 
-                getConsoleIcon={getConsoleIcon} 
-              />
-            )}
+            <h1 className="page-title">Console Pricing</h1>
           </div>
-        )}
+          <p className="page-subtitle">Manage base rates and promotional offers</p>
+        </div>
       </div>
 
-      {/* Offer Form Modal */}
+      {/* ✅ Tab Navigation - uses global .tab-container */}
+      <div className="tab-container mb-6">
+        <button
+          onClick={() => setActiveTab("default")}
+          className={activeTab === "default" ? "tab-active" : "tab-inactive"}
+        >
+          <IndianRupee className="icon-md" />
+          Default Pricing
+        </button>
+        <button
+          onClick={() => setActiveTab("offers")}
+          className={activeTab === "offers" ? "tab-active" : "tab-inactive"}
+        >
+          <Sparkles className="icon-md" />
+          Promotional Offers
+        </button>
+      </div>
+
+      {/* ✅ Default Pricing Tab */}
+      {activeTab === "default" && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.2 }}
+          className="flex-1"
+        >
+          <div className="four-col-grid mb-6">
+            {consoleTypes.map((console) => (
+              <div key={console.type} className="content-card rounded-lg p-4 hover:shadow-md transition-all duration-200">
+                {/* Console Type Header */}
+                <div className={`${console.color} rounded-lg p-3 mb-4 flex items-center gap-3`}>
+                  <div className="icon-container p-1.5 rounded-md bg-card/50">
+                    <console.icon className="icon-md" style={{ color: console.iconColor }} />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-foreground">{console.name}</p>
+                    <p className="text-xs text-muted-foreground">{console.description}</p>
+                  </div>
+                </div>
+
+                {/* Price Input */}
+                <p className="table-header-text mb-2">Price per Slot</p>
+                <div className="relative">
+                  <IndianRupee className="absolute left-3 top-1/2 -translate-y-1/2 icon-md text-muted-foreground" />
+                  <Input
+                    type="number"
+                    value={prices[console.type]?.value}
+                    onChange={(e) => handlePriceChange(console.type, e.target.value)}
+                    className="pl-9 bg-muted/20 border-border focus:ring-2 focus:ring-primary"
+                  />
+                </div>
+                {errors[console.type] && (
+                  <p className="text-destructive text-xs font-medium mt-1.5">
+                    {errors[console.type]}
+                  </p>
+                )}
+
+                {/* Changed indicator */}
+                {prices[console.type]?.hasChanged && (
+                  <motion.p
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="text-xs text-blue-400 mt-1.5 font-medium"
+                  >
+                    ● Unsaved change
+                  </motion.p>
+                )}
+              </div>
+            ))}
+          </div>
+
+          {/* Save Button */}
+          <Button
+            onClick={handleSave}
+            disabled={!canSave || isLoading}
+            className="btn-primary px-6 py-2.5 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isLoading ? (
+              <>
+                <Loader2 className="icon-md animate-spin" />
+                Saving...
+              </>
+            ) : (
+              <>
+                <Check className="icon-md" />
+                Save Pricing Changes
+              </>
+            )}
+          </Button>
+        </motion.div>
+      )}
+
+      {/* ✅ Promotional Offers Tab */}
+      {activeTab === "offers" && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.2 }}
+          className="flex-1 flex flex-col gap-4 min-h-0"
+        >
+          {/* Offers Header Row */}
+          <div className="page-actions justify-between flex-wrap">
+            <div className="flex items-center gap-3">
+              <h2 className="section-title">Active Promotions</h2>
+
+              {/* View Toggle */}
+              <div className="flex items-center gap-1 bg-muted p-1 rounded-lg border border-border">
+                <button
+                  onClick={() => setViewMode("grid")}
+                  className={`p-1.5 rounded-md transition-all ${
+                    viewMode === "grid"
+                      ? "bg-background shadow-sm text-blue-400"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                  title="Grid View"
+                >
+                  <LayoutGrid className="icon-md" />
+                </button>
+                <button
+                  onClick={() => setViewMode("table")}
+                  className={`p-1.5 rounded-md transition-all ${
+                    viewMode === "table"
+                      ? "bg-background shadow-sm text-blue-400"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                  title="Table View"
+                >
+                  <TableIcon className="icon-md" />
+                </button>
+              </div>
+            </div>
+
+            <button
+              onClick={() => setShowOfferForm(true)}
+              className="btn-primary"
+            >
+              <PlusCircle className="icon-md" />
+              New Offer
+            </button>
+          </div>
+
+          {/* Offers Content */}
+          {isLoadingOffers ? (
+            <div className="flex-1 flex flex-col items-center justify-center gap-3 text-muted-foreground">
+              <Loader2 className="w-10 h-10 animate-spin text-blue-400" />
+              <p className="body-text-muted">Loading offers...</p>
+            </div>
+          ) : offers.length === 0 ? (
+            <div className="flex-1 flex flex-col items-center justify-center gap-3 border-2 border-dashed border-border rounded-lg py-16">
+              <Sparkles className="w-12 h-12 text-muted-foreground/30" />
+              <h3 className="section-title text-muted-foreground/60">No active offers yet</h3>
+              <p className="body-text-muted">Create your first promotional offer</p>
+              <button onClick={() => setShowOfferForm(true)} className="btn-secondary mt-2">
+                <Plus className="icon-md" />
+                Add New Offer
+              </button>
+            </div>
+          ) : viewMode === "grid" ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4 overflow-y-auto pb-4">
+              {offers.map((offer) => {
+                const Icon = getConsoleIcon(offer.console_type);
+                const isDeleting = deletingOfferId === offer.id;
+                return (
+                  <Card
+                    key={offer.id}
+                    className="content-card flex flex-col border-border hover:shadow-lg transition-all duration-200"
+                  >
+                    <CardHeader className="flex flex-row items-start justify-between p-4 border-b border-border">
+                      <div className="min-w-0 flex-1 pr-2">
+                        <h2 className="card-title truncate">{offer.offer_name}</h2>
+                        <div className="flex items-center gap-1.5 mt-1">
+                          <Icon className="w-3 h-3 text-blue-400 shrink-0" />
+                          <span className="table-header-text">{offer.console_type}</span>
+                          {offer.is_currently_active && (
+                            <span className="flex items-center gap-1 text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded text-[9px] font-bold border border-emerald-500/20">
+                              <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse" />
+                              LIVE
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex gap-1 shrink-0">
+                        <button
+                          onClick={() => handleEditOffer(offer)}
+                          className="btn-icon hover:bg-emerald-500/10"
+                          title="Edit"
+                        >
+                          <Pencil className="w-3.5 h-3.5 text-emerald-400" />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteOffer(offer.id)}
+                          disabled={isDeleting}
+                          className="btn-icon hover:bg-destructive/10 disabled:opacity-50"
+                          title="Delete"
+                        >
+                          {isDeleting ? (
+                            <Loader2 className="w-3.5 h-3.5 text-destructive animate-spin" />
+                          ) : (
+                            <Trash2 className="w-3.5 h-3.5 text-destructive" />
+                          )}
+                        </button>
+                      </div>
+                    </CardHeader>
+
+                    <CardContent className="p-4 space-y-4">
+                      {/* Pricing */}
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="stat-value-large text-blue-400">₹{offer.offered_price}</p>
+                          <p className="table-header-text mt-0.5">Offer Rate</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-sm text-muted-foreground line-through">₹{offer.default_price}</p>
+                          <span className="inline-block mt-1 bg-emerald-500/10 text-emerald-400 text-xs px-2 py-0.5 rounded-full font-bold border border-emerald-500/20">
+                            {offer.discount_percentage}% OFF
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Date/Time */}
+                      <div className="border-t border-dashed border-border pt-3 space-y-1.5">
+                        <div className="flex items-center gap-2 body-text-muted">
+                          <Calendar className="icon-md text-blue-400/70 shrink-0" />
+                          <span>{offer.start_date} → {offer.end_date}</span>
+                        </div>
+                        <div className="flex items-center gap-2 body-text-muted">
+                          <Clock className="icon-md text-blue-400/70 shrink-0" />
+                          <span>{offer.start_time} - {offer.end_time}</span>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          ) : (
+            <OffersTable
+              offers={offers}
+              onEdit={handleEditOffer}
+              onDelete={handleDeleteOffer}
+              deletingOfferId={deletingOfferId}
+              getConsoleIcon={getConsoleIcon}
+            />
+          )}
+        </motion.div>
+      )}
+
+      {/* ✅ Offer Form Modal */}
       <AnimatePresence>
         {showOfferForm && (
-            <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100] p-4 text-left">
-              <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="bg-card border border-border rounded-2xl p-6 w-full max-w-md shadow-2xl overflow-hidden">
-                 <div className="flex justify-between items-center mb-6">
-                    <h2 className="text-xl font-bold text-foreground tracking-tight">{editingOffer ? 'Edit Promotion' : 'Create New Promotion'}</h2>
-                    <Button variant="ghost" size="icon" onClick={() => { setShowOfferForm(false); resetOfferForm(); }} className="rounded-full hover:bg-muted/50">
-                        <X className="w-5 h-5" />
-                    </Button>
-                 </div>
-                 
-                 <div className="space-y-4">
-                    <div className="space-y-1.5 text-left">
-                      <Label className="text-xs font-bold uppercase text-muted-foreground/80 ml-1 tracking-wider">Offer Title *</Label>
-                      <Input placeholder="e.g. Weekend Bash 2024" value={offerForm.offer_name} onChange={e => setOfferForm({...offerForm, offer_name: e.target.value})} className="bg-muted/10 border-border/50 focus:border-blue-500 transition-all" />
-                    </div>
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100] p-4">
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0, y: 10 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 10 }}
+              transition={{ duration: 0.2 }}
+              className="bg-card border border-border rounded-xl w-full max-w-md shadow-2xl overflow-hidden"
+            >
+              {/* Modal Header */}
+              <div className="flex items-center justify-between px-5 py-4 border-b border-border">
+                <h2 className="card-title">
+                  {editingOffer ? "Edit Promotion" : "Create New Promotion"}
+                </h2>
+                <button
+                  onClick={() => { setShowOfferForm(false); resetOfferForm(); }}
+                  className="btn-icon"
+                >
+                  <X className="icon-md" />
+                </button>
+              </div>
 
-                    <div className="space-y-1.5 text-left">
-                      <Label className="text-xs font-bold uppercase text-muted-foreground/80 ml-1 tracking-wider">Select Console Type *</Label>
-                      <select className="w-full h-10 border border-input rounded-md px-3 text-sm font-medium bg-background focus:ring-2 focus:ring-blue-500 outline-none border-border/50" value={offerForm.available_game_id} onChange={e => setOfferForm({...offerForm, available_game_id: e.target.value})}>
-                         <option value="">Choose console type...</option>
-                         {availableGames.map(g => <option key={g.id} value={g.id}>{g.game_name} (Base ₹{g.single_slot_price})</option>)}
-                      </select>
-                    </div>
+              {/* Modal Body */}
+              <div className="p-5 space-y-4 max-h-[70vh] overflow-y-auto">
 
-                    <div className="space-y-1.5 text-left">
-                      <Label className="text-xs font-bold uppercase text-muted-foreground/80 ml-1 tracking-wider">Promo Rate (₹) *</Label>
-                      <Input type="number" placeholder="Enter discounted price" value={offerForm.offered_price} onChange={e => setOfferForm({...offerForm, offered_price: e.target.value})} className="bg-muted/10 border-border/50 focus:border-blue-500 transition-all" />
-                    </div>
+                {/* Offer Title */}
+                <div className="space-y-1.5">
+                  <label className="table-header-text">Offer Title *</label>
+                  <Input
+                    placeholder="e.g. Weekend Bash 2024"
+                    value={offerForm.offer_name}
+                    onChange={(e) => setOfferForm({ ...offerForm, offer_name: e.target.value })}
+                    className="bg-muted/20 border-border focus:ring-2 focus:ring-primary"
+                  />
+                </div>
 
-                    <div className="grid grid-cols-2 gap-3 text-left">
-                       <div className="space-y-1.5">
-                          <Label className="text-xs font-bold uppercase text-muted-foreground/80 ml-1 text-[10px]">Start Date</Label>
-                          <Input type="date" value={offerForm.start_date} onChange={e => setOfferForm({...offerForm, start_date: e.target.value})} className="bg-muted/10 border-border/50" />
-                       </div>
-                       <div className="space-y-1.5">
-                          <Label className="text-xs font-bold uppercase text-muted-foreground/80 ml-1 text-[10px]">Start Time</Label>
-                          <Input type="time" value={offerForm.start_time} onChange={e => setOfferForm({...offerForm, start_time: e.target.value})} className="bg-muted/10 border-border/50" />
-                       </div>
-                    </div>
+                {/* Console Type */}
+                <div className="space-y-1.5">
+                  <label className="table-header-text">Console Type *</label>
+                  <select
+                    className="w-full h-10 border border-border rounded-md px-3 text-sm bg-card text-foreground focus:ring-2 focus:ring-primary outline-none"
+                    value={offerForm.available_game_id}
+                    onChange={(e) => setOfferForm({ ...offerForm, available_game_id: e.target.value })}
+                    disabled={!!editingOffer}
+                  >
+                    <option value="">Choose console type...</option>
+                    {availableGames.map((g) => (
+                      <option key={g.id} value={g.id}>
+                        {g.game_name} (Base ₹{g.single_slot_price})
+                      </option>
+                    ))}
+                  </select>
+                </div>
 
-                    <div className="grid grid-cols-2 gap-3 text-left">
-                       <div className="space-y-1.5">
-                          <Label className="text-xs font-bold uppercase text-muted-foreground/80 ml-1 text-[10px]">End Date</Label>
-                          <Input type="date" value={offerForm.end_date} onChange={e => setOfferForm({...offerForm, end_date: e.target.value})} className="bg-muted/10 border-border/50" />
-                       </div>
-                       <div className="space-y-1.5">
-                          <Label className="text-xs font-bold uppercase text-muted-foreground/80 ml-1 text-[10px]">End Time</Label>
-                          <Input type="time" value={offerForm.end_time} onChange={e => setOfferForm({...offerForm, end_time: e.target.value})} className="bg-muted/10 border-border/50" />
-                       </div>
-                    </div>
+                {/* Promo Rate */}
+                <div className="space-y-1.5">
+                  <label className="table-header-text">Promo Rate (₹) *</label>
+                  <div className="relative">
+                    <IndianRupee className="absolute left-3 top-1/2 -translate-y-1/2 icon-md text-muted-foreground" />
+                    <Input
+                      type="number"
+                      placeholder="Enter discounted price"
+                      value={offerForm.offered_price}
+                      onChange={(e) => setOfferForm({ ...offerForm, offered_price: e.target.value })}
+                      className="pl-9 bg-muted/20 border-border focus:ring-2 focus:ring-primary"
+                    />
+                  </div>
+                </div>
 
-                    <div className="flex gap-3 mt-6">
-                       <Button variant="outline" onClick={() => { setShowOfferForm(false); resetOfferForm(); }} className="flex-1 font-bold rounded-xl border-2 hover:bg-muted/50 transition-colors">Cancel</Button>
-                       <Button onClick={editingOffer ? handleUpdateOffer : handleCreateOffer} className="flex-1 bg-blue-600 text-white font-bold rounded-xl shadow-lg hover:bg-blue-700 transition-all active:scale-95">
-                           {editingOffer ? 'Save Changes' : 'Create Offer'}
-                       </Button>
-                    </div>
-                 </div>
-              </motion.div>
-            </div>
+                {/* Start Date + Time */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <label className="table-header-text">Start Date</label>
+                    <Input
+                      type="date"
+                      value={offerForm.start_date}
+                      onChange={(e) => setOfferForm({ ...offerForm, start_date: e.target.value })}
+                      className="bg-muted/20 border-border"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="table-header-text">Start Time</label>
+                    <Input
+                      type="time"
+                      value={offerForm.start_time}
+                      onChange={(e) => setOfferForm({ ...offerForm, start_time: e.target.value })}
+                      className="bg-muted/20 border-border"
+                    />
+                  </div>
+                </div>
+
+                {/* End Date + Time */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <label className="table-header-text">End Date</label>
+                    <Input
+                      type="date"
+                      value={offerForm.end_date}
+                      onChange={(e) => setOfferForm({ ...offerForm, end_date: e.target.value })}
+                      className="bg-muted/20 border-border"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="table-header-text">End Time</label>
+                    <Input
+                      type="time"
+                      value={offerForm.end_time}
+                      onChange={(e) => setOfferForm({ ...offerForm, end_time: e.target.value })}
+                      className="bg-muted/20 border-border"
+                    />
+                  </div>
+                </div>
+
+                {/* Description (optional) */}
+                <div className="space-y-1.5">
+                  <label className="table-header-text">Description (Optional)</label>
+                  <Input
+                    placeholder="Short description..."
+                    value={offerForm.offer_description}
+                    onChange={(e) => setOfferForm({ ...offerForm, offer_description: e.target.value })}
+                    className="bg-muted/20 border-border"
+                  />
+                </div>
+              </div>
+
+              {/* Modal Footer */}
+              <div className="flex gap-3 px-5 py-4 border-t border-border">
+                <button
+                  onClick={() => { setShowOfferForm(false); resetOfferForm(); }}
+                  className="btn-secondary flex-1 justify-center"
+                  disabled={isCreatingOffer || isUpdatingOffer}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={editingOffer ? handleUpdateOffer : handleCreateOffer}
+                  disabled={isCreatingOffer || isUpdatingOffer}
+                  className="btn-primary flex-1 justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {/* ✅ Loader in button while creating/updating */}
+                  {isCreatingOffer || isUpdatingOffer ? (
+                    <>
+                      <Loader2 className="icon-md animate-spin" />
+                      {editingOffer ? "Saving..." : "Creating..."}
+                    </>
+                  ) : (
+                    <>
+                      <Check className="icon-md" />
+                      {editingOffer ? "Save Changes" : "Create Offer"}
+                    </>
+                  )}
+                </button>
+              </div>
+            </motion.div>
+          </div>
         )}
       </AnimatePresence>
     </div>
   );
 }
 
-// --- NEW TABLE VIEW COMPONENT ---
-function OffersTable({ offers, onEdit, onDelete, getConsoleIcon }: any) {
+// ✅ Table View Component - aligned with global CSS
+function OffersTable({ offers, onEdit, onDelete, deletingOfferId, getConsoleIcon }: any) {
   return (
-    <div className="bg-card rounded-lg border border-border overflow-hidden w-full text-left">
-      <div className="overflow-x-auto">
-        <table className="w-full text-left text-sm">
-          <thead className="bg-muted/50 border-b border-border">
+    <div className="table-container flex-1 overflow-hidden">
+      <div className="h-full overflow-y-auto">
+        <table className="w-full text-left">
+          <thead className="table-header sticky top-0 z-10">
             <tr>
-              <th className="px-4 py-3 font-bold text-muted-foreground uppercase tracking-wider text-[10px]">Offer Name</th>
-              <th className="px-4 py-3 font-bold text-muted-foreground uppercase tracking-wider text-[10px]">Console</th>
-              <th className="px-4 py-3 font-bold text-muted-foreground uppercase tracking-wider text-[10px]">Pricing</th>
-              <th className="px-4 py-3 font-bold text-muted-foreground uppercase tracking-wider text-[10px]">Validity</th>
-              <th className="px-4 py-3 font-bold text-muted-foreground uppercase tracking-wider text-[10px] text-right">Actions</th>
+              {["Offer Name", "Console", "Pricing", "Validity", "Actions"].map((h) => (
+                <th key={h} className="table-cell table-header-text">
+                  {h}
+                </th>
+              ))}
             </tr>
           </thead>
-          <tbody className="divide-y divide-border">
+          <tbody>
             {offers.map((offer: any) => {
               const Icon = getConsoleIcon(offer.console_type);
+              const isDeleting = deletingOfferId === offer.id;
               return (
-                <tr key={offer.id} className="hover:bg-muted/20 transition-colors group">
-                  <td className="px-4 py-3">
-                    <div className="font-bold text-foreground">{offer.offer_name}</div>
+                <tr key={offer.id} className="table-row">
+                  <td className="table-cell">
+                    <p className="body-text font-semibold">{offer.offer_name}</p>
                     {offer.is_currently_active && (
-                      <span className="text-[9px] font-black text-emerald-500 flex items-center gap-1 mt-1">
-                        <span className="w-1 h-1 bg-emerald-500 rounded-full animate-pulse" /> LIVE NOW
+                      <span className="flex items-center gap-1 text-emerald-400 text-[10px] font-bold mt-0.5">
+                        <span className="w-1 h-1 bg-emerald-400 rounded-full animate-pulse" />
+                        LIVE NOW
                       </span>
                     )}
                   </td>
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-2 text-muted-foreground font-medium">
-                      <Icon className="w-4 h-4 text-blue-500" />
-                      {offer.console_type}
+                  <td className="table-cell">
+                    <div className="flex items-center gap-2 body-text-muted">
+                      <Icon className="icon-md text-blue-400" />
+                      <span>{offer.console_type}</span>
                     </div>
                   </td>
-                  <td className="px-4 py-3">
+                  <td className="table-cell">
                     <div className="flex items-center gap-2">
-                      <span className="font-black text-blue-600">₹{offer.offered_price}</span>
-                      <span className="text-xs text-muted-foreground line-through opacity-60">₹{offer.default_price}</span>
-                      <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-1 rounded">{offer.discount_percentage}%</span>
+                      <span className="stat-value text-blue-400">₹{offer.offered_price}</span>
+                      <span className="body-text-muted line-through">₹{offer.default_price}</span>
+                      <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded">
+                        {offer.discount_percentage}%
+                      </span>
                     </div>
                   </td>
-                  <td className="px-4 py-3">
-                    <div className="space-y-0.5 text-[11px] text-muted-foreground">
-                      <div className="flex items-center gap-1"><Calendar className="w-3 h-3" /> {offer.start_date}</div>
-                      <div className="flex items-center gap-1"><Clock className="w-3 h-3" /> {offer.start_time} - {offer.end_time}</div>
+                  <td className="table-cell">
+                    <div className="space-y-0.5 body-text-muted">
+                      <div className="flex items-center gap-1.5">
+                        <Calendar className="icon-md shrink-0" />
+                        <span>{offer.start_date}</span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <Clock className="icon-md shrink-0" />
+                        <span>{offer.start_time} - {offer.end_time}</span>
+                      </div>
                     </div>
                   </td>
-                  <td className="px-4 py-3 text-right">
-                    <div className="flex justify-end gap-1">
-                      <Button variant="ghost" size="icon" onClick={() => onEdit(offer)} className="h-8 w-8 hover:bg-emerald-50">
-                        <Pencil className="w-4 h-4 text-emerald-600" />
-                      </Button>
-                      <Button variant="ghost" size="icon" onClick={() => onDelete(offer.id)} className="h-8 w-8 hover:bg-destructive/10">
-                        <Trash2 className="w-4 h-4 text-destructive" />
-                      </Button>
+                  <td className="table-cell">
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => onEdit(offer)}
+                        className="btn-icon hover:bg-emerald-500/10"
+                        title="Edit"
+                      >
+                        <Pencil className="w-3.5 h-3.5 text-emerald-400" />
+                      </button>
+                      <button
+                        onClick={() => onDelete(offer.id)}
+                        disabled={isDeleting}
+                        className="btn-icon hover:bg-destructive/10 disabled:opacity-50"
+                        title="Delete"
+                      >
+                        {isDeleting ? (
+                          <Loader2 className="w-3.5 h-3.5 text-destructive animate-spin" />
+                        ) : (
+                          <Trash2 className="w-3.5 h-3.5 text-destructive" />
+                        )}
+                      </button>
                     </div>
                   </td>
                 </tr>
-              )
+              );
             })}
           </tbody>
         </table>
