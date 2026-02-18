@@ -4,18 +4,15 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { DashboardContent } from "../../components/dashboard-content"
 import { DashboardLayout } from "../../(layout)/dashboard-layout"
 import RapidBookings from "../../components/rapid-bookings"
-import { TopBar } from "../../components/top-bars"
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { motion } from "framer-motion"
-import { Gamepad2, Zap } from 'lucide-react'
-import { SubscriptionGuard } from "../../components/SubscriptionGuard"
+import { Gamepad2 } from 'lucide-react'
 
 export default function DashboardPage1() {
   const [activeTab, setActiveTab] = useState("gaming-cafe")
 
   return (
-    <SubscriptionGuard>
     <DashboardLayout>
       <div className="flex-1 min-h-screen bg-background">
         <motion.div
@@ -25,7 +22,6 @@ export default function DashboardPage1() {
           className="h-full"
         >
           <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full">
-            {/* Tab Content */}
             <div className="flex-1">
               <TabsContent value="gaming-cafe" className="mt-0 h-full border-0 p-0">
                 <motion.div
@@ -51,10 +47,9 @@ export default function DashboardPage1() {
                         <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-2">Rapid Booking</h1>
                         <p className="text-muted-foreground">Quick booking management for gaming sessions</p>
                       </div>
-                      {/* Gaming Cafe Button */}
                       <button
                         onClick={() => setActiveTab("gaming-cafe")}
-                        className="bg-blue-600 hover:bg-blue-600 text-white px-4 py-2 rounded-lg font-medium transition-colors duration-200 flex items-center gap-2"
+                        className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors duration-200 flex items-center gap-2"
                       >
                         <Gamepad2 className="w-4 h-4" />
                         Gaming Cafe
@@ -69,6 +64,5 @@ export default function DashboardPage1() {
         </motion.div>
       </div>
     </DashboardLayout>
-    </SubscriptionGuard>
   )
 }
