@@ -1,10 +1,11 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter, useParams, useSearchParams } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import {
-  ChevronRight, Home, Search, Trophy, Users, Download,
-  CheckCircle2, XCircle, Clock, CreditCard,
+  ChevronRight, Home, Search, Trophy,
+  Users, Download, CheckCircle2, XCircle,
+  Clock, CreditCard, ImageIcon,
 } from 'lucide-react';
 import { useEventsToken } from '@/hooks/useEventsToken';
 import {
@@ -15,10 +16,10 @@ import {
 import { jwtDecode } from 'jwt-decode';
 import { DashboardLayout } from '@/app/(layout)/dashboard-layout';
 
-const VENDOR_ID = 14; // TODO: replace with auth context
 
-// ─── Badge configs ────────────────────────────────────────────────────────────
-const STATUS_BADGE: Record<EventStatus, string> = {
+
+// ─── Badge maps ───────────────────────────────────────────────────────────────
+const EVENT_STATUS_BADGE: Record<EventStatus, string> = {
   draft:     'bg-gray-500/20 text-gray-300 border border-gray-500/30',
   published: 'bg-blue-500/20 text-blue-300 border border-blue-500/30',
   ongoing:   'bg-green-500/20 text-green-300 border border-green-500/30',
@@ -34,26 +35,25 @@ const REG_BADGE: Record<RegistrationStatus, string> = {
 };
 
 const PAY_BADGE: Record<PaymentStatus, string> = {
-  paid:      'bg-green-500/20 text-green-400',
-  pending:   'bg-yellow-500/20 text-yellow-400',
-  failed:    'bg-red-500/20 text-red-400',
-  refunded:  'bg-purple-500/20 text-purple-400',
+  paid:     'bg-green-500/20 text-green-400',
+  pending:  'bg-yellow-500/20 text-yellow-400',
+  failed:   'bg-red-500/20 text-red-400',
+  refunded: 'bg-purple-500/20 text-purple-400',
 };
 
 const REG_ICON: Record<RegistrationStatus, React.ReactNode> = {
   confirmed: <CheckCircle2 className="w-3 h-3" />,
-  pending:   <Clock className="w-3 h-3" />,
-  rejected:  <XCircle className="w-3 h-3" />,
-  canceled:  <XCircle className="w-3 h-3" />,
+  pending:   <Clock        className="w-3 h-3" />,
+  rejected:  <XCircle      className="w-3 h-3" />,
+  canceled:  <XCircle      className="w-3 h-3" />,
 };
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 export default function TournamentDetailPage() {
-  const router       = useRouter();
-  const params       = useParams();
-  const searchParams = useSearchParams();
-  const eventId      = params.id as string;
-   const [vendorId, setVendorId] = useState<number | null>(null)
+  const router  = useRouter();
+  const params  = useParams();
+  const eventId = params.id as string;
+ const [vendorId, setVendorId] = useState<number | null>(null)
   const { token, loading: tokenLoading } = useEventsToken(vendorId);
 
   const [event,         setEvent]         = useState<EventItem | null>(null);
@@ -61,12 +61,10 @@ export default function TournamentDetailPage() {
   const [loadingEvent,  setLoadingEvent]  = useState(true);
   const [loadingRegs,   setLoadingRegs]   = useState(true);
   const [search,        setSearch]        = useState('');
-  const [regFilter,     setRegFilter]     = useState<string>(
-    searchParams.get('tab') === 'registrations' ? '' : ''
-  );
+  const [regFilter,     setRegFilter]     = useState('');
 
-
-      useEffect(() => {
+  // Fetch event
+        useEffect(() => {
       const token = localStorage.getItem("jwtToken")
       if (token) {
         try {
@@ -78,7 +76,6 @@ export default function TournamentDetailPage() {
         }
       }
     }, [])
-  // Fetch event from list (no separate detail endpoint visible yet)
   useEffect(() => {
     if (!token) return;
     listEvents(token)
@@ -96,14 +93,17 @@ export default function TournamentDetailPage() {
       .finally(() => setLoadingRegs(false));
   }, [token, eventId]);
 
+  // Helpers
   const fmt = (iso: string) =>
-    new Date(iso).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+    new Date(iso).toLocaleDateString('en-US', {
+      month: 'long', day: 'numeric', year: 'numeric',
+    });
 
   const fmtShort = (iso: string) =>
     new Date(iso).toLocaleDateString('en-CA'); // YYYY-MM-DD
 
   const filteredRegs = registrations.filter((r) => {
-    const name = (r.team_name ?? r.contact_name ?? r.team_id ?? '').toLowerCase();
+    const name        = (r.team_name ?? r.contact_name ?? '').toLowerCase();
     const matchSearch = name.includes(search.toLowerCase());
     const matchStatus = regFilter ? r.status === regFilter : true;
     return matchSearch && matchStatus;
@@ -116,10 +116,13 @@ export default function TournamentDetailPage() {
 
   // CSV export
   const exportCSV = () => {
-    const headers = ['Team/Player', 'Contact', 'Email', 'Phone', 'Registered', 'Status', 'Payment', 'Waiver'];
+    const headers = [
+      'Team/Player','Contact','Email','Phone',
+      'Registered','Status','Payment','Waiver',
+    ];
     const rows = registrations.map((r) => [
       r.team_name ?? r.contact_name ?? r.team_id,
-      r.contact_name ?? '',
+      r.contact_name  ?? '',
       r.contact_email ?? '',
       r.contact_phone ?? '',
       fmtShort(r.created_at),
@@ -127,17 +130,17 @@ export default function TournamentDetailPage() {
       r.payment_status,
       r.waiver_signed ? 'Yes' : 'No',
     ]);
-    const csv = [headers, ...rows].map((row) => row.join(',')).join('\n');
+    const csv  = [headers, ...rows].map((row) => row.join(',')).join('\n');
     const blob = new Blob([csv], { type: 'text/csv' });
     const url  = URL.createObjectURL(blob);
     const a    = document.createElement('a');
-    a.href = url;
+    a.href     = url;
     a.download = `registrations-${eventId.slice(0, 8)}.csv`;
     a.click();
     URL.revokeObjectURL(url);
   };
 
-  /* ── Guards ──────────────────────────────────────── */
+  // ── Guards ────────────────────────────────────────
   if (tokenLoading || loadingEvent) return (
     <div className="page-container items-center justify-center">
       <div className="flex flex-col items-center gap-3">
@@ -152,7 +155,10 @@ export default function TournamentDetailPage() {
       <div className="content-card content-card-padding text-center max-w-sm">
         <Trophy className="w-10 h-10 text-muted-foreground/30 mx-auto mb-3" />
         <p className="body-text-muted mb-4">Tournament not found.</p>
-        <button className="btn-primary" onClick={() => router.push('/tournaments')}>
+        <button
+          className="btn-primary"
+          onClick={() => router.push('/tournaments')}
+        >
           Back to Tournaments
         </button>
       </div>
@@ -165,11 +171,17 @@ export default function TournamentDetailPage() {
 
       {/* ── Breadcrumb ────────────────────────────────── */}
       <nav className="flex items-center gap-1 body-text-muted mb-4 flex-shrink-0 flex-wrap">
-        <button onClick={() => router.push('/')} className="hover:text-foreground transition-colors flex items-center gap-1">
+        <button
+          onClick={() => router.push('/')}
+          className="hover:text-foreground transition-colors flex items-center gap-1"
+        >
           <Home className="icon-xs" /> Home
         </button>
         <ChevronRight className="icon-xs" />
-        <button onClick={() => router.push('/tournaments')} className="hover:text-foreground transition-colors">
+        <button
+          onClick={() => router.push('/tournaments')}
+          className="hover:text-foreground transition-colors"
+        >
           Tournaments
         </button>
         <ChevronRight className="icon-xs" />
@@ -180,9 +192,11 @@ export default function TournamentDetailPage() {
       <div className="page-header">
         <div className="page-title-section">
           <h1 className="page-title">{event.title}</h1>
-          <p className="page-subtitle">Manage tournament details, participants, and match results.</p>
+          <p className="page-subtitle">
+            Manage tournament details, participants, and registrations.
+          </p>
         </div>
-        <div className="page-actions flex-wrap">
+        <div className="page-actions">
           <button className="btn-secondary text-sm" onClick={exportCSV}>
             <Download className="icon-sm" /> Export CSV
           </button>
@@ -192,15 +206,31 @@ export default function TournamentDetailPage() {
       {/* ── Tournament Details Card ───────────────────── */}
       <div className="content-card content-card-padding mb-4 flex-shrink-0">
         <div className="flex flex-col md:flex-row gap-6">
-          {/* Thumbnail placeholder */}
-          <div className="w-full md:w-44 h-32 rounded-xl flex-shrink-0 bg-gradient-to-br from-blue-900/30 to-purple-900/30 border border-border flex items-center justify-center">
-            <Trophy className="w-10 h-10 text-blue-400/40" />
+          {/* Banner / thumbnail */}
+          <div className="w-full md:w-52 h-32 rounded-xl flex-shrink-0 overflow-hidden border border-border bg-gradient-to-br from-blue-900/20 to-purple-900/20 flex items-center justify-center">
+            {event.banner_image_url ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={event.banner_image_url}
+                alt={event.title}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="flex flex-col items-center gap-2 text-muted-foreground/40">
+                <ImageIcon className="w-8 h-8" />
+                <span className="text-xs">No banner</span>
+              </div>
+            )}
           </div>
-          {/* Info */}
+
+          {/* Info grid */}
           <div className="flex-1 min-w-0">
             <div className="flex items-center justify-between mb-4">
               <h2 className="section-title">Tournament Details</h2>
-              <span className={`text-xs font-semibold px-3 py-1 rounded-full ${STATUS_BADGE[event.status]}`}>
+              <span
+                className={`text-xs font-semibold px-3 py-1 rounded-full
+                  ${EVENT_STATUS_BADGE[event.status]}`}
+              >
                 {event.status.charAt(0).toUpperCase() + event.status.slice(1)}
               </span>
             </div>
@@ -214,7 +244,7 @@ export default function TournamentDetailPage() {
                 <p className="body-text font-medium text-sm">{fmt(event.end_at)}</p>
               </div>
               <div>
-                <p className="body-text-muted mb-1">Total Registrations</p>
+                <p className="body-text-muted mb-1">Registrations</p>
                 <p className="stat-value-large">{registrations.length}</p>
               </div>
               <div>
@@ -229,10 +259,10 @@ export default function TournamentDetailPage() {
       {/* ── Stat Pills ────────────────────────────────── */}
       <div className="stats-grid mb-4 flex-shrink-0">
         {[
-          { label: 'Total',     value: registrations.length, color: 'icon-blue',    icon: <Users className="icon-md text-blue-400" />     },
-          { label: 'Confirmed', value: confirmed,            color: 'icon-green',   icon: <CheckCircle2 className="icon-md text-green-400" /> },
-          { label: 'Pending',   value: pending,              color: 'icon-yellow',  icon: <Clock className="icon-md text-yellow-400" />    },
-          { label: 'Paid',      value: paid,                 color: 'icon-emerald', icon: <CreditCard className="icon-md text-emerald-400" /> },
+          { label: 'Total',     value: registrations.length, color: 'icon-blue',    icon: <Users        className="icon-md text-blue-400"    /> },
+          { label: 'Confirmed', value: confirmed,            color: 'icon-green',   icon: <CheckCircle2 className="icon-md text-green-400"   /> },
+          { label: 'Pending',   value: pending,              color: 'icon-yellow',  icon: <Clock        className="icon-md text-yellow-400"  /> },
+          { label: 'Paid',      value: paid,                 color: 'icon-emerald', icon: <CreditCard   className="icon-md text-emerald-400" /> },
         ].map(({ label, value, color, icon }) => (
           <div key={label} className="stat-card">
             <div className="stat-card-content">
@@ -252,7 +282,7 @@ export default function TournamentDetailPage() {
 
       {/* ── Registrations Table ───────────────────────── */}
       <div className="full-height-card flex flex-col">
-        {/* Table Header / Filters */}
+        {/* Table toolbar */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 border-b border-border flex-shrink-0">
           <div className="flex items-center gap-2">
             <Users className="icon-md text-muted-foreground" />
@@ -264,7 +294,6 @@ export default function TournamentDetailPage() {
             )}
           </div>
           <div className="flex gap-2 flex-wrap">
-            {/* Search */}
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 icon-sm text-muted-foreground" />
               <input
@@ -274,7 +303,6 @@ export default function TournamentDetailPage() {
                 onChange={(e) => setSearch(e.target.value)}
               />
             </div>
-            {/* Status filter */}
             <select
               className="select-field py-2 text-sm w-36"
               value={regFilter}
@@ -321,7 +349,7 @@ export default function TournamentDetailPage() {
                       <p className="body-text-muted">
                         {registrations.length === 0
                           ? 'No registrations yet for this tournament.'
-                          : 'No registrations match your search.'}
+                          : 'No registrations match your filters.'}
                       </p>
                     </div>
                   </td>
@@ -335,7 +363,9 @@ export default function TournamentDetailPage() {
                         {reg.team_name ?? reg.contact_name ?? '—'}
                       </p>
                       {reg.team_name && reg.contact_name && (
-                        <p className="text-xs text-muted-foreground">{reg.contact_name}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {reg.contact_name}
+                        </p>
                       )}
                     </td>
                     {/* Contact */}
@@ -350,28 +380,35 @@ export default function TournamentDetailPage() {
                         <span className="text-xs text-muted-foreground">—</span>
                       )}
                     </td>
-                    {/* Registered */}
+                    {/* Registered date */}
                     <td className="table-cell body-text-muted text-sm">
                       {fmtShort(reg.created_at)}
                     </td>
-                    {/* Status */}
+                    {/* Registration status */}
                     <td className="table-cell">
-                      <span className={`inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full ${REG_BADGE[reg.status]}`}>
+                      <span
+                        className={`inline-flex items-center gap-1.5 text-xs font-semibold
+                          px-2.5 py-1 rounded-full ${REG_BADGE[reg.status]}`}
+                      >
                         {REG_ICON[reg.status]}
                         {reg.status.charAt(0).toUpperCase() + reg.status.slice(1)}
                       </span>
                     </td>
-                    {/* Payment */}
+                    {/* Payment status */}
                     <td className="table-cell">
-                      <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${PAY_BADGE[reg.payment_status]}`}>
-                        {reg.payment_status.charAt(0).toUpperCase() + reg.payment_status.slice(1)}
+                      <span
+                        className={`text-xs font-semibold px-2.5 py-1 rounded-full
+                          ${PAY_BADGE[reg.payment_status]}`}
+                      >
+                        {reg.payment_status.charAt(0).toUpperCase() +
+                          reg.payment_status.slice(1)}
                       </span>
                     </td>
                     {/* Waiver */}
                     <td className="table-cell text-center">
                       {reg.waiver_signed
                         ? <CheckCircle2 className="w-4 h-4 text-green-400 mx-auto" />
-                        : <XCircle     className="w-4 h-4 text-red-400/50 mx-auto"   />
+                        : <XCircle      className="w-4 h-4 text-red-400/50 mx-auto"  />
                       }
                     </td>
                   </tr>

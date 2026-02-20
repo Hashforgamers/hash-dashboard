@@ -1,4 +1,5 @@
 'use client';
+
 import { useState, useEffect, useCallback } from 'react';
 import { getVendorJwt } from '@/lib/event-api';
 
@@ -30,7 +31,6 @@ export function useEventsToken(vendorId: number | null) {
     if (!vendorId) return;
     const stored = localStorage.getItem(LS_TOKEN);
     const exp    = localStorage.getItem(LS_EXP);
-    // reuse if not expired
     if (stored && exp && Date.now() < Number(exp)) {
       setToken(stored);
       setLoading(false);
