@@ -17,7 +17,8 @@ import {
   Store ,
    Ticket,
    ShoppingBag,
-   Laptop
+   Laptop,
+   Trophy
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useState } from "react";
@@ -66,6 +67,7 @@ export function MainNav({
              { href: "/pass", icon:  Ticket, label: "Manage Passes" },
              {href: "/store", icon: ShoppingBag , label:"Store"},
              {href: "/games", icon: Gamepad2 , label:"Games"},
+             {href: "/tournaments", icon: Trophy , label:"Tournaments"},
            
         ].map(({ href, icon: Icon, label }) => (
           <Link
