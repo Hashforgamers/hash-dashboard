@@ -11,16 +11,61 @@ import { Store, Lock, Unlock, Plus, X } from "lucide-react"
 import { LOGIN_URL, VENDOR_ONBOARD_URL } from "@/src/config/env"
 import { toast } from "sonner"
 
+// ✅ Indian states list
+const INDIA_STATES = [
+  "Andhra Pradesh",
+  "Arunachal Pradesh",
+  "Assam",
+  "Bihar",
+  "Chhattisgarh",
+  "Goa",
+  "Gujarat",
+  "Haryana",
+  "Himachal Pradesh",
+  "Jharkhand",
+  "Karnataka",
+  "Kerala",
+  "Madhya Pradesh",
+  "Maharashtra",
+  "Manipur",
+  "Meghalaya",
+  "Mizoram",
+  "Nagaland",
+  "Odisha",
+  "Punjab",
+  "Rajasthan",
+  "Sikkim",
+  "Tamil Nadu",
+  "Telangana",
+  "Tripura",
+  "Uttar Pradesh",
+  "Uttarakhand",
+  "West Bengal",
+  "Andaman and Nicobar Islands",
+  "Chandigarh",
+  "Dadra and Nagar Haveli and Daman and Diu",
+  "Delhi",
+  "Jammu and Kashmir",
+  "Ladakh",
+  "Lakshadweep",
+  "Puducherry",
+]
+
 // ✅ UPDATED: Use abbreviated day names to match backend
 const DAYS_OF_WEEK = [
-  { key: 'mon', label: 'Monday' },
-  { key: 'tue', label: 'Tuesday' },
-  { key: 'wed', label: 'Wednesday' },
-  { key: 'thu', label: 'Thursday' },
-  { key: 'fri', label: 'Friday' },
-  { key: 'sat', label: 'Saturday' },
-  { key: 'sun', label: 'Sunday' }
+  { key: "mon", label: "Monday" },
+  { key: "tue", label: "Tuesday" },
+  { key: "wed", label: "Wednesday" },
+  { key: "thu", label: "Thursday" },
+  { key: "fri", label: "Friday" },
+  { key: "sat", label: "Saturday" },
+  { key: "sun", label: "Sunday" },
 ]
+
+// Allowed console types for available_games
+const CONSOLE_TYPES = ["pc", "ps5", "xbox"] as const
+
+type ConsoleType = (typeof CONSOLE_TYPES)[number]
 
 export default function SelectCafePage() {
   const [cafes, setCafes] = useState<{ id: string; name: string; type: string }[]>([])
@@ -59,7 +104,7 @@ export default function SelectCafePage() {
     },
     timing: {} as Record<string, { open: string; close: string; closed: boolean }>,
     opening_day: new Date().toISOString().split("T")[0],
-    available_games: [{ name: "", total_slot: 0, rate_per_slot: 0, gaming_type: "PC" }],
+    available_games: [{ name: "pc", total_slot: 0, rate_per_slot: 0, gaming_type: "PC" as ConsoleType }],
     document_submitted: {
       business_registration: false,
       owner_identification_proof: false,
@@ -98,7 +143,7 @@ export default function SelectCafePage() {
   useEffect(() => {
     const userEmail = localStorage.getItem("vendor_account_email") || localStorage.getItem("vendor_login_email")
 
-    // Auto-fill parent email
+    // Auto-fill parent email AND lock it
     if (userEmail) {
       setFormData((prev) => ({
         ...prev,
@@ -132,20 +177,16 @@ export default function SelectCafePage() {
 
   const convertTo12HourFormat = (time24: string): string | null => {
     if (!time24 || time24 === "") return null
-
     try {
       const [hours, minutes] = time24.split(":")
       const hour = parseInt(hours, 10)
-
       if (isNaN(hour) || hour < 0 || hour > 23) {
         console.error("Invalid hour:", hours)
         return null
       }
-
       const period = hour >= 12 ? "PM" : "AM"
       const hour12 = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour
       const paddedHour = hour12.toString().padStart(2, "0")
-
       return `${paddedHour}:${minutes} ${period}`
     } catch (error) {
       console.error("Error converting time:", time24, error)
@@ -158,11 +199,30 @@ export default function SelectCafePage() {
     setError(null)
 
     try {
-      // Validation
+      // Basic validation
       if (!formData.cafe_name || !formData.owner_name || !formData.contact_info.email) {
         toast.error("Please fill all required fields")
         setIsSubmitting(false)
         return
+      }
+
+      // Validate slots and rate_per_slot (non-negative integers)
+      for (const game of formData.available_games) {
+        if (!CONSOLE_TYPES.includes(game.name as ConsoleType)) {
+          toast.error("Available console must be one of: pc, ps5, xbox")
+          setIsSubmitting(false)
+          return
+        }
+        if (game.total_slot < 0 || !Number.isInteger(game.total_slot)) {
+          toast.error("Total slots must be a non-negative whole number")
+          setIsSubmitting(false)
+          return
+        }
+        if (game.rate_per_slot < 0 || !Number.isInteger(game.rate_per_slot)) {
+          toast.error("Rate per slot must be a non-negative whole number")
+          setIsSubmitting(false)
+          return
+        }
       }
 
       // ✅ UPDATED: Convert timing with abbreviated day names
@@ -203,7 +263,7 @@ export default function SelectCafePage() {
       if (response.ok) {
         toast.success("Cafe onboarded successfully!")
         setShowOnboardDialog(false)
-        
+
         // ✅ NEW: Fetch updated vendor list from backend
         try {
           const loginResponse = await fetch(`${LOGIN_URL}/api/login`, {
@@ -213,11 +273,11 @@ export default function SelectCafePage() {
             },
             body: JSON.stringify({
               email: formData.vendor_account_email,
-              password: formData.vendor_password || "temp", // This won't work for login but we just need vendor list
+              password: formData.vendor_password || "temp",
               parent_type: "vendor",
             }),
           })
-          
+
           if (loginResponse.ok) {
             const loginData = await loginResponse.json()
             if (loginData.vendors && Array.isArray(loginData.vendors)) {
@@ -228,12 +288,11 @@ export default function SelectCafePage() {
         } catch (err) {
           console.error("Failed to refresh vendor list:", err)
         }
-        
+
         // ✅ FALLBACK: Force reload after 2 seconds if API call fails
         setTimeout(() => {
           window.location.reload()
         }, 2000)
-        
       } else {
         toast.error(result.message || "Onboarding failed")
         setError(result.message || "Onboarding failed")
@@ -489,7 +548,7 @@ export default function SelectCafePage() {
             {/* Basic Info */}
             <div className="space-y-4">
               <h3 className="text-xl font-semibold text-white">Basic Information</h3>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Label className="text-slate-300">Cafe Name *</Label>
@@ -512,12 +571,14 @@ export default function SelectCafePage() {
                 </div>
 
                 <div>
-                  <Label className="text-slate-300">Parent Email (Auto-filled or enter manually)</Label>
+                  <Label className="text-slate-300">
+                    Parent Email (Auto-filled, cannot be changed)
+                  </Label>
                   <Input
                     value={formData.vendor_account_email}
-                    onChange={(e) => setFormData({ ...formData, vendor_account_email: e.target.value })}
-                    className="bg-slate-800/50 border-slate-600 text-white"
-                    placeholder="Enter parent email"
+                    disabled
+                    className="bg-slate-800/50 border-slate-600 text-slate-300 cursor-not-allowed opacity-80"
+                    placeholder="Parent email"
                   />
                 </div>
 
@@ -525,7 +586,12 @@ export default function SelectCafePage() {
                   <Label className="text-slate-300">Vendor PIN (Optional - 4 digits)</Label>
                   <Input
                     value={formData.vendor_pin}
-                    onChange={(e) => setFormData({ ...formData, vendor_pin: e.target.value.replace(/\D/g, "").slice(0, 4) })}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        vendor_pin: e.target.value.replace(/\D/g, "").slice(0, 4),
+                      })
+                    }
                     className="bg-slate-800/50 border-slate-600 text-white"
                     placeholder="Leave empty for auto-generation"
                     maxLength={4}
@@ -548,7 +614,7 @@ export default function SelectCafePage() {
             {/* Contact Info */}
             <div className="space-y-4">
               <h3 className="text-xl font-semibold text-white">Contact Information</h3>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <Label className="text-slate-300">Email *</Label>
@@ -556,7 +622,10 @@ export default function SelectCafePage() {
                     type="email"
                     value={formData.contact_info.email}
                     onChange={(e) =>
-                      setFormData({ ...formData, contact_info: { ...formData.contact_info, email: e.target.value } })
+                      setFormData({
+                        ...formData,
+                        contact_info: { ...formData.contact_info, email: e.target.value },
+                      })
                     }
                     className="bg-slate-800/50 border-slate-600 text-white"
                     placeholder="cafe@example.com"
@@ -568,7 +637,10 @@ export default function SelectCafePage() {
                   <Input
                     value={formData.contact_info.phone}
                     onChange={(e) =>
-                      setFormData({ ...formData, contact_info: { ...formData.contact_info, phone: e.target.value } })
+                      setFormData({
+                        ...formData,
+                        contact_info: { ...formData.contact_info, phone: e.target.value },
+                      })
                     }
                     className="bg-slate-800/50 border-slate-600 text-white"
                     placeholder="1234567890"
@@ -580,7 +652,10 @@ export default function SelectCafePage() {
                   <Input
                     value={formData.contact_info.website}
                     onChange={(e) =>
-                      setFormData({ ...formData, contact_info: { ...formData.contact_info, website: e.target.value } })
+                      setFormData({
+                        ...formData,
+                        contact_info: { ...formData.contact_info, website: e.target.value },
+                      })
                     }
                     className="bg-slate-800/50 border-slate-600 text-white"
                     placeholder="https://example.com"
@@ -592,14 +667,17 @@ export default function SelectCafePage() {
             {/* Physical Address */}
             <div className="space-y-4">
               <h3 className="text-xl font-semibold text-white">Physical Address</h3>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="md:col-span-2">
                   <Label className="text-slate-300">Street Address *</Label>
                   <Input
                     value={formData.physicalAddress.street}
                     onChange={(e) =>
-                      setFormData({ ...formData, physicalAddress: { ...formData.physicalAddress, street: e.target.value } })
+                      setFormData({
+                        ...formData,
+                        physicalAddress: { ...formData.physicalAddress, street: e.target.value },
+                      })
                     }
                     className="bg-slate-800/50 border-slate-600 text-white"
                     placeholder="Street address"
@@ -611,7 +689,10 @@ export default function SelectCafePage() {
                   <Input
                     value={formData.physicalAddress.city}
                     onChange={(e) =>
-                      setFormData({ ...formData, physicalAddress: { ...formData.physicalAddress, city: e.target.value } })
+                      setFormData({
+                        ...formData,
+                        physicalAddress: { ...formData.physicalAddress, city: e.target.value },
+                      })
                     }
                     className="bg-slate-800/50 border-slate-600 text-white"
                     placeholder="City"
@@ -620,14 +701,25 @@ export default function SelectCafePage() {
 
                 <div>
                   <Label className="text-slate-300">State *</Label>
-                  <Input
+                  <select
                     value={formData.physicalAddress.state}
                     onChange={(e) =>
-                      setFormData({ ...formData, physicalAddress: { ...formData.physicalAddress, state: e.target.value } })
+                      setFormData({
+                        ...formData,
+                        physicalAddress: { ...formData.physicalAddress, state: e.target.value },
+                      })
                     }
-                    className="bg-slate-800/50 border-slate-600 text-white"
-                    placeholder="State"
-                  />
+                    className="w-full rounded-md bg-slate-800/50 border border-slate-600 text-white px-3 py-2 text-sm"
+                  >
+                    <option value="" disabled>
+                      Select state
+                    </option>
+                    {INDIA_STATES.map((st) => (
+                      <option key={st} value={st}>
+                        {st}
+                      </option>
+                    ))}
+                  </select>
                 </div>
 
                 <div>
@@ -635,7 +727,10 @@ export default function SelectCafePage() {
                   <Input
                     value={formData.physicalAddress.zipCode}
                     onChange={(e) =>
-                      setFormData({ ...formData, physicalAddress: { ...formData.physicalAddress, zipCode: e.target.value } })
+                      setFormData({
+                        ...formData,
+                        physicalAddress: { ...formData.physicalAddress, zipCode: e.target.value },
+                      })
                     }
                     className="bg-slate-800/50 border-slate-600 text-white"
                     placeholder="123456"
@@ -647,7 +742,10 @@ export default function SelectCafePage() {
                   <Input
                     value={formData.physicalAddress.country}
                     onChange={(e) =>
-                      setFormData({ ...formData, physicalAddress: { ...formData.physicalAddress, country: e.target.value } })
+                      setFormData({
+                        ...formData,
+                        physicalAddress: { ...formData.physicalAddress, country: e.target.value },
+                      })
                     }
                     className="bg-slate-800/50 border-slate-600 text-white"
                     placeholder="India"
@@ -659,7 +757,7 @@ export default function SelectCafePage() {
             {/* Business Registration */}
             <div className="space-y-4">
               <h3 className="text-xl font-semibold text-white">Business Registration</h3>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <Label className="text-slate-300">Registration Number *</Label>
@@ -720,14 +818,14 @@ export default function SelectCafePage() {
             {/* ✅ UPDATED: Timing with abbreviated day names */}
             <div className="space-y-4">
               <h3 className="text-xl font-semibold text-white">Operating Hours</h3>
-              
+
               <div className="space-y-3">
                 {DAYS_OF_WEEK.map((day) => (
                   <div key={day.key} className="flex items-center gap-4">
                     <div className="w-28">
                       <span className="text-slate-300">{day.label}</span>
                     </div>
-                    
+
                     <Checkbox
                       checked={formData.timing[day.key]?.closed || false}
                       onCheckedChange={(checked) =>
@@ -781,42 +879,54 @@ export default function SelectCafePage() {
               </div>
             </div>
 
-            {/* Available Games */}
+            {/* Available Consoles (Available Games) */}
             <div className="space-y-4">
-              <h3 className="text-xl font-semibold text-white">Available Games</h3>
-              
-              {/* ✅ NEW: Console auto-creation info */}
+              <h3 className="text-xl font-semibold text-white">Available Consoles</h3>
+
+              {/* Info */}
               <div className="bg-green-900/20 border border-green-700/50 rounded p-3">
                 <p className="text-green-300 text-xs">
-                  <strong>Console Auto-Creation:</strong> Individual console records will be automatically created based on the number of slots. 
-                  For example, 5 PC slots will create PC-1, PC-2, PC-3, PC-4, PC-5.
+                  <strong>Console Auto-Creation:</strong> Individual console records will be automatically created based on
+                  the number of slots. For example, 5 PC slots will create PC-1, PC-2, PC-3, PC-4, PC-5.
                 </p>
               </div>
-              
+
               {formData.available_games.map((game, index) => (
                 <div key={index} className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
                   <div>
-                    <Label className="text-slate-300">Game Name *</Label>
-                    <Input
+                    <Label className="text-slate-300">Available Console *</Label>
+                    <select
                       value={game.name}
                       onChange={(e) => {
+                        const value = e.target.value as ConsoleType
                         const games = [...formData.available_games]
-                        games[index].name = e.target.value
+                        games[index].name = value
+                        games[index].gaming_type = value
                         setFormData({ ...formData, available_games: games })
                       }}
-                      className="bg-slate-800/50 border-slate-600 text-white"
-                      placeholder="pc, ps5, xbox, vr"
-                    />
+                      className="w-full rounded-md bg-slate-800/50 border border-slate-600 text-white px-3 py-2 text-sm"
+                    >
+                      <option value="" disabled>
+                        Select console
+                      </option>
+                      {CONSOLE_TYPES.map((ct) => (
+                        <option key={ct} value={ct}>
+                          {ct.toUpperCase()}
+                        </option>
+                      ))}
+                    </select>
                   </div>
 
                   <div>
                     <Label className="text-slate-300">Total Slots *</Label>
                     <Input
                       type="number"
+                      min={0}
                       value={game.total_slot}
                       onChange={(e) => {
+                        const val = e.target.value === "" ? 0 : Math.max(0, parseInt(e.target.value, 10) || 0)
                         const games = [...formData.available_games]
-                        games[index].total_slot = parseInt(e.target.value) || 0
+                        games[index].total_slot = val
                         setFormData({ ...formData, available_games: games })
                       }}
                       className="bg-slate-800/50 border-slate-600 text-white"
@@ -828,10 +938,12 @@ export default function SelectCafePage() {
                     <Label className="text-slate-300">Rate per Slot *</Label>
                     <Input
                       type="number"
+                      min={0}
                       value={game.rate_per_slot}
                       onChange={(e) => {
+                        const val = e.target.value === "" ? 0 : Math.max(0, parseInt(e.target.value, 10) || 0)
                         const games = [...formData.available_games]
-                        games[index].rate_per_slot = parseInt(e.target.value) || 0
+                        games[index].rate_per_slot = val
                         setFormData({ ...formData, available_games: games })
                       }}
                       className="bg-slate-800/50 border-slate-600 text-white"
@@ -862,27 +974,25 @@ export default function SelectCafePage() {
                     ...formData,
                     available_games: [
                       ...formData.available_games,
-                      { name: "", total_slot: 0, rate_per_slot: 0, gaming_type: "PC" },
+                      { name: "pc", total_slot: 0, rate_per_slot: 0, gaming_type: "PC" as ConsoleType },
                     ],
                   })
                 }
                 className="bg-emerald-600 hover:bg-emerald-700"
               >
                 <Plus className="w-4 h-4 mr-2" />
-                Add Game
+                Add Console
               </Button>
             </div>
 
             {/* Documents */}
             <div className="space-y-4">
               <h3 className="text-xl font-semibold text-white">Documents</h3>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {Object.keys(documents).map((docType) => (
                   <div key={docType} className="space-y-2">
-                    <Label className="text-slate-300 capitalize">
-                      {docType.replace(/_/g, " ")}
-                    </Label>
+                    <Label className="text-slate-300 capitalize">{docType.replace(/_/g, " ")}</Label>
                     <div className="flex items-center gap-2">
                       <Input
                         type="file"
@@ -890,9 +1000,7 @@ export default function SelectCafePage() {
                         onChange={(e) => handleFileChange(docType, e.target.files?.[0] || null)}
                         className="bg-slate-800/50 border-slate-600 text-white file:bg-emerald-600 file:text-white file:border-0 file:rounded-lg file:px-4 file:py-2"
                       />
-                      {documents[docType] && (
-                        <span className="text-emerald-400 text-sm">✓</span>
-                      )}
+                      {documents[docType] && <span className="text-emerald-400 text-sm">✓</span>}
                     </div>
                   </div>
                 ))}
@@ -947,9 +1055,18 @@ export default function SelectCafePage() {
         }
 
         @keyframes shake {
-          0%, 100% { transform: translateX(0); }
-          20%, 60% { transform: translateX(-8px); }
-          40%, 80% { transform: translateX(8px); }
+          0%,
+          100% {
+            transform: translateX(0);
+          }
+          20%,
+          60% {
+            transform: translateX(-8px);
+          }
+          40%,
+          80% {
+            transform: translateX(8px);
+          }
         }
 
         .animate-shake {
