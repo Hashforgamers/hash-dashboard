@@ -5,8 +5,8 @@ const API_BASE = DASHBOARD_URL || 'http://localhost:5000';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-export type EventStatus = 'draft' | 'published' | 'ongoing' | 'completed' | 'canceled';
-export type PaymentStatus = 'pending' | 'paid' | 'failed' | 'refunded';
+export type EventStatus       = 'draft' | 'published' | 'ongoing' | 'completed' | 'canceled';
+export type PaymentStatus     = 'pending' | 'paid' | 'failed' | 'refunded';
 export type RegistrationStatus = 'pending' | 'confirmed' | 'rejected' | 'canceled';
 
 export interface EventPayload {
@@ -26,6 +26,8 @@ export interface EventPayload {
   visibility?: boolean;
   status?: EventStatus;
   qr_code_url?: string;
+  banner_image_url?: string;
+  banner_public_id?: string;
 }
 
 export interface EventItem {
@@ -34,13 +36,14 @@ export interface EventItem {
   status: EventStatus;
   start_at: string;
   end_at: string;
+  banner_image_url?: string | null;
 }
 
 export interface Registration {
   id: string;
   event_id: string;
   team_id: string;
-  team_name?: string;          // joined by API if available
+  team_name?: string | null;
   contact_name: string | null;
   contact_phone: string | null;
   contact_email: string | null;
@@ -51,9 +54,17 @@ export interface Registration {
   created_at: string;
 }
 
+export interface BannerUploadResult {
+  url: string;
+  public_id: string;
+}
+
 // ─── JWT ─────────────────────────────────────────────────────────────────────
 
-export async function getVendorJwt(vendorId: number, ttlMinutes = 480): Promise<string> {
+export async function getVendorJwt(
+  vendorId: number,
+  ttlMinutes = 480
+): Promise<string> {
   const res = await fetch(`${API_BASE}/api/vendor/events/getJwt`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -66,10 +77,16 @@ export async function getVendorJwt(vendorId: number, ttlMinutes = 480): Promise<
 
 // ─── Events ───────────────────────────────────────────────────────────────────
 
-export async function createEvent(token: string, payload: EventPayload): Promise<{ id: string }> {
+export async function createEvent(
+  token: string,
+  payload: EventPayload
+): Promise<{ id: string }> {
   const res = await fetch(`${API_BASE}/api/vendor/events/`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
     body: JSON.stringify(payload),
   });
   const data = await res.json();
@@ -77,8 +94,11 @@ export async function createEvent(token: string, payload: EventPayload): Promise
   return data;
 }
 
-export async function listEvents(token: string, status?: string): Promise<EventItem[]> {
-  const qs = status ? `?status=${status}` : '';
+export async function listEvents(
+  token: string,
+  status?: string
+): Promise<EventItem[]> {
+  const qs  = status ? `?status=${status}` : '';
   const res = await fetch(`${API_BASE}/api/vendor/events/${qs}`, {
     headers: { Authorization: `Bearer ${token}` },
   });
@@ -87,12 +107,70 @@ export async function listEvents(token: string, status?: string): Promise<EventI
   return data as EventItem[];
 }
 
+export async function updateEvent(
+  token: string,
+  eventId: string,
+  patch: Partial<EventPayload>
+): Promise<{ ok: boolean }> {
+  const res = await fetch(`${API_BASE}/api/vendor/events/${eventId}`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(patch),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Failed to update event');
+  return data;
+}
+
 // ─── Registrations ────────────────────────────────────────────────────────────
 
-export async function getRegistrations(token: string, eventId: string): Promise<Registration[]> {
-  const res = await fetch(`${API_BASE}/api/vendor/events/${eventId}/registrations`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+export async function getRegistrations(
+  token: string,
+  eventId: string
+): Promise<Registration[]> {
+  const res = await fetch(
+    `${API_BASE}/api/vendor/events/${eventId}/registrations`,
+    { headers: { Authorization: `Bearer ${token}` } }
+  );
   if (!res.ok) return [];
   return res.json() as Promise<Registration[]>;
+}
+
+// ─── Banner (Cloudinary) ──────────────────────────────────────────────────────
+
+export async function uploadEventBanner(
+  token: string,
+  imageFile: File,
+  eventTitle: string
+): Promise<BannerUploadResult> {
+  const formData = new FormData();
+  formData.append('image', imageFile);
+  formData.append('event_title', eventTitle);
+
+  // ⚠️ No Content-Type header — browser sets multipart boundary automatically
+  const res = await fetch(`${API_BASE}/api/vendor/events/upload-banner`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}` },
+    body: formData,
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Banner upload failed');
+  return data as BannerUploadResult;
+}
+
+export async function deleteEventBanner(
+  token: string,
+  publicId: string
+): Promise<void> {
+  await fetch(`${API_BASE}/api/vendor/events/delete-banner`, {
+    method: 'DELETE',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ public_id: publicId }),
+  });
 }
