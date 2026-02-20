@@ -245,7 +245,7 @@ export function DashboardContent({ activeTab, setActiveTab }: DashboardContentPr
       ) : (
         <div className="h-screen bg-background text-foreground p-2 sm:p-4 md:p-6 flex flex-col">
 
-          {/* ✅ Subscription expired banner */}
+          {/* ✅ Subscription expired banner
           {isLocked && (
             <motion.div
               initial={{ opacity: 0, y: -10 }}
@@ -265,7 +265,7 @@ export function DashboardContent({ activeTab, setActiveTab }: DashboardContentPr
                 Renew Now →
               </button>
             </motion.div>
-          )}
+          )}  */}
 
           {/* Header */}
           <motion.div
