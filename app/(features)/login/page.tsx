@@ -24,12 +24,11 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Loader2, Shield, Gamepad2, Lock, Mail } from 'lucide-react';
+import { Loader2, Shield, Gamepad2, Lock, Mail } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
 import { LOGIN_URL } from "../../../src/config/env";
 import { useTheme } from "next-themes";
-
 
 const formSchema = z.object({
   email: z.string().email({ message: "Invalid email address" }),
@@ -40,7 +39,6 @@ const formSchema = z.object({
   parent_type: z.string().min(1, { message: "Parent type is required" }),
 });
 
-
 export default function LoginPage() {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -50,24 +48,25 @@ export default function LoginPage() {
       parent_type: "vendor",
     },
   });
+
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [loginError, setLoginError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const lastAttemptRef = useRef(0);
-  const { resolvedTheme } = useTheme(); // Use resolvedTheme instead of theme
-  const [mounted, setMounted] = useState(false); // Add mounted state
+  const { resolvedTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
 
-  // Set mounted to true after component mounts on client
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  function createDummyJWT(identity: { id: number; type: string; email: string }) {
-    const header = {
-      alg: "HS256",
-      typ: "JWT",
-    };
+  function createDummyJWT(identity: {
+    id: number;
+    type: string;
+    email: string;
+  }) {
+    const header = { alg: "HS256", typ: "JWT" };
     const payload = {
       ...identity,
       iat: Math.floor(Date.now() / 1000),
@@ -81,15 +80,10 @@ export default function LoginPage() {
     }
     const encodedHeader = base64Encode(header);
     const encodedPayload = base64Encode(payload);
-    const signature = "dummy_signature";
-    return `${encodedHeader}.${encodedPayload}.${signature}`;
+    return `${encodedHeader}.${encodedPayload}.dummy_signature`;
   }
 
-  const identity = {
-    id: -1,
-    type: "vendor",
-    email: "dummy@hash.com",
-  };
+  const identity = { id: -1, type: "vendor", email: "dummy@hash.com" };
 
   const clearSessionData = () => {
     try {
@@ -103,7 +97,12 @@ export default function LoginPage() {
     }
   };
 
-  const fetchWithRetry = async (url: string, options: RequestInit, maxRetries = 3) => {
+  // ✅ Only retries on actual network/timeout errors, NOT on 4xx auth failures
+  const fetchWithRetry = async (
+    url: string,
+    options: RequestInit,
+    maxRetries = 3
+  ) => {
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       const controller = new AbortController();
       const timeout = attempt === 1 ? 45000 : 20000;
@@ -113,7 +112,7 @@ export default function LoginPage() {
         if (attempt === 1) {
           toast.info("Connecting to server... This may take up to 30 seconds.", {
             duration: 8000,
-            id: "server-connecting"
+            id: "server-connecting",
           });
         }
 
@@ -123,13 +122,19 @@ export default function LoginPage() {
           headers: {
             ...options.headers,
             "Cache-Control": "no-cache, no-store, must-revalidate",
-            "Pragma": "no-cache",
-            "Expires": "0",
+            Pragma: "no-cache",
+            Expires: "0",
           },
         });
 
         clearTimeout(timeoutId);
         toast.dismiss("server-connecting");
+
+        // ✅ Don't retry on 4xx (auth/client errors) — only on 5xx or network issues
+        if (response.status >= 400 && response.status < 500) {
+          return response;
+        }
+
         return response;
       } catch (error) {
         clearTimeout(timeoutId);
@@ -138,10 +143,11 @@ export default function LoginPage() {
         if (attempt === maxRetries) throw error;
 
         const delay = attempt === 1 ? 8000 : 3000;
-        toast.info(`Connection failed. Retrying in ${delay/1000} seconds...`, {
-          duration: delay - 500
-        });
-        await new Promise(resolve => setTimeout(resolve, delay));
+        toast.info(
+          `Connection failed. Retrying in ${delay / 1000} seconds...`,
+          { duration: delay - 500 }
+        );
+        await new Promise((resolve) => setTimeout(resolve, delay));
       }
     }
   };
@@ -170,26 +176,44 @@ export default function LoginPage() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Accept": "application/json",
+          Accept: "application/json",
         },
         body: JSON.stringify({
           email: values.email,
           password: values.password,
           parent_type: "vendor",
-          timestamp: timestamp,
+          timestamp,
         }),
       });
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status} ${response.statusText}`);
+      // ✅ Always parse the JSON body first, regardless of HTTP status
+      let result: any = {};
+      try {
+        result = await response!.json();
+      } catch {
+        throw new Error("Server returned an unexpected response.");
       }
 
-      const result = await response.json();
+      // ✅ Handle 4xx errors: use server's message directly (e.g. "Invalid password")
+      if (!response!.ok) {
+        const message =
+          result.message ||
+          result.error ||
+          (response!.status === 401
+            ? "Invalid email or password."
+            : response!.status === 403
+            ? "Access denied."
+            : `Login failed (${response!.status}). Please try again.`);
+        setLoginError(message);
+        toast.error(message);
+        return; // ✅ Return early, don't fall into catch block
+      }
 
+      // ✅ Handle 200 OK with status field in body
       if (result.status === "success") {
         const vendors = result.vendors;
         if (Array.isArray(vendors) && vendors.length > 0) {
-          await new Promise(resolve => setTimeout(resolve, 100));
+          await new Promise((resolve) => setTimeout(resolve, 100));
 
           localStorage.setItem("vendors", JSON.stringify(vendors));
           localStorage.setItem("vendor_login_email", values.email);
@@ -205,25 +229,40 @@ export default function LoginPage() {
           window.location.replace("/select-cafe");
         } else {
           toast.error("No vendors found for this account.");
-          return;
         }
       } else {
-        const message = result.message || "Login failed";
+        // ✅ Server returned 200 but status !== "success" (e.g. custom error format)
+        const message = result.message || "Login failed. Please try again.";
         setLoginError(message);
         toast.error(message);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Login error:", error);
+
+      // ✅ Only truly unexpected/network errors reach here now
       let errorMessage = "Failed to submit the form. Please try again.";
 
-      if (error.name === 'AbortError') {
-        errorMessage = "Server is taking too long to respond. Please try again in a moment.";
-      } else if (error.message.includes('503') || error.message.includes('502')) {
+      if (error.name === "AbortError") {
+        errorMessage =
+          "Server is taking too long to respond. Please try again in a moment.";
+      } else if (
+        error.message?.includes("503") ||
+        error.message?.includes("502")
+      ) {
         errorMessage = "Server is starting up. Please try again in a moment.";
-      } else if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
-        errorMessage = "Network connection issue. Please check your internet connection.";
-      } else if (error.message.includes('SSL') || error.message.includes('certificate')) {
+      } else if (
+        error.message?.includes("Failed to fetch") ||
+        error.message?.includes("NetworkError")
+      ) {
+        errorMessage =
+          "Network connection issue. Please check your internet connection.";
+      } else if (
+        error.message?.includes("SSL") ||
+        error.message?.includes("certificate")
+      ) {
         errorMessage = "SSL connection issue. Please try again.";
+      } else if (error.message) {
+        errorMessage = error.message;
       }
 
       setLoginError(errorMessage);
@@ -240,19 +279,18 @@ export default function LoginPage() {
       const hasToken = localStorage.getItem("jwtToken");
       const hasEmail = localStorage.getItem("vendor_login_email");
 
-      if ((hasVendors && !hasToken) || (hasToken && !hasVendors) || (hasEmail && !hasToken)) {
+      if (
+        (hasVendors && !hasToken) ||
+        (hasToken && !hasVendors) ||
+        (hasEmail && !hasToken)
+      ) {
         console.warn("Detected partial session data, clearing...");
         clearSessionData();
       }
     };
 
     checkSessionConflict();
-
-    form.reset({
-      email: "",
-      password: "",
-      parent_type: "vendor",
-    });
+    form.reset({ email: "", password: "", parent_type: "vendor" });
     setLoginError("");
   }, [form]);
 
@@ -264,15 +302,13 @@ export default function LoginPage() {
         <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-green-400/5 rounded-full blur-3xl animate-pulse delay-500"></div>
       </div>
       <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.01)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.01)_1px,transparent_1px)] bg-[size:50px_50px] pointer-events-none"></div>
-      
+
       <div className="relative z-10 w-full max-w-md">
         <Card className="bg-card/50 border border-border shadow-2xl backdrop-blur-md">
           <CardHeader className="text-center pb-8">
             <div className="flex justify-center mb-6">
               <div className="relative">
-                {/* Only render the themed image after mounting on client */}
                 {!mounted ? (
-                  // Placeholder with transparent base64 image to prevent layout shift
                   <Image
                     src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"
                     alt="Hash for Gamers"
@@ -282,7 +318,11 @@ export default function LoginPage() {
                   />
                 ) : (
                   <Image
-                    src={resolvedTheme === 'dark' ? "/whitehashlogo.png" : "/blackhashlogo.png"}
+                    src={
+                      resolvedTheme === "dark"
+                        ? "/whitehashlogo.png"
+                        : "/blackhashlogo.png"
+                    }
                     alt="Hash for Gamers"
                     width={120}
                     height={120}
@@ -299,9 +339,13 @@ export default function LoginPage() {
               Sign in to your gaming account and level up your experience
             </CardDescription>
           </CardHeader>
+
           <CardContent className="space-y-6">
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              <form
+                onSubmit={form.handleSubmit(onSubmit)}
+                className="space-y-6"
+              >
                 <FormField
                   control={form.control}
                   name="email"
@@ -328,6 +372,7 @@ export default function LoginPage() {
                     </FormItem>
                   )}
                 />
+
                 <FormField
                   control={form.control}
                   name="password"
@@ -361,6 +406,7 @@ export default function LoginPage() {
                     </FormItem>
                   )}
                 />
+
                 {loginError && (
                   <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-3">
                     <p className="text-destructive text-sm text-center flex items-center justify-center gap-2">
@@ -369,6 +415,7 @@ export default function LoginPage() {
                     </p>
                   </div>
                 )}
+
                 <Button
                   type="submit"
                   className="w-full h-12 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-primary-foreground font-semibold rounded-lg transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] shadow-lg hover:shadow-green-500/25"
@@ -388,6 +435,7 @@ export default function LoginPage() {
                 </Button>
               </form>
             </Form>
+
             <div className="flex items-center justify-center gap-4 pt-4">
               <div className="flex items-center gap-2 text-muted-foreground text-xs">
                 <Shield className="w-3 h-3" />
@@ -401,6 +449,7 @@ export default function LoginPage() {
             </div>
           </CardContent>
         </Card>
+
         <div className="text-center mt-8">
           <p className="text-muted-foreground text-sm">
             © 2024 Hash for Gamers. All rights reserved.
