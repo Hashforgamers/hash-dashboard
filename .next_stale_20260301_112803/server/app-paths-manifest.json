@@ -1,0 +1,17 @@
+{
+  "/_not-found/page": "app/_not-found/page.js",
+  "/(features)/subscription/page": "app/(features)/subscription/page.js",
+  "/(features)/dashboard/page": "app/(features)/dashboard/page.js",
+  "/(features)/gaming/page": "app/(features)/gaming/page.js",
+  "/(features)/console-pricing/page": "app/(features)/console-pricing/page.js",
+  "/(features)/pass/page": "app/(features)/pass/page.js",
+  "/(features)/manage-extraservice/page": "app/(features)/manage-extraservice/page.js",
+  "/(features)/tournaments/page": "app/(features)/tournaments/page.js",
+  "/(features)/know-your-gamers/page": "app/(features)/know-your-gamers/page.js",
+  "/(features)/select-cafe/page": "app/(features)/select-cafe/page.js",
+  "/(features)/games/page": "app/(features)/games/page.js",
+  "/(features)/booking/page": "app/(features)/booking/page.js",
+  "/(features)/transaction/page": "app/(features)/transaction/page.js",
+  "/(features)/account/page": "app/(features)/account/page.js",
+  "/(features)/store/page": "app/(features)/store/page.js"
+}

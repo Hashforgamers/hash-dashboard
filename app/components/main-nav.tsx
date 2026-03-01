@@ -14,14 +14,13 @@ import {
   Moon,
   Sun,
   UtensilsCrossed,
-  Store ,
-   Ticket,
-   ShoppingBag,
-   Laptop,
-   Trophy
+  Store,
+  Ticket,
+  ShoppingBag,
+  Laptop,
+  Trophy
 } from "lucide-react";
 import { useTheme } from "next-themes";
-import { useState } from "react";
 import { ButtonDestructive } from "./log-out";
 
 interface MainNavProps extends React.HTMLAttributes<HTMLElement> {
@@ -75,15 +74,16 @@ export function MainNav({
             href={href}
             onClick={onItemClick}
             className={cn(
-              "group flex items-center space-x-2 rounded-md px-3 py-2 text-sm font-medium transition-all hover:bg-accent hover:text-accent-foreground",
-              "md:pl-[4px]",
+              "group/nav flex items-center gap-3 rounded-xl border border-transparent px-3 py-2.5 text-sm font-medium transition-all duration-200",
+              "hover:border-border/70 hover:bg-muted/50 hover:text-foreground",
+              "md:px-3 xl:px-2 xl:group-hover:px-3",
               pathname === href
-                ? "bg-accent text-accent-foreground"
+                ? "gaming-nav-active text-foreground"
                 : "text-muted-foreground"
             )}
           >
-            <Icon className="h-5 w-5 shrink-0" />
-            <span className="block md:hidden md:group-hover:block whitespace-nowrap">{label}</span>
+            <Icon className={cn("h-5 w-5 shrink-0 transition-colors", pathname === href ? "text-emerald-400" : "text-muted-foreground group-hover/nav:text-foreground")} />
+            <span className="whitespace-nowrap md:block xl:hidden xl:group-hover:block">{label}</span>
           </Link>
         ))}
       </div>
@@ -94,15 +94,16 @@ export function MainNav({
           href="/account"
           onClick={onItemClick}
           className={cn(
-            "group flex items-center space-x-2 rounded-md px-3 py-2 text-sm font-medium transition-all hover:bg-accent hover:text-accent-foreground",
-            "md:pl-[4px]",
+            "group/nav flex items-center gap-3 rounded-xl border border-transparent px-3 py-2.5 text-sm font-medium transition-all duration-200",
+            "hover:border-border/70 hover:bg-muted/50 hover:text-foreground",
+            "md:px-3 xl:px-2 xl:group-hover:px-3",
             pathname === "/account"
-              ? "bg-accent text-accent-foreground"
+              ? "gaming-nav-active text-foreground"
               : "text-muted-foreground"
           )}
         >
-          <User className="h-5 w-5 shrink-0" />
-          <span className="block md:hidden md:group-hover:block whitespace-nowrap">My Account</span>
+          <User className={cn("h-5 w-5 shrink-0 transition-colors", pathname === "/account" ? "text-emerald-400" : "text-muted-foreground group-hover/nav:text-foreground")} />
+          <span className="whitespace-nowrap md:block xl:hidden xl:group-hover:block">My Account</span>
         </Link>
         {/* Select Cafe link */}
         <Link
@@ -112,23 +113,25 @@ export function MainNav({
             onItemClick?.();
           }}
           className={cn(
-            "group flex items-center space-x-2 rounded-md px-3 py-2 text-sm font-medium transition-all hover:bg-accent hover:text-accent-foreground",
-            "md:pl-[4px]",
+            "group/nav flex items-center gap-3 rounded-xl border border-transparent px-3 py-2.5 text-sm font-medium transition-all duration-200",
+            "hover:border-border/70 hover:bg-muted/50 hover:text-foreground",
+            "md:px-3 xl:px-2 xl:group-hover:px-3",
             pathname === "/select-cafe"
-              ? "bg-accent text-accent-foreground"
+              ? "gaming-nav-active text-foreground"
               : "text-muted-foreground"
           )}
         >
-          <Store className="h-5 w-5 shrink-0" />
-          <span className="block md:hidden md:group-hover:block whitespace-nowrap">Select Cafe</span>
+          <Store className={cn("h-5 w-5 shrink-0 transition-colors", pathname === "/select-cafe" ? "text-emerald-400" : "text-muted-foreground group-hover/nav:text-foreground")} />
+          <span className="whitespace-nowrap md:block xl:hidden xl:group-hover:block">Select Cafe</span>
         </Link>
 
         {/* Theme toggle */}
         <button
           onClick={() => {setTheme(theme === "dark" ? "light" : "dark"); onItemClick?.();}}
           className={cn(
-            "group flex items-center space-x-2 rounded-md px-3 py-2 text-sm font-medium transition-all hover:bg-accent hover:text-accent-foreground",
-            "md:pl-[4px]",
+            "group/nav flex items-center gap-3 rounded-xl border border-transparent px-3 py-2.5 text-sm font-medium transition-all duration-200",
+            "hover:border-border/70 hover:bg-muted/50 hover:text-foreground",
+            "md:px-3 xl:px-2 xl:group-hover:px-3",
             "text-muted-foreground"
           )}
         >
@@ -146,7 +149,7 @@ export function MainNav({
               )}
             />
           </div>
-          <span className="block md:hidden md:group-hover:block whitespace-nowrap">Toggle Theme</span>
+          <span className="whitespace-nowrap md:block xl:hidden xl:group-hover:block">Toggle Theme</span>
         </button>
 
         {/* Logout button - last item */}

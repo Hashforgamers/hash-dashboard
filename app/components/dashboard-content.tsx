@@ -1,29 +1,22 @@
 "use client"
 
 import React, { useEffect, useState } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { BookingStats } from "./book-stats"
+import { Card, CardContent } from "@/components/ui/card"
 import { UpcomingBookings } from "./upcoming-booking"
 import { CurrentSlots } from "./current-slot"
 import { motion, AnimatePresence } from "framer-motion"
 import {
   IndianRupee, CalendarCheck, WalletCards, Eye, EyeOff,
-  TrendingUp, RefreshCw, Zap, BarChart3, Monitor, Gamepad2,
+  TrendingUp, BarChart3, Monitor, Gamepad2,
   Gamepad, Headphones, Lock
 } from 'lucide-react'
 import { jwtDecode } from "jwt-decode"
 import { DASHBOARD_URL } from "@/src/config/env"
 import HashLoader from "./ui/HashLoader"
-import { Button } from "@/components/ui/button"
 import { NotificationButton } from "../components/NotificationButton"
 import { useSocket } from "../context/SocketContext"
 import { useSubscription } from "@/hooks/useSubscription"
 import { useRouter } from "next/navigation"
-
-interface DashboardContentProps {
-  activeTab: string
-  setActiveTab: (tab: string) => void
-}
 
 const platformMetadata = {
   platforms: [
@@ -60,7 +53,7 @@ function LockedOverlay() {
   )
 }
 
-export function DashboardContent({ activeTab, setActiveTab }: DashboardContentProps) {
+export function DashboardContent() {
   const [showBookingStats, setShowBookingStats] = useState(true)
   const [showEarnings, setShowEarnings] = useState(false)
   const [showPending, setShowPending] = useState(false)
@@ -243,7 +236,7 @@ export function DashboardContent({ activeTab, setActiveTab }: DashboardContentPr
       {dashboardData?.available ? (
         <HashLoader className="py-[50vh]" />
       ) : (
-        <div className="h-screen bg-background text-foreground p-2 sm:p-4 md:p-6 flex flex-col">
+        <div className="h-full min-h-0 text-foreground flex flex-col gap-3 sm:gap-4">
 
           {/* ✅ Subscription expired banner
           {isLocked && (
@@ -271,11 +264,11 @@ export function DashboardContent({ activeTab, setActiveTab }: DashboardContentPr
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="flex flex-col md:flex-row md:items-center justify-between mb-4 sm:mb-6 flex-shrink-0"
+            className="gaming-panel flex shrink-0 flex-col justify-between gap-3 rounded-xl p-3 md:flex-row md:items-center md:p-4"
           >
-            <div className="mb-4 md:mb-0">
-              <div className="flex items-center gap-3">
-                <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground mb-2">Dashboard</h1>
+            <div>
+              <div className="flex items-center gap-3 mb-1">
+                <h1 className="premium-heading text-xl font-bold text-foreground sm:text-2xl md:text-3xl">Gaming Cafe Command</h1>
                 <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`} />
                 {isConnected && realTimeStats.lastUpdate && (
                   <motion.div
@@ -286,8 +279,11 @@ export function DashboardContent({ activeTab, setActiveTab }: DashboardContentPr
                   />
                 )}
               </div>
+              <p className="premium-subtle text-xs sm:text-sm">
+                Monitor live slots, revenue, and upcoming sessions in real time.
+              </p>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 self-end md:self-auto">
               <NotificationButton
                 vendorId={vendorId}
                 onBookingAccepted={handleBookingAccepted}
@@ -297,16 +293,16 @@ export function DashboardContent({ activeTab, setActiveTab }: DashboardContentPr
           </motion.div>
 
           {/* Main Layout Grid */}
-          <div className="grid grid-cols-1 xl:grid-cols-4 gap-3 sm:gap-4 flex-1 min-h-0">
+          <div className="grid grid-cols-1 gap-3 sm:gap-4 lg:grid-cols-12 flex-1 min-h-0">
 
             {/* Left Column */}
-            <div className="xl:col-span-3 space-y-3 sm:space-y-4 flex flex-col min-h-0">
+            <div className="space-y-3 sm:space-y-4 flex flex-col min-h-0 lg:col-span-8 xl:col-span-9">
 
               {/* Tab Navigation */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="flex items-center gap-2 p-1 bg-muted rounded-lg w-fit flex-shrink-0"
+                className="gaming-panel flex w-fit items-center gap-2 rounded-xl p-1.5"
               >
                 <button
                   onClick={() => setActiveTopTab('analytics')}
@@ -341,7 +337,7 @@ export function DashboardContent({ activeTab, setActiveTab }: DashboardContentPr
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: -20 }}
                     transition={{ duration: 0.3 }}
-                    className="flex gap-2 sm:gap-3 flex-shrink-0"
+                    className="grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-3 lg:grid-cols-3"
                   >
                     {/* Earnings Card */}
                     <motion.div
@@ -349,7 +345,7 @@ export function DashboardContent({ activeTab, setActiveTab }: DashboardContentPr
                       transition={{ duration: 0.5 }}
                       className="flex-1"
                     >
-                      <Card className="bg-card border-border backdrop-blur-sm rounded-lg shadow-sm h-full">
+                      <Card className="gaming-kpi-card h-full rounded-xl transition-all duration-200">
                         <CardContent className="p-2 sm:p-3">
                           <div className="flex items-center justify-between mb-1 sm:mb-2">
                             <div className="flex items-center gap-1 sm:gap-2">
@@ -368,7 +364,7 @@ export function DashboardContent({ activeTab, setActiveTab }: DashboardContentPr
                               initial={{ scale: 0.8, opacity: 0.5 }}
                               animate={{ scale: 1, opacity: 1 }}
                               transition={{ duration: 0.3 }}
-                              className="text-lg sm:text-xl font-bold text-foreground"
+                              className="gaming-kpi-value text-lg font-bold text-foreground sm:text-xl"
                             >
                               {showEarnings ? `₹${currentStats.todayEarnings}` : "₹•••••"}
                             </motion.p>
@@ -387,7 +383,7 @@ export function DashboardContent({ activeTab, setActiveTab }: DashboardContentPr
                       transition={{ duration: 0.5 }}
                       className="flex-1"
                     >
-                      <Card className="bg-card border-border backdrop-blur-sm rounded-lg shadow-sm h-full">
+                      <Card className="gaming-kpi-card h-full rounded-xl transition-all duration-200">
                         <CardContent className="p-2 sm:p-3">
                           <div className="flex items-center justify-between mb-1 sm:mb-2">
                             <div className="flex items-center gap-1 sm:gap-2">
@@ -406,7 +402,7 @@ export function DashboardContent({ activeTab, setActiveTab }: DashboardContentPr
                               initial={{ scale: 0.8, opacity: 0.5 }}
                               animate={{ scale: 1, opacity: 1 }}
                               transition={{ duration: 0.3 }}
-                              className="text-lg sm:text-xl font-bold text-foreground"
+                              className="gaming-kpi-value text-lg font-bold text-foreground sm:text-xl"
                             >
                               {currentStats.todayBookings}
                             </motion.p>
@@ -425,7 +421,7 @@ export function DashboardContent({ activeTab, setActiveTab }: DashboardContentPr
                       transition={{ duration: 0.5 }}
                       className="flex-1"
                     >
-                      <Card className="bg-card border-border backdrop-blur-sm rounded-lg shadow-sm h-full">
+                      <Card className="gaming-kpi-card h-full rounded-xl transition-all duration-200">
                         <CardContent className="p-2 sm:p-3">
                           <div className="flex items-center justify-between mb-1 sm:mb-2">
                             <div className="flex items-center gap-1 sm:gap-2">
@@ -444,7 +440,7 @@ export function DashboardContent({ activeTab, setActiveTab }: DashboardContentPr
                               initial={{ scale: 0.8, opacity: 0.5 }}
                               animate={{ scale: 1, opacity: 1 }}
                               transition={{ duration: 0.3 }}
-                              className="text-lg sm:text-xl font-bold text-foreground"
+                              className="gaming-kpi-value text-lg font-bold text-foreground sm:text-xl"
                             >
                               {showPending ? `₹${currentStats.pendingAmount}` : "₹•••••"}
                             </motion.p>
@@ -466,7 +462,7 @@ export function DashboardContent({ activeTab, setActiveTab }: DashboardContentPr
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: 20 }}
                     transition={{ duration: 0.3 }}
-                    className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 sm:gap-3 flex-shrink-0"
+                    className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3 flex-shrink-0"
                   >
                     {platforms.map((platform) => {
                       const available = platform.total - platform.booked
@@ -480,7 +476,7 @@ export function DashboardContent({ activeTab, setActiveTab }: DashboardContentPr
                           initial={{ opacity: 0, y: 10 }}
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ duration: 0.3 }}
-                          className="bg-white dark:bg-card rounded-lg p-2 sm:p-3 shadow-sm border"
+                          className="rounded-xl border border-border/80 bg-card/85 p-2 shadow-sm backdrop-blur-sm sm:p-3"
                         >
                           <div className="flex items-center justify-between mb-1 sm:mb-2">
                             <div className="flex items-center gap-1 sm:gap-2">
@@ -519,7 +515,7 @@ export function DashboardContent({ activeTab, setActiveTab }: DashboardContentPr
                 transition={{ delay: 0.3 }}
                 className="flex-1 min-h-0"
               >
-                <Card className="bg-card border-border backdrop-blur-sm h-full">
+                <Card className="gaming-panel h-full rounded-xl">
                   <CardContent className="p-2 sm:p-4 h-full overflow-hidden relative">
                     <CurrentSlots
                       currentSlots={dashboardData.currentSlots}
@@ -537,9 +533,9 @@ export function DashboardContent({ activeTab, setActiveTab }: DashboardContentPr
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.4 }}
-              className="xl:col-span-1 flex flex-col min-h-0 mt-14"
+              className="flex flex-col min-h-0 lg:col-span-4 xl:col-span-3"
             >
-              <Card className="bg-card border-border backdrop-blur-sm flex-1 min-h-0 relative">
+              <Card className="gaming-panel relative flex-1 min-h-[320px] lg:min-h-0 rounded-xl">
                 <CardContent className="p-0 h-full overflow-hidden">
                   <UpcomingBookings
                     upcomingBookings={dashboardData.upcomingBookings || []}
@@ -561,7 +557,7 @@ export function DashboardContent({ activeTab, setActiveTab }: DashboardContentPr
 function App() {
   return (
     <div className="min-h-screen bg-background">
-      <DashboardContent activeTab="gaming-cafe" setActiveTab={() => {}} />
+      <DashboardContent />
     </div>
   )
 }
