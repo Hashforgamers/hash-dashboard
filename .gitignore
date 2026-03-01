@@ -38,3 +38,8 @@ next-env.d.ts
 
 .env.development
 .env.production
+
+# Next.js build output
+.next
+.next/
+.next_*
