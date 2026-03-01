@@ -5,15 +5,53 @@
   --brand-accent-strong: 171 97% 32%;
   --brand-focus: 197 94% 44%;
   --brand-highlight: 84 93% 49%;
+  --font-ui: var(--font-pixel), "Segoe UI", "Inter", sans-serif;
+  --font-display: var(--font-pixel), "Segoe UI", "Inter", sans-serif;
 }
 
+html,
 body {
-  font-family: var(--font-manrope), "Segoe UI", sans-serif;
+  font-family: var(--font-ui);
+  font-weight: 400;
+  font-size: clamp(12px, 0.78vw + 8px, 15px);
+  letter-spacing: 0.01em;
+  font-feature-settings: "ss01" on, "ss02" on, "cv01" on;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+button,
+input,
+select,
+textarea,
+label,
+a,
+p,
+span,
+div,
+th,
+td {
+  font-family: inherit;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-ui);
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  line-height: 1.2;
 }
 
 .premium-heading {
-  font-family: var(--font-space), var(--font-manrope), "Segoe UI", sans-serif;
-  letter-spacing: -0.02em;
+  font-family: var(--font-display);
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  font-weight: 700;
 }
 
 .premium-shell {
@@ -112,6 +150,163 @@ body {
   border-color: hsl(var(--brand-highlight) / 0.45);
   background: linear-gradient(100deg, hsl(var(--brand-highlight) / 0.15), hsl(var(--brand-accent) / 0.15));
   box-shadow: 0 0 0 1px hsl(var(--brand-accent) / 0.24) inset, 0 0 16px hsl(var(--brand-accent) / 0.12);
+}
+
+.dashboard-typography {
+  --dash-fs-2xs: clamp(0.68rem, 0.2vw + 0.62rem, 0.75rem);
+  --dash-fs-xs: clamp(0.74rem, 0.22vw + 0.68rem, 0.82rem);
+  --dash-fs-sm: clamp(0.82rem, 0.26vw + 0.74rem, 0.92rem);
+  --dash-fs-base: clamp(0.9rem, 0.32vw + 0.8rem, 1.02rem);
+  --dash-fs-lg: clamp(1rem, 0.42vw + 0.88rem, 1.18rem);
+  --dash-fs-xl: clamp(1.14rem, 0.65vw + 0.94rem, 1.45rem);
+  --dash-fs-2xl: clamp(1.35rem, 1.1vw + 1.02rem, 2rem);
+}
+
+.dashboard-typography .text-xs {
+  font-size: var(--dash-fs-xs);
+  line-height: 1.35;
+}
+
+.dashboard-typography .text-sm {
+  font-size: var(--dash-fs-sm);
+  line-height: 1.4;
+}
+
+.dashboard-typography .text-base {
+  font-size: var(--dash-fs-base);
+  line-height: 1.45;
+}
+
+.dashboard-typography .text-lg {
+  font-size: var(--dash-fs-lg);
+  line-height: 1.35;
+}
+
+.dashboard-typography .text-xl {
+  font-size: var(--dash-fs-xl);
+  line-height: 1.3;
+}
+
+.dashboard-typography .text-2xl,
+.dashboard-typography .text-3xl {
+  font-size: var(--dash-fs-2xl);
+  line-height: 1.15;
+}
+
+.dashboard-typography .premium-heading {
+  font-size: var(--dash-fs-2xl);
+}
+
+.dashboard-typography .premium-subtle {
+  font-size: var(--dash-fs-sm);
+  line-height: 1.45;
+}
+
+.dash-title {
+  font-family: var(--font-ui);
+  font-size: clamp(0.85rem, 0.45vw + 0.76rem, 1.05rem);
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  color: hsl(210 40% 96%);
+}
+
+.dash-subtitle {
+  font-family: var(--font-ui);
+  font-size: clamp(0.68rem, 0.35vw + 0.62rem, 0.82rem);
+  font-weight: 400;
+  color: hsl(215 19% 72%);
+}
+
+.dash-kpi-label {
+  font-family: var(--font-ui);
+  font-size: clamp(0.74rem, 0.28vw + 0.68rem, 0.88rem);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: hsl(210 40% 96%);
+}
+
+.dash-kpi-value {
+  font-family: var(--font-ui);
+  font-size: clamp(1rem, 1vw + 0.84rem, 1.35rem);
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  color: hsl(210 40% 98%);
+}
+
+.dashboard-typography .dash-title {
+  font-size: var(--dash-fs-lg);
+}
+
+.dashboard-typography .dash-subtitle {
+  font-size: var(--dash-fs-xs);
+}
+
+.dashboard-typography .dash-kpi-label {
+  font-size: var(--dash-fs-sm);
+}
+
+.dashboard-typography .dash-kpi-value {
+  font-size: clamp(1.05rem, 0.75vw + 0.9rem, 1.45rem);
+}
+
+.dashboard-typography th {
+  font-size: var(--dash-fs-xs);
+}
+
+.dashboard-typography td,
+.dashboard-typography input,
+.dashboard-typography button,
+.dashboard-typography label {
+  font-size: var(--dash-fs-sm);
+}
+
+.add-console-form .add-console-card {
+  border: 1px solid hsl(216 20% 30% / 0.7);
+  background: linear-gradient(165deg, hsl(220 30% 14% / 0.95), hsl(220 30% 11% / 0.95));
+  box-shadow: 0 14px 36px hsl(220 72% 5% / 0.3);
+}
+
+.add-console-form .add-console-card-header {
+  border-bottom: 1px solid hsl(216 20% 30% / 0.55);
+  background: linear-gradient(100deg, hsl(var(--brand-focus) / 0.08), hsl(var(--brand-accent) / 0.08));
+}
+
+.add-console-form label {
+  color: hsl(212 20% 86%);
+  font-size: var(--dash-fs-sm);
+}
+
+.add-console-form input,
+.add-console-form textarea,
+.add-console-form button[role="combobox"] {
+  border-color: hsl(216 20% 38% / 0.8);
+  background: hsl(220 24% 16% / 0.8);
+  color: hsl(210 40% 96%);
+}
+
+.add-console-form input::placeholder,
+.add-console-form textarea::placeholder {
+  color: hsl(214 18% 63%);
+}
+
+.add-console-form input:focus,
+.add-console-form textarea:focus,
+.add-console-form button[role="combobox"]:focus {
+  outline: none;
+  border-color: hsl(var(--brand-focus) / 0.7);
+  box-shadow: 0 0 0 1px hsl(var(--brand-focus) / 0.32);
+}
+
+.dash-icon-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.75rem;
+  border: 1px solid hsl(216 21% 32% / 0.8);
+  background: hsl(220 33% 18% / 0.7);
+  box-shadow: inset 0 1px 0 hsl(0 0% 100% / 0.06);
 }
 
 @media (max-width: 640px) {

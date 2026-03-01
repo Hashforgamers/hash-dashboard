@@ -74,7 +74,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
           />
         )}
 
-        <main className="flex-1 overflow-y-auto px-2 pb-2 pt-2 sm:px-3 sm:pb-3 md:px-4 md:pb-4 md:pt-4">
+        <main className="dashboard-typography flex-1 overflow-y-auto px-2 pb-2 pt-2 sm:px-3 sm:pb-3 md:px-4 md:pb-4 md:pt-4">
           {children}
         </main>
       </div>

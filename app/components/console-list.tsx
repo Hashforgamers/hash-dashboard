@@ -30,8 +30,8 @@ import {
   HardDrive,
   Activity,
 } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
-import { useState, useEffect } from "react";
+import { motion } from "framer-motion";
+import { useState, useEffect, useMemo } from "react";
 import axios from "axios";
 import { jwtDecode } from "jwt-decode";
 import  HashLoader  from "./ui/HashLoader";
@@ -48,6 +48,7 @@ export function ConsoleList({ onEdit }: ConsoleListProps) {
   const [data, setdata] = useState([]);
   const [vendorId, setVendorId] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [activeGroup, setActiveGroup] = useState<"all" | "pc" | "ps5" | "xbox" | "vr">("all");
 
 
   // Decode token once when the component mounts
@@ -90,28 +91,57 @@ export function ConsoleList({ onEdit }: ConsoleListProps) {
 
 
 
-  const consolelistdata = data.map((item: any) => ({
-    id: item.id,
-    type: item.type || "PC",
-    name: item.name || "Unknown Console",
-    number: item.number || "N/A",
-    icon:
-      item.type === "ps5"
-        ? Monitor
-        : item.type === "pc"
-        ? Cpu
-        : item.type === "xbox"
-        ? Gamepad
-        : item.type == "vr"
-        ? Headset
-        : "none",
-    brand: item.brand || "Unknown Brand",
-    processor: item.processor || "N/A",
-    gpu: item.gpu || "N/A",
-    ram: item.ram || "N/A",
-    storage: item.storage || "N/A",
-    status: item.status || "Unknown",
-  }));
+  const consoleIconByType: Record<string, any> = {
+    pc: Monitor,
+    ps5: Tv,
+    xbox: Gamepad,
+    vr: Headset,
+  };
+
+  const consolelistdata = data.map((item: any) => {
+    const normalizedType = String(item.type || "pc").toLowerCase();
+    return {
+      id: item.id,
+      type: normalizedType,
+      name: item.name || "Unknown Console",
+      number: item.number || "N/A",
+      icon: consoleIconByType[normalizedType] || Monitor,
+      brand: item.brand || "Unknown Brand",
+      processor: item.processor || "N/A",
+      gpu: item.gpu || "N/A",
+      ram: item.ram || "N/A",
+      storage: item.storage || "N/A",
+      status: item.status || "Unknown",
+    };
+  });
+
+  const typeMeta: Record<"pc" | "ps5" | "xbox" | "vr", { label: string; icon: any }> = {
+    pc: { label: "PC", icon: Monitor },
+    ps5: { label: "PS5", icon: Tv },
+    xbox: { label: "Xbox", icon: Gamepad },
+    vr: { label: "VR", icon: Headset },
+  };
+
+  const groupOrder: Array<"pc" | "ps5" | "xbox" | "vr"> = ["pc", "ps5", "xbox", "vr"];
+
+  const groupedConsoles = useMemo(() => {
+    const grouped: Record<"pc" | "ps5" | "xbox" | "vr", any[]> = {
+      pc: [],
+      ps5: [],
+      xbox: [],
+      vr: [],
+    };
+
+    consolelistdata.forEach((console: any) => {
+      if (grouped[console.type as keyof typeof grouped]) {
+        grouped[console.type as keyof typeof grouped].push(console);
+      } else {
+        grouped.pc.push(console);
+      }
+    });
+
+    return grouped;
+  }, [consolelistdata]);
 
 
   const handleDelete = async (id: number): Promise<void> => {
@@ -127,16 +157,6 @@ export function ConsoleList({ onEdit }: ConsoleListProps) {
       }
     } catch (error) {
       console.log("something while wrong to delete the data", error);
-    }
-  };
-
-
-  const getStatusVariant = (status: boolean) => {
-    switch (status) {
-      case true:
-        return "success";
-      default:
-        return "warning";
     }
   };
 
@@ -161,10 +181,10 @@ export function ConsoleList({ onEdit }: ConsoleListProps) {
   // Show loading screen while fetching data
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
+      <div className="flex min-h-[320px] items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <HashLoader color="#a3e635" size={60} />
-          <p className="text-lg font-medium text-foreground">Loading consoles...</p>
+          <p className="dash-subtitle !text-slate-300">Loading consoles...</p>
         </div>
       </div>
     );
@@ -174,140 +194,190 @@ export function ConsoleList({ onEdit }: ConsoleListProps) {
   // Show message if no consoles found
   if (!isLoading && consolelistdata.length === 0) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
+      <div className="flex min-h-[320px] items-center justify-center">
         <div className="text-center">
-          <p className="text-lg font-medium text-muted-foreground">No consoles found</p>
-          <p className="text-sm text-muted-foreground mt-2">Add a new console to get started</p>
+          <p className="dash-title !text-slate-200">No consoles found</p>
+          <p className="dash-subtitle mt-2">Add a new console to get started</p>
         </div>
       </div>
     );
   }
 
 
+  const visibleGroups = activeGroup === "all"
+    ? groupOrder.filter((group) => groupedConsoles[group].length > 0)
+    : [activeGroup];
+
   return (
-    <motion.div
-      variants={container}
-      initial="hidden"
-      animate="show"
-      className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
-    >
-      {consolelistdata?.map((console) => (
-        <motion.div key={console.id} variants={item}>
-          <Card className="group hover:shadow-lg transition-all duration-300 hover:scale-[1.02]">
-            <CardContent className="flex flex-col h-full p-4">
-              <div className="flex items-center space-x-3 mb-4">
-                <div className="bg-primary/10 p-2.5 rounded-lg group-hover:bg-primary/20 transition-colors">
-                  <console.icon className="w-7 h-7 text-primary" />
-                </div>
-                <div>
-                  <h3 className="text-base font-semibold leading-tight">
-                    {console.name}
-                  </h3>
-                  <p className="text-sm text-muted-foreground">
-                    {console.number}
-                  </p>
-                </div>
-              </div>
+    <div className="space-y-4">
+      <div className="gaming-panel rounded-xl border border-cyan-500/25 p-2">
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => setActiveGroup("all")}
+            className={`rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors sm:text-sm ${
+              activeGroup === "all"
+                ? "border-cyan-400/55 bg-cyan-500/15 text-cyan-200"
+                : "border-slate-600/70 bg-slate-800/60 text-slate-300 hover:bg-slate-700/70"
+            }`}
+          >
+            All ({consolelistdata.length})
+          </button>
+          {groupOrder.map((group) => {
+            const Icon = typeMeta[group].icon;
+            const count = groupedConsoles[group].length;
+            return (
+              <button
+                key={group}
+                type="button"
+                onClick={() => setActiveGroup(group)}
+                className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors sm:text-sm ${
+                  activeGroup === group
+                    ? "border-cyan-400/55 bg-cyan-500/15 text-cyan-200"
+                    : "border-slate-600/70 bg-slate-800/60 text-slate-300 hover:bg-slate-700/70"
+                }`}
+              >
+                <Icon className="h-3.5 w-3.5" />
+                {typeMeta[group].label} ({count})
+              </button>
+            );
+          })}
+        </div>
+      </div>
 
+      {visibleGroups.map((group) => {
+        const consolesForGroup = groupedConsoles[group];
+        const GroupIcon = typeMeta[group].icon;
+        return (
+          <div key={group} className="space-y-2">
+            <div className="flex items-center gap-2 px-1">
+              <GroupIcon className="h-4 w-4 text-cyan-300" />
+              <h3 className="dash-title !text-sm">{typeMeta[group].label} Consoles</h3>
+              <span className="rounded-full border border-cyan-400/35 bg-cyan-500/10 px-2 py-0.5 text-xs text-cyan-200">
+                {consolesForGroup.length}
+              </span>
+            </div>
 
-              <div className="flex-grow space-y-2.5 text-sm">
-                <div className="grid grid-cols-2 gap-x-4 gap-y-2">
-                  <div className="flex items-center space-x-2">
-                    <Building2 className="w-4 h-4 text-muted-foreground" />
-                    <span className="text-muted-foreground">Brand</span>
-                  </div>
-                  <span className="font-medium truncate">{console.brand}</span>
+            <motion.div
+              variants={container}
+              initial="hidden"
+              animate="show"
+              className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+            >
+              {consolesForGroup.map((console) => (
+                <motion.div key={console.id} variants={item}>
+                  <Card className="gaming-panel group rounded-xl border border-cyan-500/25 transition-all duration-300 hover:scale-[1.01] hover:border-cyan-400/45 hover:shadow-[0_0_20px_rgba(6,182,212,0.12)]">
+                    <CardContent className="flex h-full flex-col p-4">
+                      <div className="mb-4 flex items-center space-x-3">
+                        <div className="rounded-lg border border-cyan-400/25 bg-cyan-500/10 p-2.5 transition-colors group-hover:bg-cyan-500/20">
+                          <console.icon className="h-7 w-7 text-cyan-300" />
+                        </div>
+                        <div>
+                          <h3 className="dash-title !text-base leading-tight">
+                            {console.name}
+                          </h3>
+                          <p className="dash-subtitle">
+                            {console.number}
+                          </p>
+                        </div>
+                      </div>
 
+                      <div className="flex-grow space-y-2.5 text-sm">
+                        <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+                          <div className="flex items-center space-x-2">
+                            <Building2 className="w-4 h-4 text-slate-400" />
+                            <span className="text-slate-400">Brand</span>
+                          </div>
+                          <span className="font-medium truncate text-slate-100">{console.brand}</span>
 
-                  <div className="flex items-center space-x-2">
-                    <Cpu className="w-4 h-4 text-muted-foreground" />
-                    <span className="text-muted-foreground">CPU</span>
-                  </div>
-                  <span className="font-medium truncate">
-                    {console.processor}
-                  </span>
+                          <div className="flex items-center space-x-2">
+                            <Cpu className="w-4 h-4 text-slate-400" />
+                            <span className="text-slate-400">CPU</span>
+                          </div>
+                          <span className="font-medium truncate text-slate-100">
+                            {console.processor}
+                          </span>
 
+                          <div className="flex items-center space-x-2">
+                            <Gpu className="w-4 h-4 text-slate-400" />
+                            <span className="text-slate-400">GPU</span>
+                          </div>
+                          <span className="font-medium truncate text-slate-100">{console.gpu}</span>
 
-                  <div className="flex items-center space-x-2">
-                    <Gpu className="w-4 h-4 text-muted-foreground" />
-                    <span className="text-muted-foreground">GPU</span>
-                  </div>
-                  <span className="font-medium truncate">{console.gpu}</span>
+                          <div className="flex items-center space-x-2">
+                            <Memory className="w-4 h-4 text-slate-400" />
+                            <span className="text-slate-400">RAM</span>
+                          </div>
+                          <span className="font-medium text-slate-100">{console.ram}</span>
 
+                          <div className="flex items-center space-x-2">
+                            <HardDrive className="w-4 h-4 text-slate-400" />
+                            <span className="text-slate-400">Storage</span>
+                          </div>
+                          <span className="font-medium text-slate-100">{console.storage}</span>
+                        </div>
 
-                  <div className="flex items-center space-x-2">
-                    <Memory className="w-4 h-4 text-muted-foreground" />
-                    <span className="text-muted-foreground">RAM</span>
-                  </div>
-                  <span className="font-medium">{console.ram}</span>
+                        <div className="flex items-center justify-between border-t border-slate-700/70 pt-2">
+                          <div className="flex items-center space-x-2">
+                            <Activity className="w-4 h-4 text-slate-400" />
+                            <span className="text-slate-400">Status</span>
+                          </div>
+                          <Badge className={console.status ? "border border-emerald-400/40 bg-emerald-500/15 text-emerald-200" : "border border-amber-400/40 bg-amber-500/15 text-amber-200"}>
+                            {console.status ? "Available" : "Not Available"}
+                          </Badge>
+                        </div>
+                      </div>
 
-
-                  <div className="flex items-center space-x-2">
-                    <HardDrive className="w-4 h-4 text-muted-foreground" />
-                    <span className="text-muted-foreground">Storage</span>
-                  </div>
-                  <span className="font-medium">{console.storage}</span>
-                </div>
-
-
-                <div className="pt-2 flex items-center justify-between border-t">
-                  <div className="flex items-center space-x-2">
-                    <Activity className="w-4 h-4 text-muted-foreground" />
-                    <span className="text-muted-foreground">Status</span>
-                  </div>
-                  <Badge variant={getStatusVariant(console.status)}>
-                    {console.status ? "Available" : "Not Available"}
-                  </Badge>
-                </div>
-              </div>
-
-
-              <div className="flex justify-end space-x-2 mt-4 opacity-0 group-hover:opacity-100 transition-opacity">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => onEdit(console)}
-                  className="hover:bg-primary/10"
-                >
-                  <Edit className="w-4 h-4 mr-1" />
-                  Edit
-                </Button>
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      className="hover:bg-destructive/90"
-                    >
-                      <Trash2 className="w-4 h-4 mr-1" />
-                      Delete
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>
-                        Are you sure you want to delete?
-                      </AlertDialogTitle>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction className="bg-red-700 hover:bg-red-800 text-white flex items-center gap-2">
+                      <div className="mt-4 flex justify-end space-x-2 opacity-0 transition-opacity group-hover:opacity-100">
                         <Button
-                          className="bg-red-700 hover:bg-red-800 text-white flex items-center gap-2"
-                          onClick={() => handleDelete(console.id)}
+                          variant="outline"
+                          size="sm"
+                          onClick={() => onEdit(console)}
+                          className="border-cyan-400/40 bg-cyan-500/10 text-cyan-200 hover:bg-cyan-500/20"
                         >
-                          <Trash2 size={18} />
-                          Confirm Delete
+                          <Edit className="w-4 h-4 mr-1" />
+                          Edit
                         </Button>
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
-      ))}
-    </motion.div>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="border-rose-400/45 bg-rose-500/10 text-rose-200 hover:bg-rose-500/20"
+                            >
+                              <Trash2 className="w-4 h-4 mr-1" />
+                              Delete
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>
+                                Are you sure you want to delete?
+                              </AlertDialogTitle>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction className="bg-red-700 hover:bg-red-800 text-white flex items-center gap-2">
+                                <Button
+                                  className="bg-red-700 hover:bg-red-800 text-white flex items-center gap-2"
+                                  onClick={() => handleDelete(console.id)}
+                                >
+                                  <Trash2 size={18} />
+                                  Confirm Delete
+                                </Button>
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              ))}
+            </motion.div>
+          </div>
+        );
+      })}
+    </div>
   );
 }

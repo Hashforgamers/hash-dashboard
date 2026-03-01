@@ -2,18 +2,15 @@
 import { useState } from "react";
 import {
   Card,
-  CardContent,
   CardHeader,
   CardTitle,
   CardDescription,
 } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { PlusCircle, List, Monitor, Gamepad, Tv, Headset, ArrowLeft } from 'lucide-react';
+import { PlusCircle, List, Monitor, Gamepad, Tv, Headset, ArrowLeft, Sparkles } from 'lucide-react';
 import { AddConsoleForm } from "./add-console-form";
 import { ConsoleList } from "./console-list";
 import { EditConsoleForm } from "./edit-console-form";
 import { motion, AnimatePresence } from "framer-motion";
-import { jwtDecode } from "jwt-decode";
 
 const actions = [
   {
@@ -109,7 +106,7 @@ export function ManageGamingConsole() {
       }
 
       return (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 md:gap-6">
           {consoleTypes.map((console) => (
             <motion.div
               key={console.type}
@@ -119,16 +116,21 @@ export function ManageGamingConsole() {
               transition={{ duration: 0.2 }}
             >
               <Card
-                className="cursor-pointer transition-all hover:shadow-lg bg-card border-border rounded-lg hover:bg-accent/50"
+                className="gaming-panel cursor-pointer rounded-xl border border-cyan-500/25 transition-all duration-200 hover:border-cyan-400/45 hover:shadow-[0_0_20px_rgba(6,182,212,0.12)]"
                 onClick={() => handleConsoleTypeClick(console.type)}
               >
                 <CardHeader className="p-4 md:p-6">
-                  <console.icon
-                    className="w-6 h-6 md:w-8 md:h-8 mb-2"
-                    style={{ color: console.iconColor }}
-                  />
-                  <CardTitle className="text-foreground text-lg md:text-xl">{console.name}</CardTitle>
-                  <CardDescription className="text-muted-foreground text-sm">{console.description}</CardDescription>
+                  <div
+                    className="mb-3 flex h-11 w-11 items-center justify-center rounded-xl border border-cyan-500/25 bg-slate-900/70"
+                    style={{ boxShadow: "inset 0 1px 0 rgba(255,255,255,0.06)" }}
+                  >
+                    <console.icon
+                      className="h-6 w-6 md:h-7 md:w-7"
+                      style={{ color: console.iconColor }}
+                    />
+                  </div>
+                  <CardTitle className="dash-title !text-lg">{console.name}</CardTitle>
+                  <CardDescription className="dash-subtitle mt-1 !text-slate-300">{console.description}</CardDescription>
                 </CardHeader>
               </Card>
             </motion.div>
@@ -151,7 +153,7 @@ export function ManageGamingConsole() {
     }
 
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6">
         {actions.map((action) => (
           <motion.div
             key={action.type}
@@ -161,20 +163,25 @@ export function ManageGamingConsole() {
             transition={{ duration: 0.2 }}
           >
             <Card
-              className={`cursor-pointer transition-all hover:shadow-lg bg-card border-border rounded-lg hover:bg-accent/50 ${
-                selectedAction === action.type ? "ring-2 ring-primary" : ""
+              className={`gaming-panel cursor-pointer rounded-xl border border-cyan-500/25 transition-all duration-200 hover:border-cyan-400/45 hover:shadow-[0_0_20px_rgba(6,182,212,0.12)] ${
+                selectedAction === action.type ? "ring-2 ring-cyan-400/50" : ""
               }`}
               onClick={() => handleActionClick(action.type)}
             >
               <CardHeader className="p-4 md:p-6">
                 {selectedAction === null && (
-                  <action.icon
-                    className="w-6 h-6 md:w-8 md:h-8 mb-2"
-                    style={{ color: action.iconColor }}
-                  />
+                  <div
+                    className="mb-3 flex h-11 w-11 items-center justify-center rounded-xl border border-cyan-500/25 bg-slate-900/70"
+                    style={{ boxShadow: "inset 0 1px 0 rgba(255,255,255,0.06)" }}
+                  >
+                    <action.icon
+                      className="h-6 w-6 md:h-7 md:w-7"
+                      style={{ color: action.iconColor }}
+                    />
+                  </div>
                 )}
-                <CardTitle className="text-foreground text-lg md:text-xl">{action.label}</CardTitle>
-                <CardDescription className="text-muted-foreground text-sm">{action.description}</CardDescription>
+                <CardTitle className="dash-title !text-lg">{action.label}</CardTitle>
+                <CardDescription className="dash-subtitle mt-1 !text-slate-300">{action.description}</CardDescription>
               </CardHeader>
             </Card>
           </motion.div>
@@ -184,9 +191,19 @@ export function ManageGamingConsole() {
   };
 
   return (
-    <div className="w-full bg-background text-foreground">
+    <div className="w-full text-foreground">
       {/* Container with proper constraints */}
-      <div className="max-w-7xl mx-auto px-4 py-6 md:py-8">
+      <div className="w-full px-2 py-3 sm:px-3 sm:py-4 md:px-4 md:py-5">
+        <div className="gaming-panel mb-4 rounded-xl p-4 sm:p-5">
+          <div className="flex items-center gap-2">
+            <h1 className="premium-heading !text-xl sm:!text-2xl md:!text-3xl">Gaming Console Control</h1>
+            <Sparkles className="h-4 w-4 text-emerald-400 sm:h-5 sm:w-5" />
+          </div>
+          <p className="premium-subtle mt-1">
+            Add, organize, and operate your cafe consoles with a unified control panel.
+          </p>
+        </div>
+
         {/* Back Button Section */}
         {(selectedAction === "add" || selectedAction === "list") && (
           <div className="mb-6">
@@ -197,35 +214,22 @@ export function ManageGamingConsole() {
               animate={{ opacity: 1, scale: 1 }}
               whileHover={{ scale: 1.05 }}
               transition={{ duration: 0.3 }}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-lime-400 text-lime-900 rounded-lg hover:bg-lime-500 transition-all duration-200 font-medium"
+              className="inline-flex items-center gap-2 rounded-lg border border-cyan-400/35 bg-cyan-500/10 px-4 py-2 font-medium text-cyan-200 transition-all duration-200 hover:bg-cyan-500/20"
             >
-              <svg
-                width="20px"
-                height="20px"
-                viewBox="0 0 1024 1024"
-                xmlns="http://www.w3.org/2000/svg"
-                className="rotate-0"
-              >
-                <path
-                  fill="currentColor"
-                  d="M224 480h640a32 32 0 1 1 0 64H224a32 32 0 0 1 0-64z"
-                />
-                <path
-                  fill="currentColor"
-                  d="m237.248 512 265.408 265.344a32 32 0 0 1-45.312 45.312l-288-288a32 32 0 0 1 0-45.312l288-288a32 32 0 1 1 45.312 45.312L237.248 512z"
-                />
-              </svg>
+              <ArrowLeft className="h-4 w-4" />
               Go Back
             </motion.button>
           </div>
         )}
 
         {/* Content Area */}
-        <AnimatePresence mode="wait">
-          <div className="w-full">
+        <div className="gaming-panel rounded-xl p-3 sm:p-4 md:p-5">
+          <AnimatePresence mode="wait">
+            <div className="w-full">
             {renderContent()}
-          </div>
-        </AnimatePresence>
+            </div>
+          </AnimatePresence>
+        </div>
 
         {/* Edit Modal */}
         {editingConsole && (

@@ -46,6 +46,128 @@ import {
 import { AddConsoleFormProps, FormData } from "./interfaces";
 import { getHardWareSpecification } from "./utils";
 
+const pickRandom = <T,>(items: T[]): T => items[Math.floor(Math.random() * items.length)];
+
+const randomInt = (min: number, max: number) =>
+  Math.floor(Math.random() * (max - min + 1)) + min;
+
+const randomDateInPast = (daysBack: number) => {
+  const date = new Date();
+  date.setDate(date.getDate() - randomInt(10, daysBack));
+  return date.toISOString().split("T")[0];
+};
+
+const randomDateInFuture = (daysAhead: number) => {
+  const date = new Date();
+  date.setDate(date.getDate() + randomInt(10, daysAhead));
+  return date.toISOString().split("T")[0];
+};
+
+const generateRandomSerial = (prefix: string) =>
+  `${prefix}-${randomInt(100000, 999999)}-${String.fromCharCode(65 + randomInt(0, 25))}${String.fromCharCode(65 + randomInt(0, 25))}`;
+
+const fillMissingFormData = (data: FormData, consoleType: string): FormData => {
+  const fallbackBrandByType: Record<string, string[]> = {
+    pc: ["MSI", "ASUS", "Acer Predator", "Alienware", "Lenovo Legion"],
+    ps5: ["Sony"],
+    xbox: ["Microsoft"],
+    vr: ["Meta", "HTC", "Sony VR"],
+  };
+
+  const fallbackConnectivity = ["Wi-Fi 6 + Ethernet + Bluetooth 5.2", "Wi-Fi + LAN + USB-C", "Wi-Fi + Bluetooth + HDMI"];
+  const fallbackWarranty = ["12 months", "18 months", "24 months"];
+  const fallbackMaintenanceNotes = [
+    "Routine diagnostics completed.",
+    "Thermal and fan checks verified.",
+    "Controller and port checks completed.",
+  ];
+
+  const fallbackSupportedGames = [
+    "FC 25, GTA V, Valorant, Forza Horizon",
+    "Call of Duty, Minecraft, Fortnite",
+    "Racing, Sports, Shooter, Co-op titles",
+  ];
+
+  const fallbackAccessories = [
+    "2 Controllers, Headset, Charging Dock",
+    "Controller, Keyboard-Mouse, Cooling Stand",
+    "VR Controllers, Face Cover, Charging Cable",
+  ];
+
+  const pcHardwareDefaults = {
+    processorType: pickRandom(ProcessorOption.map((item) => item.value)),
+    graphicsCard: pickRandom(GraphiCoptions.map((item) => item.value)),
+    ramSize: pickRandom(RamSizeOptions.map((item) => item.value)),
+    storageCapacity: pickRandom(StorageOptions.map((item) => item.value)),
+    connectivity: pickRandom(fallbackConnectivity),
+    consoleModelType: "Custom Build",
+  };
+
+  const modelTypeDefaults: Record<string, string> = {
+    ps5: pickRandom(PS5playstation.map((item) => item.value)),
+    xbox: pickRandom(XboxPlaystation.map((item) => item.value)),
+    vr: pickRandom(VRPlaystation.map((item) => item.value)),
+  };
+
+  const safeType = consoleType?.toLowerCase() || "pc";
+  const hardwareDefaults = safeType === "pc"
+    ? pcHardwareDefaults
+    : {
+        ...pcHardwareDefaults,
+        processorType: "",
+        graphicsCard: "",
+        ramSize: "",
+        storageCapacity: "",
+        connectivity: pickRandom(fallbackConnectivity),
+        consoleModelType: modelTypeDefaults[safeType] || "",
+      };
+
+  const fallbackPrice = String(randomInt(25000, 95000));
+  const fallbackRentalPrice = String(randomInt(80, 250));
+
+  return {
+    ...data,
+    consoleDetails: {
+      ...data.consoleDetails,
+      ModelNumber: data.consoleDetails.ModelNumber?.trim() || `${safeType.toUpperCase()}-${randomInt(1000, 9999)}`,
+      SerialNumber: data.consoleDetails.SerialNumber?.trim() || generateRandomSerial(safeType.toUpperCase()),
+      Brand: data.consoleDetails.Brand?.trim() || pickRandom(fallbackBrandByType[safeType] || fallbackBrandByType.pc),
+      ReleaseDate: data.consoleDetails.ReleaseDate || randomDateInPast(1200),
+      Description: data.consoleDetails.Description?.trim() || `${safeType.toUpperCase()} console prepared for cafe sessions`,
+      consoleType: data.consoleDetails.consoleType || safeType,
+    },
+    hardwareSpecifications: {
+      ...data.hardwareSpecifications,
+      processorType: data.hardwareSpecifications.processorType || hardwareDefaults.processorType,
+      graphicsCard: data.hardwareSpecifications.graphicsCard || hardwareDefaults.graphicsCard,
+      ramSize: data.hardwareSpecifications.ramSize || hardwareDefaults.ramSize,
+      storageCapacity: data.hardwareSpecifications.storageCapacity || hardwareDefaults.storageCapacity,
+      connectivity: data.hardwareSpecifications.connectivity || hardwareDefaults.connectivity,
+      consoleModelType: data.hardwareSpecifications.consoleModelType || hardwareDefaults.consoleModelType,
+    },
+    maintenanceStatus: {
+      ...data.maintenanceStatus,
+      AvailableStatus: data.maintenanceStatus.AvailableStatus || "available",
+      Condition: data.maintenanceStatus.Condition || "good",
+      LastMaintenance: data.maintenanceStatus.LastMaintenance || randomDateInPast(180),
+      NextScheduledMaintenance: data.maintenanceStatus.NextScheduledMaintenance || randomDateInFuture(120),
+      MaintenanceNotes: data.maintenanceStatus.MaintenanceNotes?.trim() || pickRandom(fallbackMaintenanceNotes),
+    },
+    priceAndCost: {
+      ...data.priceAndCost,
+      price: data.priceAndCost.price || fallbackPrice,
+      Rentalprice: data.priceAndCost.Rentalprice || fallbackRentalPrice,
+      Warrantyperiod: data.priceAndCost.Warrantyperiod || pickRandom(fallbackWarranty),
+      InsuranceStatus: data.priceAndCost.InsuranceStatus || "insured",
+    },
+    additionalDetails: {
+      ...data.additionalDetails,
+      ListOfSupportedGames: data.additionalDetails.ListOfSupportedGames?.trim() || pickRandom(fallbackSupportedGames),
+      AccessoriesDetails: data.additionalDetails.AccessoriesDetails?.trim() || pickRandom(fallbackAccessories),
+    },
+  };
+};
+
 
 export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
   const [vendorId, setVendorId] = useState<number | null>(null);
@@ -161,7 +283,7 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
       const consoleData = response.data;
 
 
-      setformdata({
+      const copiedData: FormData = {
         ...formdata,
         consoleDetails: {
           ...formdata.consoleDetails,
@@ -197,7 +319,9 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
           ListOfSupportedGames: consoleData.additionalDetails.supportedGames,
           AccessoriesDetails: consoleData.additionalDetails.accessories,
         },
-      });
+      };
+
+      setformdata(fillMissingFormData(copiedData, consoleType));
     } catch (error) {
       console.error("Error copying console data:", error);
     }
@@ -212,7 +336,10 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
       return;
     }
     try {
-      const consoleNumberStr = formdata.consoleDetails.consoleNumber.replace("console-", "");
+      const completedForm = fillMissingFormData(formdata, consoleType);
+      setformdata(completedForm);
+
+      const consoleNumberStr = completedForm.consoleDetails.consoleNumber.replace("console-", "");
       const consoleNumber = parseInt(consoleNumberStr, 10);
       if (isNaN(consoleNumber)) {
         throw new Error("Invalid console number format");
@@ -220,34 +347,34 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
 
 
       const payload = {
-        availablegametype: formdata.availablegametype,
+        availablegametype: completedForm.availablegametype,
         vendorId: vendorId,
         consoleDetails: {
           consoleNumber: consoleNumber,
-          modelNumber: formdata.consoleDetails.ModelNumber,
-          serialNumber: formdata.consoleDetails.SerialNumber,
-          brand: formdata.consoleDetails.Brand,
-          consoleType: formdata.consoleDetails.consoleType,
-          releaseDate: formdata.consoleDetails.ReleaseDate,
-          description: "",
+          modelNumber: completedForm.consoleDetails.ModelNumber,
+          serialNumber: completedForm.consoleDetails.SerialNumber,
+          brand: completedForm.consoleDetails.Brand,
+          consoleType: completedForm.consoleDetails.consoleType,
+          releaseDate: completedForm.consoleDetails.ReleaseDate,
+          description: completedForm.consoleDetails.Description || "",
         },
-        hardwareSpecifications: { ...formdata.hardwareSpecifications },
+        hardwareSpecifications: { ...completedForm.hardwareSpecifications },
         maintenanceStatus: {
-          availableStatus: formdata.maintenanceStatus.AvailableStatus,
-          condition: formdata.maintenanceStatus.Condition,
-          lastMaintenance: formdata.maintenanceStatus.LastMaintenance,
-          nextMaintenance: formdata.maintenanceStatus.NextScheduledMaintenance,
-          maintenanceNotes: "",
+          availableStatus: completedForm.maintenanceStatus.AvailableStatus,
+          condition: completedForm.maintenanceStatus.Condition,
+          lastMaintenance: completedForm.maintenanceStatus.LastMaintenance,
+          nextMaintenance: completedForm.maintenanceStatus.NextScheduledMaintenance,
+          maintenanceNotes: completedForm.maintenanceStatus.MaintenanceNotes || "",
         },
         priceAndCost: {
-          price: parseFloat(formdata.priceAndCost.price) || 0,
-          rentalPrice: parseFloat(formdata.priceAndCost.Rentalprice) || 0,
-          warrantyPeriod: formdata.priceAndCost.Warrantyperiod,
-          insuranceStatus: formdata.priceAndCost.InsuranceStatus,
+          price: parseFloat(completedForm.priceAndCost.price) || 0,
+          rentalPrice: parseFloat(completedForm.priceAndCost.Rentalprice) || 0,
+          warrantyPeriod: completedForm.priceAndCost.Warrantyperiod,
+          insuranceStatus: completedForm.priceAndCost.InsuranceStatus,
         },
         additionalDetails: {
-          supportedGames: "",
-          accessories: "",
+          supportedGames: completedForm.additionalDetails.ListOfSupportedGames || "",
+          accessories: completedForm.additionalDetails.AccessoriesDetails || "",
         },
       };
 
@@ -544,22 +671,22 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
 
 
   return (
-    <div className="w-full">
+    <div className="add-console-form w-full">
       {/* Success Message */}
       {showSuccess && (
-        <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg flex items-center gap-3 shadow-sm">
-          <CheckCircle2 className="w-5 h-5 text-green-600" />
-          <span className="text-green-700 font-medium">Console added successfully!</span>
+        <div className="mb-6 flex items-center gap-3 rounded-lg border border-emerald-400/35 bg-emerald-500/12 p-4 shadow-sm">
+          <CheckCircle2 className="h-5 w-5 text-emerald-300" />
+          <span className="font-medium text-emerald-200">Console added successfully!</span>
         </div>
       )}
 
 
       {/* Header */}
-      <div className="text-center mb-8">
-        <h1 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
+      <div className="mb-8">
+        <h1 className="premium-heading mb-2 !text-2xl sm:!text-3xl md:!text-4xl">
           Add New {consoleType.toUpperCase()} Console
         </h1>
-        <p className="text-lg text-gray-600 dark:text-gray-400">
+        <p className="premium-subtle">
           Fill out the information below to add a new console to your gaming cafe inventory
         </p>
       </div>
@@ -568,13 +695,13 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
       <form onSubmit={handleSubmit} className="space-y-6">
         
         {/* Section 1: Quick Setup (Copy Console) */}
-        <Card className="shadow-md">
-          <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20">
-            <CardTitle className="flex items-center gap-3">
-              <Copy className="w-6 h-6 text-blue-600" />
+        <Card className="add-console-card">
+          <CardHeader className="add-console-card-header">
+            <CardTitle className="flex items-center gap-3 dash-title !text-lg">
+              <Copy className="h-5 w-5 text-cyan-300" />
               Quick Setup
             </CardTitle>
-            <CardDescription className="text-base">
+            <CardDescription className="dash-subtitle !text-slate-300">
               Copy data from an existing console to speed up the process
             </CardDescription>
           </CardHeader>
@@ -604,7 +731,7 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
                 type="button"
                 onClick={handleCopyConsole}
                 disabled={!selectedConsoleId}
-                className="bg-blue-600 hover:bg-blue-700"
+                className="border border-cyan-400/40 bg-cyan-500/15 text-cyan-200 hover:bg-cyan-500/25"
               >
                 <Copy className="w-4 h-4 mr-2" />
                 Copy Data
@@ -615,13 +742,13 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
 
 
         {/* Section 2: Console Details */}
-        <Card className="shadow-md">
-          <CardHeader className="bg-gradient-to-r from-emerald-50 to-green-50 dark:from-emerald-900/20 dark:to-green-900/20">
-            <CardTitle className="flex items-center gap-3">
-              <Gamepad2 className="w-6 h-6 text-emerald-600" />
+        <Card className="add-console-card">
+          <CardHeader className="add-console-card-header">
+            <CardTitle className="flex items-center gap-3 dash-title !text-lg">
+              <Gamepad2 className="h-5 w-5 text-emerald-300" />
               Console Details
             </CardTitle>
-            <CardDescription className="text-base">
+            <CardDescription className="dash-subtitle !text-slate-300">
               Enter the basic information about the console
             </CardDescription>
           </CardHeader>
@@ -635,7 +762,7 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
                   id="consoleNumber"
                   value={formdata.consoleDetails.consoleNumber}
                   readOnly
-                  className="bg-gray-100 dark:bg-gray-800 font-medium"
+                  className="bg-slate-800/80 font-medium"
                   required
                 />
               </div>
@@ -707,7 +834,7 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
                   id="consoleType" 
                   value={consoleType || ""} 
                   readOnly 
-                  className="bg-gray-100 dark:bg-gray-800 font-medium"
+                  className="bg-slate-800/80 font-medium"
                   required
                 />
               </div>
@@ -737,13 +864,13 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
 
 
         {/* Section 3: Hardware Specifications */}
-        <Card className="shadow-md">
-          <CardHeader className="bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20">
-            <CardTitle className="flex items-center gap-3">
-              <HardDrive className="w-6 h-6 text-purple-600" />
+        <Card className="add-console-card">
+          <CardHeader className="add-console-card-header">
+            <CardTitle className="flex items-center gap-3 dash-title !text-lg">
+              <HardDrive className="h-5 w-5 text-violet-300" />
               Hardware Specifications
             </CardTitle>
-            <CardDescription className="text-base">
+            <CardDescription className="dash-subtitle !text-slate-300">
               Enter the technical specifications and hardware details
             </CardDescription>
           </CardHeader>
@@ -754,13 +881,13 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
 
 
         {/* Section 4: Maintenance & Status */}
-        <Card className="shadow-md">
-          <CardHeader className="bg-gradient-to-r from-orange-50 to-red-50 dark:from-orange-900/20 dark:to-red-900/20">
-            <CardTitle className="flex items-center gap-3">
-              <Wrench className="w-6 h-6 text-orange-600" />
+        <Card className="add-console-card">
+          <CardHeader className="add-console-card-header">
+            <CardTitle className="flex items-center gap-3 dash-title !text-lg">
+              <Wrench className="h-5 w-5 text-orange-300" />
               Maintenance & Status
             </CardTitle>
-            <CardDescription className="text-base">
+            <CardDescription className="dash-subtitle !text-slate-300">
               Enter maintenance and availability information
             </CardDescription>
           </CardHeader>
@@ -865,13 +992,13 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
 
 
         {/* Section 5: Price & Cost */}
-        <Card className="shadow-md">
-          <CardHeader className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20">
-            <CardTitle className="flex items-center gap-3">
-              <DollarSign className="w-6 h-6 text-green-600" />
+        <Card className="add-console-card">
+          <CardHeader className="add-console-card-header">
+            <CardTitle className="flex items-center gap-3 dash-title !text-lg">
+              <DollarSign className="h-5 w-5 text-emerald-300" />
               Price & Cost Information
             </CardTitle>
-            <CardDescription className="text-base">
+            <CardDescription className="dash-subtitle !text-slate-300">
               Enter pricing and warranty information
             </CardDescription>
           </CardHeader>
@@ -974,7 +1101,7 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
           <Button
             type="submit"
             size="lg"
-            className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white px-12 py-4 text-lg font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200"
+            className="bg-gradient-to-r from-emerald-500 to-cyan-500 px-12 py-4 text-lg font-semibold text-white shadow-lg transition-all duration-200 hover:scale-[1.02] hover:from-emerald-400 hover:to-cyan-400 hover:shadow-xl"
             disabled={loading}
           >
             {loading ? (

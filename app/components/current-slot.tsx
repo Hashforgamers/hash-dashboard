@@ -398,31 +398,30 @@ export function CurrentSlots({ currentSlots: initialSlots, refreshSlots, setRefr
   const item = { hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } };
 
   return (
-    <div className="h-full flex flex-col min-h-0 overflow-hidden">
+    <div className="h-full min-h-0 overflow-hidden rounded-2xl bg-gradient-to-br from-slate-900/65 via-slate-900/40 to-slate-900/70 p-3 sm:p-4">
       {currentSlots?.available ? (
-        <div className="flex justify-center items-center h-full">
+        <div className="flex h-full items-center justify-center">
           <HashLoader />
         </div>
       ) : (
         <>
-          {/* Header with responsive spacing and sizing */}
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-2 sm:pb-3 gap-2 sm:gap-4 flex-shrink-0">
+          <div className="mb-3 flex shrink-0 flex-col items-start justify-between gap-3 sm:flex-row sm:items-center sm:gap-4">
             <div className="flex items-center gap-2">
-              <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`} 
+              <div className={`h-2 w-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`}
                    title={isConnected ? 'Real-time connected' : 'Connecting...'} />
-              <span className="text-xs sm:text-sm md:text-base font-semibold text-white">
-                Current Slots ({filteredSlots.length})
+              <span className="dash-title">
+                Live Console Sessions ({filteredSlots.length})
               </span>
             </div>
             
             <div className="relative w-full sm:w-auto">
-              <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-500 w-3 sm:w-4 h-3 sm:h-4" />
+              <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400 sm:h-4 sm:w-4" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={handleSearch}
                 placeholder="Search by name or console..."
-                className="w-full sm:w-48 md:w-64 pl-7 sm:pl-8 pr-3 py-1.5 sm:py-2 text-xs sm:text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-zinc-800 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-emerald-500"
+                className="w-full rounded-lg border border-slate-600/70 bg-slate-800/70 py-2 pl-8 pr-3 text-xs text-slate-100 placeholder:text-slate-400 focus:border-cyan-400/60 focus:outline-none sm:w-56 sm:text-sm md:w-72"
               />
             </div>
           </div>
@@ -431,35 +430,34 @@ export function CurrentSlots({ currentSlots: initialSlots, refreshSlots, setRefr
             <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 p-2 rounded-md text-xs sm:text-sm mb-2 flex-shrink-0"
+              className="mb-2 shrink-0 rounded-md border border-red-500/30 bg-red-950/30 p-2 text-xs text-red-300 sm:text-sm"
             >
               {error}
             </motion.div>
           )}
 
-          {/* Table container with proper height constraints */}
           <motion.div
             variants={container}
             initial="hidden"
             animate="show"
-            className="flex-1 min-h-0 rounded-md border border-gray-200 dark:border-gray-700 bg-white/50 dark:bg-zinc-800/50 backdrop-blur-sm shadow-sm overflow-hidden"
+            className="flex-1 min-h-0 overflow-hidden rounded-xl border border-cyan-500/20 bg-slate-900/55 backdrop-blur-sm"
           >
-            <div className="h-full overflow-y-auto">
-              <table ref={tableRef} className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                <thead className="bg-gray-50 dark:bg-zinc-900/50 sticky top-0 z-10">
+            <div className="h-full overflow-x-auto overflow-y-auto">
+              <table ref={tableRef} className="min-w-[760px] w-full divide-y divide-slate-700/70">
+                <thead className="sticky top-0 z-10 bg-slate-900/95">
                   <tr>
                     {['Name', 'System', 'Time', 'Progress', 'Extra', 'Action'].map((heading) => (
                       <th
                         key={heading}
                         scope="col"
-                        className="px-2 sm:px-3 md:px-4 py-2 sm:py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider"
+                        className="px-3 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-300 md:px-4"
                       >
                         {heading}
                       </th>
                     ))}
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                <tbody className="divide-y divide-slate-700/60">
                   {Array.isArray(filteredSlots) && filteredSlots.length > 0 ? (
                     <AnimatePresence mode="popLayout">
                       {filteredSlots.map((booking, index) => {
@@ -473,6 +471,15 @@ export function CurrentSlots({ currentSlots: initialSlots, refreshSlots, setRefr
                         const isReleasing = releasingSlots[uniqueKey] || false;
                         const progress = Math.min(100, (timer.elapsedTime / timer.duration) * 100);
                         const hasExtraTime = timer.extraTime > 0;
+                        const remainingTime = Math.max((timer.duration || 0) - (timer.elapsedTime || 0), 0);
+                        const progressPercent = Number.isFinite(progress) ? Math.max(0, Math.round(progress)) : 0;
+                        const progressState = hasExtraTime
+                          ? "Overtime"
+                          : progressPercent >= 90
+                            ? "Ending Soon"
+                            : progressPercent >= 60
+                              ? "In Session"
+                              : "Stable";
 
                         // ✅ ENHANCED: Check meal status from both original data and local tracking
                         const bookingIdToCheck = String(booking.bookingId || booking.bookId || '');
@@ -482,23 +489,23 @@ export function CurrentSlots({ currentSlots: initialSlots, refreshSlots, setRefr
                           <motion.tr
                             key={uniqueKey}
                             variants={item}
-                            className="hover:bg-gray-100 dark:hover:bg-zinc-700/50 transition-colors"
+                            className="transition-colors hover:bg-slate-800/45"
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, x: -20 }}
                             transition={{ duration: 0.3 }}
                           >
                             {/* ✅ ENHANCED: Name cell with dynamic meal/add food buttons */}
-                            <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-3">
+                            <td className="px-3 py-3 md:px-4">
                               <div className="flex items-center gap-1 sm:gap-2">
-                                <div className="h-6 w-6 sm:h-8 sm:w-8 bg-emerald-100 dark:bg-emerald-900/50 rounded-full flex items-center justify-center text-xs font-medium text-emerald-700 dark:text-emerald-300 flex-shrink-0">
+                                <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-emerald-500/20 text-xs font-semibold text-emerald-300 sm:h-8 sm:w-8">
                                   {(booking.username || 'Guest').slice(0, 2).toUpperCase()}
                                 </div>
                                 <div className="min-w-0 flex-1">
-                                  <div className="font-medium text-gray-900 dark:text-white text-xs sm:text-sm truncate">
+                                  <div className="truncate dash-title !text-sm">
                                     {booking.username || 'Guest'}
                                   </div>
-                                  <div className="text-xs text-gray-500 dark:text-gray-400">
+                                  <div className="text-xs text-slate-400">
                                     #{booking.consoleNumber}
                                   </div>
                                 </div>
@@ -515,11 +522,11 @@ export function CurrentSlots({ currentSlots: initialSlots, refreshSlots, setRefr
                                       e.stopPropagation();
                                       handleMealIconClick(bookingIdToCheck, booking.username || 'Guest User');
                                     }}
-                                    className="flex items-center gap-1 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-full p-1.5 transition-all duration-200 group flex-shrink-0"
+                                    className="group flex flex-shrink-0 items-center gap-1 rounded-full border border-emerald-400/30 bg-emerald-500/10 p-1.5 transition-all duration-200 hover:bg-emerald-500/20"
                                     title="View meals & add more"
                                   >
-                                    <UtensilsCrossed className="w-3 h-3 sm:w-4 sm:h-4 text-emerald-600 group-hover:text-emerald-700 transition-colors" />
-                                    <span className="text-xs text-emerald-600 group-hover:text-emerald-700 font-medium hidden sm:inline">
+                                    <UtensilsCrossed className="h-3 w-3 text-emerald-300 transition-colors group-hover:text-emerald-200 sm:h-4 sm:w-4" />
+                                    <span className="hidden text-xs font-medium text-emerald-200 sm:inline">
                                       Meals
                                     </span>
                                   </motion.button>
@@ -534,12 +541,12 @@ export function CurrentSlots({ currentSlots: initialSlots, refreshSlots, setRefr
                                       e.stopPropagation();
                                       handleAddFoodClick(bookingIdToCheck, booking.username || 'Guest User');
                                     }}
-                                    className="flex items-center gap-1 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-full p-1 sm:p-1.5 transition-all duration-200 group border border-dashed border-blue-300 dark:border-blue-600 flex-shrink-0"
+                                    className="group flex flex-shrink-0 items-center gap-1 rounded-full border border-dashed border-cyan-400/60 bg-cyan-500/10 p-1 transition-all duration-200 hover:bg-cyan-500/20 sm:p-1.5"
                                     title="Add meals to this booking"
                                   >
-                                    <Plus className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-blue-600 group-hover:text-blue-700 transition-colors" />
-                                    <UtensilsCrossed className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-blue-600 group-hover:text-blue-700 transition-colors" />
-                                    <span className="text-xs text-blue-600 group-hover:text-blue-700 font-medium hidden sm:inline">
+                                    <Plus className="h-2.5 w-2.5 text-cyan-300 transition-colors group-hover:text-cyan-200 sm:h-3 sm:w-3" />
+                                    <UtensilsCrossed className="h-2.5 w-2.5 text-cyan-300 transition-colors group-hover:text-cyan-200 sm:h-3 sm:w-3" />
+                                    <span className="hidden text-xs font-medium text-cyan-200 sm:inline">
                                       Add
                                     </span>
                                   </motion.button>
@@ -548,68 +555,93 @@ export function CurrentSlots({ currentSlots: initialSlots, refreshSlots, setRefr
                             </td>
 
                             {/* System cell - unchanged */}
-                            <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-3">
+                            <td className="px-3 py-3 md:px-4">
                               <div className="flex items-center space-x-1 sm:space-x-2">
                                 <Gamepad2 className={`w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0 ${
                                   (booking.consoleType || '').toLowerCase().includes('playstation') || 
                                   (booking.consoleType || '').toLowerCase().includes('ps') ? 'text-blue-600' : 
                                   (booking.consoleType || '').toLowerCase().includes('xbox') ? 'text-green-600' : 'text-red-600'
                                 }`} />
-                                <span className="text-xs sm:text-sm text-gray-900 dark:text-gray-100 truncate">
+                                <span className="truncate text-xs text-slate-100 sm:text-sm">
                                   {booking.consoleType || 'Gaming Console'}
                                 </span>
                               </div>
                             </td>
 
                             {/* Time cell - unchanged */}
-                            <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-3">
+                            <td className="px-3 py-3 md:px-4">
                               <div className="text-xs space-y-0.5 sm:space-y-1">
                                 <div className="truncate">
-                                  <span className="text-gray-600 hidden sm:inline">Start:</span>
-                                  <span className="text-gray-600 sm:hidden">S:</span>{' '}
+                                  <span className="hidden text-slate-400 sm:inline">Start:</span>
+                                  <span className="text-slate-400 sm:hidden">S:</span>{' '}
                                   {booking.startTime || 'N/A'}
                                 </div>
                                 <div className="truncate">
-                                  <span className="text-gray-600 hidden sm:inline">End:</span>
-                                  <span className="text-gray-600 sm:hidden">E:</span>{' '}
+                                  <span className="hidden text-slate-400 sm:inline">End:</span>
+                                  <span className="text-slate-400 sm:hidden">E:</span>{' '}
                                   {booking.endTime || 'N/A'}
                                 </div>
                               </div>
                             </td>
 
-                            {/* Progress cell - unchanged */}
-                            <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-3">
-                              <div className="space-y-1">
-                                <div className="text-xs sm:text-sm font-medium text-gray-900 dark:text-gray-100">
-                                  {formatTime(timer.elapsedTime)}
+                            {/* Progress cell - enhanced */}
+                            <td className="px-3 py-3 md:px-4">
+                              <div className="space-y-1.5">
+                                <div className="flex items-center justify-between gap-2">
+                                  <div className="text-xs font-semibold text-slate-100 sm:text-sm">
+                                    {formatTime(timer.elapsedTime)}
+                                  </div>
+                                  <span
+                                    className={`rounded-full border px-1.5 py-0.5 text-[10px] font-semibold sm:text-xs ${
+                                      hasExtraTime
+                                        ? "border-red-500/40 bg-red-500/10 text-red-300"
+                                        : progressPercent >= 90
+                                          ? "border-yellow-500/40 bg-yellow-500/10 text-yellow-300"
+                                          : "border-emerald-500/40 bg-emerald-500/10 text-emerald-300"
+                                    }`}
+                                  >
+                                    {progressPercent}%
+                                  </span>
                                 </div>
-                                <div className="h-1.5 sm:h-1 w-16 sm:w-20 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                                <div className="h-1.5 w-24 overflow-hidden rounded-full bg-slate-700/90 sm:w-28">
                                   <motion.div
-                                    className={`h-full ${progress < 75 ? 'bg-emerald-500' : progress < 90 ? 'bg-yellow-500' : 'bg-red-500'}`}
+                                    className={`h-full ${
+                                      hasExtraTime
+                                        ? "bg-gradient-to-r from-red-500 to-rose-400"
+                                        : progress < 75
+                                          ? "bg-gradient-to-r from-emerald-500 to-cyan-400"
+                                          : progress < 90
+                                            ? "bg-gradient-to-r from-yellow-500 to-amber-400"
+                                            : "bg-gradient-to-r from-orange-500 to-red-500"
+                                    }`}
                                     style={{ width: `${progress}%` }}
                                     initial={{ width: 0 }}
                                     animate={{ width: `${progress}%` }}
                                     transition={{ duration: 0.5 }}
                                   />
                                 </div>
+                                <div className={`text-[10px] sm:text-xs ${hasExtraTime ? "text-red-300" : "text-slate-400"}`}>
+                                  {hasExtraTime ? `Extended: ${formatTime(timer.extraTime)}` : `Remaining: ${formatTime(remainingTime)}`}
+                                  <span className="ml-1 text-slate-500">({progressState})</span>
+                                </div>
                               </div>
                             </td>
 
                             {/* Extra Time cell - unchanged */}
-                            <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-3">
+                            <td className="px-3 py-3 md:px-4">
                               {hasExtraTime ? (
-                                <div className="text-red-600 dark:text-red-400 font-medium text-xs sm:text-sm">
+                                <div className="text-xs font-semibold text-red-400 sm:text-sm">
                                   {formatTime(timer.extraTime)}
                                 </div>
                               ) : (
-                                <span className="text-emerald-600 dark:text-emerald-400 text-xs sm:text-sm">
+                                <span className="text-xs text-emerald-400 sm:text-sm">
                                   00:00:00
                                 </span>
                               )}
                             </td>
 
                             {/* Action cell - unchanged */}
-                            <td className="px-2 sm:px-3 md:px-4 py-2 sm:py-3">
+                            <td className="px-3 py-3 md:px-4">
                               {hasExtraTime ? (
                                 <button
                                   onClick={() => {
@@ -617,7 +649,7 @@ export function CurrentSlots({ currentSlots: initialSlots, refreshSlots, setRefr
                                     setShowOverlay(true);
                                     setError("");
                                   }}
-                                  className="bg-yellow-500 hover:bg-yellow-600 text-white px-2 sm:px-3 py-1 rounded text-xs w-16 sm:w-20 transition-colors"
+                                  className="w-20 rounded-md bg-yellow-500 px-2 py-1 text-xs text-white transition-colors hover:bg-yellow-600 sm:w-24"
                                 >
                                   <div className="flex items-center justify-center gap-1">
                                     <FaCheck className="w-2 h-2 sm:w-3 sm:h-3" />
@@ -637,7 +669,7 @@ export function CurrentSlots({ currentSlots: initialSlots, refreshSlots, setRefr
                                     uniqueKey
                                   )}
                                   disabled={isReleasing || !vendorId}
-                                  className="bg-emerald-600 hover:bg-emerald-700 text-white px-2 sm:px-3 py-1 rounded text-xs w-16 sm:w-20 disabled:opacity-50 transition-colors"
+                                  className="w-20 rounded-md bg-emerald-500 px-2 py-1 text-xs text-white transition-colors hover:bg-emerald-400 disabled:opacity-50 sm:w-24"
                                 >
                                   <div className="flex items-center justify-center gap-1">
                                     {isReleasing ? (
@@ -657,13 +689,13 @@ export function CurrentSlots({ currentSlots: initialSlots, refreshSlots, setRefr
                     </AnimatePresence>
                   ) : (
                     <tr>
-                      <td colSpan={6} className="px-2 sm:px-3 md:px-4 py-6 sm:py-8 text-center text-gray-500 dark:text-gray-400">
+                      <td colSpan={6} className="px-4 py-10 text-center text-slate-400">
                         <motion.div
                           initial={{ opacity: 0 }}
                           animate={{ opacity: 1 }}
                           className="flex flex-col items-center space-y-2"
                         >
-                          <Search className="w-6 h-6 sm:w-8 sm:h-8 text-gray-300 dark:text-gray-600" />
+                          <Search className="h-7 w-7 text-slate-600 sm:h-8 sm:w-8" />
                           <p className="text-xs sm:text-sm font-medium">No active slots found</p>
                           <p className="text-xs">
                             {isConnected ? "Waiting for new sessions..." : "Check connection"}
