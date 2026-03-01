@@ -1,14 +1,26 @@
-
 import ConsolePricing from "../../components/console-pricing";
 import { DashboardLayout } from "../../(layout)/dashboard-layout";
+import { Sparkles } from "lucide-react";
 
 export default function ManageConsolePricing() {
   return (
     <DashboardLayout>
-      <div className="flex-1 p-4 md:py-4">
-        {/* <h1 className="text-3xl font-bold">Manage Gaming Console</h1> */}
+      <div className="flex-1 space-y-3 sm:space-y-4">
+        <div className="gaming-panel rounded-xl p-4 sm:p-5">
+          <div className="flex items-center gap-2">
+            <h1 className="premium-heading !text-xl sm:!text-2xl md:!text-3xl">
+              Console Pricing Command
+            </h1>
+            <Sparkles className="h-4 w-4 text-emerald-400 sm:h-5 sm:w-5" />
+          </div>
+          <p className="premium-subtle mt-1">
+            Control base rates and dynamic promotions across all gaming systems.
+          </p>
+        </div>
 
-        < ConsolePricing />
+        <div className="gaming-panel rounded-xl p-2 sm:p-3 md:p-4">
+          <ConsolePricing />
+        </div>
       </div>
     </DashboardLayout>
   );

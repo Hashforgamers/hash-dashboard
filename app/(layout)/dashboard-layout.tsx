@@ -38,13 +38,13 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
       <div className="flex flex-1 overflow-hidden pt-[58px] md:pt-0">
         <aside
           className={`
-            group fixed left-0 top-0 z-30 h-full w-[86vw] max-w-72 border-r border-border/70 bg-background/85 p-4 backdrop-blur-md transition-transform duration-300 ease-out
+            group fixed left-0 top-0 z-30 h-full w-[86vw] max-w-72 overflow-hidden border-r border-border/70 bg-background/85 p-3 backdrop-blur-md transition-transform duration-300 ease-out
             md:relative md:w-72 md:max-w-none md:translate-x-0
             xl:w-[76px] xl:hover:w-72
             ${isNavOpen ? "translate-x-0" : "-translate-x-full"}
           `}
         >
-          <div className="mb-6 hidden items-end space-x-2 overflow-hidden md:flex">
+          <div className="mb-3 hidden items-end space-x-2 overflow-hidden md:mb-4 md:flex">
             <Image
               src="/whitehashlogo.png"
               alt="Hash Logo - Dark Mode"
@@ -64,7 +64,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
             </span>
           </div>
 
-          <MainNav className="flex-col items-start space-y-2" onItemClick={() => setIsNavOpen(false)} />
+          <MainNav className="h-full flex-col items-start" onItemClick={() => setIsNavOpen(false)} />
         </aside>
 
         {isNavOpen && (

@@ -47,13 +47,13 @@ export function MainNav({
   return (
     <nav
       className={cn(
-        "flex flex-col h-full justify-between transition-all duration-300 ease-in-out",
+        "flex h-full flex-col justify-between gap-[clamp(0.2rem,0.7vh,0.65rem)] transition-all duration-300 ease-in-out",
         className
       )}
       {...props}
     >
       {/* Main navigation items - Top section */}
-      <div className="flex flex-col space-y-2">
+      <div className="flex flex-col space-y-[clamp(0.12rem,0.42vh,0.45rem)]">
         {[
           { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
            { href: "/gaming", icon: Laptop, label: "Manage Gaming Console" },
@@ -74,7 +74,7 @@ export function MainNav({
             href={href}
             onClick={onItemClick}
             className={cn(
-              "group/nav flex items-center gap-3 rounded-xl border border-transparent px-3 py-2.5 text-sm font-medium transition-all duration-200",
+              "group/nav flex min-h-[34px] items-center gap-2.5 rounded-lg border border-transparent px-2.5 py-[clamp(0.28rem,0.75vh,0.52rem)] text-[13px] font-medium leading-tight transition-all duration-200",
               "hover:border-border/70 hover:bg-muted/50 hover:text-foreground",
               "md:px-3 xl:px-2 xl:group-hover:px-3",
               pathname === href
@@ -82,19 +82,19 @@ export function MainNav({
                 : "text-muted-foreground"
             )}
           >
-            <Icon className={cn("h-5 w-5 shrink-0 transition-colors", pathname === href ? "text-emerald-400" : "text-muted-foreground group-hover/nav:text-foreground")} />
+            <Icon className={cn("h-[18px] w-[18px] shrink-0 transition-colors", pathname === href ? "text-emerald-400" : "text-muted-foreground group-hover/nav:text-foreground")} />
             <span className="whitespace-nowrap md:block xl:hidden xl:group-hover:block">{label}</span>
           </Link>
         ))}
       </div>
 
       {/* Bottom section - Fixed order: Select Cafe, Toggle, then Logout */}
-      <div className="flex flex-col space-y-2 mt-auto">
+      <div className="mt-auto flex flex-col space-y-[clamp(0.12rem,0.42vh,0.45rem)] pt-0.5">
          <Link
           href="/account"
           onClick={onItemClick}
           className={cn(
-            "group/nav flex items-center gap-3 rounded-xl border border-transparent px-3 py-2.5 text-sm font-medium transition-all duration-200",
+            "group/nav flex min-h-[34px] items-center gap-2.5 rounded-lg border border-transparent px-2.5 py-[clamp(0.28rem,0.75vh,0.52rem)] text-[13px] font-medium leading-tight transition-all duration-200",
             "hover:border-border/70 hover:bg-muted/50 hover:text-foreground",
             "md:px-3 xl:px-2 xl:group-hover:px-3",
             pathname === "/account"
@@ -102,7 +102,7 @@ export function MainNav({
               : "text-muted-foreground"
           )}
         >
-          <User className={cn("h-5 w-5 shrink-0 transition-colors", pathname === "/account" ? "text-emerald-400" : "text-muted-foreground group-hover/nav:text-foreground")} />
+          <User className={cn("h-[18px] w-[18px] shrink-0 transition-colors", pathname === "/account" ? "text-emerald-400" : "text-muted-foreground group-hover/nav:text-foreground")} />
           <span className="whitespace-nowrap md:block xl:hidden xl:group-hover:block">My Account</span>
         </Link>
         {/* Select Cafe link */}
@@ -113,7 +113,7 @@ export function MainNav({
             onItemClick?.();
           }}
           className={cn(
-            "group/nav flex items-center gap-3 rounded-xl border border-transparent px-3 py-2.5 text-sm font-medium transition-all duration-200",
+            "group/nav flex min-h-[34px] items-center gap-2.5 rounded-lg border border-transparent px-2.5 py-[clamp(0.28rem,0.75vh,0.52rem)] text-[13px] font-medium leading-tight transition-all duration-200",
             "hover:border-border/70 hover:bg-muted/50 hover:text-foreground",
             "md:px-3 xl:px-2 xl:group-hover:px-3",
             pathname === "/select-cafe"
@@ -121,7 +121,7 @@ export function MainNav({
               : "text-muted-foreground"
           )}
         >
-          <Store className={cn("h-5 w-5 shrink-0 transition-colors", pathname === "/select-cafe" ? "text-emerald-400" : "text-muted-foreground group-hover/nav:text-foreground")} />
+          <Store className={cn("h-[18px] w-[18px] shrink-0 transition-colors", pathname === "/select-cafe" ? "text-emerald-400" : "text-muted-foreground group-hover/nav:text-foreground")} />
           <span className="whitespace-nowrap md:block xl:hidden xl:group-hover:block">Select Cafe</span>
         </Link>
 
@@ -129,7 +129,7 @@ export function MainNav({
         <button
           onClick={() => {setTheme(theme === "dark" ? "light" : "dark"); onItemClick?.();}}
           className={cn(
-            "group/nav flex items-center gap-3 rounded-xl border border-transparent px-3 py-2.5 text-sm font-medium transition-all duration-200",
+            "group/nav flex min-h-[34px] items-center gap-2.5 rounded-lg border border-transparent px-2.5 py-[clamp(0.28rem,0.75vh,0.52rem)] text-[13px] font-medium leading-tight transition-all duration-200",
             "hover:border-border/70 hover:bg-muted/50 hover:text-foreground",
             "md:px-3 xl:px-2 xl:group-hover:px-3",
             "text-muted-foreground"

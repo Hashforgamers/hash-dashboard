@@ -297,6 +297,50 @@ h6 {
   box-shadow: 0 0 0 1px hsl(var(--brand-focus) / 0.32);
 }
 
+.slot-booking-modal {
+  border-color: hsl(216 21% 30% / 0.75);
+  background: linear-gradient(165deg, hsl(220 31% 13% / 0.96), hsl(220 30% 10% / 0.96));
+  color: hsl(210 40% 96%);
+}
+
+.slot-booking-modal .sb-card {
+  border: 1px solid hsl(216 20% 31% / 0.72);
+  background: linear-gradient(160deg, hsl(220 28% 16% / 0.95), hsl(220 30% 12% / 0.95));
+  box-shadow: inset 0 1px 0 hsl(0 0% 100% / 0.05);
+}
+
+.slot-booking-modal input,
+.slot-booking-modal textarea,
+.slot-booking-modal button[role="combobox"] {
+  border-color: hsl(216 20% 38% / 0.8);
+  background: hsl(220 24% 16% / 0.8);
+  color: hsl(210 40% 96%);
+}
+
+.slot-booking-modal input::placeholder,
+.slot-booking-modal textarea::placeholder {
+  color: hsl(214 18% 63%);
+}
+
+.slot-booking-modal input:focus,
+.slot-booking-modal textarea:focus,
+.slot-booking-modal button[role="combobox"]:focus {
+  border-color: hsl(var(--brand-focus) / 0.72);
+  box-shadow: 0 0 0 1px hsl(var(--brand-focus) / 0.32);
+}
+
+.slot-booking-modal .text-gray-800,
+.slot-booking-modal .dark\:text-white {
+  color: hsl(210 40% 96%);
+}
+
+.slot-booking-modal .text-gray-700,
+.slot-booking-modal .dark\:text-gray-300,
+.slot-booking-modal .text-gray-600,
+.slot-booking-modal .dark\:text-gray-400 {
+  color: hsl(214 18% 74%);
+}
+
 .dash-icon-chip {
   display: inline-flex;
   align-items: center;

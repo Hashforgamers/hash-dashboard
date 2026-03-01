@@ -1,19 +1,27 @@
-import React from 'react'
+import { Sparkles } from "lucide-react"
+import { DashboardLayout } from "../../(layout)/dashboard-layout"
+import ManageExtraServices from "../../components/manageextra-service"
 
-import { DashboardLayout } from '../../(layout)/dashboard-layout'
-import ManageExtraServices from '../../components/manageextra-service'
-
-
-const page = () => {
+export default function ManageExtraServicePage() {
   return (
-     <DashboardLayout>
-          <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
-           
-            <ManageExtraServices/>
-           
+    <DashboardLayout>
+      <div className="flex-1 space-y-3 sm:space-y-4">
+        <div className="gaming-panel rounded-xl p-4 sm:p-5">
+          <div className="flex items-center gap-2">
+            <h1 className="premium-heading !text-xl sm:!text-2xl md:!text-3xl">
+              Extra Service Control
+            </h1>
+            <Sparkles className="h-4 w-4 text-emerald-400 sm:h-5 sm:w-5" />
           </div>
-        </DashboardLayout>
+          <p className="premium-subtle mt-1">
+            Manage cafe add-ons, meals, and beverage inventory with cleaner control.
+          </p>
+        </div>
+
+        <div className="gaming-panel rounded-xl p-2 sm:p-3 md:p-4">
+          <ManageExtraServices />
+        </div>
+      </div>
+    </DashboardLayout>
   )
 }
-
-export default page

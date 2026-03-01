@@ -1255,30 +1255,30 @@ const ToggleSwitch = ({
 
             {/* Updated Cafe Profile Card with editable image */}
 {cafeProfile && (
-  <Card className="bg-card border border-border shadow-lg">
-    <CardHeader>
-      <CardTitle className="text-foreground">Cafe Profile</CardTitle>
-      <CardDescription className="text-muted-foreground">
+  <Card className="overflow-hidden border border-cyan-500/25 bg-[linear-gradient(140deg,rgba(8,20,45,0.95),rgba(6,18,40,0.92))] shadow-[0_18px_45px_-24px_rgba(6,182,212,0.6)]">
+    <CardHeader className="space-y-1.5 pb-3">
+      <CardTitle className="text-base font-semibold uppercase tracking-[0.14em] text-cyan-100 md:text-lg">Cafe Profile</CardTitle>
+      <CardDescription className="text-xs text-slate-300 md:text-sm">
         Your public profile information
       </CardDescription>
     </CardHeader>
-    <CardContent className="p-4 space-y-6">
+    <CardContent className="space-y-5 px-4 pb-5 pt-1 md:px-5">
       {/* Profile Upload Message */}
       {profileUploadMessage && (
         <div className={cn(
-          "p-2 rounded-md text-xs font-medium text-center",
+          "rounded-lg border px-3 py-2 text-center text-xs font-medium md:text-sm",
           profileUploadMessage.includes("successfully") 
-            ? "bg-green-500/20 text-green-400" 
-            : "bg-red-500/20 text-red-400"
+            ? "border-emerald-400/40 bg-emerald-500/15 text-emerald-200" 
+            : "border-rose-400/40 bg-rose-500/15 text-rose-200"
         )}>
           {profileUploadMessage}
         </div>
       )}
       
-      <div className="flex flex-col items-center space-y-3">
+      <div className="flex flex-col items-center gap-3 text-center">
         {/* Editable Profile Image */}
-        <div className="relative group transition-transform duration-300 ease-in-out hover:scale-105">
-          <div className="h-32 w-32 rounded-full p-[4px] bg-gradient-to-r from-emerald-500 via-cyan-500 to-blue-500 animate-spin-slow">
+        <div className="group relative transition-transform duration-300 ease-in-out hover:scale-105">
+          <div className="h-24 w-24 rounded-full bg-gradient-to-r from-emerald-500 via-cyan-500 to-blue-500 p-[4px] md:h-28 md:w-28">
             <div className="h-full w-full rounded-full bg-background flex items-center justify-center overflow-hidden">
               <img
                 src={profileImage || "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?q=80&w=2070&auto=format&fit=crop"}
@@ -1298,7 +1298,7 @@ const ToggleSwitch = ({
           {/* Edit Button */}
           <label 
             htmlFor="profile-image-upload"
-            className="absolute -bottom-1 -right-1 h-10 w-10 bg-primary hover:bg-primary/90 rounded-full flex items-center justify-center cursor-pointer shadow-lg border-2 border-background transition-all duration-200 hover:scale-110"
+            className="absolute -bottom-1 -right-1 flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border-2 border-background bg-cyan-500 text-slate-950 shadow-lg transition-all duration-200 hover:scale-110 hover:bg-cyan-400"
           >
             <input
               id="profile-image-upload"
@@ -1312,21 +1312,26 @@ const ToggleSwitch = ({
           </label>
         </div>
         
-        <div className="text-center">
-          <h3 className="font-medium text-foreground">{cafeProfile.name || "Cafe Name"}</h3>
-          <p className="text-sm text-muted-foreground">
-            {cafeProfile.membershipStatus || "Standard Member"}
-          </p>
+        <div className="space-y-2">
+          <h3 className="text-base font-semibold text-slate-100 md:text-lg">{cafeProfile.name || "Cafe Name"}</h3>
+          <div className="flex flex-wrap items-center justify-center gap-2">
+            <span className="rounded-full border border-emerald-400/30 bg-emerald-500/15 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-emerald-200 md:text-xs">
+              Gaming Cafe - Live
+            </span>
+            <span className="rounded-full border border-cyan-400/30 bg-cyan-500/15 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-cyan-100 md:text-xs">
+              {cafeProfile.membershipStatus || "Standard Member"}
+            </span>
+          </div>
         </div>
       </div>
       
       <div className="space-y-2">
-        <div className="flex items-center space-x-2 text-sm text-foreground">
-          <Globe className="h-4 w-4 text-muted-foreground" />
+        <div className="flex items-center gap-2 rounded-lg border border-cyan-500/20 bg-slate-900/35 px-3 py-2 text-xs text-slate-200 md:text-sm">
+          <Globe className="h-4 w-4 text-cyan-300" />
           <span className="truncate">{cafeProfile.website || "Not Available"}</span>
         </div>
-        <div className="flex items-center space-x-2 text-sm text-foreground">
-          <Mail className="h-4 w-4 text-muted-foreground" />
+        <div className="flex items-center gap-2 rounded-lg border border-cyan-500/20 bg-slate-900/35 px-3 py-2 text-xs text-slate-200 md:text-sm">
+          <Mail className="h-4 w-4 text-cyan-300" />
           <span className="truncate">{cafeProfile.email || "No Email Provided"}</span>
         </div>
       </div>
@@ -1336,7 +1341,7 @@ const ToggleSwitch = ({
 
 
             {/* Navigation Menu */}
-            <Card className="bg-card border border-border shadow-lg">
+            <Card className="overflow-hidden border border-cyan-500/25 bg-[linear-gradient(140deg,rgba(8,20,45,0.9),rgba(6,18,40,0.88))] shadow-[0_16px_40px_-24px_rgba(6,182,212,0.55)]">
               <CardContent className="p-4">
                 <nav className="space-y-2">
                   {[
@@ -1357,15 +1362,15 @@ const ToggleSwitch = ({
                       <Button
                         variant="ghost"
                         className={cn(
-                          "w-full justify-start text-muted-foreground hover:bg-muted hover:text-foreground transition-colors duration-200",
+                          "h-10 w-full justify-start rounded-lg border border-transparent text-xs font-medium uppercase tracking-[0.08em] text-slate-300 transition-all duration-200 hover:border-cyan-500/35 hover:bg-cyan-500/10 hover:text-cyan-100 md:h-11 md:text-sm",
                           page === item.label
-                            ? "bg-muted text-foreground font-semibold"
+                            ? "border-cyan-400/50 bg-cyan-500/15 text-cyan-100 shadow-[inset_0_0_0_1px_rgba(34,211,238,0.25)]"
                             : ""
                         )}
                         onClick={handleViewInpage}
                         data-label={item.label}
                       >
-                        <item.icon className="mr-2 h-4 w-4" />
+                        <item.icon className="mr-2 h-4 w-4 text-cyan-300" />
                         {item.label}
                       </Button>
                     </motion.div>
@@ -1386,10 +1391,10 @@ const ToggleSwitch = ({
 
  {page === "Cafe Gallery" && (
   <div>
-    <Card className="bg-card border border-border shadow-lg">
-      <CardHeader>
-        <CardTitle className="text-foreground">Cafe Gallery</CardTitle>
-        <CardDescription className="text-muted-foreground">
+    <Card className="overflow-hidden border border-cyan-500/25 bg-[linear-gradient(140deg,rgba(8,20,45,0.95),rgba(6,18,40,0.9))] shadow-[0_16px_40px_-24px_rgba(6,182,212,0.55)]">
+      <CardHeader className="pb-4">
+        <CardTitle className="text-base font-semibold uppercase tracking-[0.12em] text-cyan-100 md:text-lg">Cafe Gallery</CardTitle>
+        <CardDescription className="text-xs text-slate-300 md:text-sm">
           Showcase your cafe's ambiance and offerings
         </CardDescription>
       </CardHeader>
@@ -1571,10 +1576,10 @@ const ToggleSwitch = ({
                       </div>
                     </div> **/}
                     {page === "Business Details" && businessDetails && (
-  <Card className="bg-card border border-border shadow-lg">
-    <CardHeader>
-      <CardTitle className="text-foreground">Business Details</CardTitle>
-      <CardDescription className="text-muted-foreground">
+  <Card className="overflow-hidden border border-cyan-500/25 bg-[linear-gradient(140deg,rgba(8,20,45,0.95),rgba(6,18,40,0.9))] shadow-[0_16px_40px_-24px_rgba(6,182,212,0.55)]">
+    <CardHeader className="pb-4">
+      <CardTitle className="text-base font-semibold uppercase tracking-[0.12em] text-cyan-100 md:text-lg">Business Details</CardTitle>
+      <CardDescription className="text-xs text-slate-300 md:text-sm">
         Update your cafe's basic information
       </CardDescription>
     </CardHeader>
@@ -1691,13 +1696,13 @@ const ToggleSwitch = ({
 )}
 
 {page === "Operating Hours" && (
-  <Card className="bg-card border border-border shadow-lg">
-    <CardHeader>
-      <CardTitle className="text-foreground flex items-center gap-2">
-        <Clock className="w-5 h-5" />
+  <Card className="overflow-hidden border border-cyan-500/25 bg-[linear-gradient(140deg,rgba(8,20,45,0.95),rgba(6,18,40,0.9))] shadow-[0_16px_40px_-24px_rgba(6,182,212,0.55)]">
+    <CardHeader className="pb-4">
+      <CardTitle className="flex items-center gap-2 text-base font-semibold uppercase tracking-[0.12em] text-cyan-100 md:text-lg">
+        <Clock className="h-5 w-5 text-cyan-300" />
         Operating Hours
       </CardTitle>
-      <CardDescription className="text-muted-foreground">
+      <CardDescription className="text-xs text-slate-300 md:text-sm">
         Manage your cafe's working hours and slot durations
       </CardDescription>
     </CardHeader>
@@ -1895,10 +1900,10 @@ const ToggleSwitch = ({
             )} **/}
 
               {page === "Verified Documents" && (
-                <Card className="bg-card border border-border shadow-lg">
-                  <CardHeader>
-                    <CardTitle className="text-foreground">Verified Documents</CardTitle>
-                    <CardDescription className="text-muted-foreground">
+                <Card className="overflow-hidden border border-cyan-500/25 bg-[linear-gradient(140deg,rgba(8,20,45,0.95),rgba(6,18,40,0.9))] shadow-[0_16px_40px_-24px_rgba(6,182,212,0.55)]">
+                  <CardHeader className="pb-4">
+                    <CardTitle className="text-base font-semibold uppercase tracking-[0.12em] text-cyan-100 md:text-lg">Verified Documents</CardTitle>
+                    <CardDescription className="text-xs text-slate-300 md:text-sm">
                       Manage and preview your uploaded business documents
                     </CardDescription>
                   </CardHeader>
@@ -2010,13 +2015,13 @@ const ToggleSwitch = ({
 {page === "Bank Transfer" && (
   <>
     {/* FIRST CARD - BANK TRANSFER DETAILS */}
-    <Card className="content-card shadow-lg mb-6">
-      <CardHeader>
-        <CardTitle className="card-title flex items-center gap-2">
-          <CreditCard className="icon-lg" />
+    <Card className="content-card mb-6 overflow-hidden border border-cyan-500/25 bg-[linear-gradient(140deg,rgba(8,20,45,0.95),rgba(6,18,40,0.9))] shadow-[0_16px_40px_-24px_rgba(6,182,212,0.55)]">
+      <CardHeader className="pb-4">
+        <CardTitle className="card-title flex items-center gap-2 text-base font-semibold uppercase tracking-[0.12em] text-cyan-100 md:text-lg">
+          <CreditCard className="icon-lg text-cyan-300" />
           Bank Transfer Details
         </CardTitle>
-        <CardDescription className="body-text-muted">
+        <CardDescription className="body-text-muted text-xs text-slate-300 md:text-sm">
           Manage your payment details for payouts
         </CardDescription>
       </CardHeader>
@@ -2642,13 +2647,13 @@ const ToggleSwitch = ({
 
 {/* ==================== PAYOUT HISTORY PAGE ==================== */}
 {page === "Payout History" && (
-  <Card className="content-card shadow-lg">
-    <CardHeader>
-      <CardTitle className="card-title flex items-center gap-2">
-        <DollarSign className="icon-lg" />
+  <Card className="content-card overflow-hidden border border-cyan-500/25 bg-[linear-gradient(140deg,rgba(8,20,45,0.95),rgba(6,18,40,0.9))] shadow-[0_16px_40px_-24px_rgba(6,182,212,0.55)]">
+    <CardHeader className="pb-4">
+      <CardTitle className="card-title flex items-center gap-2 text-base font-semibold uppercase tracking-[0.12em] text-cyan-100 md:text-lg">
+        <DollarSign className="icon-lg text-cyan-300" />
         Payout History
       </CardTitle>
-      <CardDescription className="body-text-muted">
+      <CardDescription className="body-text-muted text-xs text-slate-300 md:text-sm">
         View your payout transaction history
       </CardDescription>
     </CardHeader>

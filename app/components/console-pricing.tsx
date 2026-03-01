@@ -24,9 +24,7 @@ import {
 import { DASHBOARD_URL } from "@/src/config/env";
 import { jwtDecode } from "jwt-decode";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 
 interface ConsoleType {
   type: string;
@@ -375,9 +373,17 @@ export default function ConsolePricing() {
   const canSave =
     Object.values(prices).some((p) => p.hasChanged) &&
     Object.values(errors).length === 0;
+  const primaryButtonClass =
+    "inline-flex items-center justify-center gap-2 rounded-lg border border-cyan-400/40 bg-gradient-to-r from-cyan-500/90 to-emerald-500/90 px-3 py-2 text-xs font-semibold text-white shadow-md shadow-cyan-900/40 transition-all duration-200 hover:from-cyan-400 hover:to-emerald-400 hover:shadow-lg hover:shadow-cyan-600/25 disabled:cursor-not-allowed disabled:opacity-50 sm:px-4 sm:text-sm";
+  const secondaryButtonClass =
+    "inline-flex items-center justify-center gap-2 rounded-lg border border-cyan-300/25 bg-slate-900/70 px-3 py-2 text-xs font-semibold text-slate-200 transition-all duration-200 hover:border-cyan-300/45 hover:bg-slate-800/80 hover:text-cyan-100 disabled:cursor-not-allowed disabled:opacity-50 sm:px-4 sm:text-sm";
+  const destructiveIconButtonClass =
+    "inline-flex items-center justify-center rounded-lg border border-rose-400/30 bg-rose-500/10 p-2 text-rose-300 transition-all duration-200 hover:border-rose-300/60 hover:bg-rose-500/20 disabled:cursor-not-allowed disabled:opacity-50";
+  const iconButtonClass =
+    "inline-flex items-center justify-center rounded-lg border border-emerald-400/30 bg-emerald-500/10 p-2 text-emerald-300 transition-all duration-200 hover:border-emerald-300/60 hover:bg-emerald-500/20 disabled:cursor-not-allowed disabled:opacity-50";
 
   return (
-    <div className="page-container">
+    <div className="space-y-4 px-1 pb-2 sm:px-2">
 
       {/* ✅ Success Toast */}
       <AnimatePresence>
@@ -394,31 +400,26 @@ export default function ConsolePricing() {
         )}
       </AnimatePresence>
 
-      {/* ✅ Page Header */}
-      <div className="page-header">
-        <div className="page-title-section">
-          <div className="flex items-center gap-3 mb-1">
-            <div className="icon-blue p-2 rounded-lg">
-              <IndianRupee className="icon-lg text-blue-400" />
-            </div>
-            <h1 className="page-title">Console Pricing</h1>
-          </div>
-          <p className="page-subtitle">Manage base rates and promotional offers</p>
-        </div>
-      </div>
-
       {/* ✅ Tab Navigation - uses global .tab-container */}
-      <div className="tab-container mb-6">
+      <div className="gaming-panel mb-2 flex w-full items-center gap-2 rounded-xl p-2">
         <button
           onClick={() => setActiveTab("default")}
-          className={activeTab === "default" ? "tab-active" : "tab-inactive"}
+          className={`inline-flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold transition-all sm:text-sm ${
+            activeTab === "default"
+              ? "border border-cyan-400/35 bg-cyan-500/15 text-cyan-100"
+              : "border border-transparent bg-slate-900/40 text-slate-300 hover:border-cyan-400/25 hover:text-cyan-100"
+          }`}
         >
           <IndianRupee className="icon-md" />
           Default Pricing
         </button>
         <button
           onClick={() => setActiveTab("offers")}
-          className={activeTab === "offers" ? "tab-active" : "tab-inactive"}
+          className={`inline-flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold transition-all sm:text-sm ${
+            activeTab === "offers"
+              ? "border border-cyan-400/35 bg-cyan-500/15 text-cyan-100"
+              : "border border-transparent bg-slate-900/40 text-slate-300 hover:border-cyan-400/25 hover:text-cyan-100"
+          }`}
         >
           <Sparkles className="icon-md" />
           Promotional Offers
@@ -433,17 +434,17 @@ export default function ConsolePricing() {
           transition={{ duration: 0.2 }}
           className="flex-1"
         >
-          <div className="four-col-grid mb-6">
+          <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
             {consoleTypes.map((console) => (
-              <div key={console.type} className="content-card rounded-lg p-4 hover:shadow-md transition-all duration-200">
+              <div key={console.type} className="gaming-kpi-card rounded-xl border border-cyan-400/20 bg-gradient-to-br from-slate-900/75 via-slate-900/65 to-cyan-950/20 p-4 transition-all duration-200 hover:shadow-lg hover:shadow-cyan-500/10">
                 {/* Console Type Header */}
-                <div className={`${console.color} rounded-lg p-3 mb-4 flex items-center gap-3`}>
-                  <div className="icon-container p-1.5 rounded-md bg-card/50">
+                <div className={`${console.color} mb-4 flex items-center gap-3 rounded-lg border border-cyan-400/15 p-3`}>
+                  <div className="rounded-md border border-cyan-400/20 bg-slate-950/40 p-1.5">
                     <console.icon className="icon-md" style={{ color: console.iconColor }} />
                   </div>
                   <div>
-                    <p className="text-sm font-semibold text-foreground">{console.name}</p>
-                    <p className="text-xs text-muted-foreground">{console.description}</p>
+                    <p className="text-sm font-semibold text-cyan-100">{console.name}</p>
+                    <p className="text-xs text-slate-300/75">{console.description}</p>
                   </div>
                 </div>
 
@@ -455,7 +456,7 @@ export default function ConsolePricing() {
                     type="number"
                     value={prices[console.type]?.value}
                     onChange={(e) => handlePriceChange(console.type, e.target.value)}
-                    className="pl-9 bg-muted/20 border-border focus:ring-2 focus:ring-primary"
+                    className="border-cyan-400/25 bg-slate-900/70 pl-9 text-slate-100 placeholder:text-slate-400 focus-visible:ring-cyan-400/60"
                   />
                 </div>
                 {errors[console.type] && (
@@ -479,10 +480,10 @@ export default function ConsolePricing() {
           </div>
 
           {/* Save Button */}
-          <Button
+          <button
             onClick={handleSave}
             disabled={!canSave || isLoading}
-            className="btn-primary px-6 py-2.5 disabled:opacity-50 disabled:cursor-not-allowed"
+            className={`${primaryButtonClass} px-6 py-2.5`}
           >
             {isLoading ? (
               <>
@@ -495,7 +496,7 @@ export default function ConsolePricing() {
                 Save Pricing Changes
               </>
             )}
-          </Button>
+          </button>
         </motion.div>
       )}
 
@@ -508,18 +509,18 @@ export default function ConsolePricing() {
           className="flex-1 flex flex-col gap-4 min-h-0"
         >
           {/* Offers Header Row */}
-          <div className="page-actions justify-between flex-wrap">
+          <div className="gaming-panel flex flex-wrap items-center justify-between gap-3 rounded-xl p-3">
             <div className="flex items-center gap-3">
               <h2 className="section-title">Active Promotions</h2>
 
               {/* View Toggle */}
-              <div className="flex items-center gap-1 bg-muted p-1 rounded-lg border border-border">
+              <div className="flex items-center gap-1 rounded-lg border border-cyan-400/20 bg-slate-900/60 p-1">
                 <button
                   onClick={() => setViewMode("grid")}
                   className={`p-1.5 rounded-md transition-all ${
                     viewMode === "grid"
-                      ? "bg-background shadow-sm text-blue-400"
-                      : "text-muted-foreground hover:text-foreground"
+                      ? "bg-slate-800 shadow-sm text-cyan-300"
+                      : "text-muted-foreground hover:text-cyan-200"
                   }`}
                   title="Grid View"
                 >
@@ -529,8 +530,8 @@ export default function ConsolePricing() {
                   onClick={() => setViewMode("table")}
                   className={`p-1.5 rounded-md transition-all ${
                     viewMode === "table"
-                      ? "bg-background shadow-sm text-blue-400"
-                      : "text-muted-foreground hover:text-foreground"
+                      ? "bg-slate-800 shadow-sm text-cyan-300"
+                      : "text-muted-foreground hover:text-cyan-200"
                   }`}
                   title="Table View"
                 >
@@ -541,7 +542,7 @@ export default function ConsolePricing() {
 
             <button
               onClick={() => setShowOfferForm(true)}
-              className="btn-primary"
+              className={primaryButtonClass}
             >
               <PlusCircle className="icon-md" />
               New Offer
@@ -555,11 +556,11 @@ export default function ConsolePricing() {
               <p className="body-text-muted">Loading offers...</p>
             </div>
           ) : offers.length === 0 ? (
-            <div className="flex-1 flex flex-col items-center justify-center gap-3 border-2 border-dashed border-border rounded-lg py-16">
+            <div className="gaming-panel flex flex-1 flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed border-cyan-400/20 py-16">
               <Sparkles className="w-12 h-12 text-muted-foreground/30" />
               <h3 className="section-title text-muted-foreground/60">No active offers yet</h3>
               <p className="body-text-muted">Create your first promotional offer</p>
-              <button onClick={() => setShowOfferForm(true)} className="btn-secondary mt-2">
+              <button onClick={() => setShowOfferForm(true)} className={`${secondaryButtonClass} mt-2`}>
                 <Plus className="icon-md" />
                 Add New Offer
               </button>
@@ -570,11 +571,8 @@ export default function ConsolePricing() {
                 const Icon = getConsoleIcon(offer.console_type);
                 const isDeleting = deletingOfferId === offer.id;
                 return (
-                  <Card
-                    key={offer.id}
-                    className="content-card flex flex-col border-border hover:shadow-lg transition-all duration-200"
-                  >
-                    <CardHeader className="flex flex-row items-start justify-between p-4 border-b border-border">
+                  <Card key={offer.id} className="gaming-panel flex flex-col border-cyan-400/20 bg-gradient-to-b from-slate-900/70 to-slate-950/70 transition-all duration-200 hover:shadow-lg hover:shadow-cyan-500/10">
+                    <CardHeader className="flex flex-row items-start justify-between border-b border-cyan-500/15 p-4">
                       <div className="min-w-0 flex-1 pr-2">
                         <h2 className="card-title truncate">{offer.offer_name}</h2>
                         <div className="flex items-center gap-1.5 mt-1">
@@ -591,7 +589,7 @@ export default function ConsolePricing() {
                       <div className="flex gap-1 shrink-0">
                         <button
                           onClick={() => handleEditOffer(offer)}
-                          className="btn-icon hover:bg-emerald-500/10"
+                          className={iconButtonClass}
                           title="Edit"
                         >
                           <Pencil className="w-3.5 h-3.5 text-emerald-400" />
@@ -599,7 +597,7 @@ export default function ConsolePricing() {
                         <button
                           onClick={() => handleDeleteOffer(offer.id)}
                           disabled={isDeleting}
-                          className="btn-icon hover:bg-destructive/10 disabled:opacity-50"
+                          className={destructiveIconButtonClass}
                           title="Delete"
                         >
                           {isDeleting ? (
@@ -664,15 +662,16 @@ export default function ConsolePricing() {
               exit={{ scale: 0.95, opacity: 0, y: 10 }}
               transition={{ duration: 0.2 }}
               className="bg-card border border-border rounded-xl w-full max-w-md shadow-2xl overflow-hidden"
+              className="w-full max-w-md overflow-hidden rounded-xl border border-cyan-400/25 bg-gradient-to-br from-slate-950 via-slate-900 to-cyan-950/30 shadow-2xl"
             >
               {/* Modal Header */}
-              <div className="flex items-center justify-between px-5 py-4 border-b border-border">
+              <div className="flex items-center justify-between border-b border-cyan-500/20 px-5 py-4">
                 <h2 className="card-title">
                   {editingOffer ? "Edit Promotion" : "Create New Promotion"}
                 </h2>
                 <button
                   onClick={() => { setShowOfferForm(false); resetOfferForm(); }}
-                  className="btn-icon"
+                  className="inline-flex items-center justify-center rounded-lg border border-cyan-400/25 bg-slate-900/70 p-2 text-slate-200 transition-all duration-200 hover:border-cyan-300/45 hover:bg-slate-800/80 hover:text-cyan-100"
                 >
                   <X className="icon-md" />
                 </button>
@@ -688,7 +687,7 @@ export default function ConsolePricing() {
                     placeholder="e.g. Weekend Bash 2024"
                     value={offerForm.offer_name}
                     onChange={(e) => setOfferForm({ ...offerForm, offer_name: e.target.value })}
-                    className="bg-muted/20 border-border focus:ring-2 focus:ring-primary"
+                    className="border-cyan-400/25 bg-slate-900/70 text-slate-100 placeholder:text-slate-400 focus-visible:ring-cyan-400/60"
                   />
                 </div>
 
@@ -696,7 +695,7 @@ export default function ConsolePricing() {
                 <div className="space-y-1.5">
                   <label className="table-header-text">Console Type *</label>
                   <select
-                    className="w-full h-10 border border-border rounded-md px-3 text-sm bg-card text-foreground focus:ring-2 focus:ring-primary outline-none"
+                    className="h-10 w-full rounded-md border border-cyan-400/25 bg-slate-900/70 px-3 text-sm text-slate-100 outline-none focus:ring-2 focus:ring-cyan-400/60"
                     value={offerForm.available_game_id}
                     onChange={(e) => setOfferForm({ ...offerForm, available_game_id: e.target.value })}
                     disabled={!!editingOffer}
@@ -720,7 +719,7 @@ export default function ConsolePricing() {
                       placeholder="Enter discounted price"
                       value={offerForm.offered_price}
                       onChange={(e) => setOfferForm({ ...offerForm, offered_price: e.target.value })}
-                      className="pl-9 bg-muted/20 border-border focus:ring-2 focus:ring-primary"
+                      className="border-cyan-400/25 bg-slate-900/70 pl-9 text-slate-100 placeholder:text-slate-400 focus-visible:ring-cyan-400/60"
                     />
                   </div>
                 </div>
@@ -733,7 +732,7 @@ export default function ConsolePricing() {
                       type="date"
                       value={offerForm.start_date}
                       onChange={(e) => setOfferForm({ ...offerForm, start_date: e.target.value })}
-                      className="bg-muted/20 border-border"
+                      className="border-cyan-400/25 bg-slate-900/70 text-slate-100 focus-visible:ring-cyan-400/60"
                     />
                   </div>
                   <div className="space-y-1.5">
@@ -742,7 +741,7 @@ export default function ConsolePricing() {
                       type="time"
                       value={offerForm.start_time}
                       onChange={(e) => setOfferForm({ ...offerForm, start_time: e.target.value })}
-                      className="bg-muted/20 border-border"
+                      className="border-cyan-400/25 bg-slate-900/70 text-slate-100 focus-visible:ring-cyan-400/60"
                     />
                   </div>
                 </div>
@@ -755,7 +754,7 @@ export default function ConsolePricing() {
                       type="date"
                       value={offerForm.end_date}
                       onChange={(e) => setOfferForm({ ...offerForm, end_date: e.target.value })}
-                      className="bg-muted/20 border-border"
+                      className="border-cyan-400/25 bg-slate-900/70 text-slate-100 focus-visible:ring-cyan-400/60"
                     />
                   </div>
                   <div className="space-y-1.5">
@@ -764,7 +763,7 @@ export default function ConsolePricing() {
                       type="time"
                       value={offerForm.end_time}
                       onChange={(e) => setOfferForm({ ...offerForm, end_time: e.target.value })}
-                      className="bg-muted/20 border-border"
+                      className="border-cyan-400/25 bg-slate-900/70 text-slate-100 focus-visible:ring-cyan-400/60"
                     />
                   </div>
                 </div>
@@ -776,16 +775,16 @@ export default function ConsolePricing() {
                     placeholder="Short description..."
                     value={offerForm.offer_description}
                     onChange={(e) => setOfferForm({ ...offerForm, offer_description: e.target.value })}
-                    className="bg-muted/20 border-border"
+                    className="border-cyan-400/25 bg-slate-900/70 text-slate-100 placeholder:text-slate-400 focus-visible:ring-cyan-400/60"
                   />
                 </div>
               </div>
 
               {/* Modal Footer */}
-              <div className="flex gap-3 px-5 py-4 border-t border-border">
+              <div className="flex gap-3 border-t border-cyan-500/20 px-5 py-4">
                 <button
                   onClick={() => { setShowOfferForm(false); resetOfferForm(); }}
-                  className="btn-secondary flex-1 justify-center"
+                  className={`${secondaryButtonClass} flex-1`}
                   disabled={isCreatingOffer || isUpdatingOffer}
                 >
                   Cancel
@@ -793,7 +792,7 @@ export default function ConsolePricing() {
                 <button
                   onClick={editingOffer ? handleUpdateOffer : handleCreateOffer}
                   disabled={isCreatingOffer || isUpdatingOffer}
-                  className="btn-primary flex-1 justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+                  className={`${primaryButtonClass} flex-1`}
                 >
                   {/* ✅ Loader in button while creating/updating */}
                   {isCreatingOffer || isUpdatingOffer ? (
@@ -820,13 +819,13 @@ export default function ConsolePricing() {
 // ✅ Table View Component - aligned with global CSS
 function OffersTable({ offers, onEdit, onDelete, deletingOfferId, getConsoleIcon }: any) {
   return (
-    <div className="table-container flex-1 overflow-hidden">
+    <div className="table-container flex-1 overflow-hidden rounded-xl border border-cyan-500/25 bg-slate-950/35">
       <div className="h-full overflow-y-auto">
         <table className="w-full text-left">
-          <thead className="table-header sticky top-0 z-10">
+          <thead className="sticky top-0 z-10 bg-slate-900/70">
             <tr>
               {["Offer Name", "Console", "Pricing", "Validity", "Actions"].map((h) => (
-                <th key={h} className="table-cell table-header-text">
+                <th key={h} className="table-cell text-[11px] font-bold uppercase tracking-wider text-cyan-100/80 sm:text-xs">
                   {h}
                 </th>
               ))}
@@ -837,7 +836,7 @@ function OffersTable({ offers, onEdit, onDelete, deletingOfferId, getConsoleIcon
               const Icon = getConsoleIcon(offer.console_type);
               const isDeleting = deletingOfferId === offer.id;
               return (
-                <tr key={offer.id} className="table-row">
+                <tr key={offer.id} className="table-row border-b border-cyan-500/10 last:border-0">
                   <td className="table-cell">
                     <p className="body-text font-semibold">{offer.offer_name}</p>
                     {offer.is_currently_active && (
@@ -878,7 +877,7 @@ function OffersTable({ offers, onEdit, onDelete, deletingOfferId, getConsoleIcon
                     <div className="flex items-center gap-1">
                       <button
                         onClick={() => onEdit(offer)}
-                        className="btn-icon hover:bg-emerald-500/10"
+                        className="inline-flex items-center justify-center rounded-lg border border-emerald-400/30 bg-emerald-500/10 p-2 text-emerald-300 transition-all duration-200 hover:border-emerald-300/60 hover:bg-emerald-500/20"
                         title="Edit"
                       >
                         <Pencil className="w-3.5 h-3.5 text-emerald-400" />
@@ -886,7 +885,7 @@ function OffersTable({ offers, onEdit, onDelete, deletingOfferId, getConsoleIcon
                       <button
                         onClick={() => onDelete(offer.id)}
                         disabled={isDeleting}
-                        className="btn-icon hover:bg-destructive/10 disabled:opacity-50"
+                        className="inline-flex items-center justify-center rounded-lg border border-rose-400/30 bg-rose-500/10 p-2 text-rose-300 transition-all duration-200 hover:border-rose-300/60 hover:bg-rose-500/20 disabled:cursor-not-allowed disabled:opacity-50"
                         title="Delete"
                       >
                         {isDeleting ? (

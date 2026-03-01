@@ -9,7 +9,6 @@ import {
   CardTitle,
   CardDescription,
 } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Gamepad2,
@@ -21,6 +20,7 @@ import {
   XCircle,
   ArrowLeft,
   Image as ImageIcon,
+  Sparkles,
   Monitor,
   Tag,
 } from "lucide-react";
@@ -320,6 +320,10 @@ export default function GamesManagementPage() {
       CONSOLE_TYPES[0]
     );
   };
+  const primaryButtonClass =
+    "inline-flex items-center justify-center gap-2 rounded-lg border border-cyan-400/40 bg-gradient-to-r from-cyan-500/90 to-emerald-500/90 px-3 py-2 text-xs font-semibold text-white shadow-md shadow-cyan-900/40 transition-all duration-200 hover:from-cyan-400 hover:to-emerald-400 hover:shadow-lg hover:shadow-cyan-600/25 disabled:cursor-not-allowed disabled:opacity-50 sm:px-4 sm:text-sm";
+  const secondaryButtonClass =
+    "inline-flex items-center justify-center gap-2 rounded-lg border border-cyan-300/25 bg-slate-900/70 px-3 py-2 text-xs font-semibold text-slate-200 transition-all duration-200 hover:border-cyan-300/45 hover:bg-slate-800/80 hover:text-cyan-100 disabled:cursor-not-allowed disabled:opacity-50 sm:px-4 sm:text-sm";
 
   if (loading) {
     return (
@@ -333,30 +337,24 @@ export default function GamesManagementPage() {
 
   return (
     <DashboardLayout>
-      <div className="flex-1 p-4 md:p-8 bg-background">
-        {/* Header */}
+      <div className="flex-1 space-y-3 sm:space-y-4">
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mb-6"
+          className="gaming-panel rounded-xl p-4 sm:p-5"
         >
-          <div className="flex items-center justify-between">
+          <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <h1 className="text-3xl font-bold text-foreground flex items-center gap-3">
-                <Gamepad2 className="w-8 h-8 text-primary" />
+              <h1 className="premium-heading !text-xl sm:!text-2xl md:!text-3xl flex items-center gap-2">
                 Games Management
+                <Sparkles className="h-4 w-4 text-emerald-400 sm:h-5 sm:w-5" />
               </h1>
-              <p className="text-muted-foreground mt-2">
-                Manage games on your consoles
-              </p>
+              <p className="premium-subtle mt-1">Manage games on your consoles</p>
             </div>
-            <Button
-              onClick={() => setShowAddModal(true)}
-              className="bg-primary hover:bg-primary/90 text-primary-foreground"
-            >
-              <Plus className="w-4 h-4 mr-2" />
+            <button onClick={() => setShowAddModal(true)} className={primaryButtonClass}>
+              <Plus className="w-4 h-4" />
               Add Game
-            </Button>
+            </button>
           </div>
         </motion.div>
 
@@ -367,7 +365,7 @@ export default function GamesManagementPage() {
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
-              className="mb-4 p-4 bg-green-500/10 border border-green-500/20 rounded-lg flex items-center gap-2 text-green-600"
+              className="gaming-panel mb-4 flex items-center gap-2 rounded-lg border border-green-500/20 bg-green-500/10 p-4 text-green-300"
             >
               <CheckCircle2 className="w-5 h-5" />
               {success}
@@ -378,7 +376,7 @@ export default function GamesManagementPage() {
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
-              className="mb-4 p-4 bg-red-500/10 border border-red-500/20 rounded-lg flex items-center gap-2 text-red-600"
+              className="gaming-panel mb-4 flex items-center gap-2 rounded-lg border border-red-500/20 bg-red-500/10 p-4 text-red-300"
             >
               <XCircle className="w-5 h-5" />
               {error}
@@ -391,7 +389,7 @@ export default function GamesManagementPage() {
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="text-center py-16"
+            className="gaming-panel text-center py-16 rounded-xl border border-cyan-400/20 bg-slate-950/40"
           >
             <Gamepad2 className="w-16 h-16 mx-auto text-muted-foreground/50 mb-4" />
             <h3 className="text-xl font-semibold text-foreground mb-2">
@@ -400,19 +398,16 @@ export default function GamesManagementPage() {
             <p className="text-muted-foreground mb-6">
               Start by adding games to your consoles
             </p>
-            <Button
-              onClick={() => setShowAddModal(true)}
-              className="bg-primary hover:bg-primary/90"
-            >
+            <button onClick={() => setShowAddModal(true)} className={primaryButtonClass}>
               <Plus className="w-4 h-4 mr-2" />
               Add Your First Game
-            </Button>
+            </button>
           </motion.div>
         ) : (
-          <Card className="bg-card border-border">
-            <CardHeader>
-              <CardTitle>Your Games</CardTitle>
-              <CardDescription>
+          <Card className="gaming-panel overflow-hidden rounded-xl border-cyan-400/20 bg-slate-950/45">
+            <CardHeader className="border-b border-cyan-500/15">
+              <CardTitle className="text-cyan-100">Your Games</CardTitle>
+              <CardDescription className="text-slate-300/70">
                 {vendorGames.length} game{vendorGames.length !== 1 ? "s" : ""}{" "}
                 configured across your consoles
               </CardDescription>
@@ -422,19 +417,19 @@ export default function GamesManagementPage() {
                 <table className="w-full">
                   <thead>
                     <tr className="border-b border-border">
-                      <th className="text-left py-3 px-4 text-sm font-semibold text-foreground">
+                      <th className="text-left py-3 px-4 text-xs font-bold uppercase tracking-wider text-cyan-100/80">
                         Game
                       </th>
-                      <th className="text-left py-3 px-4 text-sm font-semibold text-foreground">
+                      <th className="text-left py-3 px-4 text-xs font-bold uppercase tracking-wider text-cyan-100/80">
                         Genre
                       </th>
-                      <th className="text-left py-3 px-4 text-sm font-semibold text-foreground">
+                      <th className="text-left py-3 px-4 text-xs font-bold uppercase tracking-wider text-cyan-100/80">
                         Available On
                       </th>
-                      <th className="text-left py-3 px-4 text-sm font-semibold text-foreground">
+                      <th className="text-left py-3 px-4 text-xs font-bold uppercase tracking-wider text-cyan-100/80">
                         Avg Price
                       </th>
-                      <th className="text-center py-3 px-4 text-sm font-semibold text-foreground">
+                      <th className="text-center py-3 px-4 text-xs font-bold uppercase tracking-wider text-cyan-100/80">
                         Actions
                       </th>
                     </tr>
@@ -446,7 +441,7 @@ export default function GamesManagementPage() {
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: index * 0.05 }}
-                        className="border-b border-border hover:bg-muted/50 transition-colors"
+                        className="border-b border-cyan-500/10 transition-colors hover:bg-cyan-500/5"
                       >
                         <td className="py-3 px-4">
                           <div className="flex items-center gap-3">
@@ -487,7 +482,7 @@ export default function GamesManagementPage() {
                               return (
                                 <div
                                   key={console.vendor_game_id}
-                                  className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs bg-muted border border-border group relative"
+                                  className="group relative inline-flex items-center gap-1 rounded border border-cyan-400/20 bg-slate-900/60 px-2 py-1 text-xs"
                                 >
                                   <span>{consoleInfo.icon}</span>
                                   <span className="font-medium">
@@ -561,25 +556,26 @@ export default function GamesManagementPage() {
                 initial={{ scale: 0.95, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 0.95, opacity: 0 }}
-                className="bg-background rounded-lg shadow-xl max-w-5xl w-full max-h-[90vh] overflow-hidden"
+                className="w-full max-w-5xl max-h-[90vh] overflow-hidden rounded-xl border border-cyan-400/25 bg-gradient-to-br from-slate-950 via-slate-900 to-cyan-950/30 shadow-2xl"
                 onClick={(e) => e.stopPropagation()}
               >
                 {/* Modal Header */}
-                <div className="p-6 border-b border-border">
+                <div className="border-b border-cyan-500/20 p-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <h2 className="text-2xl font-bold text-foreground">
+                      <h2 className="flex items-center gap-2 text-xl font-bold text-cyan-100 sm:text-2xl">
                         Add New Game
+                        <Gamepad2 className="h-5 w-5 text-cyan-300" />
                       </h2>
-                      <p className="text-sm text-muted-foreground mt-1">
+                      <p className="mt-1 text-sm text-slate-300/75">
                         {modalStep === 1 && "Step 1: Select a game"}
                         {modalStep === 2 &&
                           "Step 2: Choose platform & consoles"}
                       </p>
                     </div>
-                    <Button variant="ghost" size="icon" onClick={resetModal}>
+                    <button className={secondaryButtonClass} onClick={resetModal}>
                       <XCircle className="w-5 h-5" />
-                    </Button>
+                    </button>
                   </div>
 
                   {/* Progress Bar */}
@@ -588,7 +584,7 @@ export default function GamesManagementPage() {
                       <div
                         key={step}
                         className={`h-1 flex-1 rounded-full transition-colors ${
-                          step <= modalStep ? "bg-primary" : "bg-muted"
+                          step <= modalStep ? "bg-cyan-400" : "bg-slate-700"
                         }`}
                       />
                     ))}
@@ -604,7 +600,7 @@ export default function GamesManagementPage() {
                       animate={{ opacity: 1, x: 0 }}
                     >
                       {/* Search */}
-                      <div className="mb-4">
+                      <div className="mb-4 rounded-lg border border-cyan-400/15 bg-slate-900/40 p-3">
                         <div className="relative">
                           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                           <input
@@ -612,7 +608,7 @@ export default function GamesManagementPage() {
                             placeholder="Search games (e.g., GTA, Call of Duty)..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className="w-full pl-10 pr-4 py-3 bg-muted border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-foreground"
+                            className="w-full rounded-lg border border-cyan-400/25 bg-slate-900/70 py-3 pl-10 pr-4 text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-400/60"
                             autoFocus
                           />
                           {searchLoading && (
@@ -640,9 +636,9 @@ export default function GamesManagementPage() {
                           allGames.map((game) => (
                             <motion.div
                               key={game.id}
-                              whileHover={{ scale: 1.05 }}
+                              whileHover={{ scale: 1.03, y: -2 }}
                               whileTap={{ scale: 0.95 }}
-                              className="bg-card border border-border rounded-lg cursor-pointer hover:border-primary transition-all overflow-hidden"
+                              className="cursor-pointer overflow-hidden rounded-lg border border-cyan-400/20 bg-gradient-to-b from-slate-900/70 to-slate-950/70 transition-all hover:border-cyan-300/40 hover:shadow-lg hover:shadow-cyan-500/10"
                               onClick={() => {
                                 setSelectedGame(game);
                                 setModalStep(2);
@@ -690,8 +686,7 @@ export default function GamesManagementPage() {
                       animate={{ opacity: 1, x: 0 }}
                       className="space-y-6"
                     >
-                      <Button
-                        variant="ghost"
+                      <button
                         onClick={() => {
                           setModalStep(1);
                           setSelectedGame(null);
@@ -700,14 +695,14 @@ export default function GamesManagementPage() {
                           setAvailableConsoles([]);
                           setSelectedConsoleIds([]);
                         }}
-                        className="mb-2"
+                        className={`${secondaryButtonClass} mb-2`}
                       >
                         <ArrowLeft className="w-4 h-4 mr-2" />
                         Back to games
-                      </Button>
+                      </button>
 
                       {/* Selected Game Banner */}
-                      <Card className="bg-gradient-to-r from-primary/10 to-primary/5 border-primary/20">
+                      <Card className="border-cyan-400/25 bg-gradient-to-r from-cyan-500/10 to-emerald-500/5 shadow-sm">
                         <div className="flex items-center gap-4 p-4">
                           <div className="w-16 h-16 rounded bg-gradient-to-br from-purple-500 to-blue-600 flex items-center justify-center flex-shrink-0">
                             {selectedGame.image_url ? (
@@ -726,17 +721,17 @@ export default function GamesManagementPage() {
                             </h3>
                             <div className="flex gap-2 mt-1 flex-wrap">
                               {selectedGame.genre && (
-                                <span className="text-xs px-2 py-1 bg-primary/10 text-primary rounded">
+                                <span className="rounded border border-cyan-400/25 bg-cyan-500/10 px-2 py-1 text-xs text-cyan-200">
                                   {selectedGame.genre}
                                 </span>
                               )}
                               {selectedGame.rawg_rating && (
-                                <span className="text-xs px-2 py-1 bg-yellow-500/10 text-yellow-600 rounded">
+                                <span className="rounded border border-amber-400/25 bg-amber-500/10 px-2 py-1 text-xs text-amber-200">
                                   ⭐ {selectedGame.rawg_rating.toFixed(1)}
                                 </span>
                               )}
                               {selectedGame.multiplayer && (
-                                <span className="text-xs px-2 py-1 bg-green-500/10 text-green-600 rounded">
+                                <span className="rounded border border-emerald-400/25 bg-emerald-500/10 px-2 py-1 text-xs text-emerald-200">
                                   Multiplayer
                                 </span>
                               )}
@@ -747,7 +742,7 @@ export default function GamesManagementPage() {
 
                       {/* Platform Selection */}
                       <div>
-                        <label className="block text-sm font-semibold text-foreground mb-3">
+                        <label className="mb-3 block text-[11px] font-bold uppercase tracking-wider text-cyan-100/80 sm:text-xs">
                           1. Select Platform
                         </label>
                         {platformTypes.length === 0 ? (
@@ -776,8 +771,8 @@ export default function GamesManagementPage() {
                                   }
                                   className={`flex items-center gap-2 px-4 py-3 rounded-lg border-2 transition-all ${
                                     isSelected
-                                      ? "border-primary bg-primary/10 shadow-md"
-                                      : "border-border bg-card hover:border-primary/50"
+                                      ? "border-cyan-400/60 bg-cyan-500/10 shadow-md shadow-cyan-500/10"
+                                      : "border-cyan-400/20 bg-slate-900/60 hover:border-cyan-300/45"
                                   }`}
                                 >
                                   <span className="text-2xl">{info.icon}</span>
@@ -790,12 +785,12 @@ export default function GamesManagementPage() {
                                       {platform.total_consoles !== 1 ? "s" : ""}
                                     </div>
                                     {/* ✅ Show platform price on button */}
-                                    <div className="text-xs text-primary font-semibold mt-0.5">
+                                    <div className="mt-0.5 text-xs font-semibold text-cyan-300">
                                       ₹{platform.single_slot_price}/slot
                                     </div>
                                   </div>
                                   {isSelected && (
-                                    <CheckCircle2 className="w-5 h-5 text-primary ml-2" />
+                                    <CheckCircle2 className="ml-2 h-5 w-5 text-cyan-300" />
                                   )}
                                 </motion.button>
                               );
@@ -806,16 +801,16 @@ export default function GamesManagementPage() {
 
                       {/* ✅ Auto Price Display — read-only, no input */}
                       {selectedPlatform && selectedPlatformPrice > 0 && (
-                        <div className="flex items-center gap-3 p-4 bg-primary/5 border border-primary/20 rounded-lg">
-                          <IndianRupee className="w-5 h-5 text-primary" />
+                        <div className="flex items-center gap-3 rounded-lg border border-cyan-400/20 bg-cyan-500/5 p-4">
+                          <IndianRupee className="h-5 w-5 text-cyan-300" />
                           <div>
-                            <p className="text-sm font-semibold text-foreground">
+                            <p className="text-sm font-semibold text-slate-100">
                               Price per slot:{" "}
-                              <span className="text-primary">
+                              <span className="text-cyan-300">
                                 ₹{selectedPlatformPrice}
                               </span>
                             </p>
-                            <p className="text-xs text-muted-foreground mt-0.5">
+                            <p className="mt-0.5 text-xs text-slate-300/70">
                               Automatically set from{" "}
                               {getConsoleInfo(selectedPlatform).label} platform
                               pricing. To change it, update the platform price
@@ -828,7 +823,7 @@ export default function GamesManagementPage() {
                       {/* Console Selection */}
                       {selectedPlatform && availableConsoles.length > 0 && (
                         <div>
-                          <label className="block text-sm font-semibold text-foreground mb-3">
+                          <label className="mb-3 block text-[11px] font-bold uppercase tracking-wider text-cyan-100/80 sm:text-xs">
                             2. Select Consoles
                           </label>
                           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
@@ -845,8 +840,8 @@ export default function GamesManagementPage() {
                                   onClick={() => toggleConsole(console.id)}
                                   className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
                                     isSelected
-                                      ? "border-primary bg-primary/5"
-                                      : "border-border bg-card hover:border-primary/30"
+                                      ? "border-cyan-400/60 bg-cyan-500/10"
+                                      : "border-cyan-400/20 bg-slate-900/60 hover:border-cyan-300/40"
                                   }`}
                                 >
                                   <div className="flex items-start gap-3">
@@ -879,7 +874,7 @@ export default function GamesManagementPage() {
                             })}
                           </div>
                           {selectedConsoleIds.length > 0 && (
-                            <p className="text-sm text-primary font-medium mt-3 text-center">
+                            <p className="mt-3 text-center text-sm font-medium text-cyan-300">
                               ✓ {selectedConsoleIds.length} console
                               {selectedConsoleIds.length !== 1 ? "s" : ""}{" "}
                               selected
@@ -892,10 +887,10 @@ export default function GamesManagementPage() {
                 </div>
 
                 {/* Footer */}
-                <div className="p-6 border-t border-border flex justify-between items-center">
+                <div className="flex items-center justify-between border-t border-cyan-500/20 p-6">
                   <div>
                     {modalStep === 2 && (
-                      <div className="text-sm text-muted-foreground">
+                      <div className="text-sm text-slate-300/75">
                         {selectedPlatform && (
                           <span className="inline-flex items-center gap-1">
                             {getConsoleInfo(selectedPlatform).icon}{" "}
@@ -917,20 +912,16 @@ export default function GamesManagementPage() {
                     )}
                   </div>
                   <div className="flex gap-3">
-                    <Button
-                      variant="outline"
-                      onClick={resetModal}
-                      disabled={submitting}
-                    >
+                    <button onClick={resetModal} disabled={submitting} className={secondaryButtonClass}>
                       Cancel
-                    </Button>
+                    </button>
                     {modalStep === 2 && (
-                      <Button
+                      <button
                         onClick={handleAddGame}
                         disabled={
                           submitting || selectedConsoleIds.length === 0
                         }
-                        className="bg-primary hover:bg-primary/90"
+                        className={primaryButtonClass}
                       >
                         {submitting ? (
                           <>
@@ -944,7 +935,7 @@ export default function GamesManagementPage() {
                             {selectedConsoleIds.length !== 1 ? "s" : ""}
                           </>
                         )}
-                      </Button>
+                      </button>
                     )}
                   </div>
                 </div>

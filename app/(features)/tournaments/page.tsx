@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Plus, Search, MoreHorizontal, Trophy,
-  ChevronLeft, ChevronRight, ImageIcon,
+  ChevronLeft, ChevronRight, Sparkles,
 } from 'lucide-react';
 import { useEventsToken } from '@/hooks/useEventsToken';
 import { jwtDecode } from "jwt-decode"
@@ -99,19 +99,21 @@ export default function TournamentsPage() {
 
   return (
     <DashboardLayout>
-    <div className="page-container" onClick={() => setOpenMenuId(null)}>
+    <div className="flex-1 space-y-3 sm:space-y-4" onClick={() => setOpenMenuId(null)}>
 
-      {/* ── Header ───────────────────────────────────── */}
-      <div className="page-header">
-        <div className="page-title-section">
-          <h1 className="page-title">Tournaments</h1>
-          <p className="page-subtitle">
-            Manage all ongoing, upcoming, and completed tournaments.
-          </p>
-        </div>
-        <div className="page-actions">
+      <div className="gaming-panel rounded-xl p-4 sm:p-5">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h1 className="premium-heading !text-xl sm:!text-2xl md:!text-3xl flex items-center gap-2">
+              Tournament Command
+              <Sparkles className="h-4 w-4 text-emerald-400 sm:h-5 sm:w-5" />
+            </h1>
+            <p className="premium-subtle mt-1">
+              Manage all ongoing, upcoming, and completed tournaments.
+            </p>
+          </div>
           <button
-            className="btn-primary"
+            className="inline-flex items-center justify-center gap-2 rounded-lg border border-cyan-400/40 bg-gradient-to-r from-cyan-500/90 to-emerald-500/90 px-3 py-2 text-xs font-semibold text-white shadow-md shadow-cyan-900/40 transition-all duration-200 hover:from-cyan-400 hover:to-emerald-400 hover:shadow-lg hover:shadow-cyan-600/25 sm:px-4 sm:text-sm"
             onClick={() => router.push('/tournaments/create')}
           >
             <Plus className="icon-md" /> Create Tournament
@@ -120,18 +122,18 @@ export default function TournamentsPage() {
       </div>
 
       {/* ── Filters ──────────────────────────────────── */}
-      <div className="flex flex-col sm:flex-row gap-3 mb-4 flex-shrink-0">
+      <div className="gaming-panel mb-2 flex flex-col gap-3 rounded-xl p-3 sm:flex-row">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 icon-md text-muted-foreground" />
           <input
-            className="input-field pl-10"
+            className="h-10 w-full rounded-lg border border-cyan-400/25 bg-slate-900/70 pl-10 pr-4 text-sm text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-400/60"
             placeholder="Search tournaments..."
             value={search}
             onChange={(e) => { setSearch(e.target.value); setPage(1); }}
           />
         </div>
         <select
-          className="select-field w-full sm:w-44"
+          className="h-10 w-full rounded-lg border border-cyan-400/25 bg-slate-900/70 px-3 text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-cyan-400/60 sm:w-44"
           value={statusFilter}
           onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
         >
@@ -143,15 +145,15 @@ export default function TournamentsPage() {
       </div>
 
       {/* ── Table ────────────────────────────────────── */}
-      <div className="table-container flex-1 overflow-auto">
+      <div className="table-container flex-1 overflow-auto rounded-xl border border-cyan-500/25 bg-slate-950/35">
         <table className="w-full">
-          <thead className="table-header">
+          <thead className="bg-slate-900/70">
             <tr>
-              <th className="table-cell table-header-text text-left">Tournament</th>
-              <th className="table-cell table-header-text text-left">Start Date</th>
-              <th className="table-cell table-header-text text-left">End Date</th>
-              <th className="table-cell table-header-text text-left">Status</th>
-              <th className="table-cell table-header-text text-right">Actions</th>
+              <th className="table-cell text-left text-[11px] font-bold uppercase tracking-wider text-cyan-100/80 sm:text-xs">Tournament</th>
+              <th className="table-cell text-left text-[11px] font-bold uppercase tracking-wider text-cyan-100/80 sm:text-xs">Start Date</th>
+              <th className="table-cell text-left text-[11px] font-bold uppercase tracking-wider text-cyan-100/80 sm:text-xs">End Date</th>
+              <th className="table-cell text-left text-[11px] font-bold uppercase tracking-wider text-cyan-100/80 sm:text-xs">Status</th>
+              <th className="table-cell text-right text-[11px] font-bold uppercase tracking-wider text-cyan-100/80 sm:text-xs">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -160,7 +162,7 @@ export default function TournamentsPage() {
                 <tr key={i} className="table-row animate-pulse">
                   {[...Array(5)].map((_, j) => (
                     <td key={j} className="table-cell">
-                      <div className="h-4 bg-muted rounded w-full max-w-[180px]" />
+                      <div className="h-4 w-full max-w-[180px] rounded bg-slate-800/80" />
                     </td>
                   ))}
                 </tr>
@@ -200,10 +202,10 @@ export default function TournamentsPage() {
                         <img
                           src={ev.banner_image_url}
                           alt={ev.title}
-                          className="w-10 h-10 rounded-lg object-cover flex-shrink-0 border border-border"
+                          className="h-10 w-10 flex-shrink-0 rounded-lg border border-cyan-400/20 object-cover"
                         />
                       ) : (
-                        <div className="w-10 h-10 rounded-lg flex-shrink-0 icon-blue flex items-center justify-center">
+                        <div className="icon-blue flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg">
                           <Trophy className="icon-md text-blue-400" />
                         </div>
                       )}
@@ -241,17 +243,17 @@ export default function TournamentsPage() {
                     </button>
                     {openMenuId === ev.id && (
                       <div
-                        className="absolute right-4 top-10 z-20 bg-card border border-border rounded-lg shadow-xl py-1 w-44"
+                        className="absolute right-4 top-10 z-20 w-44 rounded-lg border border-cyan-400/20 bg-slate-900/95 py-1 shadow-xl"
                         onClick={(e) => e.stopPropagation()}
                       >
                         <button
-                          className="w-full text-left px-4 py-2 text-sm hover:bg-muted transition-colors"
+                          className="w-full px-4 py-2 text-left text-sm text-slate-100 transition-colors hover:bg-slate-800"
                           onClick={() => router.push(`/tournaments/${ev.id}`)}
                         >
                           View Details
                         </button>
                         <button
-                          className="w-full text-left px-4 py-2 text-sm hover:bg-muted transition-colors"
+                          className="w-full px-4 py-2 text-left text-sm text-slate-100 transition-colors hover:bg-slate-800"
                           onClick={() => router.push(`/tournaments/${ev.id}?tab=registrations`)}
                         >
                           View Registrations
@@ -287,8 +289,8 @@ export default function TournamentsPage() {
                 onClick={() => setPage(n)}
                 className={`w-8 h-8 rounded-lg text-sm font-medium transition-colors ${
                   page === n
-                    ? 'bg-primary text-primary-foreground'
-                    : 'btn-secondary'
+                    ? 'bg-cyan-500 text-white'
+                    : 'border border-cyan-400/20 bg-slate-900/70 text-slate-200 hover:border-cyan-300/45 hover:bg-slate-800/80'
                 }`}
               >
                 {n}
