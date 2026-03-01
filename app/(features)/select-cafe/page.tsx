@@ -367,7 +367,7 @@ export default function SelectCafePage() {
   }
 
   function triggerShake() {
-    const input = document.querySelector('input[type="password"]')
+    const input = document.querySelector("#access-pin")
     input?.classList.add("animate-shake")
     setTimeout(() => input?.classList.remove("animate-shake"), 500)
   }
@@ -383,18 +383,13 @@ export default function SelectCafePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex flex-col items-center justify-center p-4 md:p-8 relative overflow-hidden">
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl animate-pulse"></div>
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
-      </div>
-
-      <div className="relative max-w-7xl w-full flex flex-col items-center gap-8 md:gap-12 z-20">
+    <div className="premium-shell flex min-h-screen flex-col items-center justify-center overflow-hidden p-4 md:p-8">
+      <div className="relative z-20 flex w-full max-w-7xl flex-col items-center gap-8 md:gap-12">
         <div className="text-center space-y-4 md:space-y-6">
-          <h1 className="text-4xl md:text-5xl lg:text-7xl font-bold md:mb-2 bg-gradient-to-r from-white via-emerald-100 to-cyan-100 bg-clip-text text-transparent tracking-tight select-none">
+          <h1 className="premium-heading premium-accent-text select-none text-4xl font-bold tracking-tight md:mb-2 md:text-5xl lg:text-7xl">
             Select Gaming Cafe
           </h1>
-          <p className="text-slate-400 text-lg md:text-lg max-w-2xl mx-auto leading-relaxed select-none">
+          <p className="premium-subtle mx-auto max-w-2xl select-none text-lg leading-relaxed md:text-lg">
             Choose your cafe and enter your PIN to unlock the dashboard.
           </p>
         </div>
@@ -408,10 +403,10 @@ export default function SelectCafePage() {
             >
               <button
                 onClick={() => handleCafeClick(cafe.id)}
-                className="relative w-full p-6 md:p-8 rounded-3xl transition-all duration-500 transform hover:scale-105 hover:-translate-y-2 bg-gradient-to-br from-slate-700 to-slate-800 shadow-xl shadow-slate-900/30 hover:shadow-slate-900/50 backdrop-blur-xl min-h-[120px] md:min-h-[140px]"
+                className="premium-card relative min-h-[120px] w-full rounded-3xl p-6 backdrop-blur-xl transition-all duration-500 hover:-translate-y-2 hover:scale-105 md:min-h-[140px] md:p-8"
               >
                 <div className="relative flex items-center space-x-4 md:space-x-6 h-full">
-                  <div className="flex-shrink-0 p-4 md:p-5 rounded-2xl transition-all duration-300 group-hover:scale-110 bg-slate-600/50 backdrop-blur-sm shadow-lg shadow-slate-900/30">
+                  <div className="flex-shrink-0 rounded-2xl bg-slate-500/30 p-4 shadow-lg shadow-slate-900/30 transition-all duration-300 group-hover:scale-110 md:p-5">
                     <Store className="w-8 h-8 md:w-10 md:h-10 text-emerald-400" />
                   </div>
                   <div className="flex-1 text-left space-y-1 md:space-y-2">
@@ -430,7 +425,7 @@ export default function SelectCafePage() {
           <div className="group relative" style={{ animation: "fadeInUp 0.6s ease-out forwards" }}>
             <button
               onClick={() => handleCafeClick("add-new")}
-              className="relative w-full p-6 md:p-8 rounded-3xl transition-all duration-500 transform hover:scale-105 hover:-translate-y-2 bg-gradient-to-br from-emerald-600 to-cyan-600 shadow-xl shadow-emerald-500/30 hover:shadow-emerald-500/50 backdrop-blur-xl min-h-[120px] md:min-h-[140px] border-2 border-dashed border-emerald-300/50"
+              className="relative min-h-[120px] w-full rounded-3xl border-2 border-dashed border-emerald-300/40 bg-gradient-to-br from-emerald-600/85 to-cyan-600/85 p-6 shadow-xl shadow-emerald-500/30 backdrop-blur-xl transition-all duration-500 hover:-translate-y-2 hover:scale-105 hover:shadow-emerald-500/50 md:min-h-[140px] md:p-8"
             >
               <div className="relative flex items-center space-x-4 md:space-x-6 h-full">
                 <div className="flex-shrink-0 p-4 md:p-5 rounded-2xl transition-all duration-300 group-hover:scale-110 bg-white/20 backdrop-blur-sm shadow-lg">
@@ -452,7 +447,7 @@ export default function SelectCafePage() {
 
       {/* PIN Entry Dialog */}
       <Dialog open={showPinDialog} onOpenChange={setShowPinDialog}>
-        <DialogContent className="sm:max-w-md bg-slate-900/95 backdrop-blur-2xl border border-slate-700/50 shadow-2xl shadow-black/50 rounded-3xl">
+        <DialogContent className="premium-card rounded-3xl border shadow-2xl shadow-black/50 sm:max-w-md">
           <DialogHeader className="text-center pb-2">
             <div className="relative mx-auto mb-6">
               <div className="w-20 h-20 rounded-3xl flex items-center justify-center shadow-2xl bg-gradient-to-br from-slate-600 to-slate-700 shadow-slate-900/50">
@@ -472,12 +467,13 @@ export default function SelectCafePage() {
           <div className="space-y-6 pt-4">
             <div className="relative">
               <Input
+                id="access-pin"
                 type="password"
                 maxLength={4}
                 value={pin}
                 onChange={(e) => {
                   setPin(e.target.value.replace(/\D/g, ""))
-                  setError(null) // ✅ Clear error on new input
+                  setError(null)
                 }}
                 placeholder="••••"
                 className="text-center text-3xl tracking-[0.8em] h-16 border-2 border-slate-600/50 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 rounded-2xl bg-slate-800/80 backdrop-blur-sm transition-all duration-300 text-white placeholder-slate-500 shadow-inner"
@@ -528,7 +524,7 @@ export default function SelectCafePage() {
 
       {/* Onboarding Dialog */}
       <Dialog open={showOnboardDialog} onOpenChange={setShowOnboardDialog}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-slate-900/95 backdrop-blur-2xl border border-slate-700/50 rounded-3xl">
+        <DialogContent className="premium-card max-h-[90vh] max-w-4xl overflow-y-auto rounded-3xl border">
           <DialogHeader>
             <DialogTitle className="text-3xl font-bold bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">
               Onboard New Gaming Cafe

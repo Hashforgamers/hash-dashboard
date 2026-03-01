@@ -5,7 +5,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import {
@@ -49,7 +48,6 @@ export default function LoginPage() {
     },
   });
 
-  const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [loginError, setLoginError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -295,16 +293,9 @@ export default function LoginPage() {
   }, [form]);
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4 relative overflow-hidden">
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-green-400/10 rounded-full blur-3xl animate-pulse"></div>
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-400/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-green-400/5 rounded-full blur-3xl animate-pulse delay-500"></div>
-      </div>
-      <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.01)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.01)_1px,transparent_1px)] bg-[size:50px_50px] pointer-events-none"></div>
-
+    <div className="premium-shell flex min-h-screen items-center justify-center overflow-hidden p-4">
       <div className="relative z-10 w-full max-w-md">
-        <Card className="bg-card/50 border border-border shadow-2xl backdrop-blur-md">
+        <Card className="premium-card rounded-2xl border shadow-2xl">
           <CardHeader className="text-center pb-8">
             <div className="flex justify-center mb-6">
               <div className="relative">
@@ -329,14 +320,14 @@ export default function LoginPage() {
                     className="drop-shadow-2xl"
                   />
                 )}
-                <div className="absolute inset-0 bg-green-400/20 rounded-full blur-xl animate-pulse"></div>
+                <div className="absolute inset-0 rounded-full bg-emerald-400/20 blur-xl animate-pulse"></div>
               </div>
             </div>
-            <CardTitle className="text-3xl font-bold text-foreground mb-2 tracking-tight">
+            <CardTitle className="premium-heading mb-2 text-3xl font-bold tracking-tight text-foreground">
               Welcome Back
             </CardTitle>
-            <CardDescription className="text-muted-foreground text-base">
-              Sign in to your gaming account and level up your experience
+            <CardDescription className="premium-subtle text-base">
+              Sign in to manage your cafe, bookings, and live sessions.
             </CardDescription>
           </CardHeader>
 
@@ -418,7 +409,7 @@ export default function LoginPage() {
 
                 <Button
                   type="submit"
-                  className="w-full h-12 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-primary-foreground font-semibold rounded-lg transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] shadow-lg hover:shadow-green-500/25"
+                  className="w-full h-12 rounded-lg bg-gradient-to-r from-emerald-500 to-cyan-500 font-semibold text-primary-foreground shadow-lg transition-all duration-200 hover:from-emerald-600 hover:to-cyan-600 hover:shadow-emerald-500/20 active:scale-[0.98]"
                   disabled={loading}
                 >
                   {loading ? (
@@ -451,8 +442,8 @@ export default function LoginPage() {
         </Card>
 
         <div className="text-center mt-8">
-          <p className="text-muted-foreground text-sm">
-            © 2024 Hash for Gamers. All rights reserved.
+          <p className="premium-subtle text-sm">
+            © {new Date().getFullYear()} Hash for Gamers. All rights reserved.
           </p>
         </div>
       </div>
