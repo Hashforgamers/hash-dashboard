@@ -293,7 +293,7 @@ export default function LoginPage() {
   }, [form]);
 
   return (
-    <div className="premium-shell flex min-h-screen items-center justify-center overflow-hidden p-4">
+    <div className="premium-shell flex min-h-screen items-center justify-center overflow-hidden p-3 sm:p-4">
       <div className="relative z-10 w-full max-w-md">
         <Card className="premium-card rounded-2xl border shadow-2xl">
           <CardHeader className="text-center pb-8">
@@ -324,10 +324,10 @@ export default function LoginPage() {
               </div>
             </div>
             <CardTitle className="premium-heading mb-2 text-3xl font-bold tracking-tight text-foreground">
-              Welcome Back
+              Cafe Control Login
             </CardTitle>
             <CardDescription className="premium-subtle text-base">
-              Sign in to manage your cafe, bookings, and live sessions.
+              Enter your operator credentials to access live gaming operations.
             </CardDescription>
           </CardHeader>
 
@@ -343,7 +343,7 @@ export default function LoginPage() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel className="text-foreground font-medium flex items-center gap-2">
-                        <Mail className="w-4 h-4 text-green-400" />
+                        <Mail className="w-4 h-4 text-cyan-400" />
                         Email Address
                       </FormLabel>
                       <FormControl>
@@ -351,7 +351,7 @@ export default function LoginPage() {
                           placeholder="Enter your email"
                           type="email"
                           autoComplete="email"
-                          className="bg-input border-input text-foreground placeholder:text-muted-foreground focus:border-green-400 focus:ring-green-400/20 h-12"
+                          className="h-12 bg-input border-input text-foreground placeholder:text-muted-foreground focus:border-cyan-400 focus:ring-cyan-400/20"
                           {...field}
                           onChange={(e) => {
                             field.onChange(e);
@@ -371,7 +371,7 @@ export default function LoginPage() {
                     <FormItem>
                       <div className="flex justify-between items-center">
                         <FormLabel className="text-foreground font-medium flex items-center gap-2">
-                          <Lock className="w-4 h-4 text-green-400" />
+                          <Lock className="w-4 h-4 text-cyan-400" />
                           Password
                         </FormLabel>
                         <Link
@@ -385,7 +385,7 @@ export default function LoginPage() {
                         <PasswordInput
                           placeholder="Enter your password"
                           autoComplete="current-password"
-                          className="bg-input border-input text-foreground placeholder:text-muted-foreground focus:border-green-400 focus:ring-green-400/20 h-12"
+                          className="h-12 bg-input border-input text-foreground placeholder:text-muted-foreground focus:border-cyan-400 focus:ring-cyan-400/20"
                           {...field}
                           onChange={(e) => {
                             field.onChange(e);
@@ -409,7 +409,7 @@ export default function LoginPage() {
 
                 <Button
                   type="submit"
-                  className="w-full h-12 rounded-lg bg-gradient-to-r from-emerald-500 to-cyan-500 font-semibold text-primary-foreground shadow-lg transition-all duration-200 hover:from-emerald-600 hover:to-cyan-600 hover:shadow-emerald-500/20 active:scale-[0.98]"
+                  className="w-full h-12 rounded-lg bg-gradient-to-r from-lime-500 via-emerald-500 to-cyan-500 font-semibold text-primary-foreground shadow-lg transition-all duration-200 hover:from-lime-400 hover:via-emerald-500 hover:to-cyan-400 hover:shadow-cyan-500/20 active:scale-[0.98]"
                   disabled={loading}
                 >
                   {loading ? (

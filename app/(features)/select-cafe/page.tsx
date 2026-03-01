@@ -383,14 +383,14 @@ export default function SelectCafePage() {
   }
 
   return (
-    <div className="premium-shell flex min-h-screen flex-col items-center justify-center overflow-hidden p-4 md:p-8">
+    <div className="premium-shell flex min-h-screen flex-col items-center justify-center overflow-hidden p-3 sm:p-4 md:p-8">
       <div className="relative z-20 flex w-full max-w-7xl flex-col items-center gap-8 md:gap-12">
         <div className="text-center space-y-4 md:space-y-6">
           <h1 className="premium-heading premium-accent-text select-none text-4xl font-bold tracking-tight md:mb-2 md:text-5xl lg:text-7xl">
-            Select Gaming Cafe
+            Select Your Arena
           </h1>
           <p className="premium-subtle mx-auto max-w-2xl select-none text-lg leading-relaxed md:text-lg">
-            Choose your cafe and enter your PIN to unlock the dashboard.
+            Choose a cafe, verify PIN, and launch your operations dashboard.
           </p>
         </div>
 
@@ -414,7 +414,7 @@ export default function SelectCafePage() {
                       {cafe.name}
                     </h3>
                     <p className="text-sm md:text-base text-slate-300 group-hover:text-white/70 transition-colors duration-300">
-                      Standard Access
+                      Operator Access
                     </p>
                   </div>
                 </div>
@@ -436,7 +436,7 @@ export default function SelectCafePage() {
                     Add New Cafe
                   </h3>
                   <p className="text-sm md:text-base text-white/80 group-hover:text-white/70 transition-colors duration-300">
-                    Onboard a new gaming cafe
+                    Register a new gaming cafe
                   </p>
                 </div>
               </div>
@@ -447,7 +447,7 @@ export default function SelectCafePage() {
 
       {/* PIN Entry Dialog */}
       <Dialog open={showPinDialog} onOpenChange={setShowPinDialog}>
-        <DialogContent className="premium-card rounded-3xl border shadow-2xl shadow-black/50 sm:max-w-md">
+        <DialogContent className="premium-card w-[calc(100vw-1.5rem)] rounded-3xl border shadow-2xl shadow-black/50 sm:max-w-md">
           <DialogHeader className="text-center pb-2">
             <div className="relative mx-auto mb-6">
               <div className="w-20 h-20 rounded-3xl flex items-center justify-center shadow-2xl bg-gradient-to-br from-slate-600 to-slate-700 shadow-slate-900/50">
@@ -508,7 +508,7 @@ export default function SelectCafePage() {
               ) : (
                 <div className="flex items-center justify-center space-x-2">
                   <Unlock className="w-5 h-5" />
-                  <span>Access Gaming Cafe</span>
+                  <span>Open Dashboard</span>
                 </div>
               )}
             </Button>
@@ -524,7 +524,7 @@ export default function SelectCafePage() {
 
       {/* Onboarding Dialog */}
       <Dialog open={showOnboardDialog} onOpenChange={setShowOnboardDialog}>
-        <DialogContent className="premium-card max-h-[90vh] max-w-4xl overflow-y-auto rounded-3xl border">
+        <DialogContent className="premium-card max-h-[92vh] w-[calc(100vw-1.5rem)] max-w-4xl overflow-y-auto rounded-3xl border">
           <DialogHeader>
             <DialogTitle className="text-3xl font-bold bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">
               Onboard New Gaming Cafe

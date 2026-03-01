@@ -1,9 +1,10 @@
 /* Shared premium surface and motion system for core dashboard routes */
 
 :root {
-  --brand-accent: 160 84% 39%;
-  --brand-accent-strong: 162 92% 31%;
-  --brand-focus: 187 94% 43%;
+  --brand-accent: 173 94% 42%;
+  --brand-accent-strong: 171 97% 32%;
+  --brand-focus: 197 94% 44%;
+  --brand-highlight: 84 93% 49%;
 }
 
 body {
@@ -20,9 +21,9 @@ body {
   isolation: isolate;
   min-height: 100vh;
   background:
-    radial-gradient(70rem 30rem at 88% -5%, hsl(var(--brand-focus) / 0.1), transparent 65%),
-    radial-gradient(58rem 24rem at 0% 100%, hsl(var(--brand-accent) / 0.12), transparent 66%),
-    linear-gradient(145deg, hsl(218 42% 9%), hsl(219 30% 11%) 52%, hsl(216 25% 10%));
+    radial-gradient(70rem 30rem at 88% -5%, hsl(var(--brand-focus) / 0.12), transparent 65%),
+    radial-gradient(58rem 24rem at 0% 100%, hsl(var(--brand-accent) / 0.14), transparent 66%),
+    linear-gradient(145deg, hsl(224 43% 8%), hsl(223 33% 11%) 52%, hsl(220 28% 9%));
 }
 
 .premium-shell::before {
@@ -41,13 +42,14 @@ body {
   border: 1px solid hsl(216 21% 28% / 0.65);
   background: linear-gradient(
     145deg,
-    hsl(217 28% 18% / 0.72),
-    hsl(216 34% 12% / 0.65) 62%,
-    hsl(216 36% 11% / 0.76)
+    hsl(220 26% 18% / 0.72),
+    hsl(220 34% 12% / 0.65) 62%,
+    hsl(220 36% 11% / 0.76)
   );
   box-shadow:
     0 28px 70px hsl(222 77% 3% / 0.32),
-    inset 0 1px 0 hsl(0 0% 100% / 0.06);
+    inset 0 1px 0 hsl(0 0% 100% / 0.06),
+    0 0 0 1px hsl(var(--brand-focus) / 0.08);
   backdrop-filter: blur(18px);
 }
 
@@ -56,7 +58,7 @@ body {
 }
 
 .premium-accent-text {
-  background: linear-gradient(90deg, hsl(170 79% 58%), hsl(189 85% 57%));
+  background: linear-gradient(90deg, hsl(var(--brand-highlight)), hsl(var(--brand-accent)), hsl(var(--brand-focus)));
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
@@ -75,7 +77,61 @@ body {
 
 .premium-pill-active {
   border-color: hsl(var(--brand-accent) / 0.95);
-  background: linear-gradient(135deg, hsl(var(--brand-accent) / 0.23), hsl(var(--brand-focus) / 0.2));
+  background: linear-gradient(135deg, hsl(var(--brand-highlight) / 0.2), hsl(var(--brand-accent) / 0.24), hsl(var(--brand-focus) / 0.18));
   color: hsl(0 0% 100%);
-  box-shadow: 0 0 0 1px hsl(var(--brand-accent) / 0.32) inset;
+  box-shadow: 0 0 0 1px hsl(var(--brand-accent) / 0.32) inset, 0 0 18px hsl(var(--brand-accent) / 0.18);
+}
+
+.gaming-panel {
+  border: 1px solid hsl(216 21% 28% / 0.72);
+  background:
+    linear-gradient(180deg, hsl(220 33% 13% / 0.88), hsl(220 32% 11% / 0.9)),
+    linear-gradient(120deg, hsl(var(--brand-accent) / 0.08), transparent 45%);
+  box-shadow:
+    0 14px 40px hsl(220 74% 4% / 0.35),
+    inset 0 1px 0 hsl(0 0% 100% / 0.05);
+}
+
+.gaming-kpi-card {
+  border: 1px solid hsl(216 20% 28% / 0.75);
+  background: linear-gradient(165deg, hsl(220 29% 16% / 0.92), hsl(220 30% 12% / 0.94));
+  box-shadow: 0 12px 34px hsl(220 72% 5% / 0.28);
+}
+
+.gaming-kpi-card:hover {
+  border-color: hsl(var(--brand-focus) / 0.45);
+  transform: translateY(-1px);
+}
+
+.gaming-kpi-value {
+  font-family: var(--font-space), var(--font-manrope), "Segoe UI", sans-serif;
+  letter-spacing: -0.01em;
+}
+
+.gaming-nav-active {
+  border-color: hsl(var(--brand-highlight) / 0.45);
+  background: linear-gradient(100deg, hsl(var(--brand-highlight) / 0.15), hsl(var(--brand-accent) / 0.15));
+  box-shadow: 0 0 0 1px hsl(var(--brand-accent) / 0.24) inset, 0 0 16px hsl(var(--brand-accent) / 0.12);
+}
+
+@media (max-width: 640px) {
+  .premium-heading {
+    letter-spacing: -0.01em;
+  }
+
+  .premium-shell::before {
+    opacity: 0.12;
+    background-size: 34px 34px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
