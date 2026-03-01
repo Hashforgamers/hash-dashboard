@@ -2,10 +2,11 @@
 
 import React, { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Bell, X, Check, Clock, IndianRupee, User, Calendar } from 'lucide-react'
+import { Bell, X, Check, Clock, User, Calendar, Wallet } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { BOOKING_URL } from '@/src/config/env'
+
 
 interface PayAtCafeNotification {
   event_id: string
@@ -36,26 +37,27 @@ interface PayAtCafeNotification {
   processed_time: string
 }
 
+
 interface NotificationPanelProps {
   vendorId: number | null
   isOpen: boolean
   onClose: () => void
   notifications: PayAtCafeNotification[]
   onRemoveNotification: (bookingId: number) => void
-  socket?: any // ✅ ADDED: Socket for emitting events
-  onBookingAccepted?: (bookingData: any) => void // ✅ ADDED: Callback for UI update
+  socket?: any
+  onBookingAccepted?: (bookingData: any) => void
 }
 
-export function NotificationPanel({ 
-  vendorId, 
-  isOpen, 
+
+export function NotificationPanel({
+  vendorId,
+  isOpen,
   onClose,
   notifications,
   onRemoveNotification,
-  socket, // ✅ ADDED
-  onBookingAccepted // ✅ ADDED
+  socket,
+  onBookingAccepted
 }: NotificationPanelProps) {
-  // ✅ FIXED: Separate processing state for each action
   const [processingAction, setProcessingAction] = useState<{
     bookingId: number | null
     action: 'accept' | 'reject' | null
@@ -64,24 +66,18 @@ export function NotificationPanel({
     action: null
   })
 
-  // ✅ FIXED: Accept booking with proper button states and real-time update
+
   const handleAccept = async (notification: PayAtCafeNotification) => {
-    if (processingAction.bookingId) return // Prevent multiple actions
-    
+    if (processingAction.bookingId) return
+
     try {
-      // ✅ Set processing state - only accept button shows loader, reject gets disabled
-      setProcessingAction({
-        bookingId: notification.bookingId,
-        action: 'accept'
-      })
-      
+      setProcessingAction({ bookingId: notification.bookingId, action: 'accept' })
+
       console.log(`🔄 Processing accept for booking ${notification.bookingId}`)
-      
+
       const response = await fetch(`${BOOKING_URL}/api/pay-at-cafe/accept`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           booking_id: notification.bookingId,
           vendor_id: vendorId
@@ -89,49 +85,47 @@ export function NotificationPanel({
       })
 
       const result = await response.json()
-      
+
       if (response.ok && result.success) {
-        // ✅ Remove notification from panel
         onRemoveNotification(notification.bookingId)
-        
-        // ✅ CRITICAL: Emit socket event for real-time upcoming bookings update
+
         if (socket) {
           console.log('📡 Emitting booking_accepted event for real-time update')
           socket.emit('booking_accepted', {
-            bookingId: notification.bookingId,
-            vendorId: vendorId,
-            userId: notification.userId,
-            username: notification.username,
-            game_id: notification.game_id,
-            consoleType: notification.consoleType,
-            date: notification.date,
-            time: notification.time,
-            status: 'Confirmed',
+            bookingId:      notification.bookingId,
+            vendorId:       vendorId,
+            userId:         notification.userId,
+            username:       notification.username,
+            game_id:        notification.game_id,
+            consoleType:    notification.consoleType,
+            date:           notification.date,
+            time:           notification.time,
+            status:         'Confirmed',
             booking_status: 'upcoming'
           })
         }
-        
-        // ✅ CRITICAL: Trigger upcoming bookings update callback
+
         if (onBookingAccepted) {
           const bookingData = {
-            bookingId: notification.bookingId,
-            slotId: notification.slotId,
-            username: notification.username,
-            userId: notification.userId,
-            game: notification.game.game_name,
-            game_id: notification.game_id,
+            bookingId:   notification.bookingId,
+            slotId:      notification.slotId,
+            username:    notification.username,
+            userId:      notification.userId,
+            game:        notification.game.game_name,
+            game_id:     notification.game_id,
             consoleType: notification.consoleType,
-            date: notification.date,
-            time: notification.time,
-            status: 'Confirmed',
+            date:        notification.date,
+            time:        notification.time,
+            status:      'Confirmed',
             statusLabel: 'Confirmed'
           }
           console.log('📅 Triggering upcoming bookings update with:', bookingData)
           onBookingAccepted(bookingData)
         }
-        
-        showToast('✅ Booking accepted and confirmed! Customer can visit the cafe.', 'success')
-        console.log(`✅ Booking ${notification.bookingId} confirmed successfully`)
+
+        // ✅ UPDATED: Toast correctly says payment is NOT done yet
+        showToast('✅ Booking accepted! Collect ₹' + notification.game.single_slot_price + ' when customer arrives.', 'success')
+        console.log(`✅ Booking ${notification.bookingId} confirmed — payment to be collected at cafe`)
       } else {
         throw new Error(result.message || 'Failed to accept booking')
       }
@@ -139,43 +133,31 @@ export function NotificationPanel({
       console.error('Error accepting booking:', error)
       showToast('❌ Error accepting booking. Please try again.', 'error')
     } finally {
-      // ✅ Reset processing state
-      setProcessingAction({
-        bookingId: null,
-        action: null
-      })
+      setProcessingAction({ bookingId: null, action: null })
     }
   }
 
-  // ✅ FIXED: Reject booking with proper button states
+
   const handleReject = async (notification: PayAtCafeNotification) => {
-    if (processingAction.bookingId) return // Prevent multiple actions
-    
+    if (processingAction.bookingId) return
+
     try {
-      // ✅ Set processing state - only reject button shows loader, accept gets disabled
-      setProcessingAction({
-        bookingId: notification.bookingId,
-        action: 'reject'
-      })
-      
+      setProcessingAction({ bookingId: notification.bookingId, action: 'reject' })
+
       console.log(`🔄 Processing reject for booking ${notification.bookingId}`)
-      
-      const reason = 'Rejected by vendor'
-      
+
       const response = await fetch(`${BOOKING_URL}/api/pay-at-cafe/reject`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          booking_id: notification.bookingId,
-          vendor_id: vendorId,
-          rejection_reason: reason
+          booking_id:       notification.bookingId,
+          vendor_id:        vendorId,
+          rejection_reason: 'Rejected by vendor'
         })
       })
 
       const result = await response.json()
-      
+
       if (response.ok && result.success) {
         onRemoveNotification(notification.bookingId)
         showToast('✅ Booking rejected and cancelled successfully!', 'success')
@@ -187,27 +169,23 @@ export function NotificationPanel({
       console.error('Error rejecting booking:', error)
       showToast('❌ Error rejecting booking. Please try again.', 'error')
     } finally {
-      // ✅ Reset processing state
-      setProcessingAction({
-        bookingId: null,
-        action: null
-      })
+      setProcessingAction({ bookingId: null, action: null })
     }
   }
 
-  // Format relative time
+
   const formatRelativeTime = (dateString: string) => {
     const date = new Date(dateString)
     const now = new Date()
     const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000)
-    
+
     if (diffInSeconds < 60) return 'Just now'
     if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`
     if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`
     return `${Math.floor(diffInSeconds / 86400)}d ago`
   }
 
-  // Show toast notification
+
   const showToast = (message: string, type: 'success' | 'error' = 'success') => {
     const toast = document.createElement('div')
     toast.className = `fixed top-4 right-4 px-6 py-3 rounded-lg shadow-xl z-[10000] text-white font-medium transform transition-all duration-300 ${
@@ -219,32 +197,29 @@ export function NotificationPanel({
         <span>${message}</span>
       </div>
     `
-    
     document.body.appendChild(toast)
     setTimeout(() => document.body.removeChild(toast), 4000)
   }
 
-  // Format booking date for display
+
   const formatDisplayDate = (dateString: string) => {
     const date = new Date(dateString)
     const today = new Date()
     const tomorrow = new Date(today)
     tomorrow.setDate(tomorrow.getDate() + 1)
 
-    if (date.toDateString() === today.toDateString()) {
-      return 'Today'
-    } else if (date.toDateString() === tomorrow.toDateString()) {
-      return 'Tomorrow'
-    } else {
-      return date.toLocaleDateString('en-IN', { 
-        weekday: 'short',
-        month: 'short', 
-        day: 'numeric'
-      })
-    }
+    if (date.toDateString() === today.toDateString()) return 'Today'
+    if (date.toDateString() === tomorrow.toDateString()) return 'Tomorrow'
+    return date.toLocaleDateString('en-IN', {
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric'
+    })
   }
 
+
   const notificationCount = notifications.length
+
 
   return (
     <AnimatePresence>
@@ -258,7 +233,7 @@ export function NotificationPanel({
             onClick={onClose}
             className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40"
           />
-          
+
           {/* Notification Panel */}
           <motion.div
             initial={{ y: -100, opacity: 0, scale: 0.95 }}
@@ -302,11 +277,10 @@ export function NotificationPanel({
               ) : (
                 <div>
                   {notifications.map((notification, index) => {
-                    // ✅ FIXED: Determine button states based on current processing action
                     const isThisBookingProcessing = processingAction.bookingId === notification.bookingId
                     const isAcceptProcessing = isThisBookingProcessing && processingAction.action === 'accept'
                     const isRejectProcessing = isThisBookingProcessing && processingAction.action === 'reject'
-                    
+
                     return (
                       <motion.div
                         key={notification.event_id}
@@ -319,7 +293,8 @@ export function NotificationPanel({
                         }`}
                       >
                         <div className="space-y-3">
-                          {/* Header */}
+
+                          {/* Header Row */}
                           <div className="flex items-center justify-between">
                             <div>
                               <p className="text-sm font-medium text-foreground">Pay at Cafe Request</p>
@@ -327,7 +302,14 @@ export function NotificationPanel({
                                 {formatRelativeTime(notification.emitted_at)}
                               </p>
                             </div>
-                            <div className="w-2 h-2 bg-orange-500 rounded-full animate-pulse"></div>
+                            {/* ✅ CHANGED: "To Be Paid" badge instead of plain dot */}
+                            <Badge
+                              variant="outline"
+                              className="text-xs border-orange-400 text-orange-500 bg-orange-500/10 flex items-center gap-1"
+                            >
+                              <Wallet className="w-3 h-3" />
+                              To Be Paid
+                            </Badge>
                           </div>
 
                           {/* Customer Name */}
@@ -349,23 +331,27 @@ export function NotificationPanel({
                             </div>
                           </div>
 
-                          {/* Amount */}
-                          <div className="bg-muted/50 rounded-lg p-3">
-                            <p className="text-xs text-muted-foreground text-center mb-1">
-                              Amount to be collected at cafe
+                          {/* ✅ CHANGED: Orange box clearly showing "To Be Paid", not green "Paid" */}
+                          <div className="bg-orange-500/10 border border-orange-400/30 rounded-lg p-3">
+                            <p className="text-xs text-orange-500 font-medium text-center mb-1">
+                              To Be Paid at Cafe
                             </p>
                             <div className="text-center">
-                              <span className="text-2xl font-bold text-green-600">
+                              <span className="text-2xl font-bold text-orange-500">
                                 ₹{notification.game.single_slot_price}
                               </span>
                             </div>
+                            {/* ✅ NEW: Subtle reminder so vendor knows what to do */}
+                            <p className="text-xs text-muted-foreground text-center mt-1">
+                              Collect cash when customer arrives
+                            </p>
                           </div>
 
-                          {/* ✅ FIXED: Action Buttons with proper loading states */}
+                          {/* Action Buttons */}
                           <div className="flex gap-2">
                             <Button
                               onClick={() => handleAccept(notification)}
-                              disabled={isThisBookingProcessing} // ✅ Disable both buttons during any processing
+                              disabled={isThisBookingProcessing}
                               className="flex-1 bg-green-600 hover:bg-green-700 text-white h-9 text-sm"
                             >
                               {isAcceptProcessing ? (
@@ -377,7 +363,7 @@ export function NotificationPanel({
                             </Button>
                             <Button
                               onClick={() => handleReject(notification)}
-                              disabled={isThisBookingProcessing} // ✅ Disable both buttons during any processing
+                              disabled={isThisBookingProcessing}
                               variant="destructive"
                               className="flex-1 h-9 text-sm"
                             >
@@ -389,6 +375,7 @@ export function NotificationPanel({
                               {isRejectProcessing ? 'Rejecting...' : 'Reject'}
                             </Button>
                           </div>
+
                         </div>
                       </motion.div>
                     )
