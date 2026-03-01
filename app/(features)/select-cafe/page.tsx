@@ -11,16 +11,57 @@ import { Store, Lock, Unlock, Plus, X } from "lucide-react"
 import { LOGIN_URL, VENDOR_ONBOARD_URL } from "@/src/config/env"
 import { toast } from "sonner"
 
-// ✅ UPDATED: Use abbreviated day names to match backend
-const DAYS_OF_WEEK = [
-  { key: 'mon', label: 'Monday' },
-  { key: 'tue', label: 'Tuesday' },
-  { key: 'wed', label: 'Wednesday' },
-  { key: 'thu', label: 'Thursday' },
-  { key: 'fri', label: 'Friday' },
-  { key: 'sat', label: 'Saturday' },
-  { key: 'sun', label: 'Sunday' }
+const INDIA_STATES = [
+  "Andhra Pradesh",
+  "Arunachal Pradesh",
+  "Assam",
+  "Bihar",
+  "Chhattisgarh",
+  "Goa",
+  "Gujarat",
+  "Haryana",
+  "Himachal Pradesh",
+  "Jharkhand",
+  "Karnataka",
+  "Kerala",
+  "Madhya Pradesh",
+  "Maharashtra",
+  "Manipur",
+  "Meghalaya",
+  "Mizoram",
+  "Nagaland",
+  "Odisha",
+  "Punjab",
+  "Rajasthan",
+  "Sikkim",
+  "Tamil Nadu",
+  "Telangana",
+  "Tripura",
+  "Uttar Pradesh",
+  "Uttarakhand",
+  "West Bengal",
+  "Andaman and Nicobar Islands",
+  "Chandigarh",
+  "Dadra and Nagar Haveli and Daman and Diu",
+  "Delhi",
+  "Jammu and Kashmir",
+  "Ladakh",
+  "Lakshadweep",
+  "Puducherry",
 ]
+
+const DAYS_OF_WEEK = [
+  { key: "mon", label: "Monday" },
+  { key: "tue", label: "Tuesday" },
+  { key: "wed", label: "Wednesday" },
+  { key: "thu", label: "Thursday" },
+  { key: "fri", label: "Friday" },
+  { key: "sat", label: "Saturday" },
+  { key: "sun", label: "Sunday" },
+]
+
+const CONSOLE_TYPES = ["pc", "ps5", "xbox"] as const
+type ConsoleType = (typeof CONSOLE_TYPES)[number]
 
 export default function SelectCafePage() {
   const [cafes, setCafes] = useState<{ id: string; name: string; type: string }[]>([])
@@ -33,7 +74,6 @@ export default function SelectCafePage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const router = useRouter()
 
-  // Onboarding Form State
   const [formData, setFormData] = useState({
     cafe_name: "",
     owner_name: "",
@@ -59,7 +99,7 @@ export default function SelectCafePage() {
     },
     timing: {} as Record<string, { open: string; close: string; closed: boolean }>,
     opening_day: new Date().toISOString().split("T")[0],
-    available_games: [{ name: "", total_slot: 0, rate_per_slot: 0, gaming_type: "PC" }],
+    available_games: [{ name: "pc", total_slot: 0, rate_per_slot: 0, gaming_type: "PC" as ConsoleType }],
     document_submitted: {
       business_registration: false,
       owner_identification_proof: false,
@@ -75,7 +115,6 @@ export default function SelectCafePage() {
     bank_acc_details: null,
   })
 
-  // ✅ NEW: Function to refresh vendor list
   const refreshVendorList = () => {
     const storedVendors = localStorage.getItem("vendors")
     if (storedVendors) {
@@ -97,23 +136,15 @@ export default function SelectCafePage() {
 
   useEffect(() => {
     const userEmail = localStorage.getItem("vendor_account_email") || localStorage.getItem("vendor_login_email")
-
-    // Auto-fill parent email
     if (userEmail) {
-      setFormData((prev) => ({
-        ...prev,
-        vendor_account_email: userEmail,
-      }))
+      setFormData((prev) => ({ ...prev, vendor_account_email: userEmail }))
     }
 
-    // ✅ UPDATED: Initialize timing with abbreviated day names
     const initialTiming: Record<string, { open: string; close: string; closed: boolean }> = {}
     DAYS_OF_WEEK.forEach((day) => {
       initialTiming[day.key] = { open: "09:00", close: "22:00", closed: false }
     })
     setFormData((prev) => ({ ...prev, timing: initialTiming }))
-
-    // Load initial vendor list
     refreshVendorList()
   }, [])
 
@@ -132,20 +163,13 @@ export default function SelectCafePage() {
 
   const convertTo12HourFormat = (time24: string): string | null => {
     if (!time24 || time24 === "") return null
-
     try {
       const [hours, minutes] = time24.split(":")
       const hour = parseInt(hours, 10)
-
-      if (isNaN(hour) || hour < 0 || hour > 23) {
-        console.error("Invalid hour:", hours)
-        return null
-      }
-
+      if (isNaN(hour) || hour < 0 || hour > 23) return null
       const period = hour >= 12 ? "PM" : "AM"
       const hour12 = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour
       const paddedHour = hour12.toString().padStart(2, "0")
-
       return `${paddedHour}:${minutes} ${period}`
     } catch (error) {
       console.error("Error converting time:", time24, error)
@@ -158,14 +182,30 @@ export default function SelectCafePage() {
     setError(null)
 
     try {
-      // Validation
       if (!formData.cafe_name || !formData.owner_name || !formData.contact_info.email) {
         toast.error("Please fill all required fields")
         setIsSubmitting(false)
         return
       }
 
-      // ✅ UPDATED: Convert timing with abbreviated day names
+      for (const game of formData.available_games) {
+        if (!CONSOLE_TYPES.includes(game.name as ConsoleType)) {
+          toast.error("Available console must be one of: pc, ps5, xbox")
+          setIsSubmitting(false)
+          return
+        }
+        if (game.total_slot < 0 || !Number.isInteger(game.total_slot)) {
+          toast.error("Total slots must be a non-negative whole number")
+          setIsSubmitting(false)
+          return
+        }
+        if (game.rate_per_slot < 0 || !Number.isInteger(game.rate_per_slot)) {
+          toast.error("Rate per slot must be a non-negative whole number")
+          setIsSubmitting(false)
+          return
+        }
+      }
+
       const timing12Hour: Record<string, { open: string; close: string; closed: boolean }> = {}
       for (const day of DAYS_OF_WEEK) {
         const dayTiming = formData.timing[day.key]
@@ -176,17 +216,10 @@ export default function SelectCafePage() {
         }
       }
 
-      // Prepare form data
       const formDataToSend = new FormData()
-
-      const jsonData = {
-        ...formData,
-        timing: timing12Hour,
-      }
-
+      const jsonData = { ...formData, timing: timing12Hour }
       formDataToSend.append("json", JSON.stringify(jsonData))
 
-      // Append documents
       Object.entries(documents).forEach(([key, file]) => {
         if (file && formData.document_submitted[key as keyof typeof formData.document_submitted]) {
           formDataToSend.append(key, file)
@@ -203,21 +236,18 @@ export default function SelectCafePage() {
       if (response.ok) {
         toast.success("Cafe onboarded successfully!")
         setShowOnboardDialog(false)
-        
-        // ✅ NEW: Fetch updated vendor list from backend
+
         try {
           const loginResponse = await fetch(`${LOGIN_URL}/api/login`, {
             method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               email: formData.vendor_account_email,
-              password: formData.vendor_password || "temp", // This won't work for login but we just need vendor list
+              password: formData.vendor_password || "temp",
               parent_type: "vendor",
             }),
           })
-          
+
           if (loginResponse.ok) {
             const loginData = await loginResponse.json()
             if (loginData.vendors && Array.isArray(loginData.vendors)) {
@@ -228,12 +258,8 @@ export default function SelectCafePage() {
         } catch (err) {
           console.error("Failed to refresh vendor list:", err)
         }
-        
-        // ✅ FALLBACK: Force reload after 2 seconds if API call fails
-        setTimeout(() => {
-          window.location.reload()
-        }, 2000)
-        
+
+        setTimeout(() => { window.location.reload() }, 2000)
       } else {
         toast.error(result.message || "Onboarding failed")
         setError(result.message || "Onboarding failed")
@@ -247,6 +273,7 @@ export default function SelectCafePage() {
     setIsSubmitting(false)
   }
 
+  // ✅ FIXED: Parse JSON body BEFORE checking response.ok so server's error message is never lost
   const handleUnlock = async () => {
     if (isSubmitting) return
 
@@ -268,11 +295,10 @@ export default function SelectCafePage() {
     try {
       const timestamp = Date.now()
       const validateUrl = `${LOGIN_URL}/api/validatePin?t=${timestamp}`
+
       const response = await fetch(validateUrl, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           vendor_id: selectedCafeData.id,
           pin,
@@ -280,11 +306,30 @@ export default function SelectCafePage() {
         }),
       })
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
+      // ✅ Always parse JSON first, regardless of HTTP status
+      let data: any = {}
+      try {
+        data = await response.json()
+      } catch {
+        throw new Error("Server returned an unexpected response.")
       }
 
-      const data = await response.json()
+      // ✅ Handle 4xx: use server's message (e.g. "Invalid PIN" or "Invalid credentials")
+      if (!response.ok) {
+        const message =
+          data.message ||
+          data.error ||
+          (response.status === 401
+            ? "Invalid PIN. Please try again."
+            : response.status === 403
+            ? "Access denied."
+            : `PIN validation failed (${response.status}). Please try again.`)
+        setError(message)
+        triggerShake()
+        return // ✅ Return early — don't fall into catch block
+      }
+
+      // ✅ Handle 200 OK with status field
       if (data.status === "success") {
         localStorage.setItem("selectedCafe", selectedCafeData.id)
         localStorage.setItem("jwtToken", data.data.token)
@@ -295,17 +340,30 @@ export default function SelectCafePage() {
         toast.success("Access granted!")
         router.replace("/dashboard")
       } else {
-        setError(data.message || "Invalid PIN, please try again.")
+        // ✅ 200 but status !== "success" (custom error format from Flask)
+        const message = data.message || "Invalid PIN. Please try again."
+        setError(message)
         triggerShake()
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error("PIN validation error:", err)
-      setError("Network error. Please try again.")
-      triggerShake()
-    }
 
-    setIsUnlocking(false)
-    setIsSubmitting(false)
+      // ✅ Only true network/timeout errors reach here now
+      let errorMessage = "Network error. Please check your connection."
+      if (err.name === "AbortError") {
+        errorMessage = "Request timed out. Please try again."
+      } else if (err.message?.includes("Failed to fetch") || err.message?.includes("NetworkError")) {
+        errorMessage = "Network error. Please check your internet connection."
+      } else if (err.message) {
+        errorMessage = err.message
+      }
+
+      setError(errorMessage)
+      triggerShake()
+    } finally {
+      setIsUnlocking(false)
+      setIsSubmitting(false)
+    }
   }
 
   function triggerShake() {
@@ -326,34 +384,27 @@ export default function SelectCafePage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex flex-col items-center justify-center p-4 md:p-8 relative overflow-hidden">
-      {/* Animated Background Elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl animate-pulse"></div>
         <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
       </div>
 
       <div className="relative max-w-7xl w-full flex flex-col items-center gap-8 md:gap-12 z-20">
-        {/* Header Section */}
         <div className="text-center space-y-4 md:space-y-6">
           <h1 className="text-4xl md:text-5xl lg:text-7xl font-bold md:mb-2 bg-gradient-to-r from-white via-emerald-100 to-cyan-100 bg-clip-text text-transparent tracking-tight select-none">
             Select Gaming Cafe
           </h1>
-
           <p className="text-slate-400 text-lg md:text-lg max-w-2xl mx-auto leading-relaxed select-none">
             Choose your cafe and enter your PIN to unlock the dashboard.
           </p>
         </div>
 
-        {/* Cafe Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 w-full max-w-4xl">
           {cafes.map((cafe, index) => (
             <div
               key={cafe.id}
               className="group relative"
-              style={{
-                animationDelay: `${index * 100}ms`,
-                animation: "fadeInUp 0.6s ease-out forwards",
-              }}
+              style={{ animationDelay: `${index * 100}ms`, animation: "fadeInUp 0.6s ease-out forwards" }}
             >
               <button
                 onClick={() => handleCafeClick(cafe.id)}
@@ -363,7 +414,6 @@ export default function SelectCafePage() {
                   <div className="flex-shrink-0 p-4 md:p-5 rounded-2xl transition-all duration-300 group-hover:scale-110 bg-slate-600/50 backdrop-blur-sm shadow-lg shadow-slate-900/30">
                     <Store className="w-8 h-8 md:w-10 md:h-10 text-emerald-400" />
                   </div>
-
                   <div className="flex-1 text-left space-y-1 md:space-y-2">
                     <h3 className="text-lg md:text-xl lg:text-2xl font-bold text-white group-hover:text-white/90 transition-colors duration-300 leading-tight">
                       {cafe.name}
@@ -377,7 +427,6 @@ export default function SelectCafePage() {
             </div>
           ))}
 
-          {/* Add New Cafe Card */}
           <div className="group relative" style={{ animation: "fadeInUp 0.6s ease-out forwards" }}>
             <button
               onClick={() => handleCafeClick("add-new")}
@@ -387,7 +436,6 @@ export default function SelectCafePage() {
                 <div className="flex-shrink-0 p-4 md:p-5 rounded-2xl transition-all duration-300 group-hover:scale-110 bg-white/20 backdrop-blur-sm shadow-lg">
                   <Plus className="w-8 h-8 md:w-10 md:h-10 text-white" />
                 </div>
-
                 <div className="flex-1 text-left space-y-1 md:space-y-2">
                   <h3 className="text-lg md:text-xl lg:text-2xl font-bold text-white group-hover:text-white/90 transition-colors duration-300 leading-tight">
                     Add New Cafe
@@ -415,7 +463,6 @@ export default function SelectCafePage() {
                 )}
               </div>
             </div>
-
             <DialogTitle className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-white to-slate-200 bg-clip-text text-transparent">
               Access {selectedCafeData?.name}
             </DialogTitle>
@@ -428,10 +475,13 @@ export default function SelectCafePage() {
                 type="password"
                 maxLength={4}
                 value={pin}
-                onChange={(e) => setPin(e.target.value.replace(/\D/g, ""))}
+                onChange={(e) => {
+                  setPin(e.target.value.replace(/\D/g, ""))
+                  setError(null) // ✅ Clear error on new input
+                }}
                 placeholder="••••"
                 className="text-center text-3xl tracking-[0.8em] h-16 border-2 border-slate-600/50 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 rounded-2xl bg-slate-800/80 backdrop-blur-sm transition-all duration-300 text-white placeholder-slate-500 shadow-inner"
-                onKeyPress={(e) => e.key === "Enter" && handleUnlock()}
+                onKeyDown={(e) => e.key === "Enter" && handleUnlock()}
                 disabled={isUnlocking}
               />
 
@@ -444,7 +494,7 @@ export default function SelectCafePage() {
                         ? "bg-gradient-to-r from-emerald-400 to-emerald-500 scale-125 shadow-lg shadow-emerald-400/50"
                         : "bg-slate-600/50"
                     }`}
-                  ></div>
+                  />
                 ))}
               </div>
             </div>
@@ -469,7 +519,7 @@ export default function SelectCafePage() {
 
             {error && (
               <div className="text-center p-4 bg-red-500/10 border border-red-500/20 rounded-xl backdrop-blur-sm">
-                <p className="text-red-400 text-sm font-medium animate-pulse">{error}</p>
+                <p className="text-red-400 text-sm font-medium">{error}</p>
               </div>
             )}
           </div>
@@ -489,7 +539,6 @@ export default function SelectCafePage() {
             {/* Basic Info */}
             <div className="space-y-4">
               <h3 className="text-xl font-semibold text-white">Basic Information</h3>
-              
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Label className="text-slate-300">Cafe Name *</Label>
@@ -500,7 +549,6 @@ export default function SelectCafePage() {
                     placeholder="Enter cafe name"
                   />
                 </div>
-
                 <div>
                   <Label className="text-slate-300">Owner Name *</Label>
                   <Input
@@ -510,28 +558,27 @@ export default function SelectCafePage() {
                     placeholder="Enter owner name"
                   />
                 </div>
-
                 <div>
-                  <Label className="text-slate-300">Parent Email (Auto-filled or enter manually)</Label>
+                  <Label className="text-slate-300">Parent Email (Auto-filled, cannot be changed)</Label>
                   <Input
                     value={formData.vendor_account_email}
-                    onChange={(e) => setFormData({ ...formData, vendor_account_email: e.target.value })}
-                    className="bg-slate-800/50 border-slate-600 text-white"
-                    placeholder="Enter parent email"
+                    disabled
+                    className="bg-slate-800/50 border-slate-600 text-slate-300 cursor-not-allowed opacity-80"
+                    placeholder="Parent email"
                   />
                 </div>
-
                 <div>
                   <Label className="text-slate-300">Vendor PIN (Optional - 4 digits)</Label>
                   <Input
                     value={formData.vendor_pin}
-                    onChange={(e) => setFormData({ ...formData, vendor_pin: e.target.value.replace(/\D/g, "").slice(0, 4) })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, vendor_pin: e.target.value.replace(/\D/g, "").slice(0, 4) })
+                    }
                     className="bg-slate-800/50 border-slate-600 text-white"
                     placeholder="Leave empty for auto-generation"
                     maxLength={4}
                   />
                 </div>
-
                 <div>
                   <Label className="text-slate-300">Vendor Password (Optional - min 6 chars)</Label>
                   <Input
@@ -548,7 +595,6 @@ export default function SelectCafePage() {
             {/* Contact Info */}
             <div className="space-y-4">
               <h3 className="text-xl font-semibold text-white">Contact Information</h3>
-              
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <Label className="text-slate-300">Email *</Label>
@@ -562,7 +608,6 @@ export default function SelectCafePage() {
                     placeholder="cafe@example.com"
                   />
                 </div>
-
                 <div>
                   <Label className="text-slate-300">Phone *</Label>
                   <Input
@@ -574,7 +619,6 @@ export default function SelectCafePage() {
                     placeholder="1234567890"
                   />
                 </div>
-
                 <div>
                   <Label className="text-slate-300">Website</Label>
                   <Input
@@ -592,7 +636,6 @@ export default function SelectCafePage() {
             {/* Physical Address */}
             <div className="space-y-4">
               <h3 className="text-xl font-semibold text-white">Physical Address</h3>
-              
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="md:col-span-2">
                   <Label className="text-slate-300">Street Address *</Label>
@@ -605,7 +648,6 @@ export default function SelectCafePage() {
                     placeholder="Street address"
                   />
                 </div>
-
                 <div>
                   <Label className="text-slate-300">City *</Label>
                   <Input
@@ -617,19 +659,21 @@ export default function SelectCafePage() {
                     placeholder="City"
                   />
                 </div>
-
                 <div>
                   <Label className="text-slate-300">State *</Label>
-                  <Input
+                  <select
                     value={formData.physicalAddress.state}
                     onChange={(e) =>
                       setFormData({ ...formData, physicalAddress: { ...formData.physicalAddress, state: e.target.value } })
                     }
-                    className="bg-slate-800/50 border-slate-600 text-white"
-                    placeholder="State"
-                  />
+                    className="w-full rounded-md bg-slate-800/50 border border-slate-600 text-white px-3 py-2 text-sm"
+                  >
+                    <option value="" disabled>Select state</option>
+                    {INDIA_STATES.map((st) => (
+                      <option key={st} value={st}>{st}</option>
+                    ))}
+                  </select>
                 </div>
-
                 <div>
                   <Label className="text-slate-300">ZIP Code *</Label>
                   <Input
@@ -641,7 +685,6 @@ export default function SelectCafePage() {
                     placeholder="123456"
                   />
                 </div>
-
                 <div>
                   <Label className="text-slate-300">Country *</Label>
                   <Input
@@ -659,7 +702,6 @@ export default function SelectCafePage() {
             {/* Business Registration */}
             <div className="space-y-4">
               <h3 className="text-xl font-semibold text-white">Business Registration</h3>
-              
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <Label className="text-slate-300">Registration Number *</Label>
@@ -678,7 +720,6 @@ export default function SelectCafePage() {
                     placeholder="REG123456"
                   />
                 </div>
-
                 <div>
                   <Label className="text-slate-300">Business Type *</Label>
                   <Input
@@ -696,7 +737,6 @@ export default function SelectCafePage() {
                     placeholder="Gaming Cafe"
                   />
                 </div>
-
                 <div>
                   <Label className="text-slate-300">Tax ID *</Label>
                   <Input
@@ -717,17 +757,15 @@ export default function SelectCafePage() {
               </div>
             </div>
 
-            {/* ✅ UPDATED: Timing with abbreviated day names */}
+            {/* Operating Hours */}
             <div className="space-y-4">
               <h3 className="text-xl font-semibold text-white">Operating Hours</h3>
-              
               <div className="space-y-3">
                 {DAYS_OF_WEEK.map((day) => (
                   <div key={day.key} className="flex items-center gap-4">
                     <div className="w-28">
                       <span className="text-slate-300">{day.label}</span>
                     </div>
-                    
                     <Checkbox
                       checked={formData.timing[day.key]?.closed || false}
                       onCheckedChange={(checked) =>
@@ -742,7 +780,6 @@ export default function SelectCafePage() {
                       className="border-slate-600"
                     />
                     <span className="text-slate-400 text-sm">Closed</span>
-
                     {!formData.timing[day.key]?.closed && (
                       <>
                         <Input
@@ -781,64 +818,68 @@ export default function SelectCafePage() {
               </div>
             </div>
 
-            {/* Available Games */}
+            {/* Available Consoles */}
             <div className="space-y-4">
-              <h3 className="text-xl font-semibold text-white">Available Games</h3>
-              
-              {/* ✅ NEW: Console auto-creation info */}
+              <h3 className="text-xl font-semibold text-white">Available Consoles</h3>
               <div className="bg-green-900/20 border border-green-700/50 rounded p-3">
                 <p className="text-green-300 text-xs">
-                  <strong>Console Auto-Creation:</strong> Individual console records will be automatically created based on the number of slots. 
-                  For example, 5 PC slots will create PC-1, PC-2, PC-3, PC-4, PC-5.
+                  <strong>Console Auto-Creation:</strong> Individual console records will be automatically created based on
+                  the number of slots. For example, 5 PC slots will create PC-1, PC-2, PC-3, PC-4, PC-5.
                 </p>
               </div>
-              
               {formData.available_games.map((game, index) => (
                 <div key={index} className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
                   <div>
-                    <Label className="text-slate-300">Game Name *</Label>
-                    <Input
+                    <Label className="text-slate-300">Available Console *</Label>
+                    <select
                       value={game.name}
                       onChange={(e) => {
+                        const value = e.target.value as ConsoleType
                         const games = [...formData.available_games]
-                        games[index].name = e.target.value
+                        games[index].name = value
+                        games[index].gaming_type = value
                         setFormData({ ...formData, available_games: games })
                       }}
-                      className="bg-slate-800/50 border-slate-600 text-white"
-                      placeholder="pc, ps5, xbox, vr"
-                    />
+                      className="w-full rounded-md bg-slate-800/50 border border-slate-600 text-white px-3 py-2 text-sm"
+                    >
+                      <option value="" disabled>Select console</option>
+                      {CONSOLE_TYPES.map((ct) => (
+                        <option key={ct} value={ct}>{ct.toUpperCase()}</option>
+                      ))}
+                    </select>
                   </div>
-
                   <div>
                     <Label className="text-slate-300">Total Slots *</Label>
                     <Input
                       type="number"
+                      min={0}
                       value={game.total_slot}
                       onChange={(e) => {
+                        const val = e.target.value === "" ? 0 : Math.max(0, parseInt(e.target.value, 10) || 0)
                         const games = [...formData.available_games]
-                        games[index].total_slot = parseInt(e.target.value) || 0
+                        games[index].total_slot = val
                         setFormData({ ...formData, available_games: games })
                       }}
                       className="bg-slate-800/50 border-slate-600 text-white"
                       placeholder="5"
                     />
                   </div>
-
                   <div>
                     <Label className="text-slate-300">Rate per Slot *</Label>
                     <Input
                       type="number"
+                      min={0}
                       value={game.rate_per_slot}
                       onChange={(e) => {
+                        const val = e.target.value === "" ? 0 : Math.max(0, parseInt(e.target.value, 10) || 0)
                         const games = [...formData.available_games]
-                        games[index].rate_per_slot = parseInt(e.target.value) || 0
+                        games[index].rate_per_slot = val
                         setFormData({ ...formData, available_games: games })
                       }}
                       className="bg-slate-800/50 border-slate-600 text-white"
                       placeholder="100"
                     />
                   </div>
-
                   <div className="flex gap-2">
                     <Button
                       type="button"
@@ -854,7 +895,6 @@ export default function SelectCafePage() {
                   </div>
                 </div>
               ))}
-
               <Button
                 type="button"
                 onClick={() =>
@@ -862,27 +902,24 @@ export default function SelectCafePage() {
                     ...formData,
                     available_games: [
                       ...formData.available_games,
-                      { name: "", total_slot: 0, rate_per_slot: 0, gaming_type: "PC" },
+                      { name: "pc", total_slot: 0, rate_per_slot: 0, gaming_type: "PC" as ConsoleType },
                     ],
                   })
                 }
                 className="bg-emerald-600 hover:bg-emerald-700"
               >
                 <Plus className="w-4 h-4 mr-2" />
-                Add Game
+                Add Console
               </Button>
             </div>
 
             {/* Documents */}
             <div className="space-y-4">
               <h3 className="text-xl font-semibold text-white">Documents</h3>
-              
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {Object.keys(documents).map((docType) => (
                   <div key={docType} className="space-y-2">
-                    <Label className="text-slate-300 capitalize">
-                      {docType.replace(/_/g, " ")}
-                    </Label>
+                    <Label className="text-slate-300 capitalize">{docType.replace(/_/g, " ")}</Label>
                     <div className="flex items-center gap-2">
                       <Input
                         type="file"
@@ -890,16 +927,14 @@ export default function SelectCafePage() {
                         onChange={(e) => handleFileChange(docType, e.target.files?.[0] || null)}
                         className="bg-slate-800/50 border-slate-600 text-white file:bg-emerald-600 file:text-white file:border-0 file:rounded-lg file:px-4 file:py-2"
                       />
-                      {documents[docType] && (
-                        <span className="text-emerald-400 text-sm">✓</span>
-                      )}
+                      {documents[docType] && <span className="text-emerald-400 text-sm">✓</span>}
                     </div>
                   </div>
                 ))}
               </div>
             </div>
 
-            {/* Submit Button */}
+            {/* Submit */}
             <div className="flex gap-4 pt-6">
               <Button
                 onClick={handleOnboardSubmit}
@@ -915,7 +950,6 @@ export default function SelectCafePage() {
                   "Onboard Cafe"
                 )}
               </Button>
-
               <Button
                 onClick={() => setShowOnboardDialog(false)}
                 disabled={isSubmitting}
@@ -936,25 +970,15 @@ export default function SelectCafePage() {
 
       <style jsx global>{`
         @keyframes fadeInUp {
-          from {
-            opacity: 0;
-            transform: translateY(30px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
+          from { opacity: 0; transform: translateY(30px); }
+          to { opacity: 1; transform: translateY(0); }
         }
-
         @keyframes shake {
           0%, 100% { transform: translateX(0); }
           20%, 60% { transform: translateX(-8px); }
           40%, 80% { transform: translateX(8px); }
         }
-
-        .animate-shake {
-          animation: shake 0.5s ease-in-out;
-        }
+        .animate-shake { animation: shake 0.5s ease-in-out; }
       `}</style>
     </div>
   )
