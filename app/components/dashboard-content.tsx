@@ -1,29 +1,22 @@
 "use client"
 
 import React, { useEffect, useState } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { BookingStats } from "./book-stats"
+import { Card, CardContent } from "@/components/ui/card"
 import { UpcomingBookings } from "./upcoming-booking"
 import { CurrentSlots } from "./current-slot"
 import { motion, AnimatePresence } from "framer-motion"
 import {
   IndianRupee, CalendarCheck, WalletCards, Eye, EyeOff,
-  TrendingUp, RefreshCw, Zap, BarChart3, Monitor, Gamepad2,
+  TrendingUp, BarChart3, Monitor, Gamepad2,
   Gamepad, Headphones, Lock
 } from 'lucide-react'
 import { jwtDecode } from "jwt-decode"
 import { DASHBOARD_URL } from "@/src/config/env"
 import HashLoader from "./ui/HashLoader"
-import { Button } from "@/components/ui/button"
 import { NotificationButton } from "../components/NotificationButton"
 import { useSocket } from "../context/SocketContext"
 import { useSubscription } from "@/hooks/useSubscription"
 import { useRouter } from "next/navigation"
-
-interface DashboardContentProps {
-  activeTab: string
-  setActiveTab: (tab: string) => void
-}
 
 const platformMetadata = {
   platforms: [
@@ -60,7 +53,7 @@ function LockedOverlay() {
   )
 }
 
-export function DashboardContent({ activeTab, setActiveTab }: DashboardContentProps) {
+export function DashboardContent() {
   const [showBookingStats, setShowBookingStats] = useState(true)
   const [showEarnings, setShowEarnings] = useState(false)
   const [showPending, setShowPending] = useState(false)
@@ -234,6 +227,184 @@ export function DashboardContent({ activeTab, setActiveTab }: DashboardContentPr
     return { ...metadata, total, booked }
   })
 
+  const topMetricsStrip = (
+    <AnimatePresence mode="wait">
+      {activeTopTab === 'analytics' && (
+        <motion.div
+          key="analytics"
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={{ opacity: 0, x: -20 }}
+          transition={{ duration: 0.3 }}
+          className="grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-3 lg:grid-cols-3"
+        >
+          <motion.div
+            animate={{ scale: realTimeStats.lastUpdate ? [1, 1.05, 1] : 1 }}
+            transition={{ duration: 0.5 }}
+            className="flex-1"
+          >
+            <Card className="gaming-kpi-card h-full rounded-xl transition-all duration-200">
+              <CardContent className="p-2 sm:p-3">
+                <div className="flex items-center justify-between mb-1 sm:mb-2">
+                  <div className="flex items-center gap-1 sm:gap-2">
+                    <div className="p-1 sm:p-1.5 rounded-full bg-emerald-500/20">
+                      <IndianRupee className="w-3 sm:w-4 h-3 sm:h-4 text-emerald-400" />
+                    </div>
+                    <span className="dash-kpi-label">Earnings</span>
+                  </div>
+                  <button onClick={() => setShowEarnings(!showEarnings)} className="text-emerald-400 hover:text-emerald-300 transition-colors">
+                    {showEarnings ? <EyeOff className="w-3 sm:w-4 h-3 sm:h-4" /> : <Eye className="w-3 sm:w-4 h-3 sm:h-4" />}
+                  </button>
+                </div>
+                <div className="flex items-center justify-between">
+                  <motion.p
+                    key={currentStats.todayEarnings}
+                    initial={{ scale: 0.8, opacity: 0.5 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ duration: 0.3 }}
+                    className="dash-kpi-value"
+                  >
+                    {showEarnings ? `₹${currentStats.todayEarnings}` : "₹•••••"}
+                  </motion.p>
+                  <div className="flex items-center gap-1 text-xs text-emerald-400">
+                    <TrendingUp className="w-3 h-3" />
+                    <span>Today</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+
+          <motion.div
+            animate={{ scale: realTimeStats.lastUpdate ? [1, 1.05, 1] : 1 }}
+            transition={{ duration: 0.5 }}
+            className="flex-1"
+          >
+            <Card className="gaming-kpi-card h-full rounded-xl transition-all duration-200">
+              <CardContent className="p-2 sm:p-3">
+                <div className="flex items-center justify-between mb-1 sm:mb-2">
+                  <div className="flex items-center gap-1 sm:gap-2">
+                    <div className="p-1 sm:p-1.5 rounded-full bg-blue-500/20">
+                      <CalendarCheck className="w-3 sm:w-4 h-3 sm:h-4 text-blue-400" />
+                    </div>
+                    <span className="dash-kpi-label">Bookings</span>
+                  </div>
+                  <span className="text-xs font-bold text-green-400">
+                    +{currentStats.todayBookingsChange}%
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <motion.p
+                    key={currentStats.todayBookings}
+                    initial={{ scale: 0.8, opacity: 0.5 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ duration: 0.3 }}
+                    className="dash-kpi-value"
+                  >
+                    {currentStats.todayBookings}
+                  </motion.p>
+                  <div className="flex items-center gap-1 text-xs text-blue-400">
+                    <TrendingUp className="w-3 h-3" />
+                    <span>Today</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+
+          <motion.div
+            animate={{ scale: realTimeStats.lastUpdate ? [1, 1.05, 1] : 1 }}
+            transition={{ duration: 0.5 }}
+            className="flex-1"
+          >
+            <Card className="gaming-kpi-card h-full rounded-xl transition-all duration-200">
+              <CardContent className="p-2 sm:p-3">
+                <div className="flex items-center justify-between mb-1 sm:mb-2">
+                  <div className="flex items-center gap-1 sm:gap-2">
+                    <div className="p-1 sm:p-1.5 rounded-full bg-yellow-500/20">
+                      <WalletCards className="w-3 sm:w-4 h-3 sm:h-4 text-yellow-400" />
+                    </div>
+                    <span className="dash-kpi-label">Pending</span>
+                  </div>
+                  <button onClick={() => setShowPending(!showPending)} className="text-yellow-400 hover:text-yellow-300 transition-colors">
+                    {showPending ? <EyeOff className="w-3 sm:w-4 h-3 sm:h-4" /> : <Eye className="w-3 sm:w-4 h-3 sm:h-4" />}
+                  </button>
+                </div>
+                <div className="flex items-center justify-between">
+                  <motion.p
+                    key={currentStats.pendingAmount}
+                    initial={{ scale: 0.8, opacity: 0.5 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ duration: 0.3 }}
+                    className="dash-kpi-value"
+                  >
+                    {showPending ? `₹${currentStats.pendingAmount}` : "₹•••••"}
+                  </motion.p>
+                  <div className="flex items-center gap-1 text-xs text-yellow-400">
+                    <div className="w-2 h-2 bg-yellow-400 rounded-full animate-pulse" />
+                    <span>Today</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        </motion.div>
+      )}
+
+      {activeTopTab === 'devices' && (
+        <motion.div
+          key="devices"
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={{ opacity: 0, x: 20 }}
+          transition={{ duration: 0.3 }}
+          className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3"
+        >
+          {platforms.map((platform) => {
+            const available = platform.total - platform.booked
+            const bookedPercentage = platform.total
+              ? Math.round((platform.booked / platform.total) * 100)
+              : 0
+            const Icon = platform.icon
+            return (
+              <motion.div
+                key={platform.name}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+                className="gaming-kpi-card rounded-xl p-2 shadow-sm backdrop-blur-sm sm:p-3"
+              >
+                <div className="flex items-center justify-between mb-1 sm:mb-2">
+                  <div className="flex items-center gap-1 sm:gap-2">
+                    <div className="dash-icon-chip" style={{ backgroundColor: platform.bgColor }}>
+                      <Icon className="w-3 sm:w-4 h-3 sm:h-4" style={{ color: platform.color }} />
+                    </div>
+                    <span className="dash-kpi-label">
+                      {platform.name}
+                    </span>
+                  </div>
+                  <span className="text-xs font-bold" style={{ color: platform.color }}>
+                    {bookedPercentage}%
+                  </span>
+                </div>
+                <div className="w-full h-1 rounded-full bg-zinc-200 dark:bg-zinc-700">
+                  <div
+                    className="h-1 rounded-full"
+                    style={{ width: `${bookedPercentage}%`, backgroundColor: platform.color }}
+                  />
+                </div>
+                <div className="mt-1 sm:mt-2 text-xs flex justify-between text-zinc-600 dark:text-zinc-400">
+                  <span>Booked: {platform.booked}</span>
+                  <span>Free: {available}</span>
+                </div>
+              </motion.div>
+            )
+          })}
+        </motion.div>
+      )}
+    </AnimatePresence>
+  )
+
   if (!dashboardData) {
     return <HashLoader className="py-[42vh]" />
   }
@@ -243,7 +414,7 @@ export function DashboardContent({ activeTab, setActiveTab }: DashboardContentPr
       {dashboardData?.available ? (
         <HashLoader className="py-[50vh]" />
       ) : (
-        <div className="h-screen bg-background text-foreground p-2 sm:p-4 md:p-6 flex flex-col">
+        <div className="h-full min-h-0 text-foreground flex flex-col gap-3 sm:gap-4">
 
           {/* ✅ Subscription expired banner
           {isLocked && (
@@ -271,12 +442,18 @@ export function DashboardContent({ activeTab, setActiveTab }: DashboardContentPr
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="flex flex-col md:flex-row md:items-center justify-between mb-4 sm:mb-6 flex-shrink-0"
+            className="gaming-panel shrink-0 rounded-xl p-3 md:p-4"
           >
-            <div className="mb-4 md:mb-0">
-              <div className="flex items-center gap-3">
-                <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground mb-2">Dashboard</h1>
+            <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_auto_minmax(0,1.8fr)_auto] md:items-start">
+              <div className="flex-1">
+              <div className="flex items-center gap-3 mb-1">
+                <h1 className="premium-heading text-xl font-bold text-foreground sm:text-2xl md:text-3xl">Gaming Cafe Command</h1>
                 <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`} />
+                <NotificationButton
+                  vendorId={vendorId}
+                  onBookingAccepted={handleBookingAccepted}
+                  latestBookingEvent={latestBookingEvent}
+                />
                 {isConnected && realTimeStats.lastUpdate && (
                   <motion.div
                     animate={{ scale: [1, 1.1, 1] }}
@@ -286,240 +463,64 @@ export function DashboardContent({ activeTab, setActiveTab }: DashboardContentPr
                   />
                 )}
               </div>
+              <p className="premium-subtle text-xs sm:text-sm">
+                Monitor live slots, revenue, and upcoming sessions in real time.
+              </p>
             </div>
-            <div className="flex items-center gap-3">
-              <NotificationButton
-                vendorId={vendorId}
-                onBookingAccepted={handleBookingAccepted}
-                latestBookingEvent={latestBookingEvent}
-              />
-            </div>
-          </motion.div>
-
-          {/* Main Layout Grid */}
-          <div className="grid grid-cols-1 xl:grid-cols-4 gap-3 sm:gap-4 flex-1 min-h-0">
-
-            {/* Left Column */}
-            <div className="xl:col-span-3 space-y-3 sm:space-y-4 flex flex-col min-h-0">
-
-              {/* Tab Navigation */}
+              <div className="flex w-full items-center justify-end gap-3 self-end md:w-auto md:self-start">
               <motion.div
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="flex items-center gap-2 p-1 bg-muted rounded-lg w-fit flex-shrink-0"
+                className="gaming-panel flex w-fit flex-col items-stretch gap-2 rounded-xl p-1.5"
               >
                 <button
                   onClick={() => setActiveTopTab('analytics')}
-                  className={`flex items-center gap-2 px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm font-medium transition-all duration-200 ${
+                  className={`flex items-center justify-start gap-2 rounded-md px-3 py-2 text-xs font-semibold transition-all duration-200 sm:px-4 sm:text-sm ${
                     activeTopTab === 'analytics'
                       ? 'bg-background text-foreground shadow-sm'
                       : 'text-muted-foreground hover:text-foreground'
                   }`}
                 >
-                  <BarChart3 className="w-3 sm:w-4 h-3 sm:h-4" />
+                  <BarChart3 className="h-3 w-3 sm:h-4 sm:w-4" />
                   Analytics
                 </button>
                 <button
                   onClick={() => setActiveTopTab('devices')}
-                  className={`flex items-center gap-2 px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm font-medium transition-all duration-200 ${
+                  className={`flex items-center justify-start gap-2 rounded-md px-3 py-2 text-xs font-semibold transition-all duration-200 sm:px-4 sm:text-sm ${
                     activeTopTab === 'devices'
                       ? 'bg-background text-foreground shadow-sm'
                       : 'text-muted-foreground hover:text-foreground'
                   }`}
                 >
-                  <Monitor className="w-3 sm:w-4 h-3 sm:h-4" />
+                  <Monitor className="h-3 w-3 sm:h-4 sm:w-4" />
                   Devices
                 </button>
               </motion.div>
+            </div>
+              <div className="hidden md:block">
+                {topMetricsStrip}
+              </div>
+            </div>
+          </motion.div>
 
-              {/* Analytics / Devices Cards */}
-              <AnimatePresence mode="wait">
-                {activeTopTab === 'analytics' && (
-                  <motion.div
-                    key="analytics"
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -20 }}
-                    transition={{ duration: 0.3 }}
-                    className="flex gap-2 sm:gap-3 flex-shrink-0"
-                  >
-                    {/* Earnings Card */}
-                    <motion.div
-                      animate={{ scale: realTimeStats.lastUpdate ? [1, 1.05, 1] : 1 }}
-                      transition={{ duration: 0.5 }}
-                      className="flex-1"
-                    >
-                      <Card className="bg-card border-border backdrop-blur-sm rounded-lg shadow-sm h-full">
-                        <CardContent className="p-2 sm:p-3">
-                          <div className="flex items-center justify-between mb-1 sm:mb-2">
-                            <div className="flex items-center gap-1 sm:gap-2">
-                              <div className="p-1 sm:p-1.5 rounded-full bg-emerald-500/20">
-                                <IndianRupee className="w-3 sm:w-4 h-3 sm:h-4 text-emerald-400" />
-                              </div>
-                              <span className="text-xs sm:text-sm font-medium text-foreground">Earnings</span>
-                            </div>
-                            <button onClick={() => setShowEarnings(!showEarnings)} className="text-emerald-400 hover:text-emerald-300 transition-colors">
-                              {showEarnings ? <EyeOff className="w-3 sm:w-4 h-3 sm:h-4" /> : <Eye className="w-3 sm:w-4 h-3 sm:h-4" />}
-                            </button>
-                          </div>
-                          <div className="flex items-center justify-between">
-                            <motion.p
-                              key={currentStats.todayEarnings}
-                              initial={{ scale: 0.8, opacity: 0.5 }}
-                              animate={{ scale: 1, opacity: 1 }}
-                              transition={{ duration: 0.3 }}
-                              className="text-lg sm:text-xl font-bold text-foreground"
-                            >
-                              {showEarnings ? `₹${currentStats.todayEarnings}` : "₹•••••"}
-                            </motion.p>
-                            <div className="flex items-center gap-1 text-xs text-emerald-400">
-                              <TrendingUp className="w-3 h-3" />
-                              <span>Today</span>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </motion.div>
+          <div className="shrink-0 md:hidden">
+            {topMetricsStrip}
+          </div>
 
-                    {/* Bookings Card */}
-                    <motion.div
-                      animate={{ scale: realTimeStats.lastUpdate ? [1, 1.05, 1] : 1 }}
-                      transition={{ duration: 0.5 }}
-                      className="flex-1"
-                    >
-                      <Card className="bg-card border-border backdrop-blur-sm rounded-lg shadow-sm h-full">
-                        <CardContent className="p-2 sm:p-3">
-                          <div className="flex items-center justify-between mb-1 sm:mb-2">
-                            <div className="flex items-center gap-1 sm:gap-2">
-                              <div className="p-1 sm:p-1.5 rounded-full bg-blue-500/20">
-                                <CalendarCheck className="w-3 sm:w-4 h-3 sm:h-4 text-blue-400" />
-                              </div>
-                              <span className="text-xs sm:text-sm font-medium text-foreground">Bookings</span>
-                            </div>
-                            <span className="text-xs font-bold text-green-400">
-                              +{currentStats.todayBookingsChange}%
-                            </span>
-                          </div>
-                          <div className="flex items-center justify-between">
-                            <motion.p
-                              key={currentStats.todayBookings}
-                              initial={{ scale: 0.8, opacity: 0.5 }}
-                              animate={{ scale: 1, opacity: 1 }}
-                              transition={{ duration: 0.3 }}
-                              className="text-lg sm:text-xl font-bold text-foreground"
-                            >
-                              {currentStats.todayBookings}
-                            </motion.p>
-                            <div className="flex items-center gap-1 text-xs text-blue-400">
-                              <TrendingUp className="w-3 h-3" />
-                              <span>Today</span>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </motion.div>
+          {/* Main Layout Grid */}
+          <div className="grid grid-cols-1 gap-3 sm:gap-4 lg:grid-cols-12 flex-1 min-h-0">
 
-                    {/* Pending Card */}
-                    <motion.div
-                      animate={{ scale: realTimeStats.lastUpdate ? [1, 1.05, 1] : 1 }}
-                      transition={{ duration: 0.5 }}
-                      className="flex-1"
-                    >
-                      <Card className="bg-card border-border backdrop-blur-sm rounded-lg shadow-sm h-full">
-                        <CardContent className="p-2 sm:p-3">
-                          <div className="flex items-center justify-between mb-1 sm:mb-2">
-                            <div className="flex items-center gap-1 sm:gap-2">
-                              <div className="p-1 sm:p-1.5 rounded-full bg-yellow-500/20">
-                                <WalletCards className="w-3 sm:w-4 h-3 sm:h-4 text-yellow-400" />
-                              </div>
-                              <span className="text-xs sm:text-sm font-medium text-foreground">Pending</span>
-                            </div>
-                            <button onClick={() => setShowPending(!showPending)} className="text-yellow-400 hover:text-yellow-300 transition-colors">
-                              {showPending ? <EyeOff className="w-3 sm:w-4 h-3 sm:h-4" /> : <Eye className="w-3 sm:w-4 h-3 sm:h-4" />}
-                            </button>
-                          </div>
-                          <div className="flex items-center justify-between">
-                            <motion.p
-                              key={currentStats.pendingAmount}
-                              initial={{ scale: 0.8, opacity: 0.5 }}
-                              animate={{ scale: 1, opacity: 1 }}
-                              transition={{ duration: 0.3 }}
-                              className="text-lg sm:text-xl font-bold text-foreground"
-                            >
-                              {showPending ? `₹${currentStats.pendingAmount}` : "₹•••••"}
-                            </motion.p>
-                            <div className="flex items-center gap-1 text-xs text-yellow-400">
-                              <div className="w-2 h-2 bg-yellow-400 rounded-full animate-pulse" />
-                              <span>Today</span>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </motion.div>
-                  </motion.div>
-                )}
-
-                {activeTopTab === 'devices' && (
-                  <motion.div
-                    key="devices"
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: 20 }}
-                    transition={{ duration: 0.3 }}
-                    className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 sm:gap-3 flex-shrink-0"
-                  >
-                    {platforms.map((platform) => {
-                      const available = platform.total - platform.booked
-                      const bookedPercentage = platform.total
-                        ? Math.round((platform.booked / platform.total) * 100)
-                        : 0
-                      const Icon = platform.icon
-                      return (
-                        <motion.div
-                          key={platform.name}
-                          initial={{ opacity: 0, y: 10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ duration: 0.3 }}
-                          className="bg-white dark:bg-card rounded-lg p-2 sm:p-3 shadow-sm border"
-                        >
-                          <div className="flex items-center justify-between mb-1 sm:mb-2">
-                            <div className="flex items-center gap-1 sm:gap-2">
-                              <div className="p-1 sm:p-1.5 rounded-full" style={{ backgroundColor: platform.bgColor }}>
-                                <Icon className="w-3 sm:w-4 h-3 sm:h-4" style={{ color: platform.color }} />
-                              </div>
-                              <span className="text-xs sm:text-sm font-medium text-zinc-700 dark:text-zinc-100">
-                                {platform.name}
-                              </span>
-                            </div>
-                            <span className="text-xs font-bold" style={{ color: platform.color }}>
-                              {bookedPercentage}%
-                            </span>
-                          </div>
-                          <div className="w-full h-1 rounded-full bg-zinc-200 dark:bg-zinc-700">
-                            <div
-                              className="h-1 rounded-full"
-                              style={{ width: `${bookedPercentage}%`, backgroundColor: platform.color }}
-                            />
-                          </div>
-                          <div className="mt-1 sm:mt-2 text-xs flex justify-between text-zinc-600 dark:text-zinc-400">
-                            <span>Booked: {platform.booked}</span>
-                            <span>Free: {available}</span>
-                          </div>
-                        </motion.div>
-                      )
-                    })}
-                  </motion.div>
-                )}
-              </AnimatePresence>
+            {/* Left Column */}
+            <div className="space-y-3 sm:space-y-4 flex flex-col min-h-0 lg:col-span-8 xl:col-span-9">
 
               {/* ✅ Current Slots - locked when subscription expired */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.3 }}
-                className="flex-1 min-h-0"
+                className="flex-1 min-h-0 lg:h-full"
               >
-                <Card className="bg-card border-border backdrop-blur-sm h-full">
+                <Card className="gaming-panel h-full rounded-xl">
                   <CardContent className="p-2 sm:p-4 h-full overflow-hidden relative">
                     <CurrentSlots
                       currentSlots={dashboardData.currentSlots}
@@ -537,9 +538,9 @@ export function DashboardContent({ activeTab, setActiveTab }: DashboardContentPr
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.4 }}
-              className="xl:col-span-1 flex flex-col min-h-0 mt-14"
+              className="flex flex-col min-h-0 lg:col-span-4 xl:col-span-3 lg:h-full"
             >
-              <Card className="bg-card border-border backdrop-blur-sm flex-1 min-h-0 relative">
+              <Card className="gaming-panel relative flex-1 min-h-[320px] lg:min-h-0 rounded-xl lg:h-full">
                 <CardContent className="p-0 h-full overflow-hidden">
                   <UpcomingBookings
                     upcomingBookings={dashboardData.upcomingBookings || []}
@@ -560,8 +561,8 @@ export function DashboardContent({ activeTab, setActiveTab }: DashboardContentPr
 
 function App() {
   return (
-    <div className="min-h-screen bg-background">
-      <DashboardContent activeTab="gaming-cafe" setActiveTab={() => {}} />
+    <div className="h-full min-h-0 bg-background">
+      <DashboardContent />
     </div>
   )
 }

@@ -208,10 +208,10 @@ export function NotificationButton({
     <>
       <div className="relative">
         <Button
-          variant="outline"
+          variant="ghost"
           size="sm"
           onClick={() => setIsOpen(!isOpen)}
-          className="relative p-2 h-10 w-10 rounded-lg border-border hover:bg-muted transition-colors duration-200"
+          className="relative h-10 w-10 rounded-full border-0 bg-transparent p-0 shadow-none hover:bg-emerald-500/10 transition-colors duration-200"
         >
           <Bell className={`w-4 h-4 ${
             unreadCount > 0

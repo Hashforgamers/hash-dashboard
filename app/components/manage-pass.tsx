@@ -3,9 +3,7 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   Dialog,
   DialogTrigger,
@@ -56,7 +54,7 @@ export default function ManagePassesPage() {
   const [passTypes, setPassTypes] = useState<PassType[]>([]);
   const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState<number | null>(null);
-  const [viewMode, setViewMode] = useState<"grid" | "table">("grid");
+  const [viewMode, setViewMode] = useState<"grid" | "table">("table");
   const [hasMounted, setHasMounted] = useState(false);
   const [activeVendorId, setActiveVendorId] = useState<string>("1");
 
@@ -152,74 +150,71 @@ export default function ManagePassesPage() {
 
   const datePasses = passes.filter((p) => p.pass_mode === "date_based");
   const hourPasses = passes.filter((p) => p.pass_mode === "hour_based");
+  const primaryButtonClass =
+    "inline-flex items-center justify-center gap-2 rounded-lg border border-cyan-400/40 bg-gradient-to-r from-cyan-500/90 to-emerald-500/90 px-3 py-2 text-xs font-semibold text-white shadow-md shadow-cyan-900/40 transition-all duration-200 hover:from-cyan-400 hover:to-emerald-400 hover:shadow-lg hover:shadow-cyan-600/25 disabled:cursor-not-allowed disabled:opacity-50 sm:px-4 sm:text-sm";
 
   return (
-    <div className="page-container">
-
-      {/* ✅ Page Header */}
-      <div className="page-header">
-        <div className="page-title-section">
-          <div className="flex items-center gap-3 mb-1">
-            <div className="icon-blue p-2 rounded-lg">
-              <BadgeCheck className="icon-lg text-blue-400" />
-            </div>
-            <h1 className="page-title">Manage Cafe Passes</h1>
-          </div>
-          <p className="page-subtitle">
-            Create date-based and hour-based membership passes
-          </p>
-        </div>
-        <AddPassDialog passTypes={passTypes} onSave={handleAddPass} />
-      </div>
+    <div className="flex h-full min-h-0 flex-col gap-4 overflow-hidden px-1 pb-2 sm:px-2">
 
       {/* ✅ View Toggle */}
-      <div className="flex items-center gap-3 mb-6">
-        <div className="tab-container">
+      <div className="gaming-panel mb-2 shrink-0 flex flex-wrap items-center justify-between gap-3 rounded-xl p-3">
+        <div className="flex items-center gap-1 rounded-lg border border-cyan-400/20 bg-slate-900/60 p-1">
           <button
             onClick={() => setViewMode("grid")}
-            className={viewMode === "grid" ? "tab-active" : "tab-inactive"}
+            className={`inline-flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-semibold transition-all sm:text-sm ${
+              viewMode === "grid"
+                ? "bg-slate-800 text-cyan-300 shadow-sm"
+                : "text-slate-300 hover:text-cyan-100"
+            }`}
           >
             <LayoutGrid className="icon-md" />
             Grid
           </button>
           <button
             onClick={() => setViewMode("table")}
-            className={viewMode === "table" ? "tab-active" : "tab-inactive"}
+            className={`inline-flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-semibold transition-all sm:text-sm ${
+              viewMode === "table"
+                ? "bg-slate-800 text-cyan-300 shadow-sm"
+                : "text-slate-300 hover:text-cyan-100"
+            }`}
           >
             <TableIcon className="icon-md" />
-            Table
+            List
           </button>
         </div>
 
-        {/* Pass count summary */}
-        {!loading && passes.length > 0 && (
-          <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2">
+          {!loading && passes.length > 0 && (
+            <>
             <span className="px-2 py-0.5 bg-blue-500/10 text-blue-400 text-xs font-bold rounded-full border border-blue-500/20">
               {hourPasses.length} Hour-Based
             </span>
             <span className="px-2 py-0.5 bg-emerald-500/10 text-emerald-400 text-xs font-bold rounded-full border border-emerald-500/20">
               {datePasses.length} Date-Based
             </span>
-          </div>
-        )}
+            </>
+          )}
+          <AddPassDialog passTypes={passTypes} onSave={handleAddPass} buttonClassName={primaryButtonClass} />
+        </div>
       </div>
 
-      {/* ✅ Content */}
-      {loading ? (
-        <div className="flex items-center justify-center gap-3 py-16 text-muted-foreground">
-          <Loader2 className="w-8 h-8 animate-spin text-blue-400" />
-          <p className="body-text-muted">Loading passes...</p>
-        </div>
-      ) : passes.length === 0 ? (
-        <div className="flex flex-col items-center justify-center gap-3 border-2 border-dashed border-border rounded-lg py-16">
-          <BadgeCheck className="w-12 h-12 text-muted-foreground/30" />
-          <h3 className="section-title text-muted-foreground/60">No passes found</h3>
-          <p className="body-text-muted">Create your first pass to get started</p>
-          <div className="mt-2">
-            <AddPassDialog passTypes={passTypes} onSave={handleAddPass} />
+      <div className="min-h-0 flex-1 overflow-y-auto pr-1">
+        {/* ✅ Content */}
+        {loading ? (
+          <div className="flex items-center justify-center gap-3 py-16 text-muted-foreground">
+            <Loader2 className="w-8 h-8 animate-spin text-blue-400" />
+            <p className="body-text-muted">Loading passes...</p>
           </div>
-        </div>
-      ) : viewMode === "grid" ? (
+        ) : passes.length === 0 ? (
+          <div className="gaming-panel flex flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed border-cyan-400/20 py-16">
+            <BadgeCheck className="w-12 h-12 text-muted-foreground/30" />
+            <h3 className="section-title text-muted-foreground/60">No passes found</h3>
+            <p className="body-text-muted">Create your first pass to get started</p>
+            <div className="mt-2">
+              <AddPassDialog passTypes={passTypes} onSave={handleAddPass} buttonClassName={primaryButtonClass} />
+            </div>
+          </div>
+        ) : viewMode === "grid" ? (
 
         /* ✅ GRID VIEW */
         <div className="section-spacing">
@@ -275,7 +270,7 @@ export default function ManagePassesPage() {
             </div>
           )}
         </div>
-      ) : (
+        ) : (
 
         /* ✅ TABLE VIEW */
         <PassesTable
@@ -285,7 +280,8 @@ export default function ManagePassesPage() {
           onDelete={handleDeletePass}
           deletingId={deletingId}
         />
-      )}
+        )}
+      </div>
     </div>
   );
 }
@@ -295,19 +291,19 @@ export default function ManagePassesPage() {
 /* ------------------------------------------------------------------ */
 function PassesTable({ passes, passTypes, onEdit, onDelete, deletingId }: any) {
   return (
-    <div className="table-container">
+    <div className="table-container overflow-hidden rounded-xl border border-cyan-500/25 bg-slate-950/35">
       <div className="overflow-x-auto">
         <table className="w-full text-left">
-          <thead className="table-header">
+          <thead className="bg-slate-900/70">
             <tr>
               {["Pass Name", "Mode", "Price", "Validity", "Hours", "Actions"].map((h) => (
-                <th key={h} className="table-cell table-header-text">{h}</th>
+                <th key={h} className="table-cell text-[11px] font-bold uppercase tracking-wider text-cyan-100/80 sm:text-xs">{h}</th>
               ))}
             </tr>
           </thead>
           <tbody>
             {passes.map((pass: CafePass) => (
-              <tr key={pass.id} className="table-row">
+              <tr key={pass.id} className="table-row border-b border-cyan-500/10 last:border-0">
 
                 {/* Name */}
                 <td className="table-cell">
@@ -376,7 +372,7 @@ function PassesTable({ passes, passTypes, onEdit, onDelete, deletingId }: any) {
                     <button
                       onClick={() => onDelete(pass.id)}
                       disabled={deletingId === pass.id}
-                      className="btn-icon hover:bg-destructive/10 disabled:opacity-50"
+                      className="inline-flex items-center justify-center rounded-lg border border-rose-400/30 bg-rose-500/10 p-2 text-rose-300 transition-all duration-200 hover:border-rose-300/60 hover:bg-rose-500/20 disabled:cursor-not-allowed disabled:opacity-50"
                       title="Delete"
                     >
                       {deletingId === pass.id ? (
@@ -403,8 +399,8 @@ function PassCard({ pass, passTypes, onEdit, onDelete, deletingId }: any) {
   const isHourBased = pass.pass_mode === "hour_based";
 
   return (
-    <Card className="content-card hover:shadow-lg transition-all duration-200">
-      <CardHeader className="flex flex-row items-start justify-between p-4 border-b border-border">
+    <Card className="gaming-panel border-cyan-400/20 bg-gradient-to-b from-slate-900/70 to-slate-950/70 transition-all duration-200 hover:shadow-lg hover:shadow-cyan-500/10">
+      <CardHeader className="flex flex-row items-start justify-between border-b border-cyan-500/15 p-4">
         <div className="min-w-0 flex-1">
           <h2 className="card-title truncate">{pass.name}</h2>
           <div className="flex items-center gap-1.5 mt-1">
@@ -425,7 +421,7 @@ function PassCard({ pass, passTypes, onEdit, onDelete, deletingId }: any) {
           <button
             onClick={() => onDelete(pass.id)}
             disabled={deletingId === pass.id}
-            className="btn-icon hover:bg-destructive/10 disabled:opacity-50"
+            className="inline-flex items-center justify-center rounded-lg border border-rose-400/30 bg-rose-500/10 p-2 text-rose-300 transition-all duration-200 hover:border-rose-300/60 hover:bg-rose-500/20 disabled:cursor-not-allowed disabled:opacity-50"
             title="Delete"
           >
             {deletingId === pass.id ? (
@@ -482,7 +478,7 @@ function PassCard({ pass, passTypes, onEdit, onDelete, deletingId }: any) {
 /* ------------------------------------------------------------------ */
 /*                         ADD PASS DIALOG                             */
 /* ------------------------------------------------------------------ */
-function AddPassDialog({ passTypes, onSave }: any) {
+function AddPassDialog({ passTypes, onSave, buttonClassName }: any) {
   const [open, setOpen] = useState(false);
   const [passMode, setPassMode] = useState<"date_based" | "hour_based">("date_based");
   const [form, setForm] = useState({
@@ -523,29 +519,36 @@ function AddPassDialog({ passTypes, onSave }: any) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <button className="btn-primary">
+        <button className={buttonClassName || "btn-primary"}>
           <PlusCircle className="icon-md" />
           New Pass
         </button>
       </DialogTrigger>
 
-      <DialogContent className="sm:max-w-[520px] w-[95vw] bg-card border border-border rounded-xl shadow-2xl">
+      <DialogContent className="w-[95vw] rounded-xl border border-cyan-400/25 bg-gradient-to-br from-slate-950 via-slate-900 to-cyan-950/30 shadow-2xl sm:max-w-[520px]">
         {/* Modal Header */}
-        <div className="px-1 pb-2 border-b border-border">
-          <DialogTitle className="section-title">Add New Pass</DialogTitle>
-          <p className="body-text-muted mt-0.5">Configure your new membership pass</p>
+        <div className="border-b border-cyan-500/20 px-1 pb-2">
+          <DialogTitle className="flex items-center gap-2 text-base font-bold tracking-wide text-cyan-100 sm:text-lg">
+            <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-cyan-400/35 bg-cyan-500/10">
+              <PlusCircle className="h-4 w-4 text-cyan-300" />
+            </span>
+            Add New Pass
+          </DialogTitle>
+          <p className="mt-0.5 text-xs text-slate-300/70 sm:text-sm">Configure your new membership pass</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4 pt-2">
           {/* Mode Toggle */}
           <div>
-            <label className="table-header-text mb-2 block">Pass Mode</label>
-            <div className="tab-container w-full">
+            <label className="mb-2 block text-[11px] font-bold uppercase tracking-wider text-cyan-100/80 sm:text-xs">Pass Mode</label>
+            <div className="flex w-full items-center gap-1 rounded-lg border border-cyan-400/20 bg-slate-900/60 p-1">
               <button
                 type="button"
                 onClick={() => setPassMode("date_based")}
-                className={`flex-1 flex items-center justify-center gap-2 ${
-                  passMode === "date_based" ? "tab-active" : "tab-inactive"
+                className={`flex flex-1 items-center justify-center gap-2 rounded-md px-3 py-2 text-xs font-semibold transition-all sm:text-sm ${
+                  passMode === "date_based"
+                    ? "bg-slate-800 text-cyan-300 shadow-sm"
+                    : "text-slate-300 hover:text-cyan-100"
                 }`}
               >
                 <Calendar className="icon-md" />
@@ -554,8 +557,10 @@ function AddPassDialog({ passTypes, onSave }: any) {
               <button
                 type="button"
                 onClick={() => setPassMode("hour_based")}
-                className={`flex-1 flex items-center justify-center gap-2 ${
-                  passMode === "hour_based" ? "tab-active" : "tab-inactive"
+                className={`flex flex-1 items-center justify-center gap-2 rounded-md px-3 py-2 text-xs font-semibold transition-all sm:text-sm ${
+                  passMode === "hour_based"
+                    ? "bg-slate-800 text-cyan-300 shadow-sm"
+                    : "text-slate-300 hover:text-cyan-100"
                 }`}
               >
                 <Clock className="icon-md" />
@@ -566,20 +571,20 @@ function AddPassDialog({ passTypes, onSave }: any) {
 
           {/* Pass Name */}
           <div className="space-y-1.5">
-            <label className="table-header-text">Pass Name *</label>
+            <label className="text-[11px] font-bold uppercase tracking-wider text-cyan-100/80 sm:text-xs">Pass Name *</label>
             <Input
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
               placeholder="e.g. Monthly Gaming Pass"
               required
-              className="bg-muted/20 border-border"
+              className="border-cyan-400/25 bg-slate-900/70 text-slate-100 placeholder:text-slate-400 focus-visible:ring-cyan-400/60"
             />
           </div>
 
           {/* Price + Validity */}
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <label className="table-header-text">Price (₹) *</label>
+              <label className="text-[11px] font-bold uppercase tracking-wider text-cyan-100/80 sm:text-xs">Price (₹) *</label>
               <div className="relative">
                 <IndianRupee className="absolute left-3 top-1/2 -translate-y-1/2 icon-md text-muted-foreground" />
                 <Input
@@ -587,12 +592,12 @@ function AddPassDialog({ passTypes, onSave }: any) {
                   value={form.price}
                   onChange={(e) => setForm({ ...form, price: e.target.value })}
                   required
-                  className="pl-9 bg-muted/20 border-border"
+                  className="border-cyan-400/25 bg-slate-900/70 pl-9 text-slate-100 placeholder:text-slate-400 focus-visible:ring-cyan-400/60"
                 />
               </div>
             </div>
             <div className="space-y-1.5">
-              <label className="table-header-text">Validity (Days) *</label>
+              <label className="text-[11px] font-bold uppercase tracking-wider text-cyan-100/80 sm:text-xs">Validity (Days) *</label>
               <div className="relative">
                 <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 icon-md text-muted-foreground" />
                 <Input
@@ -600,7 +605,7 @@ function AddPassDialog({ passTypes, onSave }: any) {
                   value={form.days_valid}
                   onChange={(e) => setForm({ ...form, days_valid: e.target.value })}
                   required
-                  className="pl-9 bg-muted/20 border-border"
+                  className="border-cyan-400/25 bg-slate-900/70 pl-9 text-slate-100 placeholder:text-slate-400 focus-visible:ring-cyan-400/60"
                 />
               </div>
             </div>
@@ -609,7 +614,7 @@ function AddPassDialog({ passTypes, onSave }: any) {
           {/* Total Hours (hour_based only) */}
           {passMode === "hour_based" && (
             <div className="space-y-1.5">
-              <label className="table-header-text">Total Hours *</label>
+              <label className="text-[11px] font-bold uppercase tracking-wider text-cyan-100/80 sm:text-xs">Total Hours *</label>
               <div className="relative">
                 <Clock className="absolute left-3 top-1/2 -translate-y-1/2 icon-md text-muted-foreground" />
                 <Input
@@ -618,7 +623,7 @@ function AddPassDialog({ passTypes, onSave }: any) {
                   onChange={(e) => setForm({ ...form, total_hours: e.target.value })}
                   required
                   placeholder="e.g. 50"
-                  className="pl-9 bg-muted/20 border-border"
+                  className="border-cyan-400/25 bg-slate-900/70 pl-9 text-slate-100 placeholder:text-slate-400 focus-visible:ring-cyan-400/60"
                 />
               </div>
             </div>
@@ -626,21 +631,21 @@ function AddPassDialog({ passTypes, onSave }: any) {
 
           {/* Description */}
           <div className="space-y-1.5">
-            <label className="table-header-text">Description (Optional)</label>
+            <label className="text-[11px] font-bold uppercase tracking-wider text-cyan-100/80 sm:text-xs">Description (Optional)</label>
             <Input
               value={form.description}
               onChange={(e) => setForm({ ...form, description: e.target.value })}
               placeholder="Short description..."
-              className="bg-muted/20 border-border"
+              className="border-cyan-400/25 bg-slate-900/70 text-slate-100 placeholder:text-slate-400 focus-visible:ring-cyan-400/60"
             />
           </div>
 
           {/* Footer Buttons */}
-          <div className="flex gap-3 pt-2 border-t border-border">
+          <div className="flex gap-3 border-t border-cyan-500/20 pt-2">
             <button
               type="button"
               onClick={() => setOpen(false)}
-              className="btn-secondary flex-1 justify-center"
+              className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg border border-cyan-300/25 bg-slate-900/70 px-3 py-2 text-xs font-semibold text-slate-200 transition-all duration-200 hover:border-cyan-300/45 hover:bg-slate-800/80 hover:text-cyan-100 disabled:cursor-not-allowed disabled:opacity-50 sm:px-4 sm:text-sm"
               disabled={isSubmitting}
             >
               Cancel
@@ -648,7 +653,7 @@ function AddPassDialog({ passTypes, onSave }: any) {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="btn-primary flex-1 justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+              className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg border border-cyan-400/40 bg-gradient-to-r from-cyan-500/90 to-emerald-500/90 px-3 py-2 text-xs font-semibold text-white shadow-md shadow-cyan-900/40 transition-all duration-200 hover:from-cyan-400 hover:to-emerald-400 hover:shadow-lg hover:shadow-cyan-600/25 disabled:cursor-not-allowed disabled:opacity-50 sm:px-4 sm:text-sm"
             >
               {isSubmitting ? (
                 <>
@@ -704,14 +709,14 @@ function EditPassDialog({ passObj, passTypes, onSave }: any) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <button className="btn-icon hover:bg-emerald-500/10" title="Edit">
+        <button className="inline-flex items-center justify-center rounded-lg border border-emerald-400/30 bg-emerald-500/10 p-2 text-emerald-300 transition-all duration-200 hover:border-emerald-300/60 hover:bg-emerald-500/20" title="Edit">
           <Pencil className="icon-md text-emerald-400" />
         </button>
       </DialogTrigger>
 
-      <DialogContent className="sm:max-w-[480px] w-[95vw] bg-card border border-border rounded-xl shadow-2xl">
+      <DialogContent className="w-[95vw] rounded-xl border border-cyan-400/25 bg-gradient-to-br from-slate-950 via-slate-900 to-cyan-950/30 shadow-2xl sm:max-w-[480px]">
         {/* Modal Header */}
-        <div className="px-1 pb-2 border-b border-border">
+        <div className="border-b border-cyan-500/20 px-1 pb-2">
           <DialogTitle className="section-title">Edit Pass</DialogTitle>
           <p className="body-text-muted mt-0.5">Update pass details</p>
         </div>
@@ -725,7 +730,7 @@ function EditPassDialog({ passObj, passTypes, onSave }: any) {
               onChange={(e) => setForm({ ...form, name: e.target.value })}
               placeholder="Pass name"
               required
-              className="bg-muted/20 border-border"
+              className="border-cyan-400/25 bg-slate-900/70 text-slate-100 placeholder:text-slate-400 focus-visible:ring-cyan-400/60"
             />
           </div>
 
@@ -740,7 +745,7 @@ function EditPassDialog({ passObj, passTypes, onSave }: any) {
                   value={form.price}
                   onChange={(e) => setForm({ ...form, price: e.target.value })}
                   required
-                  className="pl-9 bg-muted/20 border-border"
+                  className="border-cyan-400/25 bg-slate-900/70 pl-9 text-slate-100 placeholder:text-slate-400 focus-visible:ring-cyan-400/60"
                 />
               </div>
             </div>
@@ -753,7 +758,7 @@ function EditPassDialog({ passObj, passTypes, onSave }: any) {
                   value={form.days_valid}
                   onChange={(e) => setForm({ ...form, days_valid: e.target.value })}
                   required
-                  className="pl-9 bg-muted/20 border-border"
+                  className="border-cyan-400/25 bg-slate-900/70 pl-9 text-slate-100 placeholder:text-slate-400 focus-visible:ring-cyan-400/60"
                 />
               </div>
             </div>
@@ -769,7 +774,7 @@ function EditPassDialog({ passObj, passTypes, onSave }: any) {
                   type="number"
                   value={form.total_hours}
                   onChange={(e) => setForm({ ...form, total_hours: e.target.value })}
-                  className="pl-9 bg-muted/20 border-border"
+                  className="border-cyan-400/25 bg-slate-900/70 pl-9 text-slate-100 placeholder:text-slate-400 focus-visible:ring-cyan-400/60"
                 />
               </div>
             </div>
@@ -782,12 +787,12 @@ function EditPassDialog({ passObj, passTypes, onSave }: any) {
               value={form.description}
               onChange={(e) => setForm({ ...form, description: e.target.value })}
               placeholder="Short description..."
-              className="bg-muted/20 border-border"
+              className="border-cyan-400/25 bg-slate-900/70 text-slate-100 placeholder:text-slate-400 focus-visible:ring-cyan-400/60"
             />
           </div>
 
           {/* Footer */}
-          <div className="flex gap-3 pt-2 border-t border-border">
+          <div className="flex gap-3 border-t border-cyan-500/20 pt-2">
             <button
               type="button"
               onClick={() => setOpen(false)}

@@ -336,24 +336,24 @@ export function TransactionTable() {
   }
 
   return (
-    <div className="space-y-6 p-4 md:p-6">
+    <div className="space-y-4 sm:space-y-5">
       {/* <CHANGE> Updated metric cards to use default card styling instead of colorful gradients */}
-      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4">
         <motion.div
           variants={cardVariants}
           initial="hidden"
           animate="visible"
           transition={{ duration: 0.3, delay: 0 }}
         >
-          <Card className="rounded-lg bg-card border-border backdrop-blur-sm">
+          <Card className="gaming-kpi-card rounded-xl border-cyan-500/20 backdrop-blur-sm">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
+              <CardTitle className="dash-kpi-label">
                 Total Revenue
               </CardTitle>
               <DollarSignIcon className="h-4 w-4 text-emerald-400" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-foreground">
+              <div className="dash-kpi-value !text-xl sm:!text-2xl">
                 ₹{metrics.total}
               </div>
               <p className="text-xs text-emerald-400">
@@ -369,15 +369,15 @@ export function TransactionTable() {
           animate="visible"
           transition={{ duration: 0.3, delay: 0.1 }}
         >
-          <Card className="rounded-lg bg-card border-border backdrop-blur-sm">
+          <Card className="gaming-kpi-card rounded-xl border-cyan-500/20 backdrop-blur-sm">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
+              <CardTitle className="dash-kpi-label">
                 Unique Users
               </CardTitle>
               <UserIcon className="h-4 w-4 text-primary" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-foreground">
+              <div className="dash-kpi-value !text-xl sm:!text-2xl">
                 {metrics.uniqueUsers}
               </div>
               <p className="text-xs text-emerald-400">
@@ -393,15 +393,15 @@ export function TransactionTable() {
           animate="visible"
           transition={{ duration: 0.3, delay: 0.2 }}
         >
-          <Card className="rounded-lg bg-card border-border backdrop-blur-sm">
+          <Card className="gaming-kpi-card rounded-xl border-cyan-500/20 backdrop-blur-sm">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
+              <CardTitle className="dash-kpi-label">
                 Pending Settlements
               </CardTitle>
               <ClockIcon className="h-4 w-4 text-yellow-400" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-foreground">
+              <div className="dash-kpi-value !text-xl sm:!text-2xl">
                 {metrics.pendingSettlements}
               </div>
               <p className="text-xs text-yellow-400">
@@ -417,15 +417,15 @@ export function TransactionTable() {
           animate="visible"
           transition={{ duration: 0.3, delay: 0.3 }}
         >
-          <Card className="rounded-lg bg-card border-border backdrop-blur-sm">
+          <Card className="gaming-kpi-card rounded-xl border-cyan-500/20 backdrop-blur-sm">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
+              <CardTitle className="dash-kpi-label">
                 Cash Transactions
               </CardTitle>
               <CreditCardIcon className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-foreground">
+              <div className="dash-kpi-value !text-xl sm:!text-2xl">
                 {metrics.cashTransactions}
               </div>
               <p className="text-xs text-muted-foreground">
@@ -445,13 +445,13 @@ export function TransactionTable() {
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3, delay: 0.4 }}
-        className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3"
+        className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center"
       >
         <div className="relative flex-1">
-          <SearchIcon className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+          <SearchIcon className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-400" />
           <Input
             placeholder="Search transactions..."
-            className="pl-8 rounded-lg bg-input border-border"
+            className="rounded-lg border-slate-600/70 bg-slate-800/70 pl-8 text-slate-100 placeholder:text-slate-400 focus:border-cyan-400/60"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
@@ -463,7 +463,7 @@ export function TransactionTable() {
             animate="visible"
             variants={boxVariants}
             transition={{ duration: 0.1 }}
-            className="flex items-center px-3 py-2 border border-border rounded-lg text-sm text-muted-foreground hover:bg-muted transition-colors"
+            className="flex items-center rounded-lg border border-slate-600/70 bg-slate-800/70 px-3 py-2 text-sm text-slate-200 transition-colors hover:bg-slate-700/70"
             onClick={() => setShowFilter(!showFilter)}
           >
             <FilterIcon className="h-4 w-4 mr-2" />
@@ -475,7 +475,7 @@ export function TransactionTable() {
             animate="visible"
             variants={boxVariants}
             transition={{ duration: 0.2 }}
-            className="flex items-center px-3 py-2 border border-border rounded-lg text-sm text-muted-foreground hover:bg-muted transition-colors"
+            className="flex items-center rounded-lg border border-slate-600/70 bg-slate-800/70 px-3 py-2 text-sm text-slate-200 transition-colors hover:bg-slate-700/70"
             onClick={downloadFilteredData}
           >
             <Download className="h-4 w-4 mr-2" />
@@ -498,19 +498,19 @@ export function TransactionTable() {
         initial="hidden"
         animate="visible"
         transition={{ duration: 0.3, delay: 0.5 }}
-        className="rounded-lg border border-border bg-card overflow-hidden"
+        className="overflow-hidden rounded-xl border border-slate-700 bg-slate-900/60"
       >
-        <div className="max-h-[600px] overflow-x-auto overflow-y-auto">
-          <Table className="min-w-full">
-            <TableHeader className="bg-muted/50 sticky top-0">
-              <TableRow className="border-border hover:bg-transparent">
-                <TableHead className="font-semibold text-foreground px-4 py-3">Slot Date</TableHead>
-                <TableHead className="font-semibold text-foreground px-4 py-3">Slot Time</TableHead>
-                <TableHead className="font-semibold text-foreground px-4 py-3">User Name</TableHead>
-                <TableHead className="font-semibold text-foreground px-4 py-3">Amount</TableHead>
-                <TableHead className="font-semibold text-foreground px-4 py-3">Mode of Payment</TableHead>
-                <TableHead className="font-semibold text-foreground px-4 py-3">Booking Type</TableHead>
-                <TableHead className="font-semibold text-foreground px-4 py-3">Settlement Status</TableHead>
+        <div className="max-h-[620px] overflow-x-auto overflow-y-auto">
+          <Table className="min-w-[980px]">
+            <TableHeader className="sticky top-0 bg-slate-800/90 backdrop-blur-sm">
+              <TableRow className="border-slate-700 hover:bg-transparent">
+                <TableHead className="px-4 py-3 font-semibold text-slate-100">Slot Date</TableHead>
+                <TableHead className="px-4 py-3 font-semibold text-slate-100">Slot Time</TableHead>
+                <TableHead className="px-4 py-3 font-semibold text-slate-100">User Name</TableHead>
+                <TableHead className="px-4 py-3 font-semibold text-slate-100">Amount</TableHead>
+                <TableHead className="px-4 py-3 font-semibold text-slate-100">Mode of Payment</TableHead>
+                <TableHead className="px-4 py-3 font-semibold text-slate-100">Booking Type</TableHead>
+                <TableHead className="px-4 py-3 font-semibold text-slate-100">Settlement Status</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -525,10 +525,10 @@ export function TransactionTable() {
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       onClick={() => toggleDateExpand(slotDate)}
-                      className="cursor-pointer hover:bg-muted/30 transition-colors border-border"
+                      className="cursor-pointer border-slate-700 transition-colors hover:bg-slate-800/70"
                     >
                       {/* Slot Date */}
-                      <TableCell colSpan={1} className="text-primary font-medium px-4 py-3">
+                      <TableCell colSpan={1} className="px-4 py-3 font-medium text-cyan-200">
                         <div className="flex items-center justify-between">
                           <span>{slotDate}</span>
                           <span className="text-xs">{expandedDates.includes(slotDate) ? "▲" : "▼"}</span>
@@ -537,7 +537,7 @@ export function TransactionTable() {
                       {/* Empty cells for columns between Date and Amount */}
                       <TableCell colSpan={2} className="px-4 py-3"></TableCell>
                       {/* Total Amount */}
-                      <TableCell colSpan={4} className="text-primary font-medium px-4 py-3">
+                      <TableCell colSpan={4} className="px-4 py-3 font-medium text-cyan-200">
                         ₹{dayTotalAmount.toFixed(2)}
                       </TableCell>
                     </motion.tr>
@@ -552,17 +552,17 @@ export function TransactionTable() {
                               animate={{ opacity: 1, y: 0 }}
                               exit={{ opacity: 0, y: -10 }}
                               transition={{ duration: 0.2 }}
-                              className="hover:bg-muted/20 transition-colors border-border"
+                              className="border-slate-700 transition-colors hover:bg-slate-800/55"
                             >
-                              <TableCell className="px-4 py-3 text-muted-foreground">{transaction.slotDate}</TableCell>
-                              <TableCell className="px-4 py-3 text-muted-foreground">{transaction.slotTime}</TableCell>
-                              <TableCell className="px-4 py-3 text-foreground">{transaction.userName}</TableCell>
-                              <TableCell className="px-4 py-3 text-foreground font-medium">₹{transaction.amount.toFixed(2)}</TableCell>
+                              <TableCell className="px-4 py-3 text-slate-300">{transaction.slotDate}</TableCell>
+                              <TableCell className="px-4 py-3 text-slate-300">{transaction.slotTime}</TableCell>
+                              <TableCell className="px-4 py-3 text-slate-100">{transaction.userName}</TableCell>
+                              <TableCell className="px-4 py-3 font-medium text-slate-100">₹{transaction.amount.toFixed(2)}</TableCell>
                               <TableCell className="px-4 py-3">
-                                <Badge variant="secondary" className="bg-muted text-muted-foreground">{transaction.modeOfPayment}</Badge>
+                                <Badge variant="secondary" className="bg-slate-700/80 text-slate-200">{transaction.modeOfPayment}</Badge>
                               </TableCell>
                               <TableCell className="px-4 py-3">
-                                <Badge variant="outline" className="border-border text-muted-foreground">{transaction.bookingType}</Badge>
+                                <Badge variant="outline" className="border-slate-500/70 text-slate-300">{transaction.bookingType}</Badge>
                               </TableCell>
                               <TableCell className="px-4 py-3">
                                 <Badge
@@ -578,7 +578,7 @@ export function TransactionTable() {
                                       ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/30"
                                       : transaction.settlementStatus === "pending"
                                       ? "bg-yellow-500/20 text-yellow-400 border-yellow-500/30"
-                                      : "border-border text-muted-foreground"
+                                      : "border-slate-500/70 text-slate-300"
                                   }
                                 >
                                   {transaction.settlementStatus}

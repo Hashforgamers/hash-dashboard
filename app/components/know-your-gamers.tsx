@@ -124,26 +124,43 @@ export function KnowYourGamers() {
     return matchesSearch && matchesTier
   })
 
+  const getTierBadgeClass = (tier: string) => {
+    const normalized = (tier || "").toLowerCase()
+    if (normalized === "platinum") {
+      return "border border-cyan-300/40 bg-cyan-500/15 text-cyan-200"
+    }
+    if (normalized === "gold") {
+      return "border border-amber-300/40 bg-amber-500/15 text-amber-200"
+    }
+    if (normalized === "silver") {
+      return "border border-slate-300/40 bg-slate-400/15 text-slate-200"
+    }
+    return "border border-emerald-300/40 bg-emerald-500/15 text-emerald-200"
+  }
+
   return (
-    <div className="space-y-6 p-4 sm:p-6">
+    <div className="flex h-full min-h-0 flex-col gap-4 p-1 sm:p-2">
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="shrink-0 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {stats.map((stat, index) => {
           const Icon = iconMap[stat.icon as keyof typeof iconMap]
           return (
-            <div key={index} className="bg-card text-card-foreground rounded-lg p-4 shadow-sm border border-border">
+            <div
+              key={index}
+              className="gaming-kpi-card rounded-xl border border-cyan-400/20 bg-gradient-to-br from-slate-900/75 via-slate-900/65 to-cyan-950/20 p-4"
+            >
               <div className="flex items-center justify-between">
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm text-muted-foreground truncate">{stat.title}</p>
-                  <h3 className="text-xl sm:text-2xl font-bold mt-1 truncate">{stat.value}</h3>
+                  <p className="truncate text-xs uppercase tracking-wide text-slate-300/75 sm:text-sm">{stat.title}</p>
+                  <h3 className="mt-1 truncate text-xl font-bold text-cyan-100 sm:text-2xl">{stat.value}</h3>
                 </div>
-                <div className="bg-muted p-3 rounded-full ml-3 flex-shrink-0">
-                  <Icon className="w-5 h-5 sm:w-6 sm:h-6 text-muted-foreground" />
+                <div className="ml-3 flex-shrink-0 rounded-full border border-cyan-400/25 bg-cyan-500/10 p-3">
+                  <Icon className="h-5 w-5 text-cyan-300 sm:h-6 sm:w-6" />
                 </div>
               </div>
-              <div className="mt-2 flex items-center text-sm">
-                <span className="text-green-600 dark:text-green-400">{stat.change}</span>
-                <span className="text-muted-foreground ml-1">vs last month</span>
+              <div className="mt-2 flex items-center text-xs sm:text-sm">
+                <span className="text-emerald-300">{stat.change}</span>
+                <span className="ml-1 text-slate-300/70">vs last month</span>
               </div>
             </div>
           )
@@ -151,22 +168,22 @@ export function KnowYourGamers() {
       </div>
 
       {/* Filters and Search */}
-      <div className="bg-card text-card-foreground rounded-lg border border-border shadow-sm">
+      <div className="gaming-panel shrink-0 rounded-xl border border-cyan-400/20 bg-slate-950/40">
         <div className="flex flex-col sm:flex-row gap-4 p-4">
           <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5" />
+            <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-300/70" />
             <input
               type="text"
               placeholder="Search by name or contact..."
-              className="w-full pl-10 pr-4 py-2 bg-background border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
+              className="w-full rounded-lg border border-cyan-400/25 bg-slate-900/70 py-2 pl-10 pr-4 text-sm text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-400/60"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
-            <Filter className="text-muted-foreground w-5 h-5" />
+            <Filter className="h-5 w-5 text-slate-300/70" />
             <select
-              className="bg-background border border-input rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-ring min-w-0"
+              className="min-w-0 rounded-lg border border-cyan-400/25 bg-slate-900/70 px-3 py-2 text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-cyan-400/60"
               value={selectedTier}
               onChange={(e) => setSelectedTier(e.target.value)}
             >
@@ -180,11 +197,11 @@ export function KnowYourGamers() {
       </div>
 
       {/* Data Table */}
-      <div className="bg-card text-card-foreground rounded-lg border border-border shadow-sm">
-        <div className="overflow-x-auto">
+      <div className="gaming-panel min-h-0 flex-1 overflow-hidden rounded-xl border border-cyan-400/20 bg-slate-950/45">
+        <div className="h-full overflow-auto">
           <table className="w-full min-w-[1200px]">
-            <thead>
-              <tr className="border-b border-border">
+            <thead className="bg-slate-900/70">
+              <tr className="border-b border-cyan-500/20">
                 {[
                   "Customer ID",
                   "Name",
@@ -201,42 +218,55 @@ export function KnowYourGamers() {
                 ].map((header) => (
                   <th
                     key={header}
-                    className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider whitespace-nowrap"
+                    className="whitespace-nowrap px-4 py-3 text-left text-[11px] font-bold uppercase tracking-wider text-cyan-100/80"
                   >
                     {header}
                   </th>
                 ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-border">
-              {filteredData.map((gamer) => (
-                <tr key={gamer.id} className="hover:bg-muted/50">
-                  <td className="px-4 py-3 text-sm whitespace-nowrap">{gamer.id}</td>
-                  <td className="px-4 py-3 text-sm font-medium whitespace-nowrap">{gamer.name}</td>
-                  <td className="px-4 py-3 text-sm whitespace-nowrap">{gamer.contact}</td>
-                  <td className="px-4 py-3 text-sm whitespace-nowrap">{gamer.totalSlots}</td>
-                  <td className="px-4 py-3 text-sm whitespace-nowrap">₹{gamer.totalAmount.toLocaleString()}</td>
-                  <td className="px-4 py-3 text-sm whitespace-nowrap">₹{gamer.averagePerSlot}</td>
-                  <td className="px-4 py-3 text-sm whitespace-nowrap">{gamer.promoCodesUsed}</td>
-                  <td className="px-4 py-3 text-sm whitespace-nowrap">₹{gamer.discountAvailed.toLocaleString()}</td>
-                  <td className="px-4 py-3 text-sm whitespace-nowrap">₹{gamer.netRevenue.toLocaleString()}</td>
-                  <td className="px-4 py-3 text-sm whitespace-nowrap">
+            <tbody className="divide-y divide-cyan-500/10">
+              {loading ? (
+                <tr>
+                  <td className="px-4 py-8 text-center text-sm text-slate-300/70" colSpan={12}>
+                    Loading gamers...
+                  </td>
+                </tr>
+              ) : filteredData.length === 0 ? (
+                <tr>
+                  <td className="px-4 py-8 text-center text-sm text-slate-300/70" colSpan={12}>
+                    No gamers found for this filter.
+                  </td>
+                </tr>
+              ) : (
+                filteredData.map((gamer) => (
+                <tr key={gamer.id} className="hover:bg-cyan-500/5">
+                  <td className="whitespace-nowrap px-4 py-3 text-sm text-slate-200">{gamer.id}</td>
+                  <td className="whitespace-nowrap px-4 py-3 text-sm font-semibold text-cyan-100">{gamer.name}</td>
+                  <td className="whitespace-nowrap px-4 py-3 text-sm text-slate-200">{gamer.contact}</td>
+                  <td className="whitespace-nowrap px-4 py-3 text-sm text-slate-200">{gamer.totalSlots}</td>
+                  <td className="whitespace-nowrap px-4 py-3 text-sm text-slate-200">₹{gamer.totalAmount.toLocaleString()}</td>
+                  <td className="whitespace-nowrap px-4 py-3 text-sm text-slate-200">₹{gamer.averagePerSlot}</td>
+                  <td className="whitespace-nowrap px-4 py-3 text-sm text-slate-200">{gamer.promoCodesUsed}</td>
+                  <td className="whitespace-nowrap px-4 py-3 text-sm text-slate-200">₹{gamer.discountAvailed.toLocaleString()}</td>
+                  <td className="whitespace-nowrap px-4 py-3 text-sm text-slate-200">₹{gamer.netRevenue.toLocaleString()}</td>
+                  <td className="whitespace-nowrap px-4 py-3 text-sm text-slate-200">
                     {gamer.lastVisit && format(new Date(gamer.lastVisit), "dd MMM yyyy")}
                   </td>
-                  <td className="px-4 py-3 text-sm whitespace-nowrap">
-                    <span className="px-2 py-1 rounded-full text-xs font-medium bg-muted text-muted-foreground">
+                  <td className="whitespace-nowrap px-4 py-3 text-sm">
+                    <span className={`rounded-full px-2 py-1 text-xs font-semibold ${getTierBadgeClass(gamer.membershipTier)}`}>
                       {gamer.membershipTier}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-sm max-w-[200px] truncate">{gamer.notes}</td>
+                  <td className="max-w-[200px] truncate px-4 py-3 text-sm text-slate-300">{gamer.notes}</td>
                 </tr>
-              ))}
+              )))}
             </tbody>
           </table>
         </div>
 
         {/* Mobile-friendly message when table is scrollable */}
-        <div className="p-4 text-center text-sm text-muted-foreground border-t border-border sm:hidden">
+        <div className="border-t border-cyan-500/20 p-4 text-center text-sm text-slate-300/70 sm:hidden">
           Scroll horizontally to view all columns
         </div>
       </div>

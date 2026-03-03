@@ -233,14 +233,14 @@ export default function SubscriptionPage() {
         Use normal document flow with overflow-y-auto on the main content area.
         DashboardLayout's <main> already has overflow-y-auto so this just fills it.
       */}
-      <div className="relative min-h-full w-full bg-background">
+      <div className="relative min-h-full w-full bg-[radial-gradient(circle_at_top,rgba(6,182,212,0.16),rgba(2,6,23,0.95)_42%,rgba(2,6,23,1))]">
 
         {/* Navigation / Back button row */}
-        <div className="max-w-7xl mx-auto px-4 pt-6 flex justify-between items-center">
+        <div className="mx-auto flex w-full max-w-[1600px] items-center justify-between px-3 pt-4 sm:px-4 md:px-6">
           <Button
             variant="ghost"
             onClick={() => router.push("/dashboard")}
-            className="gap-2 bg-card/50 hover:bg-card"
+            className="h-10 gap-2 rounded-lg border border-cyan-500/30 bg-slate-900/55 px-3 text-slate-200 hover:bg-cyan-500/10 hover:text-cyan-100"
           >
             <ArrowLeft className="w-4 h-4" />
             Back to Dashboard
@@ -249,29 +249,29 @@ export default function SubscriptionPage() {
             variant="ghost"
             size="icon"
             onClick={() => router.push("/dashboard")}
-            className="rounded-full bg-card/50 shadow-md hover:bg-card"
+            className="h-10 w-10 rounded-lg border border-cyan-500/30 bg-slate-900/55 text-slate-300 shadow-md hover:bg-cyan-500/10 hover:text-cyan-100"
           >
             <X className="w-5 h-5" />
           </Button>
         </div>
 
-        <div className="max-w-6xl mx-auto p-4 md:p-8 space-y-8 pb-20">
+        <div className="mx-auto w-full max-w-[1600px] space-y-6 px-3 pb-16 pt-4 sm:px-4 md:space-y-8 md:px-6">
 
           {/* Header Section */}
-          <div className="text-center space-y-4 py-6">
+          <div className="rounded-2xl border border-cyan-500/25 bg-[linear-gradient(140deg,rgba(8,20,45,0.96),rgba(6,18,40,0.9))] p-5 text-center shadow-[0_22px_48px_-30px_rgba(6,182,212,0.7)] md:p-7">
             <motion.div
               initial={{ scale: 0.5, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               className="flex justify-center mb-2"
             >
-              <div className="p-3 bg-primary/10 rounded-2xl">
-                <Sparkles className="w-10 h-10 text-primary" />
+              <div className="rounded-xl border border-cyan-400/35 bg-cyan-500/15 p-3">
+                <Sparkles className="h-9 w-9 text-cyan-300 md:h-10 md:w-10" />
               </div>
             </motion.div>
-            <h1 className="text-4xl md:text-6xl font-black tracking-tight text-foreground">
+            <h1 className="text-2xl font-semibold uppercase tracking-[0.11em] text-cyan-100 sm:text-3xl md:text-4xl">
               Upgrade Your Cafe
             </h1>
-            <p className="text-muted-foreground text-lg max-w-xl mx-auto">
+            <p className="mx-auto max-w-2xl text-sm text-slate-300 md:text-base">
               Choose the plan that fits your business scale.
             </p>
           </div>
@@ -284,12 +284,12 @@ export default function SubscriptionPage() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0 }}
               >
-                <Alert className="border-primary bg-primary/5 backdrop-blur-sm max-w-2xl mx-auto">
-                  <Loader2 className="h-4 w-4 animate-spin text-primary" />
-                  <AlertTitle className="text-primary">
+                <Alert className="mx-auto max-w-2xl border-cyan-500/40 bg-cyan-500/10 backdrop-blur-sm">
+                  <Loader2 className="h-4 w-4 animate-spin text-cyan-300" />
+                  <AlertTitle className="text-cyan-100">
                     Waiting for Payment Confirmation
                   </AlertTitle>
-                  <AlertDescription>
+                  <AlertDescription className="text-slate-300">
                     We are automatically checking your payment status. Please don't refresh.
                   </AlertDescription>
                 </Alert>
@@ -299,18 +299,18 @@ export default function SubscriptionPage() {
 
           {/* Current Plan Indicator */}
           {currentSubscription && (
-            <div className="max-w-2xl mx-auto bg-card/80 border border-primary/20 p-4 rounded-xl flex justify-between items-center backdrop-blur-sm">
+            <div className="mx-auto flex w-full max-w-3xl flex-col gap-3 rounded-xl border border-cyan-500/30 bg-slate-900/55 p-4 backdrop-blur-sm sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <span className="text-xs font-bold uppercase text-primary">
+                <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-cyan-300">
                   Your Current Plan
                 </span>
-                <h3 className="text-lg font-bold">
+                <h3 className="text-base font-semibold text-cyan-100 md:text-lg">
                   {currentSubscription.package?.name}
                 </h3>
               </div>
-              <div className="text-right">
-                <span className="text-xs text-muted-foreground">PC Limit</span>
-                <p className="text-lg font-bold">
+              <div className="text-left sm:text-right">
+                <span className="text-xs text-slate-300">PC Limit</span>
+                <p className="text-base font-semibold text-cyan-100 md:text-lg">
                   {currentSubscription.pc_limit} Units
                 </p>
               </div>
@@ -318,7 +318,7 @@ export default function SubscriptionPage() {
           )}
 
           {/* Packages Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 pt-4">
+          <div className="grid grid-cols-1 gap-4 pt-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {packages.map((pkg, index) => (
               <motion.div
                 key={pkg.id}
@@ -327,37 +327,37 @@ export default function SubscriptionPage() {
                 transition={{ delay: index * 0.1 }}
               >
                 <Card
-                  className={`h-full relative overflow-hidden flex flex-col transition-all duration-300 hover:shadow-2xl bg-card/90 backdrop-blur-sm border-2 ${
+                  className={`relative flex h-full flex-col overflow-hidden border transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_22px_45px_-28px_rgba(6,182,212,0.75)] ${
                     pkg.code === currentSubscription?.package?.code
-                      ? "border-primary shadow-primary/20"
-                      : "border-border/50 hover:border-primary/50"
+                      ? "border-cyan-400/65 bg-[linear-gradient(145deg,rgba(8,20,45,0.98),rgba(6,18,40,0.93))]"
+                      : "border-cyan-500/25 bg-[linear-gradient(145deg,rgba(8,20,45,0.9),rgba(5,14,34,0.88))] hover:border-cyan-400/55"
                   }`}
                 >
                   {pkg.code === "grow" && (
                     <div className="absolute top-0 right-0 p-2">
-                      <div className="bg-primary text-[10px] font-bold text-white px-2 py-0.5 rounded-bl-lg rounded-tr-sm flex items-center gap-1">
+                      <div className="flex items-center gap-1 rounded-bl-lg rounded-tr-sm bg-cyan-500 px-2 py-0.5 text-[10px] font-bold text-slate-950">
                         <Crown className="w-3 h-3" /> BEST VALUE
                       </div>
                     </div>
                   )}
 
                   <CardHeader>
-                    <CardTitle className="text-xl">{pkg.name}</CardTitle>
-                    <CardDescription className="min-h-[40px]">
+                    <CardTitle className="text-lg font-semibold uppercase tracking-[0.08em] text-cyan-100">{pkg.name}</CardTitle>
+                    <CardDescription className="min-h-[40px] text-sm text-slate-300">
                       {pkg.description}
                     </CardDescription>
                   </CardHeader>
 
-                  <CardContent className="flex-1 space-y-6">
+                  <CardContent className="flex flex-1 flex-col space-y-5">
                     <div>
                       <div className="flex items-baseline gap-1">
-                        <span className="text-4xl font-black text-foreground">
+                        <span className="text-3xl font-semibold text-cyan-100 md:text-4xl">
                           ₹{pkg.price}
                         </span>
-                        <span className="text-muted-foreground text-sm">/mo</span>
+                        <span className="text-sm text-slate-300">/mo</span>
                       </div>
                       {pkg.original_price > pkg.price && (
-                        <p className="text-xs text-muted-foreground line-through decoration-red-500">
+                        <p className="text-xs text-slate-400 line-through decoration-rose-400">
                           Regular ₹{pkg.original_price}
                         </p>
                       )}
@@ -376,7 +376,7 @@ export default function SubscriptionPage() {
                         processing !== null ||
                         pkg.code === currentSubscription?.package?.code
                       }
-                      className="w-full mt-auto font-bold group"
+                      className="group mt-auto h-10 w-full rounded-lg font-semibold uppercase tracking-[0.08em] md:h-11"
                       variant={pkg.code === "grow" ? "default" : "secondary"}
                     >
                       {processing === pkg.code ? (
@@ -404,10 +404,10 @@ export default function SubscriptionPage() {
 function FeatureItem({ text }: { text: string }) {
   return (
     <div className="flex items-start gap-2 text-sm">
-      <div className="mt-0.5 p-0.5 rounded-full bg-primary/20">
-        <Check className="w-3 h-3 text-primary" />
+      <div className="mt-0.5 rounded-full bg-cyan-500/20 p-0.5">
+        <Check className="h-3 w-3 text-cyan-300" />
       </div>
-      <span className="text-foreground/80">{text}</span>
+      <span className="text-slate-200/90">{text}</span>
     </div>
   );
 }

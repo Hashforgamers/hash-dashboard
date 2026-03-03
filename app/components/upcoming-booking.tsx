@@ -574,7 +574,7 @@ export function UpcomingBookings({
   return (
     <>
       {/* 🚀 FIXED: Proper flex container structure */}
-      <div className="h-full flex flex-col overflow-hidden">
+      <div className="h-full flex flex-col overflow-hidden rounded-2xl bg-gradient-to-br from-slate-900/70 via-slate-900/45 to-slate-900/70 p-3 sm:p-4">
         <AnimatePresence>
           {startCard && (
             <motion.div
@@ -675,19 +675,15 @@ export function UpcomingBookings({
           )}
         </AnimatePresence>
 
-        {/* Header - Fixed height */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-2 sm:pb-3 gap-2 sm:gap-4 flex-shrink-0">
-          <div className="flex items-center gap-2 px-3 py-2">
-            <div className={`w-2 mt-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`} />
-            <h3 className="text-xs sm:text-sm font-semibold text-foreground mt-2">Upcoming Bookings</h3>
-            <span className="px-2 py-0.5 bg-emerald-100 mt-2 text-emerald-800 rounded-full text-xs">
+        {/* Header + Search */}
+        <div className="mb-3 flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center sm:gap-4 flex-shrink-0">
+          <div className="flex items-center gap-2">
+            <div className={`h-2 w-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`} />
+            <h3 className="dash-title">Upcoming Session Queue</h3>
+            <span className="rounded-full border border-emerald-400/40 bg-emerald-500/15 px-2 py-0.5 text-xs text-emerald-200">
               {filteredBookings.length}
             </span>
           </div>
-        </div>
-
-        {/* Search Filter - Fixed height */}
-        <div className="pb-2 sm:pb-3 flex-shrink-0">
           <ResponsiveSearchFilter
             searchTerm={searchTerm}
             setSearchTerm={setSearchTerm}
@@ -695,6 +691,7 @@ export function UpcomingBookings({
             setSelectedDate={setSelectedDate}
             timeFilter={timeFilter}
             setTimeFilter={setTimeFilter}
+            className="w-full sm:w-[300px] lg:w-[330px]"
           />
         </div>
 
@@ -723,24 +720,24 @@ export function UpcomingBookings({
                         duration: 0.3, 
                         delay: index * 0.02 
                       }}
-                      className="bg-gray-50 dark:bg-card rounded-lg sm:rounded-xl border border-gray-200 dark:border-zinc-700 p-2 sm:p-4 hover:shadow-sm transition-shadow duration-200"
+                      className="rounded-xl border border-emerald-400/20 bg-gradient-to-r from-slate-800/80 to-slate-800/55 p-3 transition-all duration-200 hover:border-emerald-300/40 hover:shadow-[0_0_20px_rgba(16,185,129,0.08)] sm:p-4"
                     >
-                      <div className="space-y-2">
+                      <div className="space-y-2.5">
                         {/* User info row */}
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2 min-w-0 flex-1">
-                            <User className="w-3 h-3 shrink-0" />
-                            <span className="truncate text-xs sm:text-sm font-medium">{booking.username || "Guest User"}</span>
+                            <User className="h-3.5 w-3.5 shrink-0 text-slate-300" />
+                            <span className="truncate dash-title !text-sm">{booking.username || "Guest User"}</span>
                           </div>
-                          <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800 shrink-0">
+                          <span className="shrink-0 rounded-full border border-emerald-400/40 bg-emerald-500/15 px-2 py-0.5 text-xs font-medium text-emerald-200">
                             Paid
                           </span>
                         </div>
 
                         {/* Time/duration row */}
-                        <div className="flex flex-wrap gap-3 text-xs text-gray-600 dark:text-gray-400">
+                        <div className="flex flex-wrap gap-3 text-xs text-slate-300">
                           <div className="flex items-center gap-1">
-                            <Clock className="w-3 h-3 shrink-0" />
+                            <Clock className="h-3 w-3 shrink-0 text-slate-400" />
                             <span>{booking.time || 'No time set'}</span>
                           </div>
                           <div className="flex items-center gap-1">
@@ -758,11 +755,11 @@ export function UpcomingBookings({
                                   e.stopPropagation();
                                   handleFoodIconClick(booking.bookingId, booking.username || 'Guest User', true);
                                 }}
-                                className="flex items-center gap-1 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-full p-1.5 transition-all duration-200 group"
+                                className="group flex items-center gap-1 rounded-full border border-emerald-400/35 bg-emerald-500/10 p-1.5 transition-all duration-200 hover:bg-emerald-500/20"
                                 title="View meals & add more"
                               >
-                                <UtensilsCrossed className="w-4 h-4 text-emerald-600 group-hover:text-emerald-700 transition-colors" />
-                                <span className="text-xs text-emerald-600 group-hover:text-emerald-700 font-medium">
+                                <UtensilsCrossed className="h-4 w-4 text-emerald-300 transition-colors group-hover:text-emerald-200" />
+                                <span className="text-xs font-medium text-emerald-200">
                                   Meals
                                 </span>
                               </motion.button>
@@ -774,12 +771,12 @@ export function UpcomingBookings({
                                   e.stopPropagation();
                                   handleAddFoodClick(booking.bookingId, booking.username || 'Guest User');
                                 }}
-                                className="flex items-center gap-1 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-full p-1.5 transition-all duration-200 group border border-dashed border-blue-300 dark:border-blue-600"
+                                className="group flex items-center gap-1 rounded-full border border-dashed border-cyan-400/60 bg-cyan-500/10 p-1.5 transition-all duration-200 hover:bg-cyan-500/20"
                                 title="Add meals to this booking"
                               >
-                                <Plus className="w-3 h-3 text-blue-600 group-hover:text-blue-700 transition-colors" />
-                                <UtensilsCrossed className="w-3 h-3 text-blue-600 group-hover:text-blue-700 transition-colors" />
-                                <span className="text-xs text-blue-600 group-hover:text-blue-700 font-medium">
+                                <Plus className="h-3 w-3 text-cyan-300 transition-colors group-hover:text-cyan-200" />
+                                <UtensilsCrossed className="h-3 w-3 text-cyan-300 transition-colors group-hover:text-cyan-200" />
+                                <span className="text-xs font-medium text-cyan-200">
                                   Add
                                 </span>
                               </motion.button>
@@ -794,7 +791,7 @@ export function UpcomingBookings({
                           onClick={() =>
                             start(booking.consoleType || "", booking.game_id, booking.bookingId)
                           }
-                          className="w-full py-1.5 sm:py-2 text-xs sm:text-sm bg-emerald-500 hover:bg-emerald-600 text-white rounded-md font-medium transition-all flex items-center justify-center gap-2"
+                          className="flex w-full items-center justify-center gap-2 rounded-md bg-gradient-to-r from-emerald-500 to-cyan-500 py-2 text-xs font-semibold text-white transition-all hover:from-emerald-400 hover:to-cyan-400 sm:text-sm"
                         >
                           <Play className="w-3 h-3" />
                           Start

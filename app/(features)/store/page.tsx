@@ -1,14 +1,27 @@
 import VendorOrderPage from "@/app/components/vendorOrder"
 import { DashboardLayout } from "../../(layout)/dashboard-layout"
+import { Sparkles } from "lucide-react"
 
 export default function StorePage() {
   return (
-    <DashboardLayout>
-      <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
-        {/* <h1 className="text-3xl font-bold">Manage Booking</h1> */}
-        <VendorOrderPage />
+    <DashboardLayout contentScroll="contained">
+      <div className="flex h-full min-h-0 flex-1 flex-col gap-3 sm:gap-4">
+        <div className="gaming-panel shrink-0 rounded-xl p-4 sm:p-5">
+          <div className="flex items-center gap-2">
+            <h1 className="premium-heading !text-xl sm:!text-2xl md:!text-3xl">
+              Store Supply Command
+            </h1>
+            <Sparkles className="h-4 w-4 text-emerald-400 sm:h-5 sm:w-5" />
+          </div>
+          <p className="premium-subtle mt-1">
+            Stock and reorder cafe inventory with a faster vendor workflow.
+          </p>
+        </div>
+
+        <div className="gaming-panel min-h-0 flex-1 overflow-hidden rounded-xl p-2 sm:p-3 md:p-4">
+          <VendorOrderPage />
+        </div>
       </div>
     </DashboardLayout>
   )
 }
-

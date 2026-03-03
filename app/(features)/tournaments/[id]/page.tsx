@@ -3,9 +3,9 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import {
-  ChevronRight, Home, Search, Trophy,
+  Home, Search, Trophy,
   Users, Download, CheckCircle2, XCircle,
-  Clock, CreditCard, ImageIcon,
+  Clock, CreditCard, ImageIcon, Sparkles,
 } from 'lucide-react';
 import { useEventsToken } from '@/hooks/useEventsToken';
 import {
@@ -167,47 +167,50 @@ export default function TournamentDetailPage() {
 
   return (
     <DashboardLayout>
-    <div className="page-container overflow-y-auto">
+    <div className="flex-1 space-y-3 overflow-y-auto sm:space-y-4">
+
+      {/* ── Page Header ───────────────────────────────── */}
+      <div className="gaming-panel rounded-xl p-4 sm:p-5">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+          <h1 className="premium-heading !text-xl sm:!text-2xl md:!text-3xl flex items-center gap-2">
+            {event.title}
+            <Sparkles className="h-4 w-4 text-emerald-400 sm:h-5 sm:w-5" />
+          </h1>
+          <p className="premium-subtle mt-1">
+            Manage tournament details, participants, and registrations.
+          </p>
+        </div>
+          <button className="inline-flex items-center justify-center gap-2 rounded-lg border border-cyan-300/25 bg-slate-900/70 px-3 py-2 text-xs font-semibold text-slate-200 transition-all duration-200 hover:border-cyan-300/45 hover:bg-slate-800/80 hover:text-cyan-100 sm:px-4 sm:text-sm" onClick={exportCSV}>
+            <Download className="icon-sm" /> Export CSV
+          </button>
+        </div>
+      </div>
 
       {/* ── Breadcrumb ────────────────────────────────── */}
-      <nav className="flex items-center gap-1 body-text-muted mb-4 flex-shrink-0 flex-wrap">
+      <nav className="gaming-panel flex flex-wrap items-center gap-2 rounded-xl p-3 text-xs text-slate-300/70 sm:text-sm">
         <button
           onClick={() => router.push('/')}
-          className="hover:text-foreground transition-colors flex items-center gap-1"
+          className="hover:text-foreground transition-colors inline-flex items-center gap-1"
         >
           <Home className="icon-xs" /> Home
         </button>
-        <ChevronRight className="icon-xs" />
+        <span className="text-slate-500">|</span>
         <button
           onClick={() => router.push('/tournaments')}
           className="hover:text-foreground transition-colors"
         >
           Tournaments
         </button>
-        <ChevronRight className="icon-xs" />
-        <span className="text-foreground truncate max-w-[200px]">{event.title}</span>
+        <span className="text-slate-500">|</span>
+        <span className="text-foreground truncate max-w-[260px]">{event.title}</span>
       </nav>
 
-      {/* ── Page Header ───────────────────────────────── */}
-      <div className="page-header">
-        <div className="page-title-section">
-          <h1 className="page-title">{event.title}</h1>
-          <p className="page-subtitle">
-            Manage tournament details, participants, and registrations.
-          </p>
-        </div>
-        <div className="page-actions">
-          <button className="btn-secondary text-sm" onClick={exportCSV}>
-            <Download className="icon-sm" /> Export CSV
-          </button>
-        </div>
-      </div>
-
       {/* ── Tournament Details Card ───────────────────── */}
-      <div className="content-card content-card-padding mb-4 flex-shrink-0">
+      <div className="gaming-panel content-card-padding mb-4 flex-shrink-0 rounded-xl border-cyan-400/20 bg-slate-950/45">
         <div className="flex flex-col md:flex-row gap-6">
           {/* Banner / thumbnail */}
-          <div className="w-full md:w-52 h-32 rounded-xl flex-shrink-0 overflow-hidden border border-border bg-gradient-to-br from-blue-900/20 to-purple-900/20 flex items-center justify-center">
+          <div className="w-full md:w-52 h-32 rounded-xl flex-shrink-0 overflow-hidden border border-cyan-400/20 bg-gradient-to-br from-blue-900/20 to-purple-900/20 flex items-center justify-center">
             {event.banner_image_url ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
@@ -257,33 +260,29 @@ export default function TournamentDetailPage() {
       </div>
 
       {/* ── Stat Pills ────────────────────────────────── */}
-      <div className="stats-grid mb-4 flex-shrink-0">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4 mb-4 flex-shrink-0">
         {[
           { label: 'Total',     value: registrations.length, color: 'icon-blue',    icon: <Users        className="icon-md text-blue-400"    /> },
           { label: 'Confirmed', value: confirmed,            color: 'icon-green',   icon: <CheckCircle2 className="icon-md text-green-400"   /> },
           { label: 'Pending',   value: pending,              color: 'icon-yellow',  icon: <Clock        className="icon-md text-yellow-400"  /> },
           { label: 'Paid',      value: paid,                 color: 'icon-emerald', icon: <CreditCard   className="icon-md text-emerald-400" /> },
         ].map(({ label, value, color, icon }) => (
-          <div key={label} className="stat-card">
-            <div className="stat-card-content">
-              <div className="stat-card-layout">
-                <div className="stat-card-left">
-                  <div className={`stat-card-icon ${color}`}>{icon}</div>
-                  <div className="stat-card-text">
-                    <p className="stat-label">{label}</p>
-                    <p className="stat-value-large">{value}</p>
-                  </div>
-                </div>
+          <div key={label} className="gaming-kpi-card rounded-xl border border-cyan-400/20 bg-gradient-to-br from-slate-900/75 via-slate-900/65 to-cyan-950/20 p-4">
+            <div className="flex items-center justify-between">
+              <div className="min-w-0">
+                <p className="text-xs uppercase tracking-wide text-slate-300/70">{label}</p>
+                <p className="mt-1 text-xl font-bold text-cyan-100 sm:text-2xl">{value}</p>
               </div>
+              <div className={`inline-flex h-10 w-10 items-center justify-center rounded-lg ${color}`}>{icon}</div>
             </div>
           </div>
         ))}
       </div>
 
       {/* ── Registrations Table ───────────────────────── */}
-      <div className="full-height-card flex flex-col">
+      <div className="gaming-panel flex flex-col overflow-hidden rounded-xl border border-cyan-400/20 bg-slate-950/45">
         {/* Table toolbar */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 border-b border-border flex-shrink-0">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 border-b border-cyan-500/20 flex-shrink-0">
           <div className="flex items-center gap-2">
             <Users className="icon-md text-muted-foreground" />
             <h3 className="section-title">Registrations</h3>
@@ -297,14 +296,14 @@ export default function TournamentDetailPage() {
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 icon-sm text-muted-foreground" />
               <input
-                className="input-field pl-9 py-2 text-sm w-48"
+                className="h-9 w-48 rounded-lg border border-cyan-400/25 bg-slate-900/70 pl-9 pr-3 text-sm text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-400/60"
                 placeholder="Search teams..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
             </div>
             <select
-              className="select-field py-2 text-sm w-36"
+              className="h-9 w-36 rounded-lg border border-cyan-400/25 bg-slate-900/70 px-3 text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-cyan-400/60"
               value={regFilter}
               onChange={(e) => setRegFilter(e.target.value)}
             >
@@ -320,14 +319,14 @@ export default function TournamentDetailPage() {
         {/* Table */}
         <div className="overflow-auto flex-1">
           <table className="w-full">
-            <thead className="table-header sticky top-0">
+            <thead className="sticky top-0 bg-slate-900/70">
               <tr>
-                <th className="table-cell table-header-text text-left">Team / Player</th>
-                <th className="table-cell table-header-text text-left">Contact</th>
-                <th className="table-cell table-header-text text-left">Registered</th>
-                <th className="table-cell table-header-text text-left">Status</th>
-                <th className="table-cell table-header-text text-left">Payment</th>
-                <th className="table-cell table-header-text text-center">Waiver</th>
+                <th className="table-cell text-left text-[11px] font-bold uppercase tracking-wider text-cyan-100/80 sm:text-xs">Team / Player</th>
+                <th className="table-cell text-left text-[11px] font-bold uppercase tracking-wider text-cyan-100/80 sm:text-xs">Contact</th>
+                <th className="table-cell text-left text-[11px] font-bold uppercase tracking-wider text-cyan-100/80 sm:text-xs">Registered</th>
+                <th className="table-cell text-left text-[11px] font-bold uppercase tracking-wider text-cyan-100/80 sm:text-xs">Status</th>
+                <th className="table-cell text-left text-[11px] font-bold uppercase tracking-wider text-cyan-100/80 sm:text-xs">Payment</th>
+                <th className="table-cell text-center text-[11px] font-bold uppercase tracking-wider text-cyan-100/80 sm:text-xs">Waiver</th>
               </tr>
             </thead>
             <tbody>
@@ -336,7 +335,7 @@ export default function TournamentDetailPage() {
                   <tr key={i} className="table-row animate-pulse">
                     {[...Array(6)].map((_, j) => (
                       <td key={j} className="table-cell">
-                        <div className="h-4 bg-muted rounded w-full max-w-[120px]" />
+                        <div className="h-4 w-full max-w-[120px] rounded bg-slate-800/80" />
                       </td>
                     ))}
                   </tr>
@@ -356,7 +355,7 @@ export default function TournamentDetailPage() {
                 </tr>
               ) : (
                 filteredRegs.map((reg) => (
-                  <tr key={reg.id} className="table-row">
+                  <tr key={reg.id} className="table-row border-b border-cyan-500/10 last:border-0 hover:bg-cyan-500/5">
                     {/* Team / Player */}
                     <td className="table-cell">
                       <p className="table-cell-text font-medium">
