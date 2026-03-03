@@ -41,5 +41,15 @@ next-env.d.ts
 
 # Next.js build output
 .next
+
+# Next.js build files
 .next/
-.next_*
+.next_*/
+out/
+build/
+
+# Node
+node_modules/
+
+# Logs
+*.log
