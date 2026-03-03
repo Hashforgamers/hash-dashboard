@@ -35,11 +35,11 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
         </Button>
       </header>
 
-      <div className="flex flex-1 overflow-hidden pt-[58px] md:pt-0">
+      <div className="flex min-h-0 flex-1 overflow-hidden pt-[58px] md:pt-0">
         <aside
           className={`
-            group fixed left-0 top-0 z-30 h-full w-[86vw] max-w-72 overflow-hidden border-r border-border/70 bg-background/85 p-3 backdrop-blur-md transition-transform duration-300 ease-out
-            md:relative md:w-72 md:max-w-none md:translate-x-0
+            group fixed left-0 top-0 z-30 flex h-full w-[86vw] max-w-72 flex-col overflow-hidden border-r border-border/70 bg-background/85 p-3 backdrop-blur-md transition-transform duration-300 ease-out
+            md:sticky md:top-0 md:h-dvh md:w-72 md:max-w-none md:translate-x-0 md:shrink-0
             xl:w-[76px] xl:hover:w-72
             ${isNavOpen ? "translate-x-0" : "-translate-x-full"}
           `}
@@ -64,7 +64,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
             </span>
           </div>
 
-          <MainNav className="h-full flex-col items-start" onItemClick={() => setIsNavOpen(false)} />
+          <MainNav className="min-h-0 flex-1 items-start" onItemClick={() => setIsNavOpen(false)} />
         </aside>
 
         {isNavOpen && (
@@ -74,7 +74,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
           />
         )}
 
-        <main className="dashboard-typography flex-1 overflow-y-auto px-2 pb-2 pt-2 sm:px-3 sm:pb-3 md:px-4 md:pb-4 md:pt-4">
+        <main className="dashboard-typography min-h-0 flex-1 overflow-y-auto px-2 pb-2 pt-2 sm:px-3 sm:pb-3 md:px-4 md:pb-4 md:pt-4">
           {children}
         </main>
       </div>

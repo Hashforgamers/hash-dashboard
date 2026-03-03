@@ -1,9 +1,11 @@
+"use client";
+
 import { LogOut } from "lucide-react";
 
 export function ButtonDestructive() {
   return (
     <button
-      className="group/nav flex min-h-[34px] items-center gap-2.5 rounded-lg border border-transparent px-2.5 py-[clamp(0.28rem,0.75vh,0.52rem)] text-[13px] font-medium leading-tight text-red-400 transition-all duration-200 hover:border-border/70 hover:bg-muted/50 hover:text-red-300 md:px-3 xl:px-2 xl:group-hover/nav:px-3"
+      className="group/nav flex min-h-[32px] items-center gap-2 rounded-lg border border-transparent px-2.5 py-[clamp(0.2rem,0.55vh,0.38rem)] text-[13px] font-medium leading-tight text-red-400 transition-all duration-200 hover:border-border/70 hover:bg-muted/50 hover:text-red-300 md:px-3 xl:px-2 xl:group-hover/nav:px-3"
       onClick={() => {
         localStorage.removeItem("jwtToken");
         localStorage.removeItem("tokenExpiration");
