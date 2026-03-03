@@ -4,15 +4,12 @@ import React, { useState, useEffect } from 'react';
 import {
   Card,
   CardContent,
-  CardHeader,
-  CardTitle,
+  CardHeader
 } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { motion } from "framer-motion"
-import { ShoppingCart, Package, Loader2, CheckCircle, X } from 'lucide-react'
+import { ShoppingCart, Loader2, CheckCircle } from 'lucide-react'
 import Image from "next/image"
 import { VENDOR_ONBOARD_URL } from '@/src/config/env';
 
@@ -144,155 +141,153 @@ const VendorOrderPage: React.FC = () => {
       return product ? { ...product, qty } : undefined;
     })
     .filter(Boolean) as (Product & { qty: number })[];
+  const primaryButtonClass =
+    "inline-flex items-center justify-center gap-2 rounded-lg border border-cyan-400/40 bg-gradient-to-r from-cyan-500/90 to-emerald-500/90 px-3 py-2 text-xs font-semibold text-white shadow-md shadow-cyan-900/40 transition-all duration-200 hover:from-cyan-400 hover:to-emerald-400 hover:shadow-lg hover:shadow-cyan-600/25 disabled:cursor-not-allowed disabled:opacity-50 sm:px-4 sm:text-sm";
+  const secondaryButtonClass =
+    "inline-flex items-center justify-center gap-2 rounded-lg border border-cyan-300/25 bg-slate-900/70 px-3 py-2 text-xs font-semibold text-slate-200 transition-all duration-200 hover:border-cyan-300/45 hover:bg-slate-800/80 hover:text-cyan-100 disabled:cursor-not-allowed disabled:opacity-50 sm:px-4 sm:text-sm";
+  const quantityInputClass =
+    "mt-1 h-8 border-cyan-400/25 bg-slate-900/70 text-xs text-slate-100 placeholder:text-slate-400 focus-visible:ring-cyan-400/60";
 
   return (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="page-container relative"
+      className="relative flex h-full min-h-0 flex-col gap-4 overflow-hidden px-1 pb-2 sm:px-2"
     >
       {/* ---------- HEADER ---------- */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
-        className="page-header"
+        className="gaming-panel shrink-0 rounded-xl p-3 sm:p-4"
       >
-        <div className="page-title-section">
-          <h1 className="page-title">
-            Place Orders
-          </h1>
-          <p className="page-subtitle">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 className="premium-heading !text-base sm:!text-lg md:!text-xl">Place Orders</h2>
+            <p className="premium-subtle">
             Select products and quantities to order
           </p>
-        </div>
-        {/* Order Summary as Floating Button */}
-        <div className="flex items-center gap-2">
-          <Button
-            className="btn-primary rounded-full shadow-md flex items-center"
-            onClick={() => setOrderModalOpen(true)}
-            disabled={Object.keys(orderItems).length === 0}
-          >
-            <ShoppingCart className="icon-lg mr-2" />
-            <span className="font-semibold">{Object.keys(orderItems).length}</span>
-            <span className="ml-2 font-medium">Order</span>
-          </Button>
-          <div className="bg-muted/30 px-3 py-1 rounded-full body-text font-semibold text-primary">
-            ₹{totalAmount.toFixed(2)}
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              className={primaryButtonClass}
+              onClick={() => setOrderModalOpen(true)}
+              disabled={Object.keys(orderItems).length === 0}
+            >
+              <ShoppingCart className="icon-md" />
+              <span className="font-semibold">{Object.keys(orderItems).length}</span>
+              <span className="font-medium">Order</span>
+            </button>
+            <div className="rounded-full border border-cyan-400/20 bg-slate-900/60 px-3 py-1 text-xs font-semibold text-cyan-100 sm:text-sm">
+              ₹{totalAmount.toFixed(2)}
+            </div>
           </div>
         </div>
       </motion.div>
 
-      {/* ---------- ERROR STATE ---------- */}
-      {error && (
-        <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-2 sm:p-3 text-destructive mb-2 max-w-lg mx-auto">
-          <p className="body-text font-medium">Error:</p>
-          <p className="body-text-small mt-1 break-words">{error}</p>
-          <Button
-            variant="outline"
-            size="sm"
-            className="mt-2 border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
-            onClick={fetchProducts}
-          >
-            Try Again
-          </Button>
-        </div>
-      )}
-
-      {submitSuccess && (
-        <motion.div
-          initial={{ opacity: 0, scale: 0.98 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="bg-green-500/10 border border-green-500/20 rounded-lg p-2 sm:p-3 text-green-400 flex items-center gap-2 max-w-md mx-auto"
-        >
-          <CheckCircle className="icon-lg" />
-          <p className="body-text font-medium">Order placed successfully!</p>
-        </motion.div>
-      )}
-
-      {/* ---------- PRODUCT LIST (SHORT CARDS) ---------- */}
-      {loading ? (
-        <div className="text-center py-8 sm:py-12">
-          <div className="inline-block animate-spin rounded-full h-6 w-6 sm:h-8 sm:w-8 border-b-2 border-primary"></div>
-          <p className="body-text-muted mt-2">Loading products...</p>
-        </div>
-      ) : products.length === 0 ? (
-        <div className="text-center py-8 sm:py-12">
-          <p className="body-text-muted">No products available.</p>
-          <Button
-            className="mt-4 btn-primary"
-            onClick={fetchProducts}
-          >
-            Refresh Products
-          </Button>
-        </div>
-      ) : (
-        <div className="section-spacing">
-          <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-compact">
-            {products.map((product, idx) => (
-              <motion.div
-                key={product.product_id}
-                initial={{ opacity: 0, scale: 0.97 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.03 * idx }}
-                className="w-full max-w-[230px] mx-auto"
-              >
-                <Card className="content-card overflow-hidden hover:shadow-lg transition-shadow duration-300 bg-muted/30 w-full min-h-[192px] flex flex-col justify-between">
-                  <div className="aspect-video relative w-full min-h-[84px] bg-background">
-                    <Image
-                      alt={product.name}
-                      src={product.image_url || "/placeholder.svg?height=140&width=220&query=product"}
-                      fill
-                      className="object-cover rounded-t-lg"
-                    />
-                    <div className="absolute top-1 right-1 sm:top-2 sm:right-2">
-                      <span className="px-1.5 py-0.5 bg-background/80 body-text-small font-medium rounded-full text-muted-foreground">
-                        {product.category}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="p-tight space-y-0.5">
-                    <h3 className="body-text font-semibold truncate">{product.name}</h3>
-                    <div className="flex items-center justify-between pt-0.5">
-                      <span className="body-text-small font-medium">₹{product.price}</span>
-                      <span className="px-1 rounded text-[11px] font-medium bg-green-500/20 text-green-500">
-                        Stock: {product.stock}
-                      </span>
-                    </div>
-                    <p className="body-text-small">Min: {product.min_order_quantity}</p>
-                    <Input
-                      type="number"
-                      min={0}
-                      max={product.stock}
-                      step={product.min_order_quantity}
-                      value={orderItems[product.product_id] || ''}
-                      onChange={e => {
-                        let val = parseInt(e.target.value, 10);
-                        if (isNaN(val) || val < 0) val = 0;
-                        if (val > 0 && val < product.min_order_quantity) val = product.min_order_quantity;
-                        if (val > product.stock) val = product.stock;
-                        handleQtyChange(product.product_id, val);
-                      }}
-                      className="input-field text-xs h-7 mt-1"
-                      placeholder="Qty"
-                    />
-                  </div>
-                </Card>
-              </motion.div>
-            ))}
+      <div className="min-h-0 flex-1 overflow-y-auto pr-1">
+        {/* ---------- ERROR STATE ---------- */}
+        {error && (
+          <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-2 sm:p-3 text-destructive mb-2 max-w-lg mx-auto">
+            <p className="body-text font-medium">Error:</p>
+            <p className="body-text-small mt-1 break-words">{error}</p>
+            <button className={`${secondaryButtonClass} mt-2 border-destructive text-destructive`} onClick={fetchProducts}>
+              Try Again
+            </button>
           </div>
-        </div>
-      )}
+        )}
+
+        {submitSuccess && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.98 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="rounded-lg border border-green-500/20 bg-green-500/10 p-2 text-green-400 sm:p-3"
+          >
+            <div className="flex items-center gap-2">
+              <CheckCircle className="icon-lg" />
+              <p className="body-text font-medium">Order placed successfully!</p>
+            </div>
+          </motion.div>
+        )}
+
+        {/* ---------- PRODUCT LIST (SHORT CARDS) ---------- */}
+        {loading ? (
+          <div className="gaming-panel text-center py-8 sm:py-12">
+            <div className="inline-block animate-spin rounded-full h-6 w-6 sm:h-8 sm:w-8 border-b-2 border-primary"></div>
+            <p className="body-text-muted mt-2">Loading products...</p>
+          </div>
+        ) : products.length === 0 ? (
+          <div className="gaming-panel text-center py-8 sm:py-12">
+            <p className="body-text-muted">No products available.</p>
+            <button className={`${primaryButtonClass} mt-4`} onClick={fetchProducts}>
+              Refresh Products
+            </button>
+          </div>
+        ) : (
+          <div className="section-spacing">
+            <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-compact">
+              {products.map((product, idx) => (
+                <motion.div
+                  key={product.product_id}
+                  initial={{ opacity: 0, scale: 0.97 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.03 * idx }}
+                  className="w-full max-w-[230px] mx-auto"
+                >
+                  <Card className="w-full min-h-[198px] flex flex-col justify-between overflow-hidden border border-cyan-400/20 bg-gradient-to-b from-slate-900/70 to-slate-950/70 transition-shadow duration-300 hover:shadow-lg hover:shadow-cyan-500/10">
+                    <div className="relative min-h-[84px] w-full aspect-video bg-slate-900/50">
+                      <Image
+                        alt={product.name}
+                        src={product.image_url || "/placeholder.svg?height=140&width=220&query=product"}
+                        fill
+                        className="object-cover rounded-t-lg"
+                      />
+                      <div className="absolute top-1 right-1 sm:top-2 sm:right-2">
+                        <span className="rounded-full border border-cyan-400/25 bg-slate-950/80 px-1.5 py-0.5 text-[10px] font-semibold text-slate-200">
+                          {product.category}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="space-y-1 p-tight">
+                      <h3 className="truncate text-sm font-semibold text-cyan-100">{product.name}</h3>
+                      <div className="flex items-center justify-between pt-0.5">
+                        <span className="text-xs font-semibold text-slate-100">₹{product.price}</span>
+                        <span className="rounded border border-emerald-400/20 bg-emerald-500/10 px-1 py-0.5 text-[10px] font-semibold text-emerald-300">
+                          Stock: {product.stock}
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-slate-300/75">Min: {product.min_order_quantity}</p>
+                      <Input
+                        type="number"
+                        min={0}
+                        max={product.stock}
+                        step={product.min_order_quantity}
+                        value={orderItems[product.product_id] || ''}
+                        onChange={e => {
+                          let val = parseInt(e.target.value, 10);
+                          if (isNaN(val) || val < 0) val = 0;
+                          if (val > 0 && val < product.min_order_quantity) val = product.min_order_quantity;
+                          if (val > product.stock) val = product.stock;
+                          handleQtyChange(product.product_id, val);
+                        }}
+                        className={quantityInputClass}
+                        placeholder="Qty"
+                      />
+                    </div>
+                  </Card>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
 
       {/* ---------- ORDER CONFIRM OVERLAY ---------- */}
       <Dialog open={orderModalOpen} onOpenChange={setOrderModalOpen}>
-        <DialogContent className="sm:max-w-[450px] w-[95vw] max-h-[90vh] p-0 bg-card/95 border border-border shadow-2xl rounded-lg overflow-y-auto">
+        <DialogContent className="max-h-[90vh] w-[95vw] overflow-y-auto rounded-xl border border-cyan-400/25 bg-gradient-to-br from-slate-950 via-slate-900 to-cyan-950/30 p-0 shadow-2xl sm:max-w-[450px]">
           <DialogHeader className="p-4 pb-0">
             <DialogTitle className="section-title flex items-center justify-between">
               <span>Order Summary</span>
-              <Button size="icon" variant="ghost" className="rounded-full" onClick={() => setOrderModalOpen(false)}>
-                <X className="icon-md" />
-              </Button>
             </DialogTitle>
             <DialogDescription className="body-text-muted mt-1">
               Review selected products and place your order.
@@ -303,8 +298,8 @@ const VendorOrderPage: React.FC = () => {
               <div className="text-center body-text-muted my-8">No items selected.</div>
             ) : (
               orderProducts.map((prod) => (
-                <div key={prod.product_id} className="flex items-center gap-3 border-b border-border pb-2 last:border-b-0">
-                  <div className="flex-shrink-0 w-10 h-10 rounded overflow-hidden bg-background relative">
+                <div key={prod.product_id} className="flex items-center gap-3 border-b border-cyan-500/10 pb-2 last:border-b-0">
+                  <div className="relative h-10 w-10 flex-shrink-0 overflow-hidden rounded bg-slate-900/50">
                     <Image src={prod.image_url || "/placeholder.svg?height=40&width=40&query=prod"} alt={prod.name} fill className="object-cover" />
                   </div>
                   <div className="flex-1 min-w-0">
@@ -323,10 +318,10 @@ const VendorOrderPage: React.FC = () => {
               <span>Total</span>
               <span>₹{totalAmount.toFixed(2)}</span>
             </div>
-            <Button
+            <button
               onClick={handleSubmitOrder}
               disabled={submitting || orderProducts.length === 0}
-              className="btn-primary w-full"
+              className={`${primaryButtonClass} w-full`}
             >
               {submitting ? (
                 <Loader2 className="icon-md mr-2 animate-spin" />
@@ -334,7 +329,7 @@ const VendorOrderPage: React.FC = () => {
                 <ShoppingCart className="icon-md mr-2" />
               )}
               Place Order
-            </Button>
+            </button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

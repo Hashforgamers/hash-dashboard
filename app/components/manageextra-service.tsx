@@ -6,7 +6,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
 import {
   Dialog,
   DialogContent,
@@ -16,12 +15,11 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { motion, AnimatePresence } from "framer-motion"
 import {
   Plus, Trash2, Loader2, UtensilsCrossed, Coffee,
-  LayoutGrid, Table as TableIcon, IndianRupee
+  LayoutGrid, Table as TableIcon, IndianRupee, Sparkles, FolderPlus
 } from 'lucide-react'
 import Image from "next/image"
 import { jwtDecode } from "jwt-decode"
@@ -110,7 +108,7 @@ export default function ManageExtraServices() {
      HELPERS
   --------------------------------------------------------------- */
   const getViewMode = (catId: number): 'grid' | 'table' =>
-    viewModes[catId] ?? 'grid'
+    viewModes[catId] ?? 'table'
 
   const setViewMode = (catId: number, mode: 'grid' | 'table') =>
     setViewModes(prev => ({ ...prev, [catId]: mode }))
@@ -268,18 +266,34 @@ export default function ManageExtraServices() {
     if (vendorId && isClient) fetchCategories()
   }, [vendorId, isClient])
 
+  const totalCategories = categories.length
+  const totalItems = categories.reduce((sum, cat) => sum + cat.items.length, 0)
+  const activeItems = categories.reduce(
+    (sum, cat) => sum + cat.items.filter((item) => item.is_active).length,
+    0
+  )
+  const avgPrice =
+    totalItems > 0
+      ? Math.round(
+          categories.reduce(
+            (sum, cat) => sum + cat.items.reduce((rowSum, item) => rowSum + Number(item.price || 0), 0),
+            0
+          ) / totalItems
+        )
+      : 0
+  const primaryButtonClass =
+    "inline-flex items-center justify-center gap-2 rounded-lg border border-cyan-400/40 bg-gradient-to-r from-cyan-500/90 to-emerald-500/90 px-3 py-2 text-xs font-semibold text-white shadow-md shadow-cyan-900/40 transition-all duration-200 hover:from-cyan-400 hover:to-emerald-400 hover:shadow-lg hover:shadow-cyan-600/25 disabled:cursor-not-allowed disabled:opacity-50 sm:px-4 sm:text-sm"
+  const secondaryButtonClass =
+    "inline-flex items-center justify-center gap-2 rounded-lg border border-cyan-300/25 bg-slate-900/70 px-3 py-2 text-xs font-semibold text-slate-200 transition-all duration-200 hover:border-cyan-300/45 hover:bg-slate-800/80 hover:text-cyan-100 disabled:cursor-not-allowed disabled:opacity-50 sm:px-4 sm:text-sm"
+  const destructiveIconButtonClass =
+    "inline-flex items-center justify-center rounded-lg border border-rose-400/30 bg-rose-500/10 p-2 text-rose-300 transition-all duration-200 hover:border-rose-300/60 hover:bg-rose-500/20 disabled:cursor-not-allowed disabled:opacity-50"
+
   /* ---------------------------------------------------------------
      SSR GUARD
   --------------------------------------------------------------- */
   if (!isClient) {
     return (
-      <div className="page-container section-spacing">
-        <div className="page-header">
-          <div className="page-title-section">
-            <h1 className="page-title">Manage Extra Services</h1>
-            <p className="page-subtitle">Create categories and add menu items</p>
-          </div>
-        </div>
+      <div className="w-full space-y-4 px-1 pb-2 sm:px-2">
         <div className="flex items-center justify-center py-12">
           <Loader2 className="w-8 h-8 animate-spin text-primary" />
         </div>
@@ -294,75 +308,89 @@ export default function ManageExtraServices() {
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="page-container section-spacing"
+      className="flex h-full min-h-0 w-full flex-col space-y-4 overflow-hidden px-1 pb-2 sm:px-2"
     >
-      {/* ✅ Page Header */}
       <motion.div
-        initial={{ opacity: 0, y: -20 }}
+        initial={{ opacity: 0, y: -14 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.1 }}
-        className="page-header"
+        transition={{ delay: 0.08 }}
+        className="gaming-panel shrink-0 rounded-xl p-3 sm:p-4"
       >
-        <div className="page-title-section">
-          <div className="flex items-center gap-3 mb-1">
-            <div className="icon-blue p-2 rounded-lg">
-              <UtensilsCrossed className="icon-lg text-blue-400" />
-            </div>
-            <h1 className="page-title">Extra Services</h1>
+        <div className="flex gap-2 overflow-x-auto pb-1 sm:gap-3">
+          <div className="gaming-kpi-card min-w-[155px] flex-1 rounded-xl p-3 sm:min-w-[170px] sm:p-4">
+          <p className="text-[11px] uppercase tracking-wide text-slate-300/70 sm:text-xs">Categories</p>
+          <p className="mt-1 text-xl font-semibold text-cyan-300 sm:text-2xl">{totalCategories}</p>
+        </div>
+          <div className="gaming-kpi-card min-w-[155px] flex-1 rounded-xl p-3 sm:min-w-[170px] sm:p-4">
+          <p className="text-[11px] uppercase tracking-wide text-slate-300/70 sm:text-xs">Menu Items</p>
+          <p className="mt-1 text-xl font-semibold text-sky-300 sm:text-2xl">{totalItems}</p>
+        </div>
+          <div className="gaming-kpi-card min-w-[155px] flex-1 rounded-xl p-3 sm:min-w-[170px] sm:p-4">
+          <p className="text-[11px] uppercase tracking-wide text-slate-300/70 sm:text-xs">Active</p>
+          <p className="mt-1 text-xl font-semibold text-emerald-300 sm:text-2xl">{activeItems}</p>
+        </div>
+          <div className="gaming-kpi-card min-w-[155px] flex-1 rounded-xl p-3 sm:min-w-[170px] sm:p-4">
+          <p className="text-[11px] uppercase tracking-wide text-slate-300/70 sm:text-xs">Avg Price</p>
+          <p className="mt-1 flex items-center text-xl font-semibold text-amber-300 sm:text-2xl">
+            <IndianRupee className="mr-1 h-4 w-4 sm:h-5 sm:w-5" />
+            {avgPrice}
+          </p>
           </div>
-          <p className="page-subtitle">Create categories and add menu items for your cafe</p>
-        </div>
-        <button
-          onClick={() => setShowCategoryDlg(true)}
-          disabled={loading || !vendorId}
-          className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          <Plus className="icon-md" />
-          New Category
-        </button>
-      </motion.div>
-
-      {/* ✅ Error State */}
-      {error && (
-        <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4 text-destructive">
-          <p className="body-text font-medium">Error: {error}</p>
-          <button
-            className="btn-secondary mt-2 text-destructive border-destructive"
-            onClick={() => { setError(null); if (vendorId) fetchCategories() }}
-            disabled={!vendorId}
-          >
-            Try Again
-          </button>
-        </div>
-      )}
-
-      {/* ✅ Auth Loading */}
-      {!vendorId && !error && (
-        <div className="flex items-center justify-center py-12 gap-3 text-muted-foreground">
-          <Loader2 className="w-6 h-6 animate-spin" />
-          <p className="body-text-muted">Loading authentication...</p>
-        </div>
-      )}
-
-      {/* ✅ Main Content */}
-      {vendorId && (
-        loading ? (
-          <div className="flex items-center justify-center py-12 gap-3 text-muted-foreground">
-            <Loader2 className="w-8 h-8 animate-spin text-blue-400" />
-            <p className="body-text-muted">Loading categories...</p>
-          </div>
-        ) : !Array.isArray(categories) || categories.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 gap-3 border-2 border-dashed border-border rounded-lg">
-            <UtensilsCrossed className="w-12 h-12 text-muted-foreground/30" />
-            <h3 className="section-title text-muted-foreground/60">No categories yet</h3>
-            <p className="body-text-muted">Create your first category to get started</p>
-            <button className="btn-primary mt-2" onClick={() => setShowCategoryDlg(true)}>
+          <div className="min-w-[190px] flex-1 sm:min-w-[210px]">
+            <button
+              onClick={() => setShowCategoryDlg(true)}
+              disabled={loading || !vendorId}
+              className={`${primaryButtonClass} h-full min-h-[88px] w-full`}
+            >
               <Plus className="icon-md" />
-              Create First Category
+              New Category
             </button>
           </div>
-        ) : (
-          <div className="section-spacing">
+        </div>
+      </motion.div>
+
+      <div className="min-h-0 flex-1 overflow-y-auto pr-1">
+        {/* ✅ Error State */}
+        {error && (
+          <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4 text-destructive">
+            <p className="body-text font-medium">Error: {error}</p>
+            <button
+              className={`${secondaryButtonClass} mt-2 border-destructive text-destructive`}
+              onClick={() => { setError(null); if (vendorId) fetchCategories() }}
+              disabled={!vendorId}
+            >
+              Try Again
+            </button>
+          </div>
+        )}
+
+        {/* ✅ Auth Loading */}
+        {!vendorId && !error && (
+          <div className="flex items-center justify-center py-12 gap-3 text-muted-foreground">
+            <Loader2 className="w-6 h-6 animate-spin" />
+            <p className="body-text-muted">Loading authentication...</p>
+          </div>
+        )}
+
+        {/* ✅ Main Content */}
+        {vendorId && (
+          loading ? (
+            <div className="flex items-center justify-center py-12 gap-3 text-muted-foreground">
+              <Loader2 className="w-8 h-8 animate-spin text-blue-400" />
+              <p className="body-text-muted">Loading categories...</p>
+            </div>
+          ) : !Array.isArray(categories) || categories.length === 0 ? (
+            <div className="gaming-panel flex flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed border-cyan-400/20 py-16">
+              <UtensilsCrossed className="w-12 h-12 text-muted-foreground/30" />
+              <h3 className="section-title text-muted-foreground/60">No categories yet</h3>
+              <p className="body-text-muted">Create your first category to get started</p>
+              <button className={`${primaryButtonClass} mt-2`} onClick={() => setShowCategoryDlg(true)}>
+                <Plus className="icon-md" />
+                Create First Category
+              </button>
+            </div>
+          ) : (
+            <div className="section-spacing">
             {categories.map((cat, i) => {
               if (!cat?.id) return null
               const mode = getViewMode(cat.id)
@@ -375,23 +403,25 @@ export default function ManageExtraServices() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.05 * i }}
                 >
-                  <Card className="content-card shadow-sm">
+                  <Card className="gaming-panel overflow-hidden rounded-xl border-cyan-400/20 bg-gradient-to-br from-slate-950/65 via-slate-950/50 to-cyan-950/20 shadow-sm">
                     {/* ✅ Category Header with view toggle */}
-                    <CardHeader className="content-card-padding pb-3">
+                    <CardHeader className="content-card-padding border-b border-cyan-500/15 pb-3">
                       <div className="flex items-center justify-between gap-3 flex-wrap">
                         {/* Left: Icon + Name */}
                         <div className="flex items-center gap-3 min-w-0 flex-1">
-                          <div className="icon-container bg-muted/20 shrink-0">
+                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-cyan-400/30 bg-cyan-500/10">
                             {getCategoryIcon(cat.name)}
                           </div>
                           <div className="min-w-0">
-                            <CardTitle className="card-title truncate">{cat.name}</CardTitle>
+                            <CardTitle className="truncate text-sm font-bold tracking-wide text-cyan-100 sm:text-base">
+                              {cat.name}
+                            </CardTitle>
                             {cat.description && (
-                              <p className="card-subtitle mt-0.5 line-clamp-1">{cat.description}</p>
+                              <p className="mt-0.5 line-clamp-1 text-xs text-slate-300/75 sm:text-sm">{cat.description}</p>
                             )}
                           </div>
                           {/* Item count badge */}
-                          <span className="shrink-0 px-2 py-0.5 bg-blue-500/10 text-blue-400 text-xs font-bold rounded-full border border-blue-500/20">
+                          <span className="shrink-0 rounded-full border border-cyan-400/30 bg-cyan-500/10 px-2 py-0.5 text-xs font-bold text-cyan-300">
                             {cat.items.length} items
                           </span>
                         </div>
@@ -399,13 +429,13 @@ export default function ManageExtraServices() {
                         {/* Right: View Toggle + Delete */}
                         <div className="flex items-center gap-2 shrink-0">
                           {/* ✅ View Mode Toggle */}
-                          <div className="flex items-center gap-1 bg-muted p-1 rounded-lg border border-border">
+                          <div className="flex items-center gap-1 rounded-lg border border-cyan-400/20 bg-slate-900/60 p-1">
                             <button
                               onClick={() => setViewMode(cat.id, 'grid')}
                               className={`p-1.5 rounded-md transition-all ${
                                 mode === 'grid'
-                                  ? 'bg-background shadow-sm text-blue-400'
-                                  : 'text-muted-foreground hover:text-foreground'
+                                  ? 'bg-slate-800 shadow-sm text-cyan-300'
+                                  : 'text-muted-foreground hover:text-cyan-200'
                               }`}
                               title="Grid View"
                             >
@@ -415,8 +445,8 @@ export default function ManageExtraServices() {
                               onClick={() => setViewMode(cat.id, 'table')}
                               className={`p-1.5 rounded-md transition-all ${
                                 mode === 'table'
-                                  ? 'bg-background shadow-sm text-blue-400'
-                                  : 'text-muted-foreground hover:text-foreground'
+                                  ? 'bg-slate-800 shadow-sm text-cyan-300'
+                                  : 'text-muted-foreground hover:text-cyan-200'
                               }`}
                               title="Table View"
                             >
@@ -424,24 +454,11 @@ export default function ManageExtraServices() {
                             </button>
                           </div>
 
-                          {/* Add Item Button */}
-                          <button
-                            onClick={() => {
-                              setActiveCategoryId(cat.id)
-                              setMenuForm({ name: "", description: "", price: "", imageFile: undefined, is_active: true })
-                              setShowMenuDlg(true)
-                            }}
-                            className="btn-primary py-1.5"
-                          >
-                            <Plus className="icon-md" />
-                            <span className="hidden sm:inline">Add Item</span>
-                          </button>
-
                           {/* Delete Category */}
                           <button
                             onClick={() => deleteCategory(cat.id)}
                             disabled={isDeletingCat}
-                            className="btn-icon hover:bg-destructive/10 disabled:opacity-50"
+                            className={destructiveIconButtonClass}
                             title="Delete Category"
                           >
                             {isDeletingCat
@@ -453,7 +470,7 @@ export default function ManageExtraServices() {
                       </div>
                     </CardHeader>
 
-                    <CardContent className="content-card-padding pt-0">
+                    <CardContent className="content-card-padding pt-3">
                       <AnimatePresence mode="wait">
 
                         {/* ✅ GRID VIEW */}
@@ -464,7 +481,7 @@ export default function ManageExtraServices() {
                             animate={{ opacity: 1, x: 0 }}
                             exit={{ opacity: 0, x: -10 }}
                             transition={{ duration: 0.2 }}
-                            className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3"
+                            className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6"
                           >
                             {Array.isArray(cat.items) && cat.items.map((item, idx) => {
                               if (!item?.id) return null
@@ -476,7 +493,7 @@ export default function ManageExtraServices() {
                                   animate={{ opacity: 1, scale: 1 }}
                                   transition={{ delay: 0.04 * idx }}
                                 >
-                                  <Card className="content-card overflow-hidden hover:shadow-lg transition-all duration-200 bg-muted/20">
+                                  <Card className="overflow-hidden rounded-lg border border-cyan-400/25 bg-gradient-to-b from-slate-900/70 to-slate-950/70 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-cyan-500/10">
                                     <CardContent className="p-0">
                                       {/* Image */}
                                       <div className="aspect-video relative">
@@ -488,11 +505,11 @@ export default function ManageExtraServices() {
                                         />
                                         {/* Delete button overlay */}
                                         <button
-                                          onClick={() => deleteMenuItem(cat.id, item.id)}
-                                          disabled={isDeleting}
-                                          className="absolute top-1.5 right-1.5 p-1 bg-background/80 hover:bg-background rounded-lg transition-all disabled:opacity-50"
-                                          title="Delete item"
-                                        >
+                                            onClick={() => deleteMenuItem(cat.id, item.id)}
+                                            disabled={isDeleting}
+                                            className="absolute right-1.5 top-1.5 inline-flex items-center justify-center rounded-md border border-rose-400/30 bg-slate-950/80 p-1 text-rose-300 transition-all duration-200 hover:border-rose-300/60 hover:bg-rose-500/20 disabled:cursor-not-allowed disabled:opacity-50"
+                                            title="Delete item"
+                                          >
                                           {isDeleting
                                             ? <Loader2 className="w-3 h-3 text-destructive animate-spin" />
                                             : <Trash2 className="w-3 h-3 text-destructive" />
@@ -501,7 +518,7 @@ export default function ManageExtraServices() {
                                       </div>
 
                                       {/* Info */}
-                                      <div className="p-2 space-y-1">
+                                      <div className="space-y-1 p-2.5">
                                         <p className="body-text font-semibold truncate text-xs sm:text-sm">
                                           {item.name}
                                         </p>
@@ -543,7 +560,7 @@ export default function ManageExtraServices() {
                                   setMenuForm({ name: "", description: "", price: "", imageFile: undefined, is_active: true })
                                   setShowMenuDlg(true)
                                 }}
-                                className="content-card overflow-hidden border-2 border-dashed border-border hover:border-primary/50 cursor-pointer transition-all duration-200 hover:shadow-md bg-muted/10"
+                                className="cursor-pointer overflow-hidden rounded-lg border-2 border-dashed border-cyan-400/25 bg-slate-900/40 transition-all duration-200 hover:border-cyan-300/50 hover:shadow-md"
                               >
                                 <CardContent className="p-0 flex items-center justify-center min-h-[100px]">
                                   <div className="flex flex-col items-center gap-1 text-muted-foreground hover:text-foreground transition-colors p-4">
@@ -564,7 +581,7 @@ export default function ManageExtraServices() {
                             animate={{ opacity: 1, x: 0 }}
                             exit={{ opacity: 0, x: 10 }}
                             transition={{ duration: 0.2 }}
-                            className="table-container"
+                            className="table-container overflow-hidden rounded-lg border border-cyan-500/25 bg-slate-950/35"
                           >
                             {cat.items.length === 0 ? (
                               <div className="flex flex-col items-center justify-center py-10 gap-2 text-muted-foreground">
@@ -574,10 +591,10 @@ export default function ManageExtraServices() {
                             ) : (
                               <div className="overflow-x-auto">
                                 <table className="w-full text-left">
-                                  <thead className="table-header">
+                                  <thead className="bg-slate-900/70">
                                     <tr>
                                       {["Item", "Description", "Price", "Status", "Action"].map(h => (
-                                        <th key={h} className="table-cell table-header-text">{h}</th>
+                                        <th key={h} className="table-cell text-[11px] font-bold uppercase tracking-wider text-cyan-100/80 sm:text-xs">{h}</th>
                                       ))}
                                     </tr>
                                   </thead>
@@ -586,7 +603,7 @@ export default function ManageExtraServices() {
                                       if (!item?.id) return null
                                       const isDeleting = deletingItemId === item.id
                                       return (
-                                        <tr key={item.id} className="table-row">
+                                        <tr key={item.id} className="table-row border-b border-cyan-500/10 last:border-0">
                                           {/* Item name + image */}
                                           <td className="table-cell">
                                             <div className="flex items-center gap-3">
@@ -634,7 +651,7 @@ export default function ManageExtraServices() {
                                             <button
                                               onClick={() => deleteMenuItem(cat.id, item.id)}
                                               disabled={isDeleting}
-                                              className="btn-icon hover:bg-destructive/10 disabled:opacity-50"
+                                              className={destructiveIconButtonClass}
                                               title="Delete"
                                             >
                                               {isDeleting
@@ -659,49 +676,55 @@ export default function ManageExtraServices() {
                 </motion.div>
               )
             })}
-          </div>
-        )
-      )}
+            </div>
+          )
+        )}
+      </div>
 
       {/* ✅ Category Dialog */}
       <Dialog open={showCategoryDlg} onOpenChange={setShowCategoryDlg}>
-        <DialogContent className="sm:max-w-[425px] w-[95vw] bg-card border border-border shadow-2xl rounded-xl">
+        <DialogContent className="w-[95vw] rounded-xl border border-cyan-400/25 bg-gradient-to-br from-slate-950 via-slate-900 to-cyan-950/30 shadow-2xl sm:max-w-[425px]">
           <DialogHeader>
-            <DialogTitle className="section-title">New Category</DialogTitle>
-            <DialogDescription className="body-text-muted">
+            <DialogTitle className="flex items-center gap-2 text-base font-bold tracking-wide text-cyan-100 sm:text-lg">
+              <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-cyan-400/35 bg-cyan-500/10">
+                <FolderPlus className="h-4 w-4 text-cyan-300" />
+              </span>
+              New Category
+            </DialogTitle>
+            <DialogDescription className="text-xs text-slate-300/70 sm:text-sm">
               Enter a name and description for your new category.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-2">
             <div className="space-y-1.5">
-              <label className="table-header-text">Name *</label>
+              <label className="text-[11px] font-bold uppercase tracking-wider text-cyan-100/80 sm:text-xs">Name *</label>
               <Input
                 value={categoryForm.name}
                 onChange={e => setCategoryForm({ ...categoryForm, name: e.target.value })}
                 placeholder="e.g. Food, Drinks, Snacks"
                 disabled={categoryLoading}
-                className="bg-muted/20 border-border"
+                className="border-cyan-400/25 bg-slate-900/70 text-slate-100 placeholder:text-slate-400 focus-visible:ring-cyan-400/60"
               />
             </div>
             <div className="space-y-1.5">
-              <label className="table-header-text">Description</label>
+              <label className="text-[11px] font-bold uppercase tracking-wider text-cyan-100/80 sm:text-xs">Description</label>
               <Input
                 value={categoryForm.description}
                 onChange={e => setCategoryForm({ ...categoryForm, description: e.target.value })}
                 placeholder="Optional description"
                 disabled={categoryLoading}
-                className="bg-muted/20 border-border"
+                className="border-cyan-400/25 bg-slate-900/70 text-slate-100 placeholder:text-slate-400 focus-visible:ring-cyan-400/60"
               />
             </div>
           </div>
           <DialogFooter className="gap-2">
-            <button onClick={() => setShowCategoryDlg(false)} disabled={categoryLoading} className="btn-secondary flex-1 justify-center">
+            <button onClick={() => setShowCategoryDlg(false)} disabled={categoryLoading} className={`${secondaryButtonClass} flex-1`}>
               Cancel
             </button>
             <button
               onClick={createCategory}
               disabled={categoryLoading || !categoryForm.name.trim()}
-              className="btn-primary flex-1 justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+              className={`${primaryButtonClass} flex-1`}
             >
               {categoryLoading ? <><Loader2 className="icon-md animate-spin" /> Creating...</> : 'Create Category'}
             </button>
@@ -711,37 +734,42 @@ export default function ManageExtraServices() {
 
       {/* ✅ Menu Item Dialog */}
       <Dialog open={showMenuDlg} onOpenChange={setShowMenuDlg}>
-        <DialogContent className="sm:max-w-[500px] w-[95vw] bg-card border border-border shadow-2xl rounded-xl">
+        <DialogContent className="w-[95vw] rounded-xl border border-cyan-400/25 bg-gradient-to-br from-slate-950 via-slate-900 to-cyan-950/30 shadow-2xl sm:max-w-[500px]">
           <DialogHeader>
-            <DialogTitle className="section-title">New Menu Item</DialogTitle>
-            <DialogDescription className="body-text-muted">
+            <DialogTitle className="flex items-center gap-2 text-base font-bold tracking-wide text-cyan-100 sm:text-lg">
+              <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-emerald-400/35 bg-emerald-500/10">
+                <Sparkles className="h-4 w-4 text-emerald-300" />
+              </span>
+              New Menu Item
+            </DialogTitle>
+            <DialogDescription className="text-xs text-slate-300/70 sm:text-sm">
               Add a new item to your category.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-2 max-h-[60vh] overflow-y-auto pr-1">
             <div className="space-y-1.5">
-              <label className="table-header-text">Name *</label>
+              <label className="text-[11px] font-bold uppercase tracking-wider text-cyan-100/80 sm:text-xs">Name *</label>
               <Input
                 value={menuForm.name}
                 onChange={e => setMenuForm({ ...menuForm, name: e.target.value })}
                 placeholder="e.g. Burger, Coffee"
                 disabled={menuLoading}
-                className="bg-muted/20 border-border"
+                className="border-cyan-400/25 bg-slate-900/70 text-slate-100 placeholder:text-slate-400 focus-visible:ring-cyan-400/60"
               />
             </div>
             <div className="space-y-1.5">
-              <label className="table-header-text">Description</label>
+              <label className="text-[11px] font-bold uppercase tracking-wider text-cyan-100/80 sm:text-xs">Description</label>
               <Textarea
                 value={menuForm.description}
                 onChange={e => setMenuForm({ ...menuForm, description: e.target.value })}
                 placeholder="Optional description"
                 disabled={menuLoading}
                 rows={3}
-                className="bg-muted/20 border-border resize-none"
+                className="resize-none border-cyan-400/25 bg-slate-900/70 text-slate-100 placeholder:text-slate-400 focus-visible:ring-cyan-400/60"
               />
             </div>
             <div className="space-y-1.5">
-              <label className="table-header-text">Price (₹) *</label>
+              <label className="text-[11px] font-bold uppercase tracking-wider text-cyan-100/80 sm:text-xs">Price (₹) *</label>
               <div className="relative">
                 <IndianRupee className="absolute left-3 top-1/2 -translate-y-1/2 icon-md text-muted-foreground" />
                 <Input
@@ -752,18 +780,18 @@ export default function ManageExtraServices() {
                   min="0"
                   step="0.01"
                   disabled={menuLoading}
-                  className="pl-9 bg-muted/20 border-border"
+                  className="border-cyan-400/25 bg-slate-900/70 pl-9 text-slate-100 placeholder:text-slate-400 focus-visible:ring-cyan-400/60"
                 />
               </div>
             </div>
             <div className="space-y-1.5">
-              <label className="table-header-text">Image (optional)</label>
+              <label className="text-[11px] font-bold uppercase tracking-wider text-cyan-100/80 sm:text-xs">Image (optional)</label>
               <Input
                 type="file"
                 accept="image/*"
                 onChange={handleImageSelect}
                 disabled={menuLoading}
-                className="bg-muted/20 border-border file:text-primary file:bg-transparent file:border-0 file:font-medium"
+                className="border-cyan-400/25 bg-slate-900/70 text-slate-200 file:border-0 file:bg-transparent file:font-medium file:text-cyan-300"
               />
               {menuForm.imageFile && (
                 <p className="body-text-muted text-xs mt-1">
@@ -773,13 +801,13 @@ export default function ManageExtraServices() {
             </div>
           </div>
           <DialogFooter className="gap-2">
-            <button onClick={() => setShowMenuDlg(false)} disabled={menuLoading} className="btn-secondary flex-1 justify-center">
+            <button onClick={() => setShowMenuDlg(false)} disabled={menuLoading} className={`${secondaryButtonClass} flex-1`}>
               Cancel
             </button>
             <button
               onClick={createMenuItem}
               disabled={menuLoading || !menuForm.name.trim() || !menuForm.price.trim()}
-              className="btn-primary flex-1 justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+              className={`${primaryButtonClass} flex-1`}
             >
               {menuLoading ? <><Loader2 className="icon-md animate-spin" /> Creating...</> : 'Create Item'}
             </button>

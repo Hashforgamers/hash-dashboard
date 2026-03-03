@@ -224,20 +224,20 @@ const MealSelector: React.FC<MealSelectorProps> = ({
         initial={{ opacity: 0, scale: 0.95, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 20 }}
-        className="relative w-full max-w-4xl h-[85vh] overflow-hidden rounded-xl bg-white shadow-2xl dark:bg-gray-900" // ✅ Smaller modal: max-w-4xl instead of max-w-6xl, h-[85vh] instead of 80vh
+        className="relative h-[85vh] w-full max-w-4xl overflow-hidden rounded-xl border border-cyan-500/30 bg-gradient-to-br from-slate-900/95 via-slate-900/92 to-slate-950/95 shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         {/* ✅ Compact Header */}
-        <div className="flex items-center justify-between border-b border-gray-300 p-4 dark:border-gray-700"> {/* ✅ p-4 instead of p-6 */}
+        <div className="flex items-center justify-between border-b border-cyan-500/25 bg-slate-900/80 p-4">
           <div className="flex items-center gap-3"> {/* ✅ gap-3 instead of gap-4 */}
-            <div className="rounded-lg bg-green-700 p-2 text-white"> {/* ✅ p-2 instead of p-3 */}
+            <div className="rounded-lg bg-cyan-500/20 p-2 text-cyan-200">
               <ChefHat size={20} /> {/* ✅ size 20 instead of 28 */}
             </div>
             <div>
-              <h2 className="text-lg font-bold text-gray-900 dark:text-white"> {/* ✅ text-lg instead of text-2xl */}
+              <h2 className="text-lg font-bold text-slate-100">
                 Add Meals & Extras
               </h2>
-              <p className="text-xs text-gray-600 dark:text-gray-400"> {/* ✅ text-xs instead of text-sm */}
+              <p className="text-xs text-slate-400">
                 {categories.length} categories •{" "}
                 {categories.reduce((sum, c) => sum + c.menu_count, 0)} items
               </p>
@@ -245,13 +245,13 @@ const MealSelector: React.FC<MealSelectorProps> = ({
           </div>
           <div className="flex items-center gap-2">
             <button
-              className="rounded-lg bg-green-600 px-4 py-2 text-sm text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-600" // ✅ text-sm, px-4 py-2
+              className="rounded-lg bg-gradient-to-r from-emerald-500 to-cyan-500 px-4 py-2 text-sm text-white hover:from-emerald-400 hover:to-cyan-400 focus:outline-none"
               onClick={handleConfirm}
             >
               Add to Order
             </button>
             <button
-              className="rounded-lg p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700"
+              className="rounded-lg p-2 text-slate-300 hover:bg-slate-700"
               onClick={onClose}
               aria-label="Close"
             >
@@ -263,12 +263,12 @@ const MealSelector: React.FC<MealSelectorProps> = ({
         {/* Body */}
         <div className="flex h-[calc(85vh-120px)] overflow-hidden"> {/* ✅ Adjusted height calculation */}
           {/* ✅ Compact Sidebar */}
-          <aside className="w-56 overflow-auto border-r border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-800"> {/* ✅ w-56 instead of w-64, p-3 instead of p-4 */}
-            <h3 className="mb-3 text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase"> {/* ✅ text-xs, mb-3 */}
+          <aside className="w-56 overflow-auto border-r border-cyan-500/20 bg-slate-900/60 p-3">
+            <h3 className="mb-3 text-xs font-semibold uppercase text-slate-300">
               Categories
             </h3>
             {categories.length === 0 && (
-              <p className="text-gray-500 dark:text-gray-400 text-xs">No categories</p> /* ✅ text-xs */
+              <p className="text-xs text-slate-400">No categories</p>
             )}
             <ul>
               {categories.map((category) => (
@@ -276,19 +276,19 @@ const MealSelector: React.FC<MealSelectorProps> = ({
                   <button
                     className={`block w-full rounded-lg p-2 text-left transition-colors duration-200 ${
                       selectedCategory === category.id
-                        ? "bg-green-200 text-green-800 dark:bg-green-900 dark:text-green-300"
-                        : "hover:bg-green-100 dark:hover:bg-green-900/30"
+                        ? "bg-cyan-500/20 text-cyan-200"
+                        : "hover:bg-slate-800"
                     }`}
                     onClick={() => setSelectedCategory(category.id)}
                   >
                     <div className="flex justify-between">
                       <span className="font-medium text-sm">{category.name}</span> {/* ✅ text-sm */}
-                      <span className="rounded-full bg-gray-300 px-1.5 py-0.5 text-xs font-semibold text-gray-700 dark:bg-gray-600 dark:text-gray-300"> {/* ✅ smaller padding */}
+                      <span className="rounded-full bg-slate-700 px-1.5 py-0.5 text-xs font-semibold text-slate-200">
                         {category.menu_count}
                       </span>
                     </div>
                     {category.description && (
-                      <p className="mt-1 text-xs text-gray-600 line-clamp-2 dark:text-gray-400">
+                      <p className="mt-1 line-clamp-2 text-xs text-slate-400">
                         {category.description}
                       </p>
                     )}
@@ -299,7 +299,7 @@ const MealSelector: React.FC<MealSelectorProps> = ({
           </aside>
 
           {/* ✅ Compact Main content */}
-          <section className="flex-1 overflow-auto p-4"> {/* ✅ p-4 instead of p-6 */}
+          <section className="flex-1 overflow-auto bg-slate-900/35 p-4">
             {loading && (
               <div className="flex flex-col items-center justify-center space-y-3 h-64"> {/* ✅ h-64 for fixed height */}
                 <Loader2 size={36} className="animate-spin text-green-600" /> {/* ✅ size 36 instead of 48 */}
@@ -340,10 +340,10 @@ const MealSelector: React.FC<MealSelectorProps> = ({
                         <motion.div
                           key={item.id}
                           layout
-                          className={`rounded-lg border-2 bg-white shadow-sm dark:bg-gray-700 ${
+                          className={`rounded-lg border-2 bg-slate-800/80 shadow-sm ${
                             quantity > 0
-                              ? "border-green-500 shadow-green-200"
-                              : "border-gray-200 dark:border-gray-600"
+                              ? "border-emerald-400/70 shadow-emerald-500/20"
+                              : "border-slate-600"
                           }`} /* ✅ Removed max-w-md, removed mb-6 */
                           whileHover={{ y: -2 }} /* ✅ Less hover effect */
                         >
@@ -361,7 +361,7 @@ const MealSelector: React.FC<MealSelectorProps> = ({
                               </div>
                             )}
                             {quantity > 0 && (
-                              <div className="absolute right-2 top-2 rounded-lg bg-green-600 px-2 py-1 text-xs font-semibold text-white"> {/* ✅ Smaller badge */}
+                              <div className="absolute right-2 top-2 rounded-lg bg-cyan-500/90 px-2 py-1 text-xs font-semibold text-white">
                                 {quantity}
                               </div>
                             )}
@@ -369,18 +369,18 @@ const MealSelector: React.FC<MealSelectorProps> = ({
 
                           {/* ✅ Compact Card Content */}
                           <div className="p-3"> {/* ✅ p-3 instead of p-4 */}
-                            <h3 className="mb-1 font-semibold text-sm text-gray-900 dark:text-gray-200 line-clamp-1"> {/* ✅ text-sm, mb-1, line-clamp-1 */}
+                            <h3 className="mb-1 line-clamp-1 text-sm font-semibold text-slate-100">
                               {item.name}
                             </h3>
                             {item.description && (
-                              <p className="mb-3 text-xs text-gray-600 dark:text-gray-400 line-clamp-2"> {/* ✅ text-xs, mb-3 */}
+                              <p className="mb-3 line-clamp-2 text-xs text-slate-400">
                                 {item.description}
                               </p>
                             )}
                             
                             {/* ✅ Compact Price and Controls */}
                             <div className="flex items-center justify-between">
-                              <div className="flex items-center space-x-1 text-green-600">
+                              <div className="flex items-center space-x-1 text-emerald-300">
                                 <IndianRupee size={16} /> {/* ✅ size 16 instead of 20 */}
                                 <span className="text-lg font-bold">{item.price}</span> {/* ✅ text-lg instead of text-xl */}
                               </div>
@@ -396,7 +396,7 @@ const MealSelector: React.FC<MealSelectorProps> = ({
                                 >
                                   <Minus size={12} /> {/* ✅ size 12 instead of 16 */}
                                 </button>
-                                <span className="min-w-[20px] text-center font-semibold text-sm text-gray-900 dark:text-gray-100"> {/* ✅ min-w-[20px], text-sm */}
+                                <span className="min-w-[20px] text-center text-sm font-semibold text-slate-100">
                                   {quantity}
                                 </span>
                                 <button
@@ -416,7 +416,7 @@ const MealSelector: React.FC<MealSelectorProps> = ({
                             {quantity > 0 && (
                               <motion.p
                                 layout
-                                className="mt-2 text-right font-semibold text-green-700 text-sm" /* ✅ mt-2, text-sm */
+                                className="mt-2 text-right text-sm font-semibold text-emerald-300"
                               >
                                 Subtotal: ₹{(quantity * item.price).toFixed(2)}
                               </motion.p>
@@ -431,16 +431,16 @@ const MealSelector: React.FC<MealSelectorProps> = ({
         </div>
 
         {/* ✅ Compact Footer */}
-        <div className="border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 p-3 my-[-2vh]"> {/* ✅ p-3 instead of p-4 */}
+        <div className="my-[-2vh] border-t border-cyan-500/20 bg-slate-900/95 p-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <div>
-                <p className="text-xs text-gray-600 dark:text-gray-400"> {/* ✅ text-xs */}
+                <p className="text-xs text-slate-400">
                   {getTotalItems()} item{getTotalItems() !== 1 ? 's' : ''} selected
                 </p>
                 <div className="flex items-center gap-1">
-                  <IndianRupee className="w-4 h-4 text-green-600" /> {/* ✅ w-4 h-4 */}
-                  <span className="text-xl font-bold text-green-600"> {/* ✅ text-xl instead of text-2xl */}
+                  <IndianRupee className="w-4 h-4 text-emerald-300" />
+                  <span className="text-xl font-bold text-emerald-300">
                     {getTotalCost()}
                   </span>
                 </div>
@@ -449,7 +449,7 @@ const MealSelector: React.FC<MealSelectorProps> = ({
               {selectedMeals.length > 0 && (
                 <button
                   onClick={clearSelection}
-                  className="text-xs text-red-600 hover:text-red-700 underline" /* ✅ text-xs */
+                  className="text-xs text-rose-300 hover:text-rose-200 underline"
                 >
                   Clear All
                 </button>
@@ -459,7 +459,7 @@ const MealSelector: React.FC<MealSelectorProps> = ({
             <div className="flex gap-2"> {/* ✅ gap-2 instead of gap-3 */}
               <button
                 onClick={onClose}
-                className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors font-medium text-sm" /* ✅ text-sm */
+                className="rounded-lg border border-slate-600 px-4 py-2 text-sm font-medium text-slate-200 hover:bg-slate-700"
               >
                 Cancel
               </button>
