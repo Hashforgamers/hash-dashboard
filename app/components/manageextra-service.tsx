@@ -108,7 +108,7 @@ export default function ManageExtraServices() {
      HELPERS
   --------------------------------------------------------------- */
   const getViewMode = (catId: number): 'grid' | 'table' =>
-    viewModes[catId] ?? 'grid'
+    viewModes[catId] ?? 'table'
 
   const setViewMode = (catId: number, mode: 'grid' | 'table') =>
     setViewModes(prev => ({ ...prev, [catId]: mode }))
@@ -308,13 +308,13 @@ export default function ManageExtraServices() {
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="w-full space-y-4 px-1 pb-2 sm:px-2"
+      className="flex h-full min-h-0 w-full flex-col space-y-4 overflow-hidden px-1 pb-2 sm:px-2"
     >
       <motion.div
         initial={{ opacity: 0, y: -14 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.08 }}
-        className="gaming-panel rounded-xl p-3 sm:p-4"
+        className="gaming-panel shrink-0 rounded-xl p-3 sm:p-4"
       >
         <div className="flex gap-2 overflow-x-auto pb-1 sm:gap-3">
           <div className="gaming-kpi-card min-w-[155px] flex-1 rounded-xl p-3 sm:min-w-[170px] sm:p-4">
@@ -349,47 +349,48 @@ export default function ManageExtraServices() {
         </div>
       </motion.div>
 
-      {/* ✅ Error State */}
-      {error && (
-        <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4 text-destructive">
-          <p className="body-text font-medium">Error: {error}</p>
-          <button
-            className={`${secondaryButtonClass} mt-2 border-destructive text-destructive`}
-            onClick={() => { setError(null); if (vendorId) fetchCategories() }}
-            disabled={!vendorId}
-          >
-            Try Again
-          </button>
-        </div>
-      )}
-
-      {/* ✅ Auth Loading */}
-      {!vendorId && !error && (
-        <div className="flex items-center justify-center py-12 gap-3 text-muted-foreground">
-          <Loader2 className="w-6 h-6 animate-spin" />
-          <p className="body-text-muted">Loading authentication...</p>
-        </div>
-      )}
-
-      {/* ✅ Main Content */}
-      {vendorId && (
-        loading ? (
-          <div className="flex items-center justify-center py-12 gap-3 text-muted-foreground">
-            <Loader2 className="w-8 h-8 animate-spin text-blue-400" />
-            <p className="body-text-muted">Loading categories...</p>
-          </div>
-        ) : !Array.isArray(categories) || categories.length === 0 ? (
-          <div className="gaming-panel flex flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed border-cyan-400/20 py-16">
-            <UtensilsCrossed className="w-12 h-12 text-muted-foreground/30" />
-            <h3 className="section-title text-muted-foreground/60">No categories yet</h3>
-            <p className="body-text-muted">Create your first category to get started</p>
-            <button className={`${primaryButtonClass} mt-2`} onClick={() => setShowCategoryDlg(true)}>
-              <Plus className="icon-md" />
-              Create First Category
+      <div className="min-h-0 flex-1 overflow-y-auto pr-1">
+        {/* ✅ Error State */}
+        {error && (
+          <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4 text-destructive">
+            <p className="body-text font-medium">Error: {error}</p>
+            <button
+              className={`${secondaryButtonClass} mt-2 border-destructive text-destructive`}
+              onClick={() => { setError(null); if (vendorId) fetchCategories() }}
+              disabled={!vendorId}
+            >
+              Try Again
             </button>
           </div>
-        ) : (
-          <div className="section-spacing">
+        )}
+
+        {/* ✅ Auth Loading */}
+        {!vendorId && !error && (
+          <div className="flex items-center justify-center py-12 gap-3 text-muted-foreground">
+            <Loader2 className="w-6 h-6 animate-spin" />
+            <p className="body-text-muted">Loading authentication...</p>
+          </div>
+        )}
+
+        {/* ✅ Main Content */}
+        {vendorId && (
+          loading ? (
+            <div className="flex items-center justify-center py-12 gap-3 text-muted-foreground">
+              <Loader2 className="w-8 h-8 animate-spin text-blue-400" />
+              <p className="body-text-muted">Loading categories...</p>
+            </div>
+          ) : !Array.isArray(categories) || categories.length === 0 ? (
+            <div className="gaming-panel flex flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed border-cyan-400/20 py-16">
+              <UtensilsCrossed className="w-12 h-12 text-muted-foreground/30" />
+              <h3 className="section-title text-muted-foreground/60">No categories yet</h3>
+              <p className="body-text-muted">Create your first category to get started</p>
+              <button className={`${primaryButtonClass} mt-2`} onClick={() => setShowCategoryDlg(true)}>
+                <Plus className="icon-md" />
+                Create First Category
+              </button>
+            </div>
+          ) : (
+            <div className="section-spacing">
             {categories.map((cat, i) => {
               if (!cat?.id) return null
               const mode = getViewMode(cat.id)
@@ -675,9 +676,10 @@ export default function ManageExtraServices() {
                 </motion.div>
               )
             })}
-          </div>
-        )
-      )}
+            </div>
+          )
+        )}
+      </div>
 
       {/* ✅ Category Dialog */}
       <Dialog open={showCategoryDlg} onOpenChange={setShowCategoryDlg}>

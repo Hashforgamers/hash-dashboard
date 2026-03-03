@@ -327,8 +327,8 @@ export default function GamesManagementPage() {
 
   if (loading) {
     return (
-      <DashboardLayout>
-        <div className="flex items-center justify-center h-screen">
+      <DashboardLayout contentScroll="contained">
+        <div className="flex h-full min-h-0 flex-1 items-center justify-center">
           <Loader2 className="w-8 h-8 animate-spin text-primary" />
         </div>
       </DashboardLayout>
@@ -336,12 +336,12 @@ export default function GamesManagementPage() {
   }
 
   return (
-    <DashboardLayout>
-      <div className="flex-1 space-y-3 sm:space-y-4">
+    <DashboardLayout contentScroll="contained">
+      <div className="flex h-full min-h-0 flex-1 flex-col gap-3 sm:gap-4">
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="gaming-panel rounded-xl p-4 sm:p-5"
+          className="gaming-panel shrink-0 rounded-xl p-4 sm:p-5"
         >
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
@@ -358,189 +358,191 @@ export default function GamesManagementPage() {
           </div>
         </motion.div>
 
-        {/* Success/Error Messages */}
-        <AnimatePresence>
-          {success && (
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              className="gaming-panel mb-4 flex items-center gap-2 rounded-lg border border-green-500/20 bg-green-500/10 p-4 text-green-300"
-            >
-              <CheckCircle2 className="w-5 h-5" />
-              {success}
-            </motion.div>
-          )}
-          {error && (
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              className="gaming-panel mb-4 flex items-center gap-2 rounded-lg border border-red-500/20 bg-red-500/10 p-4 text-red-300"
-            >
-              <XCircle className="w-5 h-5" />
-              {error}
-            </motion.div>
-          )}
-        </AnimatePresence>
+        <div className="min-h-0 flex-1 overflow-y-auto pr-1">
+          {/* Success/Error Messages */}
+          <AnimatePresence>
+            {success && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className="gaming-panel mb-4 flex items-center gap-2 rounded-lg border border-green-500/20 bg-green-500/10 p-4 text-green-300"
+              >
+                <CheckCircle2 className="w-5 h-5" />
+                {success}
+              </motion.div>
+            )}
+            {error && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className="gaming-panel mb-4 flex items-center gap-2 rounded-lg border border-red-500/20 bg-red-500/10 p-4 text-red-300"
+              >
+                <XCircle className="w-5 h-5" />
+                {error}
+              </motion.div>
+            )}
+          </AnimatePresence>
 
-        {/* Games Table */}
-        {vendorGames.length === 0 ? (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="gaming-panel text-center py-16 rounded-xl border border-cyan-400/20 bg-slate-950/40"
-          >
-            <Gamepad2 className="w-16 h-16 mx-auto text-muted-foreground/50 mb-4" />
-            <h3 className="text-xl font-semibold text-foreground mb-2">
-              No Games Added Yet
-            </h3>
-            <p className="text-muted-foreground mb-6">
-              Start by adding games to your consoles
-            </p>
-            <button onClick={() => setShowAddModal(true)} className={primaryButtonClass}>
-              <Plus className="w-4 h-4 mr-2" />
-              Add Your First Game
-            </button>
-          </motion.div>
-        ) : (
-          <Card className="gaming-panel overflow-hidden rounded-xl border-cyan-400/20 bg-slate-950/45">
-            <CardHeader className="border-b border-cyan-500/15">
-              <CardTitle className="text-cyan-100">Your Games</CardTitle>
-              <CardDescription className="text-slate-300/70">
-                {vendorGames.length} game{vendorGames.length !== 1 ? "s" : ""}{" "}
-                configured across your consoles
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b border-border">
-                      <th className="text-left py-3 px-4 text-xs font-bold uppercase tracking-wider text-cyan-100/80">
-                        Game
-                      </th>
-                      <th className="text-left py-3 px-4 text-xs font-bold uppercase tracking-wider text-cyan-100/80">
-                        Genre
-                      </th>
-                      <th className="text-left py-3 px-4 text-xs font-bold uppercase tracking-wider text-cyan-100/80">
-                        Available On
-                      </th>
-                      <th className="text-left py-3 px-4 text-xs font-bold uppercase tracking-wider text-cyan-100/80">
-                        Avg Price
-                      </th>
-                      <th className="text-center py-3 px-4 text-xs font-bold uppercase tracking-wider text-cyan-100/80">
-                        Actions
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {vendorGames.map((vg, index) => (
-                      <motion.tr
-                        key={vg.game.id}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: index * 0.05 }}
-                        className="border-b border-cyan-500/10 transition-colors hover:bg-cyan-500/5"
-                      >
-                        <td className="py-3 px-4">
-                          <div className="flex items-center gap-3">
-                            <div className="w-12 h-12 rounded bg-gradient-to-br from-purple-500 to-blue-600 flex items-center justify-center flex-shrink-0">
-                              {vg.game.image_url ? (
-                                <img
-                                  src={vg.game.image_url}
-                                  alt={vg.game.name}
-                                  className="w-full h-full object-cover rounded"
-                                />
-                              ) : (
-                                <Gamepad2 className="w-6 h-6 text-white" />
-                              )}
-                            </div>
-                            <div>
-                              <p className="font-semibold text-foreground">
-                                {vg.game.name}
-                              </p>
-                              {vg.game.rawg_rating && (
-                                <p className="text-xs text-muted-foreground">
-                                  ⭐ {vg.game.rawg_rating.toFixed(1)}
+          {/* Games Table */}
+          {vendorGames.length === 0 ? (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="gaming-panel text-center py-16 rounded-xl border border-cyan-400/20 bg-slate-950/40"
+            >
+              <Gamepad2 className="w-16 h-16 mx-auto text-muted-foreground/50 mb-4" />
+              <h3 className="text-xl font-semibold text-foreground mb-2">
+                No Games Added Yet
+              </h3>
+              <p className="text-muted-foreground mb-6">
+                Start by adding games to your consoles
+              </p>
+              <button onClick={() => setShowAddModal(true)} className={primaryButtonClass}>
+                <Plus className="w-4 h-4 mr-2" />
+                Add Your First Game
+              </button>
+            </motion.div>
+          ) : (
+            <Card className="gaming-panel overflow-hidden rounded-xl border-cyan-400/20 bg-slate-950/45">
+              <CardHeader className="border-b border-cyan-500/15">
+                <CardTitle className="text-cyan-100">Your Games</CardTitle>
+                <CardDescription className="text-slate-300/70">
+                  {vendorGames.length} game{vendorGames.length !== 1 ? "s" : ""}{" "}
+                  configured across your consoles
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b border-border">
+                        <th className="text-left py-3 px-4 text-xs font-bold uppercase tracking-wider text-cyan-100/80">
+                          Game
+                        </th>
+                        <th className="text-left py-3 px-4 text-xs font-bold uppercase tracking-wider text-cyan-100/80">
+                          Genre
+                        </th>
+                        <th className="text-left py-3 px-4 text-xs font-bold uppercase tracking-wider text-cyan-100/80">
+                          Available On
+                        </th>
+                        <th className="text-left py-3 px-4 text-xs font-bold uppercase tracking-wider text-cyan-100/80">
+                          Avg Price
+                        </th>
+                        <th className="text-center py-3 px-4 text-xs font-bold uppercase tracking-wider text-cyan-100/80">
+                          Actions
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {vendorGames.map((vg, index) => (
+                        <motion.tr
+                          key={vg.game.id}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: index * 0.05 }}
+                          className="border-b border-cyan-500/10 transition-colors hover:bg-cyan-500/5"
+                        >
+                          <td className="py-3 px-4">
+                            <div className="flex items-center gap-3">
+                              <div className="w-12 h-12 rounded bg-gradient-to-br from-purple-500 to-blue-600 flex items-center justify-center flex-shrink-0">
+                                {vg.game.image_url ? (
+                                  <img
+                                    src={vg.game.image_url}
+                                    alt={vg.game.name}
+                                    className="w-full h-full object-cover rounded"
+                                  />
+                                ) : (
+                                  <Gamepad2 className="w-6 h-6 text-white" />
+                                )}
+                              </div>
+                              <div>
+                                <p className="font-semibold text-foreground">
+                                  {vg.game.name}
                                 </p>
-                              )}
+                                {vg.game.rawg_rating && (
+                                  <p className="text-xs text-muted-foreground">
+                                    ⭐ {vg.game.rawg_rating.toFixed(1)}
+                                  </p>
+                                )}
+                              </div>
                             </div>
-                          </div>
-                        </td>
-                        <td className="py-3 px-4">
-                          <span className="text-sm text-muted-foreground">
-                            {vg.game.genre || "N/A"}
-                          </span>
-                        </td>
-                        <td className="py-3 px-4">
-                          <div className="flex flex-wrap gap-1">
-                            {vg.consoles.map((console) => {
-                              const consoleInfo = getConsoleInfo(
-                                console.console_type
-                              );
-                              return (
-                                <div
-                                  key={console.vendor_game_id}
-                                  className="group relative inline-flex items-center gap-1 rounded border border-cyan-400/20 bg-slate-900/60 px-2 py-1 text-xs"
-                                >
-                                  <span>{consoleInfo.icon}</span>
-                                  <span className="font-medium">
-                                    #{console.console_number}
-                                  </span>
-                                  {/* ✅ Show offer price in orange, normal in default */}
-                                  <span
-                                    className={
-                                      console.is_offer
-                                        ? "text-orange-500 font-semibold"
-                                        : "text-muted-foreground"
-                                    }
-                                  >
-                                    (₹{console.price_per_hour}/hr
-                                    {console.is_offer && (
-                                      <Tag className="w-3 h-3 inline ml-1" />
-                                    )}
-                                    )
-                                  </span>
-                                  <button
-                                    onClick={() =>
-                                      handleDeleteVendorGame(
-                                        console.vendor_game_id,
-                                        vg.game.name,
-                                        console.console_number
-                                      )
-                                    }
-                                    className="ml-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                                  >
-                                    <XCircle className="w-3 h-3 text-red-500 hover:text-red-600" />
-                                  </button>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        </td>
-                        <td className="py-3 px-4">
-                          <div className="flex items-center gap-1 text-primary font-semibold">
-                            <IndianRupee className="w-4 h-4" />
-                            <span>{vg.avg_price.toFixed(0)}/hr</span>
-                          </div>
-                        </td>
-                        <td className="py-3 px-4">
-                          <div className="flex items-center justify-center gap-2">
-                            <span className="text-xs text-muted-foreground">
-                              {vg.total_consoles} console
-                              {vg.total_consoles !== 1 ? "s" : ""}
+                          </td>
+                          <td className="py-3 px-4">
+                            <span className="text-sm text-muted-foreground">
+                              {vg.game.genre || "N/A"}
                             </span>
-                          </div>
-                        </td>
-                      </motion.tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </CardContent>
-          </Card>
-        )}
+                          </td>
+                          <td className="py-3 px-4">
+                            <div className="flex flex-wrap gap-1">
+                              {vg.consoles.map((console) => {
+                                const consoleInfo = getConsoleInfo(
+                                  console.console_type
+                                );
+                                return (
+                                  <div
+                                    key={console.vendor_game_id}
+                                    className="group relative inline-flex items-center gap-1 rounded border border-cyan-400/20 bg-slate-900/60 px-2 py-1 text-xs"
+                                  >
+                                    <span>{consoleInfo.icon}</span>
+                                    <span className="font-medium">
+                                      #{console.console_number}
+                                    </span>
+                                    {/* ✅ Show offer price in orange, normal in default */}
+                                    <span
+                                      className={
+                                        console.is_offer
+                                          ? "text-orange-500 font-semibold"
+                                          : "text-muted-foreground"
+                                      }
+                                    >
+                                      (₹{console.price_per_hour}/hr
+                                      {console.is_offer && (
+                                        <Tag className="w-3 h-3 inline ml-1" />
+                                      )}
+                                      )
+                                    </span>
+                                    <button
+                                      onClick={() =>
+                                        handleDeleteVendorGame(
+                                          console.vendor_game_id,
+                                          vg.game.name,
+                                          console.console_number
+                                        )
+                                      }
+                                      className="ml-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                                    >
+                                      <XCircle className="w-3 h-3 text-red-500 hover:text-red-600" />
+                                    </button>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </td>
+                          <td className="py-3 px-4">
+                            <div className="flex items-center gap-1 text-primary font-semibold">
+                              <IndianRupee className="w-4 h-4" />
+                              <span>{vg.avg_price.toFixed(0)}/hr</span>
+                            </div>
+                          </td>
+                          <td className="py-3 px-4">
+                            <div className="flex items-center justify-center gap-2">
+                              <span className="text-xs text-muted-foreground">
+                                {vg.total_consoles} console
+                                {vg.total_consoles !== 1 ? "s" : ""}
+                              </span>
+                            </div>
+                          </td>
+                        </motion.tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </div>
 
         {/* Add Game Modal */}
         <AnimatePresence>

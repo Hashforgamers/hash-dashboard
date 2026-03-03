@@ -1199,7 +1199,7 @@ const ToggleSwitch = ({
   const { navigation, cafeProfile, businessDetails, operatingHours, billingDetails, verifiedDocuments } = data;
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="h-full min-h-0 overflow-y-auto bg-background text-foreground">
       <div className="container py-6 md:py-8 space-y-8">
         <div className="grid grid-cols-12 gap-6">
           {/* Left Sidebar */}

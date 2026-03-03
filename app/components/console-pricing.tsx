@@ -119,7 +119,7 @@ export default function ConsolePricing() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [vendorId, setVendorId] = useState<number | null>(null);
   const [activeTab, setActiveTab] = useState<"default" | "offers">("default");
-  const [viewMode, setViewMode] = useState<"grid" | "table">("grid");
+  const [viewMode, setViewMode] = useState<"grid" | "table">("table");
   const [offers, setOffers] = useState<PricingOffer[]>([]);
   const [availableGames, setAvailableGames] = useState<AvailableGame[]>([]);
   const [isLoadingOffers, setIsLoadingOffers] = useState(false);
@@ -383,7 +383,7 @@ export default function ConsolePricing() {
     "inline-flex items-center justify-center rounded-lg border border-emerald-400/30 bg-emerald-500/10 p-2 text-emerald-300 transition-all duration-200 hover:border-emerald-300/60 hover:bg-emerald-500/20 disabled:cursor-not-allowed disabled:opacity-50";
 
   return (
-    <div className="space-y-4 px-1 pb-2 sm:px-2">
+    <div className="flex h-full min-h-0 flex-col gap-4 overflow-hidden px-1 pb-2 sm:px-2">
 
       {/* ✅ Success Toast */}
       <AnimatePresence>
@@ -401,7 +401,7 @@ export default function ConsolePricing() {
       </AnimatePresence>
 
       {/* ✅ Tab Navigation - uses global .tab-container */}
-      <div className="gaming-panel mb-2 flex w-full items-center gap-2 rounded-xl p-2">
+      <div className="gaming-panel mb-2 flex w-full shrink-0 items-center gap-2 rounded-xl p-2">
         <button
           onClick={() => setActiveTab("default")}
           className={`inline-flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold transition-all sm:text-sm ${
@@ -432,7 +432,7 @@ export default function ConsolePricing() {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.2 }}
-          className="flex-1"
+          className="min-h-0 flex-1 overflow-y-auto pr-1"
         >
           <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
             {consoleTypes.map((console) => (
@@ -506,10 +506,10 @@ export default function ConsolePricing() {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.2 }}
-          className="flex-1 flex flex-col gap-4 min-h-0"
+          className="flex flex-1 min-h-0 flex-col gap-4 overflow-hidden"
         >
           {/* Offers Header Row */}
-          <div className="gaming-panel flex flex-wrap items-center justify-between gap-3 rounded-xl p-3">
+          <div className="gaming-panel shrink-0 flex flex-wrap items-center justify-between gap-3 rounded-xl p-3">
             <div className="flex items-center gap-3">
               <h2 className="section-title">Active Promotions</h2>
 

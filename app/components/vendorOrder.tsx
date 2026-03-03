@@ -152,14 +152,14 @@ const VendorOrderPage: React.FC = () => {
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="relative space-y-4 px-1 pb-2 sm:px-2"
+      className="relative flex h-full min-h-0 flex-col gap-4 overflow-hidden px-1 pb-2 sm:px-2"
     >
       {/* ---------- HEADER ---------- */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
-        className="gaming-panel rounded-xl p-3 sm:p-4"
+        className="gaming-panel shrink-0 rounded-xl p-3 sm:p-4"
       >
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
@@ -185,100 +185,102 @@ const VendorOrderPage: React.FC = () => {
         </div>
       </motion.div>
 
-      {/* ---------- ERROR STATE ---------- */}
-      {error && (
-        <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-2 sm:p-3 text-destructive mb-2 max-w-lg mx-auto">
-          <p className="body-text font-medium">Error:</p>
-          <p className="body-text-small mt-1 break-words">{error}</p>
-          <button className={`${secondaryButtonClass} mt-2 border-destructive text-destructive`} onClick={fetchProducts}>
-            Try Again
-          </button>
-        </div>
-      )}
-
-      {submitSuccess && (
-        <motion.div
-          initial={{ opacity: 0, scale: 0.98 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="rounded-lg border border-green-500/20 bg-green-500/10 p-2 text-green-400 sm:p-3"
-        >
-          <div className="flex items-center gap-2">
-            <CheckCircle className="icon-lg" />
-            <p className="body-text font-medium">Order placed successfully!</p>
+      <div className="min-h-0 flex-1 overflow-y-auto pr-1">
+        {/* ---------- ERROR STATE ---------- */}
+        {error && (
+          <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-2 sm:p-3 text-destructive mb-2 max-w-lg mx-auto">
+            <p className="body-text font-medium">Error:</p>
+            <p className="body-text-small mt-1 break-words">{error}</p>
+            <button className={`${secondaryButtonClass} mt-2 border-destructive text-destructive`} onClick={fetchProducts}>
+              Try Again
+            </button>
           </div>
-        </motion.div>
-      )}
+        )}
 
-      {/* ---------- PRODUCT LIST (SHORT CARDS) ---------- */}
-      {loading ? (
-        <div className="gaming-panel text-center py-8 sm:py-12">
-          <div className="inline-block animate-spin rounded-full h-6 w-6 sm:h-8 sm:w-8 border-b-2 border-primary"></div>
-          <p className="body-text-muted mt-2">Loading products...</p>
-        </div>
-      ) : products.length === 0 ? (
-        <div className="gaming-panel text-center py-8 sm:py-12">
-          <p className="body-text-muted">No products available.</p>
-          <button className={`${primaryButtonClass} mt-4`} onClick={fetchProducts}>
-            Refresh Products
-          </button>
-        </div>
-      ) : (
-        <div className="section-spacing">
-          <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-compact">
-            {products.map((product, idx) => (
-              <motion.div
-                key={product.product_id}
-                initial={{ opacity: 0, scale: 0.97 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.03 * idx }}
-                className="w-full max-w-[230px] mx-auto"
-              >
-                <Card className="w-full min-h-[198px] flex flex-col justify-between overflow-hidden border border-cyan-400/20 bg-gradient-to-b from-slate-900/70 to-slate-950/70 transition-shadow duration-300 hover:shadow-lg hover:shadow-cyan-500/10">
-                  <div className="relative min-h-[84px] w-full aspect-video bg-slate-900/50">
-                    <Image
-                      alt={product.name}
-                      src={product.image_url || "/placeholder.svg?height=140&width=220&query=product"}
-                      fill
-                      className="object-cover rounded-t-lg"
-                    />
-                    <div className="absolute top-1 right-1 sm:top-2 sm:right-2">
-                      <span className="rounded-full border border-cyan-400/25 bg-slate-950/80 px-1.5 py-0.5 text-[10px] font-semibold text-slate-200">
-                        {product.category}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="space-y-1 p-tight">
-                    <h3 className="truncate text-sm font-semibold text-cyan-100">{product.name}</h3>
-                    <div className="flex items-center justify-between pt-0.5">
-                      <span className="text-xs font-semibold text-slate-100">₹{product.price}</span>
-                      <span className="rounded border border-emerald-400/20 bg-emerald-500/10 px-1 py-0.5 text-[10px] font-semibold text-emerald-300">
-                        Stock: {product.stock}
-                      </span>
-                    </div>
-                    <p className="text-[11px] text-slate-300/75">Min: {product.min_order_quantity}</p>
-                    <Input
-                      type="number"
-                      min={0}
-                      max={product.stock}
-                      step={product.min_order_quantity}
-                      value={orderItems[product.product_id] || ''}
-                      onChange={e => {
-                        let val = parseInt(e.target.value, 10);
-                        if (isNaN(val) || val < 0) val = 0;
-                        if (val > 0 && val < product.min_order_quantity) val = product.min_order_quantity;
-                        if (val > product.stock) val = product.stock;
-                        handleQtyChange(product.product_id, val);
-                      }}
-                      className={quantityInputClass}
-                      placeholder="Qty"
-                    />
-                  </div>
-                </Card>
-              </motion.div>
-            ))}
+        {submitSuccess && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.98 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="rounded-lg border border-green-500/20 bg-green-500/10 p-2 text-green-400 sm:p-3"
+          >
+            <div className="flex items-center gap-2">
+              <CheckCircle className="icon-lg" />
+              <p className="body-text font-medium">Order placed successfully!</p>
+            </div>
+          </motion.div>
+        )}
+
+        {/* ---------- PRODUCT LIST (SHORT CARDS) ---------- */}
+        {loading ? (
+          <div className="gaming-panel text-center py-8 sm:py-12">
+            <div className="inline-block animate-spin rounded-full h-6 w-6 sm:h-8 sm:w-8 border-b-2 border-primary"></div>
+            <p className="body-text-muted mt-2">Loading products...</p>
           </div>
-        </div>
-      )}
+        ) : products.length === 0 ? (
+          <div className="gaming-panel text-center py-8 sm:py-12">
+            <p className="body-text-muted">No products available.</p>
+            <button className={`${primaryButtonClass} mt-4`} onClick={fetchProducts}>
+              Refresh Products
+            </button>
+          </div>
+        ) : (
+          <div className="section-spacing">
+            <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-compact">
+              {products.map((product, idx) => (
+                <motion.div
+                  key={product.product_id}
+                  initial={{ opacity: 0, scale: 0.97 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.03 * idx }}
+                  className="w-full max-w-[230px] mx-auto"
+                >
+                  <Card className="w-full min-h-[198px] flex flex-col justify-between overflow-hidden border border-cyan-400/20 bg-gradient-to-b from-slate-900/70 to-slate-950/70 transition-shadow duration-300 hover:shadow-lg hover:shadow-cyan-500/10">
+                    <div className="relative min-h-[84px] w-full aspect-video bg-slate-900/50">
+                      <Image
+                        alt={product.name}
+                        src={product.image_url || "/placeholder.svg?height=140&width=220&query=product"}
+                        fill
+                        className="object-cover rounded-t-lg"
+                      />
+                      <div className="absolute top-1 right-1 sm:top-2 sm:right-2">
+                        <span className="rounded-full border border-cyan-400/25 bg-slate-950/80 px-1.5 py-0.5 text-[10px] font-semibold text-slate-200">
+                          {product.category}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="space-y-1 p-tight">
+                      <h3 className="truncate text-sm font-semibold text-cyan-100">{product.name}</h3>
+                      <div className="flex items-center justify-between pt-0.5">
+                        <span className="text-xs font-semibold text-slate-100">₹{product.price}</span>
+                        <span className="rounded border border-emerald-400/20 bg-emerald-500/10 px-1 py-0.5 text-[10px] font-semibold text-emerald-300">
+                          Stock: {product.stock}
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-slate-300/75">Min: {product.min_order_quantity}</p>
+                      <Input
+                        type="number"
+                        min={0}
+                        max={product.stock}
+                        step={product.min_order_quantity}
+                        value={orderItems[product.product_id] || ''}
+                        onChange={e => {
+                          let val = parseInt(e.target.value, 10);
+                          if (isNaN(val) || val < 0) val = 0;
+                          if (val > 0 && val < product.min_order_quantity) val = product.min_order_quantity;
+                          if (val > product.stock) val = product.stock;
+                          handleQtyChange(product.product_id, val);
+                        }}
+                        className={quantityInputClass}
+                        placeholder="Qty"
+                      />
+                    </div>
+                  </Card>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
 
       {/* ---------- ORDER CONFIRM OVERLAY ---------- */}
       <Dialog open={orderModalOpen} onOpenChange={setOrderModalOpen}>

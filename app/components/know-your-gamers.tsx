@@ -139,9 +139,9 @@ export function KnowYourGamers() {
   }
 
   return (
-    <div className="space-y-4 p-1 sm:p-2">
+    <div className="flex h-full min-h-0 flex-col gap-4 p-1 sm:p-2">
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="shrink-0 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {stats.map((stat, index) => {
           const Icon = iconMap[stat.icon as keyof typeof iconMap]
           return (
@@ -168,7 +168,7 @@ export function KnowYourGamers() {
       </div>
 
       {/* Filters and Search */}
-      <div className="gaming-panel rounded-xl border border-cyan-400/20 bg-slate-950/40">
+      <div className="gaming-panel shrink-0 rounded-xl border border-cyan-400/20 bg-slate-950/40">
         <div className="flex flex-col sm:flex-row gap-4 p-4">
           <div className="flex-1 relative">
             <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-300/70" />
@@ -197,8 +197,8 @@ export function KnowYourGamers() {
       </div>
 
       {/* Data Table */}
-      <div className="gaming-panel overflow-hidden rounded-xl border border-cyan-400/20 bg-slate-950/45">
-        <div className="overflow-x-auto">
+      <div className="gaming-panel min-h-0 flex-1 overflow-hidden rounded-xl border border-cyan-400/20 bg-slate-950/45">
+        <div className="h-full overflow-auto">
           <table className="w-full min-w-[1200px]">
             <thead className="bg-slate-900/70">
               <tr className="border-b border-cyan-500/20">

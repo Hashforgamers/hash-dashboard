@@ -209,8 +209,8 @@ export function ConsoleList({ onEdit }: ConsoleListProps) {
     : [activeGroup];
 
   return (
-    <div className="space-y-4">
-      <div className="gaming-panel rounded-xl border border-cyan-500/25 p-2">
+    <div className="flex h-full min-h-0 flex-col gap-4 overflow-hidden">
+      <div className="gaming-panel shrink-0 rounded-xl border border-cyan-500/25 p-2">
         <div className="flex flex-wrap gap-2">
           <button
             type="button"
@@ -245,18 +245,20 @@ export function ConsoleList({ onEdit }: ConsoleListProps) {
         </div>
       </div>
 
-      {visibleGroups.map((group) => {
-        const consolesForGroup = groupedConsoles[group];
-        const GroupIcon = typeMeta[group].icon;
-        return (
-          <div key={group} className="space-y-2">
-            <div className="flex items-center gap-2 px-1">
-              <GroupIcon className="h-4 w-4 text-cyan-300" />
-              <h3 className="dash-title !text-sm">{typeMeta[group].label} Consoles</h3>
-              <span className="rounded-full border border-cyan-400/35 bg-cyan-500/10 px-2 py-0.5 text-xs text-cyan-200">
-                {consolesForGroup.length}
-              </span>
-            </div>
+      <div className="min-h-0 flex-1 overflow-y-auto pr-1">
+        <div className="space-y-4">
+          {visibleGroups.map((group) => {
+            const consolesForGroup = groupedConsoles[group];
+            const GroupIcon = typeMeta[group].icon;
+            return (
+              <div key={group} className="space-y-2">
+                <div className="flex items-center gap-2 px-1">
+                  <GroupIcon className="h-4 w-4 text-cyan-300" />
+                  <h3 className="dash-title !text-sm">{typeMeta[group].label} Consoles</h3>
+                  <span className="rounded-full border border-cyan-400/35 bg-cyan-500/10 px-2 py-0.5 text-xs text-cyan-200">
+                    {consolesForGroup.length}
+                  </span>
+                </div>
 
             <motion.div
               variants={container}
@@ -375,9 +377,11 @@ export function ConsoleList({ onEdit }: ConsoleListProps) {
                 </motion.div>
               ))}
             </motion.div>
-          </div>
-        );
-      })}
+              </div>
+            );
+          })}
+        </div>
+      </div>
     </div>
   );
 }

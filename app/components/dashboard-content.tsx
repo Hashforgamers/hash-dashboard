@@ -561,7 +561,7 @@ export function DashboardContent() {
 
 function App() {
   return (
-    <div className="min-h-screen bg-background">
+    <div className="h-full min-h-0 bg-background">
       <DashboardContent />
     </div>
   )

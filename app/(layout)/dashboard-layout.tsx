@@ -7,12 +7,17 @@ import { Button } from "@/components/ui/button"
 import { MainNav } from "../components/main-nav"
 import Image from "next/image"
 
-export function DashboardLayout({ children }: { children: React.ReactNode }) {
+interface DashboardLayoutProps {
+  children: React.ReactNode
+  contentScroll?: "page" | "contained"
+}
+
+export function DashboardLayout({ children, contentScroll = "page" }: DashboardLayoutProps) {
   const { theme } = useTheme()
   const [isNavOpen, setIsNavOpen] = useState(false)
 
   return (
-    <div className="premium-shell flex min-h-dvh overflow-hidden text-foreground">
+    <div className="premium-shell flex h-dvh overflow-hidden text-foreground">
       <header className="fixed left-0 right-0 top-0 z-20 flex items-center justify-between border-b border-border/70 bg-background/90 px-4 py-3 backdrop-blur md:hidden">
         <div className="flex items-center space-x-2">
           <Image
@@ -74,7 +79,11 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
           />
         )}
 
-        <main className="dashboard-typography min-h-0 flex-1 overflow-y-auto px-2 pb-2 pt-2 sm:px-3 sm:pb-3 md:px-4 md:pb-4 md:pt-4">
+        <main
+          className={`dashboard-typography min-h-0 flex-1 px-2 pb-2 pt-2 sm:px-3 sm:pb-3 md:px-4 md:pb-4 md:pt-4 ${
+            contentScroll === "contained" ? "overflow-hidden" : "overflow-y-auto"
+          }`}
+        >
           {children}
         </main>
       </div>

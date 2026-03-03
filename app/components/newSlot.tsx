@@ -1430,6 +1430,7 @@ function SlotPill({
   onClick,
   selected = false,
   disabled = false,
+  compact = false,
 }: {
   label: string
   color: PillColor
@@ -1437,6 +1438,7 @@ function SlotPill({
   onClick?: () => void
   selected?: boolean
   disabled?: boolean
+  compact?: boolean
 }) {
   const colorClasses: Record<PillColor, string> = {
     green: selected 
@@ -1459,7 +1461,8 @@ function SlotPill({
       onClick={onClick}
       disabled={disabled}
       className={cn(
-        "w-full h-full min-h-[36px] flex items-center justify-center rounded-md text-[10px] font-bold uppercase tracking-wide",
+        "w-full h-full flex items-center justify-center rounded-md text-[10px] font-bold uppercase tracking-wide",
+        compact ? "min-h-[30px]" : "min-h-[36px]",
         "transition-all duration-200 cursor-pointer",
         disabled && "cursor-not-allowed opacity-60",
         colorClasses[color],
@@ -1504,12 +1507,14 @@ function TopBar({
   selectedSlots, 
   onNewBooking,
   selectedConsole,
-  onConsoleChange
+  onConsoleChange,
+  compact = false,
 }: { 
   selectedSlots: SelectedSlot[], 
   onNewBooking: () => void,
   selectedConsole: ConsoleFilter,
   onConsoleChange: (gameConsole: ConsoleFilter) => void
+  compact?: boolean
 }) {
   const [menuOpen, setMenuOpen] = useState(false)
   const [showManageView, setShowManageView] = useState<'change' | 'reject' | 'list' | null>(null)
@@ -1553,8 +1558,8 @@ function TopBar({
 
   // Main TopBar return
   return (
-    <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-      <Card className="rounded-xl border border-slate-700 bg-slate-800/50 p-3 backdrop-blur-sm">
+    <div className={cn("mb-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between", compact && "mb-2 gap-2")}>
+      <Card className={cn("rounded-xl border border-slate-700 bg-slate-800/50 p-3 backdrop-blur-sm", compact && "p-2")}>
         <div className="flex items-center gap-2">
           <span className="text-xs font-medium uppercase tracking-wide text-slate-400">Select Console</span>
           <div className="flex flex-wrap items-center gap-2">
@@ -1670,7 +1675,8 @@ function ScheduleGrid({
   onSlotSelect,
   allSlots,
   isLoading,
-  fetchSlotBookings
+  fetchSlotBookings,
+  compact = false,
 }: {
   availableConsoles: ConsoleType[]
   selectedConsole: ConsoleFilter
@@ -1679,6 +1685,7 @@ function ScheduleGrid({
   allSlots: { [key: string]: any[] }
   isLoading: boolean
   fetchSlotBookings: (slotIds: number[], date: string) => Promise<void>
+  compact?: boolean
 }) {
   const timelineRef = useRef<HTMLDivElement | null>(null)
   const isDraggingRef = useRef(false)
@@ -1740,7 +1747,7 @@ function ScheduleGrid({
       return Math.abs(minutes - nowMinutes) < Math.abs(bestMinutes - nowMinutes) ? idx : bestIndex
     }, 0)
 
-    const colWidth = 116
+    const colWidth = compact ? 100 : 116
     const targetLeft = Math.max(0, (nearestIndex * colWidth) - 160)
     timelineRef.current.scrollTo({ left: targetLeft, behavior: 'smooth' })
   }, [uniqueTimes])
@@ -1883,7 +1890,10 @@ if (isPastTime) {
     <div
       key={`past-${day.fullDate}-${gameConsole.id}`}
       onClick={() => handleSlotClick(day, time, gameConsole)} // ✅ Make clickable
-      className="w-full h-full min-h-[40px] flex items-center justify-center bg-gray-500 dark:bg-gray-600 text-white rounded-md cursor-pointer hover:bg-gray-600 dark:hover:bg-gray-700 transition-colors"
+      className={cn(
+        "w-full h-full flex items-center justify-center bg-gray-500 dark:bg-gray-600 text-white rounded-md cursor-pointer hover:bg-gray-600 dark:hover:bg-gray-700 transition-colors",
+        compact ? "min-h-[32px]" : "min-h-[40px]"
+      )}
       title="Past slot - Click to view past bookings"
     >
       <Clock className="h-4 w-4 mr-1" />
@@ -1895,7 +1905,10 @@ if (isPastTime) {
   timeSlots.push(
     <div
       key={`unavailable-${day.fullDate}-${gameConsole.id}`}
-      className="w-full h-full min-h-[40px] flex items-center justify-center bg-red-600 text-white rounded-md cursor-not-allowed"
+      className={cn(
+        "w-full h-full flex items-center justify-center bg-red-600 text-white rounded-md cursor-not-allowed",
+        compact ? "min-h-[32px]" : "min-h-[40px]"
+      )}
       title="Fully booked"
     >
       <X className="h-5 w-5 stroke-[3]" />
@@ -1906,7 +1919,10 @@ if (isPastTime) {
           // ✅ Show available slots with count
           else {
             timeSlots.push(
-              <div key={`${day.fullDate}-${slot.slot_id}`} className="w-full h-full min-h-[40px]">
+              <div
+                key={`${day.fullDate}-${slot.slot_id}`}
+                className={cn("w-full h-full", compact ? "min-h-[32px]" : "min-h-[40px]")}
+              >
                 <SlotPill
                   label={`${gameConsole.name} - ${slot.available_slot}`}
                   color={getConsoleColor(gameConsole.id)}
@@ -1914,6 +1930,7 @@ if (isPastTime) {
                   onClick={() => handleSlotClick(day, time, gameConsole)}
                   selected={isSelected}
                   disabled={false}
+                  compact={compact}
                 />
               </div>
             )
@@ -1921,7 +1938,10 @@ if (isPastTime) {
         })
 
         return (
-          <div key={`${day.fullDate}-${timeIndex}`} className="flex flex-row flex-wrap gap-1 items-stretch h-full p-1">
+          <div
+            key={`${day.fullDate}-${timeIndex}`}
+            className={cn("flex flex-row flex-wrap items-stretch h-full", compact ? "gap-0.5 p-0.5" : "gap-1 p-1")}
+          >
             {timeSlots}
           </div>
         )
@@ -1956,7 +1976,10 @@ if (isPastTime) {
         )}
       >
         <div className="min-w-max">
-          <div className="grid gap-2 p-4 pb-3 bg-gray-800/50" style={{ gridTemplateColumns: `80px repeat(${uniqueTimes.length}, minmax(110px, 1fr))` }}>
+          <div
+            className={cn("grid bg-gray-800/50", compact ? "gap-1 p-2 pb-2" : "gap-2 p-4 pb-3")}
+            style={{ gridTemplateColumns: `80px repeat(${uniqueTimes.length}, minmax(${compact ? 96 : 110}px, 1fr))` }}
+          >
             <div className="sticky left-0 z-20 flex items-center justify-center bg-gray-800/95 text-center text-xs font-semibold uppercase text-gray-400 backdrop-blur-sm">
               Date
             </div>
@@ -1971,8 +1994,11 @@ if (isPastTime) {
             {rows.map((row) => (
               <div 
                 key={row.fullDate}
-                className="grid gap-2 p-4 py-3 border-b border-gray-700/50 last:border-b-0 hover:bg-gray-700/20 transition-colors" 
-                style={{ gridTemplateColumns: `80px repeat(${uniqueTimes.length}, minmax(110px, 1fr))` }}
+                className={cn(
+                  "grid border-b border-gray-700/50 last:border-b-0 hover:bg-gray-700/20 transition-colors",
+                  compact ? "gap-1 p-2 py-1.5" : "gap-2 p-4 py-3"
+                )}
+                style={{ gridTemplateColumns: `80px repeat(${uniqueTimes.length}, minmax(${compact ? 96 : 110}px, 1fr))` }}
               >
                 <div className="sticky left-0 z-20 flex items-center justify-center rounded-lg bg-gray-700/95 px-2 py-2 text-sm font-bold text-white backdrop-blur-sm">
                   {row.date}
@@ -1981,7 +2007,10 @@ if (isPastTime) {
                 {row.cells.map((content, idx) => (
                   <div
                     key={`${row.fullDate}-cell-${idx}`}
-                    className="min-h-[44px] rounded-lg border border-gray-700 bg-gray-800/50 backdrop-blur-sm"
+                    className={cn(
+                      "rounded-lg border border-gray-700 bg-gray-800/50 backdrop-blur-sm",
+                      compact ? "min-h-[36px]" : "min-h-[44px]"
+                    )}
                   >
                     {content}
                   </div>
@@ -1998,10 +2027,12 @@ if (isPastTime) {
 
 function RecentBookings({ 
   bookings, 
-  isLoading 
+  isLoading,
+  fixedCard = false,
 }: { 
   bookings: any[], 
   isLoading: boolean 
+  fixedCard?: boolean
 }) {
   // ✅ Determine if these are past bookings
   const hasPastBookings = bookings.some(b => 
@@ -2011,7 +2042,7 @@ function RecentBookings({
   
   if (isLoading) {
     return (
-      <Card className="p-6 mt-2 bg-gray-50 dark:bg-gray-700/30">
+      <Card className={cn("p-6 mt-2 bg-gray-50 dark:bg-gray-700/30", fixedCard && "h-full min-h-0")}>
         <div className="flex items-center justify-center py-8">
           <Loader2 className="w-6 h-6 animate-spin text-emerald-500" />
           <span className="ml-2 text-gray-600 dark:text-gray-400">Loading bookings...</span>
@@ -2022,7 +2053,7 @@ function RecentBookings({
 
   if (bookings.length === 0) {
     return (
-      <Card className="p-6 mt-2 bg-gray-50 dark:bg-gray-700/30">
+      <Card className={cn("p-6 mt-2 bg-gray-50 dark:bg-gray-700/30", fixedCard && "h-full min-h-0")}>
         <div className="flex flex-col items-center justify-center py-8 text-center">
           <div className="p-3 bg-gray-200 dark:bg-gray-600 rounded-full mb-3">
             <AlertCircle className="w-6 h-6 text-gray-500 dark:text-gray-400" />
@@ -2041,7 +2072,7 @@ function RecentBookings({
   }
 
   return (
-    <Card className="p-4 mt-2 bg-gray-50 dark:bg-gray-700/30">
+    <Card className={cn("p-4 mt-2 bg-gray-50 dark:bg-gray-700/30", fixedCard && "h-full min-h-0 flex flex-col")}>
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-semibold text-gray-800 dark:text-white flex items-center gap-2">
           {/* ✅ Show different icon based on booking type */}
@@ -2069,16 +2100,16 @@ function RecentBookings({
         )}
       </div>
 
-      <div className="overflow-x-auto">
+      <div className={cn("overflow-x-auto", fixedCard && "min-h-0 flex-1 overflow-auto")}>
         <Table>
-          <TableHeader>
+          <TableHeader className="sticky top-0 z-20">
             <TableRow>
-              <TableHead className="text-gray-700 dark:text-gray-300">Booking ID</TableHead>
-              <TableHead className="text-gray-700 dark:text-gray-300">Customer Details</TableHead>
-              <TableHead className="text-gray-700 dark:text-gray-300">Time</TableHead>
-              <TableHead className="text-gray-700 dark:text-gray-300">Status</TableHead>
-              <TableHead className="text-gray-700 dark:text-gray-300">Meal Selection</TableHead>
-              <TableHead className="text-gray-700 dark:text-gray-300">Actions</TableHead>
+              <TableHead className="sticky top-0 z-20 bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300">Booking ID</TableHead>
+              <TableHead className="sticky top-0 z-20 bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300">Customer Details</TableHead>
+              <TableHead className="sticky top-0 z-20 bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300">Time</TableHead>
+              <TableHead className="sticky top-0 z-20 bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300">Status</TableHead>
+              <TableHead className="sticky top-0 z-20 bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300">Meal Selection</TableHead>
+              <TableHead className="sticky top-0 z-20 bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -3025,7 +3056,11 @@ function ListBooking() {
 }
 
 
-export default function SlotManagement() {
+interface SlotManagementProps {
+  embedded?: boolean
+}
+
+export default function SlotManagement({ embedded = false }: SlotManagementProps) {
   const [selectedConsole, setSelectedConsole] = useState<ConsoleFilter>("PC")
   const [selectedSlots, setSelectedSlots] = useState<SelectedSlot[]>([])
   const [showBookingForm, setShowBookingForm] = useState(false)
@@ -3376,7 +3411,7 @@ useEffect(() => {
 
   if (isLoading) {
     return (
-      <main className="min-h-screen bg-background flex items-center justify-center">
+      <main className={embedded ? "h-full min-h-0 bg-background flex items-center justify-center" : "min-h-screen bg-background flex items-center justify-center"}>
         <div className="text-center">
           <Loader2 className="w-12 h-12 animate-spin text-blue-500 mx-auto mb-4" />
           <p className="text-slate-300">Loading slot data...</p>
@@ -3386,29 +3421,57 @@ useEffect(() => {
   }
 
   return (
-    <main className="min-h-screen bg-background">
-      <div className="mx-auto w-full max-w-full p-3 sm:p-4 md:p-6">
-        <TopBar
-          selectedSlots={selectedSlots}
-          onNewBooking={handleNewBooking}
-          selectedConsole={selectedConsole}
-          onConsoleChange={setSelectedConsole}
-        />
-        <ScheduleGrid
-          availableConsoles={availableConsoles}
-          selectedConsole={selectedConsole}
-          selectedSlots={selectedSlots}
-          onSlotSelect={handleSlotSelect}
-          allSlots={allSlots}
-          isLoading={isLoading}
-          fetchSlotBookings={fetchSlotBookings}
-        />
-         <RecentBookings 
-  bookings={slotBookings} 
-  isLoading={isLoadingBookings} 
-/>
-
-
+    <main className={embedded ? "h-full min-h-0 bg-background overflow-hidden" : "min-h-screen bg-background"}>
+      <div
+        className={`mx-auto w-full max-w-full p-3 sm:p-4 md:p-6 ${
+          embedded ? "flex h-full min-h-0 flex-col gap-3 sm:gap-4" : ""
+        }`}
+      >
+        {embedded ? (
+          <>
+            <div className="shrink-0 space-y-3 sm:space-y-4">
+              <TopBar
+                selectedSlots={selectedSlots}
+                onNewBooking={handleNewBooking}
+                selectedConsole={selectedConsole}
+                onConsoleChange={setSelectedConsole}
+                compact
+              />
+              <ScheduleGrid
+                availableConsoles={availableConsoles}
+                selectedConsole={selectedConsole}
+                selectedSlots={selectedSlots}
+                onSlotSelect={handleSlotSelect}
+                allSlots={allSlots}
+                isLoading={isLoading}
+                fetchSlotBookings={fetchSlotBookings}
+                compact
+              />
+            </div>
+            <div className="min-h-0 flex-1">
+              <RecentBookings bookings={slotBookings} isLoading={isLoadingBookings} fixedCard />
+            </div>
+          </>
+        ) : (
+          <>
+            <TopBar
+              selectedSlots={selectedSlots}
+              onNewBooking={handleNewBooking}
+              selectedConsole={selectedConsole}
+              onConsoleChange={setSelectedConsole}
+            />
+            <ScheduleGrid
+              availableConsoles={availableConsoles}
+              selectedConsole={selectedConsole}
+              selectedSlots={selectedSlots}
+              onSlotSelect={handleSlotSelect}
+              allSlots={allSlots}
+              isLoading={isLoading}
+              fetchSlotBookings={fetchSlotBookings}
+            />
+            <RecentBookings bookings={slotBookings} isLoading={isLoadingBookings} />
+          </>
+        )}
       </div>
 
       <SlotBookingForm

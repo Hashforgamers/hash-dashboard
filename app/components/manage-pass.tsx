@@ -154,10 +154,10 @@ export default function ManagePassesPage() {
     "inline-flex items-center justify-center gap-2 rounded-lg border border-cyan-400/40 bg-gradient-to-r from-cyan-500/90 to-emerald-500/90 px-3 py-2 text-xs font-semibold text-white shadow-md shadow-cyan-900/40 transition-all duration-200 hover:from-cyan-400 hover:to-emerald-400 hover:shadow-lg hover:shadow-cyan-600/25 disabled:cursor-not-allowed disabled:opacity-50 sm:px-4 sm:text-sm";
 
   return (
-    <div className="space-y-4 px-1 pb-2 sm:px-2">
+    <div className="flex h-full min-h-0 flex-col gap-4 overflow-hidden px-1 pb-2 sm:px-2">
 
       {/* ✅ View Toggle */}
-      <div className="gaming-panel mb-2 flex flex-wrap items-center justify-between gap-3 rounded-xl p-3">
+      <div className="gaming-panel mb-2 shrink-0 flex flex-wrap items-center justify-between gap-3 rounded-xl p-3">
         <div className="flex items-center gap-1 rounded-lg border border-cyan-400/20 bg-slate-900/60 p-1">
           <button
             onClick={() => setViewMode("grid")}
@@ -198,22 +198,23 @@ export default function ManagePassesPage() {
         </div>
       </div>
 
-      {/* ✅ Content */}
-      {loading ? (
-        <div className="flex items-center justify-center gap-3 py-16 text-muted-foreground">
-          <Loader2 className="w-8 h-8 animate-spin text-blue-400" />
-          <p className="body-text-muted">Loading passes...</p>
-        </div>
-      ) : passes.length === 0 ? (
-        <div className="gaming-panel flex flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed border-cyan-400/20 py-16">
-          <BadgeCheck className="w-12 h-12 text-muted-foreground/30" />
-          <h3 className="section-title text-muted-foreground/60">No passes found</h3>
-          <p className="body-text-muted">Create your first pass to get started</p>
-          <div className="mt-2">
-            <AddPassDialog passTypes={passTypes} onSave={handleAddPass} buttonClassName={primaryButtonClass} />
+      <div className="min-h-0 flex-1 overflow-y-auto pr-1">
+        {/* ✅ Content */}
+        {loading ? (
+          <div className="flex items-center justify-center gap-3 py-16 text-muted-foreground">
+            <Loader2 className="w-8 h-8 animate-spin text-blue-400" />
+            <p className="body-text-muted">Loading passes...</p>
           </div>
-        </div>
-      ) : viewMode === "grid" ? (
+        ) : passes.length === 0 ? (
+          <div className="gaming-panel flex flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed border-cyan-400/20 py-16">
+            <BadgeCheck className="w-12 h-12 text-muted-foreground/30" />
+            <h3 className="section-title text-muted-foreground/60">No passes found</h3>
+            <p className="body-text-muted">Create your first pass to get started</p>
+            <div className="mt-2">
+              <AddPassDialog passTypes={passTypes} onSave={handleAddPass} buttonClassName={primaryButtonClass} />
+            </div>
+          </div>
+        ) : viewMode === "grid" ? (
 
         /* ✅ GRID VIEW */
         <div className="section-spacing">
@@ -269,7 +270,7 @@ export default function ManagePassesPage() {
             </div>
           )}
         </div>
-      ) : (
+        ) : (
 
         /* ✅ TABLE VIEW */
         <PassesTable
@@ -279,7 +280,8 @@ export default function ManagePassesPage() {
           onDelete={handleDeletePass}
           deletingId={deletingId}
         />
-      )}
+        )}
+      </div>
     </div>
   );
 }
