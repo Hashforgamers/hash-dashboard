@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Copy, KeyRound, RefreshCw, Shield, UserCog, Users } from "lucide-react";
+import { Copy, KeyRound, RefreshCw, Shield, Sparkles, UserCog, Users } from "lucide-react";
 import { toast } from "sonner";
 
 const ROLE_ORDER: StaffRole[] = ["owner", "manager", "staff"];
@@ -239,8 +239,11 @@ export default function EmployeeAccessPage() {
         <div className="gaming-panel shrink-0 rounded-xl border border-cyan-500/25 p-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <h1 className="dash-title !text-base sm:!text-lg">Employee Access Control</h1>
-              <p className="dash-subtitle">Onboard employees with auto-generated PIN and control service access by role.</p>
+              <div className="flex items-center gap-2">
+                <h1 className="premium-heading !text-xl sm:!text-2xl md:!text-3xl">Employee Access Control</h1>
+                <Sparkles className="h-4 w-4 text-emerald-400 sm:h-5 sm:w-5" />
+              </div>
+              <p className="premium-subtle mt-1">Onboard employees with auto-generated PIN and control service access by role.</p>
             </div>
             <div className="inline-flex items-center gap-2 rounded-lg border border-cyan-400/35 bg-cyan-500/10 px-3 py-1 text-xs text-cyan-200">
               <Shield className="h-3.5 w-3.5" />
