@@ -34,6 +34,7 @@ import { toast } from "sonner";
 
 interface MainNavProps extends React.HTMLAttributes<HTMLElement> {
   onItemClick?: () => void;
+  isNavPinned?: boolean;
 }
 
 interface NavItem {
@@ -58,12 +59,14 @@ const navItems: NavItem[] = [
   { href: "/select-cafe", icon: Store, label: "Select Cafe", permission: "cafe.switch" },
 ];
 
-export function MainNav({ className, onItemClick, ...props }: MainNavProps) {
+export function MainNav({ className, onItemClick, isNavPinned = false, ...props }: MainNavProps) {
   const pathname = usePathname();
   const { setTheme, theme } = useTheme();
   const { can, activeStaff, setActiveByPin, clearAccessSession, setSelectedCafe } = useAccess();
   const [pinDialogOpen, setPinDialogOpen] = useState(false);
   const [pin, setPin] = useState("");
+  const responsiveItemPaddingClass = isNavPinned ? "md:px-3 xl:px-3" : "md:px-3 xl:px-2 xl:group-hover:px-3";
+  const responsiveLabelClass = isNavPinned ? "whitespace-nowrap md:block xl:block" : "whitespace-nowrap md:block xl:hidden xl:group-hover:block";
 
   const clearStorageExceptVendor = () => {
     const keysToKeep = ["vendor_login_email", "vendors"];
@@ -124,7 +127,7 @@ export function MainNav({ className, onItemClick, ...props }: MainNavProps) {
                   className={cn(
                     "group/nav flex min-h-[32px] items-center gap-2 rounded-lg border border-transparent px-2.5 py-[clamp(0.2rem,0.55vh,0.38rem)] text-[13px] font-medium leading-tight transition-all duration-200",
                     "hover:border-border/70 hover:bg-muted/50 hover:text-foreground",
-                    "md:px-3 xl:px-2 xl:group-hover:px-3",
+                    responsiveItemPaddingClass,
                     pathname === href ? "gaming-nav-active text-foreground" : "text-muted-foreground"
                   )}
                 >
@@ -134,7 +137,7 @@ export function MainNav({ className, onItemClick, ...props }: MainNavProps) {
                       pathname === href ? "text-emerald-400" : "text-muted-foreground group-hover/nav:text-foreground"
                     )}
                   />
-                  <span className="whitespace-nowrap md:block xl:hidden xl:group-hover:block">{label}</span>
+                  <span className={responsiveLabelClass}>{label}</span>
                 </Link>
               ))}
           </div>
@@ -148,7 +151,7 @@ export function MainNav({ className, onItemClick, ...props }: MainNavProps) {
               className={cn(
                 "group/nav flex min-h-[30px] items-center gap-2 rounded-lg border border-transparent px-2.5 py-[clamp(0.14rem,0.42vh,0.28rem)] text-[13px] font-medium leading-tight transition-all duration-200",
                 "hover:border-border/70 hover:bg-muted/50 hover:text-foreground",
-                "md:px-3 xl:px-2 xl:group-hover:px-3",
+                responsiveItemPaddingClass,
                 pathname === "/employee-access" ? "gaming-nav-active text-foreground" : "text-muted-foreground"
               )}
             >
@@ -158,7 +161,7 @@ export function MainNav({ className, onItemClick, ...props }: MainNavProps) {
                   pathname === "/employee-access" ? "text-emerald-400" : "text-muted-foreground group-hover/nav:text-foreground"
                 )}
               />
-              <span className="whitespace-nowrap md:block xl:hidden xl:group-hover:block">Team Access</span>
+              <span className={responsiveLabelClass}>Team Access</span>
             </Link>
           )}
 
@@ -170,11 +173,12 @@ export function MainNav({ className, onItemClick, ...props }: MainNavProps) {
             className={cn(
               "group/nav flex w-full min-h-[30px] items-center gap-2 rounded-lg border border-transparent px-2.5 py-[clamp(0.14rem,0.42vh,0.28rem)] text-[13px] font-medium leading-tight transition-all duration-200",
               "hover:border-border/70 hover:bg-muted/50 hover:text-foreground",
-              "md:px-3 xl:px-2 xl:group-hover:px-3 text-muted-foreground"
+              responsiveItemPaddingClass,
+              "text-muted-foreground"
             )}
           >
             <KeyRound className="h-[18px] w-[18px] shrink-0 transition-colors text-muted-foreground group-hover/nav:text-foreground" />
-            <span className="whitespace-nowrap md:block xl:hidden xl:group-hover:block">Switch User PIN</span>
+            <span className={responsiveLabelClass}>Switch User PIN</span>
           </button>
 
           {can("account.manage") && (
@@ -184,7 +188,7 @@ export function MainNav({ className, onItemClick, ...props }: MainNavProps) {
               className={cn(
                 "group/nav flex min-h-[30px] items-center gap-2 rounded-lg border border-transparent px-2.5 py-[clamp(0.14rem,0.42vh,0.28rem)] text-[13px] font-medium leading-tight transition-all duration-200",
                 "hover:border-border/70 hover:bg-muted/50 hover:text-foreground",
-                "md:px-3 xl:px-2 xl:group-hover:px-3",
+                responsiveItemPaddingClass,
                 pathname === "/account" ? "gaming-nav-active text-foreground" : "text-muted-foreground"
               )}
             >
@@ -194,7 +198,7 @@ export function MainNav({ className, onItemClick, ...props }: MainNavProps) {
                   pathname === "/account" ? "text-emerald-400" : "text-muted-foreground group-hover/nav:text-foreground"
                 )}
               />
-              <span className="whitespace-nowrap md:block xl:hidden xl:group-hover:block">My Account</span>
+              <span className={responsiveLabelClass}>My Account</span>
             </Link>
           )}
 
@@ -206,7 +210,7 @@ export function MainNav({ className, onItemClick, ...props }: MainNavProps) {
             className={cn(
               "group/nav flex min-h-[30px] w-full items-center gap-2 rounded-lg border border-transparent px-2.5 py-[clamp(0.14rem,0.42vh,0.28rem)] text-[13px] font-medium leading-tight transition-all duration-200",
               "hover:border-border/70 hover:bg-muted/50 hover:text-foreground",
-              "md:px-3 xl:px-2 xl:group-hover:px-3",
+              responsiveItemPaddingClass,
               "text-muted-foreground"
             )}
           >
@@ -214,10 +218,10 @@ export function MainNav({ className, onItemClick, ...props }: MainNavProps) {
               <Sun className={cn("absolute transition-transform duration-300", theme === "dark" ? "rotate-90 scale-0" : "rotate-0 scale-100")} />
               <Moon className={cn("absolute transition-transform duration-300", theme === "dark" ? "rotate-0 scale-100" : "rotate-90 scale-0")} />
             </div>
-            <span className="whitespace-nowrap md:block xl:hidden xl:group-hover:block">Toggle Theme</span>
+            <span className={responsiveLabelClass}>Toggle Theme</span>
           </button>
 
-          <ButtonDestructive />
+          <ButtonDestructive isNavPinned={isNavPinned} />
         </div>
       </nav>
 
