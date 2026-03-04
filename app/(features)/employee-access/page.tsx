@@ -15,6 +15,12 @@ import { Copy, KeyRound, RefreshCw, Shield, UserCog, Users } from "lucide-react"
 import { toast } from "sonner";
 
 const ROLE_ORDER: StaffRole[] = ["owner", "manager", "staff"];
+const STAFF_ACTION_LABELS: Record<"role" | "toggle" | "remove" | "pin", string> = {
+  role: "Updating role...",
+  toggle: "Updating...",
+  remove: "Removing...",
+  pin: "Saving PIN...",
+};
 
 const SERVICE_PERMISSION_MAP: Array<{
   label: string;
@@ -57,6 +63,10 @@ export default function EmployeeAccessPage() {
   const [role, setRoleState] = useState<StaffRole>("staff");
   const [lastCreatedPin, setLastCreatedPin] = useState<string | null>(null);
   const [lastCreatedName, setLastCreatedName] = useState<string>("");
+  const [isCreating, setIsCreating] = useState(false);
+  const [isResettingPermissions, setIsResettingPermissions] = useState(false);
+  const [pendingPermissionKey, setPendingPermissionKey] = useState<string | null>(null);
+  const [pendingStaffAction, setPendingStaffAction] = useState<Record<string, "role" | "toggle" | "remove" | "pin">>({});
 
   const serviceSections = useMemo(() => {
     return {
@@ -67,77 +77,135 @@ export default function EmployeeAccessPage() {
   }, []);
 
   const handleCreate = async () => {
-    const result = await createStaff({ name, role });
-    if (!result.ok) {
-      toast.error(result.message);
-      return;
-    }
+    setIsCreating(true);
+    try {
+      const result = await createStaff({ name, role });
+      if (!result.ok) {
+        toast.error(result.message);
+        return;
+      }
 
-    setLastCreatedPin(result.generatedPin || null);
-    setLastCreatedName(name.trim());
-    toast.success(`Employee added. PIN: ${result.generatedPin}`);
-    setName("");
-    setRoleState("staff");
+      setLastCreatedPin(result.generatedPin || null);
+      setLastCreatedName(name.trim());
+      toast.success(`Employee added. PIN: ${result.generatedPin}`);
+      setName("");
+      setRoleState("staff");
+    } finally {
+      setIsCreating(false);
+    }
   };
 
   const handleResetPermissions = async () => {
     try {
+      setIsResettingPermissions(true);
       await resetRolePermissions();
       toast.success("Role permissions reset");
     } catch (e: any) {
       toast.error(e?.message || "Failed to reset permissions");
+    } finally {
+      setIsResettingPermissions(false);
     }
   };
 
   const handleSetRole = async (staffId: string, value: StaffRole) => {
     try {
+      setPendingStaffAction((prev) => ({ ...prev, [staffId]: "role" }));
       await setRole(staffId, value);
       toast.success("Role updated");
     } catch (e: any) {
       toast.error(e?.message || "Failed to update role");
+    } finally {
+      setPendingStaffAction((prev) => {
+        const next = { ...prev };
+        delete next[staffId];
+        return next;
+      });
     }
   };
 
   const handleToggleStaff = async (staffId: string) => {
     try {
+      setPendingStaffAction((prev) => ({ ...prev, [staffId]: "toggle" }));
       await toggleStaffActive(staffId);
       toast.success("Staff status updated");
     } catch (e: any) {
       toast.error(e?.message || "Failed to update staff status");
+    } finally {
+      setPendingStaffAction((prev) => {
+        const next = { ...prev };
+        delete next[staffId];
+        return next;
+      });
     }
   };
 
   const handleRemoveStaff = async (staffId: string) => {
     try {
+      setPendingStaffAction((prev) => ({ ...prev, [staffId]: "remove" }));
       await removeStaff(staffId);
       toast.success("Staff removed");
     } catch (e: any) {
       toast.error(e?.message || "Failed to remove staff");
+    } finally {
+      setPendingStaffAction((prev) => {
+        const next = { ...prev };
+        delete next[staffId];
+        return next;
+      });
     }
   };
 
   const handleChangePin = async (staffId: string, currentPin?: string | null) => {
-    const entered = window.prompt("Enter new PIN (4-6 digits)", currentPin || "");
+    const entered = window.prompt("Enter new PIN (4 digits)", currentPin || "");
     if (!entered) return;
     const pin = entered.trim();
-    if (!/^\d{4,6}$/.test(pin)) {
-      toast.error("PIN must be 4-6 digits");
+    if (!/^\d{4}$/.test(pin)) {
+      toast.error("PIN must be 4 digits");
+      return;
+    }
+    const duplicateStaff = staffProfiles.find(
+      (staff) => staff.id !== staffId && (staff.pinCode || "").trim() === pin
+    );
+    if (duplicateStaff) {
+      const message = `PIN ${pin} is already assigned to ${duplicateStaff.name}. Please use a different PIN.`;
+      toast.error(message);
+      window.alert(message);
       return;
     }
 
-    const result = await updateStaffPin(staffId, pin);
-    if (!result.ok) {
-      toast.error(result.message);
-      return;
+    setPendingStaffAction((prev) => ({ ...prev, [staffId]: "pin" }));
+    const loadingToastId = toast.loading("Updating PIN...");
+    try {
+      const result = await updateStaffPin(staffId, pin);
+      if (!result.ok) {
+        const message = result.message || "Failed to update PIN";
+        toast.error(message);
+        window.alert(message);
+        return;
+      }
+      toast.success("PIN updated");
+    } catch (e: any) {
+      const message = e?.message || "Failed to update PIN";
+      toast.error(message);
+      window.alert(message);
+    } finally {
+      toast.dismiss(loadingToastId);
+      setPendingStaffAction((prev) => {
+        const next = { ...prev };
+        delete next[staffId];
+        return next;
+      });
     }
-    toast.success("PIN updated");
   };
 
   const handleSetRolePermission = async (roleKey: StaffRole, permission: Permission, enabled: boolean) => {
     try {
+      setPendingPermissionKey(`${roleKey}:${permission}`);
       await setRolePermission(roleKey, permission, enabled);
     } catch (e: any) {
       toast.error(e?.message || "Failed to update permission");
+    } finally {
+      setPendingPermissionKey(null);
     }
   };
 
@@ -211,12 +279,13 @@ export default function EmployeeAccessPage() {
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="e.g. Akash"
+                    disabled={isCreating}
                     className="border-slate-600/70 bg-slate-900/70"
                   />
                 </div>
                 <div className="space-y-1 md:col-span-1">
                   <Label>Role</Label>
-                  <Select value={role} onValueChange={(value: StaffRole) => setRoleState(value)}>
+                  <Select value={role} onValueChange={(value: StaffRole) => setRoleState(value)} disabled={isCreating}>
                     <SelectTrigger className="border-slate-600/70 bg-slate-900/70">
                       <SelectValue />
                     </SelectTrigger>
@@ -227,9 +296,9 @@ export default function EmployeeAccessPage() {
                   </Select>
                 </div>
                 <div className="flex items-end md:col-span-1">
-                  <Button className="w-full" onClick={() => void handleCreate()} disabled={!name.trim()}>
-                    <UserCog className="mr-2 h-4 w-4" />
-                    Add
+                  <Button className="w-full" onClick={() => void handleCreate()} disabled={!name.trim() || isCreating}>
+                    {isCreating ? <RefreshCw className="mr-2 h-4 w-4 animate-spin" /> : <UserCog className="mr-2 h-4 w-4" />}
+                    {isCreating ? "Adding..." : "Add"}
                   </Button>
                 </div>
               </div>
@@ -278,7 +347,11 @@ export default function EmployeeAccessPage() {
                       </div>
 
                       <div className="col-span-2">
-                        <Select value={staff.role} onValueChange={(value: StaffRole) => void handleSetRole(staff.id, value)}>
+                        <Select
+                          value={staff.role}
+                          onValueChange={(value: StaffRole) => void handleSetRole(staff.id, value)}
+                          disabled={Boolean(pendingStaffAction[staff.id])}
+                        >
                           <SelectTrigger className="h-8 border-slate-600/70 bg-slate-900/70">
                             <SelectValue />
                           </SelectTrigger>
@@ -304,6 +377,7 @@ export default function EmployeeAccessPage() {
                             type="button"
                             className="text-slate-400 transition-colors hover:text-cyan-300"
                             onClick={() => copyPin(staff.pinCode as string)}
+                            disabled={Boolean(pendingStaffAction[staff.id])}
                           >
                             <Copy className="h-3.5 w-3.5" />
                           </button>
@@ -311,14 +385,39 @@ export default function EmployeeAccessPage() {
                       </div>
 
                       <div className="col-span-2 flex items-center justify-end gap-2">
-                        <Button variant="outline" size="sm" onClick={() => void handleToggleStaff(staff.id)}>
-                          {staff.isActive ? "Disable" : "Enable"}
+                        {pendingStaffAction[staff.id] && (
+                          <span className="text-[11px] text-cyan-300">{STAFF_ACTION_LABELS[pendingStaffAction[staff.id]]}</span>
+                        )}
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => void handleToggleStaff(staff.id)}
+                          disabled={Boolean(pendingStaffAction[staff.id])}
+                        >
+                          {pendingStaffAction[staff.id] === "toggle" ? "Updating..." : staff.isActive ? "Disable" : "Enable"}
                         </Button>
-                        <Button variant="destructive" size="sm" onClick={() => void handleRemoveStaff(staff.id)}>
-                          Remove
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => void handleRemoveStaff(staff.id)}
+                          disabled={Boolean(pendingStaffAction[staff.id])}
+                        >
+                          {pendingStaffAction[staff.id] === "remove" ? "Removing..." : "Remove"}
                         </Button>
-                        <Button variant="secondary" size="sm" onClick={() => void handleChangePin(staff.id, staff.pinCode)}>
-                          Change PIN
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          onClick={() => void handleChangePin(staff.id, staff.pinCode)}
+                          disabled={Boolean(pendingStaffAction[staff.id])}
+                        >
+                          {pendingStaffAction[staff.id] === "pin" ? (
+                            <>
+                              <RefreshCw className="mr-2 h-3.5 w-3.5 animate-spin" />
+                              Saving...
+                            </>
+                          ) : (
+                            "Change PIN"
+                          )}
                         </Button>
                       </div>
                     </div>
@@ -334,10 +433,18 @@ export default function EmployeeAccessPage() {
           >
             <div className="flex items-center justify-between border-b border-cyan-500/20 px-3 py-2">
               <h2 className="dash-title !text-sm">Role to Service Mapping</h2>
-              <Button size="sm" variant="outline" onClick={() => void handleResetPermissions()}>
-                <RefreshCw className="mr-2 h-3.5 w-3.5" />
-                Reset Default
-              </Button>
+              <div className="flex items-center gap-3">
+                {pendingPermissionKey && !isResettingPermissions && (
+                  <span className="inline-flex items-center text-xs text-cyan-300">
+                    <RefreshCw className="mr-1.5 h-3 w-3 animate-spin" />
+                    Saving permission changes...
+                  </span>
+                )}
+                <Button size="sm" variant="outline" onClick={() => void handleResetPermissions()} disabled={isResettingPermissions}>
+                  <RefreshCw className={`mr-2 h-3.5 w-3.5 ${isResettingPermissions ? "animate-spin" : ""}`} />
+                  {isResettingPermissions ? "Resetting..." : "Reset Default"}
+                </Button>
+              </div>
             </div>
 
             <div className="min-h-0 flex-1 overflow-y-auto p-3">
@@ -366,7 +473,7 @@ export default function EmployeeAccessPage() {
                           <div key={`${item.permission}-${roleKey}`} className="col-span-2 flex justify-center">
                             <Switch
                               checked={checked}
-                              disabled={isOwner}
+                              disabled={isOwner || isResettingPermissions || pendingPermissionKey !== null}
                               onCheckedChange={(enabled) => void handleSetRolePermission(roleKey, item.permission, enabled)}
                             />
                           </div>

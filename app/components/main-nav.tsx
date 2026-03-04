@@ -77,6 +77,10 @@ export function MainNav({ className, onItemClick, ...props }: MainNavProps) {
   };
 
   const handleSwitchUser = async () => {
+    if (!/^\d{4}$/.test(pin)) {
+      toast.error("PIN must be 4 digits");
+      return;
+    }
     const result = await setActiveByPin(pin);
     if (!result.ok) {
       toast.error(result.message);
@@ -227,15 +231,15 @@ export function MainNav({ className, onItemClick, ...props }: MainNavProps) {
             <Input
               value={pin}
               onChange={(e) => setPin(e.target.value.replace(/\D/g, ""))}
-              maxLength={6}
-              placeholder="Enter 4-6 digit PIN"
+              maxLength={4}
+              placeholder="Enter 4-digit PIN"
               onKeyDown={(e) => e.key === "Enter" && void handleSwitchUser()}
             />
             <div className="flex items-center justify-end gap-2">
               <Button variant="outline" onClick={() => setPinDialogOpen(false)}>
                 Cancel
               </Button>
-              <Button onClick={() => void handleSwitchUser()} disabled={pin.length < 4}>
+              <Button onClick={() => void handleSwitchUser()} disabled={pin.length !== 4}>
                 Switch
               </Button>
             </div>
