@@ -10,6 +10,8 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Store, Lock, Unlock, Plus, X } from "lucide-react"
 import { LOGIN_URL, VENDOR_ONBOARD_URL } from "@/src/config/env"
 import { toast } from "sonner"
+import { useAccess } from "@/app/context/AccessContext"
+import { accessApi } from "@/lib/access-api"
 
 const INDIA_STATES = [
   "Andhra Pradesh",
@@ -65,13 +67,14 @@ type ConsoleType = (typeof CONSOLE_TYPES)[number]
 
 export default function SelectCafePage() {
   const [cafes, setCafes] = useState<{ id: string; name: string; type: string }[]>([])
-  const [selectedCafe, setSelectedCafe] = useState<string | null>(null)
+  const [selectedCafe, setSelectedCafeId] = useState<string | null>(null)
   const [pin, setPin] = useState("")
   const [showPinDialog, setShowPinDialog] = useState(false)
   const [showOnboardDialog, setShowOnboardDialog] = useState(false)
   const [isUnlocking, setIsUnlocking] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const { setSelectedCafe: setActiveCafe } = useAccess()
   const router = useRouter()
 
   const [formData, setFormData] = useState({
@@ -153,7 +156,7 @@ export default function SelectCafePage() {
       setShowOnboardDialog(true)
       return
     }
-    setSelectedCafe(id)
+    setSelectedCafeId(id)
     setShowPinDialog(true)
     setPin("")
     setError(null)
@@ -316,6 +319,25 @@ export default function SelectCafePage() {
 
       // ✅ Handle 4xx: use server's message (e.g. "Invalid PIN" or "Invalid credentials")
       if (!response.ok) {
+        // Staff PINs are validated by dashboard access service, not login-service validatePin.
+        if (response.status === 401) {
+          try {
+            const accessSession = await accessApi.unlockByPin(selectedCafeData.id, pin)
+            localStorage.setItem("jwtToken", accessSession.token)
+            localStorage.setItem("rbac_access_token_v1", accessSession.token)
+            setActiveCafe(selectedCafeData.id)
+
+            const oneHour = 60 * 60
+            document.cookie = `jwt=${accessSession.token}; max-age=${oneHour}; path=/; SameSite=Lax; Secure`
+
+            toast.success("Access granted!")
+            router.replace("/dashboard")
+            return
+          } catch {
+            // Fall through to existing message handling below.
+          }
+        }
+
         const message =
           data.message ||
           data.error ||
@@ -331,8 +353,18 @@ export default function SelectCafePage() {
 
       // ✅ Handle 200 OK with status field
       if (data.status === "success") {
-        localStorage.setItem("selectedCafe", selectedCafeData.id)
         localStorage.setItem("jwtToken", data.data.token)
+
+        // Bootstrap RBAC token with the same cafe PIN (owner/staff unlock path)
+        try {
+          const accessSession = await accessApi.unlockByPin(selectedCafeData.id, pin)
+          localStorage.setItem("rbac_access_token_v1", accessSession.token)
+        } catch (rbacError) {
+          console.warn("RBAC unlock bootstrap failed:", rbacError)
+          toast.warning("Cafe unlocked, but owner RBAC session bootstrap failed. Team access actions may fail until this is fixed.")
+        }
+
+        setActiveCafe(selectedCafeData.id)
 
         const oneHour = 60 * 60
         document.cookie = `jwt=${data.data.token}; max-age=${oneHour}; path=/; SameSite=Lax; Secure`

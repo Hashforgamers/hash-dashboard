@@ -3,9 +3,12 @@
 import { useState } from "react"
 import { Menu, X } from "lucide-react"
 import { useTheme } from "next-themes"
+import { usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { MainNav } from "../components/main-nav"
 import Image from "next/image"
+import { useAccess } from "../context/AccessContext"
+import { canAccessPath } from "@/lib/rbac"
 
 interface DashboardLayoutProps {
   children: React.ReactNode
@@ -15,6 +18,9 @@ interface DashboardLayoutProps {
 export function DashboardLayout({ children, contentScroll = "page" }: DashboardLayoutProps) {
   const { theme } = useTheme()
   const [isNavOpen, setIsNavOpen] = useState(false)
+  const pathname = usePathname()
+  const { activeStaff } = useAccess()
+  const hasAccess = activeStaff ? canAccessPath(pathname, activeStaff.permissions) : true
 
   return (
     <div className="premium-shell flex h-dvh overflow-hidden text-foreground">
@@ -84,7 +90,18 @@ export function DashboardLayout({ children, contentScroll = "page" }: DashboardL
             contentScroll === "contained" ? "overflow-hidden" : "overflow-y-auto"
           }`}
         >
-          {children}
+          {hasAccess ? (
+            children
+          ) : (
+            <div className="flex h-full min-h-[220px] items-center justify-center">
+              <div className="w-full max-w-xl rounded-2xl border border-red-500/30 bg-red-500/10 p-6 text-center">
+                <h2 className="text-xl font-semibold text-red-200">Access Restricted</h2>
+                <p className="mt-2 text-sm text-red-100/80">
+                  Your current role does not have permission to access this page.
+                </p>
+              </div>
+            </div>
+          )}
         </main>
       </div>
     </div>
