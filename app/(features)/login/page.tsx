@@ -87,8 +87,12 @@ export default function LoginPage() {
     try {
       localStorage.removeItem("vendors");
       localStorage.removeItem("vendor_login_email");
+      localStorage.removeItem("vendor_account_email");
       localStorage.removeItem("jwtToken");
       localStorage.removeItem("tokenExpiration");
+      localStorage.removeItem("selectedCafe");
+      localStorage.removeItem("active_staff_session_v1");
+      localStorage.removeItem("rbac_access_token_v1");
       sessionStorage.clear();
     } catch (error) {
       console.warn("Error clearing session data:", error);
