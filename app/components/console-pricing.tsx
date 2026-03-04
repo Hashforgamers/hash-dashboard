@@ -20,6 +20,8 @@ import {
   Loader2,
   LayoutGrid,
   Table as TableIcon,
+  Minus,
+  Save,
 } from "lucide-react";
 import { DASHBOARD_URL } from "@/src/config/env";
 import { jwtDecode } from "jwt-decode";
@@ -104,6 +106,41 @@ interface AvailableGame {
   single_slot_price: number;
 }
 
+interface ControllerTier {
+  id: string;
+  quantity: number;
+  total_price: number;
+}
+
+interface ControllerPricingRule {
+  base_price: number;
+  tiers: ControllerTier[];
+}
+
+type ControllerPricingState = Record<string, ControllerPricingRule>;
+
+const defaultControllerPricing: ControllerPricingState = {
+  ps5: {
+    base_price: 0,
+    tiers: [],
+  },
+  xbox: {
+    base_price: 0,
+    tiers: [],
+  },
+  pc: {
+    base_price: 0,
+    tiers: [],
+  },
+  vr: {
+    base_price: 0,
+    tiers: [],
+  },
+};
+
+const controllerPreviewQuantities = [1, 2, 3, 4];
+const controllerSupportedConsoleTypes = new Set(["ps5", "xbox"]);
+
 export default function ConsolePricing() {
   const [prices, setPrices] = useState<PricingState>(() => {
     const initialPrices: PricingState = {};
@@ -118,7 +155,7 @@ export default function ConsolePricing() {
   const [successMessage, setSuccessMessage] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [vendorId, setVendorId] = useState<number | null>(null);
-  const [activeTab, setActiveTab] = useState<"default" | "offers">("default");
+  const [activeTab, setActiveTab] = useState<"default" | "offers" | "controllers">("default");
   const [viewMode, setViewMode] = useState<"grid" | "table">("table");
   const [offers, setOffers] = useState<PricingOffer[]>([]);
   const [availableGames, setAvailableGames] = useState<AvailableGame[]>([]);
@@ -130,6 +167,11 @@ export default function ConsolePricing() {
   const [isCreatingOffer, setIsCreatingOffer] = useState(false);
   const [isUpdatingOffer, setIsUpdatingOffer] = useState(false);
   const [deletingOfferId, setDeletingOfferId] = useState<number | null>(null);
+  const [controllerPricing, setControllerPricing] = useState<ControllerPricingState>(defaultControllerPricing);
+  const [isLoadingControllerPricing, setIsLoadingControllerPricing] = useState(false);
+  const [isSavingControllerPricing, setIsSavingControllerPricing] = useState(false);
+  const [controllerPricingError, setControllerPricingError] = useState<string | null>(null);
+  const [controllerPricingChanged, setControllerPricingChanged] = useState(false);
 
   const [offerForm, setOfferForm] = useState({
     available_game_id: "",
@@ -181,6 +223,47 @@ export default function ConsolePricing() {
       fetchAvailableGames();
     }
   }, [vendorId, activeTab]);
+
+  useEffect(() => {
+    if (!vendorId || activeTab !== "controllers") return;
+    fetchControllerPricing();
+  }, [vendorId, activeTab]);
+
+  const fetchControllerPricing = async () => {
+    if (!vendorId) return;
+    setIsLoadingControllerPricing(true);
+    setControllerPricingError(null);
+    try {
+      const res = await fetch(`${DASHBOARD_URL}/api/vendor/${vendorId}/controller-pricing`);
+      if (!res.ok) throw new Error("Failed to fetch controller pricing");
+      const data = await res.json();
+      const pricingData = data?.pricing || {};
+
+      setControllerPricing((prev) => {
+        const next = { ...prev };
+        for (const consoleType of controllerSupportedConsoleTypes) {
+          const item = pricingData[consoleType];
+          next[consoleType] = {
+            base_price: Number(item?.base_price ?? 0),
+            tiers: Array.isArray(item?.tiers)
+              ? item.tiers.map((tier: any) => ({
+                  id: String(tier?.id ?? `${consoleType}-tier-${Date.now()}-${Math.random()}`),
+                  quantity: Number(tier?.quantity ?? 2),
+                  total_price: Number(tier?.total_price ?? 0),
+                }))
+              : [],
+          };
+        }
+        return next;
+      });
+      setControllerPricingChanged(false);
+    } catch (error) {
+      console.error("Failed to load controller pricing", error);
+      setControllerPricingError("Unable to load controller pricing from server.");
+    } finally {
+      setIsLoadingControllerPricing(false);
+    }
+  };
 
   const fetchOffers = async () => {
     if (!vendorId) return;
@@ -370,6 +453,149 @@ export default function ConsolePricing() {
   const getConsoleIcon = (type: string) =>
     consoleTypes.find((c) => c.type === type.toLowerCase())?.icon || Monitor;
 
+  const updateControllerBasePrice = (consoleType: string, value: string) => {
+    const nextValue = Math.max(0, parseFloat(value) || 0);
+    setControllerPricing((prev) => ({
+      ...prev,
+      [consoleType]: {
+        ...(prev[consoleType] || { base_price: 0, tiers: [] }),
+        base_price: nextValue,
+      },
+    }));
+    setControllerPricingChanged(true);
+  };
+
+  const addControllerTier = (consoleType: string) => {
+    setControllerPricing((prev) => {
+      const current = prev[consoleType] || { base_price: 0, tiers: [] };
+      const nextQty = Math.max(2, ...current.tiers.map((t) => t.quantity + 1));
+      const newTier: ControllerTier = {
+        id: `${consoleType}-tier-${Date.now()}`,
+        quantity: nextQty,
+        total_price: current.base_price * nextQty,
+      };
+      return {
+        ...prev,
+        [consoleType]: {
+          ...current,
+          tiers: [...current.tiers, newTier],
+        },
+      };
+    });
+    setControllerPricingChanged(true);
+  };
+
+  const updateControllerTier = (
+    consoleType: string,
+    tierId: string,
+    field: "quantity" | "total_price",
+    value: string
+  ) => {
+    const nextValue = Math.max(0, parseFloat(value) || 0);
+    setControllerPricing((prev) => {
+      const current = prev[consoleType] || { base_price: 0, tiers: [] };
+      return {
+        ...prev,
+        [consoleType]: {
+          ...current,
+          tiers: current.tiers.map((tier) =>
+            tier.id === tierId
+              ? {
+                  ...tier,
+                  [field]: field === "quantity" ? Math.max(2, Math.round(nextValue)) : nextValue,
+                }
+              : tier
+          ),
+        },
+      };
+    });
+    setControllerPricingChanged(true);
+  };
+
+  const removeControllerTier = (consoleType: string, tierId: string) => {
+    setControllerPricing((prev) => {
+      const current = prev[consoleType] || { base_price: 0, tiers: [] };
+      return {
+        ...prev,
+        [consoleType]: {
+          ...current,
+          tiers: current.tiers.filter((tier) => tier.id !== tierId),
+        },
+      };
+    });
+    setControllerPricingChanged(true);
+  };
+
+  const calculateControllerTotal = (consoleType: string, quantity: number) => {
+    const config = controllerPricing[consoleType];
+    if (!config || quantity <= 0) return 0;
+
+    const base = config.base_price;
+    const tiers = config.tiers.filter((tier) => tier.quantity > 0).sort((a, b) => a.quantity - b.quantity);
+    const dp = Array(quantity + 1).fill(Number.POSITIVE_INFINITY);
+    dp[0] = 0;
+
+    for (let i = 1; i <= quantity; i += 1) {
+      dp[i] = Math.min(dp[i], dp[i - 1] + base);
+      for (const tier of tiers) {
+        if (tier.quantity <= i) {
+          dp[i] = Math.min(dp[i], dp[i - tier.quantity] + tier.total_price);
+        }
+      }
+    }
+
+    return Number.isFinite(dp[quantity]) ? dp[quantity] : quantity * base;
+  };
+
+  const saveControllerPricing = async () => {
+    if (!vendorId) return;
+    setIsSavingControllerPricing(true);
+    setControllerPricingError(null);
+
+    const pricingPayload = Array.from(controllerSupportedConsoleTypes).reduce(
+      (acc, consoleType) => {
+        const config = controllerPricing[consoleType] || { base_price: 0, tiers: [] };
+        const normalizedTiers = config.tiers
+          .map((tier) => ({
+            quantity: Math.max(2, Math.round(Number(tier.quantity || 0))),
+            total_price: Math.max(0, Number(tier.total_price || 0)),
+          }))
+          .filter((tier, index, arr) => arr.findIndex((t) => t.quantity === tier.quantity) === index)
+          .sort((a, b) => a.quantity - b.quantity);
+
+        acc[consoleType] = {
+          base_price: Math.max(0, Number(config.base_price || 0)),
+          tiers: normalizedTiers,
+        };
+        return acc;
+      },
+      {} as Record<string, { base_price: number; tiers: Array<{ quantity: number; total_price: number }> }>
+    );
+
+    try {
+      const response = await fetch(`${DASHBOARD_URL}/api/vendor/${vendorId}/controller-pricing`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ pricing: pricingPayload }),
+      });
+      const data = await response.json();
+      if (!response.ok || !data?.success) {
+        const backendMessage =
+          data?.message || (Array.isArray(data?.errors) ? data.errors.join(", ") : "Unable to save");
+        throw new Error(backendMessage);
+      }
+
+      showToast("Controller pricing saved successfully.");
+      setControllerPricingChanged(false);
+      fetchControllerPricing();
+    } catch (error) {
+      console.error("Failed to save controller pricing", error);
+      setControllerPricingError(error instanceof Error ? error.message : "Unable to save controller pricing.");
+    } finally {
+      setIsSavingControllerPricing(false);
+    }
+  };
+
   const canSave =
     Object.values(prices).some((p) => p.hasChanged) &&
     Object.values(errors).length === 0;
@@ -423,6 +649,17 @@ export default function ConsolePricing() {
         >
           <Sparkles className="icon-md" />
           Promotional Offers
+        </button>
+        <button
+          onClick={() => setActiveTab("controllers")}
+          className={`inline-flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold transition-all sm:text-sm ${
+            activeTab === "controllers"
+              ? "border border-cyan-400/35 bg-cyan-500/15 text-cyan-100"
+              : "border border-transparent bg-slate-900/40 text-slate-300 hover:border-cyan-400/25 hover:text-cyan-100"
+          }`}
+        >
+          <Gamepad className="icon-md" />
+          Controller Pricing
         </button>
       </div>
 
@@ -652,6 +889,161 @@ export default function ConsolePricing() {
         </motion.div>
       )}
 
+      {activeTab === "controllers" && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.2 }}
+          className="flex flex-1 min-h-0 flex-col gap-4 overflow-hidden"
+        >
+          <div className="gaming-panel shrink-0 rounded-xl p-4">
+            <h2 className="section-title">Extra Controller Pricing</h2>
+            <p className="body-text-muted mt-1">
+              Configure base and tier rates like 1 controller = ₹50, 2 controllers = ₹80.
+              Backend-integrated for PS5 and Xbox.
+            </p>
+            {controllerPricingError && (
+              <p className="mt-2 text-xs font-medium text-rose-300">{controllerPricingError}</p>
+            )}
+          </div>
+
+          {isLoadingControllerPricing ? (
+            <div className="flex-1 flex flex-col items-center justify-center gap-3 text-muted-foreground">
+              <Loader2 className="w-10 h-10 animate-spin text-blue-400" />
+              <p className="body-text-muted">Loading controller pricing...</p>
+            </div>
+          ) : (
+          <div className="min-h-0 flex-1 overflow-y-auto pr-1 space-y-4">
+            {consoleTypes
+              .filter((console) => controllerSupportedConsoleTypes.has(console.type))
+              .map((console) => {
+              const Icon = console.icon;
+              const config = controllerPricing[console.type] || { base_price: 0, tiers: [] };
+              const sortedTiers = [...config.tiers].sort((a, b) => a.quantity - b.quantity);
+              return (
+                <Card
+                  key={console.type}
+                  className="gaming-panel rounded-xl border border-cyan-500/20 bg-gradient-to-br from-slate-900/75 via-slate-900/70 to-cyan-950/20"
+                >
+                  <CardHeader className="border-b border-cyan-500/15 pb-3">
+                    <div className="flex items-center gap-2">
+                      <Icon className="icon-md text-cyan-300" />
+                      <span className="card-title">{console.name}</span>
+                    </div>
+                  </CardHeader>
+
+                  <CardContent className="space-y-4 p-4">
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                      <div className="space-y-1.5">
+                        <label className="table-header-text">Base Price (1 Controller)</label>
+                        <Input
+                          type="number"
+                          min={0}
+                          value={config.base_price}
+                          onChange={(e) => updateControllerBasePrice(console.type, e.target.value)}
+                          className="border-cyan-400/25 bg-slate-900/70 text-slate-100 focus-visible:ring-cyan-400/60"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <h3 className="table-header-text">Tier Offers</h3>
+                        <button
+                          onClick={() => addControllerTier(console.type)}
+                          className={secondaryButtonClass}
+                        >
+                          <Plus className="icon-md" />
+                          Add Tier
+                        </button>
+                      </div>
+
+                      {sortedTiers.length === 0 ? (
+                        <p className="body-text-muted">No tier offers added.</p>
+                      ) : (
+                        <div className="space-y-2">
+                          {sortedTiers.map((tier) => (
+                            <div
+                              key={tier.id}
+                              className="grid grid-cols-1 gap-2 rounded-lg border border-cyan-500/15 bg-slate-900/55 p-3 sm:grid-cols-[1fr_1fr_auto]"
+                            >
+                              <div className="space-y-1">
+                                <label className="table-header-text">Quantity</label>
+                                <Input
+                                  type="number"
+                                  min={2}
+                                  value={tier.quantity}
+                                  onChange={(e) =>
+                                    updateControllerTier(console.type, tier.id, "quantity", e.target.value)
+                                  }
+                                  className="border-cyan-400/25 bg-slate-900/70 text-slate-100 focus-visible:ring-cyan-400/60"
+                                />
+                              </div>
+                              <div className="space-y-1">
+                                <label className="table-header-text">Tier Total (₹)</label>
+                                <Input
+                                  type="number"
+                                  min={0}
+                                  value={tier.total_price}
+                                  onChange={(e) =>
+                                    updateControllerTier(console.type, tier.id, "total_price", e.target.value)
+                                  }
+                                  className="border-cyan-400/25 bg-slate-900/70 text-slate-100 focus-visible:ring-cyan-400/60"
+                                />
+                              </div>
+                              <button
+                                onClick={() => removeControllerTier(console.type, tier.id)}
+                                className={`${destructiveIconButtonClass} self-end`}
+                                title="Remove tier"
+                              >
+                                <Minus className="icon-md" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="rounded-lg border border-cyan-500/15 bg-slate-900/60 p-3">
+                      <p className="table-header-text mb-2">Pricing Preview</p>
+                      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                        {controllerPreviewQuantities.map((qty) => (
+                          <div key={`${console.type}-${qty}`} className="rounded-md border border-cyan-500/10 bg-slate-950/55 p-2">
+                            <p className="body-text-muted">{qty} controller{qty > 1 ? "s" : ""}</p>
+                            <p className="stat-value text-cyan-200">₹{calculateControllerTotal(console.type, qty)}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+          )}
+
+          <div className="shrink-0">
+            <button
+              onClick={saveControllerPricing}
+              disabled={isSavingControllerPricing || !controllerPricingChanged}
+              className={primaryButtonClass}
+            >
+              {isSavingControllerPricing ? (
+                <>
+                  <Loader2 className="icon-md animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <Save className="icon-md" />
+                  Save Controller Pricing
+                </>
+              )}
+            </button>
+          </div>
+        </motion.div>
+      )}
+
       {/* ✅ Offer Form Modal */}
       <AnimatePresence>
         {showOfferForm && (
@@ -661,7 +1053,6 @@ export default function ConsolePricing() {
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.95, opacity: 0, y: 10 }}
               transition={{ duration: 0.2 }}
-              className="bg-card border border-border rounded-xl w-full max-w-md shadow-2xl overflow-hidden"
               className="w-full max-w-md overflow-hidden rounded-xl border border-cyan-400/25 bg-gradient-to-br from-slate-950 via-slate-900 to-cyan-950/30 shadow-2xl"
             >
               {/* Modal Header */}
