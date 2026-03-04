@@ -6,6 +6,7 @@ import "./globals.css";
 import "./premium.css";
 import { SocketProvider } from "./context/SocketContext";
 import { SubscriptionProvider } from "./context/SubscriptionContext";
+import { AccessProvider } from "./context/AccessContext";
 
 const silkscreen = Silkscreen({
   subsets: ["latin"],
@@ -33,7 +34,7 @@ export default function RootLayout({
           <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={true}>
           <SocketProvider>
             <SubscriptionProvider>
-            {children}
+            <AccessProvider>{children}</AccessProvider>
             </SubscriptionProvider>
             </SocketProvider>
           </ThemeProvider>

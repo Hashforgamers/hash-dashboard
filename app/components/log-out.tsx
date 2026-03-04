@@ -9,6 +9,8 @@ export function ButtonDestructive() {
       onClick={() => {
         localStorage.removeItem("jwtToken");
         localStorage.removeItem("tokenExpiration");
+        localStorage.removeItem("active_staff_session_v1");
+        localStorage.removeItem("rbac_access_token_v1");
         window.location.href = "/login"; // Redirect after logout
       }}
     >

@@ -233,7 +233,7 @@ export default function SubscriptionPage() {
         Use normal document flow with overflow-y-auto on the main content area.
         DashboardLayout's <main> already has overflow-y-auto so this just fills it.
       */}
-      <div className="relative min-h-full w-full bg-[radial-gradient(circle_at_top,rgba(6,182,212,0.16),rgba(2,6,23,0.95)_42%,rgba(2,6,23,1))]">
+      <div className="relative min-h-full w-full bg-slate-950">
 
         {/* Navigation / Back button row */}
         <div className="mx-auto flex w-full max-w-[1600px] items-center justify-between px-3 pt-4 sm:px-4 md:px-6">
@@ -258,7 +258,7 @@ export default function SubscriptionPage() {
         <div className="mx-auto w-full max-w-[1600px] space-y-6 px-3 pb-16 pt-4 sm:px-4 md:space-y-8 md:px-6">
 
           {/* Header Section */}
-          <div className="rounded-2xl border border-cyan-500/25 bg-[linear-gradient(140deg,rgba(8,20,45,0.96),rgba(6,18,40,0.9))] p-5 text-center shadow-[0_22px_48px_-30px_rgba(6,182,212,0.7)] md:p-7">
+          <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5 text-center shadow-sm md:p-7">
             <motion.div
               initial={{ scale: 0.5, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
