@@ -50,6 +50,7 @@ export default function EmployeeAccessPage() {
     rolePermissions,
     setRolePermission,
     resetRolePermissions,
+    updateStaffPin,
   } = useAccess();
 
   const [name, setName] = useState("");
@@ -113,6 +114,23 @@ export default function EmployeeAccessPage() {
     } catch (e: any) {
       toast.error(e?.message || "Failed to remove staff");
     }
+  };
+
+  const handleChangePin = async (staffId: string, currentPin?: string | null) => {
+    const entered = window.prompt("Enter new PIN (4-6 digits)", currentPin || "");
+    if (!entered) return;
+    const pin = entered.trim();
+    if (!/^\d{4,6}$/.test(pin)) {
+      toast.error("PIN must be 4-6 digits");
+      return;
+    }
+
+    const result = await updateStaffPin(staffId, pin);
+    if (!result.ok) {
+      toast.error(result.message);
+      return;
+    }
+    toast.success("PIN updated");
   };
 
   const handleSetRolePermission = async (roleKey: StaffRole, permission: Permission, enabled: boolean) => {
@@ -279,8 +297,17 @@ export default function EmployeeAccessPage() {
                         </Badge>
                       </div>
 
-                      <div className="col-span-2 flex items-center gap-2 font-mono tracking-wider text-slate-400">
-                        Hidden
+                      <div className="col-span-2 flex items-center gap-2 font-mono tracking-wider text-slate-200">
+                        {staff.pinCode || "Not set"}
+                        {staff.pinCode && (
+                          <button
+                            type="button"
+                            className="text-slate-400 transition-colors hover:text-cyan-300"
+                            onClick={() => copyPin(staff.pinCode as string)}
+                          >
+                            <Copy className="h-3.5 w-3.5" />
+                          </button>
+                        )}
                       </div>
 
                       <div className="col-span-2 flex items-center justify-end gap-2">
@@ -289,6 +316,9 @@ export default function EmployeeAccessPage() {
                         </Button>
                         <Button variant="destructive" size="sm" onClick={() => void handleRemoveStaff(staff.id)}>
                           Remove
+                        </Button>
+                        <Button variant="secondary" size="sm" onClick={() => void handleChangePin(staff.id, staff.pinCode)}>
+                          Change PIN
                         </Button>
                       </div>
                     </div>

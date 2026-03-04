@@ -11,6 +11,7 @@ export interface StaffProfile {
   name: string;
   role: StaffRole;
   isActive: boolean;
+  pinCode?: string | null;
   createdAt: string;
 }
 
@@ -47,6 +48,7 @@ interface AccessContextValue {
   setRole: (staffId: string, role: StaffRole) => Promise<void>;
   setRolePermission: (role: StaffRole, permission: Permission, enabled: boolean) => Promise<void>;
   resetRolePermissions: () => Promise<void>;
+  updateStaffPin: (staffId: string, pin: string) => Promise<{ ok: boolean; message: string; pin?: string }>;
   toggleStaffActive: (staffId: string) => Promise<void>;
   removeStaff: (staffId: string) => Promise<void>;
   clearAccessSession: () => void;
@@ -258,6 +260,7 @@ export function AccessProvider({ children }: { children: React.ReactNode }) {
             name: s.name,
             role: toRole(s.role) as StaffRole,
             isActive: s.is_active,
+            pinCode: s.pin_code ?? null,
             createdAt: s.created_at || new Date().toISOString(),
           }))
         );
@@ -345,6 +348,7 @@ export function AccessProvider({ children }: { children: React.ReactNode }) {
           name: created.name,
           role: toRole(created.role) as StaffRole,
           isActive: created.is_active,
+          pinCode: created.pin_code ?? created.generated_pin ?? null,
           createdAt: created.created_at || new Date().toISOString(),
         },
       ]);
@@ -469,6 +473,28 @@ export function AccessProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const updateStaffPin = async (staffId: string, pin: string) => {
+    if (!selectedCafeId) {
+      return { ok: false, message: "No cafe selected" };
+    }
+    const token = await ensureRbacToken(selectedCafeId);
+    if (!token) {
+      return { ok: false, message: "RBAC session missing. Re-unlock cafe with PIN." };
+    }
+
+    try {
+      const updated = await accessApi.updateStaff(selectedCafeId, token, staffId, { pin });
+      setStaffProfiles((prev) =>
+        prev.map((s) =>
+          s.id === staffId ? { ...s, pinCode: updated.pin_code ?? pin } : s
+        )
+      );
+      return { ok: true, message: "PIN updated", pin: updated.pin_code ?? pin };
+    } catch (e: any) {
+      return { ok: false, message: e?.message || "Failed to update PIN" };
+    }
+  };
+
   const toggleStaffActive = async (staffId: string) => {
     if (!selectedCafeId) {
       throw new Error("No cafe selected");
@@ -533,6 +559,7 @@ export function AccessProvider({ children }: { children: React.ReactNode }) {
         setRole,
         setRolePermission,
         resetRolePermissions,
+        updateStaffPin,
         toggleStaffActive,
         removeStaff,
         clearAccessSession,

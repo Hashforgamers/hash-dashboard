@@ -319,6 +319,25 @@ export default function SelectCafePage() {
 
       // ✅ Handle 4xx: use server's message (e.g. "Invalid PIN" or "Invalid credentials")
       if (!response.ok) {
+        // Staff PINs are validated by dashboard access service, not login-service validatePin.
+        if (response.status === 401) {
+          try {
+            const accessSession = await accessApi.unlockByPin(selectedCafeData.id, pin)
+            localStorage.setItem("jwtToken", accessSession.token)
+            localStorage.setItem("rbac_access_token_v1", accessSession.token)
+            setActiveCafe(selectedCafeData.id)
+
+            const oneHour = 60 * 60
+            document.cookie = `jwt=${accessSession.token}; max-age=${oneHour}; path=/; SameSite=Lax; Secure`
+
+            toast.success("Access granted!")
+            router.replace("/dashboard")
+            return
+          } catch {
+            // Fall through to existing message handling below.
+          }
+        }
+
         const message =
           data.message ||
           data.error ||

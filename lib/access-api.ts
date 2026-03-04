@@ -8,6 +8,7 @@ export interface StaffDto {
   name: string;
   role: Role;
   is_active: boolean;
+  pin_code?: string | null;
   created_at?: string;
   updated_at?: string;
   generated_pin?: string;
@@ -79,7 +80,13 @@ export const accessApi = {
     vendorId: string,
     token: string,
     staffId: string,
-    payload: { role?: Exclude<Role, "owner">; is_active?: boolean; name?: string; regenerate_pin?: boolean }
+    payload: {
+      role?: Exclude<Role, "owner">;
+      is_active?: boolean;
+      name?: string;
+      pin?: string;
+      regenerate_pin?: boolean;
+    }
   ) =>
     accessCall<StaffDto>(vendorId, `/staff/${staffId}`, token, {
       method: "PATCH",
