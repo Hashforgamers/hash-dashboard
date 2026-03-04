@@ -1,7 +1,7 @@
 "use client"
 
-import { useState } from "react"
-import { Menu, X } from "lucide-react"
+import { useEffect, useState } from "react"
+import { Menu, Pin, PinOff, X } from "lucide-react"
 import { useTheme } from "next-themes"
 import { usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
@@ -15,12 +15,34 @@ interface DashboardLayoutProps {
   contentScroll?: "page" | "contained"
 }
 
+const NAV_PIN_STORAGE_KEY = "dashboard_nav_pinned_v1"
+
 export function DashboardLayout({ children, contentScroll = "page" }: DashboardLayoutProps) {
   const { theme } = useTheme()
   const [isNavOpen, setIsNavOpen] = useState(false)
+  const [isNavPinned, setIsNavPinned] = useState(false)
   const pathname = usePathname()
   const { activeStaff } = useAccess()
   const hasAccess = activeStaff ? canAccessPath(pathname, activeStaff.permissions) : true
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(NAV_PIN_STORAGE_KEY)
+      if (saved === "1") {
+        setIsNavPinned(true)
+      }
+    } catch {
+      // noop
+    }
+  }, [])
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(NAV_PIN_STORAGE_KEY, isNavPinned ? "1" : "0")
+    } catch {
+      // noop
+    }
+  }, [isNavPinned])
 
   return (
     <div className="premium-shell flex h-dvh overflow-hidden text-foreground">
@@ -51,10 +73,22 @@ export function DashboardLayout({ children, contentScroll = "page" }: DashboardL
           className={`
             group fixed left-0 top-0 z-30 flex h-full w-[86vw] max-w-72 flex-col overflow-hidden border-r border-border/70 bg-background/85 p-3 backdrop-blur-md transition-transform duration-300 ease-out
             md:sticky md:top-0 md:h-dvh md:w-72 md:max-w-none md:translate-x-0 md:shrink-0
-            xl:w-[76px] xl:hover:w-72
+            ${isNavPinned ? "xl:w-72" : "xl:w-[76px] xl:hover:w-72"}
             ${isNavOpen ? "translate-x-0" : "-translate-x-full"}
           `}
         >
+          <button
+            type="button"
+            aria-label={isNavPinned ? "Unpin sidebar" : "Pin sidebar"}
+            title={isNavPinned ? "Unpin sidebar" : "Pin sidebar"}
+            onClick={() => setIsNavPinned((prev) => !prev)}
+            className={`absolute right-2 top-2 z-10 hidden rounded-md border border-border/70 bg-background/80 p-1.5 text-muted-foreground transition-colors hover:text-foreground md:inline-flex ${
+              isNavPinned ? "xl:inline-flex" : "xl:hidden xl:group-hover:inline-flex"
+            }`}
+          >
+            {isNavPinned ? <PinOff className="h-4 w-4" /> : <Pin className="h-4 w-4" />}
+          </button>
+
           <div className="mb-3 hidden items-end space-x-2 overflow-hidden md:mb-4 md:flex">
             <Image
               src="/whitehashlogo.png"
@@ -70,12 +104,16 @@ export function DashboardLayout({ children, contentScroll = "page" }: DashboardL
               height={36}
               className="shrink-0 dark:hidden"
             />
-            <span className="premium-heading ml-1 hidden whitespace-nowrap text-sm font-semibold text-foreground md:block xl:hidden xl:group-hover:block">
+            <span className={`premium-heading ml-1 hidden whitespace-nowrap text-sm font-semibold text-foreground md:block ${isNavPinned ? "xl:block" : "xl:hidden xl:group-hover:block"}`}>
               Hash Gaming
             </span>
           </div>
 
-          <MainNav className="min-h-0 flex-1 items-start" onItemClick={() => setIsNavOpen(false)} />
+          <MainNav
+            className="min-h-0 flex-1 items-start"
+            onItemClick={() => setIsNavOpen(false)}
+            isNavPinned={isNavPinned}
+          />
         </aside>
 
         {isNavOpen && (
