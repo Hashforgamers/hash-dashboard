@@ -33,8 +33,29 @@ interface Transaction {
 
 function getToken() {
   if (typeof window !== "undefined") {
-    return localStorage.getItem("jwtToken");
+    return localStorage.getItem("rbac_access_token_v1") || localStorage.getItem("jwtToken");
   }
+  return null;
+}
+
+function getVendorIdFromToken(decoded: any): number | null {
+  if (!decoded) return null;
+
+  if (decoded.vendor_id !== undefined && decoded.vendor_id !== null) {
+    const n = Number(decoded.vendor_id);
+    if (!Number.isNaN(n)) return n;
+  }
+
+  if (decoded.sub && typeof decoded.sub === "object" && decoded.sub.id !== undefined && decoded.sub.id !== null) {
+    const n = Number(decoded.sub.id);
+    if (!Number.isNaN(n)) return n;
+  }
+
+  if (typeof decoded.sub === "string" && /^\d+$/.test(decoded.sub)) {
+    const n = Number(decoded.sub);
+    if (!Number.isNaN(n)) return n;
+  }
+
   return null;
 }
 
@@ -115,7 +136,7 @@ export function TransactionTable() {
     if (storedToken) {
       try {
         const decoded: any = jwtDecode(storedToken);
-        setVendorId(decoded?.sub?.id || null);
+        setVendorId(getVendorIdFromToken(decoded));
         setIssuedAt(decoded?.iat || null);
         setExpirationTime(decoded?.exp || null);
       } catch (error) {
@@ -139,7 +160,7 @@ export function TransactionTable() {
     if (storedToken) {
       try {
         const decoded: any = jwtDecode(storedToken);
-        setVendorId(decoded?.sub?.id || null);
+        setVendorId(getVendorIdFromToken(decoded));
         setIssuedAt(decoded?.iat || null);
         setExpirationTime(decoded?.exp || null);
       } catch (error) {
