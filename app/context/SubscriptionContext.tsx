@@ -1,9 +1,8 @@
 "use client"
 
-import { createContext, useContext, useEffect, useState, ReactNode } from "react"
-import { useRouter, usePathname } from "next/navigation"
+import { createContext, useContext, useEffect, useRef, useState, ReactNode } from "react"
+import { usePathname } from "next/navigation"
 import { subscriptionApi } from "@/lib/api"
-import { toast } from "sonner"
 
 interface SubscriptionStatus {
   is_active: boolean
@@ -33,7 +32,7 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
   const [status, setStatus] = useState<SubscriptionStatus | null>(null)
   const [loading, setLoading] = useState(false)
   const [vendorId, setVendorId] = useState<number | null>(null)
-  const router = useRouter()
+  const checkInFlight = useRef(false)
   const pathname = usePathname()
 
   useEffect(() => {
@@ -46,7 +45,8 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
     }
   }, [pathname])
 
-  const checkSubscription = async () => {
+  const checkSubscription = async (force = false) => {
+    if (checkInFlight.current) return
     if (!vendorId || vendorId <= 0) {
       setLoading(false)
       return
@@ -60,31 +60,56 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
     }
 
     const skipPages = ["/subscription", "/login", "/select-cafe"]
-    if (skipPages.some(page => pathname?.includes(page))) {
+    if (!force && skipPages.some(page => pathname?.includes(page))) {
       setLoading(false)
       return
     }
 
     try {
+      checkInFlight.current = true
       setLoading(true)
       const response = await subscriptionApi.checkStatus(vendorId)
       setStatus(response as SubscriptionStatus)
       // ✅ No redirect on locked — dashboard stays visible
     } catch (error) {
       console.error("Failed to check subscription:", error)
-      setStatus({ is_active: true, locked: false, message: "Check failed" })
+      // Keep an already-active state on transient API errors to avoid false relocking.
+      setStatus((prev) =>
+        prev?.is_active
+          ? prev
+          : { is_active: false, locked: true, message: "Unable to verify subscription status" }
+      )
     } finally {
       setLoading(false)
+      checkInFlight.current = false
     }
   }
 
   const refreshStatus = async () => {
-    await checkSubscription()
+    await checkSubscription(true)
   }
 
   useEffect(() => {
-    if (vendorId && pathname?.includes("/dashboard")) {
-      checkSubscription()
+    if (!vendorId) return
+
+    const skipPages = ["/login", "/select-cafe"]
+    if (skipPages.some(page => pathname?.includes(page))) return
+
+    checkSubscription()
+  }, [vendorId, pathname])
+
+  useEffect(() => {
+    const onFocus = () => {
+      if (document.visibilityState === "hidden") return
+      if (vendorId) {
+        void checkSubscription(true)
+      }
+    }
+    window.addEventListener("focus", onFocus)
+    document.addEventListener("visibilitychange", onFocus)
+    return () => {
+      window.removeEventListener("focus", onFocus)
+      document.removeEventListener("visibilitychange", onFocus)
     }
   }, [vendorId, pathname])
 

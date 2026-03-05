@@ -22,6 +22,7 @@ import {
   Trophy,
   KeyRound,
   Shield,
+  Wallet,
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { ButtonDestructive } from "./log-out";
@@ -52,6 +53,7 @@ const navItems: NavItem[] = [
   { href: "/manage-extraservice", icon: UtensilsCrossed, label: "Extra Services", permission: "extras.manage" },
   { href: "/know-your-gamers", icon: Users, label: "Know Your Gamers", permission: "gamers.view" },
   { href: "/console-pricing", icon: DollarSign, label: "Console Pricing", permission: "pricing.manage" },
+  { href: "/gamers-credit", icon: Wallet, label: "Gamers Credit", permission: "pricing.manage" },
   { href: "/pass", icon: Ticket, label: "Manage Passes", permission: "passes.manage" },
   { href: "/store", icon: ShoppingBag, label: "Store", permission: "store.manage" },
   { href: "/games", icon: Gamepad2, label: "Games", permission: "games.manage" },

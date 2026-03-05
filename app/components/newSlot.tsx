@@ -60,6 +60,50 @@ interface ActivePricingEntry {
   discount_percentage?: number
 }
 
+interface ControllerTierRule {
+  quantity: number
+  total_price: number
+}
+
+interface ControllerPricingConfig {
+  base_price: number
+  tiers: ControllerTierRule[]
+}
+
+const normalizeControllerType = (name: string | undefined): "ps5" | "xbox" | null => {
+  const value = (name || "").toLowerCase()
+  if (value.includes("ps")) return "ps5"
+  if (value.includes("xbox")) return "xbox"
+  return null
+}
+
+const calculateControllerFare = (config: ControllerPricingConfig, quantity: number): number => {
+  if (quantity <= 0) return 0
+
+  const base = Number(config.base_price || 0)
+  const tiers = (config.tiers || [])
+    .map((tier) => ({
+      quantity: Number(tier.quantity || 0),
+      total_price: Number(tier.total_price || 0),
+    }))
+    .filter((tier) => tier.quantity >= 2)
+    .sort((a, b) => a.quantity - b.quantity)
+
+  const dp = Array(quantity + 1).fill(Number.POSITIVE_INFINITY)
+  dp[0] = 0
+
+  for (let i = 1; i <= quantity; i += 1) {
+    dp[i] = Math.min(dp[i], dp[i - 1] + base)
+    for (const tier of tiers) {
+      if (tier.quantity <= i) {
+        dp[i] = Math.min(dp[i], dp[i - tier.quantity] + tier.total_price)
+      }
+    }
+  }
+
+  return Number.isFinite(dp[quantity]) ? Math.round(dp[quantity]) : Math.round(quantity * base)
+}
+
 
 import { Textarea } from "@/components/ui/textarea"
 import {
@@ -195,7 +239,7 @@ async function fetchSlotsBatch(vendorId: number, gameIds: number[], dates: strin
 }
 
 // Update this constant
-const PAYMENT_TYPES = ['Cash', 'UPI', 'Pass'] as const  // Add 'Pass'
+const PAYMENT_TYPES = ['Cash', 'UPI', 'Pass', 'Monthly Credit'] as const
 
 
 function SlotBookingForm({ 
@@ -221,8 +265,15 @@ function SlotBookingForm({
   const [passError, setPassError] = useState('')
   const [isPrivateMode, setIsPrivateMode] = useState<boolean>(false)
   const [waiveOffAmount, setWaiveOffAmount] = useState<number>(0)
+  const [extraControllerQty, setExtraControllerQty] = useState<number>(0)
   const [extraControllerFare, setExtraControllerFare] = useState<number>(0)
   const [autoWaiveOffAmount, setAutoWaiveOffAmount] = useState<number>(0)
+  const [controllerPricingConfig, setControllerPricingConfig] = useState<ControllerPricingConfig>({
+    base_price: 0,
+    tiers: []
+  })
+  const [hasControllerPricingConfigured, setHasControllerPricingConfigured] = useState<boolean>(false)
+  const [isControllerPricingLoading, setIsControllerPricingLoading] = useState<boolean>(false)
   const [selectedMeals, setSelectedMeals] = useState<SelectedMeal[]>([])
   const [isMealSelectorOpen, setIsMealSelectorOpen] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false)
@@ -575,6 +626,65 @@ const getEffectivePrice = (slot: SelectedSlot): number => {
     setIsMealSelectorOpen(false)
   }
 
+  const selectedConsoleName = (selectedSlots[0]?.console_name || '').toLowerCase()
+  const selectedControllerType = normalizeControllerType(selectedSlots[0]?.console_name)
+  const supportsExtraController = selectedControllerType !== null && hasControllerPricingConfigured
+
+  useEffect(() => {
+    const fetchControllerPricing = async () => {
+      if (!selectedControllerType) {
+        setControllerPricingConfig({ base_price: 0, tiers: [] })
+        setHasControllerPricingConfigured(false)
+        return
+      }
+
+      const vendorId = getVendorIdFromToken()
+      if (!vendorId) return
+
+      setIsControllerPricingLoading(true)
+      try {
+        const response = await fetch(`${DASHBOARD_URL}/api/vendor/${vendorId}/controller-pricing`)
+        if (!response.ok) throw new Error("Failed to fetch controller pricing")
+        const data = await response.json()
+        const entry = data?.pricing?.[selectedControllerType as "ps5" | "xbox"]
+        const configured = Boolean(entry?.configured)
+        setHasControllerPricingConfigured(configured)
+        setControllerPricingConfig({
+          base_price: configured ? Number(entry?.base_price ?? 0) : 0,
+          tiers: Array.isArray(entry?.tiers)
+            ? entry.tiers.map((tier: any) => ({
+                quantity: Number(tier?.quantity ?? 0),
+                total_price: Number(tier?.total_price ?? 0),
+              }))
+            : []
+        })
+      } catch (error) {
+        console.error("❌ Failed to fetch controller pricing:", error)
+        setHasControllerPricingConfigured(false)
+        setControllerPricingConfig({ base_price: 0, tiers: [] })
+      } finally {
+        setIsControllerPricingLoading(false)
+      }
+    }
+
+    fetchControllerPricing()
+  }, [selectedControllerType])
+
+  useEffect(() => {
+    if (!supportsExtraController && (extraControllerFare !== 0 || extraControllerQty !== 0)) {
+      setExtraControllerQty(0)
+      setExtraControllerFare(0)
+    }
+  }, [supportsExtraController, extraControllerFare, extraControllerQty])
+
+  useEffect(() => {
+    if (!supportsExtraController) return
+    const nextFare = calculateControllerFare(controllerPricingConfig, extraControllerQty)
+    if (nextFare !== extraControllerFare) {
+      setExtraControllerFare(nextFare)
+    }
+  }, [controllerPricingConfig, extraControllerQty, extraControllerFare, supportsExtraController])
+
   const mealsTotal = selectedMeals.reduce((sum, meal) => sum + meal.total, 0)
   const consoleTotal = selectedSlots.reduce((sum, slot) => sum + getEffectivePrice(slot), 0)
   const totalAmount = Math.max(
@@ -672,9 +782,10 @@ const getEffectivePrice = (slot: SelectedSlot): number => {
         phone,
         bookedDate: selectedSlots[0]?.date || '',
         slotId: selectedSlots.map(slot => slot.slot_id),
-        paymentType,
+        paymentType: paymentType === 'Monthly Credit' ? 'monthly_credit' : paymentType,
         waiveOffAmount: waiveOffAmount + autoWaiveOffAmount,
-        extraControllerFare,
+        extraControllerQty: supportsExtraController ? extraControllerQty : 0,
+        extraControllerFare: supportsExtraController ? extraControllerFare : 0,
         selectedMeals: selectedMeals.map(meal => ({
           menu_item_id: meal.menu_item_id,
           quantity: meal.quantity
@@ -684,11 +795,20 @@ const getEffectivePrice = (slot: SelectedSlot): number => {
 
       console.log('📤 Submitting booking data:', bookingData)
 
-const response = await fetch(`${BOOKING_URL}/api/newBooking/vendor/${vendorId}`, {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify(bookingData),
-})
+      const bookingHeaders: Record<string, string> = {
+        'Content-Type': 'application/json',
+        'X-Client-Source': 'dashboard',
+      }
+      const dashboardToken = localStorage.getItem('rbac_access_token_v1') || localStorage.getItem('jwtToken')
+      if (dashboardToken) {
+        bookingHeaders.Authorization = `Bearer ${dashboardToken}`
+      }
+
+      const response = await fetch(`${BOOKING_URL}/api/newBooking/vendor/${vendorId}`, {
+        method: 'POST',
+        headers: bookingHeaders,
+        body: JSON.stringify(bookingData),
+      })
 
 console.log('📥 API response status:', response.status)
 
@@ -749,7 +869,7 @@ if (response.ok || result.success === true || result.success === 'true') {
 
     } catch (error) {
       console.error('❌ Error submitting booking:', error)
-      alert('Failed to create booking')
+      alert(error instanceof Error ? error.message : 'Failed to create booking')
     } finally {
       setIsSubmitting(false)
       console.log('🏁 Form submission completed')
@@ -1157,7 +1277,7 @@ if (response.ok || result.success === true || result.success === 'true') {
   </div>
   
   {/* Payment Type Buttons */}
-  <div className="grid grid-cols-3 gap-4">
+  <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
     {PAYMENT_TYPES.map((type) => (
       <motion.button
         key={type}
@@ -1184,11 +1304,17 @@ if (response.ok || result.success === true || result.success === 'true') {
           {type === 'Cash' && <Wallet className="w-5 h-5" />}
           {type === 'UPI' && <CreditCard className="w-5 h-5" />}
           {type === 'Pass' && <Ticket className="w-5 h-5" />}
+          {type === 'Monthly Credit' && <Wallet className="w-5 h-5" />}
           <span className="font-medium">{type}</span>
         </div>
       </motion.button>
     ))}
   </div>
+  {paymentType === 'Monthly Credit' && (
+    <p className="mt-2 text-xs text-amber-600 dark:text-amber-300">
+      Monthly credit works only for users with an active Gamers Credit account.
+    </p>
+  )}
   
   {/* Pass UID Input - Shows when Pass is selected */}
   <AnimatePresence>
@@ -1314,17 +1440,35 @@ if (response.ok || result.success === true || result.success === 'true') {
                         </div>
                       )}
 
-                      <div className="flex justify-between items-center py-2 border-b border-gray-200 dark:border-gray-600">
-                        <span className="text-gray-600 dark:text-gray-400">Extra Controller:</span>
-                        <input
-                          type="number"
-                          value={extraControllerFare}
-                          onChange={(e) => setExtraControllerFare(Number(e.target.value) || 0)}
-                          placeholder="₹0"
-                          className="w-20 text-right px-2 py-1 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-800 dark:text-white focus:border-emerald-500 focus:outline-none transition-colors"
-                          min={0}
-                        />
-                      </div>
+                      {supportsExtraController && (
+                        <div className="flex justify-between items-center py-2 border-b border-gray-200 dark:border-gray-600">
+                          <span className="text-gray-600 dark:text-gray-400">Extra Controller:</span>
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => setExtraControllerQty((prev) => Math.max(0, prev - 1))}
+                              className="inline-flex h-7 w-7 items-center justify-center rounded border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300"
+                              disabled={isControllerPricingLoading}
+                            >
+                              -
+                            </button>
+                            <span className="w-14 text-center text-sm text-gray-800 dark:text-white">
+                              {extraControllerQty} qty
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => setExtraControllerQty((prev) => Math.min(8, prev + 1))}
+                              className="inline-flex h-7 w-7 items-center justify-center rounded border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300"
+                              disabled={isControllerPricingLoading}
+                            >
+                              +
+                            </button>
+                            <span className="w-16 text-right text-sm font-medium text-gray-800 dark:text-white">
+                              ₹{extraControllerFare}
+                            </span>
+                          </div>
+                        </div>
+                      )}
 
                       <div className="flex justify-between items-center py-2 border-b border-gray-200 dark:border-gray-600">
                         <span className="text-gray-600 dark:text-gray-400">Meals & Extras:</span>

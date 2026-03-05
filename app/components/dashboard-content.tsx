@@ -31,15 +31,15 @@ const platformMetadata = {
 function LockedOverlay() {
   const router = useRouter()
   return (
-    <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-4 rounded-lg bg-background/70 backdrop-blur-sm">
+    <div className="absolute inset-0 z-30 flex flex-col items-center justify-center gap-4 rounded-lg bg-background/75 backdrop-blur-sm">
       <div className="flex flex-col items-center gap-3 text-center px-6">
         <div className="p-4 bg-destructive/10 rounded-full">
           <Lock className="w-8 h-8 text-destructive" />
         </div>
         <div>
-          <h3 className="font-bold text-base text-foreground">Subscription Required</h3>
+          <h3 className="font-bold text-base text-foreground">Dashboard Locked</h3>
           <p className="text-xs text-muted-foreground mt-1">
-            Subscribe to view and manage live sessions
+            Your subscription is inactive. All dashboard widgets are locked.
           </p>
         </div>
         <button
@@ -414,7 +414,13 @@ export function DashboardContent() {
       {dashboardData?.available ? (
         <HashLoader className="py-[50vh]" />
       ) : (
-        <div className="h-full min-h-0 text-foreground flex flex-col gap-3 sm:gap-4">
+        <div className="relative h-full min-h-0 text-foreground flex flex-col gap-3 sm:gap-4">
+          {isLocked && <LockedOverlay />}
+          <div
+            className={`flex min-h-0 flex-1 flex-col overflow-hidden ${
+              isLocked ? "pointer-events-none select-none opacity-70" : ""
+            }`}
+          >
 
           {/* ✅ Subscription expired banner
           {isLocked && (
@@ -527,7 +533,6 @@ export function DashboardContent() {
                       refreshSlots={refreshSlots}
                       setRefreshSlots={setRefreshSlots}
                     />
-                    {isLocked && <LockedOverlay />}
                   </CardContent>
                 </Card>
               </motion.div>
@@ -549,9 +554,9 @@ export function DashboardContent() {
                     refreshTrigger={upcomingBookingsRefresh}
                   />
                 </CardContent>
-                {isLocked && <LockedOverlay />}
               </Card>
             </motion.div>
+          </div>
           </div>
         </div>
       )}

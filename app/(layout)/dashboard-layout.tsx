@@ -3,12 +3,13 @@
 import { useEffect, useState } from "react"
 import { Menu, Pin, PinOff, X } from "lucide-react"
 import { useTheme } from "next-themes"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { MainNav } from "../components/main-nav"
 import Image from "next/image"
 import { useAccess } from "../context/AccessContext"
 import { canAccessPath } from "@/lib/rbac"
+import { useSubscription } from "@/hooks/useSubscription"
 
 interface DashboardLayoutProps {
   children: React.ReactNode
@@ -22,8 +23,12 @@ export function DashboardLayout({ children, contentScroll = "page" }: DashboardL
   const [isNavOpen, setIsNavOpen] = useState(false)
   const [isNavPinned, setIsNavPinned] = useState(false)
   const pathname = usePathname()
+  const router = useRouter()
   const { activeStaff } = useAccess()
+  const { isLocked } = useSubscription()
   const hasAccess = activeStaff ? canAccessPath(pathname, activeStaff.permissions) : true
+  const subscriptionExempt = ["/subscription", "/select-cafe"]
+  const hasSubscriptionAccess = !isLocked || subscriptionExempt.some((path) => pathname === path || pathname.startsWith(`${path}/`))
 
   useEffect(() => {
     try {
@@ -128,15 +133,30 @@ export function DashboardLayout({ children, contentScroll = "page" }: DashboardL
             contentScroll === "contained" ? "overflow-hidden" : "overflow-y-auto"
           }`}
         >
-          {hasAccess ? (
+          {hasAccess && hasSubscriptionAccess ? (
             children
-          ) : (
+          ) : !hasAccess ? (
             <div className="flex h-full min-h-[220px] items-center justify-center">
               <div className="w-full max-w-xl rounded-2xl border border-red-500/30 bg-red-500/10 p-6 text-center">
                 <h2 className="text-xl font-semibold text-red-200">Access Restricted</h2>
                 <p className="mt-2 text-sm text-red-100/80">
                   Your current role does not have permission to access this page.
                 </p>
+              </div>
+            </div>
+          ) : (
+            <div className="flex h-full min-h-[220px] items-center justify-center">
+              <div className="w-full max-w-xl rounded-2xl border border-yellow-500/30 bg-yellow-500/10 p-6 text-center">
+                <h2 className="text-xl font-semibold text-yellow-200">Subscription Inactive</h2>
+                <p className="mt-2 text-sm text-yellow-100/80">
+                  This module is locked until your subscription is renewed.
+                </p>
+                <Button
+                  className="mt-4"
+                  onClick={() => router.push("/subscription")}
+                >
+                  Go To Subscription
+                </Button>
               </div>
             </div>
           )}
