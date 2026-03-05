@@ -18,12 +18,19 @@ export async function apiCall<T = any>(
     const separator = endpoint.includes('?') ? '&' : '?'
     const url = `${DASHBOARD_URL}${endpoint}${separator}t=${Date.now()}`
     
+    const method = (options?.method || "GET").toUpperCase()
+    const baseHeaders: Record<string, string> = {}
+    if (method !== "GET" && method !== "HEAD") {
+      baseHeaders["Content-Type"] = "application/json"
+    }
+
     const response = await fetch(url, {
       ...options,
       headers: {
-        "Content-Type": "application/json",
-        ...options?.headers,
+        ...baseHeaders,
+        ...(options?.headers || {}),
       },
+      cache: "no-store",
       // ✅ Add credentials for CORS
       credentials: 'omit', // or 'include' if you need cookies
     })
@@ -56,8 +63,19 @@ export async function apiCall<T = any>(
 // Subscription API calls
 export const subscriptionApi = {
   // Check if subscription is active
-  checkStatus: (vendorId: number) =>
-    apiCall(`/api/vendors/${vendorId}/subscription/status`),
+  checkStatus: async (vendorId: number) => {
+    const url = `${DASHBOARD_URL}/api/vendors/${vendorId}/subscription/status?t=${Date.now()}`
+    const response = await fetch(url, {
+      method: "GET",
+      cache: "no-store",
+      credentials: "omit",
+    })
+    const data = await response.json()
+    if (!response.ok) {
+      throw new Error(data?.error || data?.message || `Request failed: ${response.status}`)
+    }
+    return data
+  },
 
   // Get subscription details
   getSubscription: (vendorId: number) =>

@@ -22,18 +22,77 @@ import HashLoader from "./ui/HashLoader";
 
 interface Transaction {
   id: number;
+  bookingId?: number | null;
   userName: string;
+  userId: number;
   amount: number;
+  originalAmount: number;
+  discountedAmount: number;
   modeOfPayment: string;
+  paymentUseCase?: string;
   bookingType: string;
   settlementStatus: string;
   slotDate: string;
   slotTime: string;
+  sourceChannel?: string;
+  staffName?: string;
+  baseAmount?: number;
+  mealsAmount?: number;
+  controllerAmount?: number;
+  waiveOffAmount?: number;
+  taxableAmount?: number;
+  gstRate?: number;
+  cgstAmount?: number;
+  sgstAmount?: number;
+  igstAmount?: number;
+  totalWithTax?: number;
 }
+
+interface VendorTaxProfile {
+  gst_registered: boolean;
+  gst_enabled: boolean;
+  gst_rate: number;
+  gstin?: string;
+}
+
+type ColumnKey =
+  | "bookingId"
+  | "slotDate"
+  | "slotTime"
+  | "userName"
+  | "amount"
+  | "modeOfPayment"
+  | "paymentUseCase"
+  | "bookingType"
+  | "settlementStatus"
+  | "sourceChannel"
+  | "staffName"
+  | "breakup"
+  | "gst"
+  | "totalWithTax";
+
+const transactionColumns: Array<{ key: ColumnKey; label: string }> = [
+  { key: "bookingId", label: "Booking ID" },
+  { key: "slotDate", label: "Booking Date" },
+  { key: "slotTime", label: "Transaction Time" },
+  { key: "userName", label: "User Name" },
+  { key: "amount", label: "Amount" },
+  { key: "breakup", label: "Breakup" },
+  { key: "gst", label: "GST" },
+  { key: "totalWithTax", label: "Total+GST" },
+  { key: "modeOfPayment", label: "Mode of Payment" },
+  { key: "paymentUseCase", label: "Use Case" },
+  { key: "bookingType", label: "Booking Type" },
+  { key: "settlementStatus", label: "Settlement Status" },
+  { key: "sourceChannel", label: "Source" },
+  { key: "staffName", label: "Staff" },
+];
 
 function getToken() {
   if (typeof window !== "undefined") {
-    return localStorage.getItem("rbac_access_token_v1") || localStorage.getItem("jwtToken");
+    const rbacToken = localStorage.getItem("rbac_access_token_v1");
+    const jwtToken = localStorage.getItem("jwtToken");
+    return rbacToken || jwtToken;
   }
   return null;
 }
@@ -60,19 +119,49 @@ function getVendorIdFromToken(decoded: any): number | null {
 }
 
 export function TransactionTable() {
+  const getTodayISODate = () => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  };
+
+  const getMonthStartISODate = () => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-01`;
+  };
+
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [boolTrans, setBoolTrans] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [token, setToken] = useState<string | null>(null);
   const [vendorId, setVendorId] = useState<number | null>(null);
-  const [issuedAt, setIssuedAt] = useState<number | null>(null);
-  const [expirationTime, setExpirationTime] = useState<number | null>(null);
+  const [fromDate, setFromDate] = useState<string>(getMonthStartISODate());
+  const [toDate, setToDate] = useState<string>(getTodayISODate());
+  const [appliedFromDate, setAppliedFromDate] = useState<string>(getMonthStartISODate());
+  const [appliedToDate, setAppliedToDate] = useState<string>(getTodayISODate());
   const [filters, setFilters] = useState({
-    modeOfPayment: "",
-    bookingType: "",
-    settlementStatus: "",
+    modeOfPayment: null as string | null,
+    bookingType: null as string | null,
+    settlementStatus: null as string | null,
   });
   const [showFilter, setShowFilter] = useState(false);
+  const [showColumnSelector, setShowColumnSelector] = useState(false);
+  const [taxProfile, setTaxProfile] = useState<VendorTaxProfile | null>(null);
+  const [visibleColumns, setVisibleColumns] = useState<Record<ColumnKey, boolean>>({
+    bookingId: true,
+    slotDate: true,
+    slotTime: true,
+    userName: true,
+    amount: true,
+    modeOfPayment: true,
+    paymentUseCase: true,
+    bookingType: true,
+    settlementStatus: true,
+    sourceChannel: true,
+    staffName: true,
+    breakup: true,
+    gst: true,
+    totalWithTax: true,
+  });
 
   const cardVariants = {
     hidden: { opacity: 0, y: 20 },
@@ -113,8 +202,15 @@ export function TransactionTable() {
             filters.settlementStatus.toLowerCase().trim());
 
       // Search term check (case-insensitive)
-      const searchFields = [t.userName, t.modeOfPayment, t.bookingType].map(
-        (field) => field.toLowerCase()
+      const searchFields = [
+        String(t.bookingId ?? ""),
+        t.userName,
+        t.modeOfPayment,
+        t.bookingType,
+        t.paymentUseCase || "",
+        t.sourceChannel || "",
+        t.staffName || "",
+      ].map((field) => String(field).toLowerCase()
       );
       const isSearchMatch = searchFields.some((field) =>
         field.includes(searchTerm.toLowerCase())
@@ -131,73 +227,48 @@ export function TransactionTable() {
   }, [searchTerm, filters, transactions]);
 
   useEffect(() => {
-    const storedToken = getToken();
-    setToken(storedToken);
-    if (storedToken) {
+    const candidateTokens = typeof window !== "undefined"
+      ? [localStorage.getItem("rbac_access_token_v1"), localStorage.getItem("jwtToken")].filter(Boolean) as string[]
+      : [];
+
+    let resolvedToken: string | null = null;
+    for (const candidate of candidateTokens) {
       try {
-        const decoded: any = jwtDecode(storedToken);
-        setVendorId(getVendorIdFromToken(decoded));
-        setIssuedAt(decoded?.iat || null);
-        setExpirationTime(decoded?.exp || null);
-      } catch (error) {
-        console.error("Invalid JWT Token:", error);
+        const decoded: any = jwtDecode(candidate);
+        const resolvedVendorId = getVendorIdFromToken(decoded);
+        if (resolvedVendorId) {
+          resolvedToken = candidate;
+          setVendorId(resolvedVendorId);
+          break;
+        }
+      } catch {
+        // Try next token candidate.
       }
     }
-  }, []);
 
-  function convertEpochToYYYYMMDD(epoch: number | null) {
-    if (!epoch) return ""; // Handle null case
-    const date = new Date(epoch * 1000); // Convert epoch to milliseconds
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, "0"); // Ensure two-digit month
-    const day = String(date.getDate()).padStart(2, "0"); // Ensure two-digit day
-    return `${year}${month}${day}`;
-  }
-
-  useEffect(() => {
-    const storedToken = getToken();
-    setToken(storedToken);
-    if (storedToken) {
-      try {
-        const decoded: any = jwtDecode(storedToken);
-        setVendorId(getVendorIdFromToken(decoded));
-        setIssuedAt(decoded?.iat || null);
-        setExpirationTime(decoded?.exp || null);
-      } catch (error) {
-        console.error("Invalid JWT Token:", error);
-      }
+    if (!resolvedToken) {
+      // Keep old behavior fallback so we still send token if available.
+      resolvedToken = getToken();
     }
+    setToken(resolvedToken);
   }, []);
 
   useEffect(() => {
-    if (!vendorId || !issuedAt || !expirationTime || !token) return;
+    if (!vendorId || !token) return;
 
-    const CACHE_KEY = `transactions_${vendorId}`;
-    const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
     const POLL_INTERVAL = 60 * 1000; // 1 minute
 
     let pollingInterval: NodeJS.Timeout;
 
-    const fromDate = convertEpochToYYYYMMDD(issuedAt);
-    const toDate = convertEpochToYYYYMMDD(expirationTime);
-    const apiUrl = `${DASHBOARD_URL}/api/transactionReport/${vendorId}/${fromDate}/${toDate}`;
+    const fromDateApi = (appliedFromDate || getMonthStartISODate()).replaceAll("-", "");
+    const toDateApi = (appliedToDate || getTodayISODate()).replaceAll("-", "");
+    // Backend route format: /transactionReport/<vendor_id>/<to_date>/<from_date>
+    const apiUrl = `${DASHBOARD_URL}/api/transactionReport/${vendorId}/${toDateApi}/${fromDateApi}`;
 
-    const loadData = async (useCache: boolean) => {
+    const loadData = async () => {
       setBoolTrans(true);
-      const now = Date.now();
 
       try {
-        const cached = localStorage.getItem(CACHE_KEY);
-        if (useCache && cached) {
-          const parsed = JSON.parse(cached);
-          if (parsed.timestamp && now - parsed.timestamp < CACHE_TTL) {
-            setTransactions(parsed.data);
-            setBoolTrans(false);
-            console.log("Loaded transactions from cache");
-            return;
-          }
-        }
-
         const response = await fetch(apiUrl, {
           method: "GET",
           headers: {
@@ -211,8 +282,12 @@ export function TransactionTable() {
         }
 
         const data: Transaction[] = await response.json();
-        setTransactions(data || []);
-        localStorage.setItem(CACHE_KEY, JSON.stringify({ data, timestamp: now }));
+        const sorted = [...(data || [])].sort((a, b) => {
+          const aDate = new Date(`${a.slotDate} ${a.slotTime}`).getTime();
+          const bDate = new Date(`${b.slotDate} ${b.slotTime}`).getTime();
+          return bDate - aDate;
+        });
+        setTransactions(sorted);
       } catch (error) {
         console.error("Error fetching transactions:", error);
       } finally {
@@ -220,37 +295,97 @@ export function TransactionTable() {
       }
     };
 
-    loadData(true); // Load initially from cache if available
+    loadData();
 
     pollingInterval = setInterval(() => {
-      loadData(false); // Always refresh on interval
+      loadData();
     }, POLL_INTERVAL);
 
     return () => clearInterval(pollingInterval);
-  }, [vendorId, issuedAt, expirationTime, token]);
+  }, [vendorId, token, appliedFromDate, appliedToDate]);
+
+  useEffect(() => {
+    if (!vendorId) return;
+    let cancelled = false;
+
+    const loadTaxProfile = async () => {
+      try {
+        const res = await fetch(`${DASHBOARD_URL}/api/vendor/${vendorId}/tax-profile`);
+        if (!res.ok) return;
+        const data = await res.json();
+        if (!cancelled) {
+          setTaxProfile(data?.profile || null);
+        }
+      } catch {
+        // Keep GST export resilient even if tax profile endpoint fails.
+      }
+    };
+
+    loadTaxProfile();
+    return () => {
+      cancelled = true;
+    };
+  }, [vendorId]);
+
+  const getTransactionTax = (t: Transaction): number => {
+    const componentTax = Number(t.cgstAmount || 0) + Number(t.sgstAmount || 0) + Number(t.igstAmount || 0);
+    if (componentTax > 0) return componentTax;
+
+    const taxable = Number(t.taxableAmount ?? t.amount ?? 0);
+    const rate = Number(t.gstRate ?? (taxProfile?.gst_enabled ? taxProfile.gst_rate : 0) ?? 0);
+    if (taxable > 0 && rate > 0) return (taxable * rate) / 100;
+
+    const totalWithTax = Number(t.totalWithTax ?? 0);
+    const amount = Number(t.amount ?? 0);
+    const derived = totalWithTax - amount;
+    return derived > 0 ? derived : 0;
+  };
+
+  const getTransactionTotalWithTax = (t: Transaction): number => {
+    const totalWithTax = Number(t.totalWithTax ?? 0);
+    if (totalWithTax > 0) return totalWithTax;
+    const taxable = Number(t.taxableAmount ?? t.amount ?? 0);
+    return taxable + getTransactionTax(t);
+  };
 
   const metrics = useMemo(() => {
-    if (!transactions.length) return { total: 0, uniqueUsers: 0, pendingSettlements: 0, cashTransactions: 0 };
+    if (!filteredTransactions.length) {
+      return {
+        total: 0,
+        uniqueUsers: 0,
+        pendingSettlements: 0,
+        cashTransactions: 0,
+        cashPct: 0,
+      };
+    }
 
-    const total = transactions.reduce((sum, t) => sum + t.amount, 0);
-    const uniqueUsers = new Set(transactions.map((t) => t.userName)).size;
-    const pendingSettlements = transactions.filter((t) => t.settlementStatus === "pending").length;
-    const cashTransactions = transactions.filter(
-      (t) => t.modeOfPayment?.toLowerCase() === "cash"
+    const total = filteredTransactions.reduce(
+      (sum, t) => sum + getTransactionTotalWithTax(t),
+      0
+    );
+    const uniqueUsers = new Set(filteredTransactions.map((t) => t.userName)).size;
+    const pendingSettlements = filteredTransactions.filter(
+      (t) => String(t.settlementStatus || "").toLowerCase() === "pending"
     ).length;
+    const cashTransactions = filteredTransactions.filter(
+      (t) => String(t.modeOfPayment || "").toLowerCase() === "cash"
+    ).length;
+    const cashPct = (cashTransactions / filteredTransactions.length) * 100;
 
-    return { total, uniqueUsers, pendingSettlements, cashTransactions };
-  }, [transactions]);
+    return { total, uniqueUsers, pendingSettlements, cashTransactions, cashPct };
+  }, [filteredTransactions, taxProfile]);
 
   function downloadFilteredData() {
     const companyName = "Hash For Gamers Pvt. Ltd.";
-    const gstNumber = "GSTIN: 29ABCDE1234F1Z5"; // example, replace if needed
+    const gstNumber = taxProfile?.gstin ? `GSTIN: ${taxProfile.gstin}` : "GSTIN: N/A";
     const reportTitle = "Transaction Report";
     const reportDate = new Date().toLocaleDateString();
+    const selectedRange = `${appliedFromDate} to ${appliedToDate}`;
 
     const headers = [
-      "Slot Date",
-      "Slot Time",
+      "Booking ID",
+      "Booking Date",
+      "Transaction Time",
       "User Name",
       "Amount (INR)",
       "Mode of Payment",
@@ -259,23 +394,28 @@ export function TransactionTable() {
     ];
 
     const rows = filteredTransactions.map((transaction) => [
+      transaction.bookingId ?? "",
       transaction.slotDate,
       transaction.slotTime,
       transaction.userName,
-      transaction.amount.toFixed(2),
+      Number(transaction.amount || 0).toFixed(2),
       transaction.modeOfPayment,
       transaction.bookingType,
       transaction.settlementStatus,
     ]);
 
-    const totalAmount = filteredTransactions.reduce((sum, t) => sum + t.amount, 0);
-    const gst = totalAmount * 0.18; // Assuming 18% GST
-    const totalWithGst = totalAmount + gst;
+    const subtotal = filteredTransactions.reduce(
+      (sum, t) => sum + Number(t.taxableAmount ?? t.amount ?? 0),
+      0
+    );
+    const gst = filteredTransactions.reduce((sum, t) => sum + getTransactionTax(t), 0);
+    const totalWithGst = filteredTransactions.reduce((sum, t) => sum + getTransactionTotalWithTax(t), 0);
+    const effectiveRate = subtotal > 0 ? ((gst / subtotal) * 100).toFixed(2) : "0.00";
 
     const footer = [
       [],
-      ["Subtotal", "", "", totalAmount.toFixed(2)],
-      ["GST (18%)", "", "", gst.toFixed(2)],
+      ["Subtotal", "", "", subtotal.toFixed(2)],
+      [`GST (${effectiveRate}%)`, "", "", gst.toFixed(2)],
       ["Total (INR)", "", "", totalWithGst.toFixed(2)],
     ];
 
@@ -283,6 +423,7 @@ export function TransactionTable() {
       `"${companyName}"`,
       `"${gstNumber}"`,
       `"${reportTitle} - ${reportDate}"`,
+      `"Range: ${selectedRange}"`,
       "",
       headers.join(","),
       ...rows.map((row) => row.join(",")),
@@ -294,8 +435,8 @@ export function TransactionTable() {
     saveAs(blob, `transaction_report_${reportDate.replace(/\//g, "-")}.csv`);
   }
 
-  const groupByUser = (transactions) => {
-    const grouped = {};
+  const groupByUser = (transactions: Transaction[]) => {
+    const grouped: Record<number, { userName: string; totalAmount: number; bookings: Transaction[] }> = {};
     transactions.forEach((tx) => {
       if (!grouped[tx.userId]) {
         grouped[tx.userId] = {
@@ -310,7 +451,7 @@ export function TransactionTable() {
     return grouped;
   };
 
-  const [expandedDates, setExpandedDates] = useState<number[]>([]);
+  const [expandedDates, setExpandedDates] = useState<string[]>([]);
   const [expandedUsers, setExpandedUsers] = useState<Record<string, number[]>>({});
 
   const toggleDateExpand = (dateKey: string) => {
@@ -335,7 +476,7 @@ export function TransactionTable() {
   };
 
   const groupedTransactions = groupByUser(filteredTransactions);
-  const groupedByDate = transactions.reduce((acc, transaction) => {
+  const groupedByDate = filteredTransactions.reduce((acc, transaction) => {
     const { slotDate, userId, userName } = transaction;
     if (!acc[slotDate]) {
       acc[slotDate] = {};
@@ -351,6 +492,91 @@ export function TransactionTable() {
     acc[slotDate][userId].totalAmount += transaction.amount;
     return acc;
   }, {} as Record<string, Record<number, { userName: string; bookings: Transaction[]; totalAmount: number }>>);
+
+  const renderTransactionCell = (transaction: Transaction, key: ColumnKey) => {
+    switch (key) {
+      case "bookingId":
+        return <TableCell className="px-4 py-3 text-slate-300">{transaction.bookingId ?? "-"}</TableCell>;
+      case "slotDate":
+        return <TableCell className="px-4 py-3 text-slate-300">{transaction.slotDate}</TableCell>;
+      case "slotTime":
+        return <TableCell className="px-4 py-3 text-slate-300">{transaction.slotTime}</TableCell>;
+      case "userName":
+        return <TableCell className="px-4 py-3 text-slate-100">{transaction.userName}</TableCell>;
+      case "amount":
+        return <TableCell className="px-4 py-3 text-right font-medium text-slate-100">₹{transaction.amount.toFixed(2)}</TableCell>;
+      case "modeOfPayment":
+        return (
+          <TableCell className="px-4 py-3">
+            <Badge variant="secondary" className="bg-slate-700/80 text-slate-200">{transaction.modeOfPayment}</Badge>
+          </TableCell>
+        );
+      case "paymentUseCase":
+        return (
+          <TableCell className="px-4 py-3">
+            <Badge variant="outline" className="border-slate-500/70 text-slate-300">
+              {transaction.paymentUseCase || "-"}
+            </Badge>
+          </TableCell>
+        );
+      case "bookingType":
+        return (
+          <TableCell className="px-4 py-3">
+            <Badge variant="outline" className="border-slate-500/70 text-slate-300">{transaction.bookingType}</Badge>
+          </TableCell>
+        );
+      case "settlementStatus":
+        return (
+          <TableCell className="px-4 py-3">
+            <Badge
+              variant={
+                transaction.settlementStatus === "done"
+                  ? "default"
+                  : transaction.settlementStatus === "pending"
+                  ? "secondary"
+                  : "outline"
+              }
+              className={
+                transaction.settlementStatus === "done"
+                  ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/30"
+                  : transaction.settlementStatus === "pending"
+                  ? "bg-yellow-500/20 text-yellow-400 border-yellow-500/30"
+                  : "border-slate-500/70 text-slate-300"
+              }
+            >
+              {transaction.settlementStatus}
+            </Badge>
+          </TableCell>
+        );
+      case "sourceChannel":
+        return <TableCell className="px-4 py-3 text-slate-300">{transaction.sourceChannel || "-"}</TableCell>;
+      case "staffName":
+        return <TableCell className="px-4 py-3 text-slate-300">{transaction.staffName || "-"}</TableCell>;
+      case "breakup":
+        return (
+          <TableCell className="px-4 py-3 text-xs text-slate-300">
+            B:{(transaction.baseAmount || 0).toFixed(0)} M:{(transaction.mealsAmount || 0).toFixed(0)} C:{(transaction.controllerAmount || 0).toFixed(0)} W:{(transaction.waiveOffAmount || 0).toFixed(0)}
+          </TableCell>
+        );
+      case "gst":
+        return (
+          <TableCell className="px-4 py-3 text-xs text-slate-300">
+            {transaction.gstRate ? `${transaction.gstRate}%` : "-"}
+            {transaction.gstRate
+              ? ` | C:${(transaction.cgstAmount || 0).toFixed(2)} S:${(transaction.sgstAmount || 0).toFixed(2)} I:${(transaction.igstAmount || 0).toFixed(2)}`
+              : ""}
+          </TableCell>
+        );
+      case "totalWithTax":
+        return (
+          <TableCell className="px-4 py-3 text-right font-medium text-slate-200">
+            ₹{getTransactionTotalWithTax(transaction).toFixed(2)}
+          </TableCell>
+        );
+      default:
+        return <TableCell className="px-4 py-3 text-slate-300">-</TableCell>;
+    }
+  };
 
   if (boolTrans) {
     return <HashLoader className="min-h-[500px]" />;
@@ -375,11 +601,9 @@ export function TransactionTable() {
             </CardHeader>
             <CardContent>
               <div className="dash-kpi-value !text-xl sm:!text-2xl">
-                ₹{metrics.total}
+                ₹{metrics.total.toFixed(2)}
               </div>
-              <p className="text-xs text-emerald-400">
-                +20.1% from last month
-              </p>
+              <p className="text-xs text-emerald-400">For selected range</p>
             </CardContent>
           </Card>
         </motion.div>
@@ -401,9 +625,7 @@ export function TransactionTable() {
               <div className="dash-kpi-value !text-xl sm:!text-2xl">
                 {metrics.uniqueUsers}
               </div>
-              <p className="text-xs text-emerald-400">
-                +12 since last week
-              </p>
+              <p className="text-xs text-emerald-400">Distinct customers in view</p>
             </CardContent>
           </Card>
         </motion.div>
@@ -450,10 +672,7 @@ export function TransactionTable() {
                 {metrics.cashTransactions}
               </div>
               <p className="text-xs text-muted-foreground">
-                {(
-                  (metrics.cashTransactions / transactions.length) *
-                  100
-                ).toFixed(1)}
+                {metrics.cashPct.toFixed(1)}
                 % of total
               </p>
             </CardContent>
@@ -478,6 +697,45 @@ export function TransactionTable() {
           />
         </div>
         <div className="flex gap-2">
+          <Input
+            type="date"
+            value={fromDate}
+            onChange={(e) => setFromDate(e.target.value)}
+            className="w-[150px] rounded-lg border-slate-600/70 bg-slate-800/70 text-slate-100"
+          />
+          <Input
+            type="date"
+            value={toDate}
+            onChange={(e) => setToDate(e.target.value)}
+            className="w-[150px] rounded-lg border-slate-600/70 bg-slate-800/70 text-slate-100"
+          />
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            initial="hidden"
+            animate="visible"
+            variants={boxVariants}
+            transition={{ duration: 0.1 }}
+            className="flex items-center rounded-lg border border-slate-600/70 bg-slate-800/70 px-3 py-2 text-sm text-slate-200 transition-colors hover:bg-slate-700/70"
+            onClick={() => {
+              if (!fromDate || !toDate) return;
+              if (fromDate > toDate) return;
+              setAppliedFromDate(fromDate);
+              setAppliedToDate(toDate);
+            }}
+          >
+            <span>Apply Range</span>
+          </motion.button>
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            initial="hidden"
+            animate="visible"
+            variants={boxVariants}
+            transition={{ duration: 0.1 }}
+            className="flex items-center rounded-lg border border-slate-600/70 bg-slate-800/70 px-3 py-2 text-sm text-slate-200 transition-colors hover:bg-slate-700/70"
+            onClick={() => setShowColumnSelector((prev) => !prev)}
+          >
+            <span>Columns</span>
+          </motion.button>
           <motion.button
             whileHover={{ scale: 1.02 }}
             initial="hidden"
@@ -505,8 +763,60 @@ export function TransactionTable() {
         </div>
       </motion.div>
 
+      {showColumnSelector && (
+        <div className="rounded-lg border border-slate-700 bg-slate-900/85 p-3">
+          <div className="mb-2 flex items-center justify-between">
+            <p className="text-sm font-semibold text-slate-200">Show/Hide Columns</p>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                className="rounded border border-slate-600 px-2 py-1 text-xs text-slate-200 hover:bg-slate-800"
+                onClick={() => {
+                  setVisibleColumns((prev) => {
+                    const next = { ...prev };
+                    transactionColumns.forEach((col) => { next[col.key] = true; });
+                    return next;
+                  });
+                }}
+              >
+                Select All
+              </button>
+              <button
+                type="button"
+                className="rounded border border-slate-600 px-2 py-1 text-xs text-slate-200 hover:bg-slate-800"
+                onClick={() => {
+                  setVisibleColumns((prev) => {
+                    const next = { ...prev };
+                    transactionColumns.forEach((col) => { next[col.key] = false; });
+                    return next;
+                  });
+                }}
+              >
+                Unselect All
+              </button>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
+            {transactionColumns.map((col) => (
+              <label key={col.key} className="flex items-center gap-2 text-xs text-slate-200">
+                <input
+                  type="checkbox"
+                  checked={visibleColumns[col.key]}
+                  onChange={() => {
+                    setVisibleColumns((prev) => ({
+                      ...prev,
+                      [col.key]: !prev[col.key],
+                    }));
+                  }}
+                />
+                {col.label}
+              </label>
+            ))}
+          </div>
+        </div>
+      )}
+
       <FilterComponent
-        className="z-2"
         filters={filters}
         setFilters={setFilters}
         showFilter={showFilter}
@@ -522,16 +832,28 @@ export function TransactionTable() {
         className="overflow-hidden rounded-xl border border-slate-700 bg-slate-900/60"
       >
         <div className="max-h-[620px] overflow-x-auto overflow-y-auto">
-          <Table className="min-w-[980px]">
+          <Table className="min-w-[1500px]">
             <TableHeader className="sticky top-0 bg-slate-800/90 backdrop-blur-sm">
               <TableRow className="border-slate-700 hover:bg-transparent">
-                <TableHead className="px-4 py-3 font-semibold text-slate-100">Slot Date</TableHead>
-                <TableHead className="px-4 py-3 font-semibold text-slate-100">Slot Time</TableHead>
-                <TableHead className="px-4 py-3 font-semibold text-slate-100">User Name</TableHead>
-                <TableHead className="px-4 py-3 font-semibold text-slate-100">Amount</TableHead>
-                <TableHead className="px-4 py-3 font-semibold text-slate-100">Mode of Payment</TableHead>
-                <TableHead className="px-4 py-3 font-semibold text-slate-100">Booking Type</TableHead>
-                <TableHead className="px-4 py-3 font-semibold text-slate-100">Settlement Status</TableHead>
+                {transactionColumns
+                  .filter((col) => visibleColumns[col.key])
+                  .map((col) => (
+                    <TableHead key={col.key} className="px-4 py-3 font-semibold text-slate-100">
+                      {col.key === "breakup" ? (
+                        <span className="group relative inline-flex items-center gap-1">
+                          <span>{col.label}</span>
+                          <span className="inline-flex h-4 w-4 cursor-help items-center justify-center rounded-full border border-slate-500 text-[10px] text-slate-400">
+                            i
+                          </span>
+                          <span className="pointer-events-none absolute left-0 top-6 z-50 hidden w-56 rounded-md border border-slate-600 bg-slate-900 px-2 py-1 text-[11px] font-normal text-slate-300 shadow-lg group-hover:block">
+                            B = Base amount, M = Meals amount, C = Controller amount, W = Waive-off amount
+                          </span>
+                        </span>
+                      ) : (
+                        col.label
+                      )}
+                    </TableHead>
+                  ))}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -539,6 +861,10 @@ export function TransactionTable() {
                 // Calculate total for the day and user count
                 const dayTotalAmount = Object.values(usersGroup).reduce((sum, userGroup) => sum + userGroup.totalAmount, 0);
                 const userCount = Object.keys(usersGroup).length;
+                const visibleCols = transactionColumns.filter((col) => visibleColumns[col.key]);
+                const dayTotalTargetKey: ColumnKey | undefined = visibleColumns.totalWithTax
+                  ? "totalWithTax"
+                  : (visibleColumns.amount ? "amount" : visibleCols[visibleCols.length - 1]?.key);
                 return (
                   <React.Fragment key={slotDate}>
                     {/* Slot Date Row */}
@@ -548,19 +874,28 @@ export function TransactionTable() {
                       onClick={() => toggleDateExpand(slotDate)}
                       className="cursor-pointer border-slate-700 transition-colors hover:bg-slate-800/70"
                     >
-                      {/* Slot Date */}
-                      <TableCell colSpan={1} className="px-4 py-3 font-medium text-cyan-200">
-                        <div className="flex items-center justify-between">
-                          <span>{slotDate}</span>
-                          <span className="text-xs">{expandedDates.includes(slotDate) ? "▲" : "▼"}</span>
-                        </div>
-                      </TableCell>
-                      {/* Empty cells for columns between Date and Amount */}
-                      <TableCell colSpan={2} className="px-4 py-3"></TableCell>
-                      {/* Total Amount */}
-                      <TableCell colSpan={4} className="px-4 py-3 font-medium text-cyan-200">
-                        ₹{dayTotalAmount.toFixed(2)}
-                      </TableCell>
+                      {visibleCols.map((col, idx) => {
+                        if (idx === 0) {
+                          return (
+                            <TableCell key={`${slotDate}_${col.key}_date`} className="px-4 py-3 font-medium text-cyan-200">
+                              <span className="inline-flex items-center gap-2">
+                                <span className="text-xs">{expandedDates.includes(slotDate) ? "▲" : "▼"}</span>
+                                <span>{slotDate}</span>
+                              </span>
+                            </TableCell>
+                          );
+                        }
+
+                        if (col.key === dayTotalTargetKey) {
+                          return (
+                            <TableCell key={`${slotDate}_${col.key}_total`} className="px-4 py-3 text-right font-medium text-cyan-200">
+                              ₹{dayTotalAmount.toFixed(2)}
+                            </TableCell>
+                          );
+                        }
+
+                        return <TableCell key={`${slotDate}_${col.key}_empty`} className="px-4 py-3" />;
+                      })}
                     </motion.tr>
                     {/* Bookings under Slot Date */}
                     <AnimatePresence>
@@ -575,36 +910,13 @@ export function TransactionTable() {
                               transition={{ duration: 0.2 }}
                               className="border-slate-700 transition-colors hover:bg-slate-800/55"
                             >
-                              <TableCell className="px-4 py-3 text-slate-300">{transaction.slotDate}</TableCell>
-                              <TableCell className="px-4 py-3 text-slate-300">{transaction.slotTime}</TableCell>
-                              <TableCell className="px-4 py-3 text-slate-100">{transaction.userName}</TableCell>
-                              <TableCell className="px-4 py-3 font-medium text-slate-100">₹{transaction.amount.toFixed(2)}</TableCell>
-                              <TableCell className="px-4 py-3">
-                                <Badge variant="secondary" className="bg-slate-700/80 text-slate-200">{transaction.modeOfPayment}</Badge>
-                              </TableCell>
-                              <TableCell className="px-4 py-3">
-                                <Badge variant="outline" className="border-slate-500/70 text-slate-300">{transaction.bookingType}</Badge>
-                              </TableCell>
-                              <TableCell className="px-4 py-3">
-                                <Badge
-                                  variant={
-                                    transaction.settlementStatus === "done"
-                                      ? "default"
-                                      : transaction.settlementStatus === "pending"
-                                      ? "secondary"
-                                      : "outline"
-                                  }
-                                  className={
-                                    transaction.settlementStatus === "done"
-                                      ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/30"
-                                      : transaction.settlementStatus === "pending"
-                                      ? "bg-yellow-500/20 text-yellow-400 border-yellow-500/30"
-                                      : "border-slate-500/70 text-slate-300"
-                                  }
-                                >
-                                  {transaction.settlementStatus}
-                                </Badge>
-                              </TableCell>
+                              {transactionColumns
+                                .filter((col) => visibleColumns[col.key])
+                                .map((col) => (
+                                  <React.Fragment key={`${transaction.id}_${col.key}`}>
+                                    {renderTransactionCell(transaction, col.key)}
+                                  </React.Fragment>
+                                ))}
                             </motion.tr>
                           ))
                         )

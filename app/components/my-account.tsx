@@ -91,6 +91,21 @@ const [otpModalOpen, setOtpModalOpen] = useState(false);
 const [pendingPage, setPendingPage] = useState(null);
 const [verifiedPages, setVerifiedPages] = useState(new Set());
 
+// GST setup state (moved from separate billing module into My Account)
+const [gstProfile, setGstProfile] = useState({
+  gst_registered: false,
+  gst_enabled: false,
+  gst_rate: 18,
+  tax_inclusive: false,
+  gstin: "",
+  legal_name: "",
+  state_code: "",
+  place_of_supply_state_code: "",
+});
+const [loadingGst, setLoadingGst] = useState(false);
+const [savingGst, setSavingGst] = useState(false);
+const [gstMessage, setGstMessage] = useState<string | null>(null);
+
 // Add these state variables after your existing bank states
 const [paymentMethods, setPaymentMethods] = useState([]);
 const [loadingPaymentMethods, setLoadingPaymentMethods] = useState(false);
@@ -823,6 +838,70 @@ const toast = {
     }
   }, []);
 
+  useEffect(() => {
+    if (page === "GST Setup" && vendorId) {
+      fetchGstProfile();
+    }
+  }, [page, vendorId]);
+
+  const fetchGstProfile = async () => {
+    if (!vendorId) return;
+    setLoadingGst(true);
+    setGstMessage(null);
+    try {
+      const res = await fetch(`${DASHBOARD_URL}/api/vendor/${vendorId}/tax-profile`);
+      if (!res.ok) throw new Error("Failed to fetch GST profile");
+      const data = await res.json();
+      const profile = data?.profile || {};
+      setGstProfile({
+        gst_registered: Boolean(profile.gst_registered),
+        gst_enabled: Boolean(profile.gst_enabled),
+        gst_rate: Number(profile.gst_rate ?? 18),
+        tax_inclusive: Boolean(profile.tax_inclusive),
+        gstin: profile.gstin || "",
+        legal_name: profile.legal_name || "",
+        state_code: profile.state_code || "",
+        place_of_supply_state_code: profile.place_of_supply_state_code || "",
+      });
+    } catch (error) {
+      console.error("GST profile load error:", error);
+      setGstMessage("Unable to load GST setup.");
+    } finally {
+      setLoadingGst(false);
+    }
+  };
+
+  const saveGstProfile = async () => {
+    if (!vendorId) return;
+    setSavingGst(true);
+    setGstMessage(null);
+    try {
+      const res = await fetch(`${DASHBOARD_URL}/api/vendor/${vendorId}/tax-profile`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          gst_registered: gstProfile.gst_registered,
+          gst_enabled: gstProfile.gst_enabled,
+          gst_rate: Number(gstProfile.gst_rate || 0),
+          tax_inclusive: gstProfile.tax_inclusive,
+          gstin: gstProfile.gstin || null,
+          legal_name: gstProfile.legal_name || null,
+          state_code: gstProfile.state_code || null,
+          place_of_supply_state_code: gstProfile.place_of_supply_state_code || null,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data?.success) throw new Error(data?.message || "Failed to save GST setup");
+      setGstMessage("GST setup saved successfully.");
+      setTimeout(() => setGstMessage(null), 2500);
+    } catch (error) {
+      console.error("GST profile save error:", error);
+      setGstMessage(error instanceof Error ? error.message : "Unable to save GST setup.");
+    } finally {
+      setSavingGst(false);
+    }
+  };
+
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file || !vendorId) return;
@@ -1348,6 +1427,7 @@ const ToggleSwitch = ({
                     { icon: ImageIcon, label: "Cafe Gallery" },
                     { icon: Building2, label: "Business Details" },
                     { icon: Clock, label: "Operating Hours" },  
+                    { icon: DollarSign, label: "GST Setup" },
                     
                     { icon: FileCheck, label: "Verified Documents" },
                     { icon: CreditCard, label: "Bank Transfer" },  
@@ -1814,6 +1894,116 @@ const ToggleSwitch = ({
           ))}
         </div>
       </div>
+    </CardContent>
+  </Card>
+)}
+
+{page === "GST Setup" && (
+  <Card className="overflow-hidden border border-cyan-500/25 bg-[linear-gradient(140deg,rgba(8,20,45,0.95),rgba(6,18,40,0.9))] shadow-[0_16px_40px_-24px_rgba(6,182,212,0.55)]">
+    <CardHeader className="pb-4">
+      <CardTitle className="text-base font-semibold uppercase tracking-[0.12em] text-cyan-100 md:text-lg">GST Setup</CardTitle>
+      <CardDescription className="text-xs text-slate-300 md:text-sm">
+        Configure taxation profile for your cafe billing and transaction transparency.
+      </CardDescription>
+    </CardHeader>
+    <CardContent className="space-y-4">
+      {gstMessage && (
+        <div className="rounded-md border border-cyan-500/30 bg-cyan-500/10 px-3 py-2 text-xs text-cyan-200">
+          {gstMessage}
+        </div>
+      )}
+
+      {loadingGst ? (
+        <div className="flex items-center justify-center py-8">
+          <Loader2 className="h-6 w-6 animate-spin text-cyan-300" />
+        </div>
+      ) : (
+        <>
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+            <label className="flex items-center gap-2 text-sm text-slate-200">
+              <input
+                type="checkbox"
+                checked={gstProfile.gst_registered}
+                onChange={(e) => setGstProfile((p) => ({ ...p, gst_registered: e.target.checked }))}
+              />
+              GST Registered
+            </label>
+            <label className="flex items-center gap-2 text-sm text-slate-200">
+              <input
+                type="checkbox"
+                checked={gstProfile.gst_enabled}
+                onChange={(e) => setGstProfile((p) => ({ ...p, gst_enabled: e.target.checked }))}
+              />
+              Enable GST in Billing
+            </label>
+          </div>
+
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+            <Input
+              value={gstProfile.gstin}
+              onChange={(e) => setGstProfile((p) => ({ ...p, gstin: e.target.value.toUpperCase() }))}
+              className="border-cyan-400/25 bg-slate-900/70 text-slate-100"
+              placeholder="GSTIN"
+            />
+            <Input
+              value={gstProfile.legal_name}
+              onChange={(e) => setGstProfile((p) => ({ ...p, legal_name: e.target.value }))}
+              className="border-cyan-400/25 bg-slate-900/70 text-slate-100"
+              placeholder="Legal Name"
+            />
+          </div>
+
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+            <Input
+              type="number"
+              min={0}
+              max={28}
+              value={gstProfile.gst_rate}
+              onChange={(e) => setGstProfile((p) => ({ ...p, gst_rate: Number(e.target.value || 0) }))}
+              className="border-cyan-400/25 bg-slate-900/70 text-slate-100"
+              placeholder="GST %"
+            />
+            <Input
+              value={gstProfile.state_code}
+              onChange={(e) =>
+                setGstProfile((p) => ({ ...p, state_code: e.target.value.replace(/\D/g, "").slice(0, 2) }))
+              }
+              className="border-cyan-400/25 bg-slate-900/70 text-slate-100"
+              placeholder="Cafe State Code"
+            />
+            <Input
+              value={gstProfile.place_of_supply_state_code}
+              onChange={(e) =>
+                setGstProfile((p) => ({
+                  ...p,
+                  place_of_supply_state_code: e.target.value.replace(/\D/g, "").slice(0, 2),
+                }))
+              }
+              className="border-cyan-400/25 bg-slate-900/70 text-slate-100"
+              placeholder="Place of Supply"
+            />
+          </div>
+
+          <label className="flex items-center gap-2 text-sm text-slate-200">
+            <input
+              type="checkbox"
+              checked={gstProfile.tax_inclusive}
+              onChange={(e) => setGstProfile((p) => ({ ...p, tax_inclusive: e.target.checked }))}
+            />
+            Tax Inclusive Pricing
+          </label>
+
+          <Button
+            type="button"
+            onClick={saveGstProfile}
+            disabled={savingGst}
+            className="inline-flex items-center gap-2 rounded-lg border border-cyan-400/40 bg-cyan-500/20 text-cyan-100 hover:bg-cyan-500/30"
+          >
+            {savingGst ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+            Save GST Setup
+          </Button>
+        </>
+      )}
     </CardContent>
   </Card>
 )}

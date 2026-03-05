@@ -64,6 +64,7 @@ export interface BookingFormState {
   validatedPass: Pass | null
   isPrivateMode: boolean
   waiveOffAmount: number
+  extraControllerQty: number
   extraControllerFare: number
   selectedMeals: SelectedMeal[]
   errors: Record<string, string>
@@ -86,6 +87,7 @@ export interface BookingPayload {
   slotId: number[]
   paymentType: PaymentType
   waiveOffAmount: number
+  extraControllerQty?: number
   extraControllerFare: number
   selectedMeals: Array<{ menu_item_id: number; quantity: number }>
   bookingMode: 'private' | 'regular'
