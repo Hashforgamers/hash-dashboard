@@ -19,29 +19,65 @@ const formatTime = (seconds: number) => {
   return `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
 };
 
-const calculateElapsedTime = (startTime: string, date: string) => {
-  if (!startTime) return 0;
-  const currentTime = new Date();
-  const startDate = new Date(date);
-  const [time, modifier] = startTime.trim().split(" ");
-  const [hours, minutes] = time.split(":").map(Number);
+const parseLocalBookingDate = (dateInput: string): Date | null => {
+  const raw = String(dateInput || "").trim();
+  if (!raw) return null;
+
+  // YYYY-MM-DD
+  const dashed = raw.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (dashed) {
+    const year = Number(dashed[1]);
+    const month = Number(dashed[2]) - 1;
+    const day = Number(dashed[3]);
+    return new Date(year, month, day);
+  }
+
+  // YYYYMMDD
+  const compact = raw.match(/^(\d{4})(\d{2})(\d{2})$/);
+  if (compact) {
+    const year = Number(compact[1]);
+    const month = Number(compact[2]) - 1;
+    const day = Number(compact[3]);
+    return new Date(year, month, day);
+  }
+
+  // Fallback for other formats
+  const fallback = new Date(raw);
+  return Number.isNaN(fallback.getTime()) ? null : fallback;
+};
+
+const parseTwelveHourTime = (timeInput: string) => {
+  const [time, modifierRaw] = String(timeInput || "").trim().split(" ");
+  const [hoursRaw, minutesRaw] = (time || "0:0").split(":");
+  const hours = Number(hoursRaw || 0);
+  const minutes = Number(minutesRaw || 0);
+  const modifier = String(modifierRaw || "").toUpperCase();
   let adjustedHours = hours;
   if (modifier === "PM" && hours < 12) adjustedHours += 12;
   if (modifier === "AM" && hours === 12) adjustedHours = 0;
-  startDate.setHours(adjustedHours, minutes, 0, 0);
-  return Math.floor((currentTime.getTime() - startDate.getTime()) / 1000);
+  return {
+    hours: Math.max(0, Math.min(23, adjustedHours)),
+    minutes: Math.max(0, Math.min(59, minutes)),
+  };
+};
+
+const calculateElapsedTime = (startTime: string, date: string) => {
+  if (!startTime) return 0;
+  const currentTime = new Date();
+  const startDate = parseLocalBookingDate(date);
+  if (!startDate) return 0;
+  const parsed = parseTwelveHourTime(startTime);
+  startDate.setHours(parsed.hours, parsed.minutes, 0, 0);
+  return Math.max(Math.floor((currentTime.getTime() - startDate.getTime()) / 1000), 0);
 };
 
 const calculateExtraTime = (endTime: string, date: string) => {
   if (!endTime) return 0;
   const currentTime = new Date();
-  const endDate = new Date(date);
-  const [time, modifier] = endTime.trim().split(" ");
-  const [hours, minutes] = time.split(":").map(Number);
-  let adjustedHours = hours;
-  if (modifier === "PM" && hours < 12) adjustedHours += 12;
-  if (modifier === "AM" && hours === 12) adjustedHours = 0;
-  endDate.setHours(adjustedHours, minutes, 0, 0);
+  const endDate = parseLocalBookingDate(date);
+  if (!endDate) return 0;
+  const parsed = parseTwelveHourTime(endTime);
+  endDate.setHours(parsed.hours, parsed.minutes, 0, 0);
   return Math.max(Math.floor((currentTime.getTime() - endDate.getTime()) / 1000), 0);
 };
 
@@ -118,6 +154,7 @@ export function CurrentSlots({ currentSlots: initialSlots, refreshSlots, setRefr
 
   // ✅ NEW: Track which bookings have meals locally for instant UI updates
   const [bookingMealStatus, setBookingMealStatus] = useState<Record<string, boolean>>({});
+  const [bookingOutstandingDue, setBookingOutstandingDue] = useState<Record<string, number>>({});
 
   // Get vendorId
   useEffect(() => {
@@ -282,6 +319,70 @@ export function CurrentSlots({ currentSlots: initialSlots, refreshSlots, setRefr
     }));
     setTimers(initialTimers);
   }, [currentSlots, searchQuery]);
+
+  // Track outstanding dues per booking so under-time sessions with meal dues still require settlement.
+  useEffect(() => {
+    if (!Array.isArray(filteredSlots) || filteredSlots.length === 0) {
+      setBookingOutstandingDue({});
+      return;
+    }
+
+    const bookingIds = Array.from(
+      new Set(
+        filteredSlots
+          .map((slot) => Number(slot.bookingId || slot.bookId))
+          .filter((id) => Number.isFinite(id) && id > 0)
+      )
+    );
+
+    if (bookingIds.length === 0) {
+      setBookingOutstandingDue({});
+      return;
+    }
+
+    let isMounted = true;
+    const controller = new AbortController();
+    const token = localStorage.getItem("jwtToken");
+
+    const fetchOutstanding = async () => {
+      try {
+        const results = await Promise.all(
+          bookingIds.map(async (bookingId) => {
+            try {
+              const response = await fetch(`${BOOKING_URL}/api/booking/${bookingId}/payment-summary`, {
+                method: "GET",
+                headers: {
+                  "Content-Type": "application/json",
+                  ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                },
+                signal: controller.signal,
+              });
+              if (!response.ok) return [String(bookingId), 0] as const;
+              const data = await response.json();
+              const due = Number(data?.payment_status?.amount_due ?? data?.financial_summary?.amount_due ?? 0);
+              return [String(bookingId), Number.isFinite(due) ? due : 0] as const;
+            } catch {
+              return [String(bookingId), 0] as const;
+            }
+          })
+        );
+
+        if (isMounted) {
+          setBookingOutstandingDue(Object.fromEntries(results));
+        }
+      } catch {
+        if (isMounted) {
+          setBookingOutstandingDue({});
+        }
+      }
+    };
+
+    fetchOutstanding();
+    return () => {
+      isMounted = false;
+      controller.abort();
+    };
+  }, [filteredSlots, refreshSlots]);
 
   // Debug logging (unchanged)
   useEffect(() => {
@@ -471,6 +572,10 @@ export function CurrentSlots({ currentSlots: initialSlots, refreshSlots, setRefr
                         const isReleasing = releasingSlots[uniqueKey] || false;
                         const progress = Math.min(100, (timer.elapsedTime / timer.duration) * 100);
                         const hasExtraTime = timer.extraTime > 0;
+                        const bookingIdForDue = String(booking.bookingId || booking.bookId || "");
+                        const outstandingDue = Number(bookingOutstandingDue[bookingIdForDue] || 0);
+                        const hasOutstandingDue = outstandingDue > 0.01;
+                        const needsSettlement = hasExtraTime || hasOutstandingDue;
                         const remainingTime = Math.max((timer.duration || 0) - (timer.elapsedTime || 0), 0);
                         const progressPercent = Number.isFinite(progress) ? Math.max(0, Math.round(progress)) : 0;
                         const progressState = hasExtraTime
@@ -642,14 +747,18 @@ export function CurrentSlots({ currentSlots: initialSlots, refreshSlots, setRefr
 
                             {/* Action cell - unchanged */}
                             <td className="px-3 py-3 md:px-4">
-                              {hasExtraTime ? (
+                              {needsSettlement ? (
                                 <button
                                   onClick={() => {
                                     setSelectedSlot(booking);
                                     setShowOverlay(true);
                                     setError("");
                                   }}
-                                  className="w-20 rounded-md bg-yellow-500 px-2 py-1 text-xs text-white transition-colors hover:bg-yellow-600 sm:w-24"
+                                  className={`w-20 rounded-md px-2 py-1 text-xs text-white transition-colors sm:w-24 ${
+                                    hasOutstandingDue && !hasExtraTime
+                                      ? "bg-orange-500 hover:bg-orange-600"
+                                      : "bg-yellow-500 hover:bg-yellow-600"
+                                  }`}
                                 >
                                   <div className="flex items-center justify-center gap-1">
                                     <FaCheck className="w-2 h-2 sm:w-3 sm:h-3" />
