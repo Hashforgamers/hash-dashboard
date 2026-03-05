@@ -12,6 +12,7 @@ const initialState: BookingFormState = {
   validatedPass: null,
   isPrivateMode: false,
   waiveOffAmount: 0,
+  extraControllerQty: 0,
   extraControllerFare: 0,
   selectedMeals: [],
   errors: {}

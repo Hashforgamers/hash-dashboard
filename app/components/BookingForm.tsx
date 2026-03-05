@@ -23,7 +23,7 @@ import {
   Lock
 } from 'lucide-react';
 import { ConsoleType } from './types';
-import { BOOKING_URL } from '@/src/config/env';
+import { BOOKING_URL, DASHBOARD_URL } from '@/src/config/env';
 import MealSelector from './mealSelector';
 
 interface BookingFormProps {
@@ -40,6 +40,49 @@ interface SelectedMeal {
   category: string;
 }
 
+interface ControllerTierRule {
+  quantity: number
+  total_price: number
+}
+
+interface ControllerPricingConfig {
+  base_price: number
+  tiers: ControllerTierRule[]
+}
+
+const normalizeControllerType = (value: string | undefined): "ps5" | "xbox" | null => {
+  const text = (value || "").toLowerCase()
+  if (text.includes("ps")) return "ps5"
+  if (text.includes("xbox")) return "xbox"
+  return null
+}
+
+const calculateControllerFare = (config: ControllerPricingConfig, quantity: number): number => {
+  if (quantity <= 0) return 0
+  const base = Number(config.base_price || 0)
+  const tiers = (config.tiers || [])
+    .map((tier) => ({
+      quantity: Number(tier.quantity || 0),
+      total_price: Number(tier.total_price || 0)
+    }))
+    .filter((tier) => tier.quantity >= 2)
+    .sort((a, b) => a.quantity - b.quantity)
+
+  const dp = Array(quantity + 1).fill(Number.POSITIVE_INFINITY)
+  dp[0] = 0
+
+  for (let i = 1; i <= quantity; i += 1) {
+    dp[i] = Math.min(dp[i], dp[i - 1] + base)
+    for (const tier of tiers) {
+      if (tier.quantity <= i) {
+        dp[i] = Math.min(dp[i], dp[i - tier.quantity] + tier.total_price)
+      }
+    }
+  }
+
+  return Number.isFinite(dp[quantity]) ? Math.round(dp[quantity]) : Math.round(quantity * base)
+}
+
 const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) => {
   // User information
   const [name, setName] = useState<string>('');
@@ -53,8 +96,15 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
 
   // Booking details
   const [waiveOffAmount, setWaiveOffAmount] = useState(0);
+  const [extraControllerQty, setExtraControllerQty] = useState(0);
   const [extraControllerFare, setExtraControllerFare] = useState(0);
   const [autoWaiveOffAmount, setAutoWaiveOffAmount] = useState(0);
+  const [controllerPricingConfig, setControllerPricingConfig] = useState<ControllerPricingConfig>({
+    base_price: 0,
+    tiers: []
+  });
+  const [hasControllerPricingConfigured, setHasControllerPricingConfigured] = useState(false);
+  const [isControllerPricingLoading, setIsControllerPricingLoading] = useState(false);
 
   const [selectedDate, setSelectedDate] = useState<string>(() => {
     const now = new Date();
@@ -84,6 +134,8 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
 
   // Vendor information from JWT token
   const [vendorId, setVendorId] = useState<number | null>(null);
+  const selectedControllerType = normalizeControllerType(selectedConsole?.type || selectedConsole?.name);
+  const supportsExtraController = selectedControllerType !== null && hasControllerPricingConfigured;
 
   // User suggestion states
   const [userList, setUserList] = useState<{ name: string; email: string; phone: string }[]>([]);
@@ -294,6 +346,58 @@ const [isPrivateMode, setIsPrivateMode] = useState<boolean>(false);
       fetchUsers();
     }
   }, [vendorId]);
+
+  useEffect(() => {
+    const fetchControllerPricing = async () => {
+      if (!vendorId || !selectedControllerType) {
+        setControllerPricingConfig({ base_price: 0, tiers: [] });
+        setHasControllerPricingConfigured(false);
+        return;
+      }
+
+      setIsControllerPricingLoading(true);
+      try {
+        const response = await fetch(`${DASHBOARD_URL}/api/vendor/${vendorId}/controller-pricing`);
+        if (!response.ok) throw new Error("Failed to fetch controller pricing");
+        const data = await response.json();
+        const entry = data?.pricing?.[selectedControllerType as "ps5" | "xbox"];
+        const configured = Boolean(entry?.configured);
+        setHasControllerPricingConfigured(configured);
+        setControllerPricingConfig({
+          base_price: configured ? Number(entry?.base_price ?? 0) : 0,
+          tiers: Array.isArray(entry?.tiers)
+            ? entry.tiers.map((tier: any) => ({
+                quantity: Number(tier?.quantity ?? 0),
+                total_price: Number(tier?.total_price ?? 0),
+              }))
+            : []
+        });
+      } catch (error) {
+        console.error("Failed to fetch controller pricing", error);
+        setHasControllerPricingConfigured(false);
+        setControllerPricingConfig({ base_price: 0, tiers: [] });
+      } finally {
+        setIsControllerPricingLoading(false);
+      }
+    };
+
+    fetchControllerPricing();
+  }, [vendorId, selectedControllerType]);
+
+  useEffect(() => {
+    if (!supportsExtraController && (extraControllerFare !== 0 || extraControllerQty !== 0)) {
+      setExtraControllerQty(0);
+      setExtraControllerFare(0);
+    }
+  }, [supportsExtraController, extraControllerFare, extraControllerQty]);
+
+  useEffect(() => {
+    if (!supportsExtraController) return;
+    const nextFare = calculateControllerFare(controllerPricingConfig, extraControllerQty);
+    if (nextFare !== extraControllerFare) {
+      setExtraControllerFare(nextFare);
+    }
+  }, [controllerPricingConfig, extraControllerQty, extraControllerFare, supportsExtraController]);
 
   // Common function to filter suggestions by key and input value
   const getSuggestions = (key: keyof typeof userList[0], value: string) => {
@@ -528,7 +632,8 @@ const [isPrivateMode, setIsPrivateMode] = useState<boolean>(false);
           slotId: selectedSlots,
           paymentType, // Will be "Pass" if pass payment
           waiveOffAmount: waiveOffAmount + autoWaiveOffAmount,
-          extraControllerFare,
+          extraControllerQty: supportsExtraController ? extraControllerQty : 0,
+          extraControllerFare: supportsExtraController ? extraControllerFare : 0,
           selectedMeals: selectedMeals.map(meal => ({
             menu_item_id: meal.menu_item_id,
             quantity: meal.quantity
@@ -1382,17 +1487,35 @@ const [isPrivateMode, setIsPrivateMode] = useState<boolean>(false);
                         </div>
                       )}
 
-                      <div className="flex justify-between items-center py-1 border-b border-gray-100 dark:border-gray-700">
-                        <span className="text-gray-600 dark:text-gray-400">Extra Controller:</span>
-                        <input
-                          type="number"
-                          value={extraControllerFare}
-                          onChange={(e) => setExtraControllerFare(Number(e.target.value))}
-                          placeholder="₹0"
-                          className="w-16 text-right px-1 py-0.5 rounded border border-gray-300 dark:border-gray-600 bg-transparent dark:bg-transparent text-gray-800 dark:text-white focus:border-emerald-500 focus:outline-none transition-colors text-xs"
-                          min={0}
-                        />
-                      </div>
+                      {supportsExtraController && (
+                        <div className="flex justify-between items-center py-1 border-b border-gray-100 dark:border-gray-700">
+                          <span className="text-gray-600 dark:text-gray-400">Extra Controller:</span>
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => setExtraControllerQty((prev) => Math.max(0, prev - 1))}
+                              className="inline-flex h-6 w-6 items-center justify-center rounded border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 text-xs"
+                              disabled={isControllerPricingLoading}
+                            >
+                              -
+                            </button>
+                            <span className="w-12 text-center text-xs text-gray-800 dark:text-white">
+                              {extraControllerQty} qty
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => setExtraControllerQty((prev) => Math.min(8, prev + 1))}
+                              className="inline-flex h-6 w-6 items-center justify-center rounded border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 text-xs"
+                              disabled={isControllerPricingLoading}
+                            >
+                              +
+                            </button>
+                            <span className="w-14 text-right text-xs text-gray-800 dark:text-white">
+                              ₹{extraControllerFare}
+                            </span>
+                          </div>
+                        </div>
+                      )}
                     </>
                   )}
 

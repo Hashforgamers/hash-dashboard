@@ -5,6 +5,7 @@ import React, { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X } from 'lucide-react'
 import { jwtDecode } from 'jwt-decode'
+import { DASHBOARD_URL } from '@/src/config/env'
 
 import { useBookingForm } from '../../hooks/useBookingForm'
 import { useUserSuggestions } from '../../hooks/useUserSuggestions'
@@ -20,7 +21,7 @@ import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import MealSelector from './mealSelector'
 
-import type { SelectedSlot, SelectedMeal, ConsoleType } from '../../types/booking.types'
+import type { SelectedSlot, SelectedMeal, ConsoleType, BookingPayload } from '../../types/booking.types'
 
 // ✅ ROBUST date formatter - handles all formats
 const formatDateForDisplay = (dateStr: any): string => {
@@ -82,6 +83,50 @@ interface SlotBookingFormProps {
   availableConsoles: ConsoleType[]
 }
 
+interface ControllerTierRule {
+  quantity: number
+  total_price: number
+}
+
+interface ControllerPricingConfig {
+  base_price: number
+  tiers: ControllerTierRule[]
+}
+
+const normalizeControllerType = (name: string | undefined): 'ps5' | 'xbox' | null => {
+  const value = (name || '').toLowerCase()
+  if (value.includes('ps')) return 'ps5'
+  if (value.includes('xbox')) return 'xbox'
+  return null
+}
+
+const calculateControllerFare = (config: ControllerPricingConfig, quantity: number): number => {
+  if (quantity <= 0) return 0
+
+  const base = Number(config.base_price || 0)
+  const tiers = (config.tiers || [])
+    .filter((tier) => Number(tier.quantity) >= 2)
+    .map((tier) => ({
+      quantity: Number(tier.quantity),
+      total_price: Number(tier.total_price || 0)
+    }))
+    .sort((a, b) => a.quantity - b.quantity)
+
+  const dp = Array(quantity + 1).fill(Number.POSITIVE_INFINITY)
+  dp[0] = 0
+
+  for (let i = 1; i <= quantity; i += 1) {
+    dp[i] = Math.min(dp[i], dp[i - 1] + base)
+    for (const tier of tiers) {
+      if (tier.quantity <= i) {
+        dp[i] = Math.min(dp[i], dp[i - tier.quantity] + tier.total_price)
+      }
+    }
+  }
+
+  return Number.isFinite(dp[quantity]) ? Math.round(dp[quantity]) : Math.round(quantity * base)
+}
+
 export const SlotBookingForm = ({
   isOpen,
   onClose,
@@ -94,6 +139,11 @@ export const SlotBookingForm = ({
   const [isSubmitted, setIsSubmitted] = useState(false)
   const [autoWaiveOffAmount, setAutoWaiveOffAmount] = useState(0)
   const [isMealSelectorOpen, setIsMealSelectorOpen] = useState(false)
+  const [controllerPricingConfig, setControllerPricingConfig] = useState<ControllerPricingConfig>({
+    base_price: 0,
+    tiers: []
+  })
+  const [isControllerPricingLoading, setIsControllerPricingLoading] = useState(false)
 
   const { state, setField, setValidatedPass, togglePrivateMode, setMeals, validate, resetForm } = useBookingForm(selectedSlots)
   
@@ -132,6 +182,67 @@ export const SlotBookingForm = ({
       setAutoWaiveOffAmount(0)
     }
   }, [selectedSlots])
+
+  const selectedControllerType = normalizeControllerType(selectedSlots[0]?.console_name)
+  const isControllerPricingSupported = selectedControllerType !== null
+
+  useEffect(() => {
+    const fetchControllerPricing = async () => {
+      if (!vendorId || !isOpen || !selectedControllerType) {
+        setControllerPricingConfig({ base_price: 0, tiers: [] })
+        if (!selectedControllerType && state.extraControllerQty > 0) {
+          setField('extraControllerQty', 0)
+          setField('extraControllerFare', 0)
+        }
+        return
+      }
+
+      setIsControllerPricingLoading(true)
+      try {
+        const response = await fetch(`${DASHBOARD_URL}/api/vendor/${vendorId}/controller-pricing`)
+        if (!response.ok) throw new Error('Failed to fetch controller pricing')
+
+        const data = await response.json()
+        const pricing = data?.pricing?.[selectedControllerType]
+
+        const config: ControllerPricingConfig = {
+          base_price: Number(pricing?.base_price ?? 0),
+          tiers: Array.isArray(pricing?.tiers)
+            ? pricing.tiers.map((tier: any) => ({
+                quantity: Number(tier?.quantity ?? 2),
+                total_price: Number(tier?.total_price ?? 0)
+              }))
+            : []
+        }
+        setControllerPricingConfig(config)
+      } catch (error) {
+        console.error('❌ Failed to fetch controller pricing:', error)
+        setControllerPricingConfig({ base_price: 0, tiers: [] })
+      } finally {
+        setIsControllerPricingLoading(false)
+      }
+    }
+
+    fetchControllerPricing()
+  }, [vendorId, isOpen, selectedControllerType])
+
+  useEffect(() => {
+    if (!isControllerPricingSupported) return
+    const nextFare = calculateControllerFare(
+      controllerPricingConfig,
+      Number(state.extraControllerQty || 0)
+    )
+
+    if (nextFare !== state.extraControllerFare) {
+      setField('extraControllerFare', nextFare)
+    }
+  }, [
+    controllerPricingConfig,
+    state.extraControllerQty,
+    state.extraControllerFare,
+    isControllerPricingSupported,
+    setField
+  ])
 
   const handlePassValidation = async () => {
     const requiredHours = selectedSlots.length * 0.5
@@ -186,7 +297,7 @@ const handleSubmit = async (e: React.FormEvent) => {
     // ✅ FIXED: Match the exact format from your working code
     const totalWaiveOff = Number(state.waiveOffAmount || 0) + Number(autoWaiveOffAmount || 0)
     
-    const bookingPayload = {
+    const bookingPayload: BookingPayload = {
       consoleType: selectedSlots[0]?.console_name || '', // ✅ Keep as console_name
       name: state.name.trim(),
       email: state.email.trim(),
@@ -195,6 +306,7 @@ const handleSubmit = async (e: React.FormEvent) => {
       slotId: selectedSlots.map(slot => slot.slot_id), // ✅ Keep as slot_id
       paymentType: state.paymentType,
       waiveOffAmount: Number(totalWaiveOff.toFixed(2)),
+      extraControllerQty: Number(state.extraControllerQty || 0),
       extraControllerFare: Number((state.extraControllerFare || 0).toFixed(2)),
       selectedMeals: state.selectedMeals.map(meal => ({
         menu_item_id: meal.menu_item_id, // ✅ Keep as menu_item_id
@@ -279,6 +391,11 @@ const handleSubmit = async (e: React.FormEvent) => {
     autoWaiveOffAmount,
     state.extraControllerFare
   )
+
+  const handleExtraControllerQtyChange = (qty: number) => {
+    const safeQty = Math.max(0, Math.min(8, Number(qty) || 0))
+    setField('extraControllerQty', safeQty)
+  }
 
   if (isSubmitted) {
     return (
@@ -408,15 +525,20 @@ const handleSubmit = async (e: React.FormEvent) => {
                 mealsTotal={mealsTotal}
                 waiveOffAmount={state.waiveOffAmount}
                 autoWaiveOffAmount={autoWaiveOffAmount}
+                extraControllerQty={state.extraControllerQty}
                 extraControllerFare={state.extraControllerFare}
                 totalAmount={totalAmount}
+                controllerPricingSupported={isControllerPricingSupported}
+                controllerPricingLoading={isControllerPricingLoading}
+                controllerBasePrice={controllerPricingConfig.base_price}
+                controllerTiers={controllerPricingConfig.tiers}
                 onWaiveOffChange={(val: number) => {
                   console.log('💵 Wave off changed to:', val)
                   setField('waiveOffAmount', val)
                 }}
-                onExtraFareChange={(val: number) => {
-                  console.log('🎮 Extra fare changed to:', val)
-                  setField('extraControllerFare', val)
+                onExtraQtyChange={(qty: number) => {
+                  console.log('🎮 Extra controller qty changed to:', qty)
+                  handleExtraControllerQtyChange(qty)
                 }}
                 onMealsClick={() => setIsMealSelectorOpen(true)}
                 selectedMealsCount={state.selectedMeals.length}
