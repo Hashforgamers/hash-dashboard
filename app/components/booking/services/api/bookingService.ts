@@ -7,9 +7,18 @@ class BookingService {
 
   async createBooking(vendorId: number, payload: BookingPayload) {
     try {
+      const token =
+        (typeof window !== 'undefined' && (
+          localStorage.getItem('rbac_access_token_v1') || localStorage.getItem('jwtToken')
+        )) || null
+
       const response = await fetch(`${this.baseURL}/api/newBooking/vendor/${vendorId}`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Client-Source': 'dashboard',
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        },
         body: JSON.stringify(payload)
       })
 

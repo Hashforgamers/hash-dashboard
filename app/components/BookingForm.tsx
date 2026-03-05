@@ -117,8 +117,8 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
   const [availableSlots, setAvailableSlots] = useState<any[]>([]);
   const [isLoadingSlots, setIsLoadingSlots] = useState<boolean>(false);
 
-  // Payment - Add Pass option
-  const PAYMENT_TYPES = ['Cash', 'UPI', 'Pass']; // ← Updated
+  // Payment options
+  const PAYMENT_TYPES = ['Cash', 'UPI', 'Pass', 'Monthly Credit'];
   const [paymentType, setPaymentType] = useState<string>('Cash');
 
   // ✅ Pass payment states
@@ -620,9 +620,18 @@ const [isPrivateMode, setIsPrivateMode] = useState<boolean>(false);
       }
 
       // Create booking
+      const bookingHeaders: Record<string, string> = {
+        'Content-Type': 'application/json',
+        'X-Client-Source': 'dashboard',
+      };
+      const dashboardToken = localStorage.getItem('rbac_access_token_v1') || localStorage.getItem('jwtToken');
+      if (dashboardToken) {
+        bookingHeaders.Authorization = `Bearer ${dashboardToken}`;
+      }
+
       const response = await fetch(`${BOOKING_URL}/api/newBooking/vendor/${vendorId}`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: bookingHeaders,
         body: JSON.stringify({
           consoleType: selectedConsole.type,
           name,
@@ -630,7 +639,7 @@ const [isPrivateMode, setIsPrivateMode] = useState<boolean>(false);
           phone,
           bookedDate: selectedDate,
           slotId: selectedSlots,
-          paymentType, // Will be "Pass" if pass payment
+          paymentType: paymentType === "Monthly Credit" ? "monthly_credit" : paymentType,
           waiveOffAmount: waiveOffAmount + autoWaiveOffAmount,
           extraControllerQty: supportsExtraController ? extraControllerQty : 0,
           extraControllerFare: supportsExtraController ? extraControllerFare : 0,
@@ -685,7 +694,7 @@ const [isPrivateMode, setIsPrivateMode] = useState<boolean>(false);
       }
     } catch (error) {
       console.error('Error submitting booking:', error);
-      alert('Failed to create booking');
+      alert(error instanceof Error ? error.message : 'Failed to create booking');
     } finally {
       setIsSubmitting(false);
     }
@@ -1147,7 +1156,7 @@ const [isPrivateMode, setIsPrivateMode] = useState<boolean>(false);
                     <h3 className="text-sm font-semibold text-gray-800 dark:text-white">Payment</h3>
                   </div>
 
-                  <div className="grid grid-cols-3 gap-2">
+                  <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                     {PAYMENT_TYPES.map((type) => (
                       <motion.button
                         key={type}
@@ -1176,14 +1185,21 @@ const [isPrivateMode, setIsPrivateMode] = useState<boolean>(false);
                             <Wallet className="w-3 h-3" />
                           ) : type === 'UPI' ? (
                             <CreditCard className="w-3 h-3" />
-                          ) : (
+                          ) : type === "Pass" ? (
                             <Ticket className="w-3 h-3" />
+                          ) : (
+                            <Wallet className="w-3 h-3" />
                           )}
                           <span className="font-medium">{type}</span>
                         </div>
                       </motion.button>
                     ))}
                   </div>
+                  {paymentType === "Monthly Credit" && (
+                    <p className="mt-2 text-xs text-amber-600 dark:text-amber-300">
+                      Monthly credit works only for users with an active Gamers Credit account.
+                    </p>
+                  )}
 
                   {/* ✅ Pass UID Input - Shows when Pass is selected */}
                   <AnimatePresence>

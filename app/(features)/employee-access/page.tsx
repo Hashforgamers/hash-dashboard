@@ -38,6 +38,7 @@ const SERVICE_PERMISSION_MAP: Array<{
   { label: "Know Your Gamers", permission: "gamers.view", section: "Analytics" },
   { label: "Transaction Report", permission: "transactions.view", section: "Analytics" },
   { label: "Console Pricing", permission: "pricing.manage", section: "Admin" },
+  { label: "Gamers Credit", permission: "pricing.manage", section: "Admin" },
   { label: "My Account", permission: "account.manage", section: "Admin" },
   { label: "Subscription", permission: "subscription.manage", section: "Admin" },
   { label: "Select Cafe", permission: "cafe.switch", section: "Admin" },
@@ -465,7 +466,7 @@ export default function EmployeeAccessPage() {
                   </div>
 
                   {items.map((item) => (
-                    <div key={item.permission} className="grid grid-cols-12 items-center border-b border-slate-800/60 px-3 py-2 text-sm">
+                    <div key={`${item.permission}-${item.label}`} className="grid grid-cols-12 items-center border-b border-slate-800/60 px-3 py-2 text-sm">
                       <div className="col-span-6 text-slate-200">{item.label}</div>
 
                       {ROLE_ORDER.map((roleKey) => {

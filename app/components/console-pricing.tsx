@@ -23,7 +23,7 @@ import {
   Minus,
   Save,
 } from "lucide-react";
-import { DASHBOARD_URL } from "@/src/config/env";
+import { BOOKING_URL, DASHBOARD_URL } from "@/src/config/env";
 import { jwtDecode } from "jwt-decode";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -117,6 +117,47 @@ interface ControllerPricingRule {
   tiers: ControllerTier[];
 }
 
+interface VendorTaxProfile {
+  vendor_id: number;
+  gst_registered: boolean;
+  gst_enabled: boolean;
+  gst_rate: number;
+  tax_inclusive: boolean;
+  gstin?: string;
+  legal_name?: string;
+  state_code?: string;
+  place_of_supply_state_code?: string;
+}
+
+interface MonthlyCreditAccount {
+  id: number;
+  vendor_id: number;
+  user_id: number;
+  credit_limit: number;
+  outstanding_amount: number;
+  billing_cycle_day: number;
+  grace_days: number;
+  is_active: boolean;
+  notes?: string;
+}
+
+interface VendorUser {
+  id: number;
+  name: string;
+  email?: string;
+  phone?: string;
+}
+
+interface MonthlyCreditLedgerEntry {
+  id: number;
+  entry_type: string;
+  amount: number;
+  description?: string;
+  booked_date?: string | null;
+  due_date?: string | null;
+  created_at?: string | null;
+}
+
 type ControllerPricingState = Record<string, ControllerPricingRule>;
 
 const defaultControllerPricing: ControllerPricingState = {
@@ -155,7 +196,7 @@ export default function ConsolePricing() {
   const [successMessage, setSuccessMessage] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [vendorId, setVendorId] = useState<number | null>(null);
-  const [activeTab, setActiveTab] = useState<"default" | "offers" | "controllers">("default");
+  const [activeTab, setActiveTab] = useState<"default" | "offers" | "controllers" | "gst" | "credit">("default");
   const [viewMode, setViewMode] = useState<"grid" | "table">("table");
   const [offers, setOffers] = useState<PricingOffer[]>([]);
   const [availableGames, setAvailableGames] = useState<AvailableGame[]>([]);
@@ -172,6 +213,37 @@ export default function ConsolePricing() {
   const [isSavingControllerPricing, setIsSavingControllerPricing] = useState(false);
   const [controllerPricingError, setControllerPricingError] = useState<string | null>(null);
   const [controllerPricingChanged, setControllerPricingChanged] = useState(false);
+  const [taxProfile, setTaxProfile] = useState<VendorTaxProfile>({
+    vendor_id: 0,
+    gst_registered: false,
+    gst_enabled: false,
+    gst_rate: 18,
+    tax_inclusive: false,
+    gstin: "",
+    legal_name: "",
+    state_code: "",
+    place_of_supply_state_code: "",
+  });
+  const [isLoadingTaxProfile, setIsLoadingTaxProfile] = useState(false);
+  const [isSavingTaxProfile, setIsSavingTaxProfile] = useState(false);
+  const [taxProfileError, setTaxProfileError] = useState<string | null>(null);
+
+  const [vendorUsers, setVendorUsers] = useState<VendorUser[]>([]);
+  const [monthlyCreditAccounts, setMonthlyCreditAccounts] = useState<MonthlyCreditAccount[]>([]);
+  const [isLoadingCredit, setIsLoadingCredit] = useState(false);
+  const [isSavingCredit, setIsSavingCredit] = useState(false);
+  const [creditError, setCreditError] = useState<string | null>(null);
+  const [creditForm, setCreditForm] = useState({
+    user_id: "",
+    credit_limit: "",
+    billing_cycle_day: "1",
+    grace_days: "5",
+    is_active: true,
+    notes: "",
+  });
+  const [statementUserId, setStatementUserId] = useState<number | null>(null);
+  const [statementRows, setStatementRows] = useState<MonthlyCreditLedgerEntry[]>([]);
+  const [isLoadingStatement, setIsLoadingStatement] = useState(false);
 
   const [offerForm, setOfferForm] = useState({
     available_game_id: "",
@@ -229,6 +301,17 @@ export default function ConsolePricing() {
     fetchControllerPricing();
   }, [vendorId, activeTab]);
 
+  useEffect(() => {
+    if (!vendorId || activeTab !== "gst") return;
+    fetchTaxProfile();
+  }, [vendorId, activeTab]);
+
+  useEffect(() => {
+    if (!vendorId || activeTab !== "credit") return;
+    fetchVendorUsers();
+    fetchMonthlyCreditAccounts();
+  }, [vendorId, activeTab]);
+
   const fetchControllerPricing = async () => {
     if (!vendorId) return;
     setIsLoadingControllerPricing(true);
@@ -278,6 +361,147 @@ export default function ConsolePricing() {
       setOffers([]);
     } finally {
       setIsLoadingOffers(false);
+    }
+  };
+
+  const fetchTaxProfile = async () => {
+    if (!vendorId) return;
+    setIsLoadingTaxProfile(true);
+    setTaxProfileError(null);
+    try {
+      const res = await fetch(`${DASHBOARD_URL}/api/vendor/${vendorId}/tax-profile`);
+      if (!res.ok) throw new Error("Failed to fetch GST profile");
+      const data = await res.json();
+      const profile = data?.profile || {};
+      setTaxProfile({
+        vendor_id: vendorId,
+        gst_registered: Boolean(profile.gst_registered),
+        gst_enabled: Boolean(profile.gst_enabled),
+        gst_rate: Number(profile.gst_rate ?? 18),
+        tax_inclusive: Boolean(profile.tax_inclusive),
+        gstin: profile.gstin || "",
+        legal_name: profile.legal_name || "",
+        state_code: profile.state_code || "",
+        place_of_supply_state_code: profile.place_of_supply_state_code || "",
+      });
+    } catch (error) {
+      console.error("Failed to fetch GST profile", error);
+      setTaxProfileError("Unable to load GST setup.");
+    } finally {
+      setIsLoadingTaxProfile(false);
+    }
+  };
+
+  const saveTaxProfile = async () => {
+    if (!vendorId) return;
+    setIsSavingTaxProfile(true);
+    setTaxProfileError(null);
+    try {
+      const res = await fetch(`${DASHBOARD_URL}/api/vendor/${vendorId}/tax-profile`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          gst_registered: taxProfile.gst_registered,
+          gst_enabled: taxProfile.gst_enabled,
+          gst_rate: Number(taxProfile.gst_rate || 0),
+          tax_inclusive: taxProfile.tax_inclusive,
+          gstin: taxProfile.gstin || null,
+          legal_name: taxProfile.legal_name || null,
+          state_code: taxProfile.state_code || null,
+          place_of_supply_state_code: taxProfile.place_of_supply_state_code || null,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data?.success) throw new Error(data?.message || "Failed to save GST setup");
+      showToast("GST setup saved successfully.");
+      fetchTaxProfile();
+    } catch (error) {
+      console.error("Failed to save GST setup", error);
+      setTaxProfileError(error instanceof Error ? error.message : "Unable to save GST setup.");
+    } finally {
+      setIsSavingTaxProfile(false);
+    }
+  };
+
+  const fetchVendorUsers = async () => {
+    if (!vendorId) return;
+    try {
+      const res = await fetch(`${BOOKING_URL}/api/vendor/${vendorId}/users`);
+      if (!res.ok) throw new Error("Failed to fetch users");
+      const data = await res.json();
+      setVendorUsers(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.error("Failed to fetch users", error);
+      setVendorUsers([]);
+    }
+  };
+
+  const fetchMonthlyCreditAccounts = async () => {
+    if (!vendorId) return;
+    setIsLoadingCredit(true);
+    setCreditError(null);
+    try {
+      const res = await fetch(`${BOOKING_URL}/api/vendor/${vendorId}/monthly-credit/accounts`);
+      if (!res.ok) throw new Error("Failed to fetch accounts");
+      const data = await res.json();
+      setMonthlyCreditAccounts(Array.isArray(data?.accounts) ? data.accounts : []);
+    } catch (error) {
+      console.error("Failed to fetch monthly credit accounts", error);
+      setCreditError("Unable to load monthly credit accounts.");
+      setMonthlyCreditAccounts([]);
+    } finally {
+      setIsLoadingCredit(false);
+    }
+  };
+
+  const saveMonthlyCreditAccount = async () => {
+    if (!vendorId) return;
+    if (!creditForm.user_id) {
+      setCreditError("Select a known player first.");
+      return;
+    }
+
+    setIsSavingCredit(true);
+    setCreditError(null);
+    try {
+      const res = await fetch(`${BOOKING_URL}/api/vendor/${vendorId}/monthly-credit/accounts`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          user_id: Number(creditForm.user_id),
+          credit_limit: Number(creditForm.credit_limit || 0),
+          billing_cycle_day: Number(creditForm.billing_cycle_day || 1),
+          grace_days: Number(creditForm.grace_days || 5),
+          is_active: Boolean(creditForm.is_active),
+          notes: creditForm.notes || "",
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data?.success) throw new Error(data?.message || "Failed to save account");
+      showToast("Known player credit account saved.");
+      fetchMonthlyCreditAccounts();
+    } catch (error) {
+      console.error("Failed to save monthly credit account", error);
+      setCreditError(error instanceof Error ? error.message : "Unable to save credit account.");
+    } finally {
+      setIsSavingCredit(false);
+    }
+  };
+
+  const fetchCreditStatement = async (userId: number) => {
+    if (!vendorId) return;
+    setStatementUserId(userId);
+    setIsLoadingStatement(true);
+    try {
+      const res = await fetch(`${BOOKING_URL}/api/vendor/${vendorId}/monthly-credit/statement/${userId}`);
+      const data = await res.json();
+      if (!res.ok || !data?.success) throw new Error(data?.message || "Failed to fetch statement");
+      setStatementRows(Array.isArray(data?.entries) ? data.entries : []);
+    } catch (error) {
+      console.error("Failed to fetch monthly credit statement", error);
+      setStatementRows([]);
+    } finally {
+      setIsLoadingStatement(false);
     }
   };
 
@@ -1040,6 +1264,320 @@ export default function ConsolePricing() {
                 </>
               )}
             </button>
+          </div>
+        </motion.div>
+      )}
+
+      {activeTab === "gst" && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.2 }}
+          className="flex flex-1 min-h-0 flex-col gap-4 overflow-hidden"
+        >
+          <div className="gaming-panel shrink-0 rounded-xl p-4">
+            <h2 className="section-title">GST & Tax Setup</h2>
+            <p className="body-text-muted mt-1">
+              Define your gaming cafe GST profile once. Transactions will use this setup for CGST/SGST/IGST calculations.
+            </p>
+            {taxProfileError && <p className="mt-2 text-xs font-medium text-rose-300">{taxProfileError}</p>}
+          </div>
+
+          {isLoadingTaxProfile ? (
+            <div className="flex-1 flex items-center justify-center">
+              <Loader2 className="w-8 h-8 animate-spin text-blue-400" />
+            </div>
+          ) : (
+            <div className="min-h-0 flex-1 overflow-y-auto pr-1">
+              <Card className="gaming-panel rounded-xl border border-cyan-500/20 bg-gradient-to-br from-slate-900/75 via-slate-900/70 to-cyan-950/20">
+                <CardContent className="grid grid-cols-1 gap-4 p-4 sm:grid-cols-2">
+                  <label className="flex items-center gap-2 text-sm text-slate-200">
+                    <input
+                      type="checkbox"
+                      checked={taxProfile.gst_registered}
+                      onChange={(e) => setTaxProfile((prev) => ({ ...prev, gst_registered: e.target.checked }))}
+                    />
+                    GST Registered
+                  </label>
+                  <label className="flex items-center gap-2 text-sm text-slate-200">
+                    <input
+                      type="checkbox"
+                      checked={taxProfile.gst_enabled}
+                      onChange={(e) => setTaxProfile((prev) => ({ ...prev, gst_enabled: e.target.checked }))}
+                    />
+                    Enable GST in Billing
+                  </label>
+
+                  <div className="space-y-1.5">
+                    <label className="table-header-text">GSTIN</label>
+                    <Input
+                      value={taxProfile.gstin || ""}
+                      onChange={(e) => setTaxProfile((prev) => ({ ...prev, gstin: e.target.value.toUpperCase() }))}
+                      className="border-cyan-400/25 bg-slate-900/70 text-slate-100 focus-visible:ring-cyan-400/60"
+                      placeholder="29ABCDE1234F1Z5"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="table-header-text">Legal Name</label>
+                    <Input
+                      value={taxProfile.legal_name || ""}
+                      onChange={(e) => setTaxProfile((prev) => ({ ...prev, legal_name: e.target.value }))}
+                      className="border-cyan-400/25 bg-slate-900/70 text-slate-100 focus-visible:ring-cyan-400/60"
+                      placeholder="Gaming Cafe Pvt Ltd"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="table-header-text">GST Rate (%)</label>
+                    <Input
+                      type="number"
+                      min={0}
+                      max={28}
+                      value={taxProfile.gst_rate}
+                      onChange={(e) =>
+                        setTaxProfile((prev) => ({ ...prev, gst_rate: Math.max(0, Number(e.target.value || 0)) }))
+                      }
+                      className="border-cyan-400/25 bg-slate-900/70 text-slate-100 focus-visible:ring-cyan-400/60"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="table-header-text">Cafe State Code</label>
+                    <Input
+                      value={taxProfile.state_code || ""}
+                      onChange={(e) =>
+                        setTaxProfile((prev) => ({ ...prev, state_code: e.target.value.replace(/\D/g, "").slice(0, 2) }))
+                      }
+                      className="border-cyan-400/25 bg-slate-900/70 text-slate-100 focus-visible:ring-cyan-400/60"
+                      placeholder="29"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="table-header-text">Place of Supply State Code</label>
+                    <Input
+                      value={taxProfile.place_of_supply_state_code || ""}
+                      onChange={(e) =>
+                        setTaxProfile((prev) => ({
+                          ...prev,
+                          place_of_supply_state_code: e.target.value.replace(/\D/g, "").slice(0, 2),
+                        }))
+                      }
+                      className="border-cyan-400/25 bg-slate-900/70 text-slate-100 focus-visible:ring-cyan-400/60"
+                      placeholder="29"
+                    />
+                  </div>
+
+                  <label className="flex items-center gap-2 text-sm text-slate-200 sm:col-span-2">
+                    <input
+                      type="checkbox"
+                      checked={taxProfile.tax_inclusive}
+                      onChange={(e) => setTaxProfile((prev) => ({ ...prev, tax_inclusive: e.target.checked }))}
+                    />
+                    Tax Inclusive Pricing (price already includes GST)
+                  </label>
+                </CardContent>
+              </Card>
+
+              <div className="mt-4">
+                <button onClick={saveTaxProfile} disabled={isSavingTaxProfile} className={primaryButtonClass}>
+                  {isSavingTaxProfile ? (
+                    <>
+                      <Loader2 className="icon-md animate-spin" />
+                      Saving GST...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="icon-md" />
+                      Save GST Setup
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          )}
+        </motion.div>
+      )}
+
+      {activeTab === "credit" && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.2 }}
+          className="flex flex-1 min-h-0 flex-col gap-4 overflow-hidden"
+        >
+          <div className="gaming-panel shrink-0 rounded-xl p-4">
+            <h2 className="section-title">Known Player Monthly Credit</h2>
+            <p className="body-text-muted mt-1">
+              Allow trusted players to play now and settle at month-end. Configure user credit limit and billing cycle.
+            </p>
+            {creditError && <p className="mt-2 text-xs font-medium text-rose-300">{creditError}</p>}
+          </div>
+
+          <div className="grid min-h-0 flex-1 grid-cols-1 gap-4 overflow-hidden xl:grid-cols-2">
+            <Card className="gaming-panel min-h-0 rounded-xl border border-cyan-500/20 bg-gradient-to-br from-slate-900/75 via-slate-900/70 to-cyan-950/20">
+              <CardHeader className="border-b border-cyan-500/15 pb-3">
+                <h3 className="card-title">Create / Update Credit Account</h3>
+              </CardHeader>
+              <CardContent className="space-y-3 p-4">
+                <div className="space-y-1.5">
+                  <label className="table-header-text">Known Player</label>
+                  <select
+                    value={creditForm.user_id}
+                    onChange={(e) => setCreditForm((prev) => ({ ...prev, user_id: e.target.value }))}
+                    className="h-10 w-full rounded-md border border-cyan-400/25 bg-slate-900/70 px-3 text-sm text-slate-100 outline-none focus:ring-2 focus:ring-cyan-400/60"
+                  >
+                    <option value="">Select player</option>
+                    {vendorUsers.map((user) => (
+                      <option key={user.id} value={String(user.id)}>
+                        {user.name} {user.phone ? `(${user.phone})` : ""}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <div className="space-y-1.5">
+                    <label className="table-header-text">Credit Limit (₹)</label>
+                    <Input
+                      type="number"
+                      min={0}
+                      value={creditForm.credit_limit}
+                      onChange={(e) => setCreditForm((prev) => ({ ...prev, credit_limit: e.target.value }))}
+                      className="border-cyan-400/25 bg-slate-900/70 text-slate-100 focus-visible:ring-cyan-400/60"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="table-header-text">Billing Day (1-28)</label>
+                    <Input
+                      type="number"
+                      min={1}
+                      max={28}
+                      value={creditForm.billing_cycle_day}
+                      onChange={(e) => setCreditForm((prev) => ({ ...prev, billing_cycle_day: e.target.value }))}
+                      className="border-cyan-400/25 bg-slate-900/70 text-slate-100 focus-visible:ring-cyan-400/60"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <div className="space-y-1.5">
+                    <label className="table-header-text">Grace Days</label>
+                    <Input
+                      type="number"
+                      min={0}
+                      value={creditForm.grace_days}
+                      onChange={(e) => setCreditForm((prev) => ({ ...prev, grace_days: e.target.value }))}
+                      className="border-cyan-400/25 bg-slate-900/70 text-slate-100 focus-visible:ring-cyan-400/60"
+                    />
+                  </div>
+                  <label className="flex items-center gap-2 text-sm text-slate-200">
+                    <input
+                      type="checkbox"
+                      checked={creditForm.is_active}
+                      onChange={(e) => setCreditForm((prev) => ({ ...prev, is_active: e.target.checked }))}
+                    />
+                    Account Active
+                  </label>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="table-header-text">Notes</label>
+                  <Input
+                    value={creditForm.notes}
+                    onChange={(e) => setCreditForm((prev) => ({ ...prev, notes: e.target.value }))}
+                    className="border-cyan-400/25 bg-slate-900/70 text-slate-100 focus-visible:ring-cyan-400/60"
+                    placeholder="Trusted player, settles every month-end"
+                  />
+                </div>
+
+                <button onClick={saveMonthlyCreditAccount} disabled={isSavingCredit} className={primaryButtonClass}>
+                  {isSavingCredit ? (
+                    <>
+                      <Loader2 className="icon-md animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="icon-md" />
+                      Save Credit Account
+                    </>
+                  )}
+                </button>
+              </CardContent>
+            </Card>
+
+            <Card className="gaming-panel min-h-0 rounded-xl border border-cyan-500/20 bg-gradient-to-br from-slate-900/75 via-slate-900/70 to-cyan-950/20">
+              <CardHeader className="border-b border-cyan-500/15 pb-3">
+                <h3 className="card-title">Configured Accounts</h3>
+              </CardHeader>
+              <CardContent className="min-h-0 space-y-3 overflow-y-auto p-4">
+                {isLoadingCredit ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="w-6 h-6 animate-spin text-blue-400" />
+                  </div>
+                ) : monthlyCreditAccounts.length === 0 ? (
+                  <p className="body-text-muted">No monthly credit account configured yet.</p>
+                ) : (
+                  <div className="space-y-2">
+                    {monthlyCreditAccounts.map((account) => {
+                      const user = vendorUsers.find((u) => u.id === account.user_id);
+                      return (
+                        <div key={account.id} className="rounded-lg border border-cyan-500/15 bg-slate-900/55 p-3">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="text-sm font-semibold text-slate-100">{user?.name || `User #${account.user_id}`}</p>
+                              <p className="text-xs text-slate-400">
+                                Limit ₹{account.credit_limit} • Outstanding ₹{account.outstanding_amount}
+                              </p>
+                              <p className="text-xs text-slate-400">
+                                Cycle Day {account.billing_cycle_day} • Grace {account.grace_days} days
+                              </p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className={`text-[11px] font-semibold ${account.is_active ? "text-emerald-300" : "text-rose-300"}`}>
+                                {account.is_active ? "Active" : "Inactive"}
+                              </span>
+                              <button
+                                onClick={() => fetchCreditStatement(account.user_id)}
+                                className={secondaryButtonClass}
+                              >
+                                View Statement
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {statementUserId && (
+                  <div className="rounded-lg border border-cyan-500/15 bg-slate-900/65 p-3">
+                    <h4 className="text-sm font-semibold text-cyan-100">Statement for User #{statementUserId}</h4>
+                    {isLoadingStatement ? (
+                      <div className="py-4">
+                        <Loader2 className="w-5 h-5 animate-spin text-blue-400" />
+                      </div>
+                    ) : statementRows.length === 0 ? (
+                      <p className="body-text-muted mt-2">No ledger entries.</p>
+                    ) : (
+                      <div className="mt-2 max-h-56 overflow-y-auto space-y-1">
+                        {statementRows.map((row) => (
+                          <div key={row.id} className="flex items-center justify-between rounded border border-slate-700 px-2 py-1 text-xs">
+                            <span className="text-slate-300">{row.entry_type}</span>
+                            <span className="text-slate-200">₹{Number(row.amount || 0).toFixed(2)}</span>
+                            <span className="text-slate-400">{row.booked_date || "-"}</span>
+                            <span className="text-slate-400">Due: {row.due_date || "-"}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </div>
         </motion.div>
       )}

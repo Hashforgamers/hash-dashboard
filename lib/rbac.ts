@@ -72,6 +72,7 @@ export const NAV_PERMISSION_MAP: NavItemPermission[] = [
   { href: "/manage-extraservice", permission: "extras.manage" },
   { href: "/know-your-gamers", permission: "gamers.view" },
   { href: "/console-pricing", permission: "pricing.manage" },
+  { href: "/gamers-credit", permission: "pricing.manage" },
   { href: "/pass", permission: "passes.manage" },
   { href: "/store", permission: "store.manage" },
   { href: "/games", permission: "games.manage" },

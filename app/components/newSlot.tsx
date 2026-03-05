@@ -239,7 +239,7 @@ async function fetchSlotsBatch(vendorId: number, gameIds: number[], dates: strin
 }
 
 // Update this constant
-const PAYMENT_TYPES = ['Cash', 'UPI', 'Pass'] as const  // Add 'Pass'
+const PAYMENT_TYPES = ['Cash', 'UPI', 'Pass', 'Monthly Credit'] as const
 
 
 function SlotBookingForm({ 
@@ -782,7 +782,7 @@ const getEffectivePrice = (slot: SelectedSlot): number => {
         phone,
         bookedDate: selectedSlots[0]?.date || '',
         slotId: selectedSlots.map(slot => slot.slot_id),
-        paymentType,
+        paymentType: paymentType === 'Monthly Credit' ? 'monthly_credit' : paymentType,
         waiveOffAmount: waiveOffAmount + autoWaiveOffAmount,
         extraControllerQty: supportsExtraController ? extraControllerQty : 0,
         extraControllerFare: supportsExtraController ? extraControllerFare : 0,
@@ -795,11 +795,20 @@ const getEffectivePrice = (slot: SelectedSlot): number => {
 
       console.log('📤 Submitting booking data:', bookingData)
 
-const response = await fetch(`${BOOKING_URL}/api/newBooking/vendor/${vendorId}`, {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify(bookingData),
-})
+      const bookingHeaders: Record<string, string> = {
+        'Content-Type': 'application/json',
+        'X-Client-Source': 'dashboard',
+      }
+      const dashboardToken = localStorage.getItem('rbac_access_token_v1') || localStorage.getItem('jwtToken')
+      if (dashboardToken) {
+        bookingHeaders.Authorization = `Bearer ${dashboardToken}`
+      }
+
+      const response = await fetch(`${BOOKING_URL}/api/newBooking/vendor/${vendorId}`, {
+        method: 'POST',
+        headers: bookingHeaders,
+        body: JSON.stringify(bookingData),
+      })
 
 console.log('📥 API response status:', response.status)
 
@@ -860,7 +869,7 @@ if (response.ok || result.success === true || result.success === 'true') {
 
     } catch (error) {
       console.error('❌ Error submitting booking:', error)
-      alert('Failed to create booking')
+      alert(error instanceof Error ? error.message : 'Failed to create booking')
     } finally {
       setIsSubmitting(false)
       console.log('🏁 Form submission completed')
@@ -1268,7 +1277,7 @@ if (response.ok || result.success === true || result.success === 'true') {
   </div>
   
   {/* Payment Type Buttons */}
-  <div className="grid grid-cols-3 gap-4">
+  <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
     {PAYMENT_TYPES.map((type) => (
       <motion.button
         key={type}
@@ -1295,11 +1304,17 @@ if (response.ok || result.success === true || result.success === 'true') {
           {type === 'Cash' && <Wallet className="w-5 h-5" />}
           {type === 'UPI' && <CreditCard className="w-5 h-5" />}
           {type === 'Pass' && <Ticket className="w-5 h-5" />}
+          {type === 'Monthly Credit' && <Wallet className="w-5 h-5" />}
           <span className="font-medium">{type}</span>
         </div>
       </motion.button>
     ))}
   </div>
+  {paymentType === 'Monthly Credit' && (
+    <p className="mt-2 text-xs text-amber-600 dark:text-amber-300">
+      Monthly credit works only for users with an active Gamers Credit account.
+    </p>
+  )}
   
   {/* Pass UID Input - Shows when Pass is selected */}
   <AnimatePresence>
