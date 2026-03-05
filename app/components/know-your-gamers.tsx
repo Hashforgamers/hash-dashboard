@@ -80,7 +80,7 @@ export function KnowYourGamers() {
             title: "Total Gamers",
             value: statsJson.totalGamers?.toLocaleString() || "0",
             icon: "Users",
-            change: statsJson.membersGrowth || "+0%",
+            change: statsJson.totalGamersGrowth || "+0%",
           },
           {
             title: "Average Revenue",
@@ -92,7 +92,7 @@ export function KnowYourGamers() {
             title: "Premium Members",
             value: statsJson.premiumMembers?.toLocaleString() || "0",
             icon: "Award",
-            change: statsJson.membersGrowth || "+0%",
+            change: statsJson.premiumMembersGrowth || statsJson.membersGrowth || "+0%",
           },
           {
             title: "Avg. Session Time",

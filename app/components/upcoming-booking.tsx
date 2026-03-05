@@ -696,7 +696,7 @@ export function UpcomingBookings({
         </div>
 
         {/* 🚀 FIXED: Scrollable content area that takes remaining space */}
-        <div className="flex-1 overflow-y-auto min-h-0">
+        <div className="min-h-0 flex-1 overflow-y-auto">
           {mergedBookings.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center py-6 px-3 text-gray-500">
               <CalendarIcon className="w-8 h-8 mb-2 opacity-50" />
@@ -706,8 +706,8 @@ export function UpcomingBookings({
               </p>
             </div>
           ) : (
-            <div className="h-full overflow-y-auto">
-              <div className="space-y-2 sm:space-y-3 lg:space-y-4 p-2 sm:p-4">
+            <div>
+              <div className="space-y-2 p-2 sm:space-y-3 sm:p-4 lg:space-y-4">
                 <AnimatePresence mode="popLayout">
                   {mergedBookings.map((booking, index) => (
                     <motion.div

@@ -398,7 +398,7 @@ export function CurrentSlots({ currentSlots: initialSlots, refreshSlots, setRefr
   const item = { hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } };
 
   return (
-    <div className="h-full min-h-0 overflow-hidden rounded-2xl bg-gradient-to-br from-slate-900/65 via-slate-900/40 to-slate-900/70 p-3 sm:p-4">
+    <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-2xl bg-gradient-to-br from-slate-900/65 via-slate-900/40 to-slate-900/70 p-3 sm:p-4">
       {currentSlots?.available ? (
         <div className="flex h-full items-center justify-center">
           <HashLoader />

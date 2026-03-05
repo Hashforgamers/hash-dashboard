@@ -416,7 +416,11 @@ export function DashboardContent() {
       ) : (
         <div className="relative h-full min-h-0 text-foreground flex flex-col gap-3 sm:gap-4">
           {isLocked && <LockedOverlay />}
-          <div className={isLocked ? "pointer-events-none select-none opacity-70" : ""}>
+          <div
+            className={`flex min-h-0 flex-1 flex-col overflow-hidden ${
+              isLocked ? "pointer-events-none select-none opacity-70" : ""
+            }`}
+          >
 
           {/* ✅ Subscription expired banner
           {isLocked && (

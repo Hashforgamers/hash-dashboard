@@ -16,6 +16,31 @@ interface ExtraBookingOverlayProps {
   releaseSlot: (consoleType: string, gameId: string, consoleId: string, vendorId: any, setRefreshSlots: any) => Promise<boolean>;
 }
 
+interface PaymentSummaryLineItem {
+  transaction_id: number;
+  payment_use_case?: string;
+  booking_type?: string;
+  mode_of_payment?: string;
+  settlement_status?: string;
+  line_total: number;
+  components?: {
+    base_amount?: number;
+    meals_amount?: number;
+    controller_amount?: number;
+    waive_off_amount?: number;
+    cgst_amount?: number;
+    sgst_amount?: number;
+    igst_amount?: number;
+  };
+}
+
+interface PaymentSummary {
+  total_charged: number;
+  amount_paid: number;
+  amount_due: number;
+  line_items: PaymentSummaryLineItem[];
+}
+
 const ExtraBookingOverlay: React.FC<ExtraBookingOverlayProps> = ({
   showOverlay,
   setShowOverlay,
@@ -32,6 +57,9 @@ const ExtraBookingOverlay: React.FC<ExtraBookingOverlayProps> = ({
   const [loading, setLoading] = useState(false);
   const [waiveOffAmount, setWaiveOffAmount] = useState<string>("");
   const [waiveOffError, setWaiveOffError] = useState("");
+  const [paymentSummary, setPaymentSummary] = useState<PaymentSummary | null>(null);
+  const [summaryLoading, setSummaryLoading] = useState(false);
+  const [summaryError, setSummaryError] = useState("");
   const overlayRef = useRef<HTMLDivElement>(null);
 
   // Focus management for accessibility
@@ -40,6 +68,72 @@ const ExtraBookingOverlay: React.FC<ExtraBookingOverlayProps> = ({
       overlayRef.current.focus();
     }
   }, [showOverlay]);
+
+  const resolveBookingId = (slot: any | null): number | null => {
+    if (!slot) return null;
+    const rawId = slot.bookingId || slot.bookId;
+    const parsed = Number(rawId);
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+  };
+
+  useEffect(() => {
+    if (!showOverlay || !selectedSlot) {
+      setSummaryLoading(false);
+      return;
+    }
+
+    const bookingId = resolveBookingId(selectedSlot);
+    if (!bookingId) {
+      setSummaryLoading(false);
+      setPaymentSummary(null);
+      setSummaryError("Booking ID missing. Showing current extra charge only.");
+      return;
+    }
+
+    let isMounted = true;
+    const controller = new AbortController();
+    const token = localStorage.getItem("jwtToken");
+
+    const fetchPaymentSummary = async () => {
+      try {
+        setSummaryLoading(true);
+        setSummaryError("");
+        const response = await fetch(`${BOOKING_URL}/api/booking/${bookingId}/payment-summary`, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+          signal: controller.signal,
+        });
+
+        if (!response.ok) {
+          throw new Error(`Failed to fetch payment summary (${response.status})`);
+        }
+
+        const result = await response.json();
+        if (isMounted && result?.success && result?.financial_summary) {
+          setPaymentSummary(result.financial_summary as PaymentSummary);
+        }
+      } catch (error: any) {
+        if (error?.name === "AbortError") return;
+        if (isMounted) {
+          setPaymentSummary(null);
+          setSummaryError("Unable to load full payment summary. Showing current extra charge.");
+        }
+      } finally {
+        if (isMounted) {
+          setSummaryLoading(false);
+        }
+      }
+    };
+
+    fetchPaymentSummary();
+    return () => {
+      isMounted = false;
+      controller.abort();
+    };
+  }, [showOverlay, selectedSlot]);
 
   // Create extra booking function
   const createExtraBooking = async (payload: any) => {
@@ -142,7 +236,7 @@ const ExtraBookingOverlay: React.FC<ExtraBookingOverlayProps> = ({
   };
 
   // Handle waive-off amount change with validation
-  const handleWaiveOffChange = (e: React.ChangeEvent<HTMLInputValue>) => {
+  const handleWaiveOffChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!selectedSlot) return;
     const value = e.target.value;
     // Allow only numbers and decimals (e.g., "123.45" or "")
@@ -164,6 +258,16 @@ const ExtraBookingOverlay: React.FC<ExtraBookingOverlayProps> = ({
       }
     }
   };
+
+  const computedExtraSeconds = selectedSlot
+    ? calculateExtraTime(selectedSlot.endTime, selectedSlot.date)
+    : 0;
+  const computedExtraAmount = selectedSlot
+    ? calculateExtraAmount(computedExtraSeconds, selectedSlot.slot_price || 100)
+    : 0;
+  const parsedWaiveOff = parseFloat(waiveOffAmount) || 0;
+  const dueBeforeWaive = paymentSummary?.amount_due ?? computedExtraAmount;
+  const payableAmount = Math.max(dueBeforeWaive - parsedWaiveOff, 0);
 
   // Handle keyboard navigation for payment mode buttons
   const handlePaymentModeKeyDown = (e: React.KeyboardEvent, key: string) => {
@@ -204,23 +308,80 @@ const ExtraBookingOverlay: React.FC<ExtraBookingOverlayProps> = ({
               </p>
             </div>
 
-            <div className="flex justify-between items-center bg-red-50 dark:bg-red-900/30 p-4 rounded-lg mb-6">
-              <div>
-                <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Extra Time</p>
-                <p className="text-lg font-semibold text-red-600 dark:text-red-400">
-                  {formatTime(calculateExtraTime(selectedSlot.endTime, selectedSlot.date))}
-                </p>
+            <div className="bg-red-50 dark:bg-red-900/30 p-4 rounded-lg mb-4">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Extra Time</p>
+                  <p className="text-lg font-semibold text-red-600 dark:text-red-400">{formatTime(computedExtraSeconds)}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Total Charged</p>
+                  <p className="text-lg font-semibold text-red-600 dark:text-red-400">₹{(paymentSummary?.total_charged ?? computedExtraAmount).toFixed(2)}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Amount Paid</p>
+                  <p className="text-lg font-semibold text-emerald-600 dark:text-emerald-400">₹{(paymentSummary?.amount_paid ?? 0).toFixed(2)}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Amount Due</p>
+                  <p className="text-lg font-semibold text-red-600 dark:text-red-400">₹{payableAmount.toFixed(2)}</p>
+                </div>
               </div>
-              <div>
-                <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Amount Due</p>
-                <p className="text-lg font-semibold text-red-600 dark:text-red-400">
-                  ₹{(calculateExtraAmount(
-                    calculateExtraTime(selectedSlot.endTime, selectedSlot.date),
-                    selectedSlot.slot_price || 100
-                  ) - (parseFloat(waiveOffAmount) || 0)).toFixed(2)}
-                </p>
-              </div>
+              {summaryLoading && (
+                <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">Loading full payment summary...</p>
+              )}
+              {summaryError && (
+                <p className="mt-2 text-xs text-amber-600 dark:text-amber-400">{summaryError}</p>
+              )}
             </div>
+
+            {paymentSummary?.line_items?.length ? (
+              <div className="mb-6 border border-gray-200 dark:border-zinc-700 rounded-lg overflow-hidden">
+                <div className="px-3 py-2 border-b border-gray-200 dark:border-zinc-700">
+                  <p className="text-sm font-semibold text-gray-900 dark:text-gray-200">Transaction Breakdown</p>
+                </div>
+                <div className="max-h-48 overflow-auto">
+                  <table className="w-full text-left text-xs">
+                    <thead className="bg-gray-50 dark:bg-zinc-900/70 sticky top-0">
+                      <tr>
+                        <th className="px-3 py-2 font-semibold text-gray-700 dark:text-gray-300">Type</th>
+                        <th className="px-3 py-2 font-semibold text-gray-700 dark:text-gray-300">Amount</th>
+                        <th className="px-3 py-2 font-semibold text-gray-700 dark:text-gray-300">Mode</th>
+                        <th className="px-3 py-2 font-semibold text-gray-700 dark:text-gray-300">Status</th>
+                        <th className="px-3 py-2 font-semibold text-gray-700 dark:text-gray-300">Details</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100 dark:divide-zinc-700">
+                      {paymentSummary.line_items.map((item) => {
+                        const status = String(item.settlement_status || "pending").toLowerCase();
+                        const isSettled = ["completed", "paid", "settled", "done"].includes(status);
+                        return (
+                          <tr key={item.transaction_id} className="align-top">
+                            <td className="px-3 py-2 text-gray-900 dark:text-gray-100">
+                              {(item.payment_use_case || item.booking_type || "direct").replace(/_/g, " ")}
+                            </td>
+                            <td className="px-3 py-2 font-semibold text-gray-900 dark:text-gray-100">
+                              ₹{Number(item.line_total || 0).toFixed(2)}
+                            </td>
+                            <td className="px-3 py-2 text-gray-600 dark:text-gray-300">
+                              {item.mode_of_payment ? `Mode: ${item.mode_of_payment}` : "Mode: pending"}
+                            </td>
+                            <td className="px-3 py-2">
+                              <span className={`inline-block text-[11px] px-2 py-0.5 rounded-full ${isSettled ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300" : "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300"}`}>
+                                {isSettled ? "Paid" : "Pending"}
+                              </span>
+                            </td>
+                            <td className="px-3 py-2 text-[11px] text-gray-500 dark:text-gray-400 min-w-[260px]">
+                              Base ₹{Number(item.components?.base_amount || 0).toFixed(2)} | Meals ₹{Number(item.components?.meals_amount || 0).toFixed(2)} | Extra ₹{Number(item.components?.controller_amount || 0).toFixed(2)} | GST ₹{Number((item.components?.cgst_amount || 0) + (item.components?.sgst_amount || 0) + (item.components?.igst_amount || 0)).toFixed(2)} | Waive ₹{Number(item.components?.waive_off_amount || 0).toFixed(2)}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            ) : null}
 
             <div className="mb-6">
               <label htmlFor="waive-off-amount" className="block text-sm font-medium text-gray-900 dark:text-gray-200 mb-2">
@@ -291,6 +452,8 @@ const ExtraBookingOverlay: React.FC<ExtraBookingOverlayProps> = ({
                   setShowOverlay(false);
                   setWaiveOffAmount("");
                   setWaiveOffError("");
+                  setPaymentSummary(null);
+                  setSummaryError("");
                 }}
                 className="px-5 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-zinc-900 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm hover:bg-gray-50 dark:hover:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400 transition-all duration-200 disabled:opacity-50"
                 disabled={loading}

@@ -48,6 +48,13 @@ interface Transaction {
   totalWithTax?: number;
 }
 
+interface VendorTaxProfile {
+  gst_registered: boolean;
+  gst_enabled: boolean;
+  gst_rate: number;
+  gstin?: string;
+}
+
 type ColumnKey =
   | "bookingId"
   | "slotDate"
@@ -138,6 +145,7 @@ export function TransactionTable() {
   });
   const [showFilter, setShowFilter] = useState(false);
   const [showColumnSelector, setShowColumnSelector] = useState(false);
+  const [taxProfile, setTaxProfile] = useState<VendorTaxProfile | null>(null);
   const [visibleColumns, setVisibleColumns] = useState<Record<ColumnKey, boolean>>({
     bookingId: true,
     slotDate: true,
@@ -296,6 +304,50 @@ export function TransactionTable() {
     return () => clearInterval(pollingInterval);
   }, [vendorId, token, appliedFromDate, appliedToDate]);
 
+  useEffect(() => {
+    if (!vendorId) return;
+    let cancelled = false;
+
+    const loadTaxProfile = async () => {
+      try {
+        const res = await fetch(`${DASHBOARD_URL}/api/vendor/${vendorId}/tax-profile`);
+        if (!res.ok) return;
+        const data = await res.json();
+        if (!cancelled) {
+          setTaxProfile(data?.profile || null);
+        }
+      } catch {
+        // Keep GST export resilient even if tax profile endpoint fails.
+      }
+    };
+
+    loadTaxProfile();
+    return () => {
+      cancelled = true;
+    };
+  }, [vendorId]);
+
+  const getTransactionTax = (t: Transaction): number => {
+    const componentTax = Number(t.cgstAmount || 0) + Number(t.sgstAmount || 0) + Number(t.igstAmount || 0);
+    if (componentTax > 0) return componentTax;
+
+    const taxable = Number(t.taxableAmount ?? t.amount ?? 0);
+    const rate = Number(t.gstRate ?? (taxProfile?.gst_enabled ? taxProfile.gst_rate : 0) ?? 0);
+    if (taxable > 0 && rate > 0) return (taxable * rate) / 100;
+
+    const totalWithTax = Number(t.totalWithTax ?? 0);
+    const amount = Number(t.amount ?? 0);
+    const derived = totalWithTax - amount;
+    return derived > 0 ? derived : 0;
+  };
+
+  const getTransactionTotalWithTax = (t: Transaction): number => {
+    const totalWithTax = Number(t.totalWithTax ?? 0);
+    if (totalWithTax > 0) return totalWithTax;
+    const taxable = Number(t.taxableAmount ?? t.amount ?? 0);
+    return taxable + getTransactionTax(t);
+  };
+
   const metrics = useMemo(() => {
     if (!filteredTransactions.length) {
       return {
@@ -308,7 +360,7 @@ export function TransactionTable() {
     }
 
     const total = filteredTransactions.reduce(
-      (sum, t) => sum + Number(t.totalWithTax ?? t.amount ?? 0),
+      (sum, t) => sum + getTransactionTotalWithTax(t),
       0
     );
     const uniqueUsers = new Set(filteredTransactions.map((t) => t.userName)).size;
@@ -321,11 +373,11 @@ export function TransactionTable() {
     const cashPct = (cashTransactions / filteredTransactions.length) * 100;
 
     return { total, uniqueUsers, pendingSettlements, cashTransactions, cashPct };
-  }, [filteredTransactions]);
+  }, [filteredTransactions, taxProfile]);
 
   function downloadFilteredData() {
     const companyName = "Hash For Gamers Pvt. Ltd.";
-    const gstNumber = "GSTIN: 29ABCDE1234F1Z5"; // example, replace if needed
+    const gstNumber = taxProfile?.gstin ? `GSTIN: ${taxProfile.gstin}` : "GSTIN: N/A";
     const reportTitle = "Transaction Report";
     const reportDate = new Date().toLocaleDateString();
     const selectedRange = `${appliedFromDate} to ${appliedToDate}`;
@@ -346,20 +398,24 @@ export function TransactionTable() {
       transaction.slotDate,
       transaction.slotTime,
       transaction.userName,
-      transaction.amount.toFixed(2),
+      Number(transaction.amount || 0).toFixed(2),
       transaction.modeOfPayment,
       transaction.bookingType,
       transaction.settlementStatus,
     ]);
 
-    const totalAmount = filteredTransactions.reduce((sum, t) => sum + t.amount, 0);
-    const gst = totalAmount * 0.18; // Assuming 18% GST
-    const totalWithGst = totalAmount + gst;
+    const subtotal = filteredTransactions.reduce(
+      (sum, t) => sum + Number(t.taxableAmount ?? t.amount ?? 0),
+      0
+    );
+    const gst = filteredTransactions.reduce((sum, t) => sum + getTransactionTax(t), 0);
+    const totalWithGst = filteredTransactions.reduce((sum, t) => sum + getTransactionTotalWithTax(t), 0);
+    const effectiveRate = subtotal > 0 ? ((gst / subtotal) * 100).toFixed(2) : "0.00";
 
     const footer = [
       [],
-      ["Subtotal", "", "", totalAmount.toFixed(2)],
-      ["GST (18%)", "", "", gst.toFixed(2)],
+      ["Subtotal", "", "", subtotal.toFixed(2)],
+      [`GST (${effectiveRate}%)`, "", "", gst.toFixed(2)],
       ["Total (INR)", "", "", totalWithGst.toFixed(2)],
     ];
 
@@ -514,7 +570,7 @@ export function TransactionTable() {
       case "totalWithTax":
         return (
           <TableCell className="px-4 py-3 text-right font-medium text-slate-200">
-            ₹{Number(transaction.totalWithTax ?? transaction.amount).toFixed(2)}
+            ₹{getTransactionTotalWithTax(transaction).toFixed(2)}
           </TableCell>
         );
       default:
