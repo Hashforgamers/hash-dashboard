@@ -10,7 +10,7 @@ import { faIndianRupeeSign } from '@fortawesome/free-solid-svg-icons'
 import { useState, useEffect, useMemo } from "react";
 import { createPortal } from "react-dom"; // ✅ ADD THIS IMPORT
 import axios from "axios";
-import { format, parseISO, isToday, isTomorrow, startOfToday } from 'date-fns';
+import { format } from 'date-fns';
 import { DASHBOARD_URL } from "@/src/config/env";
 import ResponsiveSearchFilter from "./ResponsiveSearchFilter";
 import MealDetailsModal from "./mealsDetailmodal";
@@ -27,12 +27,31 @@ export function getIcon(system?: string | null): JSX.Element {
 }
 
 
+const IST_TIMEZONE = 'Asia/Kolkata';
+
+const getNowIST = (): Date =>
+  new Date(new Date().toLocaleString('en-US', { timeZone: IST_TIMEZONE }));
+
+const toDateKey = (d: Date): string => {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+};
+
 // Helper function for date formatting
 const formatDate = (dateStr: string) => {
   try {
-    const date = new Date(dateStr);
-    if (isToday(date)) return 'Today';
-    if (isTomorrow(date)) return 'Tomorrow';
+    const date = parseBookingDateLocal(dateStr);
+    if (!date) return 'Invalid Date';
+    const todayIST = getNowIST();
+    const todayKey = toDateKey(todayIST);
+    const tomorrow = new Date(todayIST);
+    tomorrow.setDate(todayIST.getDate() + 1);
+    const tomorrowKey = toDateKey(tomorrow);
+    const bookingKey = toDateKey(date);
+    if (bookingKey === todayKey) return 'Today';
+    if (bookingKey === tomorrowKey) return 'Tomorrow';
     return format(date, 'EEE, MMM d');
   } catch (error) {
     console.error("Date parsing error:", error);
@@ -89,7 +108,7 @@ const canStartBookingNow = (booking: any) => {
   end.setHours(endParsed.hour, endParsed.minute, 0, 0);
   if (end <= start) end.setDate(end.getDate() + 1);
 
-  const now = new Date();
+  const now = getNowIST();
   return now >= start && now <= end;
 };
 
@@ -188,7 +207,13 @@ const mergeConsecutiveBookings = (bookings: any[]) => {
     });
   });
 
-  return mergedResults.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  return mergedResults.sort((a, b) => {
+    const da = parseBookingDateLocal(a.date);
+    const db = parseBookingDateLocal(b.date);
+    const ta = da ? da.getTime() : 0;
+    const tb = db ? db.getTime() : 0;
+    return ta - tb;
+  });
 };
 
 
@@ -223,7 +248,7 @@ export function UpcomingBookings({
   
   // State for filtering
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedDate, setSelectedDate] = useState(format(startOfToday(), 'yyyy-MM-dd'));
+  const [selectedDate, setSelectedDate] = useState(toDateKey(getNowIST()));
   const [timeFilter, setTimeFilter] = useState("all");
 
   // ✅ State for checking if component is mounted (for portal)
@@ -373,9 +398,10 @@ export function UpcomingBookings({
 
     filtered = filtered.filter(booking => {
       try {
-        const bookingDate = new Date(booking.date);
-        const selected = new Date(selectedDate);
-        return bookingDate.toDateString() === selected.toDateString();
+        const bookingDate = parseBookingDateLocal(booking.date);
+        const selected = parseBookingDateLocal(selectedDate);
+        if (!bookingDate || !selected) return false;
+        return toDateKey(bookingDate) === toDateKey(selected);
       } catch (error) {
         console.warn('Date filtering error for booking:', booking);
         return false;
