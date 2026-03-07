@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -18,212 +18,212 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import {
-  Building2,
-  Cpu,
-  CpuIcon as Gpu,
-  MemoryStickIcon as Memory,
-  HardDrive,
-  Activity,
-  Plus,
-} from "lucide-react";
+import { Building2, Cpu, CpuIcon as Gpu, MemoryStickIcon as Memory, HardDrive, Activity } from "lucide-react";
 import axios from "axios";
 import { jwtDecode } from "jwt-decode";
 import { DASHBOARD_URL } from "@/src/config/env";
 
+type ConsoleType = "pc" | "ps5" | "xbox" | "vr";
+type ConsoleStatus = "available" | "in use" | "under maintenance";
+
 interface EditConsoleFormProps {
   console: any;
-  onClose: () => void;
+  onClose: (didUpdate?: boolean) => void;
 }
 
+const STATUS_OPTIONS: Array<{ label: string; value: ConsoleStatus }> = [
+  { label: "Available", value: "available" },
+  { label: "In Use", value: "in use" },
+  { label: "Under Maintenance", value: "under maintenance" },
+];
+
+const TYPE_FIELDS: Record<ConsoleType, Array<"cpu" | "gpu" | "ram" | "storage">> = {
+  pc: ["cpu", "gpu", "ram", "storage"],
+  ps5: ["storage"],
+  xbox: ["storage"],
+  vr: ["storage"],
+};
+
+const NON_PC_MODEL_HINT: Record<Exclude<ConsoleType, "pc">, string> = {
+  ps5: "PS5 / PS5 Slim / PS5 Pro",
+  xbox: "Xbox Series S / Xbox Series X",
+  vr: "Meta Quest / PS VR2",
+};
+
 export function EditConsoleForm({ console, onClose }: EditConsoleFormProps) {
-  const [brand, setBrand] = useState(console.brand);
-  const [cpu, setCpu] = useState(console.processor);
-  const [gpu, setGpu] = useState(console.gpu);
-  const [ram, setRam] = useState(console.ram);
-  const [storage, setStorage] = useState(console.storage);
-  const [status, setStatus] = useState(console.status);
+  const consoleType = String(console?.type || "pc").toLowerCase() as ConsoleType;
+  const visibleFields = TYPE_FIELDS[consoleType] || TYPE_FIELDS.pc;
 
-  const [newBrand, setNewBrand] = useState("");
-  const [newCpu, setNewCpu] = useState("");
-  const [newGpu, setNewGpu] = useState("");
-  const [newRam, setNewRam] = useState("");
-  const [newStorage, setNewStorage] = useState("");
-  const [newStatus, setNewStatus] = useState("");
-  const [vendorId, setVendorId] = useState(null);
+  const [brand, setBrand] = useState(String(console?.brand || ""));
+  const [name, setName] = useState(String(console?.name || ""));
+  const [cpu, setCpu] = useState(String(console?.processor || ""));
+  const [gpu, setGpu] = useState(String(console?.gpu || ""));
+  const [ram, setRam] = useState(String(console?.ram || ""));
+  const [storage, setStorage] = useState(String(console?.storage || ""));
 
-  // Decode token once when the component mounts
+  const initialStatus = useMemo<ConsoleStatus>(() => {
+    const statusLabel = String(console?.statusLabel || "").toLowerCase().trim();
+    if (statusLabel === "under maintenance") return "under maintenance";
+    if (statusLabel === "in use") return "in use";
+    if (statusLabel === "available") return "available";
+
+    if (typeof console?.status === "boolean") {
+      return console.status ? "available" : "in use";
+    }
+    return "available";
+  }, [console?.status, console?.statusLabel]);
+
+  const [status, setStatus] = useState<ConsoleStatus>(initialStatus);
+  const [consoleModelType, setConsoleModelType] = useState(String(console?.consoleModelType || ""));
+  const [vendorId, setVendorId] = useState<number | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
   useEffect(() => {
     const token = localStorage.getItem("jwtToken");
-
     if (token) {
-      const decoded_token = jwtDecode<{ sub: { id: number } }>(token);
-      setVendorId(decoded_token.sub.id);
+      const decodedToken = jwtDecode<{ sub: { id: number } }>(token);
+      setVendorId(decodedToken.sub.id);
     }
-  }, []); // empty dependency, runs once on mount
+  }, []);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const canSave = Boolean(vendorId) && !isSaving;
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const edit_payload = {
+    if (!vendorId) {
+      setError("Vendor context missing. Please login again.");
+      return;
+    }
+
+    setIsSaving(true);
+    setError(null);
+
+    const payload = {
       consoleId: console?.id,
       consoleDetails: {
-        brand: brand,
-        processor: cpu,
-        gpu: gpu,
-        ram: ram,
-        storage: storage,
-        status: status,
+        name: name.trim(),
+        brand: brand.trim(),
+        processor: visibleFields.includes("cpu") ? cpu.trim() : null,
+        gpu: visibleFields.includes("gpu") ? gpu.trim() : null,
+        ram: visibleFields.includes("ram") ? ram.trim() : null,
+        storage: visibleFields.includes("storage") ? storage.trim() : null,
+        consoleModelType: consoleType === "pc" ? null : consoleModelType.trim(),
+        status,
       },
     };
-    
-    // console.log("Form submitted", { brand, cpu, gpu, ram, storage, status });
-    onClose();
-  };
 
-  const renderSelect = (
-    label: string,
-    icon: React.ReactNode,
-    value: string,
-    setValue: (value: string) => void,
-    options: string[],
-    newValue: string,
-    setNewValue: (value: string) => void
-  ) => (
-    <div className="space-y-2">
-      <Label htmlFor={label.toLowerCase()} className="flex items-center">
-        {icon}
-        {label}
-      </Label>
-      <Select value={value} onValueChange={setValue}>
-        <SelectTrigger id={label.toLowerCase()}>
-          <SelectValue placeholder={`Select ${label}`} />
-        </SelectTrigger>
-        <SelectContent>
-          {options.map((option) => (
-            <SelectItem key={option} value={option}>
-              {option}
-            </SelectItem>
-          ))}
-          <SelectItem value="new">
-            <span className="flex items-center">
-              <Plus className="w-4 h-4 mr-2" />
-              Add New {label}
-            </span>
-          </SelectItem>
-        </SelectContent>
-      </Select>
-      {value === "new" && (
-        <Input
-          placeholder={`Enter new ${label}`}
-          value={newValue}
-          onChange={(e) => setNewValue(e.target.value)}
-        />
-      )}
-    </div>
-  );
-
-  const edit_payload = {
-    consoleId: console?.id,
-    consoleDetails: {
-      brand: brand,
-      processor: cpu,
-      gpu: gpu,
-      ram: ram,
-      storage: storage,
-      status: status,
-    },
-  };
-
-  
-  const handleClick = async () => {
     try {
-      const response = await axios.put(
+      await axios.put(
         `${DASHBOARD_URL}/api/console/update/vendor/${vendorId}`,
-        edit_payload,{
-          headers:{
-            'Content-Type':"application/json"
-          }
+        payload,
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
         }
       );
-  
-      if (!response?.data) {
-        console.log("Something went wrong while updating the data");
-      } else {
-        console.log("Updated successfully", response?.data); 
-      }
-    }catch(error) {
-      return null;
+      onClose(true);
+    } catch (err: any) {
+      const apiError = err?.response?.data?.error;
+      setError(apiError || "Failed to update console. Please try again.");
+      setIsSaving(false);
     }
   };
+
   return (
-    <Dialog open={true} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[425px]">
+    <Dialog open={true} onOpenChange={() => onClose()}>
+      <DialogContent className="sm:max-w-[560px]">
         <DialogHeader>
           <DialogTitle>Edit Console</DialogTitle>
+          <p className="text-sm text-slate-400">
+            Console type: <span className="font-semibold uppercase text-cyan-200">{consoleType}</span> | Console #{String(console?.number || "N/A")}
+          </p>
         </DialogHeader>
+
         <form onSubmit={handleSubmit} className="space-y-4">
-          {renderSelect(
-            "Brand",
-            <Building2 className="w-4 h-4 mr-2" />,
-            brand,
-            setBrand,
-            ["Custom Build", "Sony", "Microsoft", "Nintendo", "Meta"],
-            newBrand,
-            setNewBrand
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="name" className="flex items-center">Console Name</Label>
+              <Input id="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="HASH_1 / PS5_2" />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="brand" className="flex items-center"><Building2 className="mr-2 h-4 w-4" />Brand</Label>
+              <Input id="brand" value={brand} onChange={(e) => setBrand(e.target.value)} placeholder="Brand" />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="status" className="flex items-center"><Activity className="mr-2 h-4 w-4" />Status</Label>
+              <Select value={status} onValueChange={(value: ConsoleStatus) => setStatus(value)}>
+                <SelectTrigger id="status">
+                  <SelectValue placeholder="Select status" />
+                </SelectTrigger>
+                <SelectContent>
+                  {STATUS_OPTIONS.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          {consoleType !== "pc" && (
+            <div className="space-y-2">
+              <Label htmlFor="consoleModelType">Console Variant</Label>
+              <Input
+                id="consoleModelType"
+                value={consoleModelType}
+                onChange={(e) => setConsoleModelType(e.target.value)}
+                placeholder={NON_PC_MODEL_HINT[consoleType as Exclude<ConsoleType, "pc">]}
+              />
+            </div>
           )}
-          {renderSelect(
-            "CPU",
-            <Cpu className="w-4 h-4 mr-2" />,
-            cpu,
-            setCpu,
-            [
-              "Intel i9-11900K",
-              "AMD Ryzen 9 5950X",
-              "AMD Zen 2",
-              "Qualcomm Snapdragon XR2",
-            ],
-            newCpu,
-            setNewCpu
+
+          {visibleFields.includes("cpu") && (
+            <div className="space-y-2">
+              <Label htmlFor="cpu" className="flex items-center"><Cpu className="mr-2 h-4 w-4" />CPU</Label>
+              <Input id="cpu" value={cpu} onChange={(e) => setCpu(e.target.value)} placeholder="Processor" />
+            </div>
           )}
-          {renderSelect(
-            "GPU",
-            <Gpu className="w-4 h-4 mr-2" />,
-            gpu,
-            setGpu,
-            ["NVIDIA RTX 3080", "NVIDIA RTX 3090", "AMD RDNA 2", "Adreno 650"],
-            newGpu,
-            setNewGpu
+
+          {visibleFields.includes("gpu") && (
+            <div className="space-y-2">
+              <Label htmlFor="gpu" className="flex items-center"><Gpu className="mr-2 h-4 w-4" />GPU</Label>
+              <Input id="gpu" value={gpu} onChange={(e) => setGpu(e.target.value)} placeholder="Graphics card" />
+            </div>
           )}
-          {renderSelect(
-            "RAM",
-            <Memory className="w-4 h-4 mr-2" />,
-            ram,
-            setRam,
-            ["32GB DDR4", "64GB DDR4", "16GB GDDR6", "6GB"],
-            newRam,
-            setNewRam
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            {visibleFields.includes("ram") && (
+              <div className="space-y-2">
+                <Label htmlFor="ram" className="flex items-center"><Memory className="mr-2 h-4 w-4" />RAM</Label>
+                <Input id="ram" value={ram} onChange={(e) => setRam(e.target.value)} placeholder="RAM" />
+              </div>
+            )}
+
+            {visibleFields.includes("storage") && (
+              <div className="space-y-2">
+                <Label htmlFor="storage" className="flex items-center"><HardDrive className="mr-2 h-4 w-4" />Storage</Label>
+                <Input id="storage" value={storage} onChange={(e) => setStorage(e.target.value)} placeholder="Storage" />
+              </div>
+            )}
+          </div>
+
+          {error && (
+            <div className="rounded-md border border-rose-500/40 bg-rose-500/10 px-3 py-2 text-sm text-rose-200">
+              {error}
+            </div>
           )}
-          {renderSelect(
-            "Storage",
-            <HardDrive className="w-4 h-4 mr-2" />,
-            storage,
-            setStorage,
-            ["1TB NVMe SSD", "2TB NVMe SSD", "825GB SSD", "256GB"],
-            newStorage,
-            setNewStorage
-          )}
-          {renderSelect(
-            "Status",
-            <Activity className="w-4 h-4 mr-2" />,
-            status,
-            setStatus,
-            ["Available", "In Use", "Under Maintenance"],
-            newStatus,
-            setNewStatus
-          )}
+
           <DialogFooter>
-            <Button type="submit" onClick={handleClick}>
-              Save Changes
+            <Button type="button" variant="outline" onClick={() => onClose()} disabled={isSaving}>
+              Cancel
+            </Button>
+            <Button type="submit" disabled={!canSave}>
+              {isSaving ? "Saving..." : "Save Changes"}
             </Button>
           </DialogFooter>
         </form>

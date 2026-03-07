@@ -51,6 +51,48 @@ const getTimeOfDay = (time: string) => {
   return "evening";
 };
 
+const parseBookingDateLocal = (dateStr: string): Date | null => {
+  const raw = String(dateStr || "").trim();
+  if (!raw) return null;
+  const ymd = raw.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (ymd) return new Date(Number(ymd[1]), Number(ymd[2]) - 1, Number(ymd[3]));
+  const compact = raw.match(/^(\d{4})(\d{2})(\d{2})$/);
+  if (compact) return new Date(Number(compact[1]), Number(compact[2]) - 1, Number(compact[3]));
+  const d = new Date(raw);
+  return Number.isNaN(d.getTime()) ? null : d;
+};
+
+const parseMeridiemTime = (timeStr: string) => {
+  const [timePart, modifierRaw] = String(timeStr || "").trim().split(" ");
+  const [h, m] = (timePart || "0:0").split(":").map(Number);
+  const modifier = String(modifierRaw || "").toUpperCase();
+  let hour = Number.isFinite(h) ? h : 0;
+  const minute = Number.isFinite(m) ? m : 0;
+  if (modifier === "PM" && hour < 12) hour += 12;
+  if (modifier === "AM" && hour === 12) hour = 0;
+  return { hour: Math.max(0, Math.min(23, hour)), minute: Math.max(0, Math.min(59, minute)) };
+};
+
+const canStartBookingNow = (booking: any) => {
+  if (!booking?.date || !booking?.time) return false;
+  const slotDate = parseBookingDateLocal(booking.date);
+  if (!slotDate) return false;
+
+  const [startRaw, endRaw] = String(booking.time).split(" - ");
+  if (!startRaw || !endRaw) return false;
+
+  const startParsed = parseMeridiemTime(startRaw);
+  const endParsed = parseMeridiemTime(endRaw);
+  const start = new Date(slotDate);
+  start.setHours(startParsed.hour, startParsed.minute, 0, 0);
+  const end = new Date(slotDate);
+  end.setHours(endParsed.hour, endParsed.minute, 0, 0);
+  if (end <= start) end.setDate(end.getDate() + 1);
+
+  const now = new Date();
+  return now >= start && now <= end;
+};
+
 
 // Helper function for merging consecutive bookings
 const mergeConsecutiveBookings = (bookings: any[]) => {
@@ -709,7 +751,9 @@ export function UpcomingBookings({
             <div>
               <div className="space-y-2 p-2 sm:space-y-3 sm:p-4 lg:space-y-4">
                 <AnimatePresence mode="popLayout">
-                  {mergedBookings.map((booking, index) => (
+                  {mergedBookings.map((booking, index) => {
+                    const canStartNow = canStartBookingNow(booking);
+                    return (
                     <motion.div
                       key={booking.bookingId}
                       initial={{ opacity: 0, y: 10 }}
@@ -791,14 +835,21 @@ export function UpcomingBookings({
                           onClick={() =>
                             start(booking.consoleType || "", booking.game_id, booking.bookingId)
                           }
-                          className="flex w-full items-center justify-center gap-2 rounded-md bg-gradient-to-r from-emerald-500 to-cyan-500 py-2 text-xs font-semibold text-white transition-all hover:from-emerald-400 hover:to-cyan-400 sm:text-sm"
+                          disabled={!canStartNow}
+                          className={`flex w-full items-center justify-center gap-2 rounded-md py-2 text-xs font-semibold transition-all sm:text-sm ${
+                            canStartNow
+                              ? "bg-gradient-to-r from-emerald-500 to-cyan-500 text-white hover:from-emerald-400 hover:to-cyan-400"
+                              : "bg-slate-700/70 text-slate-300 cursor-not-allowed"
+                          }`}
+                          title={canStartNow ? "Start session" : "Session can be started only during its scheduled time"}
                         >
                           <Play className="w-3 h-3" />
-                          Start
+                          {canStartNow ? "Start" : "Not Startable Yet"}
                         </motion.button>
                       </div>
                     </motion.div>
-                  ))}
+                    );
+                  })}
                 </AnimatePresence>
               </div>
             </div>

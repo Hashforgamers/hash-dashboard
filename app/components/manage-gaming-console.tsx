@@ -64,6 +64,7 @@ export function ManageGamingConsole() {
   const [selectedAction, setSelectedAction] = useState<string | null>(null);
   const [selectedConsoleType, setSelectedConsoleType] = useState<string | null>(null);
   const [editingConsole, setEditingConsole] = useState<any | null>(null);
+  const [listRefreshKey, setListRefreshKey] = useState(0);
 
   const handleActionClick = (actionType: string) => {
     setSelectedAction(actionType);
@@ -78,8 +79,11 @@ export function ManageGamingConsole() {
     setEditingConsole(console);
   };
 
-  const handleCloseEdit = () => {
+  const handleCloseEdit = (didUpdate?: boolean) => {
     setEditingConsole(null);
+    if (didUpdate) {
+      setListRefreshKey((prev) => prev + 1);
+    }
   };
 
   const handleBack = () => {
@@ -98,7 +102,7 @@ export function ManageGamingConsole() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="w-full"
+            className="h-full min-h-0 w-full overflow-y-auto pr-1"
           >
             <AddConsoleForm consoleType={selectedConsoleType} />
           </motion.div>
@@ -147,7 +151,7 @@ export function ManageGamingConsole() {
           exit={{ opacity: 0, y: -20 }}
           className="h-full min-h-0 w-full"
         >
-          <ConsoleList onEdit={handleEditConsole} />
+          <ConsoleList onEdit={handleEditConsole} refreshKey={listRefreshKey} />
         </motion.div>
       );
     }
@@ -223,7 +227,7 @@ export function ManageGamingConsole() {
         )}
 
         {/* Content Area */}
-        <div className="gaming-panel flex-1 min-h-0 overflow-hidden rounded-xl p-3 sm:p-4 md:p-5">
+        <div className="gaming-panel flex-1 min-h-0 overflow-y-auto rounded-xl p-3 sm:p-4 md:p-5">
           <AnimatePresence mode="wait">
             <div className="h-full min-h-0 w-full">
             {renderContent()}

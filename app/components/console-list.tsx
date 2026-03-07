@@ -4,7 +4,6 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { useRouter } from "next/router";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,6 +18,7 @@ import {
 import {
   Edit,
   Trash2,
+  Loader2,
   Monitor,
   Gamepad,
   Tv,
@@ -42,12 +42,14 @@ import { DASHBOARD_URL } from "@/src/config/env";
 
 interface ConsoleListProps {
   onEdit: (console: any) => void;
+  refreshKey?: number;
 }
 
-export function ConsoleList({ onEdit }: ConsoleListProps) {
+export function ConsoleList({ onEdit, refreshKey = 0 }: ConsoleListProps) {
   const [data, setdata] = useState([]);
-  const [vendorId, setVendorId] = useState(null);
+  const [vendorId, setVendorId] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [deletingConsoleId, setDeletingConsoleId] = useState<number | null>(null);
   const [activeGroup, setActiveGroup] = useState<"all" | "pc" | "ps5" | "xbox" | "vr">("all");
 
 
@@ -87,7 +89,7 @@ export function ConsoleList({ onEdit }: ConsoleListProps) {
 
 
     fetch_data(); // function call here to fetch the data
-  }, [vendorId]); // this will rerun when vendorId changes
+  }, [vendorId, refreshKey]); // rerun when vendor changes or caller asks refresh
 
 
 
@@ -100,6 +102,13 @@ export function ConsoleList({ onEdit }: ConsoleListProps) {
 
   const consolelistdata = data.map((item: any) => {
     const normalizedType = String(item.type || "pc").toLowerCase();
+    const normalizedStatusLabel = String(item.statusLabel || "").trim().toLowerCase();
+    const isAvailable = typeof item.status === "boolean"
+      ? item.status
+      : normalizedStatusLabel === "available";
+    const statusLabel = normalizedStatusLabel
+      ? normalizedStatusLabel
+      : (isAvailable ? "available" : "in use");
     return {
       id: item.id,
       type: normalizedType,
@@ -111,7 +120,9 @@ export function ConsoleList({ onEdit }: ConsoleListProps) {
       gpu: item.gpu || "N/A",
       ram: item.ram || "N/A",
       storage: item.storage || "N/A",
-      status: item.status || "Unknown",
+      consoleModelType: item.consoleModelType || "N/A",
+      status: isAvailable,
+      statusLabel,
     };
   });
 
@@ -146,6 +157,7 @@ export function ConsoleList({ onEdit }: ConsoleListProps) {
 
   const handleDelete = async (id: number): Promise<void> => {
     try {
+      setDeletingConsoleId(id);
       const response = await axios.delete(
         `${DASHBOARD_URL}/api/console/${vendorId}/${id}`
       );
@@ -157,6 +169,8 @@ export function ConsoleList({ onEdit }: ConsoleListProps) {
       }
     } catch (error) {
       console.log("something while wrong to delete the data", error);
+    } finally {
+      setDeletingConsoleId(null);
     }
   };
 
@@ -183,7 +197,7 @@ export function ConsoleList({ onEdit }: ConsoleListProps) {
     return (
       <div className="flex min-h-[320px] items-center justify-center">
         <div className="flex flex-col items-center gap-4">
-          <HashLoader color="#a3e635" size={60} />
+          <HashLoader size={60} />
           <p className="dash-subtitle !text-slate-300">Loading consoles...</p>
         </div>
       </div>
@@ -292,31 +306,49 @@ export function ConsoleList({ onEdit }: ConsoleListProps) {
                           </div>
                           <span className="font-medium truncate text-slate-100">{console.brand}</span>
 
-                          <div className="flex items-center space-x-2">
-                            <Cpu className="w-4 h-4 text-slate-400" />
-                            <span className="text-slate-400">CPU</span>
-                          </div>
-                          <span className="font-medium truncate text-slate-100">
-                            {console.processor}
-                          </span>
+                          {console.type === "pc" ? (
+                            <>
+                              <div className="flex items-center space-x-2">
+                                <Cpu className="w-4 h-4 text-slate-400" />
+                                <span className="text-slate-400">CPU</span>
+                              </div>
+                              <span className="font-medium truncate text-slate-100">
+                                {console.processor || "N/A"}
+                              </span>
 
-                          <div className="flex items-center space-x-2">
-                            <Gpu className="w-4 h-4 text-slate-400" />
-                            <span className="text-slate-400">GPU</span>
-                          </div>
-                          <span className="font-medium truncate text-slate-100">{console.gpu}</span>
+                              <div className="flex items-center space-x-2">
+                                <Gpu className="w-4 h-4 text-slate-400" />
+                                <span className="text-slate-400">GPU</span>
+                              </div>
+                              <span className="font-medium truncate text-slate-100">{console.gpu || "N/A"}</span>
 
-                          <div className="flex items-center space-x-2">
-                            <Memory className="w-4 h-4 text-slate-400" />
-                            <span className="text-slate-400">RAM</span>
-                          </div>
-                          <span className="font-medium text-slate-100">{console.ram}</span>
+                              <div className="flex items-center space-x-2">
+                                <Memory className="w-4 h-4 text-slate-400" />
+                                <span className="text-slate-400">RAM</span>
+                              </div>
+                              <span className="font-medium text-slate-100">{console.ram || "N/A"}</span>
 
-                          <div className="flex items-center space-x-2">
-                            <HardDrive className="w-4 h-4 text-slate-400" />
-                            <span className="text-slate-400">Storage</span>
-                          </div>
-                          <span className="font-medium text-slate-100">{console.storage}</span>
+                              <div className="flex items-center space-x-2">
+                                <HardDrive className="w-4 h-4 text-slate-400" />
+                                <span className="text-slate-400">Storage</span>
+                              </div>
+                              <span className="font-medium text-slate-100">{console.storage || "N/A"}</span>
+                            </>
+                          ) : (
+                            <>
+                              <div className="flex items-center space-x-2">
+                                <Gamepad className="w-4 h-4 text-slate-400" />
+                                <span className="text-slate-400">Variant</span>
+                              </div>
+                              <span className="font-medium truncate text-slate-100">{console.consoleModelType || "N/A"}</span>
+
+                              <div className="flex items-center space-x-2">
+                                <HardDrive className="w-4 h-4 text-slate-400" />
+                                <span className="text-slate-400">Storage</span>
+                              </div>
+                              <span className="font-medium text-slate-100">{console.storage || "N/A"}</span>
+                            </>
+                          )}
                         </div>
 
                         <div className="flex items-center justify-between border-t border-slate-700/70 pt-2">
@@ -324,13 +356,28 @@ export function ConsoleList({ onEdit }: ConsoleListProps) {
                             <Activity className="w-4 h-4 text-slate-400" />
                             <span className="text-slate-400">Status</span>
                           </div>
-                          <Badge className={console.status ? "border border-emerald-400/40 bg-emerald-500/15 text-emerald-200" : "border border-amber-400/40 bg-amber-500/15 text-amber-200"}>
-                            {console.status ? "Available" : "Not Available"}
+                          <Badge className={console.statusLabel === "available"
+                            ? "border border-emerald-400/40 bg-emerald-500/15 text-emerald-200"
+                            : console.statusLabel === "under maintenance"
+                              ? "border border-rose-400/40 bg-rose-500/15 text-rose-200"
+                              : "border border-amber-400/40 bg-amber-500/15 text-amber-200"}
+                          >
+                            {console.statusLabel === "under maintenance"
+                              ? "Under Maintenance"
+                              : console.statusLabel === "available"
+                                ? "Available"
+                                : "In Use"}
                           </Badge>
                         </div>
                       </div>
 
-                      <div className="mt-4 flex justify-end space-x-2 opacity-0 transition-opacity group-hover:opacity-100">
+                      <div
+                        className={`mt-4 flex justify-end space-x-2 transition-opacity ${
+                          deletingConsoleId === console.id
+                            ? "opacity-100"
+                            : "opacity-0 group-hover:opacity-100"
+                        }`}
+                      >
                         <Button
                           variant="outline"
                           size="sm"
@@ -342,13 +389,23 @@ export function ConsoleList({ onEdit }: ConsoleListProps) {
                         </Button>
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
-                            <Button
+                              <Button
                               variant="outline"
                               size="sm"
+                              disabled={deletingConsoleId !== null}
                               className="border-rose-400/45 bg-rose-500/10 text-rose-200 hover:bg-rose-500/20"
                             >
-                              <Trash2 className="w-4 h-4 mr-1" />
-                              Delete
+                              {deletingConsoleId === console.id ? (
+                                <>
+                                  <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+                                  Deleting...
+                                </>
+                              ) : (
+                                <>
+                                  <Trash2 className="w-4 h-4 mr-1" />
+                                  Delete
+                                </>
+                              )}
                             </Button>
                           </AlertDialogTrigger>
                           <AlertDialogContent>
@@ -359,14 +416,22 @@ export function ConsoleList({ onEdit }: ConsoleListProps) {
                             </AlertDialogHeader>
                             <AlertDialogFooter>
                               <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction className="bg-red-700 hover:bg-red-800 text-white flex items-center gap-2">
-                                <Button
-                                  className="bg-red-700 hover:bg-red-800 text-white flex items-center gap-2"
-                                  onClick={() => handleDelete(console.id)}
-                                >
-                                  <Trash2 size={18} />
-                                  Confirm Delete
-                                </Button>
+                              <AlertDialogAction
+                                className="bg-red-700 hover:bg-red-800 text-white flex items-center gap-2"
+                                onClick={() => handleDelete(console.id)}
+                                disabled={deletingConsoleId !== null}
+                              >
+                                {deletingConsoleId === console.id ? (
+                                  <>
+                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                    Deleting...
+                                  </>
+                                ) : (
+                                  <>
+                                    <Trash2 size={18} />
+                                    Confirm Delete
+                                  </>
+                                )}
                               </AlertDialogAction>
                             </AlertDialogFooter>
                           </AlertDialogContent>

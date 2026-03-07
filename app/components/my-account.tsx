@@ -565,21 +565,47 @@ const handleProfileImageUpload = async (event: React.ChangeEvent<HTMLInputElemen
 // Utility function to convert 24h to 12h format for API
 const convertTo12HourFormat = (time24) => {
   if (!time24) return "";
+  if (time24 === "24:00") return "12:00 AM";
   const [hours, minutes] = time24.split(':');
+  if (hours === undefined || minutes === undefined) return "";
   const hour = parseInt(hours, 10);
+  if (Number.isNaN(hour)) return "";
   const ampm = hour >= 12 ? 'PM' : 'AM';
   const hour12 = hour % 12 || 12;
   return `${hour12.toString().padStart(2, '0')}:${minutes} ${ampm}`;
 };
 
+const normalizeDayForApi = (dayValue: string) => {
+  const raw = (dayValue || "").toLowerCase().trim();
+  const map: Record<string, string> = {
+    monday: "mon",
+    tuesday: "tue",
+    wednesday: "wed",
+    thursday: "thu",
+    friday: "fri",
+    saturday: "sat",
+    sunday: "sun",
+  };
+  if (map[raw]) return map[raw];
+  return raw.slice(0, 3);
+};
+
+const OPERATING_HOURS_SAVE_WINDOW_DAYS = 14;
+
 // API function to update operating hours
 const updateOperatingHours = async (vendorId, dayData) => {
   try {
+    const is24Hours = Boolean(dayData.isEnabled && dayData.open && dayData.close && dayData.open === dayData.close);
     const payload = {
       start_time: convertTo12HourFormat(dayData.open), // Convert 24h to 12h
       end_time: convertTo12HourFormat(dayData.close),   // Convert 24h to 12h
       slot_duration: dayData.slotDurationMinutes,
-      day: dayData.day.toLowerCase()
+      day: normalizeDayForApi(dayData.day),
+      is_enabled: Boolean(dayData.isEnabled),
+      is_24_hours: is24Hours,
+      // Keep synchronous save responsive on Render; booking API self-heals
+      // missing far-future dates from vendor_day_slot_config when requested.
+      window_days: OPERATING_HOURS_SAVE_WINDOW_DAYS
     };
 
     console.log('Sending payload:', payload); // Debug log
@@ -624,7 +650,7 @@ const handleSaveSlot = async (day: string) => {
       throw new Error('Day data not found');
     }
 
-    if (!dayData.open || !dayData.close || !dayData.slotDurationMinutes) {
+    if (dayData.isEnabled && (!dayData.open || !dayData.close || !dayData.slotDurationMinutes)) {
       throw new Error('Please fill in all required fields');
     }
 
@@ -634,7 +660,13 @@ const handleSaveSlot = async (day: string) => {
     const result = await updateOperatingHours(currentVendorId, dayData);
     
     if (result.success) {
-      alert(`${day.charAt(0).toUpperCase() + day.slice(1)} hours updated successfully!`);
+      const asyncJobId = result?.data?.job_id;
+      const isAsyncAccepted = result?.data?.status === "running" || result?.data?.status === "queued";
+      if (isAsyncAccepted && asyncJobId) {
+        alert(`${day.charAt(0).toUpperCase() + day.slice(1)} update queued (Job: ${asyncJobId.slice(0, 8)}...). Changes will apply shortly.`);
+      } else {
+        alert(`${day.charAt(0).toUpperCase() + day.slice(1)} hours updated successfully!`);
+      }
       
       setHoursData(prevData => 
         prevData.map(entry => 
@@ -758,6 +790,7 @@ useEffect(() => {
       close: entry.close || "18:00", 
       slotDurationMinutes: entry.slotDurationMinutes || 30,
       isEnabled: entry.isEnabled !== undefined ? entry.isEnabled : true,
+      is24Hours: Boolean(entry.is24Hours),
       hasChanges: false
     }));
     setHoursData(transformedHours);
@@ -771,6 +804,7 @@ useEffect(() => {
       close: "18:00",
       slotDurationMinutes: 30,
       isEnabled: true,
+      is24Hours: false,
       hasChanges: false
     }));
     setHoursData(defaultHours);
@@ -1789,6 +1823,7 @@ const ToggleSwitch = ({
     <CardContent className="space-y-6">
       <div className="space-y-4">
         <Label className="text-foreground">Operating Hours</Label>
+        <p className="text-xs text-slate-300">Set `open` and `close` to same time (or use `24H`) for 24-hour operation.</p>
         
         <div className="space-y-3">
           {hoursData.map((entry, index) => (
@@ -1824,6 +1859,19 @@ const ToggleSwitch = ({
                   disabled={editingSlot !== entry.day || !entry.isEnabled}
                 />
               </div>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  handleTimeChange(entry.day, 'open', '00:00');
+                  handleTimeChange(entry.day, 'close', '00:00');
+                }}
+                disabled={editingSlot !== entry.day || !entry.isEnabled}
+                className="text-xs"
+              >
+                24H
+              </Button>
               
               {/* Slot Duration Input */}
               <div className="flex items-center gap-1">
