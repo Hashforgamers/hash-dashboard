@@ -156,7 +156,49 @@ interface SlotBookingFormProps {
 
 // ============= OPTIMIZATION 1: Request Cache =============
 const requestCache = new Map<string, { data: any; timestamp: number }>()
-const CACHE_TTL = 5 * 60 * 1000 // 5 minutes
+const CACHE_TTL = 20 * 1000 // 20 seconds for booking freshness
+const IST_TIMEZONE = "Asia/Kolkata"
+
+const getISTDateParts = (date: Date) => {
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    timeZone: IST_TIMEZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(date)
+  const day = parts.find((p) => p.type === "day")?.value ?? "01"
+  const month = parts.find((p) => p.type === "month")?.value ?? "01"
+  const year = parts.find((p) => p.type === "year")?.value ?? "1970"
+  return { year, month, day }
+}
+
+const getISTDateString = (offsetDays = 0): string => {
+  const shifted = new Date(Date.now() + offsetDays * 24 * 60 * 60 * 1000)
+  const { year, month, day } = getISTDateParts(shifted)
+  return `${year}-${month}-${day}`
+}
+
+const getCurrentISTMinutes = (): number => {
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    timeZone: IST_TIMEZONE,
+    hour12: false,
+    hour: "2-digit",
+    minute: "2-digit",
+  }).formatToParts(new Date())
+  const hours = Number(parts.find((p) => p.type === "hour")?.value ?? "0")
+  const minutes = Number(parts.find((p) => p.type === "minute")?.value ?? "0")
+  return hours * 60 + minutes
+}
+
+const isPastSlotInIST = (slotDate: string, slotEndTime: string): boolean => {
+  const slotEndTs = new Date(`${slotDate}T${slotEndTime}+05:30`).getTime()
+  return Number.isFinite(slotEndTs) && Date.now() >= slotEndTs
+}
+
+const getISTMonthStartCompact = (): string => {
+  const { year, month } = getISTDateParts(new Date())
+  return `${year}${month}01`
+}
 
 function getCachedData(key: string) {
   const cached = requestCache.get(key)
@@ -202,12 +244,12 @@ async function fetchWithDedup(url: string): Promise<any> {
 }
 
 // ============= OPTIMIZATION 3: Batch API Call =============
-async function fetchSlotsBatch(vendorId: number, gameIds: number[], dates: string[]) {
-  const url = `${BOOKING_URL}/api/getSlotsBatch/vendor/${vendorId}`  // ✅ CORRECT ENDPOINT
+async function fetchSlotsBatch(vendorId: number, gameIds: number[], dates: string[], forceFresh = false) {
+  const url = `${BOOKING_URL}/api/getSlotsBatch/vendor/${vendorId}${forceFresh ? `?t=${Date.now()}` : ""}`  // ✅ CORRECT ENDPOINT
   
   const cacheKey = `batch:${vendorId}:${gameIds.join(',')}:${dates.join(',')}`
-  const cached = getCachedData(cacheKey)
-  if (cached) {
+  const cached = forceFresh ? null : getCachedData(cacheKey)
+  if (!forceFresh && cached) {
     console.log(`✅ Batch cache hit`)
     return cached
   }
@@ -230,7 +272,9 @@ async function fetchSlotsBatch(vendorId: number, gameIds: number[], dates: strin
     
     const data = await response.json()
     console.log('✅ Batch fetch successful:', data)
-    setCachedData(cacheKey, data)
+    if (!forceFresh) {
+      setCachedData(cacheKey, data)
+    }
     return data
   } catch (error) {
     console.error('❌ Batch fetch error:', error)
@@ -317,10 +361,8 @@ function SlotBookingForm({
   const calculateAutoWaiveOff = (slots: SelectedSlot[]) => {
     console.log('💰 Calculating auto waive-off for slots:', slots)
     
-    const nowIST = new Date(
-      new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' })
-    )
-    console.log('🕐 Current IST time:', nowIST.toLocaleTimeString('en-IN'))
+    const nowTs = Date.now()
+    console.log('🕐 Current IST time:', new Date().toLocaleTimeString('en-IN', { timeZone: IST_TIMEZONE }))
     
     let totalAutoWaiveOff = 0
     
@@ -334,13 +376,13 @@ function SlotBookingForm({
       console.log(`🕐 Slot Analysis for ${slot.start_time}-${slot.end_time}:`, {
         slotId: slot.slot_id,
         slotDurationMinutes,
-        currentTime: nowIST.toLocaleTimeString('en-IN'),
+        currentTime: new Date(nowTs).toLocaleTimeString('en-IN', { timeZone: IST_TIMEZONE }),
         slotStart: slotDateTime.toLocaleTimeString('en-IN'),
         slotEnd: slotEndTime.toLocaleTimeString('en-IN')
       })
       
-      if (nowIST >= slotDateTime && nowIST < slotEndTime) {
-        const elapsedMs = nowIST.getTime() - slotDateTime.getTime()
+      if (nowTs >= slotDateTime.getTime() && nowTs < slotEndTime.getTime()) {
+        const elapsedMs = nowTs - slotDateTime.getTime()
         const elapsedMinutes = elapsedMs / (1000 * 60)
         
         const elapsedPercentage = elapsedMinutes / slotDurationMinutes
@@ -356,10 +398,10 @@ function SlotBookingForm({
         
         totalAutoWaiveOff += waveOffAmount
       }
-      else if (nowIST < slotDateTime) {
+      else if (nowTs < slotDateTime.getTime()) {
         console.log(`⏰ Booking made in advance for ${slot.start_time} - no wave-off needed`)
       }
-      else if (nowIST >= slotEndTime) {
+      else if (nowTs >= slotEndTime.getTime()) {
         console.log(`⚠️ Slot ${slot.start_time} already ended - full wave-off applied`)
         totalAutoWaiveOff += slot.console_price
       }
@@ -1652,12 +1694,14 @@ function TopBar({
   onNewBooking,
   selectedConsole,
   onConsoleChange,
+  availableConsoles,
   compact = false,
 }: { 
   selectedSlots: SelectedSlot[], 
   onNewBooking: () => void,
   selectedConsole: ConsoleFilter,
   onConsoleChange: (gameConsole: ConsoleFilter) => void
+  availableConsoles: ConsoleType[]
   compact?: boolean
 }) {
   const [menuOpen, setMenuOpen] = useState(false)
@@ -1668,6 +1712,10 @@ function TopBar({
     Xbox: Gamepad,
     VR: Headset
   }
+  const orderedTypes: ConsoleFilter[] = ["PC", "PS5", "Xbox", "VR"]
+  const activeTypes = orderedTypes.filter((type) =>
+    availableConsoles.some((c) => c.type === type)
+  )
   
   // Conditional rendering for management views
   if (showManageView) {
@@ -1707,7 +1755,9 @@ function TopBar({
         <div className="flex items-center gap-2">
           <span className="text-xs font-medium uppercase tracking-wide text-slate-400">Select Console</span>
           <div className="flex flex-wrap items-center gap-2">
-            {Object.entries(consoleIcons).map(([key, Icon]) => (
+            {activeTypes.map((key) => {
+              const Icon = consoleIcons[key]
+              return (
               <SegmentedButton
                 key={key}
                 active={selectedConsole === key}
@@ -1716,7 +1766,12 @@ function TopBar({
               >
                 {key}
               </SegmentedButton>
-            ))}
+            )})}
+            {activeTypes.length === 0 && (
+              <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs text-amber-200">
+                No consoles configured for booking. Add devices in `Manage Gaming Console`.
+              </div>
+            )}
           </div>
         </div>
       </Card>
@@ -1839,14 +1894,8 @@ function ScheduleGrid({
   const getNext3Days = () => {
     const days = []
     for (let i = 0; i < 3; i++) {
-      const today = new Date()
-      const targetDate = new Date(today.getFullYear(), today.getMonth(), today.getDate() + i)
-      
-      const year = targetDate.getFullYear()
-      const month = String(targetDate.getMonth() + 1).padStart(2, '0')
-      const day = String(targetDate.getDate()).padStart(2, '0')
-      
-      const fullDate = `${year}-${month}-${day}`
+      const fullDate = getISTDateString(i)
+      const [, month, day] = fullDate.split("-")
       const displayDate = `${day}/${month}`
       
       days.push({ date: displayDate, fullDate })
@@ -1879,8 +1928,7 @@ function ScheduleGrid({
   useEffect(() => {
     if (!timelineRef.current || uniqueTimes.length === 0) return
 
-    const nowIST = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }))
-    const nowMinutes = nowIST.getHours() * 60 + nowIST.getMinutes()
+    const nowMinutes = getCurrentISTMinutes()
 
     const nearestIndex = uniqueTimes.reduce((bestIndex, time, idx) => {
       const [hours, mins] = time.split(':').map(Number)
@@ -1921,6 +1969,22 @@ function ScheduleGrid({
     return gameConsole.type === selectedConsole
   })
 
+  if (filteredConsoles.length === 0) {
+    return (
+      <Card className="rounded-2xl border border-amber-500/35 bg-amber-500/10 backdrop-blur-sm overflow-hidden">
+        <div className="flex flex-col items-center justify-center px-6 py-10 text-center">
+          <AlertCircle className="mb-3 h-8 w-8 text-amber-300" />
+          <p className="text-sm font-semibold text-amber-100">
+            No {selectedConsole} consoles available in this cafe
+          </p>
+          <p className="mt-1 text-xs text-amber-200/90">
+            Add or map {selectedConsole} devices from `Manage Gaming Console` to enable booking.
+          </p>
+        </div>
+      </Card>
+    )
+  }
+
   const getConsoleIcon = (consoleType: string) => {
     switch (consoleType) {
       case 'PC': return Monitor
@@ -1937,24 +2001,100 @@ function ScheduleGrid({
     return colors[consoleId % colors.length]
   }
 
+  const toMinuteOfDay = (timeValue: string | undefined | null): number | null => {
+    if (!timeValue) return null
+    const [h, m] = String(timeValue).slice(0, 5).split(":")
+    const hh = Number(h)
+    const mm = Number(m)
+    if (Number.isNaN(hh) || Number.isNaN(mm)) return null
+    return hh * 60 + mm
+  }
+
+  const getSlotDurationMinutes = (slot: any): number => {
+    const start = toMinuteOfDay(slot?.start_time)
+    const end = toMinuteOfDay(slot?.end_time)
+    if (start === null || end === null) return 0
+    const mins = end > start ? end - start : (24 * 60 - start + end)
+    return mins
+  }
+
+  const detectedDurations = React.useMemo(() => {
+    const selectedIds = new Set(
+      filteredConsoles
+        .map((consoleItem) => Number(consoleItem.id))
+        .filter((id) => Number.isFinite(id))
+    )
+    const durationSet = new Set<number>()
+
+    Object.values(allSlots).forEach((daySlots: any[]) => {
+      daySlots.forEach((slot: any) => {
+        const consoleId = Number(slot?.console_id)
+        if (!selectedIds.has(consoleId)) return
+        const start = toMinuteOfDay(slot?.start_time)
+        const end = toMinuteOfDay(slot?.end_time)
+        if (start === null || end === null) return
+        const mins = end > start ? end - start : (24 * 60 - start + end)
+        if (mins > 0) durationSet.add(mins)
+      })
+    })
+
+    return Array.from(durationSet).sort((a, b) => a - b)
+  }, [allSlots, filteredConsoles])
+
+  const findCoveringSlot = (daySlots: any[], time: string, consoleId?: number) => {
+    const target = toMinuteOfDay(time)
+    if (target === null) return null
+    return daySlots.find((slot) => {
+      if (slot.console_id !== consoleId) return false
+      const start = toMinuteOfDay(slot.start_time)
+      const end = toMinuteOfDay(slot.end_time)
+      if (start === null || end === null) return false
+      return target > start && target < end
+    }) || null
+  }
+
   const isSlotSelected = (slotId: number, date: string) => {
     return selectedSlots.some(slot => slot.slot_id === slotId && slot.date === date)
+  }
+
+  const pickBestSlot = (slots: any[]) => {
+    if (!Array.isArray(slots) || slots.length === 0) return null
+    return [...slots].sort((a, b) => {
+      const aAvail = Number(a?.available_slot || 0)
+      const bAvail = Number(b?.available_slot || 0)
+      if (aAvail !== bAvail) return bAvail - aAvail
+      const aOpen = Boolean(a?.is_available)
+      const bOpen = Boolean(b?.is_available)
+      if (aOpen !== bOpen) return aOpen ? -1 : 1
+      return 0
+    })[0]
   }
 
   const handleSlotClick = (dayData: any, time: string, gameConsole: ConsoleType) => {
   const daySlots = allSlots[dayData.fullDate] || []
   
-  const matchingSlot = daySlots.find(slot => {
+  let matchingSlot = daySlots.find(slot => {
     const slotStartTime = slot.start_time.slice(0, 5)
     return slotStartTime === time && slot.console_id === gameConsole.id
   })
 
+  const sameTimeSlots = daySlots.filter((slot: any) => {
+    const slotStartTime = slot.start_time.slice(0, 5)
+    return slotStartTime === time && slot.console_id === gameConsole.id
+  })
+  const bestSameTimeSlot = pickBestSlot(sameTimeSlots)
+  if (bestSameTimeSlot) {
+    matchingSlot = bestSameTimeSlot
+  }
+
+  if (!matchingSlot) {
+    matchingSlot = findCoveringSlot(daySlots, time, gameConsole.id)
+  }
+
   if (!matchingSlot) return
 
   // ✅ NEW: Check if slot is in the past
-  const nowIST = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }))
-  const slotEndTime = new Date(`${dayData.fullDate}T${matchingSlot.end_time}+05:30`)
-  const isPastTime = nowIST >= slotEndTime
+  const isPastTime = isPastSlotInIST(dayData.fullDate, matchingSlot.end_time)
 
   const selectedSlot: SelectedSlot = {
     slot_id: matchingSlot.slot_id,
@@ -2013,15 +2153,36 @@ function ScheduleGrid({
             return slotStartTime === time && slot.console_id === gameConsole.id
           })
 
-          if (consoleSlots.length === 0) return
+          if (consoleSlots.length === 0) {
+            const coveringSlot = findCoveringSlot(daySlots, time, gameConsole.id)
+            if (coveringSlot) {
+              timeSlots.push(
+                <div
+                  key={`continuation-${day.fullDate}-${gameConsole.id}-${time}`}
+                  onClick={() => handleSlotClick(day, time, gameConsole)}
+                  className={cn(
+                    "group relative h-full w-full cursor-pointer overflow-hidden rounded-md border border-amber-400/20 bg-gradient-to-r from-amber-300/8 to-amber-300/4 transition-colors hover:from-amber-300/14 hover:to-amber-300/10",
+                    compact ? "min-h-[32px]" : "min-h-[40px]"
+                  )}
+                  title={`${gameConsole.name} slot continues (${coveringSlot.start_time?.slice(0, 5)}-${coveringSlot.end_time?.slice(0, 5)})`}
+                >
+                  <div className="absolute inset-x-2 top-1/2 h-[2px] -translate-y-1/2 rounded-full bg-amber-300/45 group-hover:bg-amber-200/70" />
+                  <div className="absolute right-2 top-1/2 h-1.5 w-1.5 -translate-y-1/2 rounded-full bg-amber-200/80 group-hover:bg-amber-100" />
+                  <div className="sr-only">
+                    Slot continues
+                  </div>
+                </div>
+              )
+            }
+            return
+          }
 
-          const slot = consoleSlots[0] // Get first slot for this console/time
+          const slot = pickBestSlot(consoleSlots) // Prefer best candidate (open/high capacity) when duplicates exist
+          if (!slot) return
           const isSelected = isSlotSelected(slot.slot_id, day.fullDate)
           
           // ✅ Check if time has passed
-          const nowIST = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }))
-          const slotEndTime = new Date(`${day.fullDate}T${slot.end_time}+05:30`)
-          const isPastTime = nowIST >= slotEndTime
+          const isPastTime = isPastSlotInIST(day.fullDate, slot.end_time)
           
           // ✅ Check if fully booked
           const isFullyBooked = (slot.available_slot || 0) === 0
@@ -2068,7 +2229,7 @@ if (isPastTime) {
                 className={cn("w-full h-full", compact ? "min-h-[32px]" : "min-h-[40px]")}
               >
                 <SlotPill
-                  label={`${gameConsole.name} - ${slot.available_slot}`}
+                  label={`${gameConsole.name} - ${slot.available_slot} • ${Math.max(getSlotDurationMinutes(slot), 30)}m`}
                   color={getConsoleColor(gameConsole.id)}
                   icon={getConsoleIcon(gameConsole.type)}
                   onClick={() => handleSlotClick(day, time, gameConsole)}
@@ -2092,6 +2253,7 @@ if (isPastTime) {
       }),
     }
   })
+  const todayIST = getISTDateString(0)
 
   if (uniqueTimes.length === 0) {
     return (
@@ -2108,6 +2270,11 @@ if (isPastTime) {
 
   return (
     <Card className="rounded-2xl border border-gray-700 bg-gray-800/30 backdrop-blur-sm overflow-hidden">
+      {detectedDurations.length > 1 && (
+        <div className="border-b border-cyan-500/20 bg-cyan-500/10 px-4 py-2 text-xs text-cyan-100/90">
+          Mixed slot durations detected ({detectedDurations.join("m, ")}m). In-between cells show continuation of longer slots.
+        </div>
+      )}
       <div
         ref={timelineRef}
         onMouseDown={handleMouseDown}
@@ -2135,32 +2302,51 @@ if (isPastTime) {
           </div>
 
           <div className="border-t border-gray-700">
-            {rows.map((row) => (
-              <div 
-                key={row.fullDate}
-                className={cn(
-                  "grid border-b border-gray-700/50 last:border-b-0 hover:bg-gray-700/20 transition-colors",
-                  compact ? "gap-1 p-2 py-1.5" : "gap-2 p-4 py-3"
-                )}
-                style={{ gridTemplateColumns: `80px repeat(${uniqueTimes.length}, minmax(${compact ? 96 : 110}px, 1fr))` }}
-              >
-                <div className="sticky left-0 z-20 flex items-center justify-center rounded-lg bg-gray-700/95 px-2 py-2 text-sm font-bold text-white backdrop-blur-sm">
-                  {row.date}
-                </div>
-                
-                {row.cells.map((content, idx) => (
+            {rows.map((row) => {
+              const isTodayRow = row.fullDate === todayIST
+              return (
+                <div
+                  key={row.fullDate}
+                  className={cn(
+                    "grid border-b border-gray-700/50 last:border-b-0 transition-colors",
+                    isTodayRow
+                      ? "bg-cyan-500/10 ring-1 ring-inset ring-cyan-400/35"
+                      : "hover:bg-gray-700/20",
+                    compact ? "gap-1 p-2 py-1.5" : "gap-2 p-4 py-3"
+                  )}
+                  style={{ gridTemplateColumns: `80px repeat(${uniqueTimes.length}, minmax(${compact ? 96 : 110}px, 1fr))` }}
+                >
                   <div
-                    key={`${row.fullDate}-cell-${idx}`}
                     className={cn(
-                      "rounded-lg border border-gray-700 bg-gray-800/50 backdrop-blur-sm",
-                      compact ? "min-h-[36px]" : "min-h-[44px]"
+                      "sticky left-0 z-20 flex items-center justify-center rounded-lg px-2 py-2 text-sm font-bold backdrop-blur-sm",
+                      isTodayRow
+                        ? "bg-cyan-500/20 text-cyan-100 ring-1 ring-cyan-300/35"
+                        : "bg-gray-700/95 text-white"
                     )}
                   >
-                    {content}
+                    <span>{row.date}</span>
+                    {isTodayRow && (
+                      <span className="ml-1.5 rounded-full bg-cyan-400/20 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-cyan-100">
+                        Today
+                      </span>
+                    )}
                   </div>
-                ))}
-              </div>
-            ))}
+
+                  {row.cells.map((content, idx) => (
+                    <div
+                      key={`${row.fullDate}-cell-${idx}`}
+                      className={cn(
+                        "rounded-lg border border-gray-700 bg-gray-800/50 backdrop-blur-sm",
+                        isTodayRow && "border-cyan-500/30 bg-cyan-500/5",
+                        compact ? "min-h-[36px]" : "min-h-[44px]"
+                      )}
+                    >
+                      {content}
+                    </div>
+                  ))}
+                </div>
+              )
+            })}
           </div>
         </div>
       </div>
@@ -3003,9 +3189,7 @@ function ListBooking() {
 
   const fetchData = async () => {
     try {
-      const today = new Date();
-      const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-      const formattedDate = startOfMonth.toISOString().slice(0, 10).replace(/-/g, "");
+      const formattedDate = getISTMonthStartCompact();
       const response = await axios.get(
         `${BOOKING_URL}/api/getAllBooking/vendor/${vendorId}/${formattedDate}/`,
         { headers: { "Content-Type": "application/json" } }
@@ -3241,9 +3425,8 @@ const fetchSlotBookings = async (slotIds: number[], date: string) => {
   console.log('🔍 Fetching bookings for slots:', slotIds, 'date:', date)
   
   // ✅ Check if querying past slots
-  const nowIST = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }))
-  const queryDate = new Date(date)
-  const isPastDate = queryDate < new Date(nowIST.toISOString().split('T')[0])
+  const todayIST = getISTDateString(0)
+  const isPastDate = date < todayIST
   
   try {
     const slotIdsParam = slotIds.join(',')
@@ -3273,7 +3456,11 @@ const fetchSlotBookings = async (slotIds: number[], date: string) => {
 }
 
 
- useEffect(() => {
+useEffect(() => {
+  // Always reset in-memory cache when booking page mounts to avoid stale availability
+  requestCache.clear()
+  pendingRequests.clear()
+
   if (hasFetchedRef.current) {
     console.log("⚠️ Skipping duplicate fetch")
     return
@@ -3296,7 +3483,7 @@ const fetchSlotBookings = async (slotIds: number[], date: string) => {
       
       // Step 1: Fetch consoles
       console.log("📡 Fetching consoles...")
-      const consolesData = await fetchWithDedup(`${BOOKING_URL}/api/getAllConsole/vendor/${vendorId}`)
+      const consolesData = await fetchWithDedup(`${BOOKING_URL}/api/getAllConsole/vendor/${vendorId}?t=${Date.now()}`)
       
       const consoleTemplate = [
         { type: "PC" as ConsoleFilter, name: "PC Gaming", icon: Monitor, iconColor: "#7c3aed" },
@@ -3310,6 +3497,9 @@ const fetchSlotBookings = async (slotIds: number[], date: string) => {
           const apiName = (game.console_name || '').toLowerCase()
           const templateType = template.type.toLowerCase()
           
+          const hasLiveConsoles = Number(game.console_count ?? 0) > 0
+          if (!hasLiveConsoles) return false
+
           return apiName.includes(templateType) || 
                  (templateType === 'pc' && (apiName.includes('gaming') || apiName.includes('computer'))) ||
                  (templateType === 'ps5' && (apiName.includes('playstation') || apiName.includes('sony'))) ||
@@ -3332,11 +3522,9 @@ const fetchSlotBookings = async (slotIds: number[], date: string) => {
         return null
       }).filter(Boolean) as ConsoleType[]
       
-      setAvailableConsoles(availableConsoles)
-      console.log("✅ Available consoles:", availableConsoles)
-
       if (availableConsoles.length === 0) {
         console.log("⚠️ No consoles available")
+        setAvailableConsoles([])
         setAllSlots({})
         setIsLoading(false)
         return
@@ -3345,18 +3533,13 @@ const fetchSlotBookings = async (slotIds: number[], date: string) => {
       // Step 2: Generate dates (next 3 days)
       const dates: string[] = []
       for (let i = 0; i < 3; i++) {
-        const today = new Date()
-        const targetDate = new Date(today.getFullYear(), today.getMonth(), today.getDate() + i)
-        const year = targetDate.getFullYear()
-        const month = String(targetDate.getMonth() + 1).padStart(2, '0')
-        const day = String(targetDate.getDate()).padStart(2, '0')
-        dates.push(`${year}-${month}-${day}`)
+        dates.push(getISTDateString(i))
       }
       console.log("📅 Dates to fetch:", dates)
 
       // Step 3: Fetch slots with BATCH API 🚀
       console.log("📡 Fetching slots with BATCH API...")
-      const nowIST = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }))
+      const nowTs = Date.now()
 
 try {
   // Prepare batch request
@@ -3366,7 +3549,7 @@ try {
   console.log("🚀 Batch request:", { vendorId, gameIds, dates: batchDates })
   
   // 🔥 USE THE fetchSlotsBatch FUNCTION
-  const batchData = await fetchSlotsBatch(vendorId, gameIds, batchDates)
+  const batchData = await fetchSlotsBatch(vendorId, gameIds, batchDates, true)
   console.log("✅ Batch data received:", batchData)
 
 
@@ -3399,7 +3582,7 @@ try {
               // Mark past slots as unavailable (today only)
               if (dateString === dates[0]) {
                 const slotEndTime = new Date(`${dateString}T${slot.end_time}+05:30`)
-                const isPast = nowIST >= slotEndTime
+                const isPast = nowTs >= slotEndTime.getTime()
                 
                 if (isPast) {
                   processedSlot.is_available = false
@@ -3415,6 +3598,18 @@ try {
         
         console.log("✅ Final slots data:", slotsData)
         setAllSlots(slotsData)
+
+        const presentConsoleIds = new Set<number>()
+        Object.values(slotsData).forEach((daySlots: any[]) => {
+          daySlots.forEach((slot: any) => {
+            if (slot?.console_id != null) presentConsoleIds.add(Number(slot.console_id))
+          })
+        })
+        const filteredConsoles = availableConsoles.filter((c) => c.id != null && presentConsoleIds.has(Number(c.id)))
+        setAvailableConsoles(filteredConsoles)
+        if (filteredConsoles.length > 0 && !filteredConsoles.some((c) => c.type === selectedConsole)) {
+          setSelectedConsole(filteredConsoles[0].type as ConsoleFilter)
+        }
         
       } catch (batchError: any) {
         if (batchError.name === 'AbortError') {
@@ -3447,7 +3642,7 @@ try {
 
                   if (dateString === dates[0]) {
                     const slotEndTime = new Date(`${dateString}T${slot.end_time}+05:30`)
-                    const isPast = nowIST >= slotEndTime
+                    const isPast = nowTs >= slotEndTime.getTime()
 
                     if (isPast) {
                       processedSlot.is_available = false
@@ -3481,6 +3676,18 @@ try {
         })
 
         setAllSlots(slotsData)
+
+        const presentConsoleIds = new Set<number>()
+        Object.values(slotsData).forEach((daySlots: any[]) => {
+          daySlots.forEach((slot: any) => {
+            if (slot?.console_id != null) presentConsoleIds.add(Number(slot.console_id))
+          })
+        })
+        const filteredConsoles = availableConsoles.filter((c) => c.id != null && presentConsoleIds.has(Number(c.id)))
+        setAvailableConsoles(filteredConsoles)
+        if (filteredConsoles.length > 0 && !filteredConsoles.some((c) => c.type === selectedConsole)) {
+          setSelectedConsole(filteredConsoles[0].type as ConsoleFilter)
+        }
       }
 
       console.timeEnd("⏱️ Total fetch time")
@@ -3579,6 +3786,7 @@ useEffect(() => {
                 onNewBooking={handleNewBooking}
                 selectedConsole={selectedConsole}
                 onConsoleChange={setSelectedConsole}
+                availableConsoles={availableConsoles}
                 compact
               />
               <ScheduleGrid
@@ -3603,6 +3811,7 @@ useEffect(() => {
               onNewBooking={handleNewBooking}
               selectedConsole={selectedConsole}
               onConsoleChange={setSelectedConsole}
+              availableConsoles={availableConsoles}
             />
             <ScheduleGrid
               availableConsoles={availableConsoles}
