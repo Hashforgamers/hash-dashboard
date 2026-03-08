@@ -309,6 +309,7 @@ const MealDetailsModal: React.FC<MealDetailsModalProps> = ({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          settle_on_release: true,
           meals: selectedMeals.map(meal => ({
             menu_item_id: meal.menu_item_id,
             quantity: meal.quantity

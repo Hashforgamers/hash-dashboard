@@ -10,7 +10,7 @@ import { faIndianRupeeSign } from '@fortawesome/free-solid-svg-icons'
 import { useState, useEffect, useMemo } from "react";
 import { createPortal } from "react-dom"; // ✅ ADD THIS IMPORT
 import axios from "axios";
-import { format, parseISO, isToday, isTomorrow, startOfToday } from 'date-fns';
+import { format } from 'date-fns';
 import { DASHBOARD_URL } from "@/src/config/env";
 import ResponsiveSearchFilter from "./ResponsiveSearchFilter";
 import MealDetailsModal from "./mealsDetailmodal";
@@ -27,12 +27,31 @@ export function getIcon(system?: string | null): JSX.Element {
 }
 
 
+const IST_TIMEZONE = 'Asia/Kolkata';
+
+const getNowIST = (): Date =>
+  new Date(new Date().toLocaleString('en-US', { timeZone: IST_TIMEZONE }));
+
+const toDateKey = (d: Date): string => {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+};
+
 // Helper function for date formatting
 const formatDate = (dateStr: string) => {
   try {
-    const date = new Date(dateStr);
-    if (isToday(date)) return 'Today';
-    if (isTomorrow(date)) return 'Tomorrow';
+    const date = parseBookingDateLocal(dateStr);
+    if (!date) return 'Invalid Date';
+    const todayIST = getNowIST();
+    const todayKey = toDateKey(todayIST);
+    const tomorrow = new Date(todayIST);
+    tomorrow.setDate(todayIST.getDate() + 1);
+    const tomorrowKey = toDateKey(tomorrow);
+    const bookingKey = toDateKey(date);
+    if (bookingKey === todayKey) return 'Today';
+    if (bookingKey === tomorrowKey) return 'Tomorrow';
     return format(date, 'EEE, MMM d');
   } catch (error) {
     console.error("Date parsing error:", error);
@@ -49,6 +68,48 @@ const getTimeOfDay = (time: string) => {
   if (hour < 12) return "morning";
   if (hour < 17) return "afternoon";
   return "evening";
+};
+
+const parseBookingDateLocal = (dateStr: string): Date | null => {
+  const raw = String(dateStr || "").trim();
+  if (!raw) return null;
+  const ymd = raw.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (ymd) return new Date(Number(ymd[1]), Number(ymd[2]) - 1, Number(ymd[3]));
+  const compact = raw.match(/^(\d{4})(\d{2})(\d{2})$/);
+  if (compact) return new Date(Number(compact[1]), Number(compact[2]) - 1, Number(compact[3]));
+  const d = new Date(raw);
+  return Number.isNaN(d.getTime()) ? null : d;
+};
+
+const parseMeridiemTime = (timeStr: string) => {
+  const [timePart, modifierRaw] = String(timeStr || "").trim().split(" ");
+  const [h, m] = (timePart || "0:0").split(":").map(Number);
+  const modifier = String(modifierRaw || "").toUpperCase();
+  let hour = Number.isFinite(h) ? h : 0;
+  const minute = Number.isFinite(m) ? m : 0;
+  if (modifier === "PM" && hour < 12) hour += 12;
+  if (modifier === "AM" && hour === 12) hour = 0;
+  return { hour: Math.max(0, Math.min(23, hour)), minute: Math.max(0, Math.min(59, minute)) };
+};
+
+const canStartBookingNow = (booking: any) => {
+  if (!booking?.date || !booking?.time) return false;
+  const slotDate = parseBookingDateLocal(booking.date);
+  if (!slotDate) return false;
+
+  const [startRaw, endRaw] = String(booking.time).split(" - ");
+  if (!startRaw || !endRaw) return false;
+
+  const startParsed = parseMeridiemTime(startRaw);
+  const endParsed = parseMeridiemTime(endRaw);
+  const start = new Date(slotDate);
+  start.setHours(startParsed.hour, startParsed.minute, 0, 0);
+  const end = new Date(slotDate);
+  end.setHours(endParsed.hour, endParsed.minute, 0, 0);
+  if (end <= start) end.setDate(end.getDate() + 1);
+
+  const now = getNowIST();
+  return now >= start && now <= end;
 };
 
 
@@ -146,7 +207,13 @@ const mergeConsecutiveBookings = (bookings: any[]) => {
     });
   });
 
-  return mergedResults.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  return mergedResults.sort((a, b) => {
+    const da = parseBookingDateLocal(a.date);
+    const db = parseBookingDateLocal(b.date);
+    const ta = da ? da.getTime() : 0;
+    const tb = db ? db.getTime() : 0;
+    return ta - tb;
+  });
 };
 
 
@@ -155,15 +222,13 @@ interface UpcomingBookingsProps {
   upcomingBookings: any[];
   vendorId?: string;
   setRefreshSlots: (prev: boolean) => void;
-  refreshTrigger?: boolean;
 }
 
 
 export function UpcomingBookings({
   upcomingBookings: initialBookings,
   vendorId,
-  setRefreshSlots,
-  refreshTrigger
+  setRefreshSlots
 }: UpcomingBookingsProps): JSX.Element {
   
   const { socket, isConnected, joinVendor } = useSocket()
@@ -181,7 +246,7 @@ export function UpcomingBookings({
   
   // State for filtering
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedDate, setSelectedDate] = useState(format(startOfToday(), 'yyyy-MM-dd'));
+  const [selectedDate, setSelectedDate] = useState(toDateKey(getNowIST()));
   const [timeFilter, setTimeFilter] = useState("all");
 
   // ✅ State for checking if component is mounted (for portal)
@@ -209,30 +274,6 @@ export function UpcomingBookings({
     }
   }, [initialBookings])
 
-  // Refresh bookings when triggered
-  useEffect(() => {
-    const fetchLatestBookings = async () => {
-      if (!vendorId) return
-      
-      try {
-        console.log('🔄 Refreshing upcoming bookings from API...')
-        const response = await fetch(`${DASHBOARD_URL}/api/getLandingPage/vendor/${vendorId}`)
-        const data = await response.json()
-        
-        if (data.upcomingBookings) {
-          console.log('📅 Refreshed upcoming bookings:', data.upcomingBookings.length)
-          setUpcomingBookings(data.upcomingBookings)
-        }
-      } catch (error) {
-        console.error('❌ Error refreshing upcoming bookings:', error)
-      }
-    }
-
-    if (refreshTrigger !== undefined) {
-      fetchLatestBookings()
-    }
-  }, [refreshTrigger, vendorId])
-
   // Socket listeners for real-time updates
   useEffect(() => {
     if (!socket || !vendorId || !isConnected) return
@@ -248,12 +289,13 @@ export function UpcomingBookings({
     function handleUpcomingBooking(data: any) {
       console.log('📅 Real-time upcoming booking:', data)
       
-      if (!data || !data.vendorId) {
+      const eventVendorId = Number(data?.vendorId ?? data?.vendor_id);
+      if (!data || !eventVendorId) {
         console.warn('Invalid upcoming booking data:', data);
         return;
       }
       
-      if (data.vendorId === parseInt(vendorId) && (data.status === 'Confirmed' || data.status === 'confirmed')) {
+      if (eventVendorId === parseInt(vendorId) && (data.status === 'Confirmed' || data.status === 'confirmed')) {
         setUpcomingBookings(prev => {
           if (!Array.isArray(prev)) prev = [];
           
@@ -270,34 +312,44 @@ export function UpcomingBookings({
     function handleBookingUpdate(data: any) {
       console.log('🔄 Booking update:', data)
       
-      if (!data || !data.vendorId) {
+      const eventVendorId = Number(data?.vendorId ?? data?.vendor_id);
+      if (!data || !eventVendorId) {
         console.warn('Invalid booking update data:', data);
         return;
       }
       
-      if (data.vendorId === parseInt(vendorId)) {
+      if (eventVendorId === parseInt(vendorId)) {
+        const status = String(data.status || "").toLowerCase();
         setUpcomingBookings(prev => {
           if (!Array.isArray(prev)) prev = [];
           
           if ((data.status === 'Confirmed' || data.status === 'confirmed') && !prev.some(b => b?.bookingId === data.bookingId)) {
             return [data, ...prev]
           }
-          
-          return prev.map(booking => 
+
+          const mapped = prev.map(booking => 
             booking?.bookingId === data.bookingId 
               ? { ...booking, ...data }
               : booking
-          ).filter(booking => 
-            booking?.status !== 'Cancelled' && booking?.status !== 'cancelled'
           )
+
+          return mapped.filter(booking => {
+            const s = String(booking?.status || "").toLowerCase();
+            return !["cancelled", "canceled", "rejected", "completed", "discarded"].includes(s);
+          })
         })
+
+        if (["cancelled", "canceled", "rejected", "completed", "discarded"].includes(status) && typeof window !== "undefined") {
+          window.dispatchEvent(new CustomEvent("history-booking-add", { detail: data }));
+        }
       }
     }
 
     function handleBookingAccepted(data: any) {
       console.log('✅ Booking accepted from notification panel:', data)
       
-      if (data.vendorId === parseInt(vendorId)) {
+      const eventVendorId = Number(data?.vendorId ?? data?.vendor_id);
+      if (eventVendorId === parseInt(vendorId)) {
         setUpcomingBookings(prev => {
           if (!Array.isArray(prev)) prev = [];
           
@@ -328,12 +380,12 @@ export function UpcomingBookings({
     if (!Array.isArray(upcomingBookings)) return [];
     
     let filtered = upcomingBookings.filter(booking => booking && booking.date);
-
     filtered = filtered.filter(booking => {
       try {
-        const bookingDate = new Date(booking.date);
-        const selected = new Date(selectedDate);
-        return bookingDate.toDateString() === selected.toDateString();
+        const bookingDate = parseBookingDateLocal(booking.date);
+        const selected = parseBookingDateLocal(selectedDate);
+        if (!bookingDate || !selected) return false;
+        return toDateKey(bookingDate) === toDateKey(selected);
       } catch (error) {
         console.warn('Date filtering error for booking:', booking);
         return false;
@@ -574,7 +626,7 @@ export function UpcomingBookings({
   return (
     <>
       {/* 🚀 FIXED: Proper flex container structure */}
-      <div className="h-full flex flex-col overflow-hidden rounded-2xl bg-gradient-to-br from-slate-900/70 via-slate-900/45 to-slate-900/70 p-3 sm:p-4">
+      <div className="h-full flex flex-col overflow-hidden rounded-2xl border border-cyan-500/20 bg-gradient-to-br from-slate-900/70 via-slate-900/45 to-slate-900/70 shadow-[inset_0_1px_0_rgba(255,255,255,0.02),0_0_28px_rgba(6,182,212,0.08)] p-2 sm:p-3 lg:p-4">
         <AnimatePresence>
           {startCard && (
             <motion.div
@@ -709,7 +761,9 @@ export function UpcomingBookings({
             <div>
               <div className="space-y-2 p-2 sm:space-y-3 sm:p-4 lg:space-y-4">
                 <AnimatePresence mode="popLayout">
-                  {mergedBookings.map((booking, index) => (
+                  {mergedBookings.map((booking, index) => {
+                    const canStartNow = canStartBookingNow(booking);
+                    return (
                     <motion.div
                       key={booking.bookingId}
                       initial={{ opacity: 0, y: 10 }}
@@ -729,7 +783,7 @@ export function UpcomingBookings({
                             <User className="h-3.5 w-3.5 shrink-0 text-slate-300" />
                             <span className="truncate dash-title !text-sm">{booking.username || "Guest User"}</span>
                           </div>
-                          <span className="shrink-0 rounded-full border border-emerald-400/40 bg-emerald-500/15 px-2 py-0.5 text-xs font-medium text-emerald-200">
+                          <span className="shrink-0 rounded-full border border-emerald-400/40 bg-emerald-500/15 px-2 py-0.5 text-xs font-medium text-emerald-200 capitalize">
                             Paid
                           </span>
                         </div>
@@ -784,21 +838,27 @@ export function UpcomingBookings({
                           </div>
                         </div>
 
-                        {/* Start button */}
                         <motion.button
                           whileHover={{ scale: 1.02 }}
                           whileTap={{ scale: 0.98 }}
                           onClick={() =>
                             start(booking.consoleType || "", booking.game_id, booking.bookingId)
                           }
-                          className="flex w-full items-center justify-center gap-2 rounded-md bg-gradient-to-r from-emerald-500 to-cyan-500 py-2 text-xs font-semibold text-white transition-all hover:from-emerald-400 hover:to-cyan-400 sm:text-sm"
+                          disabled={!canStartNow}
+                          className={`flex w-full items-center justify-center gap-2 rounded-md py-2 text-xs font-semibold transition-all sm:text-sm ${
+                            canStartNow
+                              ? "bg-gradient-to-r from-emerald-500 to-cyan-500 text-white hover:from-emerald-400 hover:to-cyan-400"
+                              : "bg-slate-700/70 text-slate-300 cursor-not-allowed"
+                          }`}
+                          title={canStartNow ? "Start session" : "Session can be started only during its scheduled time"}
                         >
                           <Play className="w-3 h-3" />
-                          Start
+                          {canStartNow ? "Start" : "Not Startable Yet"}
                         </motion.button>
                       </div>
                     </motion.div>
-                  ))}
+                    );
+                  })}
                 </AnimatePresence>
               </div>
             </div>

@@ -168,6 +168,37 @@ const fillMissingFormData = (data: FormData, consoleType: string): FormData => {
   };
 };
 
+const buildHardwarePayloadByType = (
+  consoleType: string,
+  hardware: FormData["hardwareSpecifications"]
+) => {
+  const normalizedType = String(consoleType || "").toLowerCase();
+  if (normalizedType === "pc") {
+    return {
+      processorType: hardware.processorType || null,
+      graphicsCard: hardware.graphicsCard || null,
+      ramSize: hardware.ramSize || null,
+      storageCapacity: hardware.storageCapacity || null,
+      connectivity: hardware.connectivity || null,
+      consoleModelType: hardware.consoleModelType || "Custom Build",
+    };
+  }
+  return {
+    processorType: null,
+    graphicsCard: null,
+    ramSize: null,
+    storageCapacity: hardware.storageCapacity || null,
+    connectivity: null,
+    consoleModelType: hardware.consoleModelType || null,
+  };
+};
+
+const CONSOLE_VARIANT_OPTIONS: Record<string, Array<{ value: string; label: string }>> = {
+  ps5: PS5playstation,
+  xbox: XboxPlaystation,
+  vr: VRPlaystation,
+};
+
 
 export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
   const [vendorId, setVendorId] = useState<number | null>(null);
@@ -351,6 +382,7 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
         vendorId: vendorId,
         consoleDetails: {
           consoleNumber: consoleNumber,
+          name: completedForm.consoleDetails.ModelNumber,
           modelNumber: completedForm.consoleDetails.ModelNumber,
           serialNumber: completedForm.consoleDetails.SerialNumber,
           brand: completedForm.consoleDetails.Brand,
@@ -358,7 +390,10 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
           releaseDate: completedForm.consoleDetails.ReleaseDate,
           description: completedForm.consoleDetails.Description || "",
         },
-        hardwareSpecifications: { ...completedForm.hardwareSpecifications },
+        hardwareSpecifications: buildHardwarePayloadByType(
+          completedForm.consoleDetails.consoleType,
+          completedForm.hardwareSpecifications
+        ),
         maintenanceStatus: {
           availableStatus: completedForm.maintenanceStatus.AvailableStatus,
           condition: completedForm.maintenanceStatus.Condition,
@@ -572,97 +607,72 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
           </div>
         </div>
       );
-    } else if (consoleType === "ps5") {
+    } else if (consoleType === "ps5" || consoleType === "xbox" || consoleType === "vr") {
+      const variantOptions = CONSOLE_VARIANT_OPTIONS[consoleType] || [];
+      const variantLabel = consoleType === "ps5"
+        ? "PS5 Variant"
+        : consoleType === "xbox"
+          ? "Xbox Variant"
+          : "VR Device";
       return (
-        <div className="space-y-2">
-          <Label htmlFor="playstationType">
-            Types of PS5 PlayStation <span className="text-red-500">*</span>
-          </Label>
-          <Select
-            value={formdata.hardwareSpecifications.consoleModelType}
-            onValueChange={(value) =>
-              setformdata((prev) => ({
-                ...prev,
-                hardwareSpecifications: {
-                  ...prev.hardwareSpecifications,
-                  consoleModelType: value,
-                },
-              }))
-            }
-          >
-            <SelectTrigger id="playstationType">
-              <SelectValue placeholder="Select PS5 PlayStation type" />
-            </SelectTrigger>
-            <SelectContent>
-              {PS5playstation.map((item) => (
-                <SelectItem key={item.value} value={item.value}>
-                  {item.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      );
-    } else if (consoleType === "xbox") {
-      return (
-        <div className="space-y-2">
-          <Label htmlFor="playstationType">
-            Types of Xbox PlayStation <span className="text-red-500">*</span>
-          </Label>
-          <Select
-            value={formdata.hardwareSpecifications.consoleModelType}
-            onValueChange={(value) =>
-              setformdata((prev) => ({
-                ...prev,
-                hardwareSpecifications: {
-                  ...prev.hardwareSpecifications,
-                  consoleModelType: value,
-                },
-              }))
-            }
-          >
-            <SelectTrigger id="playstationType">
-              <SelectValue placeholder="Select Xbox Playstation" />
-            </SelectTrigger>
-            <SelectContent>
-              {XboxPlaystation.map((item) => (
-                <SelectItem key={item.value} value={item.value}>
-                  {item.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      );
-    } else if (consoleType === "vr") {
-      return (
-        <div className="space-y-2">
-          <Label htmlFor="playstationType">
-            Types of VR Playstation <span className="text-red-500">*</span>
-          </Label>
-          <Select
-            value={formdata.hardwareSpecifications.consoleModelType}
-            onValueChange={(value) =>
-              setformdata((prev) => ({
-                ...prev,
-                hardwareSpecifications: {
-                  ...prev.hardwareSpecifications,
-                  consoleModelType: value,
-                },
-              }))
-            }
-          >
-            <SelectTrigger id="playstationType">
-              <SelectValue placeholder="Select VR Type" />
-            </SelectTrigger>
-            <SelectContent>
-              {VRPlaystation.map((item) => (
-                <SelectItem key={item.value} value={item.value}>
-                  {item.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="space-y-2">
+            <Label htmlFor="consoleVariant">
+              {variantLabel} <span className="text-red-500">*</span>
+            </Label>
+            <Select
+              value={formdata.hardwareSpecifications.consoleModelType}
+              onValueChange={(value) =>
+                setformdata((prev) => ({
+                  ...prev,
+                  hardwareSpecifications: {
+                    ...prev.hardwareSpecifications,
+                    consoleModelType: value,
+                  },
+                }))
+              }
+            >
+              <SelectTrigger id="consoleVariant">
+                <SelectValue placeholder={`Select ${variantLabel.toLowerCase()}`} />
+              </SelectTrigger>
+              <SelectContent>
+                {variantOptions.map((item) => (
+                  <SelectItem key={item.value} value={item.value}>
+                    {item.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="storageCapacity">
+              Storage Capacity <span className="text-red-500">*</span>
+            </Label>
+            <Select
+              value={formdata.hardwareSpecifications.storageCapacity}
+              onValueChange={(value) =>
+                setformdata((prev) => ({
+                  ...prev,
+                  hardwareSpecifications: {
+                    ...prev.hardwareSpecifications,
+                    storageCapacity: value,
+                  },
+                }))
+              }
+            >
+              <SelectTrigger id="storageCapacity">
+                <SelectValue placeholder="Select storage capacity" />
+              </SelectTrigger>
+              <SelectContent>
+                {StorageOptions.map((item) => (
+                  <SelectItem key={item.value} value={item.value}>
+                    {item.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
       );
     }
@@ -768,11 +778,11 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="modelNumber">
-                  Model Number <span className="text-red-500">*</span>
+                  Console Name <span className="text-red-500">*</span>
                 </Label>
                 <Input
                   id="modelNumber"
-                  placeholder="Enter model number"
+                  placeholder="Enter console name (e.g. HASH_1, PS5_2)"
                   value={formdata.consoleDetails.ModelNumber}
                   onChange={(e) => {
                     setformdata((prev) => ({

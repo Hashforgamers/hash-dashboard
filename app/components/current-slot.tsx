@@ -1,6 +1,6 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, Gamepad2, Loader2, RefreshCw, UtensilsCrossed, Plus } from "lucide-react";
+import { Search, Gamepad2, Monitor, Headset, Loader2, RefreshCw, UtensilsCrossed, Plus } from "lucide-react";
 import { jwtDecode } from "jwt-decode";
 import { FaCheck, FaPowerOff } from 'react-icons/fa';
 import { BOOKING_URL, DASHBOARD_URL } from "@/src/config/env";
@@ -19,30 +19,62 @@ const formatTime = (seconds: number) => {
   return `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
 };
 
-const calculateElapsedTime = (startTime: string, date: string) => {
-  if (!startTime) return 0;
-  const currentTime = new Date();
-  const startDate = new Date(date);
-  const [time, modifier] = startTime.trim().split(" ");
-  const [hours, minutes] = time.split(":").map(Number);
+const IST_OFFSET_MINUTES = 330; // +05:30
+const IST_OFFSET_MS = IST_OFFSET_MINUTES * 60 * 1000;
+
+const getIstDateKey = (dateInput: string): string | null => {
+  const raw = String(dateInput || "").trim();
+  if (!raw) return null;
+
+  const dashed = raw.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (dashed) return `${dashed[1]}-${dashed[2]}-${dashed[3]}`;
+
+  const compact = raw.match(/^(\d{4})(\d{2})(\d{2})$/);
+  if (compact) return `${compact[1]}-${compact[2]}-${compact[3]}`;
+
+  const parsed = new Date(raw);
+  if (Number.isNaN(parsed.getTime())) return null;
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Kolkata",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(parsed);
+};
+
+const parseTwelveHourTime = (timeInput: string) => {
+  const [time, modifierRaw] = String(timeInput || "").trim().split(" ");
+  const [hoursRaw, minutesRaw] = (time || "0:0").split(":");
+  const hours = Number(hoursRaw || 0);
+  const minutes = Number(minutesRaw || 0);
+  const modifier = String(modifierRaw || "").toUpperCase();
   let adjustedHours = hours;
   if (modifier === "PM" && hours < 12) adjustedHours += 12;
   if (modifier === "AM" && hours === 12) adjustedHours = 0;
-  startDate.setHours(adjustedHours, minutes, 0, 0);
-  return Math.floor((currentTime.getTime() - startDate.getTime()) / 1000);
+  return {
+    hours: Math.max(0, Math.min(23, adjustedHours)),
+    minutes: Math.max(0, Math.min(59, minutes)),
+  };
+};
+
+const calculateElapsedTime = (startTime: string, date: string) => {
+  if (!startTime) return 0;
+  const dateKey = getIstDateKey(date);
+  if (!dateKey) return 0;
+  const [year, month, day] = dateKey.split("-").map(Number);
+  const parsed = parseTwelveHourTime(startTime);
+  const startUtcMs = Date.UTC(year, month - 1, day, parsed.hours, parsed.minutes, 0) - IST_OFFSET_MS;
+  return Math.max(Math.floor((Date.now() - startUtcMs) / 1000), 0);
 };
 
 const calculateExtraTime = (endTime: string, date: string) => {
   if (!endTime) return 0;
-  const currentTime = new Date();
-  const endDate = new Date(date);
-  const [time, modifier] = endTime.trim().split(" ");
-  const [hours, minutes] = time.split(":").map(Number);
-  let adjustedHours = hours;
-  if (modifier === "PM" && hours < 12) adjustedHours += 12;
-  if (modifier === "AM" && hours === 12) adjustedHours = 0;
-  endDate.setHours(adjustedHours, minutes, 0, 0);
-  return Math.max(Math.floor((currentTime.getTime() - endDate.getTime()) / 1000), 0);
+  const dateKey = getIstDateKey(date);
+  if (!dateKey) return 0;
+  const [year, month, day] = dateKey.split("-").map(Number);
+  const parsed = parseTwelveHourTime(endTime);
+  const endUtcMs = Date.UTC(year, month - 1, day, parsed.hours, parsed.minutes, 0) - IST_OFFSET_MS;
+  return Math.max(Math.floor((Date.now() - endUtcMs) / 1000), 0);
 };
 
 const calculateDuration = (startTime: string, endTime: string) => {
@@ -62,6 +94,67 @@ const calculateDuration = (startTime: string, endTime: string) => {
 const calculateExtraAmount = (extraSeconds: number, ratePerHour = 1) => {
   const extraHours = extraSeconds / 3600;
   return Math.ceil(extraHours * ratePerHour);
+};
+
+const formatHistoryDateLabel = (dateInput: any) => {
+  if (!dateInput) return "Date not available";
+  const d = new Date(dateInput);
+  if (Number.isNaN(d.getTime())) return String(dateInput);
+  return new Intl.DateTimeFormat("en-IN", {
+    timeZone: "Asia/Kolkata",
+    weekday: "short",
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  }).format(d);
+};
+
+const normalizeHistoryStatus = (booking: any) => {
+  const lifecycle = String(booking?.lifecycleStatus || "").toLowerCase().trim();
+  if (lifecycle && !["upcoming", "current"].includes(lifecycle)) {
+    return lifecycle;
+  }
+  const record = booking?.bookingRecordStatus;
+  if (typeof record === "string") {
+    const normalized = record.toLowerCase().trim();
+    if (normalized && !["true", "false"].includes(normalized)) return normalized;
+  }
+  return "completed";
+};
+
+const historyStatusChipClass = (status: string) => {
+  if (status === "rejected") return "border-red-400/40 bg-red-500/15 text-red-200";
+  if (status === "discarded" || status === "no_show") {
+    return "border-orange-400/40 bg-orange-500/15 text-orange-200";
+  }
+  if (status === "cancelled" || status === "canceled") {
+    return "border-amber-400/40 bg-amber-500/15 text-amber-200";
+  }
+  return "border-emerald-400/40 bg-emerald-500/15 text-emerald-200";
+};
+
+const historyStatusLabel = (status: string) => {
+  const value = String(status || "").toLowerCase().trim();
+  if (value === "discarded" || value === "no_show") return "No Show";
+  if (value === "verification_failed") return "Payment Failed";
+  return value.replace("_", " ");
+};
+
+const getConsoleVisual = (consoleType: string) => {
+  const value = String(consoleType || "").toLowerCase();
+  if (value.includes("ps") || value.includes("playstation") || value.includes("sony")) {
+    return { icon: Gamepad2, className: "text-blue-500" };
+  }
+  if (value.includes("xbox") || value.includes("microsoft")) {
+    return { icon: Gamepad2, className: "text-green-500" };
+  }
+  if (value.includes("vr") || value.includes("virtual")) {
+    return { icon: Headset, className: "text-fuchsia-400" };
+  }
+  if (value.includes("pc") || value.includes("computer") || value.includes("desktop")) {
+    return { icon: Monitor, className: "text-cyan-400" };
+  }
+  return { icon: Monitor, className: "text-slate-300" };
 };
 
 const releaseSlot = async (consoleType: string, gameId: string, consoleId: string, vendorId: any, setRefreshSlots: any) => {
@@ -89,11 +182,12 @@ const releaseSlot = async (consoleType: string, gameId: string, consoleId: strin
 
 interface CurrentSlotsProps {
   currentSlots: any[];
+  historyBookings?: any[];
   refreshSlots: boolean;
   setRefreshSlots: (value: boolean | ((prev: boolean) => boolean)) => void;
 }
 
-export function CurrentSlots({ currentSlots: initialSlots, refreshSlots, setRefreshSlots }: CurrentSlotsProps) {
+export function CurrentSlots({ currentSlots: initialSlots, historyBookings: initialHistoryBookings = [], refreshSlots, setRefreshSlots }: CurrentSlotsProps) {
   const { socket, isConnected, joinVendor } = useSocket()
   
   const [currentSlots, setCurrentSlots] = useState(initialSlots || [])
@@ -105,6 +199,10 @@ export function CurrentSlots({ currentSlots: initialSlots, refreshSlots, setRefr
   const [vendorId, setVendorId] = useState<number | null>(null);
   const [timers, setTimers] = useState<any[]>([]);
   const [error, setError] = useState<string>("");
+  const [activeTab, setActiveTab] = useState<'live' | 'history'>('live');
+  const [historyDate, setHistoryDate] = useState<string>("");
+  const [historyRows, setHistoryRows] = useState<any[]>(Array.isArray(initialHistoryBookings) ? initialHistoryBookings : []);
+  const [historyLoading, setHistoryLoading] = useState(false);
   const tableRef = useRef<HTMLTableElement>(null);
 
   // ✅ ENHANCED: Updated meal details modal state with mode and meal status tracking
@@ -118,6 +216,7 @@ export function CurrentSlots({ currentSlots: initialSlots, refreshSlots, setRefr
 
   // ✅ NEW: Track which bookings have meals locally for instant UI updates
   const [bookingMealStatus, setBookingMealStatus] = useState<Record<string, boolean>>({});
+  const [bookingOutstandingDue, setBookingOutstandingDue] = useState<Record<string, number>>({});
 
   // Get vendorId
   useEffect(() => {
@@ -133,6 +232,16 @@ export function CurrentSlots({ currentSlots: initialSlots, refreshSlots, setRefr
     } else {
       setError("No authentication token found.");
     }
+  }, []);
+
+  useEffect(() => {
+    const todayIst = new Intl.DateTimeFormat("en-CA", {
+      timeZone: "Asia/Kolkata",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    }).format(new Date());
+    setHistoryDate(todayIst);
   }, []);
 
   // Update from props
@@ -151,6 +260,29 @@ export function CurrentSlots({ currentSlots: initialSlots, refreshSlots, setRefr
       setBookingMealStatus(mealStatus);
     }
   }, [initialSlots])
+
+  useEffect(() => {
+    if (Array.isArray(initialHistoryBookings)) {
+      setHistoryRows(initialHistoryBookings);
+    }
+  }, [initialHistoryBookings]);
+
+  useEffect(() => {
+    const fetchHistoryByDate = async () => {
+      if (activeTab !== "history" || !vendorId || !historyDate) return;
+      setHistoryLoading(true);
+      try {
+        const res = await fetch(`${DASHBOARD_URL}/api/getLandingPage/vendor/${vendorId}?history_date=${historyDate}`);
+        const data = await res.json();
+        setHistoryRows(Array.isArray(data?.historyBookings) ? data.historyBookings : []);
+      } catch (e) {
+        setHistoryRows([]);
+      } finally {
+        setHistoryLoading(false);
+      }
+    };
+    fetchHistoryByDate();
+  }, [activeTab, vendorId, historyDate]);
 
   // ✅ ENHANCED: Listen for meal addition events to update UI immediately
   useEffect(() => {
@@ -237,13 +369,28 @@ export function CurrentSlots({ currentSlots: initialSlots, refreshSlots, setRefr
     function handleConsoleAvailability(data: any) {
       const dataVendorId = parseInt(data.vendorId || data.vendor_id)
       if (dataVendorId === vendorId) {
-        setRefreshSlots(prev => !prev);
-        
         if (data.is_available === true) {
           setCurrentSlots(prevSlots => {
-            const updated = prevSlots.filter(slot => 
-              slot.consoleNumber !== data.console_id.toString()
-            )
+            const releasingSlot = prevSlots.find(slot => slot.consoleNumber === data.console_id.toString())
+            if (releasingSlot && typeof window !== "undefined") {
+              window.dispatchEvent(
+                new CustomEvent("history-booking-add", {
+                  detail: {
+                    bookingId: releasingSlot.bookingId || releasingSlot.bookId,
+                    username: releasingSlot.username,
+                    date: releasingSlot.date,
+                    time: `${releasingSlot.startTime} - ${releasingSlot.endTime}`,
+                    consoleName: releasingSlot.consoleType,
+                    consoleType: releasingSlot.consoleType,
+                    consoleNumber: releasingSlot.consoleNumber,
+                    lifecycleStatus: "completed",
+                    bookingRecordStatus: "completed",
+                  },
+                })
+              );
+            }
+
+            const updated = prevSlots.filter(slot => slot.consoleNumber !== data.console_id.toString())
             return updated
           })
         }
@@ -257,7 +404,23 @@ export function CurrentSlots({ currentSlots: initialSlots, refreshSlots, setRefr
       socket.off('current_slot', handleCurrentSlot)
       socket.off('console_availability', handleConsoleAvailability)
     }
-  }, [socket, vendorId, isConnected, joinVendor, setRefreshSlots])
+  }, [socket, vendorId, isConnected, joinVendor])
+
+  useEffect(() => {
+    const handleHistoryAdd = (event: Event) => {
+      const customEvent = event as CustomEvent;
+      const payload = customEvent?.detail;
+      if (!payload) return;
+      setHistoryRows((prev) => {
+        const rows = Array.isArray(prev) ? [...prev] : [];
+        const bookingId = String(payload.bookingId || payload.booking_id || "");
+        if (bookingId && rows.some((r: any) => String(r?.bookingId) === bookingId)) return rows;
+        return [payload, ...rows];
+      });
+    };
+    window.addEventListener("history-booking-add", handleHistoryAdd);
+    return () => window.removeEventListener("history-booking-add", handleHistoryAdd);
+  }, []);
 
   // Update filtered slots and timers
   useEffect(() => {
@@ -282,6 +445,87 @@ export function CurrentSlots({ currentSlots: initialSlots, refreshSlots, setRefr
     }));
     setTimers(initialTimers);
   }, [currentSlots, searchQuery]);
+
+  const filteredHistoryBookings = useMemo(() => {
+    if (!Array.isArray(historyRows)) return [];
+    const term = searchQuery.trim().toLowerCase();
+    const rows = historyRows.filter((b: any) => {
+      if (!term) return true;
+      return (
+        String(b?.username || "").toLowerCase().includes(term) ||
+        String(b?.consoleName || b?.consoleType || "").toLowerCase().includes(term)
+      );
+    });
+    return rows.sort((a: any, b: any) => {
+      const da = new Date(`${a?.date || ""} ${(a?.time || "00:00").split(" - ")[0]}`);
+      const db = new Date(`${b?.date || ""} ${(b?.time || "00:00").split(" - ")[0]}`);
+      return db.getTime() - da.getTime();
+    });
+  }, [historyRows, searchQuery]);
+
+  // Track outstanding dues per booking so under-time sessions with meal dues still require settlement.
+  useEffect(() => {
+    if (!Array.isArray(filteredSlots) || filteredSlots.length === 0) {
+      setBookingOutstandingDue({});
+      return;
+    }
+
+    const bookingIds = Array.from(
+      new Set(
+        filteredSlots
+          .map((slot) => Number(slot.bookingId || slot.bookId))
+          .filter((id) => Number.isFinite(id) && id > 0)
+      )
+    );
+
+    if (bookingIds.length === 0) {
+      setBookingOutstandingDue({});
+      return;
+    }
+
+    let isMounted = true;
+    const controller = new AbortController();
+    const token = localStorage.getItem("jwtToken");
+
+    const fetchOutstanding = async () => {
+      try {
+        const results = await Promise.all(
+          bookingIds.map(async (bookingId) => {
+            try {
+              const response = await fetch(`${BOOKING_URL}/api/booking/${bookingId}/payment-summary`, {
+                method: "GET",
+                headers: {
+                  "Content-Type": "application/json",
+                  ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                },
+                signal: controller.signal,
+              });
+              if (!response.ok) return [String(bookingId), 0] as const;
+              const data = await response.json();
+              const due = Number(data?.payment_status?.amount_due ?? data?.financial_summary?.amount_due ?? 0);
+              return [String(bookingId), Number.isFinite(due) ? due : 0] as const;
+            } catch {
+              return [String(bookingId), 0] as const;
+            }
+          })
+        );
+
+        if (isMounted) {
+          setBookingOutstandingDue(Object.fromEntries(results));
+        }
+      } catch {
+        if (isMounted) {
+          setBookingOutstandingDue({});
+        }
+      }
+    };
+
+    fetchOutstanding();
+    return () => {
+      isMounted = false;
+      controller.abort();
+    };
+  }, [filteredSlots, refreshSlots]);
 
   // Debug logging (unchanged)
   useEffect(() => {
@@ -398,7 +642,7 @@ export function CurrentSlots({ currentSlots: initialSlots, refreshSlots, setRefr
   const item = { hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } };
 
   return (
-    <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-2xl bg-gradient-to-br from-slate-900/65 via-slate-900/40 to-slate-900/70 p-3 sm:p-4">
+    <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border border-cyan-500/20 bg-gradient-to-br from-slate-900/65 via-slate-900/40 to-slate-900/70 shadow-[inset_0_1px_0_rgba(255,255,255,0.02),0_0_28px_rgba(6,182,212,0.08)] p-2 sm:p-3 lg:p-4">
       {currentSlots?.available ? (
         <div className="flex h-full items-center justify-center">
           <HashLoader />
@@ -410,19 +654,45 @@ export function CurrentSlots({ currentSlots: initialSlots, refreshSlots, setRefr
               <div className={`h-2 w-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`}
                    title={isConnected ? 'Real-time connected' : 'Connecting...'} />
               <span className="dash-title">
-                Live Console Sessions ({filteredSlots.length})
+                {activeTab === 'live'
+                  ? `Live Console Sessions (${filteredSlots.length})`
+                  : `Past Sessions (${filteredHistoryBookings.length})`}
               </span>
+              <div className="ml-2 flex items-center gap-1 rounded-md border border-slate-600/60 p-0.5">
+                <button
+                  onClick={() => setActiveTab('live')}
+                  className={`rounded px-2 py-0.5 text-xs ${activeTab === 'live' ? 'bg-emerald-500/20 text-emerald-200' : 'text-slate-300'}`}
+                >
+                  Live
+                </button>
+                <button
+                  onClick={() => setActiveTab('history')}
+                  className={`rounded px-2 py-0.5 text-xs ${activeTab === 'history' ? 'bg-emerald-500/20 text-emerald-200' : 'text-slate-300'}`}
+                >
+                  History
+                </button>
+              </div>
             </div>
-            
-            <div className="relative w-full sm:w-auto">
-              <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400 sm:h-4 sm:w-4" />
+
+            <div className="flex w-full items-center gap-2 sm:w-auto sm:justify-end">
               <input
-                type="text"
-                value={searchQuery}
-                onChange={handleSearch}
-                placeholder="Search by name or console..."
-                className="w-full rounded-lg border border-slate-600/70 bg-slate-800/70 py-2 pl-8 pr-3 text-xs text-slate-100 placeholder:text-slate-400 focus:border-cyan-400/60 focus:outline-none sm:w-56 sm:text-sm md:w-72"
+                type="date"
+                value={historyDate}
+                onChange={(e) => setHistoryDate(e.target.value)}
+                className={`w-[132px] rounded-lg border border-slate-600/70 bg-slate-800/70 px-3 py-2 text-xs text-slate-100 focus:border-cyan-400/60 focus:outline-none sm:w-44 sm:text-sm ${
+                  activeTab === "history" ? "opacity-100" : "opacity-0 pointer-events-none"
+                }`}
               />
+              <div className="relative flex-1 sm:flex-none">
+                <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400 sm:h-4 sm:w-4" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={handleSearch}
+                  placeholder="Search by name or console..."
+                  className="w-full rounded-lg border border-slate-600/70 bg-slate-800/70 py-2 pl-8 pr-3 text-xs text-slate-100 placeholder:text-slate-400 focus:border-cyan-400/60 focus:outline-none sm:w-56 sm:text-sm md:w-72"
+                />
+              </div>
             </div>
           </div>
 
@@ -436,11 +706,12 @@ export function CurrentSlots({ currentSlots: initialSlots, refreshSlots, setRefr
             </motion.div>
           )}
 
+          {activeTab === 'live' ? (
           <motion.div
             variants={container}
             initial="hidden"
             animate="show"
-            className="flex-1 min-h-0 overflow-hidden rounded-xl border border-cyan-500/20 bg-slate-900/55 backdrop-blur-sm"
+            className="flex-1 min-h-0 overflow-hidden rounded-xl bg-slate-900/55 backdrop-blur-sm"
           >
             <div className="h-full overflow-x-auto overflow-y-auto">
               <table ref={tableRef} className="min-w-[760px] w-full divide-y divide-slate-700/70">
@@ -471,6 +742,10 @@ export function CurrentSlots({ currentSlots: initialSlots, refreshSlots, setRefr
                         const isReleasing = releasingSlots[uniqueKey] || false;
                         const progress = Math.min(100, (timer.elapsedTime / timer.duration) * 100);
                         const hasExtraTime = timer.extraTime > 0;
+                        const bookingIdForDue = String(booking.bookingId || booking.bookId || "");
+                        const outstandingDue = Number(bookingOutstandingDue[bookingIdForDue] || 0);
+                        const hasOutstandingDue = outstandingDue > 0.01;
+                        const needsSettlement = hasExtraTime || hasOutstandingDue;
                         const remainingTime = Math.max((timer.duration || 0) - (timer.elapsedTime || 0), 0);
                         const progressPercent = Number.isFinite(progress) ? Math.max(0, Math.round(progress)) : 0;
                         const progressState = hasExtraTime
@@ -557,11 +832,13 @@ export function CurrentSlots({ currentSlots: initialSlots, refreshSlots, setRefr
                             {/* System cell - unchanged */}
                             <td className="px-3 py-3 md:px-4">
                               <div className="flex items-center space-x-1 sm:space-x-2">
-                                <Gamepad2 className={`w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0 ${
-                                  (booking.consoleType || '').toLowerCase().includes('playstation') || 
-                                  (booking.consoleType || '').toLowerCase().includes('ps') ? 'text-blue-600' : 
-                                  (booking.consoleType || '').toLowerCase().includes('xbox') ? 'text-green-600' : 'text-red-600'
-                                }`} />
+                                {(() => {
+                                  const visual = getConsoleVisual(booking.consoleType || "");
+                                  const Icon = visual.icon;
+                                  return (
+                                    <Icon className={`w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0 ${visual.className}`} />
+                                  );
+                                })()}
                                 <span className="truncate text-xs text-slate-100 sm:text-sm">
                                   {booking.consoleType || 'Gaming Console'}
                                 </span>
@@ -642,14 +919,18 @@ export function CurrentSlots({ currentSlots: initialSlots, refreshSlots, setRefr
 
                             {/* Action cell - unchanged */}
                             <td className="px-3 py-3 md:px-4">
-                              {hasExtraTime ? (
+                              {needsSettlement ? (
                                 <button
                                   onClick={() => {
                                     setSelectedSlot(booking);
                                     setShowOverlay(true);
                                     setError("");
                                   }}
-                                  className="w-20 rounded-md bg-yellow-500 px-2 py-1 text-xs text-white transition-colors hover:bg-yellow-600 sm:w-24"
+                                  className={`w-20 rounded-md px-2 py-1 text-xs text-white transition-colors sm:w-24 ${
+                                    hasOutstandingDue && !hasExtraTime
+                                      ? "bg-orange-500 hover:bg-orange-600"
+                                      : "bg-yellow-500 hover:bg-yellow-600"
+                                  }`}
                                 >
                                   <div className="flex items-center justify-center gap-1">
                                     <FaCheck className="w-2 h-2 sm:w-3 sm:h-3" />
@@ -708,19 +989,76 @@ export function CurrentSlots({ currentSlots: initialSlots, refreshSlots, setRefr
               </table>
             </div>
           </motion.div>
+          ) : (
+            <div className="flex-1 min-h-0 overflow-hidden rounded-xl bg-slate-900/55">
+              {historyLoading ? (
+                <div className="flex h-full flex-col items-center justify-center text-slate-400">
+                  <p className="text-sm font-medium">Loading history...</p>
+                </div>
+              ) : filteredHistoryBookings.length === 0 ? (
+                <div className="flex h-full flex-col items-center justify-center text-slate-400">
+                  <p className="text-sm font-medium">No past sessions found</p>
+                </div>
+              ) : (
+                <div className="h-full overflow-x-auto overflow-y-auto">
+                  <table className="w-full min-w-[760px] divide-y divide-slate-700/70">
+                    <thead className="sticky top-0 z-10 bg-slate-900/95">
+                      <tr>
+                        {["Name", "System", "Time", "Progress", "Extra", "Action"].map((heading) => (
+                          <th
+                            key={heading}
+                            scope="col"
+                            className="px-3 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-300 md:px-4"
+                          >
+                            {heading}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-700/60">
+                      {filteredHistoryBookings.map((b: any, i: number) => {
+                        const normalizedStatus = normalizeHistoryStatus(b);
+                        const statusLabel = historyStatusLabel(normalizedStatus);
+                        const systemText = `${b.consoleName || b.consoleType || "Console"}${b.consoleBrand ? ` • ${b.consoleBrand}` : ""}${b.consoleNumber ? ` • #${b.consoleNumber}` : ""}`;
+                        return (
+                          <tr key={`${b.bookingId || i}-${b.date}`} className="transition-colors hover:bg-slate-800/45">
+                            <td className="px-3 py-3 md:px-4">
+                              <div className="text-sm font-semibold text-slate-100">{b.username || "Guest"}</div>
+                              <div className="text-xs text-slate-400">{b.bookingId ? `#${b.bookingId}` : "-"}</div>
+                            </td>
+                            <td className="px-3 py-3 md:px-4 text-xs text-slate-100">{systemText}</td>
+                            <td className="px-3 py-3 md:px-4 text-xs text-slate-300">{b.time || "Time not available"}</td>
+                            <td className="px-3 py-3 md:px-4 text-xs text-slate-300">Ended</td>
+                            <td className="px-3 py-3 md:px-4 text-xs text-slate-300">{formatHistoryDateLabel(b.date)}</td>
+                            <td className="px-3 py-3 md:px-4">
+                              <span className={`rounded-full border px-2 py-0.5 text-xs capitalize ${historyStatusChipClass(normalizedStatus)}`}>
+                                {statusLabel}
+                              </span>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          )}
           
-          <ExtraBookingOverlay
-            showOverlay={showOverlay}
-            setShowOverlay={setShowOverlay}
-            selectedSlot={selectedSlot}
-            vendorId={vendorId}
-            setRefreshSlots={setRefreshSlots}
-            setSelectedSlot={setSelectedSlot}
-            calculateExtraTime={calculateExtraTime}
-            calculateExtraAmount={calculateExtraAmount}
-            formatTime={formatTime}
-            releaseSlot={releaseSlot}
-          />
+          {activeTab === 'live' && (
+            <ExtraBookingOverlay
+              showOverlay={showOverlay}
+              setShowOverlay={setShowOverlay}
+              selectedSlot={selectedSlot}
+              vendorId={vendorId}
+              setRefreshSlots={setRefreshSlots}
+              setSelectedSlot={setSelectedSlot}
+              calculateExtraTime={calculateExtraTime}
+              calculateExtraAmount={calculateExtraAmount}
+              formatTime={formatTime}
+              releaseSlot={releaseSlot}
+            />
+          )}
           
           {/* ✅ ENHANCED: MealDetailsModal with updated props */}
           <MealDetailsModal

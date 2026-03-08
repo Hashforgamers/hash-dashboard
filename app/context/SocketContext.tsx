@@ -24,6 +24,7 @@ export const useSocket = () => {
 export const SocketProvider = ({ children }: { children: ReactNode }) => {
   const [socket, setSocket] = useState<Socket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
+  const joinedVendorsRef = React.useRef<Set<number>>(new Set());
 
   useEffect(() => {
     console.log('🔌 Creating single socket connection...')
@@ -33,14 +34,21 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
       transports: ['websocket', 'polling'],
       autoConnect: true,
       reconnection: true,
-      reconnectionAttempts: 5,
+      reconnectionAttempts: Infinity,
       reconnectionDelay: 2000,
+      reconnectionDelayMax: 10000,
       timeout: 20000,
     });
 
     newSocket.on("connect", () => {
       console.log("✅ Socket connected:", newSocket.id);
       setIsConnected(true);
+      joinedVendorsRef.current.forEach((vendorId) => {
+        newSocket.emit("dashboard_join_vendor", { vendor_id: vendorId });
+      });
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("socket-reconnected"));
+      }
     });
 
     newSocket.on("disconnect", (reason) => {
@@ -53,6 +61,16 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
       setIsConnected(false);
     });
 
+    newSocket.io.on("reconnect", () => {
+      console.log("🔁 Socket reconnected");
+      joinedVendorsRef.current.forEach((vendorId) => {
+        newSocket.emit("dashboard_join_vendor", { vendor_id: vendorId });
+      });
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("socket-reconnected"));
+      }
+    });
+
     setSocket(newSocket);
 
     return () => {
@@ -62,6 +80,7 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const joinVendor = (vendorId: number) => {
+    joinedVendorsRef.current.add(vendorId);
     if (socket?.connected) {
       console.log(`🏪 Joining vendor room: ${vendorId}`);
       socket.emit("dashboard_join_vendor", { vendor_id: vendorId });

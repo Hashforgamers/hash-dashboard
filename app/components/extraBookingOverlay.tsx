@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from "framer-motion";
-import { IndianRupee, CreditCard, Smartphone, X, CheckCircle, Loader2 } from "lucide-react";
+import { IndianRupee, CreditCard, Smartphone, X, CheckCircle, Loader2, Gamepad2, Timer, Wallet, Receipt } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { BOOKING_URL } from "@/src/config/env";
 
@@ -57,6 +57,8 @@ const ExtraBookingOverlay: React.FC<ExtraBookingOverlayProps> = ({
   const [loading, setLoading] = useState(false);
   const [waiveOffAmount, setWaiveOffAmount] = useState<string>("");
   const [waiveOffError, setWaiveOffError] = useState("");
+  const [frozenExtraSeconds, setFrozenExtraSeconds] = useState(0);
+  const [settlementPausedAt, setSettlementPausedAt] = useState<string>("");
   const [paymentSummary, setPaymentSummary] = useState<PaymentSummary | null>(null);
   const [summaryLoading, setSummaryLoading] = useState(false);
   const [summaryError, setSummaryError] = useState("");
@@ -135,6 +137,17 @@ const ExtraBookingOverlay: React.FC<ExtraBookingOverlayProps> = ({
     };
   }, [showOverlay, selectedSlot]);
 
+  useEffect(() => {
+    if (showOverlay && selectedSlot) {
+      const snapshotSeconds = calculateExtraTime(selectedSlot.endTime, selectedSlot.date);
+      setFrozenExtraSeconds(snapshotSeconds);
+      setSettlementPausedAt(new Date().toLocaleTimeString());
+      return;
+    }
+    setFrozenExtraSeconds(0);
+    setSettlementPausedAt("");
+  }, [showOverlay, selectedSlot, calculateExtraTime]);
+
   // Create extra booking function
   const createExtraBooking = async (payload: any) => {
     try {
@@ -156,15 +169,39 @@ const ExtraBookingOverlay: React.FC<ExtraBookingOverlayProps> = ({
     }
   };
 
+  const settlePendingBookingCharges = async (bookingId: number, mode: string, waiveOffAmount: number) => {
+    const response = await fetch(`${BOOKING_URL}/api/booking/${bookingId}/settle-pending`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${localStorage.getItem("jwtToken")}`,
+      },
+      body: JSON.stringify({
+        mode_of_payment: mode,
+        waive_off_amount: waiveOffAmount,
+        booking_types: ["extra", "additional_meals"],
+      }),
+    });
+    if (!response.ok) {
+      throw new Error("Failed to settle pending charges");
+    }
+    return await response.json();
+  };
+
   // ✅ FIXED: Handle settle function with IMMEDIATE UI updates (exactly like release button)
   const handleSettle = async () => {
     if (!selectedSlot || !vendorId) {
       setWaiveOffError("Invalid slot or vendor information");
       return;
     }
+    const bookingId = resolveBookingId(selectedSlot);
+    if (!bookingId) {
+      setWaiveOffError("Missing booking ID for settlement");
+      return;
+    }
 
     setLoading(true);
-    const extraTime = calculateExtraTime(selectedSlot.endTime, selectedSlot.date);
+    const extraTime = frozenExtraSeconds;
     const amount = calculateExtraAmount(extraTime, selectedSlot.slot_price || 100);
     const parsedWaiveOff = parseFloat(waiveOffAmount) || 0;
 
@@ -178,14 +215,20 @@ const ExtraBookingOverlay: React.FC<ExtraBookingOverlayProps> = ({
       amount: amount,
       gameId: selectedSlot.game_id,
       vendorId: vendorId,
-      modeOfPayment: paymentMode,
-      waiveOffAmount: parsedWaiveOff,
+      modeOfPayment: "pending",
+      waiveOffAmount: 0,
     };
 
     try {
       console.log('💰 Starting settle process...');
-      await createExtraBooking(extraBookingPayload);
-      console.log('💰 Extra booking created successfully');
+      if (amount > 0) {
+        await createExtraBooking(extraBookingPayload);
+        console.log('💰 Extra booking created successfully');
+      } else {
+        console.log('💰 No overtime charge - skipping extra booking creation');
+      }
+      await settlePendingBookingCharges(bookingId, paymentMode, parsedWaiveOff);
+      console.log('💰 Pending charges settled successfully');
 
       const success = await releaseSlot(
         selectedSlot.consoleType,
@@ -235,6 +278,9 @@ const ExtraBookingOverlay: React.FC<ExtraBookingOverlayProps> = ({
     }
   };
 
+  const isPendingStatus = (status?: string) =>
+    ["pending", "unpaid", "due"].includes(String(status || "").toLowerCase());
+
   // Handle waive-off amount change with validation
   const handleWaiveOffChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!selectedSlot) return;
@@ -243,10 +289,14 @@ const ExtraBookingOverlay: React.FC<ExtraBookingOverlayProps> = ({
     if (value === "" || /^[0-9]*\.?[0-9]*$/.test(value)) {
       setWaiveOffAmount(value);
       const parsedValue = parseFloat(value) || 0;
-      const maxWaiveOff = calculateExtraAmount(
-        calculateExtraTime(selectedSlot.endTime, selectedSlot.date),
-        selectedSlot.slot_price || 100
-      );
+      const localExtraAmount = calculateExtraAmount(frozenExtraSeconds, selectedSlot.slot_price || 100);
+      const localPendingMeals = (paymentSummary?.line_items || [])
+        .filter((item) => String(item.booking_type || "").toLowerCase() === "additional_meals" && isPendingStatus(item.settlement_status))
+        .reduce((sum, item) => sum + Number(item.line_total || 0), 0);
+      const localPendingExtra = (paymentSummary?.line_items || [])
+        .filter((item) => String(item.booking_type || "").toLowerCase() === "extra" && isPendingStatus(item.settlement_status))
+        .reduce((sum, item) => sum + Number(item.line_total || 0), 0);
+      const maxWaiveOff = localExtraAmount + localPendingMeals + localPendingExtra;
       if (parsedValue < 0) {
         setWaiveOffError("Waive-off amount cannot be negative");
         setWaiveOffAmount("");
@@ -259,14 +309,30 @@ const ExtraBookingOverlay: React.FC<ExtraBookingOverlayProps> = ({
     }
   };
 
-  const computedExtraSeconds = selectedSlot
-    ? calculateExtraTime(selectedSlot.endTime, selectedSlot.date)
-    : 0;
+  const computedExtraSeconds = frozenExtraSeconds;
   const computedExtraAmount = selectedSlot
     ? calculateExtraAmount(computedExtraSeconds, selectedSlot.slot_price || 100)
     : 0;
+  const pendingMealsAmount = (paymentSummary?.line_items || [])
+    .filter((item) => String(item.booking_type || "").toLowerCase() === "additional_meals" && isPendingStatus(item.settlement_status))
+    .reduce((sum, item) => sum + Number(item.line_total || 0), 0);
+  const historicalPendingExtraAmount = (paymentSummary?.line_items || [])
+    .filter((item) => String(item.booking_type || "").toLowerCase() === "extra" && isPendingStatus(item.settlement_status))
+    .reduce((sum, item) => sum + Number(item.line_total || 0), 0);
+  const isSettledStatus = (status?: string) =>
+    ["completed", "done", "settled", "paid"].includes(String(status || "").toLowerCase());
+  const paidInitialAmount = (paymentSummary?.line_items || [])
+    .filter((item) => String(item.booking_type || "").toLowerCase() === "direct" && isSettledStatus(item.settlement_status))
+    .reduce((sum, item) => sum + Number(item.line_total || 0), 0);
+  const paidMealsAmount = (paymentSummary?.line_items || [])
+    .filter((item) => String(item.booking_type || "").toLowerCase() === "additional_meals" && isSettledStatus(item.settlement_status))
+    .reduce((sum, item) => sum + Number(item.line_total || 0), 0);
+  const paidExtraAmount = (paymentSummary?.line_items || [])
+    .filter((item) => String(item.booking_type || "").toLowerCase() === "extra" && isSettledStatus(item.settlement_status))
+    .reduce((sum, item) => sum + Number(item.line_total || 0), 0);
+  const totalPaidAmount = paidInitialAmount + paidMealsAmount + paidExtraAmount;
   const parsedWaiveOff = parseFloat(waiveOffAmount) || 0;
-  const dueBeforeWaive = paymentSummary?.amount_due ?? computedExtraAmount;
+  const dueBeforeWaive = computedExtraAmount + pendingMealsAmount + historicalPendingExtraAmount;
   const payableAmount = Math.max(dueBeforeWaive - parsedWaiveOff, 0);
 
   // Handle keyboard navigation for payment mode buttons
@@ -289,7 +355,7 @@ const ExtraBookingOverlay: React.FC<ExtraBookingOverlayProps> = ({
         >
           <motion.div
             ref={overlayRef}
-            className="bg-white dark:bg-zinc-800 rounded-2xl shadow-xl p-8 w-full max-w-lg sm:max-w-md mx-4"
+            className="relative w-full max-w-4xl mx-3 sm:mx-4 rounded-2xl border border-cyan-500/20 bg-gradient-to-br from-slate-900 via-slate-900 to-slate-950 p-4 sm:p-6 shadow-2xl max-h-[92vh] overflow-y-auto"
             initial={{ scale: 0.95, y: 30, opacity: 0 }}
             animate={{ scale: 1, y: 0, opacity: 1 }}
             exit={{ scale: 0.95, y: 30, opacity: 0 }}
@@ -299,196 +365,247 @@ const ExtraBookingOverlay: React.FC<ExtraBookingOverlayProps> = ({
             aria-labelledby="extra-payment-title"
             tabIndex={-1}
           >
-            <div className="text-center mb-6">
-              <h2 id="extra-payment-title" className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                Extra Payment Required
-              </h2>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
-                The session for {selectedSlot.username} on {selectedSlot.consoleType} #{selectedSlot.consoleNumber} has exceeded the allotted time.
-              </p>
-            </div>
+            <div className="pointer-events-none absolute -top-16 -right-16 h-40 w-40 rounded-full bg-cyan-500/10 blur-3xl" />
+            <div className="pointer-events-none absolute -bottom-16 -left-16 h-40 w-40 rounded-full bg-emerald-500/10 blur-3xl" />
 
-            <div className="bg-red-50 dark:bg-red-900/30 p-4 rounded-lg mb-4">
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Extra Time</p>
-                  <p className="text-lg font-semibold text-red-600 dark:text-red-400">{formatTime(computedExtraSeconds)}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Total Charged</p>
-                  <p className="text-lg font-semibold text-red-600 dark:text-red-400">₹{(paymentSummary?.total_charged ?? computedExtraAmount).toFixed(2)}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Amount Paid</p>
-                  <p className="text-lg font-semibold text-emerald-600 dark:text-emerald-400">₹{(paymentSummary?.amount_paid ?? 0).toFixed(2)}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Amount Due</p>
-                  <p className="text-lg font-semibold text-red-600 dark:text-red-400">₹{payableAmount.toFixed(2)}</p>
-                </div>
-              </div>
-              {summaryLoading && (
-                <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">Loading full payment summary...</p>
-              )}
-              {summaryError && (
-                <p className="mt-2 text-xs text-amber-600 dark:text-amber-400">{summaryError}</p>
-              )}
-            </div>
-
-            {paymentSummary?.line_items?.length ? (
-              <div className="mb-6 border border-gray-200 dark:border-zinc-700 rounded-lg overflow-hidden">
-                <div className="px-3 py-2 border-b border-gray-200 dark:border-zinc-700">
-                  <p className="text-sm font-semibold text-gray-900 dark:text-gray-200">Transaction Breakdown</p>
-                </div>
-                <div className="max-h-48 overflow-auto">
-                  <table className="w-full text-left text-xs">
-                    <thead className="bg-gray-50 dark:bg-zinc-900/70 sticky top-0">
-                      <tr>
-                        <th className="px-3 py-2 font-semibold text-gray-700 dark:text-gray-300">Type</th>
-                        <th className="px-3 py-2 font-semibold text-gray-700 dark:text-gray-300">Amount</th>
-                        <th className="px-3 py-2 font-semibold text-gray-700 dark:text-gray-300">Mode</th>
-                        <th className="px-3 py-2 font-semibold text-gray-700 dark:text-gray-300">Status</th>
-                        <th className="px-3 py-2 font-semibold text-gray-700 dark:text-gray-300">Details</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-100 dark:divide-zinc-700">
-                      {paymentSummary.line_items.map((item) => {
-                        const status = String(item.settlement_status || "pending").toLowerCase();
-                        const isSettled = ["completed", "paid", "settled", "done"].includes(status);
-                        return (
-                          <tr key={item.transaction_id} className="align-top">
-                            <td className="px-3 py-2 text-gray-900 dark:text-gray-100">
-                              {(item.payment_use_case || item.booking_type || "direct").replace(/_/g, " ")}
-                            </td>
-                            <td className="px-3 py-2 font-semibold text-gray-900 dark:text-gray-100">
-                              ₹{Number(item.line_total || 0).toFixed(2)}
-                            </td>
-                            <td className="px-3 py-2 text-gray-600 dark:text-gray-300">
-                              {item.mode_of_payment ? `Mode: ${item.mode_of_payment}` : "Mode: pending"}
-                            </td>
-                            <td className="px-3 py-2">
-                              <span className={`inline-block text-[11px] px-2 py-0.5 rounded-full ${isSettled ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300" : "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300"}`}>
-                                {isSettled ? "Paid" : "Pending"}
-                              </span>
-                            </td>
-                            <td className="px-3 py-2 text-[11px] text-gray-500 dark:text-gray-400 min-w-[260px]">
-                              Base ₹{Number(item.components?.base_amount || 0).toFixed(2)} | Meals ₹{Number(item.components?.meals_amount || 0).toFixed(2)} | Extra ₹{Number(item.components?.controller_amount || 0).toFixed(2)} | GST ₹{Number((item.components?.cgst_amount || 0) + (item.components?.sgst_amount || 0) + (item.components?.igst_amount || 0)).toFixed(2)} | Waive ₹{Number(item.components?.waive_off_amount || 0).toFixed(2)}
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            ) : null}
-
-            <div className="mb-6">
-              <label htmlFor="waive-off-amount" className="block text-sm font-medium text-gray-900 dark:text-gray-200 mb-2">
-                Waive-Off Amount (₹)
-              </label>
-              <motion.input
-                id="waive-off-amount"
-                type="text"
-                value={waiveOffAmount}
-                onChange={handleWaiveOffChange}
-                pattern="[0-9]*\.?[0-9]*"
-                className={`w-full p-3 border rounded-lg bg-gray-50 dark:bg-zinc-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200 ${
-                  waiveOffError ? "border-red-500 focus:ring-red-500" : "border-gray-300 dark:border-gray-600"
-                }`}
-                placeholder="Enter waive-off amount (e.g., 50.00)"
-                aria-invalid={waiveOffError ? "true" : "false"}
-                aria-describedby={waiveOffError ? "waive-off-error" : undefined}
-                whileFocus={{ scale: 1.02 }}
-              />
-              {waiveOffError && (
-                <p id="waive-off-error" className="text-sm text-red-500 mt-1">
-                  {waiveOffError}
+            <div className="relative mb-4 sm:mb-5 flex flex-col sm:flex-row sm:items-start justify-between gap-2 sm:gap-3">
+              <div>
+                <h2 id="extra-payment-title" className="text-2xl font-bold text-slate-100">
+                  Extra Payment Required
+                </h2>
+                <p className="mt-1 text-sm text-slate-300">
+                  Settle extra play time and in-session meals before releasing the console.
                 </p>
-              )}
+                {settlementPausedAt ? (
+                  <p className="mt-1 text-xs text-cyan-300">Timer paused at {settlementPausedAt}</p>
+                ) : null}
+              </div>
+              <span className="w-fit rounded-full border border-amber-500/30 bg-amber-500/15 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-amber-300">
+                Live Session
+              </span>
             </div>
 
-            <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-900 dark:text-gray-200 mb-2">
-                Select Payment Mode
-              </label>
-              <div className="grid grid-cols-3 gap-3">
-                {[
-                  { key: "cash", label: "Cash", Icon: IndianRupee },
-                  { key: "card", label: "Card", Icon: CreditCard },
-                  { key: "upi", label: "UPI", Icon: Smartphone },
-                ].map(({ key, label, Icon }) => (
+            <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_330px] gap-4">
+              <div>
+                <div className="relative mb-4 rounded-xl border border-slate-700/70 bg-slate-800/65 p-4">
+                  <div className="flex flex-wrap items-center gap-3 text-sm text-slate-200">
+                    <span className="inline-flex items-center gap-1.5 rounded-md bg-slate-700/70 px-2.5 py-1">
+                      <Gamepad2 className="h-4 w-4 text-cyan-300" />
+                      {selectedSlot.consoleType} #{selectedSlot.consoleNumber}
+                    </span>
+                    <span className="inline-flex items-center gap-1.5 rounded-md bg-slate-700/70 px-2.5 py-1">
+                      <Receipt className="h-4 w-4 text-emerald-300" />
+                      Booking #{resolveBookingId(selectedSlot) || "N/A"}
+                    </span>
+                  </div>
+                  <p className="mt-2 text-sm text-slate-300">
+                    Session for <span className="font-semibold text-slate-100">{selectedSlot.username}</span>
+                    {computedExtraSeconds > 0
+                      ? " has crossed allotted time."
+                      : " has pending in-session charges to settle."}
+                  </p>
+                </div>
+
+                <div className="mb-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-3">
+                    <p className="text-xs font-medium text-red-200">Extra Time</p>
+                    <p className="mt-1 inline-flex items-center gap-1 text-lg font-bold text-red-300">
+                      <Timer className="h-4 w-4" />
+                      {formatTime(computedExtraSeconds)}
+                    </p>
+                  </div>
+                  <div className="rounded-xl border border-cyan-500/30 bg-cyan-500/10 p-3">
+                    <p className="text-xs font-medium text-cyan-200">Extra Charge (Live)</p>
+                    <p className="mt-1 text-lg font-bold text-cyan-300">₹{computedExtraAmount.toFixed(2)}</p>
+                  </div>
+                  <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3">
+                    <p className="text-xs font-medium text-emerald-200">Paid Initially</p>
+                    <p className="mt-1 inline-flex items-center gap-1 text-lg font-bold text-emerald-300">
+                      <Wallet className="h-4 w-4" />
+                      ₹{(paymentSummary?.amount_paid ?? 0).toFixed(2)}
+                    </p>
+                  </div>
+                  <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-3">
+                    <p className="text-xs font-medium text-amber-200">Collect Now</p>
+                    <p className="mt-1 text-lg font-bold text-amber-300">₹{payableAmount.toFixed(2)}</p>
+                  </div>
+                </div>
+                {(summaryLoading || summaryError) && (
+                  <div className="mb-4 rounded-lg border border-slate-700/70 bg-slate-800/50 px-3 py-2">
+                    {summaryLoading && (
+                      <p className="text-xs text-slate-300">Loading full transaction history...</p>
+                    )}
+                    {summaryError && (
+                      <p className="text-xs text-amber-300">{summaryError}</p>
+                    )}
+                  </div>
+                )}
+
+                <div className="mb-4 grid grid-cols-1 xl:grid-cols-2 gap-3">
+                  <div className="rounded-xl border border-slate-700/70 bg-slate-800/55 p-3">
+                    <p className="mb-2 text-sm font-semibold text-slate-100">Amount To Collect Breakdown</p>
+                    <div className="space-y-1.5 text-xs text-slate-300">
+                      <div className="flex items-center justify-between">
+                        <span>Extra played amount</span>
+                        <span className="font-semibold text-slate-100">₹{computedExtraAmount.toFixed(2)}</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span>Added meals (pending)</span>
+                        <span className="font-semibold text-slate-100">₹{pendingMealsAmount.toFixed(2)}</span>
+                      </div>
+                      {historicalPendingExtraAmount > 0 ? (
+                        <div className="flex items-center justify-between">
+                          <span>Previous pending extra</span>
+                          <span className="font-semibold text-slate-100">₹{historicalPendingExtraAmount.toFixed(2)}</span>
+                        </div>
+                      ) : null}
+                      <div className="flex items-center justify-between border-t border-slate-700/70 pt-1.5">
+                        <span>Subtotal</span>
+                        <span className="font-semibold text-slate-100">₹{dueBeforeWaive.toFixed(2)}</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span>Discount / Waive-off</span>
+                        <span className="font-semibold text-amber-300">- ₹{parsedWaiveOff.toFixed(2)}</span>
+                      </div>
+                      <div className="flex items-center justify-between border-t border-slate-700/70 pt-1.5 text-sm">
+                        <span className="font-semibold text-slate-100">Final collect amount</span>
+                        <span className="font-bold text-emerald-300">₹{payableAmount.toFixed(2)}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="rounded-xl border border-slate-700/70 bg-slate-800/55 p-3">
+                    <p className="mb-2 text-sm font-semibold text-slate-100">Paid Amount Breakdown</p>
+                    <div className="space-y-1.5 text-xs text-slate-300">
+                      <div className="flex items-center justify-between">
+                        <span>Initial booking paid</span>
+                        <span className="font-semibold text-slate-100">₹{paidInitialAmount.toFixed(2)}</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span>Meals paid</span>
+                        <span className="font-semibold text-slate-100">₹{paidMealsAmount.toFixed(2)}</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span>Extra time paid</span>
+                        <span className="font-semibold text-slate-100">₹{paidExtraAmount.toFixed(2)}</span>
+                      </div>
+                      <div className="flex items-center justify-between border-t border-slate-700/70 pt-1.5 text-sm">
+                        <span className="font-semibold text-slate-100">Total paid amount</span>
+                        <span className="font-bold text-emerald-300">₹{totalPaidAmount.toFixed(2)}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="rounded-xl border border-slate-700/70 bg-slate-800/55 p-3 h-fit lg:sticky lg:top-2">
+                <div className="mb-4">
+                  <label htmlFor="waive-off-amount" className="mb-2 block text-sm font-medium text-slate-200">
+                    Waive-Off Amount (₹)
+                  </label>
+                  <motion.input
+                    id="waive-off-amount"
+                    type="text"
+                    value={waiveOffAmount}
+                    onChange={handleWaiveOffChange}
+                    pattern="[0-9]*\.?[0-9]*"
+                    className={`w-full rounded-lg border bg-slate-900/70 p-3 text-slate-100 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 transition-all duration-200 ${
+                      waiveOffError ? "border-red-500 focus:ring-red-500" : "border-slate-600"
+                    }`}
+                    placeholder="Enter waive-off amount (e.g., 50.00)"
+                    aria-invalid={waiveOffError ? "true" : "false"}
+                    aria-describedby={waiveOffError ? "waive-off-error" : undefined}
+                    whileFocus={{ scale: 1.02 }}
+                  />
+                  {waiveOffError && (
+                    <p id="waive-off-error" className="mt-1 text-sm text-red-400">
+                      {waiveOffError}
+                    </p>
+                  )}
+                </div>
+
+                <div className="mb-5">
+                  <label className="mb-2 block text-sm font-medium text-slate-200">
+                    Select Payment Mode
+                  </label>
+                  <div className="grid grid-cols-3 gap-2 sm:gap-3">
+                    {[
+                      { key: "cash", label: "Cash", Icon: IndianRupee },
+                      { key: "card", label: "Card", Icon: CreditCard },
+                      { key: "upi", label: "UPI", Icon: Smartphone },
+                    ].map(({ key, label, Icon }) => (
+                      <motion.button
+                        key={key}
+                        onClick={() => setPaymentMode(key)}
+                        onKeyDown={(e) => handlePaymentModeKeyDown(e, key)}
+                        className={`flex flex-col items-center justify-center rounded-lg border p-2.5 sm:p-3 transition-all duration-200
+                          ${
+                            paymentMode === key
+                              ? "border-cyan-400 bg-cyan-500/20 ring-2 ring-cyan-500/30"
+                              : "border-slate-600 bg-slate-900/60 text-slate-100 hover:bg-slate-800"
+                          }`}
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        aria-pressed={paymentMode === key}
+                        role="radio"
+                      >
+                        <Icon
+                          className={`mb-1.5 h-5 w-5 ${paymentMode === key ? "text-cyan-300" : "text-slate-400"}`}
+                        />
+                        <span
+                          className={`text-sm font-medium ${paymentMode === key ? "text-cyan-200" : "text-slate-200"}`}
+                        >
+                          {label}
+                        </span>
+                      </motion.button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-2">
                   <motion.button
-                    key={key}
-                    onClick={() => setPaymentMode(key)}
-                    onKeyDown={(e) => handlePaymentModeKeyDown(e, key)}
-                    className={`flex flex-col items-center justify-center p-4 rounded-lg border transition-all duration-200
-                      ${
-                        paymentMode === key
-                          ? "bg-emerald-100 dark:bg-emerald-900/50 border-emerald-500 ring-2 ring-emerald-500/30"
-                          : "border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-zinc-700 bg-white dark:bg-zinc-900 text-gray-900 dark:text-gray-100"
-                      }`}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    aria-pressed={paymentMode === key}
-                    role="radio"
+                    onClick={handleSettle}
+                    className="w-full rounded-md bg-gradient-to-r from-emerald-500 to-cyan-500 px-6 py-2 text-sm font-medium text-white shadow-sm transition-all duration-200 hover:from-emerald-400 hover:to-cyan-400 disabled:opacity-50"
+                    disabled={loading || !!waiveOffError || !vendorId}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    aria-label="Settle extra payment"
                   >
-                    <Icon
-                      className={`w-6 h-6 mb-2 ${paymentMode === key ? "text-emerald-600" : "text-gray-500 dark:text-gray-400"}`}
-                    />
-                    <span
-                      className={`text-sm font-medium ${paymentMode === key ? "text-emerald-700 dark:text-emerald-300" : "text-gray-700 dark:text-gray-300"}`}
-                    >
-                      {label}
+                    <span className="flex items-center justify-center gap-2">
+                      {loading ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          Processing...
+                        </>
+                      ) : (
+                        <>
+                          <CheckCircle className="w-4 h-4" />
+                          Settle
+                        </>
+                      )}
                     </span>
                   </motion.button>
-                ))}
+                  <motion.button
+                    onClick={() => {
+                      setShowOverlay(false);
+                      setWaiveOffAmount("");
+                      setWaiveOffError("");
+                      setPaymentSummary(null);
+                      setSummaryError("");
+                    }}
+                    className="w-full rounded-md border border-slate-600 bg-slate-900/80 px-5 py-2 text-sm font-medium text-slate-200 transition-all duration-200 hover:bg-slate-800 disabled:opacity-50"
+                    disabled={loading}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    aria-label="Cancel extra payment"
+                  >
+                    <span className="flex items-center justify-center gap-2">
+                      <X className="w-4 h-4" />
+                      Cancel
+                    </span>
+                  </motion.button>
+                </div>
               </div>
-            </div>
-
-            <div className="flex justify-end gap-4">
-              <motion.button
-                onClick={() => {
-                  setShowOverlay(false);
-                  setWaiveOffAmount("");
-                  setWaiveOffError("");
-                  setPaymentSummary(null);
-                  setSummaryError("");
-                }}
-                className="px-5 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-zinc-900 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm hover:bg-gray-50 dark:hover:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400 transition-all duration-200 disabled:opacity-50"
-                disabled={loading}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                aria-label="Cancel extra payment"
-              >
-                <span className="flex items-center gap-2">
-                  <X className="w-4 h-4" />
-                  Cancel
-                </span>
-              </motion.button>
-
-              <motion.button
-                onClick={handleSettle}
-                className="px-6 py-2 text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 rounded-md shadow-sm transition-all duration-200 disabled:opacity-50"
-                disabled={loading || !!waiveOffError || !vendorId}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                aria-label="Settle extra payment"
-              >
-                <span className="flex items-center gap-2">
-                  {loading ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      Processing...
-                    </>
-                  ) : (
-                    <>
-                      <CheckCircle className="w-4 h-4" />
-                      Settle
-                    </>
-                  )}
-                </span>
-              </motion.button>
             </div>
           </motion.div>
         </motion.div>
