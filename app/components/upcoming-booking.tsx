@@ -222,15 +222,13 @@ interface UpcomingBookingsProps {
   upcomingBookings: any[];
   vendorId?: string;
   setRefreshSlots: (prev: boolean) => void;
-  refreshTrigger?: boolean;
 }
 
 
 export function UpcomingBookings({
   upcomingBookings: initialBookings,
   vendorId,
-  setRefreshSlots,
-  refreshTrigger
+  setRefreshSlots
 }: UpcomingBookingsProps): JSX.Element {
   
   const { socket, isConnected, joinVendor } = useSocket()
@@ -276,30 +274,6 @@ export function UpcomingBookings({
     }
   }, [initialBookings])
 
-  // Refresh bookings when triggered
-  useEffect(() => {
-    const fetchLatestBookings = async () => {
-      if (!vendorId) return
-      
-      try {
-        console.log('🔄 Refreshing upcoming bookings from API...')
-        const response = await fetch(`${DASHBOARD_URL}/api/getLandingPage/vendor/${vendorId}`)
-        const data = await response.json()
-        
-        if (data.upcomingBookings) {
-          console.log('📅 Refreshed upcoming bookings:', data.upcomingBookings.length)
-          setUpcomingBookings(data.upcomingBookings)
-        }
-      } catch (error) {
-        console.error('❌ Error refreshing upcoming bookings:', error)
-      }
-    }
-
-    if (refreshTrigger !== undefined) {
-      fetchLatestBookings()
-    }
-  }, [refreshTrigger, vendorId])
-
   // Socket listeners for real-time updates
   useEffect(() => {
     if (!socket || !vendorId || !isConnected) return
@@ -315,12 +289,13 @@ export function UpcomingBookings({
     function handleUpcomingBooking(data: any) {
       console.log('📅 Real-time upcoming booking:', data)
       
-      if (!data || !data.vendorId) {
+      const eventVendorId = Number(data?.vendorId ?? data?.vendor_id);
+      if (!data || !eventVendorId) {
         console.warn('Invalid upcoming booking data:', data);
         return;
       }
       
-      if (data.vendorId === parseInt(vendorId) && (data.status === 'Confirmed' || data.status === 'confirmed')) {
+      if (eventVendorId === parseInt(vendorId) && (data.status === 'Confirmed' || data.status === 'confirmed')) {
         setUpcomingBookings(prev => {
           if (!Array.isArray(prev)) prev = [];
           
@@ -337,34 +312,44 @@ export function UpcomingBookings({
     function handleBookingUpdate(data: any) {
       console.log('🔄 Booking update:', data)
       
-      if (!data || !data.vendorId) {
+      const eventVendorId = Number(data?.vendorId ?? data?.vendor_id);
+      if (!data || !eventVendorId) {
         console.warn('Invalid booking update data:', data);
         return;
       }
       
-      if (data.vendorId === parseInt(vendorId)) {
+      if (eventVendorId === parseInt(vendorId)) {
+        const status = String(data.status || "").toLowerCase();
         setUpcomingBookings(prev => {
           if (!Array.isArray(prev)) prev = [];
           
           if ((data.status === 'Confirmed' || data.status === 'confirmed') && !prev.some(b => b?.bookingId === data.bookingId)) {
             return [data, ...prev]
           }
-          
-          return prev.map(booking => 
+
+          const mapped = prev.map(booking => 
             booking?.bookingId === data.bookingId 
               ? { ...booking, ...data }
               : booking
-          ).filter(booking => 
-            booking?.status !== 'Cancelled' && booking?.status !== 'cancelled'
           )
+
+          return mapped.filter(booking => {
+            const s = String(booking?.status || "").toLowerCase();
+            return !["cancelled", "canceled", "rejected", "completed", "discarded"].includes(s);
+          })
         })
+
+        if (["cancelled", "canceled", "rejected", "completed", "discarded"].includes(status) && typeof window !== "undefined") {
+          window.dispatchEvent(new CustomEvent("history-booking-add", { detail: data }));
+        }
       }
     }
 
     function handleBookingAccepted(data: any) {
       console.log('✅ Booking accepted from notification panel:', data)
       
-      if (data.vendorId === parseInt(vendorId)) {
+      const eventVendorId = Number(data?.vendorId ?? data?.vendor_id);
+      if (eventVendorId === parseInt(vendorId)) {
         setUpcomingBookings(prev => {
           if (!Array.isArray(prev)) prev = [];
           
@@ -395,7 +380,6 @@ export function UpcomingBookings({
     if (!Array.isArray(upcomingBookings)) return [];
     
     let filtered = upcomingBookings.filter(booking => booking && booking.date);
-
     filtered = filtered.filter(booking => {
       try {
         const bookingDate = parseBookingDateLocal(booking.date);
@@ -642,7 +626,7 @@ export function UpcomingBookings({
   return (
     <>
       {/* 🚀 FIXED: Proper flex container structure */}
-      <div className="h-full flex flex-col overflow-hidden rounded-2xl bg-gradient-to-br from-slate-900/70 via-slate-900/45 to-slate-900/70 p-3 sm:p-4">
+      <div className="h-full flex flex-col overflow-hidden rounded-2xl border border-cyan-500/20 bg-gradient-to-br from-slate-900/70 via-slate-900/45 to-slate-900/70 shadow-[inset_0_1px_0_rgba(255,255,255,0.02),0_0_28px_rgba(6,182,212,0.08)] p-2 sm:p-3 lg:p-4">
         <AnimatePresence>
           {startCard && (
             <motion.div
@@ -799,7 +783,7 @@ export function UpcomingBookings({
                             <User className="h-3.5 w-3.5 shrink-0 text-slate-300" />
                             <span className="truncate dash-title !text-sm">{booking.username || "Guest User"}</span>
                           </div>
-                          <span className="shrink-0 rounded-full border border-emerald-400/40 bg-emerald-500/15 px-2 py-0.5 text-xs font-medium text-emerald-200">
+                          <span className="shrink-0 rounded-full border border-emerald-400/40 bg-emerald-500/15 px-2 py-0.5 text-xs font-medium text-emerald-200 capitalize">
                             Paid
                           </span>
                         </div>
@@ -854,7 +838,6 @@ export function UpcomingBookings({
                           </div>
                         </div>
 
-                        {/* Start button */}
                         <motion.button
                           whileHover={{ scale: 1.02 }}
                           whileTap={{ scale: 0.98 }}

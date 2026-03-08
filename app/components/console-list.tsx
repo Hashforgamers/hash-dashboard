@@ -19,6 +19,7 @@ import {
   Edit,
   Trash2,
   Loader2,
+  Power,
   Monitor,
   Gamepad,
   Tv,
@@ -37,6 +38,7 @@ import { jwtDecode } from "jwt-decode";
 import  HashLoader  from "./ui/HashLoader";
 
 import { DASHBOARD_URL } from "@/src/config/env";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 
 
@@ -50,6 +52,7 @@ export function ConsoleList({ onEdit, refreshKey = 0 }: ConsoleListProps) {
   const [vendorId, setVendorId] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [deletingConsoleId, setDeletingConsoleId] = useState<number | null>(null);
+  const [releasingConsoleId, setReleasingConsoleId] = useState<number | null>(null);
   const [activeGroup, setActiveGroup] = useState<"all" | "pc" | "ps5" | "xbox" | "vr">("all");
 
 
@@ -102,13 +105,8 @@ export function ConsoleList({ onEdit, refreshKey = 0 }: ConsoleListProps) {
 
   const consolelistdata = data.map((item: any) => {
     const normalizedType = String(item.type || "pc").toLowerCase();
-    const normalizedStatusLabel = String(item.statusLabel || "").trim().toLowerCase();
-    const isAvailable = typeof item.status === "boolean"
-      ? item.status
-      : normalizedStatusLabel === "available";
-    const statusLabel = normalizedStatusLabel
-      ? normalizedStatusLabel
-      : (isAvailable ? "available" : "in use");
+    const occupancyState = String(item.occupancyState || "").toLowerCase() || (item.status ? "free" : "occupied");
+    const statusLabel = String(item.statusLabel || "").trim() || (occupancyState === "free" ? "Free" : "Occupied");
     return {
       id: item.id,
       type: normalizedType,
@@ -121,8 +119,16 @@ export function ConsoleList({ onEdit, refreshKey = 0 }: ConsoleListProps) {
       ram: item.ram || "N/A",
       storage: item.storage || "N/A",
       consoleModelType: item.consoleModelType || "N/A",
-      status: isAvailable,
+      status: occupancyState === "free",
       statusLabel,
+      occupancyState,
+      gameId: item.gameId,
+      currentBookingId: item.currentBookingId,
+      currentUsername: item.currentUsername,
+      currentStartTime: item.currentStartTime,
+      currentEndTime: item.currentEndTime,
+      collectibleAmount: Number(item.collectibleAmount || 0),
+      hasPendingCollection: Boolean(item.hasPendingCollection),
     };
   });
 
@@ -171,6 +177,25 @@ export function ConsoleList({ onEdit, refreshKey = 0 }: ConsoleListProps) {
       console.log("something while wrong to delete the data", error);
     } finally {
       setDeletingConsoleId(null);
+    }
+  };
+
+  const handleRelease = async (consoleItem: any): Promise<void> => {
+    if (!vendorId || !consoleItem?.id || !consoleItem?.gameId) return;
+    try {
+      setReleasingConsoleId(consoleItem.id);
+      await axios.post(
+        `${DASHBOARD_URL}/api/releaseDevice/consoleTypeId/${consoleItem.gameId}/console/${consoleItem.id}/vendor/${vendorId}`,
+        { bookingStats: {} }
+      );
+
+      const response = await axios.get(`${DASHBOARD_URL}/api/getConsoles/vendor/${vendorId}`);
+      setdata(response.data);
+      window.dispatchEvent(new Event("refresh-dashboard"));
+    } catch (error) {
+      console.error("Failed to release console:", error);
+    } finally {
+      setReleasingConsoleId(null);
     }
   };
 
@@ -356,18 +381,32 @@ export function ConsoleList({ onEdit, refreshKey = 0 }: ConsoleListProps) {
                             <Activity className="w-4 h-4 text-slate-400" />
                             <span className="text-slate-400">Status</span>
                           </div>
-                          <Badge className={console.statusLabel === "available"
-                            ? "border border-emerald-400/40 bg-emerald-500/15 text-emerald-200"
-                            : console.statusLabel === "under maintenance"
-                              ? "border border-rose-400/40 bg-rose-500/15 text-rose-200"
-                              : "border border-amber-400/40 bg-amber-500/15 text-amber-200"}
-                          >
-                            {console.statusLabel === "under maintenance"
-                              ? "Under Maintenance"
-                              : console.statusLabel === "available"
-                                ? "Available"
-                                : "In Use"}
-                          </Badge>
+                          {console.occupancyState === "occupied" ? (
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <button
+                                    type="button"
+                                    className="inline-flex items-center rounded-md border border-amber-400/40 bg-amber-500/15 px-2.5 py-0.5 text-xs font-medium text-amber-200 cursor-help"
+                                  >
+                                    Occupied
+                                  </button>
+                                </TooltipTrigger>
+                                <TooltipContent side="top" className="max-w-xs text-xs leading-relaxed">
+                                  <p>Gamer: {console.currentUsername || "Unknown"}</p>
+                                  <p>Session: {console.currentStartTime || "--"} - {console.currentEndTime || "--"}</p>
+                                  <p>Collectible: Rs {console.collectibleAmount.toFixed(2)}</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          ) : (
+                            <Badge className={console.occupancyState === "free"
+                              ? "border border-emerald-400/40 bg-emerald-500/15 text-emerald-200"
+                              : "border border-rose-400/40 bg-rose-500/15 text-rose-200"}
+                            >
+                              {console.occupancyState === "free" ? "Free" : "Under Maintenance"}
+                            </Badge>
+                          )}
                         </div>
                       </div>
 
@@ -387,6 +426,27 @@ export function ConsoleList({ onEdit, refreshKey = 0 }: ConsoleListProps) {
                           <Edit className="w-4 h-4 mr-1" />
                           Edit
                         </Button>
+                        {console.occupancyState === "occupied" && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleRelease(console)}
+                            disabled={releasingConsoleId === console.id || deletingConsoleId !== null}
+                            className="border-amber-400/45 bg-amber-500/10 text-amber-200 hover:bg-amber-500/20"
+                          >
+                            {releasingConsoleId === console.id ? (
+                              <>
+                                <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+                                Releasing...
+                              </>
+                            ) : (
+                              <>
+                                <Power className="w-4 h-4 mr-1" />
+                                Release
+                              </>
+                            )}
+                          </Button>
+                        )}
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
                               <Button

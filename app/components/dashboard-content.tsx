@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useEffect, useState } from "react"
+import React, { useCallback, useEffect, useState } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { UpcomingBookings } from "./upcoming-booking"
 import { CurrentSlots } from "./current-slot"
@@ -60,7 +60,6 @@ export function DashboardContent() {
   const [refreshSlots, setRefreshSlots] = useState(false)
   const [vendorId, setVendorId] = useState<number | null>(null)
   const [dashboardData, setDashboardData] = useState<any>(null)
-  const [upcomingBookingsRefresh, setUpcomingBookingsRefresh] = useState(false)
   const [latestBookingEvent, setLatestBookingEvent] = useState<any>(null)
   const [activeTopTab, setActiveTopTab] = useState<'analytics' | 'devices'>('analytics')
   const [bookingInfo, setBookingInfo] = useState([])
@@ -71,18 +70,76 @@ export function DashboardContent() {
     todayBookingsChange?: number
     lastUpdate?: string
   }>({})
+  const [nowISTDateText, setNowISTDateText] = useState<string>("")
+  const [nowISTTimeText, setNowISTTimeText] = useState<string>("")
 
   const { socket, isConnected, joinVendor } = useSocket()
   const { isLocked } = useSubscription()
   const router = useRouter()
 
+  const loadLandingData = useCallback(async () => {
+    if (!vendorId) return
+    try {
+      const response = await fetch(`${DASHBOARD_URL}/api/getLandingPage/vendor/${vendorId}`)
+      const data = await response.json()
+      setDashboardData(data)
+      if (data?.stats) {
+        setRealTimeStats({
+          todayEarnings: data.stats.todayEarnings,
+          todayBookings: data.stats.todayBookings,
+          pendingAmount: data.stats.pendingAmount,
+          todayBookingsChange: data.stats.todayBookingsChange || 0,
+          lastUpdate: new Date().toLocaleTimeString(),
+        })
+      }
+    } catch (error) {
+      console.error('❌ Error loading dashboard data:', error)
+    }
+  }, [vendorId])
+
+  const loadConsoleData = useCallback(async () => {
+    if (!vendorId) return
+    try {
+      const response = await fetch(`${DASHBOARD_URL}/api/getConsoles/vendor/${vendorId}`)
+      const data = await response.json()
+      setBookingInfo(Array.isArray(data) ? data : [])
+    } catch (error) {
+      console.error('Error fetching booking data:', error)
+    }
+  }, [vendorId])
+
   const handleBookingAccepted = (bookingData: any) => {
     console.log('🎯 Booking accepted - updating upcoming bookings:', bookingData)
-    setUpcomingBookingsRefresh(prev => !prev)
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent('booking-accepted', { detail: bookingData }))
     }
   }
+
+  useEffect(() => {
+    const dateFormatter = new Intl.DateTimeFormat('en-IN', {
+      timeZone: 'Asia/Kolkata',
+      weekday: 'short',
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+    })
+    const timeFormatter = new Intl.DateTimeFormat('en-IN', {
+      timeZone: 'Asia/Kolkata',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true,
+    })
+    const tick = () => {
+      const now = new Date()
+      setNowISTDateText(dateFormatter.format(now))
+      setNowISTTimeText(timeFormatter.format(now))
+    }
+    tick()
+    const timer = setInterval(() => {
+      tick()
+    }, 1000)
+    return () => clearInterval(timer)
+  }, [])
 
   useEffect(() => {
     const token = localStorage.getItem("jwtToken")
@@ -98,34 +155,10 @@ export function DashboardContent() {
   }, [])
 
   useEffect(() => {
-    const loadInitialData = async () => {
-      if (!vendorId) return
-      try {
-        console.log('📊 Loading initial dashboard data...')
-        const response = await fetch(`${DASHBOARD_URL}/api/getLandingPage/vendor/${vendorId}`)
-        const data = await response.json()
-        setDashboardData(data)
-        console.log('✅ Initial dashboard data loaded')
-      } catch (error) {
-        console.error('❌ Error loading initial dashboard data:', error)
-      }
-    }
-    loadInitialData()
-  }, [vendorId])
-
-  useEffect(() => {
-    const fetchBookingData = async () => {
-      if (!vendorId) return
-      try {
-        const response = await fetch(`${DASHBOARD_URL}/api/getConsoles/vendor/${vendorId}`)
-        const data = await response.json()
-        setBookingInfo(data)
-      } catch (error) {
-        console.error('Error fetching booking data:', error)
-      }
-    }
-    fetchBookingData()
-  }, [vendorId, refreshSlots])
+    if (!vendorId) return
+    loadLandingData()
+    loadConsoleData()
+  }, [vendorId, loadLandingData, loadConsoleData])
 
   useEffect(() => {
     if (!socket || !vendorId || !isConnected) return
@@ -133,85 +166,95 @@ export function DashboardContent() {
     console.log('📊 Dashboard: Setting up booking event listener for real-time stats updates')
     joinVendor(vendorId)
 
-    const fetchFreshStats = async () => {
-      try {
-        console.log('🔄 Fetching fresh dashboard stats...')
-        const response = await fetch(`${DASHBOARD_URL}/api/getLandingPage/vendor/${vendorId}`)
-        const data = await response.json()
-        if (data.stats) {
-          console.log('💰 Updated stats received:', data.stats)
-          setRealTimeStats({
-            todayEarnings: data.stats.todayEarnings,
-            todayBookings: data.stats.todayBookings,
-            pendingAmount: data.stats.pendingAmount,
-            todayBookingsChange: data.stats.todayBookingsChange || 0,
-            lastUpdate: new Date().toLocaleTimeString()
-          })
-          setDashboardData((prev: any) => ({ ...prev, stats: data.stats }))
-        }
-      } catch (error) {
-        console.error('❌ Error fetching fresh stats:', error)
-      }
-    }
-
     function handleBookingEvent(data: any) {
       console.log('📅 Booking event received:', data)
-      if (data.vendorId === vendorId) {
+      const eventVendorId = Number(data?.vendorId ?? data?.vendor_id)
+      if (eventVendorId === vendorId) {
         const status = (data.status || '').toLowerCase()
         if (data.status === 'pending_acceptance') {
           console.log('🔔 Dashboard: Passing pay-at-cafe event to NotificationButton')
           setLatestBookingEvent(data)
         }
         if (status === 'confirmed' || status === 'paid' || status === 'completed') {
-          console.log('✅ Booking confirmed/paid/completed - updating dashboard stats')
           setRealTimeStats(prev => ({
             ...prev,
-            todayBookings: (prev.todayBookings || dashboardData?.stats?.todayBookings || 0) + 1,
-            todayEarnings: (prev.todayEarnings || dashboardData?.stats?.todayEarnings || 0) + (data.amount || data.slot_price || 0),
+            todayBookings: (prev.todayBookings || 0) + 1,
+            todayEarnings: (prev.todayEarnings || 0) + (data.amount || data.slot_price || 0),
             lastUpdate: new Date().toLocaleTimeString()
           }))
-          setTimeout(() => { fetchFreshStats() }, 1000)
         }
-        if (status === 'cancelled' || status === 'rejected') {
-          console.log('❌ Booking cancelled/rejected - updating dashboard stats')
-          setTimeout(() => { fetchFreshStats() }, 500)
+        if (status === 'cancelled' || status === 'rejected' || status === 'completed') {
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('history-booking-add', { detail: data }))
+          }
         }
       }
     }
 
     function handleUpcomingBookingEvent(data: any) {
       console.log('📅 Upcoming booking event received:', data)
-      if (data.vendorId === vendorId && data.status === 'Confirmed') {
-        console.log('✅ New confirmed booking - updating stats')
-        fetchFreshStats()
+      const eventVendorId = Number(data?.vendorId ?? data?.vendor_id)
+      if (eventVendorId === vendorId && (data.status === 'Confirmed' || data.status === 'confirmed')) {
+        setRealTimeStats(prev => ({
+          ...prev,
+          todayBookings: (prev.todayBookings || 0) + 1,
+          lastUpdate: new Date().toLocaleTimeString()
+        }))
       }
     }
 
     function handleConsoleAvailabilityEvent(data: any) {
-      console.log('🎮 Console availability event received:', data)
-      if (data.vendorId === vendorId && data.is_available === true) {
-        console.log('🎮 Session ended - refreshing stats for potential earnings update')
-        setTimeout(() => { fetchFreshStats() }, 1000)
+      const eventVendorId = Number(data?.vendorId ?? data?.vendor_id)
+      if (eventVendorId === vendorId && data?.console_id !== undefined) {
+        setBookingInfo((prev: any[]) =>
+          Array.isArray(prev)
+            ? prev.map((item: any) =>
+                Number(item?.id) === Number(data.console_id)
+                  ? { ...item, status: Boolean(data.is_available), is_available: Boolean(data.is_available) }
+                  : item
+              )
+            : prev
+        )
       }
+    }
+
+    function handleSocketResync() {
+      joinVendor(vendorId)
+      loadLandingData()
+      loadConsoleData()
     }
 
     socket.on('booking', handleBookingEvent)
     socket.on('upcoming_booking', handleUpcomingBookingEvent)
     socket.on('console_availability', handleConsoleAvailabilityEvent)
+    socket.on('connect', handleSocketResync)
+    if (socket.io) {
+      socket.io.on('reconnect', handleSocketResync)
+    }
+    window.addEventListener('socket-reconnected', handleSocketResync)
 
     return () => {
       console.log('🧹 Cleaning up dashboard booking listeners')
       socket.off('booking', handleBookingEvent)
       socket.off('upcoming_booking', handleUpcomingBookingEvent)
       socket.off('console_availability', handleConsoleAvailabilityEvent)
+      socket.off('connect', handleSocketResync)
+      if (socket.io) {
+        socket.io.off('reconnect', handleSocketResync)
+      }
+      window.removeEventListener('socket-reconnected', handleSocketResync)
     }
-  }, [socket, vendorId, isConnected, joinVendor, dashboardData?.stats])
+  }, [socket, vendorId, isConnected, joinVendor, loadLandingData, loadConsoleData])
 
   useEffect(() => {
-    const handleRefresh = () => setRefreshSlots(prev => !prev)
+    const handleRefresh = () => {
+      setRefreshSlots(prev => !prev)
+      loadLandingData()
+      loadConsoleData()
+    }
     window.addEventListener("refresh-dashboard", handleRefresh)
     return () => window.removeEventListener("refresh-dashboard", handleRefresh)
-  }, [])
+  }, [loadLandingData, loadConsoleData])
 
   const currentStats = {
     todayEarnings: realTimeStats.todayEarnings ?? dashboardData?.stats?.todayEarnings ?? 0,
@@ -460,6 +503,10 @@ export function DashboardContent() {
                   onBookingAccepted={handleBookingAccepted}
                   latestBookingEvent={latestBookingEvent}
                 />
+                <div className="ml-auto flex max-w-full items-center gap-2 rounded-full border border-emerald-400/30 bg-emerald-500/10 px-2 py-1 text-[11px] text-emerald-200 sm:px-3 whitespace-nowrap">
+                  <span className="font-semibold">{nowISTTimeText} IST</span>
+                  <span className="hidden lg:inline text-emerald-300/80">• {nowISTDateText}</span>
+                </div>
                 {isConnected && realTimeStats.lastUpdate && (
                   <motion.div
                     animate={{ scale: [1, 1.1, 1] }}
@@ -526,15 +573,14 @@ export function DashboardContent() {
                 transition={{ delay: 0.3 }}
                 className="flex-1 min-h-0 lg:h-full"
               >
-                <Card className="gaming-panel h-full rounded-xl">
-                  <CardContent className="p-2 sm:p-4 h-full overflow-hidden relative">
-                    <CurrentSlots
-                      currentSlots={dashboardData.currentSlots}
-                      refreshSlots={refreshSlots}
-                      setRefreshSlots={setRefreshSlots}
-                    />
-                  </CardContent>
-                </Card>
+                <div className="h-full overflow-hidden relative">
+                  <CurrentSlots
+                    currentSlots={dashboardData.currentSlots}
+                    historyBookings={dashboardData.historyBookings || []}
+                    refreshSlots={refreshSlots}
+                    setRefreshSlots={setRefreshSlots}
+                  />
+                </div>
               </motion.div>
             </div>
 
@@ -545,16 +591,13 @@ export function DashboardContent() {
               transition={{ delay: 0.4 }}
               className="flex flex-col min-h-0 lg:col-span-4 xl:col-span-3 lg:h-full"
             >
-              <Card className="gaming-panel relative flex-1 min-h-[320px] lg:min-h-0 rounded-xl lg:h-full">
-                <CardContent className="p-0 h-full overflow-hidden">
-                  <UpcomingBookings
-                    upcomingBookings={dashboardData.upcomingBookings || []}
-                    vendorId={vendorId?.toString()}
-                    setRefreshSlots={setRefreshSlots}
-                    refreshTrigger={upcomingBookingsRefresh}
-                  />
-                </CardContent>
-              </Card>
+              <div className="relative flex-1 min-h-[320px] lg:min-h-0 rounded-xl lg:h-full overflow-hidden">
+                <UpcomingBookings
+                  upcomingBookings={dashboardData.upcomingBookings || []}
+                  vendorId={vendorId?.toString()}
+                  setRefreshSlots={setRefreshSlots}
+                />
+              </div>
             </motion.div>
           </div>
           </div>
