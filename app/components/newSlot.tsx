@@ -33,6 +33,7 @@ import {
 import { BOOKING_URL, DASHBOARD_URL } from '@/src/config/env'
 import { ConsoleType } from './types'
 import MealSelector from './mealSelector'
+import CreditAccountModal, { type MonthlyCreditAccountSummary } from './credit-account-modal'
 
 type PillColor = "green" | "blue" | "purple" | "yellow" | "red"
 type ConsoleFilter = "PC" | "PS5" | "Xbox" | "VR"
@@ -140,6 +141,7 @@ interface SelectedMeal {
 }
 
 interface UserSuggestion {
+  id?: number
   name: string
   email: string
   phone: string
@@ -346,13 +348,17 @@ function SlotBookingForm({
 
 
 
-  const [userList, setUserList] = useState<{ name: string; email: string; phone: string }[]>([])
-  const [emailSuggestions, setEmailSuggestions] = useState<{ name: string; email: string; phone: string }[]>([])
-  const [phoneSuggestions, setPhoneSuggestions] = useState<{ name: string; email: string; phone: string }[]>([])
-  const [nameSuggestions, setNameSuggestions] = useState<{ name: string; email: string; phone: string }[]>([])
+  const [userList, setUserList] = useState<{ id?: number; name: string; email: string; phone: string }[]>([])
+  const [emailSuggestions, setEmailSuggestions] = useState<{ id?: number; name: string; email: string; phone: string }[]>([])
+  const [phoneSuggestions, setPhoneSuggestions] = useState<{ id?: number; name: string; email: string; phone: string }[]>([])
+  const [nameSuggestions, setNameSuggestions] = useState<{ id?: number; name: string; email: string; phone: string }[]>([])
   const [focusedInput, setFocusedInput] = useState<string>('')
   const [focusedSquadMemberId, setFocusedSquadMemberId] = useState<string | null>(null)
   const [squadMemberSuggestions, setSquadMemberSuggestions] = useState<Record<string, UserSuggestion[]>>({})
+  const [creditAccount, setCreditAccount] = useState<MonthlyCreditAccountSummary | null>(null)
+  const [creditAccountLoading, setCreditAccountLoading] = useState(false)
+  const [creditAccountError, setCreditAccountError] = useState('')
+  const [showCreditAccountModal, setShowCreditAccountModal] = useState(false)
   const blurTimeoutRef = useRef<number | null>(null)
 
 
@@ -679,6 +685,62 @@ useEffect(() => {
     setNameSuggestions([])
     setFocusedInput("")
   }
+
+  const matchedPrimaryUser = useMemo(() => {
+    const normalizedEmail = email.trim().toLowerCase()
+    const normalizedPhone = phone.trim()
+    const normalizedName = name.trim().toLowerCase()
+    return userList.find((user) => {
+      const byEmail = normalizedEmail && user.email?.trim().toLowerCase() === normalizedEmail
+      const byPhone = normalizedPhone && user.phone?.trim() === normalizedPhone
+      const byName = normalizedName && user.name?.trim().toLowerCase() === normalizedName
+      return Boolean(byEmail || byPhone || (byName && (normalizedEmail || normalizedPhone)))
+    }) || null
+  }, [userList, email, phone, name])
+
+  const availableCreditAmount = useMemo(() => {
+    if (!creditAccount) return 0
+    return Math.max(Number(creditAccount.credit_limit || 0) - Number(creditAccount.outstanding_amount || 0), 0)
+  }, [creditAccount])
+
+  useEffect(() => {
+    if (!isOpen || paymentType !== 'Monthly Credit') return
+
+    const vendorId = getVendorIdFromToken()
+    if (!vendorId) return
+
+    let cancelled = false
+    const loadCreditAccount = async () => {
+      setCreditAccountLoading(true)
+      setCreditAccountError('')
+      try {
+        const res = await fetch(`${BOOKING_URL}/api/vendor/${vendorId}/monthly-credit/accounts`)
+        const data = await res.json()
+        if (!res.ok) {
+          throw new Error(data?.message || data?.error || 'Unable to load monthly credit accounts')
+        }
+        const accounts = Array.isArray(data?.accounts) ? data.accounts : []
+        const matchedAccount = matchedPrimaryUser?.id
+          ? accounts.find((row: any) => Number(row.user_id) === Number(matchedPrimaryUser.id))
+          : null
+        if (!cancelled) {
+          setCreditAccount(matchedAccount || null)
+        }
+      } catch (error: any) {
+        if (!cancelled) {
+          setCreditAccount(null)
+          setCreditAccountError(error?.message || 'Unable to load monthly credit accounts')
+        }
+      } finally {
+        if (!cancelled) setCreditAccountLoading(false)
+      }
+    }
+
+    loadCreditAccount()
+    return () => {
+      cancelled = true
+    }
+  }, [isOpen, paymentType, matchedPrimaryUser?.id])
 
   const handleMealSelectorConfirm = (meals: SelectedMeal[]) => {
     console.log('🍽️ Meals confirmed:', meals)
@@ -1034,9 +1096,54 @@ const getEffectivePrice = (slot: SelectedSlot): number => {
         {paymentMethodMeta[paymentType]?.hint}
       </p>
       {paymentType === 'Monthly Credit' && (
-        <p className="mt-2 rounded-md border border-amber-200 bg-amber-50 px-2.5 py-1.5 text-xs text-amber-700 dark:border-amber-700 dark:bg-amber-900/25 dark:text-amber-300">
-          Monthly credit works only for users with an active Gamers Credit account.
-        </p>
+        <div className="mt-2 space-y-2">
+          <p className="rounded-md border border-amber-200 bg-amber-50 px-2.5 py-1.5 text-xs text-amber-700 dark:border-amber-700 dark:bg-amber-900/25 dark:text-amber-300">
+            Monthly credit works only for users with an active Gamers Credit account.
+          </p>
+          <div className="rounded-xl border border-gray-300 bg-slate-50/60 p-3 dark:border-slate-700 dark:bg-slate-900/60">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-sm font-semibold text-gray-800 dark:text-white">Credit Account Status</p>
+                <p className="text-xs text-gray-500 dark:text-slate-400">
+                  {matchedPrimaryUser?.id
+                    ? `Matched customer: ${matchedPrimaryUser.name}`
+                    : 'No known customer matched yet. Create credit on the fly if needed.'}
+                </p>
+              </div>
+              {!creditAccount?.is_active && (
+                <button
+                  type="button"
+                  onClick={() => setShowCreditAccountModal(true)}
+                  className="rounded-lg border border-cyan-500/40 bg-cyan-500/10 px-3 py-1.5 text-xs font-medium text-cyan-700 dark:text-cyan-200"
+                >
+                  Create Credit Account
+                </button>
+              )}
+            </div>
+            {creditAccountLoading ? (
+              <p className="mt-2 text-xs text-gray-500 dark:text-slate-400">Loading credit account...</p>
+            ) : creditAccount?.is_active ? (
+              <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-3">
+                <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-3 py-2">
+                  <p className="text-[11px] uppercase tracking-wide text-emerald-700 dark:text-emerald-300">Limit</p>
+                  <p className="text-sm font-semibold text-emerald-900 dark:text-emerald-100">₹{Number(creditAccount.credit_limit || 0).toFixed(2)}</p>
+                </div>
+                <div className="rounded-lg border border-amber-500/20 bg-amber-500/10 px-3 py-2">
+                  <p className="text-[11px] uppercase tracking-wide text-amber-700 dark:text-amber-300">Outstanding</p>
+                  <p className="text-sm font-semibold text-amber-900 dark:text-amber-100">₹{Number(creditAccount.outstanding_amount || 0).toFixed(2)}</p>
+                </div>
+                <div className="rounded-lg border border-cyan-500/20 bg-cyan-500/10 px-3 py-2">
+                  <p className="text-[11px] uppercase tracking-wide text-cyan-700 dark:text-cyan-300">Available</p>
+                  <p className="text-sm font-semibold text-cyan-900 dark:text-cyan-100">₹{availableCreditAmount.toFixed(2)}</p>
+                </div>
+              </div>
+            ) : (
+              <div className="mt-2 rounded-lg border border-red-500/20 bg-red-500/10 px-3 py-2 text-xs text-red-600 dark:text-red-300">
+                {creditAccountError || 'No credit account configured for this customer.'}
+              </div>
+            )}
+          </div>
+        </div>
       )}
 
       <AnimatePresence>
@@ -1165,6 +1272,16 @@ const getEffectivePrice = (slot: SelectedSlot): number => {
       newErrors.pass = passError
     }
   }
+
+    if (paymentType === 'Monthly Credit') {
+      if (creditAccountLoading) {
+        newErrors.payment = 'Monthly credit account status is still loading'
+      } else if (!creditAccount?.is_active) {
+        newErrors.payment = 'Monthly credit account is not configured for this customer'
+      } else if (availableCreditAmount < totalAmount) {
+        newErrors.payment = `Available credit is ₹${availableCreditAmount.toFixed(2)}, booking needs ₹${totalAmount.toFixed(2)}`
+      }
+    }
 
     setErrors(newErrors)
     console.log('✅ Form validation result:', { isValid: Object.keys(newErrors).length === 0, errors: newErrors })
@@ -1994,7 +2111,7 @@ if (response.ok || result.success === true || result.success === 'true') {
               <Button
                 type="submit"
                 form="slot-booking-form"
-                disabled={isSubmitting}
+                disabled={isSubmitting || (paymentType === 'Monthly Credit' && (!creditAccount?.is_active || availableCreditAmount < totalAmount))}
                 className="flex-1 bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white disabled:opacity-50"
               >
                 {isSubmitting ? (
@@ -2018,6 +2135,29 @@ if (response.ok || result.success === true || result.success === 'true') {
             onClose={handleMealSelectorClose}
             onConfirm={handleMealSelectorConfirm}
             initialSelectedMeals={selectedMeals}
+          />
+          <CreditAccountModal
+            open={showCreditAccountModal}
+            vendorId={getVendorIdFromToken()}
+            customer={{
+              userId: matchedPrimaryUser?.id ?? null,
+              name,
+              email,
+              phone,
+            }}
+            onClose={() => setShowCreditAccountModal(false)}
+            onCreated={({ account, user }) => {
+              setCreditAccount(account)
+              setName(user.name)
+              setEmail(user.email || '')
+              setPhone(user.phone || '')
+              setShowCreditAccountModal(false)
+              setUserList((prev) => {
+                const nextUser = { id: user.userId || undefined, name: user.name, email: user.email || '', phone: user.phone || '' }
+                const filtered = prev.filter((row) => !(row.id && nextUser.id && Number(row.id) === Number(nextUser.id)))
+                return [nextUser, ...filtered]
+              })
+            }}
           />
         </motion.div>
       </motion.div>
