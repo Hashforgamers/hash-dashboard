@@ -206,7 +206,7 @@ const ExtraBookingOverlay: React.FC<ExtraBookingOverlayProps> = ({
     const parsedWaiveOff = parseFloat(waiveOffAmount) || 0;
 
     const extraBookingPayload = {
-      consoleNumber: selectedSlot.consoleNumber,
+      consoleNumber: selectedSlot.consoleId || selectedSlot.consoleNumber,
       consoleType: selectedSlot.consoleType,
       date: new Date().toISOString().split("T")[0],
       slotId: selectedSlot.slotId,
@@ -230,13 +230,34 @@ const ExtraBookingOverlay: React.FC<ExtraBookingOverlayProps> = ({
       await settlePendingBookingCharges(bookingId, paymentMode, parsedWaiveOff);
       console.log('💰 Pending charges settled successfully');
 
-      const success = await releaseSlot(
-        selectedSlot.consoleType,
-        selectedSlot.game_id,
-        selectedSlot.consoleNumber,
-        vendorId,
-        setRefreshSlots
+      const squadDetails = (selectedSlot?.squadDetails && typeof selectedSlot.squadDetails === "object")
+        ? selectedSlot.squadDetails
+        : {};
+      const isPcSquad = String(squadDetails?.console_group || "").toLowerCase() === "pc"
+        && Number(squadDetails?.player_count || selectedSlot?.squadPlayerCount || 1) > 1;
+
+      const requestedConsoleIds = isPcSquad && Array.isArray(squadDetails?.assigned_console_ids)
+        ? squadDetails.assigned_console_ids
+        : [selectedSlot.consoleId || selectedSlot.consoleNumber];
+      const releaseConsoleIds = Array.from(
+        new Set(
+          requestedConsoleIds
+            .map((id: any) => Number(id))
+            .filter((id: number) => Number.isFinite(id) && id > 0)
+        )
       );
+
+      let success = true;
+      for (const consoleId of releaseConsoleIds) {
+        const released = await releaseSlot(
+          selectedSlot.consoleType,
+          selectedSlot.game_id,
+          String(consoleId),
+          vendorId,
+          setRefreshSlots
+        );
+        success = success && Boolean(released);
+      }
       console.log('💰 Release slot result:', success);
 
       if (success) {
@@ -528,11 +549,12 @@ const ExtraBookingOverlay: React.FC<ExtraBookingOverlayProps> = ({
                   <label className="mb-2 block text-sm font-medium text-slate-200">
                     Select Payment Mode
                   </label>
-                  <div className="grid grid-cols-3 gap-2 sm:gap-3">
+                  <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3">
                     {[
                       { key: "cash", label: "Cash", Icon: IndianRupee },
                       { key: "card", label: "Card", Icon: CreditCard },
                       { key: "upi", label: "UPI", Icon: Smartphone },
+                      { key: "credit", label: "Credit", Icon: Wallet },
                     ].map(({ key, label, Icon }) => (
                       <motion.button
                         key={key}

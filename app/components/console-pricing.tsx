@@ -22,6 +22,7 @@ import {
   Table as TableIcon,
   Minus,
   Save,
+  Users,
 } from "lucide-react";
 import { BOOKING_URL, DASHBOARD_URL } from "@/src/config/env";
 import { jwtDecode } from "jwt-decode";
@@ -117,6 +118,8 @@ interface ControllerPricingRule {
   tiers: ControllerTier[];
 }
 
+type SquadPricingState = Record<string, Record<string, number>>;
+
 interface VendorTaxProfile {
   vendor_id: number;
   gst_registered: boolean;
@@ -181,6 +184,29 @@ const defaultControllerPricing: ControllerPricingState = {
 
 const controllerPreviewQuantities = [1, 2, 3, 4];
 const controllerSupportedConsoleTypes = new Set(["ps5", "xbox"]);
+const squadMaxPlayersByConsole: Record<string, number> = {
+  pc: 10,
+};
+const squadGroupLabelByConsoleType: Record<string, string> = {
+  pc: "pc",
+};
+const squadRuleDefaults: SquadPricingState = {
+  pc: { "2": 0, "3": 3, "4": 5, "5": 8 },
+};
+
+const round2 = (value: number) => Math.round((value + Number.EPSILON) * 100) / 100;
+const discountToFinalUnitAmount = (base: number, discountPercent: number) =>
+  round2(Math.max(0, base - (base * Math.max(0, Math.min(90, discountPercent))) / 100));
+const discountToFinalTotalAmount = (base: number, discountPercent: number, players: number) =>
+  round2(discountToFinalUnitAmount(base, discountPercent) * Math.max(1, players));
+const finalTotalAmountToDiscount = (base: number, finalTotalAmount: number, players: number) => {
+  if (!base || base <= 0) return 0;
+  const safePlayers = Math.max(1, players);
+  const maxTotal = base * safePlayers;
+  const normalizedFinalTotal = Math.max(0, Math.min(maxTotal, finalTotalAmount));
+  return round2(((maxTotal - normalizedFinalTotal) / maxTotal) * 100);
+};
+const squadRowKey = (group: string, players: number) => `${group}-${players}`;
 
 export default function ConsolePricing() {
   const [prices, setPrices] = useState<PricingState>(() => {
@@ -196,7 +222,7 @@ export default function ConsolePricing() {
   const [successMessage, setSuccessMessage] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [vendorId, setVendorId] = useState<number | null>(null);
-  const [activeTab, setActiveTab] = useState<"default" | "offers" | "controllers" | "gst" | "credit">("default");
+  const [activeTab, setActiveTab] = useState<"default" | "offers" | "controllers" | "squad" | "gst" | "credit">("default");
   const [viewMode, setViewMode] = useState<"grid" | "table">("table");
   const [offers, setOffers] = useState<PricingOffer[]>([]);
   const [availableGames, setAvailableGames] = useState<AvailableGame[]>([]);
@@ -213,6 +239,13 @@ export default function ConsolePricing() {
   const [isSavingControllerPricing, setIsSavingControllerPricing] = useState(false);
   const [controllerPricingError, setControllerPricingError] = useState<string | null>(null);
   const [controllerPricingChanged, setControllerPricingChanged] = useState(false);
+  const [squadPricing, setSquadPricing] = useState<SquadPricingState>(squadRuleDefaults);
+  const [isLoadingSquadPricing, setIsLoadingSquadPricing] = useState(false);
+  const [isSavingSquadPricing, setIsSavingSquadPricing] = useState(false);
+  const [squadPricingChanged, setSquadPricingChanged] = useState(false);
+  const [squadPricingError, setSquadPricingError] = useState<string | null>(null);
+  const [squadFinalDraft, setSquadFinalDraft] = useState<Record<string, string>>({});
+  const [squadRuleWarnings, setSquadRuleWarnings] = useState<Record<string, string>>({});
   const [taxProfile, setTaxProfile] = useState<VendorTaxProfile>({
     vendor_id: 0,
     gst_registered: false,
@@ -302,6 +335,11 @@ export default function ConsolePricing() {
   }, [vendorId, activeTab]);
 
   useEffect(() => {
+    if (!vendorId || activeTab !== "squad") return;
+    fetchSquadPricingRules();
+  }, [vendorId, activeTab]);
+
+  useEffect(() => {
     if (!vendorId || activeTab !== "gst") return;
     fetchTaxProfile();
   }, [vendorId, activeTab]);
@@ -345,6 +383,48 @@ export default function ConsolePricing() {
       setControllerPricingError("Unable to load controller pricing from server.");
     } finally {
       setIsLoadingControllerPricing(false);
+    }
+  };
+
+  const fetchSquadPricingRules = async () => {
+    if (!vendorId) return;
+    setIsLoadingSquadPricing(true);
+    setSquadPricingError(null);
+    try {
+      const res = await fetch(`${DASHBOARD_URL}/api/vendor/${vendorId}/squad-pricing-rules`);
+      if (!res.ok) throw new Error("Failed to fetch squad pricing rules");
+      const data = await res.json();
+      const pricing = data?.pricing || {};
+      const next: SquadPricingState = { pc: {} };
+      for (const group of Object.keys(next)) {
+        const incoming = pricing?.[group];
+        if (incoming && typeof incoming === "object" && Object.keys(incoming).length > 0) {
+          Object.entries(incoming).forEach(([players, discount]) => {
+            const p = Number(players);
+            if (Number.isNaN(p)) return;
+            if (typeof discount === "object" && discount !== null) {
+              const obj: any = discount;
+              next[group][String(p)] = Number(obj.discount_percent ?? 0);
+              return;
+            }
+            next[group][String(p)] = Number(discount ?? 0);
+          });
+        } else {
+          const maxPlayers = Math.min(squadMaxPlayersByConsole[group] || 6, 5);
+          for (let players = 2; players <= maxPlayers; players += 1) {
+            next[group][String(players)] = Number(squadRuleDefaults[group]?.[String(players)] ?? 0);
+          }
+        }
+      }
+      setSquadPricing(next);
+      setSquadFinalDraft({});
+      setSquadRuleWarnings({});
+      setSquadPricingChanged(false);
+    } catch (error) {
+      console.error("Failed to load squad pricing rules", error);
+      setSquadPricingError("Unable to load squad pricing rules.");
+    } finally {
+      setIsLoadingSquadPricing(false);
     }
   };
 
@@ -820,6 +900,212 @@ export default function ConsolePricing() {
     }
   };
 
+  const updateSquadRule = (group: string, playerCount: number, value: string) => {
+    const parsed = Math.max(0, Math.min(90, Number(value) || 0));
+    const rowKey = squadRowKey(group, playerCount);
+    setSquadPricing((prev) => ({
+      ...prev,
+      [group]: {
+        ...(prev[group] || {}),
+        [String(playerCount)]: parsed,
+      },
+    }));
+    setSquadFinalDraft((prev) => {
+      const next = { ...prev };
+      delete next[rowKey];
+      return next;
+    });
+    setSquadRuleWarnings((prev) => {
+      const next = { ...prev };
+      delete next[rowKey];
+      return next;
+    });
+    setSquadPricingChanged(true);
+  };
+
+  const updateSquadRuleByFinalAmount = (group: string, playerCount: number, value: string, basePrice: number) => {
+    const rowKey = squadRowKey(group, playerCount);
+    setSquadFinalDraft((prev) => ({ ...prev, [rowKey]: value }));
+
+    const parsed = Number(value);
+    const maxTotal = round2(Math.max(0, basePrice * playerCount));
+    if (!Number.isNaN(parsed) && parsed > maxTotal) {
+      setSquadRuleWarnings((prev) => ({
+        ...prev,
+        [rowKey]: `Discounted price is more than base price. Max allowed is ₹${maxTotal}.`,
+      }));
+    } else {
+      setSquadRuleWarnings((prev) => {
+        const next = { ...prev };
+        delete next[rowKey];
+        return next;
+      });
+    }
+  };
+
+  const checkAndApplySquadFinalAmount = (group: string, playerCount: number, basePrice: number) => {
+    const rowKey = squadRowKey(group, playerCount);
+    const maxTotal = round2(Math.max(0, basePrice * playerCount));
+    const draftValue = squadFinalDraft[rowKey];
+    const parsed = Number(draftValue);
+    const safeFinalTotal = Number.isNaN(parsed) ? maxTotal : Math.max(0, parsed);
+
+    if (safeFinalTotal > maxTotal) {
+      // Too high final amount means negative discount; enforce minimum discount = 0%.
+      setSquadPricing((prev) => ({
+        ...prev,
+        [group]: {
+          ...(prev[group] || {}),
+          [String(playerCount)]: 0,
+        },
+      }));
+      setSquadFinalDraft((prev) => ({ ...prev, [rowKey]: String(maxTotal) }));
+      setSquadRuleWarnings((prev) => ({
+        ...prev,
+        [rowKey]: `Discounted price is more than base price. Auto-set to minimum discount (0%).`,
+      }));
+      setSquadPricingChanged(true);
+      return;
+    }
+
+    const discount = finalTotalAmountToDiscount(basePrice, safeFinalTotal, playerCount);
+    setSquadPricing((prev) => ({
+      ...prev,
+      [group]: {
+        ...(prev[group] || {}),
+        [String(playerCount)]: discount,
+      },
+    }));
+    setSquadFinalDraft((prev) => ({
+      ...prev,
+      [rowKey]: String(round2(safeFinalTotal)),
+    }));
+    setSquadRuleWarnings((prev) => {
+      const next = { ...prev };
+      delete next[rowKey];
+      return next;
+    });
+    setSquadPricingChanged(true);
+  };
+
+  const changeSquadRulePlayerCount = (group: string, oldPlayerCount: number, nextValue: string) => {
+    const maxPlayers = squadMaxPlayersByConsole[group] || 10;
+    const parsed = Math.max(2, Math.min(maxPlayers, Math.round(Number(nextValue) || oldPlayerCount)));
+    setSquadPricing((prev) => {
+      const current = { ...(prev[group] || {}) };
+      const oldKey = String(oldPlayerCount);
+      const newKey = String(parsed);
+      const oldDiscount = Number(current[oldKey] ?? 0);
+      delete current[oldKey];
+      if (current[newKey] === undefined) {
+        current[newKey] = oldDiscount;
+      } else {
+        current[newKey] = Math.max(0, Math.min(90, Number(current[newKey] || 0)));
+      }
+      return { ...prev, [group]: current };
+    });
+    const oldKey = squadRowKey(group, oldPlayerCount);
+    const newKey = squadRowKey(group, parsed);
+    setSquadFinalDraft((prev) => {
+      const next = { ...prev };
+      if (prev[oldKey] !== undefined && next[newKey] === undefined) {
+        next[newKey] = prev[oldKey];
+      }
+      delete next[oldKey];
+      return next;
+    });
+    setSquadRuleWarnings((prev) => {
+      const next = { ...prev };
+      if (prev[oldKey] && !next[newKey]) {
+        next[newKey] = prev[oldKey];
+      }
+      delete next[oldKey];
+      return next;
+    });
+    setSquadPricingChanged(true);
+  };
+
+  const removeSquadRule = (group: string, playerCount: number) => {
+    setSquadPricing((prev) => {
+      const current = { ...(prev[group] || {}) };
+      delete current[String(playerCount)];
+      return { ...prev, [group]: current };
+    });
+    const rowKey = squadRowKey(group, playerCount);
+    setSquadFinalDraft((prev) => {
+      const next = { ...prev };
+      delete next[rowKey];
+      return next;
+    });
+    setSquadRuleWarnings((prev) => {
+      const next = { ...prev };
+      delete next[rowKey];
+      return next;
+    });
+    setSquadPricingChanged(true);
+  };
+
+  const addSquadRule = (group: string) => {
+    const maxPlayers = squadMaxPlayersByConsole[group] || 10;
+    setSquadPricing((prev) => {
+      const current = { ...(prev[group] || {}) };
+      let nextPlayerCount: number | null = null;
+      for (let p = 2; p <= maxPlayers; p += 1) {
+        if (current[String(p)] === undefined) {
+          nextPlayerCount = p;
+          break;
+        }
+      }
+      if (nextPlayerCount === null) return prev;
+      current[String(nextPlayerCount)] = 0;
+      return { ...prev, [group]: current };
+    });
+    setSquadPricingChanged(true);
+  };
+
+  const saveSquadPricingRules = async () => {
+    if (!vendorId) return;
+    setIsSavingSquadPricing(true);
+    setSquadPricingError(null);
+    try {
+      const pricingPayload = Object.entries(squadPricing).reduce((acc, [group, rules]) => {
+        const consoleTypeKey =
+          group === "ps" ? "ps5" : group === "xbox" ? "xbox" : group === "pc" ? "pc" : "vr";
+        const basePrice = Number(prices?.[consoleTypeKey]?.value || 0);
+        acc[group] = {};
+        Object.entries(rules || {}).forEach(([players, discount]) => {
+          const playerCount = Math.max(1, Number(players) || 1);
+          const discountPercent = round2(Math.max(0, Math.min(90, Number(discount) || 0)));
+          acc[group][players] = {
+            discount_percent: discountPercent,
+            final_amount: discountToFinalTotalAmount(basePrice, discountPercent, playerCount),
+          };
+        });
+        return acc;
+      }, {} as Record<string, Record<string, { discount_percent: number; final_amount: number }>>);
+
+      const response = await fetch(`${DASHBOARD_URL}/api/vendor/${vendorId}/squad-pricing-rules`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ pricing: pricingPayload }),
+      });
+      const data = await response.json();
+      if (!response.ok || !data?.success) {
+        const backendMessage =
+          data?.message || (Array.isArray(data?.errors) ? data.errors.join(", ") : "Unable to save");
+        throw new Error(backendMessage);
+      }
+      showToast("Squad pricing rules saved.");
+      setSquadPricingChanged(false);
+      fetchSquadPricingRules();
+    } catch (error) {
+      console.error("Failed to save squad pricing rules", error);
+      setSquadPricingError(error instanceof Error ? error.message : "Unable to save squad pricing rules.");
+    } finally {
+      setIsSavingSquadPricing(false);
+    }
+  };
+
   const canSave =
     Object.values(prices).some((p) => p.hasChanged) &&
     Object.values(errors).length === 0;
@@ -831,6 +1117,21 @@ export default function ConsolePricing() {
     "inline-flex items-center justify-center rounded-lg border border-rose-400/30 bg-rose-500/10 p-2 text-rose-300 transition-all duration-200 hover:border-rose-300/60 hover:bg-rose-500/20 disabled:cursor-not-allowed disabled:opacity-50";
   const iconButtonClass =
     "inline-flex items-center justify-center rounded-lg border border-emerald-400/30 bg-emerald-500/10 p-2 text-emerald-300 transition-all duration-200 hover:border-emerald-300/60 hover:bg-emerald-500/20 disabled:cursor-not-allowed disabled:opacity-50";
+  const squadOverview = (() => {
+    const groups = Object.keys(squadPricing || {});
+    const allRules = groups.flatMap((group) =>
+      Object.values(squadPricing[group] || {}).map((discount) => Number(discount || 0))
+    );
+    const slabCount = allRules.length;
+    const avgDiscount = slabCount > 0 ? round2(allRules.reduce((a, b) => a + b, 0) / slabCount) : 0;
+    const highestDiscount = slabCount > 0 ? round2(Math.max(...allRules)) : 0;
+    return {
+      consoleCount: groups.length || 0,
+      slabCount,
+      avgDiscount,
+      highestDiscount,
+    };
+  })();
 
   return (
     <div className="flex h-full min-h-0 flex-col gap-4 overflow-hidden px-1 pb-2 sm:px-2">
@@ -884,6 +1185,17 @@ export default function ConsolePricing() {
         >
           <Gamepad className="icon-md" />
           Controller Pricing
+        </button>
+        <button
+          onClick={() => setActiveTab("squad")}
+          className={`inline-flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold transition-all sm:text-sm ${
+            activeTab === "squad"
+              ? "border border-cyan-400/35 bg-cyan-500/15 text-cyan-100"
+              : "border border-transparent bg-slate-900/40 text-slate-300 hover:border-cyan-400/25 hover:text-cyan-100"
+          }`}
+        >
+          <Users className="icon-md" />
+          Squad Pricing
         </button>
       </div>
 
@@ -1243,6 +1555,7 @@ export default function ConsolePricing() {
                 </Card>
               );
             })}
+
           </div>
           )}
 
@@ -1261,6 +1574,251 @@ export default function ConsolePricing() {
                 <>
                   <Save className="icon-md" />
                   Save Controller Pricing
+                </>
+              )}
+            </button>
+          </div>
+        </motion.div>
+      )}
+
+      {activeTab === "squad" && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.2 }}
+          className="flex flex-1 min-h-0 flex-col gap-4 overflow-hidden"
+        >
+          <div className="gaming-panel shrink-0 rounded-xl border border-cyan-400/25 bg-gradient-to-r from-slate-900/90 via-slate-900/85 to-cyan-950/35 p-4">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h2 className="section-title flex items-center gap-2">
+                  <Users className="icon-md text-cyan-300" />
+                  Squad Pricing Rule Engine
+                </h2>
+                <p className="body-text-muted mt-1">
+                  Set PC squad discounts by player count with instant base/discount/final preview.
+                </p>
+              </div>
+              <div className="rounded-lg border border-emerald-400/30 bg-emerald-500/10 px-3 py-2 text-xs text-emerald-200">
+                Staff Friendly Mode
+              </div>
+            </div>
+            {squadPricingError && (
+              <p className="mt-2 text-xs font-medium text-rose-300">{squadPricingError}</p>
+            )}
+          </div>
+
+          <div className="grid shrink-0 grid-cols-2 gap-3 sm:grid-cols-4">
+            <div className="rounded-lg border border-cyan-500/20 bg-slate-900/65 p-3">
+              <p className="text-[11px] uppercase tracking-[0.08em] text-slate-400">Consoles</p>
+              <p className="text-lg font-semibold text-cyan-100">{squadOverview.consoleCount}</p>
+            </div>
+            <div className="rounded-lg border border-cyan-500/20 bg-slate-900/65 p-3">
+              <p className="text-[11px] uppercase tracking-[0.08em] text-slate-400">Slabs</p>
+              <p className="text-lg font-semibold text-cyan-100">{squadOverview.slabCount}</p>
+            </div>
+            <div className="rounded-lg border border-cyan-500/20 bg-slate-900/65 p-3">
+              <p className="text-[11px] uppercase tracking-[0.08em] text-slate-400">Avg Discount</p>
+              <p className="text-lg font-semibold text-cyan-100">{squadOverview.avgDiscount}%</p>
+            </div>
+            <div className="rounded-lg border border-cyan-500/20 bg-slate-900/65 p-3">
+              <p className="text-[11px] uppercase tracking-[0.08em] text-slate-400">Top Discount</p>
+              <p className="text-lg font-semibold text-cyan-100">{squadOverview.highestDiscount}%</p>
+            </div>
+          </div>
+
+          <div className="min-h-0 flex-1 overflow-y-auto pr-1">
+            {isLoadingSquadPricing ? (
+              <div className="gaming-panel flex h-full items-center justify-center rounded-xl border border-cyan-500/20 bg-slate-900/65 p-6 text-slate-300">
+                <Loader2 className="mr-2 h-5 w-5 animate-spin text-cyan-300" />
+                Loading squad rules...
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+                {consoleTypes.filter((console) => console.type === "pc").map((console) => {
+                  const group = squadGroupLabelByConsoleType[console.type];
+                  if (!group) return null;
+                  const maxPlayers = squadMaxPlayersByConsole[group] || 6;
+                  const basePrice = Number(prices?.[console.type]?.value || 0);
+                  const rules = Object.entries(squadPricing?.[group] || {})
+                    .map(([players, discount]) => ({ players: Number(players), discount: Number(discount || 0) }))
+                    .filter((row) => Number.isFinite(row.players))
+                    .sort((a, b) => a.players - b.players);
+                  const canAddMore = rules.length < Math.max(0, maxPlayers - 1);
+                  const topDiscount = rules.length ? Math.max(...rules.map((r) => r.discount)) : 0;
+                  const Icon = console.icon;
+
+                  return (
+                    <Card
+                      key={`squad-${console.type}`}
+                      className="gaming-panel overflow-hidden rounded-xl border border-cyan-500/20 bg-gradient-to-br from-slate-900/80 via-slate-900/70 to-cyan-950/25"
+                    >
+                      <CardHeader className="border-b border-cyan-500/15 bg-slate-900/55 pb-3">
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-2">
+                            <div className="rounded-md border border-cyan-400/25 bg-slate-950/45 p-1.5">
+                              <Icon className="icon-md text-cyan-300" />
+                            </div>
+                            <div>
+                              <p className="card-title">{console.name}</p>
+                              <p className="text-xs text-slate-300">Base ₹{basePrice} per player</p>
+                            </div>
+                          </div>
+                          <button
+                            onClick={() => addSquadRule(group)}
+                            disabled={!canAddMore}
+                            className={secondaryButtonClass}
+                          >
+                            <Plus className="icon-md" />
+                            Add Slab
+                          </button>
+                        </div>
+                        <div className="mt-2 flex flex-wrap gap-2 text-[11px]">
+                          <span className="rounded-full border border-cyan-400/20 bg-cyan-500/10 px-2 py-1 text-cyan-200">
+                            {rules.length} slabs
+                          </span>
+                          <span className="rounded-full border border-emerald-400/20 bg-emerald-500/10 px-2 py-1 text-emerald-200">
+                            max {maxPlayers} players
+                          </span>
+                          <span className="rounded-full border border-purple-400/20 bg-purple-500/10 px-2 py-1 text-purple-200">
+                            top {round2(topDiscount)}%
+                          </span>
+                        </div>
+                      </CardHeader>
+
+                      <CardContent className="space-y-3 p-4">
+                        {rules.length === 0 ? (
+                          <div className="rounded-lg border border-dashed border-cyan-400/25 bg-slate-950/45 p-4 text-center text-sm text-slate-300">
+                            No squad slabs configured for {console.name}.
+                          </div>
+                        ) : (
+                          <>
+                            <div className="hidden px-1 md:grid md:grid-cols-[110px_120px_180px_1fr_auto] md:gap-2">
+                              <span className="table-header-text">Players</span>
+                              <span className="table-header-text">Discount</span>
+                              <span className="table-header-text">Final Total</span>
+                              <span className="table-header-text">Live Preview</span>
+                              <span className="table-header-text">Action</span>
+                            </div>
+
+                            {rules.map((rule) => {
+                              const discountAmount = Number(((basePrice * rule.discount) / 100).toFixed(2));
+                              const finalUnitAmount = Number((basePrice - discountAmount).toFixed(2));
+                              const finalTotalAmount = Number((finalUnitAmount * rule.players).toFixed(2));
+                              const rowKey = squadRowKey(group, rule.players);
+                              const maxTotal = Number((basePrice * rule.players).toFixed(2));
+                              const finalDraftValue =
+                                squadFinalDraft[rowKey] !== undefined
+                                  ? squadFinalDraft[rowKey]
+                                  : String(finalTotalAmount);
+                              const draftNumeric = Number(finalDraftValue);
+                              const isDraftHigherThanBase =
+                                !Number.isNaN(draftNumeric) && draftNumeric > maxTotal;
+                              const warningText =
+                                squadRuleWarnings[rowKey] ||
+                                (isDraftHigherThanBase
+                                  ? `Discounted price is more than base price. Max allowed is ₹${maxTotal}.`
+                                  : "");
+
+                              return (
+                                <div
+                                  key={`${group}-${rule.players}`}
+                                  className="rounded-lg border border-cyan-500/15 bg-slate-950/55 p-2.5"
+                                >
+                                  <div className="grid grid-cols-1 gap-2 md:grid-cols-[110px_120px_180px_1fr_auto]">
+                                    <div className="flex items-center gap-2">
+                                      <Input
+                                        type="number"
+                                        min={2}
+                                        max={maxPlayers}
+                                        value={rule.players}
+                                        onChange={(e) => changeSquadRulePlayerCount(group, rule.players, e.target.value)}
+                                        className="h-8 border-cyan-400/25 bg-slate-900/70 text-slate-100 focus-visible:ring-cyan-400/60"
+                                      />
+                                    </div>
+
+                                    <div className="flex items-center gap-2">
+                                      <Input
+                                        type="number"
+                                        min={0}
+                                        max={90}
+                                        value={rule.discount}
+                                        onChange={(e) => updateSquadRule(group, rule.players, e.target.value)}
+                                        className="h-8 border-cyan-400/25 bg-slate-900/70 text-slate-100 focus-visible:ring-cyan-400/60"
+                                      />
+                                      <span className="text-xs text-slate-300">%</span>
+                                    </div>
+
+                                    <div className="flex items-center gap-2">
+                                      <Input
+                                        type="number"
+                                        min={0}
+                                        max={basePrice > 0 ? basePrice * rule.players : undefined}
+                                        value={finalDraftValue}
+                                        onChange={(e) => updateSquadRuleByFinalAmount(group, rule.players, e.target.value, basePrice)}
+                                        className="h-8 border-cyan-400/25 bg-slate-900/70 text-slate-100 focus-visible:ring-cyan-400/60"
+                                      />
+                                      <button
+                                        type="button"
+                                        onClick={() => checkAndApplySquadFinalAmount(group, rule.players, basePrice)}
+                                        className="rounded border border-cyan-400/35 bg-cyan-500/10 px-2 py-1 text-[10px] font-semibold text-cyan-200 hover:bg-cyan-500/20"
+                                      >
+                                        Check
+                                      </button>
+                                    </div>
+
+                                    <div className="flex items-center justify-between rounded-md border border-cyan-500/15 bg-slate-900/65 px-2 py-1.5 text-xs">
+                                      <span
+                                        className={`text-slate-300 ${warningText ? "inline-flex items-center gap-1 text-amber-300" : ""}`}
+                                        title={warningText || undefined}
+                                      >
+                                        {warningText ? <AlertTriangle className="h-3.5 w-3.5" /> : null}
+                                        {warningText ? "Review" : "OK"}
+                                      </span>
+                                      <span className="text-cyan-100">
+                                        Unit ₹{finalUnitAmount} x {rule.players} = ₹{finalTotalAmount}
+                                      </span>
+                                    </div>
+
+                                    <button
+                                      onClick={() => removeSquadRule(group, rule.players)}
+                                      className={destructiveIconButtonClass}
+                                      title="Remove slab"
+                                    >
+                                      <Minus className="icon-md" />
+                                    </button>
+                                  </div>
+                                  {warningText && (
+                                    <p className="mt-1.5 text-[11px] text-amber-300">{warningText}</p>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </>
+                        )}
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          <div className="shrink-0">
+            <button
+              onClick={saveSquadPricingRules}
+              disabled={isSavingSquadPricing || !squadPricingChanged}
+              className={primaryButtonClass}
+            >
+              {isSavingSquadPricing ? (
+                <>
+                  <Loader2 className="icon-md animate-spin" />
+                  Saving Squad Rules...
+                </>
+              ) : (
+                <>
+                  <Users className="icon-md" />
+                  Save Squad Pricing
                 </>
               )}
             </button>

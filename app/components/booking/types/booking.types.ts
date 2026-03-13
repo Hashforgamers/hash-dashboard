@@ -2,6 +2,18 @@
 export type ConsoleFilter = "PC" | "PS5" | "Xbox" | "VR"
 export type PaymentType = 'Cash' | 'UPI' | 'Pass'
 
+export interface SquadMemberPayload {
+  name: string
+  phone: string
+}
+
+export interface SquadDetailsPayload {
+  enabled: boolean
+  playerCount: number
+  suggestedExtraControllerQty: number
+  members: SquadMemberPayload[]
+}
+
 export interface ConsoleType {
   id: number
   type: ConsoleFilter
@@ -90,5 +102,7 @@ export interface BookingPayload {
   extraControllerQty?: number
   extraControllerFare: number
   selectedMeals: Array<{ menu_item_id: number; quantity: number }>
+  bookingType?: 'direct' | 'squad'
   bookingMode: 'private' | 'regular'
+  squadDetails?: SquadDetailsPayload
 }

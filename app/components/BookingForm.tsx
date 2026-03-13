@@ -640,6 +640,7 @@ const [isPrivateMode, setIsPrivateMode] = useState<boolean>(false);
           bookedDate: selectedDate,
           slotId: selectedSlots,
           paymentType: paymentType === "Monthly Credit" ? "monthly_credit" : paymentType,
+          bookingType: 'direct',
           waiveOffAmount: waiveOffAmount + autoWaiveOffAmount,
           extraControllerQty: supportsExtraController ? extraControllerQty : 0,
           extraControllerFare: supportsExtraController ? extraControllerFare : 0,
@@ -648,6 +649,12 @@ const [isPrivateMode, setIsPrivateMode] = useState<boolean>(false);
             quantity: meal.quantity
           })),
           bookingMode: isPrivateMode ? 'private' : 'regular',
+          squadDetails: {
+            enabled: false,
+            playerCount: 1,
+            suggestedExtraControllerQty: 0,
+            members: [],
+          },
         }),
       });
 

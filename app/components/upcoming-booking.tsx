@@ -240,9 +240,13 @@ export function UpcomingBookings({
   const [selectedSystem, setSelectedSystem] = useState("");
   const [availableConsoles, setAvailableConsoles] = useState<any[]>([]);
   const [selectedConsole, setSelectedConsole] = useState<number | null>(null);
+  const [selectedConsoleIds, setSelectedConsoleIds] = useState<number[]>([]);
+  const [requiredConsoleCount, setRequiredConsoleCount] = useState<number>(1);
+  const [isPcSquadStart, setIsPcSquadStart] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedGameId, setSelectedGameId] = useState<string | null>(null);
   const [selectedBookingId, setSelectedBookingId] = useState<string | null>(null);
+  const [expandedBookingRows, setExpandedBookingRows] = useState<Record<string, boolean>>({});
   
   // State for filtering
   const [searchTerm, setSearchTerm] = useState("");
@@ -430,7 +434,7 @@ export function UpcomingBookings({
   }, [mergedBookings]);
 
   // Enhanced start session handler with debugging
-  const start = (system: string, gameId: string, bookingId: string) => {
+  const start = (system: string, gameId: string, bookingId: string, booking: any) => {
     console.log('🚀 Start clicked with params:', { system, gameId, bookingId, vendorId });
     
     if (!system || !gameId || !bookingId) {
@@ -446,6 +450,22 @@ export function UpcomingBookings({
     setSelectedSystem(system);
     setSelectedGameId(gameId);
     setSelectedBookingId(bookingId);
+    const consoleGroup = String(
+      booking?.squadDetails?.console_group ||
+      booking?.squadDetails?.consoleGroup ||
+      (String(system || "").toLowerCase().includes("pc") ? "pc" : "")
+    ).toLowerCase();
+    const pcSquad = Boolean(
+      consoleGroup === "pc" &&
+      (booking?.squadEnabled || Number(booking?.squadPlayerCount || booking?.squadDetails?.player_count || 1) > 1)
+    );
+    const neededConsoles = pcSquad
+      ? Math.max(1, Number(booking?.squadPlayerCount || booking?.squadDetails?.player_count || 1))
+      : 1;
+    setIsPcSquadStart(pcSquad);
+    setRequiredConsoleCount(neededConsoles);
+    setSelectedConsoleIds([]);
+    setSelectedConsole(null);
     setStartCard(true);
     fetchAvailableConsoles(gameId, vendorId);
   };
@@ -537,7 +557,10 @@ export function UpcomingBookings({
 
   // Handle session start submission
   const handleSubmit = async () => {
-    if (selectedConsole && selectedGameId && selectedBookingId) {
+    const effectiveSelected = selectedConsoleIds.length > 0
+      ? selectedConsoleIds
+      : (selectedConsole ? [selectedConsole] : []);
+    if (effectiveSelected.length > 0 && selectedGameId && selectedBookingId) {
       setIsLoading(true);
 
       const selectedMergedBooking = mergedBookings.find(
@@ -545,24 +568,34 @@ export function UpcomingBookings({
       );
       const bookingIds = selectedMergedBooking?.merged_booking_ids || [selectedBookingId];
 
+      const primaryConsoleId = effectiveSelected[0];
+      const additionalConsoleIds = effectiveSelected.slice(1);
+
       const url = bookingIds.length > 1
         ? `${DASHBOARD_URL}/api/assignConsoleToMultipleBookings`
-        : `${DASHBOARD_URL}/api/updateDeviceStatus/consoleTypeId/${selectedGameId}/console/${selectedConsole}/bookingId/${selectedBookingId}/vendor/${vendorId}`;
+        : `${DASHBOARD_URL}/api/updateDeviceStatus/consoleTypeId/${selectedGameId}/console/${primaryConsoleId}/bookingId/${selectedBookingId}/vendor/${vendorId}`;
 
       const payload = bookingIds.length > 1
         ? {
-            console_id: selectedConsole,
+            console_id: primaryConsoleId,
             game_id: selectedGameId,
             booking_ids: bookingIds,
             vendor_id: vendorId,
+            additional_console_ids: isPcSquadStart ? additionalConsoleIds : [],
           }
-        : null;
+        : (isPcSquadStart
+            ? { additional_console_ids: additionalConsoleIds }
+            : null);
 
       try {
         if (bookingIds.length > 1) {
           await axios.post(url, payload);
         } else {
-          await axios.post(url);
+          if (payload) {
+            await axios.post(url, payload);
+          } else {
+            await axios.post(url);
+          }
         }
 
         setStartCard(false);
@@ -585,7 +618,24 @@ export function UpcomingBookings({
 
   // Handle console selection
   const handleConsoleSelection = (consoleId: number) => {
-    setSelectedConsole(consoleId);
+    if (!isPcSquadStart) {
+      setSelectedConsole(consoleId);
+      setSelectedConsoleIds([consoleId]);
+      return;
+    }
+    setSelectedConsoleIds((prev) => {
+      if (prev.includes(consoleId)) {
+        const next = prev.filter((id) => id !== consoleId);
+        setSelectedConsole(next[0] || null);
+        return next;
+      }
+      if (prev.length >= requiredConsoleCount) {
+        return prev;
+      }
+      const next = [...prev, consoleId];
+      setSelectedConsole(next[0] || null);
+      return next;
+    });
   };
 
   // ✅ ENHANCED: Enhanced meal/food icon click handlers
@@ -644,7 +694,9 @@ export function UpcomingBookings({
                 <Card className="bg-gray-50 dark:bg-zinc-900 overflow-hidden border border-gray-200 dark:border-zinc-800">
                   <div className="p-2 sm:p-3 border-b border-gray-200 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-800/50">
                     <div className="flex items-center justify-between">
-                      <h2 className="text-sm font-semibold">Select Console</h2>
+                      <h2 className="text-sm font-semibold">
+                        {isPcSquadStart ? `Select ${requiredConsoleCount} PC Consoles` : "Select Console"}
+                      </h2>
                       <button
                         onClick={() => setStartCard(false)}
                         className="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-zinc-700"
@@ -680,7 +732,9 @@ export function UpcomingBookings({
                             whileTap={{ scale: 0.98 }}
                             onClick={() => handleConsoleSelection(console.consoleId)}
                             className={`cursor-pointer rounded-lg border ${
-                              selectedConsole === console.consoleId
+                              (isPcSquadStart
+                                ? selectedConsoleIds.includes(console.consoleId)
+                                : selectedConsole === console.consoleId)
                                 ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20"
                                 : "border-gray-200 dark:border-zinc-800 hover:border-emerald-500/50"
                             } p-2 sm:p-3 transition-all duration-200`}
@@ -701,9 +755,16 @@ export function UpcomingBookings({
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                       onClick={handleSubmit}
-                      disabled={!selectedConsole || isLoading}
+                      disabled={
+                        isLoading ||
+                        (isPcSquadStart
+                          ? selectedConsoleIds.length !== requiredConsoleCount
+                          : !selectedConsole)
+                      }
                       className={`w-full mt-4 py-2 sm:py-3 rounded-lg text-xs sm:text-sm font-medium flex items-center justify-center space-x-2 ${
-                        selectedConsole && !isLoading
+                        ((isPcSquadStart
+                          ? selectedConsoleIds.length === requiredConsoleCount
+                          : !!selectedConsole) && !isLoading)
                           ? "bg-emerald-500 hover:bg-emerald-600 text-white"
                           : "bg-gray-100 text-gray-400 cursor-not-allowed"
                       }`}
@@ -720,6 +781,11 @@ export function UpcomingBookings({
                         </>
                       )}
                     </motion.button>
+                    {isPcSquadStart && (
+                      <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+                        Selected {selectedConsoleIds.length}/{requiredConsoleCount} consoles.
+                      </p>
+                    )}
                   </div>
                 </Card>
               </motion.div>
@@ -763,6 +829,30 @@ export function UpcomingBookings({
                 <AnimatePresence mode="popLayout">
                   {mergedBookings.map((booking, index) => {
                     const canStartNow = canStartBookingNow(booking);
+                    const squadMembers = Array.isArray(booking?.squadMembers) ? booking.squadMembers : [];
+                    const squadPlayerCount = Number(
+                      booking?.squadPlayerCount ||
+                      booking?.squadDetails?.player_count ||
+                      (squadMembers.length || 1)
+                    );
+                    const squadEnabled = Boolean(booking?.squadEnabled || squadPlayerCount > 1);
+                    const squadMemberNames = squadMembers
+                      .map((member: any) => String(member?.name || "").trim())
+                      .filter((value: string) => value.length > 0)
+                      .slice(0, 3);
+                    const bookingKey = String(booking?.bookingId || "");
+                    const expanded = Boolean(expandedBookingRows[bookingKey]);
+                    const assignedConsoleIds = Array.isArray(booking?.squadDetails?.assigned_console_ids)
+                      ? booking.squadDetails.assigned_console_ids
+                      : [];
+                    const assignedConsoleLabels = Array.isArray(booking?.squadDetails?.assigned_console_labels)
+                      ? booking.squadDetails.assigned_console_labels
+                      : [];
+                    const appliedControllerQty = Number(
+                      booking?.squadDetails?.applied_extra_controller_qty ||
+                      booking?.squadDetails?.suggested_extra_controller_qty ||
+                      0
+                    );
                     return (
                     <motion.div
                       key={booking.bookingId}
@@ -782,11 +872,55 @@ export function UpcomingBookings({
                           <div className="flex items-center gap-2 min-w-0 flex-1">
                             <User className="h-3.5 w-3.5 shrink-0 text-slate-300" />
                             <span className="truncate dash-title !text-sm">{booking.username || "Guest User"}</span>
+                            {squadEnabled && (
+                              <span className="shrink-0 rounded-full border border-sky-400/40 bg-sky-500/15 px-2 py-0.5 text-[10px] font-semibold text-sky-200">
+                                Squad x{squadPlayerCount}
+                              </span>
+                            )}
                           </div>
                           <span className="shrink-0 rounded-full border border-emerald-400/40 bg-emerald-500/15 px-2 py-0.5 text-xs font-medium text-emerald-200 capitalize">
                             Paid
                           </span>
+                          {squadEnabled && (
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setExpandedBookingRows((prev) => ({
+                                  ...prev,
+                                  [bookingKey]: !expanded,
+                                }))
+                              }
+                              className="ml-2 rounded border border-slate-500/50 px-2 py-0.5 text-[10px] text-slate-200"
+                            >
+                              {expanded ? "Collapse" : "Expand"}
+                            </button>
+                          )}
                         </div>
+                        {squadEnabled && squadMemberNames.length > 0 && (
+                          <p className="text-[11px] text-slate-300">
+                            Members: {squadMemberNames.join(", ")}
+                            {squadPlayerCount - squadMemberNames.length > 0
+                              ? ` +${squadPlayerCount - squadMemberNames.length} more`
+                              : ""}
+                          </p>
+                        )}
+                        {squadEnabled && expanded && (
+                          <div className="rounded-md border border-sky-400/25 bg-sky-500/10 p-2 text-[11px] text-sky-100">
+                            <p className="font-semibold">Squad Details</p>
+                            <p>Members: {squadMembers.map((m: any) => m?.name).filter(Boolean).join(", ") || "Not available"}</p>
+                            {String(booking?.squadDetails?.console_group || "").toLowerCase() === "pc" ? (
+                              <p>
+                                Assigned Consoles: {
+                                  assignedConsoleLabels.length > 0
+                                    ? assignedConsoleLabels.join(", ")
+                                    : (assignedConsoleIds.length > 0 ? assignedConsoleIds.join(", ") : "Not assigned yet")
+                                }
+                              </p>
+                            ) : (
+                              <p>Extra Controllers: {appliedControllerQty}</p>
+                            )}
+                          </div>
+                        )}
 
                         {/* Time/duration row */}
                         <div className="flex flex-wrap gap-3 text-xs text-slate-300">
@@ -842,7 +976,7 @@ export function UpcomingBookings({
                           whileHover={{ scale: 1.02 }}
                           whileTap={{ scale: 0.98 }}
                           onClick={() =>
-                            start(booking.consoleType || "", booking.game_id, booking.bookingId)
+                            start(booking.consoleType || "", booking.game_id, booking.bookingId, booking)
                           }
                           disabled={!canStartNow}
                           className={`flex w-full items-center justify-center gap-2 rounded-md py-2 text-xs font-semibold transition-all sm:text-sm ${

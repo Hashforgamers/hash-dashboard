@@ -318,8 +318,13 @@ export default function SubscriptionPage() {
           )}
 
           {/* Packages Grid */}
-          <div className="grid grid-cols-1 gap-4 pt-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {packages.map((pkg, index) => (
+          {packages.length === 0 ? (
+            <div className="mx-auto max-w-2xl rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-center text-amber-100">
+              No active subscription packages found.
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-4 pt-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {packages.map((pkg, index) => (
               <motion.div
                 key={pkg.id}
                 initial={{ opacity: 0, y: 30 }}
@@ -393,8 +398,9 @@ export default function SubscriptionPage() {
                   </CardContent>
                 </Card>
               </motion.div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </DashboardLayout>
