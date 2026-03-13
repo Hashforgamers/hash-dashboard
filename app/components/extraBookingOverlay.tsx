@@ -2,6 +2,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { IndianRupee, CreditCard, Smartphone, X, CheckCircle, Loader2, Gamepad2, Timer, Wallet, Receipt } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { BOOKING_URL } from "@/src/config/env";
+import CreditAccountModal, { type MonthlyCreditAccountSummary } from "./credit-account-modal";
 
 interface ExtraBookingOverlayProps {
   showOverlay: boolean;
@@ -41,6 +42,13 @@ interface PaymentSummary {
   line_items: PaymentSummaryLineItem[];
 }
 
+interface VendorUserSummary {
+  id?: number;
+  name: string;
+  email: string;
+  phone: string;
+}
+
 const ExtraBookingOverlay: React.FC<ExtraBookingOverlayProps> = ({
   showOverlay,
   setShowOverlay,
@@ -62,6 +70,11 @@ const ExtraBookingOverlay: React.FC<ExtraBookingOverlayProps> = ({
   const [paymentSummary, setPaymentSummary] = useState<PaymentSummary | null>(null);
   const [summaryLoading, setSummaryLoading] = useState(false);
   const [summaryError, setSummaryError] = useState("");
+  const [creditAccount, setCreditAccount] = useState<MonthlyCreditAccountSummary | null>(null);
+  const [creditAccountLoading, setCreditAccountLoading] = useState(false);
+  const [creditAccountError, setCreditAccountError] = useState("");
+  const [selectedUserProfile, setSelectedUserProfile] = useState<VendorUserSummary | null>(null);
+  const [showCreditAccountModal, setShowCreditAccountModal] = useState(false);
   const overlayRef = useRef<HTMLDivElement>(null);
 
   // Focus management for accessibility
@@ -148,6 +161,62 @@ const ExtraBookingOverlay: React.FC<ExtraBookingOverlayProps> = ({
     setSettlementPausedAt("");
   }, [showOverlay, selectedSlot, calculateExtraTime]);
 
+  useEffect(() => {
+    if (!showOverlay || !selectedSlot || !vendorId || paymentMode !== "credit") return;
+
+    let cancelled = false;
+    const token = localStorage.getItem("rbac_access_token_v1") || localStorage.getItem("jwtToken");
+    const headers = {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    };
+
+    const loadCreditState = async () => {
+      setCreditAccountLoading(true);
+      setCreditAccountError("");
+      try {
+        const [usersRes, accountsRes] = await Promise.all([
+          fetch(`${BOOKING_URL}/api/vendor/${vendorId}/users`, { headers }),
+          fetch(`${BOOKING_URL}/api/vendor/${vendorId}/monthly-credit/accounts`, { headers }),
+        ]);
+        const usersData = await usersRes.json();
+        const accountsData = await accountsRes.json();
+        if (!usersRes.ok) {
+          throw new Error(usersData?.message || usersData?.error || "Unable to load customer details");
+        }
+        if (!accountsRes.ok) {
+          throw new Error(accountsData?.message || accountsData?.error || "Unable to load credit account");
+        }
+        const users = Array.isArray(usersData) ? usersData : [];
+        const matchedUser =
+          users.find((row: any) => Number(row.id) === Number(selectedSlot.userId)) ||
+          users.find((row: any) => String(row.name || "").trim().toLowerCase() === String(selectedSlot.username || "").trim().toLowerCase()) ||
+          null;
+        const accounts = Array.isArray(accountsData?.accounts) ? accountsData.accounts : [];
+        const matchedAccount = matchedUser?.id
+          ? accounts.find((row: any) => Number(row.user_id) === Number(matchedUser.id))
+          : null;
+
+        if (!cancelled) {
+          setSelectedUserProfile(matchedUser);
+          setCreditAccount(matchedAccount || null);
+        }
+      } catch (error: any) {
+        if (!cancelled) {
+          setCreditAccount(null);
+          setCreditAccountError(error?.message || "Unable to load credit status");
+        }
+      } finally {
+        if (!cancelled) setCreditAccountLoading(false);
+      }
+    };
+
+    loadCreditState();
+    return () => {
+      cancelled = true;
+    };
+  }, [showOverlay, selectedSlot, vendorId, paymentMode]);
+
   // Create extra booking function
   const createExtraBooking = async (payload: any) => {
     try {
@@ -159,10 +228,11 @@ const ExtraBookingOverlay: React.FC<ExtraBookingOverlayProps> = ({
         },
         body: JSON.stringify(payload),
       });
+      const data = await response.json();
       if (!response.ok) {
-        throw new Error("Failed to create extra booking");
+        throw new Error(data?.message || data?.error || "Failed to create extra booking");
       }
-      return await response.json();
+      return data;
     } catch (error) {
       console.error("Error creating extra booking:", error);
       throw error;
@@ -182,10 +252,11 @@ const ExtraBookingOverlay: React.FC<ExtraBookingOverlayProps> = ({
         booking_types: ["extra", "additional_meals"],
       }),
     });
+    const data = await response.json();
     if (!response.ok) {
-      throw new Error("Failed to settle pending charges");
+      throw new Error(data?.message || data?.error || "Failed to settle pending charges");
     }
-    return await response.json();
+    return data;
   };
 
   // ✅ FIXED: Handle settle function with IMMEDIATE UI updates (exactly like release button)
@@ -206,7 +277,7 @@ const ExtraBookingOverlay: React.FC<ExtraBookingOverlayProps> = ({
     const parsedWaiveOff = parseFloat(waiveOffAmount) || 0;
 
     const extraBookingPayload = {
-      consoleNumber: selectedSlot.consoleNumber,
+      consoleNumber: selectedSlot.consoleId || selectedSlot.consoleNumber,
       consoleType: selectedSlot.consoleType,
       date: new Date().toISOString().split("T")[0],
       slotId: selectedSlot.slotId,
@@ -230,13 +301,34 @@ const ExtraBookingOverlay: React.FC<ExtraBookingOverlayProps> = ({
       await settlePendingBookingCharges(bookingId, paymentMode, parsedWaiveOff);
       console.log('💰 Pending charges settled successfully');
 
-      const success = await releaseSlot(
-        selectedSlot.consoleType,
-        selectedSlot.game_id,
-        selectedSlot.consoleNumber,
-        vendorId,
-        setRefreshSlots
+      const squadDetails = (selectedSlot?.squadDetails && typeof selectedSlot.squadDetails === "object")
+        ? selectedSlot.squadDetails
+        : {};
+      const isPcSquad = String(squadDetails?.console_group || "").toLowerCase() === "pc"
+        && Number(squadDetails?.player_count || selectedSlot?.squadPlayerCount || 1) > 1;
+
+      const requestedConsoleIds = isPcSquad && Array.isArray(squadDetails?.assigned_console_ids)
+        ? squadDetails.assigned_console_ids
+        : [selectedSlot.consoleId || selectedSlot.consoleNumber];
+      const releaseConsoleIds = Array.from(
+        new Set(
+          requestedConsoleIds
+            .map((id: any) => Number(id))
+            .filter((id: number) => Number.isFinite(id) && id > 0)
+        )
       );
+
+      let success = true;
+      for (const consoleId of releaseConsoleIds) {
+        const released = await releaseSlot(
+          selectedSlot.consoleType,
+          selectedSlot.game_id,
+          String(consoleId),
+          vendorId,
+          setRefreshSlots
+        );
+        success = success && Boolean(released);
+      }
       console.log('💰 Release slot result:', success);
 
       if (success) {
@@ -343,17 +435,22 @@ const ExtraBookingOverlay: React.FC<ExtraBookingOverlayProps> = ({
     }
   };
 
+  const availableCreditAmount = creditAccount
+    ? Math.max(Number(creditAccount.credit_limit || 0) - Number(creditAccount.outstanding_amount || 0), 0)
+    : 0;
+
   return (
     <AnimatePresence>
       {showOverlay && selectedSlot && (
-        <motion.div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          onClick={() => setShowOverlay(false)}
-        >
+        <>
           <motion.div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setShowOverlay(false)}
+          >
+            <motion.div
             ref={overlayRef}
             className="relative w-full max-w-4xl mx-3 sm:mx-4 rounded-2xl border border-cyan-500/20 bg-gradient-to-br from-slate-900 via-slate-900 to-slate-950 p-4 sm:p-6 shadow-2xl max-h-[92vh] overflow-y-auto"
             initial={{ scale: 0.95, y: 30, opacity: 0 }}
@@ -528,11 +625,12 @@ const ExtraBookingOverlay: React.FC<ExtraBookingOverlayProps> = ({
                   <label className="mb-2 block text-sm font-medium text-slate-200">
                     Select Payment Mode
                   </label>
-                  <div className="grid grid-cols-3 gap-2 sm:gap-3">
+                  <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3">
                     {[
                       { key: "cash", label: "Cash", Icon: IndianRupee },
                       { key: "card", label: "Card", Icon: CreditCard },
                       { key: "upi", label: "UPI", Icon: Smartphone },
+                      { key: "credit", label: "Credit", Icon: Wallet },
                     ].map(({ key, label, Icon }) => (
                       <motion.button
                         key={key}
@@ -562,11 +660,57 @@ const ExtraBookingOverlay: React.FC<ExtraBookingOverlayProps> = ({
                   </div>
                 </div>
 
+                {paymentMode === "credit" && (
+                  <div className="mb-5 rounded-xl border border-slate-700/70 bg-slate-900/60 p-3">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="text-sm font-semibold text-slate-100">Credit Account Status</p>
+                        <p className="text-xs text-slate-400">
+                          {selectedUserProfile?.id
+                            ? `Matched customer: ${selectedUserProfile.name}`
+                            : "No credit-enabled customer matched yet."}
+                        </p>
+                      </div>
+                      {!creditAccount?.is_active && (
+                        <button
+                          type="button"
+                          onClick={() => setShowCreditAccountModal(true)}
+                          className="rounded-lg border border-cyan-500/40 bg-cyan-500/10 px-3 py-1.5 text-xs font-medium text-cyan-200"
+                        >
+                          Create Credit Account
+                        </button>
+                      )}
+                    </div>
+                    {creditAccountLoading ? (
+                      <p className="mt-2 text-xs text-slate-400">Loading credit account...</p>
+                    ) : creditAccount?.is_active ? (
+                      <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-3">
+                        <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-3 py-2">
+                          <p className="text-[11px] uppercase tracking-wide text-emerald-300">Limit</p>
+                          <p className="text-sm font-semibold text-emerald-100">₹{Number(creditAccount.credit_limit || 0).toFixed(2)}</p>
+                        </div>
+                        <div className="rounded-lg border border-amber-500/20 bg-amber-500/10 px-3 py-2">
+                          <p className="text-[11px] uppercase tracking-wide text-amber-300">Outstanding</p>
+                          <p className="text-sm font-semibold text-amber-100">₹{Number(creditAccount.outstanding_amount || 0).toFixed(2)}</p>
+                        </div>
+                        <div className="rounded-lg border border-cyan-500/20 bg-cyan-500/10 px-3 py-2">
+                          <p className="text-[11px] uppercase tracking-wide text-cyan-300">Available</p>
+                          <p className="text-sm font-semibold text-cyan-100">₹{availableCreditAmount.toFixed(2)}</p>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="mt-2 rounded-lg border border-red-500/20 bg-red-500/10 px-3 py-2 text-xs text-red-300">
+                        {creditAccountError || "No credit account configured for this customer."}
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 <div className="flex flex-col gap-2">
                   <motion.button
                     onClick={handleSettle}
                     className="w-full rounded-md bg-gradient-to-r from-emerald-500 to-cyan-500 px-6 py-2 text-sm font-medium text-white shadow-sm transition-all duration-200 hover:from-emerald-400 hover:to-cyan-400 disabled:opacity-50"
-                    disabled={loading || !!waiveOffError || !vendorId}
+                    disabled={loading || !!waiveOffError || !vendorId || (paymentMode === "credit" && (!creditAccount?.is_active || availableCreditAmount < payableAmount))}
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     aria-label="Settle extra payment"
@@ -607,8 +751,30 @@ const ExtraBookingOverlay: React.FC<ExtraBookingOverlayProps> = ({
                 </div>
               </div>
             </div>
+            </motion.div>
           </motion.div>
-        </motion.div>
+          <CreditAccountModal
+            open={showCreditAccountModal}
+            vendorId={vendorId}
+            customer={{
+              userId: selectedUserProfile?.id ?? selectedSlot?.userId ?? null,
+              name: selectedUserProfile?.name || selectedSlot?.username || "",
+              email: selectedUserProfile?.email || "",
+              phone: selectedUserProfile?.phone || "",
+            }}
+            onClose={() => setShowCreditAccountModal(false)}
+            onCreated={({ account, user }) => {
+              setCreditAccount(account);
+              setSelectedUserProfile({
+                id: user.userId || undefined,
+                name: user.name,
+                email: user.email || "",
+                phone: user.phone || "",
+              });
+              setShowCreditAccountModal(false);
+            }}
+          />
+        </>
       )}
     </AnimatePresence>
   );

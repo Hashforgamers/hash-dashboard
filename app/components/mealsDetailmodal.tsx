@@ -1,10 +1,10 @@
 // components/MealDetailsModal.tsx - Complete responsive version
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   X, ChefHat, Loader2, IndianRupee, Package, Plus, Minus, 
   ShoppingCart, Save, UtensilsCrossed, Eye, PlusCircle, AlertTriangle,
-  CheckCircle2
+  CheckCircle2, Users, User, Phone
 } from 'lucide-react';
 import { BOOKING_URL, DASHBOARD_URL } from '@/src/config/env';
 
@@ -50,6 +50,48 @@ interface SelectedMeal {
   category: string;
 }
 
+interface SquadDetails {
+  enabled?: boolean;
+  player_count?: number;
+  playerCount?: number;
+  member_console_map?: Array<{
+    member_position?: number;
+    member_user_id?: number | null;
+    member_name?: string;
+    console_id?: number;
+    console_label?: string;
+  }>;
+  member_meal_ledger?: Array<{
+    added_at?: string;
+    member_position?: number;
+    member_user_id?: number | null;
+    member_name?: string;
+    meals_total?: number;
+    meals?: Array<{
+      name?: string;
+      quantity?: number;
+      total_price?: number;
+    }>;
+  }>;
+}
+
+interface SquadMember {
+  id?: number;
+  member_user_id?: number | null;
+  member_position?: number;
+  name_snapshot?: string;
+  phone_snapshot?: string;
+  name?: string;
+  phone?: string;
+  is_captain?: boolean;
+}
+
+interface TargetMember {
+  member_user_id?: number | null;
+  member_position?: number;
+  name?: string;
+}
+
 interface MealDetailsModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -58,6 +100,7 @@ interface MealDetailsModalProps {
   initialMode?: 'view' | 'add';
   hasExistingMeals?: boolean;
   vendorId?: string;
+  targetMember?: TargetMember | null;
 }
 
 // ✅ Image caching utility
@@ -129,12 +172,16 @@ const MealDetailsModal: React.FC<MealDetailsModalProps> = ({
   customerName,
   initialMode = 'view',
   hasExistingMeals = false,
-  vendorId
+  vendorId,
+  targetMember = null,
 }) => {
   // State for existing meals
   const [mealDetails, setMealDetails] = useState<MealDetail[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [squadDetails, setSquadDetails] = useState<SquadDetails | null>(null);
+  const [squadMembers, setSquadMembers] = useState<SquadMember[]>([]);
+  const [activeTargetMember, setActiveTargetMember] = useState<TargetMember | null>(targetMember);
   
   // State for adding new meals
   const [mode, setMode] = useState<'view' | 'add'>(initialMode);
@@ -154,12 +201,19 @@ const MealDetailsModal: React.FC<MealDetailsModalProps> = ({
       setError('');
       setMenuError('');
       setSuccessMessage('');
+      setSquadDetails(null);
+      setSquadMembers([]);
+      setActiveTargetMember(targetMember);
       
       if (bookingId) {
         fetchMealDetails();
       }
     }
   }, [isOpen, bookingId, initialMode]);
+
+  useEffect(() => {
+    setActiveTargetMember(targetMember);
+  }, [targetMember]);
 
   // Fetch menu items when switching to add mode
   useEffect(() => {
@@ -205,6 +259,14 @@ const MealDetailsModal: React.FC<MealDetailsModalProps> = ({
       
       const data = await response.json();
       console.log('📋 Booking details response:', data);
+
+      if (data.success && data.booking) {
+        setSquadDetails((data.booking.squad_details || null) as SquadDetails | null);
+        setSquadMembers(Array.isArray(data.booking.squad_members) ? data.booking.squad_members : []);
+      } else {
+        setSquadDetails(null);
+        setSquadMembers([]);
+      }
       
       if (data.success && data.booking && Array.isArray(data.booking.extra_services)) {
         setMealDetails(data.booking.extra_services);
@@ -310,6 +372,13 @@ const MealDetailsModal: React.FC<MealDetailsModalProps> = ({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           settle_on_release: true,
+          squad_member: activeTargetMember
+            ? {
+                member_user_id: activeTargetMember.member_user_id ?? null,
+                member_position: activeTargetMember.member_position ?? null,
+                name: activeTargetMember.name || null,
+              }
+            : null,
           meals: selectedMeals.map(meal => ({
             menu_item_id: meal.menu_item_id,
             quantity: meal.quantity
@@ -357,6 +426,71 @@ const MealDetailsModal: React.FC<MealDetailsModalProps> = ({
 
   const totalNewMealsPrice = selectedMeals.reduce((sum, meal) => sum + meal.total, 0);
   const totalNewItems = selectedMeals.reduce((sum, meal) => sum + meal.quantity, 0);
+  const squadPlayerCount = Number(
+    squadDetails?.player_count ?? squadDetails?.playerCount ?? (squadMembers.length > 0 ? squadMembers.length : 1)
+  );
+  const isSquadBooking = Boolean((squadDetails?.enabled ?? false) || squadPlayerCount > 1 || squadMembers.length > 1);
+  const memberMealSummary = useMemo(() => {
+    const ledger = Array.isArray(squadDetails?.member_meal_ledger) ? squadDetails.member_meal_ledger : [];
+    const bucket = new Map<string, {
+      member_name: string;
+      member_position: number;
+      total: number;
+      meals: Map<string, { name: string; quantity: number; total: number }>;
+    }>();
+
+    for (const entry of ledger) {
+      const memberPosition = Number(entry?.member_position || 0);
+      const memberName = String(entry?.member_name || `Player ${memberPosition || ""}`).trim();
+      const memberKey = `${memberPosition || 0}-${memberName.toLowerCase()}`;
+      if (!bucket.has(memberKey)) {
+        bucket.set(memberKey, {
+          member_name: memberName || `Player ${memberPosition || ""}`,
+          member_position: memberPosition,
+          total: 0,
+          meals: new Map(),
+        });
+      }
+      const row = bucket.get(memberKey)!;
+      row.total += Number(entry?.meals_total || 0);
+
+      const meals = Array.isArray(entry?.meals) ? entry.meals : [];
+      for (const meal of meals) {
+        const mealName = String(meal?.name || "Item").trim();
+        const mealKey = mealName.toLowerCase();
+        if (!row.meals.has(mealKey)) {
+          row.meals.set(mealKey, { name: mealName, quantity: 0, total: 0 });
+        }
+        const mealRow = row.meals.get(mealKey)!;
+        mealRow.quantity += Number(meal?.quantity || 0);
+        mealRow.total += Number(meal?.total_price || 0);
+      }
+    }
+
+    return Array.from(bucket.values())
+      .map((row) => ({
+        ...row,
+        meals: Array.from(row.meals.values()),
+      }))
+      .sort((a, b) => (a.member_position || 9999) - (b.member_position || 9999));
+  }, [squadDetails?.member_meal_ledger]);
+
+  const mealToMemberLabels = useMemo(() => {
+    const map: Record<string, string[]> = {};
+    for (const member of memberMealSummary) {
+      for (const meal of member.meals) {
+        const mealKey = String(meal.name || "").trim().toLowerCase();
+        if (!mealKey) continue;
+        if (!map[mealKey]) map[mealKey] = [];
+        map[mealKey].push(`${member.member_name} x${meal.quantity}`);
+      }
+    }
+    return map;
+  }, [memberMealSummary]);
+
+  const attributedMealTotal = memberMealSummary.reduce((sum, member) => sum + Number(member.total || 0), 0);
+  const unattributedMealTotal = Math.max(0, Number(getTotalMealCost()) - Number(attributedMealTotal));
+  const memberConsoleMap = Array.isArray(squadDetails?.member_console_map) ? squadDetails.member_console_map : [];
 
   if (!isOpen) return null;
 
@@ -389,6 +523,11 @@ const MealDetailsModal: React.FC<MealDetailsModalProps> = ({
                 <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
                   {customerName}
                 </p>
+                {activeTargetMember && (
+                  <p className="text-[11px] sm:text-xs text-cyan-600 dark:text-cyan-300">
+                    Target: {activeTargetMember.name || `Player ${activeTargetMember.member_position || ""}`}
+                  </p>
+                )}
               </div>
             </div>
             
@@ -466,6 +605,86 @@ const MealDetailsModal: React.FC<MealDetailsModalProps> = ({
             {mode === 'view' ? (
               /* View Mode - Show existing meals */
               <div className="p-3 sm:p-4 h-full overflow-y-auto">
+                {!loading && !error && isSquadBooking && (
+                  <div className="mb-4 rounded-lg border border-cyan-200 bg-cyan-50 p-3 dark:border-cyan-800 dark:bg-cyan-900/20">
+                    <div className="mb-2 flex items-center gap-2 text-cyan-700 dark:text-cyan-300">
+                      <Users className="h-4 w-4" />
+                      <span className="text-sm font-semibold">Squad Booking • {squadPlayerCount} Players</span>
+                    </div>
+                    {squadMembers.length > 0 && (
+                      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                        {squadMembers
+                          .sort((a, b) => (a.member_position || 0) - (b.member_position || 0))
+                          .map((member) => (
+                            <div
+                              key={`${member.id || member.member_position || 0}-${member.phone_snapshot || member.name_snapshot || ''}`}
+                              className="rounded-md border border-cyan-200/80 bg-white/70 p-2 dark:border-cyan-700 dark:bg-slate-900/40"
+                            >
+                              <div className="flex items-center gap-1 text-xs font-medium text-slate-800 dark:text-slate-100">
+                                <User className="h-3.5 w-3.5" />
+                                <span>{member.name_snapshot || `Player ${member.member_position || ''}`}</span>
+                                {member.is_captain && (
+                                  <span className="rounded bg-cyan-100 px-1.5 py-0.5 text-[10px] text-cyan-700 dark:bg-cyan-900/40 dark:text-cyan-200">
+                                    Captain
+                                  </span>
+                                )}
+                              </div>
+                              {member.phone_snapshot && (
+                                <div className="mt-1 flex items-center gap-1 text-xs text-slate-600 dark:text-slate-300">
+                                  <Phone className="h-3.5 w-3.5" />
+                                  <span>{member.phone_snapshot}</span>
+                                </div>
+                              )}
+                              {(() => {
+                                const mappedConsole = memberConsoleMap.find((entry) => Number(entry?.member_position || 0) === Number(member.member_position || 0));
+                                const consoleLabel = String(mappedConsole?.console_label || "").trim();
+                                if (!consoleLabel) return null;
+                                return (
+                                  <div className="mt-1 text-[11px] text-cyan-700 dark:text-cyan-300">
+                                    PC: {consoleLabel}
+                                  </div>
+                                );
+                              })()}
+                            </div>
+                          ))}
+                      </div>
+                    )}
+                    {memberMealSummary.length > 0 && (
+                      <div className="mt-3 rounded-md border border-cyan-300/60 bg-white/80 p-2 dark:border-cyan-700 dark:bg-slate-900/50">
+                        <div className="mb-2 flex items-center justify-between gap-2 text-xs font-semibold text-cyan-700 dark:text-cyan-300">
+                          <span>Who Was Served What</span>
+                          <span>Attributed: ₹{attributedMealTotal.toFixed(2)}</span>
+                        </div>
+                        <div className="space-y-2">
+                          {memberMealSummary.map((entry, idx) => (
+                            <div key={`ledger-summary-${idx}`} className="rounded border border-cyan-200/70 bg-cyan-50/40 px-2 py-1.5 text-xs dark:border-cyan-700/60 dark:bg-cyan-900/20">
+                              <div className="flex items-center justify-between gap-2">
+                                <span className="font-medium text-slate-800 dark:text-slate-100">
+                                  {entry.member_name || `Player ${entry.member_position || ""}`}
+                                </span>
+                                <span className="text-cyan-700 dark:text-cyan-300">₹{Number(entry.total || 0).toFixed(2)}</span>
+                              </div>
+                              <div className="mt-1 space-y-1 text-[11px] text-slate-700 dark:text-slate-200">
+                                {(entry.meals || []).map((meal, mealIdx) => (
+                                  <div key={`ledger-summary-${idx}-meal-${mealIdx}`} className="flex items-center justify-between">
+                                    <span>{meal.name || "Item"} x{Number(meal.quantity || 0)}</span>
+                                    <span>₹{Number(meal.total || 0).toFixed(2)}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                        {unattributedMealTotal > 0.01 && (
+                          <div className="mt-2 rounded border border-amber-300/70 bg-amber-50/80 px-2 py-1.5 text-[11px] text-amber-800 dark:border-amber-700 dark:bg-amber-950/30 dark:text-amber-200">
+                            Unassigned meals: ₹{unattributedMealTotal.toFixed(2)} (added without selecting a squad member)
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 {loading && (
                   <div className="flex flex-col items-center justify-center py-8">
                     <Loader2 className="w-6 h-6 sm:w-8 sm:h-8 animate-spin text-emerald-600 mb-3" />
@@ -534,6 +753,12 @@ const MealDetailsModal: React.FC<MealDetailsModalProps> = ({
                             <div className="flex items-center justify-between text-xs text-emerald-700 dark:text-emerald-300">
                               <span>₹{meal.unit_price} × {meal.quantity}</span>
                             </div>
+                            {isSquadBooking && (
+                              <div className="text-[11px] text-emerald-800 dark:text-emerald-200">
+                                <span className="font-medium">Served to:</span>{" "}
+                                {(mealToMemberLabels[String(meal.menu_item_name || "").trim().toLowerCase()] || []).join(", ") || "Not tagged"}
+                              </div>
+                            )}
                           </div>
                         </motion.div>
                       ))}

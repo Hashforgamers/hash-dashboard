@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, Gamepad2, Monitor, Headset, Loader2, RefreshCw, UtensilsCrossed, Plus } from "lucide-react";
+import { Search, Gamepad2, Monitor, Headset, Loader2, RefreshCw, UtensilsCrossed, Plus, ChevronDown, ChevronUp } from "lucide-react";
 import { jwtDecode } from "jwt-decode";
 import { FaCheck, FaPowerOff } from 'react-icons/fa';
 import { BOOKING_URL, DASHBOARD_URL } from "@/src/config/env";
@@ -166,17 +166,22 @@ const releaseSlot = async (consoleType: string, gameId: string, consoleId: strin
       body: JSON.stringify({ bookingStats: {} }),
     });
     if (response.ok) {
+      const payload = await response.json().catch(() => ({}));
       console.log('✅ Client: Release API call successful');
       setRefreshSlots((prev: boolean) => !prev);
       if (typeof window !== "undefined") {
         window.dispatchEvent(new CustomEvent("refresh-dashboard"));
       }
-      return true;
+      return {
+        ok: true,
+        partial_release: Boolean(payload?.partial_release),
+        payload,
+      };
     }
     throw new Error("Failed to release the slot.");
   } catch (error) {
     console.error("❌ Client: Error calling release API:", error);
-    return false;
+    return { ok: false, partial_release: false, payload: null };
   }
 };
 
@@ -211,12 +216,20 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
     bookingId: '',
     customerName: '',
     mode: 'view' as 'view' | 'add',
-    hasExistingMeals: false
+    hasExistingMeals: false,
+    targetMember: null as null | {
+      member_user_id?: number | null;
+      member_position?: number;
+      name?: string;
+    }
   });
 
   // ✅ NEW: Track which bookings have meals locally for instant UI updates
   const [bookingMealStatus, setBookingMealStatus] = useState<Record<string, boolean>>({});
   const [bookingOutstandingDue, setBookingOutstandingDue] = useState<Record<string, number>>({});
+  const [expandedLiveRows, setExpandedLiveRows] = useState<Record<string, boolean>>({});
+  const [mealPickerBookingId, setMealPickerBookingId] = useState<string | null>(null);
+  const [mealPickerMemberPosByBooking, setMealPickerMemberPosByBooking] = useState<Record<string, number>>({});
 
   // Get vendorId
   useEffect(() => {
@@ -333,6 +346,8 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
           username: data.username,
           consoleType: data.consoleType,
           consoleNumber: data.consoleNumber,
+          consoleCode: data.consoleCode,
+          consoleId: data.consoleId || data.console_id,
           game_id: data.game_id,
           startTime: data.startTime,
           endTime: data.endTime,
@@ -344,10 +359,13 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
         }
         
         setCurrentSlots(prevSlots => {
-          const exists = prevSlots.some(slot => 
+            const exists = prevSlots.some(slot => 
             slot.slotId === newSlot.slotId || 
             slot.bookingId === newSlot.bookingId ||
-            (slot.consoleNumber === newSlot.consoleNumber && slot.status === 'active')
+            (
+              (slot.consoleId && newSlot.consoleId && Number(slot.consoleId) === Number(newSlot.consoleId)) ||
+              (slot.consoleNumber === newSlot.consoleNumber && slot.status === 'active')
+            )
           )
           
           if (!exists) {
@@ -371,7 +389,11 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
       if (dataVendorId === vendorId) {
         if (data.is_available === true) {
           setCurrentSlots(prevSlots => {
-            const releasingSlot = prevSlots.find(slot => slot.consoleNumber === data.console_id.toString())
+            const releasingSlot = prevSlots.find(
+              (slot) =>
+                Number(slot.consoleId || 0) === Number(data.console_id || 0) ||
+                String(slot.consoleNumber || "") === String(data.console_id || "")
+            )
             if (releasingSlot && typeof window !== "undefined") {
               window.dispatchEvent(
                 new CustomEvent("history-booking-add", {
@@ -390,9 +412,19 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
               );
             }
 
-            const updated = prevSlots.filter(slot => slot.consoleNumber !== data.console_id.toString())
+            const updated = prevSlots.filter(
+              (slot) =>
+                Number(slot.consoleId || 0) !== Number(data.console_id || 0) &&
+                String(slot.consoleNumber || "") !== String(data.console_id || "")
+            )
             return updated
           })
+        } else {
+          // Occupancy became active; refresh dashboard to pull latest live rows immediately.
+          setRefreshSlots((prev: boolean) => !prev);
+          if (typeof window !== "undefined") {
+            window.dispatchEvent(new CustomEvent("refresh-dashboard"));
+          }
         }
       }
     }
@@ -555,12 +587,14 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
   }, []);
 
   // Handle release slot with unique identifier
-  const handleRelease = async (consoleType: string, gameId: string, consoleNumber: string, vendorId: any, setRefreshSlots: any, slotId: string, uniqueKey: string) => {
+  const handleRelease = async (consoleType: string, gameId: string, consoleId: string, vendorId: any, setRefreshSlots: any, slotId: string, uniqueKey: string) => {
     setReleasingSlots((prev) => ({ ...prev, [uniqueKey]: true }));
     try {
-      const success = await releaseSlot(consoleType, gameId, consoleNumber, vendorId, setRefreshSlots);
-      if (success) {
-        setCurrentSlots(prev => prev.filter(slot => slot.slotId !== slotId))
+      const releaseResult = await releaseSlot(consoleType, gameId, consoleId, vendorId, setRefreshSlots);
+      if (releaseResult.ok) {
+        if (!releaseResult.partial_release) {
+          setCurrentSlots(prev => prev.filter(slot => slot.slotId !== slotId))
+        }
       } else {
         setError("Failed to release slot. Please try again.");
       }
@@ -577,7 +611,11 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
   };
 
   // ✅ ENHANCED: Meal icon click handler for existing meals
-  const handleMealIconClick = (bookingId: string, customerName: string) => {
+  const handleMealIconClick = (
+    bookingId: string,
+    customerName: string,
+    targetMember?: { member_user_id?: number | null; member_position?: number; name?: string } | null
+  ) => {
     console.log('🍽️ CurrentSlots: Meal icon clicked', { 
       originalBookingId: bookingId, 
       customerName,
@@ -595,12 +633,17 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
       bookingId: bookingId,
       customerName: customerName || 'Guest User',
       mode: 'view',
-      hasExistingMeals: true
+      hasExistingMeals: true,
+      targetMember: targetMember || null
     });
   };
 
   // ✅ NEW: Add food click handler for bookings without meals
-  const handleAddFoodClick = (bookingId: string, customerName: string) => {
+  const handleAddFoodClick = (
+    bookingId: string,
+    customerName: string,
+    targetMember?: { member_user_id?: number | null; member_position?: number; name?: string } | null
+  ) => {
     console.log('➕ CurrentSlots: Add food clicked', { 
       bookingId, 
       customerName,
@@ -618,7 +661,8 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
       bookingId: bookingId,
       customerName: customerName || 'Guest User',
       mode: 'add',
-      hasExistingMeals: false
+      hasExistingMeals: false,
+      targetMember: targetMember || null
     });
   };
 
@@ -629,7 +673,8 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
       bookingId: '',
       customerName: '',
       mode: 'view',
-      hasExistingMeals: false
+      hasExistingMeals: false,
+      targetMember: null
     });
     
     // ✅ Emit event to refresh dashboard and update meal status
@@ -738,7 +783,7 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                           duration: 3600,
                         };
                         
-                        const uniqueKey = `${booking.slotId}-${booking.bookingId || booking.bookId}-${booking.consoleNumber}`;
+                        const uniqueKey = `${booking.slotId}-${booking.bookingId || booking.bookId}-${booking.consoleId || booking.consoleNumber}`;
                         const isReleasing = releasingSlots[uniqueKey] || false;
                         const progress = Math.min(100, (timer.elapsedTime / timer.duration) * 100);
                         const hasExtraTime = timer.extraTime > 0;
@@ -759,6 +804,71 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                         // ✅ ENHANCED: Check meal status from both original data and local tracking
                         const bookingIdToCheck = String(booking.bookingId || booking.bookId || '');
                         const hasMeals = bookingMealStatus[bookingIdToCheck] ?? booking.hasMeals ?? false;
+                        const squadMembers = Array.isArray(booking?.squadMembers) ? booking.squadMembers : [];
+                        const squadPlayerCount = Number(
+                          booking?.squadPlayerCount ||
+                          booking?.squadDetails?.player_count ||
+                          (squadMembers.length || 1)
+                        );
+                        const squadEnabled = Boolean(booking?.squadEnabled || squadPlayerCount > 1);
+                        const squadMemberNames = squadMembers
+                          .map((member: any) => String(member?.name || "").trim())
+                          .filter((value: string) => value.length > 0)
+                          .slice(0, 2);
+                        const rowExpanded = Boolean(expandedLiveRows[bookingIdToCheck]);
+                        const assignedConsoleLabels = Array.isArray(booking?.squadDetails?.assigned_console_labels)
+                          ? booking.squadDetails.assigned_console_labels
+                          : [];
+                        const assignedConsoleIds = Array.isArray(booking?.squadDetails?.assigned_console_ids)
+                          ? booking.squadDetails.assigned_console_ids
+                          : [];
+                        const memberConsoleMap = Array.isArray(booking?.squadDetails?.member_console_map)
+                          ? booking.squadDetails.member_console_map
+                          : [];
+                        const isPcSquad = squadEnabled && String(booking?.squadDetails?.console_group || "").toLowerCase() === "pc";
+                        const sortedSquadMembers = squadMembers
+                          .slice()
+                          .sort((a: any, b: any) => Number(a?.member_position || 0) - Number(b?.member_position || 0));
+                        const captainMember = sortedSquadMembers.find((m: any) => Boolean(m?.is_captain)) || sortedSquadMembers[0] || null;
+                        const selectedMealMemberPos = mealPickerMemberPosByBooking[bookingIdToCheck] ?? Number(captainMember?.member_position || 1);
+                        const selectedMealMember = sortedSquadMembers.find((m: any) => Number(m?.member_position || 0) === Number(selectedMealMemberPos)) || captainMember;
+                        const assignedLabelById = new Map<number, string>();
+                        assignedConsoleIds.forEach((id: any, idx: number) => {
+                          const parsedId = Number(id || 0);
+                          const label = String(assignedConsoleLabels[idx] || "").trim();
+                          if (parsedId > 0 && label) assignedLabelById.set(parsedId, label);
+                        });
+                        const pcMemberRows = isPcSquad
+                          ? sortedSquadMembers.map((member: any, idx: number) => {
+                              const memberPos = Number(member?.member_position || idx + 1);
+                              const explicitMapping = memberConsoleMap.find((m: any) => Number(m?.member_position || 0) === memberPos);
+                              const memberConsoleId = Number(
+                                explicitMapping?.console_id ?? assignedConsoleIds[idx] ?? 0
+                              ) || null;
+                              const explicitLabel = String(explicitMapping?.console_label || "").trim();
+                              const explicitLooksNumeric = /^[0-9]+$/.test(explicitLabel);
+                              const preferredAssignedLabel = memberConsoleId ? assignedLabelById.get(memberConsoleId) : undefined;
+                              const memberConsoleLabel = String(
+                                preferredAssignedLabel ||
+                                (!explicitLooksNumeric ? explicitLabel : "") ||
+                                (memberConsoleId ? `Console-${memberConsoleId}` : "Unassigned")
+                              );
+                              const memberName = String(member?.name || `Player ${member?.member_position || idx + 1}`);
+                              return {
+                                member,
+                                idx,
+                                memberPos,
+                                memberConsoleId,
+                                memberConsoleLabel,
+                                memberName,
+                              };
+                            })
+                          : [];
+                        const appliedControllerQty = Number(
+                          booking?.squadDetails?.applied_extra_controller_qty ||
+                          booking?.squadDetails?.suggested_extra_controller_qty ||
+                          0
+                        );
 
                         return (
                           <motion.tr
@@ -777,71 +887,248 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                                   {(booking.username || 'Guest').slice(0, 2).toUpperCase()}
                                 </div>
                                 <div className="min-w-0 flex-1">
-                                  <div className="truncate dash-title !text-sm">
-                                    {booking.username || 'Guest'}
+                                  <div className="flex items-center gap-1 flex-wrap">
+                                    <div className="truncate dash-title !text-sm">
+                                      {booking.username || 'Guest'}
+                                    </div>
+                                    {squadEnabled && (
+                                      <span className="rounded-full border border-emerald-400/40 bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-200">
+                                        Captain
+                                      </span>
+                                    )}
+                                    {squadEnabled && (
+                                      <span className="rounded-full border border-sky-400/40 bg-sky-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-sky-200">
+                                        Squad x{squadPlayerCount}
+                                      </span>
+                                    )}
                                   </div>
                                   <div className="text-xs text-slate-400">
-                                    #{booking.consoleNumber}
+                                    {booking.consoleCode || booking.consoleNumber || "-"}
                                   </div>
+                                  {squadEnabled && squadMemberNames.length > 0 && (
+                                    <div className="text-[10px] text-slate-400">
+                                      {squadMemberNames.join(", ")}
+                                      {squadPlayerCount - squadMemberNames.length > 0
+                                        ? ` +${squadPlayerCount - squadMemberNames.length}`
+                                        : ""}
+                                    </div>
+                                  )}
                                 </div>
                                 
                                 {/* ✅ ENHANCED: Conditional rendering of meal/add food buttons */}
                                 {hasMeals ? (
                                   // Show food icon for users who have meals
-                                  <motion.button
-                                    initial={{ scale: 0 }}
-                                    animate={{ scale: 1 }}
-                                    whileHover={{ scale: 1.1 }}
-                                    whileTap={{ scale: 0.9 }}
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleMealIconClick(bookingIdToCheck, booking.username || 'Guest User');
-                                    }}
-                                    className="group flex flex-shrink-0 items-center gap-1 rounded-full border border-emerald-400/30 bg-emerald-500/10 p-1.5 transition-all duration-200 hover:bg-emerald-500/20"
-                                    title="View meals & add more"
-                                  >
-                                    <UtensilsCrossed className="h-3 w-3 text-emerald-300 transition-colors group-hover:text-emerald-200 sm:h-4 sm:w-4" />
-                                    <span className="hidden text-xs font-medium text-emerald-200 sm:inline">
-                                      Meals
-                                    </span>
-                                  </motion.button>
+                                  <div className="relative">
+                                    <motion.button
+                                      initial={{ scale: 0 }}
+                                      animate={{ scale: 1 }}
+                                      whileHover={{ scale: 1.1 }}
+                                      whileTap={{ scale: 0.9 }}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        if (isPcSquad && sortedSquadMembers.length > 0) {
+                                          setMealPickerBookingId((prev) => (prev === bookingIdToCheck ? null : bookingIdToCheck));
+                                          setMealPickerMemberPosByBooking((prev) => ({
+                                            ...prev,
+                                            [bookingIdToCheck]: Number(prev[bookingIdToCheck] || captainMember?.member_position || 1),
+                                          }));
+                                          return;
+                                        }
+                                        handleMealIconClick(bookingIdToCheck, booking.username || 'Guest User');
+                                      }}
+                                      className="group flex flex-shrink-0 items-center gap-1 rounded-full border border-emerald-400/30 bg-emerald-500/10 p-1.5 transition-all duration-200 hover:bg-emerald-500/20"
+                                      title="View meals & add more"
+                                    >
+                                      <UtensilsCrossed className="h-3 w-3 text-emerald-300 transition-colors group-hover:text-emerald-200 sm:h-4 sm:w-4" />
+                                      <span className="hidden text-xs font-medium text-emerald-200 sm:inline">
+                                        Meals
+                                      </span>
+                                    </motion.button>
+                                    {isPcSquad && sortedSquadMembers.length > 0 && mealPickerBookingId === bookingIdToCheck && (
+                                      <div className="absolute right-0 top-full z-20 mt-1 w-48 rounded-md border border-cyan-500/30 bg-slate-900/95 p-2 shadow-xl">
+                                        <div className="text-[10px] font-semibold uppercase tracking-wide text-cyan-300">Add/View Meal For</div>
+                                        <select
+                                          value={String(selectedMealMemberPos || "")}
+                                          onChange={(e) => {
+                                            const value = Number(e.target.value || 0);
+                                            setMealPickerMemberPosByBooking((prev) => ({ ...prev, [bookingIdToCheck]: value }));
+                                          }}
+                                          className="mt-1 w-full rounded border border-slate-600 bg-slate-800 px-2 py-1 text-xs text-slate-100"
+                                        >
+                                          {sortedSquadMembers.map((member: any, idx: number) => {
+                                            const name = String(member?.name || `Player ${member?.member_position || idx + 1}`);
+                                            const pos = Number(member?.member_position || idx + 1);
+                                            return (
+                                              <option key={`${bookingIdToCheck}-meal-member-opt-${idx}`} value={pos}>
+                                                {name}{member?.is_captain ? " (Captain)" : ""}
+                                              </option>
+                                            );
+                                          })}
+                                        </select>
+                                        <div className="mt-2 flex gap-1">
+                                          <button
+                                            type="button"
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              handleMealIconClick(bookingIdToCheck, booking.username || 'Guest User', {
+                                                member_user_id: selectedMealMember?.member_user_id ?? null,
+                                                member_position: selectedMealMember?.member_position,
+                                                name: selectedMealMember?.name || selectedMealMember?.name_snapshot || undefined,
+                                              });
+                                              setMealPickerBookingId(null);
+                                            }}
+                                            className="flex-1 rounded border border-emerald-400/40 bg-emerald-500/15 px-2 py-1 text-[10px] text-emerald-200"
+                                          >
+                                            View
+                                          </button>
+                                          <button
+                                            type="button"
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              handleAddFoodClick(bookingIdToCheck, booking.username || 'Guest User', {
+                                                member_user_id: selectedMealMember?.member_user_id ?? null,
+                                                member_position: selectedMealMember?.member_position,
+                                                name: selectedMealMember?.name || selectedMealMember?.name_snapshot || undefined,
+                                              });
+                                              setMealPickerBookingId(null);
+                                            }}
+                                            className="flex-1 rounded border border-cyan-400/40 bg-cyan-500/15 px-2 py-1 text-[10px] text-cyan-200"
+                                          >
+                                            Add
+                                          </button>
+                                        </div>
+                                      </div>
+                                    )}
+                                  </div>
                                 ) : (
                                   // Show add food button for users who haven't ordered meals
-                                  <motion.button
-                                    initial={{ scale: 0 }}
-                                    animate={{ scale: 1 }}
-                                    whileHover={{ scale: 1.1 }}
-                                    whileTap={{ scale: 0.9 }}
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleAddFoodClick(bookingIdToCheck, booking.username || 'Guest User');
-                                    }}
-                                    className="group flex flex-shrink-0 items-center gap-1 rounded-full border border-dashed border-cyan-400/60 bg-cyan-500/10 p-1 transition-all duration-200 hover:bg-cyan-500/20 sm:p-1.5"
-                                    title="Add meals to this booking"
-                                  >
-                                    <Plus className="h-2.5 w-2.5 text-cyan-300 transition-colors group-hover:text-cyan-200 sm:h-3 sm:w-3" />
-                                    <UtensilsCrossed className="h-2.5 w-2.5 text-cyan-300 transition-colors group-hover:text-cyan-200 sm:h-3 sm:w-3" />
-                                    <span className="hidden text-xs font-medium text-cyan-200 sm:inline">
-                                      Add
-                                    </span>
-                                  </motion.button>
+                                  <div className="relative">
+                                    <motion.button
+                                      initial={{ scale: 0 }}
+                                      animate={{ scale: 1 }}
+                                      whileHover={{ scale: 1.1 }}
+                                      whileTap={{ scale: 0.9 }}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        if (isPcSquad && sortedSquadMembers.length > 0) {
+                                          setMealPickerBookingId((prev) => (prev === bookingIdToCheck ? null : bookingIdToCheck));
+                                          setMealPickerMemberPosByBooking((prev) => ({
+                                            ...prev,
+                                            [bookingIdToCheck]: Number(prev[bookingIdToCheck] || captainMember?.member_position || 1),
+                                          }));
+                                          return;
+                                        }
+                                        handleAddFoodClick(bookingIdToCheck, booking.username || 'Guest User');
+                                      }}
+                                      className="group flex flex-shrink-0 items-center gap-1 rounded-full border border-dashed border-cyan-400/60 bg-cyan-500/10 p-1 transition-all duration-200 hover:bg-cyan-500/20 sm:p-1.5"
+                                      title="Add meals to this booking"
+                                    >
+                                      <Plus className="h-2.5 w-2.5 text-cyan-300 transition-colors group-hover:text-cyan-200 sm:h-3 sm:w-3" />
+                                      <UtensilsCrossed className="h-2.5 w-2.5 text-cyan-300 transition-colors group-hover:text-cyan-200 sm:h-3 sm:w-3" />
+                                      <span className="hidden text-xs font-medium text-cyan-200 sm:inline">
+                                        Add
+                                      </span>
+                                    </motion.button>
+                                    {isPcSquad && sortedSquadMembers.length > 0 && mealPickerBookingId === bookingIdToCheck && (
+                                      <div className="absolute right-0 top-full z-20 mt-1 w-48 rounded-md border border-cyan-500/30 bg-slate-900/95 p-2 shadow-xl">
+                                        <div className="text-[10px] font-semibold uppercase tracking-wide text-cyan-300">Add Meal For</div>
+                                        <select
+                                          value={String(selectedMealMemberPos || "")}
+                                          onChange={(e) => {
+                                            const value = Number(e.target.value || 0);
+                                            setMealPickerMemberPosByBooking((prev) => ({ ...prev, [bookingIdToCheck]: value }));
+                                          }}
+                                          className="mt-1 w-full rounded border border-slate-600 bg-slate-800 px-2 py-1 text-xs text-slate-100"
+                                        >
+                                          {sortedSquadMembers.map((member: any, idx: number) => {
+                                            const name = String(member?.name || `Player ${member?.member_position || idx + 1}`);
+                                            const pos = Number(member?.member_position || idx + 1);
+                                            return (
+                                              <option key={`${bookingIdToCheck}-meal-add-member-opt-${idx}`} value={pos}>
+                                                {name}{member?.is_captain ? " (Captain)" : ""}
+                                              </option>
+                                            );
+                                          })}
+                                        </select>
+                                        <button
+                                          type="button"
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleAddFoodClick(bookingIdToCheck, booking.username || 'Guest User', {
+                                              member_user_id: selectedMealMember?.member_user_id ?? null,
+                                              member_position: selectedMealMember?.member_position,
+                                              name: selectedMealMember?.name || selectedMealMember?.name_snapshot || undefined,
+                                            });
+                                            setMealPickerBookingId(null);
+                                          }}
+                                          className="mt-2 w-full rounded border border-cyan-400/40 bg-cyan-500/15 px-2 py-1 text-[10px] text-cyan-200"
+                                        >
+                                          Continue
+                                        </button>
+                                      </div>
+                                    )}
+                                  </div>
                                 )}
                               </div>
                             </td>
 
                             {/* System cell - unchanged */}
                             <td className="px-3 py-3 md:px-4">
-                              <div className="flex items-center space-x-1 sm:space-x-2">
-                                {(() => {
-                                  const visual = getConsoleVisual(booking.consoleType || "");
-                                  const Icon = visual.icon;
-                                  return (
-                                    <Icon className={`w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0 ${visual.className}`} />
-                                  );
-                                })()}
-                                <span className="truncate text-xs text-slate-100 sm:text-sm">
-                                  {booking.consoleType || 'Gaming Console'}
-                                </span>
+                              <div className="space-y-1">
+                                {isPcSquad && pcMemberRows.length > 0 ? (
+                                  <div className="space-y-1">
+                                      {(rowExpanded ? pcMemberRows : pcMemberRows.slice(0, 1)).map((entry, idx) => (
+                                        <div
+                                          key={`${bookingIdToCheck}-sys-member-${entry.idx}`}
+                                          className="flex items-center justify-between gap-2 text-xs sm:text-sm"
+                                        >
+                                          <div className={`truncate inline-flex items-center ${idx === 0 ? "text-slate-100" : "text-slate-300"}`}>
+                                            {idx === 0 && (() => {
+                                              const visual = getConsoleVisual(booking.consoleType || "");
+                                              const Icon = visual.icon;
+                                              return (
+                                                <span className="mr-1 inline-flex items-center">
+                                                  <Icon className={`mr-1 h-3 w-3 sm:h-4 sm:w-4 ${visual.className}`} />
+                                                </span>
+                                              );
+                                            })()}
+                                            {entry.memberConsoleLabel} ({entry.memberName})
+                                          </div>
+                                          {pcMemberRows.length > 1 && idx === 0 && (
+                                            <button
+                                              type="button"
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                setExpandedLiveRows((prev) => ({
+                                                  ...prev,
+                                                  [bookingIdToCheck]: !rowExpanded,
+                                                }));
+                                              }}
+                                              className="px-1 py-0.5 text-cyan-200 hover:text-cyan-100"
+                                              title={rowExpanded ? "Show less" : "Show all"}
+                                            >
+                                              {rowExpanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+                                            </button>
+                                          )}
+                                        </div>
+                                      ))}
+                                  </div>
+                                ) : squadEnabled ? (
+                                  <div className="text-[10px] text-sky-200">Extra Controllers: {appliedControllerQty}</div>
+                                ) : (
+                                  <div className="flex items-center space-x-1 sm:space-x-2">
+                                    {(() => {
+                                      const visual = getConsoleVisual(booking.consoleType || "");
+                                      const Icon = visual.icon;
+                                      return (
+                                        <Icon className={`w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0 ${visual.className}`} />
+                                      );
+                                    })()}
+                                    <span className="truncate text-xs text-slate-100 sm:text-sm">
+                                      {booking.consoleType || 'Gaming Console'}
+                                    </span>
+                                  </div>
+                                )}
                               </div>
                             </td>
 
@@ -919,7 +1206,30 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
 
                             {/* Action cell - unchanged */}
                             <td className="px-3 py-3 md:px-4">
-                              {needsSettlement ? (
+                              {isPcSquad ? (
+                                <div className="flex flex-col gap-1">
+                                  {needsSettlement && (
+                                    <button
+                                      onClick={() => {
+                                        setSelectedSlot(booking);
+                                        setShowOverlay(true);
+                                        setError("");
+                                      }}
+                                      className={`w-20 rounded-md px-2 py-1 text-xs text-white transition-colors sm:w-24 ${
+                                        hasOutstandingDue && !hasExtraTime
+                                          ? "bg-orange-500 hover:bg-orange-600"
+                                          : "bg-yellow-500 hover:bg-yellow-600"
+                                      }`}
+                                    >
+                                      <div className="flex items-center justify-center gap-1">
+                                        <FaCheck className="w-2 h-2 sm:w-3 sm:h-3" />
+                                        <span className="hidden sm:inline">Settle All</span>
+                                        <span className="sm:hidden">Settle</span>
+                                      </div>
+                                    </button>
+                                  )}
+                                </div>
+                              ) : needsSettlement ? (
                                 <button
                                   onClick={() => {
                                     setSelectedSlot(booking);
@@ -943,10 +1253,10 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                                   onClick={() => handleRelease(
                                     booking.consoleType || '', 
                                     booking.game_id || '', 
-                                    booking.consoleNumber || '', 
+                                    String(booking.consoleId || booking.consoleNumber || ''), 
                                     vendorId, 
                                     setRefreshSlots, 
-                                    booking.slotId,
+                                    booking.slotId, 
                                     uniqueKey
                                   )}
                                   disabled={isReleasing || !vendorId}
@@ -1019,7 +1329,7 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                       {filteredHistoryBookings.map((b: any, i: number) => {
                         const normalizedStatus = normalizeHistoryStatus(b);
                         const statusLabel = historyStatusLabel(normalizedStatus);
-                        const systemText = `${b.consoleName || b.consoleType || "Console"}${b.consoleBrand ? ` • ${b.consoleBrand}` : ""}${b.consoleNumber ? ` • #${b.consoleNumber}` : ""}`;
+                        const systemText = `${b.consoleName || b.consoleType || "Console"}${b.consoleBrand ? ` • ${b.consoleBrand}` : ""}${b.consoleNumber ? ` • ${b.consoleNumber}` : ""}`;
                         return (
                           <tr key={`${b.bookingId || i}-${b.date}`} className="transition-colors hover:bg-slate-800/45">
                             <td className="px-3 py-3 md:px-4">
@@ -1068,6 +1378,7 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
             customerName={mealDetailsModal.customerName}
             initialMode={mealDetailsModal.mode}
             hasExistingMeals={mealDetailsModal.hasExistingMeals}
+            targetMember={mealDetailsModal.targetMember}
             vendorId={String(vendorId || '')}
           />
         </>

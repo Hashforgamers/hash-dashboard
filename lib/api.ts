@@ -82,7 +82,9 @@ export const subscriptionApi = {
     apiCall(`/api/vendors/${vendorId}/subscription/`),
 
   // Get all packages
-  getPackages: () => apiCall("/api/packages"),
+  // Flask route is registered on /api/packages/ (with trailing slash).
+  // Hitting /api/packages can return 308 HTML redirect in some envs.
+  getPackages: () => apiCall("/api/packages/"),
 
   // Create Razorpay order
   createOrder: (vendorId: number, packageCode: string, action: "new" | "renew" = "new") =>

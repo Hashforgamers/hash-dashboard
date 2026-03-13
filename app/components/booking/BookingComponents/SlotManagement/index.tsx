@@ -312,7 +312,14 @@ const handleSubmit = async (e: React.FormEvent) => {
         menu_item_id: meal.menu_item_id, // ✅ Keep as menu_item_id
         quantity: meal.quantity
       })),
+      bookingType: 'direct',
       bookingMode: state.isPrivateMode ? 'private' : 'regular',
+      squadDetails: {
+        enabled: false,
+        playerCount: 1,
+        suggestedExtraControllerQty: 0,
+        members: []
+      }
     }
 
     console.log('📤 Booking payload:', JSON.stringify(bookingPayload, null, 2))
