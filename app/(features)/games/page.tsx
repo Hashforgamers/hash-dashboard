@@ -345,7 +345,7 @@ export default function GamesManagementPage() {
         >
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <h1 className="premium-heading !text-xl sm:!text-2xl md:!text-3xl flex items-center gap-2">
+              <h1 className="premium-heading flex items-center gap-2">
                 Games Management
                 <Sparkles className="h-4 w-4 text-emerald-400 sm:h-5 sm:w-5" />
               </h1>
