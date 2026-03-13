@@ -2,8 +2,13 @@
 
 import { createContext, useContext, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { jwtDecode } from "jwt-decode";
 
 const AuthContext = createContext({ isAuthenticated: false });
+
+type DecodedLoginToken = {
+  exp?: number;
+};
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -12,9 +17,21 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     const token = localStorage.getItem("jwtToken");
     const expiration = localStorage.getItem("tokenExpiration");
-    console.log(expiration);
+    let effectiveExpiration = expiration ? Number(expiration) : 0;
 
-    if (!token || !expiration || new Date().getTime() > Number(expiration)) {
+    if (token) {
+      try {
+        const claims = jwtDecode<DecodedLoginToken>(token);
+        if (claims?.exp) {
+          effectiveExpiration = claims.exp * 1000;
+          localStorage.setItem("tokenExpiration", String(effectiveExpiration));
+        }
+      } catch {
+        // Fall back to stored expiration if token is not decodable.
+      }
+    }
+
+    if (!token || !effectiveExpiration || Date.now() > effectiveExpiration) {
       localStorage.removeItem("jwtToken");
       localStorage.removeItem("tokenExpiration");
       setIsAuthenticated(false);

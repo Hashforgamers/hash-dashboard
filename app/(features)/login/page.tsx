@@ -68,7 +68,7 @@ export default function LoginPage() {
     const payload = {
       ...identity,
       iat: Math.floor(Date.now() / 1000),
-      exp: Math.floor(Date.now() / 1000) + 60 * 60,
+      exp: Math.floor(Date.now() / 1000) + 24 * 60 * 60,
     };
     function base64Encode(obj: object) {
       return btoa(JSON.stringify(obj))
@@ -224,7 +224,7 @@ export default function LoginPage() {
           const dummyToken = createDummyJWT(identity);
           localStorage.setItem("jwtToken", dummyToken);
 
-          const expirationMillis = Date.now() + 60 * 60 * 1000;
+          const expirationMillis = Date.now() + 24 * 60 * 60 * 1000;
           localStorage.setItem("tokenExpiration", expirationMillis.toString());
 
           toast.success("Login successful!");

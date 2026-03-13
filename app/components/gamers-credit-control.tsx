@@ -349,14 +349,34 @@ export default function GamersCreditControl() {
   };
   const selectSetupUser = (user: VendorUser) => {
     setSetupUserSearch(formatUserLabel(user));
+    const existingAccount = accounts.find((a) => a.user_id === user.id);
+    if (existingAccount) {
+      loadAccountIntoForm(existingAccount);
+      setStatementUserId(user.id);
+      return;
+    }
     setForm((prev) => ({
       ...prev,
       user_id: String(user.id),
-      customer_name: prev.customer_name || user.name || "",
-      email: prev.email || user.email || "",
-      phone_number: prev.phone_number || user.phone || "",
+      customer_name: user.name || "",
+      email: user.email || "",
+      phone_number: user.phone || "",
+      whatsapp_number: prev.whatsapp_number || user.phone || "",
+      address_line1: "",
+      address_line2: "",
+      city: "",
+      state: "",
+      pincode: "",
+      id_proof_type: "",
+      id_proof_number: "",
+      credit_limit: "",
+      billing_cycle_day: "1",
+      grace_days: "5",
+      is_active: true,
+      notes: "",
     }));
     setSettleUserId(String(user.id));
+    setStatementUserId(user.id);
     setIsCreatingUser(false);
   };
   const selectLedgerUser = (account: MonthlyCreditAccount) => {
@@ -369,9 +389,88 @@ export default function GamersCreditControl() {
   };
   const selectedPaymentAccount = settleUserId ? accounts.find((a) => String(a.user_id) === settleUserId) : null;
   const selectedPaymentUser = settleUserId ? vendorUsers.find((u) => String(u.id) === settleUserId) : null;
+  const selectedSetupUser = form.user_id ? vendorUsers.find((u) => String(u.id) === form.user_id) : null;
+  const selectedSetupAccount = form.user_id ? accounts.find((a) => String(a.user_id) === form.user_id) : null;
+  const selectedLedgerAccount = settleUserId ? accounts.find((a) => String(a.user_id) === settleUserId) : null;
+  const selectedLedgerUser = settleUserId ? vendorUsers.find((u) => String(u.id) === settleUserId) : null;
   const isSetupSuggestionsOpen = !isCreatingUser && setupUserSearch.trim().length > 0 && setupSuggestions.length > 0;
   const isLedgerSuggestionsOpen = ledgerUserSearch.trim().length > 0 && ledgerSuggestions.length > 0;
   const isPaymentSuggestionsOpen = paymentUserSearch.trim().length > 0 && paymentSuggestions.length > 0;
+  const getAvailableCredit = (account?: MonthlyCreditAccount | null) =>
+    Math.max(Number(account?.credit_limit || 0) - Number(account?.outstanding_amount || 0), 0);
+  const renderAccountSnapshot = (
+    account: MonthlyCreditAccount | null | undefined,
+    user: VendorUser | null | undefined,
+    emptyLabel: string,
+  ) => {
+    if (!account && !user) {
+      return (
+        <div className="rounded-xl border border-dashed border-cyan-500/25 bg-slate-900/40 p-4 text-xs text-slate-400">
+          {emptyLabel}
+        </div>
+      );
+    }
+
+    const customerName = account?.customer_name || user?.name || `User #${account?.user_id || user?.id}`;
+    const primaryPhone = account?.phone_number || account?.whatsapp_number || user?.phone || "-";
+    const primaryEmail = account?.email || user?.email || "-";
+    const availableCredit = getAvailableCredit(account);
+
+    return (
+      <div className="rounded-xl border border-cyan-500/20 bg-slate-900/60 p-3">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <div className="flex flex-wrap items-center gap-2">
+              <p className="text-sm font-semibold text-cyan-100">{customerName}</p>
+              {account ? (
+                <span
+                  className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                    account.is_active
+                      ? "border border-emerald-400/35 bg-emerald-500/10 text-emerald-200"
+                      : "border border-rose-400/35 bg-rose-500/10 text-rose-200"
+                  }`}
+                >
+                  {account.is_active ? "Active" : "Paused"}
+                </span>
+              ) : (
+                <span className="rounded-full border border-amber-400/35 bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold text-amber-200">
+                  No credit account yet
+                </span>
+              )}
+            </div>
+            <p className="mt-1 text-xs text-slate-400">
+              Phone: <span className="text-slate-200">{primaryPhone}</span>  |  Email: <span className="text-slate-200">{primaryEmail}</span>
+            </p>
+          </div>
+          {account ? (
+            <div className="text-right text-[11px] text-slate-400">
+              <p>Cycle Day <span className="font-semibold text-cyan-100">{Number(account.billing_cycle_day || 1)}</span></p>
+              <p>Grace <span className="font-semibold text-cyan-100">{Number(account.grace_days || 0)} days</span></p>
+            </div>
+          ) : null}
+        </div>
+        <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-3">
+          <div className="rounded-lg border border-cyan-500/15 bg-slate-950/45 px-3 py-2">
+            <p className="text-[11px] uppercase tracking-wide text-slate-400">Limit</p>
+            <p className="text-sm font-semibold text-cyan-100">₹{Number(account?.credit_limit || 0).toFixed(2)}</p>
+          </div>
+          <div className="rounded-lg border border-amber-500/15 bg-slate-950/45 px-3 py-2">
+            <p className="text-[11px] uppercase tracking-wide text-slate-400">Outstanding</p>
+            <p className="text-sm font-semibold text-amber-200">₹{Number(account?.outstanding_amount || 0).toFixed(2)}</p>
+          </div>
+          <div className="rounded-lg border border-emerald-500/15 bg-slate-950/45 px-3 py-2">
+            <p className="text-[11px] uppercase tracking-wide text-slate-400">Available</p>
+            <p className="text-sm font-semibold text-emerald-200">₹{availableCredit.toFixed(2)}</p>
+          </div>
+        </div>
+        {account?.notes ? (
+          <p className="mt-2 text-xs text-slate-400">
+            Notes: <span className="text-slate-200">{account.notes}</span>
+          </p>
+        ) : null}
+      </div>
+    );
+  };
 
   const cardClass =
     "rounded-xl border border-cyan-500/20 bg-gradient-to-br from-slate-900/75 via-slate-900/70 to-cyan-950/20";
@@ -482,6 +581,11 @@ export default function GamersCreditControl() {
                 New gamer mode: fill recovery/contact fields below and save. User + credit account will be created together.
               </p>
             )}
+            {renderAccountSnapshot(
+              selectedSetupAccount,
+              selectedSetupUser,
+              "Select an existing gamer or create a new gamer to review account health before saving."
+            )}
 
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
               <Input value={form.customer_name} onChange={(e) => setForm((p) => ({ ...p, customer_name: e.target.value }))} placeholder="Full Name" className="border-cyan-400/25 bg-slate-900/70 text-slate-100" />
@@ -529,21 +633,44 @@ export default function GamersCreditControl() {
               ) : (
                 accounts.map((a) => {
                   const user = vendorUsers.find((u) => u.id === a.user_id);
+                  const availableCredit = getAvailableCredit(a);
                   return (
-                    <div key={a.id} className="rounded border border-cyan-500/15 bg-slate-900/60 p-2 text-xs">
+                    <div key={a.id} className="rounded border border-cyan-500/15 bg-slate-900/60 p-3 text-xs">
                       <div className="flex items-center justify-between">
-                        <span className="font-semibold text-slate-100">{a.customer_name || user?.name || `User #${a.user_id}`}</span>
-                        <button
-                          onClick={() => loadAccountIntoForm(a)}
-                          className="rounded border border-cyan-400/30 px-2 py-1 text-cyan-200 hover:bg-slate-800"
-                        >
-                          Edit
-                        </button>
+                        <div>
+                          <span className="font-semibold text-slate-100">{a.customer_name || user?.name || `User #${a.user_id}`}</span>
+                          <div className="mt-1 flex flex-wrap items-center gap-2 text-[10px] text-slate-400">
+                            <span className={`rounded-full px-2 py-0.5 ${a.is_active ? "border border-emerald-400/35 bg-emerald-500/10 text-emerald-200" : "border border-rose-400/35 bg-rose-500/10 text-rose-200"}`}>
+                              {a.is_active ? "Active" : "Paused"}
+                            </span>
+                            <span>{a.phone_number || a.whatsapp_number || a.email || "No contact added"}</span>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => {
+                              setActiveTab("ledger");
+                              setSettleUserId(String(a.user_id));
+                              setLedgerUserSearch(formatAccountLabel(a));
+                              fetchStatement(a.user_id);
+                            }}
+                            className="rounded border border-emerald-400/30 px-2 py-1 text-emerald-200 hover:bg-slate-800"
+                          >
+                            Ledger
+                          </button>
+                          <button
+                            onClick={() => loadAccountIntoForm(a)}
+                            className="rounded border border-cyan-400/30 px-2 py-1 text-cyan-200 hover:bg-slate-800"
+                          >
+                            Edit
+                          </button>
+                        </div>
                       </div>
-                      <p className="text-slate-300">
-                        Outstanding ₹{Number(a.outstanding_amount || 0).toFixed(2)} | Limit ₹{Number(a.credit_limit || 0).toFixed(2)}
-                      </p>
-                      <p className="text-slate-400">{a.phone_number || a.whatsapp_number || a.email || "No contact added"}</p>
+                      <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-3">
+                        <p className="rounded bg-slate-950/40 px-2 py-1 text-slate-300">Limit ₹{Number(a.credit_limit || 0).toFixed(2)}</p>
+                        <p className="rounded bg-slate-950/40 px-2 py-1 text-slate-300">Outstanding ₹{Number(a.outstanding_amount || 0).toFixed(2)}</p>
+                        <p className="rounded bg-slate-950/40 px-2 py-1 text-slate-300">Available ₹{availableCredit.toFixed(2)}</p>
+                      </div>
                     </div>
                   );
                 })
@@ -560,7 +687,7 @@ export default function GamersCreditControl() {
               <h3 className="text-sm font-semibold text-cyan-100">Accounts, Settlement & Proof Ledger</h3>
               <p className="text-xs text-slate-400">Track outstanding, collect payment, and keep a full ledger trail.</p>
             </CardHeader>
-            <CardContent className="flex-1 min-h-0 overflow-y-auto space-y-3 p-4">
+            <CardContent className="flex flex-1 min-h-0 flex-col space-y-3 overflow-hidden p-4">
               <div className={`grid grid-cols-1 gap-2 sm:grid-cols-4 ${isLedgerSuggestionsOpen ? "pb-24" : ""}`}>
                 <div className="space-y-2 sm:col-span-2">
                   <div className="relative">
@@ -609,11 +736,16 @@ export default function GamersCreditControl() {
                 {isSettling ? <Loader2 className="w-4 h-4 animate-spin" /> : <Wallet className="w-4 h-4" />}
                 Collect & Settle
               </button>
+              {renderAccountSnapshot(
+                selectedLedgerAccount,
+                selectedLedgerUser,
+                "Select a gamer to see limit, outstanding, available credit, cycle day, and contact details before collecting."
+              )}
 
               {isLoadingAccounts ? (
                 <Loader2 className="w-6 h-6 animate-spin text-blue-400" />
               ) : (
-                <div className="max-h-44 space-y-2 overflow-y-auto">
+                <div className="min-h-0 flex-1 space-y-2 overflow-y-auto pr-1">
                   {accounts.map((a) => {
                     const user = vendorUsers.find((u) => u.id === a.user_id);
                     return (
@@ -621,7 +753,11 @@ export default function GamersCreditControl() {
                         <div className="flex items-center justify-between">
                           <span className="font-semibold text-slate-100">{a.customer_name || user?.name || `User #${a.user_id}`}</span>
                           <button
-                            onClick={() => fetchStatement(a.user_id)}
+                            onClick={() => {
+                              setSettleUserId(String(a.user_id));
+                              setLedgerUserSearch(formatAccountLabel(a));
+                              fetchStatement(a.user_id);
+                            }}
                             className="rounded border border-cyan-400/30 px-2 py-1 text-cyan-200 hover:bg-slate-800"
                           >
                             View Proof
@@ -643,16 +779,18 @@ export default function GamersCreditControl() {
               <h3 className="text-sm font-semibold text-cyan-100">Ledger Proof</h3>
               <p className="text-xs text-slate-400">Every charge/payment with date, source, and staff attribution.</p>
             </CardHeader>
-            <CardContent className="flex-1 min-h-0 overflow-y-auto p-4">
+            <CardContent className="flex flex-1 min-h-0 flex-col overflow-hidden p-4">
               {statementUserId ? (
-                <div className="rounded border border-cyan-500/20 bg-slate-900/65 p-2 text-xs">
-                  <p className="mb-2 font-semibold text-cyan-100">Ledger Proof: User #{statementUserId}</p>
+                <div className="flex min-h-0 flex-1 flex-col rounded border border-cyan-500/20 bg-slate-900/65 p-2 text-xs">
+                  <p className="mb-2 font-semibold text-cyan-100">
+                    Ledger Proof: {selectedLedgerAccount?.customer_name || selectedLedgerUser?.name || `User #${statementUserId}`}
+                  </p>
                   {isLoadingStatement ? (
                     <Loader2 className="w-4 h-4 animate-spin text-blue-400" />
                   ) : statementRows.length === 0 ? (
                     <p className="text-slate-400">No entries.</p>
                   ) : (
-                    <div className="max-h-[360px] space-y-1 overflow-y-auto">
+                    <div className="min-h-0 flex-1 space-y-1 overflow-y-auto pr-1">
                       {statementRows.map((r) => (
                         <div key={r.id} className="flex items-center justify-between border-b border-slate-700 py-1 last:border-0">
                           <span className="w-20 text-slate-300">{r.entry_type}</span>
@@ -713,6 +851,11 @@ export default function GamersCreditControl() {
                 Collected Total: <span className="font-semibold text-emerald-200">₹{paymentCollected.toFixed(2)}</span>
               </div>
             </div>
+            {renderAccountSnapshot(
+              selectedPaymentAccount,
+              selectedPaymentUser,
+              "Select a gamer to see current credit health and payment behavior."
+            )}
             {settleUserId && (
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-4">
                 <div className="rounded-md border border-cyan-500/20 bg-slate-900/60 px-3 py-2 text-xs text-slate-300">
@@ -734,7 +877,7 @@ export default function GamersCreditControl() {
             ) : paymentRows.length === 0 ? (
               <p className="text-xs text-slate-400">No payment entries for selected gamer.</p>
             ) : (
-              <div className="max-h-[420px] space-y-1 overflow-y-auto rounded border border-cyan-500/20 bg-slate-950/35 p-2">
+              <div className="min-h-0 flex-1 space-y-1 overflow-y-auto rounded border border-cyan-500/20 bg-slate-950/35 p-2">
                 <div className="grid grid-cols-7 gap-2 border-b border-slate-700 px-2 pb-1 text-[11px] uppercase tracking-wide text-slate-400">
                   <span>Date/Time</span>
                   <span>Amount</span>

@@ -55,6 +55,21 @@ export function ConsoleList({ onEdit, refreshKey = 0 }: ConsoleListProps) {
   const [releasingConsoleId, setReleasingConsoleId] = useState<number | null>(null);
   const [activeGroup, setActiveGroup] = useState<"all" | "pc" | "ps5" | "xbox" | "vr">("all");
 
+  const loadConsoles = async (currentVendorId: number) => {
+    if (!currentVendorId) return;
+    setIsLoading(true);
+    try {
+      const response = await axios.get(
+        `${DASHBOARD_URL}/api/getConsoles/vendor/${currentVendorId}`
+      );
+      setdata(response?.data || []);
+    } catch (error) {
+      console.error("Error occurred while fetching consoles:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
 
   // Decode token once when the component mounts
   useEffect(() => {
@@ -69,30 +84,18 @@ export function ConsoleList({ onEdit, refreshKey = 0 }: ConsoleListProps) {
 
 
   useEffect(() => {
-    const fetch_data = async () => {
-      if (!vendorId) return; // Prevent calling API when vendorId is still null
-
-      setIsLoading(true); // Start loading
-
-      try {
-        const response = await axios.get(
-          `${DASHBOARD_URL}/api/getConsoles/vendor/${vendorId}`
-        );
-        if (!response) {
-          console.log("Something went wrong while fetching the data");
-        } else {
-          setdata(response.data);
-        }
-      } catch (error) {
-        console.error("Error occurred while fetching consoles:", error);
-      } finally {
-        setIsLoading(false); // Stop loading
-      }
-    };
-
-
-    fetch_data(); // function call here to fetch the data
+    if (!vendorId) return;
+    loadConsoles(vendorId);
   }, [vendorId, refreshKey]); // rerun when vendor changes or caller asks refresh
+
+  useEffect(() => {
+    const handleRefresh = () => {
+      if (!vendorId) return;
+      loadConsoles(vendorId);
+    };
+    window.addEventListener("refresh-dashboard", handleRefresh);
+    return () => window.removeEventListener("refresh-dashboard", handleRefresh);
+  }, [vendorId]);
 
 
 
@@ -189,8 +192,7 @@ export function ConsoleList({ onEdit, refreshKey = 0 }: ConsoleListProps) {
         { bookingStats: {} }
       );
 
-      const response = await axios.get(`${DASHBOARD_URL}/api/getConsoles/vendor/${vendorId}`);
-      setdata(response.data);
+      await loadConsoles(vendorId);
       window.dispatchEvent(new Event("refresh-dashboard"));
     } catch (error) {
       console.error("Failed to release console:", error);

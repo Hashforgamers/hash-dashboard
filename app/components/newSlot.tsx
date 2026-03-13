@@ -26,7 +26,6 @@ import {
   CalendarDays,
   Users,
   Sparkles,
-  Lock,
   Ticket,
   AlertCircle,
   Clock
@@ -34,6 +33,7 @@ import {
 import { BOOKING_URL, DASHBOARD_URL } from '@/src/config/env'
 import { ConsoleType } from './types'
 import MealSelector from './mealSelector'
+import CreditAccountModal, { type MonthlyCreditAccountSummary } from './credit-account-modal'
 
 type PillColor = "green" | "blue" | "purple" | "yellow" | "red"
 type ConsoleFilter = "PC" | "PS5" | "Xbox" | "VR"
@@ -141,8 +141,15 @@ interface SelectedMeal {
 }
 
 interface UserSuggestion {
+  id?: number
   name: string
   email: string
+  phone: string
+}
+
+interface SquadMemberInput {
+  id: string
+  name: string
   phone: string
 }
 
@@ -284,6 +291,16 @@ async function fetchSlotsBatch(vendorId: number, gameIds: number[], dates: strin
 
 // Update this constant
 const PAYMENT_TYPES = ['Cash', 'UPI', 'Pass', 'Monthly Credit'] as const
+const DEFAULT_SQUAD_PRICING_POLICY: Record<string, Record<string, number>> = {
+  pc: { "2": 0, "3": 3, "4": 5, "5": 8 },
+}
+
+const SQUAD_PLATFORM_RULES: Record<string, { enabled: boolean; maxPlayers: number; pricingMode: "squad_discount" | "controller_pricing" | "solo_only" }> = {
+  pc: { enabled: true, maxPlayers: 10, pricingMode: "squad_discount" },
+  ps: { enabled: true, maxPlayers: 4, pricingMode: "controller_pricing" },
+  xbox: { enabled: true, maxPlayers: 4, pricingMode: "controller_pricing" },
+  vr: { enabled: false, maxPlayers: 1, pricingMode: "solo_only" },
+}
 
 
 function SlotBookingForm({ 
@@ -307,7 +324,9 @@ function SlotBookingForm({
   const [validatedPass, setValidatedPass] = useState<any>(null)
   const [isValidatingPass, setIsValidatingPass] = useState(false)
   const [passError, setPassError] = useState('')
-  const [isPrivateMode, setIsPrivateMode] = useState<boolean>(false)
+  const [isSquadMode, setIsSquadMode] = useState<boolean>(false)
+  const [squadPlayerCount, setSquadPlayerCount] = useState<number>(2)
+  const [squadMembers, setSquadMembers] = useState<SquadMemberInput[]>([])
   const [waiveOffAmount, setWaiveOffAmount] = useState<number>(0)
   const [extraControllerQty, setExtraControllerQty] = useState<number>(0)
   const [extraControllerFare, setExtraControllerFare] = useState<number>(0)
@@ -324,15 +343,22 @@ function SlotBookingForm({
   const [isSubmitted, setIsSubmitted] = useState<boolean>(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [activePricing, setActivePricing] = useState<Record<string, ActivePricingEntry>>({})
+  const [squadPricingPolicy, setSquadPricingPolicy] = useState<Record<string, Record<string, number>>>({})
 
 
 
 
-  const [userList, setUserList] = useState<{ name: string; email: string; phone: string }[]>([])
-  const [emailSuggestions, setEmailSuggestions] = useState<{ name: string; email: string; phone: string }[]>([])
-  const [phoneSuggestions, setPhoneSuggestions] = useState<{ name: string; email: string; phone: string }[]>([])
-  const [nameSuggestions, setNameSuggestions] = useState<{ name: string; email: string; phone: string }[]>([])
+  const [userList, setUserList] = useState<{ id?: number; name: string; email: string; phone: string }[]>([])
+  const [emailSuggestions, setEmailSuggestions] = useState<{ id?: number; name: string; email: string; phone: string }[]>([])
+  const [phoneSuggestions, setPhoneSuggestions] = useState<{ id?: number; name: string; email: string; phone: string }[]>([])
+  const [nameSuggestions, setNameSuggestions] = useState<{ id?: number; name: string; email: string; phone: string }[]>([])
   const [focusedInput, setFocusedInput] = useState<string>('')
+  const [focusedSquadMemberId, setFocusedSquadMemberId] = useState<string | null>(null)
+  const [squadMemberSuggestions, setSquadMemberSuggestions] = useState<Record<string, UserSuggestion[]>>({})
+  const [creditAccount, setCreditAccount] = useState<MonthlyCreditAccountSummary | null>(null)
+  const [creditAccountLoading, setCreditAccountLoading] = useState(false)
+  const [creditAccountError, setCreditAccountError] = useState('')
+  const [showCreditAccountModal, setShowCreditAccountModal] = useState(false)
   const blurTimeoutRef = useRef<number | null>(null)
 
 
@@ -493,7 +519,23 @@ useEffect(() => {
     }
   }
 
+  const fetchSquadPricingPolicy = async () => {
+    try {
+      const res = await fetch(`${BOOKING_URL}/api/vendor/${vendorId}/squad-pricing-policy`)
+      const data = await res.json()
+      if (res.ok && data?.success && data?.policy) {
+        setSquadPricingPolicy(data.policy)
+      } else {
+        setSquadPricingPolicy(DEFAULT_SQUAD_PRICING_POLICY)
+      }
+    } catch (err) {
+      console.error('❌ Failed to fetch squad pricing policy:', err)
+      setSquadPricingPolicy(DEFAULT_SQUAD_PRICING_POLICY)
+    }
+  }
+
   fetchActivePricing()
+  fetchSquadPricingPolicy()
 }, [isOpen])
 
 
@@ -644,6 +686,62 @@ useEffect(() => {
     setFocusedInput("")
   }
 
+  const matchedPrimaryUser = useMemo(() => {
+    const normalizedEmail = email.trim().toLowerCase()
+    const normalizedPhone = phone.trim()
+    const normalizedName = name.trim().toLowerCase()
+    return userList.find((user) => {
+      const byEmail = normalizedEmail && user.email?.trim().toLowerCase() === normalizedEmail
+      const byPhone = normalizedPhone && user.phone?.trim() === normalizedPhone
+      const byName = normalizedName && user.name?.trim().toLowerCase() === normalizedName
+      return Boolean(byEmail || byPhone || (byName && (normalizedEmail || normalizedPhone)))
+    }) || null
+  }, [userList, email, phone, name])
+
+  const availableCreditAmount = useMemo(() => {
+    if (!creditAccount) return 0
+    return Math.max(Number(creditAccount.credit_limit || 0) - Number(creditAccount.outstanding_amount || 0), 0)
+  }, [creditAccount])
+
+  useEffect(() => {
+    if (!isOpen || paymentType !== 'Monthly Credit') return
+
+    const vendorId = getVendorIdFromToken()
+    if (!vendorId) return
+
+    let cancelled = false
+    const loadCreditAccount = async () => {
+      setCreditAccountLoading(true)
+      setCreditAccountError('')
+      try {
+        const res = await fetch(`${BOOKING_URL}/api/vendor/${vendorId}/monthly-credit/accounts`)
+        const data = await res.json()
+        if (!res.ok) {
+          throw new Error(data?.message || data?.error || 'Unable to load monthly credit accounts')
+        }
+        const accounts = Array.isArray(data?.accounts) ? data.accounts : []
+        const matchedAccount = matchedPrimaryUser?.id
+          ? accounts.find((row: any) => Number(row.user_id) === Number(matchedPrimaryUser.id))
+          : null
+        if (!cancelled) {
+          setCreditAccount(matchedAccount || null)
+        }
+      } catch (error: any) {
+        if (!cancelled) {
+          setCreditAccount(null)
+          setCreditAccountError(error?.message || 'Unable to load monthly credit accounts')
+        }
+      } finally {
+        if (!cancelled) setCreditAccountLoading(false)
+      }
+    }
+
+    loadCreditAccount()
+    return () => {
+      cancelled = true
+    }
+  }, [isOpen, paymentType, matchedPrimaryUser?.id])
+
   const handleMealSelectorConfirm = (meals: SelectedMeal[]) => {
     console.log('🍽️ Meals confirmed:', meals)
     setSelectedMeals(meals)
@@ -671,6 +769,119 @@ const getEffectivePrice = (slot: SelectedSlot): number => {
   const selectedConsoleName = (selectedSlots[0]?.console_name || '').toLowerCase()
   const selectedControllerType = normalizeControllerType(selectedSlots[0]?.console_name)
   const supportsExtraController = selectedControllerType !== null && hasControllerPricingConfigured
+  const bookingFlowMode: "solo" | "squad" = isSquadMode ? "squad" : "solo"
+  const squadConsoleGroup = (() => {
+    if (selectedConsoleName.includes("ps")) return "ps"
+    if (selectedConsoleName.includes("xbox")) return "xbox"
+    if (selectedConsoleName.includes("vr")) return "vr"
+    if (selectedConsoleName.includes("pc")) return "pc"
+    return "pc"
+  })()
+  const squadPlatformRule = SQUAD_PLATFORM_RULES[squadConsoleGroup] || SQUAD_PLATFORM_RULES.vr
+  const squadSupported = Boolean(squadPlatformRule.enabled)
+  const squadUsesDiscountEngine = squadPlatformRule.pricingMode === "squad_discount"
+  const squadPolicyForConsole =
+    (squadConsoleGroup === "pc"
+      ? (squadPricingPolicy[squadConsoleGroup] || DEFAULT_SQUAD_PRICING_POLICY[squadConsoleGroup] || DEFAULT_SQUAD_PRICING_POLICY.pc)
+      : {})
+  const squadMaxPlayers = (() => {
+    if (squadUsesDiscountEngine) {
+      const keys = Object.keys(squadPolicyForConsole).map((k) => Number(k)).filter((v) => !Number.isNaN(v))
+      if (keys.length > 0) return Math.max(...keys)
+    }
+    return Number(squadPlatformRule.maxPlayers || 1)
+  })()
+  const includedControllers = selectedControllerType ? 1 : 0
+  const suggestedExtraControllerQty = isSquadMode && selectedControllerType
+    ? Math.max(0, squadPlayerCount - includedControllers)
+    : 0
+  const maxQuickMembers = Math.max(1, squadPlayerCount - 1)
+
+  const setBookingModeQuick = (mode: "solo" | "squad") => {
+    if (mode === "solo") {
+      setIsSquadMode(false)
+      return
+    }
+    if (!squadSupported) return
+    setIsSquadMode(true)
+  }
+
+  const addSquadMemberRow = () => {
+    if (!isSquadMode) return
+    setSquadPlayerCount((prev) => Math.min(squadMaxPlayers, prev + 1))
+  }
+
+  const removeSquadMemberRow = (memberId: string) => {
+    if (!isSquadMode) return
+    setSquadMembers((prev) => prev.filter((m) => m.id !== memberId))
+    setSquadPlayerCount((prev) => Math.max(2, prev - 1))
+  }
+
+  const updateSquadMemberRow = (memberId: string, field: "name" | "phone", value: string) => {
+    setSquadMembers((prev) =>
+      prev.map((member) =>
+        member.id === memberId ? { ...member, [field]: value } : member
+      )
+    )
+    const query = String(value || "").trim().toLowerCase()
+    if (!query) {
+      setSquadMemberSuggestions((prev) => ({ ...prev, [memberId]: [] }))
+      return
+    }
+    const matches = userList
+      .filter((user) => {
+        const nameMatch = String(user.name || "").toLowerCase().includes(query)
+        const phoneMatch = String(user.phone || "").toLowerCase().includes(query)
+        const emailMatch = String(user.email || "").toLowerCase().includes(query)
+        return nameMatch || phoneMatch || emailMatch
+      })
+      .slice(0, 5)
+    setSquadMemberSuggestions((prev) => ({ ...prev, [memberId]: matches }))
+    setFocusedSquadMemberId(memberId)
+  }
+
+  const handleSquadMemberFocus = (memberId: string, currentQuery = "") => {
+    const query = String(currentQuery || "").trim().toLowerCase()
+    const matches = (query
+      ? userList.filter((user) => {
+          const nameMatch = String(user.name || "").toLowerCase().includes(query)
+          const phoneMatch = String(user.phone || "").toLowerCase().includes(query)
+          const emailMatch = String(user.email || "").toLowerCase().includes(query)
+          return nameMatch || phoneMatch || emailMatch
+        })
+      : userList
+    ).slice(0, 5)
+    setFocusedSquadMemberId(memberId)
+    setSquadMemberSuggestions((prev) => ({ ...prev, [memberId]: matches }))
+  }
+
+  const handleSquadMemberBlur = (memberId: string) => {
+    window.setTimeout(() => {
+      setFocusedSquadMemberId((current) => (current === memberId ? null : current))
+      setSquadMemberSuggestions((prev) => ({ ...prev, [memberId]: [] }))
+    }, 140)
+  }
+
+  const handleSquadMemberSuggestionPick = (memberId: string, user: UserSuggestion) => {
+    setSquadMembers((prev) =>
+      prev.map((member) =>
+        member.id === memberId
+          ? { ...member, name: user.name || member.name, phone: user.phone || member.phone }
+          : member
+      )
+    )
+    setFocusedSquadMemberId(null)
+    setSquadMemberSuggestions((prev) => ({ ...prev, [memberId]: [] }))
+  }
+
+  const applyExtraControllerQty = (nextQty: number) => {
+    const sanitizedQty = Math.max(0, Math.min(8, nextQty))
+    setExtraControllerQty(sanitizedQty)
+    if (isSquadMode && selectedControllerType) {
+      const mappedPlayers = Math.max(2, Math.min(squadMaxPlayers, sanitizedQty + 2))
+      setSquadPlayerCount(mappedPlayers)
+    }
+  }
 
   useEffect(() => {
     const fetchControllerPricing = async () => {
@@ -713,6 +924,45 @@ const getEffectivePrice = (slot: SelectedSlot): number => {
   }, [selectedControllerType])
 
   useEffect(() => {
+    if (!squadSupported && isSquadMode) {
+      setIsSquadMode(false)
+    }
+  }, [squadSupported, isSquadMode])
+
+  useEffect(() => {
+    if (!isSquadMode && squadPlayerCount !== 2) {
+      setSquadPlayerCount(2)
+    }
+  }, [isSquadMode, squadPlayerCount])
+
+  useEffect(() => {
+    if (!isSquadMode) {
+      if (squadMembers.length > 0) setSquadMembers([])
+      if (focusedSquadMemberId) setFocusedSquadMemberId(null)
+      if (Object.keys(squadMemberSuggestions).length > 0) setSquadMemberSuggestions({})
+      return
+    }
+
+    const targetMembers = Math.max(1, squadPlayerCount - 1)
+    setSquadMembers((prev) => {
+      if (prev.length === targetMembers) return prev
+      if (prev.length > targetMembers) return prev.slice(0, targetMembers)
+      const next = [...prev]
+      for (let i = prev.length; i < targetMembers; i += 1) {
+        next.push({ id: `${Date.now()}-${i}`, name: "", phone: "" })
+      }
+      return next
+    })
+  }, [isSquadMode, squadPlayerCount, squadMembers.length])
+
+  useEffect(() => {
+    if (!isSquadMode || !selectedControllerType) return
+    if (extraControllerQty !== suggestedExtraControllerQty) {
+      setExtraControllerQty(suggestedExtraControllerQty)
+    }
+  }, [isSquadMode, selectedControllerType, suggestedExtraControllerQty, extraControllerQty])
+
+  useEffect(() => {
     if (!supportsExtraController && (extraControllerFare !== 0 || extraControllerQty !== 0)) {
       setExtraControllerQty(0)
       setExtraControllerFare(0)
@@ -728,10 +978,253 @@ const getEffectivePrice = (slot: SelectedSlot): number => {
   }, [controllerPricingConfig, extraControllerQty, extraControllerFare, supportsExtraController])
 
   const mealsTotal = selectedMeals.reduce((sum, meal) => sum + meal.total, 0)
-  const consoleTotal = selectedSlots.reduce((sum, slot) => sum + getEffectivePrice(slot), 0)
+  const consoleUnitTotal = selectedSlots.reduce((sum, slot) => sum + getEffectivePrice(slot), 0)
+  const squadConsoleMultiplier = isSquadMode && squadConsoleGroup === "pc" ? squadPlayerCount : 1
+  const consoleTotal = isSquadMode ? Number((consoleUnitTotal * squadConsoleMultiplier).toFixed(2)) : consoleUnitTotal
+  const squadDiscountPercent = (() => {
+    if (!isSquadMode || !squadUsesDiscountEngine) return 0
+    const keys = Object.keys(squadPolicyForConsole).map((k) => Number(k)).filter((v) => !Number.isNaN(v)).sort((a, b) => a - b)
+    if (keys.length === 0) return 0
+    const minPlayers = keys[0]
+    const maxPlayers = keys[keys.length - 1]
+    const cappedPlayers = Math.min(maxPlayers, Math.max(minPlayers, squadPlayerCount))
+    return Number(squadPolicyForConsole[String(cappedPlayers)] || 0)
+  })()
+  const squadDiscountAmount = isSquadMode
+    ? Number(((consoleTotal * squadDiscountPercent) / 100).toFixed(2))
+    : 0
   const totalAmount = Math.max(
     0,
-    consoleTotal - waiveOffAmount - autoWaiveOffAmount + extraControllerFare + mealsTotal
+    consoleTotal - squadDiscountAmount - waiveOffAmount - autoWaiveOffAmount + extraControllerFare + mealsTotal
+  )
+
+  const paymentMethodMeta: Record<string, {
+    icon: React.ComponentType<{ className?: string }>
+    hint: string
+    accent: string
+  }> = {
+    Cash: {
+      icon: Wallet,
+      hint: "Collect directly at desk",
+      accent: "emerald",
+    },
+    UPI: {
+      icon: CreditCard,
+      hint: "Scan and pay instantly",
+      accent: "sky",
+    },
+    Pass: {
+      icon: Ticket,
+      hint: "Validate and redeem hours",
+      accent: "violet",
+    },
+    "Monthly Credit": {
+      icon: Clock,
+      hint: "Bill in monthly cycle",
+      accent: "amber",
+    },
+  }
+
+  const paymentMethodCard = (
+    <Card className="sb-card p-4 sm:p-5 md:p-6">
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <div className="rounded-md bg-yellow-100 p-1 dark:bg-yellow-900/30">
+            <CreditCard className="h-4 w-4 text-yellow-600" />
+          </div>
+          <div>
+            <h3 className="text-lg font-semibold text-gray-800 dark:text-white">Payment Method</h3>
+            <p className="text-xs text-gray-500 dark:text-gray-400">Pick one to finish quickly</p>
+          </div>
+        </div>
+        <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700 dark:border-emerald-800 dark:bg-emerald-900/25 dark:text-emerald-300">
+          Selected: {paymentType}
+        </span>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+        {PAYMENT_TYPES.map((type) => (
+          (() => {
+            const meta = paymentMethodMeta[type]
+            const Icon = meta.icon
+            const isActive = paymentType === type
+            const iconClass = isActive
+              ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/35 dark:text-emerald-300"
+              : "bg-slate-800 text-slate-300 dark:bg-slate-700/70 dark:text-slate-300"
+            return (
+              <motion.button
+                key={type}
+                type="button"
+                whileHover={{ y: -1 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => {
+                  setPaymentType(type)
+                  if (type !== 'Pass') {
+                    setPassUid('')
+                    setValidatedPass(null)
+                    setPassError('')
+                  }
+                  if (errors.payment) setErrors((prev) => ({ ...prev, payment: '' }))
+                }}
+                className={cn(
+                  "group rounded-xl border p-3 transition-all duration-200 min-h-[72px]",
+                  isActive
+                    ? "border-emerald-500 bg-emerald-50/80 ring-1 ring-emerald-200 dark:bg-emerald-900/30 dark:ring-emerald-800"
+                    : "border-gray-300 dark:border-gray-600 hover:border-slate-400 dark:hover:border-slate-500 hover:bg-slate-50/40 dark:hover:bg-slate-800/40"
+                )}
+              >
+                <div className="flex items-center justify-between">
+                  <span className={cn("inline-flex h-8 w-8 items-center justify-center rounded-lg transition-colors", iconClass)}>
+                    <Icon className="h-4 w-4" />
+                  </span>
+                  <span
+                    className={cn(
+                      "h-2.5 w-2.5 rounded-full border",
+                      isActive ? "border-emerald-600 bg-emerald-500" : "border-gray-400 bg-transparent"
+                    )}
+                  />
+                </div>
+                <p className="mt-2 text-sm font-semibold text-gray-800 dark:text-white text-left leading-tight">
+                  {type === "Monthly Credit" ? "Credit" : type}
+                </p>
+              </motion.button>
+            )
+          })()
+        ))}
+      </div>
+      <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+        {paymentMethodMeta[paymentType]?.hint}
+      </p>
+      {paymentType === 'Monthly Credit' && (
+        <div className="mt-2 space-y-2">
+          <p className="rounded-md border border-amber-200 bg-amber-50 px-2.5 py-1.5 text-xs text-amber-700 dark:border-amber-700 dark:bg-amber-900/25 dark:text-amber-300">
+            Monthly credit works only for users with an active Gamers Credit account.
+          </p>
+          <div className="rounded-xl border border-gray-300 bg-slate-50/60 p-3 dark:border-slate-700 dark:bg-slate-900/60">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-sm font-semibold text-gray-800 dark:text-white">Credit Account Status</p>
+                <p className="text-xs text-gray-500 dark:text-slate-400">
+                  {matchedPrimaryUser?.id
+                    ? `Matched customer: ${matchedPrimaryUser.name}`
+                    : 'No known customer matched yet. Create credit on the fly if needed.'}
+                </p>
+              </div>
+              {!creditAccount?.is_active && (
+                <button
+                  type="button"
+                  onClick={() => setShowCreditAccountModal(true)}
+                  className="rounded-lg border border-cyan-500/40 bg-cyan-500/10 px-3 py-1.5 text-xs font-medium text-cyan-700 dark:text-cyan-200"
+                >
+                  Create Credit Account
+                </button>
+              )}
+            </div>
+            {creditAccountLoading ? (
+              <p className="mt-2 text-xs text-gray-500 dark:text-slate-400">Loading credit account...</p>
+            ) : creditAccount?.is_active ? (
+              <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-3">
+                <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-3 py-2">
+                  <p className="text-[11px] uppercase tracking-wide text-emerald-700 dark:text-emerald-300">Limit</p>
+                  <p className="text-sm font-semibold text-emerald-900 dark:text-emerald-100">₹{Number(creditAccount.credit_limit || 0).toFixed(2)}</p>
+                </div>
+                <div className="rounded-lg border border-amber-500/20 bg-amber-500/10 px-3 py-2">
+                  <p className="text-[11px] uppercase tracking-wide text-amber-700 dark:text-amber-300">Outstanding</p>
+                  <p className="text-sm font-semibold text-amber-900 dark:text-amber-100">₹{Number(creditAccount.outstanding_amount || 0).toFixed(2)}</p>
+                </div>
+                <div className="rounded-lg border border-cyan-500/20 bg-cyan-500/10 px-3 py-2">
+                  <p className="text-[11px] uppercase tracking-wide text-cyan-700 dark:text-cyan-300">Available</p>
+                  <p className="text-sm font-semibold text-cyan-900 dark:text-cyan-100">₹{availableCreditAmount.toFixed(2)}</p>
+                </div>
+              </div>
+            ) : (
+              <div className="mt-2 rounded-lg border border-red-500/20 bg-red-500/10 px-3 py-2 text-xs text-red-600 dark:text-red-300">
+                {creditAccountError || 'No credit account configured for this customer.'}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      <AnimatePresence>
+        {paymentType === 'Pass' && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="mt-4 space-y-2"
+          >
+            <div className="relative">
+              <input
+                type="text"
+                value={passUid}
+                onChange={(e) => setPassUid(e.target.value.toUpperCase())}
+                onBlur={() => {
+                  if (passUid.trim()) validatePass(passUid)
+                }}
+                placeholder="Enter Pass UID (HFG-XXXXXXXXXXXX)"
+                className="w-full px-3 py-2 bg-white dark:bg-gray-800 rounded border border-gray-300 dark:border-gray-600 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500/20 transition-all duration-200 text-sm"
+              />
+              {isValidatingPass && (
+                <Loader2 className="w-4 h-4 animate-spin text-emerald-600 absolute right-3 top-2.5" />
+              )}
+            </div>
+
+            {validatedPass && !passError && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="bg-emerald-50 dark:bg-emerald-900/20 rounded-lg p-2 border border-emerald-200 dark:border-emerald-700"
+              >
+                <div className="flex items-start gap-2">
+                  <CheckCircle className="w-4 h-4 text-emerald-600 flex-shrink-0 mt-0.5" />
+                  <div className="flex-1 text-xs space-y-1">
+                    <p className="font-semibold text-emerald-800 dark:text-emerald-200">
+                      {validatedPass.pass_name}
+                    </p>
+                    <div className="flex justify-between text-emerald-700 dark:text-emerald-300">
+                      <span>Hours Available</span>
+                      <span className="font-bold">
+                        {validatedPass.remaining_hours}/{validatedPass.total_hours}
+                      </span>
+                    </div>
+                    {selectedSlots.length > 0 && (
+                      <div className="flex justify-between text-emerald-600 dark:text-emerald-400">
+                        <span>Hours Needed</span>
+                        <span className="font-bold">{selectedSlots.length * 0.5} hrs</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </motion.div>
+            )}
+
+            {passError && (
+              <motion.p
+                initial={{ opacity: 0, y: -5 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="text-xs text-red-500 flex items-center gap-1"
+              >
+                <X className="w-3 h-3" />
+                {passError}
+              </motion.p>
+            )}
+
+            {errors.pass && (
+              <motion.p
+                initial={{ opacity: 0, y: -5 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="text-xs text-red-500"
+              >
+                {errors.pass}
+              </motion.p>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {errors.payment && <p className="text-red-500 text-sm mt-2">{errors.payment}</p>}
+    </Card>
   )
 
   console.log('💰 Pricing calculation:', {
@@ -753,6 +1246,21 @@ const getEffectivePrice = (slot: SelectedSlot): number => {
     if (!phone.trim()) newErrors.phone = 'Phone number is required'
     if (selectedSlots.length === 0) newErrors.slots = 'Please select at least one time slot'
     if (!paymentType) newErrors.payment = 'Please select a payment method'
+    if (isSquadMode) {
+      if (!squadSupported) {
+        newErrors.squad = 'Squad mode is not supported for this console type'
+      } else if (squadPlayerCount < 2) {
+        newErrors.squad = 'Squad booking requires at least 2 players'
+      } else if (squadPlayerCount > squadMaxPlayers) {
+        newErrors.squad = `Maximum ${squadMaxPlayers} players allowed for this console type`
+      }
+      const hasPartialMember = squadMembers.some(
+        (m) => (m.name.trim() && !m.phone.trim()) || (!m.name.trim() && m.phone.trim())
+      )
+      if (hasPartialMember) {
+        newErrors.squad_members = 'Fill both name and phone for squad members, or leave both empty'
+      }
+    }
 
      // Validate pass if Pass payment is selected
   if (paymentType === 'Pass') {
@@ -764,6 +1272,16 @@ const getEffectivePrice = (slot: SelectedSlot): number => {
       newErrors.pass = passError
     }
   }
+
+    if (paymentType === 'Monthly Credit') {
+      if (creditAccountLoading) {
+        newErrors.payment = 'Monthly credit account status is still loading'
+      } else if (!creditAccount?.is_active) {
+        newErrors.payment = 'Monthly credit account is not configured for this customer'
+      } else if (availableCreditAmount < totalAmount) {
+        newErrors.payment = `Available credit is ₹${availableCreditAmount.toFixed(2)}, booking needs ₹${totalAmount.toFixed(2)}`
+      }
+    }
 
     setErrors(newErrors)
     console.log('✅ Form validation result:', { isValid: Object.keys(newErrors).length === 0, errors: newErrors })
@@ -825,6 +1343,7 @@ const getEffectivePrice = (slot: SelectedSlot): number => {
         bookedDate: selectedSlots[0]?.date || '',
         slotId: selectedSlots.map(slot => slot.slot_id),
         paymentType: paymentType === 'Monthly Credit' ? 'monthly_credit' : paymentType,
+        bookingType: isSquadMode ? 'squad' : 'direct',
         waiveOffAmount: waiveOffAmount + autoWaiveOffAmount,
         extraControllerQty: supportsExtraController ? extraControllerQty : 0,
         extraControllerFare: supportsExtraController ? extraControllerFare : 0,
@@ -832,7 +1351,21 @@ const getEffectivePrice = (slot: SelectedSlot): number => {
           menu_item_id: meal.menu_item_id,
           quantity: meal.quantity
         })),
-        bookingMode: isPrivateMode ? 'private' : 'regular',
+        bookingMode: 'regular',
+        squadDetails: {
+          enabled: isSquadMode && squadSupported,
+          playerCount: isSquadMode ? squadPlayerCount : 1,
+          suggestedExtraControllerQty: isSquadMode ? suggestedExtraControllerQty : 0,
+          discountPercentPreview: isSquadMode ? squadDiscountPercent : 0,
+          discountAmountPreview: isSquadMode ? squadDiscountAmount : 0,
+          consoleGroup: squadConsoleGroup,
+          pricingMode: squadPlatformRule.pricingMode,
+          members: isSquadMode
+            ? squadMembers
+                .filter((m) => m.name.trim() && m.phone.trim())
+                .map((m) => ({ name: m.name.trim(), phone: m.phone.trim() }))
+            : [],
+        }
       }
 
       console.log('📤 Submitting booking data:', bookingData)
@@ -1009,8 +1542,8 @@ if (response.ok || result.success === true || result.success === 'true') {
           <div className="flex-1 overflow-y-auto p-3 sm:p-4 md:p-6">
             <form id="slot-booking-form" onSubmit={handleSubmit} className="space-y-4 sm:space-y-5 md:space-y-6 pb-4">
               <div className="grid grid-cols-1 gap-4 md:gap-5 xl:grid-cols-3 xl:gap-6">
-                <div className="space-y-4 md:space-y-5 xl:col-span-2">
-                  <Card className="sb-card p-4">
+                <div className="flex flex-col gap-4 md:gap-5 xl:col-span-2">
+                  <Card className="sb-card p-4 order-1">
                     <h3 className="text-lg font-semibold text-emerald-800 dark:text-emerald-200 mb-3">Selected Time Slots</h3>
                     <div className="space-y-2">
                       {selectedSlots.map((slot, index) => (
@@ -1057,12 +1590,19 @@ if (response.ok || result.success === true || result.success === 'true') {
                     </div>
                   </Card>
 
-                  <Card className="sb-card p-4 sm:p-5 md:p-6">
+                  <Card className="sb-card p-4 sm:p-5 md:p-6 order-3">
                     <div className="flex items-center gap-2 mb-4">
                       <div className="p-1 bg-emerald-100 dark:bg-emerald-900/30 rounded">
                         <Users className="w-4 h-4 text-emerald-600" />
                       </div>
-                      <h3 className="text-lg font-semibold text-gray-800 dark:text-white">Customer Information</h3>
+                      <div>
+                        <h3 className="text-lg font-semibold text-gray-800 dark:text-white">
+                          {isSquadMode ? "Captain Information" : "Customer Information"}
+                        </h3>
+                        {isSquadMode && (
+                          <p className="text-xs text-gray-500 dark:text-gray-400">Primary contact for squad booking</p>
+                        )}
+                      </div>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -1074,7 +1614,7 @@ if (response.ok || result.success === true || result.success === 'true') {
                           onFocus={handleEmailFocus}
                           onBlur={handleBlur}
                           autoComplete="off"
-                          placeholder="Email"
+                          placeholder={isSquadMode ? "Captain email" : "Email"}
                           className={cn(
                             "w-full pl-10 pr-4 py-3 bg-white dark:bg-gray-800 border rounded-lg transition-all duration-200",
                             errors.email
@@ -1126,7 +1666,7 @@ if (response.ok || result.success === true || result.success === 'true') {
                           onFocus={handlePhoneFocus}
                           onBlur={handleBlur}
                           autoComplete="off"
-                          placeholder="Phone"
+                          placeholder={isSquadMode ? "Captain phone" : "Phone"}
                           className={cn(
                             "w-full pl-10 pr-4 py-3 bg-white dark:bg-gray-800 border rounded-lg transition-all duration-200",
                             errors.phone
@@ -1177,7 +1717,7 @@ if (response.ok || result.success === true || result.success === 'true') {
                           onChange={(e) => handleNameInputChange(e.target.value)}
                           onFocus={handleNameFocus}
                           onBlur={handleBlur}
-                          placeholder="Full name"
+                          placeholder={isSquadMode ? "Captain full name" : "Full name"}
                           className={cn(
                             "w-full pl-10 pr-4 py-3 bg-white dark:bg-gray-800 border rounded-lg transition-all duration-200",
                             errors.name
@@ -1221,225 +1761,199 @@ if (response.ok || result.success === true || result.success === 'true') {
                         {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name}</p>}
                       </div>
                     </div>
+
+                    <AnimatePresence>
+                      {isSquadMode && (
+                        <motion.div
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: 'auto' }}
+                          exit={{ opacity: 0, height: 0 }}
+                          className="mt-4 rounded-lg border border-slate-200 p-3 dark:border-slate-700"
+                        >
+                          <div className="mb-2 flex items-center justify-between">
+                            <p className="text-xs font-semibold text-gray-700 dark:text-gray-300">
+                              Squad Player Details (Optional)
+                            </p>
+                            <button
+                              type="button"
+                              onClick={addSquadMemberRow}
+                              disabled={squadMembers.length >= maxQuickMembers}
+                              className="rounded border border-gray-300 px-2 py-1 text-xs text-gray-700 disabled:opacity-50 dark:border-gray-600 dark:text-gray-300"
+                            >
+                              Add Player
+                            </button>
+                          </div>
+                            <div className="space-y-2">
+                              {squadMembers.map((member, idx) => (
+                                <div key={member.id} className="rounded-md border border-slate-200 p-2 dark:border-slate-700">
+                                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_1fr_auto]">
+                                    <input
+                                      type="text"
+                                      placeholder={`Player ${idx + 2} name`}
+                                      value={member.name}
+                                      onFocus={() => handleSquadMemberFocus(member.id, member.name)}
+                                      onBlur={() => handleSquadMemberBlur(member.id)}
+                                      onChange={(e) => updateSquadMemberRow(member.id, "name", e.target.value)}
+                                      className="rounded border border-gray-300 bg-white px-3 py-2 text-xs dark:border-gray-600 dark:bg-gray-800"
+                                    />
+                                    <input
+                                      type="tel"
+                                      placeholder={`Player ${idx + 2} phone`}
+                                      value={member.phone}
+                                      onFocus={() => handleSquadMemberFocus(member.id, member.phone)}
+                                      onBlur={() => handleSquadMemberBlur(member.id)}
+                                      onChange={(e) => updateSquadMemberRow(member.id, "phone", e.target.value)}
+                                      className="rounded border border-gray-300 bg-white px-3 py-2 text-xs dark:border-gray-600 dark:bg-gray-800"
+                                    />
+                                    <button
+                                      type="button"
+                                      onClick={() => removeSquadMemberRow(member.id)}
+                                      className="rounded border border-red-300 px-2 py-1 text-xs text-red-600 dark:border-red-700 dark:text-red-400"
+                                    >
+                                      Remove
+                                    </button>
+                                  </div>
+                                  {focusedSquadMemberId === member.id &&
+                                    Array.isArray(squadMemberSuggestions[member.id]) &&
+                                    squadMemberSuggestions[member.id].length > 0 && (
+                                      <div className="mt-2 max-h-36 overflow-auto rounded border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900">
+                                        {squadMemberSuggestions[member.id].map((suggested, suggestionIdx) => (
+                                          <button
+                                            key={`${member.id}-sg-${suggestionIdx}`}
+                                            type="button"
+                                            onMouseDown={() => handleSquadMemberSuggestionPick(member.id, suggested)}
+                                            className="flex w-full items-center justify-between border-b border-slate-100 px-2 py-1.5 text-left text-xs last:border-b-0 hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-800"
+                                          >
+                                            <span className="font-medium text-slate-700 dark:text-slate-200">
+                                              {suggested.name}
+                                            </span>
+                                            <span className="text-slate-500 dark:text-slate-400">
+                                              {suggested.phone}
+                                            </span>
+                                          </button>
+                                        ))}
+                                      </div>
+                                    )}
+                                </div>
+                              ))}
+                            </div>
+                          {errors.squad_members && <p className="mt-2 text-red-500 text-xs">{errors.squad_members}</p>}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                   </Card>
 
-                  {/* PRIVATE BOOKING TOGGLE - ADD THIS ENTIRE SECTION */}
-<Card className="sb-card p-4">
-  <div className="flex items-center justify-between">
-    {/* Left Side - Icon and Text */}
-    <div className="flex items-center gap-3">
-      <div className={cn(
-        "p-2 rounded-lg transition-all duration-300",
-        isPrivateMode 
-          ? "bg-gradient-to-br from-purple-500 to-pink-500" 
-          : "bg-gray-300 dark:bg-gray-600"
-      )}>
-        {isPrivateMode ? (
-          <Lock className="w-5 h-5 text-white" />
-        ) : (
-          <Users className="w-5 h-5 text-gray-600 dark:text-gray-300" />
-        )}
-      </div>
-      
-      <div>
-        <h3 className="text-sm font-bold text-gray-800 dark:text-white flex items-center gap-2">
-          {isPrivateMode ? (
-            <>
-              <span className="text-purple-600 dark:text-purple-400">Private Booking</span>
-              <span className="text-xs bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 px-2 py-0.5 rounded-full font-medium">
-                Manual Mode
-              </span>
-            </>
-          ) : (
-            <>
-              <span className="text-gray-700 dark:text-gray-300">Regular Booking</span>
-              <span className="text-xs bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 px-2 py-0.5 rounded-full font-medium">
-                Standard Mode
-              </span>
-            </>
-          )}
-        </h3>
-        <p className="text-xs text-gray-600 dark:text-gray-400 mt-0.5">
-          {isPrivateMode 
-            ? 'Walk-in or manual booking for internal tracking' 
-            : 'Online booking with standard workflow'}
-        </p>
-      </div>
-    </div>
-    
-    {/* Right Side - Toggle Switch */}
-    <motion.button
-      type="button"
-      onClick={() => setIsPrivateMode(!isPrivateMode)}
-      whileTap={{ scale: 0.95 }}
-      className={cn(
-        "relative inline-flex h-8 w-14 items-center rounded-full transition-all duration-300",
-        "focus:outline-none focus:ring-2 focus:ring-offset-2",
-        isPrivateMode 
-          ? "bg-gradient-to-r from-purple-600 to-pink-600 focus:ring-purple-500" 
-          : "bg-gray-300 dark:bg-gray-600 focus:ring-gray-400"
-      )}
-    >
-      <span className="sr-only">Toggle private mode</span>
-      <motion.span
-        animate={{ x: isPrivateMode ? 28 : 4 }}
-        transition={{ type: "spring", stiffness: 500, damping: 30 }}
-        className="inline-block h-6 w-6 transform rounded-full bg-white shadow-lg"
-      />
-    </motion.button>
-  </div>
-  
-  {/* Info Banner - Shows when Private mode is active */}
-  <AnimatePresence>
-    {isPrivateMode && (
-      <motion.div
-        initial={{ opacity: 0, height: 0 }}
-        animate={{ opacity: 1, height: 'auto' }}
-        exit={{ opacity: 0, height: 0 }}
-        className="mt-3 flex items-start gap-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg p-2.5 border border-purple-200 dark:border-purple-700"
-      >
-        <AlertCircle className="w-4 h-4 text-purple-600 dark:text-purple-400 flex-shrink-0 mt-0.5" />
-        <div className="flex-1">
-          <p className="text-xs text-purple-800 dark:text-purple-200">
-            <strong>Private Mode Active:</strong> This booking will be marked as a private/walk-in booking for internal tracking.
-          </p>
-        </div>
-      </motion.div>
-    )}
-  </AnimatePresence>
-</Card>
+                  <Card className="sb-card p-4 order-2">
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-2">
+                        <div className={cn(
+                          "p-2 rounded-lg",
+                          bookingFlowMode === "squad"
+                            ? "bg-blue-500"
+                            : "bg-emerald-500"
+                        )}>
+                          <Users className="w-4 h-4 text-white" />
+                        </div>
+                        <div>
+                          <h3 className="text-sm font-semibold text-gray-800 dark:text-white">Booking Type</h3>
+                          <p className="text-xs text-gray-600 dark:text-gray-400">Switch mode quickly for staff workflow</p>
+                        </div>
+                      </div>
+                    </div>
 
+                    <div className="mt-3 grid grid-cols-2 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setBookingModeQuick("solo")}
+                        className={cn(
+                          "rounded-lg border px-3 py-2 text-xs font-semibold transition-colors",
+                          bookingFlowMode === "solo"
+                            ? "border-emerald-500 bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-200"
+                            : "border-gray-300 text-gray-700 dark:border-gray-600 dark:text-gray-300"
+                        )}
+                      >
+                        Solo
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setBookingModeQuick("squad")}
+                        disabled={!squadSupported}
+                        className={cn(
+                          "rounded-lg border px-3 py-2 text-xs font-semibold transition-colors",
+                          !squadSupported && "cursor-not-allowed opacity-50",
+                          bookingFlowMode === "squad"
+                            ? "border-blue-500 bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-200"
+                            : "border-gray-300 text-gray-700 dark:border-gray-600 dark:text-gray-300"
+                        )}
+                      >
+                        Squad
+                      </button>
+                    </div>
+                    {!squadSupported && (
+                      <p className="mt-2 text-xs text-amber-600 dark:text-amber-300">
+                        Squad booking is disabled for this console type.
+                      </p>
+                    )}
 
-                  <Card className="sb-card p-4 sm:p-5 md:p-6">
-  <div className="flex items-center gap-2 mb-4">
-    <div className="p-1 bg-yellow-100 dark:bg-yellow-900/30 rounded">
-      <CreditCard className="w-4 h-4 text-yellow-600" />
-    </div>
-    <h3 className="text-lg font-semibold text-gray-800 dark:text-white">Payment Method</h3>
-  </div>
-  
-  {/* Payment Type Buttons */}
-  <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-    {PAYMENT_TYPES.map((type) => (
-      <motion.button
-        key={type}
-        type="button"
-        whileHover={{ scale: 1.02 }}
-        whileTap={{ scale: 0.98 }}
-        onClick={() => {
-          setPaymentType(type)
-          if (type !== 'Pass') {
-            setPassUid('')
-            setValidatedPass(null)
-            setPassError('')
-          }
-          if (errors.payment) setErrors((prev) => ({ ...prev, payment: '' }))
-        }}
-        className={cn(
-          "p-4 rounded-lg border transition-all duration-200",
-          paymentType === type
-            ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300'
-            : 'border-gray-300 dark:border-gray-600 hover:border-emerald-300 hover:bg-emerald-50/50 dark:hover:bg-emerald-900/20'
-        )}
-      >
-        <div className="flex items-center justify-center gap-2">
-          {type === 'Cash' && <Wallet className="w-5 h-5" />}
-          {type === 'UPI' && <CreditCard className="w-5 h-5" />}
-          {type === 'Pass' && <Ticket className="w-5 h-5" />}
-          {type === 'Monthly Credit' && <Wallet className="w-5 h-5" />}
-          <span className="font-medium">{type}</span>
-        </div>
-      </motion.button>
-    ))}
-  </div>
-  {paymentType === 'Monthly Credit' && (
-    <p className="mt-2 text-xs text-amber-600 dark:text-amber-300">
-      Monthly credit works only for users with an active Gamers Credit account.
-    </p>
-  )}
-  
-  {/* Pass UID Input - Shows when Pass is selected */}
-  <AnimatePresence>
-    {paymentType === 'Pass' && (
-      <motion.div
-        initial={{ opacity: 0, height: 0 }}
-        animate={{ opacity: 1, height: 'auto' }}
-        exit={{ opacity: 0, height: 0 }}
-        className="mt-4 space-y-2"
-      >
-        <div className="relative">
-          <input
-            type="text"
-            value={passUid}
-            onChange={(e) => setPassUid(e.target.value.toUpperCase())}
-            onBlur={() => {
-              if (passUid.trim()) validatePass(passUid)
-            }}
-            placeholder="Enter Pass UID (HFG-XXXXXXXXXXXX)"
-            className="w-full px-3 py-2 bg-white dark:bg-gray-800 rounded border border-gray-300 dark:border-gray-600 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500/20 transition-all duration-200 text-sm"
-          />
-          {isValidatingPass && (
-            <Loader2 className="w-4 h-4 animate-spin text-emerald-600 absolute right-3 top-2.5" />
-          )}
-        </div>
-        
-        {/* Validated Pass Details */}
-        {validatedPass && !passError && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="bg-emerald-50 dark:bg-emerald-900/20 rounded-lg p-2 border border-emerald-200 dark:border-emerald-700"
-          >
-            <div className="flex items-start gap-2">
-              <CheckCircle className="w-4 h-4 text-emerald-600 flex-shrink-0 mt-0.5" />
-              <div className="flex-1 text-xs space-y-1">
-                <p className="font-semibold text-emerald-800 dark:text-emerald-200">
-                  {validatedPass.pass_name}
-                </p>
-                <div className="flex justify-between text-emerald-700 dark:text-emerald-300">
-                  <span>Hours Available</span>
-                  <span className="font-bold">
-                    {validatedPass.remaining_hours}/{validatedPass.total_hours}
-                  </span>
-                </div>
-                {selectedSlots.length > 0 && (
-                  <div className="flex justify-between text-emerald-600 dark:text-emerald-400">
-                    <span>Hours Needed</span>
-                    <span className="font-bold">{selectedSlots.length * 0.5} hrs</span>
-                  </div>
-                )}
-              </div>
-            </div>
-          </motion.div>
-        )}
-        
-        {/* Error Message */}
-        {passError && (
-          <motion.p
-            initial={{ opacity: 0, y: -5 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-xs text-red-500 flex items-center gap-1"
-          >
-            <X className="w-3 h-3" />
-            {passError}
-          </motion.p>
-        )}
-        
-        {errors.pass && (
-          <motion.p
-            initial={{ opacity: 0, y: -5 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-xs text-red-500"
-          >
-            {errors.pass}
-          </motion.p>
-        )}
-      </motion.div>
-    )}
-  </AnimatePresence>
-  
-  {errors.payment && <p className="text-red-500 text-sm mt-2">{errors.payment}</p>}
-</Card>
+                    <AnimatePresence>
+                      {isSquadMode && (
+                        <motion.div
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: 'auto' }}
+                          exit={{ opacity: 0, height: 0 }}
+                          className="mt-3 space-y-3"
+                        >
+                          <div className="flex items-center justify-between rounded-lg border border-blue-200 bg-blue-50 px-3 py-2.5 dark:border-blue-700 dark:bg-blue-900/20">
+                            <span className="text-xs text-blue-800 dark:text-blue-200 font-medium">Players in Squad</span>
+                            <div className="flex items-center gap-2">
+                              <button
+                                type="button"
+                                onClick={() => setSquadPlayerCount((prev) => Math.max(2, prev - 1))}
+                                className="inline-flex h-7 w-7 items-center justify-center rounded border border-blue-300 text-blue-700 dark:border-blue-600 dark:text-blue-300"
+                              >
+                                -
+                              </button>
+                              <span className="w-16 text-center text-sm font-semibold text-blue-900 dark:text-blue-100">
+                                {squadPlayerCount}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => setSquadPlayerCount((prev) => Math.min(squadMaxPlayers, prev + 1))}
+                                className="inline-flex h-7 w-7 items-center justify-center rounded border border-blue-300 text-blue-700 dark:border-blue-600 dark:text-blue-300"
+                              >
+                                +
+                              </button>
+                            </div>
+                          </div>
+                          <div className="text-xs text-gray-600 dark:text-gray-300">
+                            Max players: <span className="font-semibold">{squadMaxPlayers}</span>
+                            <span className="ml-2">
+                              Mode: <span className="font-semibold">{squadUsesDiscountEngine ? "PC discount rule engine" : "Controller pricing"}</span>
+                            </span>
+                            {selectedControllerType && (
+                              <span className="ml-2">
+                                Suggested extra controllers: <span className="font-semibold">{suggestedExtraControllerQty}</span>
+                              </span>
+                            )}
+                          </div>
+
+                          {selectedControllerType && (
+                            <div className="flex justify-end">
+                              <button
+                                type="button"
+                                onClick={() => applyExtraControllerQty(suggestedExtraControllerQty)}
+                                className="rounded-md border border-cyan-300 px-2.5 py-1 text-xs text-cyan-700 hover:bg-cyan-50 dark:border-cyan-700 dark:text-cyan-300 dark:hover:bg-cyan-900/20"
+                              >
+                                Use suggested controllers
+                              </button>
+                            </div>
+                          )}
+
+                          {errors.squad && <p className="text-red-500 text-xs">{errors.squad}</p>}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </Card>
 
                 </div>
 
@@ -1454,9 +1968,27 @@ if (response.ok || result.success === true || result.success === 'true') {
 
                     <div className="space-y-3">
                       <div className="flex justify-between items-center py-2 border-b border-gray-200 dark:border-gray-600">
-                        <span className="text-gray-600 dark:text-gray-400">Console Total:</span>
+                        <span className="text-gray-600 dark:text-gray-400">
+                          Console Total{isSquadMode && squadConsoleGroup === "pc" ? ` (₹${consoleUnitTotal} x ${squadPlayerCount})` : ""}:
+                        </span>
                         <span className="font-medium text-gray-800 dark:text-white">₹{consoleTotal}</span>
                       </div>
+
+                      {isSquadMode && (
+                        <div className="flex justify-between items-center py-2 border-b border-gray-200 dark:border-gray-600">
+                          <span className="text-gray-600 dark:text-gray-400">Squad Players:</span>
+                          <span className="font-medium text-gray-800 dark:text-white">{squadPlayerCount}</span>
+                        </div>
+                      )}
+
+                      {isSquadMode && squadDiscountPercent > 0 && (
+                        <div className="flex justify-between items-center py-2 border-b border-gray-200 dark:border-gray-600 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg px-3">
+                          <span className="text-emerald-700 dark:text-emerald-300 font-medium">
+                            Squad Discount ({squadDiscountPercent}%):
+                          </span>
+                          <span className="font-bold text-emerald-600 dark:text-emerald-300">-₹{squadDiscountAmount}</span>
+                        </div>
+                      )}
 
                       <div className="flex justify-between items-center py-2 border-b border-gray-200 dark:border-gray-600">
                         <span className="text-gray-600 dark:text-gray-400">Manual Waive Off:</span>
@@ -1488,7 +2020,7 @@ if (response.ok || result.success === true || result.success === 'true') {
                           <div className="flex items-center gap-2">
                             <button
                               type="button"
-                              onClick={() => setExtraControllerQty((prev) => Math.max(0, prev - 1))}
+                              onClick={() => applyExtraControllerQty(extraControllerQty - 1)}
                               className="inline-flex h-7 w-7 items-center justify-center rounded border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300"
                               disabled={isControllerPricingLoading}
                             >
@@ -1499,7 +2031,7 @@ if (response.ok || result.success === true || result.success === 'true') {
                             </span>
                             <button
                               type="button"
-                              onClick={() => setExtraControllerQty((prev) => Math.min(8, prev + 1))}
+                              onClick={() => applyExtraControllerQty(extraControllerQty + 1)}
                               className="inline-flex h-7 w-7 items-center justify-center rounded border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300"
                               disabled={isControllerPricingLoading}
                             >
@@ -1559,6 +2091,7 @@ if (response.ok || result.success === true || result.success === 'true') {
                       </div>
                     </div>
                   </Card>
+                  {paymentMethodCard}
                 </div>
               </div>
 
@@ -1578,7 +2111,7 @@ if (response.ok || result.success === true || result.success === 'true') {
               <Button
                 type="submit"
                 form="slot-booking-form"
-                disabled={isSubmitting}
+                disabled={isSubmitting || (paymentType === 'Monthly Credit' && (!creditAccount?.is_active || availableCreditAmount < totalAmount))}
                 className="flex-1 bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white disabled:opacity-50"
               >
                 {isSubmitting ? (
@@ -1602,6 +2135,29 @@ if (response.ok || result.success === true || result.success === 'true') {
             onClose={handleMealSelectorClose}
             onConfirm={handleMealSelectorConfirm}
             initialSelectedMeals={selectedMeals}
+          />
+          <CreditAccountModal
+            open={showCreditAccountModal}
+            vendorId={getVendorIdFromToken()}
+            customer={{
+              userId: matchedPrimaryUser?.id ?? null,
+              name,
+              email,
+              phone,
+            }}
+            onClose={() => setShowCreditAccountModal(false)}
+            onCreated={({ account, user }) => {
+              setCreditAccount(account)
+              setName(user.name)
+              setEmail(user.email || '')
+              setPhone(user.phone || '')
+              setShowCreditAccountModal(false)
+              setUserList((prev) => {
+                const nextUser = { id: user.userId || undefined, name: user.name, email: user.email || '', phone: user.phone || '' }
+                const filtered = prev.filter((row) => !(row.id && nextUser.id && Number(row.id) === Number(nextUser.id)))
+                return [nextUser, ...filtered]
+              })
+            }}
           />
         </motion.div>
       </motion.div>
@@ -2453,7 +3009,14 @@ function RecentBookings({
               >
                 {/* Booking ID */}
                 <TableCell className="font-medium text-emerald-600 dark:text-emerald-400">
-                  {booking.booking_fid}
+                  <div className="flex flex-col gap-1">
+                    <span>{booking.booking_fid || `#BK-${booking.booking_id}`}</span>
+                    {(booking.squad_enabled || Number(booking.squad_player_count || 1) > 1) && (
+                      <span className="w-fit rounded-full border border-sky-400/40 bg-sky-500/15 px-2 py-0.5 text-[10px] font-semibold text-sky-200">
+                        Squad x{Math.max(1, Number(booking.squad_player_count || 1))}
+                      </span>
+                    )}
+                  </div>
                 </TableCell>
                 
                 {/* Customer Details */}
@@ -2471,6 +3034,13 @@ function RecentBookings({
                       <Phone className="w-3 h-3" />
                       {booking.customer_phone}
                     </span>
+                    {(booking.squad_enabled || Number(booking.squad_player_count || 1) > 1) && (
+                      <span className="text-[11px] text-sky-600 dark:text-sky-300">
+                        Squad: {Array.isArray(booking.squad_members) && booking.squad_members.length > 0
+                          ? booking.squad_members.map((m: any) => m?.name).filter(Boolean).join(", ")
+                          : `${Math.max(1, Number(booking.squad_player_count || 1))} players`}
+                      </span>
+                    )}
                   </div>
                 </TableCell>
                 
@@ -2478,10 +3048,12 @@ function RecentBookings({
                 <TableCell>
                   <div className="flex flex-col gap-1">
                     <span className="text-xs text-gray-700 dark:text-gray-300 font-medium">
-                      {booking.slot_start_time?.slice(0, 5)} - {booking.slot_end_time?.slice(0, 5)}
+                      {(booking.slot_start_time || booking.start_time || "N/A")} - {(booking.slot_end_time || booking.end_time || "N/A")}
                     </span>
                     <span className="text-xs text-gray-500">
-                      {new Date(booking.booking_date).toLocaleDateString('en-GB')}
+                      {booking.booking_date
+                        ? new Date(booking.booking_date).toLocaleDateString('en-GB')
+                        : "Date unavailable"}
                     </span>
                   </div>
                 </TableCell>
