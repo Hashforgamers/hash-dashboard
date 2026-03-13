@@ -200,7 +200,7 @@ export function ManageGamingConsole() {
       <div className="flex h-full min-h-0 w-full flex-col px-2 py-3 sm:px-3 sm:py-4 md:px-4 md:py-5">
         <div className="gaming-panel mb-4 rounded-xl p-4 sm:p-5">
           <div className="flex items-center gap-2">
-            <h1 className="premium-heading !text-xl sm:!text-2xl md:!text-3xl">Gaming Console Control</h1>
+            <h1 className="premium-heading">Gaming Console Control</h1>
             <Sparkles className="h-4 w-4 text-emerald-400 sm:h-5 sm:w-5" />
           </div>
           <p className="premium-subtle mt-1">

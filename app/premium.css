@@ -5,8 +5,75 @@
   --brand-accent-strong: 171 97% 32%;
   --brand-focus: 197 94% 44%;
   --brand-highlight: 84 93% 49%;
-  --font-ui: var(--font-pixel), "Segoe UI", "Inter", sans-serif;
-  --font-display: var(--font-pixel), "Segoe UI", "Inter", sans-serif;
+  --font-ui: var(--font-inter), "Segoe UI", "Inter", sans-serif;
+  --font-display: var(--font-inter), "Segoe UI", "Inter", sans-serif;
+  --premium-shell-bg:
+    radial-gradient(78rem 38rem at 100% -10%, hsl(var(--brand-focus) / 0.08), transparent 58%),
+    radial-gradient(58rem 28rem at -8% 108%, hsl(var(--brand-accent) / 0.08), transparent 62%),
+    linear-gradient(145deg, hsl(201 38% 96%), hsl(215 32% 93%) 52%, hsl(208 28% 90%));
+  --premium-grid-line: hsl(213 30% 45% / 0.08);
+  --premium-card-border: hsl(210 24% 72% / 0.65);
+  --premium-card-bg: linear-gradient(
+    145deg,
+    hsl(0 0% 100% / 0.92),
+    hsl(210 38% 98% / 0.92) 58%,
+    hsl(205 32% 95% / 0.94)
+  );
+  --premium-card-shadow:
+    0 18px 40px hsl(216 33% 70% / 0.18),
+    inset 0 1px 0 hsl(0 0% 100% / 0.75),
+    0 0 0 1px hsl(var(--brand-focus) / 0.06);
+  --premium-subtle-text: hsl(217 20% 38%);
+  --premium-title-text: hsl(221 39% 14%);
+  --premium-kpi-text: hsl(222 47% 11%);
+  --premium-pill-border: hsl(213 24% 72%);
+  --premium-pill-bg: hsl(0 0% 100% / 0.78);
+  --premium-pill-text: hsl(220 27% 24%);
+  --gaming-panel-border: hsl(210 24% 74% / 0.72);
+  --gaming-panel-bg:
+    linear-gradient(180deg, hsl(0 0% 100% / 0.82), hsl(210 32% 97% / 0.92)),
+    linear-gradient(120deg, hsl(var(--brand-accent) / 0.05), transparent 45%);
+  --gaming-panel-shadow:
+    0 16px 34px hsl(215 30% 68% / 0.15),
+    inset 0 1px 0 hsl(0 0% 100% / 0.72);
+  --gaming-kpi-border: hsl(210 24% 74% / 0.78);
+  --gaming-kpi-bg: linear-gradient(165deg, hsl(0 0% 100% / 0.94), hsl(210 38% 97% / 0.94));
+  --gaming-kpi-shadow: 0 12px 26px hsl(216 29% 72% / 0.16);
+}
+
+.dark {
+  --premium-shell-bg:
+    radial-gradient(70rem 30rem at 88% -5%, hsl(var(--brand-focus) / 0.12), transparent 65%),
+    radial-gradient(58rem 24rem at 0% 100%, hsl(var(--brand-accent) / 0.14), transparent 66%),
+    linear-gradient(145deg, hsl(224 43% 8%), hsl(223 33% 11%) 52%, hsl(220 28% 9%));
+  --premium-grid-line: hsl(0 0% 100% / 0.06);
+  --premium-card-border: hsl(216 21% 28% / 0.65);
+  --premium-card-bg: linear-gradient(
+    145deg,
+    hsl(220 26% 18% / 0.72),
+    hsl(220 34% 12% / 0.65) 62%,
+    hsl(220 36% 11% / 0.76)
+  );
+  --premium-card-shadow:
+    0 28px 70px hsl(222 77% 3% / 0.32),
+    inset 0 1px 0 hsl(0 0% 100% / 0.06),
+    0 0 0 1px hsl(var(--brand-focus) / 0.08);
+  --premium-subtle-text: hsl(212 21% 74%);
+  --premium-title-text: hsl(210 40% 96%);
+  --premium-kpi-text: hsl(210 40% 98%);
+  --premium-pill-border: hsl(216 20% 26%);
+  --premium-pill-bg: hsl(218 26% 15% / 0.75);
+  --premium-pill-text: hsl(210 37% 96%);
+  --gaming-panel-border: hsl(216 21% 28% / 0.72);
+  --gaming-panel-bg:
+    linear-gradient(180deg, hsl(220 33% 13% / 0.88), hsl(220 32% 11% / 0.9)),
+    linear-gradient(120deg, hsl(var(--brand-accent) / 0.08), transparent 45%);
+  --gaming-panel-shadow:
+    0 14px 40px hsl(220 74% 4% / 0.35),
+    inset 0 1px 0 hsl(0 0% 100% / 0.05);
+  --gaming-kpi-border: hsl(216 20% 28% / 0.75);
+  --gaming-kpi-bg: linear-gradient(165deg, hsl(220 29% 16% / 0.92), hsl(220 30% 12% / 0.94));
+  --gaming-kpi-shadow: 0 12px 34px hsl(220 72% 5% / 0.28);
 }
 
 html,
@@ -58,10 +125,7 @@ h6 {
   position: relative;
   isolation: isolate;
   min-height: 100vh;
-  background:
-    radial-gradient(70rem 30rem at 88% -5%, hsl(var(--brand-focus) / 0.12), transparent 65%),
-    radial-gradient(58rem 24rem at 0% 100%, hsl(var(--brand-accent) / 0.14), transparent 66%),
-    linear-gradient(145deg, hsl(224 43% 8%), hsl(223 33% 11%) 52%, hsl(220 28% 9%));
+  background: var(--premium-shell-bg);
 }
 
 .premium-shell::before {
@@ -71,28 +135,20 @@ h6 {
   z-index: -1;
   pointer-events: none;
   opacity: 0.18;
-  background-image: linear-gradient(hsl(0 0% 100% / 0.06) 1px, transparent 1px),
-    linear-gradient(90deg, hsl(0 0% 100% / 0.05) 1px, transparent 1px);
+  background-image: linear-gradient(var(--premium-grid-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--premium-grid-line) 1px, transparent 1px);
   background-size: 46px 46px;
 }
 
 .premium-card {
-  border: 1px solid hsl(216 21% 28% / 0.65);
-  background: linear-gradient(
-    145deg,
-    hsl(220 26% 18% / 0.72),
-    hsl(220 34% 12% / 0.65) 62%,
-    hsl(220 36% 11% / 0.76)
-  );
-  box-shadow:
-    0 28px 70px hsl(222 77% 3% / 0.32),
-    inset 0 1px 0 hsl(0 0% 100% / 0.06),
-    0 0 0 1px hsl(var(--brand-focus) / 0.08);
+  border: 1px solid var(--premium-card-border);
+  background: var(--premium-card-bg);
+  box-shadow: var(--premium-card-shadow);
   backdrop-filter: blur(18px);
 }
 
 .premium-subtle {
-  color: hsl(212 21% 74%);
+  color: var(--premium-subtle-text);
 }
 
 .premium-accent-text {
@@ -103,9 +159,9 @@ h6 {
 }
 
 .premium-pill {
-  border: 1px solid hsl(216 20% 26%);
-  background: hsl(218 26% 15% / 0.75);
-  color: hsl(210 37% 96%);
+  border: 1px solid var(--premium-pill-border);
+  background: var(--premium-pill-bg);
+  color: var(--premium-pill-text);
 }
 
 .premium-pill:hover {
@@ -121,19 +177,15 @@ h6 {
 }
 
 .gaming-panel {
-  border: 1px solid hsl(216 21% 28% / 0.72);
-  background:
-    linear-gradient(180deg, hsl(220 33% 13% / 0.88), hsl(220 32% 11% / 0.9)),
-    linear-gradient(120deg, hsl(var(--brand-accent) / 0.08), transparent 45%);
-  box-shadow:
-    0 14px 40px hsl(220 74% 4% / 0.35),
-    inset 0 1px 0 hsl(0 0% 100% / 0.05);
+  border: 1px solid var(--gaming-panel-border);
+  background: var(--gaming-panel-bg);
+  box-shadow: var(--gaming-panel-shadow);
 }
 
 .gaming-kpi-card {
-  border: 1px solid hsl(216 20% 28% / 0.75);
-  background: linear-gradient(165deg, hsl(220 29% 16% / 0.92), hsl(220 30% 12% / 0.94));
-  box-shadow: 0 12px 34px hsl(220 72% 5% / 0.28);
+  border: 1px solid var(--gaming-kpi-border);
+  background: var(--gaming-kpi-bg);
+  box-shadow: var(--gaming-kpi-shadow);
 }
 
 .gaming-kpi-card:hover {
@@ -142,7 +194,7 @@ h6 {
 }
 
 .gaming-kpi-value {
-  font-family: var(--font-space), var(--font-manrope), "Segoe UI", sans-serif;
+  font-family: var(--font-inter), "Segoe UI", "Inter", sans-serif;
   letter-spacing: -0.01em;
 }
 
@@ -153,13 +205,22 @@ h6 {
 }
 
 .dashboard-typography {
-  --dash-fs-2xs: clamp(0.68rem, 0.2vw + 0.62rem, 0.75rem);
-  --dash-fs-xs: clamp(0.74rem, 0.22vw + 0.68rem, 0.82rem);
-  --dash-fs-sm: clamp(0.82rem, 0.26vw + 0.74rem, 0.92rem);
-  --dash-fs-base: clamp(0.9rem, 0.32vw + 0.8rem, 1.02rem);
-  --dash-fs-lg: clamp(1rem, 0.42vw + 0.88rem, 1.18rem);
-  --dash-fs-xl: clamp(1.14rem, 0.65vw + 0.94rem, 1.45rem);
-  --dash-fs-2xl: clamp(1.35rem, 1.1vw + 1.02rem, 2rem);
+  --dash-fs-2xs: clamp(0.68rem, 0.14vw + 0.65rem, 0.76rem);
+  --dash-fs-xs: clamp(0.76rem, 0.18vw + 0.72rem, 0.84rem);
+  --dash-fs-sm: clamp(0.84rem, 0.22vw + 0.78rem, 0.94rem);
+  --dash-fs-base: clamp(0.92rem, 0.26vw + 0.86rem, 1.04rem);
+  --dash-fs-lg: clamp(1rem, 0.4vw + 0.9rem, 1.18rem);
+  --dash-fs-xl: clamp(1.14rem, 0.64vw + 0.98rem, 1.48rem);
+  --dash-fs-2xl: clamp(1.4rem, 1vw + 1.12rem, 2.08rem);
+  --dash-fs-3xl: clamp(1.72rem, 1.45vw + 1.22rem, 2.7rem);
+  --dash-lh-tight: 1.18;
+  --dash-lh-snug: 1.3;
+  --dash-lh-base: 1.45;
+  font-family: var(--font-ui);
+}
+
+.dashboard-typography :is(h1, h2, h3, h4, h5, h6, p, span, label, a, button, input, select, textarea, th, td, li, dt, dd) {
+  font-family: inherit;
 }
 
 .dashboard-typography .text-xs {
@@ -190,7 +251,12 @@ h6 {
 .dashboard-typography .text-2xl,
 .dashboard-typography .text-3xl {
   font-size: var(--dash-fs-2xl);
-  line-height: 1.15;
+  line-height: var(--dash-lh-tight);
+}
+
+.dashboard-typography .text-4xl {
+  font-size: var(--dash-fs-3xl);
+  line-height: 1.08;
 }
 
 .dashboard-typography .premium-heading {
@@ -207,14 +273,14 @@ h6 {
   font-size: clamp(0.85rem, 0.45vw + 0.76rem, 1.05rem);
   font-weight: 700;
   letter-spacing: 0.03em;
-  color: hsl(210 40% 96%);
+  color: var(--premium-title-text);
 }
 
 .dash-subtitle {
   font-family: var(--font-ui);
   font-size: clamp(0.68rem, 0.35vw + 0.62rem, 0.82rem);
   font-weight: 400;
-  color: hsl(215 19% 72%);
+  color: var(--premium-subtle-text);
 }
 
 .dash-kpi-label {
@@ -222,7 +288,7 @@ h6 {
   font-size: clamp(0.74rem, 0.28vw + 0.68rem, 0.88rem);
   font-weight: 700;
   letter-spacing: 0.02em;
-  color: hsl(210 40% 96%);
+  color: var(--premium-title-text);
 }
 
 .dash-kpi-value {
@@ -230,7 +296,7 @@ h6 {
   font-size: clamp(1rem, 1vw + 0.84rem, 1.35rem);
   font-weight: 700;
   letter-spacing: 0.03em;
-  color: hsl(210 40% 98%);
+  color: var(--premium-kpi-text);
 }
 
 .dashboard-typography .dash-title {
@@ -256,8 +322,50 @@ h6 {
 .dashboard-typography td,
 .dashboard-typography input,
 .dashboard-typography button,
-.dashboard-typography label {
+.dashboard-typography label,
+.dashboard-typography select,
+.dashboard-typography textarea {
   font-size: var(--dash-fs-sm);
+}
+
+.dashboard-typography h1 {
+  font-size: var(--dash-fs-3xl);
+  line-height: 1.05;
+}
+
+.dashboard-typography h2 {
+  font-size: var(--dash-fs-2xl);
+  line-height: var(--dash-lh-tight);
+}
+
+.dashboard-typography h3 {
+  font-size: var(--dash-fs-xl);
+  line-height: var(--dash-lh-snug);
+}
+
+.dashboard-typography h4,
+.dashboard-typography h5,
+.dashboard-typography h6 {
+  font-size: var(--dash-fs-lg);
+  line-height: var(--dash-lh-snug);
+}
+
+.dashboard-typography p,
+.dashboard-typography li,
+.dashboard-typography dd,
+.dashboard-typography dt {
+  line-height: var(--dash-lh-base);
+}
+
+.dashboard-typography small,
+.dashboard-typography [class*="text-[11px]"] {
+  font-size: var(--dash-fs-2xs);
+  line-height: 1.35;
+}
+
+.dashboard-typography [class*="text-[13px]"] {
+  font-size: var(--dash-fs-sm);
+  line-height: 1.4;
 }
 
 .add-console-form .add-console-card {

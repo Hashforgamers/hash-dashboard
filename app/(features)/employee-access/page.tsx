@@ -241,7 +241,7 @@ export default function EmployeeAccessPage() {
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="premium-heading !text-xl sm:!text-2xl md:!text-3xl">Employee Access Control</h1>
+                <h1 className="premium-heading">Employee Access Control</h1>
                 <Sparkles className="h-4 w-4 text-emerald-400 sm:h-5 sm:w-5" />
               </div>
               <p className="premium-subtle mt-1">Onboard employees with auto-generated PIN and control service access by role.</p>

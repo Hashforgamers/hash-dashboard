@@ -8,7 +8,7 @@ export default function GamersCreditPage() {
       <div className="flex h-full min-h-0 flex-1 flex-col gap-3 sm:gap-4">
         <div className="gaming-panel shrink-0 rounded-xl p-4 sm:p-5">
           <div className="flex items-center gap-2">
-            <h1 className="premium-heading !text-xl sm:!text-2xl md:!text-3xl">Gamers Credit Ledger</h1>
+            <h1 className="premium-heading">Gamers Credit Ledger</h1>
             <Wallet className="h-4 w-4 text-emerald-400 sm:h-5 sm:w-5" />
           </div>
           <p className="premium-subtle mt-1">
