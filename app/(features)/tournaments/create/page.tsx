@@ -382,7 +382,7 @@ export default function CreateTournamentPage() {
     <DashboardLayout>
     <div className="flex-1 space-y-3 overflow-y-auto sm:space-y-4">
       <div className="gaming-panel rounded-xl p-4 sm:p-5">
-        <h1 className="premium-heading !text-xl sm:!text-2xl md:!text-3xl flex items-center gap-2">
+        <h1 className="premium-heading flex items-center gap-2">
           Create New Tournament
           <Sparkles className="h-4 w-4 text-emerald-400 sm:h-5 sm:w-5" />
         </h1>

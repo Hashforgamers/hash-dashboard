@@ -1,6 +1,6 @@
 import { ThemeProvider } from "next-themes";
 import { AuthProvider } from "./AuthProvider";
-import { Silkscreen } from "next/font/google";
+import { Inter } from "next/font/google";
 
 import "./globals.css";
 import "./premium.css";
@@ -8,10 +8,10 @@ import { SocketProvider } from "./context/SocketContext";
 import { SubscriptionProvider } from "./context/SubscriptionContext";
 import { AccessProvider } from "./context/AccessContext";
 
-const silkscreen = Silkscreen({
+const inter = Inter({
   subsets: ["latin"],
-  weight: ["400", "700"],
-  variable: "--font-pixel",
+  variable: "--font-inter",
+  display: "swap",
 });
 
 export const metadata ={
@@ -27,7 +27,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head />
-      <body className={`${silkscreen.variable} bg-background text-foreground`}>
+      <body className={`${inter.variable} bg-background text-foreground`}>
         <AuthProvider>
           {" "}
           {/* Wrap inside AuthProvider */}
