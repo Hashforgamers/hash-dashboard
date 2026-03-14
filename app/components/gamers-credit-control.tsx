@@ -405,7 +405,7 @@ export default function GamersCreditControl() {
   ) => {
     if (!account && !user) {
       return (
-        <div className="rounded-xl border border-dashed border-cyan-500/25 bg-slate-900/40 p-4 text-xs text-slate-400">
+        <div className="dashboard-module-card rounded-xl border border-dashed p-4 text-xs text-slate-600 dark:text-slate-400">
           {emptyLabel}
         </div>
       );
@@ -417,97 +417,108 @@ export default function GamersCreditControl() {
     const availableCredit = getAvailableCredit(account);
 
     return (
-      <div className="rounded-xl border border-cyan-500/20 bg-slate-900/60 p-3">
+      <div className="dashboard-module-surface rounded-xl p-3">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <div className="flex flex-wrap items-center gap-2">
-              <p className="text-sm font-semibold text-cyan-100">{customerName}</p>
+              <p className="text-sm font-semibold text-slate-900 dark:text-cyan-100">{customerName}</p>
               {account ? (
                 <span
                   className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${
                     account.is_active
-                      ? "border border-emerald-400/35 bg-emerald-500/10 text-emerald-200"
-                      : "border border-rose-400/35 bg-rose-500/10 text-rose-200"
+                      ? "border border-emerald-300/40 bg-emerald-50 text-emerald-700 dark:border-emerald-400/35 dark:bg-emerald-500/10 dark:text-emerald-200"
+                      : "border border-rose-300/40 bg-rose-50 text-rose-700 dark:border-rose-400/35 dark:bg-rose-500/10 dark:text-rose-200"
                   }`}
                 >
                   {account.is_active ? "Active" : "Paused"}
                 </span>
               ) : (
-                <span className="rounded-full border border-amber-400/35 bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold text-amber-200">
+                <span className="rounded-full border border-amber-300/40 bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-700 dark:border-amber-400/35 dark:bg-amber-500/10 dark:text-amber-200">
                   No credit account yet
                 </span>
               )}
             </div>
-            <p className="mt-1 text-xs text-slate-400">
-              Phone: <span className="text-slate-200">{primaryPhone}</span>  |  Email: <span className="text-slate-200">{primaryEmail}</span>
+            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+              Phone: <span className="text-slate-900 dark:text-slate-200">{primaryPhone}</span>  |  Email: <span className="text-slate-900 dark:text-slate-200">{primaryEmail}</span>
             </p>
           </div>
           {account ? (
-            <div className="text-right text-[11px] text-slate-400">
-              <p>Cycle Day <span className="font-semibold text-cyan-100">{Number(account.billing_cycle_day || 1)}</span></p>
-              <p>Grace <span className="font-semibold text-cyan-100">{Number(account.grace_days || 0)} days</span></p>
+            <div className="text-right text-[11px] text-slate-500 dark:text-slate-400">
+              <p>Cycle Day <span className="font-semibold text-slate-900 dark:text-cyan-100">{Number(account.billing_cycle_day || 1)}</span></p>
+              <p>Grace <span className="font-semibold text-slate-900 dark:text-cyan-100">{Number(account.grace_days || 0)} days</span></p>
             </div>
           ) : null}
         </div>
         <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-3">
-          <div className="rounded-lg border border-cyan-500/15 bg-slate-950/45 px-3 py-2">
-            <p className="text-[11px] uppercase tracking-wide text-slate-400">Limit</p>
-            <p className="text-sm font-semibold text-cyan-100">₹{Number(account?.credit_limit || 0).toFixed(2)}</p>
+          <div className="dashboard-module-card rounded-lg px-3 py-2">
+            <p className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400">Limit</p>
+            <p className="text-sm font-semibold text-slate-900 dark:text-cyan-100">₹{Number(account?.credit_limit || 0).toFixed(2)}</p>
           </div>
-          <div className="rounded-lg border border-amber-500/15 bg-slate-950/45 px-3 py-2">
-            <p className="text-[11px] uppercase tracking-wide text-slate-400">Outstanding</p>
-            <p className="text-sm font-semibold text-amber-200">₹{Number(account?.outstanding_amount || 0).toFixed(2)}</p>
+          <div className="dashboard-module-card rounded-lg px-3 py-2">
+            <p className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400">Outstanding</p>
+            <p className="text-sm font-semibold text-amber-700 dark:text-amber-200">₹{Number(account?.outstanding_amount || 0).toFixed(2)}</p>
           </div>
-          <div className="rounded-lg border border-emerald-500/15 bg-slate-950/45 px-3 py-2">
-            <p className="text-[11px] uppercase tracking-wide text-slate-400">Available</p>
-            <p className="text-sm font-semibold text-emerald-200">₹{availableCredit.toFixed(2)}</p>
+          <div className="dashboard-module-card rounded-lg px-3 py-2">
+            <p className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400">Available</p>
+            <p className="text-sm font-semibold text-emerald-700 dark:text-emerald-200">₹{availableCredit.toFixed(2)}</p>
           </div>
         </div>
         {account?.notes ? (
-          <p className="mt-2 text-xs text-slate-400">
-            Notes: <span className="text-slate-200">{account.notes}</span>
+          <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+            Notes: <span className="text-slate-900 dark:text-slate-200">{account.notes}</span>
           </p>
         ) : null}
       </div>
     );
   };
 
-  const cardClass =
-    "rounded-xl border border-cyan-500/20 bg-gradient-to-br from-slate-900/75 via-slate-900/70 to-cyan-950/20";
+  const cardClass = "dashboard-module-surface rounded-xl";
   const primaryButtonClass =
-    "inline-flex items-center justify-center gap-2 rounded-lg border border-cyan-400/40 bg-gradient-to-r from-cyan-500/90 to-emerald-500/90 px-3 py-2 text-xs font-semibold text-white transition-all duration-200 hover:from-cyan-400 hover:to-emerald-400 disabled:opacity-50";
+    "ui-action-primary inline-flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold transition-all duration-200 disabled:opacity-50";
+  const secondaryButtonClass =
+    "ui-action-secondary inline-flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold transition-all duration-200 disabled:opacity-50";
+  const inputClass =
+    "dashboard-module-input text-slate-900 placeholder:text-slate-400 dark:text-slate-100";
+  const selectClass =
+    "dashboard-module-input h-10 rounded-md px-3 text-sm text-slate-900 dark:text-slate-100";
   const suggestionClass =
-    "max-h-44 overflow-y-auto rounded-md border border-cyan-500/20 bg-slate-950/90 p-1 shadow-xl";
+    "dashboard-module-surface max-h-44 overflow-y-auto rounded-md p-1 shadow-xl";
+  const summaryCardClass = "dashboard-module-surface rounded-lg p-3";
+  const chipCardClass = "dashboard-module-card rounded-md px-3 py-2 text-xs";
+  const activeTabClass =
+    "dashboard-module-tab-active border border-cyan-400/35 bg-cyan-500/12 text-slate-900 dark:bg-cyan-500/15 dark:text-cyan-100";
+  const inactiveTabClass =
+    "text-slate-700 hover:bg-slate-50 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800/70 dark:hover:text-cyan-100";
 
   return (
-    <div className="flex h-full min-h-0 flex-col gap-4 overflow-hidden">
+    <div className="dashboard-module dashboard-typography flex h-full min-h-0 flex-col gap-4 overflow-hidden">
       {notice && (
-        <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-xs text-emerald-300">
+        <div className="rounded-lg border border-emerald-300/40 bg-emerald-50 px-3 py-2 text-xs text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300">
           {notice}
         </div>
       )}
       {error && (
-        <div className="rounded-lg border border-rose-500/30 bg-rose-500/10 px-3 py-2 text-xs text-rose-300">
+        <div className="rounded-lg border border-rose-300/40 bg-rose-50 px-3 py-2 text-xs text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-300">
           {error}
         </div>
       )}
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-        <div className="rounded-lg border border-cyan-500/20 bg-slate-900/60 p-3">
-          <p className="text-[11px] uppercase tracking-[0.1em] text-slate-400">Allowed Accounts</p>
-          <p className="mt-1 text-xl font-semibold text-cyan-100">{accounts.length}</p>
+        <div className={summaryCardClass}>
+          <p className="text-[11px] uppercase tracking-[0.1em] text-slate-500 dark:text-slate-400">Allowed Accounts</p>
+          <p className="mt-1 text-xl font-semibold text-slate-900 dark:text-cyan-100">{accounts.length}</p>
         </div>
-        <div className="rounded-lg border border-cyan-500/20 bg-slate-900/60 p-3">
-          <p className="text-[11px] uppercase tracking-[0.1em] text-slate-400">Active Accounts</p>
-          <p className="mt-1 text-xl font-semibold text-emerald-200">{activeAccounts}</p>
+        <div className={summaryCardClass}>
+          <p className="text-[11px] uppercase tracking-[0.1em] text-slate-500 dark:text-slate-400">Active Accounts</p>
+          <p className="mt-1 text-xl font-semibold text-emerald-700 dark:text-emerald-200">{activeAccounts}</p>
         </div>
-        <div className="rounded-lg border border-cyan-500/20 bg-slate-900/60 p-3">
-          <p className="text-[11px] uppercase tracking-[0.1em] text-slate-400">Total Outstanding</p>
-          <p className="mt-1 text-xl font-semibold text-amber-200">₹{totalOutstanding.toFixed(2)}</p>
+        <div className={summaryCardClass}>
+          <p className="text-[11px] uppercase tracking-[0.1em] text-slate-500 dark:text-slate-400">Total Outstanding</p>
+          <p className="mt-1 text-xl font-semibold text-amber-700 dark:text-amber-200">₹{totalOutstanding.toFixed(2)}</p>
         </div>
       </div>
 
-      <div className="flex items-center gap-2 rounded-lg border border-cyan-500/20 bg-slate-900/60 p-2">
+      <div className="dashboard-module-tab-group flex items-center gap-2 rounded-lg p-2">
         {[
           { id: "setup", label: "Account Setup" },
           { id: "ledger", label: "Ledger & Settlement" },
@@ -518,8 +529,8 @@ export default function GamersCreditControl() {
             onClick={() => setActiveTab(tab.id as "setup" | "ledger" | "payments")}
             className={`rounded-md px-3 py-1.5 text-xs font-semibold transition-all ${
               activeTab === tab.id
-                ? "border border-cyan-400/35 bg-cyan-500/15 text-cyan-100"
-                : "text-slate-300 hover:bg-slate-800/70 hover:text-cyan-100"
+                ? activeTabClass
+                : inactiveTabClass
             }`}
           >
             {tab.label}
@@ -544,7 +555,7 @@ export default function GamersCreditControl() {
                   value={setupUserSearch}
                   onChange={(e) => setSetupUserSearch(e.target.value)}
                   placeholder="Type gamer name / phone / email"
-                  className="border-cyan-400/25 bg-slate-900/70 text-slate-100"
+                  className={inputClass}
                   disabled={isCreatingUser}
                 />
                 {isSetupSuggestionsOpen && (
@@ -554,10 +565,10 @@ export default function GamersCreditControl() {
                         type="button"
                         key={u.id}
                         onClick={() => selectSetupUser(u)}
-                        className="flex w-full items-center justify-between rounded px-2 py-1.5 text-left text-xs text-slate-200 hover:bg-slate-800/80"
+                        className="flex w-full items-center justify-between rounded px-2 py-1.5 text-left text-xs text-slate-700 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-800/80"
                       >
                         <span className="truncate">{u.name}</span>
-                        <span className="ml-3 truncate text-slate-400">{u.phone || u.email || ""}</span>
+                        <span className="ml-3 truncate text-slate-500 dark:text-slate-400">{u.phone || u.email || ""}</span>
                       </button>
                     ))}
                   </div>
@@ -570,14 +581,14 @@ export default function GamersCreditControl() {
                     setIsCreatingUser((prev) => !prev);
                     setForm((prev) => ({ ...prev, user_id: "" }));
                   }}
-                  className="h-10 rounded-md border border-cyan-400/35 px-3 text-xs font-semibold text-cyan-100 hover:bg-cyan-500/10"
+                  className={secondaryButtonClass}
                 >
                   {isCreatingUser ? "Use Existing" : "Create New Gamer"}
                 </button>
               </div>
             </div>
             {isCreatingUser && (
-              <p className="text-[11px] text-cyan-200/80">
+              <p className="text-[11px] text-slate-600 dark:text-cyan-200/80">
                 New gamer mode: fill recovery/contact fields below and save. User + credit account will be created together.
               </p>
             )}
@@ -588,30 +599,30 @@ export default function GamersCreditControl() {
             )}
 
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-              <Input value={form.customer_name} onChange={(e) => setForm((p) => ({ ...p, customer_name: e.target.value }))} placeholder="Full Name" className="border-cyan-400/25 bg-slate-900/70 text-slate-100" />
-              <Input value={form.whatsapp_number} onChange={(e) => setForm((p) => ({ ...p, whatsapp_number: e.target.value }))} placeholder="WhatsApp Number" className="border-cyan-400/25 bg-slate-900/70 text-slate-100" />
-              <Input value={form.phone_number} onChange={(e) => setForm((p) => ({ ...p, phone_number: e.target.value }))} placeholder="Phone Number" className="border-cyan-400/25 bg-slate-900/70 text-slate-100" />
-              <Input value={form.email} onChange={(e) => setForm((p) => ({ ...p, email: e.target.value }))} placeholder="Email" className="border-cyan-400/25 bg-slate-900/70 text-slate-100" />
-              <Input value={form.address_line1} onChange={(e) => setForm((p) => ({ ...p, address_line1: e.target.value }))} placeholder="Address Line 1" className="border-cyan-400/25 bg-slate-900/70 text-slate-100 sm:col-span-2" />
-              <Input value={form.address_line2} onChange={(e) => setForm((p) => ({ ...p, address_line2: e.target.value }))} placeholder="Address Line 2" className="border-cyan-400/25 bg-slate-900/70 text-slate-100 sm:col-span-2" />
-              <Input value={form.city} onChange={(e) => setForm((p) => ({ ...p, city: e.target.value }))} placeholder="City" className="border-cyan-400/25 bg-slate-900/70 text-slate-100" />
-              <Input value={form.state} onChange={(e) => setForm((p) => ({ ...p, state: e.target.value }))} placeholder="State" className="border-cyan-400/25 bg-slate-900/70 text-slate-100" />
-              <Input value={form.pincode} onChange={(e) => setForm((p) => ({ ...p, pincode: e.target.value }))} placeholder="Pincode" className="border-cyan-400/25 bg-slate-900/70 text-slate-100" />
-              <Input value={form.id_proof_type} onChange={(e) => setForm((p) => ({ ...p, id_proof_type: e.target.value }))} placeholder="ID Proof Type (Aadhaar/PAN)" className="border-cyan-400/25 bg-slate-900/70 text-slate-100" />
-              <Input value={form.id_proof_number} onChange={(e) => setForm((p) => ({ ...p, id_proof_number: e.target.value }))} placeholder="ID Proof Number" className="border-cyan-400/25 bg-slate-900/70 text-slate-100" />
-              <Input type="number" min={0} value={form.credit_limit} onChange={(e) => setForm((p) => ({ ...p, credit_limit: e.target.value }))} placeholder="Credit Limit ₹" className="border-cyan-400/25 bg-slate-900/70 text-slate-100" />
-              <Input type="number" min={1} max={28} value={form.billing_cycle_day} onChange={(e) => setForm((p) => ({ ...p, billing_cycle_day: e.target.value }))} placeholder="Billing Day" className="border-cyan-400/25 bg-slate-900/70 text-slate-100" />
-              <Input type="number" min={0} value={form.grace_days} onChange={(e) => setForm((p) => ({ ...p, grace_days: e.target.value }))} placeholder="Grace Days" className="border-cyan-400/25 bg-slate-900/70 text-slate-100" />
-              <Input value={form.notes} onChange={(e) => setForm((p) => ({ ...p, notes: e.target.value }))} placeholder="Recovery Notes" className="border-cyan-400/25 bg-slate-900/70 text-slate-100" />
+              <Input value={form.customer_name} onChange={(e) => setForm((p) => ({ ...p, customer_name: e.target.value }))} placeholder="Full Name" className={inputClass} />
+              <Input value={form.whatsapp_number} onChange={(e) => setForm((p) => ({ ...p, whatsapp_number: e.target.value }))} placeholder="WhatsApp Number" className={inputClass} />
+              <Input value={form.phone_number} onChange={(e) => setForm((p) => ({ ...p, phone_number: e.target.value }))} placeholder="Phone Number" className={inputClass} />
+              <Input value={form.email} onChange={(e) => setForm((p) => ({ ...p, email: e.target.value }))} placeholder="Email" className={inputClass} />
+              <Input value={form.address_line1} onChange={(e) => setForm((p) => ({ ...p, address_line1: e.target.value }))} placeholder="Address Line 1" className={`${inputClass} sm:col-span-2`} />
+              <Input value={form.address_line2} onChange={(e) => setForm((p) => ({ ...p, address_line2: e.target.value }))} placeholder="Address Line 2" className={`${inputClass} sm:col-span-2`} />
+              <Input value={form.city} onChange={(e) => setForm((p) => ({ ...p, city: e.target.value }))} placeholder="City" className={inputClass} />
+              <Input value={form.state} onChange={(e) => setForm((p) => ({ ...p, state: e.target.value }))} placeholder="State" className={inputClass} />
+              <Input value={form.pincode} onChange={(e) => setForm((p) => ({ ...p, pincode: e.target.value }))} placeholder="Pincode" className={inputClass} />
+              <Input value={form.id_proof_type} onChange={(e) => setForm((p) => ({ ...p, id_proof_type: e.target.value }))} placeholder="ID Proof Type (Aadhaar/PAN)" className={inputClass} />
+              <Input value={form.id_proof_number} onChange={(e) => setForm((p) => ({ ...p, id_proof_number: e.target.value }))} placeholder="ID Proof Number" className={inputClass} />
+              <Input type="number" min={0} value={form.credit_limit} onChange={(e) => setForm((p) => ({ ...p, credit_limit: e.target.value }))} placeholder="Credit Limit ₹" className={inputClass} />
+              <Input type="number" min={1} max={28} value={form.billing_cycle_day} onChange={(e) => setForm((p) => ({ ...p, billing_cycle_day: e.target.value }))} placeholder="Billing Day" className={inputClass} />
+              <Input type="number" min={0} value={form.grace_days} onChange={(e) => setForm((p) => ({ ...p, grace_days: e.target.value }))} placeholder="Grace Days" className={inputClass} />
+              <Input value={form.notes} onChange={(e) => setForm((p) => ({ ...p, notes: e.target.value }))} placeholder="Recovery Notes" className={inputClass} />
             </div>
 
-            <label className="flex items-center gap-2 text-sm text-slate-200">
+            <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200">
               <input type="checkbox" checked={form.is_active} onChange={(e) => setForm((p) => ({ ...p, is_active: e.target.checked }))} />
               Credit Account Active
             </label>
               </div>
 
-              <div className="sticky bottom-0 left-0 right-0 mt-3 border-t border-cyan-500/20 bg-slate-950/80 pt-3 backdrop-blur">
+              <div className="sticky bottom-0 left-0 right-0 mt-3 border-t border-cyan-500/20 bg-white/90 pt-3 backdrop-blur dark:bg-slate-950/80">
                 <button onClick={saveAccount} disabled={isSavingAccount} className={primaryButtonClass}>
                   {isSavingAccount ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                   {isCreatingUser ? "Create Gamer & Save Account" : "Save Gamer Account"}
@@ -622,25 +633,25 @@ export default function GamersCreditControl() {
 
           <Card className={`${cardClass} flex min-h-0 flex-col`}>
             <CardHeader className="border-b border-cyan-500/15 pb-3">
-              <h3 className="text-sm font-semibold text-cyan-100">Allowed Gamers List</h3>
-              <p className="text-xs text-slate-400">Click `Edit` on any account to prefill and update details.</p>
+              <h3 className="text-sm font-semibold text-slate-900 dark:text-cyan-100">Allowed Gamers List</h3>
+              <p className="text-xs text-slate-600 dark:text-slate-400">Click `Edit` on any account to prefill and update details.</p>
             </CardHeader>
             <CardContent className="flex-1 min-h-0 overflow-y-auto space-y-2 p-4">
               {isLoadingAccounts ? (
                 <Loader2 className="w-6 h-6 animate-spin text-blue-400" />
               ) : accounts.length === 0 ? (
-                <p className="text-xs text-slate-400">No allowed gamers configured yet.</p>
+                <p className="text-xs text-slate-600 dark:text-slate-400">No allowed gamers configured yet.</p>
               ) : (
                 accounts.map((a) => {
                   const user = vendorUsers.find((u) => u.id === a.user_id);
                   const availableCredit = getAvailableCredit(a);
                   return (
-                    <div key={a.id} className="rounded border border-cyan-500/15 bg-slate-900/60 p-3 text-xs">
+                    <div key={a.id} className="dashboard-module-card rounded p-3 text-xs">
                       <div className="flex items-center justify-between">
                         <div>
-                          <span className="font-semibold text-slate-100">{a.customer_name || user?.name || `User #${a.user_id}`}</span>
-                          <div className="mt-1 flex flex-wrap items-center gap-2 text-[10px] text-slate-400">
-                            <span className={`rounded-full px-2 py-0.5 ${a.is_active ? "border border-emerald-400/35 bg-emerald-500/10 text-emerald-200" : "border border-rose-400/35 bg-rose-500/10 text-rose-200"}`}>
+                          <span className="font-semibold text-slate-900 dark:text-slate-100">{a.customer_name || user?.name || `User #${a.user_id}`}</span>
+                          <div className="mt-1 flex flex-wrap items-center gap-2 text-[10px] text-slate-500 dark:text-slate-400">
+                            <span className={`rounded-full px-2 py-0.5 ${a.is_active ? "border border-emerald-300/40 bg-emerald-50 text-emerald-700 dark:border-emerald-400/35 dark:bg-emerald-500/10 dark:text-emerald-200" : "border border-rose-300/40 bg-rose-50 text-rose-700 dark:border-rose-400/35 dark:bg-rose-500/10 dark:text-rose-200"}`}>
                               {a.is_active ? "Active" : "Paused"}
                             </span>
                             <span>{a.phone_number || a.whatsapp_number || a.email || "No contact added"}</span>
@@ -654,22 +665,22 @@ export default function GamersCreditControl() {
                               setLedgerUserSearch(formatAccountLabel(a));
                               fetchStatement(a.user_id);
                             }}
-                            className="rounded border border-emerald-400/30 px-2 py-1 text-emerald-200 hover:bg-slate-800"
+                            className="rounded border border-emerald-300/50 px-2 py-1 text-emerald-700 hover:bg-emerald-50 dark:border-emerald-400/30 dark:text-emerald-200 dark:hover:bg-slate-800"
                           >
                             Ledger
                           </button>
                           <button
                             onClick={() => loadAccountIntoForm(a)}
-                            className="rounded border border-cyan-400/30 px-2 py-1 text-cyan-200 hover:bg-slate-800"
+                            className="rounded border border-cyan-300/50 px-2 py-1 text-sky-700 hover:bg-cyan-50 dark:border-cyan-400/30 dark:text-cyan-200 dark:hover:bg-slate-800"
                           >
                             Edit
                           </button>
                         </div>
                       </div>
                       <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-3">
-                        <p className="rounded bg-slate-950/40 px-2 py-1 text-slate-300">Limit ₹{Number(a.credit_limit || 0).toFixed(2)}</p>
-                        <p className="rounded bg-slate-950/40 px-2 py-1 text-slate-300">Outstanding ₹{Number(a.outstanding_amount || 0).toFixed(2)}</p>
-                        <p className="rounded bg-slate-950/40 px-2 py-1 text-slate-300">Available ₹{availableCredit.toFixed(2)}</p>
+                        <p className="dashboard-module-surface rounded px-2 py-1 text-slate-700 dark:text-slate-300">Limit ₹{Number(a.credit_limit || 0).toFixed(2)}</p>
+                        <p className="dashboard-module-surface rounded px-2 py-1 text-slate-700 dark:text-slate-300">Outstanding ₹{Number(a.outstanding_amount || 0).toFixed(2)}</p>
+                        <p className="dashboard-module-surface rounded px-2 py-1 text-slate-700 dark:text-slate-300">Available ₹{availableCredit.toFixed(2)}</p>
                       </div>
                     </div>
                   );
@@ -695,7 +706,7 @@ export default function GamersCreditControl() {
                       value={ledgerUserSearch}
                       onChange={(e) => setLedgerUserSearch(e.target.value)}
                       placeholder="Type gamer name / phone / email"
-                      className="border-cyan-400/25 bg-slate-900/70 text-slate-100"
+                      className={inputClass}
                     />
                     {isLedgerSuggestionsOpen && (
                       <div className={`${suggestionClass} absolute left-0 right-0 top-full z-20 mt-1`}>
@@ -704,10 +715,10 @@ export default function GamersCreditControl() {
                             type="button"
                             key={a.id}
                             onClick={() => selectLedgerUser(a)}
-                            className="flex w-full items-center justify-between rounded px-2 py-1.5 text-left text-xs text-slate-200 hover:bg-slate-800/80"
+                            className="flex w-full items-center justify-between rounded px-2 py-1.5 text-left text-xs text-slate-700 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-800/80"
                           >
                             <span className="truncate">{formatAccountLabel(a)}</span>
-                            <span className="ml-3 text-slate-400">₹{Number(a.outstanding_amount || 0).toFixed(0)}</span>
+                            <span className="ml-3 text-slate-500 dark:text-slate-400">₹{Number(a.outstanding_amount || 0).toFixed(0)}</span>
                           </button>
                         ))}
                       </div>
@@ -720,12 +731,12 @@ export default function GamersCreditControl() {
                   value={settleAmount}
                   onChange={(e) => setSettleAmount(e.target.value)}
                   placeholder="Collect Amount ₹"
-                  className="border-cyan-400/25 bg-slate-900/70 text-slate-100"
+                  className={inputClass}
                 />
                 <select
                   value={settleMode}
                   onChange={(e) => setSettleMode(e.target.value)}
-                  className="h-10 rounded-md border border-cyan-400/25 bg-slate-900/70 px-3 text-sm text-slate-100"
+                  className={selectClass}
                 >
                   <option value="Cash">Cash</option>
                   <option value="UPI">UPI</option>
@@ -749,21 +760,21 @@ export default function GamersCreditControl() {
                   {accounts.map((a) => {
                     const user = vendorUsers.find((u) => u.id === a.user_id);
                     return (
-                      <div key={a.id} className="rounded border border-cyan-500/15 bg-slate-900/60 p-2 text-xs">
+                      <div key={a.id} className="dashboard-module-card rounded p-2 text-xs">
                         <div className="flex items-center justify-between">
-                          <span className="font-semibold text-slate-100">{a.customer_name || user?.name || `User #${a.user_id}`}</span>
+                          <span className="font-semibold text-slate-900 dark:text-slate-100">{a.customer_name || user?.name || `User #${a.user_id}`}</span>
                           <button
                             onClick={() => {
                               setSettleUserId(String(a.user_id));
                               setLedgerUserSearch(formatAccountLabel(a));
                               fetchStatement(a.user_id);
                             }}
-                            className="rounded border border-cyan-400/30 px-2 py-1 text-cyan-200 hover:bg-slate-800"
+                            className="rounded border border-cyan-300/50 px-2 py-1 text-sky-700 hover:bg-cyan-50 dark:border-cyan-400/30 dark:text-cyan-200 dark:hover:bg-slate-800"
                           >
                             View Proof
                           </button>
                         </div>
-                        <p className="text-slate-300">
+                        <p className="text-slate-700 dark:text-slate-300">
                           Outstanding ₹{Number(a.outstanding_amount || 0).toFixed(2)} | Limit ₹{Number(a.credit_limit || 0).toFixed(2)}
                         </p>
                       </div>
@@ -776,35 +787,35 @@ export default function GamersCreditControl() {
 
           <Card className={`${cardClass} flex min-h-0 flex-col`}>
             <CardHeader className="border-b border-cyan-500/15 pb-3">
-              <h3 className="text-sm font-semibold text-cyan-100">Ledger Proof</h3>
-              <p className="text-xs text-slate-400">Every charge/payment with date, source, and staff attribution.</p>
+              <h3 className="text-sm font-semibold text-slate-900 dark:text-cyan-100">Ledger Proof</h3>
+              <p className="text-xs text-slate-600 dark:text-slate-400">Every charge/payment with date, source, and staff attribution.</p>
             </CardHeader>
             <CardContent className="flex flex-1 min-h-0 flex-col overflow-hidden p-4">
               {statementUserId ? (
-                <div className="flex min-h-0 flex-1 flex-col rounded border border-cyan-500/20 bg-slate-900/65 p-2 text-xs">
-                  <p className="mb-2 font-semibold text-cyan-100">
+                <div className="dashboard-module-surface flex min-h-0 flex-1 flex-col rounded p-2 text-xs">
+                  <p className="mb-2 font-semibold text-slate-900 dark:text-cyan-100">
                     Ledger Proof: {selectedLedgerAccount?.customer_name || selectedLedgerUser?.name || `User #${statementUserId}`}
                   </p>
                   {isLoadingStatement ? (
                     <Loader2 className="w-4 h-4 animate-spin text-blue-400" />
                   ) : statementRows.length === 0 ? (
-                    <p className="text-slate-400">No entries.</p>
+                    <p className="text-slate-600 dark:text-slate-400">No entries.</p>
                   ) : (
                     <div className="min-h-0 flex-1 space-y-1 overflow-y-auto pr-1">
                       {statementRows.map((r) => (
-                        <div key={r.id} className="flex items-center justify-between border-b border-slate-700 py-1 last:border-0">
-                          <span className="w-20 text-slate-300">{r.entry_type}</span>
-                          <span className="w-24 text-slate-100">₹{Number(r.amount || 0).toFixed(2)}</span>
-                          <span className="w-24 text-slate-400">{r.booked_date || "-"}</span>
-                          <span className="w-28 truncate text-slate-400">{r.staff_name || r.source_channel || "-"}</span>
-                          <span className="w-16 text-slate-500">#{r.transaction_id || "-"}</span>
+                        <div key={r.id} className="flex items-center justify-between border-b border-slate-200 py-1 last:border-0 dark:border-slate-700">
+                          <span className="w-20 text-slate-700 dark:text-slate-300">{r.entry_type}</span>
+                          <span className="w-24 text-slate-900 dark:text-slate-100">₹{Number(r.amount || 0).toFixed(2)}</span>
+                          <span className="w-24 text-slate-500 dark:text-slate-400">{r.booked_date || "-"}</span>
+                          <span className="w-28 truncate text-slate-500 dark:text-slate-400">{r.staff_name || r.source_channel || "-"}</span>
+                          <span className="w-16 text-slate-500 dark:text-slate-500">#{r.transaction_id || "-"}</span>
                         </div>
                       ))}
                     </div>
                   )}
                 </div>
               ) : (
-                <p className="text-xs text-slate-400">Select a gamer to view proof ledger.</p>
+                <p className="text-xs text-slate-600 dark:text-slate-400">Select a gamer to view proof ledger.</p>
               )}
             </CardContent>
           </Card>
@@ -814,8 +825,8 @@ export default function GamersCreditControl() {
       {activeTab === "payments" && (
         <Card className={`${cardClass} flex min-h-0 flex-col`}>
           <CardHeader className="border-b border-cyan-500/15 pb-3">
-            <h3 className="text-sm font-semibold text-cyan-100">Payments List</h3>
-            <p className="text-xs text-slate-400">Track only payment collections for selected gamer with clear totals.</p>
+              <h3 className="text-sm font-semibold text-slate-900 dark:text-cyan-100">Payments List</h3>
+              <p className="text-xs text-slate-600 dark:text-slate-400">Track only payment collections for selected gamer with clear totals.</p>
           </CardHeader>
           <CardContent className="flex-1 min-h-0 overflow-y-auto space-y-3 p-4">
             <div className={`grid grid-cols-1 gap-2 sm:grid-cols-4 ${isPaymentSuggestionsOpen ? "pb-24" : ""}`}>
@@ -825,7 +836,7 @@ export default function GamersCreditControl() {
                     value={paymentUserSearch}
                     onChange={(e) => setPaymentUserSearch(e.target.value)}
                     placeholder="Type gamer name / phone / email"
-                    className="border-cyan-400/25 bg-slate-900/70 text-slate-100"
+                    className={inputClass}
                   />
                   {isPaymentSuggestionsOpen && (
                     <div className={`${suggestionClass} absolute left-0 right-0 top-full z-20 mt-1`}>
@@ -834,21 +845,21 @@ export default function GamersCreditControl() {
                           type="button"
                           key={a.id}
                           onClick={() => selectPaymentUser(a)}
-                          className="flex w-full items-center justify-between rounded px-2 py-1.5 text-left text-xs text-slate-200 hover:bg-slate-800/80"
+                          className="flex w-full items-center justify-between rounded px-2 py-1.5 text-left text-xs text-slate-700 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-800/80"
                         >
                           <span className="truncate">{formatAccountLabel(a)}</span>
-                          <span className="ml-3 text-slate-400">₹{Number(a.outstanding_amount || 0).toFixed(0)}</span>
+                          <span className="ml-3 text-slate-500 dark:text-slate-400">₹{Number(a.outstanding_amount || 0).toFixed(0)}</span>
                         </button>
                       ))}
                     </div>
                   )}
                 </div>
               </div>
-              <div className="rounded-md border border-cyan-500/20 bg-slate-900/60 px-3 py-2 text-xs text-slate-300">
-                Payments Count: <span className="font-semibold text-cyan-100">{paymentRows.length}</span>
+              <div className={chipCardClass}>
+                Payments Count: <span className="font-semibold text-slate-900 dark:text-cyan-100">{paymentRows.length}</span>
               </div>
-              <div className="rounded-md border border-cyan-500/20 bg-slate-900/60 px-3 py-2 text-xs text-slate-300">
-                Collected Total: <span className="font-semibold text-emerald-200">₹{paymentCollected.toFixed(2)}</span>
+              <div className={chipCardClass}>
+                Collected Total: <span className="font-semibold text-emerald-700 dark:text-emerald-200">₹{paymentCollected.toFixed(2)}</span>
               </div>
             </div>
             {renderAccountSnapshot(
@@ -858,27 +869,27 @@ export default function GamersCreditControl() {
             )}
             {settleUserId && (
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-4">
-                <div className="rounded-md border border-cyan-500/20 bg-slate-900/60 px-3 py-2 text-xs text-slate-300">
-                  Gamer: <span className="font-semibold text-cyan-100">{selectedPaymentAccount?.customer_name || selectedPaymentUser?.name || `User #${settleUserId}`}</span>
+                <div className={chipCardClass}>
+                  Gamer: <span className="font-semibold text-slate-900 dark:text-cyan-100">{selectedPaymentAccount?.customer_name || selectedPaymentUser?.name || `User #${settleUserId}`}</span>
                 </div>
-                <div className="rounded-md border border-cyan-500/20 bg-slate-900/60 px-3 py-2 text-xs text-slate-300">
-                  Outstanding: <span className="font-semibold text-amber-200">₹{Number(selectedPaymentAccount?.outstanding_amount || 0).toFixed(2)}</span>
+                <div className={chipCardClass}>
+                  Outstanding: <span className="font-semibold text-amber-700 dark:text-amber-200">₹{Number(selectedPaymentAccount?.outstanding_amount || 0).toFixed(2)}</span>
                 </div>
-                <div className="rounded-md border border-cyan-500/20 bg-slate-900/60 px-3 py-2 text-xs text-slate-300">
-                  Avg Collection: <span className="font-semibold text-emerald-200">₹{avgPayment.toFixed(2)}</span>
+                <div className={chipCardClass}>
+                  Avg Collection: <span className="font-semibold text-emerald-700 dark:text-emerald-200">₹{avgPayment.toFixed(2)}</span>
                 </div>
-                <div className="rounded-md border border-cyan-500/20 bg-slate-900/60 px-3 py-2 text-xs text-slate-300">
-                  Last Payment: <span className="font-semibold text-slate-100">{String(lastPaymentDate).replace("T", " ").slice(0, 16)}</span>
+                <div className={chipCardClass}>
+                  Last Payment: <span className="font-semibold text-slate-900 dark:text-slate-100">{String(lastPaymentDate).replace("T", " ").slice(0, 16)}</span>
                 </div>
               </div>
             )}
             {isLoadingStatement ? (
               <Loader2 className="w-5 h-5 animate-spin text-blue-400" />
             ) : paymentRows.length === 0 ? (
-              <p className="text-xs text-slate-400">No payment entries for selected gamer.</p>
+              <p className="text-xs text-slate-600 dark:text-slate-400">No payment entries for selected gamer.</p>
             ) : (
-              <div className="min-h-0 flex-1 space-y-1 overflow-y-auto rounded border border-cyan-500/20 bg-slate-950/35 p-2">
-                <div className="grid grid-cols-7 gap-2 border-b border-slate-700 px-2 pb-1 text-[11px] uppercase tracking-wide text-slate-400">
+              <div className="dashboard-module-surface min-h-0 flex-1 space-y-1 overflow-y-auto rounded p-2">
+                <div className="grid grid-cols-7 gap-2 border-b border-slate-200 px-2 pb-1 text-[11px] uppercase tracking-wide text-slate-500 dark:border-slate-700 dark:text-slate-400">
                   <span>Date/Time</span>
                   <span>Amount</span>
                   <span>Mode</span>
@@ -888,14 +899,14 @@ export default function GamersCreditControl() {
                   <span>Txn</span>
                 </div>
                 {paymentRows.map((row) => (
-                  <div key={row.id} className="grid grid-cols-7 gap-2 rounded border border-slate-700 px-2 py-1 text-xs">
-                    <span className="text-slate-300">{String(row.created_at || row.booked_date || "-").replace("T", " ").slice(0, 16)}</span>
-                    <span className="font-semibold text-emerald-200">₹{Number(row.amount || 0).toFixed(2)}</span>
-                    <span className="text-slate-200">{row.mode_of_payment || "-"}</span>
-                    <span className="text-slate-400">{row.source_channel || "-"}</span>
-                    <span className="truncate text-slate-400">{row.staff_name || "-"}</span>
-                    <span className="truncate text-slate-400">{row.description || row.booking_type || row.payment_use_case || "-"}</span>
-                    <span className="text-slate-500">#{row.transaction_id || "-"}</span>
+                  <div key={row.id} className="dashboard-module-card grid grid-cols-7 gap-2 rounded px-2 py-1 text-xs">
+                    <span className="text-slate-700 dark:text-slate-300">{String(row.created_at || row.booked_date || "-").replace("T", " ").slice(0, 16)}</span>
+                    <span className="font-semibold text-emerald-700 dark:text-emerald-200">₹{Number(row.amount || 0).toFixed(2)}</span>
+                    <span className="text-slate-900 dark:text-slate-200">{row.mode_of_payment || "-"}</span>
+                    <span className="text-slate-500 dark:text-slate-400">{row.source_channel || "-"}</span>
+                    <span className="truncate text-slate-500 dark:text-slate-400">{row.staff_name || "-"}</span>
+                    <span className="truncate text-slate-500 dark:text-slate-400">{row.description || row.booking_type || row.payment_use_case || "-"}</span>
+                    <span className="text-slate-500 dark:text-slate-500">#{row.transaction_id || "-"}</span>
                   </div>
                 ))}
               </div>

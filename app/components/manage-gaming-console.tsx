@@ -125,16 +125,13 @@ export function ManageGamingConsole() {
               >
                 <CardHeader className="p-4 md:p-6">
                   <div
-                    className="mb-3 flex h-11 w-11 items-center justify-center rounded-xl border border-cyan-500/25 bg-slate-900/70"
-                    style={{ boxShadow: "inset 0 1px 0 rgba(255,255,255,0.06)" }}
+                    className="feature-action-icon mb-3"
+                    style={{ ["--feature-icon-color" as string]: console.iconColor }}
                   >
-                    <console.icon
-                      className="h-6 w-6 md:h-7 md:w-7"
-                      style={{ color: console.iconColor }}
-                    />
+                    <console.icon className="h-6 w-6 md:h-7 md:w-7" />
                   </div>
                   <CardTitle className="dash-title !text-lg">{console.name}</CardTitle>
-                  <CardDescription className="dash-subtitle mt-1 !text-slate-300">{console.description}</CardDescription>
+                  <CardDescription className="dash-subtitle premium-subtle mt-1">{console.description}</CardDescription>
                 </CardHeader>
               </Card>
             </motion.div>
@@ -175,17 +172,14 @@ export function ManageGamingConsole() {
               <CardHeader className="p-4 md:p-6">
                 {selectedAction === null && (
                   <div
-                    className="mb-3 flex h-11 w-11 items-center justify-center rounded-xl border border-cyan-500/25 bg-slate-900/70"
-                    style={{ boxShadow: "inset 0 1px 0 rgba(255,255,255,0.06)" }}
+                    className="feature-action-icon mb-3"
+                    style={{ ["--feature-icon-color" as string]: action.iconColor }}
                   >
-                    <action.icon
-                      className="h-6 w-6 md:h-7 md:w-7"
-                      style={{ color: action.iconColor }}
-                    />
+                    <action.icon className="h-6 w-6 md:h-7 md:w-7" />
                   </div>
                 )}
                 <CardTitle className="dash-title !text-lg">{action.label}</CardTitle>
-                <CardDescription className="dash-subtitle mt-1 !text-slate-300">{action.description}</CardDescription>
+                <CardDescription className="dash-subtitle premium-subtle mt-1">{action.description}</CardDescription>
               </CardHeader>
             </Card>
           </motion.div>
@@ -218,7 +212,7 @@ export function ManageGamingConsole() {
               animate={{ opacity: 1, scale: 1 }}
               whileHover={{ scale: 1.05 }}
               transition={{ duration: 0.3 }}
-              className="inline-flex items-center gap-2 rounded-lg border border-cyan-400/35 bg-cyan-500/10 px-4 py-2 font-medium text-cyan-200 transition-all duration-200 hover:bg-cyan-500/20"
+              className="inline-flex items-center gap-2 rounded-lg border border-cyan-300 bg-white px-4 py-2 font-medium text-slate-900 transition-all duration-200 hover:bg-slate-50 dark:border-cyan-400/35 dark:bg-cyan-500/10 dark:text-cyan-200 dark:hover:bg-cyan-500/20"
             >
               <ArrowLeft className="h-4 w-4" />
               Go Back

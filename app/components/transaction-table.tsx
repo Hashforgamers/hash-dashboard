@@ -496,25 +496,25 @@ export function TransactionTable() {
   const renderTransactionCell = (transaction: Transaction, key: ColumnKey) => {
     switch (key) {
       case "bookingId":
-        return <TableCell className="px-4 py-3 text-slate-300">{transaction.bookingId ?? "-"}</TableCell>;
+        return <TableCell className="px-4 py-3 text-slate-700 dark:text-slate-300">{transaction.bookingId ?? "-"}</TableCell>;
       case "slotDate":
-        return <TableCell className="px-4 py-3 text-slate-300">{transaction.slotDate}</TableCell>;
+        return <TableCell className="px-4 py-3 text-slate-700 dark:text-slate-300">{transaction.slotDate}</TableCell>;
       case "slotTime":
-        return <TableCell className="px-4 py-3 text-slate-300">{transaction.slotTime}</TableCell>;
+        return <TableCell className="px-4 py-3 text-slate-700 dark:text-slate-300">{transaction.slotTime}</TableCell>;
       case "userName":
-        return <TableCell className="px-4 py-3 text-slate-100">{transaction.userName}</TableCell>;
+        return <TableCell className="px-4 py-3 text-slate-900 dark:text-slate-100">{transaction.userName}</TableCell>;
       case "amount":
-        return <TableCell className="px-4 py-3 text-right font-medium text-slate-100">₹{transaction.amount.toFixed(2)}</TableCell>;
+        return <TableCell className="px-4 py-3 text-right font-medium text-slate-900 dark:text-slate-100">₹{transaction.amount.toFixed(2)}</TableCell>;
       case "modeOfPayment":
         return (
           <TableCell className="px-4 py-3">
-            <Badge variant="secondary" className="bg-slate-700/80 text-slate-200">{transaction.modeOfPayment}</Badge>
+            <Badge variant="secondary" className="bg-slate-200 text-slate-900 dark:bg-slate-700/80 dark:text-slate-200">{transaction.modeOfPayment}</Badge>
           </TableCell>
         );
       case "paymentUseCase":
         return (
           <TableCell className="px-4 py-3">
-            <Badge variant="outline" className="border-slate-500/70 text-slate-300">
+            <Badge variant="outline" className="border-slate-300 text-slate-700 dark:border-slate-500/70 dark:text-slate-300">
               {transaction.paymentUseCase || "-"}
             </Badge>
           </TableCell>
@@ -522,7 +522,7 @@ export function TransactionTable() {
       case "bookingType":
         return (
           <TableCell className="px-4 py-3">
-            <Badge variant="outline" className="border-slate-500/70 text-slate-300">{transaction.bookingType}</Badge>
+            <Badge variant="outline" className="border-slate-300 text-slate-700 dark:border-slate-500/70 dark:text-slate-300">{transaction.bookingType}</Badge>
           </TableCell>
         );
       case "settlementStatus":
@@ -538,10 +538,10 @@ export function TransactionTable() {
               }
               className={
                 transaction.settlementStatus === "done"
-                  ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/30"
+                  ? "border-emerald-300 bg-emerald-50 text-emerald-800 dark:border-emerald-500/30 dark:bg-emerald-500/20 dark:text-emerald-400"
                   : transaction.settlementStatus === "pending"
-                  ? "bg-yellow-500/20 text-yellow-400 border-yellow-500/30"
-                  : "border-slate-500/70 text-slate-300"
+                  ? "border-yellow-300 bg-yellow-50 text-yellow-800 dark:border-yellow-500/30 dark:bg-yellow-500/20 dark:text-yellow-400"
+                  : "border-slate-300 text-slate-700 dark:border-slate-500/70 dark:text-slate-300"
               }
             >
               {transaction.settlementStatus}
@@ -549,18 +549,18 @@ export function TransactionTable() {
           </TableCell>
         );
       case "sourceChannel":
-        return <TableCell className="px-4 py-3 text-slate-300">{transaction.sourceChannel || "-"}</TableCell>;
+        return <TableCell className="px-4 py-3 text-slate-700 dark:text-slate-300">{transaction.sourceChannel || "-"}</TableCell>;
       case "staffName":
-        return <TableCell className="px-4 py-3 text-slate-300">{transaction.staffName || "-"}</TableCell>;
+        return <TableCell className="px-4 py-3 text-slate-700 dark:text-slate-300">{transaction.staffName || "-"}</TableCell>;
       case "breakup":
         return (
-          <TableCell className="px-4 py-3 text-xs text-slate-300">
+          <TableCell className="px-4 py-3 text-xs text-slate-700 dark:text-slate-300">
             B:{(transaction.baseAmount || 0).toFixed(0)} M:{(transaction.mealsAmount || 0).toFixed(0)} C:{(transaction.controllerAmount || 0).toFixed(0)} W:{(transaction.waiveOffAmount || 0).toFixed(0)}
           </TableCell>
         );
       case "gst":
         return (
-          <TableCell className="px-4 py-3 text-xs text-slate-300">
+          <TableCell className="px-4 py-3 text-xs text-slate-700 dark:text-slate-300">
             {transaction.gstRate ? `${transaction.gstRate}%` : "-"}
             {transaction.gstRate
               ? ` | C:${(transaction.cgstAmount || 0).toFixed(2)} S:${(transaction.sgstAmount || 0).toFixed(2)} I:${(transaction.igstAmount || 0).toFixed(2)}`
@@ -569,12 +569,12 @@ export function TransactionTable() {
         );
       case "totalWithTax":
         return (
-          <TableCell className="px-4 py-3 text-right font-medium text-slate-200">
+          <TableCell className="px-4 py-3 text-right font-medium text-slate-900 dark:text-slate-200">
             ₹{getTransactionTotalWithTax(transaction).toFixed(2)}
           </TableCell>
         );
       default:
-        return <TableCell className="px-4 py-3 text-slate-300">-</TableCell>;
+        return <TableCell className="px-4 py-3 text-slate-700 dark:text-slate-300">-</TableCell>;
     }
   };
 
@@ -583,7 +583,7 @@ export function TransactionTable() {
   }
 
   return (
-    <div className="space-y-4 sm:space-y-5">
+    <div className="flex h-full min-h-0 w-full min-w-0 flex-col gap-4 overflow-hidden sm:gap-5">
       {/* <CHANGE> Updated metric cards to use default card styling instead of colorful gradients */}
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4">
         <motion.div
@@ -685,13 +685,13 @@ export function TransactionTable() {
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3, delay: 0.4 }}
-        className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center"
+        className="shrink-0 flex flex-col items-stretch gap-3 sm:flex-row sm:items-center"
       >
         <div className="relative flex-1">
-          <SearchIcon className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-400" />
+          <SearchIcon className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-500 dark:text-slate-400" />
           <Input
             placeholder="Search transactions..."
-            className="rounded-lg border-slate-600/70 bg-slate-800/70 pl-8 text-slate-100 placeholder:text-slate-400 focus:border-cyan-400/60"
+            className="dashboard-module-input rounded-lg pl-8"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
@@ -701,13 +701,13 @@ export function TransactionTable() {
             type="date"
             value={fromDate}
             onChange={(e) => setFromDate(e.target.value)}
-            className="w-[150px] rounded-lg border-slate-600/70 bg-slate-800/70 text-slate-100"
+            className="dashboard-module-input w-[150px] rounded-lg"
           />
           <Input
             type="date"
             value={toDate}
             onChange={(e) => setToDate(e.target.value)}
-            className="w-[150px] rounded-lg border-slate-600/70 bg-slate-800/70 text-slate-100"
+            className="dashboard-module-input w-[150px] rounded-lg"
           />
           <motion.button
             whileHover={{ scale: 1.02 }}
@@ -715,7 +715,7 @@ export function TransactionTable() {
             animate="visible"
             variants={boxVariants}
             transition={{ duration: 0.1 }}
-            className="flex items-center rounded-lg border border-slate-600/70 bg-slate-800/70 px-3 py-2 text-sm text-slate-200 transition-colors hover:bg-slate-700/70"
+            className="flex items-center rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 transition-colors hover:bg-slate-50 dark:border-slate-600/70 dark:bg-slate-800/70 dark:text-slate-200 dark:hover:bg-slate-700/70"
             onClick={() => {
               if (!fromDate || !toDate) return;
               if (fromDate > toDate) return;
@@ -731,7 +731,7 @@ export function TransactionTable() {
             animate="visible"
             variants={boxVariants}
             transition={{ duration: 0.1 }}
-            className="flex items-center rounded-lg border border-slate-600/70 bg-slate-800/70 px-3 py-2 text-sm text-slate-200 transition-colors hover:bg-slate-700/70"
+            className="flex items-center rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 transition-colors hover:bg-slate-50 dark:border-slate-600/70 dark:bg-slate-800/70 dark:text-slate-200 dark:hover:bg-slate-700/70"
             onClick={() => setShowColumnSelector((prev) => !prev)}
           >
             <span>Columns</span>
@@ -742,7 +742,7 @@ export function TransactionTable() {
             animate="visible"
             variants={boxVariants}
             transition={{ duration: 0.1 }}
-            className="flex items-center rounded-lg border border-slate-600/70 bg-slate-800/70 px-3 py-2 text-sm text-slate-200 transition-colors hover:bg-slate-700/70"
+            className="flex items-center rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 transition-colors hover:bg-slate-50 dark:border-slate-600/70 dark:bg-slate-800/70 dark:text-slate-200 dark:hover:bg-slate-700/70"
             onClick={() => setShowFilter(!showFilter)}
           >
             <FilterIcon className="h-4 w-4 mr-2" />
@@ -754,7 +754,7 @@ export function TransactionTable() {
             animate="visible"
             variants={boxVariants}
             transition={{ duration: 0.2 }}
-            className="flex items-center rounded-lg border border-slate-600/70 bg-slate-800/70 px-3 py-2 text-sm text-slate-200 transition-colors hover:bg-slate-700/70"
+            className="flex items-center rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 transition-colors hover:bg-slate-50 dark:border-slate-600/70 dark:bg-slate-800/70 dark:text-slate-200 dark:hover:bg-slate-700/70"
             onClick={downloadFilteredData}
           >
             <Download className="h-4 w-4 mr-2" />
@@ -764,13 +764,13 @@ export function TransactionTable() {
       </motion.div>
 
       {showColumnSelector && (
-        <div className="rounded-lg border border-slate-700 bg-slate-900/85 p-3">
+        <div className="dashboard-module-surface shrink-0 rounded-lg border p-3">
           <div className="mb-2 flex items-center justify-between">
-            <p className="text-sm font-semibold text-slate-200">Show/Hide Columns</p>
+            <p className="text-sm font-semibold text-slate-900 dark:text-slate-200">Show/Hide Columns</p>
             <div className="flex gap-2">
               <button
                 type="button"
-                className="rounded border border-slate-600 px-2 py-1 text-xs text-slate-200 hover:bg-slate-800"
+                className="rounded border border-slate-300 px-2 py-1 text-xs text-slate-900 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-800"
                 onClick={() => {
                   setVisibleColumns((prev) => {
                     const next = { ...prev };
@@ -783,7 +783,7 @@ export function TransactionTable() {
               </button>
               <button
                 type="button"
-                className="rounded border border-slate-600 px-2 py-1 text-xs text-slate-200 hover:bg-slate-800"
+                className="rounded border border-slate-300 px-2 py-1 text-xs text-slate-900 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-800"
                 onClick={() => {
                   setVisibleColumns((prev) => {
                     const next = { ...prev };
@@ -798,7 +798,7 @@ export function TransactionTable() {
           </div>
           <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
             {transactionColumns.map((col) => (
-              <label key={col.key} className="flex items-center gap-2 text-xs text-slate-200">
+              <label key={col.key} className="flex items-center gap-2 text-xs text-slate-900 dark:text-slate-200">
                 <input
                   type="checkbox"
                   checked={visibleColumns[col.key]}
@@ -829,23 +829,23 @@ export function TransactionTable() {
         initial="hidden"
         animate="visible"
         transition={{ duration: 0.3, delay: 0.5 }}
-        className="overflow-hidden rounded-xl border border-slate-700 bg-slate-900/60"
+        className="dashboard-module-surface relative min-h-0 min-w-0 flex-1 overflow-hidden rounded-xl border"
       >
-        <div className="max-h-[620px] overflow-x-auto overflow-y-auto">
-          <Table className="min-w-[1500px]">
-            <TableHeader className="sticky top-0 bg-slate-800/90 backdrop-blur-sm">
-              <TableRow className="border-slate-700 hover:bg-transparent">
+        <div className="h-full min-h-0 w-full overflow-auto overscroll-contain [scrollbar-gutter:stable_both-edges]">
+          <Table className="min-w-[1750px]">
+            <TableHeader className="dashboard-module-table-head sticky top-0 backdrop-blur-sm">
+              <TableRow className="border-slate-200 hover:bg-transparent dark:border-slate-700">
                 {transactionColumns
                   .filter((col) => visibleColumns[col.key])
                   .map((col) => (
-                    <TableHead key={col.key} className="px-4 py-3 font-semibold text-slate-100">
+                    <TableHead key={col.key} className="px-4 py-3 font-semibold text-white">
                       {col.key === "breakup" ? (
                         <span className="group relative inline-flex items-center gap-1">
                           <span>{col.label}</span>
-                          <span className="inline-flex h-4 w-4 cursor-help items-center justify-center rounded-full border border-slate-500 text-[10px] text-slate-400">
+                          <span className="inline-flex h-4 w-4 cursor-help items-center justify-center rounded-full border border-slate-300 text-[10px] text-slate-600 dark:border-slate-500 dark:text-slate-400">
                             i
                           </span>
-                          <span className="pointer-events-none absolute left-0 top-6 z-50 hidden w-56 rounded-md border border-slate-600 bg-slate-900 px-2 py-1 text-[11px] font-normal text-slate-300 shadow-lg group-hover:block">
+                          <span className="pointer-events-none absolute left-0 top-6 z-50 hidden w-56 rounded-md border border-slate-300 bg-white px-2 py-1 text-[11px] font-normal text-slate-700 shadow-lg group-hover:block dark:border-slate-600 dark:bg-slate-900 dark:text-slate-300">
                             B = Base amount, M = Meals amount, C = Controller amount, W = Waive-off amount
                           </span>
                         </span>
@@ -872,12 +872,12 @@ export function TransactionTable() {
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       onClick={() => toggleDateExpand(slotDate)}
-                      className="cursor-pointer border-slate-700 transition-colors hover:bg-slate-800/70"
+                      className="cursor-pointer border-slate-200 transition-colors hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800/70"
                     >
                       {visibleCols.map((col, idx) => {
                         if (idx === 0) {
                           return (
-                            <TableCell key={`${slotDate}_${col.key}_date`} className="px-4 py-3 font-medium text-cyan-200">
+                            <TableCell key={`${slotDate}_${col.key}_date`} className="px-4 py-3 font-medium text-sky-700 dark:text-cyan-200">
                               <span className="inline-flex items-center gap-2">
                                 <span className="text-xs">{expandedDates.includes(slotDate) ? "▲" : "▼"}</span>
                                 <span>{slotDate}</span>
@@ -888,7 +888,7 @@ export function TransactionTable() {
 
                         if (col.key === dayTotalTargetKey) {
                           return (
-                            <TableCell key={`${slotDate}_${col.key}_total`} className="px-4 py-3 text-right font-medium text-cyan-200">
+                            <TableCell key={`${slotDate}_${col.key}_total`} className="px-4 py-3 text-right font-medium text-sky-700 dark:text-cyan-200">
                               ₹{dayTotalAmount.toFixed(2)}
                             </TableCell>
                           );
@@ -908,7 +908,7 @@ export function TransactionTable() {
                               animate={{ opacity: 1, y: 0 }}
                               exit={{ opacity: 0, y: -10 }}
                               transition={{ duration: 0.2 }}
-                              className="border-slate-700 transition-colors hover:bg-slate-800/55"
+                              className="border-slate-200 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800/55"
                             >
                               {transactionColumns
                                 .filter((col) => visibleColumns[col.key])

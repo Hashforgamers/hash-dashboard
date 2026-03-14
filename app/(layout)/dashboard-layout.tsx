@@ -51,7 +51,7 @@ export function DashboardLayout({ children, contentScroll = "page" }: DashboardL
 
   return (
     <div className="premium-shell dashboard-typography flex h-dvh overflow-hidden text-foreground">
-      <header className="fixed left-0 right-0 top-0 z-20 flex items-center justify-between border-b border-border/70 bg-background/90 px-4 py-3 backdrop-blur md:hidden">
+      <header className="dashboard-nav dashboard-nav-surface dashboard-nav-divider fixed left-0 right-0 top-0 z-20 flex items-center justify-between border-b px-4 py-3 backdrop-blur md:hidden">
         <div className="flex items-center space-x-2">
           <Image
             src={theme === "dark" ? "/whitehashlogo.png" : "/blackhashlogo.png"}
@@ -76,7 +76,7 @@ export function DashboardLayout({ children, contentScroll = "page" }: DashboardL
       <div className="flex min-h-0 flex-1 overflow-hidden pt-[58px] md:pt-0">
         <aside
           className={`
-            group fixed left-0 top-0 z-30 flex h-full w-[86vw] max-w-72 flex-col overflow-hidden border-r border-border/70 bg-background/85 p-3 backdrop-blur-md transition-transform duration-300 ease-out
+            dashboard-nav dashboard-nav-surface dashboard-nav-divider group fixed left-0 top-0 z-30 flex h-full w-[86vw] max-w-72 flex-col overflow-hidden border-r p-3 backdrop-blur-md transition-transform duration-300 ease-out
             md:sticky md:top-0 md:h-dvh md:w-72 md:max-w-none md:translate-x-0 md:shrink-0
             ${isNavPinned ? "xl:w-72" : "xl:w-[76px] xl:hover:w-72"}
             ${isNavOpen ? "translate-x-0" : "-translate-x-full"}
@@ -87,7 +87,7 @@ export function DashboardLayout({ children, contentScroll = "page" }: DashboardL
             aria-label={isNavPinned ? "Unpin sidebar" : "Pin sidebar"}
             title={isNavPinned ? "Unpin sidebar" : "Pin sidebar"}
             onClick={() => setIsNavPinned((prev) => !prev)}
-            className={`absolute right-2 top-2 z-10 hidden rounded-md border border-border/70 bg-background/80 p-1.5 text-muted-foreground transition-colors hover:text-foreground md:inline-flex ${
+            className={`dashboard-nav-panel absolute right-2 top-2 z-10 hidden rounded-md border p-1.5 text-muted-foreground transition-colors hover:text-foreground md:inline-flex ${
               isNavPinned ? "xl:inline-flex" : "xl:hidden xl:group-hover:inline-flex"
             }`}
           >

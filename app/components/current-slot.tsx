@@ -687,7 +687,7 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
   const item = { hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } };
 
   return (
-    <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border border-cyan-500/20 bg-gradient-to-br from-slate-900/65 via-slate-900/40 to-slate-900/70 shadow-[inset_0_1px_0_rgba(255,255,255,0.02),0_0_28px_rgba(6,182,212,0.08)] p-2 sm:p-3 lg:p-4">
+    <div className="dashboard-module dashboard-module-panel flex h-full min-h-0 flex-col overflow-hidden rounded-2xl p-2 sm:p-3 lg:p-4">
       {currentSlots?.available ? (
         <div className="flex h-full items-center justify-center">
           <HashLoader />
@@ -703,16 +703,16 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                   ? `Live Console Sessions (${filteredSlots.length})`
                   : `Past Sessions (${filteredHistoryBookings.length})`}
               </span>
-              <div className="ml-2 flex items-center gap-1 rounded-md border border-slate-600/60 p-0.5">
+              <div className="dashboard-module-tab-group ml-2 flex items-center gap-1 rounded-md p-0.5">
                 <button
                   onClick={() => setActiveTab('live')}
-                  className={`rounded px-2 py-0.5 text-xs ${activeTab === 'live' ? 'bg-emerald-500/20 text-emerald-200' : 'text-slate-300'}`}
+                  className={`rounded px-2.5 py-1 text-sm ${activeTab === 'live' ? 'dashboard-module-tab-active' : 'dashboard-module-tab'}`}
                 >
                   Live
                 </button>
                 <button
                   onClick={() => setActiveTab('history')}
-                  className={`rounded px-2 py-0.5 text-xs ${activeTab === 'history' ? 'bg-emerald-500/20 text-emerald-200' : 'text-slate-300'}`}
+                  className={`rounded px-2.5 py-1 text-sm ${activeTab === 'history' ? 'dashboard-module-tab-active' : 'dashboard-module-tab'}`}
                 >
                   History
                 </button>
@@ -724,7 +724,7 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                 type="date"
                 value={historyDate}
                 onChange={(e) => setHistoryDate(e.target.value)}
-                className={`w-[132px] rounded-lg border border-slate-600/70 bg-slate-800/70 px-3 py-2 text-xs text-slate-100 focus:border-cyan-400/60 focus:outline-none sm:w-44 sm:text-sm ${
+                className={`dashboard-module-input w-[132px] rounded-lg px-3 py-2 text-sm sm:w-44 ${
                   activeTab === "history" ? "opacity-100" : "opacity-0 pointer-events-none"
                 }`}
               />
@@ -735,7 +735,7 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                   value={searchQuery}
                   onChange={handleSearch}
                   placeholder="Search by name or console..."
-                  className="w-full rounded-lg border border-slate-600/70 bg-slate-800/70 py-2 pl-8 pr-3 text-xs text-slate-100 placeholder:text-slate-400 focus:border-cyan-400/60 focus:outline-none sm:w-56 sm:text-sm md:w-72"
+                  className="dashboard-module-input w-full rounded-lg py-2.5 pl-8 pr-3 text-sm sm:w-56 md:w-72"
                 />
               </div>
             </div>
@@ -756,24 +756,24 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
             variants={container}
             initial="hidden"
             animate="show"
-            className="flex-1 min-h-0 overflow-hidden rounded-xl bg-slate-900/55 backdrop-blur-sm"
+            className="dashboard-module-surface flex-1 min-h-0 overflow-hidden rounded-xl backdrop-blur-sm"
           >
             <div className="h-full overflow-x-auto overflow-y-auto">
-              <table ref={tableRef} className="min-w-[760px] w-full divide-y divide-slate-700/70">
-                <thead className="sticky top-0 z-10 bg-slate-900/95">
+              <table ref={tableRef} className="dashboard-module-table min-w-[760px] w-full divide-y">
+                <thead className="dashboard-module-table-head sticky top-0 z-10">
                   <tr>
                     {['Name', 'System', 'Time', 'Progress', 'Extra', 'Action'].map((heading) => (
                       <th
                         key={heading}
                         scope="col"
-                        className="px-3 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-300 md:px-4"
+                        className="dashboard-module-table-header px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider md:px-4"
                       >
                         {heading}
                       </th>
                     ))}
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-700/60">
+                <tbody className="dashboard-module-table-body divide-y">
                   {Array.isArray(filteredSlots) && filteredSlots.length > 0 ? (
                     <AnimatePresence mode="popLayout">
                       {filteredSlots.map((booking, index) => {
@@ -874,7 +874,7 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                           <motion.tr
                             key={uniqueKey}
                             variants={item}
-                            className="transition-colors hover:bg-slate-800/45"
+                            className="dashboard-module-row transition-colors"
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, x: -20 }}
@@ -892,21 +892,18 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                                       {booking.username || 'Guest'}
                                     </div>
                                     {squadEnabled && (
-                                      <span className="rounded-full border border-emerald-400/40 bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-200">
+                                      <span className="rounded-full border border-emerald-400/40 bg-emerald-500/10 px-2 py-0.5 text-xs font-semibold text-emerald-200">
                                         Captain
                                       </span>
                                     )}
                                     {squadEnabled && (
-                                      <span className="rounded-full border border-sky-400/40 bg-sky-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-sky-200">
+                                      <span className="rounded-full border border-sky-400/40 bg-sky-500/15 px-2 py-0.5 text-xs font-semibold text-sky-200">
                                         Squad x{squadPlayerCount}
                                       </span>
                                     )}
                                   </div>
-                                  <div className="text-xs text-slate-400">
-                                    {booking.consoleCode || booking.consoleNumber || "-"}
-                                  </div>
                                   {squadEnabled && squadMemberNames.length > 0 && (
-                                    <div className="text-[10px] text-slate-400">
+                                    <div className="text-xs text-slate-400">
                                       {squadMemberNames.join(", ")}
                                       {squadPlayerCount - squadMemberNames.length > 0
                                         ? ` +${squadPlayerCount - squadMemberNames.length}`
@@ -946,7 +943,7 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                                     </motion.button>
                                     {isPcSquad && sortedSquadMembers.length > 0 && mealPickerBookingId === bookingIdToCheck && (
                                       <div className="absolute right-0 top-full z-20 mt-1 w-48 rounded-md border border-cyan-500/30 bg-slate-900/95 p-2 shadow-xl">
-                                        <div className="text-[10px] font-semibold uppercase tracking-wide text-cyan-300">Add/View Meal For</div>
+                                        <div className="text-xs font-semibold uppercase tracking-wide text-cyan-300">Add/View Meal For</div>
                                         <select
                                           value={String(selectedMealMemberPos || "")}
                                           onChange={(e) => {
@@ -977,7 +974,7 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                                               });
                                               setMealPickerBookingId(null);
                                             }}
-                                            className="flex-1 rounded border border-emerald-400/40 bg-emerald-500/15 px-2 py-1 text-[10px] text-emerald-200"
+                                            className="flex-1 rounded border border-emerald-400/40 bg-emerald-500/15 px-2 py-1 text-xs text-emerald-200"
                                           >
                                             View
                                           </button>
@@ -992,7 +989,7 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                                               });
                                               setMealPickerBookingId(null);
                                             }}
-                                            className="flex-1 rounded border border-cyan-400/40 bg-cyan-500/15 px-2 py-1 text-[10px] text-cyan-200"
+                                            className="flex-1 rounded border border-cyan-400/40 bg-cyan-500/15 px-2 py-1 text-xs text-cyan-200"
                                           >
                                             Add
                                           </button>
@@ -1031,7 +1028,7 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                                     </motion.button>
                                     {isPcSquad && sortedSquadMembers.length > 0 && mealPickerBookingId === bookingIdToCheck && (
                                       <div className="absolute right-0 top-full z-20 mt-1 w-48 rounded-md border border-cyan-500/30 bg-slate-900/95 p-2 shadow-xl">
-                                        <div className="text-[10px] font-semibold uppercase tracking-wide text-cyan-300">Add Meal For</div>
+                                        <div className="text-xs font-semibold uppercase tracking-wide text-cyan-300">Add Meal For</div>
                                         <select
                                           value={String(selectedMealMemberPos || "")}
                                           onChange={(e) => {
@@ -1061,7 +1058,7 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                                             });
                                             setMealPickerBookingId(null);
                                           }}
-                                          className="mt-2 w-full rounded border border-cyan-400/40 bg-cyan-500/15 px-2 py-1 text-[10px] text-cyan-200"
+                                          className="mt-2 w-full rounded border border-cyan-400/40 bg-cyan-500/15 px-2 py-1 text-xs text-cyan-200"
                                         >
                                           Continue
                                         </button>
@@ -1114,7 +1111,7 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                                       ))}
                                   </div>
                                 ) : squadEnabled ? (
-                                  <div className="text-[10px] text-sky-200">Extra Controllers: {appliedControllerQty}</div>
+                                  <div className="text-xs text-sky-200">Extra Controllers: {appliedControllerQty}</div>
                                 ) : (
                                   <div className="flex items-center space-x-1 sm:space-x-2">
                                     {(() => {
@@ -1184,7 +1181,7 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                                     transition={{ duration: 0.5 }}
                                   />
                                 </div>
-                                <div className={`text-[10px] sm:text-xs ${hasExtraTime ? "text-red-300" : "text-slate-400"}`}>
+                                <div className={`text-xs ${hasExtraTime ? "text-red-300" : "text-slate-400"}`}>
                                   {hasExtraTime ? `Extended: ${formatTime(timer.extraTime)}` : `Remaining: ${formatTime(remainingTime)}`}
                                   <span className="ml-1 text-slate-500">({progressState})</span>
                                 </div>
@@ -1300,38 +1297,38 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
             </div>
           </motion.div>
           ) : (
-            <div className="flex-1 min-h-0 overflow-hidden rounded-xl bg-slate-900/55">
+            <div className="dashboard-module-surface flex-1 min-h-0 overflow-hidden rounded-xl">
               {historyLoading ? (
-                <div className="flex h-full flex-col items-center justify-center text-slate-400">
+                <div className="dashboard-module-empty flex h-full flex-col items-center justify-center">
                   <p className="text-sm font-medium">Loading history...</p>
                 </div>
               ) : filteredHistoryBookings.length === 0 ? (
-                <div className="flex h-full flex-col items-center justify-center text-slate-400">
+                <div className="dashboard-module-empty flex h-full flex-col items-center justify-center">
                   <p className="text-sm font-medium">No past sessions found</p>
                 </div>
               ) : (
                 <div className="h-full overflow-x-auto overflow-y-auto">
-                  <table className="w-full min-w-[760px] divide-y divide-slate-700/70">
-                    <thead className="sticky top-0 z-10 bg-slate-900/95">
+                  <table className="dashboard-module-table w-full min-w-[760px] divide-y">
+                    <thead className="dashboard-module-table-head sticky top-0 z-10">
                       <tr>
                         {["Name", "System", "Time", "Progress", "Extra", "Action"].map((heading) => (
                           <th
                             key={heading}
                             scope="col"
-                            className="px-3 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-300 md:px-4"
+                            className="dashboard-module-table-header px-3 py-3 text-left text-[11px] font-semibold uppercase tracking-wider md:px-4"
                           >
                             {heading}
                           </th>
                         ))}
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-700/60">
+                    <tbody className="dashboard-module-table-body divide-y">
                       {filteredHistoryBookings.map((b: any, i: number) => {
                         const normalizedStatus = normalizeHistoryStatus(b);
                         const statusLabel = historyStatusLabel(normalizedStatus);
                         const systemText = `${b.consoleName || b.consoleType || "Console"}${b.consoleBrand ? ` • ${b.consoleBrand}` : ""}${b.consoleNumber ? ` • ${b.consoleNumber}` : ""}`;
                         return (
-                          <tr key={`${b.bookingId || i}-${b.date}`} className="transition-colors hover:bg-slate-800/45">
+                          <tr key={`${b.bookingId || i}-${b.date}`} className="dashboard-module-row transition-colors">
                             <td className="px-3 py-3 md:px-4">
                               <div className="text-sm font-semibold text-slate-100">{b.username || "Guest"}</div>
                               <div className="text-xs text-slate-400">{b.bookingId ? `#${b.bookingId}` : "-"}</div>

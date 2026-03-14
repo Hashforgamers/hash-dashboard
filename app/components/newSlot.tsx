@@ -1049,8 +1049,8 @@ const getEffectivePrice = (slot: SelectedSlot): number => {
             const Icon = meta.icon
             const isActive = paymentType === type
             const iconClass = isActive
-              ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/35 dark:text-emerald-300"
-              : "bg-slate-800 text-slate-300 dark:bg-slate-700/70 dark:text-slate-300"
+              ? "payment-option-icon-active"
+              : "payment-option-icon"
             return (
               <motion.button
                 key={type}
@@ -1067,10 +1067,10 @@ const getEffectivePrice = (slot: SelectedSlot): number => {
                   if (errors.payment) setErrors((prev) => ({ ...prev, payment: '' }))
                 }}
                 className={cn(
-                  "group rounded-xl border p-3 transition-all duration-200 min-h-[72px]",
+                  "payment-option-card group min-h-[72px] rounded-xl p-3 transition-all duration-200",
                   isActive
-                    ? "border-emerald-500 bg-emerald-50/80 ring-1 ring-emerald-200 dark:bg-emerald-900/30 dark:ring-emerald-800"
-                    : "border-gray-300 dark:border-gray-600 hover:border-slate-400 dark:hover:border-slate-500 hover:bg-slate-50/40 dark:hover:bg-slate-800/40"
+                    ? "payment-option-card-active"
+                    : ""
                 )}
               >
                 <div className="flex items-center justify-between">
@@ -1079,8 +1079,8 @@ const getEffectivePrice = (slot: SelectedSlot): number => {
                   </span>
                   <span
                     className={cn(
-                      "h-2.5 w-2.5 rounded-full border",
-                      isActive ? "border-emerald-600 bg-emerald-500" : "border-gray-400 bg-transparent"
+                      "payment-option-dot h-2.5 w-2.5 rounded-full",
+                      isActive ? "payment-option-dot-active" : ""
                     )}
                   />
                 </div>
@@ -1101,8 +1101,8 @@ const getEffectivePrice = (slot: SelectedSlot): number => {
             Monthly credit works only for users with an active Gamers Credit account.
           </p>
           <div className="rounded-xl border border-gray-300 bg-slate-50/60 p-3 dark:border-slate-700 dark:bg-slate-900/60">
-            <div className="flex items-start justify-between gap-3">
-              <div>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div className="min-w-0">
                 <p className="text-sm font-semibold text-gray-800 dark:text-white">Credit Account Status</p>
                 <p className="text-xs text-gray-500 dark:text-slate-400">
                   {matchedPrimaryUser?.id
@@ -1123,18 +1123,18 @@ const getEffectivePrice = (slot: SelectedSlot): number => {
             {creditAccountLoading ? (
               <p className="mt-2 text-xs text-gray-500 dark:text-slate-400">Loading credit account...</p>
             ) : creditAccount?.is_active ? (
-              <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-3">
-                <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-3 py-2">
-                  <p className="text-[11px] uppercase tracking-wide text-emerald-700 dark:text-emerald-300">Limit</p>
-                  <p className="text-sm font-semibold text-emerald-900 dark:text-emerald-100">₹{Number(creditAccount.credit_limit || 0).toFixed(2)}</p>
+              <div className="mt-2 grid grid-cols-1 gap-2 min-[480px]:grid-cols-2 xl:grid-cols-3">
+                <div className="min-w-0 rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-3 py-2">
+                  <p className="text-xs uppercase tracking-wide text-emerald-700 dark:text-emerald-300">Limit</p>
+                  <p className="break-words text-base font-semibold text-emerald-900 dark:text-emerald-100">₹{Number(creditAccount.credit_limit || 0).toFixed(2)}</p>
                 </div>
-                <div className="rounded-lg border border-amber-500/20 bg-amber-500/10 px-3 py-2">
-                  <p className="text-[11px] uppercase tracking-wide text-amber-700 dark:text-amber-300">Outstanding</p>
-                  <p className="text-sm font-semibold text-amber-900 dark:text-amber-100">₹{Number(creditAccount.outstanding_amount || 0).toFixed(2)}</p>
+                <div className="min-w-0 rounded-lg border border-amber-500/20 bg-amber-500/10 px-3 py-2">
+                  <p className="text-xs uppercase tracking-wide text-amber-700 dark:text-amber-300">Outstanding</p>
+                  <p className="break-words text-base font-semibold text-amber-900 dark:text-amber-100">₹{Number(creditAccount.outstanding_amount || 0).toFixed(2)}</p>
                 </div>
-                <div className="rounded-lg border border-cyan-500/20 bg-cyan-500/10 px-3 py-2">
-                  <p className="text-[11px] uppercase tracking-wide text-cyan-700 dark:text-cyan-300">Available</p>
-                  <p className="text-sm font-semibold text-cyan-900 dark:text-cyan-100">₹{availableCreditAmount.toFixed(2)}</p>
+                <div className="min-w-0 rounded-lg border border-cyan-500/20 bg-cyan-500/10 px-3 py-2 min-[480px]:col-span-2 xl:col-span-1">
+                  <p className="text-xs uppercase tracking-wide text-cyan-700 dark:text-cyan-300">Available</p>
+                  <p className="break-words text-base font-semibold text-cyan-900 dark:text-cyan-100">₹{availableCreditAmount.toFixed(2)}</p>
                 </div>
               </div>
             ) : (
@@ -1504,7 +1504,7 @@ if (response.ok || result.success === true || result.success === 'true') {
               onClose()
               setIsSubmitted(false)
             }}
-            className="w-full bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700"
+            className="ui-action-primary w-full"
           >
             Create Another Booking
           </Button>
@@ -1533,7 +1533,7 @@ if (response.ok || result.success === true || result.success === 'true') {
             <h2 className="premium-heading !text-xl sm:!text-2xl">New Slot Booking</h2>
             <button
               onClick={onClose}
-              className="p-2 rounded-lg bg-slate-700/70 hover:bg-slate-600 text-slate-200 transition-colors"
+              className="slot-booking-modal-close rounded-lg p-2 transition-colors"
             >
               <X className="w-5 h-5" />
             </button>
@@ -1547,7 +1547,7 @@ if (response.ok || result.success === true || result.success === 'true') {
                     <h3 className="text-lg font-semibold text-emerald-800 dark:text-emerald-200 mb-3">Selected Time Slots</h3>
                     <div className="space-y-2">
                       {selectedSlots.map((slot, index) => (
-                        <div key={index} className="flex items-center justify-between text-sm bg-white dark:bg-gray-800 rounded-lg p-3">
+                        <div key={index} className="slot-booking-modal-soft flex items-center justify-between rounded-lg p-3 text-sm">
                           <span className="text-gray-700 dark:text-gray-300">
                             <strong>{new Date(slot.date).toLocaleDateString('en-GB')}</strong> • {slot.start_time.slice(0, 5)}-{slot.end_time.slice(0, 5)} • {slot.console_name}
                           </span>
@@ -2049,7 +2049,7 @@ if (response.ok || result.success === true || result.success === 'true') {
                         <button
                           type="button"
                           onClick={() => setIsMealSelectorOpen(true)}
-                          className="flex items-center gap-2 rounded-lg border border-cyan-400/35 bg-cyan-500/12 px-3 py-1.5 text-sm text-cyan-200 transition-all duration-200 hover:bg-cyan-500/20"
+                          className="slot-booking-modal-accent flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm transition-all duration-200"
                         >
                           <Plus className="w-3 h-3" />
                           {selectedMeals.length === 0 ? 'Add Meals & Extras' : `${selectedMeals.length} Selected`}
@@ -2060,24 +2060,24 @@ if (response.ok || result.success === true || result.success === 'true') {
                         <div className="py-2 border-b border-gray-200 dark:border-gray-600">
                           <div className="space-y-2">
                             {selectedMeals.map(meal => (
-                              <div key={meal.menu_item_id} className="rounded-lg border border-cyan-500/25 bg-slate-800/70 p-3">
+                              <div key={meal.menu_item_id} className="slot-booking-modal-soft rounded-lg p-3">
                                 <div className="flex justify-between items-start">
                                   <div className="flex-1">
-                                    <span className="font-medium text-cyan-200 text-sm">
+                                    <span className="text-sm font-medium text-gray-800 dark:text-white">
                                       {meal.name}
                                     </span>
-                                    <div className="mt-1 text-xs text-slate-300">
+                                    <div className="mt-1 text-xs text-gray-600 dark:text-gray-400">
                                       {meal.category} • ₹{meal.price} × {meal.quantity}
                                     </div>
                                   </div>
-                                  <span className="font-bold text-cyan-200 text-sm">
+                                  <span className="text-sm font-bold text-gray-800 dark:text-white">
                                     ₹{meal.total}
                                   </span>
                                 </div>
                               </div>
                             ))}
-                            <div className="border-t border-cyan-500/25 pt-2 text-right">
-                              <span className="text-sm font-bold text-cyan-200">
+                            <div className="border-t border-gray-200 pt-2 text-right dark:border-gray-600">
+                              <span className="text-sm font-bold text-gray-800 dark:text-white">
                                 Meals Total: ₹{mealsTotal}
                               </span>
                             </div>
@@ -2098,13 +2098,13 @@ if (response.ok || result.success === true || result.success === 'true') {
             </form>
           </div>
 
-          <div className="sticky bottom-0 z-20 border-t border-slate-700/80 bg-slate-900/95 p-3 backdrop-blur-md sm:p-4">
+          <div className="slot-booking-modal-footer sticky bottom-0 z-20 p-3 backdrop-blur-md sm:p-4">
             <div className="flex flex-col gap-3 sm:flex-row sm:gap-4">
               <Button
                 type="button"
                 onClick={onClose}
                 variant="outline"
-                className="flex-1 border-slate-500/60 bg-slate-700/50 text-slate-100 hover:bg-slate-600/70"
+                className="slot-booking-modal-secondary flex-1"
               >
                 Cancel
               </Button>
@@ -2112,7 +2112,7 @@ if (response.ok || result.success === true || result.success === 'true') {
                 type="submit"
                 form="slot-booking-form"
                 disabled={isSubmitting || (paymentType === 'Monthly Credit' && (!creditAccount?.is_active || availableCreditAmount < totalAmount))}
-                className="flex-1 bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white disabled:opacity-50"
+                className="ui-action-primary flex-1 disabled:opacity-50"
               >
                 {isSubmitting ? (
                   <div className="flex items-center gap-2">
@@ -2236,7 +2236,7 @@ function SegmentedButton({
         "transition-all duration-200",
         active
           ? "bg-blue-600 text-white shadow-md"
-          : "bg-gray-700 text-gray-300 hover:bg-gray-600 border border-gray-600",
+          : "border border-slate-300 bg-white text-slate-700 hover:bg-slate-100 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600",
       )}
     >
       {Icon ? <Icon className="h-3.5 w-3.5" /> : null}
@@ -2307,9 +2307,9 @@ function TopBar({
   // Main TopBar return
   return (
     <div className={cn("mb-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between", compact && "mb-2 gap-2")}>
-      <Card className={cn("rounded-xl border border-slate-700 bg-slate-800/50 p-3 backdrop-blur-sm", compact && "p-2")}>
+      <Card className={cn("rounded-xl border border-slate-300 bg-white/90 p-3 shadow-sm backdrop-blur-sm dark:border-slate-700 dark:bg-slate-800/50", compact && "p-2")}>
         <div className="flex items-center gap-2">
-          <span className="text-xs font-medium uppercase tracking-wide text-slate-400">Select Console</span>
+          <span className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">Select Console</span>
           <div className="flex flex-wrap items-center gap-2">
             {activeTypes.map((key) => {
               const Icon = consoleIcons[key]
@@ -2336,11 +2336,11 @@ function TopBar({
           onClick={onNewBooking}
           disabled={selectedSlots.length === 0}
           className={cn(
-            "rounded-lg text-white shadow-lg transition-all duration-200",
+            "rounded-lg shadow-lg transition-all duration-200",
             "px-4 py-2 text-xs font-semibold sm:px-5 sm:text-sm",
             selectedSlots.length > 0 
-              ? "bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400"
-              : "bg-slate-600 cursor-not-allowed"
+              ? "ui-action-primary"
+              : "bg-slate-600 text-white cursor-not-allowed"
           )}
         >
           <Plus className="mr-2 h-4 w-4" />
@@ -2353,12 +2353,12 @@ function TopBar({
             <Button 
               variant="outline"
               size="icon" 
-              className="rounded-lg border-slate-600 bg-slate-700 hover:bg-slate-600 text-slate-100"
+              className="ui-toolbar-menu rounded-lg"
             >
               <MoreVertical className="w-5 h-5" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56 border-slate-700 bg-slate-900 text-slate-100">
+          <DropdownMenuContent align="end" className="w-56 border-slate-200 bg-white text-slate-900 shadow-lg dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100">
             <DropdownMenuItem onClick={() => {
               setShowManageView('change');
               setMenuOpen(false);
@@ -2403,9 +2403,9 @@ function ConsoleFilter({
   }
 
   return (
-    <Card className="rounded-xl border border-gray-700 bg-gray-800/50 backdrop-blur-sm p-4 mb-6">
+    <Card className="mb-6 rounded-xl border border-slate-300 bg-white/90 p-4 shadow-sm backdrop-blur-sm dark:border-gray-700 dark:bg-gray-800/50">
       <div className="flex items-center gap-3">
-        <span className="text-xs font-medium text-gray-400 uppercase">Select Console</span>
+        <span className="text-xs font-medium uppercase text-slate-500 dark:text-gray-400">Select Console</span>
         <div className="flex flex-wrap items-center gap-2">
           {Object.entries(consoleIcons).map(([key, Icon]) => (
             <SegmentedButton 
@@ -2527,13 +2527,13 @@ function ScheduleGrid({
 
   if (filteredConsoles.length === 0) {
     return (
-      <Card className="rounded-2xl border border-amber-500/35 bg-amber-500/10 backdrop-blur-sm overflow-hidden">
+      <Card className="overflow-hidden rounded-2xl border border-amber-300 bg-amber-50/90 backdrop-blur-sm dark:border-amber-500/35 dark:bg-amber-500/10">
         <div className="flex flex-col items-center justify-center px-6 py-10 text-center">
           <AlertCircle className="mb-3 h-8 w-8 text-amber-300" />
-          <p className="text-sm font-semibold text-amber-100">
+          <p className="text-sm font-semibold text-amber-900 dark:text-amber-100">
             No {selectedConsole} consoles available in this cafe
           </p>
-          <p className="mt-1 text-xs text-amber-200/90">
+          <p className="mt-1 text-xs text-amber-700 dark:text-amber-200/90">
             Add or map {selectedConsole} devices from `Manage Gaming Console` to enable booking.
           </p>
         </div>
@@ -2825,9 +2825,9 @@ if (isPastTime) {
   }
 
   return (
-    <Card className="rounded-2xl border border-gray-700 bg-gray-800/30 backdrop-blur-sm overflow-hidden">
-      {detectedDurations.length > 1 && (
-        <div className="border-b border-cyan-500/20 bg-cyan-500/10 px-4 py-2 text-xs text-cyan-100/90">
+      <Card className="overflow-hidden rounded-2xl border border-slate-300 bg-white/90 shadow-sm backdrop-blur-sm dark:border-gray-700 dark:bg-gray-800/30">
+        {detectedDurations.length > 1 && (
+        <div className="border-b border-cyan-200 bg-cyan-50 px-4 py-2 text-xs text-cyan-800 dark:border-cyan-500/20 dark:bg-cyan-500/10 dark:text-cyan-100/90">
           Mixed slot durations detected ({detectedDurations.join("m, ")}m). In-between cells show continuation of longer slots.
         </div>
       )}
@@ -2844,30 +2844,30 @@ if (isPastTime) {
       >
         <div className="min-w-max">
           <div
-            className={cn("grid bg-gray-800/50", compact ? "gap-1 p-2 pb-2" : "gap-2 p-4 pb-3")}
+            className={cn("grid bg-slate-100/80 dark:bg-gray-800/50", compact ? "gap-1 p-2 pb-2" : "gap-2 p-4 pb-3")}
             style={{ gridTemplateColumns: `80px repeat(${uniqueTimes.length}, minmax(${compact ? 96 : 110}px, 1fr))` }}
           >
-            <div className="sticky left-0 z-20 flex items-center justify-center bg-gray-800/95 text-center text-xs font-semibold uppercase text-gray-400 backdrop-blur-sm">
+            <div className="sticky left-0 z-20 flex items-center justify-center bg-slate-800/95 text-center text-xs font-semibold uppercase text-white backdrop-blur-sm">
               Date
             </div>
             {uniqueTimes.map((time) => (
-              <div key={time} className="text-sm font-bold text-gray-200 text-center">
+              <div key={time} className="text-center text-sm font-bold text-slate-700 dark:text-gray-200">
                 {time}
               </div>
             ))}
           </div>
 
-          <div className="border-t border-gray-700">
+          <div className="border-t border-slate-300 dark:border-gray-700">
             {rows.map((row) => {
               const isTodayRow = row.fullDate === todayIST
               return (
                 <div
                   key={row.fullDate}
                   className={cn(
-                    "grid border-b border-gray-700/50 last:border-b-0 transition-colors",
+                    "grid border-b border-slate-200 last:border-b-0 transition-colors dark:border-gray-700/50",
                     isTodayRow
-                      ? "bg-cyan-500/10 ring-1 ring-inset ring-cyan-400/35"
-                      : "hover:bg-gray-700/20",
+                      ? "bg-cyan-50 ring-1 ring-inset ring-cyan-300/50 dark:bg-cyan-500/10 dark:ring-cyan-400/35"
+                      : "hover:bg-slate-100/70 dark:hover:bg-gray-700/20",
                     compact ? "gap-1 p-2 py-1.5" : "gap-2 p-4 py-3"
                   )}
                   style={{ gridTemplateColumns: `80px repeat(${uniqueTimes.length}, minmax(${compact ? 96 : 110}px, 1fr))` }}
@@ -2876,13 +2876,13 @@ if (isPastTime) {
                     className={cn(
                       "sticky left-0 z-20 flex items-center justify-center rounded-lg px-2 py-2 text-sm font-bold backdrop-blur-sm",
                       isTodayRow
-                        ? "bg-cyan-500/20 text-cyan-100 ring-1 ring-cyan-300/35"
-                        : "bg-gray-700/95 text-white"
+                        ? "bg-cyan-100 text-cyan-900 ring-1 ring-cyan-300/60 dark:bg-cyan-500/20 dark:text-cyan-100 dark:ring-cyan-300/35"
+                        : "bg-slate-700/95 text-white"
                     )}
                   >
                     <span>{row.date}</span>
                     {isTodayRow && (
-                      <span className="ml-1.5 rounded-full bg-cyan-400/20 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-cyan-100">
+                      <span className="ml-1.5 rounded-full bg-cyan-200 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-cyan-900 dark:bg-cyan-400/20 dark:text-cyan-100">
                         Today
                       </span>
                     )}
@@ -2892,8 +2892,8 @@ if (isPastTime) {
                     <div
                       key={`${row.fullDate}-cell-${idx}`}
                       className={cn(
-                        "rounded-lg border border-gray-700 bg-gray-800/50 backdrop-blur-sm",
-                        isTodayRow && "border-cyan-500/30 bg-cyan-500/5",
+                        "rounded-lg border border-slate-300 bg-white/85 backdrop-blur-sm dark:border-gray-700 dark:bg-gray-800/50",
+                        isTodayRow && "border-cyan-300 bg-cyan-50/70 dark:border-cyan-500/30 dark:bg-cyan-500/5",
                         compact ? "min-h-[36px]" : "min-h-[44px]"
                       )}
                     >
@@ -2928,10 +2928,10 @@ function RecentBookings({
   
   if (isLoading) {
     return (
-      <Card className={cn("p-6 mt-2 bg-gray-50 dark:bg-gray-700/30", fixedCard && "h-full min-h-0")}>
+      <Card className={cn("booking-contrast-card mt-2 bg-slate-50 p-6 dark:bg-gray-700/30", fixedCard && "h-full min-h-0")}>
         <div className="flex items-center justify-center py-8">
           <Loader2 className="w-6 h-6 animate-spin text-emerald-500" />
-          <span className="ml-2 text-gray-600 dark:text-gray-400">Loading bookings...</span>
+          <span className="booking-contrast-muted ml-2">Loading bookings...</span>
         </div>
       </Card>
     )
@@ -2939,15 +2939,15 @@ function RecentBookings({
 
   if (bookings.length === 0) {
     return (
-      <Card className={cn("p-6 mt-2 bg-gray-50 dark:bg-gray-700/30", fixedCard && "h-full min-h-0")}>
+      <Card className={cn("booking-contrast-card mt-2 bg-slate-50 p-6 dark:bg-gray-700/30", fixedCard && "h-full min-h-0")}>
         <div className="flex flex-col items-center justify-center py-8 text-center">
           <div className="p-3 bg-gray-200 dark:bg-gray-600 rounded-full mb-3">
-            <AlertCircle className="w-6 h-6 text-gray-500 dark:text-gray-400" />
+            <AlertCircle className="booking-contrast-subtle h-6 w-6" />
           </div>
-          <p className="text-gray-600 dark:text-gray-400 font-medium">
+          <p className="booking-contrast-muted font-medium">
             No {hasPastBookings ? 'past' : 'active'} bookings for selected slot
           </p>
-          <p className="text-sm text-gray-500 dark:text-gray-500 mt-1">
+          <p className="booking-contrast-subtle mt-1 text-sm">
             {hasPastBookings 
               ? 'This past slot has no booking history'
               : 'This slot is available for new bookings'}
@@ -2958,29 +2958,29 @@ function RecentBookings({
   }
 
   return (
-    <Card className={cn("p-4 mt-2 bg-gray-50 dark:bg-gray-700/30", fixedCard && "h-full min-h-0 flex flex-col")}>
+    <Card className={cn("booking-contrast-card mt-2 bg-gray-50 p-4 dark:bg-gray-700/30", fixedCard && "h-full min-h-0 flex flex-col")}>
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold text-gray-800 dark:text-white flex items-center gap-2">
+        <h3 className="booking-contrast-heading flex items-center gap-2 text-lg font-semibold">
           {/* ✅ Show different icon based on booking type */}
           {hasPastBookings ? (
-            <Clock className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+            <Clock className="booking-contrast-subtle h-5 w-5" />
           ) : (
             <CalendarDays className="w-5 h-5 text-emerald-600" />
           )}
           
           {/* ✅ Show "Past" or "Active" in title */}
-          <span className={hasPastBookings ? "text-gray-700 dark:text-gray-300" : ""}>
+          <span className={hasPastBookings ? "booking-contrast-muted" : ""}>
             {bookingType} Slot Bookings
           </span>
           
-          <span className="text-sm font-normal text-gray-500">
+          <span className="booking-contrast-subtle text-sm font-normal">
             ({bookings.length} {bookingType})
           </span>
         </h3>
         
         {/* ✅ Show badge for past bookings */}
         {hasPastBookings && (
-          <span className="px-3 py-1 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-full text-xs font-medium">
+          <span className="booking-contrast-muted rounded-full bg-gray-200 px-3 py-1 text-xs font-medium dark:bg-gray-700">
             History
           </span>
         )}
@@ -2990,12 +2990,12 @@ function RecentBookings({
         <Table>
           <TableHeader className="sticky top-0 z-20">
             <TableRow>
-              <TableHead className="sticky top-0 z-20 bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300">Booking ID</TableHead>
-              <TableHead className="sticky top-0 z-20 bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300">Customer Details</TableHead>
-              <TableHead className="sticky top-0 z-20 bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300">Time</TableHead>
-              <TableHead className="sticky top-0 z-20 bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300">Status</TableHead>
-              <TableHead className="sticky top-0 z-20 bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300">Meal Selection</TableHead>
-              <TableHead className="sticky top-0 z-20 bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300">Actions</TableHead>
+              <TableHead className="booking-contrast-header sticky top-0 z-20 bg-gray-100 dark:bg-gray-800">Booking ID</TableHead>
+              <TableHead className="booking-contrast-header sticky top-0 z-20 bg-gray-100 dark:bg-gray-800">Customer Details</TableHead>
+              <TableHead className="booking-contrast-header sticky top-0 z-20 bg-gray-100 dark:bg-gray-800">Time</TableHead>
+              <TableHead className="booking-contrast-header sticky top-0 z-20 bg-gray-100 dark:bg-gray-800">Status</TableHead>
+              <TableHead className="booking-contrast-header sticky top-0 z-20 bg-gray-100 dark:bg-gray-800">Meal Selection</TableHead>
+              <TableHead className="booking-contrast-header sticky top-0 z-20 bg-gray-100 dark:bg-gray-800">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -3008,11 +3008,11 @@ function RecentBookings({
                 )}
               >
                 {/* Booking ID */}
-                <TableCell className="font-medium text-emerald-600 dark:text-emerald-400">
+                <TableCell className="booking-contrast-heading font-medium">
                   <div className="flex flex-col gap-1">
                     <span>{booking.booking_fid || `#BK-${booking.booking_id}`}</span>
                     {(booking.squad_enabled || Number(booking.squad_player_count || 1) > 1) && (
-                      <span className="w-fit rounded-full border border-sky-400/40 bg-sky-500/15 px-2 py-0.5 text-[10px] font-semibold text-sky-200">
+                      <span className="w-fit rounded-full border border-sky-400/40 bg-sky-500/15 px-2 py-0.5 text-[10px] font-semibold text-black dark:text-sky-200">
                         Squad x{Math.max(1, Number(booking.squad_player_count || 1))}
                       </span>
                     )}
@@ -3022,20 +3022,20 @@ function RecentBookings({
                 {/* Customer Details */}
                 <TableCell>
                   <div className="flex flex-col gap-1">
-                    <span className="font-medium text-gray-800 dark:text-white flex items-center gap-1">
+                    <span className="booking-contrast-heading flex items-center gap-1 font-medium">
                       <User className="w-3 h-3" />
                       {booking.customer_name}
                     </span>
-                    <span className="text-xs text-gray-600 dark:text-gray-400 flex items-center gap-1">
+                    <span className="booking-contrast-muted flex items-center gap-1 text-xs">
                       <Mail className="w-3 h-3" />
                       {booking.customer_email}
                     </span>
-                    <span className="text-xs text-gray-600 dark:text-gray-400 flex items-center gap-1">
+                    <span className="booking-contrast-muted flex items-center gap-1 text-xs">
                       <Phone className="w-3 h-3" />
                       {booking.customer_phone}
                     </span>
                     {(booking.squad_enabled || Number(booking.squad_player_count || 1) > 1) && (
-                      <span className="text-[11px] text-sky-600 dark:text-sky-300">
+                      <span className="booking-contrast-muted text-[11px]">
                         Squad: {Array.isArray(booking.squad_members) && booking.squad_members.length > 0
                           ? booking.squad_members.map((m: any) => m?.name).filter(Boolean).join(", ")
                           : `${Math.max(1, Number(booking.squad_player_count || 1))} players`}
@@ -3047,10 +3047,10 @@ function RecentBookings({
                 {/* ✅ NEW: Time Column */}
                 <TableCell>
                   <div className="flex flex-col gap-1">
-                    <span className="text-xs text-gray-700 dark:text-gray-300 font-medium">
+                    <span className="booking-contrast-muted text-xs font-medium">
                       {(booking.slot_start_time || booking.start_time || "N/A")} - {(booking.slot_end_time || booking.end_time || "N/A")}
                     </span>
-                    <span className="text-xs text-gray-500">
+                    <span className="booking-contrast-subtle text-xs">
                       {booking.booking_date
                         ? new Date(booking.booking_date).toLocaleDateString('en-GB')
                         : "Date unavailable"}
@@ -3066,7 +3066,7 @@ function RecentBookings({
                     booking.status === 'confirmed' && "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
                     booking.status === 'checked_in' && "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400",
                     booking.status === 'pending_verified' && "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
-                    booking.status === 'completed' && "bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300",
+                    booking.status === 'completed' && "bg-gray-100 text-black dark:bg-gray-700 dark:text-gray-300",
                     booking.status === 'cancelled' && "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
                     booking.status === 'rejected' && "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
                   )}>
@@ -3078,14 +3078,14 @@ function RecentBookings({
                 
                 {/* Meal Selection */}
                 <TableCell>
-                  <div className="flex items-center gap-1 text-sm text-gray-700 dark:text-gray-300">
+                  <div className="booking-contrast-muted flex items-center gap-1 text-sm">
                     {booking.meals && booking.meals.length > 0 ? (
                       <div className="flex items-center gap-1">
-                        <Sparkles className="w-4 h-4 text-emerald-600" />
+                        <Sparkles className="w-4 h-4 text-emerald-600 dark:text-emerald-300" />
                         <span className="text-xs">{booking.meal_selection}</span>
                       </div>
                     ) : (
-                      <span className="text-gray-500 italic text-xs">No meal selected</span>
+                      <span className="booking-contrast-subtle text-xs italic">No meal selected</span>
                     )}
                   </div>
                 </TableCell>
@@ -3096,10 +3096,10 @@ function RecentBookings({
                     variant="ghost"
                     size="sm"
                     className={cn(
-                      "text-xs",
+                      "booking-contrast-heading text-xs",
                       hasPastBookings 
-                        ? "text-gray-600 hover:text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700" 
-                        : "text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-900/30"
+                        ? "hover:bg-gray-100 dark:hover:bg-gray-700" 
+                        : "hover:bg-emerald-50 dark:hover:bg-emerald-900/30"
                     )}
                   >
                     {hasPastBookings ? 'View History' : 'View Details'}
@@ -3112,8 +3112,8 @@ function RecentBookings({
       </div>
       
       {/* ✅ NEW: Summary Footer */}
-      <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-600 flex items-center justify-between">
-        <div className="text-sm text-gray-600 dark:text-gray-400">
+      <div className="mt-4 flex items-center justify-between border-t border-gray-200 pt-4 dark:border-gray-600">
+        <div className="booking-contrast-muted text-sm">
           {hasPastBookings ? (
             <span className="flex items-center gap-2">
               <Clock className="w-4 h-4" />
@@ -3143,7 +3143,7 @@ function RecentBookings({
                   status === 'completed' && "bg-gray-500",
                   status === 'cancelled' && "bg-red-500"
                 )} />
-                <span className="text-gray-600 dark:text-gray-400">
+                <span className="booking-contrast-muted">
                   {status === 'checked_in' ? 'Checked-In' : 
                    status === 'pending_verified' ? 'Pending' :
                    status.charAt(0).toUpperCase() + status.slice(1)}: {count}
@@ -3872,7 +3872,7 @@ function ListBooking() {
           onChange={(e) => setSearchQuery(e.target.value)}
           className="w-full flex-1 rounded-lg border border-slate-600/70 bg-slate-800/70 px-4 py-2.5 text-sm text-slate-100 placeholder:text-slate-400 focus:border-cyan-400/60 focus:outline-none"
         />
-        <Button onClick={handleSearch} className="bg-gradient-to-r from-emerald-500 to-cyan-500 text-white hover:from-emerald-400 hover:to-cyan-400">
+        <Button onClick={handleSearch} className="ui-action-primary">
           <Search className="w-4 h-4 mr-2" />
           Search
         </Button>
@@ -4337,7 +4337,7 @@ useEffect(() => {
       <main className={embedded ? "h-full min-h-0 bg-background flex items-center justify-center" : "min-h-screen bg-background flex items-center justify-center"}>
         <div className="text-center">
           <Loader2 className="w-12 h-12 animate-spin text-blue-500 mx-auto mb-4" />
-          <p className="text-slate-300">Loading slot data...</p>
+          <p className="text-black dark:text-slate-200">Loading slot data...</p>
         </div>
       </main>
     )
