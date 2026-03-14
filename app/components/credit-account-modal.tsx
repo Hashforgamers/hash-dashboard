@@ -35,6 +35,8 @@ interface CreditAccountModalProps {
   onCreated: (payload: { account: MonthlyCreditAccountSummary; user: CreditCustomerProfile }) => void
 }
 
+const MAX_BILLING_CYCLE_DAY = 31
+
 const authHeaders = () => {
   const token = localStorage.getItem("rbac_access_token_v1") || localStorage.getItem("jwtToken")
   return {
@@ -67,7 +69,14 @@ export default function CreditAccountModal({ open, vendorId, customer, onClose, 
   }, [open, customer])
 
   const canSubmit = useMemo(() => {
-    return Boolean(vendorId && form.name.trim() && (form.phone.trim() || form.email.trim()) && Number(form.credit_limit) >= 0 && Number(form.billing_cycle_day) >= 1 && Number(form.billing_cycle_day) <= 28)
+    return Boolean(
+      vendorId &&
+      form.name.trim() &&
+      (form.phone.trim() || form.email.trim()) &&
+      Number(form.credit_limit) >= 0 &&
+      Number(form.billing_cycle_day) >= 1 &&
+      Number(form.billing_cycle_day) <= MAX_BILLING_CYCLE_DAY
+    )
   }, [vendorId, form])
 
   const handleConfirm = async () => {
@@ -165,15 +174,15 @@ export default function CreditAccountModal({ open, vendorId, customer, onClose, 
           onClick={onClose}
         >
           <motion.div
-            className="w-full max-w-lg rounded-2xl border border-cyan-500/20 bg-slate-950 shadow-2xl"
+            className="credit-account-modal w-full max-w-lg rounded-2xl border shadow-2xl"
             initial={{ opacity: 0, y: 24, scale: 0.96 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 24, scale: 0.96 }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-start justify-between border-b border-slate-800 px-5 py-4">
+            <div className="credit-account-modal-header flex items-start justify-between px-5 py-4">
               <div className="flex items-start gap-3">
-                <div className="rounded-xl bg-amber-500/15 p-2 text-amber-300">
+                <div className="slot-booking-modal-accent rounded-xl p-2">
                   <Wallet className="h-5 w-5" />
                 </div>
                 <div>
@@ -181,7 +190,7 @@ export default function CreditAccountModal({ open, vendorId, customer, onClose, 
                   <p className="text-sm text-slate-400">Verify customer details and enable monthly credit.</p>
                 </div>
               </div>
-              <button onClick={onClose} className="rounded-md p-1 text-slate-400 hover:bg-slate-800 hover:text-slate-200">
+              <button onClick={onClose} className="slot-booking-modal-close rounded-md p-1">
                 <X className="h-4 w-4" />
               </button>
             </div>
@@ -189,34 +198,34 @@ export default function CreditAccountModal({ open, vendorId, customer, onClose, 
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div className="sm:col-span-2">
                   <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-slate-400">Customer Name</label>
-                  <input value={form.name} onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))} className="w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-cyan-500 focus:outline-none" />
+                  <input value={form.name} onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))} className="w-full rounded-lg border px-3 py-2 text-sm focus:border-cyan-500 focus:outline-none" />
                 </div>
                 <div>
                   <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-slate-400">Phone</label>
-                  <input value={form.phone} onChange={(e) => setForm((p) => ({ ...p, phone: e.target.value }))} className="w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-cyan-500 focus:outline-none" />
+                  <input value={form.phone} onChange={(e) => setForm((p) => ({ ...p, phone: e.target.value }))} className="w-full rounded-lg border px-3 py-2 text-sm focus:border-cyan-500 focus:outline-none" />
                 </div>
                 <div>
                   <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-slate-400">Email</label>
-                  <input value={form.email} onChange={(e) => setForm((p) => ({ ...p, email: e.target.value }))} className="w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-cyan-500 focus:outline-none" />
+                  <input value={form.email} onChange={(e) => setForm((p) => ({ ...p, email: e.target.value }))} className="w-full rounded-lg border px-3 py-2 text-sm focus:border-cyan-500 focus:outline-none" />
                 </div>
                 <div>
                   <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-slate-400">Credit Limit (₹)</label>
-                  <input type="number" min={0} value={form.credit_limit} onChange={(e) => setForm((p) => ({ ...p, credit_limit: e.target.value }))} className="w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-cyan-500 focus:outline-none" />
+                  <input type="number" min={0} value={form.credit_limit} onChange={(e) => setForm((p) => ({ ...p, credit_limit: e.target.value }))} className="w-full rounded-lg border px-3 py-2 text-sm focus:border-cyan-500 focus:outline-none" />
                 </div>
                 <div>
                   <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-slate-400">Billing Cycle Day</label>
-                  <input type="number" min={1} max={28} value={form.billing_cycle_day} onChange={(e) => setForm((p) => ({ ...p, billing_cycle_day: e.target.value }))} className="w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-cyan-500 focus:outline-none" />
+                  <input type="number" min={1} max={MAX_BILLING_CYCLE_DAY} value={form.billing_cycle_day} onChange={(e) => setForm((p) => ({ ...p, billing_cycle_day: e.target.value }))} className="w-full rounded-lg border px-3 py-2 text-sm focus:border-cyan-500 focus:outline-none" />
                 </div>
                 <div className="sm:col-span-2">
                   <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-slate-400">Notes</label>
-                  <textarea value={form.notes} onChange={(e) => setForm((p) => ({ ...p, notes: e.target.value }))} rows={3} className="w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-cyan-500 focus:outline-none" placeholder="Optional notes" />
+                  <textarea value={form.notes} onChange={(e) => setForm((p) => ({ ...p, notes: e.target.value }))} rows={3} className="w-full rounded-lg border px-3 py-2 text-sm focus:border-cyan-500 focus:outline-none" placeholder="Optional notes" />
                 </div>
               </div>
               {error ? <div className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-300">{error}</div> : null}
             </div>
-            <div className="flex items-center justify-end gap-2 border-t border-slate-800 px-5 py-4">
-              <button onClick={onClose} className="rounded-lg border border-slate-700 bg-slate-900 px-4 py-2 text-sm text-slate-200">Cancel</button>
-              <button onClick={handleConfirm} disabled={!canSubmit || saving} className="rounded-lg bg-gradient-to-r from-emerald-500 to-cyan-500 px-4 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-50">
+            <div className="credit-account-modal-footer flex items-center justify-end gap-2 px-5 py-4">
+              <button onClick={onClose} className="slot-booking-modal-secondary rounded-lg px-4 py-2 text-sm">Cancel</button>
+              <button onClick={handleConfirm} disabled={!canSubmit || saving} className="ui-action-primary rounded-lg px-4 py-2 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-50">
                 <span className="inline-flex items-center gap-2">{saving ? <Loader2 className="h-4 w-4 animate-spin" /> : null}Confirm</span>
               </button>
             </div>

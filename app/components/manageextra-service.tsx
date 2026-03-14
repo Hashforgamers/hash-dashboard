@@ -282,9 +282,9 @@ export default function ManageExtraServices() {
         )
       : 0
   const primaryButtonClass =
-    "inline-flex items-center justify-center gap-2 rounded-lg border border-cyan-400/40 bg-gradient-to-r from-cyan-500/90 to-emerald-500/90 px-3 py-2 text-xs font-semibold text-white shadow-md shadow-cyan-900/40 transition-all duration-200 hover:from-cyan-400 hover:to-emerald-400 hover:shadow-lg hover:shadow-cyan-600/25 disabled:cursor-not-allowed disabled:opacity-50 sm:px-4 sm:text-sm"
+    "ui-action-primary inline-flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold shadow-md transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-50 sm:px-4"
   const secondaryButtonClass =
-    "inline-flex items-center justify-center gap-2 rounded-lg border border-cyan-300/25 bg-slate-900/70 px-3 py-2 text-xs font-semibold text-slate-200 transition-all duration-200 hover:border-cyan-300/45 hover:bg-slate-800/80 hover:text-cyan-100 disabled:cursor-not-allowed disabled:opacity-50 sm:px-4 sm:text-sm"
+    "ui-action-secondary inline-flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-50 sm:px-4"
   const destructiveIconButtonClass =
     "inline-flex items-center justify-center rounded-lg border border-rose-400/30 bg-rose-500/10 p-2 text-rose-300 transition-all duration-200 hover:border-rose-300/60 hover:bg-rose-500/20 disabled:cursor-not-allowed disabled:opacity-50"
 
@@ -308,7 +308,7 @@ export default function ManageExtraServices() {
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="flex h-full min-h-0 w-full flex-col space-y-4 overflow-hidden px-1 pb-2 sm:px-2"
+      className="dashboard-module dashboard-typography flex h-full min-h-0 w-full flex-col gap-4 overflow-hidden px-1 pb-2 sm:px-2"
     >
       <motion.div
         initial={{ opacity: 0, y: -14 }}
@@ -318,19 +318,19 @@ export default function ManageExtraServices() {
       >
         <div className="flex gap-2 overflow-x-auto pb-1 sm:gap-3">
           <div className="gaming-kpi-card min-w-[155px] flex-1 rounded-xl p-3 sm:min-w-[170px] sm:p-4">
-          <p className="text-[11px] uppercase tracking-wide text-slate-300/70 sm:text-xs">Categories</p>
+          <p className="text-xs uppercase tracking-wide text-slate-500">Categories</p>
           <p className="mt-1 text-xl font-semibold text-cyan-300 sm:text-2xl">{totalCategories}</p>
         </div>
           <div className="gaming-kpi-card min-w-[155px] flex-1 rounded-xl p-3 sm:min-w-[170px] sm:p-4">
-          <p className="text-[11px] uppercase tracking-wide text-slate-300/70 sm:text-xs">Menu Items</p>
+          <p className="text-xs uppercase tracking-wide text-slate-500">Menu Items</p>
           <p className="mt-1 text-xl font-semibold text-sky-300 sm:text-2xl">{totalItems}</p>
         </div>
           <div className="gaming-kpi-card min-w-[155px] flex-1 rounded-xl p-3 sm:min-w-[170px] sm:p-4">
-          <p className="text-[11px] uppercase tracking-wide text-slate-300/70 sm:text-xs">Active</p>
+          <p className="text-xs uppercase tracking-wide text-slate-500">Active</p>
           <p className="mt-1 text-xl font-semibold text-emerald-300 sm:text-2xl">{activeItems}</p>
         </div>
           <div className="gaming-kpi-card min-w-[155px] flex-1 rounded-xl p-3 sm:min-w-[170px] sm:p-4">
-          <p className="text-[11px] uppercase tracking-wide text-slate-300/70 sm:text-xs">Avg Price</p>
+          <p className="text-xs uppercase tracking-wide text-slate-500">Avg Price</p>
           <p className="mt-1 flex items-center text-xl font-semibold text-amber-300 sm:text-2xl">
             <IndianRupee className="mr-1 h-4 w-4 sm:h-5 sm:w-5" />
             {avgPrice}
@@ -349,7 +349,7 @@ export default function ManageExtraServices() {
         </div>
       </motion.div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto pr-1">
+      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain pr-1">
         {/* ✅ Error State */}
         {error && (
           <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4 text-destructive">
@@ -390,7 +390,7 @@ export default function ManageExtraServices() {
               </button>
             </div>
           ) : (
-            <div className="section-spacing">
+            <div className="section-spacing pb-2">
             {categories.map((cat, i) => {
               if (!cat?.id) return null
               const mode = getViewMode(cat.id)
@@ -403,25 +403,25 @@ export default function ManageExtraServices() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.05 * i }}
                 >
-                  <Card className="gaming-panel overflow-hidden rounded-xl border-cyan-400/20 bg-gradient-to-br from-slate-950/65 via-slate-950/50 to-cyan-950/20 shadow-sm">
+                  <Card className="gaming-panel overflow-hidden rounded-xl border-cyan-400/20 shadow-sm">
                     {/* ✅ Category Header with view toggle */}
                     <CardHeader className="content-card-padding border-b border-cyan-500/15 pb-3">
                       <div className="flex items-center justify-between gap-3 flex-wrap">
                         {/* Left: Icon + Name */}
                         <div className="flex items-center gap-3 min-w-0 flex-1">
-                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-cyan-400/30 bg-cyan-500/10">
+                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-cyan-300 bg-cyan-50 dark:border-cyan-400/30 dark:bg-cyan-500/10">
                             {getCategoryIcon(cat.name)}
                           </div>
                           <div className="min-w-0">
-                            <CardTitle className="truncate text-sm font-bold tracking-wide text-cyan-100 sm:text-base">
+                            <CardTitle className="truncate text-base font-bold tracking-wide text-slate-900 dark:text-cyan-100">
                               {cat.name}
                             </CardTitle>
                             {cat.description && (
-                              <p className="mt-0.5 line-clamp-1 text-xs text-slate-300/75 sm:text-sm">{cat.description}</p>
+                              <p className="mt-0.5 line-clamp-1 text-sm text-slate-500">{cat.description}</p>
                             )}
                           </div>
                           {/* Item count badge */}
-                          <span className="shrink-0 rounded-full border border-cyan-400/30 bg-cyan-500/10 px-2 py-0.5 text-xs font-bold text-cyan-300">
+                          <span className="shrink-0 rounded-full border border-cyan-300 bg-cyan-50 px-2 py-0.5 text-xs font-bold text-slate-900 dark:border-cyan-400/30 dark:bg-cyan-500/10 dark:text-cyan-300">
                             {cat.items.length} items
                           </span>
                         </div>
@@ -429,13 +429,13 @@ export default function ManageExtraServices() {
                         {/* Right: View Toggle + Delete */}
                         <div className="flex items-center gap-2 shrink-0">
                           {/* ✅ View Mode Toggle */}
-                          <div className="flex items-center gap-1 rounded-lg border border-cyan-400/20 bg-slate-900/60 p-1">
+                          <div className="flex items-center gap-1 rounded-lg border border-slate-300 bg-white/90 p-1 dark:border-cyan-400/20 dark:bg-slate-900/60">
                             <button
                               onClick={() => setViewMode(cat.id, 'grid')}
                               className={`p-1.5 rounded-md transition-all ${
                                 mode === 'grid'
-                                  ? 'bg-slate-800 shadow-sm text-cyan-300'
-                                  : 'text-muted-foreground hover:text-cyan-200'
+                                  ? 'bg-slate-200 shadow-sm text-slate-900 dark:bg-slate-800 dark:text-cyan-300'
+                                  : 'text-slate-500 hover:text-slate-900 dark:text-muted-foreground dark:hover:text-cyan-200'
                               }`}
                               title="Grid View"
                             >
@@ -445,8 +445,8 @@ export default function ManageExtraServices() {
                               onClick={() => setViewMode(cat.id, 'table')}
                               className={`p-1.5 rounded-md transition-all ${
                                 mode === 'table'
-                                  ? 'bg-slate-800 shadow-sm text-cyan-300'
-                                  : 'text-muted-foreground hover:text-cyan-200'
+                                  ? 'bg-slate-200 shadow-sm text-slate-900 dark:bg-slate-800 dark:text-cyan-300'
+                                  : 'text-slate-500 hover:text-slate-900 dark:text-muted-foreground dark:hover:text-cyan-200'
                               }`}
                               title="Table View"
                             >
@@ -493,7 +493,7 @@ export default function ManageExtraServices() {
                                   animate={{ opacity: 1, scale: 1 }}
                                   transition={{ delay: 0.04 * idx }}
                                 >
-                                  <Card className="overflow-hidden rounded-lg border border-cyan-400/25 bg-gradient-to-b from-slate-900/70 to-slate-950/70 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-cyan-500/10">
+                                  <Card className="dashboard-module-card overflow-hidden rounded-lg border border-cyan-400/25 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-cyan-500/10">
                                     <CardContent className="p-0">
                                       {/* Image */}
                                       <div className="aspect-video relative">
@@ -528,12 +528,12 @@ export default function ManageExtraServices() {
                                           </p>
                                         )}
                                         <div className="flex items-center justify-between pt-0.5">
-                                          <div className="flex items-center gap-0.5 text-blue-400 font-bold text-xs">
+                                          <div className="flex items-center gap-0.5 text-blue-400 font-bold text-sm">
                                             <IndianRupee className="w-3 h-3" />
                                             <span>{item.price}</span>
                                           </div>
                                           <span className={clsx(
-                                            "px-1.5 py-0.5 rounded-full text-[10px] font-bold",
+                                            "px-2 py-0.5 rounded-full text-xs font-bold",
                                             item.is_active
                                               ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
                                               : "bg-muted/20 text-muted-foreground"
@@ -560,10 +560,10 @@ export default function ManageExtraServices() {
                                   setMenuForm({ name: "", description: "", price: "", imageFile: undefined, is_active: true })
                                   setShowMenuDlg(true)
                                 }}
-                                className="cursor-pointer overflow-hidden rounded-lg border-2 border-dashed border-cyan-400/25 bg-slate-900/40 transition-all duration-200 hover:border-cyan-300/50 hover:shadow-md"
+                                className="cursor-pointer overflow-hidden rounded-lg border-2 border-dashed border-cyan-300 bg-white/90 transition-all duration-200 hover:border-cyan-400 hover:shadow-md dark:border-cyan-400/25 dark:bg-slate-900/40 dark:hover:border-cyan-300/50"
                               >
                                 <CardContent className="p-0 flex items-center justify-center min-h-[100px]">
-                                  <div className="flex flex-col items-center gap-1 text-muted-foreground hover:text-foreground transition-colors p-4">
+                                  <div className="flex flex-col items-center gap-1 p-4 text-slate-500 transition-colors hover:text-slate-900 dark:text-muted-foreground dark:hover:text-foreground">
                                     <Plus className="icon-xl" />
                                     <span className="text-xs font-medium">Add Item</span>
                                   </div>
@@ -581,7 +581,7 @@ export default function ManageExtraServices() {
                             animate={{ opacity: 1, x: 0 }}
                             exit={{ opacity: 0, x: 10 }}
                             transition={{ duration: 0.2 }}
-                            className="table-container overflow-hidden rounded-lg border border-cyan-500/25 bg-slate-950/35"
+                            className="table-container dashboard-module-surface overflow-hidden rounded-lg border border-cyan-500/25"
                           >
                             {cat.items.length === 0 ? (
                               <div className="flex flex-col items-center justify-center py-10 gap-2 text-muted-foreground">
@@ -591,10 +591,10 @@ export default function ManageExtraServices() {
                             ) : (
                               <div className="overflow-x-auto">
                                 <table className="w-full text-left">
-                                  <thead className="bg-slate-900/70">
+                                  <thead className="dashboard-module-table-head">
                                     <tr>
                                       {["Item", "Description", "Price", "Status", "Action"].map(h => (
-                                        <th key={h} className="table-cell text-[11px] font-bold uppercase tracking-wider text-cyan-100/80 sm:text-xs">{h}</th>
+                                        <th key={h} className="table-cell text-xs font-bold uppercase tracking-wider text-white dark:text-cyan-100/80">{h}</th>
                                       ))}
                                     </tr>
                                   </thead>
@@ -628,7 +628,7 @@ export default function ManageExtraServices() {
 
                                           {/* Price */}
                                           <td className="table-cell">
-                                            <div className="flex items-center gap-0.5 text-blue-400 font-bold">
+                                            <div className="flex items-center gap-0.5 font-bold text-sky-700 dark:text-blue-400">
                                               <IndianRupee className="icon-md" />
                                               <span>{item.price}</span>
                                             </div>
@@ -639,8 +639,8 @@ export default function ManageExtraServices() {
                                             <span className={clsx(
                                               "px-2 py-0.5 rounded-full text-xs font-bold border",
                                               item.is_active
-                                                ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
-                                                : "bg-muted/20 text-muted-foreground border-border"
+                                                ? "border-emerald-300 bg-emerald-50 text-emerald-800 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-400"
+                                                : "border-border bg-muted/20 text-slate-600 dark:text-muted-foreground"
                                             )}>
                                               {item.is_active ? "Active" : "Inactive"}
                                             </span>
@@ -683,37 +683,37 @@ export default function ManageExtraServices() {
 
       {/* ✅ Category Dialog */}
       <Dialog open={showCategoryDlg} onOpenChange={setShowCategoryDlg}>
-        <DialogContent className="w-[95vw] rounded-xl border border-cyan-400/25 bg-gradient-to-br from-slate-950 via-slate-900 to-cyan-950/30 shadow-2xl sm:max-w-[425px]">
+        <DialogContent className="ui-dialog-surface w-[95vw] rounded-xl shadow-2xl sm:max-w-[425px]">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-base font-bold tracking-wide text-cyan-100 sm:text-lg">
+            <DialogTitle className="ui-dialog-title flex items-center gap-2 text-lg font-bold tracking-wide">
               <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-cyan-400/35 bg-cyan-500/10">
                 <FolderPlus className="h-4 w-4 text-cyan-300" />
               </span>
               New Category
             </DialogTitle>
-            <DialogDescription className="text-xs text-slate-300/70 sm:text-sm">
+            <DialogDescription className="ui-dialog-subtle text-sm">
               Enter a name and description for your new category.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-2">
             <div className="space-y-1.5">
-              <label className="text-[11px] font-bold uppercase tracking-wider text-cyan-100/80 sm:text-xs">Name *</label>
+              <label className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-cyan-100/80">Name *</label>
               <Input
                 value={categoryForm.name}
                 onChange={e => setCategoryForm({ ...categoryForm, name: e.target.value })}
                 placeholder="e.g. Food, Drinks, Snacks"
                 disabled={categoryLoading}
-                className="border-cyan-400/25 bg-slate-900/70 text-slate-100 placeholder:text-slate-400 focus-visible:ring-cyan-400/60"
+                className="ui-input-surface focus-visible:ring-cyan-400/60"
               />
             </div>
             <div className="space-y-1.5">
-              <label className="text-[11px] font-bold uppercase tracking-wider text-cyan-100/80 sm:text-xs">Description</label>
+              <label className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-cyan-100/80">Description</label>
               <Input
                 value={categoryForm.description}
                 onChange={e => setCategoryForm({ ...categoryForm, description: e.target.value })}
                 placeholder="Optional description"
                 disabled={categoryLoading}
-                className="border-cyan-400/25 bg-slate-900/70 text-slate-100 placeholder:text-slate-400 focus-visible:ring-cyan-400/60"
+                className="ui-input-surface focus-visible:ring-cyan-400/60"
               />
             </div>
           </div>
@@ -734,42 +734,42 @@ export default function ManageExtraServices() {
 
       {/* ✅ Menu Item Dialog */}
       <Dialog open={showMenuDlg} onOpenChange={setShowMenuDlg}>
-        <DialogContent className="w-[95vw] rounded-xl border border-cyan-400/25 bg-gradient-to-br from-slate-950 via-slate-900 to-cyan-950/30 shadow-2xl sm:max-w-[500px]">
+        <DialogContent className="ui-dialog-surface w-[95vw] rounded-xl shadow-2xl sm:max-w-[500px]">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-base font-bold tracking-wide text-cyan-100 sm:text-lg">
+            <DialogTitle className="ui-dialog-title flex items-center gap-2 text-lg font-bold tracking-wide">
               <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-emerald-400/35 bg-emerald-500/10">
                 <Sparkles className="h-4 w-4 text-emerald-300" />
               </span>
               New Menu Item
             </DialogTitle>
-            <DialogDescription className="text-xs text-slate-300/70 sm:text-sm">
+            <DialogDescription className="ui-dialog-subtle text-sm">
               Add a new item to your category.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-2 max-h-[60vh] overflow-y-auto pr-1">
             <div className="space-y-1.5">
-              <label className="text-[11px] font-bold uppercase tracking-wider text-cyan-100/80 sm:text-xs">Name *</label>
+              <label className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-cyan-100/80">Name *</label>
               <Input
                 value={menuForm.name}
                 onChange={e => setMenuForm({ ...menuForm, name: e.target.value })}
                 placeholder="e.g. Burger, Coffee"
                 disabled={menuLoading}
-                className="border-cyan-400/25 bg-slate-900/70 text-slate-100 placeholder:text-slate-400 focus-visible:ring-cyan-400/60"
+                className="ui-input-surface focus-visible:ring-cyan-400/60"
               />
             </div>
             <div className="space-y-1.5">
-              <label className="text-[11px] font-bold uppercase tracking-wider text-cyan-100/80 sm:text-xs">Description</label>
+              <label className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-cyan-100/80">Description</label>
               <Textarea
                 value={menuForm.description}
                 onChange={e => setMenuForm({ ...menuForm, description: e.target.value })}
                 placeholder="Optional description"
                 disabled={menuLoading}
                 rows={3}
-                className="resize-none border-cyan-400/25 bg-slate-900/70 text-slate-100 placeholder:text-slate-400 focus-visible:ring-cyan-400/60"
+                className="ui-input-surface resize-none focus-visible:ring-cyan-400/60"
               />
             </div>
             <div className="space-y-1.5">
-              <label className="text-[11px] font-bold uppercase tracking-wider text-cyan-100/80 sm:text-xs">Price (₹) *</label>
+              <label className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-cyan-100/80">Price (₹) *</label>
               <div className="relative">
                 <IndianRupee className="absolute left-3 top-1/2 -translate-y-1/2 icon-md text-muted-foreground" />
                 <Input
@@ -780,18 +780,18 @@ export default function ManageExtraServices() {
                   min="0"
                   step="0.01"
                   disabled={menuLoading}
-                  className="border-cyan-400/25 bg-slate-900/70 pl-9 text-slate-100 placeholder:text-slate-400 focus-visible:ring-cyan-400/60"
+                  className="ui-input-surface pl-9 focus-visible:ring-cyan-400/60"
                 />
               </div>
             </div>
             <div className="space-y-1.5">
-              <label className="text-[11px] font-bold uppercase tracking-wider text-cyan-100/80 sm:text-xs">Image (optional)</label>
+              <label className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-cyan-100/80">Image (optional)</label>
               <Input
                 type="file"
                 accept="image/*"
                 onChange={handleImageSelect}
                 disabled={menuLoading}
-                className="border-cyan-400/25 bg-slate-900/70 text-slate-200 file:border-0 file:bg-transparent file:font-medium file:text-cyan-300"
+                className="ui-input-surface text-slate-900 file:border-0 file:bg-transparent file:font-medium file:text-sky-700 dark:text-slate-200 dark:file:text-cyan-300"
               />
               {menuForm.imageFile && (
                 <p className="body-text-muted text-xs mt-1">

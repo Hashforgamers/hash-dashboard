@@ -420,7 +420,7 @@ export default function ForgotPasswordPage() {
                           {timer > 0 ? (
                             <>
                               Expires in{" "}
-                              <span className="font-mono font-bold text-green-400">
+                              <span className="font-bold text-green-400">
                                 {formatTime(timer)}
                               </span>
                             </>

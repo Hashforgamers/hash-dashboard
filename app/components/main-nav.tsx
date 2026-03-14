@@ -101,15 +101,15 @@ export function MainNav({ className, onItemClick, isNavPinned = false, ...props 
     <>
       <nav
         className={cn(
-          "flex h-full min-h-0 flex-col overflow-hidden transition-all duration-300 ease-in-out",
+          "dashboard-nav flex h-full min-h-0 flex-col overflow-hidden transition-all duration-300 ease-in-out",
           className
         )}
         {...props}
       >
-        <div className="mb-2 rounded-lg border border-border/60 bg-muted/20 px-2.5 py-2">
+        <div className="dashboard-nav-panel mb-2 rounded-lg border px-2.5 py-2">
           <p className="text-xs uppercase tracking-[0.08em] text-muted-foreground">Active User</p>
           <p className="truncate text-sm font-semibold text-foreground">{activeStaff?.name || "Owner"}</p>
-          <p className="text-xs capitalize text-emerald-400">{activeStaff?.role || "owner"}</p>
+          <p className="dashboard-nav-role text-xs capitalize">{activeStaff?.role || "owner"}</p>
         </div>
 
         <div className="min-h-0 flex-1 overflow-y-auto pr-1">
@@ -127,8 +127,7 @@ export function MainNav({ className, onItemClick, isNavPinned = false, ...props 
                     onItemClick?.();
                   }}
                   className={cn(
-                    "group/nav flex min-h-[32px] items-center gap-2 rounded-lg border border-transparent px-2.5 py-[clamp(0.2rem,0.55vh,0.38rem)] text-sm font-medium leading-tight transition-all duration-200",
-                    "hover:border-border/70 hover:bg-muted/50 hover:text-foreground",
+                    "dashboard-nav-item group/nav flex min-h-[32px] items-center gap-2 rounded-lg border px-2.5 py-[clamp(0.2rem,0.55vh,0.38rem)] text-sm font-medium leading-tight transition-all duration-200",
                     responsiveItemPaddingClass,
                     pathname === href ? "gaming-nav-active text-foreground" : "text-muted-foreground"
                   )}
@@ -136,7 +135,7 @@ export function MainNav({ className, onItemClick, isNavPinned = false, ...props 
                   <Icon
                     className={cn(
                       "h-[18px] w-[18px] shrink-0 transition-colors",
-                      pathname === href ? "text-emerald-400" : "text-muted-foreground group-hover/nav:text-foreground"
+                      pathname === href ? "dashboard-nav-icon-active" : "text-muted-foreground group-hover/nav:text-foreground"
                     )}
                   />
                   <span className={responsiveLabelClass}>{label}</span>
@@ -145,14 +144,13 @@ export function MainNav({ className, onItemClick, isNavPinned = false, ...props 
           </div>
         </div>
 
-        <div className="shrink-0 space-y-[clamp(0.06rem,0.2vh,0.14rem)] border-t border-border/60 pt-2">
+        <div className="dashboard-nav-divider shrink-0 space-y-[clamp(0.06rem,0.2vh,0.14rem)] border-t pt-2">
           {can("staff.manage") && (
             <Link
               href="/employee-access"
               onClick={onItemClick}
               className={cn(
-                "group/nav flex min-h-[30px] items-center gap-2 rounded-lg border border-transparent px-2.5 py-[clamp(0.14rem,0.42vh,0.28rem)] text-sm font-medium leading-tight transition-all duration-200",
-                "hover:border-border/70 hover:bg-muted/50 hover:text-foreground",
+                "dashboard-nav-item group/nav flex min-h-[30px] items-center gap-2 rounded-lg border px-2.5 py-[clamp(0.14rem,0.42vh,0.28rem)] text-sm font-medium leading-tight transition-all duration-200",
                 responsiveItemPaddingClass,
                 pathname === "/employee-access" ? "gaming-nav-active text-foreground" : "text-muted-foreground"
               )}
@@ -160,7 +158,7 @@ export function MainNav({ className, onItemClick, isNavPinned = false, ...props 
               <Shield
                 className={cn(
                   "h-[18px] w-[18px] shrink-0 transition-colors",
-                  pathname === "/employee-access" ? "text-emerald-400" : "text-muted-foreground group-hover/nav:text-foreground"
+                  pathname === "/employee-access" ? "dashboard-nav-icon-active" : "text-muted-foreground group-hover/nav:text-foreground"
                 )}
               />
               <span className={responsiveLabelClass}>Team Access</span>
@@ -173,8 +171,7 @@ export function MainNav({ className, onItemClick, isNavPinned = false, ...props 
               onItemClick?.();
             }}
             className={cn(
-              "group/nav flex w-full min-h-[30px] items-center gap-2 rounded-lg border border-transparent px-2.5 py-[clamp(0.14rem,0.42vh,0.28rem)] text-sm font-medium leading-tight transition-all duration-200",
-              "hover:border-border/70 hover:bg-muted/50 hover:text-foreground",
+              "dashboard-nav-item group/nav flex w-full min-h-[30px] items-center gap-2 rounded-lg border px-2.5 py-[clamp(0.14rem,0.42vh,0.28rem)] text-sm font-medium leading-tight transition-all duration-200",
               responsiveItemPaddingClass,
               "text-muted-foreground"
             )}
@@ -188,8 +185,7 @@ export function MainNav({ className, onItemClick, isNavPinned = false, ...props 
               href="/account"
               onClick={onItemClick}
               className={cn(
-                "group/nav flex min-h-[30px] items-center gap-2 rounded-lg border border-transparent px-2.5 py-[clamp(0.14rem,0.42vh,0.28rem)] text-sm font-medium leading-tight transition-all duration-200",
-                "hover:border-border/70 hover:bg-muted/50 hover:text-foreground",
+                "dashboard-nav-item group/nav flex min-h-[30px] items-center gap-2 rounded-lg border px-2.5 py-[clamp(0.14rem,0.42vh,0.28rem)] text-sm font-medium leading-tight transition-all duration-200",
                 responsiveItemPaddingClass,
                 pathname === "/account" ? "gaming-nav-active text-foreground" : "text-muted-foreground"
               )}
@@ -197,7 +193,7 @@ export function MainNav({ className, onItemClick, isNavPinned = false, ...props 
               <User
                 className={cn(
                   "h-[18px] w-[18px] shrink-0 transition-colors",
-                  pathname === "/account" ? "text-emerald-400" : "text-muted-foreground group-hover/nav:text-foreground"
+                  pathname === "/account" ? "dashboard-nav-icon-active" : "text-muted-foreground group-hover/nav:text-foreground"
                 )}
               />
               <span className={responsiveLabelClass}>My Account</span>
@@ -210,8 +206,7 @@ export function MainNav({ className, onItemClick, isNavPinned = false, ...props 
               onItemClick?.();
             }}
             className={cn(
-              "group/nav flex min-h-[30px] w-full items-center gap-2 rounded-lg border border-transparent px-2.5 py-[clamp(0.14rem,0.42vh,0.28rem)] text-sm font-medium leading-tight transition-all duration-200",
-              "hover:border-border/70 hover:bg-muted/50 hover:text-foreground",
+              "dashboard-nav-item group/nav flex min-h-[30px] w-full items-center gap-2 rounded-lg border px-2.5 py-[clamp(0.14rem,0.42vh,0.28rem)] text-sm font-medium leading-tight transition-all duration-200",
               responsiveItemPaddingClass,
               "text-muted-foreground"
             )}

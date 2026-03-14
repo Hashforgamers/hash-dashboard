@@ -317,7 +317,7 @@ export default function EmployeeAccessPage() {
               {lastCreatedPin && (
                 <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-emerald-400/30 bg-emerald-500/10 px-3 py-2 text-sm">
                   <div className="text-emerald-200">
-                    <span className="font-semibold">{lastCreatedName}</span> PIN: <span className="font-mono tracking-widest">{lastCreatedPin}</span>
+                    <span className="font-semibold">{lastCreatedName}</span> PIN: <span className="tracking-widest">{lastCreatedPin}</span>
                   </div>
                   <Button size="sm" variant="outline" onClick={() => copyPin(lastCreatedPin)}>
                     <Copy className="mr-2 h-3.5 w-3.5" />
@@ -381,7 +381,7 @@ export default function EmployeeAccessPage() {
 
                         <div className="md:col-span-2">
                           <p className="mb-1 text-[11px] uppercase tracking-[0.08em] text-slate-400 md:hidden">PIN</p>
-                          <div className="flex items-center gap-2 font-mono tracking-wider text-slate-200">
+                          <div className="flex items-center gap-2 tracking-wider text-slate-200">
                             {staff.pinCode || "Not set"}
                             {staff.pinCode && (
                               <button

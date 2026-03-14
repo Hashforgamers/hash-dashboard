@@ -225,7 +225,7 @@ export function ConsoleList({ onEdit, refreshKey = 0 }: ConsoleListProps) {
       <div className="flex min-h-[320px] items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <HashLoader size={60} />
-          <p className="dash-subtitle !text-slate-300">Loading consoles...</p>
+          <p className="dash-subtitle premium-subtle">Loading consoles...</p>
         </div>
       </div>
     );
@@ -237,8 +237,8 @@ export function ConsoleList({ onEdit, refreshKey = 0 }: ConsoleListProps) {
     return (
       <div className="flex min-h-[320px] items-center justify-center">
         <div className="text-center">
-          <p className="dash-title !text-slate-200">No consoles found</p>
-          <p className="dash-subtitle mt-2">Add a new console to get started</p>
+          <p className="dash-title">No consoles found</p>
+          <p className="dash-subtitle premium-subtle mt-2">Add a new console to get started</p>
         </div>
       </div>
     );
@@ -250,7 +250,7 @@ export function ConsoleList({ onEdit, refreshKey = 0 }: ConsoleListProps) {
     : [activeGroup];
 
   return (
-    <div className="flex h-full min-h-0 flex-col gap-4 overflow-hidden">
+    <div className="dashboard-module dashboard-typography flex h-full min-h-0 flex-col gap-4 overflow-hidden">
       <div className="gaming-panel shrink-0 rounded-xl border border-cyan-500/25 p-2">
         <div className="flex flex-wrap gap-2">
           <button
@@ -258,8 +258,8 @@ export function ConsoleList({ onEdit, refreshKey = 0 }: ConsoleListProps) {
             onClick={() => setActiveGroup("all")}
             className={`rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors sm:text-sm ${
               activeGroup === "all"
-                ? "border-cyan-400/55 bg-cyan-500/15 text-cyan-200"
-                : "border-slate-600/70 bg-slate-800/60 text-slate-300 hover:bg-slate-700/70"
+                ? "border-cyan-400/55 bg-cyan-500/10 text-slate-900 dark:bg-cyan-500/15 dark:text-cyan-200"
+                : "border-slate-300 bg-white/80 text-slate-700 hover:bg-slate-100 dark:border-slate-600/70 dark:bg-slate-800/60 dark:text-slate-300 dark:hover:bg-slate-700/70"
             }`}
           >
             All ({consolelistdata.length})
@@ -274,8 +274,8 @@ export function ConsoleList({ onEdit, refreshKey = 0 }: ConsoleListProps) {
                 onClick={() => setActiveGroup(group)}
                 className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors sm:text-sm ${
                   activeGroup === group
-                    ? "border-cyan-400/55 bg-cyan-500/15 text-cyan-200"
-                    : "border-slate-600/70 bg-slate-800/60 text-slate-300 hover:bg-slate-700/70"
+                    ? "border-cyan-400/55 bg-cyan-500/10 text-slate-900 dark:bg-cyan-500/15 dark:text-cyan-200"
+                    : "border-slate-300 bg-white/80 text-slate-700 hover:bg-slate-100 dark:border-slate-600/70 dark:bg-slate-800/60 dark:text-slate-300 dark:hover:bg-slate-700/70"
                 }`}
               >
                 <Icon className="h-3.5 w-3.5" />
@@ -294,9 +294,9 @@ export function ConsoleList({ onEdit, refreshKey = 0 }: ConsoleListProps) {
             return (
               <div key={group} className="space-y-2">
                 <div className="flex items-center gap-2 px-1">
-                  <GroupIcon className="h-4 w-4 text-cyan-300" />
+                  <GroupIcon className="h-4 w-4 text-slate-700 dark:text-cyan-300" />
                   <h3 className="dash-title !text-sm">{typeMeta[group].label} Consoles</h3>
-                  <span className="rounded-full border border-cyan-400/35 bg-cyan-500/10 px-2 py-0.5 text-xs text-cyan-200">
+                  <span className="rounded-full border border-cyan-400/35 bg-cyan-500/10 px-2 py-0.5 text-xs text-slate-900 dark:text-cyan-200">
                     {consolesForGroup.length}
                   </span>
                 </div>
@@ -312,14 +312,14 @@ export function ConsoleList({ onEdit, refreshKey = 0 }: ConsoleListProps) {
                   <Card className="gaming-panel group rounded-xl border border-cyan-500/25 transition-all duration-300 hover:scale-[1.01] hover:border-cyan-400/45 hover:shadow-[0_0_20px_rgba(6,182,212,0.12)]">
                     <CardContent className="flex h-full flex-col p-4">
                       <div className="mb-4 flex items-center space-x-3">
-                        <div className="rounded-lg border border-cyan-400/25 bg-cyan-500/10 p-2.5 transition-colors group-hover:bg-cyan-500/20">
-                          <console.icon className="h-7 w-7 text-cyan-300" />
+                        <div className="feature-action-icon p-2.5 transition-colors group-hover:bg-slate-100 dark:group-hover:bg-slate-800/80">
+                          <console.icon className="h-7 w-7 text-slate-700 dark:text-cyan-300" />
                         </div>
                         <div>
                           <h3 className="dash-title !text-base leading-tight">
                             {console.name}
                           </h3>
-                          <p className="dash-subtitle">
+                          <p className="dash-subtitle premium-subtle">
                             {console.number}
                           </p>
                         </div>
@@ -328,60 +328,60 @@ export function ConsoleList({ onEdit, refreshKey = 0 }: ConsoleListProps) {
                       <div className="flex-grow space-y-2.5 text-sm">
                         <div className="grid grid-cols-2 gap-x-4 gap-y-2">
                           <div className="flex items-center space-x-2">
-                            <Building2 className="w-4 h-4 text-slate-400" />
-                            <span className="text-slate-400">Brand</span>
+                            <Building2 className="w-4 h-4 text-slate-500 dark:text-slate-400" />
+                            <span className="text-slate-600 dark:text-slate-400">Brand</span>
                           </div>
-                          <span className="font-medium truncate text-slate-100">{console.brand}</span>
+                          <span className="font-medium truncate text-slate-900 dark:text-slate-100">{console.brand}</span>
 
                           {console.type === "pc" ? (
                             <>
                               <div className="flex items-center space-x-2">
-                                <Cpu className="w-4 h-4 text-slate-400" />
-                                <span className="text-slate-400">CPU</span>
+                                <Cpu className="w-4 h-4 text-slate-500 dark:text-slate-400" />
+                                <span className="text-slate-600 dark:text-slate-400">CPU</span>
                               </div>
-                              <span className="font-medium truncate text-slate-100">
+                              <span className="font-medium truncate text-slate-900 dark:text-slate-100">
                                 {console.processor || "N/A"}
                               </span>
 
                               <div className="flex items-center space-x-2">
-                                <Gpu className="w-4 h-4 text-slate-400" />
-                                <span className="text-slate-400">GPU</span>
+                                <Gpu className="w-4 h-4 text-slate-500 dark:text-slate-400" />
+                                <span className="text-slate-600 dark:text-slate-400">GPU</span>
                               </div>
-                              <span className="font-medium truncate text-slate-100">{console.gpu || "N/A"}</span>
+                              <span className="font-medium truncate text-slate-900 dark:text-slate-100">{console.gpu || "N/A"}</span>
 
                               <div className="flex items-center space-x-2">
-                                <Memory className="w-4 h-4 text-slate-400" />
-                                <span className="text-slate-400">RAM</span>
+                                <Memory className="w-4 h-4 text-slate-500 dark:text-slate-400" />
+                                <span className="text-slate-600 dark:text-slate-400">RAM</span>
                               </div>
-                              <span className="font-medium text-slate-100">{console.ram || "N/A"}</span>
+                              <span className="font-medium text-slate-900 dark:text-slate-100">{console.ram || "N/A"}</span>
 
                               <div className="flex items-center space-x-2">
-                                <HardDrive className="w-4 h-4 text-slate-400" />
-                                <span className="text-slate-400">Storage</span>
+                                <HardDrive className="w-4 h-4 text-slate-500 dark:text-slate-400" />
+                                <span className="text-slate-600 dark:text-slate-400">Storage</span>
                               </div>
-                              <span className="font-medium text-slate-100">{console.storage || "N/A"}</span>
+                              <span className="font-medium text-slate-900 dark:text-slate-100">{console.storage || "N/A"}</span>
                             </>
                           ) : (
                             <>
                               <div className="flex items-center space-x-2">
-                                <Gamepad className="w-4 h-4 text-slate-400" />
-                                <span className="text-slate-400">Variant</span>
+                                <Gamepad className="w-4 h-4 text-slate-500 dark:text-slate-400" />
+                                <span className="text-slate-600 dark:text-slate-400">Variant</span>
                               </div>
-                              <span className="font-medium truncate text-slate-100">{console.consoleModelType || "N/A"}</span>
+                              <span className="font-medium truncate text-slate-900 dark:text-slate-100">{console.consoleModelType || "N/A"}</span>
 
                               <div className="flex items-center space-x-2">
-                                <HardDrive className="w-4 h-4 text-slate-400" />
-                                <span className="text-slate-400">Storage</span>
+                                <HardDrive className="w-4 h-4 text-slate-500 dark:text-slate-400" />
+                                <span className="text-slate-600 dark:text-slate-400">Storage</span>
                               </div>
-                              <span className="font-medium text-slate-100">{console.storage || "N/A"}</span>
+                              <span className="font-medium text-slate-900 dark:text-slate-100">{console.storage || "N/A"}</span>
                             </>
                           )}
                         </div>
 
-                        <div className="flex items-center justify-between border-t border-slate-700/70 pt-2">
+                        <div className="flex items-center justify-between border-t border-slate-200 pt-2 dark:border-slate-700/70">
                           <div className="flex items-center space-x-2">
-                            <Activity className="w-4 h-4 text-slate-400" />
-                            <span className="text-slate-400">Status</span>
+                            <Activity className="w-4 h-4 text-slate-500 dark:text-slate-400" />
+                            <span className="text-slate-600 dark:text-slate-400">Status</span>
                           </div>
                           {console.occupancyState === "occupied" ? (
                             <TooltipProvider>
@@ -389,7 +389,7 @@ export function ConsoleList({ onEdit, refreshKey = 0 }: ConsoleListProps) {
                                 <TooltipTrigger asChild>
                                   <button
                                     type="button"
-                                    className="inline-flex items-center rounded-md border border-amber-400/40 bg-amber-500/15 px-2.5 py-0.5 text-xs font-medium text-amber-200 cursor-help"
+                                    className="inline-flex cursor-help items-center rounded-md border border-amber-300 bg-amber-50 px-2.5 py-0.5 text-xs font-medium text-amber-800 dark:border-amber-400/40 dark:bg-amber-500/15 dark:text-amber-200"
                                   >
                                     Occupied
                                   </button>
@@ -403,8 +403,8 @@ export function ConsoleList({ onEdit, refreshKey = 0 }: ConsoleListProps) {
                             </TooltipProvider>
                           ) : (
                             <Badge className={console.occupancyState === "free"
-                              ? "border border-emerald-400/40 bg-emerald-500/15 text-emerald-200"
-                              : "border border-rose-400/40 bg-rose-500/15 text-rose-200"}
+                              ? "border border-emerald-300 bg-emerald-50 text-emerald-800 dark:border-emerald-400/40 dark:bg-emerald-500/15 dark:text-emerald-200"
+                              : "border border-rose-300 bg-rose-50 text-rose-800 dark:border-rose-400/40 dark:bg-rose-500/15 dark:text-rose-200"}
                             >
                               {console.occupancyState === "free" ? "Free" : "Under Maintenance"}
                             </Badge>
@@ -423,7 +423,7 @@ export function ConsoleList({ onEdit, refreshKey = 0 }: ConsoleListProps) {
                           variant="outline"
                           size="sm"
                           onClick={() => onEdit(console)}
-                          className="border-cyan-400/40 bg-cyan-500/10 text-cyan-200 hover:bg-cyan-500/20"
+                          className="border-cyan-300 bg-white text-slate-900 hover:bg-slate-50 dark:border-cyan-400/40 dark:bg-cyan-500/10 dark:text-cyan-200 dark:hover:bg-cyan-500/20"
                         >
                           <Edit className="w-4 h-4 mr-1" />
                           Edit
@@ -434,7 +434,7 @@ export function ConsoleList({ onEdit, refreshKey = 0 }: ConsoleListProps) {
                             size="sm"
                             onClick={() => handleRelease(console)}
                             disabled={releasingConsoleId === console.id || deletingConsoleId !== null}
-                            className="border-amber-400/45 bg-amber-500/10 text-amber-200 hover:bg-amber-500/20"
+                            className="border-amber-300 bg-white text-amber-800 hover:bg-amber-50 dark:border-amber-400/45 dark:bg-amber-500/10 dark:text-amber-200 dark:hover:bg-amber-500/20"
                           >
                             {releasingConsoleId === console.id ? (
                               <>
@@ -455,7 +455,7 @@ export function ConsoleList({ onEdit, refreshKey = 0 }: ConsoleListProps) {
                               variant="outline"
                               size="sm"
                               disabled={deletingConsoleId !== null}
-                              className="border-rose-400/45 bg-rose-500/10 text-rose-200 hover:bg-rose-500/20"
+                              className="border-rose-300 bg-white text-rose-700 hover:bg-rose-50 dark:border-rose-400/45 dark:bg-rose-500/10 dark:text-rose-200 dark:hover:bg-rose-500/20"
                             >
                               {deletingConsoleId === console.id ? (
                                 <>

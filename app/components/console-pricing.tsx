@@ -1110,13 +1110,26 @@ export default function ConsolePricing() {
     Object.values(prices).some((p) => p.hasChanged) &&
     Object.values(errors).length === 0;
   const primaryButtonClass =
-    "inline-flex items-center justify-center gap-2 rounded-lg border border-cyan-400/40 bg-gradient-to-r from-cyan-500/90 to-emerald-500/90 px-3 py-2 text-xs font-semibold text-white shadow-md shadow-cyan-900/40 transition-all duration-200 hover:from-cyan-400 hover:to-emerald-400 hover:shadow-lg hover:shadow-cyan-600/25 disabled:cursor-not-allowed disabled:opacity-50 sm:px-4 sm:text-sm";
+    "ui-action-primary inline-flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold shadow-md transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-50 sm:px-4 sm:text-sm";
   const secondaryButtonClass =
-    "inline-flex items-center justify-center gap-2 rounded-lg border border-cyan-300/25 bg-slate-900/70 px-3 py-2 text-xs font-semibold text-slate-200 transition-all duration-200 hover:border-cyan-300/45 hover:bg-slate-800/80 hover:text-cyan-100 disabled:cursor-not-allowed disabled:opacity-50 sm:px-4 sm:text-sm";
+    "ui-action-secondary inline-flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-50 sm:px-4 sm:text-sm";
   const destructiveIconButtonClass =
-    "inline-flex items-center justify-center rounded-lg border border-rose-400/30 bg-rose-500/10 p-2 text-rose-300 transition-all duration-200 hover:border-rose-300/60 hover:bg-rose-500/20 disabled:cursor-not-allowed disabled:opacity-50";
+    "inline-flex items-center justify-center rounded-lg border border-rose-300/50 bg-rose-50 p-2 text-rose-600 transition-all duration-200 hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-rose-400/30 dark:bg-rose-500/10 dark:text-rose-300 dark:hover:bg-rose-500/20";
   const iconButtonClass =
-    "inline-flex items-center justify-center rounded-lg border border-emerald-400/30 bg-emerald-500/10 p-2 text-emerald-300 transition-all duration-200 hover:border-emerald-300/60 hover:bg-emerald-500/20 disabled:cursor-not-allowed disabled:opacity-50";
+    "inline-flex items-center justify-center rounded-lg border border-emerald-300/50 bg-emerald-50 p-2 text-emerald-700 transition-all duration-200 hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-emerald-400/30 dark:bg-emerald-500/10 dark:text-emerald-300 dark:hover:bg-emerald-500/20";
+  const tabButtonBaseClass =
+    "inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-xs font-semibold transition-all sm:text-sm";
+  const activeTabButtonClass =
+    "dashboard-module-tab-active border-cyan-400/35 bg-cyan-500/12 text-slate-900 dark:bg-cyan-500/15 dark:text-cyan-100";
+  const inactiveTabButtonClass =
+    "border-slate-200 bg-white text-slate-700 hover:border-cyan-300/40 hover:bg-slate-50 hover:text-slate-900 dark:border-transparent dark:bg-slate-900/40 dark:text-slate-300 dark:hover:border-cyan-400/25 dark:hover:bg-slate-800/80 dark:hover:text-cyan-100";
+  const pricingCardClass =
+    "dashboard-module-surface rounded-xl p-4 transition-all duration-200 hover:shadow-lg hover:shadow-cyan-500/10";
+  const inputSurfaceClass =
+    "dashboard-module-input text-slate-900 placeholder:text-slate-400 focus-visible:ring-cyan-400/60 dark:text-slate-100 dark:placeholder:text-slate-400";
+  const selectSurfaceClass =
+    "dashboard-module-input h-10 w-full rounded-md px-3 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-cyan-400/60 dark:text-slate-100";
+  const summaryCardClass = "dashboard-module-surface rounded-lg p-3";
   const squadOverview = (() => {
     const groups = Object.keys(squadPricing || {});
     const allRules = groups.flatMap((group) =>
@@ -1134,7 +1147,7 @@ export default function ConsolePricing() {
   })();
 
   return (
-    <div className="flex h-full min-h-0 flex-col gap-4 overflow-hidden px-1 pb-2 sm:px-2">
+    <div className="console-pricing-page dashboard-module dashboard-typography flex h-full min-h-0 flex-col gap-4 overflow-hidden px-1 pb-2 sm:px-2">
 
       {/* ✅ Success Toast */}
       <AnimatePresence>
@@ -1152,13 +1165,13 @@ export default function ConsolePricing() {
       </AnimatePresence>
 
       {/* ✅ Tab Navigation - uses global .tab-container */}
-      <div className="gaming-panel mb-2 flex w-full shrink-0 items-center gap-2 rounded-xl p-2">
+      <div className="gaming-panel dashboard-module-panel mb-2 flex w-full shrink-0 items-center gap-2 rounded-xl p-2">
         <button
           onClick={() => setActiveTab("default")}
-          className={`inline-flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold transition-all sm:text-sm ${
+          className={`${tabButtonBaseClass} ${
             activeTab === "default"
-              ? "border border-cyan-400/35 bg-cyan-500/15 text-cyan-100"
-              : "border border-transparent bg-slate-900/40 text-slate-300 hover:border-cyan-400/25 hover:text-cyan-100"
+              ? activeTabButtonClass
+              : inactiveTabButtonClass
           }`}
         >
           <IndianRupee className="icon-md" />
@@ -1166,10 +1179,10 @@ export default function ConsolePricing() {
         </button>
         <button
           onClick={() => setActiveTab("offers")}
-          className={`inline-flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold transition-all sm:text-sm ${
+          className={`${tabButtonBaseClass} ${
             activeTab === "offers"
-              ? "border border-cyan-400/35 bg-cyan-500/15 text-cyan-100"
-              : "border border-transparent bg-slate-900/40 text-slate-300 hover:border-cyan-400/25 hover:text-cyan-100"
+              ? activeTabButtonClass
+              : inactiveTabButtonClass
           }`}
         >
           <Sparkles className="icon-md" />
@@ -1177,10 +1190,10 @@ export default function ConsolePricing() {
         </button>
         <button
           onClick={() => setActiveTab("controllers")}
-          className={`inline-flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold transition-all sm:text-sm ${
+          className={`${tabButtonBaseClass} ${
             activeTab === "controllers"
-              ? "border border-cyan-400/35 bg-cyan-500/15 text-cyan-100"
-              : "border border-transparent bg-slate-900/40 text-slate-300 hover:border-cyan-400/25 hover:text-cyan-100"
+              ? activeTabButtonClass
+              : inactiveTabButtonClass
           }`}
         >
           <Gamepad className="icon-md" />
@@ -1188,10 +1201,10 @@ export default function ConsolePricing() {
         </button>
         <button
           onClick={() => setActiveTab("squad")}
-          className={`inline-flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold transition-all sm:text-sm ${
+          className={`${tabButtonBaseClass} ${
             activeTab === "squad"
-              ? "border border-cyan-400/35 bg-cyan-500/15 text-cyan-100"
-              : "border border-transparent bg-slate-900/40 text-slate-300 hover:border-cyan-400/25 hover:text-cyan-100"
+              ? activeTabButtonClass
+              : inactiveTabButtonClass
           }`}
         >
           <Users className="icon-md" />
@@ -1209,15 +1222,15 @@ export default function ConsolePricing() {
         >
           <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
             {consoleTypes.map((console) => (
-              <div key={console.type} className="gaming-kpi-card rounded-xl border border-cyan-400/20 bg-gradient-to-br from-slate-900/75 via-slate-900/65 to-cyan-950/20 p-4 transition-all duration-200 hover:shadow-lg hover:shadow-cyan-500/10">
+              <div key={console.type} className={pricingCardClass}>
                 {/* Console Type Header */}
                 <div className={`${console.color} mb-4 flex items-center gap-3 rounded-lg border border-cyan-400/15 p-3`}>
-                  <div className="rounded-md border border-cyan-400/20 bg-slate-950/40 p-1.5">
+                  <div className="feature-action-icon p-1.5">
                     <console.icon className="icon-md" style={{ color: console.iconColor }} />
                   </div>
                   <div>
-                    <p className="text-sm font-semibold text-cyan-100">{console.name}</p>
-                    <p className="text-xs text-slate-300/75">{console.description}</p>
+                    <p className="text-sm font-semibold text-slate-900 dark:text-cyan-100">{console.name}</p>
+                    <p className="premium-subtle text-xs">{console.description}</p>
                   </div>
                 </div>
 
@@ -1229,7 +1242,7 @@ export default function ConsolePricing() {
                     type="number"
                     value={prices[console.type]?.value}
                     onChange={(e) => handlePriceChange(console.type, e.target.value)}
-                    className="border-cyan-400/25 bg-slate-900/70 pl-9 text-slate-100 placeholder:text-slate-400 focus-visible:ring-cyan-400/60"
+                    className={`${inputSurfaceClass} pl-9`}
                   />
                 </div>
                 {errors[console.type] && (
@@ -1287,13 +1300,13 @@ export default function ConsolePricing() {
               <h2 className="section-title">Active Promotions</h2>
 
               {/* View Toggle */}
-              <div className="flex items-center gap-1 rounded-lg border border-cyan-400/20 bg-slate-900/60 p-1">
+              <div className="dashboard-module-tab-group flex items-center gap-1 rounded-lg p-1">
                 <button
                   onClick={() => setViewMode("grid")}
                   className={`p-1.5 rounded-md transition-all ${
                     viewMode === "grid"
-                      ? "bg-slate-800 shadow-sm text-cyan-300"
-                      : "text-muted-foreground hover:text-cyan-200"
+                      ? "dashboard-module-tab-active bg-cyan-500/12 text-slate-900 shadow-sm dark:text-cyan-100"
+                      : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-cyan-100"
                   }`}
                   title="Grid View"
                 >
@@ -1303,8 +1316,8 @@ export default function ConsolePricing() {
                   onClick={() => setViewMode("table")}
                   className={`p-1.5 rounded-md transition-all ${
                     viewMode === "table"
-                      ? "bg-slate-800 shadow-sm text-cyan-300"
-                      : "text-muted-foreground hover:text-cyan-200"
+                      ? "dashboard-module-tab-active bg-cyan-500/12 text-slate-900 shadow-sm dark:text-cyan-100"
+                      : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-cyan-100"
                   }`}
                   title="Table View"
                 >
@@ -1344,15 +1357,15 @@ export default function ConsolePricing() {
                 const Icon = getConsoleIcon(offer.console_type);
                 const isDeleting = deletingOfferId === offer.id;
                 return (
-                  <Card key={offer.id} className="gaming-panel flex flex-col border-cyan-400/20 bg-gradient-to-b from-slate-900/70 to-slate-950/70 transition-all duration-200 hover:shadow-lg hover:shadow-cyan-500/10">
+                  <Card key={offer.id} className="dashboard-module-surface flex flex-col transition-all duration-200 hover:shadow-lg hover:shadow-cyan-500/10">
                     <CardHeader className="flex flex-row items-start justify-between border-b border-cyan-500/15 p-4">
                       <div className="min-w-0 flex-1 pr-2">
                         <h2 className="card-title truncate">{offer.offer_name}</h2>
                         <div className="flex items-center gap-1.5 mt-1">
                           <Icon className="w-3 h-3 text-blue-400 shrink-0" />
-                          <span className="table-header-text">{offer.console_type}</span>
+                          <span className="table-header-text text-slate-700 dark:text-cyan-100/80">{offer.console_type}</span>
                           {offer.is_currently_active && (
-                            <span className="flex items-center gap-1 text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded text-[9px] font-bold border border-emerald-500/20">
+                            <span className="flex items-center gap-1 rounded border border-emerald-300/40 bg-emerald-50 px-1.5 py-0.5 text-[9px] font-bold text-emerald-700 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-300">
                               <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse" />
                               LIVE
                             </span>
@@ -1386,12 +1399,12 @@ export default function ConsolePricing() {
                       {/* Pricing */}
                       <div className="flex items-center justify-between">
                         <div>
-                          <p className="stat-value-large text-blue-400">₹{offer.offered_price}</p>
+                          <p className="stat-value-large text-sky-700 dark:text-blue-400">₹{offer.offered_price}</p>
                           <p className="table-header-text mt-0.5">Offer Rate</p>
                         </div>
                         <div className="text-right">
-                          <p className="text-sm text-muted-foreground line-through">₹{offer.default_price}</p>
-                          <span className="inline-block mt-1 bg-emerald-500/10 text-emerald-400 text-xs px-2 py-0.5 rounded-full font-bold border border-emerald-500/20">
+                          <p className="text-sm text-slate-500 line-through dark:text-slate-400">₹{offer.default_price}</p>
+                          <span className="mt-1 inline-block rounded-full border border-emerald-300/40 bg-emerald-50 px-2 py-0.5 text-xs font-bold text-emerald-700 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-300">
                             {offer.discount_percentage}% OFF
                           </span>
                         </div>
@@ -1457,10 +1470,7 @@ export default function ConsolePricing() {
               const config = controllerPricing[console.type] || { base_price: 0, tiers: [] };
               const sortedTiers = [...config.tiers].sort((a, b) => a.quantity - b.quantity);
               return (
-                <Card
-                  key={console.type}
-                  className="gaming-panel rounded-xl border border-cyan-500/20 bg-gradient-to-br from-slate-900/75 via-slate-900/70 to-cyan-950/20"
-                >
+                <Card key={console.type} className="dashboard-module-surface rounded-xl">
                   <CardHeader className="border-b border-cyan-500/15 pb-3">
                     <div className="flex items-center gap-2">
                       <Icon className="icon-md text-cyan-300" />
@@ -1477,7 +1487,7 @@ export default function ConsolePricing() {
                           min={0}
                           value={config.base_price}
                           onChange={(e) => updateControllerBasePrice(console.type, e.target.value)}
-                          className="border-cyan-400/25 bg-slate-900/70 text-slate-100 focus-visible:ring-cyan-400/60"
+                          className={inputSurfaceClass}
                         />
                       </div>
                     </div>
@@ -1501,7 +1511,7 @@ export default function ConsolePricing() {
                           {sortedTiers.map((tier) => (
                             <div
                               key={tier.id}
-                              className="grid grid-cols-1 gap-2 rounded-lg border border-cyan-500/15 bg-slate-900/55 p-3 sm:grid-cols-[1fr_1fr_auto]"
+                              className="dashboard-module-surface grid grid-cols-1 gap-2 rounded-lg p-3 sm:grid-cols-[1fr_1fr_auto]"
                             >
                               <div className="space-y-1">
                                 <label className="table-header-text">Quantity</label>
@@ -1512,7 +1522,7 @@ export default function ConsolePricing() {
                                   onChange={(e) =>
                                     updateControllerTier(console.type, tier.id, "quantity", e.target.value)
                                   }
-                                  className="border-cyan-400/25 bg-slate-900/70 text-slate-100 focus-visible:ring-cyan-400/60"
+                                  className={inputSurfaceClass}
                                 />
                               </div>
                               <div className="space-y-1">
@@ -1524,7 +1534,7 @@ export default function ConsolePricing() {
                                   onChange={(e) =>
                                     updateControllerTier(console.type, tier.id, "total_price", e.target.value)
                                   }
-                                  className="border-cyan-400/25 bg-slate-900/70 text-slate-100 focus-visible:ring-cyan-400/60"
+                                  className={inputSurfaceClass}
                                 />
                               </div>
                               <button
@@ -1540,13 +1550,13 @@ export default function ConsolePricing() {
                       )}
                     </div>
 
-                    <div className="rounded-lg border border-cyan-500/15 bg-slate-900/60 p-3">
+                    <div className="dashboard-module-surface rounded-lg p-3">
                       <p className="table-header-text mb-2">Pricing Preview</p>
                       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                         {controllerPreviewQuantities.map((qty) => (
-                          <div key={`${console.type}-${qty}`} className="rounded-md border border-cyan-500/10 bg-slate-950/55 p-2">
+                          <div key={`${console.type}-${qty}`} className="dashboard-module-card rounded-md p-2">
                             <p className="body-text-muted">{qty} controller{qty > 1 ? "s" : ""}</p>
-                            <p className="stat-value text-cyan-200">₹{calculateControllerTotal(console.type, qty)}</p>
+                            <p className="stat-value text-slate-900 dark:text-cyan-100">₹{calculateControllerTotal(console.type, qty)}</p>
                           </div>
                         ))}
                       </div>
@@ -1588,7 +1598,7 @@ export default function ConsolePricing() {
           transition={{ duration: 0.2 }}
           className="flex flex-1 min-h-0 flex-col gap-4 overflow-hidden"
         >
-          <div className="gaming-panel shrink-0 rounded-xl border border-cyan-400/25 bg-gradient-to-r from-slate-900/90 via-slate-900/85 to-cyan-950/35 p-4">
+          <div className="dashboard-module-panel shrink-0 rounded-xl p-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <h2 className="section-title flex items-center gap-2">
@@ -1599,7 +1609,7 @@ export default function ConsolePricing() {
                   Set PC squad discounts by player count with instant base/discount/final preview.
                 </p>
               </div>
-              <div className="rounded-lg border border-emerald-400/30 bg-emerald-500/10 px-3 py-2 text-xs text-emerald-200">
+              <div className="rounded-lg border border-emerald-300/40 bg-emerald-50 px-3 py-2 text-xs text-emerald-700 dark:border-emerald-400/30 dark:bg-emerald-500/10 dark:text-emerald-200">
                 Staff Friendly Mode
               </div>
             </div>
@@ -1609,27 +1619,27 @@ export default function ConsolePricing() {
           </div>
 
           <div className="grid shrink-0 grid-cols-2 gap-3 sm:grid-cols-4">
-            <div className="rounded-lg border border-cyan-500/20 bg-slate-900/65 p-3">
-              <p className="text-[11px] uppercase tracking-[0.08em] text-slate-400">Consoles</p>
-              <p className="text-lg font-semibold text-cyan-100">{squadOverview.consoleCount}</p>
+            <div className={summaryCardClass}>
+              <p className="text-[11px] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400">Consoles</p>
+              <p className="text-lg font-semibold text-slate-900 dark:text-cyan-100">{squadOverview.consoleCount}</p>
             </div>
-            <div className="rounded-lg border border-cyan-500/20 bg-slate-900/65 p-3">
-              <p className="text-[11px] uppercase tracking-[0.08em] text-slate-400">Slabs</p>
-              <p className="text-lg font-semibold text-cyan-100">{squadOverview.slabCount}</p>
+            <div className={summaryCardClass}>
+              <p className="text-[11px] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400">Slabs</p>
+              <p className="text-lg font-semibold text-slate-900 dark:text-cyan-100">{squadOverview.slabCount}</p>
             </div>
-            <div className="rounded-lg border border-cyan-500/20 bg-slate-900/65 p-3">
-              <p className="text-[11px] uppercase tracking-[0.08em] text-slate-400">Avg Discount</p>
-              <p className="text-lg font-semibold text-cyan-100">{squadOverview.avgDiscount}%</p>
+            <div className={summaryCardClass}>
+              <p className="text-[11px] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400">Avg Discount</p>
+              <p className="text-lg font-semibold text-slate-900 dark:text-cyan-100">{squadOverview.avgDiscount}%</p>
             </div>
-            <div className="rounded-lg border border-cyan-500/20 bg-slate-900/65 p-3">
-              <p className="text-[11px] uppercase tracking-[0.08em] text-slate-400">Top Discount</p>
-              <p className="text-lg font-semibold text-cyan-100">{squadOverview.highestDiscount}%</p>
+            <div className={summaryCardClass}>
+              <p className="text-[11px] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400">Top Discount</p>
+              <p className="text-lg font-semibold text-slate-900 dark:text-cyan-100">{squadOverview.highestDiscount}%</p>
             </div>
           </div>
 
           <div className="min-h-0 flex-1 overflow-y-auto pr-1">
             {isLoadingSquadPricing ? (
-              <div className="gaming-panel flex h-full items-center justify-center rounded-xl border border-cyan-500/20 bg-slate-900/65 p-6 text-slate-300">
+              <div className="dashboard-module-surface flex h-full items-center justify-center rounded-xl p-6 text-slate-600 dark:text-slate-300">
                 <Loader2 className="mr-2 h-5 w-5 animate-spin text-cyan-300" />
                 Loading squad rules...
               </div>
@@ -1649,19 +1659,16 @@ export default function ConsolePricing() {
                   const Icon = console.icon;
 
                   return (
-                    <Card
-                      key={`squad-${console.type}`}
-                      className="gaming-panel overflow-hidden rounded-xl border border-cyan-500/20 bg-gradient-to-br from-slate-900/80 via-slate-900/70 to-cyan-950/25"
-                    >
-                      <CardHeader className="border-b border-cyan-500/15 bg-slate-900/55 pb-3">
+                    <Card key={`squad-${console.type}`} className="dashboard-module-surface overflow-hidden rounded-xl">
+                      <CardHeader className="border-b border-cyan-500/15 bg-slate-50 pb-3 dark:bg-slate-900/55">
                         <div className="flex items-center justify-between gap-2">
                           <div className="flex items-center gap-2">
-                            <div className="rounded-md border border-cyan-400/25 bg-slate-950/45 p-1.5">
+                            <div className="feature-action-icon p-1.5">
                               <Icon className="icon-md text-cyan-300" />
                             </div>
                             <div>
                               <p className="card-title">{console.name}</p>
-                              <p className="text-xs text-slate-300">Base ₹{basePrice} per player</p>
+                              <p className="text-xs text-slate-600 dark:text-slate-300">Base ₹{basePrice} per player</p>
                             </div>
                           </div>
                           <button
@@ -1674,13 +1681,13 @@ export default function ConsolePricing() {
                           </button>
                         </div>
                         <div className="mt-2 flex flex-wrap gap-2 text-[11px]">
-                          <span className="rounded-full border border-cyan-400/20 bg-cyan-500/10 px-2 py-1 text-cyan-200">
+                          <span className="rounded-full border border-cyan-300/40 bg-cyan-50 px-2 py-1 text-sky-700 dark:border-cyan-400/20 dark:bg-cyan-500/10 dark:text-cyan-200">
                             {rules.length} slabs
                           </span>
-                          <span className="rounded-full border border-emerald-400/20 bg-emerald-500/10 px-2 py-1 text-emerald-200">
+                          <span className="rounded-full border border-emerald-300/40 bg-emerald-50 px-2 py-1 text-emerald-700 dark:border-emerald-400/20 dark:bg-emerald-500/10 dark:text-emerald-200">
                             max {maxPlayers} players
                           </span>
-                          <span className="rounded-full border border-purple-400/20 bg-purple-500/10 px-2 py-1 text-purple-200">
+                          <span className="rounded-full border border-purple-300/40 bg-purple-50 px-2 py-1 text-purple-700 dark:border-purple-400/20 dark:bg-purple-500/10 dark:text-purple-200">
                             top {round2(topDiscount)}%
                           </span>
                         </div>
@@ -1688,7 +1695,7 @@ export default function ConsolePricing() {
 
                       <CardContent className="space-y-3 p-4">
                         {rules.length === 0 ? (
-                          <div className="rounded-lg border border-dashed border-cyan-400/25 bg-slate-950/45 p-4 text-center text-sm text-slate-300">
+                          <div className="dashboard-module-card rounded-lg border border-dashed p-4 text-center text-sm text-slate-600 dark:text-slate-300">
                             No squad slabs configured for {console.name}.
                           </div>
                         ) : (
@@ -1723,7 +1730,7 @@ export default function ConsolePricing() {
                               return (
                                 <div
                                   key={`${group}-${rule.players}`}
-                                  className="rounded-lg border border-cyan-500/15 bg-slate-950/55 p-2.5"
+                                  className="dashboard-module-card rounded-lg p-2.5"
                                 >
                                   <div className="grid grid-cols-1 gap-2 md:grid-cols-[110px_120px_180px_1fr_auto]">
                                     <div className="flex items-center gap-2">
@@ -1733,7 +1740,7 @@ export default function ConsolePricing() {
                                         max={maxPlayers}
                                         value={rule.players}
                                         onChange={(e) => changeSquadRulePlayerCount(group, rule.players, e.target.value)}
-                                        className="h-8 border-cyan-400/25 bg-slate-900/70 text-slate-100 focus-visible:ring-cyan-400/60"
+                                        className={`${inputSurfaceClass} h-8`}
                                       />
                                     </div>
 
@@ -1744,9 +1751,9 @@ export default function ConsolePricing() {
                                         max={90}
                                         value={rule.discount}
                                         onChange={(e) => updateSquadRule(group, rule.players, e.target.value)}
-                                        className="h-8 border-cyan-400/25 bg-slate-900/70 text-slate-100 focus-visible:ring-cyan-400/60"
+                                        className={`${inputSurfaceClass} h-8`}
                                       />
-                                      <span className="text-xs text-slate-300">%</span>
+                                      <span className="text-xs text-slate-600 dark:text-slate-300">%</span>
                                     </div>
 
                                     <div className="flex items-center gap-2">
@@ -1756,26 +1763,26 @@ export default function ConsolePricing() {
                                         max={basePrice > 0 ? basePrice * rule.players : undefined}
                                         value={finalDraftValue}
                                         onChange={(e) => updateSquadRuleByFinalAmount(group, rule.players, e.target.value, basePrice)}
-                                        className="h-8 border-cyan-400/25 bg-slate-900/70 text-slate-100 focus-visible:ring-cyan-400/60"
+                                        className={`${inputSurfaceClass} h-8`}
                                       />
                                       <button
                                         type="button"
                                         onClick={() => checkAndApplySquadFinalAmount(group, rule.players, basePrice)}
-                                        className="rounded border border-cyan-400/35 bg-cyan-500/10 px-2 py-1 text-[10px] font-semibold text-cyan-200 hover:bg-cyan-500/20"
+                                        className="rounded border border-cyan-300/40 bg-cyan-50 px-2 py-1 text-[10px] font-semibold text-sky-700 hover:bg-cyan-100 dark:border-cyan-400/35 dark:bg-cyan-500/10 dark:text-cyan-200 dark:hover:bg-cyan-500/20"
                                       >
                                         Check
                                       </button>
                                     </div>
 
-                                    <div className="flex items-center justify-between rounded-md border border-cyan-500/15 bg-slate-900/65 px-2 py-1.5 text-xs">
+                                    <div className="dashboard-module-surface flex items-center justify-between rounded-md px-2 py-1.5 text-xs">
                                       <span
-                                        className={`text-slate-300 ${warningText ? "inline-flex items-center gap-1 text-amber-300" : ""}`}
+                                        className={`text-slate-600 dark:text-slate-300 ${warningText ? "inline-flex items-center gap-1 text-amber-600 dark:text-amber-300" : ""}`}
                                         title={warningText || undefined}
                                       >
                                         {warningText ? <AlertTriangle className="h-3.5 w-3.5" /> : null}
                                         {warningText ? "Review" : "OK"}
                                       </span>
-                                      <span className="text-cyan-100">
+                                      <span className="text-slate-900 dark:text-cyan-100">
                                         Unit ₹{finalUnitAmount} x {rule.players} = ₹{finalTotalAmount}
                                       </span>
                                     </div>
@@ -1789,7 +1796,7 @@ export default function ConsolePricing() {
                                     </button>
                                   </div>
                                   {warningText && (
-                                    <p className="mt-1.5 text-[11px] text-amber-300">{warningText}</p>
+                                    <p className="mt-1.5 text-[11px] text-amber-600 dark:text-amber-300">{warningText}</p>
                                   )}
                                 </div>
                               );
@@ -1847,9 +1854,9 @@ export default function ConsolePricing() {
             </div>
           ) : (
             <div className="min-h-0 flex-1 overflow-y-auto pr-1">
-              <Card className="gaming-panel rounded-xl border border-cyan-500/20 bg-gradient-to-br from-slate-900/75 via-slate-900/70 to-cyan-950/20">
+              <Card className="dashboard-module-surface rounded-xl">
                 <CardContent className="grid grid-cols-1 gap-4 p-4 sm:grid-cols-2">
-                  <label className="flex items-center gap-2 text-sm text-slate-200">
+                  <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200">
                     <input
                       type="checkbox"
                       checked={taxProfile.gst_registered}
@@ -1857,7 +1864,7 @@ export default function ConsolePricing() {
                     />
                     GST Registered
                   </label>
-                  <label className="flex items-center gap-2 text-sm text-slate-200">
+                  <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200">
                     <input
                       type="checkbox"
                       checked={taxProfile.gst_enabled}
@@ -1871,7 +1878,7 @@ export default function ConsolePricing() {
                     <Input
                       value={taxProfile.gstin || ""}
                       onChange={(e) => setTaxProfile((prev) => ({ ...prev, gstin: e.target.value.toUpperCase() }))}
-                      className="border-cyan-400/25 bg-slate-900/70 text-slate-100 focus-visible:ring-cyan-400/60"
+                      className={inputSurfaceClass}
                       placeholder="29ABCDE1234F1Z5"
                     />
                   </div>
@@ -1881,7 +1888,7 @@ export default function ConsolePricing() {
                     <Input
                       value={taxProfile.legal_name || ""}
                       onChange={(e) => setTaxProfile((prev) => ({ ...prev, legal_name: e.target.value }))}
-                      className="border-cyan-400/25 bg-slate-900/70 text-slate-100 focus-visible:ring-cyan-400/60"
+                      className={inputSurfaceClass}
                       placeholder="Gaming Cafe Pvt Ltd"
                     />
                   </div>
@@ -1896,7 +1903,7 @@ export default function ConsolePricing() {
                       onChange={(e) =>
                         setTaxProfile((prev) => ({ ...prev, gst_rate: Math.max(0, Number(e.target.value || 0)) }))
                       }
-                      className="border-cyan-400/25 bg-slate-900/70 text-slate-100 focus-visible:ring-cyan-400/60"
+                      className={inputSurfaceClass}
                     />
                   </div>
 
@@ -1907,7 +1914,7 @@ export default function ConsolePricing() {
                       onChange={(e) =>
                         setTaxProfile((prev) => ({ ...prev, state_code: e.target.value.replace(/\D/g, "").slice(0, 2) }))
                       }
-                      className="border-cyan-400/25 bg-slate-900/70 text-slate-100 focus-visible:ring-cyan-400/60"
+                      className={inputSurfaceClass}
                       placeholder="29"
                     />
                   </div>
@@ -1922,12 +1929,12 @@ export default function ConsolePricing() {
                           place_of_supply_state_code: e.target.value.replace(/\D/g, "").slice(0, 2),
                         }))
                       }
-                      className="border-cyan-400/25 bg-slate-900/70 text-slate-100 focus-visible:ring-cyan-400/60"
+                      className={inputSurfaceClass}
                       placeholder="29"
                     />
                   </div>
 
-                  <label className="flex items-center gap-2 text-sm text-slate-200 sm:col-span-2">
+                  <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200 sm:col-span-2">
                     <input
                       type="checkbox"
                       checked={taxProfile.tax_inclusive}
@@ -1974,7 +1981,7 @@ export default function ConsolePricing() {
           </div>
 
           <div className="grid min-h-0 flex-1 grid-cols-1 gap-4 overflow-hidden xl:grid-cols-2">
-            <Card className="gaming-panel min-h-0 rounded-xl border border-cyan-500/20 bg-gradient-to-br from-slate-900/75 via-slate-900/70 to-cyan-950/20">
+            <Card className="dashboard-module-surface min-h-0 rounded-xl">
               <CardHeader className="border-b border-cyan-500/15 pb-3">
                 <h3 className="card-title">Create / Update Credit Account</h3>
               </CardHeader>
@@ -1984,7 +1991,7 @@ export default function ConsolePricing() {
                   <select
                     value={creditForm.user_id}
                     onChange={(e) => setCreditForm((prev) => ({ ...prev, user_id: e.target.value }))}
-                    className="h-10 w-full rounded-md border border-cyan-400/25 bg-slate-900/70 px-3 text-sm text-slate-100 outline-none focus:ring-2 focus:ring-cyan-400/60"
+                    className={selectSurfaceClass}
                   >
                     <option value="">Select player</option>
                     {vendorUsers.map((user) => (
@@ -2003,7 +2010,7 @@ export default function ConsolePricing() {
                       min={0}
                       value={creditForm.credit_limit}
                       onChange={(e) => setCreditForm((prev) => ({ ...prev, credit_limit: e.target.value }))}
-                      className="border-cyan-400/25 bg-slate-900/70 text-slate-100 focus-visible:ring-cyan-400/60"
+                      className={inputSurfaceClass}
                     />
                   </div>
                   <div className="space-y-1.5">
@@ -2014,7 +2021,7 @@ export default function ConsolePricing() {
                       max={28}
                       value={creditForm.billing_cycle_day}
                       onChange={(e) => setCreditForm((prev) => ({ ...prev, billing_cycle_day: e.target.value }))}
-                      className="border-cyan-400/25 bg-slate-900/70 text-slate-100 focus-visible:ring-cyan-400/60"
+                      className={inputSurfaceClass}
                     />
                   </div>
                 </div>
@@ -2027,10 +2034,10 @@ export default function ConsolePricing() {
                       min={0}
                       value={creditForm.grace_days}
                       onChange={(e) => setCreditForm((prev) => ({ ...prev, grace_days: e.target.value }))}
-                      className="border-cyan-400/25 bg-slate-900/70 text-slate-100 focus-visible:ring-cyan-400/60"
+                      className={inputSurfaceClass}
                     />
                   </div>
-                  <label className="flex items-center gap-2 text-sm text-slate-200">
+                  <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200">
                     <input
                       type="checkbox"
                       checked={creditForm.is_active}
@@ -2045,7 +2052,7 @@ export default function ConsolePricing() {
                   <Input
                     value={creditForm.notes}
                     onChange={(e) => setCreditForm((prev) => ({ ...prev, notes: e.target.value }))}
-                    className="border-cyan-400/25 bg-slate-900/70 text-slate-100 focus-visible:ring-cyan-400/60"
+                    className={inputSurfaceClass}
                     placeholder="Trusted player, settles every month-end"
                   />
                 </div>
@@ -2066,7 +2073,7 @@ export default function ConsolePricing() {
               </CardContent>
             </Card>
 
-            <Card className="gaming-panel min-h-0 rounded-xl border border-cyan-500/20 bg-gradient-to-br from-slate-900/75 via-slate-900/70 to-cyan-950/20">
+            <Card className="dashboard-module-surface min-h-0 rounded-xl">
               <CardHeader className="border-b border-cyan-500/15 pb-3">
                 <h3 className="card-title">Configured Accounts</h3>
               </CardHeader>
@@ -2082,19 +2089,19 @@ export default function ConsolePricing() {
                     {monthlyCreditAccounts.map((account) => {
                       const user = vendorUsers.find((u) => u.id === account.user_id);
                       return (
-                        <div key={account.id} className="rounded-lg border border-cyan-500/15 bg-slate-900/55 p-3">
+                        <div key={account.id} className="dashboard-module-card rounded-lg p-3">
                           <div className="flex items-center justify-between">
                             <div>
-                              <p className="text-sm font-semibold text-slate-100">{user?.name || `User #${account.user_id}`}</p>
-                              <p className="text-xs text-slate-400">
+                              <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{user?.name || `User #${account.user_id}`}</p>
+                              <p className="text-xs text-slate-600 dark:text-slate-400">
                                 Limit ₹{account.credit_limit} • Outstanding ₹{account.outstanding_amount}
                               </p>
-                              <p className="text-xs text-slate-400">
+                              <p className="text-xs text-slate-600 dark:text-slate-400">
                                 Cycle Day {account.billing_cycle_day} • Grace {account.grace_days} days
                               </p>
                             </div>
                             <div className="flex items-center gap-2">
-                              <span className={`text-[11px] font-semibold ${account.is_active ? "text-emerald-300" : "text-rose-300"}`}>
+                              <span className={`text-[11px] font-semibold ${account.is_active ? "text-emerald-700 dark:text-emerald-300" : "text-rose-700 dark:text-rose-300"}`}>
                                 {account.is_active ? "Active" : "Inactive"}
                               </span>
                               <button
@@ -2112,8 +2119,8 @@ export default function ConsolePricing() {
                 )}
 
                 {statementUserId && (
-                  <div className="rounded-lg border border-cyan-500/15 bg-slate-900/65 p-3">
-                    <h4 className="text-sm font-semibold text-cyan-100">Statement for User #{statementUserId}</h4>
+                  <div className="dashboard-module-surface rounded-lg p-3">
+                    <h4 className="text-sm font-semibold text-slate-900 dark:text-cyan-100">Statement for User #{statementUserId}</h4>
                     {isLoadingStatement ? (
                       <div className="py-4">
                         <Loader2 className="w-5 h-5 animate-spin text-blue-400" />
@@ -2123,11 +2130,11 @@ export default function ConsolePricing() {
                     ) : (
                       <div className="mt-2 max-h-56 overflow-y-auto space-y-1">
                         {statementRows.map((row) => (
-                          <div key={row.id} className="flex items-center justify-between rounded border border-slate-700 px-2 py-1 text-xs">
-                            <span className="text-slate-300">{row.entry_type}</span>
-                            <span className="text-slate-200">₹{Number(row.amount || 0).toFixed(2)}</span>
-                            <span className="text-slate-400">{row.booked_date || "-"}</span>
-                            <span className="text-slate-400">Due: {row.due_date || "-"}</span>
+                          <div key={row.id} className="dashboard-module-card flex items-center justify-between rounded px-2 py-1 text-xs">
+                            <span className="text-slate-700 dark:text-slate-300">{row.entry_type}</span>
+                            <span className="text-slate-900 dark:text-slate-200">₹{Number(row.amount || 0).toFixed(2)}</span>
+                            <span className="text-slate-500 dark:text-slate-400">{row.booked_date || "-"}</span>
+                            <span className="text-slate-500 dark:text-slate-400">Due: {row.due_date || "-"}</span>
                           </div>
                         ))}
                       </div>
@@ -2149,7 +2156,7 @@ export default function ConsolePricing() {
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.95, opacity: 0, y: 10 }}
               transition={{ duration: 0.2 }}
-              className="w-full max-w-md overflow-hidden rounded-xl border border-cyan-400/25 bg-gradient-to-br from-slate-950 via-slate-900 to-cyan-950/30 shadow-2xl"
+              className="ui-dialog-surface w-full max-w-md overflow-hidden rounded-xl shadow-2xl"
             >
               {/* Modal Header */}
               <div className="flex items-center justify-between border-b border-cyan-500/20 px-5 py-4">
@@ -2158,7 +2165,7 @@ export default function ConsolePricing() {
                 </h2>
                 <button
                   onClick={() => { setShowOfferForm(false); resetOfferForm(); }}
-                  className="inline-flex items-center justify-center rounded-lg border border-cyan-400/25 bg-slate-900/70 p-2 text-slate-200 transition-all duration-200 hover:border-cyan-300/45 hover:bg-slate-800/80 hover:text-cyan-100"
+                  className="slot-booking-modal-close inline-flex items-center justify-center rounded-lg p-2"
                 >
                   <X className="icon-md" />
                 </button>
@@ -2174,7 +2181,7 @@ export default function ConsolePricing() {
                     placeholder="e.g. Weekend Bash 2024"
                     value={offerForm.offer_name}
                     onChange={(e) => setOfferForm({ ...offerForm, offer_name: e.target.value })}
-                    className="border-cyan-400/25 bg-slate-900/70 text-slate-100 placeholder:text-slate-400 focus-visible:ring-cyan-400/60"
+                    className={inputSurfaceClass}
                   />
                 </div>
 
@@ -2182,7 +2189,7 @@ export default function ConsolePricing() {
                 <div className="space-y-1.5">
                   <label className="table-header-text">Console Type *</label>
                   <select
-                    className="h-10 w-full rounded-md border border-cyan-400/25 bg-slate-900/70 px-3 text-sm text-slate-100 outline-none focus:ring-2 focus:ring-cyan-400/60"
+                    className={selectSurfaceClass}
                     value={offerForm.available_game_id}
                     onChange={(e) => setOfferForm({ ...offerForm, available_game_id: e.target.value })}
                     disabled={!!editingOffer}
@@ -2206,7 +2213,7 @@ export default function ConsolePricing() {
                       placeholder="Enter discounted price"
                       value={offerForm.offered_price}
                       onChange={(e) => setOfferForm({ ...offerForm, offered_price: e.target.value })}
-                      className="border-cyan-400/25 bg-slate-900/70 pl-9 text-slate-100 placeholder:text-slate-400 focus-visible:ring-cyan-400/60"
+                      className={`${inputSurfaceClass} pl-9`}
                     />
                   </div>
                 </div>
@@ -2219,7 +2226,7 @@ export default function ConsolePricing() {
                       type="date"
                       value={offerForm.start_date}
                       onChange={(e) => setOfferForm({ ...offerForm, start_date: e.target.value })}
-                      className="border-cyan-400/25 bg-slate-900/70 text-slate-100 focus-visible:ring-cyan-400/60"
+                      className={inputSurfaceClass}
                     />
                   </div>
                   <div className="space-y-1.5">
@@ -2228,7 +2235,7 @@ export default function ConsolePricing() {
                       type="time"
                       value={offerForm.start_time}
                       onChange={(e) => setOfferForm({ ...offerForm, start_time: e.target.value })}
-                      className="border-cyan-400/25 bg-slate-900/70 text-slate-100 focus-visible:ring-cyan-400/60"
+                      className={inputSurfaceClass}
                     />
                   </div>
                 </div>
@@ -2241,7 +2248,7 @@ export default function ConsolePricing() {
                       type="date"
                       value={offerForm.end_date}
                       onChange={(e) => setOfferForm({ ...offerForm, end_date: e.target.value })}
-                      className="border-cyan-400/25 bg-slate-900/70 text-slate-100 focus-visible:ring-cyan-400/60"
+                      className={inputSurfaceClass}
                     />
                   </div>
                   <div className="space-y-1.5">
@@ -2250,7 +2257,7 @@ export default function ConsolePricing() {
                       type="time"
                       value={offerForm.end_time}
                       onChange={(e) => setOfferForm({ ...offerForm, end_time: e.target.value })}
-                      className="border-cyan-400/25 bg-slate-900/70 text-slate-100 focus-visible:ring-cyan-400/60"
+                      className={inputSurfaceClass}
                     />
                   </div>
                 </div>
@@ -2262,7 +2269,7 @@ export default function ConsolePricing() {
                     placeholder="Short description..."
                     value={offerForm.offer_description}
                     onChange={(e) => setOfferForm({ ...offerForm, offer_description: e.target.value })}
-                    className="border-cyan-400/25 bg-slate-900/70 text-slate-100 placeholder:text-slate-400 focus-visible:ring-cyan-400/60"
+                    className={inputSurfaceClass}
                   />
                 </div>
               </div>
@@ -2306,13 +2313,13 @@ export default function ConsolePricing() {
 // ✅ Table View Component - aligned with global CSS
 function OffersTable({ offers, onEdit, onDelete, deletingOfferId, getConsoleIcon }: any) {
   return (
-    <div className="table-container flex-1 overflow-hidden rounded-xl border border-cyan-500/25 bg-slate-950/35">
+    <div className="table-container dashboard-module-surface flex-1 overflow-hidden rounded-xl border border-cyan-500/25">
       <div className="h-full overflow-y-auto">
         <table className="w-full text-left">
-          <thead className="sticky top-0 z-10 bg-slate-900/70">
+          <thead className="dashboard-module-table-head sticky top-0 z-10">
             <tr>
               {["Offer Name", "Console", "Pricing", "Validity", "Actions"].map((h) => (
-                <th key={h} className="table-cell text-[11px] font-bold uppercase tracking-wider text-cyan-100/80 sm:text-xs">
+                <th key={h} className="table-cell dashboard-module-table-header text-[11px] font-bold uppercase tracking-wider sm:text-xs">
                   {h}
                 </th>
               ))}
@@ -2327,8 +2334,8 @@ function OffersTable({ offers, onEdit, onDelete, deletingOfferId, getConsoleIcon
                   <td className="table-cell">
                     <p className="body-text font-semibold">{offer.offer_name}</p>
                     {offer.is_currently_active && (
-                      <span className="flex items-center gap-1 text-emerald-400 text-[10px] font-bold mt-0.5">
-                        <span className="w-1 h-1 bg-emerald-400 rounded-full animate-pulse" />
+                      <span className="mt-0.5 flex items-center gap-1 text-[10px] font-bold text-emerald-700 dark:text-emerald-300">
+                        <span className="h-1 w-1 rounded-full bg-emerald-500 animate-pulse dark:bg-emerald-400" />
                         LIVE NOW
                       </span>
                     )}
@@ -2341,9 +2348,9 @@ function OffersTable({ offers, onEdit, onDelete, deletingOfferId, getConsoleIcon
                   </td>
                   <td className="table-cell">
                     <div className="flex items-center gap-2">
-                      <span className="stat-value text-blue-400">₹{offer.offered_price}</span>
+                      <span className="stat-value text-sky-700 dark:text-blue-400">₹{offer.offered_price}</span>
                       <span className="body-text-muted line-through">₹{offer.default_price}</span>
-                      <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded">
+                      <span className="rounded bg-emerald-50 px-1.5 py-0.5 text-[10px] font-bold text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300">
                         {offer.discount_percentage}%
                       </span>
                     </div>
@@ -2364,15 +2371,15 @@ function OffersTable({ offers, onEdit, onDelete, deletingOfferId, getConsoleIcon
                     <div className="flex items-center gap-1">
                       <button
                         onClick={() => onEdit(offer)}
-                        className="inline-flex items-center justify-center rounded-lg border border-emerald-400/30 bg-emerald-500/10 p-2 text-emerald-300 transition-all duration-200 hover:border-emerald-300/60 hover:bg-emerald-500/20"
+                        className="inline-flex items-center justify-center rounded-lg border border-emerald-300/50 bg-emerald-50 p-2 text-emerald-700 transition-all duration-200 hover:bg-emerald-100 dark:border-emerald-400/30 dark:bg-emerald-500/10 dark:text-emerald-300 dark:hover:bg-emerald-500/20"
                         title="Edit"
                       >
-                        <Pencil className="w-3.5 h-3.5 text-emerald-400" />
+                        <Pencil className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
                       </button>
                       <button
                         onClick={() => onDelete(offer.id)}
                         disabled={isDeleting}
-                        className="inline-flex items-center justify-center rounded-lg border border-rose-400/30 bg-rose-500/10 p-2 text-rose-300 transition-all duration-200 hover:border-rose-300/60 hover:bg-rose-500/20 disabled:cursor-not-allowed disabled:opacity-50"
+                        className="inline-flex items-center justify-center rounded-lg border border-rose-300/50 bg-rose-50 p-2 text-rose-600 transition-all duration-200 hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-rose-400/30 dark:bg-rose-500/10 dark:text-rose-300 dark:hover:bg-rose-500/20"
                         title="Delete"
                       >
                         {isDeleting ? (
