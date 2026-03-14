@@ -681,12 +681,12 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
 
 
   return (
-    <div className="add-console-form w-full">
+    <div className="add-console-form dashboard-module dashboard-typography w-full">
       {/* Success Message */}
       {showSuccess && (
-        <div className="mb-6 flex items-center gap-3 rounded-lg border border-emerald-400/35 bg-emerald-500/12 p-4 shadow-sm">
-          <CheckCircle2 className="h-5 w-5 text-emerald-300" />
-          <span className="font-medium text-emerald-200">Console added successfully!</span>
+        <div className="mb-6 flex items-center gap-3 rounded-lg border border-emerald-300 bg-emerald-50 p-4 shadow-sm dark:border-emerald-400/35 dark:bg-emerald-500/12">
+          <CheckCircle2 className="h-5 w-5 text-emerald-700 dark:text-emerald-300" />
+          <span className="font-medium text-emerald-800 dark:text-emerald-200">Console added successfully!</span>
         </div>
       )}
 
@@ -708,10 +708,10 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
         <Card className="add-console-card">
           <CardHeader className="add-console-card-header">
             <CardTitle className="flex items-center gap-3 dash-title !text-lg">
-              <Copy className="h-5 w-5 text-cyan-300" />
+              <Copy className="h-5 w-5 text-slate-700 dark:text-cyan-300" />
               Quick Setup
             </CardTitle>
-            <CardDescription className="dash-subtitle !text-slate-300">
+            <CardDescription className="dash-subtitle premium-subtle">
               Copy data from an existing console to speed up the process
             </CardDescription>
           </CardHeader>
@@ -741,7 +741,7 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
                 type="button"
                 onClick={handleCopyConsole}
                 disabled={!selectedConsoleId}
-                className="border border-cyan-400/40 bg-cyan-500/15 text-cyan-200 hover:bg-cyan-500/25"
+                className="ui-action-primary"
               >
                 <Copy className="w-4 h-4 mr-2" />
                 Copy Data
@@ -755,10 +755,10 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
         <Card className="add-console-card">
           <CardHeader className="add-console-card-header">
             <CardTitle className="flex items-center gap-3 dash-title !text-lg">
-              <Gamepad2 className="h-5 w-5 text-emerald-300" />
+              <Gamepad2 className="h-5 w-5 text-slate-700 dark:text-emerald-300" />
               Console Details
             </CardTitle>
-            <CardDescription className="dash-subtitle !text-slate-300">
+            <CardDescription className="dash-subtitle premium-subtle">
               Enter the basic information about the console
             </CardDescription>
           </CardHeader>
@@ -772,7 +772,7 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
                   id="consoleNumber"
                   value={formdata.consoleDetails.consoleNumber}
                   readOnly
-                  className="bg-slate-800/80 font-medium"
+                  className="font-medium"
                   required
                 />
               </div>
@@ -844,7 +844,7 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
                   id="consoleType" 
                   value={consoleType || ""} 
                   readOnly 
-                  className="bg-slate-800/80 font-medium"
+                  className="font-medium"
                   required
                 />
               </div>
@@ -877,10 +877,10 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
         <Card className="add-console-card">
           <CardHeader className="add-console-card-header">
             <CardTitle className="flex items-center gap-3 dash-title !text-lg">
-              <HardDrive className="h-5 w-5 text-violet-300" />
+              <HardDrive className="h-5 w-5 text-slate-700 dark:text-violet-300" />
               Hardware Specifications
             </CardTitle>
-            <CardDescription className="dash-subtitle !text-slate-300">
+            <CardDescription className="dash-subtitle premium-subtle">
               Enter the technical specifications and hardware details
             </CardDescription>
           </CardHeader>
@@ -894,10 +894,10 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
         <Card className="add-console-card">
           <CardHeader className="add-console-card-header">
             <CardTitle className="flex items-center gap-3 dash-title !text-lg">
-              <Wrench className="h-5 w-5 text-orange-300" />
+              <Wrench className="h-5 w-5 text-slate-700 dark:text-orange-300" />
               Maintenance & Status
             </CardTitle>
-            <CardDescription className="dash-subtitle !text-slate-300">
+            <CardDescription className="dash-subtitle premium-subtle">
               Enter maintenance and availability information
             </CardDescription>
           </CardHeader>
@@ -1005,10 +1005,10 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
         <Card className="add-console-card">
           <CardHeader className="add-console-card-header">
             <CardTitle className="flex items-center gap-3 dash-title !text-lg">
-              <DollarSign className="h-5 w-5 text-emerald-300" />
+              <DollarSign className="h-5 w-5 text-slate-700 dark:text-emerald-300" />
               Price & Cost Information
             </CardTitle>
-            <CardDescription className="dash-subtitle !text-slate-300">
+            <CardDescription className="dash-subtitle premium-subtle">
               Enter pricing and warranty information
             </CardDescription>
           </CardHeader>
@@ -1111,7 +1111,7 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
           <Button
             type="submit"
             size="lg"
-            className="bg-gradient-to-r from-emerald-500 to-cyan-500 px-12 py-4 text-lg font-semibold text-white shadow-lg transition-all duration-200 hover:scale-[1.02] hover:from-emerald-400 hover:to-cyan-400 hover:shadow-xl"
+            className="ui-action-primary px-12 py-4 text-lg font-semibold shadow-lg transition-all duration-200 hover:scale-[1.02] hover:shadow-xl"
             disabled={loading}
           >
             {loading ? (

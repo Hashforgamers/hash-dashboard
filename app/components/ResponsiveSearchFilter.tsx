@@ -25,14 +25,14 @@ export default function ResponsiveSearchFilter({
             placeholder="Search by name or console..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full rounded-lg border border-slate-600/70 bg-slate-800/70 py-2 pl-8 pr-3 text-xs text-slate-100 placeholder:text-slate-400 focus:border-cyan-400/60 focus:outline-none sm:text-sm"
+            className="dashboard-module-input w-full rounded-lg py-2 pl-8 pr-3 text-xs sm:text-sm"
           />
         </div>
 
         {/* Filter Icon */}
         <button
           onClick={() => setShowOverlay(true)}
-          className="rounded-lg border border-slate-600/70 bg-slate-800/70 p-2 text-slate-300 transition-colors hover:bg-slate-700/70"
+          className="dashboard-module-input rounded-lg p-2 text-slate-300 transition-colors hover:opacity-90"
         >
           <Filter className="w-4 h-4" />
         </button>
@@ -53,32 +53,32 @@ export default function ResponsiveSearchFilter({
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
               transition={{ type: "spring", bounce: 0.1, duration: 0.4 }}
-              className="h-full w-[85vw] bg-slate-900 p-4 shadow-lg sm:w-[400px]"
+              className="dashboard-module-panel dashboard-module h-full w-[85vw] p-4 shadow-lg sm:w-[400px]"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Header */}
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-base font-medium text-slate-100">Filters</h3>
+                <h3 className="text-base font-medium text-foreground">Filters</h3>
                 <button onClick={() => setShowOverlay(false)}>
-                  <X className="w-5 h-5 text-slate-400" />
+                  <X className="w-5 h-5 text-muted-foreground" />
                 </button>
               </div>
 
               {/* Date Picker */}
               <div className="mb-6">
-                <label className="mb-1 block text-sm font-medium text-slate-200">Select Date</label>
+                <label className="mb-1 block text-sm font-medium text-foreground">Select Date</label>
                 <input
                   type="date"
                   value={selectedDate.split("T")[0]}
                   onChange={(e) =>
                     setSelectedDate(new Date(e.target.value).toISOString())
                   }
-                  className="w-full rounded-lg border border-slate-600/70 bg-slate-800/70 px-3 py-2 text-sm text-slate-100 focus:border-cyan-400/60 focus:outline-none transition-colors"
+                  className="dashboard-module-input w-full rounded-lg px-3 py-2 text-sm transition-colors"
                 />
               </div>
             {/* Time Slot Selection */}
             <div className="mt-6">
-            <label className="mb-2 block text-sm font-medium text-slate-200">Select Time Slot</label>
+            <label className="mb-2 block text-sm font-medium text-foreground">Select Time Slot</label>
             <div className="grid grid-cols-2 gap-2">
                 {["all", "morning", "afternoon", "evening"].map((slot) => (
                 <button
@@ -89,8 +89,8 @@ export default function ResponsiveSearchFilter({
                     }}
                     className={`rounded-lg border px-3 py-2 text-center text-sm transition-colors ${
                     timeFilter === slot
-                        ? "border-emerald-400/50 bg-emerald-500/15 text-emerald-200"
-                        : "border-slate-600/70 bg-slate-800/70 text-slate-200 hover:bg-slate-700/70"
+                        ? "dashboard-module-tab-active"
+                        : "dashboard-module-input"
                     }`}
                 >
                     {slot.charAt(0).toUpperCase() + slot.slice(1)}

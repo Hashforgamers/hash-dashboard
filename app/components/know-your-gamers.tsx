@@ -139,7 +139,7 @@ export function KnowYourGamers() {
   }
 
   return (
-    <div className="flex h-full min-h-0 flex-col gap-4 p-1 sm:p-2">
+    <div className="dashboard-module dashboard-typography flex h-full min-h-0 flex-col gap-4 p-1 sm:p-2">
       {/* Stats Cards */}
       <div className="shrink-0 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {stats.map((stat, index) => {
@@ -147,12 +147,12 @@ export function KnowYourGamers() {
           return (
             <div
               key={index}
-              className="gaming-kpi-card rounded-xl border border-cyan-400/20 bg-gradient-to-br from-slate-900/75 via-slate-900/65 to-cyan-950/20 p-4"
+              className="gaming-kpi-card rounded-xl border border-cyan-400/20 p-4"
             >
               <div className="flex items-center justify-between">
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-xs uppercase tracking-wide text-slate-300/75 sm:text-sm">{stat.title}</p>
-                  <h3 className="mt-1 truncate text-xl font-bold text-cyan-100 sm:text-2xl">{stat.value}</h3>
+                  <p className="truncate text-xs uppercase tracking-wide text-slate-500 sm:text-sm">{stat.title}</p>
+                  <h3 className="mt-1 truncate text-xl font-bold text-cyan-300 sm:text-2xl">{stat.value}</h3>
                 </div>
                 <div className="ml-3 flex-shrink-0 rounded-full border border-cyan-400/25 bg-cyan-500/10 p-3">
                   <Icon className="h-5 w-5 text-cyan-300 sm:h-6 sm:w-6" />
@@ -160,7 +160,7 @@ export function KnowYourGamers() {
               </div>
               <div className="mt-2 flex items-center text-xs sm:text-sm">
                 <span className="text-emerald-300">{stat.change}</span>
-                <span className="ml-1 text-slate-300/70">vs last month</span>
+                <span className="ml-1 text-slate-500">vs last month</span>
               </div>
             </div>
           )
@@ -168,22 +168,22 @@ export function KnowYourGamers() {
       </div>
 
       {/* Filters and Search */}
-      <div className="gaming-panel shrink-0 rounded-xl border border-cyan-400/20 bg-slate-950/40">
+      <div className="gaming-panel shrink-0 rounded-xl border border-cyan-400/20">
         <div className="flex flex-col sm:flex-row gap-4 p-4">
           <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-300/70" />
+            <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-500" />
             <input
               type="text"
               placeholder="Search by name or contact..."
-              className="w-full rounded-lg border border-cyan-400/25 bg-slate-900/70 py-2 pl-10 pr-4 text-sm text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-400/60"
+              className="dashboard-module-input w-full rounded-lg py-2 pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-400/60"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
-            <Filter className="h-5 w-5 text-slate-300/70" />
+            <Filter className="h-5 w-5 text-slate-500" />
             <select
-              className="min-w-0 rounded-lg border border-cyan-400/25 bg-slate-900/70 px-3 py-2 text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-cyan-400/60"
+              className="dashboard-module-input min-w-0 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-400/60"
               value={selectedTier}
               onChange={(e) => setSelectedTier(e.target.value)}
             >
@@ -197,10 +197,10 @@ export function KnowYourGamers() {
       </div>
 
       {/* Data Table */}
-      <div className="gaming-panel min-h-0 flex-1 overflow-hidden rounded-xl border border-cyan-400/20 bg-slate-950/45">
+      <div className="gaming-panel min-h-0 flex-1 overflow-hidden rounded-xl border border-cyan-400/20">
         <div className="h-full overflow-auto">
-          <table className="w-full min-w-[1200px]">
-            <thead className="bg-slate-900/70">
+          <table className="dashboard-module-table w-full min-w-[1200px]">
+            <thead className="dashboard-module-table-head">
               <tr className="border-b border-cyan-500/20">
                 {[
                   "Customer ID",
@@ -218,39 +218,39 @@ export function KnowYourGamers() {
                 ].map((header) => (
                   <th
                     key={header}
-                    className="whitespace-nowrap px-4 py-3 text-left text-[11px] font-bold uppercase tracking-wider text-cyan-100/80"
+                    className="dashboard-module-table-header whitespace-nowrap px-4 py-3 text-left text-xs font-bold uppercase tracking-wider"
                   >
                     {header}
                   </th>
                 ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-cyan-500/10">
+            <tbody className="dashboard-module-table-body divide-y divide-cyan-500/10">
               {loading ? (
                 <tr>
-                  <td className="px-4 py-8 text-center text-sm text-slate-300/70" colSpan={12}>
+                  <td className="px-4 py-8 text-center text-sm text-slate-500" colSpan={12}>
                     Loading gamers...
                   </td>
                 </tr>
               ) : filteredData.length === 0 ? (
                 <tr>
-                  <td className="px-4 py-8 text-center text-sm text-slate-300/70" colSpan={12}>
+                  <td className="px-4 py-8 text-center text-sm text-slate-500" colSpan={12}>
                     No gamers found for this filter.
                   </td>
                 </tr>
               ) : (
                 filteredData.map((gamer) => (
-                <tr key={gamer.id} className="hover:bg-cyan-500/5">
-                  <td className="whitespace-nowrap px-4 py-3 text-sm text-slate-200">{gamer.id}</td>
-                  <td className="whitespace-nowrap px-4 py-3 text-sm font-semibold text-cyan-100">{gamer.name}</td>
-                  <td className="whitespace-nowrap px-4 py-3 text-sm text-slate-200">{gamer.contact}</td>
-                  <td className="whitespace-nowrap px-4 py-3 text-sm text-slate-200">{gamer.totalSlots}</td>
-                  <td className="whitespace-nowrap px-4 py-3 text-sm text-slate-200">₹{gamer.totalAmount.toLocaleString()}</td>
-                  <td className="whitespace-nowrap px-4 py-3 text-sm text-slate-200">₹{gamer.averagePerSlot}</td>
-                  <td className="whitespace-nowrap px-4 py-3 text-sm text-slate-200">{gamer.promoCodesUsed}</td>
-                  <td className="whitespace-nowrap px-4 py-3 text-sm text-slate-200">₹{gamer.discountAvailed.toLocaleString()}</td>
-                  <td className="whitespace-nowrap px-4 py-3 text-sm text-slate-200">₹{gamer.netRevenue.toLocaleString()}</td>
-                  <td className="whitespace-nowrap px-4 py-3 text-sm text-slate-200">
+                <tr key={gamer.id} className="dashboard-module-row hover:bg-cyan-500/5">
+                  <td className="whitespace-nowrap px-4 py-3 text-sm text-slate-700">{gamer.id}</td>
+                  <td className="whitespace-nowrap px-4 py-3 text-sm font-semibold text-cyan-300">{gamer.name}</td>
+                  <td className="whitespace-nowrap px-4 py-3 text-sm text-slate-700">{gamer.contact}</td>
+                  <td className="whitespace-nowrap px-4 py-3 text-sm text-slate-700">{gamer.totalSlots}</td>
+                  <td className="whitespace-nowrap px-4 py-3 text-sm text-slate-700">₹{gamer.totalAmount.toLocaleString()}</td>
+                  <td className="whitespace-nowrap px-4 py-3 text-sm text-slate-700">₹{gamer.averagePerSlot}</td>
+                  <td className="whitespace-nowrap px-4 py-3 text-sm text-slate-700">{gamer.promoCodesUsed}</td>
+                  <td className="whitespace-nowrap px-4 py-3 text-sm text-slate-700">₹{gamer.discountAvailed.toLocaleString()}</td>
+                  <td className="whitespace-nowrap px-4 py-3 text-sm text-slate-700">₹{gamer.netRevenue.toLocaleString()}</td>
+                  <td className="whitespace-nowrap px-4 py-3 text-sm text-slate-700">
                     {gamer.lastVisit && format(new Date(gamer.lastVisit), "dd MMM yyyy")}
                   </td>
                   <td className="whitespace-nowrap px-4 py-3 text-sm">
@@ -258,7 +258,7 @@ export function KnowYourGamers() {
                       {gamer.membershipTier}
                     </span>
                   </td>
-                  <td className="max-w-[200px] truncate px-4 py-3 text-sm text-slate-300">{gamer.notes}</td>
+                  <td className="max-w-[200px] truncate px-4 py-3 text-sm text-slate-500">{gamer.notes}</td>
                 </tr>
               )))}
             </tbody>
@@ -266,7 +266,7 @@ export function KnowYourGamers() {
         </div>
 
         {/* Mobile-friendly message when table is scrollable */}
-        <div className="border-t border-cyan-500/20 p-4 text-center text-sm text-slate-300/70 sm:hidden">
+        <div className="border-t border-cyan-500/20 p-4 text-center text-sm text-slate-500 sm:hidden">
           Scroll horizontally to view all columns
         </div>
       </div>

@@ -676,7 +676,7 @@ export function UpcomingBookings({
   return (
     <>
       {/* 🚀 FIXED: Proper flex container structure */}
-      <div className="h-full flex flex-col overflow-hidden rounded-2xl border border-cyan-500/20 bg-gradient-to-br from-slate-900/70 via-slate-900/45 to-slate-900/70 shadow-[inset_0_1px_0_rgba(255,255,255,0.02),0_0_28px_rgba(6,182,212,0.08)] p-2 sm:p-3 lg:p-4">
+      <div className="dashboard-module dashboard-module-panel h-full flex flex-col overflow-hidden rounded-2xl p-2 sm:p-3 lg:p-4">
         <AnimatePresence>
           {startCard && (
             <motion.div
@@ -798,7 +798,7 @@ export function UpcomingBookings({
           <div className="flex items-center gap-2">
             <div className={`h-2 w-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`} />
             <h3 className="dash-title">Upcoming Session Queue</h3>
-            <span className="rounded-full border border-emerald-400/40 bg-emerald-500/15 px-2 py-0.5 text-xs text-emerald-200">
+            <span className="rounded-full border border-emerald-400/40 bg-emerald-500/15 px-2.5 py-0.5 text-sm text-emerald-200">
               {filteredBookings.length}
             </span>
           </div>
@@ -816,7 +816,7 @@ export function UpcomingBookings({
         {/* 🚀 FIXED: Scrollable content area that takes remaining space */}
         <div className="min-h-0 flex-1 overflow-y-auto">
           {mergedBookings.length === 0 ? (
-            <div className="h-full flex flex-col items-center justify-center py-6 px-3 text-gray-500">
+            <div className="dashboard-module-empty h-full flex flex-col items-center justify-center py-6 px-3">
               <CalendarIcon className="w-8 h-8 mb-2 opacity-50" />
               <p className="text-sm font-medium">No bookings found</p>
               <p className="text-xs mt-1 text-center">
@@ -864,7 +864,7 @@ export function UpcomingBookings({
                         duration: 0.3, 
                         delay: index * 0.02 
                       }}
-                      className="rounded-xl border border-emerald-400/20 bg-gradient-to-r from-slate-800/80 to-slate-800/55 p-3 transition-all duration-200 hover:border-emerald-300/40 hover:shadow-[0_0_20px_rgba(16,185,129,0.08)] sm:p-4"
+                      className="dashboard-module-card rounded-xl p-3 transition-all duration-200 hover:border-emerald-300/40 hover:shadow-[0_0_20px_rgba(16,185,129,0.08)] sm:p-4"
                     >
                       <div className="space-y-2.5">
                         {/* User info row */}
@@ -873,12 +873,12 @@ export function UpcomingBookings({
                             <User className="h-3.5 w-3.5 shrink-0 text-slate-300" />
                             <span className="truncate dash-title !text-sm">{booking.username || "Guest User"}</span>
                             {squadEnabled && (
-                              <span className="shrink-0 rounded-full border border-sky-400/40 bg-sky-500/15 px-2 py-0.5 text-[10px] font-semibold text-sky-200">
+                              <span className="shrink-0 rounded-full border border-sky-400/40 bg-sky-500/15 px-2.5 py-0.5 text-xs font-semibold text-sky-200">
                                 Squad x{squadPlayerCount}
                               </span>
                             )}
                           </div>
-                          <span className="shrink-0 rounded-full border border-emerald-400/40 bg-emerald-500/15 px-2 py-0.5 text-xs font-medium text-emerald-200 capitalize">
+                          <span className="shrink-0 rounded-full border border-emerald-400/40 bg-emerald-500/15 px-2.5 py-0.5 text-sm font-medium text-emerald-200 capitalize">
                             Paid
                           </span>
                           {squadEnabled && (
@@ -890,14 +890,14 @@ export function UpcomingBookings({
                                   [bookingKey]: !expanded,
                                 }))
                               }
-                              className="ml-2 rounded border border-slate-500/50 px-2 py-0.5 text-[10px] text-slate-200"
+                              className="ml-2 rounded border border-slate-500/50 px-2.5 py-0.5 text-xs text-slate-200"
                             >
                               {expanded ? "Collapse" : "Expand"}
                             </button>
                           )}
                         </div>
                         {squadEnabled && squadMemberNames.length > 0 && (
-                          <p className="text-[11px] text-slate-300">
+                          <p className="text-xs text-slate-300">
                             Members: {squadMemberNames.join(", ")}
                             {squadPlayerCount - squadMemberNames.length > 0
                               ? ` +${squadPlayerCount - squadMemberNames.length} more`
@@ -905,7 +905,7 @@ export function UpcomingBookings({
                           </p>
                         )}
                         {squadEnabled && expanded && (
-                          <div className="rounded-md border border-sky-400/25 bg-sky-500/10 p-2 text-[11px] text-sky-100">
+                          <div className="rounded-md border border-sky-400/25 bg-sky-500/10 p-2 text-xs text-sky-100">
                             <p className="font-semibold">Squad Details</p>
                             <p>Members: {squadMembers.map((m: any) => m?.name).filter(Boolean).join(", ") || "Not available"}</p>
                             {String(booking?.squadDetails?.console_group || "").toLowerCase() === "pc" ? (
@@ -923,7 +923,7 @@ export function UpcomingBookings({
                         )}
 
                         {/* Time/duration row */}
-                        <div className="flex flex-wrap gap-3 text-xs text-slate-300">
+                        <div className="flex flex-wrap gap-3 text-sm text-slate-300">
                           <div className="flex items-center gap-1">
                             <Clock className="h-3 w-3 shrink-0 text-slate-400" />
                             <span>{booking.time || 'No time set'}</span>
@@ -947,7 +947,7 @@ export function UpcomingBookings({
                                 title="View meals & add more"
                               >
                                 <UtensilsCrossed className="h-4 w-4 text-emerald-300 transition-colors group-hover:text-emerald-200" />
-                                <span className="text-xs font-medium text-emerald-200">
+                                <span className="text-sm font-medium text-emerald-200">
                                   Meals
                                 </span>
                               </motion.button>
@@ -964,7 +964,7 @@ export function UpcomingBookings({
                               >
                                 <Plus className="h-3 w-3 text-cyan-300 transition-colors group-hover:text-cyan-200" />
                                 <UtensilsCrossed className="h-3 w-3 text-cyan-300 transition-colors group-hover:text-cyan-200" />
-                                <span className="text-xs font-medium text-cyan-200">
+                                <span className="text-sm font-medium text-cyan-200">
                                   Add
                                 </span>
                               </motion.button>

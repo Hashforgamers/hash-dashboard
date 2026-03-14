@@ -65,24 +65,24 @@ const FilterComponent: React.FC<FilterProps> = ({
           exit={{ opacity: 0, scale: 1 }}
           // className="fixed left-[80%] w-[25%] max-w-lg -translate-x-1/2 -translate-y-1/2 shadow-lg rounded-lg p-1 dark:border-gray-700 z-50 backdrop-blur-sm bg-black/30 "
           // className="fixed left-[80%] w-[25%] w-full h-full flex items-center justify-center z-50 backdrop-blur-sm bg-black/30"
-          className="fixed w-full h-full z-50  "
+          className="fixed inset-0 z-50 bg-black/20 backdrop-blur-[1px]"
         >
-          <Card className="p-2 relative left-[80%] fixed ">
+          <Card className="dashboard-module dashboard-module-card fixed right-4 top-24 w-[min(92vw,24rem)] p-2 shadow-xl">
             <CardHeader className="top-0">
               <button
-                className="absolute right-2 p-2 transition-all rounded-md hover:bg-red-500 hover:scale-110"
+                className="absolute right-2 rounded-md p-2 transition-all hover:scale-110 hover:bg-rose-50 dark:hover:bg-rose-500/20"
                 onClick={() => setShowFilter(false)}
               >
-                <X className="w-5 h-5 text-gray-600 dark:text-gray-300" />
+                <X className="h-5 w-5 text-slate-700 dark:text-gray-300" />
               </button>
 
-              <CardTitle className="text-center text-lg font-semibold">
+              <CardTitle className="text-center text-lg font-semibold text-slate-900 dark:text-white">
                 Filters
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <h3 className="text-sm font-medium">Mode of Payment</h3>
+                <h3 className="text-sm font-medium text-slate-900 dark:text-white">Mode of Payment</h3>
                 <div className="flex flex-wrap gap-2 mt-2 ">
                   {["Cash", "PayPal", null].map((option) => (
                     <Badge
@@ -92,7 +92,11 @@ const FilterComponent: React.FC<FilterProps> = ({
                           ? "default"
                           : "outline"
                       }
-                      className="cursor-pointer text-sm px-3 py-1"
+                      className={`cursor-pointer px-3 py-1 text-sm ${
+                        selectedFilters.modeOfPayment === option
+                          ? "border border-cyan-300 bg-cyan-50 text-slate-900 dark:border-cyan-500/40 dark:bg-cyan-500/20 dark:text-cyan-200"
+                          : "border border-slate-300 text-slate-700 dark:border-slate-500/70 dark:text-slate-300"
+                      }`}
                       onClick={() => toggleFilter("modeOfPayment", option)}
                     >
                       {option ?? "None"}
@@ -103,7 +107,7 @@ const FilterComponent: React.FC<FilterProps> = ({
 
               {/* Booking Type */}
               <div>
-                <h3 className="text-sm font-medium">Booking Type</h3>
+                <h3 className="text-sm font-medium text-slate-900 dark:text-white">Booking Type</h3>
                 <div className="flex flex-wrap gap-2 mt-2">
                   {["Hash", "Direct", null].map((option) => (
                     <Badge
@@ -113,7 +117,11 @@ const FilterComponent: React.FC<FilterProps> = ({
                           ? "default"
                           : "outline"
                       }
-                      className="cursor-pointer text-sm px-3 py-1"
+                      className={`cursor-pointer px-3 py-1 text-sm ${
+                        selectedFilters.bookingType === option
+                          ? "border border-cyan-300 bg-cyan-50 text-slate-900 dark:border-cyan-500/40 dark:bg-cyan-500/20 dark:text-cyan-200"
+                          : "border border-slate-300 text-slate-700 dark:border-slate-500/70 dark:text-slate-300"
+                      }`}
                       onClick={() => toggleFilter("bookingType", option)}
                     >
                       {option ?? "None"}
@@ -124,7 +132,7 @@ const FilterComponent: React.FC<FilterProps> = ({
 
               {/* Settlement Status */}
               <div>
-                <h3 className="text-sm font-medium">Settlement Status</h3>
+                <h3 className="text-sm font-medium text-slate-900 dark:text-white">Settlement Status</h3>
                 <div className="flex flex-wrap gap-2 mt-2">
                   {["Pending", "Done", null].map((option) => (
                     <Badge
@@ -134,7 +142,11 @@ const FilterComponent: React.FC<FilterProps> = ({
                           ? "default"
                           : "outline"
                       }
-                      className="cursor-pointer text-sm px-3 py-1"
+                      className={`cursor-pointer px-3 py-1 text-sm ${
+                        selectedFilters.settlementStatus === option
+                          ? "border border-cyan-300 bg-cyan-50 text-slate-900 dark:border-cyan-500/40 dark:bg-cyan-500/20 dark:text-cyan-200"
+                          : "border border-slate-300 text-slate-700 dark:border-slate-500/70 dark:text-slate-300"
+                      }`}
                       onClick={() => toggleFilter("settlementStatus", option)}
                     >
                       {option ?? "All"}
@@ -148,14 +160,14 @@ const FilterComponent: React.FC<FilterProps> = ({
                 <Button
                   onClick={clearFilters}
                   variant="outline"
-                  className="px-4 py-2 text-sm hover:bg-red-500 mx-2 my-4"
+                  className="mx-2 my-4 px-4 py-2 text-sm text-slate-900 hover:bg-rose-50 dark:text-white dark:hover:bg-rose-500/20"
                 >
                   Clear Filters
                 </Button>
                 <Button
                   onClick={applyFilters}
                   variant="outline"
-                  className="px-4 py-2 text-sm hover:bg-green-500 mx-2 my-4"
+                  className="mx-2 my-4 border border-emerald-300 bg-white px-4 py-2 text-sm text-slate-900 hover:bg-emerald-50 dark:border-emerald-500/40 dark:bg-emerald-500/15 dark:text-emerald-200 dark:hover:bg-emerald-500/20"
                 >
                   Apply
                 </Button>

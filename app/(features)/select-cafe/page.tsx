@@ -118,6 +118,11 @@ export default function SelectCafePage() {
     bank_acc_details: null,
   })
 
+  const formInputClass = "ui-input-surface"
+  const formSelectClass = "ui-input-surface w-full rounded-md px-3 py-2 text-sm"
+  const sectionHeadingClass = "text-xl font-semibold text-slate-900 dark:text-white"
+  const labelClass = "text-slate-700 dark:text-slate-300"
+
   const refreshVendorList = () => {
     const storedVendors = localStorage.getItem("vendors")
     if (storedVendors) {
@@ -418,7 +423,7 @@ export default function SelectCafePage() {
     <div className="premium-shell flex min-h-screen flex-col items-center justify-center overflow-hidden p-3 sm:p-4 md:p-8">
       <div className="relative z-20 flex w-full max-w-7xl flex-col items-center gap-8 md:gap-12">
         <div className="text-center space-y-4 md:space-y-6">
-          <h1 className="premium-heading premium-accent-text select-none text-4xl font-bold tracking-tight md:mb-2 md:text-5xl lg:text-7xl">
+          <h1 className="premium-heading select-none text-4xl font-bold tracking-tight text-slate-900 md:mb-2 md:text-5xl lg:text-7xl dark:text-white">
             Select Your Arena
           </h1>
           <p className="premium-subtle mx-auto max-w-2xl select-none text-lg leading-relaxed md:text-lg">
@@ -438,14 +443,14 @@ export default function SelectCafePage() {
                 className="premium-card relative min-h-[120px] w-full rounded-3xl p-6 backdrop-blur-xl transition-all duration-500 hover:-translate-y-2 hover:scale-105 md:min-h-[140px] md:p-8"
               >
                 <div className="relative flex items-center space-x-4 md:space-x-6 h-full">
-                  <div className="flex-shrink-0 rounded-2xl bg-slate-500/30 p-4 shadow-lg shadow-slate-900/30 transition-all duration-300 group-hover:scale-110 md:p-5">
-                    <Store className="w-8 h-8 md:w-10 md:h-10 text-emerald-400" />
+                  <div className="feature-action-icon h-16 w-16 flex-shrink-0 shadow-lg transition-all duration-300 group-hover:scale-110 md:h-20 md:w-20">
+                    <Store className="w-8 h-8 text-emerald-600 md:w-10 md:h-10 dark:text-emerald-400" />
                   </div>
                   <div className="flex-1 text-left space-y-1 md:space-y-2">
-                    <h3 className="text-lg md:text-xl lg:text-2xl font-bold text-white group-hover:text-white/90 transition-colors duration-300 leading-tight">
+                    <h3 className="text-lg font-bold leading-tight text-slate-900 transition-colors duration-300 group-hover:text-slate-700 md:text-xl lg:text-2xl dark:text-white dark:group-hover:text-white/90">
                       {cafe.name}
                     </h3>
-                    <p className="text-sm md:text-base text-slate-300 group-hover:text-white/70 transition-colors duration-300">
+                    <p className="text-sm text-slate-600 transition-colors duration-300 group-hover:text-slate-500 md:text-base dark:text-slate-300 dark:group-hover:text-white/70">
                       Operator Access
                     </p>
                   </div>
@@ -457,17 +462,17 @@ export default function SelectCafePage() {
           <div className="group relative" style={{ animation: "fadeInUp 0.6s ease-out forwards" }}>
             <button
               onClick={() => handleCafeClick("add-new")}
-              className="relative min-h-[120px] w-full rounded-3xl border-2 border-dashed border-emerald-300/40 bg-gradient-to-br from-emerald-600/85 to-cyan-600/85 p-6 shadow-xl shadow-emerald-500/30 backdrop-blur-xl transition-all duration-500 hover:-translate-y-2 hover:scale-105 hover:shadow-emerald-500/50 md:min-h-[140px] md:p-8"
+              className="premium-card relative min-h-[120px] w-full rounded-3xl border-2 border-dashed border-emerald-300/60 bg-white/90 p-6 shadow-xl backdrop-blur-xl transition-all duration-500 hover:-translate-y-2 hover:scale-105 md:min-h-[140px] md:p-8 dark:border-emerald-300/40 dark:bg-[hsl(var(--brand-accent)/0.14)]"
             >
               <div className="relative flex items-center space-x-4 md:space-x-6 h-full">
-                <div className="flex-shrink-0 p-4 md:p-5 rounded-2xl transition-all duration-300 group-hover:scale-110 bg-white/20 backdrop-blur-sm shadow-lg">
-                  <Plus className="w-8 h-8 md:w-10 md:h-10 text-white" />
+                <div className="feature-action-icon h-16 w-16 flex-shrink-0 rounded-2xl transition-all duration-300 group-hover:scale-110 md:h-20 md:w-20">
+                  <Plus className="h-8 w-8 text-emerald-700 md:h-10 md:w-10 dark:text-white" />
                 </div>
                 <div className="flex-1 text-left space-y-1 md:space-y-2">
-                  <h3 className="text-lg md:text-xl lg:text-2xl font-bold text-white group-hover:text-white/90 transition-colors duration-300 leading-tight">
+                  <h3 className="text-lg font-bold leading-tight text-slate-900 transition-colors duration-300 group-hover:text-slate-700 md:text-xl lg:text-2xl dark:text-white dark:group-hover:text-white/90">
                     Add New Cafe
                   </h3>
-                  <p className="text-sm md:text-base text-white/80 group-hover:text-white/70 transition-colors duration-300">
+                  <p className="text-sm text-slate-600 transition-colors duration-300 group-hover:text-slate-500 md:text-base dark:text-slate-200 dark:group-hover:text-white/70">
                     Register a new gaming cafe
                   </p>
                 </div>
@@ -482,18 +487,18 @@ export default function SelectCafePage() {
         <DialogContent className="premium-card w-[calc(100vw-1.5rem)] rounded-3xl border shadow-2xl shadow-black/50 sm:max-w-md">
           <DialogHeader className="text-center pb-2">
             <div className="relative mx-auto mb-6">
-              <div className="w-20 h-20 rounded-3xl flex items-center justify-center shadow-2xl bg-gradient-to-br from-slate-600 to-slate-700 shadow-slate-900/50">
+              <div className="feature-action-icon h-20 w-20 rounded-3xl shadow-2xl">
                 {isUnlocking ? (
-                  <Unlock className="w-10 h-10 text-white animate-pulse" />
+                  <Unlock className="h-10 w-10 animate-pulse text-slate-900 dark:text-white" />
                 ) : (
-                  <Lock className="w-10 h-10 text-white" />
+                  <Lock className="h-10 w-10 text-slate-900 dark:text-white" />
                 )}
               </div>
             </div>
-            <DialogTitle className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-white to-slate-200 bg-clip-text text-transparent">
+            <DialogTitle className="text-2xl font-bold text-slate-900 md:text-3xl dark:text-white">
               Access {selectedCafeData?.name}
             </DialogTitle>
-            <p className="text-slate-400 text-sm md:text-base mt-2">Enter your 4-digit PIN to continue</p>
+            <p className="mt-2 text-sm text-slate-600 md:text-base dark:text-slate-400">Enter your 4-digit PIN to continue</p>
           </DialogHeader>
 
           <div className="space-y-6 pt-4">
@@ -508,7 +513,7 @@ export default function SelectCafePage() {
                   setError(null)
                 }}
                 placeholder="••••"
-                className="text-center text-3xl tracking-[0.8em] h-16 border-2 border-slate-600/50 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 rounded-2xl bg-slate-800/80 backdrop-blur-sm transition-all duration-300 text-white placeholder-slate-500 shadow-inner"
+                className="ui-input-surface h-16 rounded-2xl border-2 text-center text-3xl tracking-[0.8em] shadow-inner transition-all duration-300"
                 onKeyDown={(e) => e.key === "Enter" && handleUnlock()}
                 disabled={isUnlocking}
               />
@@ -519,8 +524,8 @@ export default function SelectCafePage() {
                     key={i}
                     className={`w-4 h-4 rounded-full transition-all duration-300 ${
                       i < pin.length
-                        ? "bg-gradient-to-r from-emerald-400 to-emerald-500 scale-125 shadow-lg shadow-emerald-400/50"
-                        : "bg-slate-600/50"
+                        ? "bg-emerald-500 scale-125 shadow-lg shadow-emerald-400/50"
+                        : "bg-slate-300 dark:bg-slate-600/50"
                     }`}
                   />
                 ))}
@@ -530,7 +535,7 @@ export default function SelectCafePage() {
             <Button
               onClick={handleUnlock}
               disabled={pin.length !== 4 || isUnlocking || isSubmitting}
-              className="w-full h-14 text-white font-bold text-lg rounded-2xl transition-all duration-300 shadow-xl hover:shadow-2xl transform hover:scale-105 disabled:transform-none disabled:opacity-50 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500"
+              className="ui-action-primary h-14 w-full rounded-2xl text-lg font-bold text-white shadow-xl transition-all duration-300 hover:scale-105 hover:shadow-2xl disabled:transform-none disabled:opacity-50"
             >
               {isUnlocking ? (
                 <div className="flex items-center justify-center space-x-3">
@@ -547,7 +552,7 @@ export default function SelectCafePage() {
 
             {error && (
               <div className="text-center p-4 bg-red-500/10 border border-red-500/20 rounded-xl backdrop-blur-sm">
-                <p className="text-red-400 text-sm font-medium">{error}</p>
+                <p className="text-sm font-medium text-red-600 dark:text-red-400">{error}</p>
               </div>
             )}
           </div>
@@ -558,7 +563,7 @@ export default function SelectCafePage() {
       <Dialog open={showOnboardDialog} onOpenChange={setShowOnboardDialog}>
         <DialogContent className="premium-card max-h-[92vh] w-[calc(100vw-1.5rem)] max-w-4xl overflow-y-auto rounded-3xl border">
           <DialogHeader>
-            <DialogTitle className="text-3xl font-bold bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">
+            <DialogTitle className="text-3xl font-bold text-slate-900 dark:text-white">
               Onboard New Gaming Cafe
             </DialogTitle>
           </DialogHeader>
@@ -566,54 +571,54 @@ export default function SelectCafePage() {
           <div className="space-y-6 py-6">
             {/* Basic Info */}
             <div className="space-y-4">
-              <h3 className="text-xl font-semibold text-white">Basic Information</h3>
+              <h3 className={sectionHeadingClass}>Basic Information</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <Label className="text-slate-300">Cafe Name *</Label>
+                  <Label className={labelClass}>Cafe Name *</Label>
                   <Input
                     value={formData.cafe_name}
                     onChange={(e) => setFormData({ ...formData, cafe_name: e.target.value })}
-                    className="bg-slate-800/50 border-slate-600 text-white"
+                    className={formInputClass}
                     placeholder="Enter cafe name"
                   />
                 </div>
                 <div>
-                  <Label className="text-slate-300">Owner Name *</Label>
+                  <Label className={labelClass}>Owner Name *</Label>
                   <Input
                     value={formData.owner_name}
                     onChange={(e) => setFormData({ ...formData, owner_name: e.target.value })}
-                    className="bg-slate-800/50 border-slate-600 text-white"
+                    className={formInputClass}
                     placeholder="Enter owner name"
                   />
                 </div>
                 <div>
-                  <Label className="text-slate-300">Parent Email (Auto-filled, cannot be changed)</Label>
+                  <Label className={labelClass}>Parent Email (Auto-filled, cannot be changed)</Label>
                   <Input
                     value={formData.vendor_account_email}
                     disabled
-                    className="bg-slate-800/50 border-slate-600 text-slate-300 cursor-not-allowed opacity-80"
+                    className="ui-input-surface cursor-not-allowed opacity-80"
                     placeholder="Parent email"
                   />
                 </div>
                 <div>
-                  <Label className="text-slate-300">Vendor PIN (Optional - 4 digits)</Label>
+                  <Label className={labelClass}>Vendor PIN (Optional - 4 digits)</Label>
                   <Input
                     value={formData.vendor_pin}
                     onChange={(e) =>
                       setFormData({ ...formData, vendor_pin: e.target.value.replace(/\D/g, "").slice(0, 4) })
                     }
-                    className="bg-slate-800/50 border-slate-600 text-white"
+                    className={formInputClass}
                     placeholder="Leave empty for auto-generation"
                     maxLength={4}
                   />
                 </div>
                 <div>
-                  <Label className="text-slate-300">Vendor Password (Optional - min 6 chars)</Label>
+                  <Label className={labelClass}>Vendor Password (Optional - min 6 chars)</Label>
                   <Input
                     type="password"
                     value={formData.vendor_password}
                     onChange={(e) => setFormData({ ...formData, vendor_password: e.target.value })}
-                    className="bg-slate-800/50 border-slate-600 text-white"
+                    className={formInputClass}
                     placeholder="Leave empty for auto-generation"
                   />
                 </div>
@@ -622,39 +627,39 @@ export default function SelectCafePage() {
 
             {/* Contact Info */}
             <div className="space-y-4">
-              <h3 className="text-xl font-semibold text-white">Contact Information</h3>
+              <h3 className={sectionHeadingClass}>Contact Information</h3>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
-                  <Label className="text-slate-300">Email *</Label>
+                  <Label className={labelClass}>Email *</Label>
                   <Input
                     type="email"
                     value={formData.contact_info.email}
                     onChange={(e) =>
                       setFormData({ ...formData, contact_info: { ...formData.contact_info, email: e.target.value } })
                     }
-                    className="bg-slate-800/50 border-slate-600 text-white"
+                    className={formInputClass}
                     placeholder="cafe@example.com"
                   />
                 </div>
                 <div>
-                  <Label className="text-slate-300">Phone *</Label>
+                  <Label className={labelClass}>Phone *</Label>
                   <Input
                     value={formData.contact_info.phone}
                     onChange={(e) =>
                       setFormData({ ...formData, contact_info: { ...formData.contact_info, phone: e.target.value } })
                     }
-                    className="bg-slate-800/50 border-slate-600 text-white"
+                    className={formInputClass}
                     placeholder="1234567890"
                   />
                 </div>
                 <div>
-                  <Label className="text-slate-300">Website</Label>
+                  <Label className={labelClass}>Website</Label>
                   <Input
                     value={formData.contact_info.website}
                     onChange={(e) =>
                       setFormData({ ...formData, contact_info: { ...formData.contact_info, website: e.target.value } })
                     }
-                    className="bg-slate-800/50 border-slate-600 text-white"
+                    className={formInputClass}
                     placeholder="https://example.com"
                   />
                 </div>
@@ -663,38 +668,38 @@ export default function SelectCafePage() {
 
             {/* Physical Address */}
             <div className="space-y-4">
-              <h3 className="text-xl font-semibold text-white">Physical Address</h3>
+              <h3 className={sectionHeadingClass}>Physical Address</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="md:col-span-2">
-                  <Label className="text-slate-300">Street Address *</Label>
+                  <Label className={labelClass}>Street Address *</Label>
                   <Input
                     value={formData.physicalAddress.street}
                     onChange={(e) =>
                       setFormData({ ...formData, physicalAddress: { ...formData.physicalAddress, street: e.target.value } })
                     }
-                    className="bg-slate-800/50 border-slate-600 text-white"
+                    className={formInputClass}
                     placeholder="Street address"
                   />
                 </div>
                 <div>
-                  <Label className="text-slate-300">City *</Label>
+                  <Label className={labelClass}>City *</Label>
                   <Input
                     value={formData.physicalAddress.city}
                     onChange={(e) =>
                       setFormData({ ...formData, physicalAddress: { ...formData.physicalAddress, city: e.target.value } })
                     }
-                    className="bg-slate-800/50 border-slate-600 text-white"
+                    className={formInputClass}
                     placeholder="City"
                   />
                 </div>
                 <div>
-                  <Label className="text-slate-300">State *</Label>
+                  <Label className={labelClass}>State *</Label>
                   <select
                     value={formData.physicalAddress.state}
                     onChange={(e) =>
                       setFormData({ ...formData, physicalAddress: { ...formData.physicalAddress, state: e.target.value } })
                     }
-                    className="w-full rounded-md bg-slate-800/50 border border-slate-600 text-white px-3 py-2 text-sm"
+                    className={formSelectClass}
                   >
                     <option value="" disabled>Select state</option>
                     {INDIA_STATES.map((st) => (
@@ -703,24 +708,24 @@ export default function SelectCafePage() {
                   </select>
                 </div>
                 <div>
-                  <Label className="text-slate-300">ZIP Code *</Label>
+                  <Label className={labelClass}>ZIP Code *</Label>
                   <Input
                     value={formData.physicalAddress.zipCode}
                     onChange={(e) =>
                       setFormData({ ...formData, physicalAddress: { ...formData.physicalAddress, zipCode: e.target.value } })
                     }
-                    className="bg-slate-800/50 border-slate-600 text-white"
+                    className={formInputClass}
                     placeholder="123456"
                   />
                 </div>
                 <div>
-                  <Label className="text-slate-300">Country *</Label>
+                  <Label className={labelClass}>Country *</Label>
                   <Input
                     value={formData.physicalAddress.country}
                     onChange={(e) =>
                       setFormData({ ...formData, physicalAddress: { ...formData.physicalAddress, country: e.target.value } })
                     }
-                    className="bg-slate-800/50 border-slate-600 text-white"
+                    className={formInputClass}
                     placeholder="India"
                   />
                 </div>
@@ -729,10 +734,10 @@ export default function SelectCafePage() {
 
             {/* Business Registration */}
             <div className="space-y-4">
-              <h3 className="text-xl font-semibold text-white">Business Registration</h3>
+              <h3 className={sectionHeadingClass}>Business Registration</h3>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
-                  <Label className="text-slate-300">Registration Number *</Label>
+                  <Label className={labelClass}>Registration Number *</Label>
                   <Input
                     value={formData.business_registration_details.registration_number}
                     onChange={(e) =>
@@ -744,12 +749,12 @@ export default function SelectCafePage() {
                         },
                       })
                     }
-                    className="bg-slate-800/50 border-slate-600 text-white"
+                    className={formInputClass}
                     placeholder="REG123456"
                   />
                 </div>
                 <div>
-                  <Label className="text-slate-300">Business Type *</Label>
+                  <Label className={labelClass}>Business Type *</Label>
                   <Input
                     value={formData.business_registration_details.business_type}
                     onChange={(e) =>
@@ -761,12 +766,12 @@ export default function SelectCafePage() {
                         },
                       })
                     }
-                    className="bg-slate-800/50 border-slate-600 text-white"
+                    className={formInputClass}
                     placeholder="Gaming Cafe"
                   />
                 </div>
                 <div>
-                  <Label className="text-slate-300">Tax ID *</Label>
+                  <Label className={labelClass}>Tax ID *</Label>
                   <Input
                     value={formData.business_registration_details.tax_id}
                     onChange={(e) =>
@@ -778,7 +783,7 @@ export default function SelectCafePage() {
                         },
                       })
                     }
-                    className="bg-slate-800/50 border-slate-600 text-white"
+                    className={formInputClass}
                     placeholder="TAX123456"
                   />
                 </div>
@@ -787,12 +792,12 @@ export default function SelectCafePage() {
 
             {/* Operating Hours */}
             <div className="space-y-4">
-              <h3 className="text-xl font-semibold text-white">Operating Hours</h3>
+              <h3 className={sectionHeadingClass}>Operating Hours</h3>
               <div className="space-y-3">
                 {DAYS_OF_WEEK.map((day) => (
                   <div key={day.key} className="flex items-center gap-4">
                     <div className="w-28">
-                      <span className="text-slate-300">{day.label}</span>
+                      <span className="text-slate-700 dark:text-slate-300">{day.label}</span>
                     </div>
                     <Checkbox
                       checked={formData.timing[day.key]?.closed || false}
@@ -807,7 +812,7 @@ export default function SelectCafePage() {
                       }
                       className="border-slate-600"
                     />
-                    <span className="text-slate-400 text-sm">Closed</span>
+                    <span className="text-sm text-slate-600 dark:text-slate-400">Closed</span>
                     {!formData.timing[day.key]?.closed && (
                       <>
                         <Input
@@ -822,9 +827,9 @@ export default function SelectCafePage() {
                               },
                             })
                           }
-                          className="bg-slate-800/50 border-slate-600 text-white w-32"
+                          className="ui-input-surface w-32"
                         />
-                        <span className="text-slate-400">to</span>
+                        <span className="text-slate-600 dark:text-slate-400">to</span>
                         <Input
                           type="time"
                           value={formData.timing[day.key]?.close || "22:00"}
@@ -837,7 +842,7 @@ export default function SelectCafePage() {
                               },
                             })
                           }
-                          className="bg-slate-800/50 border-slate-600 text-white w-32"
+                          className="ui-input-surface w-32"
                         />
                       </>
                     )}
@@ -848,9 +853,9 @@ export default function SelectCafePage() {
 
             {/* Available Consoles */}
             <div className="space-y-4">
-              <h3 className="text-xl font-semibold text-white">Available Consoles</h3>
-              <div className="bg-green-900/20 border border-green-700/50 rounded p-3">
-                <p className="text-green-300 text-xs">
+              <h3 className={sectionHeadingClass}>Available Consoles</h3>
+              <div className="rounded p-3 border border-emerald-300 bg-emerald-50 dark:border-green-700/50 dark:bg-green-900/20">
+                <p className="text-xs text-emerald-800 dark:text-green-300">
                   <strong>Console Auto-Creation:</strong> Individual console records will be automatically created based on
                   the number of slots. For example, 5 PC slots will create PC-1, PC-2, PC-3, PC-4, PC-5.
                 </p>
@@ -858,7 +863,7 @@ export default function SelectCafePage() {
               {formData.available_games.map((game, index) => (
                 <div key={index} className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
                   <div>
-                    <Label className="text-slate-300">Available Console *</Label>
+                    <Label className={labelClass}>Available Console *</Label>
                     <select
                       value={game.name}
                       onChange={(e) => {
@@ -868,7 +873,7 @@ export default function SelectCafePage() {
                         games[index].gaming_type = value
                         setFormData({ ...formData, available_games: games })
                       }}
-                      className="w-full rounded-md bg-slate-800/50 border border-slate-600 text-white px-3 py-2 text-sm"
+                      className={formSelectClass}
                     >
                       <option value="" disabled>Select console</option>
                       {CONSOLE_TYPES.map((ct) => (
@@ -877,7 +882,7 @@ export default function SelectCafePage() {
                     </select>
                   </div>
                   <div>
-                    <Label className="text-slate-300">Total Slots *</Label>
+                    <Label className={labelClass}>Total Slots *</Label>
                     <Input
                       type="number"
                       min={0}
@@ -888,12 +893,12 @@ export default function SelectCafePage() {
                         games[index].total_slot = val
                         setFormData({ ...formData, available_games: games })
                       }}
-                      className="bg-slate-800/50 border-slate-600 text-white"
+                      className={formInputClass}
                       placeholder="5"
                     />
                   </div>
                   <div>
-                    <Label className="text-slate-300">Rate per Slot *</Label>
+                    <Label className={labelClass}>Rate per Slot *</Label>
                     <Input
                       type="number"
                       min={0}
@@ -904,7 +909,7 @@ export default function SelectCafePage() {
                         games[index].rate_per_slot = val
                         setFormData({ ...formData, available_games: games })
                       }}
-                      className="bg-slate-800/50 border-slate-600 text-white"
+                      className={formInputClass}
                       placeholder="100"
                     />
                   </div>
@@ -915,7 +920,7 @@ export default function SelectCafePage() {
                         const games = formData.available_games.filter((_, i) => i !== index)
                         setFormData({ ...formData, available_games: games })
                       }}
-                      className="bg-red-600 hover:bg-red-700"
+                      className="border border-rose-300 bg-white text-rose-700 hover:bg-rose-50 dark:border-rose-500/40 dark:bg-rose-500/12 dark:text-rose-200 dark:hover:bg-rose-500/20"
                       disabled={formData.available_games.length === 1}
                     >
                       <X className="w-4 h-4" />
@@ -934,7 +939,7 @@ export default function SelectCafePage() {
                     ],
                   })
                 }
-                className="bg-emerald-600 hover:bg-emerald-700"
+                className="ui-action-primary"
               >
                 <Plus className="w-4 h-4 mr-2" />
                 Add Console
@@ -943,19 +948,19 @@ export default function SelectCafePage() {
 
             {/* Documents */}
             <div className="space-y-4">
-              <h3 className="text-xl font-semibold text-white">Documents</h3>
+              <h3 className={sectionHeadingClass}>Documents</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {Object.keys(documents).map((docType) => (
                   <div key={docType} className="space-y-2">
-                    <Label className="text-slate-300 capitalize">{docType.replace(/_/g, " ")}</Label>
+                    <Label className={`${labelClass} capitalize`}>{docType.replace(/_/g, " ")}</Label>
                     <div className="flex items-center gap-2">
                       <Input
                         type="file"
                         accept=".pdf,.jpg,.jpeg,.png"
                         onChange={(e) => handleFileChange(docType, e.target.files?.[0] || null)}
-                        className="bg-slate-800/50 border-slate-600 text-white file:bg-emerald-600 file:text-white file:border-0 file:rounded-lg file:px-4 file:py-2"
+                        className="ui-input-surface file:mr-4 file:rounded-lg file:border-0 file:bg-emerald-600 file:px-4 file:py-2 file:text-white dark:file:bg-emerald-600"
                       />
-                      {documents[docType] && <span className="text-emerald-400 text-sm">✓</span>}
+                      {documents[docType] && <span className="text-sm text-emerald-700 dark:text-emerald-400">✓</span>}
                     </div>
                   </div>
                 ))}
@@ -967,7 +972,7 @@ export default function SelectCafePage() {
               <Button
                 onClick={handleOnboardSubmit}
                 disabled={isSubmitting}
-                className="flex-1 h-14 bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-600 hover:to-cyan-600 text-white font-bold text-lg"
+                className="ui-action-primary flex-1 h-14 text-lg font-bold text-white"
               >
                 {isSubmitting ? (
                   <div className="flex items-center gap-2">
@@ -981,7 +986,7 @@ export default function SelectCafePage() {
               <Button
                 onClick={() => setShowOnboardDialog(false)}
                 disabled={isSubmitting}
-                className="px-8 h-14 bg-slate-700 hover:bg-slate-600 text-white"
+                className="slot-booking-modal-secondary px-8 h-14"
               >
                 Cancel
               </Button>
@@ -989,7 +994,7 @@ export default function SelectCafePage() {
 
             {error && (
               <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-xl">
-                <p className="text-red-400 text-sm">{error}</p>
+                <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
               </div>
             )}
           </div>
