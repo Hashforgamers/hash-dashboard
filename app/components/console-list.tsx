@@ -53,6 +53,7 @@ export function ConsoleList({ onEdit, refreshKey = 0 }: ConsoleListProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [deletingConsoleId, setDeletingConsoleId] = useState<number | null>(null);
   const [releasingConsoleId, setReleasingConsoleId] = useState<number | null>(null);
+  const [unlinkingConsoleId, setUnlinkingConsoleId] = useState<number | null>(null);
   const [activeGroup, setActiveGroup] = useState<"all" | "pc" | "ps5" | "xbox" | "vr">("all");
 
   const loadConsoles = async (currentVendorId: number) => {
@@ -132,6 +133,9 @@ export function ConsoleList({ onEdit, refreshKey = 0 }: ConsoleListProps) {
       currentEndTime: item.currentEndTime,
       collectibleAmount: Number(item.collectibleAmount || 0),
       hasPendingCollection: Boolean(item.hasPendingCollection),
+      kioskLinked: Boolean(item.kioskLinked),
+      kioskId: item.kioskId || null,
+      kioskLinkSessionId: item.kioskLinkSessionId || null,
     };
   });
 
@@ -198,6 +202,23 @@ export function ConsoleList({ onEdit, refreshKey = 0 }: ConsoleListProps) {
       console.error("Failed to release console:", error);
     } finally {
       setReleasingConsoleId(null);
+    }
+  };
+
+  const handleUnlink = async (consoleItem: any): Promise<void> => {
+    if (!vendorId || !consoleItem?.id) return;
+    try {
+      setUnlinkingConsoleId(consoleItem.id);
+      await axios.post(
+        `${DASHBOARD_URL}/api/vendors/${vendorId}/pcs/unlink`,
+        { console_id: consoleItem.id }
+      );
+      await loadConsoles(vendorId);
+      window.dispatchEvent(new Event("refresh-dashboard"));
+    } catch (error) {
+      console.error("Failed to unlink kiosk:", error);
+    } finally {
+      setUnlinkingConsoleId(null);
     }
   };
 
@@ -311,18 +332,36 @@ export function ConsoleList({ onEdit, refreshKey = 0 }: ConsoleListProps) {
                 <motion.div key={console.id} variants={item}>
                   <Card className="gaming-panel group rounded-xl border border-cyan-500/25 transition-all duration-300 hover:scale-[1.01] hover:border-cyan-400/45 hover:shadow-[0_0_20px_rgba(6,182,212,0.12)]">
                     <CardContent className="flex h-full flex-col p-4">
-                      <div className="mb-4 flex items-center space-x-3">
-                        <div className="feature-action-icon p-2.5 transition-colors group-hover:bg-slate-100 dark:group-hover:bg-slate-800/80">
-                          <console.icon className="h-7 w-7 text-slate-700 dark:text-cyan-300" />
+                      <div className="mb-4 flex items-center justify-between">
+                        <div className="flex items-center space-x-3">
+                          <div className="feature-action-icon p-2.5 transition-colors group-hover:bg-slate-100 dark:group-hover:bg-slate-800/80">
+                            <console.icon className="h-7 w-7 text-slate-700 dark:text-cyan-300" />
+                          </div>
+                          <div>
+                            <h3 className="dash-title !text-base leading-tight">
+                              {console.name}
+                            </h3>
+                            <p className="dash-subtitle premium-subtle">
+                              {console.number}
+                            </p>
+                          </div>
                         </div>
-                        <div>
-                          <h3 className="dash-title !text-base leading-tight">
-                            {console.name}
-                          </h3>
-                          <p className="dash-subtitle premium-subtle">
-                            {console.number}
-                          </p>
-                        </div>
+                        {console.type === "pc" && console.kioskLinked && (
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <span className="inline-flex cursor-help items-center gap-2 rounded-full border border-emerald-400/40 bg-emerald-500/10 px-2 py-1 text-xs font-semibold text-emerald-700 dark:text-emerald-200">
+                                  <span className="h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]" />
+                                  Linked
+                                </span>
+                              </TooltipTrigger>
+                              <TooltipContent side="top" className="text-xs">
+                                <p>Kiosk linked</p>
+                                {console.kioskId ? <p>ID: {console.kioskId}</p> : null}
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        )}
                       </div>
 
                       <div className="flex-grow space-y-2.5 text-sm">
@@ -428,6 +467,27 @@ export function ConsoleList({ onEdit, refreshKey = 0 }: ConsoleListProps) {
                           <Edit className="w-4 h-4 mr-1" />
                           Edit
                         </Button>
+                        {console.type === "pc" && console.kioskLinked && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleUnlink(console)}
+                            disabled={unlinkingConsoleId === console.id || deletingConsoleId !== null}
+                            className="border-emerald-300 bg-white text-emerald-800 hover:bg-emerald-50 dark:border-emerald-400/45 dark:bg-emerald-500/10 dark:text-emerald-200 dark:hover:bg-emerald-500/20"
+                          >
+                            {unlinkingConsoleId === console.id ? (
+                              <>
+                                <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+                                Unlinking...
+                              </>
+                            ) : (
+                              <>
+                                <Power className="w-4 h-4 mr-1" />
+                                Unlink
+                              </>
+                            )}
+                          </Button>
+                        )}
                         {console.occupancyState === "occupied" && (
                           <Button
                             variant="outline"
