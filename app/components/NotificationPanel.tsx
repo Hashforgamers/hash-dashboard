@@ -12,7 +12,9 @@ interface PayAtCafeNotification {
   event_id: string
   emitted_at: string
   bookingId: number
+  booking_ids?: number[]
   slotId: number
+  slot_ids?: number[]
   vendorId: number
   userId: number
   username: string
@@ -25,6 +27,9 @@ interface PayAtCafeNotification {
   consoleType: string
   consoleNumber: string
   date: string
+  batch_id?: string
+  slot_count?: number
+  total_amount?: number
   slot_price: {
     vendor_id: number
     single_slot_price: number
@@ -123,8 +128,13 @@ export function NotificationPanel({
           onBookingAccepted(bookingData)
         }
 
+        if (result?.booking_ids?.length > 1 && typeof window !== "undefined") {
+          window.dispatchEvent(new CustomEvent("refresh-dashboard"))
+        }
+
         // ✅ UPDATED: Toast correctly says payment is NOT done yet
-        showToast('✅ Booking accepted! Collect ₹' + notification.game.single_slot_price + ' after session completion.', 'success')
+        const collectAmount = notification.total_amount || notification.game.single_slot_price
+        showToast('✅ Booking accepted! Collect ₹' + collectAmount + ' after session completion.', 'success')
         console.log(`✅ Booking ${notification.bookingId} confirmed — payment to be collected after session`)
       } else {
         throw new Error(result.message || 'Failed to accept booking')
@@ -160,6 +170,9 @@ export function NotificationPanel({
 
       if (response.ok && result.success) {
         onRemoveNotification(notification.bookingId)
+        if (result?.booking_ids?.length > 1 && typeof window !== "undefined") {
+          window.dispatchEvent(new CustomEvent("refresh-dashboard"))
+        }
         showToast('✅ Booking rejected and cancelled successfully!', 'success')
         console.log(`❌ Booking ${notification.bookingId} cancelled successfully`)
       } else {
@@ -317,6 +330,11 @@ export function NotificationPanel({
                             <User className="w-4 h-4 text-slate-400" />
                             <span className="font-medium text-slate-100">{notification.username}</span>
                             <span className="text-xs text-slate-400">wants to book</span>
+                            {notification.slot_count && notification.slot_count > 1 && (
+                              <span className="rounded-full border border-amber-400/40 bg-amber-500/10 px-2 py-0.5 text-[11px] font-semibold text-amber-200">
+                                {notification.slot_count} slots
+                              </span>
+                            )}
                           </div>
 
                           {/* Game + Console */}
@@ -349,12 +367,12 @@ export function NotificationPanel({
                             </p>
                             <div className="text-center">
                               <span className="text-2xl font-bold text-orange-300">
-                                ₹{notification.game.single_slot_price}
+                                ₹{notification.total_amount ?? notification.game.single_slot_price}
                               </span>
                             </div>
                             {/* ✅ NEW: Subtle reminder so vendor knows what to do */}
                             <p className="mt-1 text-center text-xs text-slate-400">
-                              Collect cash when customer arrives
+                              Collect after session completion
                             </p>
                           </div>
 

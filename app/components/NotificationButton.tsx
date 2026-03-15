@@ -67,11 +67,14 @@ export function NotificationButton({
     console.log('🔔 NotificationButton: Received booking event from Dashboard:', latestBookingEvent)
 
     // Check if this is a pay-at-cafe notification for our vendor
+    const eventBatchId = latestBookingEvent.batch_id || latestBookingEvent?.squad_details?.batch_id
     if (latestBookingEvent.vendorId === vendorId && latestBookingEvent.status === 'pending_acceptance') {
       console.log('🔔 NotificationButton: Processing pay at cafe notification for vendor:', vendorId)
 
       setNotifications(prev => {
-        const exists = prev.some(n => n.bookingId === latestBookingEvent.bookingId)
+        const exists = eventBatchId
+          ? prev.some(n => (n.batch_id || n?.squad_details?.batch_id) === eventBatchId)
+          : prev.some(n => n.bookingId === latestBookingEvent.bookingId)
         if (!exists) {
           console.log('📥 NotificationButton: Adding new notification from Dashboard event')
           const newNotifications = [latestBookingEvent, ...prev]
@@ -92,11 +95,11 @@ export function NotificationButton({
       if (Notification.permission === 'granted') {
         try {
           const notification = new Notification('New Pay at Cafe Request', {
-            body: `${latestBookingEvent.username} wants to book ${latestBookingEvent.game?.game_name || 'a game'} for ₹${latestBookingEvent.game?.single_slot_price || latestBookingEvent.slot_price?.single_slot_price}`,
-            icon: '/favicon.ico',
-            tag: `pay_at_cafe_${latestBookingEvent.bookingId}`,
-            requireInteraction: true
-          })
+          body: `${latestBookingEvent.username} wants to book ${latestBookingEvent.game?.game_name || 'a game'} for ₹${latestBookingEvent.total_amount || latestBookingEvent.game?.single_slot_price || latestBookingEvent.slot_price?.single_slot_price}`,
+          icon: '/favicon.ico',
+          tag: `pay_at_cafe_${eventBatchId || latestBookingEvent.bookingId}`,
+          requireInteraction: true
+        })
           setTimeout(() => notification.close(), 10000)
         } catch (notifError) {
           console.log('NotificationButton: Browser notification failed:', notifError)
@@ -129,7 +132,10 @@ export function NotificationButton({
     const handlePayAtCafeAccepted = (data: any) => {
       console.log('✅ NotificationButton: Booking accepted via socket event:', data)
       setNotifications(prev => {
-        const filtered = prev.filter(n => n.bookingId !== data.bookingId)
+        const batchId = data?.batch_id
+        const filtered = batchId
+          ? prev.filter(n => (n.batch_id || n?.squad_details?.batch_id) !== batchId)
+          : prev.filter(n => n.bookingId !== data.bookingId)
         console.log('📉 NotificationButton: Removed accepted booking. Count:', prev.length, '->', filtered.length)
         return filtered
       })
@@ -139,7 +145,10 @@ export function NotificationButton({
     const handlePayAtCafeRejected = (data: any) => {
       console.log('❌ NotificationButton: Booking rejected via socket event:', data)
       setNotifications(prev => {
-        const filtered = prev.filter(n => n.bookingId !== data.bookingId)
+        const batchId = data?.batch_id
+        const filtered = batchId
+          ? prev.filter(n => (n.batch_id || n?.squad_details?.batch_id) !== batchId)
+          : prev.filter(n => n.bookingId !== data.bookingId)
         console.log('📉 NotificationButton: Removed rejected booking. Count:', prev.length, '->', filtered.length)
         return filtered
       })
