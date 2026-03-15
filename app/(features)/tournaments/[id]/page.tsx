@@ -12,6 +12,7 @@ import {
   listEvents, getRegistrations,
   EventItem, Registration,
   EventStatus, RegistrationStatus, PaymentStatus,
+  getTeams, TeamItem, publishResults, WinnerInput,
 } from '@/lib/event-api';
 import { jwtDecode } from 'jwt-decode';
 import { DashboardLayout } from '@/app/(layout)/dashboard-layout';
@@ -60,8 +61,17 @@ export default function TournamentDetailPage() {
   const [registrations, setRegistrations] = useState<Registration[]>([]);
   const [loadingEvent,  setLoadingEvent]  = useState(true);
   const [loadingRegs,   setLoadingRegs]   = useState(true);
+  const [teams,         setTeams]         = useState<TeamItem[]>([]);
+  const [loadingTeams,  setLoadingTeams]  = useState(true);
   const [search,        setSearch]        = useState('');
   const [regFilter,     setRegFilter]     = useState('');
+  const [publishError,  setPublishError]  = useState<string | null>(null);
+  const [publishing,    setPublishing]    = useState(false);
+  const [winners,       setWinners]       = useState<WinnerInput[]>([
+    { rank: 1, team_id: '', verified_snapshot: '' },
+    { rank: 2, team_id: '', verified_snapshot: '' },
+    { rank: 3, team_id: '', verified_snapshot: '' },
+  ]);
 
   // Fetch event
         useEffect(() => {
@@ -93,6 +103,16 @@ export default function TournamentDetailPage() {
       .finally(() => setLoadingRegs(false));
   }, [token, eventId]);
 
+  // Fetch teams
+  useEffect(() => {
+    if (!token) return;
+    setLoadingTeams(true);
+    getTeams(token, eventId)
+      .then(setTeams)
+      .catch(console.error)
+      .finally(() => setLoadingTeams(false));
+  }, [token, eventId]);
+
   // Helpers
   const fmt = (iso: string) =>
     new Date(iso).toLocaleDateString('en-US', {
@@ -113,6 +133,55 @@ export default function TournamentDetailPage() {
   const confirmed = registrations.filter((r) => r.status === 'confirmed').length;
   const pending   = registrations.filter((r) => r.status === 'pending').length;
   const paid      = registrations.filter((r) => r.payment_status === 'paid').length;
+
+  const handleWinnerChange = (index: number, patch: Partial<WinnerInput>) => {
+    setWinners((prev) => {
+      const next = [...prev];
+      next[index] = { ...next[index], ...patch };
+      return next;
+    });
+  };
+
+  const handlePublishResults = async () => {
+    if (!token) return;
+    setPublishError(null);
+
+    const selected = winners
+      .map((w) => ({
+        ...w,
+        team_id: String(w.team_id || '').trim(),
+        verified_snapshot: String(w.verified_snapshot || '').trim(),
+      }))
+      .filter((w) => w.team_id);
+
+    if (selected.length === 0) {
+      setPublishError('Select at least one winner to publish.');
+      return;
+    }
+
+    const teamIds = selected.map((w) => w.team_id);
+    const dupes = teamIds.filter((id, idx) => teamIds.indexOf(id) !== idx);
+    if (dupes.length > 0) {
+      setPublishError('A team can only appear once in winners.');
+      return;
+    }
+
+    const payload = selected.map((w) => ({
+      team_id: w.team_id,
+      rank: Number(w.rank),
+      verified_snapshot: w.verified_snapshot || undefined,
+    }));
+
+    try {
+      setPublishing(true);
+      await publishResults(token, eventId, payload);
+      setEvent((prev) => prev ? { ...prev, status: 'completed' } : prev);
+    } catch (error: any) {
+      setPublishError(error?.message || 'Failed to publish results.');
+    } finally {
+      setPublishing(false);
+    }
+  };
 
   // CSV export
   const exportCSV = () => {
@@ -415,6 +484,130 @@ export default function TournamentDetailPage() {
               )}
             </tbody>
           </table>
+        </div>
+      </div>
+
+      {/* ── Teams ─────────────────────────────────────── */}
+      <div className="gaming-panel flex flex-col overflow-hidden rounded-xl border border-cyan-400/20 bg-slate-950/45">
+        <div className="flex items-center justify-between gap-3 p-4 border-b border-cyan-500/20">
+          <div className="flex items-center gap-2">
+            <Trophy className="icon-md text-muted-foreground" />
+            <h3 className="section-title">Teams</h3>
+            {!loadingTeams && (
+              <span className="text-xs bg-muted text-muted-foreground px-2 py-0.5 rounded-full">
+                {teams.length}
+              </span>
+            )}
+          </div>
+        </div>
+        <div className="overflow-auto flex-1">
+          <table className="w-full">
+            <thead className="sticky top-0 bg-slate-900/70">
+              <tr>
+                <th className="table-cell text-left text-[11px] font-bold uppercase tracking-wider text-cyan-100/80 sm:text-xs">Team</th>
+                <th className="table-cell text-left text-[11px] font-bold uppercase tracking-wider text-cyan-100/80 sm:text-xs">Type</th>
+                <th className="table-cell text-left text-[11px] font-bold uppercase tracking-wider text-cyan-100/80 sm:text-xs">Members</th>
+                <th className="table-cell text-left text-[11px] font-bold uppercase tracking-wider text-cyan-100/80 sm:text-xs">Created</th>
+              </tr>
+            </thead>
+            <tbody>
+              {loadingTeams ? (
+                [...Array(3)].map((_, i) => (
+                  <tr key={i} className="table-row animate-pulse">
+                    {[...Array(4)].map((_, j) => (
+                      <td key={j} className="table-cell">
+                        <div className="h-4 w-full max-w-[140px] rounded bg-slate-800/80" />
+                      </td>
+                    ))}
+                  </tr>
+                ))
+              ) : teams.length === 0 ? (
+                <tr>
+                  <td colSpan={4} className="table-cell text-center py-16">
+                    <div className="flex flex-col items-center gap-2">
+                      <Users className="w-10 h-10 text-muted-foreground/20" />
+                      <p className="body-text-muted">No teams yet for this tournament.</p>
+                    </div>
+                  </td>
+                </tr>
+              ) : (
+                teams.map((team) => (
+                  <tr key={team.id} className="table-row border-b border-cyan-500/10 last:border-0 hover:bg-cyan-500/5">
+                    <td className="table-cell">
+                      <p className="table-cell-text font-medium">{team.name}</p>
+                    </td>
+                    <td className="table-cell body-text-muted text-sm">
+                      {team.is_individual ? 'Solo' : 'Team'}
+                    </td>
+                    <td className="table-cell body-text-muted text-sm">
+                      {typeof team.member_count === 'number' ? team.member_count : '—'}
+                    </td>
+                    <td className="table-cell body-text-muted text-sm">
+                      {fmtShort(team.created_at)}
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* ── Publish Results ───────────────────────────── */}
+      <div className="gaming-panel rounded-xl border border-cyan-400/20 bg-slate-950/45 p-4 sm:p-5">
+        <div className="flex items-center justify-between gap-3 mb-4">
+          <div>
+            <h3 className="section-title">Publish Results</h3>
+            <p className="premium-subtle text-sm">Select winners and publish final standings.</p>
+          </div>
+          <span className={`text-xs font-semibold px-3 py-1 rounded-full ${EVENT_STATUS_BADGE[event.status]}`}>
+            {event.status.charAt(0).toUpperCase() + event.status.slice(1)}
+          </span>
+        </div>
+
+        <div className="space-y-3">
+          {winners.map((winner, idx) => (
+            <div key={winner.rank} className="grid grid-cols-1 gap-3 rounded-lg border border-cyan-400/15 bg-slate-900/60 p-3 md:grid-cols-3">
+              <div className="flex items-center gap-2">
+                <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-cyan-500/20 text-sm font-bold text-cyan-100">
+                  #{winner.rank}
+                </span>
+                <span className="text-sm text-slate-200">Rank {winner.rank}</span>
+              </div>
+              <select
+                className="h-10 w-full rounded-lg border border-cyan-400/25 bg-slate-900/70 px-3 text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-cyan-400/60"
+                value={winner.team_id}
+                onChange={(e) => handleWinnerChange(idx, { team_id: e.target.value })}
+              >
+                <option value="">Select team</option>
+                {teams.map((team) => (
+                  <option key={team.id} value={team.id}>{team.name}</option>
+                ))}
+              </select>
+              <input
+                className="h-10 w-full rounded-lg border border-cyan-400/25 bg-slate-900/70 px-3 text-sm text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-400/60"
+                placeholder="Result image URL (optional)"
+                value={winner.verified_snapshot || ''}
+                onChange={(e) => handleWinnerChange(idx, { verified_snapshot: e.target.value })}
+              />
+            </div>
+          ))}
+        </div>
+
+        {publishError && (
+          <div className="mt-3 rounded-lg border border-rose-400/30 bg-rose-500/10 px-3 py-2 text-sm text-rose-200">
+            {publishError}
+          </div>
+        )}
+
+        <div className="mt-4 flex items-center justify-end">
+          <button
+            className="inline-flex items-center justify-center gap-2 rounded-lg border border-cyan-400/40 bg-gradient-to-r from-cyan-500/90 to-emerald-500/90 px-4 py-2 text-xs font-semibold text-white shadow-md shadow-cyan-900/40 transition-all duration-200 hover:from-cyan-400 hover:to-emerald-400 hover:shadow-lg hover:shadow-cyan-600/25 disabled:cursor-not-allowed disabled:opacity-70 sm:text-sm"
+            onClick={handlePublishResults}
+            disabled={publishing || teams.length === 0}
+          >
+            {publishing ? 'Publishing...' : 'Publish Results'}
+          </button>
         </div>
       </div>
 
