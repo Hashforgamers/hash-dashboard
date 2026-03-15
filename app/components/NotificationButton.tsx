@@ -70,32 +70,19 @@ export function NotificationButton({
     const eventBatchId = latestBookingEvent.batch_id || latestBookingEvent?.squad_details?.batch_id
     if (latestBookingEvent.vendorId === vendorId && latestBookingEvent.status === 'pending_acceptance') {
       console.log('🔔 NotificationButton: Processing pay at cafe notification for vendor:', vendorId)
-
-      setNotifications(prev => {
-        const exists = eventBatchId
-          ? prev.some(n => (n.batch_id || n?.squad_details?.batch_id) === eventBatchId)
-          : prev.some(n => n.bookingId === latestBookingEvent.bookingId)
-        if (!exists) {
-          console.log('📥 NotificationButton: Adding new notification from Dashboard event')
-          const newNotifications = [latestBookingEvent, ...prev]
-          console.log('📄 NotificationButton: New notification data:', JSON.stringify(latestBookingEvent, null, 2))
-          return newNotifications
-        }
-        console.log('⚠️ NotificationButton: Notification already exists, skipping')
-        return prev
-      })
-
-      setUnreadCount(prev => {
-        const newCount = prev + 1
-        console.log('📊 NotificationButton: Updated unread count from', prev, 'to', newCount)
-        return newCount
-      })
+      // Always refetch pending list so batch totals + amount are accurate.
+      fetchPendingBookings()
 
       // Show browser notification
       if (Notification.permission === 'granted') {
         try {
+          const fallbackAmount =
+            latestBookingEvent?.total_amount ??
+            latestBookingEvent?.slot_price?.single_slot_price ??
+            latestBookingEvent?.slot_price ??
+            latestBookingEvent?.game?.single_slot_price
           const notification = new Notification('New Pay at Cafe Request', {
-          body: `${latestBookingEvent.username} wants to book ${latestBookingEvent.game?.game_name || 'a game'} for ₹${latestBookingEvent.total_amount || latestBookingEvent.game?.single_slot_price || latestBookingEvent.slot_price?.single_slot_price}`,
+          body: `${latestBookingEvent.username} wants to book ${latestBookingEvent.game?.game_name || 'a game'} for ₹${fallbackAmount ?? 0}`,
           icon: '/favicon.ico',
           tag: `pay_at_cafe_${eventBatchId || latestBookingEvent.bookingId}`,
           requireInteraction: true
