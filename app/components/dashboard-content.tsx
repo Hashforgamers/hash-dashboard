@@ -218,6 +218,18 @@ export function DashboardContent() {
       }
     }
 
+    function handleBookingPaymentUpdate(data: any) {
+      const eventVendorId = Number(data?.vendorId ?? data?.vendor_id)
+      if (eventVendorId !== vendorId) return
+      setRefreshSlots((prev) => !prev)
+      loadLandingData()
+      loadConsoleData()
+      setRealTimeStats(prev => ({
+        ...prev,
+        lastUpdate: new Date().toLocaleTimeString(),
+      }))
+    }
+
     function handleSocketResync() {
       joinVendor(vendorId)
       loadLandingData()
@@ -227,6 +239,7 @@ export function DashboardContent() {
     socket.on('booking', handleBookingEvent)
     socket.on('upcoming_booking', handleUpcomingBookingEvent)
     socket.on('console_availability', handleConsoleAvailabilityEvent)
+    socket.on('booking_payment_update', handleBookingPaymentUpdate)
     socket.on('connect', handleSocketResync)
     if (socket.io) {
       socket.io.on('reconnect', handleSocketResync)
@@ -238,6 +251,7 @@ export function DashboardContent() {
       socket.off('booking', handleBookingEvent)
       socket.off('upcoming_booking', handleUpcomingBookingEvent)
       socket.off('console_availability', handleConsoleAvailabilityEvent)
+      socket.off('booking_payment_update', handleBookingPaymentUpdate)
       socket.off('connect', handleSocketResync)
       if (socket.io) {
         socket.io.off('reconnect', handleSocketResync)
