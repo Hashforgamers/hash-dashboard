@@ -54,6 +54,21 @@ export interface Registration {
   created_at: string;
 }
 
+export interface TeamItem {
+  id: string;
+  name: string;
+  created_by_user: number | string;
+  created_at: string;
+  is_individual: boolean;
+  member_count?: number;
+}
+
+export interface WinnerInput {
+  team_id: string;
+  rank: number;
+  verified_snapshot?: string | null;
+}
+
 export interface BannerUploadResult {
   url: string;
   public_id: string;
@@ -137,6 +152,39 @@ export async function getRegistrations(
   );
   if (!res.ok) return [];
   return res.json() as Promise<Registration[]>;
+}
+
+export async function getTeams(
+  token: string,
+  eventId: string
+): Promise<TeamItem[]> {
+  const res = await fetch(
+    `${API_BASE}/api/vendor/events/${eventId}/teams`,
+    { headers: { Authorization: `Bearer ${token}` } }
+  );
+  if (!res.ok) return [];
+  return res.json() as Promise<TeamItem[]>;
+}
+
+export async function publishResults(
+  token: string,
+  eventId: string,
+  winners: WinnerInput[]
+): Promise<{ ok: boolean }> {
+  const res = await fetch(
+    `${API_BASE}/api/vendor/events/${eventId}/results/publish`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ winners }),
+    }
+  );
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Failed to publish results');
+  return data;
 }
 
 // ─── Banner (Cloudinary) ──────────────────────────────────────────────────────
