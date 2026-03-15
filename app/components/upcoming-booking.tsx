@@ -286,10 +286,6 @@ export function UpcomingBookings({
     
     joinVendor(parseInt(vendorId))
 
-    socket.off('upcoming_booking');
-    socket.off('booking');
-    socket.off('booking_accepted');
-
     function handleUpcomingBooking(data: any) {
       console.log('📅 Real-time upcoming booking:', data)
       
@@ -367,15 +363,28 @@ export function UpcomingBookings({
       }
     }
 
+    function handleCurrentSlotStart(data: any) {
+      const eventVendorId = Number(data?.vendorId ?? data?.vendor_id);
+      if (eventVendorId !== parseInt(vendorId)) return;
+      const currentBookingId = Number(data?.bookingId ?? data?.bookId);
+      if (!Number.isFinite(currentBookingId) || currentBookingId <= 0) return;
+      setUpcomingBookings(prev => {
+        if (!Array.isArray(prev)) return prev;
+        return prev.filter(booking => Number(booking?.bookingId) !== currentBookingId);
+      });
+    }
+
     socket.on('upcoming_booking', handleUpcomingBooking)
     socket.on('booking', handleBookingUpdate)
     socket.on('booking_accepted', handleBookingAccepted)
+    socket.on('current_slot', handleCurrentSlotStart)
 
     return () => {
       console.log('🧹 Cleaning up UpcomingBookings listeners')
       socket.off('upcoming_booking', handleUpcomingBooking)
       socket.off('booking', handleBookingUpdate)
       socket.off('booking_accepted', handleBookingAccepted)
+      socket.off('current_slot', handleCurrentSlotStart)
     }
   }, [socket, vendorId, isConnected, joinVendor])
 
