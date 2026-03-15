@@ -365,7 +365,10 @@ export function UpcomingBookings({
 
     function handleCurrentSlotStart(data: any) {
       const eventVendorId = Number(data?.vendorId ?? data?.vendor_id);
-      if (eventVendorId !== parseInt(vendorId)) return;
+      const vendorMatches = !data?.vendorId && !data?.vendor_id
+        ? true
+        : eventVendorId === parseInt(vendorId);
+      if (!vendorMatches) return;
       const currentBookingId = Number(data?.bookingId ?? data?.bookId);
       if (!Number.isFinite(currentBookingId) || currentBookingId <= 0) return;
       setUpcomingBookings(prev => {
