@@ -332,8 +332,6 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
     if (!socket || !vendorId || !isConnected) return
 
     joinVendor(vendorId)
-    socket.off('current_slot');
-    socket.off('console_availability');
 
     function handleCurrentSlot(data: any) {
       const dataVendorId = parseInt(data.vendorId || data.vendor_id)

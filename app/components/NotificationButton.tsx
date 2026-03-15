@@ -180,6 +180,16 @@ export function NotificationButton({
     }
   }, [vendorId])
 
+  // Re-fetch pending list after socket reconnect to avoid stale notifications
+  useEffect(() => {
+    if (!vendorId) return
+    const handleReconnected = () => {
+      fetchPendingBookings()
+    }
+    window.addEventListener("socket-reconnected", handleReconnected)
+    return () => window.removeEventListener("socket-reconnected", handleReconnected)
+  }, [vendorId])
+
   // Handle panel close
   const handleClose = () => {
     setIsOpen(false)
