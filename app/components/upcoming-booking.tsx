@@ -865,6 +865,24 @@ export function UpcomingBookings({
                       booking?.squadDetails?.suggested_extra_controller_qty ||
                       0
                     );
+                    const paymentUseCase = String(
+                      booking?.squadDetails?.payment_use_case ||
+                      booking?.squadDetails?.paymentUseCase ||
+                      booking?.payment_use_case ||
+                      ""
+                    ).toLowerCase();
+                    const settlementStatus = String(
+                      booking?.squadDetails?.settlement_status ||
+                      booking?.squadDetails?.settlementStatus ||
+                      booking?.settlement_status ||
+                      ""
+                    ).toLowerCase();
+                    const isPayAtCafe = paymentUseCase === "pay_at_cafe" ||
+                      ["pending", "unpaid", "due"].includes(settlementStatus);
+                    const paymentBadgeLabel = isPayAtCafe ? "To Be Paid" : "Paid";
+                    const paymentBadgeClass = isPayAtCafe
+                      ? "border-amber-400/40 bg-amber-500/15 text-amber-200"
+                      : "border-emerald-400/40 bg-emerald-500/15 text-emerald-200";
                     return (
                     <motion.div
                       key={booking.bookingId}
@@ -890,8 +908,8 @@ export function UpcomingBookings({
                               </span>
                             )}
                           </div>
-                          <span className="shrink-0 rounded-full border border-emerald-400/40 bg-emerald-500/15 px-2.5 py-0.5 text-sm font-medium text-emerald-200 capitalize">
-                            Paid
+                          <span className={`shrink-0 rounded-full border px-2.5 py-0.5 text-sm font-medium capitalize ${paymentBadgeClass}`}>
+                            {paymentBadgeLabel}
                           </span>
                           {squadEnabled && (
                             <button
