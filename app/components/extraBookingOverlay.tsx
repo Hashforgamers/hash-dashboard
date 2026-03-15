@@ -91,6 +91,12 @@ const ExtraBookingOverlay: React.FC<ExtraBookingOverlayProps> = ({
     return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
   };
 
+  const normalizeBookingType = (type?: string) => String(type || "").toLowerCase().trim();
+  const isExtraType = (type?: string) => {
+    const normalized = normalizeBookingType(type);
+    return normalized === "extra" || normalized === "additional_meals";
+  };
+
   useEffect(() => {
     if (!showOverlay || !selectedSlot) {
       setSummaryLoading(false);
@@ -239,7 +245,12 @@ const ExtraBookingOverlay: React.FC<ExtraBookingOverlayProps> = ({
     }
   };
 
-  const settlePendingBookingCharges = async (bookingId: number, mode: string, waiveOffAmount: number) => {
+  const settlePendingBookingCharges = async (
+    bookingId: number,
+    mode: string,
+    waiveOffAmount: number,
+    bookingTypes?: string[]
+  ) => {
     const response = await fetch(`${BOOKING_URL}/api/booking/${bookingId}/settle-pending`, {
       method: "POST",
       headers: {
@@ -249,7 +260,7 @@ const ExtraBookingOverlay: React.FC<ExtraBookingOverlayProps> = ({
       body: JSON.stringify({
         mode_of_payment: mode,
         waive_off_amount: waiveOffAmount,
-        booking_types: ["extra", "additional_meals"],
+        booking_types: bookingTypes && bookingTypes.length > 0 ? bookingTypes : ["extra", "additional_meals"],
       }),
     });
     const data = await response.json();
@@ -298,7 +309,22 @@ const ExtraBookingOverlay: React.FC<ExtraBookingOverlayProps> = ({
       } else {
         console.log('💰 No overtime charge - skipping extra booking creation');
       }
-      await settlePendingBookingCharges(bookingId, paymentMode, parsedWaiveOff);
+      const pendingTypes = (paymentSummary?.line_items || [])
+        .filter((item) => isPendingStatus(item.settlement_status))
+        .map((item) => normalizeBookingType(item.booking_type))
+        .filter((type) => type && type !== "settlement_waive_off");
+      const bookingTypesSet = new Set(pendingTypes);
+      if (amount > 0) {
+        bookingTypesSet.add("extra");
+      }
+      if (pendingMealsAmount > 0) {
+        bookingTypesSet.add("additional_meals");
+      }
+      const bookingTypesPayload = bookingTypesSet.size > 0
+        ? Array.from(bookingTypesSet)
+        : ["extra", "additional_meals"];
+
+      await settlePendingBookingCharges(bookingId, paymentMode, parsedWaiveOff, bookingTypesPayload);
       console.log('💰 Pending charges settled successfully');
 
       const squadDetails = (selectedSlot?.squadDetails && typeof selectedSlot.squadDetails === "object")
@@ -388,7 +414,10 @@ const ExtraBookingOverlay: React.FC<ExtraBookingOverlayProps> = ({
       const localPendingExtra = (paymentSummary?.line_items || [])
         .filter((item) => String(item.booking_type || "").toLowerCase() === "extra" && isPendingStatus(item.settlement_status))
         .reduce((sum, item) => sum + Number(item.line_total || 0), 0);
-      const maxWaiveOff = localExtraAmount + localPendingMeals + localPendingExtra;
+      const localPendingBase = (paymentSummary?.line_items || [])
+        .filter((item) => !isExtraType(item.booking_type) && isPendingStatus(item.settlement_status))
+        .reduce((sum, item) => sum + Number(item.line_total || 0), 0);
+      const maxWaiveOff = localExtraAmount + localPendingMeals + localPendingExtra + localPendingBase;
       if (parsedValue < 0) {
         setWaiveOffError("Waive-off amount cannot be negative");
         setWaiveOffAmount("");
@@ -411,10 +440,13 @@ const ExtraBookingOverlay: React.FC<ExtraBookingOverlayProps> = ({
   const historicalPendingExtraAmount = (paymentSummary?.line_items || [])
     .filter((item) => String(item.booking_type || "").toLowerCase() === "extra" && isPendingStatus(item.settlement_status))
     .reduce((sum, item) => sum + Number(item.line_total || 0), 0);
+  const pendingBaseAmount = (paymentSummary?.line_items || [])
+    .filter((item) => !isExtraType(item.booking_type) && isPendingStatus(item.settlement_status))
+    .reduce((sum, item) => sum + Number(item.line_total || 0), 0);
   const isSettledStatus = (status?: string) =>
     ["completed", "done", "settled", "paid"].includes(String(status || "").toLowerCase());
   const paidInitialAmount = (paymentSummary?.line_items || [])
-    .filter((item) => String(item.booking_type || "").toLowerCase() === "direct" && isSettledStatus(item.settlement_status))
+    .filter((item) => !isExtraType(item.booking_type) && isSettledStatus(item.settlement_status))
     .reduce((sum, item) => sum + Number(item.line_total || 0), 0);
   const paidMealsAmount = (paymentSummary?.line_items || [])
     .filter((item) => String(item.booking_type || "").toLowerCase() === "additional_meals" && isSettledStatus(item.settlement_status))
@@ -424,7 +456,7 @@ const ExtraBookingOverlay: React.FC<ExtraBookingOverlayProps> = ({
     .reduce((sum, item) => sum + Number(item.line_total || 0), 0);
   const totalPaidAmount = paidInitialAmount + paidMealsAmount + paidExtraAmount;
   const parsedWaiveOff = parseFloat(waiveOffAmount) || 0;
-  const dueBeforeWaive = computedExtraAmount + pendingMealsAmount + historicalPendingExtraAmount;
+  const dueBeforeWaive = computedExtraAmount + pendingMealsAmount + historicalPendingExtraAmount + pendingBaseAmount;
   const payableAmount = Math.max(dueBeforeWaive - parsedWaiveOff, 0);
 
   // Handle keyboard navigation for payment mode buttons
@@ -468,10 +500,10 @@ const ExtraBookingOverlay: React.FC<ExtraBookingOverlayProps> = ({
             <div className="relative mb-4 sm:mb-5 flex flex-col sm:flex-row sm:items-start justify-between gap-2 sm:gap-3">
               <div>
                 <h2 id="extra-payment-title" className="text-2xl font-bold text-slate-100">
-                  Extra Payment Required
+                  Session Settlement
                 </h2>
                 <p className="mt-1 text-sm text-slate-300">
-                  Settle extra play time and in-session meals before releasing the console.
+                  Settle pending session charges (play time, meals, pay at cafe) before releasing the console.
                 </p>
                 {settlementPausedAt ? (
                   <p className="mt-1 text-xs text-cyan-300">Timer paused at {settlementPausedAt}</p>
@@ -499,7 +531,7 @@ const ExtraBookingOverlay: React.FC<ExtraBookingOverlayProps> = ({
                     Session for <span className="font-semibold text-slate-100">{selectedSlot.username}</span>
                     {computedExtraSeconds > 0
                       ? " has crossed allotted time."
-                      : " has pending in-session charges to settle."}
+                      : " has pending charges to settle."}
                   </p>
                 </div>
 

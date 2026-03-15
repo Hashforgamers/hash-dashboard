@@ -124,8 +124,8 @@ export function NotificationPanel({
         }
 
         // ✅ UPDATED: Toast correctly says payment is NOT done yet
-        showToast('✅ Booking accepted! Collect ₹' + notification.game.single_slot_price + ' when customer arrives.', 'success')
-        console.log(`✅ Booking ${notification.bookingId} confirmed — payment to be collected at cafe`)
+        showToast('✅ Booking accepted! Collect ₹' + notification.game.single_slot_price + ' after session completion.', 'success')
+        console.log(`✅ Booking ${notification.bookingId} confirmed — payment to be collected after session`)
       } else {
         throw new Error(result.message || 'Failed to accept booking')
       }
