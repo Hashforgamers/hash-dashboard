@@ -12,6 +12,12 @@ type SocketPayload = {
 };
 
 const MODULE_EVENT_MAP: Record<string, string> = {
+  booking_updated: "booking",
+  booking_queue_updated: "booking",
+  booking_slots_updated: "booking",
+  booking_payment_update: "booking",
+  pay_at_cafe_accepted: "booking",
+  pay_at_cafe_rejected: "booking",
   extras_updated: "extras",
   pricing_updated: "pricing",
   passes_updated: "passes",
@@ -34,7 +40,12 @@ export function DashboardDataBus() {
       if (eventVendor && eventVendor !== vendorId) return;
       const moduleKey = MODULE_EVENT_MAP[event];
       if (moduleKey) {
-        const versionKey = moduleKey === "store" ? "store" : `${moduleKey}:${vendorId}`;
+        const versionKey =
+          moduleKey === "store"
+            ? "store"
+            : moduleKey === "booking"
+              ? `booking:${vendorId}`
+              : `${moduleKey}:${vendorId}`;
         bumpModuleVersion(versionKey);
       }
     };
