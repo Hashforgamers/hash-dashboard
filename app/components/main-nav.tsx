@@ -23,6 +23,7 @@ import {
   KeyRound,
   Shield,
   Wallet,
+  Star,
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { ButtonDestructive } from "./log-out";
@@ -58,6 +59,7 @@ const navItems: NavItem[] = [
   { href: "/store", icon: ShoppingBag, label: "Store", permission: "store.manage" },
   { href: "/games", icon: Gamepad2, label: "Games", permission: "games.manage" },
   { href: "/tournaments", icon: Trophy, label: "Tournaments", permission: "tournaments.manage" },
+  { href: "/reviews", icon: Star, label: "Reviews", permission: "reviews.manage" },
   { href: "/select-cafe", icon: Store, label: "Select Cafe", permission: "cafe.switch" },
 ];
 
