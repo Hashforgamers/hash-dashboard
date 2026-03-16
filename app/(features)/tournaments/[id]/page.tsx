@@ -409,7 +409,7 @@ export default function TournamentDetailPage() {
       {/* ── Registrations Table ───────────────────────── */}
       <div className="gaming-panel flex flex-col overflow-hidden rounded-xl border border-cyan-400/20 bg-slate-950/45">
         {/* Table toolbar */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 border-b border-cyan-500/20 flex-shrink-0">
+        <div className="dashboard-toolbar justify-between gap-3 p-4 border-b border-cyan-500/20 flex-shrink-0">
           <div className="flex items-center gap-2">
             <Users className="icon-md text-muted-foreground" />
             <h3 className="section-title">Registrations</h3>
@@ -419,18 +419,18 @@ export default function TournamentDetailPage() {
               </span>
             )}
           </div>
-          <div className="flex gap-2 flex-wrap">
-            <div className="relative">
+          <div className="dashboard-action-bar">
+            <div className="relative min-w-[180px]">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 icon-sm text-muted-foreground" />
               <input
-                className="h-9 w-48 rounded-lg border border-cyan-400/25 bg-slate-900/70 pl-9 pr-3 text-sm text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-400/60"
+                className="dashboard-module-input h-9 w-full pl-9 pr-3"
                 placeholder="Search teams..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
             </div>
             <select
-              className="h-9 w-36 rounded-lg border border-cyan-400/25 bg-slate-900/70 px-3 text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-cyan-400/60"
+              className="dashboard-module-input h-9 w-36 px-3"
               value={regFilter}
               onChange={(e) => setRegFilter(e.target.value)}
             >
@@ -444,8 +444,9 @@ export default function TournamentDetailPage() {
         </div>
 
         {/* Table */}
-        <div className="overflow-auto flex-1">
-          <table className="w-full">
+        <div className="dashboard-table-shell flex-1">
+          <div className="dashboard-table-wrap">
+            <table className="dashboard-table">
             <thead className="sticky top-0 bg-slate-900/70">
               <tr>
                 <th className="table-cell text-left text-[11px] font-bold uppercase tracking-wider text-cyan-100/80 sm:text-xs">Team / Player</th>
@@ -541,7 +542,8 @@ export default function TournamentDetailPage() {
                 ))
               )}
             </tbody>
-          </table>
+            </table>
+          </div>
         </div>
       </div>
 
@@ -558,8 +560,8 @@ export default function TournamentDetailPage() {
             )}
           </div>
         </div>
-        <div className="overflow-auto flex-1">
-          <table className="w-full">
+        <div className="dashboard-table-wrap flex-1">
+          <table className="dashboard-table">
             <thead className="sticky top-0 bg-slate-900/70">
               <tr>
                 <th className="table-cell text-left text-[11px] font-bold uppercase tracking-wider text-cyan-100/80 sm:text-xs">Team</th>

@@ -169,13 +169,13 @@ export function KnowYourGamers() {
 
       {/* Filters and Search */}
       <div className="gaming-panel shrink-0 rounded-xl border border-cyan-400/20">
-        <div className="flex flex-col sm:flex-row gap-4 p-4">
-          <div className="flex-1 relative">
+        <div className="dashboard-toolbar p-4">
+          <div className="relative flex-1 min-w-[220px]">
             <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-500" />
             <input
               type="text"
               placeholder="Search by name or contact..."
-              className="dashboard-module-input w-full rounded-lg py-2 pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-400/60"
+              className="dashboard-module-input h-10 w-full pl-10 pr-4"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -183,7 +183,7 @@ export function KnowYourGamers() {
           <div className="flex items-center gap-2 flex-shrink-0">
             <Filter className="h-5 w-5 text-slate-500" />
             <select
-              className="dashboard-module-input min-w-0 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-400/60"
+              className="dashboard-module-input h-10 min-w-0 px-3"
               value={selectedTier}
               onChange={(e) => setSelectedTier(e.target.value)}
             >
@@ -197,9 +197,9 @@ export function KnowYourGamers() {
       </div>
 
       {/* Data Table */}
-      <div className="gaming-panel min-h-0 flex-1 overflow-hidden rounded-xl border border-cyan-400/20">
-        <div className="h-full overflow-auto">
-          <table className="dashboard-module-table w-full min-w-[1200px]">
+      <div className="dashboard-table-shell min-h-0 flex-1">
+        <div className="dashboard-table-wrap h-full">
+          <table className="dashboard-table min-w-[1200px]">
             <thead className="dashboard-module-table-head">
               <tr className="border-b border-cyan-500/20">
                 {[

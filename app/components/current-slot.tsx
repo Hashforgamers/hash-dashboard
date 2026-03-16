@@ -743,7 +743,7 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
             <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="mb-2 shrink-0 rounded-md border border-red-500/30 bg-red-950/30 p-2 text-xs text-red-300 sm:text-sm"
+              className="dashboard-error-banner mb-2 shrink-0 text-xs sm:text-sm"
             >
               {error}
             </motion.div>
@@ -754,9 +754,9 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
             variants={container}
             initial="hidden"
             animate="show"
-            className="dashboard-module-surface flex-1 min-h-0 overflow-hidden rounded-xl backdrop-blur-sm"
+            className="dashboard-table-shell flex-1 min-h-0 backdrop-blur-sm"
           >
-            <div className="h-full overflow-x-auto overflow-y-auto">
+            <div className="dashboard-table-wrap h-full">
               <table ref={tableRef} className="dashboard-module-table min-w-[760px] w-full divide-y">
                 <thead className="dashboard-module-table-head sticky top-0 z-10">
                   <tr>
@@ -1302,7 +1302,7 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
             </div>
           </motion.div>
           ) : (
-            <div className="dashboard-module-surface flex-1 min-h-0 overflow-hidden rounded-xl">
+            <div className="dashboard-table-shell flex-1 min-h-0">
               {historyLoading ? (
                 <div className="dashboard-module-empty flex h-full flex-col items-center justify-center">
                   <p className="text-sm font-medium">Loading history...</p>
@@ -1312,7 +1312,7 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                   <p className="text-sm font-medium">No past sessions found</p>
                 </div>
               ) : (
-                <div className="h-full overflow-x-auto overflow-y-auto">
+                <div className="dashboard-table-wrap h-full">
                   <table className="dashboard-module-table w-full min-w-[760px] divide-y">
                     <thead className="dashboard-module-table-head sticky top-0 z-10">
                       <tr>

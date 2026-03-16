@@ -2406,9 +2406,9 @@ export default function ConsolePricing() {
 // ✅ Table View Component - aligned with global CSS
 function OffersTable({ offers, onEdit, onDelete, deletingOfferId, getConsoleIcon }: any) {
   return (
-    <div className="table-container dashboard-module-surface flex-1 overflow-hidden rounded-xl border border-cyan-500/25">
-      <div className="h-full overflow-y-auto">
-        <table className="w-full text-left">
+    <div className="dashboard-table-shell">
+      <div className="dashboard-table-wrap">
+        <table className="dashboard-table text-left">
           <thead className="dashboard-module-table-head sticky top-0 z-10">
             <tr>
               {["Offer Name", "Console", "Pricing", "Validity", "Actions"].map((h) => (

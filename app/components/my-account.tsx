@@ -2903,9 +2903,9 @@ const ToggleSwitch = ({
         </div>
       ) : Array.isArray(payouts) && payouts.length > 0 ? (
         <div className="space-y-4">
-          {/* ✅ FIXED: Add overflow wrapper for table */}
-          <div className="overflow-x-auto -mx-4 sm:-mx-6 px-4 sm:px-6">
-            <table className="w-full min-w-[800px] border-collapse border border-border rounded-lg">
+          <div className="dashboard-table-shell">
+            <div className="dashboard-table-wrap">
+            <table className="dashboard-table min-w-[800px] border-collapse">
               <thead>
                 <tr className="table-header">
                   <th className="table-cell table-header-text text-left whitespace-nowrap">Date</th>
@@ -2960,6 +2960,7 @@ const ToggleSwitch = ({
                 ))}
               </tbody>
             </table>
+            </div>
           </div>
 
           {/* Mobile scroll indicator */}

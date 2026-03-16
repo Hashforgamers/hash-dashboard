@@ -604,7 +604,7 @@ export default function ManageExtraServices() {
                             animate={{ opacity: 1, x: 0 }}
                             exit={{ opacity: 0, x: 10 }}
                             transition={{ duration: 0.2 }}
-                            className="table-container dashboard-module-surface overflow-hidden rounded-lg border border-cyan-500/25"
+                            className="dashboard-table-shell"
                           >
                             {cat.items.length === 0 ? (
                               <div className="flex flex-col items-center justify-center py-10 gap-2 text-muted-foreground">
@@ -612,8 +612,8 @@ export default function ManageExtraServices() {
                                 <p className="body-text-muted">No items yet</p>
                               </div>
                             ) : (
-                              <div className="overflow-x-auto">
-                                <table className="w-full text-left">
+                              <div className="dashboard-table-wrap">
+                                <table className="dashboard-table text-left">
                                   <thead className="dashboard-module-table-head">
                                     <tr>
                                       {["Item", "Description", "Price", "Status", "Action"].map(h => (

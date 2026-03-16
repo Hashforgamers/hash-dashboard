@@ -428,6 +428,11 @@ h6 {
   border: 1px solid var(--dash-module-input-border);
   background: var(--dash-module-input-bg);
   color: var(--dash-module-input-text);
+  border-radius: 0.75rem;
+  padding: 0.55rem 0.9rem;
+  font-size: var(--dash-fs-sm);
+  line-height: var(--dash-lh-base);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .dashboard-module-input::placeholder {
@@ -438,6 +443,77 @@ h6 {
   outline: none;
   border-color: hsl(var(--brand-focus) / 0.58);
   box-shadow: 0 0 0 1px hsl(var(--brand-focus) / 0.18);
+}
+
+.dashboard-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.dashboard-toolbar-spacer {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.dashboard-filter-stack {
+  display: grid;
+  gap: 0.6rem;
+}
+
+.dashboard-action-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.dashboard-card {
+  border: 1px solid var(--dash-module-surface-border);
+  background: var(--dash-module-surface-bg);
+  border-radius: 0.9rem;
+  box-shadow: 0 16px 36px hsl(220 24% 12% / 0.12);
+}
+
+.dashboard-card-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--dash-module-line);
+}
+
+.dashboard-card-body {
+  padding: 1rem 1.25rem;
+}
+
+.dashboard-empty-state {
+  color: var(--dash-module-empty);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1.5rem;
+}
+
+.dashboard-loader {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--dash-module-muted);
+}
+
+.dashboard-error-banner {
+  border: 1px solid hsl(0 72% 54% / 0.35);
+  background: hsl(0 72% 42% / 0.16);
+  color: hsl(0 72% 82%);
+  border-radius: 0.75rem;
+  padding: 0.75rem 1rem;
 }
 
 .dashboard-module-tab-group {
@@ -464,14 +540,24 @@ h6 {
 
 .dashboard-module-table {
   border-color: var(--dash-module-line);
+  width: 100%;
+  min-width: 720px;
+  border-collapse: separate;
+  border-spacing: 0;
 }
 
 .dashboard-module-table-head {
   background: var(--dash-module-surface-strong);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  backdrop-filter: blur(8px);
 }
 
 .dashboard-module-table-header {
-  color: hsl(0 0% 100% / 0.9);
+  color: var(--dash-module-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
 }
 
 .dashboard-module-table-body {
@@ -482,13 +568,69 @@ h6 {
   background: var(--dash-module-hover);
 }
 
+.dashboard-table-shell {
+  border: 1px solid var(--dash-module-surface-border);
+  background: var(--dash-module-surface-bg);
+  border-radius: 0.75rem;
+  box-shadow: 0 10px 24px hsl(220 20% 20% / 0.08);
+}
+
+.dashboard-table-wrap {
+  width: 100%;
+  overflow: auto;
+  max-height: min(70vh, 720px);
+}
+
+.dashboard-table {
+  width: 100%;
+  min-width: 720px;
+  border-collapse: separate;
+  border-spacing: 0;
+  color: var(--dash-module-input-text);
+}
+
+.dashboard-table thead {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--dash-module-surface-strong);
+  backdrop-filter: blur(8px);
+}
+
+.dashboard-table th {
+  padding: 0.75rem 1rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--dash-module-muted);
+  border-bottom: 1px solid var(--dash-module-line);
+}
+
+.dashboard-table td {
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid var(--dash-module-line);
+}
+
+.dashboard-table tbody tr:hover {
+  background: var(--dash-module-hover);
+}
+
 .dashboard-module-empty {
   color: var(--dash-module-empty);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
 }
 
 .dashboard-module-card {
   border: 1px solid var(--dash-module-card-border);
   background: var(--dash-module-card-bg);
+  border-radius: 0.9rem;
+  box-shadow: 0 16px 32px hsl(220 18% 12% / 0.12);
 }
 
 .feature-action-icon {
@@ -828,10 +970,14 @@ h6 {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  flex-wrap: wrap;
 }
 
 .feature-page-subtitle {
   margin-top: 0.25rem;
+  max-width: 60ch;
+  font-size: var(--dash-fs-sm);
+  line-height: 1.5;
 }
 
 .feature-page-content {

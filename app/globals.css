@@ -265,6 +265,11 @@ body {
   .btn-icon {
     @apply p-2 bg-card hover:bg-muted rounded-lg transition-colors duration-200;
   }
+
+  /* Dashboard Toolbar Buttons */
+  .dashboard-action-button {
+    @apply inline-flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 text-sm font-medium text-foreground transition-colors duration-200 hover:bg-muted;
+  }
   
   /* Danger Button */
   .btn-danger {
@@ -283,20 +288,20 @@ body {
 @layer components {
   /* Section Headers */
   .section-title {
-    @apply text-lg sm:text-xl font-semibold text-foreground;
+    @apply text-base sm:text-lg md:text-xl font-semibold text-foreground tracking-tight;
   }
   
   .section-subtitle {
-    @apply text-xs sm:text-sm text-muted-foreground;
+    @apply text-xs sm:text-sm text-muted-foreground leading-relaxed;
   }
   
   /* Card Headers */
   .card-title {
-    @apply text-base sm:text-lg font-semibold text-foreground;
+    @apply text-base sm:text-lg font-semibold text-foreground tracking-tight;
   }
   
   .card-subtitle {
-    @apply text-xs sm:text-sm text-muted-foreground;
+    @apply text-xs sm:text-sm text-muted-foreground leading-relaxed;
   }
   
   /* Stat Card Typography */
@@ -314,11 +319,11 @@ body {
   
   /* Body Text */
   .body-text {
-    @apply text-sm text-foreground;
+    @apply text-sm text-foreground leading-relaxed;
   }
   
   .body-text-muted {
-    @apply text-xs sm:text-sm text-muted-foreground;
+    @apply text-xs sm:text-sm text-muted-foreground leading-relaxed;
   }
   
   /* Form Labels */

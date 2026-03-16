@@ -321,9 +321,9 @@ export default function ManagePassesPage() {
 /* ------------------------------------------------------------------ */
 function PassesTable({ passes, passTypes, onEdit, onDelete, deletingId }: any) {
   return (
-    <div className="table-container dashboard-module-surface overflow-hidden rounded-xl border border-cyan-500/25">
-      <div className="overflow-x-auto">
-        <table className="w-full text-left">
+    <div className="dashboard-table-shell">
+      <div className="dashboard-table-wrap">
+        <table className="dashboard-table text-left">
           <thead className="dashboard-module-table-head">
             <tr>
               {["Pass Name", "Mode", "Price", "Validity", "Hours", "Actions"].map((h) => (

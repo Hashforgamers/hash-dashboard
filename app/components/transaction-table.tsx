@@ -685,13 +685,13 @@ export function TransactionTable() {
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3, delay: 0.4 }}
-        className="shrink-0 flex flex-col items-stretch gap-3 sm:flex-row sm:items-center"
+        className="dashboard-toolbar shrink-0"
       >
-        <div className="relative flex-1">
+        <div className="relative flex-1 min-w-[220px]">
           <SearchIcon className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-500 dark:text-slate-400" />
           <Input
             placeholder="Search transactions..."
-            className="dashboard-module-input rounded-lg pl-8"
+            className="dashboard-module-input h-10 w-full pl-8"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
@@ -701,13 +701,13 @@ export function TransactionTable() {
             type="date"
             value={fromDate}
             onChange={(e) => setFromDate(e.target.value)}
-            className="dashboard-module-input w-[150px] rounded-lg"
+            className="dashboard-module-input h-10 w-[150px]"
           />
           <Input
             type="date"
             value={toDate}
             onChange={(e) => setToDate(e.target.value)}
-            className="dashboard-module-input w-[150px] rounded-lg"
+            className="dashboard-module-input h-10 w-[150px]"
           />
           <motion.button
             whileHover={{ scale: 1.02 }}
@@ -715,7 +715,7 @@ export function TransactionTable() {
             animate="visible"
             variants={boxVariants}
             transition={{ duration: 0.1 }}
-            className="flex items-center rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 transition-colors hover:bg-slate-50 dark:border-slate-600/70 dark:bg-slate-800/70 dark:text-slate-200 dark:hover:bg-slate-700/70"
+            className="dashboard-action-button"
             onClick={() => {
               if (!fromDate || !toDate) return;
               if (fromDate > toDate) return;
@@ -731,7 +731,7 @@ export function TransactionTable() {
             animate="visible"
             variants={boxVariants}
             transition={{ duration: 0.1 }}
-            className="flex items-center rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 transition-colors hover:bg-slate-50 dark:border-slate-600/70 dark:bg-slate-800/70 dark:text-slate-200 dark:hover:bg-slate-700/70"
+            className="dashboard-action-button"
             onClick={() => setShowColumnSelector((prev) => !prev)}
           >
             <span>Columns</span>
@@ -742,7 +742,7 @@ export function TransactionTable() {
             animate="visible"
             variants={boxVariants}
             transition={{ duration: 0.1 }}
-            className="flex items-center rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 transition-colors hover:bg-slate-50 dark:border-slate-600/70 dark:bg-slate-800/70 dark:text-slate-200 dark:hover:bg-slate-700/70"
+            className="dashboard-action-button"
             onClick={() => setShowFilter(!showFilter)}
           >
             <FilterIcon className="h-4 w-4 mr-2" />
@@ -754,7 +754,7 @@ export function TransactionTable() {
             animate="visible"
             variants={boxVariants}
             transition={{ duration: 0.2 }}
-            className="flex items-center rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 transition-colors hover:bg-slate-50 dark:border-slate-600/70 dark:bg-slate-800/70 dark:text-slate-200 dark:hover:bg-slate-700/70"
+            className="dashboard-action-button"
             onClick={downloadFilteredData}
           >
             <Download className="h-4 w-4 mr-2" />
