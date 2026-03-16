@@ -1539,7 +1539,7 @@ export default function ConsolePricing() {
           className="flex flex-1 min-h-0 flex-col gap-4 overflow-hidden"
         >
           <div className="gaming-panel shrink-0 rounded-xl p-4">
-            <h2 className="section-title">Extra Controller Pricing</h2>
+            <h2 className="subsection-title">Extra Controller Pricing</h2>
             <p className="body-text-muted mt-1">
               Configure base and tier rates like 1 controller = ₹50, 2 controllers = ₹80.
               Backend-integrated for PS5 and Xbox.

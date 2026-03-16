@@ -288,7 +288,11 @@ body {
 @layer components {
   /* Section Headers */
   .section-title {
-    @apply text-base sm:text-lg md:text-xl font-semibold text-foreground tracking-tight;
+    @apply text-sm sm:text-base md:text-lg font-semibold text-foreground tracking-tight;
+  }
+
+  .subsection-title {
+    @apply text-sm sm:text-base md:text-lg font-semibold text-foreground tracking-tight;
   }
   
   .section-subtitle {
@@ -324,6 +328,10 @@ body {
   
   .body-text-muted {
     @apply text-xs sm:text-sm text-muted-foreground leading-relaxed;
+  }
+
+  .dashboard-hero-title {
+    @apply text-lg sm:text-xl md:text-2xl font-semibold text-foreground tracking-tight;
   }
   
   /* Form Labels */

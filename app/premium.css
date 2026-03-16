@@ -579,6 +579,13 @@ h6 {
   width: 100%;
   overflow: auto;
   max-height: min(70vh, 720px);
+  cursor: grab;
+  touch-action: pan-y;
+}
+
+.dashboard-table-wrap[data-dragging="true"] {
+  cursor: grabbing;
+  user-select: none;
 }
 
 .dashboard-table {
@@ -988,6 +995,10 @@ h6 {
   padding: 0.5rem;
 }
 
+.feature-page-content-scroll {
+  overflow: auto;
+}
+
 @media (min-width: 640px) {
   .feature-page-shell {
     gap: 1rem;
@@ -1003,9 +1014,101 @@ h6 {
 }
 
 @media (min-width: 768px) {
-  .feature-page-content {
-    padding: 1rem;
-  }
+.feature-page-content {
+  padding: 1rem;
+}
+}
+
+/* Account + Access standardization */
+.account-scope,
+.access-scope {
+  color: var(--dash-module-input-text);
+}
+
+.account-scope .text-slate-100,
+.account-scope .text-slate-200,
+.access-scope .text-slate-100,
+.access-scope .text-slate-200 {
+  color: var(--dash-module-input-text) !important;
+}
+
+.account-scope .text-slate-300,
+.access-scope .text-slate-300 {
+  color: var(--dash-module-muted) !important;
+}
+
+.account-scope .text-slate-400,
+.access-scope .text-slate-400 {
+  color: var(--dash-module-empty) !important;
+}
+
+.account-scope .text-cyan-100,
+.account-scope .text-cyan-200,
+.account-scope .text-cyan-300,
+.access-scope .text-cyan-100,
+.access-scope .text-cyan-200,
+.access-scope .text-cyan-300 {
+  color: hsl(var(--brand-accent-strong)) !important;
+}
+
+.account-scope .bg-slate-900\/35,
+.account-scope .bg-slate-900\/40,
+.account-scope .bg-slate-900\/50,
+.account-scope .bg-slate-900\/70,
+.access-scope .bg-slate-900\/35,
+.access-scope .bg-slate-900\/40,
+.access-scope .bg-slate-900\/50,
+.access-scope .bg-slate-900\/70 {
+  background: var(--dash-module-surface-bg) !important;
+}
+
+.account-scope .bg-slate-950\/40,
+.account-scope .bg-slate-950\/50,
+.access-scope .bg-slate-950\/40,
+.access-scope .bg-slate-950\/50 {
+  background: var(--dash-module-panel-bg) !important;
+}
+
+.account-scope .border-cyan-400\/25,
+.account-scope .border-cyan-400\/35,
+.account-scope .border-cyan-500\/20,
+.account-scope .border-cyan-500\/25,
+.account-scope .border-slate-700,
+.account-scope .border-slate-700\/80,
+.account-scope .border-slate-700\/60,
+.account-scope .border-slate-800\/60,
+.access-scope .border-cyan-400\/25,
+.access-scope .border-cyan-400\/35,
+.access-scope .border-cyan-500\/20,
+.access-scope .border-cyan-500\/25,
+.access-scope .border-slate-700,
+.access-scope .border-slate-700\/80,
+.access-scope .border-slate-700\/60,
+.access-scope .border-slate-800\/60 {
+  border-color: var(--dash-module-surface-border) !important;
+}
+
+.account-scope .bg-cyan-500\/10,
+.access-scope .bg-cyan-500\/10 {
+  background: hsl(var(--brand-accent) / 0.12) !important;
+}
+
+.account-scope input,
+.account-scope textarea,
+.account-scope select,
+.access-scope input,
+.access-scope textarea,
+.access-scope select {
+  background: var(--dash-module-input-bg) !important;
+  border-color: var(--dash-module-input-border) !important;
+  color: var(--dash-module-input-text) !important;
+}
+
+.account-scope input::placeholder,
+.account-scope textarea::placeholder,
+.access-scope input::placeholder,
+.access-scope textarea::placeholder {
+  color: var(--dash-module-input-placeholder) !important;
 }
 
 .dashboard-typography h1 {
