@@ -6,6 +6,7 @@ import { BOOKING_URL } from "@/src/config/env";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Loader2, Save, Wallet } from "lucide-react";
+import { useModuleCache } from "@/app/hooks/useModuleCache";
 
 interface VendorUser {
   id: number;
@@ -96,6 +97,27 @@ export default function GamersCreditControl() {
   const [ledgerUserSearch, setLedgerUserSearch] = useState("");
   const [paymentUserSearch, setPaymentUserSearch] = useState("");
 
+  const cacheKey = vendorId ? `gamers_credit:${vendorId}` : "gamers_credit:0";
+  const fetcher = async () => {
+    if (!vendorId) return { users: [], accounts: [] };
+    const [usersRes, accountsRes] = await Promise.all([
+      fetch(`${BOOKING_URL}/api/vendor/${vendorId}/users`),
+      fetch(`${BOOKING_URL}/api/vendor/${vendorId}/monthly-credit/accounts`),
+    ]);
+    const users = usersRes.ok ? await usersRes.json() : [];
+    const accounts = accountsRes.ok ? await accountsRes.json() : [];
+    return {
+      users: Array.isArray(users) ? users : [],
+      accounts: Array.isArray(accounts?.accounts) ? accounts.accounts : Array.isArray(accounts) ? accounts : [],
+    };
+  };
+
+  const { data: cachedCredit, refresh: refreshCredit } = useModuleCache<{ users: VendorUser[]; accounts: MonthlyCreditAccount[] }>(
+    cacheKey,
+    fetcher,
+    120000
+  );
+
   useEffect(() => {
     const token = localStorage.getItem("jwtToken");
     if (!token) return;
@@ -109,8 +131,16 @@ export default function GamersCreditControl() {
 
   useEffect(() => {
     if (!vendorId) return;
-    fetchUsers(vendorId);
-    fetchAccounts(vendorId);
+    if (cachedCredit) {
+      setVendorUsers(Array.isArray(cachedCredit.users) ? cachedCredit.users : []);
+      setAccounts(Array.isArray(cachedCredit.accounts) ? cachedCredit.accounts : []);
+      return;
+    }
+    refreshCredit().then((data) => {
+      if (!data) return;
+      setVendorUsers(Array.isArray(data.users) ? data.users : []);
+      setAccounts(Array.isArray(data.accounts) ? data.accounts : []);
+    }).catch(() => null);
   }, [vendorId]);
 
   useEffect(() => {
@@ -123,26 +153,15 @@ export default function GamersCreditControl() {
     setTimeout(() => setNotice(""), 3000);
   };
 
-  const fetchUsers = async (id: number) => {
-    try {
-      const res = await fetch(`${BOOKING_URL}/api/vendor/${id}/users`);
-      if (!res.ok) throw new Error("Failed to fetch users");
-      const data = await res.json();
-      setVendorUsers(Array.isArray(data) ? data : []);
-    } catch (e) {
-      console.error(e);
-      setVendorUsers([]);
-    }
-  };
-
-  const fetchAccounts = async (id: number) => {
+  const fetchUsersAndAccounts = async (force = false) => {
+    if (!vendorId) return;
     setIsLoadingAccounts(true);
     setError(null);
     try {
-      const res = await fetch(`${BOOKING_URL}/api/vendor/${id}/monthly-credit/accounts`);
-      if (!res.ok) throw new Error("Failed to fetch accounts");
-      const data = await res.json();
-      setAccounts(Array.isArray(data?.accounts) ? data.accounts : []);
+      const data = await refreshCredit(force);
+      if (!data) return;
+      setVendorUsers(Array.isArray(data.users) ? data.users : []);
+      setAccounts(Array.isArray(data.accounts) ? data.accounts : []);
     } catch (e) {
       console.error(e);
       setAccounts([]);
@@ -187,7 +206,7 @@ export default function GamersCreditControl() {
         targetUserId = Number(createData.user.id);
         setForm((prev) => ({ ...prev, user_id: String(targetUserId) }));
         setIsCreatingUser(false);
-        await fetchUsers(vendorId);
+        await fetchUsersAndAccounts(true);
       }
 
       if (!targetUserId) {
@@ -220,7 +239,7 @@ export default function GamersCreditControl() {
       const data = await res.json();
       if (!res.ok || !data?.success) throw new Error(data?.message || "Failed to save account");
       toast("Gamers credit account saved.");
-      fetchAccounts(vendorId);
+      fetchUsersAndAccounts(true);
     } catch (e) {
       console.error(e);
       setError(e instanceof Error ? e.message : "Unable to save account.");
@@ -274,7 +293,7 @@ export default function GamersCreditControl() {
       if (!res.ok || !data?.success) throw new Error(data?.message || "Failed to settle");
       toast(`Settlement recorded. Remaining ₹${Number(data?.remaining_outstanding || 0).toFixed(2)}`);
       setSettleAmount("");
-      fetchAccounts(vendorId);
+      fetchUsersAndAccounts(true);
       if (statementUserId === Number(settleUserId)) {
         fetchStatement(Number(settleUserId));
       }

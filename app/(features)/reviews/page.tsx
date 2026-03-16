@@ -11,6 +11,8 @@ import {
   ReviewItem,
   ReviewSummary,
 } from "@/lib/review-api";
+import { useModuleCache } from "@/app/hooks/useModuleCache";
+import { useDashboardData } from "@/app/context/DashboardDataContext";
 
 function formatDate(value?: string | null) {
   if (!value) return "--";
@@ -33,6 +35,7 @@ function RatingStars({ rating }: { rating: number }) {
 }
 
 export default function ReviewsPage() {
+  const { vendorId } = useDashboardData();
   const [token, setToken] = useState<string | null>(null);
   const [summary, setSummary] = useState<ReviewSummary | null>(null);
   const [reviews, setReviews] = useState<ReviewItem[]>([]);
@@ -44,6 +47,39 @@ export default function ReviewsPage() {
   const [responseDrafts, setResponseDrafts] = useState<Record<string, string>>({});
   const [actioningId, setActioningId] = useState<string | null>(null);
 
+  const summaryKey = vendorId ? `reviews_summary:${vendorId}` : "reviews_summary:0";
+  const listKey = vendorId ? `reviews_list:${vendorId}:${statusFilter}:${ratingFilter}:${search}` : "reviews_list:0";
+  const versionKey = vendorId ? `reviews:${vendorId}` : "reviews:0";
+
+  const summaryFetcher = async () => {
+    if (!token) throw new Error("Missing token");
+    return getReviewSummary(token);
+  };
+
+  const listFetcher = async () => {
+    if (!token) throw new Error("Missing token");
+    return listReviews(token, {
+      status: statusFilter,
+      rating: ratingFilter || undefined,
+      search: search || undefined,
+      limit: 50,
+      offset: 0,
+    });
+  };
+
+  const { data: cachedSummary, refresh: refreshSummaryCache } = useModuleCache<ReviewSummary>(
+    summaryKey,
+    summaryFetcher,
+    120000,
+    versionKey
+  );
+  const { data: cachedList, refresh: refreshListCache } = useModuleCache<{ items: ReviewItem[] }>(
+    listKey,
+    listFetcher,
+    120000,
+    versionKey
+  );
+
   useEffect(() => {
     if (typeof window === "undefined") return;
     const accessToken =
@@ -51,11 +87,11 @@ export default function ReviewsPage() {
     setToken(accessToken);
   }, []);
 
-  const refreshSummary = async (tkn: string) => {
+  const refreshSummary = async () => {
     setLoadingSummary(true);
     try {
-      const data = await getReviewSummary(tkn);
-      setSummary(data);
+      const data = await refreshSummaryCache(true);
+      setSummary(data || null);
     } catch {
       setSummary(null);
     } finally {
@@ -63,17 +99,11 @@ export default function ReviewsPage() {
     }
   };
 
-  const refreshReviews = async (tkn: string) => {
+  const refreshReviews = async () => {
     setLoading(true);
     try {
-      const data = await listReviews(tkn, {
-        status: statusFilter,
-        rating: ratingFilter || undefined,
-        search: search || undefined,
-        limit: 50,
-        offset: 0,
-      });
-      setReviews(data.items || []);
+      const data = await refreshListCache(true);
+      setReviews(data?.items || []);
     } catch {
       setReviews([]);
     } finally {
@@ -83,13 +113,21 @@ export default function ReviewsPage() {
 
   useEffect(() => {
     if (!token) return;
-    refreshSummary(token);
-  }, [token]);
+    if (cachedSummary) {
+      setSummary(cachedSummary);
+      return;
+    }
+    refreshSummary();
+  }, [token, cachedSummary]);
 
   useEffect(() => {
     if (!token) return;
-    refreshReviews(token);
-  }, [token, statusFilter, ratingFilter, search]);
+    if (cachedList?.items) {
+      setReviews(cachedList.items);
+      return;
+    }
+    refreshReviews();
+  }, [token, cachedList, statusFilter, ratingFilter, search]);
 
   const breakdown = useMemo(() => {
     const total = summary?.total || 0;
@@ -108,7 +146,7 @@ export default function ReviewsPage() {
     try {
       await respondToReview(token, reviewId, draft);
       setResponseDrafts((prev) => ({ ...prev, [reviewId]: "" }));
-      await refreshReviews(token);
+      await refreshReviews();
     } finally {
       setActioningId(null);
     }
@@ -119,8 +157,8 @@ export default function ReviewsPage() {
     setActioningId(reviewId);
     try {
       await updateReviewStatus(token, reviewId, status);
-      await refreshReviews(token);
-      await refreshSummary(token);
+      await refreshReviews();
+      await refreshSummary();
     } finally {
       setActioningId(null);
     }

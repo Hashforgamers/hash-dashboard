@@ -35,6 +35,7 @@ import { motion } from "framer-motion";
 import { useState, useEffect, useMemo } from "react";
 import axios from "axios";
 import { jwtDecode } from "jwt-decode";
+import { useDashboardData } from "@/app/context/DashboardDataContext";
 import  HashLoader  from "./ui/HashLoader";
 
 import { DASHBOARD_URL } from "@/src/config/env";
@@ -49,6 +50,7 @@ interface ConsoleListProps {
 
 export function ConsoleList({ onEdit, refreshKey = 0 }: ConsoleListProps) {
   const [data, setdata] = useState([]);
+  const { vendorId: cachedVendorId, consoles: cachedConsoles, refreshConsoles, setConsoles: setCachedConsoles } = useDashboardData();
   const [vendorId, setVendorId] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [deletingConsoleId, setDeletingConsoleId] = useState<number | null>(null);
@@ -56,14 +58,25 @@ export function ConsoleList({ onEdit, refreshKey = 0 }: ConsoleListProps) {
   const [unlinkingConsoleId, setUnlinkingConsoleId] = useState<number | null>(null);
   const [activeGroup, setActiveGroup] = useState<"all" | "pc" | "ps5" | "xbox" | "vr">("all");
 
-  const loadConsoles = async (currentVendorId: number) => {
+  const loadConsoles = async (currentVendorId: number, force = false) => {
     if (!currentVendorId) return;
     setIsLoading(true);
     try {
-      const response = await axios.get(
-        `${DASHBOARD_URL}/api/getConsoles/vendor/${currentVendorId}`
-      );
-      setdata(response?.data || []);
+      if (!force && Array.isArray(cachedConsoles) && cachedConsoles.length > 0) {
+        setdata(cachedConsoles);
+      } else {
+        const fresh = await refreshConsoles(force);
+        if (Array.isArray(fresh)) {
+          setdata(fresh);
+        } else {
+          const response = await axios.get(
+            `${DASHBOARD_URL}/api/getConsoles/vendor/${currentVendorId}`
+          );
+          const nextData = response?.data || [];
+          setdata(nextData);
+          setCachedConsoles(Array.isArray(nextData) ? nextData : []);
+        }
+      }
     } catch (error) {
       console.error("Error occurred while fetching consoles:", error);
     } finally {
@@ -74,20 +87,27 @@ export function ConsoleList({ onEdit, refreshKey = 0 }: ConsoleListProps) {
 
   // Decode token once when the component mounts
   useEffect(() => {
+    if (cachedVendorId) {
+      setVendorId(cachedVendorId);
+      return;
+    }
     const token = localStorage.getItem("jwtToken");
-
-
     if (token) {
       const decoded_token = jwtDecode<{ sub: { id: number } }>(token);
       setVendorId(decoded_token.sub.id);
     }
-  }, []); // runs once on mount
+  }, [cachedVendorId]); // runs once on mount
 
 
   useEffect(() => {
     if (!vendorId) return;
+    if (Array.isArray(cachedConsoles) && cachedConsoles.length > 0) {
+      setdata(cachedConsoles);
+      setIsLoading(false);
+      return;
+    }
     loadConsoles(vendorId);
-  }, [vendorId, refreshKey]); // rerun when vendor changes or caller asks refresh
+  }, [vendorId, refreshKey, cachedConsoles]); // rerun when vendor changes or caller asks refresh
 
   useEffect(() => {
     const handleRefresh = () => {
@@ -179,6 +199,7 @@ export function ConsoleList({ onEdit, refreshKey = 0 }: ConsoleListProps) {
       } else {
         console.log(response.data.message);
         setdata((prevData) => prevData.filter((item: any) => item.id !== id));
+        setCachedConsoles((prevData) => prevData.filter((item: any) => item.id !== id));
       }
     } catch (error) {
       console.log("something while wrong to delete the data", error);
@@ -196,7 +217,7 @@ export function ConsoleList({ onEdit, refreshKey = 0 }: ConsoleListProps) {
         { bookingStats: {} }
       );
 
-      await loadConsoles(vendorId);
+      await loadConsoles(vendorId, true);
       window.dispatchEvent(new Event("refresh-dashboard"));
     } catch (error) {
       console.error("Failed to release console:", error);
@@ -213,7 +234,7 @@ export function ConsoleList({ onEdit, refreshKey = 0 }: ConsoleListProps) {
         `${DASHBOARD_URL}/api/vendors/${vendorId}/pcs/unlink`,
         { console_id: consoleItem.id }
       );
-      await loadConsoles(vendorId);
+      await loadConsoles(vendorId, true);
       window.dispatchEvent(new Event("refresh-dashboard"));
     } catch (error) {
       console.error("Failed to unlink kiosk:", error);
