@@ -414,8 +414,8 @@ export default function GamesManagementPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="overflow-x-auto">
-                  <table className="w-full">
+                <div className="dashboard-table-wrap">
+                  <table className="dashboard-table">
                     <thead>
                       <tr className="border-b border-border">
                         <th className="dashboard-module-table-header text-left py-3 px-4 text-xs font-bold uppercase tracking-wider">

@@ -146,18 +146,18 @@ export default function TournamentsPage() {
 
       <div className="min-h-0 flex-1 overflow-y-auto pr-1 space-y-3 sm:space-y-4">
         {/* ── Filters ──────────────────────────────────── */}
-        <div className="gaming-panel mb-2 flex flex-col gap-3 rounded-xl p-3 sm:flex-row">
-          <div className="relative flex-1">
+        <div className="gaming-panel dashboard-toolbar mb-2 rounded-xl p-3">
+          <div className="relative flex-1 min-w-[220px]">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 icon-md text-muted-foreground" />
             <input
-              className="h-10 w-full rounded-lg border border-cyan-400/25 bg-slate-900/70 pl-10 pr-4 text-sm text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-400/60"
+              className="dashboard-module-input h-10 w-full pl-10 pr-4"
               placeholder="Search tournaments..."
               value={search}
               onChange={(e) => { setSearch(e.target.value); setPage(1); }}
             />
           </div>
           <select
-            className="h-10 w-full rounded-lg border border-cyan-400/25 bg-slate-900/70 px-3 text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-cyan-400/60 sm:w-44"
+            className="dashboard-module-input h-10 w-full sm:w-44"
             value={statusFilter}
             onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
           >
@@ -169,8 +169,9 @@ export default function TournamentsPage() {
         </div>
 
         {/* ── Table ────────────────────────────────────── */}
-        <div className="table-container overflow-auto rounded-xl border border-cyan-500/25 bg-slate-950/35">
-          <table className="w-full">
+        <div className="dashboard-table-shell">
+          <div className="dashboard-table-wrap">
+            <table className="dashboard-table">
             <thead className="bg-slate-900/70">
               <tr>
                 <th className="table-cell text-left text-[11px] font-bold uppercase tracking-wider text-cyan-100/80 sm:text-xs">Tournament</th>
@@ -289,7 +290,8 @@ export default function TournamentsPage() {
                 ))
               )}
             </tbody>
-          </table>
+            </table>
+          </div>
         </div>
 
         {/* ── Pagination ───────────────────────────────── */}
