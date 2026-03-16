@@ -67,6 +67,10 @@ export function DashboardContent() {
     todayEarnings?: number
     todayBookings?: number
     pendingAmount?: number
+    todayAppFees?: number
+    pendingAppFees?: number
+    netEarnings?: number
+    netPendingAmount?: number
     todayBookingsChange?: number
     lastUpdate?: string
   }>({})
@@ -85,6 +89,10 @@ export function DashboardContent() {
           todayEarnings: landingData.stats.todayEarnings,
           todayBookings: landingData.stats.todayBookings,
           pendingAmount: landingData.stats.pendingAmount,
+          todayAppFees: landingData.stats.todayAppFees,
+          pendingAppFees: landingData.stats.pendingAppFees,
+          netEarnings: landingData.stats.netEarnings,
+          netPendingAmount: landingData.stats.netPendingAmount,
           todayBookingsChange: landingData.stats.todayBookingsChange || 0,
           lastUpdate: new Date().toLocaleTimeString(),
         })
@@ -259,8 +267,14 @@ export function DashboardContent() {
     todayEarnings: realTimeStats.todayEarnings ?? dashboardData?.stats?.todayEarnings ?? 0,
     todayBookings: realTimeStats.todayBookings ?? dashboardData?.stats?.todayBookings ?? 0,
     pendingAmount: realTimeStats.pendingAmount ?? dashboardData?.stats?.pendingAmount ?? 0,
+    todayAppFees: realTimeStats.todayAppFees ?? dashboardData?.stats?.todayAppFees ?? 0,
+    pendingAppFees: realTimeStats.pendingAppFees ?? dashboardData?.stats?.pendingAppFees ?? 0,
+    netEarnings: realTimeStats.netEarnings ?? dashboardData?.stats?.netEarnings ?? 0,
+    netPendingAmount: realTimeStats.netPendingAmount ?? dashboardData?.stats?.netPendingAmount ?? 0,
     todayBookingsChange: realTimeStats.todayBookingsChange ?? dashboardData?.stats?.todayBookingsChange ?? 0
   }
+
+  const formatMoney = (value?: number) => `₹${Number(value || 0).toFixed(2)}`
 
   const platforms = platformMetadata.platforms.map(metadata => {
     const platformBooking = bookingInfo.filter((b: any) => b.type === metadata.type)
@@ -292,7 +306,7 @@ export function DashboardContent() {
                     <div className="p-1 sm:p-1.5 rounded-full bg-emerald-500/20">
                       <IndianRupee className="w-3 sm:w-4 h-3 sm:h-4 text-emerald-400" />
                     </div>
-                    <span className="dash-kpi-label">Earnings</span>
+                    <span className="dash-kpi-label">Earnings (Net)</span>
                   </div>
                   <button onClick={() => setShowEarnings(!showEarnings)} className="text-emerald-400 hover:text-emerald-300 transition-colors">
                     {showEarnings ? <EyeOff className="w-3 sm:w-4 h-3 sm:h-4" /> : <Eye className="w-3 sm:w-4 h-3 sm:h-4" />}
@@ -300,18 +314,27 @@ export function DashboardContent() {
                 </div>
                 <div className="flex items-center justify-between">
                   <motion.p
-                    key={currentStats.todayEarnings}
+                    key={currentStats.netEarnings}
                     initial={{ scale: 0.8, opacity: 0.5 }}
                     animate={{ scale: 1, opacity: 1 }}
                     transition={{ duration: 0.3 }}
                     className="dash-kpi-value"
                   >
-                    {showEarnings ? `₹${currentStats.todayEarnings}` : "₹•••••"}
+                    {showEarnings ? formatMoney(currentStats.netEarnings) : "₹•••••"}
                   </motion.p>
                   <div className="flex items-center gap-1 text-xs text-emerald-400">
                     <TrendingUp className="w-3 h-3" />
                     <span>Today</span>
                   </div>
+                </div>
+                <div className="mt-1 text-[11px] text-emerald-400/90">
+                  {showEarnings ? (
+                    <>
+                      Gross: {formatMoney(currentStats.todayEarnings)} · App Fee: {formatMoney(currentStats.todayAppFees)}
+                    </>
+                  ) : (
+                    "Gross: ₹••••• · App Fee: ₹•••••"
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -366,7 +389,7 @@ export function DashboardContent() {
                     <div className="p-1 sm:p-1.5 rounded-full bg-yellow-500/20">
                       <WalletCards className="w-3 sm:w-4 h-3 sm:h-4 text-yellow-400" />
                     </div>
-                    <span className="dash-kpi-label">Pending</span>
+                    <span className="dash-kpi-label">Pending (Net)</span>
                   </div>
                   <button onClick={() => setShowPending(!showPending)} className="text-yellow-400 hover:text-yellow-300 transition-colors">
                     {showPending ? <EyeOff className="w-3 sm:w-4 h-3 sm:h-4" /> : <Eye className="w-3 sm:w-4 h-3 sm:h-4" />}
@@ -374,18 +397,27 @@ export function DashboardContent() {
                 </div>
                 <div className="flex items-center justify-between">
                   <motion.p
-                    key={currentStats.pendingAmount}
+                    key={currentStats.netPendingAmount}
                     initial={{ scale: 0.8, opacity: 0.5 }}
                     animate={{ scale: 1, opacity: 1 }}
                     transition={{ duration: 0.3 }}
                     className="dash-kpi-value"
                   >
-                    {showPending ? `₹${currentStats.pendingAmount}` : "₹•••••"}
+                    {showPending ? formatMoney(currentStats.netPendingAmount) : "₹•••••"}
                   </motion.p>
                   <div className="flex items-center gap-1 text-xs text-yellow-400">
                     <div className="w-2 h-2 bg-yellow-400 rounded-full animate-pulse" />
                     <span>Today</span>
                   </div>
+                </div>
+                <div className="mt-1 text-[11px] text-yellow-400/90">
+                  {showPending ? (
+                    <>
+                      Gross: {formatMoney(currentStats.pendingAmount)} · App Fee: {formatMoney(currentStats.pendingAppFees)}
+                    </>
+                  ) : (
+                    "Gross: ₹••••• · App Fee: ₹•••••"
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -495,7 +527,7 @@ export function DashboardContent() {
             <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_auto_minmax(0,1.8fr)_auto] md:items-start">
               <div className="flex-1">
               <div className="flex items-center gap-3 mb-1">
-                <h1 className="premium-heading text-xl font-bold text-foreground sm:text-2xl md:text-3xl">Gaming Cafe Command</h1>
+                <h1 className="premium-heading dashboard-hero-title">Gaming Cafe Command</h1>
                 <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`} />
                 <NotificationButton
                   vendorId={vendorId}

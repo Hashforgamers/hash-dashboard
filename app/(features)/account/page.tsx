@@ -4,8 +4,8 @@ import { Sparkles } from "lucide-react";
 
 export default function MyAccountPage() {
   return (
-    <DashboardLayout contentScroll="contained">
-      <div className="feature-page-shell">
+    <DashboardLayout contentScroll="page">
+      <div className="feature-page-shell account-scope">
         <div className="feature-page-header gaming-panel">
           <div className="feature-page-header-row">
             <h1 className="premium-heading">
@@ -18,7 +18,7 @@ export default function MyAccountPage() {
           </p>
         </div>
 
-        <div className="feature-page-content gaming-panel">
+        <div className="feature-page-content feature-page-content-scroll gaming-panel">
           <MyAccount />
         </div>
       </div>
