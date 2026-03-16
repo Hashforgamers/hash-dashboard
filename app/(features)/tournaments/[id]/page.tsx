@@ -16,6 +16,8 @@ import {
 } from '@/lib/event-api';
 import { jwtDecode } from 'jwt-decode';
 import { DashboardLayout } from '@/app/(layout)/dashboard-layout';
+import { useModuleCache } from '@/app/hooks/useModuleCache';
+import { useDashboardData } from '@/app/context/DashboardDataContext';
 
 
 
@@ -55,6 +57,7 @@ export default function TournamentDetailPage() {
   const params  = useParams();
   const eventId = params.id as string;
  const [vendorId, setVendorId] = useState<number | null>(null)
+  const { vendorId: cachedVendorId } = useDashboardData();
   const { token, loading: tokenLoading } = useEventsToken(vendorId);
 
   const [event,         setEvent]         = useState<EventItem | null>(null);
@@ -75,6 +78,10 @@ export default function TournamentDetailPage() {
 
   // Fetch event
         useEffect(() => {
+      if (cachedVendorId) {
+        setVendorId(cachedVendorId);
+        return;
+      }
       const token = localStorage.getItem("jwtToken")
       if (token) {
         try {
@@ -85,33 +92,84 @@ export default function TournamentDetailPage() {
           console.error('❌ Error decoding JWT token:', error)
         }
       }
-    }, [])
+    }, [cachedVendorId])
+
+  const eventKey = vendorId ? `tournament:${vendorId}:${eventId}` : "tournament:0";
+  const regsKey = `tournament_regs:${eventId}`;
+  const teamsKey = `tournament_teams:${eventId}`;
+  const versionKey = vendorId ? `tournaments:${vendorId}` : "tournaments:0";
+
+  const { data: cachedEvent, refresh: refreshEventCache } = useModuleCache<EventItem | null>(
+    eventKey,
+    async () => {
+      if (!token) return null;
+      const evs = await listEvents(token);
+      return evs.find((e) => e.id === eventId) ?? null;
+    },
+    120000,
+    versionKey
+  );
+
+  const { data: cachedRegs, refresh: refreshRegsCache } = useModuleCache<Registration[]>(
+    regsKey,
+    async () => {
+      if (!token) return [];
+      return getRegistrations(token, eventId);
+    },
+    120000,
+    versionKey
+  );
+
+  const { data: cachedTeams, refresh: refreshTeamsCache } = useModuleCache<TeamItem[]>(
+    teamsKey,
+    async () => {
+      if (!token) return [];
+      return getTeams(token, eventId);
+    },
+    120000,
+    versionKey
+  );
   useEffect(() => {
     if (!token) return;
-    listEvents(token)
-      .then((evs) => setEvent(evs.find((e) => e.id === eventId) ?? null))
+    if (cachedEvent) {
+      setEvent(cachedEvent);
+      setLoadingEvent(false);
+      return;
+    }
+    refreshEventCache(true)
+      .then((ev) => setEvent(ev ?? null))
       .catch(console.error)
       .finally(() => setLoadingEvent(false));
-  }, [token, eventId]);
+  }, [token, eventId, cachedEvent, refreshEventCache]);
 
   // Fetch registrations
   useEffect(() => {
     if (!token) return;
-    getRegistrations(token, eventId)
-      .then(setRegistrations)
+    if (cachedRegs) {
+      setRegistrations(cachedRegs);
+      setLoadingRegs(false);
+      return;
+    }
+    refreshRegsCache(true)
+      .then((data) => setRegistrations(data || []))
       .catch(console.error)
       .finally(() => setLoadingRegs(false));
-  }, [token, eventId]);
+  }, [token, eventId, cachedRegs, refreshRegsCache]);
 
   // Fetch teams
   useEffect(() => {
     if (!token) return;
+    if (cachedTeams) {
+      setTeams(cachedTeams);
+      setLoadingTeams(false);
+      return;
+    }
     setLoadingTeams(true);
-    getTeams(token, eventId)
-      .then(setTeams)
+    refreshTeamsCache(true)
+      .then((data) => setTeams(data || []))
       .catch(console.error)
       .finally(() => setLoadingTeams(false));
-  }, [token, eventId]);
+  }, [token, eventId, cachedTeams, refreshTeamsCache]);
 
   // Helpers
   const fmt = (iso: string) =>

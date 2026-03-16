@@ -10,7 +10,7 @@ import {
   TrendingUp, BarChart3, Monitor, Gamepad2,
   Gamepad, Headphones, Lock
 } from 'lucide-react'
-import { jwtDecode } from "jwt-decode"
+import { useDashboardData } from "@/app/context/DashboardDataContext"
 import { DASHBOARD_URL } from "@/src/config/env"
 import HashLoader from "./ui/HashLoader"
 import { NotificationButton } from "../components/NotificationButton"
@@ -58,7 +58,7 @@ export function DashboardContent() {
   const [showEarnings, setShowEarnings] = useState(false)
   const [showPending, setShowPending] = useState(false)
   const [refreshSlots, setRefreshSlots] = useState(false)
-  const [vendorId, setVendorId] = useState<number | null>(null)
+  const { vendorId, landingData, consoles, refreshLanding, refreshConsoles } = useDashboardData()
   const [dashboardData, setDashboardData] = useState<any>(null)
   const [latestBookingEvent, setLatestBookingEvent] = useState<any>(null)
   const [activeTopTab, setActiveTopTab] = useState<'analytics' | 'devices'>('analytics')
@@ -77,36 +77,34 @@ export function DashboardContent() {
   const { isLocked } = useSubscription()
   const router = useRouter()
 
-  const loadLandingData = useCallback(async () => {
-    if (!vendorId) return
-    try {
-      const response = await fetch(`${DASHBOARD_URL}/api/getLandingPage/vendor/${vendorId}`)
-      const data = await response.json()
-      setDashboardData(data)
-      if (data?.stats) {
+  useEffect(() => {
+    if (landingData) {
+      setDashboardData(landingData)
+      if (landingData?.stats) {
         setRealTimeStats({
-          todayEarnings: data.stats.todayEarnings,
-          todayBookings: data.stats.todayBookings,
-          pendingAmount: data.stats.pendingAmount,
-          todayBookingsChange: data.stats.todayBookingsChange || 0,
+          todayEarnings: landingData.stats.todayEarnings,
+          todayBookings: landingData.stats.todayBookings,
+          pendingAmount: landingData.stats.pendingAmount,
+          todayBookingsChange: landingData.stats.todayBookingsChange || 0,
           lastUpdate: new Date().toLocaleTimeString(),
         })
       }
-    } catch (error) {
-      console.error('❌ Error loading dashboard data:', error)
     }
-  }, [vendorId])
+  }, [landingData])
+
+  useEffect(() => {
+    if (Array.isArray(consoles) && consoles.length > 0) {
+      setBookingInfo(consoles)
+    }
+  }, [consoles])
+
+  const loadLandingData = useCallback(async () => {
+    await refreshLanding()
+  }, [refreshLanding])
 
   const loadConsoleData = useCallback(async () => {
-    if (!vendorId) return
-    try {
-      const response = await fetch(`${DASHBOARD_URL}/api/getConsoles/vendor/${vendorId}`)
-      const data = await response.json()
-      setBookingInfo(Array.isArray(data) ? data : [])
-    } catch (error) {
-      console.error('Error fetching booking data:', error)
-    }
-  }, [vendorId])
+    await refreshConsoles()
+  }, [refreshConsoles])
 
   const handleBookingAccepted = (bookingData: any) => {
     console.log('🎯 Booking accepted - updating upcoming bookings:', bookingData)
@@ -139,19 +137,6 @@ export function DashboardContent() {
       tick()
     }, 1000)
     return () => clearInterval(timer)
-  }, [])
-
-  useEffect(() => {
-    const token = localStorage.getItem("jwtToken")
-    if (token) {
-      try {
-        const decoded_token = jwtDecode<{ sub: { id: number } }>(token)
-        console.log('🔑 Decoded vendor ID:', decoded_token.sub.id)
-        setVendorId(decoded_token.sub.id)
-      } catch (error) {
-        console.error('❌ Error decoding JWT token:', error)
-      }
-    }
   }, [])
 
   useEffect(() => {

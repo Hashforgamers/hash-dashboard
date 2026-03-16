@@ -28,6 +28,7 @@ import { BOOKING_URL, DASHBOARD_URL } from "@/src/config/env";
 import { jwtDecode } from "jwt-decode";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { useModuleCache } from "@/app/hooks/useModuleCache";
 
 interface ConsoleType {
   type: string;
@@ -291,6 +292,113 @@ export default function ConsolePricing() {
 
   const validatePrice = (value: number) => value >= 0 && value <= 10000;
 
+  const basePricingKey = vendorId ? `pricing_base:${vendorId}` : "pricing_base:0";
+  const offersKey = vendorId ? `pricing_offers:${vendorId}` : "pricing_offers:0";
+  const controllerKey = vendorId ? `pricing_controller:${vendorId}` : "pricing_controller:0";
+  const squadKey = vendorId ? `pricing_squad:${vendorId}` : "pricing_squad:0";
+  const taxKey = vendorId ? `pricing_tax:${vendorId}` : "pricing_tax:0";
+  const gamesKey = vendorId ? `pricing_games:${vendorId}` : "pricing_games:0";
+  const pricingVersionKey = vendorId ? `pricing:${vendorId}` : "pricing:0";
+
+  const { data: cachedBasePricing, refresh: refreshBasePricingCache } = useModuleCache<PricingState>(
+    basePricingKey,
+    async () => {
+      if (!vendorId) return {};
+      const res = await fetch(`${DASHBOARD_URL}/api/vendor/${vendorId}/console-pricing`);
+      if (!res.ok) throw new Error("Failed");
+      const data = await res.json();
+      const newPrices: PricingState = {};
+      consoleTypes.forEach((c) => {
+        newPrices[c.type] = { value: data[c.type] ?? 0, isValid: true, hasChanged: false };
+      });
+      return newPrices;
+    },
+    120000,
+    pricingVersionKey
+  );
+
+  const { data: cachedOffers, refresh: refreshOffersCache } = useModuleCache<PricingOffer[]>(
+    offersKey,
+    async () => {
+      if (!vendorId) return [];
+      const res = await fetch(`${DASHBOARD_URL}/api/vendor/${vendorId}/pricing-offers`);
+      if (!res.ok) throw new Error("Failed");
+      const data = await res.json();
+      return Array.isArray(data?.offers) ? data.offers : [];
+    },
+    120000,
+    pricingVersionKey
+  );
+
+  const { data: cachedControllerPricing, refresh: refreshControllerCache } = useModuleCache<ControllerPricingState>(
+    controllerKey,
+    async () => {
+      if (!vendorId) return defaultControllerPricing;
+      const res = await fetch(`${DASHBOARD_URL}/api/vendor/${vendorId}/controller-pricing`);
+      if (!res.ok) throw new Error("Failed to fetch controller pricing");
+      const data = await res.json();
+      const pricingData = data?.pricing || {};
+      const next: ControllerPricingState = { ...defaultControllerPricing };
+      for (const consoleType of controllerSupportedConsoleTypes) {
+        const item = pricingData[consoleType];
+        next[consoleType] = {
+          base_price: Number(item?.base_price ?? 0),
+          tiers: Array.isArray(item?.tiers)
+            ? item.tiers.map((tier: any) => ({
+                id: String(tier?.id ?? `${consoleType}-tier-${Date.now()}-${Math.random()}`),
+                quantity: Number(tier?.quantity ?? 2),
+                total_price: Number(tier?.total_price ?? 0),
+              }))
+            : [],
+        };
+      }
+      return next;
+    },
+    120000,
+    pricingVersionKey
+  );
+
+  const { data: cachedSquadPricing, refresh: refreshSquadCache } = useModuleCache<SquadPricingState>(
+    squadKey,
+    async () => {
+      if (!vendorId) return squadRuleDefaults;
+      const res = await fetch(`${DASHBOARD_URL}/api/vendor/${vendorId}/squad-pricing-rules`);
+      if (!res.ok) throw new Error("Failed to fetch squad pricing rules");
+      const data = await res.json();
+      return Array.isArray(data?.rules) ? data.rules : data;
+    },
+    120000,
+    pricingVersionKey
+  );
+
+  const { data: cachedTaxProfile, refresh: refreshTaxCache } = useModuleCache<VendorTaxProfile>(
+    taxKey,
+    async () => {
+      if (!vendorId) return taxProfile;
+      const res = await fetch(`${DASHBOARD_URL}/api/vendor/${vendorId}/tax-profile`);
+      const data = await res.json();
+      if (!res.ok) throw new Error("Failed to fetch tax profile");
+      return data?.profile || data;
+    },
+    120000,
+    pricingVersionKey
+  );
+
+  const { data: cachedAvailableGames, refresh: refreshGamesCache } = useModuleCache<AvailableGame[]>(
+    gamesKey,
+    async () => {
+      if (!vendorId) return [];
+      const res = await fetch(`${DASHBOARD_URL}/api/vendor/${vendorId}/available-games`);
+      if (!res.ok) throw new Error("Failed");
+      const data = await res.json();
+      return Array.isArray(data)
+        ? data
+        : data.games || data.available_games || data.data || [];
+    },
+    120000,
+    pricingVersionKey
+  );
+
   useEffect(() => {
     const token = localStorage.getItem("jwtToken");
     if (token) {
@@ -305,44 +413,58 @@ export default function ConsolePricing() {
 
   useEffect(() => {
     if (!vendorId) return;
-    const fetchPricing = async () => {
-      try {
-        const res = await fetch(`${DASHBOARD_URL}/api/vendor/${vendorId}/console-pricing`);
-        if (!res.ok) throw new Error("Failed");
-        const data = await res.json();
-        const newPrices: PricingState = {};
-        consoleTypes.forEach((c) => {
-          newPrices[c.type] = { value: data[c.type] ?? 0, isValid: true, hasChanged: false };
-        });
-        setPrices(newPrices);
-      } catch (error) {
-        console.error("Error fetching prices:", error);
-      }
-    };
-    fetchPricing();
-  }, [vendorId]);
+    if (cachedBasePricing && Object.keys(cachedBasePricing).length > 0) {
+      setPrices(cachedBasePricing);
+      return;
+    }
+    refreshBasePricingCache(true)
+      .then((data) => {
+        if (data) setPrices(data);
+      })
+      .catch((error) => console.error("Error fetching prices:", error));
+  }, [vendorId, cachedBasePricing, refreshBasePricingCache]);
 
   useEffect(() => {
     if (vendorId && activeTab === "offers") {
-      fetchOffers();
-      fetchAvailableGames();
+      if (cachedOffers) {
+        setOffers(cachedOffers);
+      } else {
+        fetchOffers();
+      }
+      if (cachedAvailableGames) {
+        setAvailableGames(cachedAvailableGames);
+      } else {
+        fetchAvailableGames();
+      }
     }
-  }, [vendorId, activeTab]);
+  }, [vendorId, activeTab, cachedOffers, cachedAvailableGames]);
 
   useEffect(() => {
     if (!vendorId || activeTab !== "controllers") return;
+    if (cachedControllerPricing) {
+      setControllerPricing(cachedControllerPricing);
+      return;
+    }
     fetchControllerPricing();
-  }, [vendorId, activeTab]);
+  }, [vendorId, activeTab, cachedControllerPricing]);
 
   useEffect(() => {
     if (!vendorId || activeTab !== "squad") return;
+    if (cachedSquadPricing) {
+      setSquadPricing(cachedSquadPricing);
+      return;
+    }
     fetchSquadPricingRules();
-  }, [vendorId, activeTab]);
+  }, [vendorId, activeTab, cachedSquadPricing]);
 
   useEffect(() => {
     if (!vendorId || activeTab !== "gst") return;
+    if (cachedTaxProfile) {
+      setTaxProfile(cachedTaxProfile);
+      return;
+    }
     fetchTaxProfile();
-  }, [vendorId, activeTab]);
+  }, [vendorId, activeTab, cachedTaxProfile]);
 
   useEffect(() => {
     if (!vendorId || activeTab !== "credit") return;
@@ -355,28 +477,10 @@ export default function ConsolePricing() {
     setIsLoadingControllerPricing(true);
     setControllerPricingError(null);
     try {
-      const res = await fetch(`${DASHBOARD_URL}/api/vendor/${vendorId}/controller-pricing`);
-      if (!res.ok) throw new Error("Failed to fetch controller pricing");
-      const data = await res.json();
-      const pricingData = data?.pricing || {};
-
-      setControllerPricing((prev) => {
-        const next = { ...prev };
-        for (const consoleType of controllerSupportedConsoleTypes) {
-          const item = pricingData[consoleType];
-          next[consoleType] = {
-            base_price: Number(item?.base_price ?? 0),
-            tiers: Array.isArray(item?.tiers)
-              ? item.tiers.map((tier: any) => ({
-                  id: String(tier?.id ?? `${consoleType}-tier-${Date.now()}-${Math.random()}`),
-                  quantity: Number(tier?.quantity ?? 2),
-                  total_price: Number(tier?.total_price ?? 0),
-                }))
-              : [],
-          };
-        }
-        return next;
-      });
+      const data = await refreshControllerCache(true);
+      if (data) {
+        setControllerPricing(data);
+      }
       setControllerPricingChanged(false);
     } catch (error) {
       console.error("Failed to load controller pricing", error);
@@ -391,10 +495,8 @@ export default function ConsolePricing() {
     setIsLoadingSquadPricing(true);
     setSquadPricingError(null);
     try {
-      const res = await fetch(`${DASHBOARD_URL}/api/vendor/${vendorId}/squad-pricing-rules`);
-      if (!res.ok) throw new Error("Failed to fetch squad pricing rules");
-      const data = await res.json();
-      const pricing = data?.pricing || {};
+      const data = await refreshSquadCache(true);
+      const pricing = (data as any)?.pricing || data || {};
       const next: SquadPricingState = { pc: {} };
       for (const group of Object.keys(next)) {
         const incoming = pricing?.[group];
@@ -432,10 +534,8 @@ export default function ConsolePricing() {
     if (!vendorId) return;
     setIsLoadingOffers(true);
     try {
-      const res = await fetch(`${DASHBOARD_URL}/api/vendor/${vendorId}/pricing-offers`);
-      if (!res.ok) throw new Error("Failed");
-      const data = await res.json();
-      setOffers(data.offers || []);
+      const data = await refreshOffersCache(true);
+      setOffers(data || []);
     } catch (error) {
       console.error("Error:", error);
       setOffers([]);
@@ -449,20 +549,18 @@ export default function ConsolePricing() {
     setIsLoadingTaxProfile(true);
     setTaxProfileError(null);
     try {
-      const res = await fetch(`${DASHBOARD_URL}/api/vendor/${vendorId}/tax-profile`);
-      if (!res.ok) throw new Error("Failed to fetch GST profile");
-      const data = await res.json();
-      const profile = data?.profile || {};
+      const profile = await refreshTaxCache(true);
+      const safeProfile = profile || {};
       setTaxProfile({
         vendor_id: vendorId,
-        gst_registered: Boolean(profile.gst_registered),
-        gst_enabled: Boolean(profile.gst_enabled),
-        gst_rate: Number(profile.gst_rate ?? 18),
-        tax_inclusive: Boolean(profile.tax_inclusive),
-        gstin: profile.gstin || "",
-        legal_name: profile.legal_name || "",
-        state_code: profile.state_code || "",
-        place_of_supply_state_code: profile.place_of_supply_state_code || "",
+        gst_registered: Boolean(safeProfile.gst_registered),
+        gst_enabled: Boolean(safeProfile.gst_enabled),
+        gst_rate: Number(safeProfile.gst_rate ?? 18),
+        tax_inclusive: Boolean(safeProfile.tax_inclusive),
+        gstin: safeProfile.gstin || "",
+        legal_name: safeProfile.legal_name || "",
+        state_code: safeProfile.state_code || "",
+        place_of_supply_state_code: safeProfile.place_of_supply_state_code || "",
       });
     } catch (error) {
       console.error("Failed to fetch GST profile", error);
@@ -588,13 +686,8 @@ export default function ConsolePricing() {
   const fetchAvailableGames = async () => {
     if (!vendorId) return;
     try {
-      const res = await fetch(`${DASHBOARD_URL}/api/vendor/${vendorId}/available-games`);
-      if (!res.ok) throw new Error("Failed");
-      const data = await res.json();
-      const gamesArray: AvailableGame[] = Array.isArray(data)
-        ? data
-        : data.games || data.available_games || data.data || [];
-      setAvailableGames(gamesArray);
+      const gamesArray = await refreshGamesCache(true);
+      if (gamesArray) setAvailableGames(gamesArray);
     } catch (error) {
       setAvailableGames([]);
     }

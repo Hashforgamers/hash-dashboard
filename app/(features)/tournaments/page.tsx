@@ -10,6 +10,8 @@ import { useEventsToken } from '@/hooks/useEventsToken';
 import { jwtDecode } from "jwt-decode"
 import { listEvents, EventItem, EventStatus } from '@/lib/event-api';
 import { DashboardLayout } from '@/app/(layout)/dashboard-layout';
+import { useModuleCache } from '@/app/hooks/useModuleCache';
+import { useDashboardData } from '@/app/context/DashboardDataContext';
 
 // TODO: swap with your real auth context
 
@@ -39,6 +41,7 @@ const ALL_STATUSES: EventStatus[] = [
 export default function TournamentsPage() {
   const router = useRouter();
   const [vendorId, setVendorId] = useState<number | null>(null)
+  const { vendorId: cachedVendorId } = useDashboardData();
   const { token, loading: tokenLoading, error: tokenError, refresh } = useEventsToken(vendorId);
 
   const [events,       setEvents]       = useState<EventItem[]>([]);
@@ -48,7 +51,11 @@ export default function TournamentsPage() {
   const [page,         setPage]         = useState(1);
   const [openMenuId,   setOpenMenuId]   = useState<string | null>(null);
   
-    useEffect(() => {
+  useEffect(() => {
+    if (cachedVendorId) {
+      setVendorId(cachedVendorId);
+      return;
+    }
     const token = localStorage.getItem("jwtToken")
     if (token) {
       try {
@@ -59,16 +66,32 @@ export default function TournamentsPage() {
         console.error('❌ Error decoding JWT token:', error)
       }
     }
-  }, [])
+  }, [cachedVendorId])
+
+  const cacheKey = vendorId ? `tournaments:${vendorId}:${statusFilter || "all"}` : "tournaments:0";
+  const versionKey = vendorId ? `tournaments:${vendorId}` : "tournaments:0";
+  const { data: cachedEvents, refresh: refreshEventsCache } = useModuleCache<EventItem[]>(
+    cacheKey,
+    async () => {
+      if (!token) return [];
+      return listEvents(token, statusFilter || undefined);
+    },
+    120000,
+    versionKey
+  );
 
   useEffect(() => {
     if (!token) return;
+    if (cachedEvents) {
+      setEvents(cachedEvents);
+      return;
+    }
     setLoadingData(true);
-    listEvents(token, statusFilter || undefined)
-      .then(setEvents)
+    refreshEventsCache(true)
+      .then((data) => setEvents(data || []))
       .catch(console.error)
       .finally(() => setLoadingData(false));
-  }, [token, statusFilter]);
+  }, [token, statusFilter, cachedEvents, refreshEventsCache]);
 
   const filtered   = events.filter((e) =>
     e.title.toLowerCase().includes(search.toLowerCase())
