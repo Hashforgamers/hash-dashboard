@@ -207,8 +207,28 @@ const getCurrentISTMinutes = (): number => {
   return hours * 60 + minutes
 }
 
-const isPastSlotInIST = (slotDate: string, slotEndTime: string): boolean => {
-  const slotEndTs = new Date(`${slotDate}T${slotEndTime}+05:30`).getTime()
+const toMinutes = (timeValue: string): number => {
+  const parts = String(timeValue || "").split(":")
+  if (parts.length < 2) return Number.NaN
+  const hours = Number(parts[0])
+  const minutes = Number(parts[1])
+  if (Number.isNaN(hours) || Number.isNaN(minutes)) return Number.NaN
+  return hours * 60 + minutes
+}
+
+const getSlotEndTimestampIST = (slotDate: string, slotStartTime: string, slotEndTime: string): number => {
+  const rawEndTs = new Date(`${slotDate}T${slotEndTime}+05:30`).getTime()
+  if (!Number.isFinite(rawEndTs)) return Number.NaN
+  const startMinutes = toMinutes(slotStartTime)
+  const endMinutes = toMinutes(slotEndTime)
+  if (Number.isFinite(startMinutes) && Number.isFinite(endMinutes) && endMinutes <= startMinutes) {
+    return rawEndTs + 24 * 60 * 60 * 1000
+  }
+  return rawEndTs
+}
+
+const isPastSlotInIST = (slotDate: string, slotEndTime: string, slotStartTime = "00:00"): boolean => {
+  const slotEndTs = getSlotEndTimestampIST(slotDate, slotStartTime, slotEndTime)
   return Number.isFinite(slotEndTs) && Date.now() >= slotEndTs
 }
 
@@ -404,7 +424,8 @@ function SlotBookingForm({
     
     slots.forEach(slot => {
       const slotDateTime = new Date(`${slot.date}T${slot.start_time}+05:30`)
-      const slotEndTime = new Date(`${slot.date}T${slot.end_time}+05:30`)
+      const slotEndTs = getSlotEndTimestampIST(slot.date, slot.start_time, slot.end_time)
+      const slotEndTime = new Date(Number.isFinite(slotEndTs) ? slotEndTs : `${slot.date}T${slot.end_time}+05:30`)
       
       const slotDurationMs = slotEndTime.getTime() - slotDateTime.getTime()
       const slotDurationMinutes = slotDurationMs / (1000 * 60)
@@ -2660,7 +2681,7 @@ function ScheduleGrid({
   if (!matchingSlot) return
 
   // ✅ NEW: Check if slot is in the past
-  const isPastTime = isPastSlotInIST(dayData.fullDate, matchingSlot.end_time)
+  const isPastTime = isPastSlotInIST(dayData.fullDate, matchingSlot.end_time, matchingSlot.start_time)
 
   const selectedSlot: SelectedSlot = {
     slot_id: matchingSlot.slot_id,
@@ -2748,7 +2769,7 @@ function ScheduleGrid({
           const isSelected = isSlotSelected(slot.slot_id, day.fullDate)
           
           // ✅ Check if time has passed
-          const isPastTime = isPastSlotInIST(day.fullDate, slot.end_time)
+          const isPastTime = isPastSlotInIST(day.fullDate, slot.end_time, slot.start_time)
           
           // ✅ Check if fully booked
           const isFullyBooked = (slot.available_slot || 0) === 0
@@ -4107,8 +4128,8 @@ const [isLoadingBookings, setIsLoadingBookings] = useState(false)
               }
 
               if (dateString === dates[0]) {
-                const slotEndTime = new Date(`${dateString}T${slot.end_time}+05:30`)
-                const isPast = nowTs >= slotEndTime.getTime()
+                const slotEndTs = getSlotEndTimestampIST(dateString, slot.start_time, slot.end_time)
+                const isPast = Number.isFinite(slotEndTs) && nowTs >= slotEndTs
                 if (isPast) {
                   processedSlot.is_available = false
                 }
@@ -4143,8 +4164,8 @@ const [isLoadingBookings, setIsLoadingBookings] = useState(false)
                   }
 
                   if (dateString === dates[0]) {
-                    const slotEndTime = new Date(`${dateString}T${slot.end_time}+05:30`)
-                    const isPast = nowTs >= slotEndTime.getTime()
+                    const slotEndTs = getSlotEndTimestampIST(dateString, slot.start_time, slot.end_time)
+                    const isPast = Number.isFinite(slotEndTs) && nowTs >= slotEndTs
 
                     if (isPast) {
                       processedSlot.is_available = false
