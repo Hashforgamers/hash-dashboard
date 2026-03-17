@@ -25,6 +25,7 @@ import {
 import { ConsoleType } from './types';
 import { BOOKING_URL, DASHBOARD_URL } from '@/src/config/env';
 import MealSelector from './mealSelector';
+import { normalizeBookedDate } from './booking/utils/dataHelpers';
 
 interface BookingFormProps {
   selectedConsole: ConsoleType;
@@ -637,7 +638,7 @@ const [isPrivateMode, setIsPrivateMode] = useState<boolean>(false);
           name,
           email,
           phone,
-          bookedDate: selectedDate,
+          bookedDate: normalizeBookedDate(selectedDate),
           slotId: selectedSlots,
           paymentType: paymentType === "Monthly Credit" ? "monthly_credit" : paymentType,
           bookingType: 'direct',

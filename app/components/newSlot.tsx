@@ -186,6 +186,15 @@ const getISTDateString = (offsetDays = 0): string => {
   return `${year}-${month}-${day}`
 }
 
+const normalizeBookedDate = (raw: string): string => {
+  const trimmed = (raw || "").trim()
+  if (!trimmed) return ""
+  if (/^\d{8}$/.test(trimmed)) {
+    return `${trimmed.slice(0, 4)}-${trimmed.slice(4, 6)}-${trimmed.slice(6, 8)}`
+  }
+  return trimmed
+}
+
 const getCurrentISTMinutes = (): number => {
   const parts = new Intl.DateTimeFormat("en-GB", {
     timeZone: IST_TIMEZONE,
@@ -1341,7 +1350,7 @@ const getEffectivePrice = (slot: SelectedSlot): number => {
         name,
         email,
         phone,
-        bookedDate: selectedSlots[0]?.date || '',
+        bookedDate: normalizeBookedDate(selectedSlots[0]?.date || ''),
         slotId: selectedSlots.map(slot => slot.slot_id),
         paymentType: paymentType === 'Monthly Credit' ? 'monthly_credit' : paymentType,
         bookingType: isSquadMode ? 'squad' : 'direct',
@@ -4201,11 +4210,12 @@ const fetchSlotBookings = async (slotIds: number[], date: string) => {
   }
   
   setIsLoadingBookings(true)
-  console.log('🔍 Fetching bookings for slots:', slotIds, 'date:', date)
+  const normalizedDate = normalizeBookedDate(date)
+  console.log('🔍 Fetching bookings for slots:', slotIds, 'date:', normalizedDate)
   
   // ✅ Check if querying past slots
   const todayIST = getISTDateString(0)
-  const isPastDate = date < todayIST
+  const isPastDate = normalizedDate < todayIST
   
   try {
     const slotIdsParam = slotIds.join(',')
@@ -4213,7 +4223,7 @@ const fetchSlotBookings = async (slotIds: number[], date: string) => {
     const statusParam = isPastDate ? '&include_completed=true' : ''
     
     const response = await fetch(
-      `${BOOKING_URL}/api/vendor/${vendorId}/slot-bookings?slot_ids=${slotIdsParam}&date=${date}${statusParam}`
+      `${BOOKING_URL}/api/vendor/${vendorId}/slot-bookings?slot_ids=${slotIdsParam}&date=${normalizedDate}${statusParam}`
     )
     
     const data = await response.json()
