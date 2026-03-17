@@ -899,6 +899,11 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                                         Squad x{squadPlayerCount}
                                       </span>
                                     )}
+                                    {hasMeals && (
+                                      <span className="rounded-full border border-emerald-400/40 bg-emerald-500/10 px-2 py-0.5 text-xs font-semibold text-emerald-200">
+                                        Meals Added
+                                      </span>
+                                    )}
                                   </div>
                                   {squadEnabled && squadMemberNames.length > 0 && (
                                     <div className="text-xs text-slate-400">

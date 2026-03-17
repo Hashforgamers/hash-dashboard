@@ -93,12 +93,14 @@ function decodeStaffFromToken(token: string, cafeId: string, matrix: RolePermiss
     const claims = jwtDecode<DecodedToken>(token);
     if (claims.staff?.role) {
       const role = claims.staff.role;
+      const tokenPerms = Array.isArray(claims.staff.permissions) ? claims.staff.permissions : [];
+      const mergedPerms = Array.from(new Set([...tokenPerms, ...(matrix[role] || [])])) as Permission[];
       return {
         id: claims.staff.id || `staff-${cafeId}`,
         cafeId,
         name: claims.staff.name || "Staff",
         role,
-        permissions: (claims.staff.permissions as Permission[]) || matrix[role],
+        permissions: mergedPerms,
       };
     }
   } catch {

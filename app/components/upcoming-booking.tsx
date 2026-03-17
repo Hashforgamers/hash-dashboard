@@ -11,7 +11,7 @@ import { useState, useEffect, useMemo } from "react";
 import { createPortal } from "react-dom"; // ✅ ADD THIS IMPORT
 import axios from "axios";
 import { format } from 'date-fns';
-import { DASHBOARD_URL } from "@/src/config/env";
+import { BOOKING_URL, DASHBOARD_URL } from "@/src/config/env";
 import ResponsiveSearchFilter from "./ResponsiveSearchFilter";
 import MealDetailsModal from "./mealsDetailmodal";
 import { useSocket } from "../context/SocketContext";
@@ -270,6 +270,36 @@ export function UpcomingBookings({
     hasExistingMeals: false
   });
 
+  const [cancelDialog, setCancelDialog] = useState<{
+    open: boolean
+    booking: any | null
+    repaymentType: "refund" | "credit" | "reschedule" | "none"
+    reason: string
+    isPaid: boolean
+  }>({
+    open: false,
+    booking: null,
+    repaymentType: "refund",
+    reason: "",
+    isPaid: false
+  })
+  const [cancelLoading, setCancelLoading] = useState(false)
+
+  const showToast = (message: string, type: 'success' | 'error' = 'success') => {
+    const toast = document.createElement('div')
+    toast.className = `fixed top-4 right-4 px-6 py-3 rounded-lg shadow-xl z-[10000] text-white font-medium transform transition-all duration-300 ${
+      type === 'success' ? 'bg-emerald-500' : 'bg-rose-500'
+    }`
+    toast.innerHTML = `
+      <div class="flex items-center gap-2">
+        <div class="w-2 h-2 rounded-full bg-white animate-pulse"></div>
+        <span>${message}</span>
+      </div>
+    `
+    document.body.appendChild(toast)
+    setTimeout(() => document.body.removeChild(toast), 4000)
+  }
+
   // Update bookings when props change
   useEffect(() => {
     if (Array.isArray(initialBookings)) {
@@ -377,10 +407,35 @@ export function UpcomingBookings({
       });
     }
 
+    function handleBookingPaymentUpdate(data: any) {
+      const eventVendorId = Number(data?.vendorId ?? data?.vendor_id);
+      if (eventVendorId && vendorId && eventVendorId !== parseInt(vendorId)) return;
+      const eventType = String(data?.event || "").toLowerCase();
+      const bookingId = Number(data?.bookingId ?? data?.booking_id);
+      if (!Number.isFinite(bookingId) || bookingId <= 0) return;
+      if (eventType === "meals_added") {
+        setUpcomingBookings(prev => {
+          if (!Array.isArray(prev)) return prev;
+          return prev.map(booking =>
+            Number(booking?.bookingId) === bookingId
+              ? { ...booking, hasMeals: true }
+              : booking
+          )
+        })
+      }
+      if (eventType === "booking_cancelled") {
+        setUpcomingBookings(prev => {
+          if (!Array.isArray(prev)) return prev;
+          return prev.filter(booking => Number(booking?.bookingId) !== bookingId);
+        })
+      }
+    }
+
     socket.on('upcoming_booking', handleUpcomingBooking)
     socket.on('booking', handleBookingUpdate)
     socket.on('booking_accepted', handleBookingAccepted)
     socket.on('current_slot', handleCurrentSlotStart)
+    socket.on('booking_payment_update', handleBookingPaymentUpdate)
 
     return () => {
       console.log('🧹 Cleaning up UpcomingBookings listeners')
@@ -388,6 +443,7 @@ export function UpcomingBookings({
       socket.off('booking', handleBookingUpdate)
       socket.off('booking_accepted', handleBookingAccepted)
       socket.off('current_slot', handleCurrentSlotStart)
+      socket.off('booking_payment_update', handleBookingPaymentUpdate)
     }
   }, [socket, vendorId, isConnected, joinVendor])
 
@@ -685,6 +741,62 @@ export function UpcomingBookings({
     });
   };
 
+  const openCancelDialog = (booking: any, isPaid: boolean) => {
+    setCancelDialog({
+      open: true,
+      booking,
+      repaymentType: isPaid ? "refund" : "none",
+      reason: "",
+      isPaid
+    })
+  }
+
+  const closeCancelDialog = () => {
+    setCancelDialog(prev => ({ ...prev, open: false }))
+  }
+
+  const handleCancelBooking = async () => {
+    if (!cancelDialog.booking || !vendorId) return
+    const booking = cancelDialog.booking
+    const bookingIds = Array.isArray(booking?.merged_booking_ids) && booking.merged_booking_ids.length > 0
+      ? booking.merged_booking_ids
+      : [booking.bookingId]
+    setCancelLoading(true)
+    try {
+      const payload = {
+        booking_ids: bookingIds,
+        repayment_type: cancelDialog.isPaid ? cancelDialog.repaymentType : "none",
+        reason: cancelDialog.reason || "Cancelled from dashboard"
+      }
+      const response = await fetch(`${BOOKING_URL}/api/bookings/cancel`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      })
+      const result = await response.json()
+      if (!response.ok || !result?.success) {
+        throw new Error(result?.message || "Failed to cancel booking")
+      }
+      setUpcomingBookings(prev => {
+        if (!Array.isArray(prev)) return prev
+        return prev.filter(b => !bookingIds.includes(b.bookingId))
+      })
+      setRefreshSlots(prev => !prev)
+      showToast(
+        cancelDialog.isPaid
+          ? `Booking cancelled. Repayment: ${cancelDialog.repaymentType.toUpperCase()}`
+          : "Booking cancelled successfully",
+        "success"
+      )
+      closeCancelDialog()
+    } catch (error: any) {
+      console.error("Cancel booking failed:", error)
+      showToast(error?.message || "Failed to cancel booking", "error")
+    } finally {
+      setCancelLoading(false)
+    }
+  }
+
   return (
     <>
       {/* 🚀 FIXED: Proper flex container structure */}
@@ -871,6 +983,7 @@ export function UpcomingBookings({
                       booking?.payment_use_case ||
                       ""
                     ).toLowerCase();
+                    const hasMeals = Boolean(booking?.hasMeals);
                     const settlementStatus = String(
                       booking?.squadDetails?.settlement_status ||
                       booking?.squadDetails?.settlementStatus ||
@@ -879,6 +992,13 @@ export function UpcomingBookings({
                     ).toLowerCase();
                     const isPayAtCafe = paymentUseCase === "pay_at_cafe" ||
                       ["pending", "unpaid", "due"].includes(settlementStatus);
+                    const isPaidBooking = !isPayAtCafe;
+                    const bookingRecordStatus = String(
+                      booking?.bookingRecordStatus || booking?.status || ""
+                    ).toLowerCase();
+                    const lifecycleStatus = String(booking?.lifecycleStatus || "").toLowerCase();
+                    const canCancel = !["current", "completed"].includes(lifecycleStatus) &&
+                      !["cancelled", "canceled", "rejected", "completed", "discarded"].includes(bookingRecordStatus);
                     const paymentBadgeLabel = isPayAtCafe ? "To Be Paid" : "Paid";
                     const paymentBadgeClass = isPayAtCafe
                       ? "border-amber-400/40 bg-amber-500/15 text-amber-200"
@@ -899,15 +1019,20 @@ export function UpcomingBookings({
                       <div className="space-y-2.5">
                         {/* User info row */}
                         <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2 min-w-0 flex-1">
-                            <User className="h-3.5 w-3.5 shrink-0 text-slate-300" />
-                            <span className="truncate dash-title !text-sm">{booking.username || "Guest User"}</span>
-                            {squadEnabled && (
-                              <span className="shrink-0 rounded-full border border-sky-400/40 bg-sky-500/15 px-2.5 py-0.5 text-xs font-semibold text-sky-200">
-                                Squad x{squadPlayerCount}
-                              </span>
-                            )}
-                          </div>
+                        <div className="flex items-center gap-2 min-w-0 flex-1">
+                          <User className="h-3.5 w-3.5 shrink-0 text-slate-300" />
+                          <span className="truncate dash-title !text-sm">{booking.username || "Guest User"}</span>
+                          {squadEnabled && (
+                            <span className="shrink-0 rounded-full border border-sky-400/40 bg-sky-500/15 px-2.5 py-0.5 text-xs font-semibold text-sky-200">
+                              Squad x{squadPlayerCount}
+                            </span>
+                          )}
+                          {hasMeals && (
+                            <span className="shrink-0 rounded-full border border-emerald-400/40 bg-emerald-500/10 px-2.5 py-0.5 text-xs font-semibold text-emerald-200">
+                              Meals Added
+                            </span>
+                          )}
+                        </div>
                           <span className={`shrink-0 rounded-full border px-2.5 py-0.5 text-sm font-medium capitalize ${paymentBadgeClass}`}>
                             {paymentBadgeLabel}
                           </span>
@@ -1019,6 +1144,18 @@ export function UpcomingBookings({
                           <Play className="w-3 h-3" />
                           {canStartNow ? "Start" : "Not Startable Yet"}
                         </motion.button>
+                        {canCancel && (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              openCancelDialog(booking, isPaidBooking);
+                            }}
+                            className="mt-2 w-full rounded-md border border-rose-400/40 bg-rose-500/10 px-3 py-2 text-xs font-semibold text-rose-200 transition-all hover:bg-rose-500/20"
+                          >
+                            Cancel Booking
+                          </button>
+                        )}
                       </div>
                     </motion.div>
                     );
@@ -1041,6 +1178,78 @@ export function UpcomingBookings({
           hasExistingMeals={mealDetailsModal.hasExistingMeals}
           vendorId={vendorId}
         />,
+        document.body
+      )}
+
+      {isMounted && cancelDialog.open && createPortal(
+        <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/40 p-4">
+          <div className="w-full max-w-md rounded-2xl border border-slate-700/60 bg-slate-900/95 p-5 shadow-2xl">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-semibold text-slate-100">Cancel Booking</h3>
+              <button
+                type="button"
+                onClick={closeCancelDialog}
+                className="rounded-full border border-slate-600/60 p-1 text-slate-300 hover:bg-slate-800"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <p className="mt-2 text-xs text-slate-400">
+              {cancelDialog.isPaid
+                ? "This booking is paid. Choose how you will repay the user."
+                : "This booking is unpaid. The slot will be released immediately."}
+            </p>
+
+            {cancelDialog.isPaid && (
+              <div className="mt-4 space-y-2">
+                <label className="text-xs font-medium text-slate-300">Repayment Method</label>
+                <select
+                  value={cancelDialog.repaymentType}
+                  onChange={(e) =>
+                    setCancelDialog(prev => ({
+                      ...prev,
+                      repaymentType: e.target.value as any
+                    }))
+                  }
+                  className="w-full rounded-md border border-slate-600/60 bg-slate-800/70 px-3 py-2 text-xs text-slate-100"
+                >
+                  <option value="refund">Refund to original payment</option>
+                  <option value="credit">Credit to wallet/pass</option>
+                  <option value="reschedule">Reschedule credit</option>
+                </select>
+              </div>
+            )}
+
+            <div className="mt-4 space-y-2">
+              <label className="text-xs font-medium text-slate-300">Reason (optional)</label>
+              <textarea
+                rows={2}
+                value={cancelDialog.reason}
+                onChange={(e) => setCancelDialog(prev => ({ ...prev, reason: e.target.value }))}
+                className="w-full rounded-md border border-slate-600/60 bg-slate-800/70 px-3 py-2 text-xs text-slate-100"
+                placeholder="Add a short reason..."
+              />
+            </div>
+
+            <div className="mt-4 flex items-center justify-end gap-2">
+              <button
+                type="button"
+                onClick={closeCancelDialog}
+                className="rounded-md border border-slate-600/60 px-3 py-2 text-xs text-slate-300 hover:bg-slate-800"
+              >
+                Keep Booking
+              </button>
+              <button
+                type="button"
+                onClick={handleCancelBooking}
+                disabled={cancelLoading}
+                className="rounded-md border border-rose-400/40 bg-rose-500/15 px-3 py-2 text-xs font-semibold text-rose-200 hover:bg-rose-500/25 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {cancelLoading ? "Cancelling..." : "Confirm Cancel"}
+              </button>
+            </div>
+          </div>
+        </div>,
         document.body
       )}
     </>
