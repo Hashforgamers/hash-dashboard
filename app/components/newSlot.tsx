@@ -130,6 +130,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Search, CalendarClock, XCircle, ListTodo } from "lucide-react"
 import axios from "axios"
+import { useDashboardData } from "@/app/context/DashboardDataContext"
 
 interface SelectedMeal {
   menu_item_id: number
@@ -185,6 +186,15 @@ const getISTDateString = (offsetDays = 0): string => {
   return `${year}-${month}-${day}`
 }
 
+const normalizeBookedDate = (raw: string): string => {
+  const trimmed = (raw || "").trim()
+  if (!trimmed) return ""
+  if (/^\d{8}$/.test(trimmed)) {
+    return `${trimmed.slice(0, 4)}-${trimmed.slice(4, 6)}-${trimmed.slice(6, 8)}`
+  }
+  return trimmed
+}
+
 const getCurrentISTMinutes = (): number => {
   const parts = new Intl.DateTimeFormat("en-GB", {
     timeZone: IST_TIMEZONE,
@@ -197,8 +207,28 @@ const getCurrentISTMinutes = (): number => {
   return hours * 60 + minutes
 }
 
-const isPastSlotInIST = (slotDate: string, slotEndTime: string): boolean => {
-  const slotEndTs = new Date(`${slotDate}T${slotEndTime}+05:30`).getTime()
+const toMinutes = (timeValue: string): number => {
+  const parts = String(timeValue || "").split(":")
+  if (parts.length < 2) return Number.NaN
+  const hours = Number(parts[0])
+  const minutes = Number(parts[1])
+  if (Number.isNaN(hours) || Number.isNaN(minutes)) return Number.NaN
+  return hours * 60 + minutes
+}
+
+const getSlotEndTimestampIST = (slotDate: string, slotStartTime: string, slotEndTime: string): number => {
+  const rawEndTs = new Date(`${slotDate}T${slotEndTime}+05:30`).getTime()
+  if (!Number.isFinite(rawEndTs)) return Number.NaN
+  const startMinutes = toMinutes(slotStartTime)
+  const endMinutes = toMinutes(slotEndTime)
+  if (Number.isFinite(startMinutes) && Number.isFinite(endMinutes) && endMinutes <= startMinutes) {
+    return rawEndTs + 24 * 60 * 60 * 1000
+  }
+  return rawEndTs
+}
+
+const isPastSlotInIST = (slotDate: string, slotEndTime: string, slotStartTime = "00:00"): boolean => {
+  const slotEndTs = getSlotEndTimestampIST(slotDate, slotStartTime, slotEndTime)
   return Number.isFinite(slotEndTs) && Date.now() >= slotEndTs
 }
 
@@ -394,7 +424,8 @@ function SlotBookingForm({
     
     slots.forEach(slot => {
       const slotDateTime = new Date(`${slot.date}T${slot.start_time}+05:30`)
-      const slotEndTime = new Date(`${slot.date}T${slot.end_time}+05:30`)
+      const slotEndTs = getSlotEndTimestampIST(slot.date, slot.start_time, slot.end_time)
+      const slotEndTime = new Date(Number.isFinite(slotEndTs) ? slotEndTs : `${slot.date}T${slot.end_time}+05:30`)
       
       const slotDurationMs = slotEndTime.getTime() - slotDateTime.getTime()
       const slotDurationMinutes = slotDurationMs / (1000 * 60)
@@ -1340,7 +1371,7 @@ const getEffectivePrice = (slot: SelectedSlot): number => {
         name,
         email,
         phone,
-        bookedDate: selectedSlots[0]?.date || '',
+        bookedDate: normalizeBookedDate(selectedSlots[0]?.date || ''),
         slotId: selectedSlots.map(slot => slot.slot_id),
         paymentType: paymentType === 'Monthly Credit' ? 'monthly_credit' : paymentType,
         bookingType: isSquadMode ? 'squad' : 'direct',
@@ -2650,7 +2681,7 @@ function ScheduleGrid({
   if (!matchingSlot) return
 
   // ✅ NEW: Check if slot is in the past
-  const isPastTime = isPastSlotInIST(dayData.fullDate, matchingSlot.end_time)
+  const isPastTime = isPastSlotInIST(dayData.fullDate, matchingSlot.end_time, matchingSlot.start_time)
 
   const selectedSlot: SelectedSlot = {
     slot_id: matchingSlot.slot_id,
@@ -2738,7 +2769,7 @@ function ScheduleGrid({
           const isSelected = isSlotSelected(slot.slot_id, day.fullDate)
           
           // ✅ Check if time has passed
-          const isPastTime = isPastSlotInIST(day.fullDate, slot.end_time)
+          const isPastTime = isPastSlotInIST(day.fullDate, slot.end_time, slot.start_time)
           
           // ✅ Check if fully booked
           const isFullyBooked = (slot.available_slot || 0) === 0
@@ -3961,6 +3992,7 @@ interface SlotManagementProps {
 }
 
 export default function SlotManagement({ embedded = false }: SlotManagementProps) {
+  const { moduleCache, moduleVersions, setModuleCache } = useDashboardData()
   const [selectedConsole, setSelectedConsole] = useState<ConsoleFilter>("PC")
   const [selectedSlots, setSelectedSlots] = useState<SelectedSlot[]>([])
   const [showBookingForm, setShowBookingForm] = useState(false)
@@ -3970,9 +4002,7 @@ export default function SlotManagement({ embedded = false }: SlotManagementProps
   const [isLoading, setIsLoading] = useState(true)
     const [slotBookings, setSlotBookings] = useState<any[]>([])
 const [isLoadingBookings, setIsLoadingBookings] = useState(false)
-  
-const hasFetchedRef = useRef(false)
-const abortControllerRef = useRef<AbortController | null>(null)
+  const [vendorId, setVendorId] = useState<number | null>(null)
 
   const getVendorIdFromToken = (): number | null => {
     const token = localStorage.getItem('jwtToken')
@@ -3986,6 +4016,213 @@ const abortControllerRef = useRef<AbortController | null>(null)
     }
   }
 
+  type BookingCacheData = {
+    availableConsoles: ConsoleType[]
+    allSlots: { [key: string]: any[] }
+    selectedConsole: ConsoleFilter
+    dates: string[]
+  }
+
+  const bookingCacheKey = vendorId ? `booking_dashboard:${vendorId}` : "booking_dashboard:0"
+  const bookingVersionKey = vendorId ? `booking:${vendorId}` : "booking:0"
+  const cachedBooking = moduleCache[bookingCacheKey]?.data as BookingCacheData | undefined
+  const bookingVersion = moduleVersions[bookingVersionKey] || 0
+
+  const applyBookingCache = (data: BookingCacheData) => {
+    setAvailableConsoles(data.availableConsoles)
+    setAllSlots(data.allSlots)
+    if (data.selectedConsole) {
+      setSelectedConsole(data.selectedConsole)
+    }
+    setIsLoading(false)
+  }
+
+  const loadBookingData = async (resolvedVendorId: number): Promise<BookingCacheData | null> => {
+    try {
+      console.time("⏱️ Total fetch time")
+
+      console.log("📡 Fetching consoles...")
+      const consolesData = await fetchWithDedup(`${BOOKING_URL}/api/getAllConsole/vendor/${resolvedVendorId}?t=${Date.now()}`)
+
+      const consoleTemplate = [
+        { type: "PC" as ConsoleFilter, name: "PC Gaming", icon: Monitor, iconColor: "#7c3aed" },
+        { type: "PS5" as ConsoleFilter, name: "PlayStation 5", icon: Tv, iconColor: "#2563eb" },
+        { type: "Xbox" as ConsoleFilter, name: "Xbox Series", icon: Gamepad, iconColor: "#059669" },
+        { type: "VR" as ConsoleFilter, name: "VR Gaming", icon: Headset, iconColor: "#ea580c" },
+      ]
+
+      const consolesResolved = consoleTemplate
+        .map(template => {
+          const matchedConsole = consolesData.games?.find((game: any) => {
+            const apiName = (game.console_name || '').toLowerCase()
+            const templateType = template.type.toLowerCase()
+
+            const hasLiveConsoles = Number(game.console_count ?? 0) > 0
+            if (!hasLiveConsoles) return false
+
+            return apiName.includes(templateType) ||
+              (templateType === 'pc' && (apiName.includes('gaming') || apiName.includes('computer'))) ||
+              (templateType === 'ps5' && (apiName.includes('playstation') || apiName.includes('sony'))) ||
+              (templateType === 'xbox' && (apiName.includes('series') || apiName.includes('microsoft'))) ||
+              (templateType === 'vr' && (apiName.includes('virtual') || apiName.includes('reality')))
+          })
+
+          if (matchedConsole) {
+            return {
+              type: template.type,
+              name: matchedConsole.console_name,
+              id: matchedConsole.id,
+              price: matchedConsole.console_price,
+              icon: template.icon,
+              iconColor: template.iconColor,
+              color: "grey" as const,
+              description: `${template.type} Gaming Console`
+            }
+          }
+          return null
+        })
+        .filter(Boolean) as ConsoleType[]
+
+      if (consolesResolved.length === 0) {
+        console.log("⚠️ No consoles available")
+        return { availableConsoles: [], allSlots: {}, selectedConsole, dates: [] }
+      }
+
+      const dates: string[] = []
+      for (let i = 0; i < 3; i++) {
+        dates.push(getISTDateString(i))
+      }
+      console.log("📅 Dates to fetch:", dates)
+
+      console.log("📡 Fetching slots with BATCH API...")
+      const nowTs = Date.now()
+
+      let slotsData: { [key: string]: any[] } = {}
+      dates.forEach((dateString) => {
+        slotsData[dateString] = []
+      })
+
+      try {
+        const gameIds = consolesResolved.map(c => c.id).filter(Boolean) as number[]
+        const batchDates = dates.map(d => d.replace(/-/g, ""))
+
+        console.log("🚀 Batch request:", { vendorId: resolvedVendorId, gameIds, dates: batchDates })
+
+        const batchData = await fetchSlotsBatch(resolvedVendorId, gameIds, batchDates, true)
+        console.log("✅ Batch data received:", batchData)
+
+        for (const [dateKey, slots] of Object.entries(batchData)) {
+          const dateString = `${dateKey.slice(0, 4)}-${dateKey.slice(4, 6)}-${dateKey.slice(6, 8)}`
+
+          if (Array.isArray(slots)) {
+            const processedSlots = slots.map((slot: any) => {
+              const gameConsole = consolesResolved.find(c => c.id === slot.console_id)
+
+              const processedSlot = {
+                ...slot,
+                console_id: slot.console_id,
+                console_name: gameConsole?.name || "Unknown Console",
+                date: dateString,
+                is_available: (slot.available_slot || 0) > 0,
+                available_slot: slot.available_slot || 0,
+              }
+
+              if (dateString === dates[0]) {
+                const slotEndTs = getSlotEndTimestampIST(dateString, slot.start_time, slot.end_time)
+                const isPast = Number.isFinite(slotEndTs) && nowTs >= slotEndTs
+                if (isPast) {
+                  processedSlot.is_available = false
+                }
+              }
+              return processedSlot
+            })
+
+            slotsData[dateString] = processedSlots
+          }
+        }
+      } catch (batchError: any) {
+        console.error("❌ Batch fetch failed, falling back to individual requests:", batchError)
+
+        const allFetchPromises = dates.flatMap((dateString) =>
+          consolesResolved.map(async (gameConsole) => {
+            if (!gameConsole.id) return null
+
+            try {
+              const formattedDate = dateString.replace(/-/g, "")
+              const apiUrl = `${BOOKING_URL}/api/getSlots/vendor/${resolvedVendorId}/game/${gameConsole.id}/${formattedDate}`
+
+              const slotData = await fetchWithDedup(apiUrl)
+
+              if (slotData.slots && Array.isArray(slotData.slots)) {
+                const processedSlots = slotData.slots.map((slot: any) => {
+                  const processedSlot = {
+                    ...slot,
+                    console_id: gameConsole.id,
+                    console_name: gameConsole.name,
+                    date: dateString,
+                    is_available: slot.is_available,
+                  }
+
+                  if (dateString === dates[0]) {
+                    const slotEndTs = getSlotEndTimestampIST(dateString, slot.start_time, slot.end_time)
+                    const isPast = Number.isFinite(slotEndTs) && nowTs >= slotEndTs
+
+                    if (isPast) {
+                      processedSlot.is_available = false
+                    }
+                  }
+
+                  return processedSlot
+                })
+
+                return { dateString, slots: processedSlots }
+              }
+            } catch (error) {
+              console.error(`❌ Error fetching slots for ${gameConsole.name} on ${dateString}:`, error)
+            }
+
+            return null
+          })
+        )
+
+        const results = await Promise.all(allFetchPromises)
+        results.forEach(result => {
+          if (result && result.dateString && result.slots) {
+            slotsData[result.dateString].push(...result.slots)
+          }
+        })
+      }
+
+      const presentConsoleIds = new Set<number>()
+      Object.values(slotsData).forEach((daySlots: any[]) => {
+        daySlots.forEach((slot: any) => {
+          if (slot?.console_id != null) presentConsoleIds.add(Number(slot.console_id))
+        })
+      })
+      const filteredConsoles = consolesResolved.filter((c) => c.id != null && presentConsoleIds.has(Number(c.id)))
+      let nextSelectedConsole = selectedConsole
+      if (filteredConsoles.length > 0 && !filteredConsoles.some((c) => c.type === selectedConsole)) {
+        nextSelectedConsole = filteredConsoles[0].type as ConsoleFilter
+      }
+
+      console.timeEnd("⏱️ Total fetch time")
+      return { availableConsoles: filteredConsoles, allSlots: slotsData, selectedConsole: nextSelectedConsole, dates }
+    } catch (error: any) {
+      console.error('❌ Error in booking load:', error)
+      return null
+    }
+  }
+
+  const refreshBookingSnapshot = async () => {
+    if (!vendorId) return
+    requestCache.clear()
+    pendingRequests.clear()
+    const data = await loadBookingData(vendorId)
+    if (!data) return
+    setModuleCache(bookingCacheKey, data)
+    applyBookingCache(data)
+  }
+
 const fetchSlotBookings = async (slotIds: number[], date: string) => {
   const vendorId = getVendorIdFromToken()
   if (!vendorId || slotIds.length === 0) {
@@ -3994,11 +4231,12 @@ const fetchSlotBookings = async (slotIds: number[], date: string) => {
   }
   
   setIsLoadingBookings(true)
-  console.log('🔍 Fetching bookings for slots:', slotIds, 'date:', date)
+  const normalizedDate = normalizeBookedDate(date)
+  console.log('🔍 Fetching bookings for slots:', slotIds, 'date:', normalizedDate)
   
   // ✅ Check if querying past slots
   const todayIST = getISTDateString(0)
-  const isPastDate = date < todayIST
+  const isPastDate = normalizedDate < todayIST
   
   try {
     const slotIdsParam = slotIds.join(',')
@@ -4006,7 +4244,7 @@ const fetchSlotBookings = async (slotIds: number[], date: string) => {
     const statusParam = isPastDate ? '&include_completed=true' : ''
     
     const response = await fetch(
-      `${BOOKING_URL}/api/vendor/${vendorId}/slot-bookings?slot_ids=${slotIdsParam}&date=${date}${statusParam}`
+      `${BOOKING_URL}/api/vendor/${vendorId}/slot-bookings?slot_ids=${slotIdsParam}&date=${normalizedDate}${statusParam}`
     )
     
     const data = await response.json()
@@ -4028,261 +4266,46 @@ const fetchSlotBookings = async (slotIds: number[], date: string) => {
 }
 
 
-useEffect(() => {
-  // Always reset in-memory cache when booking page mounts to avoid stale availability
-  requestCache.clear()
-  pendingRequests.clear()
+  useEffect(() => {
+    setVendorId(getVendorIdFromToken())
+  }, [])
 
-  if (hasFetchedRef.current) {
-    console.log("⚠️ Skipping duplicate fetch")
-    return
-  }
+  useEffect(() => {
+    if (cachedBooking) {
+      applyBookingCache(cachedBooking)
+    }
+  }, [cachedBooking])
 
-  const fetchDataOnce = async () => {
-    const vendorId = getVendorIdFromToken()
-    if (!vendorId) {
-      setIsLoading(false)
-      return
+  useEffect(() => {
+    if (!vendorId) return
+
+    const shouldRefresh = !cachedBooking || bookingVersion > 0
+    if (!shouldRefresh) return
+
+    if (!cachedBooking) {
+      setIsLoading(true)
     }
 
-    hasFetchedRef.current = true
-    abortControllerRef.current = new AbortController()
-    const signal = abortControllerRef.current.signal
-    setIsLoading(true)
-    
-    try {
-      console.time("⏱️ Total fetch time")
-      
-      // Step 1: Fetch consoles
-      console.log("📡 Fetching consoles...")
-      const consolesData = await fetchWithDedup(`${BOOKING_URL}/api/getAllConsole/vendor/${vendorId}?t=${Date.now()}`)
-      
-      const consoleTemplate = [
-        { type: "PC" as ConsoleFilter, name: "PC Gaming", icon: Monitor, iconColor: "#7c3aed" },
-        { type: "PS5" as ConsoleFilter, name: "PlayStation 5", icon: Tv, iconColor: "#2563eb" },
-        { type: "Xbox" as ConsoleFilter, name: "Xbox Series", icon: Gamepad, iconColor: "#059669" },
-        { type: "VR" as ConsoleFilter, name: "VR Gaming", icon: Headset, iconColor: "#ea580c" },
-      ]
-      
-      const availableConsoles = consoleTemplate.map(template => {
-        const matchedConsole = consolesData.games?.find((game: any) => {
-          const apiName = (game.console_name || '').toLowerCase()
-          const templateType = template.type.toLowerCase()
-          
-          const hasLiveConsoles = Number(game.console_count ?? 0) > 0
-          if (!hasLiveConsoles) return false
+    requestCache.clear()
+    pendingRequests.clear()
 
-          return apiName.includes(templateType) || 
-                 (templateType === 'pc' && (apiName.includes('gaming') || apiName.includes('computer'))) ||
-                 (templateType === 'ps5' && (apiName.includes('playstation') || apiName.includes('sony'))) ||
-                 (templateType === 'xbox' && (apiName.includes('series') || apiName.includes('microsoft'))) ||
-                 (templateType === 'vr' && (apiName.includes('virtual') || apiName.includes('reality')))
-        })
-        
-        if (matchedConsole) {
-          return {
-            type: template.type,
-            name: matchedConsole.console_name,
-            id: matchedConsole.id,
-            price: matchedConsole.console_price,
-            icon: template.icon,
-            iconColor: template.iconColor,
-            color: "grey" as const,
-            description: `${template.type} Gaming Console`
-          }
+    loadBookingData(vendorId)
+      .then((data) => {
+        if (!data) return
+        setModuleCache(bookingCacheKey, data)
+        applyBookingCache(data)
+        setRecentBookings([])
+      })
+      .catch((error) => {
+        console.error("❌ Error loading booking data:", error)
+      })
+      .finally(() => {
+        if (!cachedBooking) {
+          setIsLoading(false)
         }
-        return null
-      }).filter(Boolean) as ConsoleType[]
-      
-      if (availableConsoles.length === 0) {
-        console.log("⚠️ No consoles available")
-        setAvailableConsoles([])
-        setAllSlots({})
-        setIsLoading(false)
-        return
-      }
-
-      // Step 2: Generate dates (next 3 days)
-      const dates: string[] = []
-      for (let i = 0; i < 3; i++) {
-        dates.push(getISTDateString(i))
-      }
-      console.log("📅 Dates to fetch:", dates)
-
-      // Step 3: Fetch slots with BATCH API 🚀
-      console.log("📡 Fetching slots with BATCH API...")
-      const nowTs = Date.now()
-
-try {
-  // Prepare batch request
-  const gameIds = availableConsoles.map(c => c.id).filter(Boolean) as number[]
-  const batchDates = dates.map(d => d.replace(/-/g, ""))
-  
-  console.log("🚀 Batch request:", { vendorId, gameIds, dates: batchDates })
-  
-  // 🔥 USE THE fetchSlotsBatch FUNCTION
-  const batchData = await fetchSlotsBatch(vendorId, gameIds, batchDates, true)
-  console.log("✅ Batch data received:", batchData)
-
-
-        
-        // Process batch response
-        const slotsData: { [key: string]: any[] } = {}
-        dates.forEach((dateString) => {
-          slotsData[dateString] = []
-        })
-        
-        // Map batch results to frontend format
-        for (const [dateKey, slots] of Object.entries(batchData)) {
-          // Convert YYYYMMDD back to YYYY-MM-DD
-          const dateString = `${dateKey.slice(0, 4)}-${dateKey.slice(4, 6)}-${dateKey.slice(6, 8)}`
-          
-          if (Array.isArray(slots)) {
-            const processedSlots = slots.map((slot: any) => {
-              const gameConsole = availableConsoles.find(c => c.id === slot.console_id)
-              
-              const processedSlot = {
-  ...slot,
-  console_id: slot.console_id,  // ✅ FIXED: Underscore naming
-  console_name: gameConsole?.name || "Unknown Console",  // ✅ FIXED
-  date: dateString,
-  is_available: (slot.available_slot || 0) > 0,  // ✅ FIXED: Check count
-  available_slot: slot.available_slot || 0,  // ✅ FIXED: Store count with fallback
-}
-
-              
-              // Mark past slots as unavailable (today only)
-              if (dateString === dates[0]) {
-                const slotEndTime = new Date(`${dateString}T${slot.end_time}+05:30`)
-                const isPast = nowTs >= slotEndTime.getTime()
-                
-                if (isPast) {
-                  processedSlot.is_available = false
-                }
-              }
-              
-              return processedSlot
-            })
-            
-            slotsData[dateString] = processedSlots
-          }
-        }
-        
-        console.log("✅ Final slots data:", slotsData)
-        setAllSlots(slotsData)
-
-        const presentConsoleIds = new Set<number>()
-        Object.values(slotsData).forEach((daySlots: any[]) => {
-          daySlots.forEach((slot: any) => {
-            if (slot?.console_id != null) presentConsoleIds.add(Number(slot.console_id))
-          })
-        })
-        const filteredConsoles = availableConsoles.filter((c) => c.id != null && presentConsoleIds.has(Number(c.id)))
-        setAvailableConsoles(filteredConsoles)
-        if (filteredConsoles.length > 0 && !filteredConsoles.some((c) => c.type === selectedConsole)) {
-          setSelectedConsole(filteredConsoles[0].type as ConsoleFilter)
-        }
-        
-      } catch (batchError: any) {
-        if (batchError.name === 'AbortError') {
-          throw batchError
-        }
-        
-        // Fallback to old method if batch fails
-        console.error("❌ Batch fetch failed, falling back to individual requests:", batchError)
-        console.log("⚠️ Using parallel fetches as fallback...")
-        
-        const allFetchPromises = dates.flatMap((dateString) =>
-          availableConsoles.map(async (gameConsole) => {
-            if (!gameConsole.id) return null
-
-            try {
-              const formattedDate = dateString.replace(/-/g, "")
-              const apiUrl = `${BOOKING_URL}/api/getSlots/vendor/${vendorId}/game/${gameConsole.id}/${formattedDate}`
-              
-              const slotData = await fetchWithDedup(apiUrl)
-
-              if (slotData.slots && Array.isArray(slotData.slots)) {
-                const processedSlots = slotData.slots.map((slot: any) => {
-                  const processedSlot = {
-                    ...slot,
-                    console_id: gameConsole.id,
-                    console_name: gameConsole.name,
-                    date: dateString,
-                    is_available: slot.is_available,
-                  }
-
-                  if (dateString === dates[0]) {
-                    const slotEndTime = new Date(`${dateString}T${slot.end_time}+05:30`)
-                    const isPast = nowTs >= slotEndTime.getTime()
-
-                    if (isPast) {
-                      processedSlot.is_available = false
-                    }
-                  }
-
-                  return processedSlot
-                })
-
-                return { dateString, slots: processedSlots }
-              }
-            } catch (error) {
-              console.error(`❌ Error fetching slots for ${gameConsole.name} on ${dateString}:`, error)
-            }
-
-            return null
-          })
-        )
-
-        const results = await Promise.all(allFetchPromises)
-
-        const slotsData: { [key: string]: any[] } = {}
-        dates.forEach((dateString) => {
-          slotsData[dateString] = []
-        })
-
-        results.forEach(result => {
-          if (result && result.dateString && result.slots) {
-            slotsData[result.dateString].push(...result.slots)
-          }
-        })
-
-        setAllSlots(slotsData)
-
-        const presentConsoleIds = new Set<number>()
-        Object.values(slotsData).forEach((daySlots: any[]) => {
-          daySlots.forEach((slot: any) => {
-            if (slot?.console_id != null) presentConsoleIds.add(Number(slot.console_id))
-          })
-        })
-        const filteredConsoles = availableConsoles.filter((c) => c.id != null && presentConsoleIds.has(Number(c.id)))
-        setAvailableConsoles(filteredConsoles)
-        if (filteredConsoles.length > 0 && !filteredConsoles.some((c) => c.type === selectedConsole)) {
-          setSelectedConsole(filteredConsoles[0].type as ConsoleFilter)
-        }
-      }
-
-      console.timeEnd("⏱️ Total fetch time")
-      setRecentBookings([])
-
-    } catch (error: any) {
-      if (error.name !== 'AbortError') {
-        console.error('❌ Error in fetchData:', error)
-      }
-    } finally {
-      setIsLoading(false)
-      console.log("✅ Loading complete")
-    }
-  }
-
-  fetchDataOnce()
-  
-  return () => {
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort()
-    }
-  }
-}, [])
+        console.log("✅ Booking data load complete")
+      })
+  }, [vendorId, bookingVersion])
 
   // Fetch bookings when slots are selected
 useEffect(() => {
@@ -4298,15 +4321,12 @@ useEffect(() => {
 
   useEffect(() => {
     const handleBookingUpdated = () => {
-      hasFetchedRef.current = false
-      requestCache.clear()
-      pendingRequests.clear()
-      window.location.reload()
+      refreshBookingSnapshot()
     }
 
     window.addEventListener('refresh-dashboard', handleBookingUpdated)
     return () => window.removeEventListener('refresh-dashboard', handleBookingUpdated)
-  }, [])
+  }, [vendorId])
 
   const handleSlotSelect = (slot: SelectedSlot) => {
     const isSelected = selectedSlots.some(s => s.slot_id === slot.slot_id && s.date === slot.date)
@@ -4326,10 +4346,7 @@ useEffect(() => {
 
   const handleBookingComplete = () => {
     setSelectedSlots([])
-    hasFetchedRef.current = false
-    requestCache.clear()
-    pendingRequests.clear()
-    window.location.reload()
+    refreshBookingSnapshot()
   }
 
   if (isLoading) {

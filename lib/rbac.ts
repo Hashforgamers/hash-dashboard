@@ -10,6 +10,7 @@ export type Permission =
   | "store.manage"
   | "games.manage"
   | "tournaments.manage"
+  | "reviews.manage"
   | "account.manage"
   | "staff.manage"
   | "subscription.manage"
@@ -30,6 +31,7 @@ export const ROLE_PERMISSIONS: Record<StaffRole, Permission[]> = {
     "store.manage",
     "games.manage",
     "tournaments.manage",
+    "reviews.manage",
     "account.manage",
     "staff.manage",
     "subscription.manage",
@@ -47,6 +49,7 @@ export const ROLE_PERMISSIONS: Record<StaffRole, Permission[]> = {
     "store.manage",
     "games.manage",
     "tournaments.manage",
+    "reviews.manage",
     "cafe.switch",
   ],
   staff: [
@@ -77,6 +80,7 @@ export const NAV_PERMISSION_MAP: NavItemPermission[] = [
   { href: "/store", permission: "store.manage" },
   { href: "/games", permission: "games.manage" },
   { href: "/tournaments", permission: "tournaments.manage" },
+  { href: "/reviews", permission: "reviews.manage" },
   { href: "/select-cafe", permission: "cafe.switch" },
   { href: "/account", permission: "account.manage" },
   { href: "/subscription", permission: "subscription.manage" },

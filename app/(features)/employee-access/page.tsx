@@ -235,8 +235,8 @@ export default function EmployeeAccessPage() {
   }
 
   return (
-    <DashboardLayout contentScroll="contained">
-      <div className="flex h-full min-h-0 flex-col gap-4 overflow-hidden">
+    <DashboardLayout contentScroll="page">
+      <div className="access-scope flex flex-col gap-4">
         <div className="gaming-panel shrink-0 rounded-xl border border-cyan-500/25 p-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
@@ -253,7 +253,7 @@ export default function EmployeeAccessPage() {
           </div>
         </div>
 
-        <Tabs defaultValue="add-employee" className="flex min-h-0 flex-1 flex-col overflow-hidden">
+        <Tabs defaultValue="add-employee" className="flex flex-col">
           <TabsList className="gaming-panel h-auto w-full shrink-0 gap-1 overflow-x-auto rounded-xl border border-cyan-500/25 bg-slate-900/50 p-1 sm:w-fit">
             <TabsTrigger
               value="add-employee"
@@ -271,7 +271,7 @@ export default function EmployeeAccessPage() {
 
           <TabsContent
             value="add-employee"
-            className="mt-4 min-h-0 flex-1 overflow-hidden data-[state=inactive]:hidden data-[state=active]:flex data-[state=active]:flex-col data-[state=active]:gap-4"
+            className="mt-4 data-[state=inactive]:hidden data-[state=active]:flex data-[state=active]:flex-col data-[state=active]:gap-4"
           >
             <div className="gaming-panel shrink-0 rounded-xl border border-cyan-500/25 p-4">
               <h2 className="dash-title !text-sm">Add Employee</h2>

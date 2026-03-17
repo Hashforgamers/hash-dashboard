@@ -23,6 +23,7 @@ import {
   IndianRupee,
 } from "lucide-react";
 import { DASHBOARD_URL } from "@/src/config/env";
+import { useModuleCache } from "@/app/hooks/useModuleCache";
 
 /* ------------------------------------------------------------------ */
 /*                          TYPE DEFINITIONS                           */
@@ -58,29 +59,60 @@ export default function ManagePassesPage() {
   const [hasMounted, setHasMounted] = useState(false);
   const [activeVendorId, setActiveVendorId] = useState<string>("1");
 
+  const passTypesKey = "pass_types";
+  const passesKey = `passes:${activeVendorId}`;
+
+  const { data: cachedPassTypes, refresh: refreshPassTypes } = useModuleCache<PassType[]>(
+    passTypesKey,
+    async () => {
+      const res = await axios.get(`${DASHBOARD_URL}/api/pass_types`);
+      return res.data || [];
+    },
+    600000,
+    passesKey
+  );
+
+  const { data: cachedPasses, refresh: refreshPassesCache } = useModuleCache<CafePass[]>(
+    passesKey,
+    async () => {
+      const res = await axios.get(`${DASHBOARD_URL}/api/vendor/${activeVendorId}/passes`);
+      return res.data?.passes || res.data || [];
+    },
+    120000,
+    passesKey
+  );
+
   useEffect(() => {
     setHasMounted(true);
     const savedId = localStorage.getItem("selectedCafe") || "1";
     setActiveVendorId(savedId);
+  }, []);
 
-    const fetchData = async () => {
-      setLoading(true);
+  useEffect(() => {
+    if (!activeVendorId) return;
+    setLoading(true);
+    const hydrate = async () => {
       try {
-        const [typesRes, passesRes] = await Promise.all([
-          axios.get(`${DASHBOARD_URL}/api/pass_types`),
-          axios.get(`${DASHBOARD_URL}/api/vendor/${savedId}/passes`),
-        ]);
-        setPassTypes(typesRes.data);
-        setPasses(passesRes.data.passes || passesRes.data);
+        if (cachedPassTypes) {
+          setPassTypes(cachedPassTypes);
+        } else {
+          const types = await refreshPassTypes();
+          if (types) setPassTypes(types);
+        }
+        if (cachedPasses) {
+          setPasses(cachedPasses);
+        } else {
+          const list = await refreshPassesCache();
+          if (list) setPasses(list);
+        }
       } catch (error) {
         console.error("Failed to fetch data:", error);
       } finally {
         setLoading(false);
       }
     };
-
-    fetchData();
-  }, []);
+    hydrate();
+  }, [activeVendorId, cachedPassTypes, cachedPasses, refreshPassTypes, refreshPassesCache]);
 
   if (!hasMounted) {
     return (
@@ -94,10 +126,8 @@ export default function ManagePassesPage() {
 
   const refreshPasses = async () => {
     try {
-      const { data } = await axios.get(
-        `${DASHBOARD_URL}/api/vendor/${activeVendorId}/passes`
-      );
-      setPasses(data.passes || data);
+      const list = await refreshPassesCache(true);
+      if (list) setPasses(list);
     } catch (error) {
       console.error("Failed to refresh:", error);
     }
@@ -291,9 +321,9 @@ export default function ManagePassesPage() {
 /* ------------------------------------------------------------------ */
 function PassesTable({ passes, passTypes, onEdit, onDelete, deletingId }: any) {
   return (
-    <div className="table-container dashboard-module-surface overflow-hidden rounded-xl border border-cyan-500/25">
-      <div className="overflow-x-auto">
-        <table className="w-full text-left">
+    <div className="dashboard-table-shell">
+      <div className="dashboard-table-wrap">
+        <table className="dashboard-table text-left">
           <thead className="dashboard-module-table-head">
             <tr>
               {["Pass Name", "Mode", "Price", "Validity", "Hours", "Actions"].map((h) => (

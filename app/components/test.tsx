@@ -7,6 +7,7 @@ import { jwtDecode } from 'jwt-decode'
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
+import { normalizeBookedDate } from "./booking/utils/dataHelpers"
 import { 
   Dot, 
   MoreVertical, 
@@ -419,7 +420,7 @@ function SlotBookingForm({
         name,
         email,
         phone,
-        bookedDate: selectedSlots[0]?.date || '',
+        bookedDate: normalizeBookedDate(selectedSlots[0]?.date || ''),
         slotId: selectedSlots.map(slot => slot.slot_id),
         paymentType,
         waiveOffAmount: waiveOffAmount + autoWaiveOffAmount,
@@ -1444,9 +1445,9 @@ function RecentBookings({ bookings }: { bookings: any[] }) {
     <section className="mt-12">
       <h2 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">Recent Slot Bookings</h2>
 
-      <Card className="mt-6 overflow-hidden rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/30 backdrop-blur-sm">
-        <div className="w-full overflow-x-auto">
-          <table className="min-w-full text-sm">
+      <Card className="dashboard-table-shell mt-6 overflow-hidden rounded-2xl backdrop-blur-sm">
+        <div className="dashboard-table-wrap">
+          <table className="dashboard-table text-sm">
             <thead>
               <tr className="bg-gray-50 dark:bg-gray-700/50 text-gray-800 dark:text-gray-200">
                 <th className="px-6 py-4 text-left font-semibold">Booking ID</th>

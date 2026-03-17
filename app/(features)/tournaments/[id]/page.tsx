@@ -16,6 +16,8 @@ import {
 } from '@/lib/event-api';
 import { jwtDecode } from 'jwt-decode';
 import { DashboardLayout } from '@/app/(layout)/dashboard-layout';
+import { useModuleCache } from '@/app/hooks/useModuleCache';
+import { useDashboardData } from '@/app/context/DashboardDataContext';
 
 
 
@@ -55,6 +57,7 @@ export default function TournamentDetailPage() {
   const params  = useParams();
   const eventId = params.id as string;
  const [vendorId, setVendorId] = useState<number | null>(null)
+  const { vendorId: cachedVendorId } = useDashboardData();
   const { token, loading: tokenLoading } = useEventsToken(vendorId);
 
   const [event,         setEvent]         = useState<EventItem | null>(null);
@@ -75,6 +78,10 @@ export default function TournamentDetailPage() {
 
   // Fetch event
         useEffect(() => {
+      if (cachedVendorId) {
+        setVendorId(cachedVendorId);
+        return;
+      }
       const token = localStorage.getItem("jwtToken")
       if (token) {
         try {
@@ -85,33 +92,84 @@ export default function TournamentDetailPage() {
           console.error('❌ Error decoding JWT token:', error)
         }
       }
-    }, [])
+    }, [cachedVendorId])
+
+  const eventKey = vendorId ? `tournament:${vendorId}:${eventId}` : "tournament:0";
+  const regsKey = `tournament_regs:${eventId}`;
+  const teamsKey = `tournament_teams:${eventId}`;
+  const versionKey = vendorId ? `tournaments:${vendorId}` : "tournaments:0";
+
+  const { data: cachedEvent, refresh: refreshEventCache } = useModuleCache<EventItem | null>(
+    eventKey,
+    async () => {
+      if (!token) return null;
+      const evs = await listEvents(token);
+      return evs.find((e) => e.id === eventId) ?? null;
+    },
+    120000,
+    versionKey
+  );
+
+  const { data: cachedRegs, refresh: refreshRegsCache } = useModuleCache<Registration[]>(
+    regsKey,
+    async () => {
+      if (!token) return [];
+      return getRegistrations(token, eventId);
+    },
+    120000,
+    versionKey
+  );
+
+  const { data: cachedTeams, refresh: refreshTeamsCache } = useModuleCache<TeamItem[]>(
+    teamsKey,
+    async () => {
+      if (!token) return [];
+      return getTeams(token, eventId);
+    },
+    120000,
+    versionKey
+  );
   useEffect(() => {
     if (!token) return;
-    listEvents(token)
-      .then((evs) => setEvent(evs.find((e) => e.id === eventId) ?? null))
+    if (cachedEvent) {
+      setEvent(cachedEvent);
+      setLoadingEvent(false);
+      return;
+    }
+    refreshEventCache(true)
+      .then((ev) => setEvent(ev ?? null))
       .catch(console.error)
       .finally(() => setLoadingEvent(false));
-  }, [token, eventId]);
+  }, [token, eventId, cachedEvent, refreshEventCache]);
 
   // Fetch registrations
   useEffect(() => {
     if (!token) return;
-    getRegistrations(token, eventId)
-      .then(setRegistrations)
+    if (cachedRegs) {
+      setRegistrations(cachedRegs);
+      setLoadingRegs(false);
+      return;
+    }
+    refreshRegsCache(true)
+      .then((data) => setRegistrations(data || []))
       .catch(console.error)
       .finally(() => setLoadingRegs(false));
-  }, [token, eventId]);
+  }, [token, eventId, cachedRegs, refreshRegsCache]);
 
   // Fetch teams
   useEffect(() => {
     if (!token) return;
+    if (cachedTeams) {
+      setTeams(cachedTeams);
+      setLoadingTeams(false);
+      return;
+    }
     setLoadingTeams(true);
-    getTeams(token, eventId)
-      .then(setTeams)
+    refreshTeamsCache(true)
+      .then((data) => setTeams(data || []))
       .catch(console.error)
       .finally(() => setLoadingTeams(false));
-  }, [token, eventId]);
+  }, [token, eventId, cachedTeams, refreshTeamsCache]);
 
   // Helpers
   const fmt = (iso: string) =>
@@ -351,7 +409,7 @@ export default function TournamentDetailPage() {
       {/* ── Registrations Table ───────────────────────── */}
       <div className="gaming-panel flex flex-col overflow-hidden rounded-xl border border-cyan-400/20 bg-slate-950/45">
         {/* Table toolbar */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 border-b border-cyan-500/20 flex-shrink-0">
+        <div className="dashboard-toolbar justify-between gap-3 p-4 border-b border-cyan-500/20 flex-shrink-0">
           <div className="flex items-center gap-2">
             <Users className="icon-md text-muted-foreground" />
             <h3 className="section-title">Registrations</h3>
@@ -361,18 +419,18 @@ export default function TournamentDetailPage() {
               </span>
             )}
           </div>
-          <div className="flex gap-2 flex-wrap">
-            <div className="relative">
+          <div className="dashboard-action-bar">
+            <div className="relative min-w-[180px]">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 icon-sm text-muted-foreground" />
               <input
-                className="h-9 w-48 rounded-lg border border-cyan-400/25 bg-slate-900/70 pl-9 pr-3 text-sm text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-400/60"
+                className="dashboard-module-input h-9 w-full pl-9 pr-3"
                 placeholder="Search teams..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
             </div>
             <select
-              className="h-9 w-36 rounded-lg border border-cyan-400/25 bg-slate-900/70 px-3 text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-cyan-400/60"
+              className="dashboard-module-input h-9 w-36 px-3"
               value={regFilter}
               onChange={(e) => setRegFilter(e.target.value)}
             >
@@ -386,8 +444,9 @@ export default function TournamentDetailPage() {
         </div>
 
         {/* Table */}
-        <div className="overflow-auto flex-1">
-          <table className="w-full">
+        <div className="dashboard-table-shell flex-1">
+          <div className="dashboard-table-wrap">
+            <table className="dashboard-table">
             <thead className="sticky top-0 bg-slate-900/70">
               <tr>
                 <th className="table-cell text-left text-[11px] font-bold uppercase tracking-wider text-cyan-100/80 sm:text-xs">Team / Player</th>
@@ -483,7 +542,8 @@ export default function TournamentDetailPage() {
                 ))
               )}
             </tbody>
-          </table>
+            </table>
+          </div>
         </div>
       </div>
 
@@ -500,8 +560,8 @@ export default function TournamentDetailPage() {
             )}
           </div>
         </div>
-        <div className="overflow-auto flex-1">
-          <table className="w-full">
+        <div className="dashboard-table-wrap flex-1">
+          <table className="dashboard-table">
             <thead className="sticky top-0 bg-slate-900/70">
               <tr>
                 <th className="table-cell text-left text-[11px] font-bold uppercase tracking-wider text-cyan-100/80 sm:text-xs">Team</th>

@@ -10,6 +10,8 @@ import { useEventsToken } from '@/hooks/useEventsToken';
 import { jwtDecode } from "jwt-decode"
 import { listEvents, EventItem, EventStatus } from '@/lib/event-api';
 import { DashboardLayout } from '@/app/(layout)/dashboard-layout';
+import { useModuleCache } from '@/app/hooks/useModuleCache';
+import { useDashboardData } from '@/app/context/DashboardDataContext';
 
 // TODO: swap with your real auth context
 
@@ -39,6 +41,7 @@ const ALL_STATUSES: EventStatus[] = [
 export default function TournamentsPage() {
   const router = useRouter();
   const [vendorId, setVendorId] = useState<number | null>(null)
+  const { vendorId: cachedVendorId } = useDashboardData();
   const { token, loading: tokenLoading, error: tokenError, refresh } = useEventsToken(vendorId);
 
   const [events,       setEvents]       = useState<EventItem[]>([]);
@@ -48,7 +51,11 @@ export default function TournamentsPage() {
   const [page,         setPage]         = useState(1);
   const [openMenuId,   setOpenMenuId]   = useState<string | null>(null);
   
-    useEffect(() => {
+  useEffect(() => {
+    if (cachedVendorId) {
+      setVendorId(cachedVendorId);
+      return;
+    }
     const token = localStorage.getItem("jwtToken")
     if (token) {
       try {
@@ -59,16 +66,32 @@ export default function TournamentsPage() {
         console.error('❌ Error decoding JWT token:', error)
       }
     }
-  }, [])
+  }, [cachedVendorId])
+
+  const cacheKey = vendorId ? `tournaments:${vendorId}:${statusFilter || "all"}` : "tournaments:0";
+  const versionKey = vendorId ? `tournaments:${vendorId}` : "tournaments:0";
+  const { data: cachedEvents, refresh: refreshEventsCache } = useModuleCache<EventItem[]>(
+    cacheKey,
+    async () => {
+      if (!token) return [];
+      return listEvents(token, statusFilter || undefined);
+    },
+    120000,
+    versionKey
+  );
 
   useEffect(() => {
     if (!token) return;
+    if (cachedEvents) {
+      setEvents(cachedEvents);
+      return;
+    }
     setLoadingData(true);
-    listEvents(token, statusFilter || undefined)
-      .then(setEvents)
+    refreshEventsCache(true)
+      .then((data) => setEvents(data || []))
       .catch(console.error)
       .finally(() => setLoadingData(false));
-  }, [token, statusFilter]);
+  }, [token, statusFilter, cachedEvents, refreshEventsCache]);
 
   const filtered   = events.filter((e) =>
     e.title.toLowerCase().includes(search.toLowerCase())
@@ -123,18 +146,18 @@ export default function TournamentsPage() {
 
       <div className="min-h-0 flex-1 overflow-y-auto pr-1 space-y-3 sm:space-y-4">
         {/* ── Filters ──────────────────────────────────── */}
-        <div className="gaming-panel mb-2 flex flex-col gap-3 rounded-xl p-3 sm:flex-row">
-          <div className="relative flex-1">
+        <div className="gaming-panel dashboard-toolbar mb-2 rounded-xl p-3">
+          <div className="relative flex-1 min-w-[220px]">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 icon-md text-muted-foreground" />
             <input
-              className="h-10 w-full rounded-lg border border-cyan-400/25 bg-slate-900/70 pl-10 pr-4 text-sm text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-400/60"
+              className="dashboard-module-input h-10 w-full pl-10 pr-4"
               placeholder="Search tournaments..."
               value={search}
               onChange={(e) => { setSearch(e.target.value); setPage(1); }}
             />
           </div>
           <select
-            className="h-10 w-full rounded-lg border border-cyan-400/25 bg-slate-900/70 px-3 text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-cyan-400/60 sm:w-44"
+            className="dashboard-module-input h-10 w-full sm:w-44"
             value={statusFilter}
             onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
           >
@@ -146,8 +169,9 @@ export default function TournamentsPage() {
         </div>
 
         {/* ── Table ────────────────────────────────────── */}
-        <div className="table-container overflow-auto rounded-xl border border-cyan-500/25 bg-slate-950/35">
-          <table className="w-full">
+        <div className="dashboard-table-shell">
+          <div className="dashboard-table-wrap">
+            <table className="dashboard-table">
             <thead className="bg-slate-900/70">
               <tr>
                 <th className="table-cell text-left text-[11px] font-bold uppercase tracking-wider text-cyan-100/80 sm:text-xs">Tournament</th>
@@ -266,7 +290,8 @@ export default function TournamentsPage() {
                 ))
               )}
             </tbody>
-          </table>
+            </table>
+          </div>
         </div>
 
         {/* ── Pagination ───────────────────────────────── */}

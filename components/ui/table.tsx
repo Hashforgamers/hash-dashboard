@@ -5,15 +5,72 @@ import { cn } from "@/lib/utils"
 const Table = React.forwardRef<
   HTMLTableElement,
   React.HTMLAttributes<HTMLTableElement>
->(({ className, ...props }, ref) => (
-  <div className="relative w-full overflow-auto">
-    <table
-      ref={ref}
-      className={cn("w-full caption-bottom text-sm", className)}
-      {...props}
-    />
-  </div>
-))
+>(({ className, ...props }, ref) => {
+  const wrapperRef = React.useRef<HTMLDivElement>(null)
+  const draggingRef = React.useRef(false)
+  const startXRef = React.useRef(0)
+  const scrollLeftRef = React.useRef(0)
+  const [isDragging, setIsDragging] = React.useState(false)
+
+  const shouldIgnoreDrag = (target: EventTarget | null) => {
+    if (!(target instanceof HTMLElement)) return false
+    return Boolean(
+      target.closest(
+        "button, a, input, textarea, select, option, label, [role='button'], [data-no-drag]"
+      )
+    )
+  }
+
+  const handlePointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (event.pointerType === "mouse" && event.button !== 0) return
+    if (shouldIgnoreDrag(event.target)) return
+    const wrapper = wrapperRef.current
+    if (!wrapper) return
+    if (wrapper.scrollWidth <= wrapper.clientWidth) return
+    draggingRef.current = true
+    setIsDragging(true)
+    startXRef.current = event.clientX
+    scrollLeftRef.current = wrapper.scrollLeft
+    wrapper.setPointerCapture(event.pointerId)
+  }
+
+  const handlePointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (!draggingRef.current) return
+    const wrapper = wrapperRef.current
+    if (!wrapper) return
+    event.preventDefault()
+    const delta = event.clientX - startXRef.current
+    wrapper.scrollLeft = scrollLeftRef.current - delta
+  }
+
+  const stopDragging = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (!draggingRef.current) return
+    draggingRef.current = false
+    setIsDragging(false)
+    const wrapper = wrapperRef.current
+    if (wrapper) {
+      wrapper.releasePointerCapture(event.pointerId)
+    }
+  }
+
+  return (
+    <div
+      ref={wrapperRef}
+      className="dashboard-table-wrap relative w-full overflow-auto"
+      data-dragging={isDragging ? "true" : "false"}
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={stopDragging}
+      onPointerLeave={stopDragging}
+    >
+      <table
+        ref={ref}
+        className={cn("dashboard-table caption-bottom text-sm", className)}
+        {...props}
+      />
+    </div>
+  )
+})
 Table.displayName = "Table"
 
 const TableHeader = React.forwardRef<

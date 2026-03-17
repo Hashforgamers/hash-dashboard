@@ -7,6 +7,8 @@ import "./premium.css";
 import { SocketProvider } from "./context/SocketContext";
 import { SubscriptionProvider } from "./context/SubscriptionContext";
 import { AccessProvider } from "./context/AccessContext";
+import { DashboardDataProvider } from "./context/DashboardDataContext";
+import { DashboardDataBus } from "./context/DashboardDataBus";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -34,7 +36,12 @@ export default function RootLayout({
           <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={true}>
           <SocketProvider>
             <SubscriptionProvider>
-            <AccessProvider>{children}</AccessProvider>
+            <AccessProvider>
+              <DashboardDataProvider>
+                <DashboardDataBus />
+                {children}
+              </DashboardDataProvider>
+            </AccessProvider>
             </SubscriptionProvider>
             </SocketProvider>
           </ThemeProvider>

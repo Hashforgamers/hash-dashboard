@@ -25,6 +25,7 @@ import Image from "next/image"
 import { jwtDecode } from "jwt-decode"
 import clsx from "clsx"
 import { DASHBOARD_URL } from "@/src/config/env"
+import { useModuleCache } from "@/app/hooks/useModuleCache"
 
 /* ------------------------------------------------------------------ */
 /*                         TYPE DEFINITIONS                            */
@@ -84,6 +85,54 @@ export default function ManageExtraServices() {
   const [error, setError] = useState<string | null>(null)
   const [vendorId, setVendorId] = useState<number | null>(null)
 
+  const cacheKey = vendorId ? `extras:${vendorId}` : "extras:0"
+
+  const transformCategories = (payload: any): ExtraServiceCategory[] => {
+    const categoriesData = payload?.categories || payload
+    if (!Array.isArray(categoriesData)) return []
+    return categoriesData.map((cat: any, index: number) => {
+      if (!cat || typeof cat !== 'object') return null
+      const transformedItems: ExtraServiceMenu[] = Array.isArray(cat.menus)
+        ? cat.menus.map((menu: any) => {
+            if (!menu || typeof menu !== 'object') return null
+            let imageUrl: string | null = null
+            if (Array.isArray(menu.images) && menu.images.length > 0) {
+              imageUrl = menu.images[0]?.image_url || null
+            }
+            return {
+              id: menu.id || 0,
+              name: menu.name || 'Untitled Item',
+              description: menu.description || '',
+              price: menu.price || 0,
+              image: imageUrl,
+              is_active: menu.is_active !== false,
+            }
+          }).filter(Boolean)
+        : []
+      return {
+        id: cat.id || index + 1,
+        name: cat.name || `Category ${index + 1}`,
+        description: cat.description || '',
+        items: transformedItems,
+      }
+    }).filter(Boolean) as ExtraServiceCategory[]
+  }
+
+  const fetcher = async () => {
+    if (!vendorId) return []
+    const res = await fetch(`${API_BASE}/vendor/${vendorId}/extra-services`)
+    if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`)
+    const data = await res.json()
+    if (data?.success === false) throw new Error(data?.message || 'API request failed')
+    return transformCategories(data)
+  }
+
+  const { data: cachedCategories, loading: cacheLoading, refresh } = useModuleCache<ExtraServiceCategory[]>(
+    cacheKey,
+    fetcher,
+    120000
+  )
+
   // ✅ View mode per category: { [categoryId]: 'grid' | 'table' }
   const [viewModes, setViewModes] = useState<Record<number, 'grid' | 'table'>>({})
 
@@ -113,46 +162,15 @@ export default function ManageExtraServices() {
   const setViewMode = (catId: number, mode: 'grid' | 'table') =>
     setViewModes(prev => ({ ...prev, [catId]: mode }))
 
-  const fetchCategories = async () => {
+  const fetchCategories = async (force = false) => {
     if (!vendorId) return
     try {
       setLoading(true)
       setError(null)
-      const res = await fetch(`${API_BASE}/vendor/${vendorId}/extra-services`)
-      if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`)
-      const data = await res.json()
-      if (!data?.success) throw new Error(data?.message || 'API request failed')
-      const categoriesData = data.categories
-      if (!Array.isArray(categoriesData)) throw new Error('Invalid categories data format')
-
-      const validatedCategories: ExtraServiceCategory[] = categoriesData.map((cat: any, index: number) => {
-        if (!cat || typeof cat !== 'object') return null
-        const transformedItems: ExtraServiceMenu[] = Array.isArray(cat.menus)
-          ? cat.menus.map((menu: any) => {
-              if (!menu || typeof menu !== 'object') return null
-              let imageUrl: string | null = null
-              if (Array.isArray(menu.images) && menu.images.length > 0) {
-                imageUrl = menu.images[0]?.image_url || null
-              }
-              return {
-                id: menu.id || 0,
-                name: menu.name || 'Untitled Item',
-                description: menu.description || '',
-                price: menu.price || 0,
-                image: imageUrl,
-                is_active: menu.is_active !== false,
-              }
-            }).filter(Boolean)
-          : []
-        return {
-          id: cat.id || index + 1,
-          name: cat.name || `Category ${index + 1}`,
-          description: cat.description || '',
-          items: transformedItems,
-        }
-      }).filter(Boolean) as ExtraServiceCategory[]
-
-      setCategories(validatedCategories)
+      const next = await refresh(force)
+      if (Array.isArray(next)) {
+        setCategories(next)
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch categories')
       setCategories([])
@@ -176,7 +194,7 @@ export default function ManageExtraServices() {
       if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || `HTTP ${res.status}`)
       setShowCategoryDlg(false)
       setCategoryForm({ name: "", description: "" })
-      await fetchCategories()
+      await fetchCategories(true)
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Failed to create category')
     } finally {
@@ -190,7 +208,7 @@ export default function ManageExtraServices() {
     try {
       const res = await fetch(`${API_BASE}/vendor/${vendorId}/extra-services/category/${categoryId}`, { method: "DELETE" })
       if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || `HTTP ${res.status}`)
-      await fetchCategories()
+      await fetchCategories(true)
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Failed to delete category')
     } finally {
@@ -214,7 +232,7 @@ export default function ManageExtraServices() {
       if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || `HTTP ${res.status}`)
       setShowMenuDlg(false)
       setMenuForm({ name: "", description: "", price: "", imageFile: undefined, is_active: true })
-      await fetchCategories()
+      await fetchCategories(true)
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Failed to create menu item')
     } finally {
@@ -231,7 +249,7 @@ export default function ManageExtraServices() {
         { method: "DELETE" }
       )
       if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || `HTTP ${res.status}`)
-      await fetchCategories()
+      await fetchCategories(true)
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Failed to delete menu item')
     } finally {
@@ -263,8 +281,13 @@ export default function ManageExtraServices() {
   }, [isClient])
 
   useEffect(() => {
-    if (vendorId && isClient) fetchCategories()
-  }, [vendorId, isClient])
+    if (!vendorId || !isClient) return
+    if (cachedCategories && cachedCategories.length > 0) {
+      setCategories(cachedCategories)
+      return
+    }
+    fetchCategories()
+  }, [vendorId, isClient, cachedCategories])
 
   const totalCategories = categories.length
   const totalItems = categories.reduce((sum, cat) => sum + cat.items.length, 0)
@@ -356,7 +379,7 @@ export default function ManageExtraServices() {
             <p className="body-text font-medium">Error: {error}</p>
             <button
               className={`${secondaryButtonClass} mt-2 border-destructive text-destructive`}
-              onClick={() => { setError(null); if (vendorId) fetchCategories() }}
+              onClick={() => { setError(null); if (vendorId) fetchCategories(true) }}
               disabled={!vendorId}
             >
               Try Again
@@ -581,7 +604,7 @@ export default function ManageExtraServices() {
                             animate={{ opacity: 1, x: 0 }}
                             exit={{ opacity: 0, x: 10 }}
                             transition={{ duration: 0.2 }}
-                            className="table-container dashboard-module-surface overflow-hidden rounded-lg border border-cyan-500/25"
+                            className="dashboard-table-shell"
                           >
                             {cat.items.length === 0 ? (
                               <div className="flex flex-col items-center justify-center py-10 gap-2 text-muted-foreground">
@@ -589,8 +612,8 @@ export default function ManageExtraServices() {
                                 <p className="body-text-muted">No items yet</p>
                               </div>
                             ) : (
-                              <div className="overflow-x-auto">
-                                <table className="w-full text-left">
+                              <div className="dashboard-table-wrap">
+                                <table className="dashboard-table text-left">
                                   <thead className="dashboard-module-table-head">
                                     <tr>
                                       {["Item", "Description", "Price", "Status", "Action"].map(h => (

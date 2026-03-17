@@ -12,6 +12,7 @@ import { motion } from "framer-motion"
 import { ShoppingCart, Loader2, CheckCircle } from 'lucide-react'
 import Image from "next/image"
 import { VENDOR_ONBOARD_URL } from '@/src/config/env';
+import { useModuleCache } from "@/app/hooks/useModuleCache";
 
 interface Product {
   product_id: string;
@@ -41,22 +42,37 @@ const VendorOrderPage: React.FC = () => {
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [orderModalOpen, setOrderModalOpen] = useState(false);
 
-  useEffect(() => { fetchProducts(); }, []);
+  const cacheKey = "store_products";
+  const fetcher = async () => {
+    const res = await fetch(`${VENDOR_ONBOARD_URL}/api/vendor/products`);
+    if (!res.ok) throw new Error('Failed to load products');
+    const data = await res.json();
+    return Array.isArray(data) ? data.map((p: any) => ({
+      ...p,
+      price: Number(p.price),
+      stock: Number(p.stock),
+      min_order_quantity: Number(p.min_order_quantity),
+    })) : [];
+  };
+
+  const { data: cachedProducts, refresh } = useModuleCache<Product[]>(cacheKey, fetcher, 300000, "store");
+
+  useEffect(() => {
+    if (cachedProducts && cachedProducts.length > 0) {
+      setProducts(cachedProducts);
+      return;
+    }
+    fetchProducts();
+  }, [cachedProducts]);
 
   const fetchProducts = async () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`${VENDOR_ONBOARD_URL}/api/vendor/products`);
-      if (!res.ok) throw new Error('Failed to load products');
-      const data = await res.json();
-      const mapped: Product[] = data.map((p: any) => ({
-        ...p,
-        price: Number(p.price),
-        stock: Number(p.stock),
-        min_order_quantity: Number(p.min_order_quantity),
-      }));
-      setProducts(mapped);
+      const next = await refresh(true);
+      if (Array.isArray(next)) {
+        setProducts(next);
+      }
     } catch (err) {
       setError('Unable to load products');
     } finally {

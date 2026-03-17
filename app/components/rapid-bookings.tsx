@@ -25,6 +25,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import axios from "axios";
+import { normalizeBookedDate } from "./booking/utils/dataHelpers";
 import {
   Select,
   SelectContent,
@@ -424,7 +425,7 @@ function RapidBookings() {
         name: name,
         email: "demo@1example.com",
         phone: phone,
-        bookedDate: date,
+        bookedDate: normalizeBookedDate(date),
         slotId: slotIds,
         paymentType: paymentType,
         isRapidBooking: true,
@@ -1018,4 +1019,3 @@ function RapidBookings() {
 }
 
 export default RapidBookings;
-

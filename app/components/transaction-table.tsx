@@ -26,6 +26,8 @@ interface Transaction {
   userName: string;
   userId: number;
   amount: number;
+  appFeeAmount?: number;
+  netAmount?: number;
   originalAmount: number;
   discountedAmount: number;
   modeOfPayment: string;
@@ -61,6 +63,8 @@ type ColumnKey =
   | "slotTime"
   | "userName"
   | "amount"
+  | "appFeeAmount"
+  | "netAmount"
   | "modeOfPayment"
   | "paymentUseCase"
   | "bookingType"
@@ -77,6 +81,8 @@ const transactionColumns: Array<{ key: ColumnKey; label: string }> = [
   { key: "slotTime", label: "Transaction Time" },
   { key: "userName", label: "User Name" },
   { key: "amount", label: "Amount" },
+  { key: "appFeeAmount", label: "App Fee" },
+  { key: "netAmount", label: "Net Amount" },
   { key: "breakup", label: "Breakup" },
   { key: "gst", label: "GST" },
   { key: "totalWithTax", label: "Total+GST" },
@@ -152,6 +158,8 @@ export function TransactionTable() {
     slotTime: true,
     userName: true,
     amount: true,
+    appFeeAmount: true,
+    netAmount: true,
     modeOfPayment: true,
     paymentUseCase: true,
     bookingType: true,
@@ -352,6 +360,8 @@ export function TransactionTable() {
     if (!filteredTransactions.length) {
       return {
         total: 0,
+        appFeeTotal: 0,
+        netTotal: 0,
         uniqueUsers: 0,
         pendingSettlements: 0,
         cashTransactions: 0,
@@ -363,6 +373,11 @@ export function TransactionTable() {
       (sum, t) => sum + getTransactionTotalWithTax(t),
       0
     );
+    const appFeeTotal = filteredTransactions.reduce(
+      (sum, t) => sum + Number(t.appFeeAmount || 0),
+      0
+    );
+    const netTotal = Math.max(total - appFeeTotal, 0);
     const uniqueUsers = new Set(filteredTransactions.map((t) => t.userName)).size;
     const pendingSettlements = filteredTransactions.filter(
       (t) => String(t.settlementStatus || "").toLowerCase() === "pending"
@@ -372,7 +387,7 @@ export function TransactionTable() {
     ).length;
     const cashPct = (cashTransactions / filteredTransactions.length) * 100;
 
-    return { total, uniqueUsers, pendingSettlements, cashTransactions, cashPct };
+    return { total, appFeeTotal, netTotal, uniqueUsers, pendingSettlements, cashTransactions, cashPct };
   }, [filteredTransactions, taxProfile]);
 
   function downloadFilteredData() {
@@ -388,6 +403,8 @@ export function TransactionTable() {
       "Transaction Time",
       "User Name",
       "Amount (INR)",
+      "App Fee (INR)",
+      "Net Amount (INR)",
       "Mode of Payment",
       "Booking Type",
       "Settlement Status",
@@ -399,6 +416,8 @@ export function TransactionTable() {
       transaction.slotTime,
       transaction.userName,
       Number(transaction.amount || 0).toFixed(2),
+      Number(transaction.appFeeAmount || 0).toFixed(2),
+      Number(transaction.netAmount ?? (transaction.amount - (transaction.appFeeAmount || 0))).toFixed(2),
       transaction.modeOfPayment,
       transaction.bookingType,
       transaction.settlementStatus,
@@ -417,6 +436,8 @@ export function TransactionTable() {
       ["Subtotal", "", "", subtotal.toFixed(2)],
       [`GST (${effectiveRate}%)`, "", "", gst.toFixed(2)],
       ["Total (INR)", "", "", totalWithGst.toFixed(2)],
+      ["App Fee Total (INR)", "", "", metrics.appFeeTotal.toFixed(2)],
+      ["Net Total (INR)", "", "", metrics.netTotal.toFixed(2)],
     ];
 
     const csvContent = [
@@ -505,6 +526,18 @@ export function TransactionTable() {
         return <TableCell className="px-4 py-3 text-slate-900 dark:text-slate-100">{transaction.userName}</TableCell>;
       case "amount":
         return <TableCell className="px-4 py-3 text-right font-medium text-slate-900 dark:text-slate-100">₹{transaction.amount.toFixed(2)}</TableCell>;
+      case "appFeeAmount":
+        return (
+          <TableCell className="px-4 py-3 text-right text-slate-700 dark:text-slate-300">
+            ₹{Number(transaction.appFeeAmount || 0).toFixed(2)}
+          </TableCell>
+        );
+      case "netAmount":
+        return (
+          <TableCell className="px-4 py-3 text-right font-medium text-slate-900 dark:text-slate-100">
+            ₹{Number(transaction.netAmount ?? (transaction.amount - (transaction.appFeeAmount || 0))).toFixed(2)}
+          </TableCell>
+        );
       case "modeOfPayment":
         return (
           <TableCell className="px-4 py-3">
@@ -595,7 +628,7 @@ export function TransactionTable() {
           <Card className="gaming-kpi-card rounded-xl border-cyan-500/20 backdrop-blur-sm">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="dash-kpi-label">
-                Total Revenue
+                Gross Revenue
               </CardTitle>
               <DollarSignIcon className="h-4 w-4 text-emerald-400" />
             </CardHeader>
@@ -603,7 +636,9 @@ export function TransactionTable() {
               <div className="dash-kpi-value !text-xl sm:!text-2xl">
                 ₹{metrics.total.toFixed(2)}
               </div>
-              <p className="text-xs text-emerald-400">For selected range</p>
+              <p className="text-xs text-emerald-400">
+                App Fee: ₹{metrics.appFeeTotal.toFixed(2)} · Net: ₹{metrics.netTotal.toFixed(2)}
+              </p>
             </CardContent>
           </Card>
         </motion.div>
@@ -685,13 +720,13 @@ export function TransactionTable() {
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3, delay: 0.4 }}
-        className="shrink-0 flex flex-col items-stretch gap-3 sm:flex-row sm:items-center"
+        className="dashboard-toolbar shrink-0"
       >
-        <div className="relative flex-1">
+        <div className="relative flex-1 min-w-[220px]">
           <SearchIcon className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-500 dark:text-slate-400" />
           <Input
             placeholder="Search transactions..."
-            className="dashboard-module-input rounded-lg pl-8"
+            className="dashboard-module-input h-10 w-full pl-8"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
@@ -701,13 +736,13 @@ export function TransactionTable() {
             type="date"
             value={fromDate}
             onChange={(e) => setFromDate(e.target.value)}
-            className="dashboard-module-input w-[150px] rounded-lg"
+            className="dashboard-module-input h-10 w-[150px]"
           />
           <Input
             type="date"
             value={toDate}
             onChange={(e) => setToDate(e.target.value)}
-            className="dashboard-module-input w-[150px] rounded-lg"
+            className="dashboard-module-input h-10 w-[150px]"
           />
           <motion.button
             whileHover={{ scale: 1.02 }}
@@ -715,7 +750,7 @@ export function TransactionTable() {
             animate="visible"
             variants={boxVariants}
             transition={{ duration: 0.1 }}
-            className="flex items-center rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 transition-colors hover:bg-slate-50 dark:border-slate-600/70 dark:bg-slate-800/70 dark:text-slate-200 dark:hover:bg-slate-700/70"
+            className="dashboard-action-button"
             onClick={() => {
               if (!fromDate || !toDate) return;
               if (fromDate > toDate) return;
@@ -731,7 +766,7 @@ export function TransactionTable() {
             animate="visible"
             variants={boxVariants}
             transition={{ duration: 0.1 }}
-            className="flex items-center rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 transition-colors hover:bg-slate-50 dark:border-slate-600/70 dark:bg-slate-800/70 dark:text-slate-200 dark:hover:bg-slate-700/70"
+            className="dashboard-action-button"
             onClick={() => setShowColumnSelector((prev) => !prev)}
           >
             <span>Columns</span>
@@ -742,7 +777,7 @@ export function TransactionTable() {
             animate="visible"
             variants={boxVariants}
             transition={{ duration: 0.1 }}
-            className="flex items-center rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 transition-colors hover:bg-slate-50 dark:border-slate-600/70 dark:bg-slate-800/70 dark:text-slate-200 dark:hover:bg-slate-700/70"
+            className="dashboard-action-button"
             onClick={() => setShowFilter(!showFilter)}
           >
             <FilterIcon className="h-4 w-4 mr-2" />
@@ -754,7 +789,7 @@ export function TransactionTable() {
             animate="visible"
             variants={boxVariants}
             transition={{ duration: 0.2 }}
-            className="flex items-center rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 transition-colors hover:bg-slate-50 dark:border-slate-600/70 dark:bg-slate-800/70 dark:text-slate-200 dark:hover:bg-slate-700/70"
+            className="dashboard-action-button"
             onClick={downloadFilteredData}
           >
             <Download className="h-4 w-4 mr-2" />
@@ -832,7 +867,7 @@ export function TransactionTable() {
         className="dashboard-module-surface relative min-h-0 min-w-0 flex-1 overflow-hidden rounded-xl border"
       >
         <div className="h-full min-h-0 w-full overflow-auto overscroll-contain [scrollbar-gutter:stable_both-edges]">
-          <Table className="min-w-[1750px]">
+          <Table className="min-w-[1950px]">
             <TableHeader className="dashboard-module-table-head sticky top-0 backdrop-blur-sm">
               <TableRow className="border-slate-200 hover:bg-transparent dark:border-slate-700">
                 {transactionColumns
@@ -845,8 +880,8 @@ export function TransactionTable() {
                           <span className="inline-flex h-4 w-4 cursor-help items-center justify-center rounded-full border border-slate-300 text-[10px] text-slate-600 dark:border-slate-500 dark:text-slate-400">
                             i
                           </span>
-                          <span className="pointer-events-none absolute left-0 top-6 z-50 hidden w-56 rounded-md border border-slate-300 bg-white px-2 py-1 text-[11px] font-normal text-slate-700 shadow-lg group-hover:block dark:border-slate-600 dark:bg-slate-900 dark:text-slate-300">
-                            B = Base amount, M = Meals amount, C = Controller amount, W = Waive-off amount
+                          <span className="pointer-events-none absolute left-0 top-6 z-50 hidden w-60 rounded-md border border-slate-300 bg-white px-2 py-1 text-[11px] font-normal text-slate-700 shadow-lg group-hover:block dark:border-slate-600 dark:bg-slate-900 dark:text-slate-300">
+                            B = Base, M = Meals, C = Controller, W = Waive-off
                           </span>
                         </span>
                       ) : (
