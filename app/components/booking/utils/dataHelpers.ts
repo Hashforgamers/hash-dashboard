@@ -19,6 +19,15 @@ export const formatDateForAPI = (date: string): string => {
   return date.replace(/-/g, '')
 }
 
+export const normalizeBookedDate = (raw: string): string => {
+  const trimmed = (raw || '').trim()
+  if (!trimmed) return ''
+  if (/^\d{8}$/.test(trimmed)) {
+    return `${trimmed.slice(0, 4)}-${trimmed.slice(4, 6)}-${trimmed.slice(6, 8)}`
+  }
+  return trimmed
+}
+
 export const getCurrentISTTime = (): Date => {
   return new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }))
 }

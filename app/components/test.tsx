@@ -7,6 +7,7 @@ import { jwtDecode } from 'jwt-decode'
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
+import { normalizeBookedDate } from "./booking/utils/dataHelpers"
 import { 
   Dot, 
   MoreVertical, 
@@ -419,7 +420,7 @@ function SlotBookingForm({
         name,
         email,
         phone,
-        bookedDate: selectedSlots[0]?.date || '',
+        bookedDate: normalizeBookedDate(selectedSlots[0]?.date || ''),
         slotId: selectedSlots.map(slot => slot.slot_id),
         paymentType,
         waiveOffAmount: waiveOffAmount + autoWaiveOffAmount,

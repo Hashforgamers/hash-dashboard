@@ -12,6 +12,7 @@ import { useUserSuggestions } from '../../hooks/useUserSuggestions'
 import { usePassValidation } from '../../hooks/usePassValidation'
 import { bookingService } from '../../services/api/bookingService'
 import { calculateAutoWaiveOff, calculateConsoleTotal, calculateMealsTotal, calculateTotalAmount } from '../../utils/priceCalculations'
+import { normalizeBookedDate } from '../../utils/dataHelpers'
 
 import { CustomerInfo } from './CustomerInfo'
 import { PaymentSection } from './PaymentSection'
@@ -302,7 +303,7 @@ const handleSubmit = async (e: React.FormEvent) => {
       name: state.name.trim(),
       email: state.email.trim(),
       phone: state.phone.trim(),
-      bookedDate: selectedSlots[0]?.date || '',
+      bookedDate: normalizeBookedDate(selectedSlots[0]?.date || ''),
       slotId: selectedSlots.map(slot => slot.slot_id), // ✅ Keep as slot_id
       paymentType: state.paymentType,
       waiveOffAmount: Number(totalWaiveOff.toFixed(2)),
