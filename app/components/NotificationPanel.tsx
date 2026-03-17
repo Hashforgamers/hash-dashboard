@@ -9,6 +9,8 @@ import { BOOKING_URL } from '@/src/config/env'
 
 
 interface PayAtCafeNotification {
+  kind?: "pay_at_cafe"
+  notification_id?: string
   event_id: string
   emitted_at: string
   bookingId: number
@@ -42,13 +44,25 @@ interface PayAtCafeNotification {
   processed_time: string
 }
 
+interface MealsAddedNotification {
+  kind: "meals_added"
+  notification_id: string
+  emitted_at?: string
+  bookingId: number
+  vendorId: number
+  username?: string
+  amount_added?: number
+}
+
+type DashboardNotification = PayAtCafeNotification | MealsAddedNotification
+
 
 interface NotificationPanelProps {
   vendorId: number | null
   isOpen: boolean
   onClose: () => void
-  notifications: PayAtCafeNotification[]
-  onRemoveNotification: (bookingId: number) => void
+  notifications: DashboardNotification[]
+  onRemoveNotification: (bookingId: number | string) => void
   socket?: any
   onBookingAccepted?: (bookingData: any) => void
 }
@@ -258,7 +272,7 @@ export function NotificationPanel({
             {/* Header */}
             <div className="flex items-center justify-between border-b border-cyan-500/20 bg-slate-900/70 p-4">
               <div className="flex items-center gap-2">
-                <h3 className="dash-title !text-base">Pay at Cafe Requests</h3>
+                <h3 className="dash-title !text-base">Notifications</h3>
                 {notificationCount > 0 && (
                   <Badge className="border border-cyan-400/40 bg-cyan-500/15 text-cyan-200 text-xs">
                     {notificationCount}
@@ -282,21 +296,77 @@ export function NotificationPanel({
                   <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full border border-slate-700 bg-slate-800/70">
                     <Bell className="h-8 w-8 text-slate-400 opacity-70" />
                   </div>
-                  <h4 className="mb-2 font-medium text-slate-100">No payment requests</h4>
+                  <h4 className="mb-2 font-medium text-slate-100">No notifications</h4>
                   <p className="mx-auto max-w-sm text-sm leading-relaxed text-slate-400">
-                    When customers choose "Pay at Cafe" for their bookings, you'll see their requests here for approval.
+                    Meal additions and pay-at-cafe requests will appear here for quick action.
                   </p>
                 </div>
               ) : (
                 <div className="space-y-3">
                   {notifications.map((notification, index) => {
-                    const isThisBookingProcessing = processingAction.bookingId === notification.bookingId
+                    const isMealNotice = (notification as any)?.kind === "meals_added"
+                    const isThisBookingProcessing = !isMealNotice && processingAction.bookingId === (notification as any).bookingId
                     const isAcceptProcessing = isThisBookingProcessing && processingAction.action === 'accept'
                     const isRejectProcessing = isThisBookingProcessing && processingAction.action === 'reject'
 
+                    if (isMealNotice) {
+                      const mealNotice = notification as MealsAddedNotification
+                      return (
+                        <motion.div
+                          key={mealNotice.notification_id}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, x: 20 }}
+                          transition={{ delay: index * 0.05 }}
+                          className="rounded-xl border border-cyan-400/20 bg-gradient-to-r from-slate-800/80 to-slate-800/55 p-4 transition-all duration-200 hover:border-cyan-300/40"
+                        >
+                          <div className="space-y-3">
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <p className="text-sm font-semibold text-slate-100">Meals Added</p>
+                                {mealNotice.emitted_at && (
+                                  <p className="text-xs text-slate-400">
+                                    {formatRelativeTime(mealNotice.emitted_at)}
+                                  </p>
+                                )}
+                              </div>
+                              <Badge
+                                variant="outline"
+                                className="flex items-center gap-1 border-cyan-400/50 bg-cyan-500/10 text-xs text-cyan-200"
+                              >
+                                <Wallet className="w-3 h-3" />
+                                Pending
+                              </Badge>
+                            </div>
+                            <div className="flex items-center gap-2 text-sm text-slate-200">
+                              <User className="w-4 h-4 text-slate-400" />
+                              <span className="font-medium text-slate-100">{mealNotice.username || "Customer"}</span>
+                              <span className="text-xs text-slate-400">added meals</span>
+                            </div>
+                            <div className="rounded-lg border border-cyan-400/40 bg-cyan-500/10 p-3 text-center">
+                              <span className="text-xs text-cyan-200">Amount to collect</span>
+                              <div className="text-2xl font-bold text-cyan-200">
+                                ₹{Number(mealNotice.amount_added || 0).toFixed(0)}
+                              </div>
+                            </div>
+                            <div className="flex justify-end">
+                              <Button
+                                variant="outline"
+                                className="h-8 border-cyan-400/40 bg-cyan-500/10 text-xs text-cyan-200 hover:bg-cyan-500/20"
+                                onClick={() => onRemoveNotification(mealNotice.notification_id)}
+                              >
+                                Dismiss
+                              </Button>
+                            </div>
+                          </div>
+                        </motion.div>
+                      )
+                    }
+
+                    const payNotice = notification as PayAtCafeNotification
                     return (
                       <motion.div
-                        key={notification.event_id}
+                        key={payNotice.notification_id || payNotice.event_id}
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, x: 20 }}
@@ -312,7 +382,7 @@ export function NotificationPanel({
                             <div>
                               <p className="text-sm font-semibold text-slate-100">Pay at Cafe Request</p>
                               <p className="text-xs text-slate-400">
-                                {formatRelativeTime(notification.emitted_at)}
+                                {formatRelativeTime(payNotice.emitted_at)}
                               </p>
                             </div>
                             {/* ✅ CHANGED: "To Be Paid" badge instead of plain dot */}
@@ -328,11 +398,11 @@ export function NotificationPanel({
                           {/* Customer Name */}
                           <div className="flex items-center gap-2">
                             <User className="w-4 h-4 text-slate-400" />
-                            <span className="font-medium text-slate-100">{notification.username}</span>
+                            <span className="font-medium text-slate-100">{payNotice.username}</span>
                             <span className="text-xs text-slate-400">wants to book</span>
-                            {notification.slot_count && notification.slot_count > 1 && (
+                            {payNotice.slot_count && payNotice.slot_count > 1 && (
                               <span className="rounded-full border border-amber-400/40 bg-amber-500/10 px-2 py-0.5 text-[11px] font-semibold text-amber-200">
-                                {notification.slot_count} slots
+                                {payNotice.slot_count} slots
                               </span>
                             )}
                           </div>
@@ -340,11 +410,11 @@ export function NotificationPanel({
                           {/* Game + Console */}
                           <div className="flex flex-wrap items-center gap-2 text-xs">
                             <span className="rounded-full border border-cyan-400/35 bg-cyan-500/10 px-2 py-0.5 text-cyan-200">
-                              {notification.game?.game_name || "Gaming Session"}
+                              {payNotice.game?.game_name || "Gaming Session"}
                             </span>
                             <span className="flex items-center gap-1 rounded-full border border-slate-600/70 bg-slate-800/80 px-2 py-0.5 text-slate-300">
                               <Gamepad2 className="h-3 w-3 text-rose-400" />
-                              {notification.consoleType || "Console"}
+                              {payNotice.consoleType || "Console"}
                             </span>
                           </div>
 
@@ -352,11 +422,11 @@ export function NotificationPanel({
                           <div className="flex items-center gap-4 text-sm text-slate-200">
                             <div className="flex items-center gap-1">
                               <Clock className="w-3 h-3 text-slate-400" />
-                              <span>{notification.time}</span>
+                              <span>{payNotice.time}</span>
                             </div>
                             <div className="flex items-center gap-1">
                               <Calendar className="w-3 h-3 text-slate-400" />
-                              <span>{formatDisplayDate(notification.date)}</span>
+                              <span>{formatDisplayDate(payNotice.date)}</span>
                             </div>
                           </div>
 
@@ -367,7 +437,7 @@ export function NotificationPanel({
                             </p>
                             <div className="text-center">
                               <span className="text-2xl font-bold text-orange-300">
-                                ₹{notification.total_amount ?? notification.game.single_slot_price}
+                                ₹{payNotice.total_amount ?? payNotice.game.single_slot_price}
                               </span>
                             </div>
                             {/* ✅ NEW: Subtle reminder so vendor knows what to do */}
@@ -379,7 +449,7 @@ export function NotificationPanel({
                           {/* Action Buttons */}
                           <div className="flex gap-2">
                             <Button
-                              onClick={() => handleAccept(notification)}
+                              onClick={() => handleAccept(payNotice)}
                               disabled={isThisBookingProcessing}
                               className="h-9 flex-1 bg-gradient-to-r from-emerald-500 to-cyan-500 text-sm text-white hover:from-emerald-400 hover:to-cyan-400"
                             >
@@ -391,7 +461,7 @@ export function NotificationPanel({
                               {isAcceptProcessing ? 'Accepting...' : 'Accept'}
                             </Button>
                             <Button
-                              onClick={() => handleReject(notification)}
+                              onClick={() => handleReject(payNotice)}
                               disabled={isThisBookingProcessing}
                               variant="outline"
                               className="h-9 flex-1 border-rose-400/45 bg-rose-500/10 text-sm text-rose-200 hover:bg-rose-500/20"

@@ -1111,6 +1111,13 @@ h6 {
   color: var(--dash-module-input-placeholder) !important;
 }
 
+.account-scope .account-panel,
+.access-scope .account-panel {
+  border: 1px solid var(--dash-module-panel-border);
+  background: var(--dash-module-panel-bg);
+  box-shadow: var(--dash-module-panel-shadow);
+}
+
 .dashboard-typography h1 {
   font-size: var(--dash-fs-3xl);
   line-height: 1.05;
