@@ -84,6 +84,26 @@ const calculateControllerFare = (config: ControllerPricingConfig, quantity: numb
   return Number.isFinite(dp[quantity]) ? Math.round(dp[quantity]) : Math.round(quantity * base)
 }
 
+const toMinutes = (timeValue: string): number => {
+  const parts = String(timeValue || "").split(":")
+  if (parts.length < 2) return Number.NaN
+  const hours = Number(parts[0])
+  const minutes = Number(parts[1])
+  if (Number.isNaN(hours) || Number.isNaN(minutes)) return Number.NaN
+  return hours * 60 + minutes
+}
+
+const getSlotEndTimestampIST = (slotDate: string, slotStartTime: string, slotEndTime: string): number => {
+  const rawEndTs = new Date(`${slotDate}T${slotEndTime}+05:30`).getTime()
+  if (!Number.isFinite(rawEndTs)) return Number.NaN
+  const startMinutes = toMinutes(slotStartTime)
+  const endMinutes = toMinutes(slotEndTime)
+  if (Number.isFinite(startMinutes) && Number.isFinite(endMinutes) && endMinutes <= startMinutes) {
+    return rawEndTs + 24 * 60 * 60 * 1000
+  }
+  return rawEndTs
+}
+
 const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) => {
   // User information
   const [name, setName] = useState<string>('');
@@ -558,8 +578,8 @@ const [isPrivateMode, setIsPrivateMode] = useState<boolean>(false);
             const nextSlotDateTime = new Date(`${selectedDate}T${nextSlot.start_time}+05:30`);
             isPast = nowIST >= nextSlotDateTime;
           } else {
-            const slotEndTime = new Date(`${selectedDate}T${slot.end_time}+05:30`);
-            isPast = nowIST >= slotEndTime;
+            const slotEndTs = getSlotEndTimestampIST(selectedDate, slot.start_time, slot.end_time)
+            isPast = Number.isFinite(slotEndTs) ? nowIST.getTime() >= slotEndTs : false
           }
 
           return {
