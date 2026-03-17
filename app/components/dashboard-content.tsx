@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useCallback, useEffect, useState } from "react"
+import React, { useCallback, useEffect, useRef, useState } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { UpcomingBookings } from "./upcoming-booking"
 import { CurrentSlots } from "./current-slot"
@@ -76,10 +76,28 @@ export function DashboardContent() {
   }>({})
   const [nowISTDateText, setNowISTDateText] = useState<string>("")
   const [nowISTTimeText, setNowISTTimeText] = useState<string>("")
+  const lastMealNoticeRef = useRef<{ key: string; ts: number } | null>(null)
 
   const { socket, isConnected, joinVendor } = useSocket()
   const { isLocked } = useSubscription()
   const router = useRouter()
+
+  const showDashboardToast = useCallback((message: string, type: 'success' | 'error' | 'info' = 'info') => {
+    const toast = document.createElement('div')
+    const bgClass =
+      type === 'success' ? 'bg-emerald-500' : type === 'error' ? 'bg-rose-500' : 'bg-cyan-500'
+    toast.className = `fixed top-4 right-4 px-5 py-3 rounded-lg shadow-xl z-[10000] text-white font-medium transform transition-all duration-300 ${bgClass}`
+    toast.innerHTML = `
+      <div class="flex items-center gap-2">
+        <div class="w-2 h-2 rounded-full bg-white animate-pulse"></div>
+        <span>${message}</span>
+      </div>
+    `
+    document.body.appendChild(toast)
+    setTimeout(() => {
+      if (toast.parentNode) toast.parentNode.removeChild(toast)
+    }, 4500)
+  }, [])
 
   useEffect(() => {
     if (landingData) {
@@ -214,6 +232,31 @@ export function DashboardContent() {
     function handleBookingPaymentUpdate(data: any) {
       const eventVendorId = Number(data?.vendorId ?? data?.vendor_id)
       if (eventVendorId !== vendorId) return
+      const eventType = String(data?.event || "").toLowerCase()
+      if (eventType === "meals_added") {
+        const bookingId = data?.bookingId ?? data?.booking_id
+        const amountAdded = Number(data?.amount_added || 0)
+        const customerName = data?.username || data?.user_name || "Customer"
+        const noticeKey = `${bookingId || "booking"}:${amountAdded}:${data?.settlement_status || ""}`
+        const nowTs = Date.now()
+        const lastNotice = lastMealNoticeRef.current
+        if (!lastNotice || lastNotice.key !== noticeKey || nowTs - lastNotice.ts > 15000) {
+          lastMealNoticeRef.current = { key: noticeKey, ts: nowTs }
+          showDashboardToast(`Meals added by ${customerName} (+₹${amountAdded.toFixed(0)})`, "info")
+          if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "granted") {
+            try {
+              const browserNotif = new Notification("Meals added during session", {
+                body: `${customerName} added meals (+₹${amountAdded.toFixed(0)})`,
+                icon: "/favicon.ico",
+                tag: `meals_${bookingId || "unknown"}`
+              })
+              setTimeout(() => browserNotif.close(), 8000)
+            } catch (err) {
+              console.warn("Browser notification failed:", err)
+            }
+          }
+        }
+      }
       setRefreshSlots((prev) => !prev)
       loadLandingData()
       loadConsoleData()

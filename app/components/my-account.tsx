@@ -1368,7 +1368,7 @@ const ToggleSwitch = ({
 
             {/* Updated Cafe Profile Card with editable image */}
 {cafeProfile && (
-  <Card className="overflow-hidden border border-cyan-500/25 bg-[linear-gradient(140deg,rgba(8,20,45,0.95),rgba(6,18,40,0.92))] shadow-[0_18px_45px_-24px_rgba(6,182,212,0.6)]">
+  <Card className="account-panel overflow-hidden">
     <CardHeader className="space-y-1.5 pb-3">
       <CardTitle className="text-base font-semibold uppercase tracking-[0.14em] text-cyan-100 md:text-lg">Cafe Profile</CardTitle>
       <CardDescription className="text-xs text-slate-300 md:text-sm">
@@ -1381,8 +1381,8 @@ const ToggleSwitch = ({
         <div className={cn(
           "rounded-lg border px-3 py-2 text-center text-xs font-medium md:text-sm",
           profileUploadMessage.includes("successfully") 
-            ? "border-emerald-400/40 bg-emerald-500/15 text-emerald-200" 
-            : "border-rose-400/40 bg-rose-500/15 text-rose-200"
+            ? "border-emerald-400/40 bg-emerald-500/15 text-emerald-700 dark:text-emerald-200" 
+            : "border-rose-400/40 bg-rose-500/15 text-rose-700 dark:text-rose-200"
         )}>
           {profileUploadMessage}
         </div>
@@ -1428,7 +1428,7 @@ const ToggleSwitch = ({
         <div className="space-y-2">
           <h3 className="text-base font-semibold text-slate-100 md:text-lg">{cafeProfile.name || "Cafe Name"}</h3>
           <div className="flex flex-wrap items-center justify-center gap-2">
-            <span className="rounded-full border border-emerald-400/30 bg-emerald-500/15 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-emerald-200 md:text-xs">
+            <span className="rounded-full border border-emerald-400/30 bg-emerald-500/15 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-emerald-700 dark:text-emerald-200 md:text-xs">
               Gaming Cafe - Live
             </span>
             <span className="rounded-full border border-cyan-400/30 bg-cyan-500/15 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-cyan-100 md:text-xs">
@@ -1454,7 +1454,7 @@ const ToggleSwitch = ({
 
 
             {/* Navigation Menu */}
-            <Card className="overflow-hidden border border-cyan-500/25 bg-[linear-gradient(140deg,rgba(8,20,45,0.9),rgba(6,18,40,0.88))] shadow-[0_16px_40px_-24px_rgba(6,182,212,0.55)]">
+            <Card className="account-panel overflow-hidden">
               <CardContent className="p-4">
                 <nav className="space-y-2">
                   {[
@@ -1505,7 +1505,7 @@ const ToggleSwitch = ({
 
  {page === "Cafe Gallery" && (
   <div>
-    <Card className="overflow-hidden border border-cyan-500/25 bg-[linear-gradient(140deg,rgba(8,20,45,0.95),rgba(6,18,40,0.9))] shadow-[0_16px_40px_-24px_rgba(6,182,212,0.55)]">
+    <Card className="account-panel overflow-hidden">
       <CardHeader className="pb-4">
         <CardTitle className="text-base font-semibold uppercase tracking-[0.12em] text-cyan-100 md:text-lg">Cafe Gallery</CardTitle>
         <CardDescription className="text-xs text-slate-300 md:text-sm">
@@ -1690,7 +1690,7 @@ const ToggleSwitch = ({
                       </div>
                     </div> **/}
                     {page === "Business Details" && businessDetails && (
-  <Card className="overflow-hidden border border-cyan-500/25 bg-[linear-gradient(140deg,rgba(8,20,45,0.95),rgba(6,18,40,0.9))] shadow-[0_16px_40px_-24px_rgba(6,182,212,0.55)]">
+  <Card className="account-panel overflow-hidden">
     <CardHeader className="pb-4">
       <CardTitle className="text-base font-semibold uppercase tracking-[0.12em] text-cyan-100 md:text-lg">Business Details</CardTitle>
       <CardDescription className="text-xs text-slate-300 md:text-sm">
@@ -1810,7 +1810,7 @@ const ToggleSwitch = ({
 )}
 
 {page === "Operating Hours" && (
-  <Card className="overflow-hidden border border-cyan-500/25 bg-[linear-gradient(140deg,rgba(8,20,45,0.95),rgba(6,18,40,0.9))] shadow-[0_16px_40px_-24px_rgba(6,182,212,0.55)]">
+  <Card className="account-panel overflow-hidden">
     <CardHeader className="pb-4">
       <CardTitle className="flex items-center gap-2 text-base font-semibold uppercase tracking-[0.12em] text-cyan-100 md:text-lg">
         <Clock className="h-5 w-5 text-cyan-300" />
@@ -1947,7 +1947,7 @@ const ToggleSwitch = ({
 )}
 
 {page === "GST Setup" && (
-  <Card className="overflow-hidden border border-cyan-500/25 bg-[linear-gradient(140deg,rgba(8,20,45,0.95),rgba(6,18,40,0.9))] shadow-[0_16px_40px_-24px_rgba(6,182,212,0.55)]">
+  <Card className="account-panel overflow-hidden">
     <CardHeader className="pb-4">
       <CardTitle className="text-base font-semibold uppercase tracking-[0.12em] text-cyan-100 md:text-lg">GST Setup</CardTitle>
       <CardDescription className="text-xs text-slate-300 md:text-sm">
@@ -2138,7 +2138,7 @@ const ToggleSwitch = ({
             )} **/}
 
               {page === "Verified Documents" && (
-                <Card className="overflow-hidden border border-cyan-500/25 bg-[linear-gradient(140deg,rgba(8,20,45,0.95),rgba(6,18,40,0.9))] shadow-[0_16px_40px_-24px_rgba(6,182,212,0.55)]">
+                <Card className="account-panel overflow-hidden">
                   <CardHeader className="pb-4">
                     <CardTitle className="text-base font-semibold uppercase tracking-[0.12em] text-cyan-100 md:text-lg">Verified Documents</CardTitle>
                     <CardDescription className="text-xs text-slate-300 md:text-sm">
@@ -2253,7 +2253,7 @@ const ToggleSwitch = ({
 {page === "Bank Transfer" && (
   <>
     {/* FIRST CARD - BANK TRANSFER DETAILS */}
-    <Card className="content-card mb-6 overflow-hidden border border-cyan-500/25 bg-[linear-gradient(140deg,rgba(8,20,45,0.95),rgba(6,18,40,0.9))] shadow-[0_16px_40px_-24px_rgba(6,182,212,0.55)]">
+    <Card className="content-card account-panel mb-6 overflow-hidden">
       <CardHeader className="pb-4">
         <CardTitle className="card-title flex items-center gap-2 text-base font-semibold uppercase tracking-[0.12em] text-cyan-100 md:text-lg">
           <CreditCard className="icon-lg text-cyan-300" />
@@ -2885,7 +2885,7 @@ const ToggleSwitch = ({
 
 {/* ==================== PAYOUT HISTORY PAGE ==================== */}
 {page === "Payout History" && (
-  <Card className="content-card overflow-hidden border border-cyan-500/25 bg-[linear-gradient(140deg,rgba(8,20,45,0.95),rgba(6,18,40,0.9))] shadow-[0_16px_40px_-24px_rgba(6,182,212,0.55)]">
+  <Card className="content-card account-panel overflow-hidden">
     <CardHeader className="pb-4">
       <CardTitle className="card-title flex items-center gap-2 text-base font-semibold uppercase tracking-[0.12em] text-cyan-100 md:text-lg">
         <DollarSign className="icon-lg text-cyan-300" />
