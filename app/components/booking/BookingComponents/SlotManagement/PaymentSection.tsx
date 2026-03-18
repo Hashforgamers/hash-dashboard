@@ -49,7 +49,7 @@ export const PaymentSection = memo(({
             <div className={cn(
               'p-2 rounded-lg transition-all duration-300',
               isPrivateMode 
-                ? 'bg-gradient-to-br from-purple-500 to-pink-500' 
+                ? 'bg-purple-500' 
                 : 'bg-gray-300 dark:bg-gray-600'
             )}>
               {isPrivateMode ? (
@@ -93,7 +93,7 @@ export const PaymentSection = memo(({
               'relative inline-flex h-8 w-14 items-center rounded-full transition-all duration-300',
               'focus:outline-none focus:ring-2 focus:ring-offset-2',
               isPrivateMode 
-                ? 'bg-gradient-to-r from-purple-600 to-pink-600 focus:ring-purple-500' 
+                ? 'bg-purple-600 focus:ring-purple-500' 
                 : 'bg-gray-300 dark:bg-gray-600 focus:ring-gray-400'
             )}
           >

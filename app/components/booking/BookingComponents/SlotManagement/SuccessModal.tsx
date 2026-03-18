@@ -29,9 +29,9 @@ export const SuccessModal = ({
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
           transition={{ type: 'spring', stiffness: 200, damping: 20 }}
-          className="w-16 h-16 mx-auto mb-6 rounded-full bg-gradient-to-r from-emerald-500 to-green-500 flex items-center justify-center shadow-lg"
+          className="w-16 h-16 mx-auto mb-6 rounded-full bg-emerald-500/15 flex items-center justify-center border border-emerald-400/30"
         >
-          <CheckCircle className="w-8 h-8 text-white" />
+          <CheckCircle className="w-8 h-8 text-emerald-600 dark:text-emerald-300" />
         </motion.div>
 
         <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-3">
@@ -68,7 +68,7 @@ export const SuccessModal = ({
 
         <Button
           onClick={onClose}
-          className="w-full bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700"
+          className="w-full dashboard-btn-primary"
         >
           Create Another Booking
         </Button>

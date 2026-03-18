@@ -866,7 +866,7 @@ export function TransactionTable() {
         transition={{ duration: 0.3, delay: 0.5 }}
         className="dashboard-module-surface relative min-h-0 min-w-0 flex-1 overflow-hidden rounded-xl border"
       >
-        <div className="h-full min-h-0 w-full overflow-auto overscroll-contain [scrollbar-gutter:stable_both-edges]">
+        <div className="dashboard-table-wrap h-full min-h-0 w-full overflow-auto overscroll-contain [scrollbar-gutter:stable_both-edges]">
           <Table className="min-w-[1950px]">
             <TableHeader className="dashboard-module-table-head sticky top-0 backdrop-blur-sm">
               <TableRow className="border-slate-200 hover:bg-transparent dark:border-slate-700">

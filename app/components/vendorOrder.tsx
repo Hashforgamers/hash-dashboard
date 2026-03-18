@@ -158,11 +158,11 @@ const VendorOrderPage: React.FC = () => {
     })
     .filter(Boolean) as (Product & { qty: number })[];
   const primaryButtonClass =
-    "inline-flex items-center justify-center gap-2 rounded-lg border border-cyan-400/40 bg-gradient-to-r from-cyan-500/90 to-emerald-500/90 px-3 py-2 text-xs font-semibold text-white shadow-md shadow-cyan-900/40 transition-all duration-200 hover:from-cyan-400 hover:to-emerald-400 hover:shadow-lg hover:shadow-cyan-600/25 disabled:cursor-not-allowed disabled:opacity-50 sm:px-4 sm:text-sm";
+    "dashboard-btn-primary inline-flex items-center justify-center gap-2 px-3 py-2 text-xs sm:px-4 sm:text-sm";
   const secondaryButtonClass =
-    "inline-flex items-center justify-center gap-2 rounded-lg border border-cyan-300/25 bg-slate-900/70 px-3 py-2 text-xs font-semibold text-slate-200 transition-all duration-200 hover:border-cyan-300/45 hover:bg-slate-800/80 hover:text-cyan-100 disabled:cursor-not-allowed disabled:opacity-50 sm:px-4 sm:text-sm";
+    "dashboard-btn-secondary inline-flex items-center justify-center gap-2 px-3 py-2 text-xs sm:px-4 sm:text-sm";
   const quantityInputClass =
-    "mt-1 h-8 border-cyan-400/25 bg-slate-900/70 text-xs text-slate-100 placeholder:text-slate-400 focus-visible:ring-cyan-400/60";
+    "dashboard-module-input mt-1 h-8 text-xs";
 
   return (
     <motion.div
@@ -194,7 +194,7 @@ const VendorOrderPage: React.FC = () => {
               <span className="font-semibold">{Object.keys(orderItems).length}</span>
               <span className="font-medium">Order</span>
             </button>
-            <div className="rounded-full border border-cyan-400/20 bg-slate-900/60 px-3 py-1 text-xs font-semibold text-cyan-100 sm:text-sm">
+            <div className="dashboard-badge sm:text-sm">
               ₹{totalAmount.toFixed(2)}
             </div>
           </div>
@@ -250,8 +250,8 @@ const VendorOrderPage: React.FC = () => {
                   transition={{ delay: 0.03 * idx }}
                   className="w-full max-w-[230px] mx-auto"
                 >
-                  <Card className="w-full min-h-[198px] flex flex-col justify-between overflow-hidden border border-cyan-400/20 bg-gradient-to-b from-slate-900/70 to-slate-950/70 transition-shadow duration-300 hover:shadow-lg hover:shadow-cyan-500/10">
-                    <div className="relative min-h-[84px] w-full aspect-video bg-slate-900/50">
+                  <Card className="dashboard-module-card w-full min-h-[198px] flex flex-col justify-between overflow-hidden transition-shadow duration-300 hover:shadow-lg">
+                    <div className="relative min-h-[84px] w-full aspect-video bg-black/5 dark:bg-white/5">
                       <Image
                         alt={product.name}
                         src={product.image_url || "/placeholder.svg?height=140&width=220&query=product"}
@@ -259,20 +259,20 @@ const VendorOrderPage: React.FC = () => {
                         className="object-cover rounded-t-lg"
                       />
                       <div className="absolute top-1 right-1 sm:top-2 sm:right-2">
-                        <span className="rounded-full border border-cyan-400/25 bg-slate-950/80 px-1.5 py-0.5 text-[10px] font-semibold text-slate-200">
+                        <span className="dashboard-badge">
                           {product.category}
                         </span>
                       </div>
                     </div>
                     <div className="space-y-1 p-tight">
-                      <h3 className="truncate text-sm font-semibold text-cyan-100">{product.name}</h3>
+                      <h3 className="truncate text-sm font-semibold text-foreground">{product.name}</h3>
                       <div className="flex items-center justify-between pt-0.5">
-                        <span className="text-xs font-semibold text-slate-100">₹{product.price}</span>
-                        <span className="rounded border border-emerald-400/20 bg-emerald-500/10 px-1 py-0.5 text-[10px] font-semibold text-emerald-300">
+                        <span className="text-xs font-semibold text-foreground">₹{product.price}</span>
+                        <span className="dashboard-badge" data-variant="success">
                           Stock: {product.stock}
                         </span>
                       </div>
-                      <p className="text-[11px] text-slate-300/75">Min: {product.min_order_quantity}</p>
+                      <p className="text-[11px] text-muted-foreground">Min: {product.min_order_quantity}</p>
                       <Input
                         type="number"
                         min={0}
@@ -300,7 +300,7 @@ const VendorOrderPage: React.FC = () => {
 
       {/* ---------- ORDER CONFIRM OVERLAY ---------- */}
       <Dialog open={orderModalOpen} onOpenChange={setOrderModalOpen}>
-        <DialogContent className="max-h-[90vh] w-[95vw] overflow-y-auto rounded-xl border border-cyan-400/25 bg-gradient-to-br from-slate-950 via-slate-900 to-cyan-950/30 p-0 shadow-2xl sm:max-w-[450px]">
+        <DialogContent className="dashboard-module-panel max-h-[90vh] w-[95vw] overflow-y-auto rounded-xl p-0 shadow-2xl sm:max-w-[450px]">
           <DialogHeader className="p-4 pb-0">
             <DialogTitle className="section-title flex items-center justify-between">
               <span>Order Summary</span>

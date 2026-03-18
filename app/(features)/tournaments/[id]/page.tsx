@@ -337,7 +337,7 @@ export default function TournamentDetailPage() {
       <div className="gaming-panel content-card-padding mb-4 flex-shrink-0 rounded-xl border-cyan-400/20 bg-slate-950/45">
         <div className="flex flex-col md:flex-row gap-6">
           {/* Banner / thumbnail */}
-          <div className="w-full md:w-52 h-32 rounded-xl flex-shrink-0 overflow-hidden border border-cyan-400/20 bg-gradient-to-br from-blue-900/20 to-purple-900/20 flex items-center justify-center">
+          <div className="w-full md:w-52 h-32 rounded-xl flex-shrink-0 overflow-hidden border border-border bg-muted/30 flex items-center justify-center">
             {event.banner_image_url ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
@@ -394,7 +394,7 @@ export default function TournamentDetailPage() {
           { label: 'Pending',   value: pending,              color: 'icon-yellow',  icon: <Clock        className="icon-md text-yellow-400"  /> },
           { label: 'Paid',      value: paid,                 color: 'icon-emerald', icon: <CreditCard   className="icon-md text-emerald-400" /> },
         ].map(({ label, value, color, icon }) => (
-          <div key={label} className="gaming-kpi-card rounded-xl border border-cyan-400/20 bg-gradient-to-br from-slate-900/75 via-slate-900/65 to-cyan-950/20 p-4">
+          <div key={label} className="gaming-kpi-card rounded-xl border border-border p-4">
             <div className="flex items-center justify-between">
               <div className="min-w-0">
                 <p className="text-xs uppercase tracking-wide text-slate-300/70">{label}</p>
@@ -662,7 +662,7 @@ export default function TournamentDetailPage() {
 
         <div className="mt-4 flex items-center justify-end">
           <button
-            className="inline-flex items-center justify-center gap-2 rounded-lg border border-cyan-400/40 bg-gradient-to-r from-cyan-500/90 to-emerald-500/90 px-4 py-2 text-xs font-semibold text-white shadow-md shadow-cyan-900/40 transition-all duration-200 hover:from-cyan-400 hover:to-emerald-400 hover:shadow-lg hover:shadow-cyan-600/25 disabled:cursor-not-allowed disabled:opacity-70 sm:text-sm"
+            className="dashboard-btn-primary inline-flex items-center justify-center gap-2 px-4 py-2 text-xs sm:text-sm"
             onClick={handlePublishResults}
             disabled={publishing || teams.length === 0}
           >

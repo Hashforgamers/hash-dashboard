@@ -93,7 +93,7 @@ const CachedImage: React.FC<{
 
   if (error) {
     return (
-      <div className={`flex items-center justify-center bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 ${className}`}>
+      <div className={`flex items-center justify-center bg-green-50 dark:bg-green-900/20 ${className}`}>
         <ChefHat className="text-green-500" size={32} />
       </div>
     )
@@ -102,7 +102,7 @@ const CachedImage: React.FC<{
   return (
     <div className={`relative ${className}`}>
       {!loaded && (
-        <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20">
+        <div className="absolute inset-0 flex items-center justify-center bg-green-50 dark:bg-green-900/20">
           <Loader2 className="animate-spin text-green-500" size={24} />
         </div>
       )}
@@ -345,7 +345,7 @@ const MealSelector: React.FC<MealSelectorProps> = ({
                                 className="h-full w-full"
                               />
                             ) : (
-                              <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20">
+                              <div className="flex h-full w-full items-center justify-center bg-green-50 dark:bg-green-900/20">
                                 <ChefHat className="text-green-500" size={32} />
                               </div>
                             )}
@@ -449,7 +449,7 @@ const MealSelector: React.FC<MealSelectorProps> = ({
 
               <button
                 onClick={handleConfirm}
-                className="px-6 py-2 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg hover:from-green-700 hover:to-green-800 transition-all font-bold shadow-lg flex items-center gap-2 text-sm"
+                className="dashboard-btn-primary px-6 py-2 font-bold flex items-center gap-2 text-sm"
               >
                 <ShoppingCart className="w-4 h-4" />
                 Add to Order

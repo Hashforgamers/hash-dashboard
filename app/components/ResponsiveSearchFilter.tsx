@@ -16,7 +16,7 @@ export default function ResponsiveSearchFilter({
   return (
     <div className={`w-full ${className}`}>
       {/* Top Bar */}
-      <div className="flex items-center gap-2 sm:gap-3">
+      <div className="dashboard-toolbar">
         {/* Search Input */}
         <div className="relative flex-1 min-w-0">
           <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400 sm:h-4 sm:w-4" />
@@ -32,7 +32,7 @@ export default function ResponsiveSearchFilter({
         {/* Filter Icon */}
         <button
           onClick={() => setShowOverlay(true)}
-          className="dashboard-module-input rounded-lg p-2 text-slate-300 transition-colors hover:opacity-90"
+          className="dashboard-btn-secondary rounded-lg p-2"
         >
           <Filter className="w-4 h-4" />
         </button>

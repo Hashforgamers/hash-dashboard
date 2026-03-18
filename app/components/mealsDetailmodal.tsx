@@ -140,7 +140,7 @@ const CachedImage: React.FC<{
 
   if (error) {
     return (
-      <div className={`flex items-center justify-center bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 ${className}`}>
+      <div className={`flex items-center justify-center bg-green-50 dark:bg-green-900/20 ${className}`}>
         <ChefHat className="text-green-500 w-6 h-6 sm:w-8 sm:h-8" />
       </div>
     );
@@ -149,7 +149,7 @@ const CachedImage: React.FC<{
   return (
     <div className={`relative ${className}`}>
       {!loaded && (
-        <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20">
+        <div className="absolute inset-0 flex items-center justify-center bg-green-50 dark:bg-green-900/20">
           <Loader2 className="animate-spin text-green-500 w-4 h-4 sm:w-6 sm:h-6" />
         </div>
       )}
@@ -511,7 +511,7 @@ const MealDetailsModal: React.FC<MealDetailsModalProps> = ({
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header - Responsive */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 sm:p-4 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-emerald-50 to-green-50 dark:from-emerald-900/20 dark:to-green-900/20 flex-shrink-0 gap-3 sm:gap-0">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 sm:p-4 border-b border-gray-200 dark:border-gray-700 bg-emerald-50/70 dark:bg-emerald-900/20 flex-shrink-0 gap-3 sm:gap-0">
             <div className="flex items-center gap-2 sm:gap-3">
               <div className="p-1.5 sm:p-2 bg-emerald-600 rounded-lg">
                 <ChefHat className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
@@ -782,7 +782,7 @@ const MealDetailsModal: React.FC<MealDetailsModalProps> = ({
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                       onClick={() => setMode('add')}
-                      className="w-full py-2.5 sm:py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-lg font-medium transition-all flex items-center justify-center gap-2 text-sm sm:text-base"
+                      className="dashboard-btn-primary w-full py-2.5 sm:py-3 font-medium flex items-center justify-center gap-2 text-sm sm:text-base"
                     >
                       <Plus className="w-4 h-4" />
                       Add More Meals
@@ -947,7 +947,7 @@ const MealDetailsModal: React.FC<MealDetailsModalProps> = ({
                                     className="h-full w-full"
                                   />
                                 ) : (
-                                  <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20">
+                                  <div className="flex h-full w-full items-center justify-center bg-green-50 dark:bg-green-900/20">
                                     <ChefHat className="text-green-500 w-6 h-6 sm:w-8 sm:h-8" />
                                   </div>
                                 )}

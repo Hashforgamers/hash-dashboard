@@ -76,7 +76,7 @@ export default function SlotManagement() {
 
   if (isLoading) {
     return (
-      <main className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
+      <main className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="w-12 h-12 animate-spin text-blue-500 mx-auto mb-4" />
           <p className="text-slate-300">Loading slot data...</p>
@@ -87,7 +87,7 @@ export default function SlotManagement() {
 
   if (error) {
     return (
-      <main className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
+      <main className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
           <p className="text-red-400">Error loading data: {error.message}</p>
           <button onClick={refetch} className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg">
@@ -99,7 +99,7 @@ export default function SlotManagement() {
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+    <main className="min-h-screen bg-background">
       <div className="mx-auto w-full max-w-[1600px] p-6 md:p-8">
         <TopBar 
           selectedSlots={selectedSlots} 

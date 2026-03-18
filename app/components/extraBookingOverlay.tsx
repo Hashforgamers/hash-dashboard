@@ -484,7 +484,7 @@ const ExtraBookingOverlay: React.FC<ExtraBookingOverlayProps> = ({
           >
             <motion.div
             ref={overlayRef}
-            className="relative w-full max-w-4xl mx-3 sm:mx-4 rounded-2xl border border-cyan-500/20 bg-gradient-to-br from-slate-900 via-slate-900 to-slate-950 p-4 sm:p-6 shadow-2xl max-h-[92vh] overflow-y-auto"
+            className="dashboard-module-panel relative w-full max-w-4xl mx-3 sm:mx-4 rounded-2xl p-4 sm:p-6 shadow-2xl max-h-[92vh] overflow-y-auto"
             initial={{ scale: 0.95, y: 30, opacity: 0 }}
             animate={{ scale: 1, y: 0, opacity: 1 }}
             exit={{ scale: 0.95, y: 30, opacity: 0 }}
@@ -741,7 +741,7 @@ const ExtraBookingOverlay: React.FC<ExtraBookingOverlayProps> = ({
                 <div className="flex flex-col gap-2">
                   <motion.button
                     onClick={handleSettle}
-                    className="w-full rounded-md bg-gradient-to-r from-emerald-500 to-cyan-500 px-6 py-2 text-sm font-medium text-white shadow-sm transition-all duration-200 hover:from-emerald-400 hover:to-cyan-400 disabled:opacity-50"
+                    className="dashboard-btn-primary w-full rounded-md px-6 py-2 text-sm font-medium disabled:opacity-50"
                     disabled={loading || !!waiveOffError || !vendorId || (paymentMode === "credit" && (!creditAccount?.is_active || availableCreditAmount < payableAmount))}
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}

@@ -740,9 +740,9 @@ const [isPrivateMode, setIsPrivateMode] = useState<boolean>(false);
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             transition={{ type: 'spring', stiffness: 200, damping: 20 }}
-            className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-r from-emerald-500 to-green-500 flex items-center justify-center shadow-lg"
+            className="w-16 h-16 mx-auto mb-4 rounded-full bg-emerald-500/15 flex items-center justify-center border border-emerald-400/30"
           >
-            <CheckCircle className="w-8 h-8 text-white" />
+            <CheckCircle className="w-8 h-8 text-emerald-600 dark:text-emerald-300" />
           </motion.div>
 
           <h2 className="text-xl font-bold text-gray-800 dark:text-white mb-2">
@@ -797,7 +797,7 @@ const [isPrivateMode, setIsPrivateMode] = useState<boolean>(false);
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={onBack}
-            className="w-full px-4 py-2 bg-gradient-to-r from-emerald-600 to-green-600 text-white rounded-lg font-medium hover:from-emerald-700 hover:to-green-700 shadow-md transition-all duration-200"
+            className="dashboard-btn-primary w-full px-4 py-2 font-medium"
           >
             Make Another Booking
           </motion.button>
@@ -824,7 +824,7 @@ const [isPrivateMode, setIsPrivateMode] = useState<boolean>(false);
             <ChevronLeft className="w-5 h-5 text-gray-600 dark:text-gray-400" />
           </motion.button>
           <div>
-            <h1 className="text-lg font-bold bg-transparent bg-gradient-to-r from-emerald-600 to-green-600 bg-clip-text text-transparent">
+            <h1 className="text-lg font-bold text-foreground">
               Book {selectedConsole.name}
             </h1>
             <p className="text-xs text-gray-500">Type: {selectedConsole.type} | ID: {selectedConsole.id}</p>
@@ -846,8 +846,8 @@ const [isPrivateMode, setIsPrivateMode] = useState<boolean>(false);
 >
   <div className={`rounded-lg p-3 border transition-all duration-300 ${
     isPrivateMode
-      ? 'bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 border-purple-300 dark:border-purple-600 shadow-md'
-      : 'bg-gray-50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700'
+      ? 'bg-purple-50/70 dark:bg-purple-900/20 border-purple-300/60 dark:border-purple-700/60'
+      : 'bg-muted/40 border-border'
   }`}>
     <div className="flex items-center justify-between">
       {/* Left Side - Icon and Text */}
@@ -859,7 +859,7 @@ const [isPrivateMode, setIsPrivateMode] = useState<boolean>(false);
           transition={{ duration: 0.3 }}
           className={`p-2 rounded-lg transition-all duration-300 ${
             isPrivateMode 
-              ? 'bg-gradient-to-br from-purple-500 to-pink-500 shadow-lg shadow-purple-500/50' 
+              ? 'bg-purple-500 text-white' 
               : 'bg-gray-300 dark:bg-gray-600'
           }`}
         >
@@ -907,7 +907,7 @@ const [isPrivateMode, setIsPrivateMode] = useState<boolean>(false);
         whileTap={{ scale: 0.95 }}
         className={`relative inline-flex h-8 w-14 items-center rounded-full transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 ${
           isPrivateMode 
-            ? 'bg-gradient-to-r from-purple-600 to-pink-600 focus:ring-purple-500' 
+            ? 'bg-purple-600 focus:ring-purple-500' 
             : 'bg-gray-300 dark:bg-gray-600 focus:ring-gray-400'
         }`}
       >
@@ -1570,7 +1570,7 @@ const [isPrivateMode, setIsPrivateMode] = useState<boolean>(false);
                       <button
                         type="button"
                         onClick={() => setIsMealSelectorOpen(true)}
-                        className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-emerald-100 to-green-100 dark:from-emerald-900/30 dark:to-green-900/30 text-emerald-700 dark:text-emerald-300 rounded-lg text-xs hover:from-emerald-200 hover:to-green-200 dark:hover:from-emerald-900/50 dark:hover:to-green-900/50 transition-all duration-200 border border-emerald-200 dark:border-emerald-700"
+                        className="dashboard-badge flex items-center gap-2 px-3 py-1.5 text-xs"
                       >
                         <Plus className="w-3 h-3" />
                         {selectedMeals.length === 0 ? 'Add Meals' : `${selectedMeals.length} Selected`}
@@ -1634,7 +1634,7 @@ const [isPrivateMode, setIsPrivateMode] = useState<boolean>(false);
             className={`w-full py-2.5 rounded-lg font-bold text-white transition-all duration-200 shadow-md ${
               isSubmitting
                 ? 'bg-gray-400 cursor-not-allowed'
-                : 'bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 hover:shadow-lg'
+                : 'dashboard-btn-primary'
             }`}
             disabled={isSubmitting}
           >
