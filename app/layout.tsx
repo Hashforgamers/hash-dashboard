@@ -9,6 +9,7 @@ import { SubscriptionProvider } from "./context/SubscriptionContext";
 import { AccessProvider } from "./context/AccessContext";
 import { DashboardDataProvider } from "./context/DashboardDataContext";
 import { DashboardDataBus } from "./context/DashboardDataBus";
+import { TableDragScroll } from "./components/TableDragScroll";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -39,6 +40,7 @@ export default function RootLayout({
             <AccessProvider>
               <DashboardDataProvider>
                 <DashboardDataBus />
+                <TableDragScroll />
                 {children}
               </DashboardDataProvider>
             </AccessProvider>

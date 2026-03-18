@@ -267,10 +267,10 @@ export function NotificationPanel({
             animate={{ y: 0, opacity: 1, scale: 1 }}
             exit={{ y: -100, opacity: 0, scale: 0.95 }}
             transition={{ type: "spring", damping: 25, stiffness: 300 }}
-            className="fixed top-16 right-4 left-4 z-50 max-h-[85vh] overflow-hidden rounded-2xl border border-cyan-500/25 bg-gradient-to-br from-slate-900/95 via-slate-900/92 to-slate-950/95 shadow-[0_18px_60px_rgba(2,6,23,0.55)] md:left-auto md:w-[26rem]"
+            className="dashboard-module-panel fixed top-16 right-4 left-4 z-50 max-h-[85vh] overflow-hidden rounded-2xl shadow-[0_18px_60px_rgba(2,6,23,0.35)] md:left-auto md:w-[26rem]"
           >
             {/* Header */}
-            <div className="flex items-center justify-between border-b border-cyan-500/20 bg-slate-900/70 p-4">
+            <div className="flex items-center justify-between border-b border-border bg-muted/30 p-4">
               <div className="flex items-center gap-2">
                 <h3 className="dash-title !text-base">Notifications</h3>
                 {notificationCount > 0 && (
@@ -290,14 +290,14 @@ export function NotificationPanel({
             </div>
 
             {/* Content */}
-            <div className="max-h-[70vh] overflow-y-auto bg-slate-900/40 p-2 sm:p-3">
+            <div className="max-h-[70vh] overflow-y-auto bg-transparent p-2 sm:p-3">
               {notifications.length === 0 ? (
-                <div className="rounded-xl border border-cyan-500/20 bg-slate-900/70 px-6 py-12 text-center">
-                  <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full border border-slate-700 bg-slate-800/70">
-                    <Bell className="h-8 w-8 text-slate-400 opacity-70" />
+                <div className="dashboard-module-card px-6 py-12 text-center">
+                  <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full border border-border bg-muted/40">
+                    <Bell className="h-8 w-8 text-muted-foreground opacity-70" />
                   </div>
-                  <h4 className="mb-2 font-medium text-slate-100">No notifications</h4>
-                  <p className="mx-auto max-w-sm text-sm leading-relaxed text-slate-400">
+                  <h4 className="mb-2 font-medium text-foreground">No notifications</h4>
+                  <p className="mx-auto max-w-sm text-sm leading-relaxed text-muted-foreground">
                     Meal additions and pay-at-cafe requests will appear here for quick action.
                   </p>
                 </div>
@@ -318,7 +318,7 @@ export function NotificationPanel({
                           animate={{ opacity: 1, y: 0 }}
                           exit={{ opacity: 0, x: 20 }}
                           transition={{ delay: index * 0.05 }}
-                          className="rounded-xl border border-cyan-400/20 bg-gradient-to-r from-slate-800/80 to-slate-800/55 p-4 transition-all duration-200 hover:border-cyan-300/40"
+                          className="dashboard-module-card rounded-xl p-4 transition-all duration-200"
                         >
                           <div className="space-y-3">
                             <div className="flex items-center justify-between">
@@ -371,7 +371,7 @@ export function NotificationPanel({
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, x: 20 }}
                         transition={{ delay: index * 0.1 }}
-                        className={`rounded-xl border border-emerald-400/20 bg-gradient-to-r from-slate-800/80 to-slate-800/55 p-4 transition-all duration-200 hover:border-emerald-300/40 ${
+                        className={`dashboard-module-card rounded-xl p-4 transition-all duration-200 ${
                           isThisBookingProcessing ? 'opacity-75' : ''
                         }`}
                       >
@@ -451,7 +451,7 @@ export function NotificationPanel({
                             <Button
                               onClick={() => handleAccept(payNotice)}
                               disabled={isThisBookingProcessing}
-                              className="h-9 flex-1 bg-gradient-to-r from-emerald-500 to-cyan-500 text-sm text-white hover:from-emerald-400 hover:to-cyan-400"
+                              className="h-9 flex-1 dashboard-btn-primary text-sm"
                             >
                               {isAcceptProcessing ? (
                                 <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />

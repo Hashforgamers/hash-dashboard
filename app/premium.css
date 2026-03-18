@@ -5,213 +5,199 @@
   --brand-accent-strong: 171 97% 32%;
   --brand-focus: 197 94% 44%;
   --brand-highlight: 84 93% 49%;
+  --surface-0: 210 38% 97%;
+  --surface-1: 0 0% 100%;
+  --surface-2: 210 32% 94%;
+  --surface-strong: 214 24% 18%;
+  --surface-border: 210 20% 82%;
+  --surface-muted: 214 12% 52%;
+  --text-strong: 222 36% 14%;
+  --text-muted: 217 14% 46%;
   --font-ui: var(--font-inter), "Segoe UI", "Inter", sans-serif;
   --font-display: var(--font-inter), "Segoe UI", "Inter", sans-serif;
-  --premium-shell-bg:
-    radial-gradient(78rem 38rem at 100% -10%, hsl(var(--brand-focus) / 0.08), transparent 58%),
-    radial-gradient(58rem 28rem at -8% 108%, hsl(var(--brand-accent) / 0.08), transparent 62%),
-    linear-gradient(145deg, hsl(201 38% 96%), hsl(215 32% 93%) 52%, hsl(208 28% 90%));
-  --premium-grid-line: hsl(213 30% 45% / 0.08);
-  --premium-card-border: hsl(210 24% 72% / 0.65);
-  --premium-card-bg: linear-gradient(
-    145deg,
-    hsl(0 0% 100% / 0.92),
-    hsl(210 38% 98% / 0.92) 58%,
-    hsl(205 32% 95% / 0.94)
-  );
-  --premium-card-shadow:
-    0 18px 40px hsl(216 33% 70% / 0.18),
-    inset 0 1px 0 hsl(0 0% 100% / 0.75),
-    0 0 0 1px hsl(var(--brand-focus) / 0.06);
-  --premium-subtle-text: hsl(217 20% 38%);
-  --premium-title-text: hsl(221 39% 14%);
-  --premium-kpi-text: hsl(222 47% 11%);
-  --premium-pill-border: hsl(213 24% 72%);
-  --premium-pill-bg: hsl(0 0% 100% / 0.78);
-  --premium-pill-text: hsl(220 27% 24%);
-  --gaming-panel-border: hsl(210 24% 74% / 0.72);
-  --gaming-panel-bg:
-    linear-gradient(180deg, hsl(0 0% 100% / 0.82), hsl(210 32% 97% / 0.92)),
-    linear-gradient(120deg, hsl(var(--brand-accent) / 0.05), transparent 45%);
-  --gaming-panel-shadow:
-    0 16px 34px hsl(215 30% 68% / 0.15),
-    inset 0 1px 0 hsl(0 0% 100% / 0.72);
-  --gaming-kpi-border: hsl(210 24% 74% / 0.78);
-  --gaming-kpi-bg: linear-gradient(165deg, hsl(0 0% 100% / 0.94), hsl(210 38% 97% / 0.94));
-  --gaming-kpi-shadow: 0 12px 26px hsl(216 29% 72% / 0.16);
-  --nav-shell-bg: hsl(0 0% 100% / 0.76);
-  --nav-shell-border: hsl(211 27% 80% / 0.72);
-  --nav-panel-bg: hsl(0 0% 100% / 0.64);
-  --nav-panel-border: hsl(211 25% 78% / 0.7);
-  --nav-divider: hsl(211 24% 76% / 0.68);
-  --nav-hover-bg: hsl(210 55% 96% / 0.9);
-  --nav-hover-border: hsl(200 65% 68% / 0.5);
-  --nav-active-bg: linear-gradient(135deg, hsl(var(--brand-highlight) / 0.16), hsl(var(--brand-accent) / 0.18), hsl(var(--brand-focus) / 0.14));
-  --nav-active-border: hsl(var(--brand-accent) / 0.52);
-  --nav-active-shadow: 0 0 0 1px hsl(var(--brand-accent) / 0.16) inset, 0 10px 24px hsl(200 58% 72% / 0.18);
-  --nav-icon-active: hsl(166 100% 28%);
-  --nav-text: hsl(0 0% 0%);
-  --nav-subtle-text: hsl(0 0% 0%);
-  --nav-role-text: hsl(160 75% 34%);
+  --premium-shell-bg: hsl(var(--surface-0));
+  --premium-grid-line: transparent;
+  --premium-card-border: hsl(var(--surface-border) / 0.9);
+  --premium-card-bg: hsl(var(--surface-1));
+  --premium-card-shadow: 0 12px 28px hsl(220 20% 20% / 0.08);
+  --premium-subtle-text: hsl(var(--text-muted));
+  --premium-title-text: hsl(var(--text-strong));
+  --premium-kpi-text: hsl(var(--text-strong));
+  --premium-pill-border: hsl(var(--surface-border) / 0.85);
+  --premium-pill-bg: hsl(var(--surface-1));
+  --premium-pill-text: hsl(var(--text-strong));
+  --gaming-panel-border: hsl(var(--surface-border) / 0.85);
+  --gaming-panel-bg: hsl(var(--surface-1));
+  --gaming-panel-shadow: 0 12px 26px hsl(220 20% 20% / 0.08);
+  --gaming-kpi-border: hsl(var(--surface-border) / 0.85);
+  --gaming-kpi-bg: hsl(var(--surface-1));
+  --gaming-kpi-shadow: 0 10px 22px hsl(220 18% 18% / 0.08);
+  --nav-shell-bg: hsl(var(--surface-1));
+  --nav-shell-border: hsl(var(--surface-border) / 0.85);
+  --nav-panel-bg: hsl(var(--surface-1));
+  --nav-panel-border: hsl(var(--surface-border) / 0.8);
+  --nav-divider: hsl(var(--surface-border) / 0.75);
+  --nav-hover-bg: hsl(var(--surface-2));
+  --nav-hover-border: hsl(var(--surface-border) / 0.9);
+  --nav-active-bg: hsl(var(--brand-accent) / 0.14);
+  --nav-active-border: hsl(var(--brand-accent) / 0.45);
+  --nav-active-shadow: 0 0 0 1px hsl(var(--brand-accent) / 0.2) inset;
+  --nav-icon-active: hsl(var(--brand-accent-strong));
+  --nav-text: hsl(var(--text-strong));
+  --nav-subtle-text: hsl(var(--text-muted));
+  --nav-role-text: hsl(var(--brand-accent-strong));
   --nav-danger-text: hsl(0 70% 47%);
   --nav-danger-hover: hsl(0 74% 42%);
-  --dash-module-panel-bg: linear-gradient(145deg, hsl(0 0% 100% / 0.94), hsl(210 42% 97% / 0.94) 58%, hsl(205 34% 93% / 0.96));
-  --dash-module-panel-border: hsl(210 24% 76% / 0.78);
-  --dash-module-panel-shadow: 0 20px 42px hsl(214 36% 72% / 0.18), inset 0 1px 0 hsl(0 0% 100% / 0.82);
-  --dash-module-surface-bg: hsl(0 0% 100% / 0.72);
-  --dash-module-surface-strong: hsl(214 34% 18%);
-  --dash-module-surface-border: hsl(210 22% 78% / 0.82);
-  --dash-module-line: hsl(211 22% 82% / 0.78);
-  --dash-module-hover: hsl(210 60% 96% / 0.92);
-  --dash-module-input-bg: hsl(0 0% 100% / 0.88);
-  --dash-module-input-border: hsl(210 22% 74% / 0.82);
-  --dash-module-input-text: hsl(222 47% 11%);
-  --dash-module-input-placeholder: hsl(217 14% 46%);
-  --dash-module-muted: hsl(219 15% 38%);
-  --dash-module-empty: hsl(217 13% 54%);
-  --dash-module-card-bg: linear-gradient(135deg, hsl(0 0% 100% / 0.88), hsl(210 36% 96% / 0.92));
-  --dash-module-card-border: hsl(210 24% 76% / 0.78);
-  --booking-text-strong: hsl(0 0% 0%);
-  --booking-text-muted: hsl(0 0% 4%);
-  --booking-text-subtle: hsl(0 0% 18%);
-  --booking-link: hsl(0 0% 0%);
-  --booking-link-hover: hsl(0 0% 0%);
+  --dash-module-panel-bg: hsl(var(--surface-1));
+  --dash-module-panel-border: hsl(var(--surface-border) / 0.88);
+  --dash-module-panel-shadow: 0 16px 36px hsl(220 20% 20% / 0.08);
+  --dash-module-surface-bg: hsl(var(--surface-1));
+  --dash-module-surface-strong: hsl(var(--surface-2));
+  --dash-module-surface-border: hsl(var(--surface-border) / 0.85);
+  --dash-module-line: hsl(var(--surface-border) / 0.8);
+  --dash-module-hover: hsl(var(--surface-2));
+  --dash-module-input-bg: hsl(var(--surface-1));
+  --dash-module-input-border: hsl(var(--surface-border) / 0.9);
+  --dash-module-input-text: hsl(var(--text-strong));
+  --dash-module-input-placeholder: hsl(var(--text-muted));
+  --dash-module-muted: hsl(var(--text-muted));
+  --dash-module-empty: hsl(var(--text-muted));
+  --dash-module-card-bg: hsl(var(--surface-1));
+  --dash-module-card-border: hsl(var(--surface-border) / 0.85);
+  --booking-text-strong: hsl(var(--text-strong));
+  --booking-text-muted: hsl(var(--text-muted));
+  --booking-text-subtle: hsl(var(--text-muted));
+  --booking-link: hsl(var(--brand-accent-strong));
+  --booking-link-hover: hsl(var(--brand-accent));
   --action-primary-bg: hsl(173 80% 42%);
   --action-primary-hover: hsl(173 82% 36%);
   --action-primary-disabled: hsl(215 16% 68%);
   --action-primary-text: hsl(0 0% 100%);
-  --toolbar-menu-bg: hsl(0 0% 100% / 0.88);
-  --toolbar-menu-hover: hsl(210 55% 96% / 0.96);
-  --toolbar-menu-border: hsl(210 22% 74% / 0.82);
-  --toolbar-menu-text: hsl(221 39% 14%);
-  --slot-modal-bg: linear-gradient(165deg, hsl(0 0% 100% / 0.98), hsl(210 38% 97% / 0.96));
-  --slot-modal-border: hsl(210 24% 72% / 0.7);
-  --slot-modal-text: hsl(0 0% 0%);
-  --slot-modal-muted: hsl(0 0% 8%);
-  --slot-modal-placeholder: hsl(0 0% 28%);
-  --slot-modal-card-bg: linear-gradient(160deg, hsl(0 0% 100% / 0.94), hsl(210 32% 97% / 0.94));
-  --slot-modal-card-border: hsl(210 22% 78% / 0.78);
-  --slot-modal-input-bg: hsl(0 0% 100% / 0.94);
-  --slot-modal-input-border: hsl(210 22% 74% / 0.84);
-  --slot-modal-close-bg: hsl(210 42% 96%);
-  --slot-modal-close-hover: hsl(210 44% 92%);
-  --slot-modal-close-text: hsl(221 39% 14%);
-  --slot-modal-footer-bg: hsl(210 38% 96% / 0.96);
-  --slot-modal-footer-border: hsl(210 24% 78% / 0.84);
-  --slot-modal-secondary-bg: hsl(220 20% 24%);
-  --slot-modal-secondary-hover: hsl(220 20% 18%);
-  --slot-modal-secondary-border: hsl(216 16% 36%);
+  --toolbar-menu-bg: hsl(var(--surface-1) / 0.96);
+  --toolbar-menu-hover: hsl(var(--surface-2));
+  --toolbar-menu-border: hsl(var(--surface-border) / 0.85);
+  --toolbar-menu-text: hsl(var(--text-strong));
+  --slot-modal-bg: hsl(var(--surface-1));
+  --slot-modal-border: hsl(var(--surface-border) / 0.9);
+  --slot-modal-text: hsl(var(--text-strong));
+  --slot-modal-muted: hsl(var(--text-muted));
+  --slot-modal-placeholder: hsl(var(--text-muted));
+  --slot-modal-card-bg: hsl(var(--surface-1));
+  --slot-modal-card-border: hsl(var(--surface-border) / 0.85);
+  --slot-modal-input-bg: hsl(var(--surface-1));
+  --slot-modal-input-border: hsl(var(--surface-border) / 0.9);
+  --slot-modal-close-bg: hsl(var(--surface-2));
+  --slot-modal-close-hover: hsl(var(--surface-border) / 0.18);
+  --slot-modal-close-text: hsl(var(--text-strong));
+  --slot-modal-footer-bg: hsl(var(--surface-2));
+  --slot-modal-footer-border: hsl(var(--surface-border) / 0.85);
+  --slot-modal-secondary-bg: hsl(var(--surface-strong));
+  --slot-modal-secondary-hover: hsl(var(--surface-strong) / 0.92);
+  --slot-modal-secondary-border: hsl(var(--surface-border) / 0.7);
   --slot-modal-secondary-text: hsl(0 0% 100%);
   --slot-modal-accent-bg: hsl(var(--brand-focus) / 0.1);
   --slot-modal-accent-hover: hsl(var(--brand-focus) / 0.16);
   --slot-modal-accent-border: hsl(var(--brand-focus) / 0.28);
-  --slot-modal-accent-text: hsl(198 88% 30%);
-  --slot-modal-soft-bg: hsl(210 36% 96%);
-  --slot-modal-soft-border: hsl(210 24% 80% / 0.84);
+  --slot-modal-accent-text: hsl(var(--brand-focus));
+  --slot-modal-soft-bg: hsl(var(--surface-2));
+  --slot-modal-soft-border: hsl(var(--surface-border) / 0.85);
 }
 
 .dark {
-  --premium-shell-bg:
-    radial-gradient(70rem 30rem at 88% -5%, hsl(var(--brand-focus) / 0.12), transparent 65%),
-    radial-gradient(58rem 24rem at 0% 100%, hsl(var(--brand-accent) / 0.14), transparent 66%),
-    linear-gradient(145deg, hsl(224 43% 8%), hsl(223 33% 11%) 52%, hsl(220 28% 9%));
-  --premium-grid-line: hsl(0 0% 100% / 0.06);
-  --premium-card-border: hsl(216 21% 28% / 0.65);
-  --premium-card-bg: linear-gradient(
-    145deg,
-    hsl(220 26% 18% / 0.72),
-    hsl(220 34% 12% / 0.65) 62%,
-    hsl(220 36% 11% / 0.76)
-  );
-  --premium-card-shadow:
-    0 28px 70px hsl(222 77% 3% / 0.32),
-    inset 0 1px 0 hsl(0 0% 100% / 0.06),
-    0 0 0 1px hsl(var(--brand-focus) / 0.08);
-  --premium-subtle-text: hsl(212 21% 74%);
-  --premium-title-text: hsl(210 40% 96%);
-  --premium-kpi-text: hsl(210 40% 98%);
-  --premium-pill-border: hsl(216 20% 26%);
-  --premium-pill-bg: hsl(218 26% 15% / 0.75);
-  --premium-pill-text: hsl(210 37% 96%);
-  --gaming-panel-border: hsl(216 21% 28% / 0.72);
-  --gaming-panel-bg:
-    linear-gradient(180deg, hsl(220 33% 13% / 0.88), hsl(220 32% 11% / 0.9)),
-    linear-gradient(120deg, hsl(var(--brand-accent) / 0.08), transparent 45%);
-  --gaming-panel-shadow:
-    0 14px 40px hsl(220 74% 4% / 0.35),
-    inset 0 1px 0 hsl(0 0% 100% / 0.05);
-  --gaming-kpi-border: hsl(216 20% 28% / 0.75);
-  --gaming-kpi-bg: linear-gradient(165deg, hsl(220 29% 16% / 0.92), hsl(220 30% 12% / 0.94));
-  --gaming-kpi-shadow: 0 12px 34px hsl(220 72% 5% / 0.28);
-  --nav-shell-bg: hsl(220 30% 12% / 0.82);
-  --nav-shell-border: hsl(216 21% 28% / 0.72);
-  --nav-panel-bg: hsl(220 26% 16% / 0.62);
-  --nav-panel-border: hsl(216 21% 28% / 0.68);
-  --nav-divider: hsl(216 21% 28% / 0.7);
-  --nav-hover-bg: hsl(220 22% 20% / 0.82);
-  --nav-hover-border: hsl(216 22% 36% / 0.68);
-  --nav-active-bg: linear-gradient(100deg, hsl(var(--brand-highlight) / 0.15), hsl(var(--brand-accent) / 0.15));
-  --nav-active-border: hsl(var(--brand-highlight) / 0.45);
-  --nav-active-shadow: 0 0 0 1px hsl(var(--brand-accent) / 0.24) inset, 0 0 16px hsl(var(--brand-accent) / 0.12);
-  --nav-icon-active: hsl(145 75% 58%);
-  --nav-text: hsl(0 0% 100%);
-  --nav-subtle-text: hsl(0 0% 100%);
-  --nav-role-text: hsl(149 68% 58%);
+  --surface-0: 222 26% 10%;
+  --surface-1: 222 24% 13%;
+  --surface-2: 222 22% 17%;
+  --surface-strong: 220 20% 22%;
+  --surface-border: 216 20% 28%;
+  --surface-muted: 214 14% 62%;
+  --text-strong: 210 40% 98%;
+  --text-muted: 214 18% 70%;
+  --premium-shell-bg: hsl(var(--surface-0));
+  --premium-grid-line: transparent;
+  --premium-card-border: hsl(var(--surface-border) / 0.8);
+  --premium-card-bg: hsl(var(--surface-1));
+  --premium-card-shadow: 0 18px 40px hsl(220 40% 6% / 0.25);
+  --premium-subtle-text: hsl(var(--text-muted));
+  --premium-title-text: hsl(var(--text-strong));
+  --premium-kpi-text: hsl(var(--text-strong));
+  --premium-pill-border: hsl(var(--surface-border) / 0.8);
+  --premium-pill-bg: hsl(var(--surface-1));
+  --premium-pill-text: hsl(var(--text-strong));
+  --gaming-panel-border: hsl(var(--surface-border) / 0.8);
+  --gaming-panel-bg: hsl(var(--surface-1));
+  --gaming-panel-shadow: 0 18px 40px hsl(220 40% 6% / 0.22);
+  --gaming-kpi-border: hsl(var(--surface-border) / 0.8);
+  --gaming-kpi-bg: hsl(var(--surface-1));
+  --gaming-kpi-shadow: 0 12px 28px hsl(220 40% 6% / 0.22);
+  --nav-shell-bg: hsl(var(--surface-1));
+  --nav-shell-border: hsl(var(--surface-border) / 0.85);
+  --nav-panel-bg: hsl(var(--surface-2));
+  --nav-panel-border: hsl(var(--surface-border) / 0.8);
+  --nav-divider: hsl(var(--surface-border) / 0.8);
+  --nav-hover-bg: hsl(var(--surface-2));
+  --nav-hover-border: hsl(var(--surface-border) / 0.85);
+  --nav-active-bg: hsl(var(--brand-accent) / 0.2);
+  --nav-active-border: hsl(var(--brand-accent) / 0.5);
+  --nav-active-shadow: 0 0 0 1px hsl(var(--brand-accent) / 0.26) inset;
+  --nav-icon-active: hsl(var(--brand-accent));
+  --nav-text: hsl(var(--text-strong));
+  --nav-subtle-text: hsl(var(--text-muted));
+  --nav-role-text: hsl(var(--brand-accent));
   --nav-danger-text: hsl(0 92% 74%);
   --nav-danger-hover: hsl(0 96% 81%);
-  --dash-module-panel-bg: linear-gradient(145deg, hsl(220 30% 14% / 0.9), hsl(220 26% 18% / 0.82) 58%, hsl(220 24% 22% / 0.88));
-  --dash-module-panel-border: hsl(216 21% 28% / 0.74);
-  --dash-module-panel-shadow: 0 18px 40px hsl(220 74% 4% / 0.3), inset 0 1px 0 hsl(0 0% 100% / 0.05);
-  --dash-module-surface-bg: hsl(220 31% 14% / 0.62);
-  --dash-module-surface-strong: hsl(220 31% 12% / 0.95);
-  --dash-module-surface-border: hsl(216 21% 28% / 0.74);
-  --dash-module-line: hsl(216 21% 28% / 0.72);
-  --dash-module-hover: hsl(220 22% 20% / 0.82);
-  --dash-module-input-bg: hsl(220 24% 16% / 0.82);
-  --dash-module-input-border: hsl(216 20% 38% / 0.8);
-  --dash-module-input-text: hsl(210 40% 96%);
-  --dash-module-input-placeholder: hsl(214 18% 63%);
-  --dash-module-muted: hsl(214 16% 72%);
-  --dash-module-empty: hsl(214 14% 62%);
-  --dash-module-card-bg: linear-gradient(135deg, hsl(220 28% 18% / 0.82), hsl(220 24% 22% / 0.68));
-  --dash-module-card-border: hsl(216 21% 28% / 0.72);
-  --booking-text-strong: hsl(210 40% 96%);
-  --booking-text-muted: hsl(213 24% 84%);
-  --booking-text-subtle: hsl(214 16% 72%);
-  --booking-link: hsl(149 68% 58%);
-  --booking-link-hover: hsl(149 72% 68%);
+  --dash-module-panel-bg: hsl(var(--surface-1));
+  --dash-module-panel-border: hsl(var(--surface-border) / 0.8);
+  --dash-module-panel-shadow: 0 18px 40px hsl(220 40% 6% / 0.22);
+  --dash-module-surface-bg: hsl(var(--surface-1));
+  --dash-module-surface-strong: hsl(var(--surface-2));
+  --dash-module-surface-border: hsl(var(--surface-border) / 0.8);
+  --dash-module-line: hsl(var(--surface-border) / 0.8);
+  --dash-module-hover: hsl(var(--surface-2));
+  --dash-module-input-bg: hsl(var(--surface-1));
+  --dash-module-input-border: hsl(var(--surface-border) / 0.85);
+  --dash-module-input-text: hsl(var(--text-strong));
+  --dash-module-input-placeholder: hsl(var(--text-muted));
+  --dash-module-muted: hsl(var(--text-muted));
+  --dash-module-empty: hsl(var(--text-muted));
+  --dash-module-card-bg: hsl(var(--surface-1));
+  --dash-module-card-border: hsl(var(--surface-border) / 0.8);
+  --booking-text-strong: hsl(var(--text-strong));
+  --booking-text-muted: hsl(var(--text-muted));
+  --booking-text-subtle: hsl(var(--text-muted));
+  --booking-link: hsl(var(--brand-accent));
+  --booking-link-hover: hsl(var(--brand-accent-strong));
   --action-primary-bg: hsl(173 72% 40%);
   --action-primary-hover: hsl(173 76% 46%);
   --action-primary-disabled: hsl(218 14% 34%);
   --action-primary-text: hsl(0 0% 100%);
-  --toolbar-menu-bg: hsl(220 24% 24% / 0.94);
-  --toolbar-menu-hover: hsl(220 22% 28% / 0.98);
-  --toolbar-menu-border: hsl(216 20% 38% / 0.8);
-  --toolbar-menu-text: hsl(210 40% 96%);
-  --slot-modal-bg: linear-gradient(165deg, hsl(220 31% 13% / 0.96), hsl(220 30% 10% / 0.96));
-  --slot-modal-border: hsl(216 21% 30% / 0.75);
-  --slot-modal-text: hsl(210 40% 96%);
-  --slot-modal-muted: hsl(214 18% 74%);
-  --slot-modal-placeholder: hsl(214 18% 63%);
-  --slot-modal-card-bg: linear-gradient(160deg, hsl(220 28% 16% / 0.95), hsl(220 30% 12% / 0.95));
-  --slot-modal-card-border: hsl(216 20% 31% / 0.72);
-  --slot-modal-input-bg: hsl(220 24% 16% / 0.8);
-  --slot-modal-input-border: hsl(216 20% 38% / 0.8);
-  --slot-modal-close-bg: hsl(220 24% 24% / 0.9);
-  --slot-modal-close-hover: hsl(220 22% 28% / 0.98);
-  --slot-modal-close-text: hsl(210 40% 96%);
-  --slot-modal-footer-bg: hsl(220 33% 12% / 0.95);
-  --slot-modal-footer-border: hsl(216 21% 30% / 0.8);
-  --slot-modal-secondary-bg: hsl(220 24% 24% / 0.82);
-  --slot-modal-secondary-hover: hsl(220 22% 28% / 0.92);
-  --slot-modal-secondary-border: hsl(216 20% 38% / 0.8);
-  --slot-modal-secondary-text: hsl(210 40% 96%);
+  --toolbar-menu-bg: hsl(var(--surface-2) / 0.95);
+  --toolbar-menu-hover: hsl(var(--surface-2));
+  --toolbar-menu-border: hsl(var(--surface-border) / 0.8);
+  --toolbar-menu-text: hsl(var(--text-strong));
+  --slot-modal-bg: hsl(var(--surface-1));
+  --slot-modal-border: hsl(var(--surface-border) / 0.85);
+  --slot-modal-text: hsl(var(--text-strong));
+  --slot-modal-muted: hsl(var(--text-muted));
+  --slot-modal-placeholder: hsl(var(--text-muted));
+  --slot-modal-card-bg: hsl(var(--surface-1));
+  --slot-modal-card-border: hsl(var(--surface-border) / 0.85);
+  --slot-modal-input-bg: hsl(var(--surface-1));
+  --slot-modal-input-border: hsl(var(--surface-border) / 0.85);
+  --slot-modal-close-bg: hsl(var(--surface-2));
+  --slot-modal-close-hover: hsl(var(--surface-border) / 0.2);
+  --slot-modal-close-text: hsl(var(--text-strong));
+  --slot-modal-footer-bg: hsl(var(--surface-2));
+  --slot-modal-footer-border: hsl(var(--surface-border) / 0.85);
+  --slot-modal-secondary-bg: hsl(var(--surface-strong));
+  --slot-modal-secondary-hover: hsl(var(--surface-strong) / 0.9);
+  --slot-modal-secondary-border: hsl(var(--surface-border) / 0.8);
+  --slot-modal-secondary-text: hsl(var(--text-strong));
   --slot-modal-accent-bg: hsl(var(--brand-focus) / 0.12);
   --slot-modal-accent-hover: hsl(var(--brand-focus) / 0.18);
   --slot-modal-accent-border: hsl(var(--brand-focus) / 0.34);
-  --slot-modal-accent-text: hsl(190 88% 82%);
-  --slot-modal-soft-bg: hsl(220 24% 18% / 0.9);
-  --slot-modal-soft-border: hsl(216 20% 31% / 0.72);
+  --slot-modal-accent-text: hsl(var(--brand-focus));
+  --slot-modal-soft-bg: hsl(var(--surface-2));
+  --slot-modal-soft-border: hsl(var(--surface-border) / 0.8);
 }
 
 html,
@@ -277,10 +263,8 @@ h6 {
   inset: 0;
   z-index: -1;
   pointer-events: none;
-  opacity: 0.18;
-  background-image: linear-gradient(var(--premium-grid-line) 1px, transparent 1px),
-    linear-gradient(90deg, var(--premium-grid-line) 1px, transparent 1px);
-  background-size: 46px 46px;
+  opacity: 0;
+  background-image: none;
 }
 
 .premium-card {
@@ -295,10 +279,7 @@ h6 {
 }
 
 .premium-accent-text {
-  background: linear-gradient(90deg, hsl(var(--brand-highlight)), hsl(var(--brand-accent)), hsl(var(--brand-focus)));
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+  color: hsl(var(--brand-accent-strong));
 }
 
 .premium-pill {
@@ -308,15 +289,15 @@ h6 {
 }
 
 .premium-pill:hover {
-  border-color: hsl(var(--brand-focus) / 0.55);
-  background: hsl(217 30% 19% / 0.92);
+  border-color: hsl(var(--brand-focus) / 0.4);
+  background: hsl(var(--surface-2));
 }
 
 .premium-pill-active {
-  border-color: hsl(var(--brand-accent) / 0.95);
-  background: linear-gradient(135deg, hsl(var(--brand-highlight) / 0.2), hsl(var(--brand-accent) / 0.24), hsl(var(--brand-focus) / 0.18));
-  color: hsl(0 0% 100%);
-  box-shadow: 0 0 0 1px hsl(var(--brand-accent) / 0.32) inset, 0 0 18px hsl(var(--brand-accent) / 0.18);
+  border-color: hsl(var(--brand-accent) / 0.55);
+  background: hsl(var(--brand-accent) / 0.16);
+  color: hsl(var(--brand-accent-strong));
+  box-shadow: 0 0 0 1px hsl(var(--brand-accent) / 0.2) inset;
 }
 
 .gaming-panel {
@@ -360,6 +341,77 @@ h6 {
   --dash-lh-snug: 1.3;
   --dash-lh-base: 1.45;
   font-family: var(--font-ui);
+}
+
+.dashboard-typography h1 {
+  font-size: var(--dash-fs-3xl);
+  line-height: var(--dash-lh-tight);
+}
+
+.dashboard-typography h2 {
+  font-size: var(--dash-fs-2xl);
+  line-height: var(--dash-lh-tight);
+}
+
+.dashboard-typography h3 {
+  font-size: var(--dash-fs-xl);
+  line-height: var(--dash-lh-snug);
+}
+
+.dashboard-typography h4,
+.dashboard-typography h5,
+.dashboard-typography h6 {
+  font-size: var(--dash-fs-lg);
+  line-height: var(--dash-lh-snug);
+}
+
+.dashboard-typography p,
+.dashboard-typography span,
+.dashboard-typography label {
+  font-size: var(--dash-fs-base);
+  line-height: var(--dash-lh-base);
+}
+
+.heading-1 {
+  font-size: var(--dash-fs-3xl);
+  line-height: var(--dash-lh-tight);
+  font-weight: 700;
+}
+
+.heading-2 {
+  font-size: var(--dash-fs-2xl);
+  line-height: var(--dash-lh-tight);
+  font-weight: 700;
+}
+
+.heading-3 {
+  font-size: var(--dash-fs-xl);
+  line-height: var(--dash-lh-snug);
+  font-weight: 600;
+}
+
+.body-sm {
+  font-size: var(--dash-fs-sm);
+  line-height: var(--dash-lh-base);
+}
+
+.body-xs {
+  font-size: var(--dash-fs-xs);
+  line-height: var(--dash-lh-base);
+}
+
+.label-xs {
+  font-size: var(--dash-fs-2xs);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.label-sm {
+  font-size: var(--dash-fs-xs);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 .dashboard-typography :is(h1, h2, h3, h4, h5, h6, p, span, label, a, button, input, select, textarea, th, td, li, dt, dd) {
@@ -467,6 +519,82 @@ h6 {
   flex-wrap: wrap;
   align-items: center;
   gap: 0.5rem;
+}
+
+.dashboard-toolbar-title {
+  font-size: var(--dash-fs-xl);
+  font-weight: 700;
+  color: var(--premium-title-text);
+}
+
+.dashboard-toolbar-subtitle {
+  font-size: var(--dash-fs-sm);
+  color: var(--dash-module-muted);
+}
+
+.dashboard-btn-primary {
+  border: 1px solid hsl(var(--brand-accent) / 0.6);
+  background: hsl(var(--brand-accent));
+  color: hsl(0 0% 100%);
+  font-weight: 600;
+  border-radius: 0.75rem;
+  padding: 0.55rem 1rem;
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+}
+
+.dashboard-btn-primary:hover {
+  background: hsl(var(--brand-accent-strong));
+  border-color: hsl(var(--brand-accent-strong));
+}
+
+.dashboard-btn-secondary {
+  border: 1px solid var(--dash-module-input-border);
+  background: var(--dash-module-surface-bg);
+  color: var(--premium-title-text);
+  font-weight: 600;
+  border-radius: 0.75rem;
+  padding: 0.55rem 1rem;
+}
+
+.dashboard-badge {
+  border: 1px solid var(--dash-module-input-border);
+  background: var(--dash-module-surface-bg);
+  color: var(--premium-title-text);
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 0.2rem 0.5rem;
+  border-radius: 999px;
+}
+
+.dashboard-badge[data-variant="success"] {
+  border-color: hsl(var(--brand-accent) / 0.4);
+  color: hsl(var(--brand-accent-strong));
+}
+
+.dashboard-badge[data-variant="warning"] {
+  border-color: hsl(38 92% 60% / 0.4);
+  color: hsl(38 82% 40%);
+}
+
+.dashboard-badge[data-variant="danger"] {
+  border-color: hsl(0 72% 54% / 0.4);
+  color: hsl(0 72% 54%);
+}
+
+.premium-shell [class*="bg-gradient-to-"],
+.premium-shell [class*="bg-[linear-gradient"],
+.premium-shell [class*="bg-[radial-gradient"],
+.premium-shell [class*="bg-[conic-gradient"] {
+  background-image: none !important;
+  background-color: var(--dash-module-surface-bg) !important;
+}
+
+.premium-shell .bg-clip-text.text-transparent {
+  color: var(--premium-title-text) !important;
+  -webkit-text-fill-color: currentColor;
+  background-image: none !important;
 }
 
 .dashboard-card {

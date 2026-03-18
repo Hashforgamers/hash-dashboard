@@ -83,12 +83,12 @@ export function BookingTable() {
           placeholder="Filter by System, User, or Status"
           value={filter}
           onChange={(e) => setFilter(e.target.value)}
-          className="border p-2 w-full rounded-md"
+          className="dashboard-module-input w-full rounded-md"
         />
       </div>
 
       <div className="border rounded-md">
-      <div className="max-h-[200px] overflow-y-auto">
+      <div className="dashboard-table-wrap max-h-[200px] overflow-y-auto">
         <Table>
           <TableHeader>
               <TableRow>

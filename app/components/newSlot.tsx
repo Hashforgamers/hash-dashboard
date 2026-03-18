@@ -1494,9 +1494,9 @@ if (response.ok || result.success === true || result.success === 'true') {
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             transition={{ type: 'spring', stiffness: 200, damping: 20 }}
-            className="w-16 h-16 mx-auto mb-6 rounded-full bg-gradient-to-r from-emerald-500 to-green-500 flex items-center justify-center shadow-lg"
+            className="w-16 h-16 mx-auto mb-6 rounded-full bg-emerald-500/15 flex items-center justify-center border border-emerald-400/30"
           >
-            <CheckCircle className="w-8 h-8 text-white" />
+            <CheckCircle className="w-8 h-8 text-emerald-600 dark:text-emerald-300" />
           </motion.div>
 
           <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-3">
@@ -2748,7 +2748,7 @@ function ScheduleGrid({
                   key={`continuation-${day.fullDate}-${gameConsole.id}-${time}`}
                   onClick={() => handleSlotClick(day, time, gameConsole)}
                   className={cn(
-                    "group relative h-full w-full cursor-pointer overflow-hidden rounded-md border border-amber-400/20 bg-gradient-to-r from-amber-300/8 to-amber-300/4 transition-colors hover:from-amber-300/14 hover:to-amber-300/10",
+                    "group relative h-full w-full cursor-pointer overflow-hidden rounded-md border border-amber-400/20 bg-amber-200/10 transition-colors hover:bg-amber-200/20",
                     compact ? "min-h-[32px]" : "min-h-[40px]"
                   )}
                   title={`${gameConsole.name} slot continues (${coveringSlot.start_time?.slice(0, 5)}-${coveringSlot.end_time?.slice(0, 5)})`}

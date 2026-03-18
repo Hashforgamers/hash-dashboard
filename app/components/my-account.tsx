@@ -1391,7 +1391,7 @@ const ToggleSwitch = ({
       <div className="flex flex-col items-center gap-3 text-center">
         {/* Editable Profile Image */}
         <div className="group relative transition-transform duration-300 ease-in-out hover:scale-105">
-          <div className="h-24 w-24 rounded-full bg-gradient-to-r from-emerald-500 via-cyan-500 to-blue-500 p-[4px] md:h-28 md:w-28">
+          <div className="h-24 w-24 rounded-full bg-emerald-500/20 p-[4px] md:h-28 md:w-28">
             <div className="h-full w-full rounded-full bg-background flex items-center justify-center overflow-hidden">
               <img
                 src={profileImage || "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?q=80&w=2070&auto=format&fit=crop"}
@@ -1585,7 +1585,7 @@ const ToggleSwitch = ({
                 </Button>
                 
                 {/* Image Info Overlay */}
-                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-2">
+                <div className="absolute bottom-0 left-0 right-0 bg-black/60 p-2">
                   <p className="text-white text-xs font-medium">Image {index + 1}</p>
                 </div>
               </div>
@@ -2709,8 +2709,8 @@ const ToggleSwitch = ({
                       <div className={cn(
                         "flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 rounded-xl border transition-all duration-200 hover:shadow-md gap-3",
                         method.is_enabled 
-                          ? "border-primary/50 bg-gradient-to-r from-primary/5 to-primary/10" 
-                          : "border-border bg-gradient-to-r from-transparent to-muted/20 hover:border-primary/30"
+                          ? "border-primary/50 bg-primary/5" 
+                          : "border-border bg-muted/20 hover:border-primary/30"
                       )}>
                         {/* Method Info */}
                         <div className="flex items-start sm:items-center space-x-4 flex-1 min-w-0 w-full sm:w-auto">
@@ -2719,8 +2719,8 @@ const ToggleSwitch = ({
                               <div className={cn(
                                 "w-12 h-12 rounded-xl flex items-center justify-center border transition-colors",
                                 method.is_enabled 
-                                  ? "bg-gradient-to-br from-blue-500/30 to-blue-600/30 border-blue-500/50" 
-                                  : "bg-gradient-to-br from-blue-500/10 to-blue-600/10 border-blue-500/20"
+                                  ? "bg-blue-500/30 border-blue-500/50" 
+                                  : "bg-blue-500/10 border-blue-500/20"
                               )}>
                                 <Coffee className={cn(
                                   "icon-lg transition-colors",
@@ -2731,8 +2731,8 @@ const ToggleSwitch = ({
                               <div className={cn(
                                 "w-12 h-12 rounded-xl flex items-center justify-center border transition-colors",
                                 method.is_enabled 
-                                  ? "bg-gradient-to-br from-purple-500/30 to-purple-600/30 border-purple-500/50" 
-                                  : "bg-gradient-to-br from-purple-500/10 to-purple-600/10 border-purple-500/20"
+                                  ? "bg-purple-500/30 border-purple-500/50" 
+                                  : "bg-purple-500/10 border-purple-500/20"
                               )}>
                                 <CreditCard className={cn(
                                   "icon-lg transition-colors",
@@ -2810,7 +2810,7 @@ const ToggleSwitch = ({
                 </div>
                 
                 {/* Summary Footer */}
-                <div className="mt-6 p-4 bg-gradient-to-r from-muted/20 to-muted/40 rounded-lg border border-border">
+                <div className="mt-6 p-4 bg-muted/30 rounded-lg border border-border">
                   <div className="flex flex-col sm:flex-row items-start gap-3">
                     <div className="w-5 h-5 bg-blue-500/20 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
                       <div className="w-2 h-2 bg-blue-500 rounded-full"></div>

@@ -268,7 +268,7 @@ export function ManageBooking() {
             exit="exit"
             className="relative bg-card rounded-lg shadow-lg p-6 border dark:border-gray-800"
           >
-            <div className="absolute inset-0 bg-gradient-to-br from-background/50 to-background rounded-lg " />
+            <div className="absolute inset-0 bg-background/60 rounded-lg " />
             <div className="relative">{renderForm()}</div>
           </motion.div>
         )}

@@ -68,7 +68,7 @@ export default function MasterAnalyticsPage() {
   const data = analyticsData[reportType];
 
   return (
-    <div className="p-6 h-screen overflow-hidden bg-gradient-to-br from-gray-950 to-gray-900 text-white">
+    <div className="p-6 h-screen overflow-hidden bg-background text-foreground">
       <div className="flex justify-between items-center mb-6">
         <div className="flex items-center gap-3">
           <button

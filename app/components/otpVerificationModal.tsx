@@ -85,12 +85,12 @@ export function OTPVerificationModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[radial-gradient(circle_at_top,rgba(6,182,212,0.22),rgba(2,6,23,0.9)_42%,rgba(0,0,0,0.95))] p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
       <motion.div
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.9 }}
-        className="mx-auto w-full max-w-md rounded-2xl border border-cyan-500/30 bg-[linear-gradient(150deg,rgba(8,20,45,0.98),rgba(6,16,36,0.96))] p-5 shadow-[0_30px_70px_-36px_rgba(6,182,212,0.75)] md:p-6"
+        className="dashboard-module-panel mx-auto w-full max-w-md rounded-2xl p-5 shadow-[0_30px_70px_-36px_rgba(2,6,23,0.4)] md:p-6"
       >
         <div className="space-y-5">
           {/* Header */}
@@ -147,7 +147,7 @@ export function OTPVerificationModal({
               <Button
                 onClick={handleVerifyOTP}
                 disabled={loading || !otp.trim() || otp.length !== 6}
-                className="h-11 w-full rounded-lg bg-gradient-to-r from-emerald-500 to-cyan-500 text-sm font-semibold uppercase tracking-[0.09em] text-slate-950 hover:from-emerald-400 hover:to-cyan-400 md:h-12"
+                className="dashboard-btn-primary h-11 w-full rounded-lg text-sm font-semibold uppercase tracking-[0.09em] md:h-12"
               >
                 {loading ? (
                   <>
