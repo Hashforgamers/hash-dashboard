@@ -61,6 +61,7 @@ interface FailedPayment {
 export default function SubscriptionPage() {
   const [packages, setPackages] = useState<Package[]>([]);
   const [loading, setLoading] = useState(true);
+  const [pricingDevMode, setPricingDevMode] = useState(false);
   const [processing, setProcessing] = useState<string | null>(null);
   const [currentSubscription, setCurrentSubscription] = useState<any>(null);
   const [failedPayment, setFailedPayment] = useState<FailedPayment | null>(null);
@@ -138,6 +139,7 @@ export default function SubscriptionPage() {
       setLoading(true);
       const packagesResponse = await subscriptionApi.getPackages();
       setPackages(packagesResponse.packages || []);
+      setPricingDevMode(Boolean((packagesResponse as any).dev_mode));
 
       try {
         const subResponse = await subscriptionApi.getSubscription(vendorId!);
@@ -282,6 +284,15 @@ export default function SubscriptionPage() {
             </p>
           </div>
 
+          {pricingDevMode ? (
+            <Alert className="mx-auto max-w-3xl border-amber-500/40 bg-amber-500/10 backdrop-blur-sm">
+              <AlertTitle className="text-amber-100">Test Pricing Mode Is On</AlertTitle>
+              <AlertDescription className="text-amber-50/90">
+                Backend is running with test subscription pricing. Disable `SUBSCRIPTION_DEV_MODE` in dashboard-service env to use super-admin catalog prices.
+              </AlertDescription>
+            </Alert>
+          ) : null}
+
           {/* Payment Polling Alert */}
           <AnimatePresence>
             {pollingOrderId && (
@@ -381,7 +392,7 @@ export default function SubscriptionPage() {
                           ) : null}
                         </div>
                       )}
-                      {pkg.original_price > pkg.price && (
+                      {!pricingDevMode && pkg.original_price > pkg.price && (
                         <p className="text-xs text-slate-400 line-through decoration-rose-400">
                           Regular ₹{pkg.original_price}
                         </p>
