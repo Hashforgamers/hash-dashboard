@@ -40,7 +40,13 @@ interface Package {
   original_price: number;
   is_free: boolean;
   description: string;
-  features: any;
+  features: {
+    plan_features?: string[];
+    quarterly_price_inr?: number;
+    yearly_price_inr?: number;
+    onboarding_offer?: string;
+    [key: string]: any;
+  };
 }
 
 interface FailedPayment {
@@ -338,7 +344,7 @@ export default function SubscriptionPage() {
                       : ""
                   }`}
                 >
-                  {pkg.code === "grow" && (
+                  {(pkg.code === "grow" || pkg.code === "pro") && (
                     <div className="absolute top-0 right-0 p-2">
                       <div className="flex items-center gap-1 rounded-bl-lg rounded-tr-sm bg-cyan-500 px-2 py-0.5 text-[10px] font-bold text-slate-950">
                         <Crown className="w-3 h-3" /> BEST VALUE
@@ -361,18 +367,41 @@ export default function SubscriptionPage() {
                         </span>
                         <span className="text-sm text-slate-300">/mo</span>
                       </div>
+                      {(pkg.features?.quarterly_price_inr || pkg.features?.yearly_price_inr) && (
+                        <div className="mt-2 flex flex-wrap gap-2 text-[11px] text-slate-300">
+                          {pkg.features?.quarterly_price_inr ? (
+                            <span className="rounded-full border border-cyan-500/30 px-2 py-0.5">
+                              Qtr: ₹{Number(pkg.features.quarterly_price_inr).toFixed(0)}
+                            </span>
+                          ) : null}
+                          {pkg.features?.yearly_price_inr ? (
+                            <span className="rounded-full border border-cyan-500/30 px-2 py-0.5">
+                              Yr: ₹{Number(pkg.features.yearly_price_inr).toFixed(0)}
+                            </span>
+                          ) : null}
+                        </div>
+                      )}
                       {pkg.original_price > pkg.price && (
                         <p className="text-xs text-slate-400 line-through decoration-rose-400">
                           Regular ₹{pkg.original_price}
                         </p>
                       )}
+                      {pkg.features?.onboarding_offer ? (
+                        <p className="mt-2 text-xs text-emerald-300">
+                          {pkg.features.onboarding_offer}
+                        </p>
+                      ) : null}
                     </div>
 
                     <div className="space-y-3">
                       <FeatureItem text={`Up to ${pkg.pc_limit} Devices`} />
-                      <FeatureItem text="Live Booking View" />
-                      <FeatureItem text="Revenue Analytics" />
-                      <FeatureItem text="Smart Notifications" />
+                      {(Array.isArray(pkg.features?.plan_features) && pkg.features.plan_features.length
+                        ? pkg.features.plan_features
+                        : ["Live Booking View", "Revenue Analytics", "Smart Notifications"])
+                        .slice(0, 4)
+                        .map((feature) => (
+                          <FeatureItem key={`${pkg.code}-${feature}`} text={String(feature)} />
+                        ))}
                     </div>
 
                     <Button
