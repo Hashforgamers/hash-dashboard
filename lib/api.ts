@@ -87,10 +87,15 @@ export const subscriptionApi = {
   getPackages: () => apiCall("/api/packages/"),
 
   // Create Razorpay order
-  createOrder: (vendorId: number, packageCode: string, action: "new" | "renew" = "new") =>
+  createOrder: (
+    vendorId: number,
+    packageCode: string,
+    action: "new" | "renew" = "new",
+    billingCycle: "monthly" | "quarterly" | "yearly" = "monthly"
+  ) =>
     apiCall(`/api/vendors/${vendorId}/subscription/create-order`, {
       method: "POST",
-      body: JSON.stringify({ package_code: packageCode, action }),
+      body: JSON.stringify({ package_code: packageCode, action, billing_cycle: billingCycle }),
     }),
 
   // Verify payment and activate subscription
@@ -102,6 +107,7 @@ export const subscriptionApi = {
       razorpay_signature: string
       package_code: string
       action: "new" | "renew"
+      billing_cycle?: "monthly" | "quarterly" | "yearly"
     }
   ) =>
     apiCall(`/api/vendors/${vendorId}/subscription/verify-payment`, {
