@@ -556,7 +556,7 @@ const handleSubmit = async (e: React.FormEvent) => {
               <Button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 h-12 text-lg font-semibold"
+                className="w-full dashboard-btn-primary h-12 text-lg font-semibold"
               >
                 {isSubmitting ? 'Creating Booking...' : 'Confirm Booking'}
               </Button>

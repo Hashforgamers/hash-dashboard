@@ -1136,7 +1136,7 @@ export function UpcomingBookings({
                           disabled={!canStartNow}
                           className={`flex w-full items-center justify-center gap-2 rounded-md py-2 text-xs font-semibold transition-all sm:text-sm ${
                             canStartNow
-                              ? "bg-gradient-to-r from-emerald-500 to-cyan-500 text-white hover:from-emerald-400 hover:to-cyan-400"
+                              ? "dashboard-btn-primary"
                               : "bg-slate-700/70 text-slate-300 cursor-not-allowed"
                           }`}
                           title={canStartNow ? "Start session" : "Session can be started only during its scheduled time"}

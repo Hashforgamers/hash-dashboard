@@ -199,7 +199,7 @@ const PassRedemption: React.FC<{ vendorId: number }> = ({ vendorId }) => {
 
       {/* Pass Details Card */}
       {passDetails && (
-        <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg shadow-md p-6 space-y-6">
+        <div className="bg-blue-50/70 dark:bg-blue-900/20 rounded-lg shadow-md p-6 space-y-6">
           <div className="flex items-start justify-between">
             <div>
               <h3 className="text-xl font-bold text-gray-900">

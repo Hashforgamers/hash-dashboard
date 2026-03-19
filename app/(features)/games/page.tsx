@@ -446,7 +446,7 @@ export default function GamesManagementPage() {
                         >
                           <td className="py-3 px-4">
                             <div className="flex items-center gap-3">
-                              <div className="w-12 h-12 rounded bg-gradient-to-br from-purple-500 to-blue-600 flex items-center justify-center flex-shrink-0">
+                              <div className="w-12 h-12 rounded bg-slate-200 dark:bg-slate-800 flex items-center justify-center flex-shrink-0">
                                 {vg.game.image_url ? (
                                   <img
                                     src={vg.game.image_url}
@@ -454,7 +454,7 @@ export default function GamesManagementPage() {
                                     className="w-full h-full object-cover rounded"
                                   />
                                 ) : (
-                                  <Gamepad2 className="w-6 h-6 text-white" />
+                                  <Gamepad2 className="w-6 h-6 text-slate-600 dark:text-slate-200" />
                                 )}
                               </div>
                               <div>
@@ -646,7 +646,7 @@ export default function GamesManagementPage() {
                                 setModalStep(2);
                               }}
                             >
-                              <div className="relative w-full h-32 bg-gradient-to-br from-purple-500 to-blue-600">
+                              <div className="relative w-full h-32 bg-slate-200 dark:bg-slate-800">
                                 {game.image_url ? (
                                   <img
                                     src={game.image_url}
@@ -655,7 +655,7 @@ export default function GamesManagementPage() {
                                   />
                                 ) : (
                                   <div className="w-full h-full flex items-center justify-center">
-                                    <ImageIcon className="w-8 h-8 text-white/50" />
+                                    <ImageIcon className="w-8 h-8 text-slate-500/70 dark:text-slate-200/70" />
                                   </div>
                                 )}
                                 {game.rawg_rating && (
@@ -706,7 +706,7 @@ export default function GamesManagementPage() {
                       {/* Selected Game Banner */}
                       <Card className="dashboard-module-surface shadow-sm">
                         <div className="flex items-center gap-4 p-4">
-                          <div className="w-16 h-16 rounded bg-gradient-to-br from-purple-500 to-blue-600 flex items-center justify-center flex-shrink-0">
+                          <div className="w-16 h-16 rounded bg-slate-200 dark:bg-slate-800 flex items-center justify-center flex-shrink-0">
                             {selectedGame.image_url ? (
                               <img
                                 src={selectedGame.image_url}
@@ -714,7 +714,7 @@ export default function GamesManagementPage() {
                                 className="w-full h-full object-cover rounded"
                               />
                             ) : (
-                              <Gamepad2 className="w-8 h-8 text-white" />
+                              <Gamepad2 className="w-8 h-8 text-slate-600 dark:text-slate-200" />
                             )}
                           </div>
                           <div className="flex-1">

@@ -306,9 +306,9 @@ const PrivateBookingForm: React.FC<PrivateBookingFormProps> = ({ onBack }) => {
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             transition={{ type: 'spring', stiffness: 200, damping: 20 }}
-            className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-r from-emerald-500 to-green-500 flex items-center justify-center shadow-lg"
+            className="w-16 h-16 mx-auto mb-4 rounded-full bg-emerald-500/15 flex items-center justify-center border border-emerald-400/30"
           >
-            <CheckCircle className="w-8 h-8 text-white" />
+            <CheckCircle className="w-8 h-8 text-emerald-600 dark:text-emerald-300" />
           </motion.div>
 
           <h2 className="text-xl font-bold text-gray-800 dark:text-white mb-2">
@@ -349,7 +349,7 @@ const PrivateBookingForm: React.FC<PrivateBookingFormProps> = ({ onBack }) => {
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={onBack}
-            className="w-full px-4 py-2 bg-gradient-to-r from-emerald-600 to-green-600 text-white rounded-lg font-medium hover:from-emerald-700 hover:to-green-700 shadow-md transition-all duration-200"
+            className="dashboard-btn-primary w-full px-4 py-2 font-medium"
           >
             Create Another Booking
           </motion.button>
@@ -376,7 +376,7 @@ const PrivateBookingForm: React.FC<PrivateBookingFormProps> = ({ onBack }) => {
             <ChevronLeft className="w-5 h-5 text-gray-600 dark:text-gray-400" />
           </motion.button>
           <div>
-            <h1 className="text-lg font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+            <h1 className="text-lg font-bold text-foreground">
               Private Booking
             </h1>
             <p className="text-xs text-gray-500">Manual booking without slot restrictions</p>
@@ -670,7 +670,7 @@ const PrivateBookingForm: React.FC<PrivateBookingFormProps> = ({ onBack }) => {
                     <button
                       type="button"
                       onClick={() => setIsMealSelectorOpen(true)}
-                      className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-orange-100 to-red-100 dark:from-orange-900/30 dark:to-red-900/30 text-orange-700 dark:text-orange-300 rounded-lg text-xs hover:from-orange-200 hover:to-red-200 dark:hover:from-orange-900/50 dark:hover:to-red-900/50 transition-all duration-200"
+                      className="flex items-center gap-2 px-3 py-2 bg-orange-100/80 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 rounded-lg text-xs transition-all duration-200"
                     >
                       <Plus className="w-3 h-3" />
                       {selectedMeals.length === 0 ? 'Add Meals/Snacks' : `${selectedMeals.length} Selected`}
@@ -830,7 +830,7 @@ const PrivateBookingForm: React.FC<PrivateBookingFormProps> = ({ onBack }) => {
             className={`w-full py-2.5 rounded-lg font-bold text-white transition-all duration-200 shadow-md ${
               isSubmitting
                 ? 'bg-gray-400 cursor-not-allowed'
-                : 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 hover:shadow-lg'
+                : 'bg-purple-600 hover:bg-purple-700'
             }`}
           >
             {isSubmitting ? (

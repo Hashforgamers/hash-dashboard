@@ -1171,12 +1171,12 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                                   <motion.div
                                     className={`h-full ${
                                       hasExtraTime
-                                        ? "bg-gradient-to-r from-red-500 to-rose-400"
+                                        ? "bg-red-500"
                                         : progress < 75
-                                          ? "bg-gradient-to-r from-emerald-500 to-cyan-400"
+                                          ? "bg-emerald-500"
                                           : progress < 90
-                                            ? "bg-gradient-to-r from-yellow-500 to-amber-400"
-                                            : "bg-gradient-to-r from-orange-500 to-red-500"
+                                            ? "bg-yellow-500"
+                                            : "bg-orange-500"
                                     }`}
                                     style={{ width: `${progress}%` }}
                                     initial={{ width: 0 }}

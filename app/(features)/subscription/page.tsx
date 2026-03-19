@@ -40,7 +40,13 @@ interface Package {
   original_price: number;
   is_free: boolean;
   description: string;
-  features: any;
+  features: {
+    plan_features?: string[];
+    quarterly_price_inr?: number;
+    yearly_price_inr?: number;
+    onboarding_offer?: string;
+    [key: string]: any;
+  };
 }
 
 interface FailedPayment {
@@ -299,18 +305,18 @@ export default function SubscriptionPage() {
 
           {/* Current Plan Indicator */}
           {currentSubscription && (
-            <div className="mx-auto flex w-full max-w-3xl flex-col gap-3 rounded-xl border border-cyan-500/30 bg-slate-900/55 p-4 backdrop-blur-sm sm:flex-row sm:items-center sm:justify-between">
+            <div className="dashboard-module-panel mx-auto flex w-full max-w-3xl flex-col gap-3 rounded-xl p-4 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-cyan-300">
+                <span className="label-xs text-muted-foreground">
                   Your Current Plan
                 </span>
-                <h3 className="text-base font-semibold text-cyan-100 md:text-lg">
+                <h3 className="text-base font-semibold text-foreground md:text-lg">
                   {currentSubscription.package?.name}
                 </h3>
               </div>
               <div className="text-left sm:text-right">
-                <span className="text-xs text-slate-300">PC Limit</span>
-                <p className="text-base font-semibold text-cyan-100 md:text-lg">
+                <span className="text-xs text-muted-foreground">PC Limit</span>
+                <p className="text-base font-semibold text-foreground md:text-lg">
                   {currentSubscription.pc_limit} Units
                 </p>
               </div>
@@ -332,13 +338,13 @@ export default function SubscriptionPage() {
                 transition={{ delay: index * 0.1 }}
               >
                 <Card
-                  className={`relative flex h-full flex-col overflow-hidden border transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_22px_45px_-28px_rgba(6,182,212,0.75)] ${
+                  className={`dashboard-module-card relative flex h-full flex-col overflow-hidden transition-all duration-300 hover:-translate-y-1 ${
                     pkg.code === currentSubscription?.package?.code
-                      ? "border-cyan-400/65 bg-[linear-gradient(145deg,rgba(8,20,45,0.98),rgba(6,18,40,0.93))]"
-                      : "border-cyan-500/25 bg-[linear-gradient(145deg,rgba(8,20,45,0.9),rgba(5,14,34,0.88))] hover:border-cyan-400/55"
+                      ? "ring-2 ring-cyan-400/40"
+                      : ""
                   }`}
                 >
-                  {pkg.code === "grow" && (
+                  {(pkg.code === "grow" || pkg.code === "pro") && (
                     <div className="absolute top-0 right-0 p-2">
                       <div className="flex items-center gap-1 rounded-bl-lg rounded-tr-sm bg-cyan-500 px-2 py-0.5 text-[10px] font-bold text-slate-950">
                         <Crown className="w-3 h-3" /> BEST VALUE
@@ -347,8 +353,8 @@ export default function SubscriptionPage() {
                   )}
 
                   <CardHeader>
-                    <CardTitle className="text-lg font-semibold uppercase tracking-[0.08em] text-cyan-100">{pkg.name}</CardTitle>
-                    <CardDescription className="min-h-[40px] text-sm text-slate-300">
+                    <CardTitle className="text-lg font-semibold uppercase tracking-[0.08em] text-foreground">{pkg.name}</CardTitle>
+                    <CardDescription className="min-h-[40px] text-sm text-muted-foreground">
                       {pkg.description}
                     </CardDescription>
                   </CardHeader>
@@ -356,23 +362,46 @@ export default function SubscriptionPage() {
                   <CardContent className="flex flex-1 flex-col space-y-5">
                     <div>
                       <div className="flex items-baseline gap-1">
-                        <span className="text-3xl font-semibold text-cyan-100 md:text-4xl">
+                        <span className="text-3xl font-semibold text-foreground md:text-4xl">
                           ₹{pkg.price}
                         </span>
                         <span className="text-sm text-slate-300">/mo</span>
                       </div>
+                      {(pkg.features?.quarterly_price_inr || pkg.features?.yearly_price_inr) && (
+                        <div className="mt-2 flex flex-wrap gap-2 text-[11px] text-slate-300">
+                          {pkg.features?.quarterly_price_inr ? (
+                            <span className="rounded-full border border-cyan-500/30 px-2 py-0.5">
+                              Qtr: ₹{Number(pkg.features.quarterly_price_inr).toFixed(0)}
+                            </span>
+                          ) : null}
+                          {pkg.features?.yearly_price_inr ? (
+                            <span className="rounded-full border border-cyan-500/30 px-2 py-0.5">
+                              Yr: ₹{Number(pkg.features.yearly_price_inr).toFixed(0)}
+                            </span>
+                          ) : null}
+                        </div>
+                      )}
                       {pkg.original_price > pkg.price && (
                         <p className="text-xs text-slate-400 line-through decoration-rose-400">
                           Regular ₹{pkg.original_price}
                         </p>
                       )}
+                      {pkg.features?.onboarding_offer ? (
+                        <p className="mt-2 text-xs text-emerald-300">
+                          {pkg.features.onboarding_offer}
+                        </p>
+                      ) : null}
                     </div>
 
                     <div className="space-y-3">
                       <FeatureItem text={`Up to ${pkg.pc_limit} Devices`} />
-                      <FeatureItem text="Live Booking View" />
-                      <FeatureItem text="Revenue Analytics" />
-                      <FeatureItem text="Smart Notifications" />
+                      {(Array.isArray(pkg.features?.plan_features) && pkg.features.plan_features.length
+                        ? pkg.features.plan_features
+                        : ["Live Booking View", "Revenue Analytics", "Smart Notifications"])
+                        .slice(0, 4)
+                        .map((feature) => (
+                          <FeatureItem key={`${pkg.code}-${feature}`} text={String(feature)} />
+                        ))}
                     </div>
 
                     <Button
