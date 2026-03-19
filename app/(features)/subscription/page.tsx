@@ -471,7 +471,7 @@ export default function SubscriptionPage() {
                         pkg.code === currentSubscription?.package?.code
                       }
                       className="group mt-auto h-10 w-full rounded-lg font-semibold uppercase tracking-[0.08em] md:h-11"
-                      variant={pkg.code === "grow" ? "default" : "secondary"}
+                      variant="default"
                     >
                       {processing === pkg.code ? (
                         <Loader2 className="w-4 h-4 animate-spin" />
