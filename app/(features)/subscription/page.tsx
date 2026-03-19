@@ -56,12 +56,33 @@ interface FailedPayment {
   packageCode: string;
   packageName: string;
   amount: number;
+  billingCycle: BillingCycle;
+}
+
+type BillingCycle = "monthly" | "quarterly" | "yearly";
+
+const CYCLE_LABEL: Record<BillingCycle, string> = {
+  monthly: "/mo",
+  quarterly: "/qtr",
+  yearly: "/yr",
+};
+
+function getCyclePrice(pkg: Package, cycle: BillingCycle, pricingDevMode: boolean): number {
+  if (pricingDevMode) return Number(pkg.price || 0);
+  if (cycle === "quarterly") {
+    return Number(pkg.features?.quarterly_price_inr || Number(pkg.price || 0) * 3 || 0);
+  }
+  if (cycle === "yearly") {
+    return Number(pkg.features?.yearly_price_inr || Number(pkg.price || 0) * 12 || 0);
+  }
+  return Number(pkg.price || 0);
 }
 
 export default function SubscriptionPage() {
   const [packages, setPackages] = useState<Package[]>([]);
   const [loading, setLoading] = useState(true);
   const [pricingDevMode, setPricingDevMode] = useState(false);
+  const [selectedCycle, setSelectedCycle] = useState<BillingCycle>("monthly");
   const [processing, setProcessing] = useState<string | null>(null);
   const [currentSubscription, setCurrentSubscription] = useState<any>(null);
   const [failedPayment, setFailedPayment] = useState<FailedPayment | null>(null);
@@ -70,6 +91,7 @@ export default function SubscriptionPage() {
     code: string;
     name: string;
     action: string;
+    billingCycle: BillingCycle;
   } | null>(null);
 
   const { vendorId, refreshStatus } = useSubscription();
@@ -118,6 +140,7 @@ export default function SubscriptionPage() {
             razorpay_signature: "polled_payment",
             package_code: pollingPackage.code,
             action: pollingPackage.action as "new" | "renew",
+            billing_cycle: pollingPackage.billingCycle,
           });
 
           if (activateResponse.success) {
@@ -154,7 +177,8 @@ export default function SubscriptionPage() {
 
   async function handleSubscribe(pkg: Package) {
     if (!vendorId) return;
-    if (pkg.is_free || pkg.price === 0) {
+    const selectedPrice = getCyclePrice(pkg, selectedCycle, pricingDevMode);
+    if (selectedPrice <= 0) {
       toast.info("Contact support for free activation");
       return;
     }
@@ -162,12 +186,12 @@ export default function SubscriptionPage() {
     setProcessing(pkg.code);
     try {
       const action = currentSubscription ? "renew" : "new";
-      const orderResponse = await subscriptionApi.createOrder(vendorId, pkg.code, action);
+      const orderResponse = await subscriptionApi.createOrder(vendorId, pkg.code, action, selectedCycle);
 
       if (!orderResponse.success) throw new Error(orderResponse.error);
 
       setPollingOrderId(orderResponse.order_id);
-      setPollingPackage({ code: pkg.code, name: pkg.name, action });
+      setPollingPackage({ code: pkg.code, name: pkg.name, action, billingCycle: selectedCycle });
 
       const options = createRazorpayOptions(
         orderResponse.order_id,
@@ -176,7 +200,7 @@ export default function SubscriptionPage() {
         orderResponse.key_id,
         async (response: RazorpayResponse) => {
           setPollingOrderId(null);
-          await verifyAndActivate(response, pkg.code, pkg.name, orderResponse.amount, action);
+          await verifyAndActivate(response, pkg.code, pkg.name, orderResponse.amount, action, selectedCycle);
         },
         () => setProcessing(null)
       );
@@ -192,13 +216,15 @@ export default function SubscriptionPage() {
     code: string,
     name: string,
     amt: number,
-    act: "new" | "renew"
+    act: "new" | "renew",
+    billingCycle: BillingCycle
   ) {
     try {
       const verifyResponse = await subscriptionApi.verifyPayment(vendorId!, {
         ...res,
         package_code: code,
         action: act,
+        billing_cycle: billingCycle,
       });
       if (verifyResponse.success) {
         toast.success("Subscription activated! 🎉");
@@ -215,6 +241,7 @@ export default function SubscriptionPage() {
         packageCode: code,
         packageName: name,
         amount: amt,
+        billingCycle,
       });
       toast.error("Verification failed. Please contact support.");
     } finally {
@@ -340,7 +367,24 @@ export default function SubscriptionPage() {
               No active subscription packages found.
             </div>
           ) : (
-            <div className="grid grid-cols-1 gap-4 pt-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            <>
+              <div className="mx-auto flex w-full max-w-3xl items-center justify-center gap-2 rounded-xl border border-cyan-500/20 bg-slate-900/50 p-2">
+                {(["monthly", "quarterly", "yearly"] as BillingCycle[]).map((cycle) => (
+                  <button
+                    key={cycle}
+                    type="button"
+                    onClick={() => setSelectedCycle(cycle)}
+                    className={`rounded-md px-4 py-2 text-sm font-semibold uppercase tracking-[0.08em] transition ${
+                      selectedCycle === cycle
+                        ? "bg-cyan-500 text-slate-950"
+                        : "bg-slate-800/70 text-slate-300 hover:bg-slate-700"
+                    }`}
+                  >
+                    {cycle}
+                  </button>
+                ))}
+              </div>
+              <div className="grid grid-cols-1 gap-4 pt-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {packages.map((pkg, index) => (
               <motion.div
                 key={pkg.id}
@@ -372,12 +416,17 @@ export default function SubscriptionPage() {
 
                   <CardContent className="flex flex-1 flex-col space-y-5">
                     <div>
+                      {(() => {
+                        const cyclePrice = getCyclePrice(pkg, selectedCycle, pricingDevMode);
+                        return (
                       <div className="flex items-baseline gap-1">
                         <span className="text-3xl font-semibold text-foreground md:text-4xl">
-                          ₹{pkg.price}
+                          ₹{cyclePrice}
                         </span>
-                        <span className="text-sm text-slate-300">/mo</span>
+                        <span className="text-sm text-slate-300">{CYCLE_LABEL[selectedCycle]}</span>
                       </div>
+                        );
+                      })()}
                       {(pkg.features?.quarterly_price_inr || pkg.features?.yearly_price_inr) && (
                         <div className="mt-2 flex flex-wrap gap-2 text-[11px] text-slate-300">
                           {pkg.features?.quarterly_price_inr ? (
@@ -392,7 +441,7 @@ export default function SubscriptionPage() {
                           ) : null}
                         </div>
                       )}
-                      {!pricingDevMode && pkg.original_price > pkg.price && (
+                      {!pricingDevMode && selectedCycle === "monthly" && pkg.original_price > pkg.price && (
                         <p className="text-xs text-slate-400 line-through decoration-rose-400">
                           Regular ₹{pkg.original_price}
                         </p>
@@ -440,6 +489,7 @@ export default function SubscriptionPage() {
               </motion.div>
               ))}
             </div>
+            </>
           )}
         </div>
       </div>
