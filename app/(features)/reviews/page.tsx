@@ -41,6 +41,8 @@ export default function ReviewsPage() {
   const [reviews, setReviews] = useState<ReviewItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingSummary, setLoadingSummary] = useState(true);
+  const [summaryError, setSummaryError] = useState<string | null>(null);
+  const [reviewsError, setReviewsError] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState("all");
   const [ratingFilter, setRatingFilter] = useState("");
   const [search, setSearch] = useState("");
@@ -89,11 +91,13 @@ export default function ReviewsPage() {
 
   const refreshSummary = async () => {
     setLoadingSummary(true);
+    setSummaryError(null);
     try {
       const data = await refreshSummaryCache(true);
       setSummary(data || null);
-    } catch {
+    } catch (error) {
       setSummary(null);
+      setSummaryError(error instanceof Error ? error.message : "Failed to load review summary");
     } finally {
       setLoadingSummary(false);
     }
@@ -101,11 +105,13 @@ export default function ReviewsPage() {
 
   const refreshReviews = async () => {
     setLoading(true);
+    setReviewsError(null);
     try {
       const data = await refreshListCache(true);
       setReviews(data?.items || []);
-    } catch {
+    } catch (error) {
       setReviews([]);
+      setReviewsError(error instanceof Error ? error.message : "Failed to load reviews");
     } finally {
       setLoading(false);
     }
@@ -147,6 +153,9 @@ export default function ReviewsPage() {
       await respondToReview(token, reviewId, draft);
       setResponseDrafts((prev) => ({ ...prev, [reviewId]: "" }));
       await refreshReviews();
+      setReviewsError(null);
+    } catch (error) {
+      setReviewsError(error instanceof Error ? error.message : "Failed to respond review");
     } finally {
       setActioningId(null);
     }
@@ -159,6 +168,11 @@ export default function ReviewsPage() {
       await updateReviewStatus(token, reviewId, status);
       await refreshReviews();
       await refreshSummary();
+      setReviewsError(null);
+      setSummaryError(null);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to update review status";
+      setReviewsError(message);
     } finally {
       setActioningId(null);
     }
@@ -242,6 +256,17 @@ export default function ReviewsPage() {
             </div>
           </div>
         </div>
+
+        {summaryError ? (
+          <div className="rounded-xl border border-amber-500/35 bg-amber-500/10 p-3 text-xs text-amber-200">
+            Summary sync issue: {summaryError}
+          </div>
+        ) : null}
+        {reviewsError ? (
+          <div className="rounded-xl border border-rose-500/35 bg-rose-500/10 p-3 text-xs text-rose-200">
+            Reviews sync issue: {reviewsError}
+          </div>
+        ) : null}
 
         <div className="gaming-panel flex-1 overflow-hidden rounded-xl border border-cyan-400/20 bg-slate-950/45">
           <div className="flex items-center justify-between gap-3 border-b border-cyan-500/20 p-4">

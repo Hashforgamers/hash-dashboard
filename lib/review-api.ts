@@ -52,7 +52,14 @@ export async function getReviewSummary(token: string): Promise<ReviewSummary> {
   const res = await fetch(`${API_BASE}/api/vendor/reviews/summary`, {
     headers: { Authorization: `Bearer ${token}` },
   });
-  if (!res.ok) throw new Error("Failed to fetch review summary");
+  if (!res.ok) {
+    let message = "Failed to fetch review summary";
+    try {
+      const body = await res.json();
+      message = body?.message || body?.error || message;
+    } catch {}
+    throw new Error(message);
+  }
   return res.json() as Promise<ReviewSummary>;
 }
 
@@ -60,11 +67,18 @@ export async function listReviews(
   token: string,
   params?: { status?: string; rating?: number | string; search?: string; limit?: number; offset?: number }
 ): Promise<ReviewListResponse> {
-  const url = withQuery(`${API_BASE}/api/vendor/reviews`, params);
+  const url = withQuery(`${API_BASE}/api/vendor/reviews/`, params);
   const res = await fetch(url, {
     headers: { Authorization: `Bearer ${token}` },
   });
-  if (!res.ok) throw new Error("Failed to fetch reviews");
+  if (!res.ok) {
+    let message = "Failed to fetch reviews";
+    try {
+      const body = await res.json();
+      message = body?.message || body?.error || message;
+    } catch {}
+    throw new Error(message);
+  }
   return res.json() as Promise<ReviewListResponse>;
 }
 
