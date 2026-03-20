@@ -48,8 +48,11 @@ function withQuery(url: string, params?: Record<string, string | number | undefi
   return qs ? `${url}?${qs}` : url;
 }
 
-export async function getReviewSummary(token: string): Promise<ReviewSummary> {
-  const res = await fetch(`${API_BASE}/api/vendor/reviews/summary`, {
+export async function getReviewSummary(token: string, vendorId?: number): Promise<ReviewSummary> {
+  const url = withQuery(`${API_BASE}/api/vendor/reviews/summary`, {
+    vendor_id: vendorId,
+  });
+  const res = await fetch(url, {
     headers: { Authorization: `Bearer ${token}` },
   });
   if (!res.ok) {
@@ -65,7 +68,7 @@ export async function getReviewSummary(token: string): Promise<ReviewSummary> {
 
 export async function listReviews(
   token: string,
-  params?: { status?: string; rating?: number | string; search?: string; limit?: number; offset?: number }
+  params?: { status?: string; rating?: number | string; search?: string; limit?: number; offset?: number; vendor_id?: number }
 ): Promise<ReviewListResponse> {
   const url = withQuery(`${API_BASE}/api/vendor/reviews/`, params);
   const res = await fetch(url, {

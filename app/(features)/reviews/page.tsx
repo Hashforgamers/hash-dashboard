@@ -55,7 +55,7 @@ export default function ReviewsPage() {
 
   const summaryFetcher = async () => {
     if (!token) throw new Error("Missing token");
-    return getReviewSummary(token);
+    return getReviewSummary(token, vendorId || undefined);
   };
 
   const listFetcher = async () => {
@@ -66,6 +66,7 @@ export default function ReviewsPage() {
       search: search || undefined,
       limit: 50,
       offset: 0,
+      vendor_id: vendorId || undefined,
     });
   };
 
