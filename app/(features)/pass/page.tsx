@@ -20,7 +20,7 @@ export default function TransactionReportPage() {
           </p>
         </div>
 
-        <div className="feature-page-content gaming-panel">
+        <div className="feature-page-content feature-page-content-scroll gaming-panel">
           <ManagePassesPage />
         </div>
       </div>

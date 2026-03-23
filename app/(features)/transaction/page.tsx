@@ -18,7 +18,7 @@ export default function TransactionReportPage() {
           </p>
         </div>
 
-        <div className="feature-page-content gaming-panel flex min-h-0">
+        <div className="feature-page-content feature-page-content-scroll gaming-panel flex min-h-0">
           <TransactionTable />
         </div>
       </div>

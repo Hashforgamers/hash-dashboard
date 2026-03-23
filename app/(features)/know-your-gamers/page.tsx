@@ -18,7 +18,7 @@ export default function ManageKnowYourGamers() {
           </p>
         </div>
 
-        <div className="feature-page-content gaming-panel">
+        <div className="feature-page-content feature-page-content-scroll gaming-panel">
           <KnowYourGamers />
         </div>
       </div>

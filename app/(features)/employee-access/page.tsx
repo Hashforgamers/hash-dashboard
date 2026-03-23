@@ -36,6 +36,7 @@ const SERVICE_PERMISSION_MAP: Array<{
   { label: "Games", permission: "games.manage", section: "Operations" },
   { label: "Tournaments", permission: "tournaments.manage", section: "Operations" },
   { label: "Know Your Gamers", permission: "gamers.view", section: "Analytics" },
+  { label: "Reviews", permission: "reviews.manage", section: "Analytics" },
   { label: "Transaction Report", permission: "transactions.view", section: "Analytics" },
   { label: "Console Pricing", permission: "pricing.manage", section: "Admin" },
   { label: "Gamers Credit", permission: "pricing.manage", section: "Admin" },
