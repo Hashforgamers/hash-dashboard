@@ -1124,7 +1124,10 @@ h6 {
 }
 
 .feature-page-content-scroll {
-  overflow: auto;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
 }
 
 @media (min-width: 640px) {
