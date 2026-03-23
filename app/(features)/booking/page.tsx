@@ -20,7 +20,7 @@ export default function ManageBookingPage() {
           </p>
         </div>
 
-        <div className="feature-page-content gaming-panel">
+        <div className="feature-page-content feature-page-content-scroll gaming-panel">
           <SlotManagement embedded />
         </div>
       </div>

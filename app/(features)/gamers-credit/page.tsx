@@ -15,7 +15,7 @@ export default function GamersCreditPage() {
             Manage approved gamers with month-end payment accounts, KYC details, and transparent settlement proof.
           </p>
         </div>
-        <div className="feature-page-content gaming-panel">
+        <div className="feature-page-content feature-page-content-scroll gaming-panel">
           <GamersCreditControl />
         </div>
       </div>

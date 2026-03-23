@@ -28,7 +28,8 @@ import {
   Sparkles,
   Ticket,
   AlertCircle,
-  Clock
+  Clock,
+  SlidersHorizontal
 } from "lucide-react"
 import { BOOKING_URL, DASHBOARD_URL } from '@/src/config/env'
 import { ConsoleType } from './types'
@@ -146,6 +147,12 @@ interface UserSuggestion {
   name: string
   email: string
   phone: string
+}
+
+interface BookingFieldConfig {
+  name: { visible: boolean; required: boolean }
+  phone: { visible: boolean; required: boolean }
+  email: { visible: boolean; required: boolean }
 }
 
 interface SquadMemberInput {
@@ -332,6 +339,12 @@ const SQUAD_PLATFORM_RULES: Record<string, { enabled: boolean; maxPlayers: numbe
   vr: { enabled: false, maxPlayers: 1, pricingMode: "solo_only" },
 }
 
+const DEFAULT_BOOKING_FIELD_CONFIG: BookingFieldConfig = {
+  name: { visible: true, required: true },
+  phone: { visible: true, required: true },
+  email: { visible: true, required: false },
+}
+
 
 function SlotBookingForm({ 
   isOpen, 
@@ -383,6 +396,12 @@ function SlotBookingForm({
   const [phoneSuggestions, setPhoneSuggestions] = useState<{ id?: number; name: string; email: string; phone: string }[]>([])
   const [nameSuggestions, setNameSuggestions] = useState<{ id?: number; name: string; email: string; phone: string }[]>([])
   const [focusedInput, setFocusedInput] = useState<string>('')
+  const [bookingFieldConfig, setBookingFieldConfig] = useState<BookingFieldConfig>(DEFAULT_BOOKING_FIELD_CONFIG)
+  const [bookingFieldDraft, setBookingFieldDraft] = useState<BookingFieldConfig>(DEFAULT_BOOKING_FIELD_CONFIG)
+  const [isFieldConfigOpen, setIsFieldConfigOpen] = useState(false)
+  const [isFieldConfigSaving, setIsFieldConfigSaving] = useState(false)
+  const [fieldConfigError, setFieldConfigError] = useState("")
+  const [isSuggestionLoading, setIsSuggestionLoading] = useState<Record<string, boolean>>({})
   const [focusedSquadMemberId, setFocusedSquadMemberId] = useState<string | null>(null)
   const [squadMemberSuggestions, setSquadMemberSuggestions] = useState<Record<string, UserSuggestion[]>>({})
   const [creditAccount, setCreditAccount] = useState<MonthlyCreditAccountSummary | null>(null)
@@ -390,6 +409,8 @@ function SlotBookingForm({
   const [creditAccountError, setCreditAccountError] = useState('')
   const [showCreditAccountModal, setShowCreditAccountModal] = useState(false)
   const blurTimeoutRef = useRef<number | null>(null)
+  const suggestionDebounceRef = useRef<number | null>(null)
+  const suggestionAbortRef = useRef<AbortController | null>(null)
 
 
   const getVendorIdFromToken = (): number | null => {
@@ -411,6 +432,190 @@ function SlotBookingForm({
     }
   }
 
+  const sanitizeFieldConfig = (candidate: BookingFieldConfig): BookingFieldConfig => {
+    const next: BookingFieldConfig = {
+      name: { visible: true, required: true },
+      phone: {
+        visible: Boolean(candidate?.phone?.visible ?? true),
+        required: Boolean(candidate?.phone?.required ?? true),
+      },
+      email: {
+        visible: Boolean(candidate?.email?.visible ?? true),
+        required: Boolean(candidate?.email?.required ?? false),
+      },
+    }
+
+    if (next.phone.required) next.phone.visible = true
+    if (next.email.required) next.email.visible = true
+
+    // Staff preference: if email is not compulsory, hide it from booking form.
+    if (!next.email.required) {
+      next.email.visible = false
+    }
+
+    if (!next.phone.visible && !next.email.visible) {
+      next.phone.visible = true
+      next.phone.required = true
+    }
+
+    if (!next.phone.visible) next.phone.required = false
+    if (!next.email.visible) next.email.required = false
+
+    if (!next.phone.required && !next.email.required) {
+      if (next.phone.visible) next.phone.required = true
+      else next.email.required = true
+    }
+
+    return next
+  }
+
+  const applyFieldDraftChange = (
+    field: "phone" | "email",
+    key: "visible" | "required",
+    value: boolean
+  ) => {
+    setBookingFieldDraft((prev) => {
+      const next: BookingFieldConfig = {
+        ...prev,
+        name: { visible: true, required: true },
+        phone: { ...prev.phone },
+        email: { ...prev.email },
+      }
+      next[field][key] = value
+      return sanitizeFieldConfig(next)
+    })
+  }
+
+  const upsertUsersInCache = (incoming: UserSuggestion[]) => {
+    if (!incoming.length) return
+    setUserList((prev) => {
+      const map = new Map<string, UserSuggestion>()
+      prev.forEach((user) => {
+        const key = String(user.id ?? `${user.phone || ""}|${user.email || ""}|${user.name || ""}`)
+        map.set(key, user)
+      })
+      incoming.forEach((user) => {
+        const key = String(user.id ?? `${user.phone || ""}|${user.email || ""}|${user.name || ""}`)
+        map.set(key, user)
+      })
+      return Array.from(map.values())
+    })
+  }
+
+  const fetchUserSuggestions = async (
+    field: "name" | "phone" | "email",
+    query: string,
+    setter: React.Dispatch<React.SetStateAction<UserSuggestion[]>>
+  ) => {
+    const vendorId = getVendorIdFromToken()
+    if (!vendorId) return
+
+    if (suggestionAbortRef.current) {
+      suggestionAbortRef.current.abort()
+    }
+    const controller = new AbortController()
+    suggestionAbortRef.current = controller
+
+    setIsSuggestionLoading((prev) => ({ ...prev, [field]: true }))
+    try {
+      const params = new URLSearchParams({
+        q: query.trim(),
+        field,
+        limit: "8",
+        booked_only: "true",
+      })
+      const res = await fetch(
+        `${BOOKING_URL}/api/vendor/${vendorId}/users?${params.toString()}`,
+        { signal: controller.signal }
+      )
+      const data = await res.json().catch(() => [])
+      const rows: UserSuggestion[] = Array.isArray(data) ? data : []
+      setter(rows)
+      upsertUsersInCache(rows)
+    } catch (error: any) {
+      if (error?.name !== "AbortError") {
+        console.error("❌ Failed to fetch user suggestions:", error)
+        setter([])
+      }
+    } finally {
+      setIsSuggestionLoading((prev) => ({ ...prev, [field]: false }))
+    }
+  }
+
+  const scheduleSuggestionFetch = (
+    field: "name" | "phone" | "email",
+    query: string,
+    setter: React.Dispatch<React.SetStateAction<UserSuggestion[]>>
+  ) => {
+    if (suggestionDebounceRef.current) {
+      clearTimeout(suggestionDebounceRef.current)
+    }
+    suggestionDebounceRef.current = window.setTimeout(() => {
+      fetchUserSuggestions(field, query, setter)
+    }, 180)
+  }
+
+  const loadVendorFieldConfig = async () => {
+    const vendorId = getVendorIdFromToken()
+    if (!vendorId) return
+    try {
+      const res = await fetch(`${BOOKING_URL}/api/vendor/${vendorId}/booking-field-config`)
+      const data = await res.json().catch(() => ({}))
+      const remoteConfig = sanitizeFieldConfig(
+        (data?.config as BookingFieldConfig) || DEFAULT_BOOKING_FIELD_CONFIG
+      )
+      setBookingFieldConfig(remoteConfig)
+      setBookingFieldDraft(remoteConfig)
+      setFieldConfigError("")
+    } catch (error) {
+      console.error("❌ Failed to load booking field config:", error)
+      setBookingFieldConfig(DEFAULT_BOOKING_FIELD_CONFIG)
+      setBookingFieldDraft(DEFAULT_BOOKING_FIELD_CONFIG)
+    }
+  }
+
+  const saveVendorFieldConfig = async () => {
+    const vendorId = getVendorIdFromToken()
+    if (!vendorId) return
+    setIsFieldConfigSaving(true)
+    setFieldConfigError("")
+    const normalized = sanitizeFieldConfig(bookingFieldDraft)
+    try {
+      const res = await fetch(`${BOOKING_URL}/api/vendor/${vendorId}/booking-field-config`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          show_phone: normalized.phone.visible,
+          require_phone: normalized.phone.required,
+          show_email: normalized.email.visible,
+          require_email: normalized.email.required,
+        }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok || data?.success === false) {
+        throw new Error(data?.message || "Failed to save field settings")
+      }
+      const savedConfig = sanitizeFieldConfig(
+        (data?.config as BookingFieldConfig) || normalized
+      )
+      setBookingFieldConfig(savedConfig)
+      setBookingFieldDraft(savedConfig)
+
+      if (!savedConfig.email.visible) {
+        setEmail("")
+        setEmailSuggestions([])
+      }
+      if (!savedConfig.phone.visible) {
+        setPhone("")
+        setPhoneSuggestions([])
+      }
+      setIsFieldConfigOpen(false)
+    } catch (error: any) {
+      setFieldConfigError(error?.message || "Failed to save field settings")
+    } finally {
+      setIsFieldConfigSaving(false)
+    }
+  }
 
 
 
@@ -529,6 +734,22 @@ const validatePass = async (uid: string) => {
     }
   }, [selectedSlots])
 
+  useEffect(() => {
+    if (!isOpen) return
+    loadVendorFieldConfig()
+  }, [isOpen])
+
+  useEffect(() => {
+    return () => {
+      if (suggestionDebounceRef.current) {
+        clearTimeout(suggestionDebounceRef.current)
+      }
+      if (suggestionAbortRef.current) {
+        suggestionAbortRef.current.abort()
+      }
+    }
+  }, [])
+
 
 // ADD THIS ENTIRE BLOCK
 useEffect(() => {
@@ -578,7 +799,7 @@ useEffect(() => {
     
     console.log('👥 Fetching user list for vendor:', vendorId)
     
-    const userCacheKey = 'userList'
+    const userCacheKey = `userList:${vendorId}`
     const cachedData = localStorage.getItem(userCacheKey)
 
     const isCacheValid = (timestamp: number) => {
@@ -614,7 +835,7 @@ useEffect(() => {
         const { data, timestamp } = JSON.parse(cachedData)
         if (isCacheValid(timestamp)) {
           console.log('✅ Using cached user data')
-          setUserList(data)
+          setUserList(Array.isArray(data) ? data : [])
         } else {
           console.log('⏰ Cache expired, fetching fresh data')
           fetchUsers()
@@ -629,37 +850,31 @@ useEffect(() => {
     }
   }, [isOpen])
 
-  const getSuggestions = (key: keyof typeof userList[0], value: string) => {
-    if (!value.trim()) {
-      return userList
-    }
-    
-    const filtered = userList.filter((user) =>
-      user[key].toLowerCase().includes(value.toLowerCase())
-    )
-    
-    return filtered
-  }
-
   const handleEmailInputChange = (value: string) => {
     setEmail(value)
-    const suggestions = getSuggestions('email', value)
-    setEmailSuggestions(suggestions)
+    if (errors.email) {
+      setErrors((prev) => ({ ...prev, email: "" }))
+    }
     setFocusedInput('email')
+    scheduleSuggestionFetch('email', value, setEmailSuggestions)
   }
 
   const handlePhoneInputChange = (value: string) => {
     setPhone(value)
-    const suggestions = getSuggestions('phone', value)
-    setPhoneSuggestions(suggestions)
+    if (errors.phone) {
+      setErrors((prev) => ({ ...prev, phone: "" }))
+    }
     setFocusedInput('phone')
+    scheduleSuggestionFetch('phone', value, setPhoneSuggestions)
   }
 
   const handleNameInputChange = (value: string) => {
     setName(value)
-    const suggestions = getSuggestions('name', value)
-    setNameSuggestions(suggestions)
+    if (errors.name) {
+      setErrors((prev) => ({ ...prev, name: "" }))
+    }
     setFocusedInput('name')
+    scheduleSuggestionFetch('name', value, setNameSuggestions)
   }
 
   const handleEmailFocus = () => {
@@ -668,8 +883,7 @@ useEffect(() => {
       blurTimeoutRef.current = null
     }
     setFocusedInput("email")
-    const suggestions = getSuggestions("email", email)
-    setEmailSuggestions(suggestions)
+    fetchUserSuggestions("email", email, setEmailSuggestions)
   }
 
   const handlePhoneFocus = () => {
@@ -678,8 +892,7 @@ useEffect(() => {
       blurTimeoutRef.current = null
     }
     setFocusedInput("phone")
-    const suggestions = getSuggestions("phone", phone)
-    setPhoneSuggestions(suggestions)
+    fetchUserSuggestions("phone", phone, setPhoneSuggestions)
   }
 
   const handleNameFocus = () => {
@@ -688,8 +901,7 @@ useEffect(() => {
       blurTimeoutRef.current = null
     }
     setFocusedInput("name")
-    const suggestions = getSuggestions("name", name)
-    setNameSuggestions(suggestions)
+    fetchUserSuggestions("name", name, setNameSuggestions)
   }
 
   const handleBlur = () => {
@@ -702,15 +914,16 @@ useEffect(() => {
     }, 150)
   }
 
-  const handleSuggestionClick = (user: typeof userList[0]) => {
+  const handleSuggestionClick = (user: UserSuggestion) => {
     console.log('👤 User suggestion clicked:', user)
     if (blurTimeoutRef.current) {
       clearTimeout(blurTimeoutRef.current)
       blurTimeoutRef.current = null
     }
-    setEmail(user.email)
-    setPhone(user.phone)
-    setName(user.name)
+    setEmail(user.email || "")
+    setPhone(user.phone || "")
+    setName(user.name || "")
+    upsertUsersInCache([user])
     setEmailSuggestions([])
     setPhoneSuggestions([])
     setNameSuggestions([])
@@ -1272,9 +1485,28 @@ const getEffectivePrice = (slot: SelectedSlot): number => {
     const newErrors: Record<string, string> = {}
 
     if (!name.trim()) newErrors.name = 'Name is required'
-    if (!email.trim()) newErrors.email = 'Email is required'
-    else if (!/\S+@\S+\.\S+/.test(email)) newErrors.email = 'Email is invalid'
-    if (!phone.trim()) newErrors.phone = 'Phone number is required'
+    const phoneVisible = bookingFieldConfig.phone.visible
+    const emailVisible = bookingFieldConfig.email.visible
+    const phoneRequired = bookingFieldConfig.phone.required
+    const emailRequired = bookingFieldConfig.email.required
+    const hasPhone = Boolean(phone.trim())
+    const hasEmail = Boolean(email.trim())
+
+    if (phoneRequired && !hasPhone) newErrors.phone = 'Phone number is required'
+    if (emailRequired && !hasEmail) newErrors.email = 'Email is required'
+    if (hasEmail && !/\S+@\S+\.\S+/.test(email)) newErrors.email = 'Email is invalid'
+    if (!hasPhone && !hasEmail) {
+      if (phoneVisible && emailVisible) {
+        newErrors.phone = newErrors.phone || 'Enter phone or email'
+        newErrors.email = newErrors.email || 'Enter phone or email'
+      } else if (phoneVisible) {
+        newErrors.phone = newErrors.phone || 'Phone number is required'
+      } else if (emailVisible) {
+        newErrors.email = newErrors.email || 'Email is required'
+      } else {
+        newErrors.phone = 'At least one contact field is required'
+      }
+    }
     if (selectedSlots.length === 0) newErrors.slots = 'Please select at least one time slot'
     if (!paymentType) newErrors.payment = 'Please select a payment method'
     if (isSquadMode) {
@@ -1369,8 +1601,8 @@ const getEffectivePrice = (slot: SelectedSlot): number => {
       const bookingData = {
         consoleType: selectedSlots[0]?.console_name || '',
         name,
-        email,
-        phone,
+        email: bookingFieldConfig.email.visible ? email : '',
+        phone: bookingFieldConfig.phone.visible ? phone : '',
         bookedDate: normalizeBookedDate(selectedSlots[0]?.date || ''),
         slotId: selectedSlots.map(slot => slot.slot_id),
         paymentType: paymentType === 'Monthly Credit' ? 'monthly_credit' : paymentType,
@@ -1439,7 +1671,7 @@ if (response.ok || result.success === true || result.success === 'true') {
   }
 
   // Update user cache
-  const userCacheKey = 'userList'
+  const userCacheKey = `userList:${vendorId}`
   const cached = localStorage.getItem(userCacheKey)
 
   if (cached) {
@@ -1447,7 +1679,9 @@ if (response.ok || result.success === true || result.success === 'true') {
       const { data, timestamp } = JSON.parse(cached)
 
       const isUserExists = data.some(
-        (user: any) => user.email === email || user.phone === phone
+        (user: any) =>
+          (email && user.email === email) ||
+          (phone && user.phone === phone)
       )
 
       if (!isUserExists) {
@@ -1560,14 +1794,98 @@ if (response.ok || result.success === true || result.success === 'true') {
           exit={{ scale: 0.9, opacity: 0 }}
           className="slot-booking-modal flex w-full max-w-6xl max-h-[96vh] flex-col overflow-hidden rounded-2xl border shadow-2xl"
         >
-          <div className="flex items-center justify-between border-b p-4 sm:p-5 md:p-6">
+          <div className="relative flex items-center justify-between border-b p-4 sm:p-5 md:p-6">
             <h2 className="premium-heading !text-xl sm:!text-2xl">New Slot Booking</h2>
-            <button
-              onClick={onClose}
-              className="slot-booking-modal-close rounded-lg p-2 transition-colors"
-            >
-              <X className="w-5 h-5" />
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setFieldConfigError("")
+                  setBookingFieldDraft(bookingFieldConfig)
+                  setIsFieldConfigOpen((prev) => !prev)
+                }}
+                className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs font-semibold text-gray-700 transition hover:border-emerald-500 hover:text-emerald-700 dark:border-gray-700 dark:bg-slate-900 dark:text-slate-200"
+              >
+                <SlidersHorizontal className="h-3.5 w-3.5" />
+                Field Rules
+              </button>
+              <button
+                onClick={onClose}
+                className="slot-booking-modal-close rounded-lg p-2 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            {isFieldConfigOpen && (
+              <div className="absolute right-4 top-[calc(100%-2px)] z-30 w-[310px] rounded-xl border border-slate-300 bg-white p-3 shadow-xl dark:border-slate-700 dark:bg-slate-900">
+                <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">Customer Field Configuration</p>
+                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                  Name stays mandatory. Keep at least one contact field required.
+                </p>
+
+                <div className="mt-3 space-y-3 text-xs">
+                  <div className="rounded-lg border border-slate-200 p-2 dark:border-slate-700">
+                    <p className="font-semibold text-slate-700 dark:text-slate-200">Phone</p>
+                    <div className="mt-2 flex items-center justify-between">
+                      <label className="text-slate-600 dark:text-slate-300">Show field</label>
+                      <input
+                        type="checkbox"
+                        checked={bookingFieldDraft.phone.visible}
+                        onChange={(e) => applyFieldDraftChange("phone", "visible", e.target.checked)}
+                      />
+                    </div>
+                    <div className="mt-2 flex items-center justify-between">
+                      <label className="text-slate-600 dark:text-slate-300">Required</label>
+                      <input
+                        type="checkbox"
+                        checked={bookingFieldDraft.phone.required}
+                        onChange={(e) => applyFieldDraftChange("phone", "required", e.target.checked)}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="rounded-lg border border-slate-200 p-2 dark:border-slate-700">
+                    <p className="font-semibold text-slate-700 dark:text-slate-200">Email</p>
+                    <p className="mt-2 text-[11px] text-slate-500 dark:text-slate-400">
+                      Optional email stays hidden in form for faster desk booking.
+                    </p>
+                    <div className="mt-2 flex items-center justify-between">
+                      <label className="text-slate-600 dark:text-slate-300">Required</label>
+                      <input
+                        type="checkbox"
+                        checked={bookingFieldDraft.email.required}
+                        onChange={(e) => applyFieldDraftChange("email", "required", e.target.checked)}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {fieldConfigError && (
+                  <p className="mt-2 text-xs text-red-500">{fieldConfigError}</p>
+                )}
+
+                <div className="mt-3 flex justify-end gap-2">
+                  <button
+                    type="button"
+                    className="rounded-lg border border-slate-300 px-2.5 py-1.5 text-xs text-slate-600 dark:border-slate-700 dark:text-slate-300"
+                    onClick={() => {
+                      setBookingFieldDraft(bookingFieldConfig)
+                      setIsFieldConfigOpen(false)
+                    }}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    className="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-60"
+                    onClick={saveVendorFieldConfig}
+                    disabled={isFieldConfigSaving}
+                  >
+                    {isFieldConfigSaving ? "Saving..." : "Save"}
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="flex-1 overflow-y-auto p-3 sm:p-4 md:p-6">
@@ -1636,111 +1954,14 @@ if (response.ok || result.success === true || result.success === 'true') {
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <div className="relative">
-                        <input
-                          type="email"
-                          value={email}
-                          onChange={(e) => handleEmailInputChange(e.target.value)}
-                          onFocus={handleEmailFocus}
-                          onBlur={handleBlur}
-                          autoComplete="off"
-                          placeholder={isSquadMode ? "Captain email" : "Email"}
-                          className={cn(
-                            "w-full pl-10 pr-4 py-3 bg-white dark:bg-gray-800 border rounded-lg transition-all duration-200",
-                            errors.email
-                              ? "border-red-500 focus:border-red-500"
-                              : focusedInput === "email"
-                              ? "border-emerald-500 focus:border-emerald-500"
-                              : "border-gray-300 dark:border-gray-600 focus:border-emerald-500",
-                            "focus:outline-none focus:ring-1 focus:ring-emerald-500/20"
-                          )}
-                        />
-                        <Mail className="w-4 h-4 text-gray-400 absolute left-3 top-3.5" />
-                        <AnimatePresence>
-                          {focusedInput === "email" && emailSuggestions.length > 0 && (
-                            <motion.ul
-                              initial={{ opacity: 0, y: -5 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              exit={{ opacity: 0, y: -5 }}
-                              className="absolute z-20 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg w-full mt-1 max-h-40 overflow-y-auto"
-                            >
-                              {emailSuggestions.slice(0, 5).map((user, idx) => (
-                                <motion.li
-                                  key={idx}
-                                  whileHover={{ backgroundColor: "rgba(16, 185, 129, 0.1)" }}
-                                  className="px-3 py-2 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 cursor-pointer border-b border-gray-100 dark:border-gray-700 last:border-b-0"
-                                  onMouseDown={() => handleSuggestionClick(user)}
-                                >
-                                  <div className="flex items-center gap-2">
-                                    <div className="p-1 bg-emerald-100 dark:bg-emerald-900/30 rounded-full">
-                                      <User className="w-3 h-3 text-emerald-600" />
-                                    </div>
-                                    <div>
-                                      <p className="font-medium text-gray-800 dark:text-white text-sm">{user.name}</p>
-                                      <p className="text-gray-600 dark:text-gray-400 text-xs">{user.email}</p>
-                                    </div>
-                                  </div>
-                                </motion.li>
-                              ))}
-                            </motion.ul>
-                          )}
-                        </AnimatePresence>
-                        {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
-                      </div>
-
-                      <div className="relative">
-                        <input
-                          type="tel"
-                          value={phone}
-                          onChange={(e) => handlePhoneInputChange(e.target.value)}
-                          onFocus={handlePhoneFocus}
-                          onBlur={handleBlur}
-                          autoComplete="off"
-                          placeholder={isSquadMode ? "Captain phone" : "Phone"}
-                          className={cn(
-                            "w-full pl-10 pr-4 py-3 bg-white dark:bg-gray-800 border rounded-lg transition-all duration-200",
-                            errors.phone
-                              ? "border-red-500 focus:border-red-500"
-                              : focusedInput === "phone"
-                              ? "border-emerald-500 focus:border-emerald-500"
-                              : "border-gray-300 dark:border-gray-600 focus:border-emerald-500",
-                            "focus:outline-none focus:ring-1 focus:ring-emerald-500/20"
-                          )}
-                        />
-                        <Phone className="w-4 h-4 text-gray-400 absolute left-3 top-3.5" />
-                        <AnimatePresence>
-                          {focusedInput === "phone" && phoneSuggestions.length > 0 && (
-                            <motion.ul
-                              initial={{ opacity: 0, y: -5 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              exit={{ opacity: 0, y: -5 }}
-                              className="absolute z-20 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg w-full mt-1 max-h-40 overflow-y-auto"
-                            >
-                              {phoneSuggestions.slice(0, 5).map((user, idx) => (
-                                <motion.li
-                                  key={idx}
-                                  whileHover={{ backgroundColor: "rgba(16, 185, 129, 0.1)" }}
-                                  className="px-3 py-2 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 cursor-pointer border-b border-gray-100 dark:border-gray-700 last:border-b-0"
-                                  onMouseDown={() => handleSuggestionClick(user)}
-                                >
-                                  <div className="flex items-center gap-2">
-                                    <div className="p-1 bg-emerald-100 dark:bg-emerald-900/30 rounded-full">
-                                      <User className="w-3 h-3 text-emerald-600" />
-                                    </div>
-                                    <div>
-                                      <p className="font-medium text-gray-800 dark:text-white text-sm">{user.name}</p>
-                                      <p className="text-gray-600 dark:text-gray-400 text-xs">{user.phone}</p>
-                                    </div>
-                                  </div>
-                                </motion.li>
-                              ))}
-                            </motion.ul>
-                          )}
-                        </AnimatePresence>
-                        {errors.phone && <p className="text-red-500 text-xs mt-1">{errors.phone}</p>}
-                      </div>
-
+                    <div
+                      className={cn(
+                        "grid grid-cols-1 gap-4",
+                        bookingFieldConfig.phone.visible && bookingFieldConfig.email.visible
+                          ? "md:grid-cols-3"
+                          : "md:grid-cols-2"
+                      )}
+                    >
                       <div className="relative">
                         <input
                           type="text"
@@ -1748,6 +1969,7 @@ if (response.ok || result.success === true || result.success === 'true') {
                           onChange={(e) => handleNameInputChange(e.target.value)}
                           onFocus={handleNameFocus}
                           onBlur={handleBlur}
+                          autoComplete="off"
                           placeholder={isSquadMode ? "Captain full name" : "Full name"}
                           className={cn(
                             "w-full pl-10 pr-4 py-3 bg-white dark:bg-gray-800 border rounded-lg transition-all duration-200",
@@ -1781,7 +2003,7 @@ if (response.ok || result.success === true || result.success === 'true') {
                                     </div>
                                     <div>
                                       <p className="font-medium text-gray-800 dark:text-white text-sm">{user.name}</p>
-                                      <p className="text-gray-600 dark:text-gray-400 text-xs">{user.email}</p>
+                                      <p className="text-gray-600 dark:text-gray-400 text-xs">{user.phone || user.email}</p>
                                     </div>
                                   </div>
                                 </motion.li>
@@ -1791,6 +2013,120 @@ if (response.ok || result.success === true || result.success === 'true') {
                         </AnimatePresence>
                         {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name}</p>}
                       </div>
+
+                      {bookingFieldConfig.phone.visible && (
+                        <div className="relative">
+                          <input
+                            type="tel"
+                            value={phone}
+                            onChange={(e) => handlePhoneInputChange(e.target.value)}
+                            onFocus={handlePhoneFocus}
+                            onBlur={handleBlur}
+                            autoComplete="off"
+                            placeholder={isSquadMode ? "Captain phone" : "Phone"}
+                            className={cn(
+                              "w-full pl-10 pr-4 py-3 bg-white dark:bg-gray-800 border rounded-lg transition-all duration-200",
+                              errors.phone
+                                ? "border-red-500 focus:border-red-500"
+                                : focusedInput === "phone"
+                                ? "border-emerald-500 focus:border-emerald-500"
+                                : "border-gray-300 dark:border-gray-600 focus:border-emerald-500",
+                              "focus:outline-none focus:ring-1 focus:ring-emerald-500/20"
+                            )}
+                          />
+                          <Phone className="w-4 h-4 text-gray-400 absolute left-3 top-3.5" />
+                          <AnimatePresence>
+                            {focusedInput === "phone" && (phoneSuggestions.length > 0 || isSuggestionLoading.phone) && (
+                              <motion.ul
+                                initial={{ opacity: 0, y: -5 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -5 }}
+                                className="absolute z-20 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg w-full mt-1 max-h-40 overflow-y-auto"
+                              >
+                                {isSuggestionLoading.phone && phoneSuggestions.length === 0 && (
+                                  <li className="px-3 py-2 text-xs text-gray-500 dark:text-gray-400">Searching...</li>
+                                )}
+                                {phoneSuggestions.slice(0, 5).map((user, idx) => (
+                                  <motion.li
+                                    key={idx}
+                                    whileHover={{ backgroundColor: "rgba(16, 185, 129, 0.1)" }}
+                                    className="px-3 py-2 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 cursor-pointer border-b border-gray-100 dark:border-gray-700 last:border-b-0"
+                                    onMouseDown={() => handleSuggestionClick(user)}
+                                  >
+                                    <div className="flex items-center gap-2">
+                                      <div className="p-1 bg-emerald-100 dark:bg-emerald-900/30 rounded-full">
+                                        <User className="w-3 h-3 text-emerald-600" />
+                                      </div>
+                                      <div>
+                                        <p className="font-medium text-gray-800 dark:text-white text-sm">{user.name}</p>
+                                        <p className="text-gray-600 dark:text-gray-400 text-xs">{user.phone}</p>
+                                      </div>
+                                    </div>
+                                  </motion.li>
+                                ))}
+                              </motion.ul>
+                            )}
+                          </AnimatePresence>
+                          {errors.phone && <p className="text-red-500 text-xs mt-1">{errors.phone}</p>}
+                        </div>
+                      )}
+
+                      {bookingFieldConfig.email.visible && (
+                        <div className="relative">
+                          <input
+                            type="email"
+                            value={email}
+                            onChange={(e) => handleEmailInputChange(e.target.value)}
+                            onFocus={handleEmailFocus}
+                            onBlur={handleBlur}
+                            autoComplete="off"
+                            placeholder={isSquadMode ? "Captain email" : "Email"}
+                            className={cn(
+                              "w-full pl-10 pr-4 py-3 bg-white dark:bg-gray-800 border rounded-lg transition-all duration-200",
+                              errors.email
+                                ? "border-red-500 focus:border-red-500"
+                                : focusedInput === "email"
+                                ? "border-emerald-500 focus:border-emerald-500"
+                                : "border-gray-300 dark:border-gray-600 focus:border-emerald-500",
+                              "focus:outline-none focus:ring-1 focus:ring-emerald-500/20"
+                            )}
+                          />
+                          <Mail className="w-4 h-4 text-gray-400 absolute left-3 top-3.5" />
+                          <AnimatePresence>
+                            {focusedInput === "email" && (emailSuggestions.length > 0 || isSuggestionLoading.email) && (
+                              <motion.ul
+                                initial={{ opacity: 0, y: -5 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -5 }}
+                                className="absolute z-20 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg w-full mt-1 max-h-40 overflow-y-auto"
+                              >
+                                {isSuggestionLoading.email && emailSuggestions.length === 0 && (
+                                  <li className="px-3 py-2 text-xs text-gray-500 dark:text-gray-400">Searching...</li>
+                                )}
+                                {emailSuggestions.slice(0, 5).map((user, idx) => (
+                                  <motion.li
+                                    key={idx}
+                                    whileHover={{ backgroundColor: "rgba(16, 185, 129, 0.1)" }}
+                                    className="px-3 py-2 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 cursor-pointer border-b border-gray-100 dark:border-gray-700 last:border-b-0"
+                                    onMouseDown={() => handleSuggestionClick(user)}
+                                  >
+                                    <div className="flex items-center gap-2">
+                                      <div className="p-1 bg-emerald-100 dark:bg-emerald-900/30 rounded-full">
+                                        <User className="w-3 h-3 text-emerald-600" />
+                                      </div>
+                                      <div>
+                                        <p className="font-medium text-gray-800 dark:text-white text-sm">{user.name}</p>
+                                        <p className="text-gray-600 dark:text-gray-400 text-xs">{user.email}</p>
+                                      </div>
+                                    </div>
+                                  </motion.li>
+                                ))}
+                              </motion.ul>
+                            )}
+                          </AnimatePresence>
+                          {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
+                        </div>
+                      )}
                     </div>
 
                     <AnimatePresence>
