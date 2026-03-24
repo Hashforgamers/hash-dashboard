@@ -567,33 +567,35 @@ export function DashboardContent() {
             animate={{ opacity: 1, y: 0 }}
             className="gaming-panel shrink-0 rounded-xl p-3 md:p-4"
           >
-            <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_auto_minmax(0,1.8fr)_auto] md:items-start">
+            <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-start 2xl:grid-cols-[minmax(0,1fr)_auto_minmax(0,1.6fr)_auto]">
               <div className="flex-1">
-              <div className="flex items-center gap-3 mb-1">
-                <h1 className="premium-heading dashboard-hero-title">Gaming Cafe Command</h1>
-                <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`} />
-                <NotificationButton
-                  vendorId={vendorId}
-                  onBookingAccepted={handleBookingAccepted}
-                  latestBookingEvent={latestBookingEvent}
-                />
-                <div className="ml-auto flex max-w-full items-center gap-2 rounded-full border border-emerald-400/30 bg-emerald-500/10 px-2 py-1 text-[11px] text-emerald-200 sm:px-3 whitespace-nowrap">
-                  <span className="font-semibold">{nowISTTimeText} IST</span>
-                  <span className="hidden lg:inline text-emerald-300/80">• {nowISTDateText}</span>
-                </div>
-                {isConnected && realTimeStats.lastUpdate && (
-                  <motion.div
-                    animate={{ scale: [1, 1.1, 1] }}
-                    transition={{ duration: 2, repeat: Infinity }}
-                    className="text-xs text-green-600 font-medium"
-                    title={`Last updated: ${realTimeStats.lastUpdate}`}
+                <div className="mb-2 flex flex-wrap items-center gap-2 sm:gap-3">
+                  <h1 className="premium-heading dashboard-hero-title">Gaming Cafe Command</h1>
+                  <div className={`h-2 w-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`} />
+                  <NotificationButton
+                    vendorId={vendorId}
+                    onBookingAccepted={handleBookingAccepted}
+                    latestBookingEvent={latestBookingEvent}
                   />
-                )}
+                  {isConnected && realTimeStats.lastUpdate && (
+                    <motion.div
+                      animate={{ scale: [1, 1.1, 1] }}
+                      transition={{ duration: 2, repeat: Infinity }}
+                      className="text-xs text-green-600 font-medium"
+                      title={`Last updated: ${realTimeStats.lastUpdate}`}
+                    />
+                  )}
+                </div>
+                <div className="mb-2 flex flex-wrap items-center gap-2">
+                  <div className="flex max-w-full items-center gap-2 rounded-full border border-emerald-400/30 bg-emerald-500/10 px-2 py-1 text-[11px] text-emerald-200 sm:px-3">
+                    <span className="font-semibold">{nowISTTimeText} IST</span>
+                    <span className="hidden sm:inline text-emerald-300/80">• {nowISTDateText}</span>
+                  </div>
+                </div>
+                <p className="premium-subtle text-xs sm:text-sm">
+                  Monitor live slots, revenue, and upcoming sessions in real time.
+                </p>
               </div>
-              <p className="premium-subtle text-xs sm:text-sm">
-                Monitor live slots, revenue, and upcoming sessions in real time.
-              </p>
-            </div>
               <div className="flex w-full items-center justify-end gap-3 self-end md:w-auto md:self-start">
               <motion.div
                 initial={{ opacity: 0, y: 12 }}
@@ -624,13 +626,13 @@ export function DashboardContent() {
                 </button>
               </motion.div>
             </div>
-              <div className="hidden md:block">
+              <div className="hidden 2xl:block">
                 {topMetricsStrip}
               </div>
             </div>
           </motion.div>
 
-          <div className="shrink-0 md:hidden">
+          <div className="shrink-0 2xl:hidden">
             {topMetricsStrip}
           </div>
 

@@ -1126,7 +1126,8 @@ h6 {
 .feature-page-content-scroll {
   overflow-x: hidden;
   overflow-y: auto;
-  overscroll-behavior: contain;
+  /* Allow wheel scroll to bubble naturally to parent containers when needed. */
+  overscroll-behavior: auto;
   -webkit-overflow-scrolling: touch;
 }
 
