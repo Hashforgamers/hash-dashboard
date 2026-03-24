@@ -99,6 +99,7 @@ export default function ForgotPasswordPage() {
   const [timer, setTimer] = useState(60);
   const [canResend, setCanResend] = useState(false);
   const [isResending, setIsResending] = useState(false);
+  const [resetComplete, setResetComplete] = useState(false);
   const { resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
@@ -239,9 +240,8 @@ export default function ForgotPasswordPage() {
       const data = await res.json();
 
       if (data.status === "success") {
-        toast.success("Password reset successfully! Please login.");
-        // Redirect to login after short delay
-        setTimeout(() => (window.location.href = "/login"), 1500);
+        setResetComplete(true);
+        toast.success("Password reset successfully.");
       } else {
         toast.error(data.message || "Failed to reset password.");
         passwordForm.setError("confirm_password", {
@@ -472,7 +472,7 @@ export default function ForgotPasswordPage() {
             )}
 
             {/* ── STEP 3: New Password ───────────────────────────────────── */}
-            {step === 3 && (
+            {step === 3 && !resetComplete && (
               <Form {...passwordForm}>
                 <form
                   onSubmit={passwordForm.handleSubmit(onPasswordSubmit)}
@@ -535,6 +535,23 @@ export default function ForgotPasswordPage() {
                   </Button>
                 </form>
               </Form>
+            )}
+
+            {resetComplete && (
+              <div className="space-y-5">
+                <div className="rounded-lg border border-emerald-400/35 bg-emerald-500/15 p-4 text-center">
+                  <CheckCircle className="mx-auto mb-2 h-8 w-8 text-emerald-300" />
+                  <h3 className="text-base font-semibold text-emerald-100">Password Updated</h3>
+                  <p className="mt-1 text-sm text-emerald-200/90">
+                    Your new password is active. Continue to login when you are ready.
+                  </p>
+                </div>
+                <Link href="/login" className="block">
+                  <Button className="w-full h-12 bg-emerald-600 hover:bg-emerald-500 text-white">
+                    Continue To Login
+                  </Button>
+                </Link>
+              </div>
             )}
 
             {/* Footer security badges */}

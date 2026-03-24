@@ -356,6 +356,45 @@ export function TransactionTable() {
     return taxable + getTransactionTax(t);
   };
 
+  const getTransactionCellText = (transaction: Transaction, key: ColumnKey): string => {
+    switch (key) {
+      case "bookingId":
+        return String(transaction.bookingId ?? "-");
+      case "slotDate":
+        return transaction.slotDate || "-";
+      case "slotTime":
+        return transaction.slotTime || "-";
+      case "userName":
+        return transaction.userName || "-";
+      case "amount":
+        return Number(transaction.amount || 0).toFixed(2);
+      case "appFeeAmount":
+        return Number(transaction.appFeeAmount || 0).toFixed(2);
+      case "netAmount":
+        return Number(transaction.netAmount ?? (transaction.amount - (transaction.appFeeAmount || 0))).toFixed(2);
+      case "modeOfPayment":
+        return transaction.modeOfPayment || "-";
+      case "paymentUseCase":
+        return transaction.paymentUseCase || "-";
+      case "bookingType":
+        return transaction.bookingType || "-";
+      case "settlementStatus":
+        return transaction.settlementStatus || "-";
+      case "sourceChannel":
+        return transaction.sourceChannel || "-";
+      case "staffName":
+        return transaction.staffName || "-";
+      case "breakup":
+        return `Base:${(transaction.baseAmount || 0).toFixed(2)} Meals:${(transaction.mealsAmount || 0).toFixed(2)} Ctrl:${(transaction.controllerAmount || 0).toFixed(2)} Waive:${(transaction.waiveOffAmount || 0).toFixed(2)}`;
+      case "gst":
+        return `${(transaction.gstRate || 0).toFixed(2)}% | C:${(transaction.cgstAmount || 0).toFixed(2)} S:${(transaction.sgstAmount || 0).toFixed(2)} I:${(transaction.igstAmount || 0).toFixed(2)}`;
+      case "totalWithTax":
+        return getTransactionTotalWithTax(transaction).toFixed(2);
+      default:
+        return "-";
+    }
+  };
+
   const metrics = useMemo(() => {
     if (!filteredTransactions.length) {
       return {
@@ -397,31 +436,11 @@ export function TransactionTable() {
     const reportDate = new Date().toLocaleDateString();
     const selectedRange = `${appliedFromDate} to ${appliedToDate}`;
 
-    const headers = [
-      "Booking ID",
-      "Booking Date",
-      "Transaction Time",
-      "User Name",
-      "Amount (INR)",
-      "App Fee (INR)",
-      "Net Amount (INR)",
-      "Mode of Payment",
-      "Booking Type",
-      "Settlement Status",
-    ];
-
-    const rows = filteredTransactions.map((transaction) => [
-      transaction.bookingId ?? "",
-      transaction.slotDate,
-      transaction.slotTime,
-      transaction.userName,
-      Number(transaction.amount || 0).toFixed(2),
-      Number(transaction.appFeeAmount || 0).toFixed(2),
-      Number(transaction.netAmount ?? (transaction.amount - (transaction.appFeeAmount || 0))).toFixed(2),
-      transaction.modeOfPayment,
-      transaction.bookingType,
-      transaction.settlementStatus,
-    ]);
+    const selectedColumns = transactionColumns.filter((col) => visibleColumns[col.key]);
+    const headers = selectedColumns.map((col) => col.label);
+    const rows = filteredTransactions.map((transaction) =>
+      selectedColumns.map((col) => getTransactionCellText(transaction, col.key))
+    );
 
     const subtotal = filteredTransactions.reduce(
       (sum, t) => sum + Number(t.taxableAmount ?? t.amount ?? 0),
@@ -447,7 +466,7 @@ export function TransactionTable() {
       `"Range: ${selectedRange}"`,
       "",
       headers.join(","),
-      ...rows.map((row) => row.join(",")),
+      ...rows.map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(",")),
       "",
       ...footer.map((line) => line.join(",")),
     ].join("\n");
@@ -455,22 +474,6 @@ export function TransactionTable() {
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8" });
     saveAs(blob, `transaction_report_${reportDate.replace(/\//g, "-")}.csv`);
   }
-
-  const groupByUser = (transactions: Transaction[]) => {
-    const grouped: Record<number, { userName: string; totalAmount: number; bookings: Transaction[] }> = {};
-    transactions.forEach((tx) => {
-      if (!grouped[tx.userId]) {
-        grouped[tx.userId] = {
-          userName: tx.userName,
-          totalAmount: 0,
-          bookings: [],
-        };
-      }
-      grouped[tx.userId].totalAmount += tx.amount;
-      grouped[tx.userId].bookings.push(tx);
-    });
-    return grouped;
-  };
 
   const [expandedDates, setExpandedDates] = useState<string[]>([]);
   const [expandedUsers, setExpandedUsers] = useState<Record<string, number[]>>({});
@@ -496,7 +499,6 @@ export function TransactionTable() {
     });
   };
 
-  const groupedTransactions = groupByUser(filteredTransactions);
   const groupedByDate = filteredTransactions.reduce((acc, transaction) => {
     const { slotDate, userId, userName } = transaction;
     if (!acc[slotDate]) {
@@ -510,7 +512,7 @@ export function TransactionTable() {
       };
     }
     acc[slotDate][userId].bookings.push(transaction);
-    acc[slotDate][userId].totalAmount += transaction.amount;
+    acc[slotDate][userId].totalAmount += getTransactionTotalWithTax(transaction);
     return acc;
   }, {} as Record<string, Record<number, { userName: string; bookings: Transaction[]; totalAmount: number }>>);
 
@@ -934,28 +936,73 @@ export function TransactionTable() {
                     </motion.tr>
                     {/* Bookings under Slot Date */}
                     <AnimatePresence>
-                      {expandedDates.includes(slotDate) && (
-                        Object.values(usersGroup).flatMap(userGroup =>
-                          userGroup.bookings.map((transaction) => (
+                      {expandedDates.includes(slotDate) &&
+                        Object.entries(usersGroup).flatMap(([userIdKey, userGroup]) => {
+                          const userId = Number(userIdKey);
+                          const userExpanded = (expandedUsers[slotDate] || []).includes(userId);
+
+                          const userSummaryRow = (
                             <motion.tr
-                              key={transaction.id}
-                              initial={{ opacity: 0, y: 10 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              exit={{ opacity: 0, y: -10 }}
-                              transition={{ duration: 0.2 }}
-                              className="border-slate-200 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800/55"
+                              key={`${slotDate}_user_${userId}`}
+                              initial={{ opacity: 0 }}
+                              animate={{ opacity: 1 }}
+                              exit={{ opacity: 0 }}
+                              onClick={() => toggleUserExpand(slotDate, userId)}
+                              className="cursor-pointer border-slate-200 bg-slate-50/80 transition-colors hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900/60 dark:hover:bg-slate-800/70"
                             >
-                              {transactionColumns
-                                .filter((col) => visibleColumns[col.key])
-                                .map((col) => (
-                                  <React.Fragment key={`${transaction.id}_${col.key}`}>
-                                    {renderTransactionCell(transaction, col.key)}
-                                  </React.Fragment>
-                                ))}
+                              {visibleCols.map((col, idx) => {
+                                if (idx === 0) {
+                                  return (
+                                    <TableCell key={`${slotDate}_${userId}_${col.key}_summary`} className="px-4 py-3 font-medium text-slate-900 dark:text-slate-100">
+                                      <span className="inline-flex items-center gap-2">
+                                        <span className="text-xs">{userExpanded ? "▲" : "▼"}</span>
+                                        <span>{userGroup.userName}</span>
+                                      </span>
+                                    </TableCell>
+                                  );
+                                }
+                                if (col.key === "amount" || col.key === "totalWithTax") {
+                                  return (
+                                    <TableCell key={`${slotDate}_${userId}_${col.key}_sum`} className="px-4 py-3 text-right font-medium text-slate-900 dark:text-slate-100">
+                                      ₹{userGroup.totalAmount.toFixed(2)}
+                                    </TableCell>
+                                  );
+                                }
+                                if (col.key === "bookingType") {
+                                  return (
+                                    <TableCell key={`${slotDate}_${userId}_${col.key}_count`} className="px-4 py-3 text-slate-700 dark:text-slate-300">
+                                      {userGroup.bookings.length} bookings
+                                    </TableCell>
+                                  );
+                                }
+                                return <TableCell key={`${slotDate}_${userId}_${col.key}_blank`} className="px-4 py-3" />;
+                              })}
                             </motion.tr>
-                          ))
-                        )
-                      )}
+                          );
+
+                          const bookingRows = userExpanded
+                            ? userGroup.bookings.map((transaction) => (
+                                <motion.tr
+                                  key={transaction.id}
+                                  initial={{ opacity: 0, y: 6 }}
+                                  animate={{ opacity: 1, y: 0 }}
+                                  exit={{ opacity: 0, y: -6 }}
+                                  transition={{ duration: 0.15 }}
+                                  className="border-slate-200 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800/55"
+                                >
+                                  {transactionColumns
+                                    .filter((col) => visibleColumns[col.key])
+                                    .map((col) => (
+                                      <React.Fragment key={`${transaction.id}_${col.key}`}>
+                                        {renderTransactionCell(transaction, col.key)}
+                                      </React.Fragment>
+                                    ))}
+                                </motion.tr>
+                              ))
+                            : [];
+
+                          return [userSummaryRow, ...bookingRows];
+                        })}
                     </AnimatePresence>
                   </React.Fragment>
                 );
