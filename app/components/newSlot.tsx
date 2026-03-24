@@ -171,8 +171,24 @@ interface SlotBookingFormProps {
 
 // ============= OPTIMIZATION 1: Request Cache =============
 const requestCache = new Map<string, { data: any; timestamp: number }>()
-const CACHE_TTL = 20 * 1000 // 20 seconds for booking freshness
+const CACHE_TTL = 120 * 1000 // 2 minutes for booking freshness
+const SNAPSHOT_TTL = 5 * 60 * 1000 // 5 minutes persistent snapshot for fast reload
 const IST_TIMEZONE = "Asia/Kolkata"
+
+const decodeVendorIdFromStorage = (): number | null => {
+  if (typeof window === "undefined") return null
+  const token = localStorage.getItem("jwtToken")
+  if (!token) return null
+  try {
+    const decoded = jwtDecode<{ sub?: { id?: number } | string }>(token)
+    if (typeof decoded.sub === "object" && decoded.sub?.id) {
+      return Number(decoded.sub.id)
+    }
+    return null
+  } catch {
+    return null
+  }
+}
 
 const getISTDateParts = (date: Date) => {
   const parts = new Intl.DateTimeFormat("en-GB", {
@@ -4335,21 +4351,13 @@ export default function SlotManagement({ embedded = false }: SlotManagementProps
   const [availableConsoles, setAvailableConsoles] = useState<ConsoleType[]>([])
   const [allSlots, setAllSlots] = useState<{ [key: string]: any[] }>({})
   const [recentBookings, setRecentBookings] = useState<any[]>([])
-  const [isLoading, setIsLoading] = useState(true)
+  const [isLoading, setIsLoading] = useState(false)
     const [slotBookings, setSlotBookings] = useState<any[]>([])
 const [isLoadingBookings, setIsLoadingBookings] = useState(false)
-  const [vendorId, setVendorId] = useState<number | null>(null)
+  const [vendorId, setVendorId] = useState<number | null>(() => decodeVendorIdFromStorage())
 
   const getVendorIdFromToken = (): number | null => {
-    const token = localStorage.getItem('jwtToken')
-    if (!token) return null
-    try {
-      const decoded = jwtDecode<{ sub: { id: number } }>(token)
-      return decoded.sub.id
-    } catch (error) {
-      console.error('❌ Error decoding token:', error)
-      return null
-    }
+    return decodeVendorIdFromStorage()
   }
 
   type BookingCacheData = {
@@ -4357,6 +4365,31 @@ const [isLoadingBookings, setIsLoadingBookings] = useState(false)
     allSlots: { [key: string]: any[] }
     selectedConsole: ConsoleFilter
     dates: string[]
+  }
+
+  const getSnapshotKey = (id: number) => `booking_dashboard_snapshot:${id}`
+
+  const readLocalSnapshot = (id: number): BookingCacheData | null => {
+    try {
+      const raw = localStorage.getItem(getSnapshotKey(id))
+      if (!raw) return null
+      const parsed = JSON.parse(raw)
+      const ts = Number(parsed?.ts || 0)
+      const data = parsed?.data as BookingCacheData | undefined
+      if (!data || Date.now() - ts > SNAPSHOT_TTL) return null
+      if (!Array.isArray(data.availableConsoles) || typeof data.allSlots !== "object") return null
+      return data
+    } catch {
+      return null
+    }
+  }
+
+  const writeLocalSnapshot = (id: number, data: BookingCacheData) => {
+    try {
+      localStorage.setItem(getSnapshotKey(id), JSON.stringify({ ts: Date.now(), data }))
+    } catch {
+      // Ignore storage quota failures.
+    }
   }
 
   const bookingCacheKey = vendorId ? `booking_dashboard:${vendorId}` : "booking_dashboard:0"
@@ -4373,12 +4406,17 @@ const [isLoadingBookings, setIsLoadingBookings] = useState(false)
     setIsLoading(false)
   }
 
-  const loadBookingData = async (resolvedVendorId: number): Promise<BookingCacheData | null> => {
+  const loadBookingData = async (
+    resolvedVendorId: number,
+    options: { forceFresh?: boolean } = {}
+  ): Promise<BookingCacheData | null> => {
+    const forceFresh = Boolean(options.forceFresh)
     try {
       console.time("⏱️ Total fetch time")
 
       console.log("📡 Fetching consoles...")
-      const consolesData = await fetchWithDedup(`${BOOKING_URL}/api/getAllConsole/vendor/${resolvedVendorId}?t=${Date.now()}`)
+      const consolesUrl = `${BOOKING_URL}/api/getAllConsole/vendor/${resolvedVendorId}${forceFresh ? `?t=${Date.now()}` : ""}`
+      const consolesData = await fetchWithDedup(consolesUrl)
 
       const consoleTemplate = [
         { type: "PC" as ConsoleFilter, name: "PC Gaming", icon: Monitor, iconColor: "#7c3aed" },
@@ -4444,7 +4482,7 @@ const [isLoadingBookings, setIsLoadingBookings] = useState(false)
 
         console.log("🚀 Batch request:", { vendorId: resolvedVendorId, gameIds, dates: batchDates })
 
-        const batchData = await fetchSlotsBatch(resolvedVendorId, gameIds, batchDates, true)
+        const batchData = await fetchSlotsBatch(resolvedVendorId, gameIds, batchDates, forceFresh)
         console.log("✅ Batch data received:", batchData)
 
         for (const [dateKey, slots] of Object.entries(batchData)) {
@@ -4549,13 +4587,12 @@ const [isLoadingBookings, setIsLoadingBookings] = useState(false)
     }
   }
 
-  const refreshBookingSnapshot = async () => {
+  const refreshBookingSnapshot = async (forceFresh = false) => {
     if (!vendorId) return
-    requestCache.clear()
-    pendingRequests.clear()
-    const data = await loadBookingData(vendorId)
+    const data = await loadBookingData(vendorId, { forceFresh })
     if (!data) return
     setModuleCache(bookingCacheKey, data)
+    writeLocalSnapshot(vendorId, data)
     applyBookingCache(data)
   }
 
@@ -4578,15 +4615,12 @@ const fetchSlotBookings = async (slotIds: number[], date: string) => {
     const slotIdsParam = slotIds.join(',')
     // ✅ Add status filter for past bookings
     const statusParam = isPastDate ? '&include_completed=true' : ''
-    
-    const response = await fetch(
-      `${BOOKING_URL}/api/vendor/${vendorId}/slot-bookings?slot_ids=${slotIdsParam}&date=${normalizedDate}${statusParam}`
-    )
-    
-    const data = await response.json()
+
+    const url = `${BOOKING_URL}/api/vendor/${vendorId}/slot-bookings?slot_ids=${slotIdsParam}&date=${normalizedDate}${statusParam}`
+    const data = await fetchWithDedup(url)
     console.log('📥 Slot bookings response:', data)
-    
-    if (data.success && data.bookings) {
+
+    if (data?.success && data?.bookings) {
       setSlotBookings(data.bookings)
       console.log(`✅ Loaded ${data.bookings.length} ${isPastDate ? 'past' : 'active'} bookings`)
     } else {
@@ -4603,7 +4637,9 @@ const fetchSlotBookings = async (slotIds: number[], date: string) => {
 
 
   useEffect(() => {
-    setVendorId(getVendorIdFromToken())
+    if (!vendorId) {
+      setVendorId(getVendorIdFromToken())
+    }
   }, [])
 
   useEffect(() => {
@@ -4615,20 +4651,29 @@ const fetchSlotBookings = async (slotIds: number[], date: string) => {
   useEffect(() => {
     if (!vendorId) return
 
+    let hasLocalSnapshot = false
+    // Instant local snapshot restore for fast perceived load.
+    if (!cachedBooking) {
+      const localSnapshot = readLocalSnapshot(vendorId)
+      if (localSnapshot) {
+        hasLocalSnapshot = true
+        setModuleCache(bookingCacheKey, localSnapshot)
+        applyBookingCache(localSnapshot)
+      }
+    }
+
     const shouldRefresh = !cachedBooking || bookingVersion > 0
     if (!shouldRefresh) return
 
-    if (!cachedBooking) {
+    if (!cachedBooking && !hasLocalSnapshot) {
       setIsLoading(true)
     }
 
-    requestCache.clear()
-    pendingRequests.clear()
-
-    loadBookingData(vendorId)
+    loadBookingData(vendorId, { forceFresh: bookingVersion > 0 })
       .then((data) => {
         if (!data) return
         setModuleCache(bookingCacheKey, data)
+        writeLocalSnapshot(vendorId, data)
         applyBookingCache(data)
         setRecentBookings([])
       })
@@ -4657,7 +4702,7 @@ useEffect(() => {
 
   useEffect(() => {
     const handleBookingUpdated = () => {
-      refreshBookingSnapshot()
+      refreshBookingSnapshot(true)
     }
 
     window.addEventListener('refresh-dashboard', handleBookingUpdated)
@@ -4682,10 +4727,13 @@ useEffect(() => {
 
   const handleBookingComplete = () => {
     setSelectedSlots([])
-    refreshBookingSnapshot()
+    refreshBookingSnapshot(true)
   }
 
-  if (isLoading) {
+  const hasRenderableSnapshot =
+    availableConsoles.length > 0 && Object.keys(allSlots || {}).length > 0
+
+  if (isLoading && !hasRenderableSnapshot) {
     return (
       <main className={embedded ? "h-full min-h-0 bg-background flex items-center justify-center" : "min-h-screen bg-background flex items-center justify-center"}>
         <div className="text-center">
@@ -4703,6 +4751,12 @@ useEffect(() => {
           embedded ? "flex h-full min-h-0 flex-col gap-3 sm:gap-4" : ""
         }`}
       >
+        {isLoading && hasRenderableSnapshot && (
+          <div className="mb-2 flex items-center gap-2 rounded-md border border-slate-700/60 bg-slate-900/40 px-3 py-1.5 text-xs text-slate-300">
+            <Loader2 className="h-3.5 w-3.5 animate-spin text-cyan-400" />
+            Syncing latest slots...
+          </div>
+        )}
         {embedded ? (
           <>
             <div className="shrink-0 space-y-3 sm:space-y-4">
