@@ -12,10 +12,14 @@ type SocketPayload = {
 };
 
 const MODULE_EVENT_MAP: Record<string, string> = {
+  booking: "booking",
   booking_updated: "booking",
   booking_queue_updated: "booking",
   booking_slots_updated: "booking",
   booking_payment_update: "booking",
+  upcoming_booking: "booking",
+  current_slot: "booking",
+  booking_admin: "booking",
   pay_at_cafe_accepted: "booking",
   pay_at_cafe_rejected: "booking",
   extras_updated: "extras",
