@@ -23,7 +23,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Loader2, Shield, Gamepad2, Lock, Mail } from "lucide-react";
+import { Loader2, Shield, Gamepad2, Lock, Mail, KeyRound } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
 import { LOGIN_URL } from "../../../src/config/env";
@@ -51,6 +51,15 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [loginError, setLoginError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [forceResetOpen, setForceResetOpen] = useState(false);
+  const [forceResetEmail, setForceResetEmail] = useState("");
+  const [forceResetCurrentPassword, setForceResetCurrentPassword] = useState("");
+  const [forceResetLoading, setForceResetLoading] = useState(false);
+  const [forceResetError, setForceResetError] = useState("");
+  const [forceResetForm, setForceResetForm] = useState({
+    new_password: "",
+    confirm_password: "",
+  });
   const lastAttemptRef = useRef(0);
   const { resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
@@ -211,6 +220,16 @@ export default function LoginPage() {
         return; // ✅ Return early, don't fall into catch block
       }
 
+      if (result.status === "password_change_required") {
+        setForceResetEmail(values.email);
+        setForceResetCurrentPassword(values.password);
+        setForceResetForm({ new_password: "", confirm_password: "" });
+        setForceResetError("");
+        setForceResetOpen(true);
+        toast.info(result.message || "Please set a new password before continuing.");
+        return;
+      }
+
       // ✅ Handle 200 OK with status field in body
       if (result.status === "success") {
         const vendors = result.vendors;
@@ -275,6 +294,59 @@ export default function LoginPage() {
     }
   }
 
+  const handleTemporaryPasswordUpdate = async () => {
+    if (!forceResetEmail || !forceResetCurrentPassword) {
+      setForceResetError("Session expired. Please login again.");
+      return;
+    }
+    if (!forceResetForm.new_password || !forceResetForm.confirm_password) {
+      setForceResetError("Please fill both password fields.");
+      return;
+    }
+    if (forceResetForm.new_password.length < 8) {
+      setForceResetError("New password must be at least 8 characters.");
+      return;
+    }
+    if (forceResetForm.new_password !== forceResetForm.confirm_password) {
+      setForceResetError("Passwords do not match.");
+      return;
+    }
+
+    setForceResetLoading(true);
+    setForceResetError("");
+    try {
+      const res = await fetch(`${LOGIN_URL}/api/change-password`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: forceResetEmail,
+          current_password: forceResetCurrentPassword,
+          new_password: forceResetForm.new_password,
+          confirm_password: forceResetForm.confirm_password,
+          parent_type: "vendor",
+        }),
+      });
+      const payload = await res.json().catch(() => ({}));
+      if (!res.ok || payload.status !== "success") {
+        setForceResetError(payload.message || "Failed to update password.");
+        return;
+      }
+
+      toast.success("Password updated. Logging you in...");
+      setForceResetOpen(false);
+      lastAttemptRef.current = 0;
+      await onSubmit({
+        email: forceResetEmail,
+        password: forceResetForm.new_password,
+        parent_type: "vendor",
+      });
+    } catch (error: any) {
+      setForceResetError(error?.message || "Failed to update password.");
+    } finally {
+      setForceResetLoading(false);
+    }
+  };
+
   useEffect(() => {
     const checkSessionConflict = () => {
       const hasVendors = localStorage.getItem("vendors");
@@ -298,6 +370,66 @@ export default function LoginPage() {
 
   return (
     <div className="premium-shell flex min-h-screen items-center justify-center overflow-hidden p-3 sm:p-4">
+      {forceResetOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/65 p-4">
+          <div className="w-full max-w-md rounded-2xl border border-white/20 bg-slate-950 p-5 shadow-2xl">
+            <h3 className="text-lg font-semibold text-white">Set New Password</h3>
+            <p className="mt-1 text-sm text-slate-300">
+              Your temporary password is active. Set a new password to continue.
+            </p>
+            <div className="mt-4 space-y-3">
+              <div>
+                <label className="mb-1 block text-xs text-slate-300">New Password</label>
+                <PasswordInput
+                  placeholder="Enter new password"
+                  autoComplete="new-password"
+                  value={forceResetForm.new_password}
+                  onChange={(e) => setForceResetForm((prev) => ({ ...prev, new_password: e.target.value }))}
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs text-slate-300">Confirm Password</label>
+                <PasswordInput
+                  placeholder="Re-enter password"
+                  autoComplete="new-password"
+                  value={forceResetForm.confirm_password}
+                  onChange={(e) => setForceResetForm((prev) => ({ ...prev, confirm_password: e.target.value }))}
+                />
+              </div>
+              {forceResetError && (
+                <p className="rounded-md border border-rose-400/30 bg-rose-500/10 px-3 py-2 text-sm text-rose-300">
+                  {forceResetError}
+                </p>
+              )}
+            </div>
+            <div className="mt-4 flex justify-end gap-2">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setForceResetOpen(false);
+                  setForceResetCurrentPassword("");
+                }}
+                disabled={forceResetLoading}
+              >
+                Cancel
+              </Button>
+              <Button onClick={handleTemporaryPasswordUpdate} disabled={forceResetLoading}>
+                {forceResetLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Updating...
+                  </>
+                ) : (
+                  <>
+                    <KeyRound className="mr-2 h-4 w-4" />
+                    Update & Continue
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
       <div className="relative z-10 w-full max-w-md">
         <Card className="premium-card rounded-2xl border shadow-2xl">
           <CardHeader className="text-center pb-8">

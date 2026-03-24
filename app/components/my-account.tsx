@@ -22,7 +22,7 @@ import {
 } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { User, MapPin, Calendar, Clock, Mail, Phone, Lock,  FileCheck, FileText, Camera, Building2, Sparkles, Shield, BellRing, Wallet, Settings, Globe, Coffee, ImageIcon, Save , Edit,  Ghost, X, Loader2, CreditCard , DollarSign } from 'lucide-react';
+import { User, MapPin, Calendar, Clock, Mail, Phone, Lock,  FileCheck, FileText, Camera, Building2, Sparkles, Shield, BellRing, Wallet, Settings, Globe, Coffee, ImageIcon, Save , Edit,  Ghost, X, Loader2, CreditCard , DollarSign, Download } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import { jwtDecode } from "jwt-decode";
 import { DASHBOARD_URL } from "@/src/config/env";
@@ -80,6 +80,28 @@ const [payouts, setPayouts] = useState([]);
 const [loadingPayouts, setLoadingPayouts] = useState(false);
 const [payoutPage, setPayoutPage] = useState(1);
 const [payoutTotalPages, setPayoutTotalPages] = useState(1);
+const [notificationPrefs, setNotificationPrefs] = useState({
+  app_booking_notifications_enabled: true,
+  pay_at_cafe_enabled: true,
+  hash_wallet_enabled: true,
+  payment_gateway_enabled: true,
+  pass_enabled: true,
+});
+const [loadingNotificationPrefs, setLoadingNotificationPrefs] = useState(false);
+const [savingNotificationPrefs, setSavingNotificationPrefs] = useState(false);
+const [subscriptionHistory, setSubscriptionHistory] = useState<any[]>([]);
+const [loadingSubscriptionHistory, setLoadingSubscriptionHistory] = useState(false);
+const [settlementRows, setSettlementRows] = useState<any[]>([]);
+const [settlementTotals, setSettlementTotals] = useState<any>(null);
+const [loadingSettlementSummary, setLoadingSettlementSummary] = useState(false);
+const [settlementFromDate, setSettlementFromDate] = useState(() => {
+  const today = new Date();
+  return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-01`;
+});
+const [settlementToDate, setSettlementToDate] = useState(() => {
+  const today = new Date();
+  return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+});
 
 // Add these new state variables after your existing bank states
 const [showPaymentDialog, setShowPaymentDialog] = useState(false);
@@ -307,6 +329,83 @@ const fetchPayouts = async (page = 1) => {
   }
 };
 
+const fetchNotificationPreferences = async () => {
+  if (!vendorId) return;
+  setLoadingNotificationPrefs(true);
+  try {
+    const res = await axios.get(`${DASHBOARD_URL}/api/vendor/${vendorId}/notification-preferences`);
+    if (res.data?.success && res.data?.preferences) {
+      setNotificationPrefs({
+        app_booking_notifications_enabled: !!res.data.preferences.app_booking_notifications_enabled,
+        pay_at_cafe_enabled: !!res.data.preferences.pay_at_cafe_enabled,
+        hash_wallet_enabled: !!res.data.preferences.hash_wallet_enabled,
+        payment_gateway_enabled: !!res.data.preferences.payment_gateway_enabled,
+        pass_enabled: !!res.data.preferences.pass_enabled,
+      });
+    }
+  } catch (error) {
+    console.error("Error fetching notification preferences:", error);
+  } finally {
+    setLoadingNotificationPrefs(false);
+  }
+};
+
+const saveNotificationPreferences = async (nextPrefs: any) => {
+  if (!vendorId) return;
+  setSavingNotificationPrefs(true);
+  try {
+    const res = await axios.put(
+      `${DASHBOARD_URL}/api/vendor/${vendorId}/notification-preferences`,
+      nextPrefs
+    );
+    if (res.data?.success) {
+      setNotificationPrefs(res.data.preferences || nextPrefs);
+    }
+  } catch (error) {
+    console.error("Error saving notification preferences:", error);
+    alert("Failed to update notification preferences");
+  } finally {
+    setSavingNotificationPrefs(false);
+  }
+};
+
+const fetchSubscriptionHistory = async () => {
+  if (!vendorId) return;
+  setLoadingSubscriptionHistory(true);
+  try {
+    const res = await axios.get(`${DASHBOARD_URL}/api/vendors/${vendorId}/subscription/history`);
+    setSubscriptionHistory(Array.isArray(res.data?.subscriptions) ? res.data.subscriptions : []);
+  } catch (error) {
+    console.error("Error fetching subscription history:", error);
+    setSubscriptionHistory([]);
+  } finally {
+    setLoadingSubscriptionHistory(false);
+  }
+};
+
+const fetchSettlementSummary = async () => {
+  if (!vendorId) return;
+  setLoadingSettlementSummary(true);
+  try {
+    const res = await axios.get(
+      `${DASHBOARD_URL}/api/vendor/${vendorId}/settlements/summary?from=${settlementFromDate}&to=${settlementToDate}`
+    );
+    if (res.data?.success) {
+      setSettlementRows(Array.isArray(res.data.rows) ? res.data.rows : []);
+      setSettlementTotals(res.data.totals || null);
+    } else {
+      setSettlementRows([]);
+      setSettlementTotals(null);
+    }
+  } catch (error) {
+    console.error("Error fetching settlement summary:", error);
+    setSettlementRows([]);
+    setSettlementTotals(null);
+  } finally {
+    setLoadingSettlementSummary(false);
+  }
+};
+
 // Handle bank form changes
 const handleBankFormChange = (field, value) => {
   setBankForm(prev => ({ ...prev, [field]: value }));
@@ -400,6 +499,12 @@ useEffect(() => {
     fetchPaymentMethods(); // Add this line
   } else if (page === "Payout History") {
     fetchPayouts(payoutPage);
+  } else if (page === "Notification Preferences") {
+    fetchNotificationPreferences();
+  } else if (page === "Subscription Details") {
+    fetchSubscriptionHistory();
+  } else if (page === "Settlement Report") {
+    fetchSettlementSummary();
   } else if (page === "Operating Hours") {
     // Initialize hours data if needed
     if (!hoursData.length && data?.operatingHours) {
@@ -1312,7 +1417,7 @@ const ToggleSwitch = ({
   const { navigation, cafeProfile, businessDetails, operatingHours, billingDetails, verifiedDocuments } = data;
 
   return (
-    <div className="h-full min-h-0 overflow-y-auto bg-background text-foreground">
+    <div className="min-h-screen overflow-y-auto bg-background text-foreground">
       <div className="container py-6 md:py-8 space-y-8">
         <div className="grid grid-cols-12 gap-6">
           {/* Left Sidebar */}
@@ -1465,7 +1570,10 @@ const ToggleSwitch = ({
                     
                     { icon: FileCheck, label: "Verified Documents" },
                     { icon: CreditCard, label: "Bank Transfer" },  
-                    { icon: DollarSign, label: "Payout History" }, 
+                    { icon: DollarSign, label: "Payout History" },
+                    { icon: BellRing, label: "Notification Preferences" },
+                    { icon: Wallet, label: "Subscription Details" },
+                    { icon: Calendar, label: "Settlement Report" },
                   ].map((item, index) => (
                     <motion.div
                       key={item.label}
@@ -3000,6 +3108,204 @@ const ToggleSwitch = ({
           <DollarSign className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
           <h3 className="section-title mb-2">No Payout History</h3>
           <p className="body-text-muted">Your payout transactions will appear here</p>
+        </div>
+      )}
+    </CardContent>
+  </Card>
+)}
+
+{page === "Notification Preferences" && (
+  <Card className="content-card account-panel overflow-hidden">
+    <CardHeader className="pb-4">
+      <CardTitle className="card-title flex items-center gap-2 text-base font-semibold uppercase tracking-[0.12em] text-cyan-100 md:text-lg">
+        <BellRing className="icon-lg text-cyan-300" />
+        Booking Notifications
+      </CardTitle>
+      <CardDescription className="body-text-muted text-xs text-slate-300 md:text-sm">
+        Control app booking alerts shown in your dashboard.
+      </CardDescription>
+    </CardHeader>
+    <CardContent className="space-y-4">
+      {loadingNotificationPrefs ? (
+        <div className="flex items-center gap-2 text-sm text-slate-300">
+          <Loader2 className="h-4 w-4 animate-spin" /> Loading notification settings...
+        </div>
+      ) : (
+        <>
+          {[
+            { key: "app_booking_notifications_enabled", label: "Receive all app booking notifications" },
+            { key: "pay_at_cafe_enabled", label: "Pay at Cafe notifications" },
+            { key: "hash_wallet_enabled", label: "Hash Wallet notifications" },
+            { key: "payment_gateway_enabled", label: "Payment Gateway notifications" },
+            { key: "pass_enabled", label: "Pass booking notifications" },
+          ].map((item) => (
+            <div key={item.key} className="flex items-center justify-between rounded-lg border border-border px-3 py-2">
+              <p className="text-sm text-foreground">{item.label}</p>
+              <ToggleSwitch
+                enabled={Boolean((notificationPrefs as any)[item.key])}
+                loading={savingNotificationPrefs}
+                onToggle={() => {
+                  const enabled = !Boolean((notificationPrefs as any)[item.key]);
+                  const next = { ...notificationPrefs, [item.key]: enabled } as any;
+                  if (item.key === "app_booking_notifications_enabled" && !enabled) {
+                    next.pay_at_cafe_enabled = false;
+                    next.hash_wallet_enabled = false;
+                    next.payment_gateway_enabled = false;
+                    next.pass_enabled = false;
+                  }
+                  setNotificationPrefs(next);
+                  saveNotificationPreferences(next);
+                }}
+              />
+            </div>
+          ))}
+        </>
+      )}
+    </CardContent>
+  </Card>
+)}
+
+{page === "Subscription Details" && (
+  <Card className="content-card account-panel overflow-hidden">
+    <CardHeader className="pb-4">
+      <CardTitle className="card-title flex items-center gap-2 text-base font-semibold uppercase tracking-[0.12em] text-cyan-100 md:text-lg">
+        <Wallet className="icon-lg text-cyan-300" />
+        Subscription Details
+      </CardTitle>
+      <CardDescription className="body-text-muted text-xs text-slate-300 md:text-sm">
+        View all purchased plans with invoice records.
+      </CardDescription>
+    </CardHeader>
+    <CardContent>
+      {loadingSubscriptionHistory ? (
+        <div className="flex items-center gap-2 text-sm text-slate-300">
+          <Loader2 className="h-4 w-4 animate-spin" /> Loading subscriptions...
+        </div>
+      ) : subscriptionHistory.length ? (
+        <div className="dashboard-table-shell">
+          <div className="dashboard-table-wrap">
+            <table className="dashboard-table min-w-[880px]">
+              <thead>
+                <tr className="table-header">
+                  <th className="table-cell table-header-text text-left">Plan</th>
+                  <th className="table-cell table-header-text text-left">Status</th>
+                  <th className="table-cell table-header-text text-left">Period</th>
+                  <th className="table-cell table-header-text text-left">Amount</th>
+                  <th className="table-cell table-header-text text-left">Invoice</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {subscriptionHistory.map((item: any) => (
+                  <tr key={item.id} className="table-row">
+                    <td className="table-cell table-cell-text">
+                      <div className="font-medium">{item.package?.name || "-"}</div>
+                      <div className="text-xs text-muted-foreground">{item.package?.code || "-"}</div>
+                    </td>
+                    <td className="table-cell table-cell-text">{item.status || "-"}</td>
+                    <td className="table-cell table-cell-text">
+                      {item.period_start ? new Date(item.period_start).toLocaleDateString("en-IN") : "-"}
+                      {" to "}
+                      {item.period_end ? new Date(item.period_end).toLocaleDateString("en-IN") : "-"}
+                    </td>
+                    <td className="table-cell table-cell-text">₹{Number(item.amount_paid || 0).toFixed(2)}</td>
+                    <td className="table-cell table-cell-text">
+                      {item.invoice_url ? (
+                        <a
+                          href={`${DASHBOARD_URL}${item.invoice_url}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-flex items-center gap-1 rounded-md border border-cyan-500/40 px-2 py-1 text-xs text-cyan-300 hover:bg-cyan-500/10"
+                        >
+                          <Download className="h-3.5 w-3.5" />
+                          {item.invoice_number || "Invoice"}
+                        </a>
+                      ) : (
+                        "-"
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      ) : (
+        <p className="text-sm text-muted-foreground">No subscription purchases found yet.</p>
+      )}
+    </CardContent>
+  </Card>
+)}
+
+{page === "Settlement Report" && (
+  <Card className="content-card account-panel overflow-hidden">
+    <CardHeader className="pb-4">
+      <CardTitle className="card-title flex items-center gap-2 text-base font-semibold uppercase tracking-[0.12em] text-cyan-100 md:text-lg">
+        <Calendar className="icon-lg text-cyan-300" />
+        Date-wise Settlement
+      </CardTitle>
+      <CardDescription className="body-text-muted text-xs text-slate-300 md:text-sm">
+        Paid by Hash vs pending settlement by day.
+      </CardDescription>
+    </CardHeader>
+    <CardContent className="space-y-4">
+      <div className="dashboard-toolbar">
+        <Input type="date" value={settlementFromDate} onChange={(e) => setSettlementFromDate(e.target.value)} className="dashboard-module-input h-10 w-[160px]" />
+        <Input type="date" value={settlementToDate} onChange={(e) => setSettlementToDate(e.target.value)} className="dashboard-module-input h-10 w-[160px]" />
+        <Button type="button" onClick={fetchSettlementSummary}>Apply</Button>
+      </div>
+      {settlementTotals && (
+        <div className="grid gap-3 sm:grid-cols-3">
+          <div className="rounded-lg border border-border p-3 text-sm">Net: ₹{Number(settlementTotals.net_amount || 0).toFixed(2)}</div>
+          <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-3 text-sm text-emerald-300">
+            Paid by Hash: ₹{Number(settlementTotals.paid_by_hash_amount || 0).toFixed(2)}
+          </div>
+          <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-amber-300">
+            Pending: ₹{Number(settlementTotals.pending_amount || 0).toFixed(2)}
+          </div>
+        </div>
+      )}
+      {loadingSettlementSummary ? (
+        <div className="flex items-center gap-2 text-sm text-slate-300">
+          <Loader2 className="h-4 w-4 animate-spin" /> Loading settlement report...
+        </div>
+      ) : (
+        <div className="dashboard-table-shell">
+          <div className="dashboard-table-wrap">
+            <table className="dashboard-table min-w-[900px]">
+              <thead>
+                <tr className="table-header">
+                  <th className="table-cell table-header-text text-left">Date</th>
+                  <th className="table-cell table-header-text text-left">Bookings</th>
+                  <th className="table-cell table-header-text text-left">Gross</th>
+                  <th className="table-cell table-header-text text-left">App Fee</th>
+                  <th className="table-cell table-header-text text-left">Net</th>
+                  <th className="table-cell table-header-text text-left">Paid By Hash</th>
+                  <th className="table-cell table-header-text text-left">Pending</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {settlementRows.length ? (
+                  settlementRows.map((row: any) => (
+                    <tr key={row.date} className="table-row">
+                      <td className="table-cell table-cell-text">{new Date(row.date).toLocaleDateString("en-IN")}</td>
+                      <td className="table-cell table-cell-text">{row.bookings_count}</td>
+                      <td className="table-cell table-cell-text">₹{Number(row.gross_amount || 0).toFixed(2)}</td>
+                      <td className="table-cell table-cell-text">₹{Number(row.app_fee_amount || 0).toFixed(2)}</td>
+                      <td className="table-cell table-cell-text">₹{Number(row.net_amount || 0).toFixed(2)}</td>
+                      <td className="table-cell table-cell-text text-emerald-300">₹{Number(row.paid_by_hash_amount || 0).toFixed(2)}</td>
+                      <td className="table-cell table-cell-text text-amber-300">₹{Number(row.pending_amount || 0).toFixed(2)}</td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td className="table-cell table-cell-text text-center" colSpan={7}>
+                      No settlements found for selected date range.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
     </CardContent>
