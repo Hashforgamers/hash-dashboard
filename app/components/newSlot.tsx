@@ -2908,22 +2908,6 @@ function ScheduleGrid({
     return gameConsole.type === selectedConsole
   })
 
-  if (filteredConsoles.length === 0) {
-    return (
-      <Card className="overflow-hidden rounded-2xl border border-amber-300 bg-amber-50/90 backdrop-blur-sm dark:border-amber-500/35 dark:bg-amber-500/10">
-        <div className="flex flex-col items-center justify-center px-6 py-10 text-center">
-          <AlertCircle className="mb-3 h-8 w-8 text-amber-300" />
-          <p className="text-sm font-semibold text-amber-900 dark:text-amber-100">
-            No {selectedConsole} consoles available in this cafe
-          </p>
-          <p className="mt-1 text-xs text-amber-700 dark:text-amber-200/90">
-            Add or map {selectedConsole} devices from `Manage Gaming Console` to enable booking.
-          </p>
-        </div>
-      </Card>
-    )
-  }
-
   const getConsoleIcon = (consoleType: string) => {
     switch (consoleType) {
       case 'PC': return Monitor
@@ -2979,6 +2963,22 @@ function ScheduleGrid({
 
     return Array.from(durationSet).sort((a, b) => a - b)
   }, [allSlots, filteredConsoles])
+
+  if (filteredConsoles.length === 0) {
+    return (
+      <Card className="overflow-hidden rounded-2xl border border-amber-300 bg-amber-50/90 backdrop-blur-sm dark:border-amber-500/35 dark:bg-amber-500/10">
+        <div className="flex flex-col items-center justify-center px-6 py-10 text-center">
+          <AlertCircle className="mb-3 h-8 w-8 text-amber-300" />
+          <p className="text-sm font-semibold text-amber-900 dark:text-amber-100">
+            No {selectedConsole} consoles available in this cafe
+          </p>
+          <p className="mt-1 text-xs text-amber-700 dark:text-amber-200/90">
+            Add or map {selectedConsole} devices from `Manage Gaming Console` to enable booking.
+          </p>
+        </div>
+      </Card>
+    )
+  }
 
   const findCoveringSlot = (daySlots: any[], time: string, consoleId?: number) => {
     const target = toMinuteOfDay(time)
