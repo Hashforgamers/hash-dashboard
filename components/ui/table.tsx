@@ -7,10 +7,12 @@ const Table = React.forwardRef<
   React.HTMLAttributes<HTMLTableElement>
 >(({ className, ...props }, ref) => {
   const wrapperRef = React.useRef<HTMLDivElement>(null)
+  const pointerDownRef = React.useRef(false)
   const draggingRef = React.useRef(false)
   const startXRef = React.useRef(0)
   const scrollLeftRef = React.useRef(0)
   const [isDragging, setIsDragging] = React.useState(false)
+  const DRAG_THRESHOLD_PX = 6
 
   const shouldIgnoreDrag = (target: EventTarget | null) => {
     if (!(target instanceof HTMLElement)) return false
@@ -22,34 +24,55 @@ const Table = React.forwardRef<
   }
 
   const handlePointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
-    if (event.pointerType === "mouse" && event.button !== 0) return
+    if (event.pointerType !== "mouse") return
+    if (event.button !== 0) return
     if (shouldIgnoreDrag(event.target)) return
     const wrapper = wrapperRef.current
     if (!wrapper) return
     if (wrapper.scrollWidth <= wrapper.clientWidth) return
-    draggingRef.current = true
-    setIsDragging(true)
+    pointerDownRef.current = true
+    draggingRef.current = false
+    setIsDragging(false)
     startXRef.current = event.clientX
     scrollLeftRef.current = wrapper.scrollLeft
-    wrapper.setPointerCapture(event.pointerId)
   }
 
   const handlePointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
-    if (!draggingRef.current) return
+    if (!pointerDownRef.current) return
     const wrapper = wrapperRef.current
     if (!wrapper) return
-    event.preventDefault()
     const delta = event.clientX - startXRef.current
+    if (!draggingRef.current && Math.abs(delta) < DRAG_THRESHOLD_PX) {
+      return
+    }
+    if (!draggingRef.current) {
+      draggingRef.current = true
+      setIsDragging(true)
+      wrapper.setPointerCapture(event.pointerId)
+    }
+    event.preventDefault()
     wrapper.scrollLeft = scrollLeftRef.current - delta
   }
 
   const stopDragging = (event: React.PointerEvent<HTMLDivElement>) => {
-    if (!draggingRef.current) return
+    if (!pointerDownRef.current) return
+    const wasDragging = draggingRef.current
+    pointerDownRef.current = false
     draggingRef.current = false
     setIsDragging(false)
     const wrapper = wrapperRef.current
     if (wrapper) {
-      wrapper.releasePointerCapture(event.pointerId)
+      if (wrapper.hasPointerCapture(event.pointerId)) {
+        wrapper.releasePointerCapture(event.pointerId)
+      }
+      if (wasDragging) {
+        const suppressClick = (e: MouseEvent) => {
+          e.preventDefault()
+          e.stopPropagation()
+        }
+        wrapper.addEventListener("click", suppressClick, true)
+        setTimeout(() => wrapper.removeEventListener("click", suppressClick, true), 0)
+      }
     }
   }
 
@@ -57,6 +80,7 @@ const Table = React.forwardRef<
     <div
       ref={wrapperRef}
       className="dashboard-table-wrap relative w-full overflow-auto"
+      data-native-drag="true"
       data-dragging={isDragging ? "true" : "false"}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
