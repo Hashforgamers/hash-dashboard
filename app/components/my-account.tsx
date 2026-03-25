@@ -33,8 +33,11 @@ import { motion } from "framer-motion";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faIndianRupeeSign } from '@fortawesome/free-solid-svg-icons'
 import { OTPVerificationModal } from "./otpVerificationModal";
+import { useAccess } from "@/app/context/AccessContext";
 
 export function MyAccount() {
+  const { activeStaff } = useAccess();
+  const isOwnerSession = (activeStaff?.role || "owner") === "owner";
   const [cafeImages, setCafeImages] = useState<string[]>([]);
   const [page, setPage] = useState<string | null>("Cafe Gallery");
   const prevPageRef = useRef<string | null>(null);
@@ -135,6 +138,8 @@ const [togglingMethod, setTogglingMethod] = useState(null);
 const [paymentMethodError, setPaymentMethodError] = useState(null);
 const [paymentMethodSuccess, setPaymentMethodSuccess] = useState(null);
 const [otpLoading, setOtpLoading] = useState(false);
+const [bankDetailsHistory, setBankDetailsHistory] = useState<any[]>([]);
+const [loadingBankHistory, setLoadingBankHistory] = useState(false);
 
 
 
@@ -259,7 +264,12 @@ const checkPageVerification = async (pageType) => {
 
 const handleRestrictedPageClick = async (pageName) => {
   setOtpLoading(true);
-  const pageType = pageName === "Bank Transfer" ? "bank_transfer" : "payout_history";
+  const pageType = pageName === "Bank Details" ? "bank_transfer" : "payout_history";
+  if (pageType === "bank_transfer" && isOwnerSession) {
+    setOtpLoading(false);
+    setPage(pageName);
+    return;
+  }
   
   // Check if already verified
   const isVerified = await checkPageVerification(pageType);
@@ -274,7 +284,7 @@ const handleRestrictedPageClick = async (pageName) => {
 };
 
 const handleOTPVerifySuccess = () => {
-  const pageType = pendingPage === "Bank Transfer" ? "bank_transfer" : "payout_history";
+  const pageType = pendingPage === "Bank Details" ? "bank_transfer" : "payout_history";
   setVerifiedPages(prev => new Set([...prev, pageType]));
   setPage(pendingPage);
   setPendingPage(null);
@@ -304,6 +314,24 @@ const fetchBankDetails = async () => {
     setBankDetails(null);
   } finally {
     setLoadingBank(false);
+  }
+};
+
+const fetchBankDetailsHistory = async () => {
+  if (!vendorId) return;
+  setLoadingBankHistory(true);
+  try {
+    const res = await axios.get(`${DASHBOARD_URL}/api/vendor/${vendorId}/bank-details/history?limit=100`);
+    if (res.data?.success && Array.isArray(res.data?.history)) {
+      setBankDetailsHistory(res.data.history);
+    } else {
+      setBankDetailsHistory([]);
+    }
+  } catch (error) {
+    console.error("Error fetching bank detail history:", error);
+    setBankDetailsHistory([]);
+  } finally {
+    setLoadingBankHistory(false);
   }
 };
 
@@ -415,75 +443,63 @@ const handleBankFormChange = (field, value) => {
 const handleSaveBankDetails = async () => {
   setSavingBank(true);
   try {
-    let dataToSend = {};
-    
-    // Conditional validation and data preparation
-    if (selectedPaymentMethod === 'bank') {
-      // Validate bank account fields
+    const hasAnyBankField = Boolean(
+      bankForm.accountHolderName?.trim() ||
+      bankForm.bankName?.trim() ||
+      bankForm.accountNumber?.trim() ||
+      bankForm.ifscCode?.trim()
+    );
+    const hasUpi = Boolean(bankForm.upiId?.trim());
+
+    if (!hasAnyBankField && !hasUpi) {
+      alert("Please add at least bank account details or UPI ID.");
+      return;
+    }
+
+    if (hasAnyBankField) {
       if (!bankForm.accountHolderName?.trim()) {
-        alert('Account holder name is required');
-        setSavingBank(false);
+        alert("Account holder name is required.");
         return;
       }
       if (!bankForm.bankName?.trim()) {
-        alert('Bank name is required');
-        setSavingBank(false);
+        alert("Bank name is required.");
         return;
       }
       if (!bankForm.accountNumber?.trim()) {
-        alert('Account number is required');
-        setSavingBank(false);
+        alert("Account number is required.");
         return;
       }
-      if (!bankForm.ifscCode?.trim() || bankForm.ifscCode.length !== 11) {
-        alert('Valid IFSC code (11 characters) is required');
-        setSavingBank(false);
+      if (!bankForm.ifscCode?.trim() || bankForm.ifscCode.trim().length !== 11) {
+        alert("Valid IFSC code (11 characters) is required.");
         return;
       }
-      
-      // Prepare bank account data
-      dataToSend = {
-        accountHolderName: bankForm.accountHolderName.trim(),
-        bankName: bankForm.bankName.trim(),
-        accountNumber: bankForm.accountNumber.trim(),
-        ifscCode: bankForm.ifscCode.toUpperCase().trim(),
-        upiId: bankForm.upiId?.trim() || null // Optional UPI with bank
-      };
-    } else {
-      // Validate UPI ID only
-      if (!bankForm.upiId?.trim()) {
-        alert('UPI ID is required');
-        setSavingBank(false);
-        return;
-      }
-      
-      // Prepare UPI-only data
-      dataToSend = {
-        upiId: bankForm.upiId.trim(),
-        // Explicitly set bank fields as null/empty for UPI-only
-        accountHolderName: null,
-        bankName: null,
-        accountNumber: null,
-        ifscCode: null
-      };
     }
 
-    console.log('Sending payment data:', dataToSend); // Debug log
+    const dataToSend = {
+      accountHolderName: hasAnyBankField ? bankForm.accountHolderName.trim() : null,
+      bankName: hasAnyBankField ? bankForm.bankName.trim() : null,
+      accountNumber: hasAnyBankField ? bankForm.accountNumber.trim() : null,
+      ifscCode: hasAnyBankField ? bankForm.ifscCode.toUpperCase().trim() : null,
+      upiId: hasUpi ? bankForm.upiId.trim() : null,
+      changed_by_name: activeStaff?.name || "Owner",
+      changed_by_staff_id: activeStaff?.id || "owner",
+    };
 
     const response = await axios.post(`${DASHBOARD_URL}/api/vendor/${vendorId}/bank-details`, dataToSend);
     
     if (response.data.success) {
-      alert(`${selectedPaymentMethod === 'bank' ? 'Bank account' : 'UPI'} details saved successfully!`);
+      alert('Bank details saved successfully!');
       setEditingBank(false);
       fetchBankDetails();
+      fetchBankDetailsHistory();
     } else {
-      alert(response.data.message || 'Failed to save payment details');
+      alert(response.data.message || 'Failed to save bank details');
     }
   } catch (error) {
-    console.error('Error saving payment details:', error);
+    console.error('Error saving bank details:', error);
     const errorMessage = error.response?.data?.error || 
                         error.response?.data?.message || 
-                        'Failed to save payment details. Please try again.';
+                        'Failed to save bank details. Please try again.';
     alert(errorMessage);
   } finally {
     setSavingBank(false);
@@ -494,9 +510,9 @@ const handleSaveBankDetails = async () => {
 
 // Add this to your existing useEffect or create a new one
 useEffect(() => {
-  if (page === "Bank Transfer") {
+  if (page === "Bank Details") {
     fetchBankDetails();
-    fetchPaymentMethods(); // Add this line
+    fetchBankDetailsHistory();
   } else if (page === "Payout History") {
     fetchPayouts(payoutPage);
   } else if (page === "Notification Preferences") {
@@ -1086,7 +1102,7 @@ const toast = {
 
   const handleViewInpage = async (e: React.MouseEvent<HTMLButtonElement>) => {
     const label = e.currentTarget.dataset.label;
-    if (label === "Bank Transfer" || label === "Payout History") {
+    if (label === "Bank Details" || label === "Payout History") {
     await handleRestrictedPageClick(label);
   } else {
     setPage(label);
@@ -1569,7 +1585,7 @@ const ToggleSwitch = ({
                     { icon: DollarSign, label: "GST Setup" },
                     
                     { icon: FileCheck, label: "Verified Documents" },
-                    { icon: CreditCard, label: "Bank Transfer" },  
+                    { icon: CreditCard, label: "Bank Details" },  
                     { icon: DollarSign, label: "Payout History" },
                     { icon: BellRing, label: "Notification Preferences" },
                     { icon: Wallet, label: "Subscription Details" },
@@ -2357,18 +2373,18 @@ const ToggleSwitch = ({
 
 
 
-{/* BANK TRANSFER PAGE - COMPLETE WITH BOTH SECTIONS */}
-{page === "Bank Transfer" && (
+{/* BANK DETAILS PAGE */}
+{page === "Bank Details" && (
   <>
     {/* FIRST CARD - BANK TRANSFER DETAILS */}
     <Card className="content-card account-panel mb-6 overflow-hidden">
       <CardHeader className="pb-4">
         <CardTitle className="card-title flex items-center gap-2 text-base font-semibold uppercase tracking-[0.12em] text-cyan-100 md:text-lg">
           <CreditCard className="icon-lg text-cyan-300" />
-          Bank Transfer Details
+          Bank Details
         </CardTitle>
         <CardDescription className="body-text-muted text-xs text-slate-300 md:text-sm">
-          Manage your payment details for payouts
+          Manage payout destination details (Bank + UPI).
         </CardDescription>
       </CardHeader>
       <CardContent className="content-card-padding">
@@ -2380,34 +2396,11 @@ const ToggleSwitch = ({
         ) : editingBank ? (
           // EDIT FORM
           <div className="space-y-4">
-            {/* Show selected payment method indicator */}
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 bg-muted/20 rounded-lg gap-2">
-              <div className="flex items-center gap-2 flex-wrap">
-                <Badge variant="outline" className="badge-text">
-                  {selectedPaymentMethod === 'bank' ? 'Bank Account' : 'UPI Payment'}
-                </Badge>
-                <span className="body-text-small">
-                  {selectedPaymentMethod === 'bank' 
-                    ? 'Complete bank account details' 
-                    : 'UPI ID for payments'
-                  }
-                </span>
-              </div>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  setEditingBank(false);
-                  setShowPaymentDialog(true);
-                }}
-                className="btn-secondary whitespace-nowrap"
-              >
-                Change Method
-              </Button>
+            <div className="rounded-lg border border-border bg-muted/20 p-3 text-xs text-muted-foreground">
+              Add bank account details and optional UPI in one place.
             </div>
 
-            {selectedPaymentMethod === 'bank' ? (
+            {true ? (
               // BANK ACCOUNT FIELDS
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
@@ -2467,30 +2460,7 @@ const ToggleSwitch = ({
                   </p>
                 </div>
               </div>
-            ) : (
-              // UPI ONLY FIELDS
-              <div className="space-y-4">
-                <div>
-                  <Label className="form-label">UPI ID *</Label>
-                  <Input
-                    value={bankForm.upiId || ''}
-                    onChange={(e) => handleBankFormChange('upiId', e.target.value)}
-                    placeholder="Enter UPI ID (e.g., yourname@paytm)"
-                    className="input-field"
-                    required
-                  />
-                  <p className="body-text-small mt-1">
-                    Enter your UPI ID like yourname@paytm, yourname@phonepe, yourname@gpay, etc.
-                  </p>
-                </div>
-                <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-                  <p className="body-text-small text-blue-800 dark:text-blue-200">
-                    <strong>Note:</strong> With UPI payment method, you'll receive payouts directly to your UPI ID. 
-                    Make sure the UPI ID is active and linked to your bank account.
-                  </p>
-                </div>
-              </div>
-            )}
+            ) : null}
             
             <div className="flex flex-col sm:flex-row gap-3">
               <Button 
@@ -2590,11 +2560,11 @@ const ToggleSwitch = ({
             <div className="flex flex-col sm:flex-row gap-3">
               <Button 
                 type="button"
-                onClick={() => setShowPaymentDialog(true)}
+                onClick={() => setEditingBank(true)}
                 className="btn-primary"
               >
                 <Edit className="icon-md mr-2" />
-                Edit Payment Details
+                Edit Bank Details
               </Button>
               {bankDetails.verificationStatus === 'PENDING' && (
                 <Button 
@@ -2613,122 +2583,92 @@ const ToggleSwitch = ({
           // NO BANK DETAILS
           <div className="text-center py-8">
             <CreditCard className="mx-auto icon-xl text-muted-foreground mb-4" />
-            <h3 className="section-title mb-2">No Payment Details Found</h3>
-            <p className="body-text-muted mb-4">Add your payment details to receive payouts</p>
+            <h3 className="section-title mb-2">No Bank Details Found</h3>
+            <p className="body-text-muted mb-4">Add bank/UPI details to receive payouts</p>
             <Button 
               type="button"
-              onClick={() => setShowPaymentDialog(true)}
+              onClick={() => setEditingBank(true)}
               className="btn-primary"
             >
               <CreditCard className="icon-md mr-2" />
-              Add Payment Details
+              Add Bank Details
             </Button>
           </div>
         )}
 
-        {/* PAYMENT METHOD SELECTION DIALOG */}
-        {showPaymentDialog && (
-          <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.9 }}
-              className="content-card max-w-md w-full mx-auto shadow-2xl"
-            >
-              <div className="content-card-padding space-y-4">
-                <div>
-                  <h3 className="section-title mb-2">
-                    Select Payment Method
-                  </h3>
-                  <p className="body-text-muted">
-                    Choose what type of payment method you want to add for receiving payouts
-                  </p>
-                </div>
+      </CardContent>
+    </Card>
 
-                <div className="space-y-3">
-                  <div 
-                    className={`flex items-start space-x-3 p-4 rounded-lg border cursor-pointer transition-colors ${
-                      tempPaymentSelection === 'bank' 
-                        ? 'border-primary bg-primary/10' 
-                        : 'border-border hover:bg-muted/20'
-                    }`}
-                    onClick={() => setTempPaymentSelection('bank')}
-                  >
-                    <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center mt-1 flex-shrink-0 ${
-                      tempPaymentSelection === 'bank' ? 'border-primary' : 'border-border'
-                    }`}>
-                      {tempPaymentSelection === 'bank' && (
-                        <div className="w-2 h-2 rounded-full bg-primary"></div>
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <CreditCard className="icon-md text-primary flex-shrink-0" />
-                        <p className="body-text font-medium">Bank Account</p>
-                      </div>
-                      <p className="body-text-small break-words">
-                        Add complete bank details including account holder name, bank name, account number & IFSC code
-                      </p>
-                    </div>
-                  </div>
-
-                  <div 
-                    className={`flex items-start space-x-3 p-4 rounded-lg border cursor-pointer transition-colors ${
-                      tempPaymentSelection === 'upi' 
-                        ? 'border-primary bg-primary/10' 
-                        : 'border-border hover:bg-muted/20'
-                    }`}
-                    onClick={() => setTempPaymentSelection('upi')}
-                  >
-                    <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center mt-1 flex-shrink-0 ${
-                      tempPaymentSelection === 'upi' ? 'border-primary' : 'border-border'
-                    }`}>
-                      {tempPaymentSelection === 'upi' && (
-                        <div className="w-2 h-2 rounded-full bg-primary"></div>
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <DollarSign className="icon-md text-green-500 flex-shrink-0" />
-                        <p className="body-text font-medium">UPI ID</p>
-                      </div>
-                      <p className="body-text-small break-words">
-                        Quick setup with just your UPI ID (e.g., yourname@paytm, yourname@phonepe)
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex flex-col sm:flex-row gap-3 pt-4">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setShowPaymentDialog(false)}
-                    className="btn-secondary flex-1"
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    type="button"
-                    onClick={() => {
-                      setSelectedPaymentMethod(tempPaymentSelection);
-                      setShowPaymentDialog(false);
-                      setEditingBank(true);
-                    }}
-                    className="btn-primary flex-1"
-                  >
-                    Continue
-                  </Button>
-                </div>
-              </div>
-            </motion.div>
+    <Card className="content-card account-panel mb-6 overflow-hidden">
+      <CardHeader className="pb-4">
+        <CardTitle className="card-title flex items-center gap-2 text-base font-semibold uppercase tracking-[0.12em] text-cyan-100 md:text-lg">
+          <Calendar className="icon-lg text-cyan-300" />
+          Bank Details History
+        </CardTitle>
+        <CardDescription className="body-text-muted text-xs text-slate-300 md:text-sm">
+          Track who changed bank/UPI details and verification status updates.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="content-card-padding">
+        {loadingBankHistory ? (
+          <div className="flex items-center justify-center py-8">
+            <Loader2 className="icon-xl animate-spin text-primary" />
+            <span className="body-text-muted ml-2">Loading history...</span>
           </div>
+        ) : bankDetailsHistory.length ? (
+          <div className="dashboard-table-shell">
+            <div className="dashboard-table-wrap">
+              <table className="dashboard-table min-w-[1040px] border-collapse">
+                <thead>
+                  <tr className="table-header">
+                    <th className="table-cell table-header-text text-left whitespace-nowrap">Changed At</th>
+                    <th className="table-cell table-header-text text-left whitespace-nowrap">Changed By</th>
+                    <th className="table-cell table-header-text text-left whitespace-nowrap">Mode</th>
+                    <th className="table-cell table-header-text text-left whitespace-nowrap">Bank / UPI</th>
+                    <th className="table-cell table-header-text text-left whitespace-nowrap">Verification</th>
+                    <th className="table-cell table-header-text text-left whitespace-nowrap">Verified By</th>
+                    <th className="table-cell table-header-text text-left whitespace-nowrap">Verified At</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {bankDetailsHistory.map((row: any) => (
+                    <tr key={row.id} className="table-row">
+                      <td className="table-cell table-cell-text whitespace-nowrap">
+                        {row.changed_at ? new Date(row.changed_at).toLocaleString("en-IN") : "-"}
+                      </td>
+                      <td className="table-cell table-cell-text whitespace-nowrap">
+                        {row.changed_by_name || row.changed_by_staff_id || "System"}
+                      </td>
+                      <td className="table-cell table-cell-text whitespace-nowrap uppercase">
+                        {row.payment_mode || "-"}
+                      </td>
+                      <td className="table-cell table-cell-text">
+                        <div>{row.account_number_masked || "-"}</div>
+                        <div className="text-xs text-muted-foreground">{row.upi_id_masked || "-"}</div>
+                      </td>
+                      <td className="table-cell table-cell-text whitespace-nowrap">
+                        {row.verification_status || (row.is_verified ? "VERIFIED" : "PENDING")}
+                      </td>
+                      <td className="table-cell table-cell-text whitespace-nowrap">
+                        {row.verified_by_name || "-"}
+                      </td>
+                      <td className="table-cell table-cell-text whitespace-nowrap">
+                        {row.verified_at ? new Date(row.verified_at).toLocaleString("en-IN") : "-"}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        ) : (
+          <p className="text-sm text-muted-foreground">No bank detail history found yet.</p>
         )}
       </CardContent>
     </Card>
 
-    {/* SECOND CARD - PAYMENT METHODS */}
-    <Card className="content-card shadow-lg">
+    {/* Legacy Payment Methods block intentionally hidden per latest product UX direction */}
+    {false && (<Card className="content-card shadow-lg">
       <CardHeader>
         <CardTitle className="card-title flex items-center gap-2">
           <Settings className="icon-lg" />
@@ -2986,7 +2926,7 @@ const ToggleSwitch = ({
           </div>
         )}
       </CardContent>
-    </Card>
+    </Card>)}
   </>
 )}
 
@@ -3346,7 +3286,7 @@ const ToggleSwitch = ({
   }}
   onVerifySuccess={handleOTPVerifySuccess}
   vendorId={vendorId}
-  pageType={pendingPage === "Bank Transfer" ? "bank_transfer" : "payout_history"}
+  pageType={pendingPage === "Bank Details" ? "bank_transfer" : "payout_history"}
   pageName={pendingPage}
 />
 
