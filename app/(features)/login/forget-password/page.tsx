@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -60,17 +60,17 @@ function StepIndicator({ step }: { step: number }) {
             <div
               className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300 ${
                 i + 1 < step
-                  ? "bg-green-500 text-white"
+                  ? "bg-emerald-600 text-white"
                   : i + 1 === step
-                  ? "bg-green-500 text-white ring-4 ring-green-500/30"
-                  : "bg-white/10 text-slate-400"
+                  ? "bg-primary text-primary-foreground ring-4 ring-primary/25"
+                  : "bg-muted text-muted-foreground border border-border"
               }`}
             >
               {i + 1 < step ? <CheckCircle className="w-4 h-4" /> : i + 1}
             </div>
             <span
               className={`text-xs hidden sm:block ${
-                i + 1 === step ? "text-green-400" : "text-slate-500"
+                i + 1 === step ? "text-foreground" : "text-muted-foreground"
               }`}
             >
               {label}
@@ -79,7 +79,7 @@ function StepIndicator({ step }: { step: number }) {
           {i < steps.length - 1 && (
             <div
               className={`w-8 h-0.5 mb-4 transition-all duration-300 ${
-                i + 1 < step ? "bg-green-500" : "bg-white/10"
+                i + 1 < step ? "bg-primary" : "bg-border"
               }`}
             />
           )}
@@ -259,48 +259,44 @@ export default function ForgotPasswordPage() {
   // Shared background + layout
   // ─────────────────────────────────────────────────────────────────────────
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4 relative overflow-hidden">
-      {/* Animated blobs */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-green-500/10 rounded-full blur-3xl animate-pulse" />
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl animate-pulse delay-1000" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-green-400/5 rounded-full blur-3xl animate-pulse delay-500" />
-      </div>
-      <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:50px_50px]" />
-
+    <div className="premium-shell flex min-h-screen items-center justify-center overflow-hidden p-3 sm:p-4">
       <div className="relative z-10 w-full max-w-md">
-        <Card className="bg-white/5 backdrop-blur-md border border-white/10 shadow-2xl rounded-2xl">
+        <Card className="premium-card rounded-2xl border shadow-2xl">
           <CardHeader className="text-center pb-4">
             {/* Logo */}
             <div className="flex justify-center mb-4 relative">
               {!mounted ? (
-                <div className="w-[80px] h-[80px]" />
+                <div className="h-[80px] w-[80px]" />
               ) : (
                 <Image
-                  src="/whitehashlogo.png"
+                  src={
+                    resolvedTheme === "dark"
+                      ? "/whitehashlogo.png"
+                      : "/blackhashlogo.png"
+                  }
                   alt="Hash for Gamers"
                   width={80}
                   height={80}
                   className="drop-shadow-2xl z-10 relative"
                 />
               )}
-              <div className="absolute inset-0 bg-green-400/10 rounded-full blur-2xl animate-pulse z-0" />
+              <div className="absolute inset-0 rounded-full bg-emerald-400/20 blur-xl animate-pulse" />
             </div>
 
             {/* Step indicator */}
             <StepIndicator step={step} />
 
-            <CardTitle className="text-2xl font-bold text-white mb-1 tracking-tight">
+            <CardTitle className="premium-heading mb-1 text-2xl font-bold tracking-tight text-foreground">
               {step === 1 && "Forgot Password"}
               {step === 2 && "Verify OTP"}
               {step === 3 && "Reset Password"}
             </CardTitle>
-            <CardDescription className="text-slate-400 text-sm">
+            <CardDescription className="premium-subtle text-sm">
               {step === 1 && "Enter your registered email to receive a reset code"}
               {step === 2 && (
                 <>
                   Code sent to{" "}
-                  <span className="text-green-400 font-medium">{email}</span>
+                  <span className="text-emerald-400 font-medium">{email}</span>
                 </>
               )}
               {step === 3 && "Choose a strong new password for your account"}
@@ -321,7 +317,7 @@ export default function ForgotPasswordPage() {
                     name="email"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-slate-200 font-medium flex items-center gap-2">
+                        <FormLabel className="text-foreground font-medium flex items-center gap-2">
                           <Mail className="w-4 h-4 text-green-400" />
                           Email Address
                         </FormLabel>
@@ -330,11 +326,11 @@ export default function ForgotPasswordPage() {
                             placeholder="Enter your registered email"
                             type="email"
                             autoComplete="email"
-                            className="bg-white/10 border-white/20 text-white placeholder:text-slate-400 focus:border-green-400 focus:ring-green-400/20 h-12"
+                            className="h-12 bg-input border-input text-foreground placeholder:text-muted-foreground focus:border-cyan-400 focus:ring-cyan-400/20"
                             {...field}
                           />
                         </FormControl>
-                        <FormMessage className="text-red-400" />
+                        <FormMessage className="text-destructive" />
                       </FormItem>
                     )}
                   />
@@ -342,7 +338,7 @@ export default function ForgotPasswordPage() {
                   <Button
                     type="submit"
                     disabled={loading}
-                    className="w-full h-12 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-semibold rounded-lg transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] shadow-lg hover:shadow-green-500/25"
+                    className="w-full h-12 bg-primary text-primary-foreground hover:bg-primary/90 font-semibold rounded-lg transition-all duration-200"
                   >
                     {loading ? (
                       <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Sending Code...</>
@@ -354,7 +350,7 @@ export default function ForgotPasswordPage() {
                   <div className="text-center">
                     <Link
                       href="/login"
-                      className="text-slate-400 hover:text-slate-200 text-sm flex items-center justify-center gap-1 transition-colors"
+                      className="text-primary hover:text-primary/80 text-sm flex items-center justify-center gap-1 transition-colors"
                     >
                       <ArrowLeft className="w-4 h-4" /> Back to Login
                     </Link>
@@ -375,7 +371,7 @@ export default function ForgotPasswordPage() {
                     name="otp"
                     render={({ field }) => (
                       <FormItem className="space-y-4">
-                        <FormLabel className="text-slate-200 font-medium flex items-center gap-2 justify-center">
+                        <FormLabel className="text-foreground font-medium flex items-center gap-2 justify-center">
                           <KeyRound className="w-4 h-4 text-green-400" />
                           6-Digit Reset Code
                         </FormLabel>
@@ -387,34 +383,34 @@ export default function ForgotPasswordPage() {
                                   <InputOTPSlot
                                     key={i}
                                     index={i}
-                                    className="w-12 h-12 text-lg font-bold bg-white/10 border border-white/20 text-white rounded-md focus:border-green-400 focus:ring-green-400/30 transition-all duration-200"
+                                    className="w-12 h-12 text-lg font-bold bg-input border border-input text-foreground rounded-md focus:border-cyan-400 focus:ring-cyan-400/30 transition-all duration-200"
                                   />
                                 ))}
                               </InputOTPGroup>
-                              <InputOTPSeparator className="text-slate-500">
-                                <div className="w-2 h-0.5 bg-slate-500 rounded-full" />
+                              <InputOTPSeparator className="text-muted-foreground">
+                                <div className="w-2 h-0.5 bg-muted-foreground rounded-full" />
                               </InputOTPSeparator>
                               <InputOTPGroup className="gap-2">
                                 {[3, 4, 5].map((i) => (
                                   <InputOTPSlot
                                     key={i}
                                     index={i}
-                                    className="w-12 h-12 text-lg font-bold bg-white/10 border border-white/20 text-white rounded-md focus:border-green-400 focus:ring-green-400/30 transition-all duration-200"
+                                    className="w-12 h-12 text-lg font-bold bg-input border border-input text-foreground rounded-md focus:border-cyan-400 focus:ring-cyan-400/30 transition-all duration-200"
                                   />
                                 ))}
                               </InputOTPGroup>
                             </InputOTP>
                           </div>
                         </FormControl>
-                        <FormMessage className="text-red-400 text-center" />
+                        <FormMessage className="text-destructive text-center" />
                       </FormItem>
                     )}
                   />
 
                   {/* Timer + Resend */}
-                  <div className="bg-white/5 rounded-lg p-4 border border-white/10">
+                  <div className="rounded-lg p-4 border border-border bg-muted/30">
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2 text-slate-300">
+                      <div className="flex items-center gap-2 text-foreground">
                         <Clock className="w-4 h-4 text-green-400" />
                         <span className="text-sm">
                           {timer > 0 ? (
@@ -425,7 +421,7 @@ export default function ForgotPasswordPage() {
                               </span>
                             </>
                           ) : (
-                            <span className="text-red-400">Code expired</span>
+                            <span className="text-destructive">Code expired</span>
                           )}
                         </span>
                       </div>
@@ -435,7 +431,7 @@ export default function ForgotPasswordPage() {
                         size="sm"
                         onClick={handleResend}
                         disabled={!canResend || isResending}
-                        className="text-green-400 hover:text-green-300 hover:bg-green-400/10 disabled:opacity-40 transition-all"
+                        className="text-primary hover:text-primary/80 hover:bg-primary/10 disabled:opacity-40 transition-all"
                       >
                         {isResending ? (
                           <><RefreshCw className="w-4 h-4 mr-1 animate-spin" /> Sending...</>
@@ -449,7 +445,7 @@ export default function ForgotPasswordPage() {
                   <Button
                     type="submit"
                     disabled={loading || !otpValue || otpValue.length < 6}
-                    className="w-full h-12 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-semibold rounded-lg transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] shadow-lg disabled:opacity-50"
+                    className="w-full h-12 bg-primary text-primary-foreground hover:bg-primary/90 font-semibold rounded-lg transition-all duration-200 disabled:opacity-50"
                   >
                     {loading ? (
                       <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Verifying...</>
@@ -463,7 +459,7 @@ export default function ForgotPasswordPage() {
                   <button
                     type="button"
                     onClick={() => { setStep(1); otpForm.reset(); }}
-                    className="w-full text-slate-400 hover:text-slate-200 text-sm flex items-center justify-center gap-1 transition-colors"
+                    className="w-full text-primary hover:text-primary/80 text-sm flex items-center justify-center gap-1 transition-colors"
                   >
                     <ArrowLeft className="w-4 h-4" /> Change Email
                   </button>
@@ -483,7 +479,7 @@ export default function ForgotPasswordPage() {
                     name="new_password"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-slate-200 font-medium flex items-center gap-2">
+                        <FormLabel className="text-foreground font-medium flex items-center gap-2">
                           <Lock className="w-4 h-4 text-green-400" />
                           New Password
                         </FormLabel>
@@ -491,11 +487,11 @@ export default function ForgotPasswordPage() {
                           <PasswordInput
                             placeholder="Enter new password (min 8 chars)"
                             autoComplete="new-password"
-                            className="bg-white/10 border-white/20 text-white placeholder:text-slate-400 focus:border-green-400 focus:ring-green-400/20 h-12"
+                            className="h-12 bg-input border-input text-foreground placeholder:text-muted-foreground focus:border-cyan-400 focus:ring-cyan-400/20"
                             {...field}
                           />
                         </FormControl>
-                        <FormMessage className="text-red-400" />
+                        <FormMessage className="text-destructive" />
                       </FormItem>
                     )}
                   />
@@ -505,7 +501,7 @@ export default function ForgotPasswordPage() {
                     name="confirm_password"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-slate-200 font-medium flex items-center gap-2">
+                        <FormLabel className="text-foreground font-medium flex items-center gap-2">
                           <Lock className="w-4 h-4 text-green-400" />
                           Confirm Password
                         </FormLabel>
@@ -513,11 +509,11 @@ export default function ForgotPasswordPage() {
                           <PasswordInput
                             placeholder="Re-enter your new password"
                             autoComplete="new-password"
-                            className="bg-white/10 border-white/20 text-white placeholder:text-slate-400 focus:border-green-400 focus:ring-green-400/20 h-12"
+                            className="h-12 bg-input border-input text-foreground placeholder:text-muted-foreground focus:border-cyan-400 focus:ring-cyan-400/20"
                             {...field}
                           />
                         </FormControl>
-                        <FormMessage className="text-red-400" />
+                        <FormMessage className="text-destructive" />
                       </FormItem>
                     )}
                   />
@@ -525,7 +521,7 @@ export default function ForgotPasswordPage() {
                   <Button
                     type="submit"
                     disabled={loading}
-                    className="w-full h-12 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-semibold rounded-lg transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] shadow-lg hover:shadow-green-500/25"
+                    className="w-full h-12 bg-primary text-primary-foreground hover:bg-primary/90 font-semibold rounded-lg transition-all duration-200"
                   >
                     {loading ? (
                       <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Resetting Password...</>
@@ -541,8 +537,8 @@ export default function ForgotPasswordPage() {
               <div className="space-y-5">
                 <div className="rounded-lg border border-emerald-400/35 bg-emerald-500/15 p-4 text-center">
                   <CheckCircle className="mx-auto mb-2 h-8 w-8 text-emerald-300" />
-                  <h3 className="text-base font-semibold text-emerald-100">Password Updated</h3>
-                  <p className="mt-1 text-sm text-emerald-200/90">
+                  <h3 className="text-base font-semibold text-emerald-200">Password Updated</h3>
+                  <p className="mt-1 text-sm text-emerald-100/90">
                     Your new password is active. Continue to login when you are ready.
                   </p>
                 </div>
@@ -555,13 +551,13 @@ export default function ForgotPasswordPage() {
             )}
 
             {/* Footer security badges */}
-            <div className="flex items-center justify-center gap-4 pt-2 border-t border-white/10">
-              <div className="flex items-center gap-1 text-slate-500 text-xs">
+            <div className="flex items-center justify-center gap-4 pt-2 border-t border-border">
+              <div className="flex items-center gap-1 text-muted-foreground text-xs">
                 <Shield className="w-3 h-3" />
                 <span>Secure</span>
               </div>
-              <div className="w-1 h-1 bg-slate-600 rounded-full" />
-              <div className="flex items-center gap-1 text-slate-500 text-xs">
+              <div className="w-1 h-1 bg-muted-foreground rounded-full" />
+              <div className="flex items-center gap-1 text-muted-foreground text-xs">
                 <Clock className="w-3 h-3" />
                 <span>OTP expires in 10 min</span>
               </div>
@@ -570,7 +566,7 @@ export default function ForgotPasswordPage() {
         </Card>
 
         <div className="text-center mt-6">
-          <p className="text-slate-500 text-sm">
+          <p className="text-muted-foreground text-sm">
             © 2024 Hash for Gamers. All rights reserved.
           </p>
         </div>
