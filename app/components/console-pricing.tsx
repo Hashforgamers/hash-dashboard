@@ -195,6 +195,35 @@ const squadRuleDefaults: SquadPricingState = {
   pc: { "2": 0, "3": 3, "4": 5, "5": 8 },
 };
 
+const normalizeSquadPricing = (rawData: unknown): SquadPricingState => {
+  const source = (rawData && typeof rawData === "object" ? (rawData as any).pricing || rawData : {}) as Record<string, unknown>;
+  const normalized: SquadPricingState = { pc: {} };
+
+  Object.keys(normalized).forEach((group) => {
+    const maxPlayers = squadMaxPlayersByConsole[group] || 10;
+    const incomingGroup = source?.[group];
+    const rules: Record<string, number> = {};
+
+    if (incomingGroup && typeof incomingGroup === "object") {
+      Object.entries(incomingGroup as Record<string, unknown>).forEach(([players, discount]) => {
+        const playerCount = Number(players);
+        if (!Number.isFinite(playerCount) || playerCount < 2 || playerCount > maxPlayers) return;
+
+        const rawDiscount = typeof discount === "object" && discount !== null
+          ? Number((discount as any).discount_percent ?? 0)
+          : Number(discount ?? 0);
+        if (!Number.isFinite(rawDiscount)) return;
+
+        rules[String(playerCount)] = Math.max(0, Math.min(100, round2(rawDiscount)));
+      });
+    }
+
+    normalized[group] = rules;
+  });
+
+  return normalized;
+};
+
 const round2 = (value: number) => Math.round((value + Number.EPSILON) * 100) / 100;
 const discountToFinalUnitAmount = (base: number, discountPercent: number) =>
   round2(Math.max(0, base - (base * Math.max(0, Math.min(90, discountPercent))) / 100));
@@ -451,7 +480,7 @@ export default function ConsolePricing() {
   useEffect(() => {
     if (!vendorId || activeTab !== "squad") return;
     if (cachedSquadPricing) {
-      setSquadPricing(cachedSquadPricing);
+      setSquadPricing(normalizeSquadPricing(cachedSquadPricing));
       return;
     }
     fetchSquadPricingRules();
@@ -496,29 +525,7 @@ export default function ConsolePricing() {
     setSquadPricingError(null);
     try {
       const data = await refreshSquadCache(true);
-      const pricing = (data as any)?.pricing || data || {};
-      const next: SquadPricingState = { pc: {} };
-      for (const group of Object.keys(next)) {
-        const incoming = pricing?.[group];
-        if (incoming && typeof incoming === "object" && Object.keys(incoming).length > 0) {
-          Object.entries(incoming).forEach(([players, discount]) => {
-            const p = Number(players);
-            if (Number.isNaN(p)) return;
-            if (typeof discount === "object" && discount !== null) {
-              const obj: any = discount;
-              next[group][String(p)] = Number(obj.discount_percent ?? 0);
-              return;
-            }
-            next[group][String(p)] = Number(discount ?? 0);
-          });
-        } else {
-          const maxPlayers = Math.min(squadMaxPlayersByConsole[group] || 6, 5);
-          for (let players = 2; players <= maxPlayers; players += 1) {
-            next[group][String(players)] = Number(squadRuleDefaults[group]?.[String(players)] ?? 0);
-          }
-        }
-      }
-      setSquadPricing(next);
+      setSquadPricing(normalizeSquadPricing(data));
       setSquadFinalDraft({});
       setSquadRuleWarnings({});
       setSquadPricingChanged(false);
@@ -1226,7 +1233,9 @@ export default function ConsolePricing() {
   const squadOverview = (() => {
     const groups = Object.keys(squadPricing || {});
     const allRules = groups.flatMap((group) =>
-      Object.values(squadPricing[group] || {}).map((discount) => Number(discount || 0))
+      Object.entries(squadPricing[group] || {})
+        .filter(([players, discount]) => Number.isFinite(Number(players)) && Number.isFinite(Number(discount)))
+        .map(([, discount]) => Number(discount || 0))
     );
     const slabCount = allRules.length;
     const avgDiscount = slabCount > 0 ? round2(allRules.reduce((a, b) => a + b, 0) / slabCount) : 0;
@@ -1240,7 +1249,7 @@ export default function ConsolePricing() {
   })();
 
   return (
-    <div className="console-pricing-page dashboard-module dashboard-typography flex h-full min-h-0 flex-col gap-4 overflow-hidden px-1 pb-2 sm:px-2">
+    <div className="console-pricing-page dashboard-module dashboard-typography flex h-full min-h-0 flex-col gap-4 overflow-y-auto overflow-x-hidden px-1 pb-2 sm:px-2">
 
       {/* ✅ Success Toast */}
       <AnimatePresence>
@@ -1539,7 +1548,7 @@ export default function ConsolePricing() {
           className="flex flex-1 min-h-0 flex-col gap-4 overflow-hidden"
         >
           <div className="gaming-panel shrink-0 rounded-xl p-4">
-            <h2 className="subsection-title">Extra Controller Pricing</h2>
+            <h2 className="!text-base !font-semibold text-foreground">Extra Controller Pricing</h2>
             <p className="body-text-muted mt-1">
               Configure base and tier rates like 1 controller = ₹50, 2 controllers = ₹80.
               Backend-integrated for PS5 and Xbox.
@@ -1694,7 +1703,7 @@ export default function ConsolePricing() {
           <div className="dashboard-module-panel shrink-0 rounded-xl p-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
-                <h2 className="section-title flex items-center gap-2">
+                <h2 className="flex items-center gap-2 !text-base !font-semibold text-foreground">
                   <Users className="icon-md text-cyan-300" />
                   Squad Pricing Rule Engine
                 </h2>
