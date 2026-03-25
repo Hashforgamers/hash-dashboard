@@ -510,7 +510,7 @@ export default function GamersCreditControl() {
     "text-slate-700 hover:bg-slate-50 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800/70 dark:hover:text-cyan-100";
 
   return (
-    <div className="dashboard-module dashboard-typography flex h-full min-h-0 flex-col gap-4 overflow-hidden">
+    <div className="dashboard-module dashboard-typography flex h-full min-h-0 flex-col gap-4 overflow-y-auto overflow-x-hidden pr-1">
       {notice && (
         <div className="rounded-lg border border-emerald-300/40 bg-emerald-50 px-3 py-2 text-xs text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300">
           {notice}
