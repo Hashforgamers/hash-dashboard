@@ -21,6 +21,7 @@ export function TableDragScroll() {
     ].join(",")
 
     const wrappers = Array.from(document.querySelectorAll<HTMLElement>(".dashboard-table-wrap"))
+      .filter((wrap) => wrap.dataset.nativeDrag !== "true")
     const cleanups: Array<() => void> = []
 
     wrappers.forEach((wrap) => {
@@ -32,6 +33,7 @@ export function TableDragScroll() {
       const onMouseDown = (event: MouseEvent) => {
         if (event.button !== 0) return
         if ((event.target as HTMLElement)?.closest(interactiveSelector)) return
+        if (wrap.scrollWidth <= wrap.clientWidth) return
         isPointerDown = true
         isDragging = false
         startX = event.pageX - wrap.offsetLeft
