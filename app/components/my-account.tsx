@@ -113,7 +113,7 @@ const [tempPaymentSelection, setTempPaymentSelection] = useState('bank');
 
 // Add these state variables to your MyAccount component
 const [otpModalOpen, setOtpModalOpen] = useState(false);
-const [pendingPage, setPendingPage] = useState(null);
+const [pendingPage, setPendingPage] = useState<string | null>(null);
 const [verifiedPages, setVerifiedPages] = useState(new Set());
 
 // GST setup state (moved from separate billing module into My Account)
@@ -262,14 +262,19 @@ const checkPageVerification = async (pageType) => {
   }
 };
 
-const handleRestrictedPageClick = async (pageName) => {
-  setOtpLoading(true);
-  const pageType = pageName === "Bank Details" ? "bank_transfer" : "payout_history";
-  if (pageType === "bank_transfer" && isOwnerSession) {
-    setOtpLoading(false);
+const getRestrictedPageType = (pageName: string) =>
+  pageName === "Bank Details" ? "bank_transfer" : "payout_history";
+
+const handleRestrictedPageClick = async (pageName: string) => {
+  const pageType = getRestrictedPageType(pageName);
+
+  // Owner should never be blocked by OTP inside My Account restricted pages.
+  if (isOwnerSession) {
     setPage(pageName);
     return;
   }
+
+  setOtpLoading(true);
   
   // Check if already verified
   const isVerified = await checkPageVerification(pageType);
@@ -284,7 +289,8 @@ const handleRestrictedPageClick = async (pageName) => {
 };
 
 const handleOTPVerifySuccess = () => {
-  const pageType = pendingPage === "Bank Details" ? "bank_transfer" : "payout_history";
+  if (!pendingPage) return;
+  const pageType = getRestrictedPageType(pendingPage);
   setVerifiedPages(prev => new Set([...prev, pageType]));
   setPage(pendingPage);
   setPendingPage(null);
@@ -3278,17 +3284,19 @@ const ToggleSwitch = ({
 
 
       
-<OTPVerificationModal
-  isOpen={otpModalOpen}
-  onClose={() => {
-    setOtpModalOpen(false);
-    setPendingPage(null);
-  }}
-  onVerifySuccess={handleOTPVerifySuccess}
-  vendorId={vendorId}
-  pageType={pendingPage === "Bank Details" ? "bank_transfer" : "payout_history"}
-  pageName={pendingPage}
-/>
+{!isOwnerSession && (
+  <OTPVerificationModal
+    isOpen={otpModalOpen}
+    onClose={() => {
+      setOtpModalOpen(false);
+      setPendingPage(null);
+    }}
+    onVerifySuccess={handleOTPVerifySuccess}
+    vendorId={vendorId}
+    pageType={getRestrictedPageType(pendingPage || "Payout History")}
+    pageName={pendingPage}
+  />
+)}
 
    
 
