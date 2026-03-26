@@ -531,7 +531,7 @@ export function DashboardContent() {
       {dashboardData?.available ? (
         <HashLoader className="py-[50vh]" />
       ) : (
-        <div className="relative h-full min-h-0 text-foreground flex flex-col gap-3 sm:gap-4">
+        <div className="relative h-full min-h-0 text-foreground flex flex-col gap-3 overflow-y-auto sm:gap-4 lg:overflow-hidden">
           {isLocked && <LockedOverlay />}
           <div
             className={`flex min-h-0 flex-1 flex-col overflow-hidden ${
@@ -567,10 +567,10 @@ export function DashboardContent() {
             animate={{ opacity: 1, y: 0 }}
             className="gaming-panel shrink-0 rounded-xl p-3 md:p-4"
           >
-            <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-start 2xl:grid-cols-[minmax(0,1fr)_auto_minmax(0,1.6fr)_auto]">
+            <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-start">
               <div className="flex-1">
                 <div className="mb-2 flex flex-wrap items-center gap-2 sm:gap-3">
-                  <h1 className="premium-heading dashboard-hero-title">Gaming Cafe Command</h1>
+                  <h1 className="premium-heading dashboard-hero-title leading-tight">Gaming Cafe Command</h1>
                   <div className={`h-2 w-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`} />
                   <NotificationButton
                     vendorId={vendorId}
@@ -626,21 +626,18 @@ export function DashboardContent() {
                 </button>
               </motion.div>
             </div>
-              <div className="hidden 2xl:block">
-                {topMetricsStrip}
-              </div>
             </div>
           </motion.div>
 
-          <div className="shrink-0 2xl:hidden">
+          <div className="shrink-0">
             {topMetricsStrip}
           </div>
 
           {/* Main Layout Grid */}
-          <div className="grid grid-cols-1 gap-3 sm:gap-4 lg:grid-cols-12 flex-1 min-h-0">
+          <div className="grid grid-cols-1 gap-3 sm:gap-4 xl:grid-cols-12 flex-1 min-h-0">
 
             {/* Left Column */}
-            <div className="space-y-3 sm:space-y-4 flex flex-col min-h-0 lg:col-span-8 xl:col-span-9">
+            <div className="space-y-3 sm:space-y-4 flex flex-col min-h-0 xl:col-span-8 2xl:col-span-9">
 
               {/* ✅ Current Slots - locked when subscription expired */}
               <motion.div
@@ -665,9 +662,9 @@ export function DashboardContent() {
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.4 }}
-              className="flex flex-col min-h-0 lg:col-span-4 xl:col-span-3 lg:h-full"
+              className="flex flex-col min-h-0 xl:col-span-4 2xl:col-span-3 xl:h-full"
             >
-              <div className="relative flex-1 min-h-[320px] lg:min-h-0 rounded-xl lg:h-full overflow-hidden">
+              <div className="relative flex-1 min-h-[320px] xl:min-h-0 rounded-xl xl:h-full overflow-hidden">
                 <UpcomingBookings
                   upcomingBookings={dashboardData.upcomingBookings || []}
                   vendorId={vendorId?.toString()}
