@@ -723,7 +723,7 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                 value={historyDate}
                 onChange={(e) => setHistoryDate(e.target.value)}
                 className={`dashboard-module-input w-[132px] rounded-lg px-3 py-2 text-sm sm:w-44 ${
-                  activeTab === "history" ? "opacity-100" : "opacity-0 pointer-events-none"
+                  activeTab === "history" ? "opacity-100" : "hidden"
                 }`}
               />
               <div className="relative flex-1 sm:flex-none">
@@ -756,6 +756,170 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
             animate="show"
             className="dashboard-table-shell flex-1 min-h-0 backdrop-blur-sm"
           >
+            <div className="lg:hidden h-full overflow-y-auto p-2">
+              {Array.isArray(filteredSlots) && filteredSlots.length > 0 ? (
+                <div className="space-y-2">
+                  {filteredSlots.map((booking) => {
+                    const timer = timers.find((t) => t.slotId === booking.slotId) || {
+                      elapsedTime: 0,
+                      extraTime: 0,
+                      duration: 3600,
+                    };
+                    const uniqueKey = `${booking.slotId}-${booking.bookingId || booking.bookId}-${booking.consoleId || booking.consoleNumber}`;
+                    const isReleasing = releasingSlots[uniqueKey] || false;
+                    const progress = Math.min(100, (timer.elapsedTime / timer.duration) * 100);
+                    const hasExtraTime = timer.extraTime > 0;
+                    const bookingIdToCheck = String(booking.bookingId || booking.bookId || "");
+                    const outstandingDue = Number(bookingOutstandingDue[bookingIdToCheck] || 0);
+                    const hasOutstandingDue = outstandingDue > 0.01;
+                    const needsSettlement = hasExtraTime || hasOutstandingDue;
+                    const remainingTime = Math.max((timer.duration || 0) - (timer.elapsedTime || 0), 0);
+                    const hasMeals = bookingMealStatus[bookingIdToCheck] ?? booking.hasMeals ?? false;
+                    const squadMembers = Array.isArray(booking?.squadMembers) ? booking.squadMembers : [];
+                    const squadPlayerCount = Number(
+                      booking?.squadPlayerCount ||
+                      booking?.squadDetails?.player_count ||
+                      (squadMembers.length || 1)
+                    );
+                    const squadEnabled = Boolean(booking?.squadEnabled || squadPlayerCount > 1);
+                    const captainMember = squadMembers.find((member: any) => Boolean(member?.is_captain)) || squadMembers[0] || null;
+                    return (
+                      <motion.div
+                        key={`live-mobile-${uniqueKey}`}
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="dashboard-module-card rounded-xl p-3"
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0">
+                            <p className="truncate text-sm font-semibold text-slate-100">{booking.username || "Guest"}</p>
+                            <p className="truncate text-xs text-slate-400">
+                              {booking.consoleType || "Gaming Console"} · {booking.startTime || "N/A"} - {booking.endTime || "N/A"}
+                            </p>
+                          </div>
+                          <div className="flex flex-wrap items-center justify-end gap-1">
+                            {squadEnabled && (
+                              <span className="rounded-full border border-sky-400/40 bg-sky-500/15 px-2 py-0.5 text-[11px] font-semibold text-sky-200">
+                                Squad x{squadPlayerCount}
+                              </span>
+                            )}
+                            {hasMeals && (
+                              <span className="rounded-full border border-emerald-400/40 bg-emerald-500/10 px-2 py-0.5 text-[11px] font-semibold text-emerald-200">
+                                Meals Added
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="mt-2 space-y-1.5">
+                          <div className="flex items-center justify-between text-xs">
+                            <span className="text-slate-300">Elapsed: {formatTime(timer.elapsedTime)}</span>
+                            <span className={`${hasExtraTime ? "text-red-300" : "text-slate-400"}`}>
+                              {hasExtraTime ? `Extended: ${formatTime(timer.extraTime)}` : `Remaining: ${formatTime(remainingTime)}`}
+                            </span>
+                          </div>
+                          <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-700/90">
+                            <motion.div
+                              className={`h-full ${
+                                hasExtraTime
+                                  ? "bg-red-500"
+                                  : progress < 75
+                                    ? "bg-emerald-500"
+                                    : progress < 90
+                                      ? "bg-yellow-500"
+                                      : "bg-orange-500"
+                              }`}
+                              style={{ width: `${progress}%` }}
+                              initial={{ width: 0 }}
+                              animate={{ width: `${progress}%` }}
+                              transition={{ duration: 0.4 }}
+                            />
+                          </div>
+                          {hasOutstandingDue && (
+                            <p className="text-xs font-semibold text-amber-300">
+                              To be paid: ₹{outstandingDue.toFixed(2)}
+                            </p>
+                          )}
+                        </div>
+
+                        <div className="mt-3 grid grid-cols-2 gap-2">
+                          {hasMeals ? (
+                            <button
+                              type="button"
+                              onClick={() =>
+                                handleMealIconClick(bookingIdToCheck, booking.username || "Guest User", captainMember ? {
+                                  member_user_id: captainMember?.member_user_id ?? null,
+                                  member_position: captainMember?.member_position,
+                                  name: captainMember?.name || captainMember?.name_snapshot || undefined,
+                                } : null)
+                              }
+                              className="rounded-md border border-emerald-400/35 bg-emerald-500/10 px-2.5 py-2 text-xs font-semibold text-emerald-200"
+                            >
+                              Meals
+                            </button>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() =>
+                                handleAddFoodClick(bookingIdToCheck, booking.username || "Guest User", captainMember ? {
+                                  member_user_id: captainMember?.member_user_id ?? null,
+                                  member_position: captainMember?.member_position,
+                                  name: captainMember?.name || captainMember?.name_snapshot || undefined,
+                                } : null)
+                              }
+                              className="rounded-md border border-cyan-400/50 bg-cyan-500/10 px-2.5 py-2 text-xs font-semibold text-cyan-200"
+                            >
+                              Add Meals
+                            </button>
+                          )}
+
+                          {needsSettlement ? (
+                            <button
+                              onClick={() => {
+                                setSelectedSlot(booking);
+                                setShowOverlay(true);
+                                setError("");
+                              }}
+                              className={`rounded-md px-2.5 py-2 text-xs font-semibold text-white ${
+                                hasOutstandingDue && !hasExtraTime
+                                  ? "bg-orange-500 hover:bg-orange-600"
+                                  : "bg-yellow-500 hover:bg-yellow-600"
+                              }`}
+                            >
+                              Settle
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => handleRelease(
+                                booking.consoleType || '',
+                                booking.game_id || '',
+                                String(booking.consoleId || booking.consoleNumber || ''),
+                                vendorId,
+                                setRefreshSlots,
+                                booking.slotId,
+                                uniqueKey
+                              )}
+                              disabled={isReleasing || !vendorId}
+                              className="rounded-md bg-emerald-500 px-2.5 py-2 text-xs font-semibold text-white hover:bg-emerald-400 disabled:opacity-50"
+                            >
+                              {isReleasing ? "Releasing..." : "Release"}
+                            </button>
+                          )}
+                        </div>
+                      </motion.div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="dashboard-module-empty flex h-full flex-col items-center justify-center py-8">
+                  <Search className="h-8 w-8 text-slate-600" />
+                  <p className="text-sm font-medium">No active slots found</p>
+                  <p className="text-xs">{isConnected ? "Waiting for new sessions..." : "Check connection"}</p>
+                </div>
+              )}
+            </div>
+
+            <div className="hidden h-full lg:block">
             <div className="dashboard-table-wrap h-full">
               <table ref={tableRef} className="dashboard-module-table min-w-[760px] w-full divide-y">
                 <thead className="dashboard-module-table-head sticky top-0 z-10">
@@ -1305,6 +1469,7 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                 </tbody>
               </table>
             </div>
+            </div>
           </motion.div>
           ) : (
             <div className="dashboard-table-shell flex-1 min-h-0">
@@ -1317,6 +1482,39 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                   <p className="text-sm font-medium">No past sessions found</p>
                 </div>
               ) : (
+                <>
+                <div className="lg:hidden h-full overflow-y-auto p-2">
+                  <div className="space-y-2">
+                    {filteredHistoryBookings.map((b: any, i: number) => {
+                      const normalizedStatus = normalizeHistoryStatus(b);
+                      const statusLabel = historyStatusLabel(normalizedStatus);
+                      const systemText = `${b.consoleName || b.consoleType || "Console"}${b.consoleBrand ? ` • ${b.consoleBrand}` : ""}${b.consoleNumber ? ` • ${b.consoleNumber}` : ""}`;
+                      return (
+                        <div
+                          key={`history-mobile-${b.bookingId || i}-${b.date}`}
+                          className="dashboard-module-card rounded-xl p-3"
+                        >
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="min-w-0">
+                              <p className="truncate text-sm font-semibold text-slate-100">{b.username || "Guest"}</p>
+                              <p className="truncate text-xs text-slate-300">{systemText}</p>
+                            </div>
+                            <span className={`rounded-full border px-2 py-0.5 text-[11px] capitalize ${historyStatusChipClass(normalizedStatus)}`}>
+                              {statusLabel}
+                            </span>
+                          </div>
+                          <div className="mt-2 space-y-1 text-xs text-slate-400">
+                            <p>Time: {b.time || "Time not available"}</p>
+                            <p>Date: {formatHistoryDateLabel(b.date)}</p>
+                            <p>Booking: {b.bookingId ? `#${b.bookingId}` : "-"}</p>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="hidden h-full lg:block">
                 <div className="dashboard-table-wrap h-full">
                   <table className="dashboard-module-table w-full min-w-[760px] divide-y">
                     <thead className="dashboard-module-table-head sticky top-0 z-10">
@@ -1358,6 +1556,8 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                     </tbody>
                   </table>
                 </div>
+                </div>
+                </>
               )}
             </div>
           )}
