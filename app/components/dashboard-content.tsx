@@ -4,7 +4,7 @@ import React, { useCallback, useEffect, useRef, useState } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { UpcomingBookings } from "./upcoming-booking"
 import { CurrentSlots } from "./current-slot"
-import { motion, AnimatePresence } from "framer-motion"
+import { motion } from "framer-motion"
 import {
   IndianRupee, CalendarCheck, WalletCards, Eye, EyeOff, Clock,
   TrendingUp, BarChart3, Monitor, Gamepad2,
@@ -60,7 +60,6 @@ export function DashboardContent() {
   const { vendorId, landingData, consoles, refreshLanding, refreshConsoles } = useDashboardData()
   const [dashboardData, setDashboardData] = useState<any>(null)
   const [latestBookingEvent, setLatestBookingEvent] = useState<any>(null)
-  const [activeTopTab, setActiveTopTab] = useState<'analytics' | 'devices'>('analytics')
   const [bookingInfo, setBookingInfo] = useState([])
   const [realTimeStats, setRealTimeStats] = useState<{
     todayEarnings?: number
@@ -354,202 +353,137 @@ export function DashboardContent() {
   })
   const operatorName = activeStaff?.name || "Owner"
   const totalConsoles = Array.isArray(bookingInfo) ? bookingInfo.length : 0
-  const activeConsoles = Array.isArray(bookingInfo) ? bookingInfo.filter((item: any) => item?.status === false).length : 0
 
   const topMetricsStrip = (
-    <AnimatePresence mode="wait">
-      {activeTopTab === 'analytics' && (
-        <motion.div
-          key="analytics"
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: -20 }}
-          transition={{ duration: 0.3 }}
-          className="grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-3 lg:grid-cols-3 max-md:flex max-md:snap-x max-md:gap-2 max-md:overflow-x-auto max-md:pb-1 max-md:[scrollbar-width:none] max-md:[&::-webkit-scrollbar]:hidden"
-        >
-          <motion.div
-            animate={{ scale: realTimeStats.lastUpdate ? [1, 1.05, 1] : 1 }}
-            transition={{ duration: 0.5 }}
-            className="flex-1 min-w-0 max-md:min-w-[82%] max-md:snap-start"
-          >
-            <Card className="gaming-kpi-card h-full rounded-xl transition-all duration-200">
-              <CardContent className="p-2 sm:p-3">
-                <div className="flex items-center justify-between mb-1 sm:mb-2">
-                  <div className="flex items-center gap-1 sm:gap-2">
-                    <div className="p-1 sm:p-1.5 rounded-full bg-emerald-500/20">
-                      <IndianRupee className="w-3 sm:w-4 h-3 sm:h-4 text-emerald-400" />
-                    </div>
-                    <span className="dash-kpi-label">Earnings (Net)</span>
-                  </div>
-                  <button onClick={() => setShowEarnings(!showEarnings)} className="text-emerald-400 hover:text-emerald-300 transition-colors">
-                    {showEarnings ? <EyeOff className="w-3 sm:w-4 h-3 sm:h-4" /> : <Eye className="w-3 sm:w-4 h-3 sm:h-4" />}
-                  </button>
+    <motion.div
+      initial={{ opacity: 0, x: -20 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ duration: 0.3 }}
+      className="grid grid-cols-1 gap-2 sm:grid-cols-3 sm:gap-2.5 max-md:flex max-md:snap-x max-md:gap-2 max-md:overflow-x-auto max-md:pb-1 max-md:[scrollbar-width:none] max-md:[&::-webkit-scrollbar]:hidden"
+    >
+      <motion.div
+        animate={{ scale: realTimeStats.lastUpdate ? [1, 1.05, 1] : 1 }}
+        transition={{ duration: 0.5 }}
+        className="flex-1 min-w-0 max-md:min-w-[82%] max-md:snap-start"
+      >
+        <Card className="gaming-kpi-card h-full rounded-xl transition-all duration-200">
+          <CardContent className="p-2 sm:p-2.5">
+            <div className="mb-1 flex items-center justify-between sm:mb-1.5">
+              <div className="flex items-center gap-1 sm:gap-2">
+                <div className="rounded-full bg-emerald-500/20 p-1 sm:p-1.5">
+                  <IndianRupee className="h-3 w-3 text-emerald-400 sm:h-4 sm:w-4" />
                 </div>
-                <div className="flex items-center justify-between">
-                  <motion.p
-                    key={currentStats.netEarnings}
-                    initial={{ scale: 0.8, opacity: 0.5 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    transition={{ duration: 0.3 }}
-                    className="dash-kpi-value"
-                  >
-                    {showEarnings ? formatMoney(currentStats.netEarnings) : "₹•••••"}
-                  </motion.p>
-                  <div className="flex items-center gap-1 text-xs text-emerald-400">
-                    <TrendingUp className="w-3 h-3" />
-                    <span>Today</span>
-                  </div>
-                </div>
-                <div className="mt-1 text-[11px] text-emerald-400/90">
-                  {showEarnings ? (
-                    <>
-                      Gross: {formatMoney(currentStats.todayEarnings)} · App Fee: {formatMoney(currentStats.todayAppFees)}
-                    </>
-                  ) : (
-                    "Gross: ₹••••• · App Fee: ₹•••••"
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          </motion.div>
-
-          <motion.div
-            animate={{ scale: realTimeStats.lastUpdate ? [1, 1.05, 1] : 1 }}
-            transition={{ duration: 0.5 }}
-            className="flex-1 min-w-0 max-md:min-w-[82%] max-md:snap-start"
-          >
-            <Card className="gaming-kpi-card h-full rounded-xl transition-all duration-200">
-              <CardContent className="p-2 sm:p-3">
-                <div className="flex items-center justify-between mb-1 sm:mb-2">
-                  <div className="flex items-center gap-1 sm:gap-2">
-                    <div className="p-1 sm:p-1.5 rounded-full bg-blue-500/20">
-                      <CalendarCheck className="w-3 sm:w-4 h-3 sm:h-4 text-blue-400" />
-                    </div>
-                    <span className="dash-kpi-label">Bookings</span>
-                  </div>
-                  <span className="text-xs font-bold text-green-400">
-                    +{currentStats.todayBookingsChange}%
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <motion.p
-                    key={currentStats.todayBookings}
-                    initial={{ scale: 0.8, opacity: 0.5 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    transition={{ duration: 0.3 }}
-                    className="dash-kpi-value"
-                  >
-                    {currentStats.todayBookings}
-                  </motion.p>
-                  <div className="flex items-center gap-1 text-xs text-blue-400">
-                    <TrendingUp className="w-3 h-3" />
-                    <span>Today</span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </motion.div>
-
-          <motion.div
-            animate={{ scale: realTimeStats.lastUpdate ? [1, 1.05, 1] : 1 }}
-            transition={{ duration: 0.5 }}
-            className="flex-1 min-w-0 max-md:min-w-[82%] max-md:snap-start"
-          >
-            <Card className="gaming-kpi-card h-full rounded-xl transition-all duration-200">
-              <CardContent className="p-2 sm:p-3">
-                <div className="flex items-center justify-between mb-1 sm:mb-2">
-                  <div className="flex items-center gap-1 sm:gap-2">
-                    <div className="p-1 sm:p-1.5 rounded-full bg-yellow-500/20">
-                      <WalletCards className="w-3 sm:w-4 h-3 sm:h-4 text-yellow-400" />
-                    </div>
-                    <span className="dash-kpi-label">Pending (Net)</span>
-                  </div>
-                  <button onClick={() => setShowPending(!showPending)} className="text-yellow-400 hover:text-yellow-300 transition-colors">
-                    {showPending ? <EyeOff className="w-3 sm:w-4 h-3 sm:h-4" /> : <Eye className="w-3 sm:w-4 h-3 sm:h-4" />}
-                  </button>
-                </div>
-                <div className="flex items-center justify-between">
-                  <motion.p
-                    key={currentStats.netPendingAmount}
-                    initial={{ scale: 0.8, opacity: 0.5 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    transition={{ duration: 0.3 }}
-                    className="dash-kpi-value"
-                  >
-                    {showPending ? formatMoney(currentStats.netPendingAmount) : "₹•••••"}
-                  </motion.p>
-                  <div className="flex items-center gap-1 text-xs text-yellow-400">
-                    <div className="w-2 h-2 bg-yellow-400 rounded-full animate-pulse" />
-                    <span>Today</span>
-                  </div>
-                </div>
-                <div className="mt-1 text-[11px] text-yellow-400/90">
-                  {showPending ? (
-                    <>
-                      Gross: {formatMoney(currentStats.pendingAmount)} · App Fee: {formatMoney(currentStats.pendingAppFees)}
-                    </>
-                  ) : (
-                    "Gross: ₹••••• · App Fee: ₹•••••"
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          </motion.div>
-        </motion.div>
-      )}
-
-      {activeTopTab === 'devices' && (
-        <motion.div
-          key="devices"
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: 20 }}
-          transition={{ duration: 0.3 }}
-          className="grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-3 lg:grid-cols-4 max-md:flex max-md:snap-x max-md:gap-2 max-md:overflow-x-auto max-md:pb-1 max-md:[scrollbar-width:none] max-md:[&::-webkit-scrollbar]:hidden"
-        >
-          {platforms.map((platform) => {
-            const available = platform.total - platform.booked
-            const bookedPercentage = platform.total
-              ? Math.round((platform.booked / platform.total) * 100)
-              : 0
-            const Icon = platform.icon
-            return (
-              <motion.div
-                key={platform.name}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
+                <span className="dash-kpi-label">Earnings (Net)</span>
+              </div>
+              <button onClick={() => setShowEarnings(!showEarnings)} className="text-emerald-400 transition-colors hover:text-emerald-300">
+                {showEarnings ? <EyeOff className="h-3 w-3 sm:h-4 sm:w-4" /> : <Eye className="h-3 w-3 sm:h-4 sm:w-4" />}
+              </button>
+            </div>
+            <div className="flex items-center justify-between">
+              <motion.p
+                key={currentStats.netEarnings}
+                initial={{ scale: 0.8, opacity: 0.5 }}
+                animate={{ scale: 1, opacity: 1 }}
                 transition={{ duration: 0.3 }}
-                className="gaming-kpi-card rounded-xl p-2 shadow-sm backdrop-blur-sm sm:p-3 max-md:min-w-[70%] max-md:snap-start"
+                className="dash-kpi-value"
               >
-                <div className="flex items-center justify-between mb-1 sm:mb-2">
-                  <div className="flex items-center gap-1 sm:gap-2">
-                    <div className="dash-icon-chip" style={{ backgroundColor: platform.bgColor }}>
-                      <Icon className="w-3 sm:w-4 h-3 sm:h-4" style={{ color: platform.color }} />
-                    </div>
-                    <span className="dash-kpi-label">
-                      {platform.name}
-                    </span>
-                  </div>
-                  <span className="text-xs font-bold" style={{ color: platform.color }}>
-                    {bookedPercentage}%
-                  </span>
+                {showEarnings ? formatMoney(currentStats.netEarnings) : "₹•••••"}
+              </motion.p>
+              <div className="flex items-center gap-1 text-xs text-emerald-400">
+                <TrendingUp className="h-3 w-3" />
+                <span>Today</span>
+              </div>
+            </div>
+            <div className="mt-1 text-[11px] text-emerald-400/90">
+              {showEarnings ? (
+                <>Gross: {formatMoney(currentStats.todayEarnings)} · App Fee: {formatMoney(currentStats.todayAppFees)}</>
+              ) : (
+                "Gross: ₹••••• · App Fee: ₹•••••"
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      </motion.div>
+
+      <motion.div
+        animate={{ scale: realTimeStats.lastUpdate ? [1, 1.05, 1] : 1 }}
+        transition={{ duration: 0.5 }}
+        className="flex-1 min-w-0 max-md:min-w-[82%] max-md:snap-start"
+      >
+        <Card className="gaming-kpi-card h-full rounded-xl transition-all duration-200">
+          <CardContent className="p-2 sm:p-2.5">
+            <div className="mb-1 flex items-center justify-between sm:mb-1.5">
+              <div className="flex items-center gap-1 sm:gap-2">
+                <div className="rounded-full bg-blue-500/20 p-1 sm:p-1.5">
+                  <CalendarCheck className="h-3 w-3 text-blue-400 sm:h-4 sm:w-4" />
                 </div>
-                <div className="w-full h-1 rounded-full bg-zinc-200 dark:bg-zinc-700">
-                  <div
-                    className="h-1 rounded-full"
-                    style={{ width: `${bookedPercentage}%`, backgroundColor: platform.color }}
-                  />
+                <span className="dash-kpi-label">Bookings</span>
+              </div>
+              <span className="text-xs font-bold text-green-400">+{currentStats.todayBookingsChange}%</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <motion.p
+                key={currentStats.todayBookings}
+                initial={{ scale: 0.8, opacity: 0.5 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ duration: 0.3 }}
+                className="dash-kpi-value"
+              >
+                {currentStats.todayBookings}
+              </motion.p>
+              <div className="flex items-center gap-1 text-xs text-blue-400">
+                <TrendingUp className="h-3 w-3" />
+                <span>Today</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </motion.div>
+
+      <motion.div
+        animate={{ scale: realTimeStats.lastUpdate ? [1, 1.05, 1] : 1 }}
+        transition={{ duration: 0.5 }}
+        className="flex-1 min-w-0 max-md:min-w-[82%] max-md:snap-start"
+      >
+        <Card className="gaming-kpi-card h-full rounded-xl transition-all duration-200">
+          <CardContent className="p-2 sm:p-2.5">
+            <div className="mb-1 flex items-center justify-between sm:mb-1.5">
+              <div className="flex items-center gap-1 sm:gap-2">
+                <div className="rounded-full bg-yellow-500/20 p-1 sm:p-1.5">
+                  <WalletCards className="h-3 w-3 text-yellow-400 sm:h-4 sm:w-4" />
                 </div>
-                <div className="mt-1 sm:mt-2 text-xs flex justify-between text-zinc-600 dark:text-zinc-400">
-                  <span>Booked: {platform.booked}</span>
-                  <span>Free: {available}</span>
-                </div>
-              </motion.div>
-            )
-          })}
-        </motion.div>
-      )}
-    </AnimatePresence>
+                <span className="dash-kpi-label">Pending (Net)</span>
+              </div>
+              <button onClick={() => setShowPending(!showPending)} className="text-yellow-400 transition-colors hover:text-yellow-300">
+                {showPending ? <EyeOff className="h-3 w-3 sm:h-4 sm:w-4" /> : <Eye className="h-3 w-3 sm:h-4 sm:w-4" />}
+              </button>
+            </div>
+            <div className="flex items-center justify-between">
+              <motion.p
+                key={currentStats.netPendingAmount}
+                initial={{ scale: 0.8, opacity: 0.5 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ duration: 0.3 }}
+                className="dash-kpi-value"
+              >
+                {showPending ? formatMoney(currentStats.netPendingAmount) : "₹•••••"}
+              </motion.p>
+              <div className="flex items-center gap-1 text-xs text-yellow-400">
+                <div className="h-2 w-2 animate-pulse rounded-full bg-yellow-400" />
+                <span>Today</span>
+              </div>
+            </div>
+            <div className="mt-1 text-[11px] text-yellow-400/90">
+              {showPending ? (
+                <>Gross: {formatMoney(currentStats.pendingAmount)} · App Fee: {formatMoney(currentStats.pendingAppFees)}</>
+              ) : (
+                "Gross: ₹••••• · App Fee: ₹•••••"
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      </motion.div>
+    </motion.div>
   )
 
   if (!dashboardData) {
@@ -622,34 +556,10 @@ export function DashboardContent() {
               </div>
 
               <div className="min-w-0">
-                <motion.div
-                  initial={{ opacity: 0, y: 12 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="dashboard-module-tab-group mb-1 flex w-fit items-center gap-1 rounded-lg p-1"
-                >
-                  <button
-                    onClick={() => setActiveTopTab('analytics')}
-                    className={`flex items-center justify-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-semibold transition-all duration-200 ${
-                      activeTopTab === 'analytics'
-                        ? 'bg-background text-foreground shadow-sm'
-                        : 'text-muted-foreground hover:text-foreground'
-                    }`}
-                  >
-                    <BarChart3 className="h-3 w-3 sm:h-4 sm:w-4" />
-                    Analytics
-                  </button>
-                  <button
-                    onClick={() => setActiveTopTab('devices')}
-                    className={`flex items-center justify-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-semibold transition-all duration-200 ${
-                      activeTopTab === 'devices'
-                        ? 'bg-background text-foreground shadow-sm'
-                        : 'text-muted-foreground hover:text-foreground'
-                    }`}
-                  >
-                    <Monitor className="h-3 w-3 sm:h-4 sm:w-4" />
-                    Devices
-                  </button>
-                </motion.div>
+                <div className="mb-1 inline-flex items-center gap-1 rounded-md border border-cyan-400/30 bg-cyan-500/10 px-2 py-1 text-xs font-semibold text-cyan-200">
+                  <BarChart3 className="h-3.5 w-3.5" />
+                  Analytics
+                </div>
                 <div className="min-w-0">
                   {topMetricsStrip}
                 </div>
@@ -732,8 +642,14 @@ export function DashboardContent() {
                 </span>
                 <span className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1">
                   <Monitor className="h-3.5 w-3.5 text-blue-300" />
-                  {activeConsoles}/{totalConsoles} Active
+                  Total Consoles: {totalConsoles}
                 </span>
+                {platforms.map((platform) => (
+                  <span key={`console-summary-${platform.type}`} className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1">
+                    <span className="font-semibold">{platform.name}</span>
+                    <span className="text-slate-300">{platform.booked} in use / {platform.total}</span>
+                  </span>
+                ))}
               </div>
               <button
                 type="button"
