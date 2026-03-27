@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Bell, X, Check, Clock, User, Calendar, Wallet, Gamepad2 } from 'lucide-react'
+import { Bell, X, Check, Clock, User, Calendar, Wallet, Gamepad2, FileWarning } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { BOOKING_URL } from '@/src/config/env'
@@ -54,7 +54,16 @@ interface MealsAddedNotification {
   amount_added?: number
 }
 
-type DashboardNotification = PayAtCafeNotification | MealsAddedNotification
+interface DocumentRejectedNotification {
+  kind: "document_rejected"
+  notification_id: string
+  emitted_at?: string
+  vendorId: number
+  title: string
+  message: string
+}
+
+type DashboardNotification = PayAtCafeNotification | MealsAddedNotification | DocumentRejectedNotification
 
 
 interface NotificationPanelProps {
@@ -356,6 +365,43 @@ export function NotificationPanel({
                                 onClick={() => onRemoveNotification(mealNotice.notification_id)}
                               >
                                 Dismiss
+                              </Button>
+                            </div>
+                          </div>
+                        </motion.div>
+                      )
+                    }
+
+                    const isDocumentNotice = (notification as any)?.kind === "document_rejected"
+                    if (isDocumentNotice) {
+                      const docNotice = notification as DocumentRejectedNotification
+                      return (
+                        <motion.div
+                          key={docNotice.notification_id}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, x: 20 }}
+                          transition={{ delay: index * 0.05 }}
+                          className="dashboard-module-card rounded-xl border border-rose-400/35 bg-rose-500/10 p-4 transition-all duration-200"
+                        >
+                          <div className="space-y-3">
+                            <div className="flex items-center gap-2">
+                              <FileWarning className="h-4 w-4 text-rose-300" />
+                              <p className="text-sm font-semibold text-rose-100">{docNotice.title}</p>
+                            </div>
+                            <p className="text-xs text-rose-100/90">{docNotice.message}</p>
+                            <div className="flex justify-end">
+                              <Button
+                                variant="outline"
+                                className="h-8 border-rose-400/45 bg-rose-500/10 text-xs text-rose-100 hover:bg-rose-500/20"
+                                onClick={() => {
+                                  onClose()
+                                  if (typeof window !== "undefined") {
+                                    window.location.href = "/account"
+                                  }
+                                }}
+                              >
+                                Open Settings
                               </Button>
                             </div>
                           </div>

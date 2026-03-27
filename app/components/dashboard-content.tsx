@@ -182,9 +182,14 @@ export function DashboardContent() {
       const eventVendorId = Number(data?.vendorId ?? data?.vendor_id)
       if (eventVendorId === vendorId) {
         const status = (data.status || '').toLowerCase()
-        if (data.status === 'pending_acceptance') {
+        const bookingStatus = String(data?.booking_status || '').toLowerCase()
+        if (status === 'pending_acceptance' || bookingStatus === 'pending_acceptance') {
           console.log('🔔 Dashboard: Passing pay-at-cafe event to NotificationButton')
-          setLatestBookingEvent(data)
+          setLatestBookingEvent({
+            ...data,
+            vendorId: eventVendorId,
+            status: status || bookingStatus || data?.status,
+          })
         }
         if (status === 'confirmed' || status === 'paid' || status === 'completed') {
           setRealTimeStats(prev => ({

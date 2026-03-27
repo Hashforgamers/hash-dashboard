@@ -23,6 +23,7 @@ import {
   Minus,
   Save,
   Users,
+  AlertTriangle,
 } from "lucide-react";
 import { BOOKING_URL, DASHBOARD_URL } from "@/src/config/env";
 import { jwtDecode } from "jwt-decode";
@@ -269,6 +270,7 @@ export default function ConsolePricing() {
   const [isSavingControllerPricing, setIsSavingControllerPricing] = useState(false);
   const [controllerPricingError, setControllerPricingError] = useState<string | null>(null);
   const [controllerPricingChanged, setControllerPricingChanged] = useState(false);
+  const [activeControllerConsole, setActiveControllerConsole] = useState<"ps5" | "xbox">("ps5");
   const [squadPricing, setSquadPricing] = useState<SquadPricingState>(squadRuleDefaults);
   const [isLoadingSquadPricing, setIsLoadingSquadPricing] = useState(false);
   const [isSavingSquadPricing, setIsSavingSquadPricing] = useState(false);
@@ -1247,6 +1249,12 @@ export default function ConsolePricing() {
       highestDiscount,
     };
   })();
+  const controllerConsoleTabs = consoleTypes.filter((console) =>
+    controllerSupportedConsoleTypes.has(console.type)
+  );
+  const activeControllerConfigType = controllerConsoleTabs.some((c) => c.type === activeControllerConsole)
+    ? activeControllerConsole
+    : (controllerConsoleTabs[0]?.type as "ps5" | "xbox" | undefined) || "ps5";
 
   return (
     <div className="console-pricing-page dashboard-module dashboard-typography flex h-full min-h-0 flex-col gap-4 overflow-y-auto overflow-x-hidden px-1 pb-2 sm:px-2">
@@ -1548,7 +1556,7 @@ export default function ConsolePricing() {
           className="flex flex-1 min-h-0 flex-col gap-4 overflow-hidden"
         >
           <div className="gaming-panel shrink-0 rounded-xl p-4">
-            <h2 className="!text-base !font-semibold text-foreground">Extra Controller Pricing</h2>
+            <h2 className="text-sm font-semibold text-foreground sm:text-base">Extra Controller Pricing</h2>
             <p className="body-text-muted mt-1">
               Configure base and tier rates like 1 controller = ₹50, 2 controllers = ₹80.
               Backend-integrated for PS5 and Xbox.
@@ -1565,9 +1573,31 @@ export default function ConsolePricing() {
             </div>
           ) : (
           <div className="min-h-0 flex-1 overflow-y-auto pr-1 space-y-4">
-            {consoleTypes
-              .filter((console) => controllerSupportedConsoleTypes.has(console.type))
-              .map((console) => {
+            <div className="dashboard-module-tab-group inline-flex items-center gap-2 rounded-lg p-1">
+              {controllerConsoleTabs.map((console) => {
+                const isActive = activeControllerConfigType === console.type;
+                const Icon = console.icon;
+                return (
+                  <button
+                    key={`controller-tab-${console.type}`}
+                    type="button"
+                    onClick={() => setActiveControllerConsole(console.type as "ps5" | "xbox")}
+                    className={`inline-flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+                      isActive
+                        ? "dashboard-module-tab-active bg-cyan-500/12 text-slate-900 dark:text-cyan-100"
+                        : "text-slate-500 hover:text-slate-900 dark:text-slate-300 dark:hover:text-cyan-100"
+                    }`}
+                  >
+                    <Icon className="h-4 w-4" />
+                    {console.name}
+                  </button>
+                );
+              })}
+            </div>
+
+            {(() => {
+              const console = controllerConsoleTabs.find((row) => row.type === activeControllerConfigType);
+              if (!console) return null;
               const Icon = console.icon;
               const config = controllerPricing[console.type] || { base_price: 0, tiers: [] };
               const sortedTiers = [...config.tiers].sort((a, b) => a.quantity - b.quantity);
@@ -1666,7 +1696,7 @@ export default function ConsolePricing() {
                   </CardContent>
                 </Card>
               );
-            })}
+            })()}
 
           </div>
           )}
@@ -1703,7 +1733,7 @@ export default function ConsolePricing() {
           <div className="dashboard-module-panel shrink-0 rounded-xl p-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
-                <h2 className="flex items-center gap-2 !text-base !font-semibold text-foreground">
+                <h2 className="flex items-center gap-2 text-sm font-semibold text-foreground sm:text-base">
                   <Users className="icon-md text-cyan-300" />
                   Squad Pricing Rule Engine
                 </h2>
@@ -1746,7 +1776,7 @@ export default function ConsolePricing() {
                 Loading squad rules...
               </div>
             ) : (
-              <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+              <div className="grid grid-cols-1 gap-4">
                 {consoleTypes.filter((console) => console.type === "pc").map((console) => {
                   const group = squadGroupLabelByConsoleType[console.type];
                   if (!group) return null;
@@ -2461,11 +2491,11 @@ function OffersTable({ offers, onEdit, onDelete, deletingOfferId, getConsoleIcon
                     <div className="space-y-0.5 body-text-muted">
                       <div className="flex items-center gap-1.5">
                         <Calendar className="icon-md shrink-0" />
-                        <span>{offer.start_date}</span>
+                        <span>Valid From: {offer.start_date} {offer.start_time}</span>
                       </div>
                       <div className="flex items-center gap-1.5">
                         <Clock className="icon-md shrink-0" />
-                        <span>{offer.start_time} - {offer.end_time}</span>
+                        <span>Valid To: {offer.end_date} {offer.end_time}</span>
                       </div>
                     </div>
                   </td>
