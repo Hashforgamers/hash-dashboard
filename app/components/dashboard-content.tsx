@@ -353,53 +353,44 @@ export function DashboardContent() {
   })
   const operatorName = activeStaff?.name || "Owner"
   const totalConsoles = Array.isArray(bookingInfo) ? bookingInfo.length : 0
+  const inUseConsoles = platforms.reduce((sum, platform) => sum + platform.booked, 0)
 
   const topMetricsStrip = (
     <motion.div
       initial={{ opacity: 0, x: -20 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.3 }}
-      className="grid grid-cols-1 gap-2 sm:grid-cols-3 sm:gap-2.5 max-md:flex max-md:snap-x max-md:gap-2 max-md:overflow-x-auto max-md:pb-1 max-md:[scrollbar-width:none] max-md:[&::-webkit-scrollbar]:hidden"
+      className="flex flex-wrap items-stretch gap-1.5 sm:gap-2 max-md:flex max-md:snap-x max-md:gap-2 max-md:overflow-x-auto max-md:pb-1 max-md:[scrollbar-width:none] max-md:[&::-webkit-scrollbar]:hidden"
     >
       <motion.div
         animate={{ scale: realTimeStats.lastUpdate ? [1, 1.05, 1] : 1 }}
         transition={{ duration: 0.5 }}
-        className="flex-1 min-w-0 max-md:min-w-[82%] max-md:snap-start"
+        className="min-w-[168px] flex-1 max-md:min-w-[64%] max-md:snap-start"
       >
-        <Card className="gaming-kpi-card h-full rounded-xl transition-all duration-200">
-          <CardContent className="p-2 sm:p-2.5">
-            <div className="mb-1 flex items-center justify-between sm:mb-1.5">
+        <Card className="gaming-kpi-card h-full rounded-lg transition-all duration-200">
+          <CardContent className="p-2">
+            <div className="flex items-center justify-between">
               <div className="flex items-center gap-1 sm:gap-2">
-                <div className="rounded-full bg-emerald-500/20 p-1 sm:p-1.5">
-                  <IndianRupee className="h-3 w-3 text-emerald-400 sm:h-4 sm:w-4" />
+                <div className="rounded-full bg-emerald-500/20 p-1">
+                  <IndianRupee className="h-3 w-3 text-emerald-400" />
                 </div>
                 <span className="dash-kpi-label">Earnings (Net)</span>
               </div>
               <button onClick={() => setShowEarnings(!showEarnings)} className="text-emerald-400 transition-colors hover:text-emerald-300">
-                {showEarnings ? <EyeOff className="h-3 w-3 sm:h-4 sm:w-4" /> : <Eye className="h-3 w-3 sm:h-4 sm:w-4" />}
+                {showEarnings ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
               </button>
             </div>
-            <div className="flex items-center justify-between">
+            <div className="mt-1 flex items-center justify-between">
               <motion.p
                 key={currentStats.netEarnings}
                 initial={{ scale: 0.8, opacity: 0.5 }}
                 animate={{ scale: 1, opacity: 1 }}
                 transition={{ duration: 0.3 }}
-                className="dash-kpi-value"
+                className="text-sm font-semibold text-foreground sm:text-base"
               >
                 {showEarnings ? formatMoney(currentStats.netEarnings) : "₹•••••"}
               </motion.p>
-              <div className="flex items-center gap-1 text-xs text-emerald-400">
-                <TrendingUp className="h-3 w-3" />
-                <span>Today</span>
-              </div>
-            </div>
-            <div className="mt-1 text-[11px] text-emerald-400/90">
-              {showEarnings ? (
-                <>Gross: {formatMoney(currentStats.todayEarnings)} · App Fee: {formatMoney(currentStats.todayAppFees)}</>
-              ) : (
-                "Gross: ₹••••• · App Fee: ₹•••••"
-              )}
+              <span className="text-[10px] font-semibold uppercase tracking-wide text-emerald-300">Today</span>
             </div>
           </CardContent>
         </Card>
@@ -408,30 +399,30 @@ export function DashboardContent() {
       <motion.div
         animate={{ scale: realTimeStats.lastUpdate ? [1, 1.05, 1] : 1 }}
         transition={{ duration: 0.5 }}
-        className="flex-1 min-w-0 max-md:min-w-[82%] max-md:snap-start"
+        className="min-w-[150px] flex-1 max-md:min-w-[58%] max-md:snap-start"
       >
-        <Card className="gaming-kpi-card h-full rounded-xl transition-all duration-200">
-          <CardContent className="p-2 sm:p-2.5">
-            <div className="mb-1 flex items-center justify-between sm:mb-1.5">
+        <Card className="gaming-kpi-card h-full rounded-lg transition-all duration-200">
+          <CardContent className="p-2">
+            <div className="flex items-center justify-between">
               <div className="flex items-center gap-1 sm:gap-2">
-                <div className="rounded-full bg-blue-500/20 p-1 sm:p-1.5">
-                  <CalendarCheck className="h-3 w-3 text-blue-400 sm:h-4 sm:w-4" />
+                <div className="rounded-full bg-blue-500/20 p-1">
+                  <CalendarCheck className="h-3 w-3 text-blue-400" />
                 </div>
                 <span className="dash-kpi-label">Bookings</span>
               </div>
-              <span className="text-xs font-bold text-green-400">+{currentStats.todayBookingsChange}%</span>
+              <span className="text-[10px] font-bold text-green-400">+{currentStats.todayBookingsChange}%</span>
             </div>
-            <div className="flex items-center justify-between">
+            <div className="mt-1 flex items-center justify-between">
               <motion.p
                 key={currentStats.todayBookings}
                 initial={{ scale: 0.8, opacity: 0.5 }}
                 animate={{ scale: 1, opacity: 1 }}
                 transition={{ duration: 0.3 }}
-                className="dash-kpi-value"
+                className="text-sm font-semibold text-foreground sm:text-base"
               >
                 {currentStats.todayBookings}
               </motion.p>
-              <div className="flex items-center gap-1 text-xs text-blue-400">
+              <div className="flex items-center gap-1 text-[10px] text-blue-400">
                 <TrendingUp className="h-3 w-3" />
                 <span>Today</span>
               </div>
@@ -443,42 +434,35 @@ export function DashboardContent() {
       <motion.div
         animate={{ scale: realTimeStats.lastUpdate ? [1, 1.05, 1] : 1 }}
         transition={{ duration: 0.5 }}
-        className="flex-1 min-w-0 max-md:min-w-[82%] max-md:snap-start"
+        className="min-w-[168px] flex-1 max-md:min-w-[64%] max-md:snap-start"
       >
-        <Card className="gaming-kpi-card h-full rounded-xl transition-all duration-200">
-          <CardContent className="p-2 sm:p-2.5">
-            <div className="mb-1 flex items-center justify-between sm:mb-1.5">
+        <Card className="gaming-kpi-card h-full rounded-lg transition-all duration-200">
+          <CardContent className="p-2">
+            <div className="flex items-center justify-between">
               <div className="flex items-center gap-1 sm:gap-2">
-                <div className="rounded-full bg-yellow-500/20 p-1 sm:p-1.5">
-                  <WalletCards className="h-3 w-3 text-yellow-400 sm:h-4 sm:w-4" />
+                <div className="rounded-full bg-yellow-500/20 p-1">
+                  <WalletCards className="h-3 w-3 text-yellow-400" />
                 </div>
                 <span className="dash-kpi-label">Pending (Net)</span>
               </div>
               <button onClick={() => setShowPending(!showPending)} className="text-yellow-400 transition-colors hover:text-yellow-300">
-                {showPending ? <EyeOff className="h-3 w-3 sm:h-4 sm:w-4" /> : <Eye className="h-3 w-3 sm:h-4 sm:w-4" />}
+                {showPending ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
               </button>
             </div>
-            <div className="flex items-center justify-between">
+            <div className="mt-1 flex items-center justify-between">
               <motion.p
                 key={currentStats.netPendingAmount}
                 initial={{ scale: 0.8, opacity: 0.5 }}
                 animate={{ scale: 1, opacity: 1 }}
                 transition={{ duration: 0.3 }}
-                className="dash-kpi-value"
+                className="text-sm font-semibold text-foreground sm:text-base"
               >
                 {showPending ? formatMoney(currentStats.netPendingAmount) : "₹•••••"}
               </motion.p>
-              <div className="flex items-center gap-1 text-xs text-yellow-400">
+              <div className="flex items-center gap-1 text-[10px] text-yellow-400">
                 <div className="h-2 w-2 animate-pulse rounded-full bg-yellow-400" />
                 <span>Today</span>
               </div>
-            </div>
-            <div className="mt-1 text-[11px] text-yellow-400/90">
-              {showPending ? (
-                <>Gross: {formatMoney(currentStats.pendingAmount)} · App Fee: {formatMoney(currentStats.pendingAppFees)}</>
-              ) : (
-                "Gross: ₹••••• · App Fee: ₹•••••"
-              )}
             </div>
           </CardContent>
         </Card>
@@ -529,9 +513,9 @@ export function DashboardContent() {
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="gaming-panel shrink-0 rounded-xl p-2.5 md:p-3"
+            className="gaming-panel shrink-0 rounded-xl p-2 md:p-2.5"
           >
-            <div className="grid grid-cols-1 gap-2 lg:grid-cols-[minmax(230px,1fr)_minmax(0,1.8fr)_auto] lg:items-start">
+            <div className="grid grid-cols-1 gap-1.5 lg:grid-cols-[minmax(200px,1fr)_minmax(0,1.8fr)_auto] lg:items-center">
               <div className="min-w-0">
                 <div className="flex items-start justify-between gap-2 lg:block">
                   <div className="min-w-0">
@@ -556,10 +540,6 @@ export function DashboardContent() {
               </div>
 
               <div className="min-w-0">
-                <div className="mb-1 inline-flex items-center gap-1 rounded-md border border-cyan-400/30 bg-cyan-500/10 px-2 py-1 text-xs font-semibold text-cyan-200">
-                  <BarChart3 className="h-3.5 w-3.5" />
-                  Analytics
-                </div>
                 <div className="min-w-0">
                   {topMetricsStrip}
                 </div>
@@ -617,48 +597,44 @@ export function DashboardContent() {
           </div>
 
           <div className="shrink-0">
-            <div className="dashboard-module-panel mt-2 flex flex-wrap items-center justify-between gap-2 rounded-lg px-3 py-2 text-xs sm:mt-1">
-              <div className="flex flex-wrap items-center gap-2 text-slate-300">
-                <span className="inline-flex items-center gap-1 rounded-md border border-emerald-400/30 bg-emerald-500/10 px-2 py-1 text-emerald-200">
+            <div className="dashboard-module-panel mt-2 flex flex-wrap items-center justify-between gap-1.5 rounded-lg px-2 py-1.5 text-[11px] sm:mt-1">
+              <div className="flex flex-wrap items-center gap-1.5 text-slate-300">
+                <span className="inline-flex items-center gap-1 rounded-md border border-emerald-400/30 bg-emerald-500/10 px-1.5 py-0.5 text-emerald-200">
                   <Clock className="h-3.5 w-3.5" />
-                  {nowISTTimeText} IST
+                  {nowISTTimeText}
                 </span>
-                <span className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1">
+                <span className="inline-flex items-center gap-1 rounded-md border border-border px-1.5 py-0.5">
                   {nowISTDateText}
                 </span>
-                <span className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1">
+                <span className="inline-flex items-center gap-1 rounded-md border border-border px-1.5 py-0.5">
                   <User className="h-3.5 w-3.5 text-cyan-300" />
                   {operatorName}
                 </span>
                 <span
-                  className={`inline-flex items-center gap-1 rounded-md border px-2 py-1 ${
+                  className={`inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 ${
                     isConnected
                       ? "border-emerald-400/40 bg-emerald-500/10 text-emerald-200"
                       : "border-amber-400/40 bg-amber-500/10 text-amber-200"
                   }`}
                 >
                   {isConnected ? <Wifi className="h-3.5 w-3.5" /> : <WifiOff className="h-3.5 w-3.5" />}
-                  {isConnected ? "Realtime Connected" : "Reconnecting..."}
+                  {isConnected ? "Live" : "Syncing"}
                 </span>
-                <span className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1">
+                <span className="inline-flex items-center gap-1 rounded-md border border-border px-1.5 py-0.5">
                   <Monitor className="h-3.5 w-3.5 text-blue-300" />
-                  Total Consoles: {totalConsoles}
+                  {inUseConsoles}/{totalConsoles}
                 </span>
-                {platforms.map((platform) => (
-                  <span key={`console-summary-${platform.type}`} className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1">
-                    <span className="font-semibold">{platform.name}</span>
-                    <span className="text-slate-300">{platform.booked} in use / {platform.total}</span>
-                  </span>
-                ))}
               </div>
               <button
                 type="button"
                 onClick={handleManualRefresh}
-                className="inline-flex items-center gap-1 rounded-md border border-cyan-400/40 bg-cyan-500/10 px-2.5 py-1 text-cyan-200 hover:bg-cyan-500/20"
+                className="inline-flex items-center gap-1 rounded-md border border-cyan-400/40 bg-cyan-500/10 px-2 py-0.5 text-cyan-200 hover:bg-cyan-500/20"
                 disabled={isManualRefreshing}
+                title="Refresh"
+                aria-label="Refresh dashboard"
               >
                 <RefreshCw className={`h-3.5 w-3.5 ${isManualRefreshing ? "animate-spin" : ""}`} />
-                {isManualRefreshing ? "Refreshing..." : "Refresh"}
+                {isManualRefreshing ? "Syncing" : "Refresh"}
               </button>
             </div>
           </div>
