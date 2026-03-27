@@ -624,6 +624,19 @@ export function DashboardContent() {
                   <Monitor className="h-3.5 w-3.5 text-blue-300" />
                   {inUseConsoles}/{totalConsoles}
                 </span>
+                {platforms.map((platform) => {
+                  const PlatformIcon = platform.icon
+                  return (
+                    <span
+                      key={`bottom-platform-${platform.type}`}
+                      className="inline-flex items-center gap-1 rounded-md border border-border px-1.5 py-0.5"
+                      title={`${platform.name}: ${platform.booked} in use / ${platform.total}`}
+                    >
+                      <PlatformIcon className="h-3.5 w-3.5" style={{ color: platform.color }} />
+                      <span>{platform.total}</span>
+                    </span>
+                  )
+                })}
               </div>
               <button
                 type="button"
