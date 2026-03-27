@@ -56,6 +56,7 @@ export function MyAccount() {
   const [previewDocument, setPreviewDocument] = useState<string | null>(null);
   const [previewDocumentName, setPreviewDocumentName] = useState<string>("");
   const [uploadingDocumentId, setUploadingDocumentId] = useState<number | null>(null);
+  const [uploadingDocumentType, setUploadingDocumentType] = useState<string | null>(null);
   const [documentActionMessage, setDocumentActionMessage] = useState<string | null>(null);
   const [cafeImageObjects, setCafeImageObjects] = useState<{id: number, url: string, public_id: string}[]>([]);
 
@@ -1208,6 +1209,36 @@ const toast = {
       setDocumentActionMessage(error?.response?.data?.message || error?.message || "Failed to update document");
     } finally {
       setUploadingDocumentId(null);
+    }
+  };
+
+  const handleUploadMissingDocument = async (documentType: string, file: File | null) => {
+    if (!vendorId || !documentType || !file) return;
+    setUploadingDocumentType(documentType);
+    setDocumentActionMessage(null);
+    try {
+      const formData = new FormData();
+      formData.append("document_type", documentType);
+      formData.append("document", file);
+      const response = await axios.post(
+        `${DASHBOARD_URL}/api/vendor/${vendorId}/documents`,
+        formData,
+        { headers: { "Content-Type": "multipart/form-data" } }
+      );
+      if (!response?.data?.success) {
+        throw new Error(response?.data?.message || "Failed to upload document");
+      }
+      setDocumentActionMessage("Document uploaded and sent for verification.");
+      const dashboardRes = await axios.get(`${DASHBOARD_URL}/api/vendor/${vendorId}/dashboard`);
+      if (dashboardRes?.data) {
+        setData(dashboardRes.data);
+      }
+      window.dispatchEvent(new CustomEvent("refresh-dashboard"));
+    } catch (error: any) {
+      console.error("Failed to upload missing document:", error);
+      setDocumentActionMessage(error?.response?.data?.message || error?.message || "Failed to upload document");
+    } finally {
+      setUploadingDocumentType(null);
     }
   };
 
@@ -2538,6 +2569,41 @@ const ToggleSwitch = ({
                                   </Button>
                                 </>
                               )}
+                              {!doc.id && doc.status === "missing" && (
+                                <>
+                                  <input
+                                    id={`doc-upload-${doc.document_type}`}
+                                    type="file"
+                                    className="hidden"
+                                    accept=".pdf,.png,.jpg,.jpeg,.webp"
+                                    onChange={(e) => {
+                                      const selected = e.target.files?.[0] || null;
+                                      void handleUploadMissingDocument(String(doc.document_type || ""), selected);
+                                      e.currentTarget.value = "";
+                                    }}
+                                  />
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    type="button"
+                                    disabled={uploadingDocumentType === String(doc.document_type || "")}
+                                    className="border-border text-foreground hover:bg-muted hover:text-foreground"
+                                    onClick={() => {
+                                      const inputEl = document.getElementById(`doc-upload-${doc.document_type}`) as HTMLInputElement | null;
+                                      inputEl?.click();
+                                    }}
+                                  >
+                                    {uploadingDocumentType === String(doc.document_type || "") ? (
+                                      <>
+                                        <Loader2 className="mr-1 h-4 w-4 animate-spin" />
+                                        Uploading
+                                      </>
+                                    ) : (
+                                      <>Upload</>
+                                    )}
+                                  </Button>
+                                </>
+                              )}
                             </div>
                           </div>
                         ))
@@ -2546,7 +2612,7 @@ const ToggleSwitch = ({
                           <FileText className="mx-auto h-12 w-12 text-muted-foreground" />
                           <h3 className="mt-2 text-sm font-medium text-foreground">No documents uploaded</h3>
                           <p className="mt-1 text-sm text-muted-foreground">
-                            Upload your business documents to get verified.
+                            Upload each missing document using the Upload button.
                           </p>
                         </div>
                       )}
