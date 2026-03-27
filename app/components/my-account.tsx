@@ -27,6 +27,7 @@ import { cn } from "@/lib/utils";
 import { jwtDecode } from "jwt-decode";
 import { DASHBOARD_URL } from "@/src/config/env";
 import { VENDOR_ONBOARD_URL } from "@/src/config/env"
+import { BOOKING_URL } from "@/src/config/env"
 import axios from "axios";
 import HashLoader from "./ui/HashLoader";
 import { motion } from "framer-motion";
@@ -36,6 +37,13 @@ import { OTPVerificationModal } from "./otpVerificationModal";
 import { useAccess } from "@/app/context/AccessContext";
 
 export function MyAccount() {
+  const HFG_DEFAULT_LOGO = "https://res.cloudinary.com/dxjjigepf/image/upload/v1774472024/hash_for_gamer_logo_d1v4wc.png";
+  const REQUIRED_DOCUMENT_TYPES: Array<{ key: string; label: string; hint: string }> = [
+    { key: "business_registration", label: "Business Registration", hint: "GST/Udyam/MSME or equivalent registration proof." },
+    { key: "owner_identification_proof", label: "Owner Identification Proof", hint: "Owner KYC proof (Aadhaar/PAN/Voter/Passport)." },
+    { key: "tax_identification_number", label: "Tax Identification Number", hint: "GSTIN/PAN/Tax identifier document." },
+    { key: "bank_acc_details", label: "Bank Account Details", hint: "Bank first-page proof with account holder details." },
+  ];
   const { activeStaff } = useAccess();
   const isOwnerSession = (activeStaff?.role || "owner") === "owner";
   const [cafeImages, setCafeImages] = useState<string[]>([]);
@@ -94,6 +102,13 @@ const [notificationPrefs, setNotificationPrefs] = useState({
 });
 const [loadingNotificationPrefs, setLoadingNotificationPrefs] = useState(false);
 const [savingNotificationPrefs, setSavingNotificationPrefs] = useState(false);
+const [payAtCafeAutomation, setPayAtCafeAutomation] = useState({
+  auto_accept_enabled: false,
+  auto_reject_enabled: false,
+  auto_reject_after_minutes: 15,
+});
+const [loadingPayAtCafeAutomation, setLoadingPayAtCafeAutomation] = useState(false);
+const [savingPayAtCafeAutomation, setSavingPayAtCafeAutomation] = useState(false);
 const [subscriptionHistory, setSubscriptionHistory] = useState<any[]>([]);
 const [loadingSubscriptionHistory, setLoadingSubscriptionHistory] = useState(false);
 const [settlementRows, setSettlementRows] = useState<any[]>([]);
@@ -386,6 +401,50 @@ const fetchNotificationPreferences = async () => {
   }
 };
 
+const fetchPayAtCafeAutomation = async () => {
+  if (!vendorId) return;
+  setLoadingPayAtCafeAutomation(true);
+  try {
+    const res = await axios.get(`${BOOKING_URL}/api/pay-at-cafe/settings/${vendorId}`);
+    if (res.data?.success && res.data?.settings) {
+      setPayAtCafeAutomation({
+        auto_accept_enabled: !!res.data.settings.auto_accept_enabled,
+        auto_reject_enabled: !!res.data.settings.auto_reject_enabled,
+        auto_reject_after_minutes: Number(res.data.settings.auto_reject_after_minutes || 15),
+      });
+    }
+  } catch (error) {
+    console.error("Error fetching pay-at-cafe automation settings:", error);
+  } finally {
+    setLoadingPayAtCafeAutomation(false);
+  }
+};
+
+const savePayAtCafeAutomation = async (next: any) => {
+  if (!vendorId) return;
+  setSavingPayAtCafeAutomation(true);
+  try {
+    const payload = {
+      auto_accept_enabled: !!next.auto_accept_enabled,
+      auto_reject_enabled: !!next.auto_reject_enabled,
+      auto_reject_after_minutes: Math.max(1, Math.min(240, Number(next.auto_reject_after_minutes || 15))),
+    };
+    const res = await axios.put(`${BOOKING_URL}/api/pay-at-cafe/settings/${vendorId}`, payload);
+    if (res.data?.success && res.data?.settings) {
+      setPayAtCafeAutomation({
+        auto_accept_enabled: !!res.data.settings.auto_accept_enabled,
+        auto_reject_enabled: !!res.data.settings.auto_reject_enabled,
+        auto_reject_after_minutes: Number(res.data.settings.auto_reject_after_minutes || 15),
+      });
+    }
+  } catch (error) {
+    console.error("Error saving pay-at-cafe automation settings:", error);
+    alert("Failed to update pay-at-cafe auto settings");
+  } finally {
+    setSavingPayAtCafeAutomation(false);
+  }
+};
+
 const saveNotificationPreferences = async (nextPrefs: any) => {
   if (!vendorId) return;
   setSavingNotificationPrefs(true);
@@ -525,6 +584,7 @@ useEffect(() => {
     fetchPayouts(payoutPage);
   } else if (page === "Notification Preferences") {
     fetchNotificationPreferences();
+    fetchPayAtCafeAutomation();
   } else if (page === "Subscription Details") {
     fetchSubscriptionHistory();
   } else if (page === "Settlement Report") {
@@ -1222,7 +1282,7 @@ const toast = {
       console.log("API Response:", res.data);
 
       // Set profile image
-      const profileImg = res.data.cafeProfile.profileImage || "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?q=80&w=2070&auto=format&fit=crop";
+      const profileImg = res.data.cafeProfile.profileImage || HFG_DEFAULT_LOGO;
       setProfileImage(profileImg);
 
       if (res.data && res.data.cafeProfile) {
@@ -1468,6 +1528,32 @@ const ToggleSwitch = ({
 
 
   const { navigation, cafeProfile, businessDetails, operatingHours, billingDetails, verifiedDocuments } = data;
+  const documentsByType = new Map(
+    (Array.isArray(verifiedDocuments) ? verifiedDocuments : [])
+      .map((doc: any) => [String(doc?.document_type || "").toLowerCase(), doc])
+  );
+  const normalizedVerifiedDocuments = REQUIRED_DOCUMENT_TYPES.map((docMeta) => {
+    const found = documentsByType.get(docMeta.key);
+    if (found) {
+      return {
+        ...found,
+        name: found.name || docMeta.label,
+        document_type: docMeta.key,
+        hint: docMeta.hint,
+      };
+    }
+    return {
+      id: null,
+      name: docMeta.label,
+      document_type: docMeta.key,
+      status: "missing",
+      expiry: null,
+      uploadedAt: null,
+      documentUrl: null,
+      publicId: null,
+      hint: docMeta.hint,
+    };
+  });
 
   return (
     <div className="min-h-screen overflow-y-auto bg-background text-foreground">
@@ -1496,7 +1582,7 @@ const ToggleSwitch = ({
                       <div className="h-32 w-32 rounded-full p-[4px] bg-gradient-to-r from-emerald-500 via-cyan-500 to-blue-500 animate-spin-slow">
                         <div className="h-full w-full rounded-full bg-background flex items-center justify-center overflow-hidden">
                           <img
-                            src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?q=80&w=2070&auto=format&fit=crop"
+                            src={HFG_DEFAULT_LOGO}
                             alt="Avatar"
                             className="h-full w-full object-cover rounded-full"
                           />
@@ -1552,7 +1638,7 @@ const ToggleSwitch = ({
           <div className="h-24 w-24 rounded-full bg-emerald-500/20 p-[4px] md:h-28 md:w-28">
             <div className="h-full w-full rounded-full bg-background flex items-center justify-center overflow-hidden">
               <img
-                src={profileImage || "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?q=80&w=2070&auto=format&fit=crop"}
+                src={profileImage || HFG_DEFAULT_LOGO}
                 alt="Profile Avatar"
                 className="h-full w-full object-cover rounded-full"
               />
@@ -2309,10 +2395,23 @@ const ToggleSwitch = ({
                   <CardContent>
                     <div className="space-y-4">
                       {Array.isArray((data as any)?.documentAlerts) && (data as any).documentAlerts.length > 0 && (
-                        <div className="rounded-lg border border-rose-400/40 bg-rose-500/10 p-3 text-sm text-rose-100">
-                          {(data as any).documentAlerts.map((alert: any, idx: number) => (
-                            <p key={`doc-alert-${idx}`}>{alert?.message || "A document was rejected. Please upload again."}</p>
-                          ))}
+                        <div className="space-y-2">
+                          {(data as any).documentAlerts.map((alert: any, idx: number) => {
+                            const isVerified = String(alert?.type || "").toLowerCase() === "verified";
+                            return (
+                              <div
+                                key={`doc-alert-${idx}`}
+                                className={cn(
+                                  "rounded-lg border p-3 text-sm",
+                                  isVerified
+                                    ? "border-emerald-400/40 bg-emerald-500/10 text-emerald-100"
+                                    : "border-rose-400/40 bg-rose-500/10 text-rose-100"
+                                )}
+                              >
+                                {alert?.message || "Document status updated."}
+                              </div>
+                            );
+                          })}
                         </div>
                       )}
                       {documentActionMessage && (
@@ -2320,10 +2419,10 @@ const ToggleSwitch = ({
                           {documentActionMessage}
                         </div>
                       )}
-                      {verifiedDocuments && verifiedDocuments.length > 0 ? (
-                        verifiedDocuments.map((doc: any) => (
+                      {normalizedVerifiedDocuments && normalizedVerifiedDocuments.length > 0 ? (
+                        normalizedVerifiedDocuments.map((doc: any) => (
                           <div
-                            key={doc.id || doc.name}
+                            key={doc.id || doc.document_type || doc.name}
                             className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 rounded-lg border border-border hover:bg-muted/20 transition-colors duration-200"
                           >
                             <div className="flex items-center space-x-4 mb-3 sm:mb-0">
@@ -2334,6 +2433,8 @@ const ToggleSwitch = ({
                                     ? "text-green-500"
                                     : doc.status === "rejected"
                                     ? "text-red-500"
+                                    : doc.status === "missing"
+                                    ? "text-slate-500"
                                     : "text-yellow-500"
                                 )}
                               />
@@ -2351,11 +2452,13 @@ const ToggleSwitch = ({
                                     "font-medium",
                                     doc.status === "verified" ? "text-green-600" :
                                     doc.status === "rejected" ? "text-red-600" : "text-yellow-600"
-                                  )}>{doc.status}</span></p>
+                                    ,
+                                    doc.status === "missing" && "text-slate-500"
+                                  )}>{doc.status === "missing" ? "Missing" : doc.status}</span></p>
                                   {doc.uploadedAt && (
                                     <p>Uploaded: {new Date(doc.uploadedAt).toLocaleDateString()}</p>
                                   )}
-                                  <p>Expires: {doc.expiry}</p>
+                                  <p>{doc.hint}</p>
                                 </div>
                               </div>
                             </div>
@@ -2371,10 +2474,11 @@ const ToggleSwitch = ({
                                 className={cn(
                                   doc.status === "verified" && "bg-green-500/20 text-green-400",
                                   doc.status === "rejected" && "bg-red-500/20 text-red-400",
-                                  doc.status === "pending" && "bg-yellow-500/20 text-yellow-400"
+                                  doc.status === "pending" && "bg-yellow-500/20 text-yellow-400",
+                                  doc.status === "missing" && "bg-slate-500/20 text-slate-300"
                                 )}
                               >
-                                {doc.status}
+                                {doc.status === "missing" ? "missing" : doc.status}
                               </Badge>
                               {doc.documentUrl && (
                                 <>
@@ -2446,10 +2550,9 @@ const ToggleSwitch = ({
                           </p>
                         </div>
                       )}
-                      <Button variant="outline" className="w-full border-primary text-primary hover:bg-primary hover:text-primary-foreground">
-                        <FileCheck className="mr-2 h-4 w-4" />
-                        Upload New Document
-                      </Button>
+                      <p className="text-xs text-muted-foreground">
+                        Only these 4 onboarding documents are supported. Missing items are shown above.
+                      </p>
                     </div>
                   </CardContent>
                 </Card>
@@ -3183,6 +3286,76 @@ const ToggleSwitch = ({
               />
             </div>
           ))}
+          <div className="my-3 border-t border-border" />
+          <div className="space-y-3">
+            <div>
+              <p className="text-sm font-medium text-foreground">Pay at Cafe Automation</p>
+              <p className="text-xs text-muted-foreground">
+                Choose automatic handling for pending pay-at-cafe requests.
+              </p>
+            </div>
+            {loadingPayAtCafeAutomation ? (
+              <div className="flex items-center gap-2 text-sm text-slate-300">
+                <Loader2 className="h-4 w-4 animate-spin" /> Loading auto settings...
+              </div>
+            ) : (
+              <>
+                <div className="flex items-center justify-between rounded-lg border border-border px-3 py-2">
+                  <p className="text-sm text-foreground">Auto Accept</p>
+                  <ToggleSwitch
+                    enabled={Boolean(payAtCafeAutomation.auto_accept_enabled)}
+                    loading={savingPayAtCafeAutomation}
+                    onToggle={() => {
+                      const next = {
+                        ...payAtCafeAutomation,
+                        auto_accept_enabled: !payAtCafeAutomation.auto_accept_enabled,
+                        auto_reject_enabled: payAtCafeAutomation.auto_accept_enabled ? payAtCafeAutomation.auto_reject_enabled : false,
+                      };
+                      setPayAtCafeAutomation(next);
+                      savePayAtCafeAutomation(next);
+                    }}
+                  />
+                </div>
+                <div className="flex items-center justify-between rounded-lg border border-border px-3 py-2">
+                  <div>
+                    <p className="text-sm text-foreground">Auto Reject</p>
+                    <p className="text-xs text-muted-foreground">
+                      Reject pending requests after timeout.
+                    </p>
+                  </div>
+                  <ToggleSwitch
+                    enabled={Boolean(payAtCafeAutomation.auto_reject_enabled)}
+                    loading={savingPayAtCafeAutomation}
+                    onToggle={() => {
+                      const next = {
+                        ...payAtCafeAutomation,
+                        auto_reject_enabled: !payAtCafeAutomation.auto_reject_enabled,
+                        auto_accept_enabled: payAtCafeAutomation.auto_reject_enabled ? payAtCafeAutomation.auto_accept_enabled : false,
+                      };
+                      setPayAtCafeAutomation(next);
+                      savePayAtCafeAutomation(next);
+                    }}
+                  />
+                </div>
+                <div className="flex items-center gap-3 rounded-lg border border-border px-3 py-2">
+                  <Label className="text-sm text-foreground">Auto Reject Timeout (minutes)</Label>
+                  <Input
+                    type="number"
+                    min={1}
+                    max={240}
+                    value={payAtCafeAutomation.auto_reject_after_minutes}
+                    onChange={(e) => {
+                      const timeout = Math.max(1, Math.min(240, Number(e.target.value || 15)));
+                      const next = { ...payAtCafeAutomation, auto_reject_after_minutes: timeout };
+                      setPayAtCafeAutomation(next);
+                    }}
+                    onBlur={() => savePayAtCafeAutomation(payAtCafeAutomation)}
+                    className="h-8 w-24"
+                  />
+                </div>
+              </>
+            )}
+          </div>
         </>
       )}
     </CardContent>
