@@ -639,17 +639,17 @@ export function DashboardContent() {
           </div>
 
           {/* Main Layout Grid */}
-          <div className="grid grid-cols-1 gap-3 sm:gap-4 xl:grid-cols-12 flex-1 min-h-0">
+          <div className="grid grid-cols-1 gap-3 sm:gap-4 xl:grid-cols-12 flex-1 min-h-0 max-md:h-[80svh] max-md:grid-rows-2">
 
             {/* Left Column */}
-            <div className="space-y-3 sm:space-y-4 flex flex-col min-h-0 xl:col-span-8 2xl:col-span-9">
+            <div className="space-y-3 sm:space-y-4 flex flex-col min-h-0 xl:col-span-8 2xl:col-span-9 max-md:h-[40svh]">
 
               {/* ✅ Current Slots - locked when subscription expired */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.3 }}
-                className="flex-1 min-h-0 lg:h-full"
+                className="flex-1 min-h-0 lg:h-full max-md:h-full"
               >
                 <div className="h-full overflow-hidden relative">
                   <CurrentSlots
@@ -667,9 +667,9 @@ export function DashboardContent() {
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.4 }}
-              className="flex flex-col min-h-0 xl:col-span-4 2xl:col-span-3 xl:h-full"
+              className="flex flex-col min-h-0 xl:col-span-4 2xl:col-span-3 xl:h-full max-md:h-[40svh]"
             >
-              <div className="relative flex-1 min-h-[320px] xl:min-h-0 rounded-xl xl:h-full overflow-hidden">
+              <div className="relative flex-1 min-h-[320px] xl:min-h-0 rounded-xl xl:h-full overflow-hidden max-md:min-h-0 max-md:h-full">
                 <UpcomingBookings
                   upcomingBookings={dashboardData.upcomingBookings || []}
                   vendorId={vendorId?.toString()}
