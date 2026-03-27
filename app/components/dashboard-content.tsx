@@ -572,7 +572,7 @@ export function DashboardContent() {
             animate={{ opacity: 1, y: 0 }}
             className="gaming-panel shrink-0 rounded-xl p-2.5 md:p-3"
           >
-            <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-2">
+            <div className="grid grid-cols-1 items-start gap-2">
               <div className="flex-1">
                 <div className="mb-1.5 flex flex-wrap items-center gap-2 sm:mb-2 sm:gap-3">
                   <h1 className="premium-heading dashboard-hero-title leading-tight max-md:text-[1.35rem] max-md:tracking-[0.02em]">Gaming Cafe Command</h1>
@@ -601,11 +601,15 @@ export function DashboardContent() {
                   Monitor live slots, revenue, and upcoming sessions in real time.
                 </p>
               </div>
-              <div className="flex items-start justify-end">
+            </div>
+          </motion.div>
+
+          <div className="shrink-0">
+            <div className="grid grid-cols-1 items-start gap-2 md:grid-cols-[auto_minmax(0,1fr)]">
               <motion.div
                 initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="dashboard-module-tab-group flex items-center gap-1 rounded-lg p-1"
+                className="dashboard-module-tab-group flex items-center gap-1 rounded-lg p-1 w-fit"
               >
                 <button
                   onClick={() => setActiveTopTab('analytics')}
@@ -630,12 +634,10 @@ export function DashboardContent() {
                   Devices
                 </button>
               </motion.div>
+              <div className="min-w-0">
+                {topMetricsStrip}
+              </div>
             </div>
-            </div>
-          </motion.div>
-
-          <div className="shrink-0">
-            {topMetricsStrip}
           </div>
 
           {/* Main Layout Grid */}
