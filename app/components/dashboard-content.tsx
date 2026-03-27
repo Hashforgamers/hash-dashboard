@@ -340,12 +340,12 @@ export function DashboardContent() {
           animate={{ opacity: 1, x: 0 }}
           exit={{ opacity: 0, x: -20 }}
           transition={{ duration: 0.3 }}
-          className="grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-3 lg:grid-cols-3"
+          className="grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-3 lg:grid-cols-3 max-md:flex max-md:snap-x max-md:gap-2 max-md:overflow-x-auto max-md:pb-1 max-md:[scrollbar-width:none] max-md:[&::-webkit-scrollbar]:hidden"
         >
           <motion.div
             animate={{ scale: realTimeStats.lastUpdate ? [1, 1.05, 1] : 1 }}
             transition={{ duration: 0.5 }}
-            className="flex-1"
+            className="flex-1 min-w-0 max-md:min-w-[82%] max-md:snap-start"
           >
             <Card className="gaming-kpi-card h-full rounded-xl transition-all duration-200">
               <CardContent className="p-2 sm:p-3">
@@ -391,7 +391,7 @@ export function DashboardContent() {
           <motion.div
             animate={{ scale: realTimeStats.lastUpdate ? [1, 1.05, 1] : 1 }}
             transition={{ duration: 0.5 }}
-            className="flex-1"
+            className="flex-1 min-w-0 max-md:min-w-[82%] max-md:snap-start"
           >
             <Card className="gaming-kpi-card h-full rounded-xl transition-all duration-200">
               <CardContent className="p-2 sm:p-3">
@@ -428,7 +428,7 @@ export function DashboardContent() {
           <motion.div
             animate={{ scale: realTimeStats.lastUpdate ? [1, 1.05, 1] : 1 }}
             transition={{ duration: 0.5 }}
-            className="flex-1"
+            className="flex-1 min-w-0 max-md:min-w-[82%] max-md:snap-start"
           >
             <Card className="gaming-kpi-card h-full rounded-xl transition-all duration-200">
               <CardContent className="p-2 sm:p-3">
@@ -480,7 +480,7 @@ export function DashboardContent() {
           animate={{ opacity: 1, x: 0 }}
           exit={{ opacity: 0, x: 20 }}
           transition={{ duration: 0.3 }}
-          className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3"
+          className="grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-3 lg:grid-cols-4 max-md:flex max-md:snap-x max-md:gap-2 max-md:overflow-x-auto max-md:pb-1 max-md:[scrollbar-width:none] max-md:[&::-webkit-scrollbar]:hidden"
         >
           {platforms.map((platform) => {
             const available = platform.total - platform.booked
@@ -494,7 +494,7 @@ export function DashboardContent() {
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3 }}
-                className="gaming-kpi-card rounded-xl p-2 shadow-sm backdrop-blur-sm sm:p-3"
+                className="gaming-kpi-card rounded-xl p-2 shadow-sm backdrop-blur-sm sm:p-3 max-md:min-w-[70%] max-md:snap-start"
               >
                 <div className="flex items-center justify-between mb-1 sm:mb-2">
                   <div className="flex items-center gap-1 sm:gap-2">
@@ -536,7 +536,7 @@ export function DashboardContent() {
       {dashboardData?.available ? (
         <HashLoader className="py-[50vh]" />
       ) : (
-        <div className="relative h-full min-h-0 text-foreground flex flex-col gap-3 overflow-y-auto sm:gap-4 lg:overflow-hidden">
+        <div className="relative flex h-full min-h-0 flex-col gap-2 overflow-hidden text-foreground sm:gap-4">
           {isLocked && <LockedOverlay />}
           <div
             className={`flex min-h-0 flex-1 flex-col overflow-hidden ${
@@ -570,12 +570,12 @@ export function DashboardContent() {
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="gaming-panel shrink-0 rounded-xl p-3 md:p-4"
+            className="gaming-panel shrink-0 rounded-xl p-2.5 md:p-4"
           >
-            <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-start">
+            <div className="grid gap-2.5 md:grid-cols-[minmax(0,1fr)_auto] md:items-start">
               <div className="flex-1">
-                <div className="mb-2 flex flex-wrap items-center gap-2 sm:gap-3">
-                  <h1 className="premium-heading dashboard-hero-title leading-tight">Gaming Cafe Command</h1>
+                <div className="mb-1.5 flex flex-wrap items-center gap-2 sm:mb-2 sm:gap-3">
+                  <h1 className="premium-heading dashboard-hero-title leading-tight max-md:text-[1.35rem] max-md:tracking-[0.02em]">Gaming Cafe Command</h1>
                   <div className={`h-2 w-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`} />
                   <NotificationButton
                     vendorId={vendorId}
@@ -591,25 +591,25 @@ export function DashboardContent() {
                     />
                   )}
                 </div>
-                <div className="mb-2 flex flex-wrap items-center gap-2">
+                <div className="mb-1.5 flex flex-wrap items-center gap-2 sm:mb-2">
                   <div className="flex max-w-full items-center gap-2 rounded-full border border-emerald-400/30 bg-emerald-500/10 px-2 py-1 text-[11px] text-emerald-200 sm:px-3">
                     <span className="font-semibold">{nowISTTimeText} IST</span>
                     <span className="hidden sm:inline text-emerald-300/80">• {nowISTDateText}</span>
                   </div>
                 </div>
-                <p className="premium-subtle text-xs sm:text-sm">
+                <p className="premium-subtle text-[11px] leading-relaxed sm:text-sm max-md:line-clamp-2">
                   Monitor live slots, revenue, and upcoming sessions in real time.
                 </p>
               </div>
-              <div className="flex w-full items-center justify-end gap-3 self-end md:w-auto md:self-start">
+              <div className="flex w-full items-center justify-start gap-2 self-end md:w-auto md:justify-end md:gap-3 md:self-start">
               <motion.div
                 initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="gaming-panel flex w-fit flex-col items-stretch gap-2 rounded-xl p-1.5"
+                className="gaming-panel flex w-full flex-row items-stretch gap-1.5 rounded-lg p-1 md:w-fit md:flex-col md:gap-2 md:rounded-xl md:p-1.5"
               >
                 <button
                   onClick={() => setActiveTopTab('analytics')}
-                  className={`flex items-center justify-start gap-2 rounded-md px-3 py-2 text-xs font-semibold transition-all duration-200 sm:px-4 sm:text-sm ${
+                  className={`flex flex-1 items-center justify-center gap-1.5 rounded-md px-2.5 py-2 text-xs font-semibold transition-all duration-200 sm:px-4 sm:text-sm md:justify-start ${
                     activeTopTab === 'analytics'
                       ? 'bg-background text-foreground shadow-sm'
                       : 'text-muted-foreground hover:text-foreground'
@@ -620,7 +620,7 @@ export function DashboardContent() {
                 </button>
                 <button
                   onClick={() => setActiveTopTab('devices')}
-                  className={`flex items-center justify-start gap-2 rounded-md px-3 py-2 text-xs font-semibold transition-all duration-200 sm:px-4 sm:text-sm ${
+                  className={`flex flex-1 items-center justify-center gap-1.5 rounded-md px-2.5 py-2 text-xs font-semibold transition-all duration-200 sm:px-4 sm:text-sm md:justify-start ${
                     activeTopTab === 'devices'
                       ? 'bg-background text-foreground shadow-sm'
                       : 'text-muted-foreground hover:text-foreground'
@@ -639,17 +639,17 @@ export function DashboardContent() {
           </div>
 
           {/* Main Layout Grid */}
-          <div className="grid grid-cols-1 gap-3 sm:gap-4 xl:grid-cols-12 flex-1 min-h-0 max-md:h-[80svh] max-md:grid-rows-2">
+          <div className="grid grid-cols-1 gap-2 sm:gap-4 xl:grid-cols-12 flex-1 min-h-0 max-md:grid-rows-2">
 
             {/* Left Column */}
-            <div className="space-y-3 sm:space-y-4 flex flex-col min-h-0 xl:col-span-8 2xl:col-span-9 max-md:h-[40svh]">
+            <div className="space-y-2 sm:space-y-4 flex flex-col min-h-0 xl:col-span-8 2xl:col-span-9 max-md:h-full max-md:min-h-0">
 
               {/* ✅ Current Slots - locked when subscription expired */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.3 }}
-                className="flex-1 min-h-0 lg:h-full max-md:h-full"
+                className="flex-1 min-h-0 lg:h-full"
               >
                 <div className="h-full overflow-hidden relative">
                   <CurrentSlots
@@ -667,7 +667,7 @@ export function DashboardContent() {
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.4 }}
-              className="flex flex-col min-h-0 xl:col-span-4 2xl:col-span-3 xl:h-full max-md:h-[40svh]"
+              className="flex flex-col min-h-0 xl:col-span-4 2xl:col-span-3 xl:h-full max-md:h-full max-md:min-h-0"
             >
               <div className="relative flex-1 min-h-[320px] xl:min-h-0 rounded-xl xl:h-full overflow-hidden max-md:min-h-0 max-md:h-full">
                 <UpcomingBookings
