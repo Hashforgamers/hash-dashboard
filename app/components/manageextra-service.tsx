@@ -433,7 +433,7 @@ export default function ManageExtraServices() {
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="dashboard-module dashboard-typography flex h-full min-h-0 w-full flex-col gap-4 overflow-hidden px-1 pb-2 sm:px-2"
+      className="dashboard-module dashboard-typography flex w-full flex-col gap-4 px-1 pb-2 sm:px-2"
     >
       <motion.div
         initial={{ opacity: 0, y: -14 }}
@@ -474,7 +474,7 @@ export default function ManageExtraServices() {
         </div>
       </motion.div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain pr-1">
+      <div className="w-full pr-1">
         {/* ✅ Error State */}
         {error && (
           <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4 text-destructive">

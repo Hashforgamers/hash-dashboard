@@ -30,6 +30,8 @@ export function TableDragScroll() {
       let startX = 0
       let scrollLeft = 0
 
+      const scrollRoot = wrap.closest<HTMLElement>("[data-dashboard-scroll-root='true']")
+
       const onMouseDown = (event: MouseEvent) => {
         if (event.button !== 0) return
         if ((event.target as HTMLElement)?.closest(interactiveSelector)) return
@@ -72,16 +74,39 @@ export function TableDragScroll() {
         wrap.scrollLeft = scrollLeft - acceleratedWalk
       }
 
+      const onWheel = (event: WheelEvent) => {
+        if (!scrollRoot) return
+        if (Math.abs(event.deltaY) <= Math.abs(event.deltaX)) return
+
+        const canScrollWithinTable = wrap.scrollHeight > wrap.clientHeight
+        const atTop = wrap.scrollTop <= 0
+        const atBottom = wrap.scrollTop + wrap.clientHeight >= wrap.scrollHeight - 1
+        const shouldBubbleToPage =
+          !canScrollWithinTable ||
+          (event.deltaY < 0 && atTop) ||
+          (event.deltaY > 0 && atBottom)
+
+        if (!shouldBubbleToPage) return
+
+        event.preventDefault()
+        scrollRoot.scrollBy({
+          top: event.deltaY,
+          behavior: "auto",
+        })
+      }
+
       wrap.addEventListener("mousedown", onMouseDown)
       wrap.addEventListener("mouseleave", onMouseLeave)
       wrap.addEventListener("mouseup", onMouseUp)
       wrap.addEventListener("mousemove", onMouseMove)
+      wrap.addEventListener("wheel", onWheel, { passive: false })
 
       cleanups.push(() => {
         wrap.removeEventListener("mousedown", onMouseDown)
         wrap.removeEventListener("mouseleave", onMouseLeave)
         wrap.removeEventListener("mouseup", onMouseUp)
         wrap.removeEventListener("mousemove", onMouseMove)
+        wrap.removeEventListener("wheel", onWheel)
       })
     })
 
