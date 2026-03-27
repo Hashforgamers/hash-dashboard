@@ -536,7 +536,7 @@ export function DashboardContent() {
       {dashboardData?.available ? (
         <HashLoader className="py-[50vh]" />
       ) : (
-        <div className="relative flex h-full min-h-0 flex-col gap-2 overflow-hidden text-foreground sm:gap-4">
+        <div className="relative flex h-full min-h-0 flex-col gap-2 overflow-hidden text-foreground sm:gap-3">
           {isLocked && <LockedOverlay />}
           <div
             className={`flex min-h-0 flex-1 flex-col overflow-hidden ${
@@ -570,9 +570,9 @@ export function DashboardContent() {
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="gaming-panel shrink-0 rounded-xl p-2.5 md:p-4"
+            className="gaming-panel shrink-0 rounded-xl p-2.5 md:p-3"
           >
-            <div className="grid gap-2.5 md:grid-cols-[minmax(0,1fr)_auto] md:items-start">
+            <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-2">
               <div className="flex-1">
                 <div className="mb-1.5 flex flex-wrap items-center gap-2 sm:mb-2 sm:gap-3">
                   <h1 className="premium-heading dashboard-hero-title leading-tight max-md:text-[1.35rem] max-md:tracking-[0.02em]">Gaming Cafe Command</h1>
@@ -597,19 +597,19 @@ export function DashboardContent() {
                     <span className="hidden sm:inline text-emerald-300/80">• {nowISTDateText}</span>
                   </div>
                 </div>
-                <p className="premium-subtle text-[11px] leading-relaxed sm:text-sm max-md:line-clamp-2">
+                <p className="premium-subtle text-[11px] leading-relaxed sm:text-sm max-md:line-clamp-1">
                   Monitor live slots, revenue, and upcoming sessions in real time.
                 </p>
               </div>
-              <div className="flex w-full items-center justify-start gap-2 self-end md:w-auto md:justify-end md:gap-3 md:self-start">
+              <div className="flex items-start justify-end">
               <motion.div
                 initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="gaming-panel flex w-full flex-row items-stretch gap-1.5 rounded-lg p-1 md:w-fit md:flex-col md:gap-2 md:rounded-xl md:p-1.5"
+                className="dashboard-module-tab-group flex items-center gap-1 rounded-lg p-1"
               >
                 <button
                   onClick={() => setActiveTopTab('analytics')}
-                  className={`flex flex-1 items-center justify-center gap-1.5 rounded-md px-2.5 py-2 text-xs font-semibold transition-all duration-200 sm:px-4 sm:text-sm md:justify-start ${
+                  className={`flex items-center justify-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-semibold transition-all duration-200 ${
                     activeTopTab === 'analytics'
                       ? 'bg-background text-foreground shadow-sm'
                       : 'text-muted-foreground hover:text-foreground'
@@ -620,7 +620,7 @@ export function DashboardContent() {
                 </button>
                 <button
                   onClick={() => setActiveTopTab('devices')}
-                  className={`flex flex-1 items-center justify-center gap-1.5 rounded-md px-2.5 py-2 text-xs font-semibold transition-all duration-200 sm:px-4 sm:text-sm md:justify-start ${
+                  className={`flex items-center justify-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-semibold transition-all duration-200 ${
                     activeTopTab === 'devices'
                       ? 'bg-background text-foreground shadow-sm'
                       : 'text-muted-foreground hover:text-foreground'
@@ -639,7 +639,7 @@ export function DashboardContent() {
           </div>
 
           {/* Main Layout Grid */}
-          <div className="grid grid-cols-1 gap-2 sm:gap-4 xl:grid-cols-12 flex-1 min-h-0 max-md:grid-rows-2">
+          <div className="grid grid-cols-1 gap-2 sm:gap-3 xl:grid-cols-12 flex-1 min-h-0 max-md:h-[68svh] max-md:grid-rows-[1fr_1fr]">
 
             {/* Left Column */}
             <div className="space-y-2 sm:space-y-4 flex flex-col min-h-0 xl:col-span-8 2xl:col-span-9 max-md:h-full max-md:min-h-0">
