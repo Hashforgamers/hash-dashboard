@@ -54,16 +54,26 @@ interface MealsAddedNotification {
   amount_added?: number
 }
 
-interface DocumentRejectedNotification {
-  kind: "document_rejected"
+interface DocumentStatusNotification {
+  kind: "document_status"
   notification_id: string
   emitted_at?: string
   vendorId: number
+  statusType: "verified" | "rejected"
   title: string
   message: string
 }
 
-type DashboardNotification = PayAtCafeNotification | MealsAddedNotification | DocumentRejectedNotification
+type DashboardNotification = PayAtCafeNotification | MealsAddedNotification | DocumentStatusNotification
+
+interface PayAtCafeQueueSummary {
+  requested: number
+  pending: number
+  accepted: number
+  rejected: number
+  auto_accepted: number
+  auto_rejected: number
+}
 
 
 interface NotificationPanelProps {
@@ -71,6 +81,7 @@ interface NotificationPanelProps {
   isOpen: boolean
   onClose: () => void
   notifications: DashboardNotification[]
+  payAtCafeSummary?: PayAtCafeQueueSummary | null
   onRemoveNotification: (bookingId: number | string) => void
   socket?: any
   onBookingAccepted?: (bookingData: any) => void
@@ -82,6 +93,7 @@ export function NotificationPanel({
   isOpen,
   onClose,
   notifications,
+  payAtCafeSummary,
   onRemoveNotification,
   socket,
   onBookingAccepted
@@ -108,7 +120,8 @@ export function NotificationPanel({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           booking_id: notification.bookingId,
-          vendor_id: vendorId
+          vendor_id: vendorId,
+          action_source: "manual_dashboard",
         })
       })
 
@@ -185,6 +198,7 @@ export function NotificationPanel({
         body: JSON.stringify({
           booking_id:       notification.bookingId,
           vendor_id:        vendorId,
+          action_source:    "manual_dashboard",
           rejection_reason: 'Rejected by vendor'
         })
       })
@@ -300,6 +314,39 @@ export function NotificationPanel({
 
             {/* Content */}
             <div className="max-h-[70vh] overflow-y-auto bg-transparent p-2 sm:p-3">
+              {payAtCafeSummary && (
+                <div className="dashboard-module-card mb-3 rounded-xl border border-cyan-400/25 bg-cyan-500/5 p-3">
+                  <p className="mb-2 text-xs font-semibold uppercase tracking-[0.12em] text-cyan-200">
+                    Pay At Cafe Queue (Today)
+                  </p>
+                  <div className="grid grid-cols-2 gap-2 text-xs md:grid-cols-3">
+                    <div className="rounded-md border border-border bg-muted/40 px-2 py-1">
+                      <span className="text-muted-foreground">Requested</span>
+                      <div className="font-semibold text-foreground">{payAtCafeSummary.requested}</div>
+                    </div>
+                    <div className="rounded-md border border-border bg-muted/40 px-2 py-1">
+                      <span className="text-muted-foreground">Accepted</span>
+                      <div className="font-semibold text-emerald-300">{payAtCafeSummary.accepted}</div>
+                    </div>
+                    <div className="rounded-md border border-border bg-muted/40 px-2 py-1">
+                      <span className="text-muted-foreground">Rejected</span>
+                      <div className="font-semibold text-rose-300">{payAtCafeSummary.rejected}</div>
+                    </div>
+                    <div className="rounded-md border border-border bg-muted/40 px-2 py-1">
+                      <span className="text-muted-foreground">Pending</span>
+                      <div className="font-semibold text-amber-300">{payAtCafeSummary.pending}</div>
+                    </div>
+                    <div className="rounded-md border border-border bg-muted/40 px-2 py-1">
+                      <span className="text-muted-foreground">Auto Accepted</span>
+                      <div className="font-semibold text-emerald-300">{payAtCafeSummary.auto_accepted}</div>
+                    </div>
+                    <div className="rounded-md border border-border bg-muted/40 px-2 py-1">
+                      <span className="text-muted-foreground">Auto Rejected</span>
+                      <div className="font-semibold text-rose-300">{payAtCafeSummary.auto_rejected}</div>
+                    </div>
+                  </div>
+                </div>
+              )}
               {notifications.length === 0 ? (
                 <div className="dashboard-module-card px-6 py-12 text-center">
                   <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full border border-border bg-muted/40">
@@ -372,9 +419,10 @@ export function NotificationPanel({
                       )
                     }
 
-                    const isDocumentNotice = (notification as any)?.kind === "document_rejected"
+                    const isDocumentNotice = (notification as any)?.kind === "document_status"
                     if (isDocumentNotice) {
-                      const docNotice = notification as DocumentRejectedNotification
+                      const docNotice = notification as DocumentStatusNotification
+                      const isVerified = docNotice.statusType === "verified"
                       return (
                         <motion.div
                           key={docNotice.notification_id}
@@ -382,18 +430,26 @@ export function NotificationPanel({
                           animate={{ opacity: 1, y: 0 }}
                           exit={{ opacity: 0, x: 20 }}
                           transition={{ delay: index * 0.05 }}
-                          className="dashboard-module-card rounded-xl border border-rose-400/35 bg-rose-500/10 p-4 transition-all duration-200"
+                          className={`dashboard-module-card rounded-xl p-4 transition-all duration-200 ${
+                            isVerified
+                              ? "border border-emerald-400/35 bg-emerald-500/10"
+                              : "border border-rose-400/35 bg-rose-500/10"
+                          }`}
                         >
                           <div className="space-y-3">
                             <div className="flex items-center gap-2">
-                              <FileWarning className="h-4 w-4 text-rose-300" />
-                              <p className="text-sm font-semibold text-rose-100">{docNotice.title}</p>
+                              <FileWarning className={`h-4 w-4 ${isVerified ? "text-emerald-300" : "text-rose-300"}`} />
+                              <p className={`text-sm font-semibold ${isVerified ? "text-emerald-100" : "text-rose-100"}`}>{docNotice.title}</p>
                             </div>
-                            <p className="text-xs text-rose-100/90">{docNotice.message}</p>
+                            <p className={`text-xs ${isVerified ? "text-emerald-100/90" : "text-rose-100/90"}`}>{docNotice.message}</p>
                             <div className="flex justify-end">
                               <Button
                                 variant="outline"
-                                className="h-8 border-rose-400/45 bg-rose-500/10 text-xs text-rose-100 hover:bg-rose-500/20"
+                                className={`h-8 text-xs ${
+                                  isVerified
+                                    ? "border-emerald-400/45 bg-emerald-500/10 text-emerald-100 hover:bg-emerald-500/20"
+                                    : "border-rose-400/45 bg-rose-500/10 text-rose-100 hover:bg-rose-500/20"
+                                }`}
                                 onClick={() => {
                                   onClose()
                                   if (typeof window !== "undefined") {
