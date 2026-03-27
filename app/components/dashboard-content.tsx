@@ -6,17 +6,17 @@ import { UpcomingBookings } from "./upcoming-booking"
 import { CurrentSlots } from "./current-slot"
 import { motion, AnimatePresence } from "framer-motion"
 import {
-  IndianRupee, CalendarCheck, WalletCards, Eye, EyeOff,
+  IndianRupee, CalendarCheck, WalletCards, Eye, EyeOff, Clock,
   TrendingUp, BarChart3, Monitor, Gamepad2,
-  Gamepad, Headphones, Lock
+  Gamepad, Headphones, Lock, RefreshCw, Wifi, WifiOff, User
 } from 'lucide-react'
 import { useDashboardData } from "@/app/context/DashboardDataContext"
-import { DASHBOARD_URL } from "@/src/config/env"
 import HashLoader from "./ui/HashLoader"
 import { NotificationButton } from "../components/NotificationButton"
 import { useSocket } from "../context/SocketContext"
 import { useSubscription } from "@/hooks/useSubscription"
 import { useRouter } from "next/navigation"
+import { useAccess } from "@/app/context/AccessContext"
 
 const platformMetadata = {
   platforms: [
@@ -54,7 +54,6 @@ function LockedOverlay() {
 }
 
 export function DashboardContent() {
-  const [showBookingStats, setShowBookingStats] = useState(true)
   const [showEarnings, setShowEarnings] = useState(false)
   const [showPending, setShowPending] = useState(false)
   const [refreshSlots, setRefreshSlots] = useState(false)
@@ -76,11 +75,12 @@ export function DashboardContent() {
   }>({})
   const [nowISTDateText, setNowISTDateText] = useState<string>("")
   const [nowISTTimeText, setNowISTTimeText] = useState<string>("")
+  const [isManualRefreshing, setIsManualRefreshing] = useState(false)
   const lastMealNoticeRef = useRef<{ key: string; ts: number } | null>(null)
 
   const { socket, isConnected, joinVendor } = useSocket()
   const { isLocked } = useSubscription()
-  const router = useRouter()
+  const { activeStaff } = useAccess()
 
   const showDashboardToast = useCallback((message: string, type: 'success' | 'error' | 'info' = 'info') => {
     const toast = document.createElement('div')
@@ -131,6 +131,28 @@ export function DashboardContent() {
   const loadConsoleData = useCallback(async () => {
     await refreshConsoles()
   }, [refreshConsoles])
+
+  const handleManualRefresh = useCallback(async () => {
+    if (isManualRefreshing) return
+    setIsManualRefreshing(true)
+    try {
+      await Promise.all([loadLandingData(), loadConsoleData()])
+      setRefreshSlots((prev) => !prev)
+      if (socket && vendorId && isConnected) {
+        joinVendor(vendorId)
+      }
+      setRealTimeStats((prev) => ({
+        ...prev,
+        lastUpdate: new Date().toLocaleTimeString(),
+      }))
+      showDashboardToast("Dashboard refreshed", "success")
+    } catch (err) {
+      console.error("Manual refresh failed:", err)
+      showDashboardToast("Refresh failed. Please retry.", "error")
+    } finally {
+      setIsManualRefreshing(false)
+    }
+  }, [isManualRefreshing, loadLandingData, loadConsoleData, socket, vendorId, isConnected, joinVendor, showDashboardToast])
 
   const handleBookingAccepted = (bookingData: any) => {
     console.log('🎯 Booking accepted - updating upcoming bookings:', bookingData)
@@ -330,6 +352,9 @@ export function DashboardContent() {
     const booked = platformBooking.filter((b: any) => b.status === false).length
     return { ...metadata, total, booked }
   })
+  const operatorName = activeStaff?.name || "Owner"
+  const totalConsoles = Array.isArray(bookingInfo) ? bookingInfo.length : 0
+  const activeConsoles = Array.isArray(bookingInfo) ? bookingInfo.filter((item: any) => item?.status === false).length : 0
 
   const topMetricsStrip = (
     <AnimatePresence mode="wait">
@@ -566,74 +591,79 @@ export function DashboardContent() {
             </motion.div>
           )}  */}
 
-          {/* Header */}
+          {/* Top Compact Row */}
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             className="gaming-panel shrink-0 rounded-xl p-2.5 md:p-3"
           >
-            <div className="grid grid-cols-1 items-start gap-2">
-              <div className="flex-1">
-                <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-                  <h1 className="premium-heading dashboard-hero-title leading-tight max-md:text-[1.2rem] max-md:tracking-[0.02em]">Cafe Command</h1>
-                  <div className={`h-2 w-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`} />
-                  <NotificationButton
-                    vendorId={vendorId}
-                    onBookingAccepted={handleBookingAccepted}
-                    latestBookingEvent={latestBookingEvent}
-                  />
-                  <div className="flex max-w-full items-center gap-2 rounded-full border border-emerald-400/30 bg-emerald-500/10 px-2 py-1 text-[11px] text-emerald-200 sm:px-3">
-                    <span className="font-semibold">{nowISTTimeText} IST</span>
-                    <span className="hidden sm:inline text-emerald-300/80">• {nowISTDateText}</span>
+            <div className="grid grid-cols-1 gap-2 lg:grid-cols-[minmax(230px,1fr)_minmax(0,1.8fr)_auto] lg:items-start">
+              <div className="min-w-0">
+                <div className="flex items-start justify-between gap-2 lg:block">
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                      <h1 className="premium-heading dashboard-hero-title leading-tight max-md:text-[1.15rem] max-md:tracking-[0.02em]">
+                        Cafe Command
+                      </h1>
+                      <div className={`h-2 w-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`} />
+                    </div>
+                    <p className="premium-subtle mt-0.5 text-[11px] leading-relaxed sm:text-xs">
+                      Live operations at a glance.
+                    </p>
                   </div>
-                  {isConnected && realTimeStats.lastUpdate && (
-                    <motion.div
-                      animate={{ scale: [1, 1.1, 1] }}
-                      transition={{ duration: 2, repeat: Infinity }}
-                      className="text-xs text-green-600 font-medium"
-                      title={`Last updated: ${realTimeStats.lastUpdate}`}
+                  <div className="lg:hidden">
+                    <NotificationButton
+                      vendorId={vendorId}
+                      onBookingAccepted={handleBookingAccepted}
+                      latestBookingEvent={latestBookingEvent}
                     />
-                  )}
+                  </div>
                 </div>
+              </div>
+
+              <div className="min-w-0">
+                <motion.div
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="dashboard-module-tab-group mb-1 flex w-fit items-center gap-1 rounded-lg p-1"
+                >
+                  <button
+                    onClick={() => setActiveTopTab('analytics')}
+                    className={`flex items-center justify-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-semibold transition-all duration-200 ${
+                      activeTopTab === 'analytics'
+                        ? 'bg-background text-foreground shadow-sm'
+                        : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    <BarChart3 className="h-3 w-3 sm:h-4 sm:w-4" />
+                    Analytics
+                  </button>
+                  <button
+                    onClick={() => setActiveTopTab('devices')}
+                    className={`flex items-center justify-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-semibold transition-all duration-200 ${
+                      activeTopTab === 'devices'
+                        ? 'bg-background text-foreground shadow-sm'
+                        : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    <Monitor className="h-3 w-3 sm:h-4 sm:w-4" />
+                    Devices
+                  </button>
+                </motion.div>
+                <div className="min-w-0">
+                  {topMetricsStrip}
+                </div>
+              </div>
+
+              <div className="hidden items-start justify-end lg:flex">
+                <NotificationButton
+                  vendorId={vendorId}
+                  onBookingAccepted={handleBookingAccepted}
+                  latestBookingEvent={latestBookingEvent}
+                />
               </div>
             </div>
           </motion.div>
-
-          <div className="shrink-0">
-            <div className="grid grid-cols-1 items-start gap-2 md:grid-cols-[auto_minmax(0,1fr)]">
-              <motion.div
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="dashboard-module-tab-group flex items-center gap-1 rounded-lg p-1 w-fit"
-              >
-                <button
-                  onClick={() => setActiveTopTab('analytics')}
-                  className={`flex items-center justify-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-semibold transition-all duration-200 ${
-                    activeTopTab === 'analytics'
-                      ? 'bg-background text-foreground shadow-sm'
-                      : 'text-muted-foreground hover:text-foreground'
-                  }`}
-                >
-                  <BarChart3 className="h-3 w-3 sm:h-4 sm:w-4" />
-                  Analytics
-                </button>
-                <button
-                  onClick={() => setActiveTopTab('devices')}
-                  className={`flex items-center justify-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-semibold transition-all duration-200 ${
-                    activeTopTab === 'devices'
-                      ? 'bg-background text-foreground shadow-sm'
-                      : 'text-muted-foreground hover:text-foreground'
-                  }`}
-                >
-                  <Monitor className="h-3 w-3 sm:h-4 sm:w-4" />
-                  Devices
-                </button>
-              </motion.div>
-              <div className="min-w-0">
-                {topMetricsStrip}
-              </div>
-            </div>
-          </div>
 
           {/* Main Layout Grid */}
           <div className="grid grid-cols-1 gap-2 sm:gap-3 xl:grid-cols-12 flex-1 min-h-0 max-md:h-[68svh] max-md:grid-rows-[1fr_1fr]">
@@ -674,6 +704,47 @@ export function DashboardContent() {
                 />
               </div>
             </motion.div>
+          </div>
+
+          <div className="shrink-0">
+            <div className="dashboard-module-panel mt-2 flex flex-wrap items-center justify-between gap-2 rounded-lg px-3 py-2 text-xs sm:mt-1">
+              <div className="flex flex-wrap items-center gap-2 text-slate-300">
+                <span className="inline-flex items-center gap-1 rounded-md border border-emerald-400/30 bg-emerald-500/10 px-2 py-1 text-emerald-200">
+                  <Clock className="h-3.5 w-3.5" />
+                  {nowISTTimeText} IST
+                </span>
+                <span className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1">
+                  {nowISTDateText}
+                </span>
+                <span className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1">
+                  <User className="h-3.5 w-3.5 text-cyan-300" />
+                  {operatorName}
+                </span>
+                <span
+                  className={`inline-flex items-center gap-1 rounded-md border px-2 py-1 ${
+                    isConnected
+                      ? "border-emerald-400/40 bg-emerald-500/10 text-emerald-200"
+                      : "border-amber-400/40 bg-amber-500/10 text-amber-200"
+                  }`}
+                >
+                  {isConnected ? <Wifi className="h-3.5 w-3.5" /> : <WifiOff className="h-3.5 w-3.5" />}
+                  {isConnected ? "Realtime Connected" : "Reconnecting..."}
+                </span>
+                <span className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1">
+                  <Monitor className="h-3.5 w-3.5 text-blue-300" />
+                  {activeConsoles}/{totalConsoles} Active
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={handleManualRefresh}
+                className="inline-flex items-center gap-1 rounded-md border border-cyan-400/40 bg-cyan-500/10 px-2.5 py-1 text-cyan-200 hover:bg-cyan-500/20"
+                disabled={isManualRefreshing}
+              >
+                <RefreshCw className={`h-3.5 w-3.5 ${isManualRefreshing ? "animate-spin" : ""}`} />
+                {isManualRefreshing ? "Refreshing..." : "Refresh"}
+              </button>
+            </div>
           </div>
           </div>
         </div>
