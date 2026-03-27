@@ -14,6 +14,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { motion, AnimatePresence } from "framer-motion"
@@ -401,6 +408,8 @@ export default function ManageExtraServices() {
     "ui-action-primary inline-flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold shadow-md transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-50 sm:px-4"
   const secondaryButtonClass =
     "ui-action-secondary inline-flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-50 sm:px-4"
+  const iconButtonClass =
+    "inline-flex h-8 w-8 items-center justify-center rounded-lg border border-cyan-300/40 bg-cyan-50 text-sky-700 transition-all duration-200 hover:border-cyan-400 hover:bg-cyan-100 dark:border-cyan-400/35 dark:bg-cyan-500/10 dark:text-cyan-200 dark:hover:bg-cyan-500/20"
   const destructiveIconButtonClass =
     "inline-flex items-center justify-center rounded-lg border border-rose-400/30 bg-rose-500/10 p-2 text-rose-300 transition-all duration-200 hover:border-rose-300/60 hover:bg-rose-500/20 disabled:cursor-not-allowed disabled:opacity-50"
 
