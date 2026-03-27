@@ -9,7 +9,7 @@ import { useSocket } from '../context/SocketContext'
 import { BOOKING_URL } from '@/src/config/env'
 import { DASHBOARD_URL } from '@/src/config/env'
 
-type NotificationKind = "pay_at_cafe" | "meals_added" | "document_rejected"
+type NotificationKind = "pay_at_cafe" | "meals_added" | "document_status"
 
 interface MealsAddedNotification {
   kind: "meals_added"
@@ -23,13 +23,23 @@ interface MealsAddedNotification {
   settlement_status?: string
 }
 
-interface DocumentRejectedNotification {
-  kind: "document_rejected"
+interface DocumentStatusNotification {
+  kind: "document_status"
   notification_id: string
   emitted_at?: string
   vendorId: number
+  statusType: "verified" | "rejected"
   title: string
   message: string
+}
+
+interface PayAtCafeQueueSummary {
+  requested: number
+  pending: number
+  accepted: number
+  rejected: number
+  auto_accepted: number
+  auto_rejected: number
 }
 
 interface NotificationButtonProps {
@@ -47,6 +57,7 @@ export function NotificationButton({
   const [unreadCount, setUnreadCount] = useState(0)
   const [connectionStatus, setConnectionStatus] = useState<'disconnected' | 'connected' | 'joined_room'>('disconnected')
   const [notifications, setNotifications] = useState<any[]>([])
+  const [payAtCafeSummary, setPayAtCafeSummary] = useState<PayAtCafeQueueSummary | null>(null)
 
   const { socket, isConnected, joinVendor } = useSocket()
 
@@ -92,21 +103,41 @@ export function NotificationButton({
 
     try {
       console.log(`🔍 NotificationButton: Fetching pending bookings for vendor ${vendorId}...`)
-      let docNotifications: DocumentRejectedNotification[] = []
+      let docNotifications: DocumentStatusNotification[] = []
       try {
         const dashboardRes = await fetch(`${DASHBOARD_URL}/api/vendor/${vendorId}/dashboard`)
         const dashboardJson = await dashboardRes.json().catch(() => ({}))
         const alerts = Array.isArray(dashboardJson?.documentAlerts) ? dashboardJson.documentAlerts : []
         docNotifications = alerts.map((alert: any, idx: number) => ({
-          kind: "document_rejected",
-          notification_id: `doc_rejected_${vendorId}_${idx}_${encodeURIComponent(String(alert?.message || ""))}`,
+          kind: "document_status",
+          notification_id: `doc_${String(alert?.type || "status")}_${vendorId}_${idx}_${encodeURIComponent(String(alert?.message || ""))}`,
           emitted_at: new Date().toISOString(),
           vendorId: Number(vendorId),
-          title: String(alert?.title || "Document Rejected"),
-          message: String(alert?.message || "One or more documents were rejected by Hash verification team."),
+          statusType: String(alert?.type || "").toLowerCase() === "verified" ? "verified" : "rejected",
+          title: String(alert?.title || "Document Status"),
+          message: String(alert?.message || "Document status changed."),
         }))
       } catch (docErr) {
         console.warn("NotificationButton: failed to fetch document alerts", docErr)
+      }
+
+      try {
+        const now = new Date()
+        const dateStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`
+        const queueRes = await fetch(`${BOOKING_URL}/api/pay-at-cafe/queue-summary/${vendorId}?date=${dateStr}`)
+        const queueJson = await queueRes.json().catch(() => ({}))
+        if (queueRes.ok && queueJson?.success && queueJson?.summary) {
+          setPayAtCafeSummary({
+            requested: Number(queueJson.summary.requested || 0),
+            pending: Number(queueJson.summary.pending || 0),
+            accepted: Number(queueJson.summary.accepted || 0),
+            rejected: Number(queueJson.summary.rejected || 0),
+            auto_accepted: Number(queueJson.summary.auto_accepted || 0),
+            auto_rejected: Number(queueJson.summary.auto_rejected || 0),
+          })
+        }
+      } catch (queueErr) {
+        console.warn("NotificationButton: failed to fetch queue summary", queueErr)
       }
 
       const response = await fetch(`${BOOKING_URL}/api/pay-at-cafe/pending/${vendorId}`)
@@ -438,6 +469,7 @@ export function NotificationButton({
         isOpen={isOpen}
         onClose={handleClose}
         notifications={notifications}
+        payAtCafeSummary={payAtCafeSummary}
         onRemoveNotification={handleRemoveNotification}
         socket={socket}
         onBookingAccepted={handleBookingAcceptedFromPanel}
