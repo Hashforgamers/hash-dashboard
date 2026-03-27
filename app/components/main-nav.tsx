@@ -198,7 +198,7 @@ export function MainNav({ className, onItemClick, isNavPinned = false, ...props 
                   pathname === "/account" ? "dashboard-nav-icon-active" : "text-muted-foreground group-hover/nav:text-foreground"
                 )}
               />
-              <span className={responsiveLabelClass}>My Account</span>
+              <span className={responsiveLabelClass}>Settings</span>
             </Link>
           )}
 

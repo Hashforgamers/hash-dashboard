@@ -26,7 +26,7 @@ import { User, MapPin, Calendar, Clock, Mail, Phone, Lock,  FileCheck, FileText,
 import { cn } from "@/lib/utils";
 import { jwtDecode } from "jwt-decode";
 import { DASHBOARD_URL } from "@/src/config/env";
-import {VENDOR_ONBOARD_URL} from "@/src/config/env"
+import { VENDOR_ONBOARD_URL } from "@/src/config/env"
 import axios from "axios";
 import HashLoader from "./ui/HashLoader";
 import { motion } from "framer-motion";
@@ -47,6 +47,8 @@ export function MyAccount() {
   const [uploadMessage, setUploadMessage] = useState<string | null>(null);
   const [previewDocument, setPreviewDocument] = useState<string | null>(null);
   const [previewDocumentName, setPreviewDocumentName] = useState<string>("");
+  const [uploadingDocumentId, setUploadingDocumentId] = useState<number | null>(null);
+  const [documentActionMessage, setDocumentActionMessage] = useState<string | null>(null);
   const [cafeImageObjects, setCafeImageObjects] = useState<{id: number, url: string, public_id: string}[]>([]);
 
 
@@ -1118,6 +1120,35 @@ const toast = {
   const handleDocumentPreview = (documentUrl: string, documentName: string) => {
     setPreviewDocument(documentUrl);
     setPreviewDocumentName(documentName);
+  };
+
+  const handleReplaceDocument = async (documentId: number, file: File | null) => {
+    if (!vendorId || !documentId || !file) return;
+    setUploadingDocumentId(documentId);
+    setDocumentActionMessage(null);
+    try {
+      const formData = new FormData();
+      formData.append("document", file);
+      const response = await axios.put(
+        `${DASHBOARD_URL}/api/vendor/${vendorId}/documents/${documentId}`,
+        formData,
+        { headers: { "Content-Type": "multipart/form-data" } }
+      );
+      if (!response?.data?.success) {
+        throw new Error(response?.data?.message || "Failed to update document");
+      }
+      setDocumentActionMessage("Document updated and sent for re-verification.");
+      const dashboardRes = await axios.get(`${DASHBOARD_URL}/api/vendor/${vendorId}/dashboard`);
+      if (dashboardRes?.data) {
+        setData(dashboardRes.data);
+      }
+      window.dispatchEvent(new CustomEvent("refresh-dashboard"));
+    } catch (error: any) {
+      console.error("Failed to replace document:", error);
+      setDocumentActionMessage(error?.response?.data?.message || error?.message || "Failed to update document");
+    } finally {
+      setUploadingDocumentId(null);
+    }
   };
 
   const closePreview = () => {
@@ -2277,6 +2308,18 @@ const ToggleSwitch = ({
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
+                      {Array.isArray((data as any)?.documentAlerts) && (data as any).documentAlerts.length > 0 && (
+                        <div className="rounded-lg border border-rose-400/40 bg-rose-500/10 p-3 text-sm text-rose-100">
+                          {(data as any).documentAlerts.map((alert: any, idx: number) => (
+                            <p key={`doc-alert-${idx}`}>{alert?.message || "A document was rejected. Please upload again."}</p>
+                          ))}
+                        </div>
+                      )}
+                      {documentActionMessage && (
+                        <div className="rounded-lg border border-cyan-400/40 bg-cyan-500/10 p-3 text-sm text-cyan-100">
+                          {documentActionMessage}
+                        </div>
+                      )}
                       {verifiedDocuments && verifiedDocuments.length > 0 ? (
                         verifiedDocuments.map((doc: any) => (
                           <div
@@ -2353,6 +2396,41 @@ const ToggleSwitch = ({
                                     className="text-muted-foreground hover:text-foreground hover:bg-muted"
                                   >
                                     Open
+                                  </Button>
+                                </>
+                              )}
+                              {doc.id && (
+                                <>
+                                  <input
+                                    id={`doc-replace-${doc.id}`}
+                                    type="file"
+                                    className="hidden"
+                                    accept=".pdf,.png,.jpg,.jpeg,.webp"
+                                    onChange={(e) => {
+                                      const selected = e.target.files?.[0] || null;
+                                      void handleReplaceDocument(Number(doc.id), selected);
+                                      e.currentTarget.value = "";
+                                    }}
+                                  />
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    type="button"
+                                    disabled={uploadingDocumentId === Number(doc.id)}
+                                    className="border-border text-foreground hover:bg-muted hover:text-foreground"
+                                    onClick={() => {
+                                      const inputEl = document.getElementById(`doc-replace-${doc.id}`) as HTMLInputElement | null;
+                                      inputEl?.click();
+                                    }}
+                                  >
+                                    {uploadingDocumentId === Number(doc.id) ? (
+                                      <>
+                                        <Loader2 className="mr-1 h-4 w-4 animate-spin" />
+                                        Updating
+                                      </>
+                                    ) : (
+                                      <>Update</>
+                                    )}
                                   </Button>
                                 </>
                               )}
