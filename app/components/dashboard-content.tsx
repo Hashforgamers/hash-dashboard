@@ -574,14 +574,18 @@ export function DashboardContent() {
           >
             <div className="grid grid-cols-1 items-start gap-2">
               <div className="flex-1">
-                <div className="mb-1.5 flex flex-wrap items-center gap-2 sm:mb-2 sm:gap-3">
-                  <h1 className="premium-heading dashboard-hero-title leading-tight max-md:text-[1.35rem] max-md:tracking-[0.02em]">Gaming Cafe Command</h1>
+                <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                  <h1 className="premium-heading dashboard-hero-title leading-tight max-md:text-[1.2rem] max-md:tracking-[0.02em]">Cafe Command</h1>
                   <div className={`h-2 w-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`} />
                   <NotificationButton
                     vendorId={vendorId}
                     onBookingAccepted={handleBookingAccepted}
                     latestBookingEvent={latestBookingEvent}
                   />
+                  <div className="flex max-w-full items-center gap-2 rounded-full border border-emerald-400/30 bg-emerald-500/10 px-2 py-1 text-[11px] text-emerald-200 sm:px-3">
+                    <span className="font-semibold">{nowISTTimeText} IST</span>
+                    <span className="hidden sm:inline text-emerald-300/80">• {nowISTDateText}</span>
+                  </div>
                   {isConnected && realTimeStats.lastUpdate && (
                     <motion.div
                       animate={{ scale: [1, 1.1, 1] }}
@@ -591,15 +595,6 @@ export function DashboardContent() {
                     />
                   )}
                 </div>
-                <div className="mb-1.5 flex flex-wrap items-center gap-2 sm:mb-2">
-                  <div className="flex max-w-full items-center gap-2 rounded-full border border-emerald-400/30 bg-emerald-500/10 px-2 py-1 text-[11px] text-emerald-200 sm:px-3">
-                    <span className="font-semibold">{nowISTTimeText} IST</span>
-                    <span className="hidden sm:inline text-emerald-300/80">• {nowISTDateText}</span>
-                  </div>
-                </div>
-                <p className="premium-subtle text-[11px] leading-relaxed sm:text-sm max-md:line-clamp-1">
-                  Monitor live slots, revenue, and upcoming sessions in real time.
-                </p>
               </div>
             </div>
           </motion.div>
