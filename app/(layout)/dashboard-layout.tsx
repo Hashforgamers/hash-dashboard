@@ -129,6 +129,7 @@ export function DashboardLayout({ children, contentScroll = "page" }: DashboardL
         )}
 
         <main
+          data-dashboard-scroll-root="true"
           className={`min-h-0 flex-1 overflow-y-auto px-2 pb-2 pt-2 sm:px-3 sm:pb-3 md:px-4 md:pb-4 md:pt-4 ${
             contentScroll === "contained" ? "overflow-x-hidden" : ""
           }`}
