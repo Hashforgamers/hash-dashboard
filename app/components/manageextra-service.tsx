@@ -37,6 +37,10 @@ interface ExtraServiceMenu {
   price: number
   image?: string | null
   is_active: boolean
+  stock_quantity?: number | null
+  stock_unit?: string
+  low_stock_threshold?: number
+  is_low_stock?: boolean
 }
 
 interface ExtraServiceCategory {
@@ -55,6 +59,9 @@ interface MenuItemForm {
   name: string
   description: string
   price: string
+  stock_quantity: string
+  stock_unit: string
+  low_stock_threshold: string
   imageFile?: File | null
   is_active: boolean
 }
@@ -106,6 +113,10 @@ export default function ManageExtraServices() {
               price: menu.price || 0,
               image: imageUrl,
               is_active: menu.is_active !== false,
+              stock_quantity: typeof menu.stock_quantity === "number" ? menu.stock_quantity : null,
+              stock_unit: menu.stock_unit || "units",
+              low_stock_threshold: typeof menu.low_stock_threshold === "number" ? menu.low_stock_threshold : 0,
+              is_low_stock: Boolean(menu.is_low_stock),
             }
           }).filter(Boolean)
         : []
@@ -148,10 +159,26 @@ export default function ManageExtraServices() {
   /* Menu item form */
   const [showMenuDlg, setShowMenuDlg] = useState(false)
   const [menuForm, setMenuForm] = useState<MenuItemForm>({
-    name: "", description: "", price: "", imageFile: undefined, is_active: true,
+    name: "",
+    description: "",
+    price: "",
+    stock_quantity: "",
+    stock_unit: "units",
+    low_stock_threshold: "0",
+    imageFile: undefined,
+    is_active: true,
   })
   const [activeCategoryId, setActiveCategoryId] = useState<number | null>(null)
   const [menuLoading, setMenuLoading] = useState(false)
+  const [showInventoryDlg, setShowInventoryDlg] = useState(false)
+  const [inventoryLoading, setInventoryLoading] = useState(false)
+  const [inventoryCategoryId, setInventoryCategoryId] = useState<number | null>(null)
+  const [inventoryMenuId, setInventoryMenuId] = useState<number | null>(null)
+  const [inventoryItemName, setInventoryItemName] = useState("")
+  const [inventoryMode, setInventoryMode] = useState<"set" | "increment" | "decrement">("increment")
+  const [inventoryQuantity, setInventoryQuantity] = useState("0")
+  const [inventoryUnit, setInventoryUnit] = useState("units")
+  const [inventoryThreshold, setInventoryThreshold] = useState("0")
 
   /* ---------------------------------------------------------------
      HELPERS
@@ -224,6 +251,11 @@ export default function ManageExtraServices() {
       form.append("name", menuForm.name.trim())
       form.append("price", menuForm.price.trim())
       form.append("description", menuForm.description.trim())
+      if (menuForm.stock_quantity.trim() !== "") {
+        form.append("stock_quantity", menuForm.stock_quantity.trim())
+      }
+      form.append("stock_unit", menuForm.stock_unit.trim() || "units")
+      form.append("low_stock_threshold", menuForm.low_stock_threshold.trim() || "0")
       if (menuForm.imageFile) form.append("image", menuForm.imageFile)
       const res = await fetch(
         `${API_BASE}/vendor/${vendorId}/extra-services/category/${activeCategoryId}/menu`,
@@ -231,7 +263,16 @@ export default function ManageExtraServices() {
       )
       if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || `HTTP ${res.status}`)
       setShowMenuDlg(false)
-      setMenuForm({ name: "", description: "", price: "", imageFile: undefined, is_active: true })
+      setMenuForm({
+        name: "",
+        description: "",
+        price: "",
+        stock_quantity: "",
+        stock_unit: "units",
+        low_stock_threshold: "0",
+        imageFile: undefined,
+        is_active: true,
+      })
       await fetchCategories(true)
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Failed to create menu item')
@@ -260,6 +301,58 @@ export default function ManageExtraServices() {
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     setMenuForm(prev => ({ ...prev, imageFile: file }))
+  }
+
+  const openInventoryDialog = (categoryId: number, item: ExtraServiceMenu) => {
+    setInventoryCategoryId(categoryId)
+    setInventoryMenuId(item.id)
+    setInventoryItemName(item.name)
+    setInventoryMode("increment")
+    setInventoryQuantity("0")
+    setInventoryUnit(item.stock_unit || "units")
+    setInventoryThreshold(String(item.low_stock_threshold ?? 0))
+    setShowInventoryDlg(true)
+  }
+
+  const updateInventory = async () => {
+    if (!vendorId || inventoryCategoryId == null || inventoryMenuId == null) return
+    try {
+      setInventoryLoading(true)
+      const qty = Number(inventoryQuantity)
+      if (!Number.isFinite(qty) || qty < 0) {
+        alert("Quantity must be a non-negative number")
+        return
+      }
+      const threshold = Number(inventoryThreshold || 0)
+      if (!Number.isFinite(threshold) || threshold < 0) {
+        alert("Low stock threshold must be a non-negative number")
+        return
+      }
+
+      const res = await fetch(
+        `${API_BASE}/vendor/${vendorId}/extra-services/category/${inventoryCategoryId}/menu/${inventoryMenuId}/inventory`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            mode: inventoryMode,
+            quantity: Math.floor(qty),
+            stock_unit: inventoryUnit.trim() || "units",
+            low_stock_threshold: Math.floor(threshold),
+          }),
+        }
+      )
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok || data?.success === false) {
+        throw new Error(data?.error || data?.message || `HTTP ${res.status}`)
+      }
+      setShowInventoryDlg(false)
+      await fetchCategories(true)
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Failed to update inventory")
+    } finally {
+      setInventoryLoading(false)
+    }
   }
 
   /* ---------------------------------------------------------------
@@ -556,6 +649,14 @@ export default function ManageExtraServices() {
                                             <span>{item.price}</span>
                                           </div>
                                           <span className={clsx(
+                                            "rounded-full border px-2 py-0.5 text-[11px] font-semibold",
+                                            item.is_low_stock
+                                              ? "border-amber-300 bg-amber-50 text-amber-700 dark:border-amber-400/40 dark:bg-amber-500/15 dark:text-amber-300"
+                                              : "border-slate-300 bg-slate-100 text-slate-700 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200"
+                                          )}>
+                                            {item.stock_quantity ?? 0} {item.stock_unit || "units"}
+                                          </span>
+                                          <span className={clsx(
                                             "px-2 py-0.5 rounded-full text-xs font-bold",
                                             item.is_active
                                               ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
@@ -580,7 +681,16 @@ export default function ManageExtraServices() {
                               <Card
                                 onClick={() => {
                                   setActiveCategoryId(cat.id)
-                                  setMenuForm({ name: "", description: "", price: "", imageFile: undefined, is_active: true })
+                                  setMenuForm({
+                                    name: "",
+                                    description: "",
+                                    price: "",
+                                    stock_quantity: "",
+                                    stock_unit: "units",
+                                    low_stock_threshold: "0",
+                                    imageFile: undefined,
+                                    is_active: true,
+                                  })
                                   setShowMenuDlg(true)
                                 }}
                                 className="cursor-pointer overflow-hidden rounded-lg border-2 border-dashed border-cyan-300 bg-white/90 transition-all duration-200 hover:border-cyan-400 hover:shadow-md dark:border-cyan-400/25 dark:bg-slate-900/40 dark:hover:border-cyan-300/50"
@@ -616,7 +726,7 @@ export default function ManageExtraServices() {
                                 <table className="dashboard-table text-left">
                                   <thead className="dashboard-module-table-head">
                                     <tr>
-                                      {["Item", "Description", "Price", "Status", "Action"].map(h => (
+                                      {["Item", "Description", "Price", "Inventory", "Status", "Action"].map(h => (
                                         <th key={h} className="table-cell text-xs font-bold uppercase tracking-wider text-white dark:text-cyan-100/80">{h}</th>
                                       ))}
                                     </tr>
@@ -654,6 +764,27 @@ export default function ManageExtraServices() {
                                             <div className="flex items-center gap-0.5 font-bold text-sky-700 dark:text-blue-400">
                                               <IndianRupee className="icon-md" />
                                               <span>{item.price}</span>
+                                            </div>
+                                          </td>
+
+                                          {/* Inventory */}
+                                          <td className="table-cell">
+                                            <div className="flex items-center gap-2">
+                                              <span className={clsx(
+                                                "rounded-full border px-2 py-0.5 text-xs font-semibold",
+                                                item.is_low_stock
+                                                  ? "border-amber-300 bg-amber-50 text-amber-700 dark:border-amber-400/40 dark:bg-amber-500/15 dark:text-amber-300"
+                                                  : "border-slate-300 bg-slate-100 text-slate-700 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200"
+                                              )}>
+                                                {(item.stock_quantity ?? 0)} {item.stock_unit || "units"}
+                                              </span>
+                                              <button
+                                                onClick={() => openInventoryDialog(cat.id, item)}
+                                                className={iconButtonClass}
+                                                title="Update inventory"
+                                              >
+                                                <Plus className="icon-md" />
+                                              </button>
                                             </div>
                                           </td>
 
@@ -807,6 +938,45 @@ export default function ManageExtraServices() {
                 />
               </div>
             </div>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-cyan-100/80">Opening Stock</label>
+                <Input
+                  type="number"
+                  value={menuForm.stock_quantity}
+                  onChange={e => setMenuForm({ ...menuForm, stock_quantity: e.target.value })}
+                  placeholder="0"
+                  min="0"
+                  step="1"
+                  disabled={menuLoading}
+                  className="ui-input-surface focus-visible:ring-cyan-400/60"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-cyan-100/80">Unit</label>
+                <Input
+                  value={menuForm.stock_unit}
+                  onChange={e => setMenuForm({ ...menuForm, stock_unit: e.target.value })}
+                  placeholder="units"
+                  maxLength={32}
+                  disabled={menuLoading}
+                  className="ui-input-surface focus-visible:ring-cyan-400/60"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-cyan-100/80">Low Stock Alert</label>
+                <Input
+                  type="number"
+                  value={menuForm.low_stock_threshold}
+                  onChange={e => setMenuForm({ ...menuForm, low_stock_threshold: e.target.value })}
+                  placeholder="0"
+                  min="0"
+                  step="1"
+                  disabled={menuLoading}
+                  className="ui-input-surface focus-visible:ring-cyan-400/60"
+                />
+              </div>
+            </div>
             <div className="space-y-1.5">
               <label className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-cyan-100/80">Image (optional)</label>
               <Input
@@ -833,6 +1003,73 @@ export default function ManageExtraServices() {
               className={`${primaryButtonClass} flex-1`}
             >
               {menuLoading ? <><Loader2 className="icon-md animate-spin" /> Creating...</> : 'Create Item'}
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showInventoryDlg} onOpenChange={setShowInventoryDlg}>
+        <DialogContent className="ui-dialog-surface w-[95vw] rounded-xl shadow-2xl sm:max-w-[430px]">
+          <DialogHeader>
+            <DialogTitle className="ui-dialog-title text-lg font-bold tracking-wide">Update Inventory</DialogTitle>
+            <DialogDescription className="ui-dialog-subtle text-sm">
+              {inventoryItemName || "Menu item"}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 py-1">
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-cyan-100/80">Mode</label>
+              <Select value={inventoryMode} onValueChange={(value: "set" | "increment" | "decrement") => setInventoryMode(value)}>
+                <SelectTrigger className="ui-input-surface focus-visible:ring-cyan-400/60">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="set">Set exact stock</SelectItem>
+                  <SelectItem value="increment">Add stock</SelectItem>
+                  <SelectItem value="decrement">Reduce stock</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-cyan-100/80">Quantity</label>
+                <Input
+                  type="number"
+                  min="0"
+                  step="1"
+                  value={inventoryQuantity}
+                  onChange={(e) => setInventoryQuantity(e.target.value)}
+                  className="ui-input-surface focus-visible:ring-cyan-400/60"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-cyan-100/80">Unit</label>
+                <Input
+                  value={inventoryUnit}
+                  maxLength={32}
+                  onChange={(e) => setInventoryUnit(e.target.value)}
+                  className="ui-input-surface focus-visible:ring-cyan-400/60"
+                />
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-cyan-100/80">Low Stock Alert</label>
+              <Input
+                type="number"
+                min="0"
+                step="1"
+                value={inventoryThreshold}
+                onChange={(e) => setInventoryThreshold(e.target.value)}
+                className="ui-input-surface focus-visible:ring-cyan-400/60"
+              />
+            </div>
+          </div>
+          <DialogFooter className="gap-2">
+            <button className={`${secondaryButtonClass} flex-1`} onClick={() => setShowInventoryDlg(false)} disabled={inventoryLoading}>
+              Cancel
+            </button>
+            <button className={`${primaryButtonClass} flex-1`} onClick={updateInventory} disabled={inventoryLoading}>
+              {inventoryLoading ? <><Loader2 className="icon-md animate-spin" /> Saving...</> : "Save"}
             </button>
           </DialogFooter>
         </DialogContent>

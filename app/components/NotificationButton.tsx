@@ -7,8 +7,9 @@ import { Badge } from '@/components/ui/badge'
 import { NotificationPanel } from './NotificationPanel'
 import { useSocket } from '../context/SocketContext'
 import { BOOKING_URL } from '@/src/config/env'
+import { DASHBOARD_URL } from '@/src/config/env'
 
-type NotificationKind = "pay_at_cafe" | "meals_added"
+type NotificationKind = "pay_at_cafe" | "meals_added" | "document_rejected"
 
 interface MealsAddedNotification {
   kind: "meals_added"
@@ -20,6 +21,15 @@ interface MealsAddedNotification {
   username?: string
   amount_added?: number
   settlement_status?: string
+}
+
+interface DocumentRejectedNotification {
+  kind: "document_rejected"
+  notification_id: string
+  emitted_at?: string
+  vendorId: number
+  title: string
+  message: string
 }
 
 interface NotificationButtonProps {
@@ -45,6 +55,11 @@ export function NotificationButton({
     return String(value).trim()
   }
 
+  const normalizeVendorId = (value: any): number | null => {
+    const parsed = Number(value)
+    return Number.isFinite(parsed) ? parsed : null
+  }
+
   const getPayAtCafeGroupKey = (notification: any) => {
     const batchId = normalizeId(notification?.batch_id || notification?.squad_details?.batch_id)
     if (batchId) return `batch:${batchId}`
@@ -52,12 +67,47 @@ export function NotificationButton({
     return bookingId ? `booking:${bookingId}` : ""
   }
 
+  const isPendingPayAtCafeEvent = useCallback((payload: any) => {
+    if (!payload || !vendorId) return false
+    const incomingVendorId = normalizeVendorId(payload?.vendorId ?? payload?.vendor_id)
+    if (incomingVendorId === null || incomingVendorId !== vendorId) return false
+
+    const machineStatus = String(payload?.status ?? "").toLowerCase()
+    const bookingStatus = String(payload?.booking_status ?? "").toLowerCase()
+    const paymentUseCase = String(
+      payload?.payment_use_case ?? payload?.paymentUseCase ?? payload?.mode_of_payment ?? ""
+    ).toLowerCase()
+
+    const isPendingRequest = machineStatus === "pending_acceptance" || bookingStatus === "pending_acceptance"
+    const isPayAtCafe = paymentUseCase
+      ? paymentUseCase.includes("pay_at_cafe") || paymentUseCase === "cash"
+      : true
+
+    return isPendingRequest && isPayAtCafe
+  }, [vendorId])
+
   // Fetch existing pending bookings
   const fetchPendingBookings = useCallback(async () => {
     if (!vendorId) return
 
     try {
       console.log(`🔍 NotificationButton: Fetching pending bookings for vendor ${vendorId}...`)
+      let docNotifications: DocumentRejectedNotification[] = []
+      try {
+        const dashboardRes = await fetch(`${DASHBOARD_URL}/api/vendor/${vendorId}/dashboard`)
+        const dashboardJson = await dashboardRes.json().catch(() => ({}))
+        const alerts = Array.isArray(dashboardJson?.documentAlerts) ? dashboardJson.documentAlerts : []
+        docNotifications = alerts.map((alert: any, idx: number) => ({
+          kind: "document_rejected",
+          notification_id: `doc_rejected_${vendorId}_${idx}_${encodeURIComponent(String(alert?.message || ""))}`,
+          emitted_at: new Date().toISOString(),
+          vendorId: Number(vendorId),
+          title: String(alert?.title || "Document Rejected"),
+          message: String(alert?.message || "One or more documents were rejected by Hash verification team."),
+        }))
+      } catch (docErr) {
+        console.warn("NotificationButton: failed to fetch document alerts", docErr)
+      }
 
       const response = await fetch(`${BOOKING_URL}/api/pay-at-cafe/pending/${vendorId}`)
       const data = await response.json()
@@ -77,7 +127,7 @@ export function NotificationButton({
         const mapped = Array.from(deduped.values())
         setNotifications((prev) => {
           const mealNotices = prev.filter((n: any) => n.kind === "meals_added")
-          const merged = [...mapped, ...mealNotices]
+          const merged = [...mapped, ...mealNotices, ...docNotifications]
           setUnreadCount(merged.length)
           return merged
         })
@@ -85,8 +135,9 @@ export function NotificationButton({
         console.log('📋 NotificationButton: No pending bookings found')
         setNotifications((prev) => {
           const mealNotices = prev.filter((n: any) => n.kind === "meals_added")
-          setUnreadCount(mealNotices.length)
-          return mealNotices
+          const merged = [...mealNotices, ...docNotifications]
+          setUnreadCount(merged.length)
+          return merged
         })
       }
     } catch (error) {
@@ -112,21 +163,26 @@ export function NotificationButton({
 
     // Check if this is a pay-at-cafe notification for our vendor
     const eventBatchId = latestBookingEvent.batch_id || latestBookingEvent?.squad_details?.batch_id
-    if (latestBookingEvent.vendorId === vendorId && latestBookingEvent.status === 'pending_acceptance') {
+    if (isPendingPayAtCafeEvent(latestBookingEvent)) {
       console.log('🔔 NotificationButton: Processing pay at cafe notification for vendor:', vendorId)
       // Always refetch pending list so batch totals + amount are accurate.
-      fetchPendingBookings()
+      void fetchPendingBookings()
 
       // Show browser notification
-      if (Notification.permission === 'granted') {
+      if (typeof window !== "undefined" && 'Notification' in window && Notification.permission === 'granted') {
         try {
+          const gameName =
+            latestBookingEvent?.game?.game_name ||
+            (typeof latestBookingEvent?.game === "string" ? latestBookingEvent.game : null) ||
+            'a game'
+          const username = latestBookingEvent?.username || latestBookingEvent?.user_name || "A customer"
           const fallbackAmount =
             latestBookingEvent?.total_amount ??
             latestBookingEvent?.slot_price?.single_slot_price ??
             latestBookingEvent?.slot_price ??
             latestBookingEvent?.game?.single_slot_price
           const notification = new Notification('New Pay at Cafe Request', {
-          body: `${latestBookingEvent.username} wants to book ${latestBookingEvent.game?.game_name || 'a game'} for ₹${fallbackAmount ?? 0}`,
+          body: `${username} wants to book ${gameName} for ₹${fallbackAmount ?? 0}`,
           icon: '/favicon.ico',
           tag: `pay_at_cafe_${eventBatchId || latestBookingEvent.bookingId}`,
           requireInteraction: true
@@ -138,13 +194,29 @@ export function NotificationButton({
       }
     } else {
       console.log('🚫 NotificationButton: Ignoring event - not a pay-at-cafe notification:', {
-        eventVendorId: latestBookingEvent.vendorId,
+        eventVendorId: latestBookingEvent.vendorId ?? latestBookingEvent.vendor_id,
         ourVendorId: vendorId,
-        status: latestBookingEvent.status,
+        status: latestBookingEvent.status ?? latestBookingEvent.booking_status,
         expectedStatus: 'pending_acceptance'
       })
     }
-  }, [latestBookingEvent, vendorId])
+  }, [latestBookingEvent, vendorId, fetchPendingBookings, isPendingPayAtCafeEvent])
+
+  // Fallback: consume booking events directly in case parent event handoff misses a payload variation.
+  useEffect(() => {
+    if (!socket || !isConnected || !vendorId) return
+
+    const handleIncomingBooking = (payload: any) => {
+      if (!isPendingPayAtCafeEvent(payload)) return
+      console.log('🔔 NotificationButton: Received direct booking socket event; refreshing pending list')
+      void fetchPendingBookings()
+    }
+
+    socket.on('booking', handleIncomingBooking)
+    return () => {
+      socket.off('booking', handleIncomingBooking)
+    }
+  }, [socket, isConnected, vendorId, fetchPendingBookings, isPendingPayAtCafeEvent])
 
   // ✅ Socket event handling for removal events only (accept/reject)
   useEffect(() => {
@@ -254,8 +326,23 @@ export function NotificationButton({
   // Fetch pending bookings when vendorId is available
   useEffect(() => {
     if (vendorId) {
-      fetchPendingBookings()
+      void fetchPendingBookings()
     }
+  }, [vendorId, fetchPendingBookings])
+
+  // Refresh when opening panel so the user always sees the latest pending requests.
+  useEffect(() => {
+    if (!isOpen || !vendorId) return
+    void fetchPendingBookings()
+  }, [isOpen, vendorId, fetchPendingBookings])
+
+  // Poll periodically as a resilience fallback if socket delivery is delayed.
+  useEffect(() => {
+    if (!vendorId) return
+    const timer = window.setInterval(() => {
+      void fetchPendingBookings()
+    }, 30000)
+    return () => window.clearInterval(timer)
   }, [vendorId, fetchPendingBookings])
 
   useEffect(() => {

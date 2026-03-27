@@ -908,17 +908,22 @@ export function TransactionTable() {
                     <motion.tr
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
-                      onClick={() => toggleDateExpand(slotDate)}
-                      className="cursor-pointer border-slate-200 transition-colors hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800/70"
+                      className="border-slate-200 transition-colors hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800/70"
                     >
                       {visibleCols.map((col, idx) => {
                         if (idx === 0) {
                           return (
                             <TableCell key={`${slotDate}_${col.key}_date`} className="px-4 py-3 font-medium text-sky-700 dark:text-cyan-200">
-                              <span className="inline-flex items-center gap-2">
+                              <button
+                                type="button"
+                                onClick={() => toggleDateExpand(slotDate)}
+                                className="inline-flex items-center gap-2 text-left"
+                                aria-expanded={expandedDates.includes(slotDate)}
+                                aria-label={`Toggle transactions for ${slotDate}`}
+                              >
                                 <span className="text-xs">{expandedDates.includes(slotDate) ? "▲" : "▼"}</span>
                                 <span>{slotDate}</span>
-                              </span>
+                              </button>
                             </TableCell>
                           );
                         }
@@ -947,17 +952,22 @@ export function TransactionTable() {
                               initial={{ opacity: 0 }}
                               animate={{ opacity: 1 }}
                               exit={{ opacity: 0 }}
-                              onClick={() => toggleUserExpand(slotDate, userId)}
-                              className="cursor-pointer border-slate-200 bg-slate-50/80 transition-colors hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900/60 dark:hover:bg-slate-800/70"
+                              className="border-slate-200 bg-slate-50/80 transition-colors hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900/60 dark:hover:bg-slate-800/70"
                             >
                               {visibleCols.map((col, idx) => {
                                 if (idx === 0) {
                                   return (
                                     <TableCell key={`${slotDate}_${userId}_${col.key}_summary`} className="px-4 py-3 font-medium text-slate-900 dark:text-slate-100">
-                                      <span className="inline-flex items-center gap-2">
+                                      <button
+                                        type="button"
+                                        onClick={() => toggleUserExpand(slotDate, userId)}
+                                        className="inline-flex items-center gap-2 text-left"
+                                        aria-expanded={userExpanded}
+                                        aria-label={`Toggle transactions for ${userGroup.userName}`}
+                                      >
                                         <span className="text-xs">{userExpanded ? "▲" : "▼"}</span>
                                         <span>{userGroup.userName}</span>
-                                      </span>
+                                      </button>
                                     </TableCell>
                                   );
                                 }

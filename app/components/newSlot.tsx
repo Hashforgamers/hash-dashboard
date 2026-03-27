@@ -149,6 +149,21 @@ interface UserSuggestion {
   phone: string
 }
 
+interface UserPassOption {
+  id: number
+  pass_uid: string
+  user_id: number
+  pass_name: string
+  total_hours: number
+  remaining_hours: number
+  valid_from: string | null
+  valid_to: string | null
+  is_global: boolean
+  vendor_id: number | null
+  can_cover_hours: boolean
+  hours_shortfall: number
+}
+
 interface BookingFieldConfig {
   name: { visible: boolean; required: boolean }
   phone: { visible: boolean; required: boolean }
@@ -380,9 +395,16 @@ function SlotBookingForm({
   const [phone, setPhone] = useState<string>('')
   const [paymentType, setPaymentType] = useState<string>('Cash')
   const [passUid, setPassUid] = useState('')
-  const [validatedPass, setValidatedPass] = useState<any>(null)
-  const [isValidatingPass, setIsValidatingPass] = useState(false)
+  const [validatedPass, setValidatedPass] = useState<UserPassOption | null>(null)
   const [passError, setPassError] = useState('')
+  const [passOptions, setPassOptions] = useState<UserPassOption[]>([])
+  const [isLoadingPassOptions, setIsLoadingPassOptions] = useState(false)
+  const [passOtpRequestId, setPassOtpRequestId] = useState('')
+  const [passOtpCode, setPassOtpCode] = useState('')
+  const [passVerificationToken, setPassVerificationToken] = useState('')
+  const [passOtpMessage, setPassOtpMessage] = useState('')
+  const [isSendingPassOtp, setIsSendingPassOtp] = useState(false)
+  const [isVerifyingPassOtp, setIsVerifyingPassOtp] = useState(false)
   const [isSquadMode, setIsSquadMode] = useState<boolean>(false)
   const [squadPlayerCount, setSquadPlayerCount] = useState<number>(2)
   const [squadMembers, setSquadMembers] = useState<SquadMemberInput[]>([])
@@ -690,55 +712,153 @@ function SlotBookingForm({
     return finalWaveOff
   }
 
-  // Add this NEW function
-
-
-const validatePass = async (uid: string) => {
-
-      const vendorId = getVendorIdFromToken()
-    if (!vendorId) {
-     
-      return null;
-    }
-
-
-  if (!uid.trim() || !vendorId) return
-  
-  setIsValidatingPass(true)
-  setPassError('')
-  
-  try {
-    const response = await fetch(`${BOOKING_URL}/api/pass/validate`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        pass_uid: uid.trim(),
-        vendor_id: vendorId,
-      }),
-    })
-    
-    const data = await response.json()
-    
-    if (response.ok && data.valid) {
-      setValidatedPass(data.pass)
-      setPassError('')
-      
-      // Check if pass has enough hours
-      const hoursNeeded = selectedSlots.length * 0.5  // Assuming 30min slots
-      if (hoursNeeded > data.pass.remaining_hours) {
-        setPassError(`Insufficient hours. Need ${hoursNeeded} hrs, available ${data.pass.remaining_hours} hrs`)
-      }
-    } else {
-      setPassError(data.error || 'Invalid pass')
-      setValidatedPass(null)
-    }
-  } catch (err) {
-    setPassError('Failed to validate pass')
+  const resetPassFlow = () => {
+    setPassUid("")
     setValidatedPass(null)
-  } finally {
-    setIsValidatingPass(false)
+    setPassOptions([])
+    setPassError("")
+    setPassOtpRequestId("")
+    setPassOtpCode("")
+    setPassVerificationToken("")
+    setPassOtpMessage("")
   }
-}
+
+  const fetchValidPassOptions = async (userId: number) => {
+    const vendorId = getVendorIdFromToken()
+    if (!vendorId || !userId) return
+
+    setIsLoadingPassOptions(true)
+    setPassError("")
+    setPassOtpMessage("")
+    setPassVerificationToken("")
+    setPassOtpRequestId("")
+    setPassOtpCode("")
+
+    try {
+      const hoursNeeded = Math.max(selectedSlots.length * 0.5, 0.5)
+      const params = new URLSearchParams({
+        vendor_id: String(vendorId),
+        user_id: String(userId),
+        hours_needed: String(hoursNeeded),
+      })
+      const response = await fetch(`${BOOKING_URL}/api/pass/dashboard/valid-options?${params.toString()}`)
+      const data = await response.json().catch(() => ({}))
+      if (!response.ok || data?.success === false) {
+        throw new Error(data?.message || "Failed to fetch valid passes")
+      }
+      const options: UserPassOption[] = Array.isArray(data?.passes) ? data.passes : []
+      setPassOptions(options)
+      if (!options.length) {
+        setPassUid("")
+        setValidatedPass(null)
+        setPassError("No valid pass available for this user at this cafe")
+        return
+      }
+      const selected =
+        options.find((row) => row.pass_uid === passUid) ??
+        options.find((row) => row.can_cover_hours) ??
+        options[0]
+      setPassUid(selected.pass_uid)
+      setValidatedPass(selected)
+      if (!selected.can_cover_hours) {
+        setPassError(
+          `Selected pass has insufficient hours. Need ${hoursNeeded.toFixed(1)}h, short by ${selected.hours_shortfall.toFixed(1)}h.`
+        )
+      } else {
+        setPassError("")
+      }
+    } catch (error: any) {
+      setPassOptions([])
+      setValidatedPass(null)
+      setPassError(error?.message || "Failed to fetch valid passes")
+    } finally {
+      setIsLoadingPassOptions(false)
+    }
+  }
+
+  const sendPassOtp = async () => {
+    const vendorId = getVendorIdFromToken()
+    const userId = matchedPrimaryUser?.id
+    if (!vendorId || !userId || !validatedPass?.pass_uid) return
+
+    setIsSendingPassOtp(true)
+    setPassOtpMessage("")
+    setPassError("")
+    try {
+      const response = await fetch(`${BOOKING_URL}/api/pass/dashboard/otp/send`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          vendor_id: vendorId,
+          user_id: userId,
+          pass_uid: validatedPass.pass_uid,
+        }),
+      })
+      const data = await response.json().catch(() => ({}))
+      if (!response.ok || data?.success === false) {
+        throw new Error(data?.message || "Failed to send OTP")
+      }
+      setPassOtpRequestId(data.otp_request_id || "")
+      setPassVerificationToken("")
+      setPassOtpMessage(`OTP sent to ${data.masked_email || "registered email"} and app notification.`)
+    } catch (error: any) {
+      setPassOtpMessage("")
+      setPassError(error?.message || "Failed to send pass OTP")
+    } finally {
+      setIsSendingPassOtp(false)
+    }
+  }
+
+  const verifyPassOtp = async () => {
+    if (!passOtpRequestId || !passOtpCode.trim()) {
+      setPassError("Enter OTP to verify pass usage")
+      return
+    }
+    setIsVerifyingPassOtp(true)
+    setPassError("")
+    try {
+      const response = await fetch(`${BOOKING_URL}/api/pass/dashboard/otp/verify`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          otp_request_id: passOtpRequestId,
+          otp: passOtpCode.trim(),
+        }),
+      })
+      const data = await response.json().catch(() => ({}))
+      if (!response.ok || data?.success === false) {
+        throw new Error(data?.message || "Invalid OTP")
+      }
+      setPassVerificationToken(String(data.pass_verification_token || ""))
+      setPassOtpMessage("OTP verified. Pass is ready to use for booking.")
+    } catch (error: any) {
+      setPassVerificationToken("")
+      setPassError(error?.message || "Failed to verify OTP")
+    } finally {
+      setIsVerifyingPassOtp(false)
+    }
+  }
+
+  const handlePassSelectionChange = (selectedUid: string) => {
+    setPassUid(selectedUid)
+    const selected = passOptions.find((row) => row.pass_uid === selectedUid) || null
+    setValidatedPass(selected)
+    setPassVerificationToken("")
+    setPassOtpCode("")
+    setPassOtpRequestId("")
+    setPassOtpMessage("")
+    if (!selected) {
+      setPassError("Select a valid pass")
+      return
+    }
+    if (!selected.can_cover_hours) {
+      setPassError(
+        `Selected pass has insufficient hours. Shortfall ${selected.hours_shortfall.toFixed(1)}h.`
+      )
+    } else {
+      setPassError("")
+    }
+  }
 
 
   useEffect(() => {
@@ -753,6 +873,11 @@ const validatePass = async (uid: string) => {
   useEffect(() => {
     if (!isOpen) return
     loadVendorFieldConfig()
+  }, [isOpen])
+
+  useEffect(() => {
+    if (isOpen) return
+    resetPassFlow()
   }, [isOpen])
 
   useEffect(() => {
@@ -962,6 +1087,16 @@ useEffect(() => {
     if (!creditAccount) return 0
     return Math.max(Number(creditAccount.credit_limit || 0) - Number(creditAccount.outstanding_amount || 0), 0)
   }, [creditAccount])
+
+  useEffect(() => {
+    if (!isOpen || paymentType !== "Pass") return
+    if (!matchedPrimaryUser?.id) {
+      resetPassFlow()
+      setPassError("Select an existing user to use pass payment")
+      return
+    }
+    fetchValidPassOptions(Number(matchedPrimaryUser.id))
+  }, [isOpen, paymentType, matchedPrimaryUser?.id, selectedSlots.length])
 
   useEffect(() => {
     if (!isOpen || paymentType !== 'Monthly Credit') return
@@ -1320,9 +1455,7 @@ const getEffectivePrice = (slot: SelectedSlot): number => {
                 onClick={() => {
                   setPaymentType(type)
                   if (type !== 'Pass') {
-                    setPassUid('')
-                    setValidatedPass(null)
-                    setPassError('')
+                    resetPassFlow()
                   }
                   if (errors.payment) setErrors((prev) => ({ ...prev, payment: '' }))
                 }}
@@ -1414,27 +1547,42 @@ const getEffectivePrice = (slot: SelectedSlot): number => {
             exit={{ opacity: 0, height: 0 }}
             className="mt-4 space-y-2"
           >
-            <div className="relative">
-              <input
-                type="text"
-                value={passUid}
-                onChange={(e) => setPassUid(e.target.value.toUpperCase())}
-                onBlur={() => {
-                  if (passUid.trim()) validatePass(passUid)
-                }}
-                placeholder="Enter Pass UID (HFG-XXXXXXXXXXXX)"
-                className="w-full px-3 py-2 bg-white dark:bg-gray-800 rounded border border-gray-300 dark:border-gray-600 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500/20 transition-all duration-200 text-sm"
-              />
-              {isValidatingPass && (
-                <Loader2 className="w-4 h-4 animate-spin text-emerald-600 absolute right-3 top-2.5" />
-              )}
+            <div className="rounded-lg border border-gray-300 bg-white/70 p-3 dark:border-slate-700 dark:bg-slate-900/60">
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-slate-300">
+                  Valid Passes
+                </p>
+                {isLoadingPassOptions ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin text-emerald-500" />
+                ) : null}
+              </div>
+              <div className="mt-2">
+                <select
+                  value={passUid}
+                  onChange={(e) => handlePassSelectionChange(e.target.value)}
+                  className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-800"
+                  disabled={isLoadingPassOptions || !passOptions.length}
+                >
+                  <option value="">{passOptions.length ? "Select pass" : "No valid pass found"}</option>
+                  {passOptions.map((pass) => (
+                    <option key={pass.id} value={pass.pass_uid}>
+                      {pass.pass_name} • {pass.pass_uid} • {pass.remaining_hours}/{pass.total_hours}h
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
 
-            {validatedPass && !passError && (
+            {validatedPass && (
               <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className="bg-emerald-50 dark:bg-emerald-900/20 rounded-lg p-2 border border-emerald-200 dark:border-emerald-700"
+                className={cn(
+                  "rounded-lg border p-2",
+                  validatedPass.can_cover_hours
+                    ? "bg-emerald-50 border-emerald-200 dark:bg-emerald-900/20 dark:border-emerald-700"
+                    : "bg-amber-50 border-amber-200 dark:bg-amber-900/20 dark:border-amber-700"
+                )}
               >
                 <div className="flex items-start gap-2">
                   <CheckCircle className="w-4 h-4 text-emerald-600 flex-shrink-0 mt-0.5" />
@@ -1448,15 +1596,65 @@ const getEffectivePrice = (slot: SelectedSlot): number => {
                         {validatedPass.remaining_hours}/{validatedPass.total_hours}
                       </span>
                     </div>
-                    {selectedSlots.length > 0 && (
-                      <div className="flex justify-between text-emerald-600 dark:text-emerald-400">
-                        <span>Hours Needed</span>
-                        <span className="font-bold">{selectedSlots.length * 0.5} hrs</span>
-                      </div>
-                    )}
+                    <div className="flex justify-between text-emerald-600 dark:text-emerald-400">
+                      <span>Hours Needed</span>
+                      <span className="font-bold">{(selectedSlots.length * 0.5).toFixed(1)} hrs</span>
+                    </div>
                   </div>
                 </div>
               </motion.div>
+            )}
+
+            {validatedPass?.can_cover_hours && (
+              <div className="rounded-lg border border-gray-300 bg-white/70 p-3 dark:border-slate-700 dark:bg-slate-900/60">
+                <div className="flex flex-wrap items-center gap-2">
+                  <Button
+                    type="button"
+                    onClick={sendPassOtp}
+                    disabled={isSendingPassOtp || !matchedPrimaryUser?.id}
+                    className="h-8 px-3 text-xs"
+                  >
+                    {isSendingPassOtp ? (
+                      <>
+                        <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                        Sending OTP
+                      </>
+                    ) : (
+                      "Send OTP"
+                    )}
+                  </Button>
+                  <input
+                    value={passOtpCode}
+                    onChange={(e) => setPassOtpCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                    placeholder="6 digit OTP"
+                    className="h-8 w-28 rounded-md border border-gray-300 bg-white px-2.5 text-xs dark:border-slate-600 dark:bg-slate-800"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={verifyPassOtp}
+                    disabled={isVerifyingPassOtp || !passOtpRequestId || passOtpCode.length < 6}
+                    className="h-8 px-3 text-xs"
+                  >
+                    {isVerifyingPassOtp ? (
+                      <>
+                        <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                        Verifying
+                      </>
+                    ) : (
+                      "Verify OTP"
+                    )}
+                  </Button>
+                </div>
+                {passOtpMessage ? (
+                  <p className="mt-2 text-xs text-emerald-600 dark:text-emerald-300">{passOtpMessage}</p>
+                ) : null}
+                {passVerificationToken ? (
+                  <p className="mt-1 text-xs font-semibold text-emerald-700 dark:text-emerald-300">
+                    OTP verified. You can confirm booking now.
+                  </p>
+                ) : null}
+              </div>
             )}
 
             {passError && (
@@ -1541,16 +1739,20 @@ const getEffectivePrice = (slot: SelectedSlot): number => {
       }
     }
 
-     // Validate pass if Pass payment is selected
-  if (paymentType === 'Pass') {
-    if (!passUid.trim()) {
-      newErrors.pass = 'Please enter pass UID'
-    } else if (!validatedPass) {
-      newErrors.pass = 'Please validate the pass first'
-    } else if (passError) {
-      newErrors.pass = passError
+    // Validate pass if Pass payment is selected
+    if (paymentType === 'Pass') {
+      if (!matchedPrimaryUser?.id) {
+        newErrors.pass = 'Select an existing customer to use pass payment'
+      } else if (!passUid.trim() || !validatedPass) {
+        newErrors.pass = 'Select a valid pass'
+      } else if (!validatedPass.can_cover_hours) {
+        newErrors.pass = 'Selected pass does not have enough hours for this booking'
+      } else if (!passVerificationToken) {
+        newErrors.pass = 'Verify OTP before confirming pass booking'
+      } else if (passError) {
+        newErrors.pass = passError
+      }
     }
-  }
 
     if (paymentType === 'Monthly Credit') {
       if (creditAccountLoading) {
@@ -1589,29 +1791,30 @@ const getEffectivePrice = (slot: SelectedSlot): number => {
     try {
 
       if (paymentType === 'Pass' && validatedPass) {
-      const hoursToDeduct = selectedSlots.length * 0.5
-      
-      const passRedeemResponse = await fetch(`${BOOKING_URL}/api/pass/redeem/dashboard`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          pass_uid: passUid.trim(),
-          vendor_id: vendorId,
-          hours_to_deduct: hoursToDeduct,
-          session_start: selectedSlots[0]?.start_time.slice(0, 5),
-          session_end: selectedSlots[selectedSlots.length - 1]?.end_time.slice(0, 5),
-          notes: `Booking for ${selectedSlots[0]?.console_name} - ${selectedSlots.length} slots`,
-        }),
-      })
-      
-      const passRedeemData = await passRedeemResponse.json()
-      
-      if (!passRedeemResponse.ok || !passRedeemData.success) {
-        alert(`Pass redemption failed: ${passRedeemData.error}`)
-        setIsSubmitting(false)
-        return
+        const hoursToDeduct = selectedSlots.length * 0.5
+
+        const passRedeemResponse = await fetch(`${BOOKING_URL}/api/pass/redeem/dashboard`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            pass_uid: validatedPass.pass_uid,
+            vendor_id: vendorId,
+            hours_to_deduct: hoursToDeduct,
+            session_start: selectedSlots[0]?.start_time.slice(0, 5),
+            session_end: selectedSlots[selectedSlots.length - 1]?.end_time.slice(0, 5),
+            notes: `Booking for ${selectedSlots[0]?.console_name} - ${selectedSlots.length} slots`,
+            pass_verification_token: passVerificationToken,
+          }),
+        })
+
+        const passRedeemData = await passRedeemResponse.json()
+
+        if (!passRedeemResponse.ok || !passRedeemData.success) {
+          alert(`Pass redemption failed: ${passRedeemData.error || passRedeemData.message || "Unknown error"}`)
+          setIsSubmitting(false)
+          return
+        }
       }
-    }
 
 
       const bookingData = {
@@ -1619,6 +1822,7 @@ const getEffectivePrice = (slot: SelectedSlot): number => {
         name,
         email: bookingFieldConfig.email.visible ? email : '',
         phone: bookingFieldConfig.phone.visible ? phone : '',
+        userId: matchedPrimaryUser?.id ?? null,
         bookedDate: normalizeBookedDate(selectedSlots[0]?.date || ''),
         slotId: selectedSlots.map(slot => slot.slot_id),
         paymentType: paymentType === 'Monthly Credit' ? 'monthly_credit' : paymentType,
@@ -2992,8 +3196,13 @@ function ScheduleGrid({
     }) || null
   }
 
-  const isSlotSelected = (slotId: number, date: string) => {
-    return selectedSlots.some(slot => slot.slot_id === slotId && slot.date === date)
+  const isSlotSelected = (slotId: number, date: string, consoleId?: number) => {
+    return selectedSlots.some(
+      (slot) =>
+        slot.slot_id === slotId &&
+        slot.date === date &&
+        Number(slot.console_id) === Number(consoleId)
+    )
   }
 
   const pickBestSlot = (slots: any[]) => {
@@ -3118,7 +3327,7 @@ function ScheduleGrid({
 
           const slot = pickBestSlot(consoleSlots) // Prefer best candidate (open/high capacity) when duplicates exist
           if (!slot) return
-          const isSelected = isSlotSelected(slot.slot_id, day.fullDate)
+          const isSelected = isSlotSelected(slot.slot_id, day.fullDate, slot.console_id)
           
           // ✅ Check if time has passed
           const isPastTime = isPastSlotInIST(day.fullDate, slot.end_time, slot.start_time)
@@ -4710,10 +4919,24 @@ useEffect(() => {
   }, [vendorId])
 
   const handleSlotSelect = (slot: SelectedSlot) => {
-    const isSelected = selectedSlots.some(s => s.slot_id === slot.slot_id && s.date === slot.date)
+    const isSelected = selectedSlots.some(
+      (s) =>
+        s.slot_id === slot.slot_id &&
+        s.date === slot.date &&
+        Number(s.console_id) === Number(slot.console_id)
+    )
 
     if (isSelected) {
-      setSelectedSlots(selectedSlots.filter(s => !(s.slot_id === slot.slot_id && s.date === slot.date)))
+      setSelectedSlots(
+        selectedSlots.filter(
+          (s) =>
+            !(
+              s.slot_id === slot.slot_id &&
+              s.date === slot.date &&
+              Number(s.console_id) === Number(slot.console_id)
+            )
+        )
+      )
     } else {
       setSelectedSlots([...selectedSlots, slot])
     }
@@ -4723,6 +4946,13 @@ useEffect(() => {
     if (selectedSlots.length > 0) {
       setShowBookingForm(true)
     }
+  }
+
+  const handleConsoleChange = (consoleType: ConsoleFilter) => {
+    setSelectedConsole(consoleType)
+    setSelectedSlots([])
+    setSlotBookings([])
+    setShowBookingForm(false)
   }
 
   const handleBookingComplete = () => {
@@ -4764,7 +4994,7 @@ useEffect(() => {
                 selectedSlots={selectedSlots}
                 onNewBooking={handleNewBooking}
                 selectedConsole={selectedConsole}
-                onConsoleChange={setSelectedConsole}
+                onConsoleChange={handleConsoleChange}
                 availableConsoles={availableConsoles}
                 compact
               />
@@ -4789,7 +5019,7 @@ useEffect(() => {
               selectedSlots={selectedSlots}
               onNewBooking={handleNewBooking}
               selectedConsole={selectedConsole}
-              onConsoleChange={setSelectedConsole}
+              onConsoleChange={handleConsoleChange}
               availableConsoles={availableConsoles}
             />
             <ScheduleGrid
