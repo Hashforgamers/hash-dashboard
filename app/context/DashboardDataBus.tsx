@@ -11,6 +11,8 @@ type SocketPayload = {
   module?: string;
 };
 
+const TERMINAL_BOOKING_STATUSES = ["cancelled", "canceled", "rejected", "completed", "discarded", "no_show"];
+
 const MODULE_EVENT_MAP: Record<string, string> = {
   booking: "booking",
   booking_updated: "booking",
@@ -122,7 +124,7 @@ export function DashboardDataBus() {
         .map((booking: any) => (booking?.bookingId === data.bookingId ? { ...booking, ...data } : booking))
         .filter((booking: any) => {
           const s = String(booking?.status || "").toLowerCase();
-          return !["cancelled", "canceled", "rejected", "completed", "discarded"].includes(s);
+          return !TERMINAL_BOOKING_STATUSES.includes(s);
         });
 
       if ((status === "confirmed" || status === "paid") && !nextUpcoming.some((b: any) => b?.bookingId === data.bookingId)) {

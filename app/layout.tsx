@@ -33,8 +33,8 @@ export const metadata: Metadata = {
   icons: {
     icon: [
       { url: "/favicon.ico", sizes: "any" },
-      { url: "/favicon-16x16.png", type: "image/png", sizes: "16x16" },
-      { url: "/favicon-32x32.png", type: "image/png", sizes: "32x32" },
+      { url: "/favicon.svg", type: "image/svg+xml", sizes: "any" },
+      { url: "/favicon-96x96.png", type: "image/png", sizes: "96x96" },
     ],
     apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
     shortcut: ["/favicon.ico"],
@@ -47,7 +47,7 @@ export const metadata: Metadata = {
     type: "website",
     images: [
       {
-        url: "/android-chrome-512x512.png",
+        url: "/web-app-manifest-512x512.png",
         width: 512,
         height: 512,
         alt: "Hash For Gamers",
@@ -58,7 +58,7 @@ export const metadata: Metadata = {
     card: "summary",
     title: "Hash For Gamers Dashboard",
     description: "Gaming cafe operations dashboard by Hash For Gamers.",
-    images: ["/android-chrome-512x512.png"],
+    images: ["/web-app-manifest-512x512.png"],
   },
 };
 
