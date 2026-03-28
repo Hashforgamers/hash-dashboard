@@ -248,7 +248,7 @@ export default function ReviewsPage() {
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                 <input
-                  className="dashboard-module-input h-10 w-full pl-9 pr-3"
+                  className="dashboard-module-input h-10 w-full pl-10 pr-3"
                   placeholder="Search reviews..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}

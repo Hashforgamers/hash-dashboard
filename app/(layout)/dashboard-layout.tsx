@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { Clock, Gamepad, Gamepad2, Headphones, Menu, Monitor, Pin, PinOff, RefreshCw, User, Wifi, WifiOff, X } from "lucide-react"
-import { useTheme } from "next-themes"
 import { usePathname, useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { MainNav } from "../components/main-nav"
@@ -22,7 +21,6 @@ interface DashboardLayoutProps {
 const NAV_PIN_STORAGE_KEY = "dashboard_nav_pinned_v1"
 
 export function DashboardLayout({ children, contentScroll = "page" }: DashboardLayoutProps) {
-  const { theme } = useTheme()
   const [isNavOpen, setIsNavOpen] = useState(false)
   const [isNavPinned, setIsNavPinned] = useState(false)
   const [nowISTDateText, setNowISTDateText] = useState<string>("")
@@ -112,15 +110,14 @@ export function DashboardLayout({ children, contentScroll = "page" }: DashboardL
   return (
     <div className="premium-shell dashboard-typography flex h-dvh overflow-hidden text-foreground">
       <header className="dashboard-nav dashboard-nav-surface dashboard-nav-divider fixed left-0 right-0 top-0 z-20 flex items-center justify-between border-b px-4 py-3 backdrop-blur md:hidden">
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center">
           <Image
-            src={theme === "dark" ? "/whitehashlogo.png" : "/blackhashlogo.png"}
+            src="/hash_for_gamer_logo.png"
             alt="Hash Logo"
             width={36}
             height={36}
-            className="shrink-0"
+            className="shrink-0 rounded-md"
           />
-          <span className="premium-heading text-base font-semibold">Hash Gaming</span>
         </div>
 
         <Button
@@ -156,22 +153,12 @@ export function DashboardLayout({ children, contentScroll = "page" }: DashboardL
 
           <div className="mb-3 hidden items-end space-x-2 overflow-hidden md:mb-4 md:flex">
             <Image
-              src="/whitehashlogo.png"
-              alt="Hash Logo - Dark Mode"
+              src="/hash_for_gamer_logo.png"
+              alt="Hash Logo"
               width={36}
               height={36}
-              className="shrink-0 hidden dark:block"
+              className="shrink-0 rounded-md"
             />
-            <Image
-              src="/blackhashlogo.png"
-              alt="Hash Logo - Light Mode"
-              width={36}
-              height={36}
-              className="shrink-0 dark:hidden"
-            />
-            <span className={`premium-heading ml-1 hidden whitespace-nowrap text-sm font-semibold text-foreground md:block ${isNavPinned ? "xl:block" : "xl:hidden xl:group-hover:block"}`}>
-              Hash Gaming
-            </span>
           </div>
 
           <MainNav
@@ -188,12 +175,10 @@ export function DashboardLayout({ children, contentScroll = "page" }: DashboardL
           />
         )}
 
-        <div className="relative min-h-0 flex-1 overflow-hidden">
+        <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden">
           <main
             data-dashboard-scroll-root="true"
             className={`min-h-0 h-full flex-1 overflow-y-auto px-2 pb-2 pt-2 sm:px-3 sm:pb-3 md:px-4 md:pb-4 md:pt-4 ${
-              showGlobalRibbon ? "md:pb-16" : ""
-            } ${
               contentScroll === "contained" ? "overflow-x-hidden" : ""
             }`}
           >
@@ -227,8 +212,8 @@ export function DashboardLayout({ children, contentScroll = "page" }: DashboardL
           </main>
 
           {showGlobalRibbon && (
-            <div className="pointer-events-none absolute bottom-0 left-0 right-0 z-30">
-              <div className="dashboard-module-panel pointer-events-auto mx-2 mb-2 flex flex-wrap items-center justify-between gap-1.5 rounded-lg px-2 py-1.5 text-[11px] sm:mx-3 md:mx-4">
+            <div className="dashboard-nav-divider shrink-0 border-t px-2 pb-2 pt-1.5 sm:px-3 md:px-4">
+              <div className="dashboard-module-panel flex flex-wrap items-center justify-between gap-1.5 rounded-lg px-2 py-1.5 text-[11px]">
                 <div className="flex flex-wrap items-center gap-1.5 text-slate-300">
                   <span className="inline-flex items-center gap-1 rounded-md border border-emerald-400/30 bg-emerald-500/10 px-1.5 py-0.5 text-emerald-200">
                     <Clock className="h-3.5 w-3.5" />
@@ -266,6 +251,7 @@ export function DashboardLayout({ children, contentScroll = "page" }: DashboardL
                   })}
                 </div>
                 <div className="flex items-center gap-1.5">
+                  <NotificationButton vendorId={vendorId} />
                   <button
                     type="button"
                     onClick={handleManualRefresh}
@@ -277,7 +263,6 @@ export function DashboardLayout({ children, contentScroll = "page" }: DashboardL
                     <RefreshCw className={`h-3.5 w-3.5 ${isManualRefreshing ? "animate-spin" : ""}`} />
                     {isManualRefreshing ? "Syncing" : "Refresh"}
                   </button>
-                  <NotificationButton vendorId={vendorId} />
                 </div>
               </div>
             </div>

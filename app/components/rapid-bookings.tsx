@@ -483,7 +483,7 @@ function RapidBookings() {
                   placeholder="Search systems..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-9 w-full border-gray-200 focus:border-[#098637] focus:ring-[#098637]"
+                  className="pl-10 w-full border-gray-200 focus:border-[#098637] focus:ring-[#098637]"
                 />
               </div>
               <div className="flex items-center gap-2">
