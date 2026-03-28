@@ -1,7 +1,7 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { Menu, Pin, PinOff, X } from "lucide-react"
+import { useCallback, useEffect, useMemo, useState } from "react"
+import { Clock, Gamepad, Gamepad2, Headphones, Menu, Monitor, Pin, PinOff, RefreshCw, User, Wifi, WifiOff, X } from "lucide-react"
 import { useTheme } from "next-themes"
 import { usePathname, useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
@@ -10,6 +10,9 @@ import Image from "next/image"
 import { useAccess } from "../context/AccessContext"
 import { canAccessPath } from "@/lib/rbac"
 import { useSubscription } from "@/hooks/useSubscription"
+import { useSocket } from "../context/SocketContext"
+import { useDashboardData } from "../context/DashboardDataContext"
+import { NotificationButton } from "../components/NotificationButton"
 
 interface DashboardLayoutProps {
   children: React.ReactNode
@@ -22,13 +25,46 @@ export function DashboardLayout({ children, contentScroll = "page" }: DashboardL
   const { theme } = useTheme()
   const [isNavOpen, setIsNavOpen] = useState(false)
   const [isNavPinned, setIsNavPinned] = useState(false)
+  const [nowISTDateText, setNowISTDateText] = useState<string>("")
+  const [nowISTTimeText, setNowISTTimeText] = useState<string>("")
+  const [isManualRefreshing, setIsManualRefreshing] = useState(false)
   const pathname = usePathname()
   const router = useRouter()
   const { activeStaff } = useAccess()
   const { isLocked } = useSubscription()
+  const { isConnected } = useSocket()
+  const { vendorId, consoles, refreshLanding, refreshConsoles } = useDashboardData()
   const hasAccess = activeStaff ? canAccessPath(pathname, activeStaff.permissions) : true
   const subscriptionExempt = ["/subscription", "/select-cafe"]
   const hasSubscriptionAccess = !isLocked || subscriptionExempt.some((path) => pathname === path || pathname.startsWith(`${path}/`))
+  const showGlobalRibbon = pathname !== "/dashboard"
+
+  const platforms = useMemo(() => {
+    const platformMap = [
+      { name: "PC", type: "pc", icon: Monitor, color: "#3b82f6" },
+      { name: "PS5", type: "ps5", icon: Gamepad2, color: "#a855f7" },
+      { name: "Xbox", type: "xbox", icon: Gamepad, color: "#10b981" },
+      { name: "VR", type: "vr", icon: Headphones, color: "#f59e0b" },
+    ]
+    return platformMap.map((platform) => {
+      const source = Array.isArray(consoles) ? consoles.filter((item: any) => item?.type === platform.type) : []
+      const total = source.length
+      const used = source.filter((item: any) => item?.status === false).length
+      return { ...platform, total, used }
+    })
+  }, [consoles])
+
+  const handleManualRefresh = useCallback(async () => {
+    if (isManualRefreshing) return
+    setIsManualRefreshing(true)
+    try {
+      await Promise.all([refreshLanding(true), refreshConsoles(true)])
+    } catch (err) {
+      console.error("Global ribbon refresh failed:", err)
+    } finally {
+      setIsManualRefreshing(false)
+    }
+  }, [isManualRefreshing, refreshLanding, refreshConsoles])
 
   useEffect(() => {
     try {
@@ -48,6 +84,30 @@ export function DashboardLayout({ children, contentScroll = "page" }: DashboardL
       // noop
     }
   }, [isNavPinned])
+
+  useEffect(() => {
+    const dateFormatter = new Intl.DateTimeFormat("en-IN", {
+      timeZone: "Asia/Kolkata",
+      weekday: "short",
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    })
+    const timeFormatter = new Intl.DateTimeFormat("en-IN", {
+      timeZone: "Asia/Kolkata",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+    })
+    const tick = () => {
+      const now = new Date()
+      setNowISTDateText(dateFormatter.format(now))
+      setNowISTTimeText(timeFormatter.format(now))
+    }
+    tick()
+    const timer = setInterval(tick, 1000)
+    return () => clearInterval(timer)
+  }, [])
 
   return (
     <div className="premium-shell dashboard-typography flex h-dvh overflow-hidden text-foreground">
@@ -128,40 +188,101 @@ export function DashboardLayout({ children, contentScroll = "page" }: DashboardL
           />
         )}
 
-        <main
-          data-dashboard-scroll-root="true"
-          className={`min-h-0 flex-1 overflow-y-auto px-2 pb-2 pt-2 sm:px-3 sm:pb-3 md:px-4 md:pb-4 md:pt-4 ${
-            contentScroll === "contained" ? "overflow-x-hidden" : ""
-          }`}
-        >
-          {hasAccess && hasSubscriptionAccess ? (
-            children
-          ) : !hasAccess ? (
-            <div className="flex h-full min-h-[220px] items-center justify-center">
-              <div className="w-full max-w-xl rounded-2xl border border-red-500/30 bg-red-500/10 p-6 text-center">
-                <h2 className="text-xl font-semibold text-red-200">Access Restricted</h2>
-                <p className="mt-2 text-sm text-red-100/80">
-                  Your current role does not have permission to access this page.
-                </p>
+        <div className="relative min-h-0 flex-1 overflow-hidden">
+          <main
+            data-dashboard-scroll-root="true"
+            className={`min-h-0 h-full flex-1 overflow-y-auto px-2 pb-2 pt-2 sm:px-3 sm:pb-3 md:px-4 md:pb-4 md:pt-4 ${
+              showGlobalRibbon ? "md:pb-16" : ""
+            } ${
+              contentScroll === "contained" ? "overflow-x-hidden" : ""
+            }`}
+          >
+            {hasAccess && hasSubscriptionAccess ? (
+              children
+            ) : !hasAccess ? (
+              <div className="flex h-full min-h-[220px] items-center justify-center">
+                <div className="w-full max-w-xl rounded-2xl border border-red-500/30 bg-red-500/10 p-6 text-center">
+                  <h2 className="text-xl font-semibold text-red-200">Access Restricted</h2>
+                  <p className="mt-2 text-sm text-red-100/80">
+                    Your current role does not have permission to access this page.
+                  </p>
+                </div>
               </div>
-            </div>
-          ) : (
-            <div className="flex h-full min-h-[220px] items-center justify-center">
-              <div className="w-full max-w-xl rounded-2xl border border-yellow-500/30 bg-yellow-500/10 p-6 text-center">
-                <h2 className="text-xl font-semibold text-yellow-200">Subscription Inactive</h2>
-                <p className="mt-2 text-sm text-yellow-100/80">
-                  This module is locked until your subscription is renewed.
-                </p>
-                <Button
-                  className="mt-4"
-                  onClick={() => router.push("/subscription")}
-                >
-                  Go To Subscription
-                </Button>
+            ) : (
+              <div className="flex h-full min-h-[220px] items-center justify-center">
+                <div className="w-full max-w-xl rounded-2xl border border-yellow-500/30 bg-yellow-500/10 p-6 text-center">
+                  <h2 className="text-xl font-semibold text-yellow-200">Subscription Inactive</h2>
+                  <p className="mt-2 text-sm text-yellow-100/80">
+                    This module is locked until your subscription is renewed.
+                  </p>
+                  <Button
+                    className="mt-4"
+                    onClick={() => router.push("/subscription")}
+                  >
+                    Go To Subscription
+                  </Button>
+                </div>
+              </div>
+            )}
+          </main>
+
+          {showGlobalRibbon && (
+            <div className="pointer-events-none absolute bottom-0 left-0 right-0 z-30">
+              <div className="dashboard-module-panel pointer-events-auto mx-2 mb-2 flex flex-wrap items-center justify-between gap-1.5 rounded-lg px-2 py-1.5 text-[11px] sm:mx-3 md:mx-4">
+                <div className="flex flex-wrap items-center gap-1.5 text-slate-300">
+                  <span className="inline-flex items-center gap-1 rounded-md border border-emerald-400/30 bg-emerald-500/10 px-1.5 py-0.5 text-emerald-200">
+                    <Clock className="h-3.5 w-3.5" />
+                    {nowISTTimeText}
+                  </span>
+                  <span className="inline-flex items-center gap-1 rounded-md border border-border px-1.5 py-0.5">
+                    {nowISTDateText}
+                  </span>
+                  <span className="inline-flex items-center gap-1 rounded-md border border-border px-1.5 py-0.5">
+                    <User className="h-3.5 w-3.5 text-cyan-300" />
+                    {activeStaff?.name || "Owner"}
+                  </span>
+                  <span
+                    className={`inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 ${
+                      isConnected
+                        ? "border-emerald-400/40 bg-emerald-500/10 text-emerald-200"
+                        : "border-amber-400/40 bg-amber-500/10 text-amber-200"
+                    }`}
+                  >
+                    {isConnected ? <Wifi className="h-3.5 w-3.5" /> : <WifiOff className="h-3.5 w-3.5" />}
+                    {isConnected ? "Live" : "Syncing"}
+                  </span>
+                  {platforms.map((platform) => {
+                    const PlatformIcon = platform.icon
+                    return (
+                      <span
+                        key={`global-ribbon-${platform.type}`}
+                        className="inline-flex items-center gap-1 rounded-md border border-border px-1.5 py-0.5"
+                        title={`${platform.name}: ${platform.used}/${platform.total}`}
+                      >
+                        <PlatformIcon className="h-3.5 w-3.5" style={{ color: platform.color }} />
+                        <span>{platform.used}/{platform.total}</span>
+                      </span>
+                    )
+                  })}
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <NotificationButton vendorId={vendorId} />
+                  <button
+                    type="button"
+                    onClick={handleManualRefresh}
+                    className="inline-flex items-center gap-1 rounded-md border border-cyan-400/40 bg-cyan-500/10 px-2 py-0.5 text-cyan-200 hover:bg-cyan-500/20"
+                    disabled={isManualRefreshing}
+                    title="Refresh"
+                    aria-label="Refresh dashboard data"
+                  >
+                    <RefreshCw className={`h-3.5 w-3.5 ${isManualRefreshing ? "animate-spin" : ""}`} />
+                    {isManualRefreshing ? "Syncing" : "Refresh"}
+                  </button>
+                </div>
               </div>
             </div>
           )}
-        </main>
+        </div>
       </div>
     </div>
   )
