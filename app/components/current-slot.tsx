@@ -731,7 +731,7 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                   value={searchQuery}
                   onChange={handleSearch}
                   placeholder="Search by name or console..."
-                  className="dashboard-module-input w-full rounded-lg py-2.5 pl-8 pr-3 text-sm sm:w-56 md:w-72"
+                  className="dashboard-module-input w-full rounded-lg py-2.5 !pl-10 pr-3 text-sm sm:w-56 md:w-72"
                 />
               </div>
             </div>
