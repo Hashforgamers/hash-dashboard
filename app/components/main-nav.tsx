@@ -9,7 +9,6 @@ import {
   Receipt,
   Gamepad2,
   CalendarCheck,
-  User,
   Users,
   DollarSign,
   Moon,
@@ -22,6 +21,7 @@ import {
   Trophy,
   KeyRound,
   Shield,
+  Settings,
   Wallet,
   Star,
 } from "lucide-react";
@@ -192,7 +192,7 @@ export function MainNav({ className, onItemClick, isNavPinned = false, ...props 
                 pathname === "/account" ? "gaming-nav-active text-foreground" : "text-muted-foreground"
               )}
             >
-              <User
+              <Settings
                 className={cn(
                   "h-[18px] w-[18px] shrink-0 transition-colors",
                   pathname === "/account" ? "dashboard-nav-icon-active" : "text-muted-foreground group-hover/nav:text-foreground"
