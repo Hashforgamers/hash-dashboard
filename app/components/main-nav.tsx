@@ -66,7 +66,7 @@ const navItems: NavItem[] = [
 export function MainNav({ className, onItemClick, isNavPinned = false, ...props }: MainNavProps) {
   const pathname = usePathname();
   const { setTheme, theme } = useTheme();
-  const { can, activeStaff, setActiveByPin, clearAccessSession, setSelectedCafe } = useAccess();
+  const { can, setActiveByPin, clearAccessSession, setSelectedCafe } = useAccess();
   const [pinDialogOpen, setPinDialogOpen] = useState(false);
   const [pin, setPin] = useState("");
   const responsiveItemPaddingClass = isNavPinned ? "md:px-3 xl:px-3" : "md:px-3 xl:px-2 xl:group-hover:px-3";
@@ -108,12 +108,6 @@ export function MainNav({ className, onItemClick, isNavPinned = false, ...props 
         )}
         {...props}
       >
-        <div className="dashboard-nav-panel mb-2 rounded-lg border px-2.5 py-2">
-          <p className="text-xs uppercase tracking-[0.08em] text-muted-foreground">Active User</p>
-          <p className="truncate text-sm font-semibold text-foreground">{activeStaff?.name || "Owner"}</p>
-          <p className="dashboard-nav-role text-xs capitalize">{activeStaff?.role || "owner"}</p>
-        </div>
-
         <div className="min-h-0 flex-1 overflow-y-auto pr-1">
           <div className="flex flex-col space-y-[clamp(0.08rem,0.25vh,0.2rem)]">
             {navItems
