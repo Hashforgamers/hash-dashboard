@@ -6,26 +6,14 @@ import { UpcomingBookings } from "./upcoming-booking"
 import { CurrentSlots } from "./current-slot"
 import { motion } from "framer-motion"
 import {
-  IndianRupee, CalendarCheck, WalletCards, Eye, EyeOff, Clock,
-  TrendingUp, BarChart3, Monitor, Gamepad2,
-  Gamepad, Headphones, Lock, RefreshCw, Wifi, WifiOff, User
+  IndianRupee, CalendarCheck, WalletCards, Eye, EyeOff,
+  TrendingUp, Lock
 } from 'lucide-react'
 import { useDashboardData } from "@/app/context/DashboardDataContext"
 import HashLoader from "./ui/HashLoader"
-import { NotificationButton } from "../components/NotificationButton"
 import { useSocket } from "../context/SocketContext"
 import { useSubscription } from "@/hooks/useSubscription"
 import { useRouter } from "next/navigation"
-import { useAccess } from "@/app/context/AccessContext"
-
-const platformMetadata = {
-  platforms: [
-    { name: "PC", icon: Monitor, color: "#3b82f6", bgColor: "#dbeafe", type: "pc" },
-    { name: "PS5", icon: Gamepad2, color: "#a855f7", bgColor: "#f3e8ff", type: "ps5" },
-    { name: "Xbox", icon: Gamepad, color: "#10b981", bgColor: "#d1fae5", type: "xbox" },
-    { name: "VR", icon: Headphones, color: "#f59e0b", bgColor: "#fef3c7", type: "vr" },
-  ]
-}
 
 // ✅ Locked overlay component
 function LockedOverlay() {
@@ -57,10 +45,8 @@ export function DashboardContent() {
   const [showEarnings, setShowEarnings] = useState(false)
   const [showPending, setShowPending] = useState(false)
   const [refreshSlots, setRefreshSlots] = useState(false)
-  const { vendorId, landingData, consoles, refreshLanding, refreshConsoles } = useDashboardData()
+  const { vendorId, landingData, refreshLanding, refreshConsoles } = useDashboardData()
   const [dashboardData, setDashboardData] = useState<any>(null)
-  const [latestBookingEvent, setLatestBookingEvent] = useState<any>(null)
-  const [bookingInfo, setBookingInfo] = useState([])
   const [realTimeStats, setRealTimeStats] = useState<{
     todayEarnings?: number
     todayBookings?: number
@@ -72,14 +58,10 @@ export function DashboardContent() {
     todayBookingsChange?: number
     lastUpdate?: string
   }>({})
-  const [nowISTDateText, setNowISTDateText] = useState<string>("")
-  const [nowISTTimeText, setNowISTTimeText] = useState<string>("")
-  const [isManualRefreshing, setIsManualRefreshing] = useState(false)
   const lastMealNoticeRef = useRef<{ key: string; ts: number } | null>(null)
 
   const { socket, isConnected, joinVendor } = useSocket()
   const { isLocked } = useSubscription()
-  const { activeStaff } = useAccess()
 
   const showDashboardToast = useCallback((message: string, type: 'success' | 'error' | 'info' = 'info') => {
     const toast = document.createElement('div')
@@ -117,12 +99,6 @@ export function DashboardContent() {
     }
   }, [landingData])
 
-  useEffect(() => {
-    if (Array.isArray(consoles) && consoles.length > 0) {
-      setBookingInfo(consoles)
-    }
-  }, [consoles])
-
   const loadLandingData = useCallback(async () => {
     await refreshLanding()
   }, [refreshLanding])
@@ -130,61 +106,6 @@ export function DashboardContent() {
   const loadConsoleData = useCallback(async () => {
     await refreshConsoles()
   }, [refreshConsoles])
-
-  const handleManualRefresh = useCallback(async () => {
-    if (isManualRefreshing) return
-    setIsManualRefreshing(true)
-    try {
-      await Promise.all([loadLandingData(), loadConsoleData()])
-      setRefreshSlots((prev) => !prev)
-      if (socket && vendorId && isConnected) {
-        joinVendor(vendorId)
-      }
-      setRealTimeStats((prev) => ({
-        ...prev,
-        lastUpdate: new Date().toLocaleTimeString(),
-      }))
-      showDashboardToast("Dashboard refreshed", "success")
-    } catch (err) {
-      console.error("Manual refresh failed:", err)
-      showDashboardToast("Refresh failed. Please retry.", "error")
-    } finally {
-      setIsManualRefreshing(false)
-    }
-  }, [isManualRefreshing, loadLandingData, loadConsoleData, socket, vendorId, isConnected, joinVendor, showDashboardToast])
-
-  const handleBookingAccepted = (bookingData: any) => {
-    console.log('🎯 Booking accepted - updating upcoming bookings:', bookingData)
-    if (typeof window !== 'undefined') {
-      window.dispatchEvent(new CustomEvent('booking-accepted', { detail: bookingData }))
-    }
-  }
-
-  useEffect(() => {
-    const dateFormatter = new Intl.DateTimeFormat('en-IN', {
-      timeZone: 'Asia/Kolkata',
-      weekday: 'short',
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric',
-    })
-    const timeFormatter = new Intl.DateTimeFormat('en-IN', {
-      timeZone: 'Asia/Kolkata',
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: true,
-    })
-    const tick = () => {
-      const now = new Date()
-      setNowISTDateText(dateFormatter.format(now))
-      setNowISTTimeText(timeFormatter.format(now))
-    }
-    tick()
-    const timer = setInterval(() => {
-      tick()
-    }, 1000)
-    return () => clearInterval(timer)
-  }, [])
 
   useEffect(() => {
     if (!vendorId) return
@@ -205,12 +126,7 @@ export function DashboardContent() {
         const status = (data.status || '').toLowerCase()
         const bookingStatus = String(data?.booking_status || '').toLowerCase()
         if (status === 'pending_acceptance' || bookingStatus === 'pending_acceptance') {
-          console.log('🔔 Dashboard: Passing pay-at-cafe event to NotificationButton')
-          setLatestBookingEvent({
-            ...data,
-            vendorId: eventVendorId,
-            status: status || bookingStatus || data?.status,
-          })
+          console.log('🔔 Dashboard: Pay-at-cafe pending event received')
         }
         if (status === 'confirmed' || status === 'paid' || status === 'completed') {
           setRealTimeStats(prev => ({
@@ -344,14 +260,6 @@ export function DashboardContent() {
   }
 
   const formatMoney = (value?: number) => `₹${Number(value || 0).toFixed(2)}`
-
-  const platforms = platformMetadata.platforms.map(metadata => {
-    const platformBooking = bookingInfo.filter((b: any) => b.type === metadata.type)
-    const total = platformBooking.length
-    const booked = platformBooking.filter((b: any) => b.status === false).length
-    return { ...metadata, total, booked }
-  })
-  const operatorName = activeStaff?.name || "Owner"
 
   const topMetricsStrip = (
     <motion.div
@@ -521,7 +429,6 @@ export function DashboardContent() {
                       <h1 className="premium-heading dashboard-hero-title leading-tight max-md:text-[1.15rem] max-md:tracking-[0.02em]">
                         Cafe Command
                       </h1>
-                      <div className={`h-2 w-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`} />
                     </div>
                     <p className="premium-subtle mt-0.5 text-[11px] leading-relaxed sm:text-xs">
                       Live operations at a glance.
@@ -540,7 +447,7 @@ export function DashboardContent() {
           </motion.div>
 
           {/* Main Layout Grid */}
-          <div className="grid grid-cols-1 gap-2 sm:gap-3 xl:grid-cols-12 flex-1 min-h-0 max-md:h-[68svh] max-md:grid-rows-[1fr_1fr]">
+          <div className="mt-2 sm:mt-3 grid grid-cols-1 gap-2 sm:gap-3 xl:grid-cols-12 flex-1 min-h-0 max-md:h-[68svh] max-md:grid-rows-[1fr_1fr]">
 
             {/* Left Column */}
             <div className="space-y-2 sm:space-y-4 flex flex-col min-h-0 xl:col-span-8 2xl:col-span-9 max-md:h-full max-md:min-h-0">
@@ -580,64 +487,6 @@ export function DashboardContent() {
             </motion.div>
           </div>
 
-          <div className="shrink-0">
-            <div className="dashboard-module-panel mt-2 flex flex-wrap items-center justify-between gap-1.5 rounded-lg px-2 py-1.5 text-[11px] sm:mt-1">
-              <div className="flex flex-wrap items-center gap-1.5 text-slate-300">
-                <span className="inline-flex items-center gap-1 rounded-md border border-emerald-400/30 bg-emerald-500/10 px-1.5 py-0.5 text-emerald-200">
-                  <Clock className="h-3.5 w-3.5" />
-                  {nowISTTimeText}
-                </span>
-                <span className="inline-flex items-center gap-1 rounded-md border border-border px-1.5 py-0.5">
-                  {nowISTDateText}
-                </span>
-                <span className="inline-flex items-center gap-1 rounded-md border border-border px-1.5 py-0.5">
-                  <User className="h-3.5 w-3.5 text-cyan-300" />
-                  {operatorName}
-                </span>
-                <span
-                  className={`inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 ${
-                    isConnected
-                      ? "border-emerald-400/40 bg-emerald-500/10 text-emerald-200"
-                      : "border-amber-400/40 bg-amber-500/10 text-amber-200"
-                  }`}
-                >
-                  {isConnected ? <Wifi className="h-3.5 w-3.5" /> : <WifiOff className="h-3.5 w-3.5" />}
-                  {isConnected ? "Live" : "Syncing"}
-                </span>
-                {platforms.map((platform) => {
-                  const PlatformIcon = platform.icon
-                  return (
-                    <span
-                      key={`bottom-platform-${platform.type}`}
-                      className="inline-flex items-center gap-1 rounded-md border border-border px-1.5 py-0.5"
-                      title={`${platform.name}: ${platform.booked} in use / ${platform.total}`}
-                    >
-                      <PlatformIcon className="h-3.5 w-3.5" style={{ color: platform.color }} />
-                      <span>{platform.booked}/{platform.total}</span>
-                    </span>
-                  )
-                })}
-              </div>
-              <div className="flex items-center gap-1.5">
-                <NotificationButton
-                  vendorId={vendorId}
-                  onBookingAccepted={handleBookingAccepted}
-                  latestBookingEvent={latestBookingEvent}
-                />
-                <button
-                  type="button"
-                  onClick={handleManualRefresh}
-                  className="inline-flex items-center gap-1 rounded-md border border-cyan-400/40 bg-cyan-500/10 px-2 py-0.5 text-cyan-200 hover:bg-cyan-500/20"
-                  disabled={isManualRefreshing}
-                  title="Refresh"
-                  aria-label="Refresh dashboard"
-                >
-                  <RefreshCw className={`h-3.5 w-3.5 ${isManualRefreshing ? "animate-spin" : ""}`} />
-                  {isManualRefreshing ? "Syncing" : "Refresh"}
-                </button>
-              </div>
-            </div>
-          </div>
           </div>
         </div>
       )}

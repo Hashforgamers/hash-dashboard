@@ -920,7 +920,6 @@ export function UpcomingBookings({
         {/* Header + Search */}
         <div className="mb-3 flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center sm:gap-4 flex-shrink-0">
           <div className="flex items-center gap-2">
-            <div className={`h-2 w-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`} />
             <h3 className="dash-title">Upcoming Session Queue</h3>
             <span className="rounded-full border border-emerald-400/40 bg-emerald-500/15 px-2.5 py-0.5 text-sm text-emerald-200">
               {filteredBookings.length}
