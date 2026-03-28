@@ -92,14 +92,14 @@ const parseMeridiemTime = (timeStr: string) => {
   return { hour: Math.max(0, Math.min(23, hour)), minute: Math.max(0, Math.min(59, minute)) };
 };
 
-const canStartBookingNow = (booking: any) => {
-  if (!booking?.date || !booking?.time) return false;
+const TERMINAL_BOOKING_STATUSES = ["cancelled", "canceled", "rejected", "completed", "discarded", "no_show"];
+
+const getBookingTimeRange = (booking: any) => {
+  if (!booking?.date || !booking?.time) return null;
   const slotDate = parseBookingDateLocal(booking.date);
-  if (!slotDate) return false;
-
+  if (!slotDate) return null;
   const [startRaw, endRaw] = String(booking.time).split(" - ");
-  if (!startRaw || !endRaw) return false;
-
+  if (!startRaw || !endRaw) return null;
   const startParsed = parseMeridiemTime(startRaw);
   const endParsed = parseMeridiemTime(endRaw);
   const start = new Date(slotDate);
@@ -107,9 +107,20 @@ const canStartBookingNow = (booking: any) => {
   const end = new Date(slotDate);
   end.setHours(endParsed.hour, endParsed.minute, 0, 0);
   if (end <= start) end.setDate(end.getDate() + 1);
+  return { start, end };
+};
 
+const canStartBookingNow = (booking: any) => {
+  const range = getBookingTimeRange(booking);
+  if (!range) return false;
   const now = getNowIST();
-  return now >= start && now <= end;
+  return now >= range.start && now <= range.end;
+};
+
+const canMarkNoShowNow = (booking: any) => {
+  const range = getBookingTimeRange(booking);
+  if (!range) return false;
+  return getNowIST() >= range.start;
 };
 
 
@@ -284,6 +295,16 @@ export function UpcomingBookings({
     isPaid: false
   })
   const [cancelLoading, setCancelLoading] = useState(false)
+  const [noShowDialog, setNoShowDialog] = useState<{
+    open: boolean
+    booking: any | null
+    reason: string
+  }>({
+    open: false,
+    booking: null,
+    reason: ""
+  })
+  const [noShowLoading, setNoShowLoading] = useState(false)
 
   const showToast = (message: string, type: 'success' | 'error' = 'success') => {
     const toast = document.createElement('div')
@@ -365,11 +386,11 @@ export function UpcomingBookings({
 
           return mapped.filter(booking => {
             const s = String(booking?.status || "").toLowerCase();
-            return !["cancelled", "canceled", "rejected", "completed", "discarded"].includes(s);
+            return !TERMINAL_BOOKING_STATUSES.includes(s);
           })
         })
 
-        if (["cancelled", "canceled", "rejected", "completed", "discarded"].includes(status) && typeof window !== "undefined") {
+        if (TERMINAL_BOOKING_STATUSES.includes(status) && typeof window !== "undefined") {
           window.dispatchEvent(new CustomEvent("history-booking-add", { detail: data }));
         }
       }
@@ -428,6 +449,19 @@ export function UpcomingBookings({
           if (!Array.isArray(prev)) return prev;
           return prev.filter(booking => Number(booking?.bookingId) !== bookingId);
         })
+      }
+      if (eventType === "booking_no_show") {
+        setUpcomingBookings(prev => {
+          if (!Array.isArray(prev)) return prev;
+          return prev.filter(booking => Number(booking?.bookingId) !== bookingId);
+        })
+        const noShowFee = Number(data?.no_show_fee || 0)
+        showToast(
+          noShowFee > 0
+            ? `Marked no-show. Fee retained: ₹${noShowFee.toFixed(0)}`
+            : "Marked no-show successfully",
+          "success"
+        )
       }
     }
 
@@ -755,6 +789,18 @@ export function UpcomingBookings({
     setCancelDialog(prev => ({ ...prev, open: false }))
   }
 
+  const openNoShowDialog = (booking: any) => {
+    setNoShowDialog({
+      open: true,
+      booking,
+      reason: ""
+    })
+  }
+
+  const closeNoShowDialog = () => {
+    setNoShowDialog(prev => ({ ...prev, open: false }))
+  }
+
   const handleCancelBooking = async () => {
     if (!cancelDialog.booking || !vendorId) return
     const booking = cancelDialog.booking
@@ -794,6 +840,49 @@ export function UpcomingBookings({
       showToast(error?.message || "Failed to cancel booking", "error")
     } finally {
       setCancelLoading(false)
+    }
+  }
+
+  const handleMarkNoShow = async () => {
+    if (!noShowDialog.booking || !vendorId) return
+    const booking = noShowDialog.booking
+    const bookingIds = Array.isArray(booking?.merged_booking_ids) && booking.merged_booking_ids.length > 0
+      ? booking.merged_booking_ids
+      : [booking.bookingId]
+    setNoShowLoading(true)
+    try {
+      const payload = {
+        booking_ids: bookingIds,
+        reason: noShowDialog.reason || "Marked as no-show from dashboard"
+      }
+      const response = await fetch(`${BOOKING_URL}/api/bookings/no-show`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      })
+      const result = await response.json()
+      if (!response.ok || !result?.success) {
+        throw new Error(result?.message || "Failed to mark no-show")
+      }
+      const noShowIds = Array.isArray(result?.no_show_ids) ? result.no_show_ids.map((id: any) => Number(id)) : []
+      setUpcomingBookings(prev => {
+        if (!Array.isArray(prev)) return prev
+        return prev.filter(b => !noShowIds.includes(Number(b.bookingId)))
+      })
+      setRefreshSlots(prev => !prev)
+      const retainedFee = Number(result?.no_show_fee_total || 0)
+      showToast(
+        retainedFee > 0
+          ? `Marked no-show. Fee retained: ₹${retainedFee.toFixed(0)}`
+          : "Marked no-show successfully",
+        "success"
+      )
+      closeNoShowDialog()
+    } catch (error: any) {
+      console.error("No-show failed:", error)
+      showToast(error?.message || "Failed to mark no-show", "error")
+    } finally {
+      setNoShowLoading(false)
     }
   }
 
@@ -997,7 +1086,8 @@ export function UpcomingBookings({
                     ).toLowerCase();
                     const lifecycleStatus = String(booking?.lifecycleStatus || "").toLowerCase();
                     const canCancel = !["current", "completed"].includes(lifecycleStatus) &&
-                      !["cancelled", "canceled", "rejected", "completed", "discarded"].includes(bookingRecordStatus);
+                      !TERMINAL_BOOKING_STATUSES.includes(bookingRecordStatus);
+                    const canNoShow = canCancel && canMarkNoShowNow(booking);
                     const paymentBadgeLabel = isPayAtCafe ? "To Be Paid" : "Paid";
                     const paymentBadgeClass = isPayAtCafe
                       ? "border-amber-400/40 bg-amber-500/15 text-amber-200"
@@ -1037,7 +1127,7 @@ export function UpcomingBookings({
                           </div>
 
                           <div className="flex shrink-0 items-center gap-1">
-                            <span className={`rounded-full border px-2 py-0.5 text-[11px] font-medium capitalize ${paymentBadgeClass}`}>
+                            <span className={`inline-flex h-7 items-center rounded-full border px-2 text-[11px] font-medium capitalize ${paymentBadgeClass}`}>
                               {paymentBadgeLabel}
                             </span>
 
@@ -1049,7 +1139,7 @@ export function UpcomingBookings({
                                   e.stopPropagation();
                                   handleFoodIconClick(booking.bookingId, booking.username || 'Guest User', true);
                                 }}
-                                className="group flex items-center gap-1 rounded-full border border-emerald-400/35 bg-emerald-500/10 px-1.5 py-1 transition-all duration-200 hover:bg-emerald-500/20"
+                                className="group inline-flex h-7 items-center gap-1 rounded-full border border-emerald-400/35 bg-emerald-500/10 px-2 transition-all duration-200 hover:bg-emerald-500/20"
                                 title="View meals & add more"
                               >
                                 <UtensilsCrossed className="h-3 w-3 text-emerald-300 transition-colors group-hover:text-emerald-200" />
@@ -1063,7 +1153,7 @@ export function UpcomingBookings({
                                   e.stopPropagation();
                                   handleAddFoodClick(booking.bookingId, booking.username || 'Guest User');
                                 }}
-                                className="group flex items-center gap-1 rounded-full border border-dashed border-cyan-400/60 bg-cyan-500/10 px-1.5 py-1 transition-all duration-200 hover:bg-cyan-500/20"
+                                className="group inline-flex h-7 items-center gap-1 rounded-full border border-dashed border-cyan-400/60 bg-cyan-500/10 px-2 transition-all duration-200 hover:bg-cyan-500/20"
                                 title="Add meals to this booking"
                               >
                                 <Plus className="h-3 w-3 text-cyan-300 transition-colors group-hover:text-cyan-200" />
@@ -1115,7 +1205,7 @@ export function UpcomingBookings({
                           </div>
                         )}
 
-                        <div className={`grid gap-1.5 ${canCancel ? "grid-cols-2" : "grid-cols-1"}`}>
+                        <div className="flex flex-wrap items-center justify-end gap-1.5">
                           <motion.button
                             whileHover={{ scale: 1.02 }}
                             whileTap={{ scale: 0.98 }}
@@ -1123,7 +1213,7 @@ export function UpcomingBookings({
                               start(booking.consoleType || "", booking.game_id, booking.bookingId, booking)
                             }
                             disabled={!canStartNow}
-                            className={`flex min-w-0 items-center justify-center gap-1 rounded-md py-1.5 text-[11px] font-semibold transition-all sm:text-xs ${
+                            className={`inline-flex h-8 min-w-[96px] items-center justify-center gap-1 rounded-md !px-2.5 !py-0 text-[11px] font-semibold transition-all sm:min-w-[104px] sm:text-xs ${
                               canStartNow
                                 ? "dashboard-btn-primary"
                                 : "cursor-not-allowed bg-slate-700/70 text-slate-300"
@@ -1133,6 +1223,18 @@ export function UpcomingBookings({
                             <Play className="h-3 w-3 shrink-0" />
                             <span className="truncate">{canStartNow ? "Start" : "Not Startable"}</span>
                           </motion.button>
+                          {canNoShow && (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                openNoShowDialog(booking);
+                              }}
+                              className="inline-flex h-8 min-w-[86px] items-center justify-center rounded-md border border-amber-400/40 bg-amber-500/10 px-2.5 text-[11px] font-semibold text-amber-200 transition-all hover:bg-amber-500/20 sm:min-w-[92px] sm:text-xs"
+                            >
+                              No Show
+                            </button>
+                          )}
                           {canCancel && (
                             <button
                               type="button"
@@ -1140,7 +1242,7 @@ export function UpcomingBookings({
                                 e.stopPropagation();
                                 openCancelDialog(booking, isPaidBooking);
                               }}
-                              className="rounded-md border border-rose-400/40 bg-rose-500/10 px-2 py-1.5 text-[11px] font-semibold text-rose-200 transition-all hover:bg-rose-500/20 sm:text-xs"
+                              className="inline-flex h-8 min-w-[86px] items-center justify-center rounded-md border border-rose-400/40 bg-rose-500/10 px-2.5 text-[11px] font-semibold text-rose-200 transition-all hover:bg-rose-500/20 sm:min-w-[92px] sm:text-xs"
                             >
                               Cancel
                             </button>
@@ -1236,6 +1338,56 @@ export function UpcomingBookings({
                 className="rounded-md border border-rose-400/40 bg-rose-500/15 px-3 py-2 text-xs font-semibold text-rose-200 hover:bg-rose-500/25 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {cancelLoading ? "Cancelling..." : "Confirm Cancel"}
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {isMounted && noShowDialog.open && createPortal(
+        <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/40 p-4">
+          <div className="w-full max-w-md rounded-2xl border border-slate-700/60 bg-slate-900/95 p-5 shadow-2xl">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-semibold text-slate-100">Mark Booking As No Show</h3>
+              <button
+                type="button"
+                onClick={closeNoShowDialog}
+                className="rounded-full border border-slate-600/60 p-1 text-slate-300 hover:bg-slate-800"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <p className="mt-2 text-xs text-slate-400">
+              This marks the booking as no-show, releases the slot, and updates settlement in real time.
+            </p>
+
+            <div className="mt-4 space-y-2">
+              <label className="text-xs font-medium text-slate-300">Reason (optional)</label>
+              <textarea
+                rows={2}
+                value={noShowDialog.reason}
+                onChange={(e) => setNoShowDialog(prev => ({ ...prev, reason: e.target.value }))}
+                className="w-full rounded-md border border-slate-600/60 bg-slate-800/70 px-3 py-2 text-xs text-slate-100"
+                placeholder="User did not arrive..."
+              />
+            </div>
+
+            <div className="mt-4 flex items-center justify-end gap-2">
+              <button
+                type="button"
+                onClick={closeNoShowDialog}
+                className="rounded-md border border-slate-600/60 px-3 py-2 text-xs text-slate-300 hover:bg-slate-800"
+              >
+                Back
+              </button>
+              <button
+                type="button"
+                onClick={handleMarkNoShow}
+                disabled={noShowLoading}
+                className="rounded-md border border-amber-400/40 bg-amber-500/15 px-3 py-2 text-xs font-semibold text-amber-200 hover:bg-amber-500/25 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {noShowLoading ? "Updating..." : "Confirm No Show"}
               </button>
             </div>
           </div>
