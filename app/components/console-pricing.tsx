@@ -226,6 +226,13 @@ const normalizeSquadPricing = (rawData: unknown): SquadPricingState => {
 };
 
 const round2 = (value: number) => Math.round((value + Number.EPSILON) * 100) / 100;
+const parseCurrencyInput = (value: unknown): number => {
+  if (typeof value === "number") return Number.isFinite(value) ? value : 0;
+  if (typeof value !== "string") return 0;
+  const normalized = value.replace(/[^0-9.-]/g, "");
+  const parsed = Number(normalized);
+  return Number.isFinite(parsed) ? parsed : 0;
+};
 const discountToFinalUnitAmount = (base: number, discountPercent: number) =>
   round2(Math.max(0, base - (base * Math.max(0, Math.min(90, discountPercent))) / 100));
 const discountToFinalTotalAmount = (base: number, discountPercent: number, players: number) =>
@@ -341,7 +348,8 @@ export default function ConsolePricing() {
       const data = await res.json();
       const newPrices: PricingState = {};
       consoleTypes.forEach((c) => {
-        newPrices[c.type] = { value: data[c.type] ?? 0, isValid: true, hasChanged: false };
+        const normalizedValue = parseCurrencyInput(data?.[c.type]);
+        newPrices[c.type] = { value: normalizedValue, isValid: true, hasChanged: false };
       });
       return newPrices;
     },
@@ -704,7 +712,7 @@ export default function ConsolePricing() {
   };
 
   const handlePriceChange = (consoleType: string, inputValue: string) => {
-    const numericValue = parseFloat(inputValue) || 0;
+    const numericValue = parseCurrencyInput(inputValue);
     const isValid = validatePrice(numericValue);
     setPrices((prev) => ({
       ...prev,
@@ -1353,7 +1361,7 @@ export default function ConsolePricing() {
                     type="number"
                     value={prices[console.type]?.value}
                     onChange={(e) => handlePriceChange(console.type, e.target.value)}
-                    className={`${inputSurfaceClass} pl-9`}
+                    className={`${inputSurfaceClass} pl-11 pr-3 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none`}
                   />
                 </div>
                 {errors[console.type] && (
@@ -2346,7 +2354,7 @@ export default function ConsolePricing() {
                       placeholder="Enter discounted price"
                       value={offerForm.offered_price}
                       onChange={(e) => setOfferForm({ ...offerForm, offered_price: e.target.value })}
-                      className={`${inputSurfaceClass} pl-9`}
+                      className={`${inputSurfaceClass} pl-11 pr-3 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none`}
                     />
                   </div>
                 </div>

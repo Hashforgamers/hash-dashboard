@@ -728,7 +728,7 @@ export function TransactionTable() {
           <SearchIcon className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-500 dark:text-slate-400" />
           <Input
             placeholder="Search transactions..."
-            className="dashboard-module-input h-10 w-full pl-8"
+            className="dashboard-module-input h-10 w-full pl-10"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />

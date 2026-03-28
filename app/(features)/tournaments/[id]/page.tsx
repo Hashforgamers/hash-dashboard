@@ -423,7 +423,7 @@ export default function TournamentDetailPage() {
             <div className="relative min-w-[180px]">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 icon-sm text-muted-foreground" />
               <input
-                className="dashboard-module-input h-9 w-full pl-9 pr-3"
+                className="dashboard-module-input h-9 w-full pl-10 pr-3"
                 placeholder="Search teams..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
