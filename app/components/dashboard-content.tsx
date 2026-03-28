@@ -352,8 +352,6 @@ export function DashboardContent() {
     return { ...metadata, total, booked }
   })
   const operatorName = activeStaff?.name || "Owner"
-  const totalConsoles = Array.isArray(bookingInfo) ? bookingInfo.length : 0
-  const inUseConsoles = platforms.reduce((sum, platform) => sum + platform.booked, 0)
 
   const topMetricsStrip = (
     <motion.div
@@ -529,13 +527,6 @@ export function DashboardContent() {
                       Live operations at a glance.
                     </p>
                   </div>
-                  <div className="lg:hidden">
-                    <NotificationButton
-                      vendorId={vendorId}
-                      onBookingAccepted={handleBookingAccepted}
-                      latestBookingEvent={latestBookingEvent}
-                    />
-                  </div>
                 </div>
               </div>
 
@@ -544,14 +535,7 @@ export function DashboardContent() {
                   {topMetricsStrip}
                 </div>
               </div>
-
-              <div className="hidden items-start justify-end lg:flex">
-                <NotificationButton
-                  vendorId={vendorId}
-                  onBookingAccepted={handleBookingAccepted}
-                  latestBookingEvent={latestBookingEvent}
-                />
-              </div>
+              <div />
             </div>
           </motion.div>
 
@@ -620,10 +604,6 @@ export function DashboardContent() {
                   {isConnected ? <Wifi className="h-3.5 w-3.5" /> : <WifiOff className="h-3.5 w-3.5" />}
                   {isConnected ? "Live" : "Syncing"}
                 </span>
-                <span className="inline-flex items-center gap-1 rounded-md border border-border px-1.5 py-0.5">
-                  <Monitor className="h-3.5 w-3.5 text-blue-300" />
-                  {inUseConsoles}/{totalConsoles}
-                </span>
                 {platforms.map((platform) => {
                   const PlatformIcon = platform.icon
                   return (
@@ -633,22 +613,29 @@ export function DashboardContent() {
                       title={`${platform.name}: ${platform.booked} in use / ${platform.total}`}
                     >
                       <PlatformIcon className="h-3.5 w-3.5" style={{ color: platform.color }} />
-                      <span>{platform.total}</span>
+                      <span>{platform.booked}/{platform.total}</span>
                     </span>
                   )
                 })}
               </div>
-              <button
-                type="button"
-                onClick={handleManualRefresh}
-                className="inline-flex items-center gap-1 rounded-md border border-cyan-400/40 bg-cyan-500/10 px-2 py-0.5 text-cyan-200 hover:bg-cyan-500/20"
-                disabled={isManualRefreshing}
-                title="Refresh"
-                aria-label="Refresh dashboard"
-              >
-                <RefreshCw className={`h-3.5 w-3.5 ${isManualRefreshing ? "animate-spin" : ""}`} />
-                {isManualRefreshing ? "Syncing" : "Refresh"}
-              </button>
+              <div className="flex items-center gap-1.5">
+                <NotificationButton
+                  vendorId={vendorId}
+                  onBookingAccepted={handleBookingAccepted}
+                  latestBookingEvent={latestBookingEvent}
+                />
+                <button
+                  type="button"
+                  onClick={handleManualRefresh}
+                  className="inline-flex items-center gap-1 rounded-md border border-cyan-400/40 bg-cyan-500/10 px-2 py-0.5 text-cyan-200 hover:bg-cyan-500/20"
+                  disabled={isManualRefreshing}
+                  title="Refresh"
+                  aria-label="Refresh dashboard"
+                >
+                  <RefreshCw className={`h-3.5 w-3.5 ${isManualRefreshing ? "animate-spin" : ""}`} />
+                  {isManualRefreshing ? "Syncing" : "Refresh"}
+                </button>
+              </div>
             </div>
           </div>
           </div>
