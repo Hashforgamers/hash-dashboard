@@ -26,10 +26,10 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import { BOOKING_URL, DASHBOARD_URL } from "@/src/config/env";
-import { jwtDecode } from "jwt-decode";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useModuleCache } from "@/app/hooks/useModuleCache";
+import { useDashboardData } from "@/app/context/DashboardDataContext";
 
 interface ConsoleType {
   type: string;
@@ -240,6 +240,7 @@ const finalTotalAmountToDiscount = (base: number, finalTotalAmount: number, play
 const squadRowKey = (group: string, players: number) => `${group}-${players}`;
 
 export default function ConsolePricing() {
+  const { vendorId: contextVendorId } = useDashboardData();
   const [prices, setPrices] = useState<PricingState>(() => {
     const initialPrices: PricingState = {};
     consoleTypes.forEach((c) => {
@@ -431,16 +432,10 @@ export default function ConsolePricing() {
   );
 
   useEffect(() => {
-    const token = localStorage.getItem("jwtToken");
-    if (token) {
-      try {
-        const decoded_token = jwtDecode<{ sub: { id: number } }>(token);
-        setVendorId(decoded_token.sub.id);
-      } catch (e) {
-        console.error("Token decode error", e);
-      }
+    if (contextVendorId) {
+      setVendorId(contextVendorId);
     }
-  }, []);
+  }, [contextVendorId]);
 
   useEffect(() => {
     if (!vendorId) return;
@@ -1209,6 +1204,7 @@ export default function ConsolePricing() {
   };
 
   const canSave =
+    Boolean(vendorId) &&
     Object.values(prices).some((p) => p.hasChanged) &&
     Object.values(errors).length === 0;
   const primaryButtonClass =
@@ -1330,6 +1326,11 @@ export default function ConsolePricing() {
           transition={{ duration: 0.2 }}
           className="min-h-0 flex-1 overflow-y-auto pr-1"
         >
+          {!vendorId && (
+            <div className="mb-3 rounded-lg border border-amber-400/35 bg-amber-500/10 px-3 py-2 text-xs text-amber-200">
+              Select a cafe first to edit console pricing.
+            </div>
+          )}
           <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
             {consoleTypes.map((console) => (
               <div key={console.type} className={pricingCardClass}>
