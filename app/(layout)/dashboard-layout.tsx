@@ -37,7 +37,7 @@ export function DashboardLayout({ children, contentScroll = "page" }: DashboardL
   const hasAccess = activeStaff ? canAccessPath(pathname, activeStaff.permissions) : true
   const subscriptionExempt = ["/subscription", "/select-cafe"]
   const hasSubscriptionAccess = !isLocked || subscriptionExempt.some((path) => pathname === path || pathname.startsWith(`${path}/`))
-  const showGlobalRibbon = pathname !== "/dashboard"
+  const showGlobalRibbon = true
 
   const platforms = useMemo(() => {
     const platformMap = [
@@ -266,7 +266,6 @@ export function DashboardLayout({ children, contentScroll = "page" }: DashboardL
                   })}
                 </div>
                 <div className="flex items-center gap-1.5">
-                  <NotificationButton vendorId={vendorId} />
                   <button
                     type="button"
                     onClick={handleManualRefresh}
@@ -278,6 +277,7 @@ export function DashboardLayout({ children, contentScroll = "page" }: DashboardL
                     <RefreshCw className={`h-3.5 w-3.5 ${isManualRefreshing ? "animate-spin" : ""}`} />
                     {isManualRefreshing ? "Syncing" : "Refresh"}
                   </button>
+                  <NotificationButton vendorId={vendorId} />
                 </div>
               </div>
             </div>

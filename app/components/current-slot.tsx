@@ -694,8 +694,6 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
         <>
           <div className="mb-3 flex shrink-0 flex-col items-start justify-between gap-3 sm:flex-row sm:items-center sm:gap-4">
             <div className="flex items-center gap-2">
-              <div className={`h-2 w-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`}
-                   title={isConnected ? 'Real-time connected' : 'Connecting...'} />
               <span className="dash-title">
                 {activeTab === 'live'
                   ? `Live Console Sessions (${filteredSlots.length})`
