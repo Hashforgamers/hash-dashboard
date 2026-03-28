@@ -25,7 +25,7 @@ export default function ResponsiveSearchFilter({
             placeholder="Search by name or console..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="dashboard-module-input w-full rounded-lg py-2 pl-8 pr-3 text-xs sm:text-sm"
+            className="dashboard-module-input w-full rounded-lg py-2 !pl-10 pr-3 text-xs sm:text-sm"
           />
         </div>
 
