@@ -15,6 +15,8 @@ import { useSocket } from "../context/SocketContext"
 import { useSubscription } from "@/hooks/useSubscription"
 import { useRouter } from "next/navigation"
 
+const TERMINAL_BOOKING_STATUSES = ["cancelled", "canceled", "rejected", "completed", "discarded", "no_show"];
+
 // ✅ Locked overlay component
 function LockedOverlay() {
   const router = useRouter()
@@ -136,7 +138,7 @@ export function DashboardContent() {
             lastUpdate: new Date().toLocaleTimeString()
           }))
         }
-        if (status === 'cancelled' || status === 'rejected' || status === 'completed') {
+        if (TERMINAL_BOOKING_STATUSES.includes(status)) {
           if (typeof window !== 'undefined') {
             window.dispatchEvent(new CustomEvent('history-booking-add', { detail: data }))
           }
