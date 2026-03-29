@@ -1,7 +1,7 @@
 "use client";
 
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -34,174 +34,23 @@ import {
   Copy
 } from "lucide-react";
 import axios from "axios";
-import { ProcessorOption } from "./constant";
-import {
-  GraphiCoptions,
-  RamSizeOptions,
-  StorageOptions,
-  XboxPlaystation,
-  VRPlaystation,
-  PS5playstation,
-} from "./constant";
+import type { ConsoleCatalogItem } from "./console-catalog";
 import { AddConsoleFormProps, FormData } from "./interfaces";
 import { getHardWareSpecification } from "./utils";
-
-const pickRandom = <T,>(items: T[]): T => items[Math.floor(Math.random() * items.length)];
-
-const randomInt = (min: number, max: number) =>
-  Math.floor(Math.random() * (max - min + 1)) + min;
-
-const randomDateInPast = (daysBack: number) => {
-  const date = new Date();
-  date.setDate(date.getDate() - randomInt(10, daysBack));
-  return date.toISOString().split("T")[0];
-};
-
-const randomDateInFuture = (daysAhead: number) => {
-  const date = new Date();
-  date.setDate(date.getDate() + randomInt(10, daysAhead));
-  return date.toISOString().split("T")[0];
-};
-
-const generateRandomSerial = (prefix: string) =>
-  `${prefix}-${randomInt(100000, 999999)}-${String.fromCharCode(65 + randomInt(0, 25))}${String.fromCharCode(65 + randomInt(0, 25))}`;
-
-const fillMissingFormData = (data: FormData, consoleType: string): FormData => {
-  const fallbackBrandByType: Record<string, string[]> = {
-    pc: ["MSI", "ASUS", "Acer Predator", "Alienware", "Lenovo Legion"],
-    ps5: ["Sony"],
-    xbox: ["Microsoft"],
-    vr: ["Meta", "HTC", "Sony VR"],
-  };
-
-  const fallbackConnectivity = ["Wi-Fi 6 + Ethernet + Bluetooth 5.2", "Wi-Fi + LAN + USB-C", "Wi-Fi + Bluetooth + HDMI"];
-  const fallbackWarranty = ["12 months", "18 months", "24 months"];
-  const fallbackMaintenanceNotes = [
-    "Routine diagnostics completed.",
-    "Thermal and fan checks verified.",
-    "Controller and port checks completed.",
-  ];
-
-  const fallbackSupportedGames = [
-    "FC 25, GTA V, Valorant, Forza Horizon",
-    "Call of Duty, Minecraft, Fortnite",
-    "Racing, Sports, Shooter, Co-op titles",
-  ];
-
-  const fallbackAccessories = [
-    "2 Controllers, Headset, Charging Dock",
-    "Controller, Keyboard-Mouse, Cooling Stand",
-    "VR Controllers, Face Cover, Charging Cable",
-  ];
-
-  const pcHardwareDefaults = {
-    processorType: pickRandom(ProcessorOption.map((item) => item.value)),
-    graphicsCard: pickRandom(GraphiCoptions.map((item) => item.value)),
-    ramSize: pickRandom(RamSizeOptions.map((item) => item.value)),
-    storageCapacity: pickRandom(StorageOptions.map((item) => item.value)),
-    connectivity: pickRandom(fallbackConnectivity),
-    consoleModelType: "Custom Build",
-  };
-
-  const modelTypeDefaults: Record<string, string> = {
-    ps5: pickRandom(PS5playstation.map((item) => item.value)),
-    xbox: pickRandom(XboxPlaystation.map((item) => item.value)),
-    vr: pickRandom(VRPlaystation.map((item) => item.value)),
-  };
-
-  const safeType = consoleType?.toLowerCase() || "pc";
-  const hardwareDefaults = safeType === "pc"
-    ? pcHardwareDefaults
-    : {
-        ...pcHardwareDefaults,
-        processorType: "",
-        graphicsCard: "",
-        ramSize: "",
-        storageCapacity: "",
-        connectivity: pickRandom(fallbackConnectivity),
-        consoleModelType: modelTypeDefaults[safeType] || "",
-      };
-
-  const fallbackPrice = String(randomInt(25000, 95000));
-  const fallbackRentalPrice = String(randomInt(80, 250));
-
-  return {
-    ...data,
-    consoleDetails: {
-      ...data.consoleDetails,
-      ModelNumber: data.consoleDetails.ModelNumber?.trim() || `${safeType.toUpperCase()}-${randomInt(1000, 9999)}`,
-      SerialNumber: data.consoleDetails.SerialNumber?.trim() || generateRandomSerial(safeType.toUpperCase()),
-      Brand: data.consoleDetails.Brand?.trim() || pickRandom(fallbackBrandByType[safeType] || fallbackBrandByType.pc),
-      ReleaseDate: data.consoleDetails.ReleaseDate || randomDateInPast(1200),
-      Description: data.consoleDetails.Description?.trim() || `${safeType.toUpperCase()} console prepared for cafe sessions`,
-      consoleType: data.consoleDetails.consoleType || safeType,
-    },
-    hardwareSpecifications: {
-      ...data.hardwareSpecifications,
-      processorType: data.hardwareSpecifications.processorType || hardwareDefaults.processorType,
-      graphicsCard: data.hardwareSpecifications.graphicsCard || hardwareDefaults.graphicsCard,
-      ramSize: data.hardwareSpecifications.ramSize || hardwareDefaults.ramSize,
-      storageCapacity: data.hardwareSpecifications.storageCapacity || hardwareDefaults.storageCapacity,
-      connectivity: data.hardwareSpecifications.connectivity || hardwareDefaults.connectivity,
-      consoleModelType: data.hardwareSpecifications.consoleModelType || hardwareDefaults.consoleModelType,
-    },
-    maintenanceStatus: {
-      ...data.maintenanceStatus,
-      AvailableStatus: data.maintenanceStatus.AvailableStatus || "available",
-      Condition: data.maintenanceStatus.Condition || "good",
-      LastMaintenance: data.maintenanceStatus.LastMaintenance || randomDateInPast(180),
-      NextScheduledMaintenance: data.maintenanceStatus.NextScheduledMaintenance || randomDateInFuture(120),
-      MaintenanceNotes: data.maintenanceStatus.MaintenanceNotes?.trim() || pickRandom(fallbackMaintenanceNotes),
-    },
-    priceAndCost: {
-      ...data.priceAndCost,
-      price: data.priceAndCost.price || fallbackPrice,
-      Rentalprice: data.priceAndCost.Rentalprice || fallbackRentalPrice,
-      Warrantyperiod: data.priceAndCost.Warrantyperiod || pickRandom(fallbackWarranty),
-      InsuranceStatus: data.priceAndCost.InsuranceStatus || "insured",
-    },
-    additionalDetails: {
-      ...data.additionalDetails,
-      ListOfSupportedGames: data.additionalDetails.ListOfSupportedGames?.trim() || pickRandom(fallbackSupportedGames),
-      AccessoriesDetails: data.additionalDetails.AccessoriesDetails?.trim() || pickRandom(fallbackAccessories),
-    },
-  };
-};
-
-const buildHardwarePayloadByType = (
-  consoleType: string,
-  hardware: FormData["hardwareSpecifications"]
-) => {
-  const normalizedType = String(consoleType || "").toLowerCase();
-  if (normalizedType === "pc") {
-    return {
-      processorType: hardware.processorType || null,
-      graphicsCard: hardware.graphicsCard || null,
-      ramSize: hardware.ramSize || null,
-      storageCapacity: hardware.storageCapacity || null,
-      connectivity: hardware.connectivity || null,
-      consoleModelType: hardware.consoleModelType || "Custom Build",
-    };
-  }
-  return {
-    processorType: null,
-    graphicsCard: null,
-    ramSize: null,
-    storageCapacity: hardware.storageCapacity || null,
-    connectivity: null,
-    consoleModelType: hardware.consoleModelType || null,
-  };
-};
-
-const CONSOLE_VARIANT_OPTIONS: Record<string, Array<{ value: string; label: string }>> = {
-  ps5: PS5playstation,
-  xbox: XboxPlaystation,
-  vr: VRPlaystation,
-};
+import {
+  buildConsoleFormProfile,
+  buildInitialDynamicAttributes,
+  findCatalogItemForConsole,
+} from "./add-console/catalog-profile";
+import { buildHardwarePayloadByProfile, fillMissingFormData } from "./add-console/defaults";
+import { DynamicHardwareFields } from "./add-console/hardware-fields";
+import { applyAttributesToAdditionalDetails } from "./add-console/payload";
+import type { ConsoleDynamicAttributes } from "./add-console/types";
 
 
 export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
   const [vendorId, setVendorId] = useState<number | null>(null);
+  const [consoleCatalog, setConsoleCatalog] = useState<ConsoleCatalogItem[]>([]);
   const [formdata, setformdata] = useState<FormData>({
     availablegametype: consoleType,
     vendorId: null,
@@ -238,6 +87,17 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
   const [selectedConsoleId, setSelectedConsoleId] = useState<string>("");
   const [showSuccess, setShowSuccess] = useState(false);
   const [refresh, setRefresh] = useState(0);
+  const selectedCatalogItem = useMemo(
+    () => findCatalogItemForConsole(consoleType, consoleCatalog),
+    [consoleType, consoleCatalog]
+  );
+  const formProfile = useMemo(
+    () => buildConsoleFormProfile(consoleType, selectedCatalogItem),
+    [consoleType, selectedCatalogItem]
+  );
+  const [dynamicAttributes, setDynamicAttributes] = useState<ConsoleDynamicAttributes>(
+    buildInitialDynamicAttributes(formProfile)
+  );
 
 
   const router = useRouter();
@@ -294,6 +154,37 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
       fetchConsoles();
     }
   }, [vendorId, consoleType, refresh]);
+
+  useEffect(() => {
+    if (!vendorId) return;
+    let mounted = true;
+    const loadCatalog = async () => {
+      try {
+        const response = await fetch(`${DASHBOARD_URL}/api/console-types?vendor_id=${vendorId}`);
+        const data = await response.json();
+        const items = Array.isArray(data?.console_types) ? (data.console_types as ConsoleCatalogItem[]) : [];
+        if (!mounted) return;
+        setConsoleCatalog(items.filter((item) => item?.is_active !== false));
+      } catch {
+        if (mounted) setConsoleCatalog([]);
+      }
+    };
+    loadCatalog();
+    return () => {
+      mounted = false;
+    };
+  }, [vendorId]);
+
+  useEffect(() => {
+    setDynamicAttributes(buildInitialDynamicAttributes(formProfile));
+  }, [
+    formProfile.slug,
+    formProfile.inputMode,
+    formProfile.defaultCapacity,
+    formProfile.defaultControllerPolicy,
+    formProfile.defaultSupportsMultiplayer,
+    formProfile.showPlayArea,
+  ]);
 
 
   // Hide success message after 3 seconds
@@ -352,7 +243,7 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
         },
       };
 
-      setformdata(fillMissingFormData(copiedData, consoleType));
+      setformdata(fillMissingFormData(copiedData, formProfile, dynamicAttributes));
     } catch (error) {
       console.error("Error copying console data:", error);
     }
@@ -367,7 +258,7 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
       return;
     }
     try {
-      const completedForm = fillMissingFormData(formdata, consoleType);
+      const completedForm = fillMissingFormData(formdata, formProfile, dynamicAttributes);
       setformdata(completedForm);
 
       const consoleNumberStr = completedForm.consoleDetails.consoleNumber.replace("console-", "");
@@ -376,6 +267,12 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
         throw new Error("Invalid console number format");
       }
 
+
+      const mappedAdditionalDetails = applyAttributesToAdditionalDetails(
+        completedForm,
+        formProfile,
+        dynamicAttributes
+      );
 
       const payload = {
         availablegametype: completedForm.availablegametype,
@@ -390,10 +287,7 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
           releaseDate: completedForm.consoleDetails.ReleaseDate,
           description: completedForm.consoleDetails.Description || "",
         },
-        hardwareSpecifications: buildHardwarePayloadByType(
-          completedForm.consoleDetails.consoleType,
-          completedForm.hardwareSpecifications
-        ),
+        hardwareSpecifications: buildHardwarePayloadByProfile(formProfile, completedForm.hardwareSpecifications),
         maintenanceStatus: {
           availableStatus: completedForm.maintenanceStatus.AvailableStatus,
           condition: completedForm.maintenanceStatus.Condition,
@@ -408,8 +302,16 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
           insuranceStatus: completedForm.priceAndCost.InsuranceStatus,
         },
         additionalDetails: {
-          supportedGames: completedForm.additionalDetails.ListOfSupportedGames || "",
-          accessories: completedForm.additionalDetails.AccessoriesDetails || "",
+          supportedGames: mappedAdditionalDetails.ListOfSupportedGames || "",
+          accessories: mappedAdditionalDetails.AccessoriesDetails || "",
+        },
+        consoleAttributes: {
+          slug: formProfile.slug,
+          inputMode: dynamicAttributes.inputMode,
+          controllerPolicy: dynamicAttributes.controllerPolicy,
+          supportsMultiplayer: dynamicAttributes.supportsMultiplayer,
+          capacity: dynamicAttributes.capacity,
+          playAreaSqft: dynamicAttributes.playAreaSqft || 0,
         },
       };
 
@@ -454,6 +356,7 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
           AccessoriesDetails: "",
         },
       });
+      setDynamicAttributes(buildInitialDynamicAttributes(formProfile));
     } catch (error) {
       console.error("Error submitting console:", error);
       alert("Failed to add console. Please check the form and try again.");
@@ -466,278 +369,6 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     handelfetch();
-  };
-
-
-  const renderHardwareSpecifications = () => {
-    if (consoleType === "pc") {
-      return (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="space-y-2">
-            <Label htmlFor="processorType">
-              Processor Type <span className="text-red-500">*</span>
-            </Label>
-            <Select
-              value={formdata.hardwareSpecifications?.processorType || ""}
-              onValueChange={(value) =>
-                setformdata((prev) => ({
-                  ...prev,
-                  hardwareSpecifications: {
-                    ...prev.hardwareSpecifications,
-                    processorType: value,
-                  },
-                }))
-              }
-            >
-              <SelectTrigger id="processorType">
-                <SelectValue placeholder="Select processor type" />
-              </SelectTrigger>
-              <SelectContent>
-                {ProcessorOption.map((item) => (
-                  <SelectItem key={item.value} value={item.value}>
-                    {item.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="graphicsCard">
-              Graphics Card <span className="text-red-500">*</span>
-            </Label>
-            <Select
-              value={formdata.hardwareSpecifications.graphicsCard}
-              onValueChange={(value) =>
-                setformdata((prev) => ({
-                  ...prev,
-                  hardwareSpecifications: {
-                    ...prev.hardwareSpecifications,
-                    graphicsCard: value,
-                  },
-                }))
-              }
-            >
-              <SelectTrigger id="graphicsCard">
-                <SelectValue placeholder="Select graphics card" />
-              </SelectTrigger>
-              <SelectContent>
-                {GraphiCoptions.map((item) => (
-                  <SelectItem key={item.value} value={item.value}>
-                    {item.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="ramSize">
-              RAM Size <span className="text-red-500">*</span>
-            </Label>
-            <Select
-              value={formdata.hardwareSpecifications.ramSize}
-              onValueChange={(value) =>
-                setformdata((prev) => ({
-                  ...prev,
-                  hardwareSpecifications: {
-                    ...prev.hardwareSpecifications,
-                    ramSize: value,
-                  },
-                }))
-              }
-            >
-              <SelectTrigger id="ramSize">
-                <SelectValue placeholder="Select RAM size" />
-              </SelectTrigger>
-              <SelectContent>
-                {RamSizeOptions.map((item) => (
-                  <SelectItem key={item.value} value={item.value}>
-                    {item.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="storageCapacity">
-              Storage Capacity <span className="text-red-500">*</span>
-            </Label>
-            <Select
-              value={formdata.hardwareSpecifications.storageCapacity}
-              onValueChange={(value) =>
-                setformdata((prev) => ({
-                  ...prev,
-                  hardwareSpecifications: {
-                    ...prev.hardwareSpecifications,
-                    storageCapacity: value,
-                  },
-                }))
-              }
-            >
-              <SelectTrigger id="storageCapacity">
-                <SelectValue placeholder="Select storage capacity" />
-              </SelectTrigger>
-              <SelectContent>
-                {StorageOptions.map((item) => (
-                  <SelectItem key={item.value} value={item.value}>
-                    {item.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2 md:col-span-2">
-            <Label htmlFor="connectivity">
-              Connectivity <span className="text-red-500">*</span>
-            </Label>
-            <Input
-              id="connectivity"
-              placeholder="Enter connectivity options"
-              value={formdata.hardwareSpecifications.connectivity}
-              onChange={(e) =>
-                setformdata((prev) => ({
-                  ...prev,
-                  hardwareSpecifications: {
-                    ...prev.hardwareSpecifications,
-                    connectivity: e.target.value,
-                  },
-                }))
-              }
-              required
-            />
-          </div>
-        </div>
-      );
-    } else if (consoleType === "ps5" || consoleType === "xbox" || consoleType === "vr") {
-      const variantOptions = CONSOLE_VARIANT_OPTIONS[consoleType] || [];
-      const variantLabel = consoleType === "ps5"
-        ? "PS5 Variant"
-        : consoleType === "xbox"
-          ? "Xbox Variant"
-          : "VR Device";
-      return (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="space-y-2">
-            <Label htmlFor="consoleVariant">
-              {variantLabel} <span className="text-red-500">*</span>
-            </Label>
-            <Select
-              value={formdata.hardwareSpecifications.consoleModelType}
-              onValueChange={(value) =>
-                setformdata((prev) => ({
-                  ...prev,
-                  hardwareSpecifications: {
-                    ...prev.hardwareSpecifications,
-                    consoleModelType: value,
-                  },
-                }))
-              }
-            >
-              <SelectTrigger id="consoleVariant">
-                <SelectValue placeholder={`Select ${variantLabel.toLowerCase()}`} />
-              </SelectTrigger>
-              <SelectContent>
-                {variantOptions.map((item) => (
-                  <SelectItem key={item.value} value={item.value}>
-                    {item.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="storageCapacity">
-              Storage Capacity <span className="text-red-500">*</span>
-            </Label>
-            <Select
-              value={formdata.hardwareSpecifications.storageCapacity}
-              onValueChange={(value) =>
-                setformdata((prev) => ({
-                  ...prev,
-                  hardwareSpecifications: {
-                    ...prev.hardwareSpecifications,
-                    storageCapacity: value,
-                  },
-                }))
-              }
-            >
-              <SelectTrigger id="storageCapacity">
-                <SelectValue placeholder="Select storage capacity" />
-              </SelectTrigger>
-              <SelectContent>
-                {StorageOptions.map((item) => (
-                  <SelectItem key={item.value} value={item.value}>
-                    {item.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-      );
-    }
-    return (
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="space-y-2">
-          <Label htmlFor="consoleModelType">
-            Console Model / Variant <span className="text-red-500">*</span>
-          </Label>
-          <Input
-            id="consoleModelType"
-            placeholder="Enter model or variant"
-            value={formdata.hardwareSpecifications.consoleModelType}
-            onChange={(e) =>
-              setformdata((prev) => ({
-                ...prev,
-                hardwareSpecifications: {
-                  ...prev.hardwareSpecifications,
-                  consoleModelType: e.target.value,
-                },
-              }))
-            }
-            required
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="storageCapacity">
-            Storage Capacity
-          </Label>
-          <Input
-            id="storageCapacity"
-            placeholder="e.g. 512 GB"
-            value={formdata.hardwareSpecifications.storageCapacity}
-            onChange={(e) =>
-              setformdata((prev) => ({
-                ...prev,
-                hardwareSpecifications: {
-                  ...prev.hardwareSpecifications,
-                  storageCapacity: e.target.value,
-                },
-              }))
-            }
-          />
-        </div>
-
-        <div className="space-y-2 md:col-span-2">
-          <Label htmlFor="connectivity">Connectivity</Label>
-          <Input
-            id="connectivity"
-            placeholder="e.g. Wi-Fi, Ethernet, Bluetooth"
-            value={formdata.hardwareSpecifications.connectivity}
-            onChange={(e) =>
-              setformdata((prev) => ({
-                ...prev,
-                hardwareSpecifications: {
-                  ...prev.hardwareSpecifications,
-                  connectivity: e.target.value,
-                },
-              }))
-            }
-          />
-        </div>
-      </div>
-    );
   };
 
 
@@ -755,7 +386,7 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
       {/* Header */}
       <div className="mb-8">
         <h1 className="premium-heading mb-2 !text-2xl sm:!text-3xl md:!text-4xl">
-          Add New {consoleType.toUpperCase()} Console
+          Add New {formProfile.displayName.toUpperCase()} Console
         </h1>
         <p className="premium-subtle">
           Fill out the information below to add a new console to your gaming cafe inventory
@@ -903,7 +534,7 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
                 </Label>
                 <Input 
                   id="consoleType" 
-                  value={consoleType || ""} 
+                  value={formProfile.displayName || ""} 
                   readOnly 
                   className="font-medium"
                   required
@@ -946,7 +577,13 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
             </CardDescription>
           </CardHeader>
           <CardContent className="pt-6">
-            {renderHardwareSpecifications()}
+            <DynamicHardwareFields
+              profile={formProfile}
+              formdata={formdata}
+              setformdata={setformdata}
+              dynamicAttributes={dynamicAttributes}
+              setDynamicAttributes={setDynamicAttributes}
+            />
           </CardContent>
         </Card>
 
