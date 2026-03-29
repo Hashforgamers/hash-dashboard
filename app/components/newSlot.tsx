@@ -3489,7 +3489,7 @@ if (isPastTime) {
                 className={cn("w-full h-full", compact ? "min-h-[32px]" : "min-h-[40px]")}
               >
                 <SlotPill
-                  label={`${gameConsole.name} - ${slot.available_slot} • ${Math.max(getSlotDurationMinutes(slot), 30)}m`}
+                  label={`${Math.max(getSlotDurationMinutes(slot), 30)}m`}
                   color={getConsoleColor(gameConsole.id)}
                   icon={getConsoleIcon(gameConsole.type)}
                   onClick={() => handleSlotClick(day, time, gameConsole)}
