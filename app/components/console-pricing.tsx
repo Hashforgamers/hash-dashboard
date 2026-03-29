@@ -206,27 +206,9 @@ interface MonthlyCreditLedgerEntry {
 
 type ControllerPricingState = Record<string, ControllerPricingRule>;
 
-const defaultControllerPricing: ControllerPricingState = {
-  ps5: {
-    base_price: 0,
-    tiers: [],
-  },
-  xbox: {
-    base_price: 0,
-    tiers: [],
-  },
-  pc: {
-    base_price: 0,
-    tiers: [],
-  },
-  vr: {
-    base_price: 0,
-    tiers: [],
-  },
-};
+const defaultControllerPricing: ControllerPricingState = {};
 
 const controllerPreviewQuantities = [1, 2, 3, 4];
-const controllerSupportedConsoleTypes = new Set(["ps5", "xbox"]);
 const squadMaxPlayersByConsole: Record<string, number> = {
   pc: 10,
 };
@@ -320,7 +302,7 @@ export default function ConsolePricing() {
   const [isSavingControllerPricing, setIsSavingControllerPricing] = useState(false);
   const [controllerPricingError, setControllerPricingError] = useState<string | null>(null);
   const [controllerPricingChanged, setControllerPricingChanged] = useState(false);
-  const [activeControllerConsole, setActiveControllerConsole] = useState<"ps5" | "xbox">("ps5");
+  const [activeControllerConsole, setActiveControllerConsole] = useState<string>("");
   const [squadPricing, setSquadPricing] = useState<SquadPricingState>(squadRuleDefaults);
   const [isLoadingSquadPricing, setIsLoadingSquadPricing] = useState(false);
   const [isSavingSquadPricing, setIsSavingSquadPricing] = useState(false);
@@ -372,6 +354,28 @@ export default function ConsolePricing() {
   });
 
   const validatePrice = (value: number) => value >= 0 && value <= 10000;
+
+  const normalizePricingState = (raw: PricingState | Record<string, any>) => {
+    const next: PricingState = {};
+    Object.entries(raw || {}).forEach(([key, value]) => {
+      const normalizedKey = normalizeConsoleSlug(key);
+      if (!normalizedKey) return;
+      if (value && typeof value === "object" && "value" in value) {
+        next[normalizedKey] = {
+          value: parseCurrencyInput((value as any).value),
+          isValid: (value as any).isValid !== false,
+          hasChanged: Boolean((value as any).hasChanged),
+        };
+        return;
+      }
+      next[normalizedKey] = {
+        value: parseCurrencyInput(value),
+        isValid: true,
+        hasChanged: false,
+      };
+    });
+    return next;
+  };
 
   const basePricingKey = vendorId ? `pricing_base:${vendorId}` : "pricing_base:0";
   const offersKey = vendorId ? `pricing_offers:${vendorId}` : "pricing_offers:0";
@@ -425,9 +429,10 @@ export default function ConsolePricing() {
       if (!res.ok) throw new Error("Failed to fetch controller pricing");
       const data = await res.json();
       const pricingData = data?.pricing || {};
-      const next: ControllerPricingState = { ...defaultControllerPricing };
-      for (const consoleType of controllerSupportedConsoleTypes) {
-        const item = pricingData[consoleType];
+      const next: ControllerPricingState = {};
+      Object.entries(pricingData as Record<string, any>).forEach(([rawType, item]) => {
+        const consoleType = normalizeConsoleSlug(rawType);
+        if (!consoleType) return;
         next[consoleType] = {
           base_price: Number(item?.base_price ?? 0),
           tiers: Array.isArray(item?.tiers)
@@ -438,7 +443,7 @@ export default function ConsolePricing() {
               }))
             : [],
         };
-      }
+      });
       return next;
     },
     120000,
@@ -562,8 +567,9 @@ export default function ConsolePricing() {
   useEffect(() => {
     if (!vendorId) return;
     if (cachedBasePricing && Object.keys(cachedBasePricing).length > 0) {
+      const normalizedCached = normalizePricingState(cachedBasePricing);
       setPrices((prev) => {
-        const next = { ...prev, ...cachedBasePricing };
+        const next = { ...prev, ...normalizedCached };
         consoleTypes.forEach((consoleType) => {
           if (!next[consoleType.type]) {
             next[consoleType.type] = { value: 0, isValid: true, hasChanged: false };
@@ -576,7 +582,8 @@ export default function ConsolePricing() {
     refreshBasePricingCache(true)
       .then((data) => {
         if (data) {
-          setPrices((prev) => ({ ...prev, ...data }));
+          const normalizedFresh = normalizePricingState(data);
+          setPrices((prev) => ({ ...prev, ...normalizedFresh }));
         }
       })
       .catch((error) => console.error("Error fetching prices:", error));
@@ -601,10 +608,14 @@ export default function ConsolePricing() {
     if (!vendorId || activeTab !== "controllers") return;
     if (cachedControllerPricing) {
       setControllerPricing(cachedControllerPricing);
+      const keys = Object.keys(cachedControllerPricing);
+      if (keys.length > 0 && !keys.includes(activeControllerConsole)) {
+        setActiveControllerConsole(keys[0]);
+      }
       return;
     }
     fetchControllerPricing();
-  }, [vendorId, activeTab, cachedControllerPricing]);
+  }, [vendorId, activeTab, cachedControllerPricing, activeControllerConsole]);
 
   useEffect(() => {
     if (!vendorId || activeTab !== "squad") return;
@@ -638,6 +649,10 @@ export default function ConsolePricing() {
       const data = await refreshControllerCache(true);
       if (data) {
         setControllerPricing(data);
+        const keys = Object.keys(data);
+        if (keys.length > 0 && !keys.includes(activeControllerConsole)) {
+          setActiveControllerConsole(keys[0]);
+        }
       }
       setControllerPricingChanged(false);
     } catch (error) {
@@ -1089,9 +1104,9 @@ export default function ConsolePricing() {
     setIsSavingControllerPricing(true);
     setControllerPricingError(null);
 
-    const pricingPayload = Array.from(controllerSupportedConsoleTypes).reduce(
+    const pricingPayload = controllerConsoleTabs.reduce(
       (acc, consoleType) => {
-        const config = controllerPricing[consoleType] || { base_price: 0, tiers: [] };
+        const config = controllerPricing[consoleType.type] || { base_price: 0, tiers: [] };
         const normalizedTiers = config.tiers
           .map((tier) => ({
             quantity: Math.max(2, Math.round(Number(tier.quantity || 0))),
@@ -1100,7 +1115,7 @@ export default function ConsolePricing() {
           .filter((tier, index, arr) => arr.findIndex((t) => t.quantity === tier.quantity) === index)
           .sort((a, b) => a.quantity - b.quantity);
 
-        acc[consoleType] = {
+        acc[consoleType.type] = {
           base_price: Math.max(0, Number(config.base_price || 0)),
           tiers: normalizedTiers,
         };
@@ -1381,12 +1396,25 @@ export default function ConsolePricing() {
       highestDiscount,
     };
   })();
-  const controllerConsoleTabs = consoleTypes.filter((console) =>
-    controllerSupportedConsoleTypes.has(console.type)
-  );
+  const controllerConsoleTabs: ConsoleType[] = Object.keys(controllerPricing)
+    .map((rawType) => {
+      const normalizedType = normalizeConsoleSlug(rawType);
+      const known = consoleTypes.find((console) => normalizeConsoleSlug(console.type) === normalizedType);
+      if (known) return known;
+      const displayName = getConsoleDisplayName(normalizedType);
+      return {
+        type: normalizedType,
+        name: displayName,
+        icon: resolveConsoleIcon(undefined, normalizedType),
+        color: "bg-cyan-500/10",
+        iconColor: resolveConsoleColor(normalizedType),
+        description: `${displayName} systems`,
+      } as ConsoleType;
+    })
+    .filter((item, idx, arr) => item?.type && arr.findIndex((a) => a.type === item.type) === idx);
   const activeControllerConfigType = controllerConsoleTabs.some((c) => c.type === activeControllerConsole)
     ? activeControllerConsole
-    : (controllerConsoleTabs[0]?.type as "ps5" | "xbox" | undefined) || "ps5";
+    : controllerConsoleTabs[0]?.type || "";
 
   return (
     <div className="console-pricing-page dashboard-module dashboard-typography flex h-full min-h-0 flex-col gap-4 overflow-y-auto overflow-x-hidden px-1 pb-2 sm:px-2">
@@ -1486,10 +1514,11 @@ export default function ConsolePricing() {
                 <div className="relative">
                   <IndianRupee className="absolute left-3 top-1/2 -translate-y-1/2 icon-md text-muted-foreground" />
                   <Input
-                    type="number"
-                    value={prices[console.type]?.value}
+                    type="text"
+                    inputMode="decimal"
+                    value={String(prices[console.type]?.value ?? "")}
                     onChange={(e) => handlePriceChange(console.type, e.target.value)}
-                    className={`${inputSurfaceClass} pl-11 pr-3 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none`}
+                    className={`${inputSurfaceClass} pl-10 pr-3`}
                   />
                 </div>
                 {errors[console.type] && (
@@ -1696,7 +1725,7 @@ export default function ConsolePricing() {
             <h2 className="text-sm font-semibold text-foreground sm:text-base">Extra Controller Pricing</h2>
             <p className="body-text-muted mt-1">
               Configure base and tier rates like 1 controller = ₹50, 2 controllers = ₹80.
-              Backend-integrated for PS5 and Xbox.
+              Applies to all inventory console types where controller policy is enabled.
             </p>
             {controllerPricingError && (
               <p className="mt-2 text-xs font-medium text-rose-300">{controllerPricingError}</p>
@@ -1710,6 +1739,11 @@ export default function ConsolePricing() {
             </div>
           ) : (
           <div className="min-h-0 flex-1 overflow-y-auto pr-1 space-y-4">
+            {controllerConsoleTabs.length === 0 ? (
+              <div className="dashboard-module-surface rounded-lg border border-dashed border-cyan-500/25 p-4 text-sm text-slate-600 dark:text-slate-300">
+                No controller-enabled console type found yet. Set controller policy in console catalog/inventory and refresh.
+              </div>
+            ) : null}
             <div className="dashboard-module-tab-group inline-flex items-center gap-2 rounded-lg p-1">
               {controllerConsoleTabs.map((console) => {
                 const isActive = activeControllerConfigType === console.type;
@@ -1718,7 +1752,7 @@ export default function ConsolePricing() {
                   <button
                     key={`controller-tab-${console.type}`}
                     type="button"
-                    onClick={() => setActiveControllerConsole(console.type as "ps5" | "xbox")}
+                    onClick={() => setActiveControllerConsole(console.type)}
                     className={`inline-flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
                       isActive
                         ? "dashboard-module-tab-active bg-cyan-500/12 text-slate-900 dark:text-cyan-100"
