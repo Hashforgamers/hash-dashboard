@@ -4,8 +4,9 @@ import type { HardwareSpecifications } from "./interfaces";
 export const getHardWareSpecification = (
   consoleType: string
 ): HardwareSpecifications => {
-  const validTypes = ["pc", "ps5", "xbox", "vr"];
-  return validTypes.includes(consoleType)
+  const normalized = String(consoleType || "").trim().toLowerCase();
+  const validTypes = ["pc", "ps5", "playstation", "ps", "xbox", "vr", "vr_headset"];
+  return validTypes.includes(normalized)
     ? { ...defaultSpecs }
     : {
         processorType: "",
