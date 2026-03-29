@@ -676,7 +676,68 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
         </div>
       );
     }
-    return <div>Hardware specifications not available for this console type</div>;
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="space-y-2">
+          <Label htmlFor="consoleModelType">
+            Console Model / Variant <span className="text-red-500">*</span>
+          </Label>
+          <Input
+            id="consoleModelType"
+            placeholder="Enter model or variant"
+            value={formdata.hardwareSpecifications.consoleModelType}
+            onChange={(e) =>
+              setformdata((prev) => ({
+                ...prev,
+                hardwareSpecifications: {
+                  ...prev.hardwareSpecifications,
+                  consoleModelType: e.target.value,
+                },
+              }))
+            }
+            required
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="storageCapacity">
+            Storage Capacity
+          </Label>
+          <Input
+            id="storageCapacity"
+            placeholder="e.g. 512 GB"
+            value={formdata.hardwareSpecifications.storageCapacity}
+            onChange={(e) =>
+              setformdata((prev) => ({
+                ...prev,
+                hardwareSpecifications: {
+                  ...prev.hardwareSpecifications,
+                  storageCapacity: e.target.value,
+                },
+              }))
+            }
+          />
+        </div>
+
+        <div className="space-y-2 md:col-span-2">
+          <Label htmlFor="connectivity">Connectivity</Label>
+          <Input
+            id="connectivity"
+            placeholder="e.g. Wi-Fi, Ethernet, Bluetooth"
+            value={formdata.hardwareSpecifications.connectivity}
+            onChange={(e) =>
+              setformdata((prev) => ({
+                ...prev,
+                hardwareSpecifications: {
+                  ...prev.hardwareSpecifications,
+                  connectivity: e.target.value,
+                },
+              }))
+            }
+          />
+        </div>
+      </div>
+    );
   };
 
 
