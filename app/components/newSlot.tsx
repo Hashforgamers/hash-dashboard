@@ -212,6 +212,27 @@ interface SlotBookingFormProps {
   availableConsoles: ConsoleType[]
 }
 
+const resolveSafeConsoleIcon = (iconCandidate: unknown, slugHint?: string) => {
+  if (typeof iconCandidate === "function") return iconCandidate as any
+  return resolveConsoleIcon(undefined, slugHint)
+}
+
+const sanitizeConsoleEntry = (entry: any): ConsoleType => {
+  const slug = normalizeConsoleSlugLikeBackend(entry?.type || entry?.slug || entry?.name || "pc") || "pc"
+  const name = String(entry?.name || entry?.display_name || slug).trim()
+  const price = Number(entry?.price || 0)
+  return {
+    type: slug,
+    name,
+    id: Number(entry?.id) || null,
+    price: Number.isFinite(price) ? price : 0,
+    icon: resolveSafeConsoleIcon(entry?.icon, slug),
+    iconColor: String(entry?.iconColor || resolveConsoleColor(slug)),
+    color: "grey",
+    description: String(entry?.description || `${name} Console`),
+  }
+}
+
 // ============= OPTIMIZATION 1: Request Cache =============
 const requestCache = new Map<string, { data: any; timestamp: number }>()
 const CACHE_TTL = 120 * 1000 // 2 minutes for booking freshness
@@ -3010,7 +3031,7 @@ function TopBar({
           <div className="flex flex-wrap items-center gap-2">
             {activeConsoles.map((consoleItem) => {
               const key = consoleItem.type
-              const Icon = consoleItem.icon || resolveConsoleIcon(undefined, consoleItem.type)
+              const Icon = resolveSafeConsoleIcon(consoleItem.icon, consoleItem.type)
               const label = consoleItem.name || consoleItem.type
               return (
               <SegmentedButton
@@ -4693,7 +4714,10 @@ const [isLoadingBookings, setIsLoadingBookings] = useState(false)
       const data = parsed?.data as BookingCacheData | undefined
       if (!data || Date.now() - ts > SNAPSHOT_TTL) return null
       if (!Array.isArray(data.availableConsoles) || typeof data.allSlots !== "object") return null
-      return data
+      return {
+        ...data,
+        availableConsoles: data.availableConsoles.map((entry: any) => sanitizeConsoleEntry(entry)),
+      }
     } catch {
       return null
     }
@@ -4713,7 +4737,7 @@ const [isLoadingBookings, setIsLoadingBookings] = useState(false)
   const bookingVersion = moduleVersions[bookingVersionKey] || 0
 
   const applyBookingCache = (data: BookingCacheData) => {
-    setAvailableConsoles(data.availableConsoles)
+    setAvailableConsoles((data.availableConsoles || []).map((entry: any) => sanitizeConsoleEntry(entry)))
     setAllSlots(data.allSlots)
     if (data.selectedConsole) {
       setSelectedConsole(data.selectedConsole)
