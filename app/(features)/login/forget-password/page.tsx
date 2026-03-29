@@ -7,7 +7,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import Image from "next/image";
 import Link from "next/link";
-import { useTheme } from "next-themes";
 import {
   Form, FormControl, FormField, FormItem, FormLabel, FormMessage,
 } from "@/components/ui/form";
@@ -25,6 +24,7 @@ import {
   ArrowLeft, Lock, KeyRound, Loader2,
 } from "lucide-react";
 import { LOGIN_URL } from "../../../../src/config/env";
+import { HASH_LOGO_URL } from "@/src/config/branding";
 
 // ─── Schemas ──────────────────────────────────────────────────────────────────
 
@@ -100,7 +100,6 @@ export default function ForgotPasswordPage() {
   const [canResend, setCanResend] = useState(false);
   const [isResending, setIsResending] = useState(false);
   const [resetComplete, setResetComplete] = useState(false);
-  const { resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => setMounted(true), []);
@@ -269,11 +268,7 @@ export default function ForgotPasswordPage() {
                 <div className="h-[80px] w-[80px]" />
               ) : (
                 <Image
-                  src={
-                    resolvedTheme === "dark"
-                      ? "/whitehashlogo.png"
-                      : "/blackhashlogo.png"
-                  }
+                  src={HASH_LOGO_URL}
                   alt="Hash for Gamers"
                   width={80}
                   height={80}
@@ -317,8 +312,7 @@ export default function ForgotPasswordPage() {
                     name="email"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-foreground font-medium flex items-center gap-2">
-                          <Mail className="w-4 h-4 text-green-400" />
+                        <FormLabel className="text-[10px] font-medium uppercase tracking-[0.18em] text-foreground">
                           Email Address
                         </FormLabel>
                         <FormControl>
@@ -326,7 +320,7 @@ export default function ForgotPasswordPage() {
                             placeholder="Enter your registered email"
                             type="email"
                             autoComplete="email"
-                            className="h-12 bg-input border-input text-foreground placeholder:text-muted-foreground focus:border-cyan-400 focus:ring-cyan-400/20"
+                            className="h-12 rounded-2xl border-white/10 bg-white/5 text-foreground placeholder:text-muted-foreground focus:border-cyan-400 focus:ring-cyan-400/20"
                             {...field}
                           />
                         </FormControl>
@@ -343,7 +337,7 @@ export default function ForgotPasswordPage() {
                     {loading ? (
                       <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Sending Code...</>
                     ) : (
-                      <><Mail className="mr-2 h-5 w-5" /> Send Reset Code</>
+                      "Send Reset Code"
                     )}
                   </Button>
 
@@ -371,8 +365,7 @@ export default function ForgotPasswordPage() {
                     name="otp"
                     render={({ field }) => (
                       <FormItem className="space-y-4">
-                        <FormLabel className="text-foreground font-medium flex items-center gap-2 justify-center">
-                          <KeyRound className="w-4 h-4 text-green-400" />
+                        <FormLabel className="justify-center text-[10px] font-medium uppercase tracking-[0.18em] text-foreground">
                           6-Digit Reset Code
                         </FormLabel>
                         <FormControl>
@@ -383,7 +376,7 @@ export default function ForgotPasswordPage() {
                                   <InputOTPSlot
                                     key={i}
                                     index={i}
-                                    className="w-12 h-12 text-lg font-bold bg-input border border-input text-foreground rounded-md focus:border-cyan-400 focus:ring-cyan-400/30 transition-all duration-200"
+                                    className="h-12 w-12 rounded-xl border border-white/10 bg-white/5 text-lg font-bold text-foreground transition-all duration-200 focus:border-cyan-400 focus:ring-cyan-400/30"
                                   />
                                 ))}
                               </InputOTPGroup>
@@ -395,7 +388,7 @@ export default function ForgotPasswordPage() {
                                   <InputOTPSlot
                                     key={i}
                                     index={i}
-                                    className="w-12 h-12 text-lg font-bold bg-input border border-input text-foreground rounded-md focus:border-cyan-400 focus:ring-cyan-400/30 transition-all duration-200"
+                                    className="h-12 w-12 rounded-xl border border-white/10 bg-white/5 text-lg font-bold text-foreground transition-all duration-200 focus:border-cyan-400 focus:ring-cyan-400/30"
                                   />
                                 ))}
                               </InputOTPGroup>
@@ -408,7 +401,7 @@ export default function ForgotPasswordPage() {
                   />
 
                   {/* Timer + Resend */}
-                  <div className="rounded-lg p-4 border border-border bg-muted/30">
+                  <div className="rounded-2xl border border-white/8 bg-white/4 p-4">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2 text-foreground">
                         <Clock className="w-4 h-4 text-green-400" />
@@ -445,14 +438,14 @@ export default function ForgotPasswordPage() {
                   <Button
                     type="submit"
                     disabled={loading || !otpValue || otpValue.length < 6}
-                    className="w-full h-12 bg-primary text-primary-foreground hover:bg-primary/90 font-semibold rounded-lg transition-all duration-200 disabled:opacity-50"
+                    className="h-12 w-full rounded-full border border-[#16FF00]/70 bg-[#16FF00] text-[11px] font-bold uppercase tracking-[0.18em] text-black transition-all duration-200 hover:bg-[#12e000] disabled:opacity-50"
                   >
                     {loading ? (
                       <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Verifying...</>
                     ) : otpValue?.length === 6 ? (
-                      <><CheckCircle className="mr-2 h-5 w-5" /> Verify & Continue</>
+                      "Verify & Continue"
                     ) : (
-                      <><Shield className="mr-2 h-5 w-5" /> Enter Complete Code</>
+                      "Enter Complete Code"
                     )}
                   </Button>
 
@@ -479,15 +472,14 @@ export default function ForgotPasswordPage() {
                     name="new_password"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-foreground font-medium flex items-center gap-2">
-                          <Lock className="w-4 h-4 text-green-400" />
+                        <FormLabel className="text-[10px] font-medium uppercase tracking-[0.18em] text-foreground">
                           New Password
                         </FormLabel>
                         <FormControl>
                           <PasswordInput
                             placeholder="Enter new password (min 8 chars)"
                             autoComplete="new-password"
-                            className="h-12 bg-input border-input text-foreground placeholder:text-muted-foreground focus:border-cyan-400 focus:ring-cyan-400/20"
+                            className="h-12 rounded-2xl border-white/10 bg-white/5 text-foreground placeholder:text-muted-foreground focus:border-cyan-400 focus:ring-cyan-400/20"
                             {...field}
                           />
                         </FormControl>
@@ -501,15 +493,14 @@ export default function ForgotPasswordPage() {
                     name="confirm_password"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-foreground font-medium flex items-center gap-2">
-                          <Lock className="w-4 h-4 text-green-400" />
+                        <FormLabel className="text-[10px] font-medium uppercase tracking-[0.18em] text-foreground">
                           Confirm Password
                         </FormLabel>
                         <FormControl>
                           <PasswordInput
                             placeholder="Re-enter your new password"
                             autoComplete="new-password"
-                            className="h-12 bg-input border-input text-foreground placeholder:text-muted-foreground focus:border-cyan-400 focus:ring-cyan-400/20"
+                            className="h-12 rounded-2xl border-white/10 bg-white/5 text-foreground placeholder:text-muted-foreground focus:border-cyan-400 focus:ring-cyan-400/20"
                             {...field}
                           />
                         </FormControl>
@@ -521,7 +512,7 @@ export default function ForgotPasswordPage() {
                   <Button
                     type="submit"
                     disabled={loading}
-                    className="w-full h-12 bg-primary text-primary-foreground hover:bg-primary/90 font-semibold rounded-lg transition-all duration-200"
+                    className="h-12 w-full rounded-full border border-[#16FF00]/70 bg-[#16FF00] text-[11px] font-bold uppercase tracking-[0.18em] text-black transition-all duration-200 hover:bg-[#12e000]"
                   >
                     {loading ? (
                       <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Resetting Password...</>

@@ -5,26 +5,27 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import {
-  LayoutDashboard,
-  Receipt,
-  Gamepad2,
-  CalendarCheck,
+  AwardIcon,
+  Calendar02Icon,
+  DashboardSquare01Icon,
+  DollarCircleIcon,
+  GamepadDirectionalIcon,
+  Key02Icon,
+  LaptopIcon,
+  Moon02Icon,
+  ReceiptTextIcon,
+  Settings01Icon,
+  Shield01Icon,
+  ShoppingBag01Icon,
+  SpoonAndForkIcon,
+  StarIcon,
+  Store01Icon,
+  Sun03Icon,
+  Ticket01Icon,
   Users,
-  DollarSign,
-  Moon,
-  Sun,
-  UtensilsCrossed,
-  Store,
-  Ticket,
-  ShoppingBag,
-  Laptop,
-  Trophy,
-  KeyRound,
-  Shield,
-  Settings,
-  Wallet,
-  Star,
-} from "lucide-react";
+  WalletCardsIcon,
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { useTheme } from "next-themes";
 import { ButtonDestructive } from "./log-out";
 import { useAccess } from "@/app/context/AccessContext";
@@ -47,20 +48,20 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
-  { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard", permission: "dashboard.view" },
-  { href: "/gaming", icon: Laptop, label: "Manage Gaming Console", permission: "gaming.manage" },
-  { href: "/booking", icon: CalendarCheck, label: "Manage Booking", permission: "booking.manage" },
-  { href: "/transaction", icon: Receipt, label: "Transaction Report", permission: "transactions.view" },
-  { href: "/manage-extraservice", icon: UtensilsCrossed, label: "Extra Services", permission: "extras.manage" },
+  { href: "/dashboard", icon: DashboardSquare01Icon, label: "Dashboard", permission: "dashboard.view" },
+  { href: "/gaming", icon: LaptopIcon, label: "Manage Gaming Console", permission: "gaming.manage" },
+  { href: "/booking", icon: Calendar02Icon, label: "Manage Booking", permission: "booking.manage" },
+  { href: "/transaction", icon: ReceiptTextIcon, label: "Transaction Report", permission: "transactions.view" },
+  { href: "/manage-extraservice", icon: SpoonAndForkIcon, label: "Extra Services", permission: "extras.manage" },
   { href: "/know-your-gamers", icon: Users, label: "Know Your Gamers", permission: "gamers.view" },
-  { href: "/console-pricing", icon: DollarSign, label: "Console Pricing", permission: "pricing.manage" },
-  { href: "/gamers-credit", icon: Wallet, label: "Gamers Credit", permission: "pricing.manage" },
-  { href: "/pass", icon: Ticket, label: "Manage Passes", permission: "passes.manage" },
-  { href: "/store", icon: ShoppingBag, label: "Store", permission: "store.manage" },
-  { href: "/games", icon: Gamepad2, label: "Games", permission: "games.manage" },
-  { href: "/tournaments", icon: Trophy, label: "Tournaments", permission: "tournaments.manage" },
-  { href: "/reviews", icon: Star, label: "Reviews", permission: "reviews.manage" },
-  { href: "/select-cafe", icon: Store, label: "Select Cafe", permission: "cafe.switch" },
+  { href: "/console-pricing", icon: DollarCircleIcon, label: "Console Pricing", permission: "pricing.manage" },
+  { href: "/gamers-credit", icon: WalletCardsIcon, label: "Gamers Credit", permission: "pricing.manage" },
+  { href: "/pass", icon: Ticket01Icon, label: "Manage Passes", permission: "passes.manage" },
+  { href: "/store", icon: ShoppingBag01Icon, label: "Store", permission: "store.manage" },
+  { href: "/games", icon: GamepadDirectionalIcon, label: "Games", permission: "games.manage" },
+  { href: "/tournaments", icon: AwardIcon, label: "Tournaments", permission: "tournaments.manage" },
+  { href: "/reviews", icon: StarIcon, label: "Reviews", permission: "reviews.manage" },
+  { href: "/select-cafe", icon: Store01Icon, label: "Select Cafe", permission: "cafe.switch" },
 ];
 
 export function MainNav({ className, onItemClick, isNavPinned = false, ...props }: MainNavProps) {
@@ -69,8 +70,10 @@ export function MainNav({ className, onItemClick, isNavPinned = false, ...props 
   const { can, setActiveByPin, clearAccessSession, setSelectedCafe } = useAccess();
   const [pinDialogOpen, setPinDialogOpen] = useState(false);
   const [pin, setPin] = useState("");
-  const responsiveItemPaddingClass = isNavPinned ? "md:px-3 xl:px-3" : "md:px-3 xl:px-2 xl:group-hover:px-3";
+  const responsiveItemPaddingClass = isNavPinned ? "md:px-3 xl:px-3" : "md:px-3 xl:px-2 xl:px-1 xl:group-hover:px-3";
+  const responsiveItemAlignClass = isNavPinned ? "justify-start" : "justify-start xl:justify-center xl:group-hover:justify-start";
   const responsiveLabelClass = isNavPinned ? "whitespace-nowrap md:block xl:block" : "whitespace-nowrap md:block xl:hidden xl:group-hover:block";
+  const responsiveSectionLabelClass = isNavPinned ? "block" : "hidden xl:group-hover:block";
 
   const clearStorageExceptVendor = () => {
     const keysToKeep = ["vendor_login_email", "vendors"];
@@ -108,8 +111,11 @@ export function MainNav({ className, onItemClick, isNavPinned = false, ...props 
         )}
         {...props}
       >
-        <div className="min-h-0 flex-1 overflow-y-auto pr-1">
-          <div className="flex flex-col space-y-[clamp(0.08rem,0.25vh,0.2rem)]">
+        <div className="min-h-0 flex-1 overflow-y-auto pr-0.5">
+          <div className={cn("dashboard-nav-section-label pb-2", responsiveSectionLabelClass)}>
+            Navigation
+          </div>
+          <div className="flex flex-col space-y-[clamp(0.28rem,0.7vh,0.45rem)]">
             {navItems
               .filter((item) => can(item.permission))
               .map(({ href, icon: Icon, label }) => (
@@ -123,41 +129,56 @@ export function MainNav({ className, onItemClick, isNavPinned = false, ...props 
                     onItemClick?.();
                   }}
                   className={cn(
-                    "dashboard-nav-item group/nav flex min-h-[32px] items-center gap-2 rounded-lg border px-2.5 py-[clamp(0.2rem,0.55vh,0.38rem)] text-sm font-medium leading-tight transition-all duration-200",
+                    "dashboard-nav-item group/nav flex min-h-[46px] items-center gap-2 rounded-xl border px-2.5 py-[clamp(0.26rem,0.6vh,0.42rem)] text-sm font-medium leading-tight transition-all duration-200",
                     responsiveItemPaddingClass,
-                    pathname === href ? "gaming-nav-active text-foreground" : "text-muted-foreground"
+                    responsiveItemAlignClass,
+                    pathname === href ? "dashboard-nav-item-active text-foreground" : "text-muted-foreground"
                   )}
                 >
-                  <Icon
-                    className={cn(
-                      "h-[18px] w-[18px] shrink-0 transition-colors",
-                      pathname === href ? "dashboard-nav-icon-active" : "text-muted-foreground group-hover/nav:text-foreground"
-                    )}
-                  />
-                  <span className={responsiveLabelClass}>{label}</span>
+                  <span className="dashboard-nav-item-icon">
+                    <HugeiconsIcon
+                      icon={Icon}
+                      size={18}
+                      strokeWidth={1.7}
+                      className={cn(
+                        "shrink-0 transition-colors",
+                        pathname === href ? "dashboard-nav-icon-active" : "text-muted-foreground group-hover/nav:text-foreground"
+                      )}
+                    />
+                  </span>
+                  <span className={cn("dashboard-nav-label", responsiveLabelClass)}>{label}</span>
                 </Link>
               ))}
           </div>
         </div>
 
-        <div className="dashboard-nav-divider shrink-0 space-y-[clamp(0.06rem,0.2vh,0.14rem)] border-t pt-2">
+        <div className="dashboard-nav-divider shrink-0 space-y-[clamp(0.22rem,0.55vh,0.36rem)] border-t pt-3">
+          <div className={cn("dashboard-nav-section-label pb-1", responsiveSectionLabelClass)}>
+            Tools
+          </div>
           {can("staff.manage") && (
             <Link
               href="/employee-access"
               onClick={onItemClick}
               className={cn(
-                "dashboard-nav-item group/nav flex min-h-[30px] items-center gap-2 rounded-lg border px-2.5 py-[clamp(0.14rem,0.42vh,0.28rem)] text-sm font-medium leading-tight transition-all duration-200",
+                "dashboard-nav-item group/nav flex min-h-[46px] items-center gap-2 rounded-xl border px-2.5 py-[clamp(0.22rem,0.52vh,0.36rem)] text-sm font-medium leading-tight transition-all duration-200",
                 responsiveItemPaddingClass,
-                pathname === "/employee-access" ? "gaming-nav-active text-foreground" : "text-muted-foreground"
+                responsiveItemAlignClass,
+                pathname === "/employee-access" ? "dashboard-nav-item-active text-foreground" : "text-muted-foreground"
               )}
             >
-              <Shield
-                className={cn(
-                  "h-[18px] w-[18px] shrink-0 transition-colors",
-                  pathname === "/employee-access" ? "dashboard-nav-icon-active" : "text-muted-foreground group-hover/nav:text-foreground"
-                )}
-              />
-              <span className={responsiveLabelClass}>Team Access</span>
+              <span className="dashboard-nav-item-icon">
+                <HugeiconsIcon
+                  icon={Shield01Icon}
+                  size={18}
+                  strokeWidth={1.7}
+                  className={cn(
+                    "shrink-0 transition-colors",
+                    pathname === "/employee-access" ? "dashboard-nav-icon-active" : "text-muted-foreground group-hover/nav:text-foreground"
+                  )}
+                />
+              </span>
+              <span className={cn("dashboard-nav-label", responsiveLabelClass)}>Team Access</span>
             </Link>
           )}
 
@@ -167,13 +188,21 @@ export function MainNav({ className, onItemClick, isNavPinned = false, ...props 
               onItemClick?.();
             }}
             className={cn(
-              "dashboard-nav-item group/nav flex w-full min-h-[30px] items-center gap-2 rounded-lg border px-2.5 py-[clamp(0.14rem,0.42vh,0.28rem)] text-sm font-medium leading-tight transition-all duration-200",
+              "dashboard-nav-item group/nav flex w-full min-h-[46px] items-center gap-2 rounded-xl border px-2.5 py-[clamp(0.22rem,0.52vh,0.36rem)] text-sm font-medium leading-tight transition-all duration-200",
               responsiveItemPaddingClass,
+              responsiveItemAlignClass,
               "text-muted-foreground"
             )}
           >
-            <KeyRound className="h-[18px] w-[18px] shrink-0 transition-colors text-muted-foreground group-hover/nav:text-foreground" />
-            <span className={responsiveLabelClass}>Switch User PIN</span>
+            <span className="dashboard-nav-item-icon">
+              <HugeiconsIcon
+                icon={Key02Icon}
+                size={18}
+                strokeWidth={1.7}
+                className="shrink-0 transition-colors text-muted-foreground group-hover/nav:text-foreground"
+              />
+            </span>
+            <span className={cn("dashboard-nav-label", responsiveLabelClass)}>Switch User PIN</span>
           </button>
 
           {can("account.manage") && (
@@ -181,18 +210,24 @@ export function MainNav({ className, onItemClick, isNavPinned = false, ...props 
               href="/account"
               onClick={onItemClick}
               className={cn(
-                "dashboard-nav-item group/nav flex min-h-[30px] items-center gap-2 rounded-lg border px-2.5 py-[clamp(0.14rem,0.42vh,0.28rem)] text-sm font-medium leading-tight transition-all duration-200",
+                "dashboard-nav-item group/nav flex min-h-[46px] items-center gap-2 rounded-xl border px-2.5 py-[clamp(0.22rem,0.52vh,0.36rem)] text-sm font-medium leading-tight transition-all duration-200",
                 responsiveItemPaddingClass,
-                pathname === "/account" ? "gaming-nav-active text-foreground" : "text-muted-foreground"
+                responsiveItemAlignClass,
+                pathname === "/account" ? "dashboard-nav-item-active text-foreground" : "text-muted-foreground"
               )}
             >
-              <Settings
-                className={cn(
-                  "h-[18px] w-[18px] shrink-0 transition-colors",
-                  pathname === "/account" ? "dashboard-nav-icon-active" : "text-muted-foreground group-hover/nav:text-foreground"
-                )}
-              />
-              <span className={responsiveLabelClass}>Settings</span>
+              <span className="dashboard-nav-item-icon">
+                <HugeiconsIcon
+                  icon={Settings01Icon}
+                  size={18}
+                  strokeWidth={1.7}
+                  className={cn(
+                    "shrink-0 transition-colors",
+                    pathname === "/account" ? "dashboard-nav-icon-active" : "text-muted-foreground group-hover/nav:text-foreground"
+                  )}
+                />
+              </span>
+              <span className={cn("dashboard-nav-label", responsiveLabelClass)}>Settings</span>
             </Link>
           )}
 
@@ -202,16 +237,29 @@ export function MainNav({ className, onItemClick, isNavPinned = false, ...props 
               onItemClick?.();
             }}
             className={cn(
-              "dashboard-nav-item group/nav flex min-h-[30px] w-full items-center gap-2 rounded-lg border px-2.5 py-[clamp(0.14rem,0.42vh,0.28rem)] text-sm font-medium leading-tight transition-all duration-200",
+              "dashboard-nav-item group/nav flex min-h-[46px] w-full items-center gap-2 rounded-xl border px-2.5 py-[clamp(0.22rem,0.52vh,0.36rem)] text-sm font-medium leading-tight transition-all duration-200",
               responsiveItemPaddingClass,
+              responsiveItemAlignClass,
               "text-muted-foreground"
             )}
           >
-            <div className="relative flex h-5 w-5 items-center justify-center">
-              <Sun className={cn("absolute transition-transform duration-300", theme === "dark" ? "rotate-90 scale-0" : "rotate-0 scale-100")} />
-              <Moon className={cn("absolute transition-transform duration-300", theme === "dark" ? "rotate-0 scale-100" : "rotate-90 scale-0")} />
-            </div>
-            <span className={responsiveLabelClass}>Toggle Theme</span>
+            <span className="dashboard-nav-item-icon">
+              <div className="relative flex h-5 w-5 items-center justify-center">
+                <HugeiconsIcon
+                  icon={Sun03Icon}
+                  size={18}
+                  strokeWidth={1.7}
+                  className={cn("absolute transition-transform duration-300", theme === "dark" ? "rotate-90 scale-0" : "rotate-0 scale-100")}
+                />
+                <HugeiconsIcon
+                  icon={Moon02Icon}
+                  size={18}
+                  strokeWidth={1.7}
+                  className={cn("absolute transition-transform duration-300", theme === "dark" ? "rotate-0 scale-100" : "rotate-90 scale-0")}
+                />
+              </div>
+            </span>
+            <span className={cn("dashboard-nav-label", responsiveLabelClass)}>Toggle Theme</span>
           </button>
 
           <ButtonDestructive isNavPinned={isNavPinned} />

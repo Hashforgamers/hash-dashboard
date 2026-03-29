@@ -1,6 +1,6 @@
 import { ThemeProvider } from "next-themes";
 import { AuthProvider } from "./AuthProvider";
-import { Inter } from "next/font/google";
+import { Orbitron, Rajdhani } from "next/font/google";
 import type { Metadata, Viewport } from "next";
 
 import "./globals.css";
@@ -12,9 +12,16 @@ import { DashboardDataProvider } from "./context/DashboardDataContext";
 import { DashboardDataBus } from "./context/DashboardDataBus";
 import { TableDragScroll } from "./components/TableDragScroll";
 
-const inter = Inter({
+const orbitron = Orbitron({
   subsets: ["latin"],
-  variable: "--font-inter",
+  variable: "--font-display-base",
+  display: "swap",
+});
+
+const rajdhani = Rajdhani({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-ui-base",
   display: "swap",
 });
 
@@ -64,8 +71,8 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
-    { media: "(prefers-color-scheme: dark)", color: "#0b1220" },
+    { media: "(prefers-color-scheme: light)", color: "#050505" },
+    { media: "(prefers-color-scheme: dark)", color: "#050505" },
   ],
 };
 
@@ -75,9 +82,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html
+      lang="en"
+      suppressHydrationWarning
+      className={`${rajdhani.variable} ${orbitron.variable}`}
+    >
       <head />
-      <body className={`${inter.variable} bg-background text-foreground`}>
+      <body className="bg-background text-foreground">
         <AuthProvider>
           {" "}
           {/* Wrap inside AuthProvider */}

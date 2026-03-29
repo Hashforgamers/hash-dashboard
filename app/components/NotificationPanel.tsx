@@ -1,6 +1,7 @@
 "use client"
 
 import React, { useState } from 'react'
+import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Bell, X, Check, Clock, User, Calendar, Wallet, Gamepad2, FileWarning } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -270,8 +271,7 @@ export function NotificationPanel({
 
   const notificationCount = notifications.length
 
-
-  return (
+  const panelContent = (
     <AnimatePresence>
       {isOpen && (
         <>
@@ -589,4 +589,10 @@ export function NotificationPanel({
       )}
     </AnimatePresence>
   )
+
+  if (typeof document === "undefined") {
+    return panelContent
+  }
+
+  return createPortal(panelContent, document.body)
 }

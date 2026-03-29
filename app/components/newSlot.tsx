@@ -2893,14 +2893,86 @@ function TopBar({
 
   // Main TopBar return
   return (
-    <div className={cn("mb-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between", compact && "mb-2 gap-2")}>
-      <Card className={cn("rounded-xl border border-slate-300 bg-white/90 p-3 shadow-sm backdrop-blur-sm dark:border-slate-700 dark:bg-slate-800/50", compact && "p-2")}>
-        <div className="flex items-center gap-2">
-          <span className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">Select Console</span>
-          <div className="flex flex-wrap items-center gap-2">
-            {activeTypes.map((key) => {
-              const Icon = consoleIcons[key]
-              return (
+    <div className={cn("booking-toolbar mb-4 flex flex-col gap-3", compact && "mb-2 gap-2")}>
+      <div className="booking-toolbar-top">
+        <div className="booking-flow-card">
+          <div className="booking-flow-card__eyebrow">Booking flow</div>
+          <div className="booking-flow-card__title">Choose platform, select slots, create booking</div>
+          <div className="booking-flow-card__copy">
+            {selectedSlots.length > 0
+              ? `${selectedSlots.length} slot${selectedSlots.length > 1 ? "s" : ""} selected on ${selectedConsole}. Continue to create a booking.`
+              : "Start with a platform, then tap any available slot in the grid below."}
+          </div>
+        </div>
+
+        <div className="booking-toolbar-actions">
+          <Button
+            onClick={onNewBooking}
+            disabled={selectedSlots.length === 0}
+            className={cn(
+              "booking-primary-action rounded-lg shadow-lg transition-all duration-200",
+              "px-4 py-2 text-xs font-semibold sm:px-5 sm:text-sm",
+              selectedSlots.length > 0 
+                ? "ui-action-primary"
+                : "bg-slate-600 text-white cursor-not-allowed"
+            )}
+          >
+            <Plus className="mr-2 h-4 w-4" />
+            {selectedSlots.length > 0 ? `Create Booking (${selectedSlots.length})` : "Select Slots to Continue"}
+          </Button>
+
+          <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
+            <DropdownMenuTrigger asChild>
+              <Button 
+                variant="outline"
+                size="icon" 
+                className="booking-secondary-action ui-toolbar-menu rounded-lg"
+              >
+                <MoreVertical className="w-5 h-5" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56 border-slate-200 bg-white text-slate-900 shadow-lg dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100">
+              <DropdownMenuItem onClick={() => {
+                setShowManageView('change');
+                setMenuOpen(false);
+              }}>
+                <CalendarClock className="w-4 h-4 mr-2" />
+                Change Booking
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => {
+                setShowManageView('reject');
+                setMenuOpen(false);
+              }}>
+                <XCircle className="w-4 h-4 mr-2" />
+                Reject Booking
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => {
+                setShowManageView('list');
+                setMenuOpen(false);
+              }}>
+                <ListTodo className="w-4 h-4 mr-2" />
+                List Bookings
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      </div>
+
+      <Card className={cn("booking-console-panel rounded-xl border border-slate-300 bg-white/90 p-3 shadow-sm backdrop-blur-sm dark:border-slate-700 dark:bg-slate-800/50", compact && "p-3")}>
+        <div className="booking-console-panel__header">
+          <div>
+            <span className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">Console platform</span>
+            <p className="booking-console-panel__copy">Switch platform to narrow the slot map and avoid booking errors.</p>
+          </div>
+          <div className="booking-console-panel__meta">
+            <span>{activeTypes.length} active</span>
+            <span>{selectedConsole}</span>
+          </div>
+        </div>
+        <div className="booking-console-chip-row">
+          {activeTypes.map((key) => {
+            const Icon = consoleIcons[key]
+            return (
               <SegmentedButton
                 key={key}
                 active={selectedConsole === key}
@@ -2909,67 +2981,15 @@ function TopBar({
               >
                 {key}
               </SegmentedButton>
-            )})}
-            {activeTypes.length === 0 && (
-              <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs text-amber-200">
-                No consoles configured for booking. Add devices in `Manage Gaming Console`.
-              </div>
-            )}
-          </div>
+            )
+          })}
+          {activeTypes.length === 0 && (
+            <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs text-amber-200">
+              No consoles configured for booking. Add devices in `Manage Gaming Console`.
+            </div>
+          )}
         </div>
       </Card>
-      <div className="flex items-center gap-2 sm:gap-3">
-        <Button
-          onClick={onNewBooking}
-          disabled={selectedSlots.length === 0}
-          className={cn(
-            "rounded-lg shadow-lg transition-all duration-200",
-            "px-4 py-2 text-xs font-semibold sm:px-5 sm:text-sm",
-            selectedSlots.length > 0 
-              ? "ui-action-primary"
-              : "bg-slate-600 text-white cursor-not-allowed"
-          )}
-        >
-          <Plus className="mr-2 h-4 w-4" />
-          New Booking {selectedSlots.length > 0 && `(${selectedSlots.length})`}
-        </Button>
-
-        {/* Dropdown Menu for Manage Bookings */}
-        <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
-          <DropdownMenuTrigger asChild>
-            <Button 
-              variant="outline"
-              size="icon" 
-              className="ui-toolbar-menu rounded-lg"
-            >
-              <MoreVertical className="w-5 h-5" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56 border-slate-200 bg-white text-slate-900 shadow-lg dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100">
-            <DropdownMenuItem onClick={() => {
-              setShowManageView('change');
-              setMenuOpen(false);
-            }}>
-              <CalendarClock className="w-4 h-4 mr-2" />
-              Change Booking
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => {
-              setShowManageView('reject');
-              setMenuOpen(false);
-            }}>
-              <XCircle className="w-4 h-4 mr-2" />
-              Reject Booking
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => {
-              setShowManageView('list');
-              setMenuOpen(false);
-            }}>
-              <ListTodo className="w-4 h-4 mr-2" />
-              List Bookings
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
     </div>
   )
 }
@@ -3236,7 +3256,7 @@ function ScheduleGrid({
   }
 
   if (!matchingSlot) {
-    matchingSlot = findCoveringSlot(daySlots, time, gameConsole.id)
+    matchingSlot = findCoveringSlot(daySlots, time, gameConsole.id ?? undefined)
   }
 
   if (!matchingSlot) return
@@ -3282,130 +3302,164 @@ function ScheduleGrid({
     )
   }
 
-  const rows = days.map(day => {
+  const timelineSections = days.map((day) => {
     const daySlots = allSlots[day.fullDate] || []
 
-    return {
-      date: day.date,
-      fullDate: day.fullDate,
-      cells: uniqueTimes.map((time, timeIndex) => {
-        if (filteredConsoles.length === 0) {
-          return <span key={timeIndex} />
-        }
+    const lanes = filteredConsoles.map((gameConsole) => {
+      const cells = uniqueTimes.map((time, timeIndex) => {
+        const consoleSlots = daySlots.filter((slot) => {
+          const slotStartTime = slot.start_time.slice(0, 5)
+          return slotStartTime === time && slot.console_id === gameConsole.id
+        })
 
-        const timeSlots: React.ReactNode[] = []
-        
-        filteredConsoles.forEach(gameConsole => {
-          const consoleSlots = daySlots.filter(slot => {
-            const slotStartTime = slot.start_time.slice(0, 5)
-            return slotStartTime === time && slot.console_id === gameConsole.id
-          })
-
-          if (consoleSlots.length === 0) {
-            const coveringSlot = findCoveringSlot(daySlots, time, gameConsole.id)
-            if (coveringSlot) {
-              timeSlots.push(
+        if (consoleSlots.length === 0) {
+          const coveringSlot = findCoveringSlot(daySlots, time, gameConsole.id ?? undefined)
+          return (
+            <div
+              key={`${day.fullDate}-${gameConsole.id}-${timeIndex}`}
+              className={cn(
+                "booking-lane-cell",
+                compact ? "min-h-[32px]" : "min-h-[40px]"
+              )}
+            >
+              {coveringSlot ? (
                 <div
-                  key={`continuation-${day.fullDate}-${gameConsole.id}-${time}`}
                   onClick={() => handleSlotClick(day, time, gameConsole)}
-                  className={cn(
-                    "group relative h-full w-full cursor-pointer overflow-hidden rounded-md border border-amber-400/20 bg-amber-200/10 transition-colors hover:bg-amber-200/20",
-                    compact ? "min-h-[32px]" : "min-h-[40px]"
-                  )}
+                  className="booking-slot group relative h-full w-full cursor-pointer overflow-hidden rounded-md border border-amber-400/20 bg-amber-200/10 transition-colors hover:bg-amber-200/20"
                   title={`${gameConsole.name} slot continues (${coveringSlot.start_time?.slice(0, 5)}-${coveringSlot.end_time?.slice(0, 5)})`}
                 >
                   <div className="absolute inset-x-2 top-1/2 h-[2px] -translate-y-1/2 rounded-full bg-amber-300/45 group-hover:bg-amber-200/70" />
                   <div className="absolute right-2 top-1/2 h-1.5 w-1.5 -translate-y-1/2 rounded-full bg-amber-200/80 group-hover:bg-amber-100" />
-                  <div className="sr-only">
-                    Slot continues
-                  </div>
                 </div>
-              )
-            }
-            return
-          }
+              ) : (
+                <div className="booking-lane-cell__empty" />
+              )}
+            </div>
+          )
+        }
 
-          const slot = pickBestSlot(consoleSlots) // Prefer best candidate (open/high capacity) when duplicates exist
-          if (!slot) return
-          const isSelected = isSlotSelected(slot.slot_id, day.fullDate, slot.console_id)
-          
-          // ✅ Check if time has passed
-          const isPastTime = isPastSlotInIST(day.fullDate, slot.end_time, slot.start_time)
-          
-          // ✅ Check if fully booked
-          const isFullyBooked = (slot.available_slot || 0) === 0
-          
-          // ❌ Show RED X for both expired and fully booked
-         // ✅ Show GREY for PAST slots (clickable) and RED for FULLY BOOKED
-if (isPastTime) {
-  // PAST SLOT - Grey and clickable
-  timeSlots.push(
-    <div
-      key={`past-${day.fullDate}-${gameConsole.id}`}
-      onClick={() => handleSlotClick(day, time, gameConsole)} // ✅ Make clickable
-      className={cn(
-        "w-full h-full flex items-center justify-center bg-gray-500 dark:bg-gray-600 text-white rounded-md cursor-pointer hover:bg-gray-600 dark:hover:bg-gray-700 transition-colors",
-        compact ? "min-h-[32px]" : "min-h-[40px]"
-      )}
-      title="Past slot - Click to view past bookings"
-    >
-      <Clock className="h-4 w-4 mr-1" />
-      <span className="text-xs font-semibold">PAST</span>
-    </div>
-  )
-} else if (isFullyBooked) {
-  // FULLY BOOKED - Red X (not clickable)
-  timeSlots.push(
-    <div
-      key={`unavailable-${day.fullDate}-${gameConsole.id}`}
-      className={cn(
-        "w-full h-full flex items-center justify-center bg-red-600 text-white rounded-md cursor-not-allowed",
-        compact ? "min-h-[32px]" : "min-h-[40px]"
-      )}
-      title="Fully booked"
-    >
-      <X className="h-5 w-5 stroke-[3]" />
-    </div>
-  )
-}
+        const slot = pickBestSlot(consoleSlots)
+        if (!slot) {
+          return <div key={`${day.fullDate}-${gameConsole.id}-${timeIndex}`} className="booking-lane-cell" />
+        }
 
-          // ✅ Show available slots with count
-          else {
-            timeSlots.push(
-              <div
-                key={`${day.fullDate}-${slot.slot_id}`}
-                className={cn("w-full h-full", compact ? "min-h-[32px]" : "min-h-[40px]")}
-              >
-                <SlotPill
-                  label={`${gameConsole.name} - ${slot.available_slot} • ${Math.max(getSlotDurationMinutes(slot), 30)}m`}
-                  color={getConsoleColor(gameConsole.id)}
-                  icon={getConsoleIcon(gameConsole.type)}
-                  onClick={() => handleSlotClick(day, time, gameConsole)}
-                  selected={isSelected}
-                  disabled={false}
-                  compact={compact}
-                />
-              </div>
-            )
-          }
-        })
+        const isSelected = isSlotSelected(slot.slot_id, day.fullDate, slot.console_id)
+        const isPastTime = isPastSlotInIST(day.fullDate, slot.end_time, slot.start_time)
+        const isFullyBooked = (slot.available_slot || 0) === 0
+
+        let content: React.ReactNode
+
+        if (isPastTime) {
+          content = (
+            <div
+              onClick={() => handleSlotClick(day, time, gameConsole)}
+              className={cn(
+                "booking-lane-state booking-lane-state--past",
+                compact ? "min-h-[32px]" : "min-h-[40px]"
+              )}
+              title="Past slot - Click to view past bookings"
+            >
+              <Clock className="h-4 w-4 mr-1" />
+              <span className="text-xs font-semibold">Past</span>
+            </div>
+          )
+        } else if (isFullyBooked) {
+          content = (
+            <div
+              className={cn(
+                "booking-lane-state booking-lane-state--full",
+                compact ? "min-h-[32px]" : "min-h-[40px]"
+              )}
+              title="Fully booked"
+            >
+              <X className="h-5 w-5 stroke-[3]" />
+            </div>
+          )
+        } else {
+          content = (
+            <SlotPill
+              label={`${slot.available_slot} open • ${Math.max(getSlotDurationMinutes(slot), 30)}m`}
+              color={getConsoleColor(gameConsole.id)}
+              icon={getConsoleIcon(gameConsole.type)}
+              onClick={() => handleSlotClick(day, time, gameConsole)}
+              selected={isSelected}
+              disabled={false}
+              compact={compact}
+            />
+          )
+        }
 
         return (
           <div
-            key={`${day.fullDate}-${timeIndex}`}
-            className={cn("flex flex-row flex-wrap items-stretch h-full", compact ? "gap-0.5 p-0.5" : "gap-1 p-1")}
+            key={`${day.fullDate}-${gameConsole.id}-${timeIndex}`}
+            className={cn(
+              "booking-lane-cell",
+              compact ? "min-h-[32px]" : "min-h-[40px]"
+            )}
           >
-            {timeSlots}
+            {content}
           </div>
         )
-      }),
+      })
+
+      return {
+        key: `${day.fullDate}-${gameConsole.id}`,
+        consoleName: gameConsole.name,
+        consoleType: gameConsole.type,
+        cells,
+      }
+    })
+
+    return {
+      ...day,
+      lanes,
     }
   })
   const todayIST = getISTDateString(0)
+  const currentMinutes = getCurrentISTMinutes()
+  const todaySlots = allSlots[todayIST] || []
+
+  const availabilityBoard = filteredConsoles.map((gameConsole) => {
+    const consoleSlots = todaySlots.filter((slot) => slot.console_id === gameConsole.id)
+    const openSlots = consoleSlots.filter((slot) => Boolean(slot.is_available))
+
+    const openNow = openSlots.find((slot) => {
+      const start = toMinuteOfDay(slot.start_time)
+      const end = toMinuteOfDay(slot.end_time)
+      if (start === null || end === null) return false
+      return currentMinutes >= start && currentMinutes < end
+    })
+
+    const nextWindow = openSlots
+      .filter((slot) => {
+        const start = toMinuteOfDay(slot.start_time)
+        return start !== null && start >= currentMinutes && start <= currentMinutes + 60
+      })
+      .sort((a, b) => String(a.start_time).localeCompare(String(b.start_time)))[0]
+
+    const status = openNow ? "now" : nextWindow ? "next" : "full"
+    const detail = openNow
+      ? `${String(openNow.start_time).slice(0, 5)}-${String(openNow.end_time).slice(0, 5)}`
+      : nextWindow
+        ? `Next ${String(nextWindow.start_time).slice(0, 5)}`
+        : "No open window soon"
+
+    return {
+      key: String(gameConsole.id ?? gameConsole.name),
+      consoleName: gameConsole.name,
+      consoleType: gameConsole.type,
+      status,
+      detail,
+    }
+  })
+
+  const availableNowCount = availabilityBoard.filter((item) => item.status === "now").length
+  const nextSoonCount = availabilityBoard.filter((item) => item.status === "next").length
+  const fullCount = availabilityBoard.filter((item) => item.status === "full").length
 
   if (uniqueTimes.length === 0) {
     return (
-      <Card className="rounded-2xl border border-gray-700 bg-gray-800/30 backdrop-blur-sm overflow-hidden">
+      <Card className="booking-schedule-card rounded-2xl border border-gray-700 bg-gray-800/30 backdrop-blur-sm overflow-hidden">
         <div className="flex items-center justify-center py-12">
           <div className="text-center">
             <CalendarDays className="w-12 h-12 text-gray-500 mx-auto mb-3" />
@@ -3417,7 +3471,43 @@ if (isPastTime) {
   }
 
   return (
-      <Card className="overflow-hidden rounded-2xl border border-slate-300 bg-white/90 shadow-sm backdrop-blur-sm dark:border-gray-700 dark:bg-gray-800/30">
+      <Card className="booking-schedule-card overflow-hidden rounded-2xl border border-slate-300 bg-white/90 shadow-sm backdrop-blur-sm dark:border-gray-700 dark:bg-gray-800/30">
+        <div className="booking-schedule-header">
+          <div>
+            <div className="booking-schedule-header__eyebrow">Availability board</div>
+            <div className="booking-schedule-header__title">See what can be booked first, then confirm on the timeline</div>
+          </div>
+          <div className="booking-schedule-header__meta">
+            <span>{filteredConsoles.length} consoles</span>
+            <span>{selectedSlots.length} selected</span>
+          </div>
+        </div>
+        <div className="booking-availability-board">
+          <div className="booking-availability-summary">
+            <div className="booking-availability-summary__item is-live">
+              <span className="booking-availability-summary__label">Available now</span>
+              <span className="booking-availability-summary__value">{availableNowCount}</span>
+            </div>
+            <div className="booking-availability-summary__item is-cyan">
+              <span className="booking-availability-summary__label">Next 60 min</span>
+              <span className="booking-availability-summary__value">{nextSoonCount}</span>
+            </div>
+            <div className="booking-availability-summary__item is-warm">
+              <span className="booking-availability-summary__label">Fully booked</span>
+              <span className="booking-availability-summary__value">{fullCount}</span>
+            </div>
+          </div>
+
+          <div className="booking-availability-grid">
+            {availabilityBoard.map((item) => (
+              <div key={item.key} className={cn("booking-availability-card", `status-${item.status}`)}>
+                <div className="booking-availability-card__type">{item.consoleType}</div>
+                <div className="booking-availability-card__name">{item.consoleName}</div>
+                <div className="booking-availability-card__detail">{item.detail}</div>
+              </div>
+            ))}
+          </div>
+        </div>
         {detectedDurations.length > 1 && (
         <div className="border-b border-cyan-200 bg-cyan-50 px-4 py-2 text-xs text-cyan-800 dark:border-cyan-500/20 dark:bg-cyan-500/10 dark:text-cyan-100/90">
           Mixed slot durations detected ({detectedDurations.join("m, ")}m). In-between cells show continuation of longer slots.
@@ -3450,48 +3540,46 @@ if (isPastTime) {
           </div>
 
           <div className="border-t border-slate-300 dark:border-gray-700">
-            {rows.map((row) => {
-              const isTodayRow = row.fullDate === todayIST
+            {timelineSections.map((section) => {
+              const isTodaySection = section.fullDate === todayIST
               return (
                 <div
-                  key={row.fullDate}
+                  key={section.fullDate}
                   className={cn(
-                    "grid border-b border-slate-200 last:border-b-0 transition-colors dark:border-gray-700/50",
-                    isTodayRow
-                      ? "bg-cyan-50 ring-1 ring-inset ring-cyan-300/50 dark:bg-cyan-500/10 dark:ring-cyan-400/35"
-                      : "hover:bg-slate-100/70 dark:hover:bg-gray-700/20",
-                    compact ? "gap-1 p-2 py-1.5" : "gap-2 p-4 py-3"
+                    "booking-timeline-section border-b border-slate-200 last:border-b-0 dark:border-gray-700/50",
+                    isTodaySection && "booking-timeline-section--today"
                   )}
-                  style={{ gridTemplateColumns: `80px repeat(${uniqueTimes.length}, minmax(${compact ? 96 : 110}px, 1fr))` }}
                 >
-                  <div
-                    className={cn(
-                      "sticky left-0 z-20 flex items-center justify-center rounded-lg px-2 py-2 text-sm font-bold backdrop-blur-sm",
-                      isTodayRow
-                        ? "bg-cyan-100 text-cyan-900 ring-1 ring-cyan-300/60 dark:bg-cyan-500/20 dark:text-cyan-100 dark:ring-cyan-300/35"
-                        : "bg-slate-700/95 text-white"
-                    )}
-                  >
-                    <span>{row.date}</span>
-                    {isTodayRow && (
-                      <span className="ml-1.5 rounded-full bg-cyan-200 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-cyan-900 dark:bg-cyan-400/20 dark:text-cyan-100">
-                        Today
-                      </span>
-                    )}
-                  </div>
-
-                  {row.cells.map((content, idx) => (
+                  <div className="booking-timeline-section__header">
                     <div
-                      key={`${row.fullDate}-cell-${idx}`}
                       className={cn(
-                        "rounded-lg border border-slate-300 bg-white/85 backdrop-blur-sm dark:border-gray-700 dark:bg-gray-800/50",
-                        isTodayRow && "border-cyan-300 bg-cyan-50/70 dark:border-cyan-500/30 dark:bg-cyan-500/5",
-                        compact ? "min-h-[36px]" : "min-h-[44px]"
+                        "booking-timeline-section__date",
+                        isTodaySection && "is-today"
                       )}
                     >
-                      {content}
+                      <span>{section.date}</span>
+                      {isTodaySection && <span className="booking-timeline-section__badge">Today</span>}
                     </div>
-                  ))}
+                    <div className="booking-timeline-section__copy">
+                      One lane per {selectedConsole} console. Tap open cells to create a booking.
+                    </div>
+                  </div>
+
+                  <div className="booking-timeline-lanes">
+                    {section.lanes.map((lane) => (
+                      <div
+                        key={lane.key}
+                        className="booking-timeline-lane"
+                        style={{ gridTemplateColumns: `112px repeat(${uniqueTimes.length}, minmax(${compact ? 96 : 110}px, 1fr))` }}
+                      >
+                        <div className="booking-timeline-lane__label">
+                          <div className="booking-timeline-lane__name">{lane.consoleName}</div>
+                          <div className="booking-timeline-lane__type">{lane.consoleType}</div>
+                        </div>
+                        {lane.cells}
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )
             })}
@@ -4989,7 +5077,7 @@ useEffect(() => {
         )}
         {embedded ? (
           <>
-            <div className="shrink-0 space-y-3 sm:space-y-4">
+            <div className="booking-embedded-shell shrink-0 space-y-3 sm:space-y-4">
               <TopBar
                 selectedSlots={selectedSlots}
                 onNewBooking={handleNewBooking}

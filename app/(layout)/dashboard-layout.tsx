@@ -1,7 +1,22 @@
 "use client"
 
 import { useCallback, useEffect, useMemo, useState } from "react"
-import { Clock, Gamepad, Gamepad2, Headphones, Menu, Monitor, Pin, PinOff, RefreshCw, User, Wifi, WifiOff, X } from "lucide-react"
+import {
+  Clock01Icon,
+  ComputerIcon,
+  GameController02Icon,
+  GamepadDirectionalIcon,
+  Menu01Icon,
+  PinIcon,
+  PinOffIcon,
+  RefreshIcon,
+  User,
+  VirtualRealityVrIcon,
+  Wifi,
+  WifiOff,
+  X,
+} from "@hugeicons/core-free-icons"
+import { HugeiconsIcon } from "@hugeicons/react"
 import { usePathname, useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { MainNav } from "../components/main-nav"
@@ -12,6 +27,7 @@ import { useSubscription } from "@/hooks/useSubscription"
 import { useSocket } from "../context/SocketContext"
 import { useDashboardData } from "../context/DashboardDataContext"
 import { NotificationButton } from "../components/NotificationButton"
+import { HASH_LOGO_URL } from "@/src/config/branding"
 
 interface DashboardLayoutProps {
   children: React.ReactNode
@@ -39,10 +55,10 @@ export function DashboardLayout({ children, contentScroll = "page" }: DashboardL
 
   const platforms = useMemo(() => {
     const platformMap = [
-      { name: "PC", type: "pc", icon: Monitor, color: "#3b82f6" },
-      { name: "PS5", type: "ps5", icon: Gamepad2, color: "#a855f7" },
-      { name: "Xbox", type: "xbox", icon: Gamepad, color: "#10b981" },
-      { name: "VR", type: "vr", icon: Headphones, color: "#f59e0b" },
+      { name: "PC", type: "pc", icon: ComputerIcon, color: "#38bdf8" },
+      { name: "PS5", type: "ps5", icon: GameController02Icon, color: "#a855f7" },
+      { name: "Xbox", type: "xbox", icon: GamepadDirectionalIcon, color: "#16FF00" },
+      { name: "VR", type: "vr", icon: VirtualRealityVrIcon, color: "#f59e0b" },
     ]
     return platformMap.map((platform) => {
       const source = Array.isArray(consoles) ? consoles.filter((item: any) => item?.type === platform.type) : []
@@ -112,7 +128,7 @@ export function DashboardLayout({ children, contentScroll = "page" }: DashboardL
       <header className="dashboard-nav dashboard-nav-surface dashboard-nav-divider fixed left-0 right-0 top-0 z-20 flex items-center justify-between border-b px-4 py-3 backdrop-blur md:hidden">
         <div className="flex items-center">
           <Image
-            src="/hash_for_gamer_logo.png"
+            src={HASH_LOGO_URL}
             alt="Hash Logo"
             width={36}
             height={36}
@@ -126,7 +142,11 @@ export function DashboardLayout({ children, contentScroll = "page" }: DashboardL
           onClick={() => setIsNavOpen(!isNavOpen)}
           className="md:hidden"
         >
-          {isNavOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+          {isNavOpen ? (
+            <HugeiconsIcon icon={X} size={24} strokeWidth={1.8} />
+          ) : (
+            <HugeiconsIcon icon={Menu01Icon} size={24} strokeWidth={1.8} />
+          )}
         </Button>
       </header>
 
@@ -135,7 +155,7 @@ export function DashboardLayout({ children, contentScroll = "page" }: DashboardL
           className={`
             dashboard-nav dashboard-nav-surface dashboard-nav-divider group fixed left-0 top-0 z-30 flex h-full w-[86vw] max-w-72 flex-col overflow-hidden border-r p-3 backdrop-blur-md transition-transform duration-300 ease-out
             md:sticky md:top-0 md:h-dvh md:w-72 md:max-w-none md:translate-x-0 md:shrink-0
-            ${isNavPinned ? "xl:w-72" : "xl:w-[76px] xl:hover:w-72"}
+            ${isNavPinned ? "xl:w-72" : "xl:w-[68px] xl:px-0 xl:py-3 xl:hover:px-3 xl:hover:w-72"}
             ${isNavOpen ? "translate-x-0" : "-translate-x-full"}
           `}
         >
@@ -148,24 +168,53 @@ export function DashboardLayout({ children, contentScroll = "page" }: DashboardL
               isNavPinned ? "xl:inline-flex" : "xl:hidden xl:group-hover:inline-flex"
             }`}
           >
-            {isNavPinned ? <PinOff className="h-4 w-4" /> : <Pin className="h-4 w-4" />}
+            {isNavPinned ? (
+              <HugeiconsIcon icon={PinOffIcon} size={16} strokeWidth={1.8} />
+            ) : (
+              <HugeiconsIcon icon={PinIcon} size={16} strokeWidth={1.8} />
+            )}
           </button>
 
-          <div className="mb-3 hidden items-end space-x-2 overflow-hidden md:mb-4 md:flex">
+          <div className={`dashboard-nav-brand mb-3 hidden overflow-hidden px-3 py-3 md:mb-4 md:flex ${isNavPinned ? "items-center justify-start gap-3" : "items-center justify-center gap-0 xl:mx-3 xl:group-hover:mx-0 xl:group-hover:items-center xl:group-hover:justify-start xl:group-hover:gap-3"}`}>
             <Image
-              src="/hash_for_gamer_logo.png"
+              src={HASH_LOGO_URL}
               alt="Hash Logo"
               width={36}
               height={36}
-              className="shrink-0 rounded-md"
+              className="dashboard-nav-brand-logo shrink-0 rounded-xl"
+            />
+            <div className={`${isNavPinned ? "block" : "hidden xl:group-hover:block"}`}>
+              <div className="dashboard-nav-brand-title">Hash</div>
+              <div className="dashboard-nav-brand-subtitle">Gaming OS</div>
+            </div>
+          </div>
+
+          <div className={`dashboard-nav-rail min-h-0 flex-1 ${isNavPinned ? "" : "xl:px-0 xl:group-hover:px-0"}`}>
+            <MainNav
+              className={`dashboard-nav-track min-h-0 flex-1 ${isNavPinned ? "items-start" : "items-start xl:items-center xl:group-hover:items-start"}`}
+              onItemClick={() => setIsNavOpen(false)}
+              isNavPinned={isNavPinned}
             />
           </div>
 
-          <MainNav
-            className="min-h-0 flex-1 items-start"
-            onItemClick={() => setIsNavOpen(false)}
-            isNavPinned={isNavPinned}
-          />
+          <div
+            className={`dashboard-nav-footer mt-3 hidden md:block ${isNavPinned ? "" : "xl:px-0 xl:group-hover:px-0"}`}
+          >
+            <div className="dashboard-nav-feature-card">
+              <div className="dashboard-nav-feature-eyebrow">
+                <span className={`dashboard-nav-feature-dot ${isConnected ? "is-live" : ""}`} />
+                {isConnected ? "Operator Network" : "Offline Mode"}
+              </div>
+              <div className={`${isNavPinned ? "block" : "hidden xl:group-hover:block"}`}>
+                <div className="dashboard-nav-feature-title">
+                  {activeStaff?.name ? activeStaff.name : "Hash Operator"}
+                </div>
+                <div className="dashboard-nav-feature-copy">
+                  {vendorId ? `Cafe #${vendorId}` : "Console floor synced"}
+                </div>
+              </div>
+            </div>
+          </div>
         </aside>
 
         {isNavOpen && (
@@ -213,17 +262,17 @@ export function DashboardLayout({ children, contentScroll = "page" }: DashboardL
 
           {showGlobalRibbon && (
             <div className="dashboard-nav-divider shrink-0 border-t px-2 pb-2 pt-1.5 sm:px-3 md:px-4">
-              <div className="dashboard-module-panel flex flex-wrap items-center justify-between gap-1.5 rounded-lg px-2 py-1.5 text-[11px]">
+              <div className="dashboard-module-panel dashboard-global-ribbon flex flex-wrap items-center justify-between gap-2 rounded-[20px] px-3 py-2 text-[11px]">
                 <div className="flex flex-wrap items-center gap-1.5 text-slate-300">
                   <span className="inline-flex items-center gap-1 rounded-md border border-emerald-400/30 bg-emerald-500/10 px-1.5 py-0.5 text-emerald-200">
-                    <Clock className="h-3.5 w-3.5" />
+                    <HugeiconsIcon icon={Clock01Icon} size={14} strokeWidth={1.8} />
                     {nowISTTimeText}
                   </span>
                   <span className="inline-flex items-center gap-1 rounded-md border border-border px-1.5 py-0.5">
                     {nowISTDateText}
                   </span>
                   <span className="inline-flex items-center gap-1 rounded-md border border-border px-1.5 py-0.5">
-                    <User className="h-3.5 w-3.5 text-cyan-300" />
+                    <HugeiconsIcon icon={User} size={14} strokeWidth={1.8} className="text-cyan-300" />
                     {activeStaff?.name || "Owner"}
                   </span>
                   <span
@@ -233,7 +282,11 @@ export function DashboardLayout({ children, contentScroll = "page" }: DashboardL
                         : "border-amber-400/40 bg-amber-500/10 text-amber-200"
                     }`}
                   >
-                    {isConnected ? <Wifi className="h-3.5 w-3.5" /> : <WifiOff className="h-3.5 w-3.5" />}
+                    {isConnected ? (
+                      <HugeiconsIcon icon={Wifi} size={14} strokeWidth={1.8} />
+                    ) : (
+                      <HugeiconsIcon icon={WifiOff} size={14} strokeWidth={1.8} />
+                    )}
                     {isConnected ? "Live" : "Syncing"}
                   </span>
                   {platforms.map((platform) => {
@@ -244,7 +297,7 @@ export function DashboardLayout({ children, contentScroll = "page" }: DashboardL
                         className="inline-flex items-center gap-1 rounded-md border border-border px-1.5 py-0.5"
                         title={`${platform.name}: ${platform.used}/${platform.total}`}
                       >
-                        <PlatformIcon className="h-3.5 w-3.5" style={{ color: platform.color }} />
+                        <HugeiconsIcon icon={PlatformIcon} size={14} strokeWidth={1.8} style={{ color: platform.color }} />
                         <span>{platform.used}/{platform.total}</span>
                       </span>
                     )
@@ -260,7 +313,12 @@ export function DashboardLayout({ children, contentScroll = "page" }: DashboardL
                     title="Refresh"
                     aria-label="Refresh dashboard data"
                   >
-                    <RefreshCw className={`h-3.5 w-3.5 ${isManualRefreshing ? "animate-spin" : ""}`} />
+                    <HugeiconsIcon
+                      icon={RefreshIcon}
+                      size={14}
+                      strokeWidth={1.8}
+                      className={isManualRefreshing ? "animate-spin" : ""}
+                    />
                     {isManualRefreshing ? "Syncing" : "Refresh"}
                   </button>
                 </div>

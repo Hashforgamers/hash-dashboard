@@ -23,11 +23,11 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Loader2, Shield, Gamepad2, Lock, Mail, KeyRound } from "lucide-react";
+import { Loader2, Shield, KeyRound } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
 import { LOGIN_URL } from "../../../src/config/env";
-import { useTheme } from "next-themes";
+import { HASH_LOGO_URL } from "@/src/config/branding";
 
 const formSchema = z.object({
   email: z.string().email({ message: "Invalid email address" }),
@@ -61,7 +61,6 @@ export default function LoginPage() {
     confirm_password: "",
   });
   const lastAttemptRef = useRef(0);
-  const { resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -445,11 +444,7 @@ export default function LoginPage() {
                   />
                 ) : (
                   <Image
-                    src={
-                      resolvedTheme === "dark"
-                        ? "/whitehashlogo.png"
-                        : "/blackhashlogo.png"
-                    }
+                    src={HASH_LOGO_URL}
                     alt="Hash for Gamers"
                     width={120}
                     height={120}
@@ -459,10 +454,10 @@ export default function LoginPage() {
                 <div className="absolute inset-0 rounded-full bg-emerald-400/20 blur-xl animate-pulse"></div>
               </div>
             </div>
-            <CardTitle className="premium-heading mb-2 text-3xl font-bold tracking-tight text-foreground">
-              Cafe Control Login
+            <CardTitle className="premium-heading mb-2 text-3xl font-bold tracking-[0.03em] text-foreground">
+              Hash Login
             </CardTitle>
-            <CardDescription className="premium-subtle text-base">
+            <CardDescription className="premium-subtle text-sm">
               Enter your operator credentials to access live gaming operations.
             </CardDescription>
           </CardHeader>
@@ -478,8 +473,7 @@ export default function LoginPage() {
                   name="email"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-foreground font-medium flex items-center gap-2">
-                        <Mail className="w-4 h-4 text-cyan-400" />
+                      <FormLabel className="text-[10px] font-medium uppercase tracking-[0.18em] text-foreground">
                         Email Address
                       </FormLabel>
                       <FormControl>
@@ -487,7 +481,7 @@ export default function LoginPage() {
                           placeholder="Enter your email"
                           type="email"
                           autoComplete="email"
-                          className="h-12 bg-input border-input text-foreground placeholder:text-muted-foreground focus:border-cyan-400 focus:ring-cyan-400/20"
+                          className="h-12 rounded-2xl border-white/10 bg-white/5 text-foreground placeholder:text-muted-foreground focus:border-cyan-400 focus:ring-cyan-400/20"
                           {...field}
                           onChange={(e) => {
                             field.onChange(e);
@@ -506,13 +500,12 @@ export default function LoginPage() {
                   render={({ field }) => (
                     <FormItem>
                       <div className="flex justify-between items-center">
-                        <FormLabel className="text-foreground font-medium flex items-center gap-2">
-                          <Lock className="w-4 h-4 text-cyan-400" />
+                        <FormLabel className="text-[10px] font-medium uppercase tracking-[0.18em] text-foreground">
                           Password
                         </FormLabel>
                         <Link
                           href="/login/forget-password"
-                          className="text-sm text-primary hover:text-primary/80 transition-colors duration-200 hover:underline"
+                          className="text-[10px] uppercase tracking-[0.16em] text-[#F97316] transition-colors duration-200 hover:text-[#fb923c]"
                         >
                           Forgot password?
                         </Link>
@@ -521,7 +514,7 @@ export default function LoginPage() {
                         <PasswordInput
                           placeholder="Enter your password"
                           autoComplete="current-password"
-                          className="h-12 bg-input border-input text-foreground placeholder:text-muted-foreground focus:border-cyan-400 focus:ring-cyan-400/20"
+                          className="h-12 rounded-2xl border-white/10 bg-white/5 text-foreground placeholder:text-muted-foreground focus:border-cyan-400 focus:ring-cyan-400/20"
                           {...field}
                           onChange={(e) => {
                             field.onChange(e);
@@ -545,7 +538,7 @@ export default function LoginPage() {
 
                 <Button
                   type="submit"
-                  className="w-full h-12 rounded-lg bg-gradient-to-r from-lime-500 via-emerald-500 to-cyan-500 font-semibold text-primary-foreground shadow-lg transition-all duration-200 hover:from-lime-400 hover:via-emerald-500 hover:to-cyan-400 hover:shadow-cyan-500/20 active:scale-[0.98]"
+                  className="h-12 w-full rounded-full border border-[#16FF00]/70 bg-[#16FF00] text-[11px] font-bold uppercase tracking-[0.18em] text-black shadow-[0_16px_38px_rgba(22,255,0,0.2)] transition-all duration-200 hover:bg-[#12e000] hover:shadow-[0_18px_40px_rgba(22,255,0,0.28)] active:scale-[0.98]"
                   disabled={loading}
                 >
                   {loading ? (
@@ -554,25 +547,18 @@ export default function LoginPage() {
                       Signing In...
                     </>
                   ) : (
-                    <>
-                      <Gamepad2 className="mr-2 h-5 w-5" />
-                      Sign In
-                    </>
+                    "Sign In"
                   )}
                 </Button>
               </form>
             </Form>
 
-            <div className="flex items-center justify-center gap-4 pt-4">
-              <div className="flex items-center gap-2 text-muted-foreground text-xs">
-                <Shield className="w-3 h-3" />
-                <span>Secure Login</span>
-              </div>
-              <div className="w-1 h-1 bg-muted-foreground rounded-full"></div>
-              <div className="flex items-center gap-2 text-muted-foreground text-xs">
-                <Lock className="w-3 h-3" />
-                <span>256-bit SSL</span>
-              </div>
+            <div className="flex items-center justify-center gap-3 pt-4 text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
+              <span>Secure</span>
+              <div className="h-1 w-1 rounded-full bg-muted-foreground" />
+              <span>Vendor Access</span>
+              <div className="h-1 w-1 rounded-full bg-muted-foreground" />
+              <span>Hash OS</span>
             </div>
           </CardContent>
         </Card>
