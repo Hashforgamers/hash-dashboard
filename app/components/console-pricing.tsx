@@ -30,6 +30,12 @@ import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useModuleCache } from "@/app/hooks/useModuleCache";
 import { useDashboardData } from "@/app/context/DashboardDataContext";
+import {
+  normalizeConsoleSlug,
+  resolveConsoleColor,
+  resolveConsoleIcon,
+  type ConsoleCatalogItem,
+} from "./console-catalog";
 
 interface ConsoleType {
   type: string;
@@ -40,7 +46,7 @@ interface ConsoleType {
   description: string;
 }
 
-const consoleTypes: ConsoleType[] = [
+const DEFAULT_CONSOLE_TYPES: ConsoleType[] = [
   {
     type: "pc",
     name: "PC",
@@ -74,6 +80,41 @@ const consoleTypes: ConsoleType[] = [
     description: "Virtual Reality Systems",
   },
 ];
+
+const PRETTY_LABEL_OVERRIDES: Record<string, string> = {
+  pc: "PC",
+  playstation: "PlayStation",
+  xbox: "Xbox",
+  vr_headset: "VR Headset",
+  private_room: "Private Room",
+  vip_room: "VIP Room",
+  bootcamp_room: "Bootcamp Room",
+};
+
+const toTitleCase = (value: string) =>
+  value
+    .split("_")
+    .filter(Boolean)
+    .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
+    .join(" ");
+
+const getConsoleDisplayName = (slug: string, fallback?: string) =>
+  String(fallback || PRETTY_LABEL_OVERRIDES[slug] || toTitleCase(slug || "Console")).trim();
+
+const getPricingAliases = (type: string): string[] => {
+  const normalized = normalizeConsoleSlug(type);
+  if (normalized === "playstation") return ["playstation", "ps5", "ps"];
+  if (normalized === "vr_headset") return ["vr_headset", "vr"];
+  return [normalized];
+};
+
+const readPricingValue = (pricingPayload: Record<string, unknown>, type: string): number => {
+  for (const alias of getPricingAliases(type)) {
+    const raw = pricingPayload?.[alias];
+    if (raw !== undefined && raw !== null) return parseCurrencyInput(raw);
+  }
+  return 0;
+};
 
 interface PricingState {
   [key: string]: {
@@ -226,13 +267,13 @@ const normalizeSquadPricing = (rawData: unknown): SquadPricingState => {
 };
 
 const round2 = (value: number) => Math.round((value + Number.EPSILON) * 100) / 100;
-const parseCurrencyInput = (value: unknown): number => {
+function parseCurrencyInput(value: unknown): number {
   if (typeof value === "number") return Number.isFinite(value) ? value : 0;
   if (typeof value !== "string") return 0;
   const normalized = value.replace(/[^0-9.-]/g, "");
   const parsed = Number(normalized);
   return Number.isFinite(parsed) ? parsed : 0;
-};
+}
 const discountToFinalUnitAmount = (base: number, discountPercent: number) =>
   round2(Math.max(0, base - (base * Math.max(0, Math.min(90, discountPercent))) / 100));
 const discountToFinalTotalAmount = (base: number, discountPercent: number, players: number) =>
@@ -248,9 +289,10 @@ const squadRowKey = (group: string, players: number) => `${group}-${players}`;
 
 export default function ConsolePricing() {
   const { vendorId: contextVendorId } = useDashboardData();
+  const [consoleTypes, setConsoleTypes] = useState<ConsoleType[]>(DEFAULT_CONSOLE_TYPES);
   const [prices, setPrices] = useState<PricingState>(() => {
     const initialPrices: PricingState = {};
-    consoleTypes.forEach((c) => {
+    DEFAULT_CONSOLE_TYPES.forEach((c) => {
       initialPrices[c.type] = { value: 0, isValid: true, hasChanged: false };
     });
     return initialPrices;
@@ -346,10 +388,15 @@ export default function ConsolePricing() {
       const res = await fetch(`${DASHBOARD_URL}/api/vendor/${vendorId}/console-pricing`);
       if (!res.ok) throw new Error("Failed");
       const data = await res.json();
+      const pricingPayload = data && typeof data === "object" ? (data as Record<string, unknown>) : {};
+      const dynamicTypes = new Set<string>([
+        ...consoleTypes.map((consoleType) => normalizeConsoleSlug(consoleType.type)),
+        ...Object.keys(pricingPayload).map((key) => normalizeConsoleSlug(key)),
+      ]);
       const newPrices: PricingState = {};
-      consoleTypes.forEach((c) => {
-        const normalizedValue = parseCurrencyInput(data?.[c.type]);
-        newPrices[c.type] = { value: normalizedValue, isValid: true, hasChanged: false };
+      dynamicTypes.forEach((type) => {
+        if (!type) return;
+        newPrices[type] = { value: readPricingValue(pricingPayload, type), isValid: true, hasChanged: false };
       });
       return newPrices;
     },
@@ -447,16 +494,93 @@ export default function ConsolePricing() {
 
   useEffect(() => {
     if (!vendorId) return;
+    let mounted = true;
+
+    const loadConsoleTypes = async () => {
+      try {
+        const [catalogRes, gamesRes] = await Promise.all([
+          fetch(`${DASHBOARD_URL}/api/console-types?vendor_id=${vendorId}`),
+          fetch(`${DASHBOARD_URL}/api/vendor/${vendorId}/available-games`),
+        ]);
+
+        const catalogJson = catalogRes.ok ? await catalogRes.json() : {};
+        const gamesJson = gamesRes.ok ? await gamesRes.json() : [];
+        const catalogItems = Array.isArray(catalogJson?.console_types)
+          ? (catalogJson.console_types as ConsoleCatalogItem[])
+          : [];
+        const availableGameItems = Array.isArray(gamesJson)
+          ? gamesJson
+          : gamesJson?.games || gamesJson?.available_games || gamesJson?.data || [];
+
+        const dynamicTypes = new Map<string, ConsoleType>();
+        const addType = (rawSlug: unknown, rawName?: unknown, rawIcon?: unknown) => {
+          const slug = normalizeConsoleSlug(String(rawSlug || ""));
+          if (!slug || dynamicTypes.has(slug)) return;
+          const displayName = getConsoleDisplayName(slug, typeof rawName === "string" ? rawName : undefined);
+          dynamicTypes.set(slug, {
+            type: slug,
+            name: displayName,
+            icon: resolveConsoleIcon(typeof rawIcon === "string" ? rawIcon : undefined, slug),
+            color: "bg-cyan-500/10",
+            iconColor: resolveConsoleColor(slug),
+            description: `${displayName} systems`,
+          });
+        };
+
+        catalogItems
+          .filter((item) => item?.is_active !== false)
+          .forEach((item) => addType(item.slug, item.display_name, item.icon));
+
+        availableGameItems.forEach((game: any) => {
+          addType(game?.platform_type || game?.game_name, game?.display_name || game?.game_name);
+        });
+
+        if (!mounted || dynamicTypes.size === 0) return;
+        const mergedTypes = Array.from(dynamicTypes.values());
+        setConsoleTypes(mergedTypes);
+        setPrices((prev) => {
+          const next = { ...prev };
+          mergedTypes.forEach((consoleType) => {
+            if (!next[consoleType.type]) {
+              next[consoleType.type] = { value: 0, isValid: true, hasChanged: false };
+            }
+          });
+          return next;
+        });
+      } catch {
+        // Keep fallback defaults if catalog fetch fails.
+      }
+    };
+
+    loadConsoleTypes();
+
+    return () => {
+      mounted = false;
+    };
+  }, [vendorId]);
+
+  useEffect(() => {
+    if (!vendorId) return;
     if (cachedBasePricing && Object.keys(cachedBasePricing).length > 0) {
-      setPrices(cachedBasePricing);
+      setPrices((prev) => {
+        const next = { ...prev, ...cachedBasePricing };
+        consoleTypes.forEach((consoleType) => {
+          if (!next[consoleType.type]) {
+            next[consoleType.type] = { value: 0, isValid: true, hasChanged: false };
+          }
+        });
+        return next;
+      });
       return;
     }
     refreshBasePricingCache(true)
       .then((data) => {
-        if (data) setPrices(data);
+        if (data) {
+          setPrices((prev) => ({ ...prev, ...data }));
+        }
       })
       .catch((error) => console.error("Error fetching prices:", error));
-  }, [vendorId, cachedBasePricing, refreshBasePricingCache]);
+  }, [vendorId, cachedBasePricing, consoleTypes, refreshBasePricingCache]);
 
   useEffect(() => {
     if (vendorId && activeTab === "offers") {
@@ -729,10 +853,12 @@ export default function ConsolePricing() {
     if (Object.values(errors).length > 0 || Object.values(prices).some((p) => !p.isValid)) return;
     setIsLoading(true);
     try {
-      const payload = Object.entries(prices).reduce(
-        (acc, [key, val]) => { acc[key] = val.value; return acc; },
-        {} as Record<string, number>
-      );
+      const payload = consoleTypes.reduce((acc, consoleType) => {
+        const key = normalizeConsoleSlug(consoleType.type);
+        const value = prices[key]?.value ?? prices[consoleType.type]?.value ?? 0;
+        acc[key] = value;
+        return acc;
+      }, {} as Record<string, number>);
       const response = await fetch(`${DASHBOARD_URL}/api/vendor/${vendorId}/console-pricing`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -860,7 +986,9 @@ export default function ConsolePricing() {
   };
 
   const getConsoleIcon = (type: string) =>
-    consoleTypes.find((c) => c.type === type.toLowerCase())?.icon || Monitor;
+    consoleTypes.find((c) => normalizeConsoleSlug(c.type) === normalizeConsoleSlug(type))?.icon ||
+    resolveConsoleIcon(undefined, type) ||
+    Monitor;
 
   const updateControllerBasePrice = (consoleType: string, value: string) => {
     const nextValue = Math.max(0, parseFloat(value) || 0);
