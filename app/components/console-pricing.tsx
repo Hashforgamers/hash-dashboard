@@ -1510,17 +1510,15 @@ export default function ConsolePricing() {
                 </div>
 
                 {/* Price Input */}
-                <p className="table-header-text mb-2">Price per Slot</p>
-                <div className="relative">
-                  <IndianRupee className="absolute left-3 top-1/2 -translate-y-1/2 icon-md text-muted-foreground" />
-                  <Input
-                    type="text"
-                    inputMode="decimal"
-                    value={String(prices[console.type]?.value ?? "")}
-                    onChange={(e) => handlePriceChange(console.type, e.target.value)}
-                    className={`${inputSurfaceClass} pl-10 pr-3`}
-                  />
-                </div>
+                <p className="table-header-text mb-2">Price per Slot (₹)</p>
+                <Input
+                  type="text"
+                  inputMode="decimal"
+                  placeholder="0"
+                  value={String(prices[console.type]?.value ?? "")}
+                  onChange={(e) => handlePriceChange(console.type, e.target.value)}
+                  className={inputSurfaceClass}
+                />
                 {errors[console.type] && (
                   <p className="text-destructive text-xs font-medium mt-1.5">
                     {errors[console.type]}
@@ -2509,16 +2507,13 @@ export default function ConsolePricing() {
                 {/* Promo Rate */}
                 <div className="space-y-1.5">
                   <label className="table-header-text">Promo Rate (₹) *</label>
-                  <div className="relative">
-                    <IndianRupee className="absolute left-3 top-1/2 -translate-y-1/2 icon-md text-muted-foreground" />
-                    <Input
-                      type="number"
-                      placeholder="Enter discounted price"
-                      value={offerForm.offered_price}
-                      onChange={(e) => setOfferForm({ ...offerForm, offered_price: e.target.value })}
-                      className={`${inputSurfaceClass} pl-11 pr-3 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none`}
-                    />
-                  </div>
+                  <Input
+                    type="number"
+                    placeholder="Enter discounted price"
+                    value={offerForm.offered_price}
+                    onChange={(e) => setOfferForm({ ...offerForm, offered_price: e.target.value })}
+                    className={`${inputSurfaceClass} [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none`}
+                  />
                 </div>
 
                 {/* Start Date + Time */}
