@@ -3225,13 +3225,7 @@ function ScheduleGrid({
   })
 
   const getConsoleIcon = (consoleType: string) => {
-    switch (consoleType) {
-      case 'PC': return Monitor
-      case 'PS5': return MonitorPlay
-      case 'Xbox': return Gamepad
-      case 'VR': return Headset
-      default: return Monitor
-    }
+    return resolveConsoleIcon(undefined, consoleType)
   }
 
   const getConsoleColor = (consoleId: number | null): PillColor => {

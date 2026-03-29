@@ -1,7 +1,7 @@
 "use client"
 
 import { useCallback, useEffect, useMemo, useState } from "react"
-import { Clock, Gamepad, Gamepad2, Headphones, Menu, Monitor, Pin, PinOff, RefreshCw, User, Wifi, WifiOff, X } from "lucide-react"
+import { Clock, Menu, Pin, PinOff, RefreshCw, User, Wifi, WifiOff, X } from "lucide-react"
 import { usePathname, useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { MainNav } from "../components/main-nav"
@@ -12,6 +12,7 @@ import { useSubscription } from "@/hooks/useSubscription"
 import { useSocket } from "../context/SocketContext"
 import { useDashboardData } from "../context/DashboardDataContext"
 import { NotificationButton } from "../components/NotificationButton"
+import { normalizeConsoleSlug, resolveConsoleColor, resolveConsoleIcon } from "../components/console-catalog"
 
 interface DashboardLayoutProps {
   children: React.ReactNode
@@ -38,17 +39,49 @@ export function DashboardLayout({ children, contentScroll = "page" }: DashboardL
   const showGlobalRibbon = true
 
   const platforms = useMemo(() => {
-    const platformMap = [
-      { name: "PC", type: "pc", icon: Monitor, color: "#3b82f6" },
-      { name: "PS5", type: "ps5", icon: Gamepad2, color: "#a855f7" },
-      { name: "Xbox", type: "xbox", icon: Gamepad, color: "#10b981" },
-      { name: "VR", type: "vr", icon: Headphones, color: "#f59e0b" },
+    const source = Array.isArray(consoles) ? consoles : []
+    const grouped = new Map<
+      string,
+      { total: number; used: number; displayName?: string }
+    >()
+
+    source.forEach((item: any) => {
+      const slug = normalizeConsoleSlug(item?.type || item?.console_type || item?.console_slug || item?.game_name)
+      if (!slug) return
+      const current = grouped.get(slug) || { total: 0, used: 0, displayName: undefined }
+      current.total += 1
+      if (item?.status === false) current.used += 1
+      current.displayName =
+        current.displayName ||
+        item?.console_display_name ||
+        item?.consoleTypeName ||
+        item?.console_name ||
+        item?.type
+      grouped.set(slug, current)
+    })
+
+    const preferredOrder = ["pc", "playstation", "xbox", "vr_headset", "private_room", "vip_room", "bootcamp_room"]
+    const allTypes = Array.from(grouped.keys())
+    const sortedTypes = [
+      ...preferredOrder.filter((slug) => grouped.has(slug)),
+      ...allTypes.filter((slug) => !preferredOrder.includes(slug)).sort((a, b) => a.localeCompare(b)),
     ]
-    return platformMap.map((platform) => {
-      const source = Array.isArray(consoles) ? consoles.filter((item: any) => item?.type === platform.type) : []
-      const total = source.length
-      const used = source.filter((item: any) => item?.status === false).length
-      return { ...platform, total, used }
+
+    return sortedTypes.map((slug) => {
+      const counts = grouped.get(slug)!
+      const Icon = resolveConsoleIcon(undefined, slug)
+      const fallbackName = slug
+        .split("_")
+        .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+        .join(" ")
+      return {
+        type: slug,
+        name: String(counts.displayName || fallbackName),
+        icon: Icon,
+        color: resolveConsoleColor(slug),
+        total: counts.total,
+        used: counts.used,
+      }
     })
   }, [consoles])
 
