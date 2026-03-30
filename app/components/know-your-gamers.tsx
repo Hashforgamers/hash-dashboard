@@ -199,7 +199,7 @@ export function KnowYourGamers() {
       {/* Data Table */}
       <div className="dashboard-table-shell min-h-0 flex-1">
         <div className="dashboard-table-wrap h-full">
-          <table className="dashboard-table min-w-[1200px]">
+          <table className="dashboard-table min-w-[1200px] max-md:min-w-[860px]">
             <thead className="dashboard-module-table-head">
               <tr className="border-b border-cyan-500/20">
                 {[

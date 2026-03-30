@@ -2871,7 +2871,7 @@ const ToggleSwitch = ({
         ) : bankDetailsHistory.length ? (
           <div className="dashboard-table-shell">
             <div className="dashboard-table-wrap">
-              <table className="dashboard-table min-w-[1040px] border-collapse">
+              <table className="dashboard-table min-w-[1040px] max-md:min-w-[760px] border-collapse">
                 <thead>
                   <tr className="table-header">
                     <th className="table-cell table-header-text text-left whitespace-nowrap">Changed At</th>
@@ -3206,7 +3206,7 @@ const ToggleSwitch = ({
         <div className="space-y-4">
           <div className="dashboard-table-shell">
             <div className="dashboard-table-wrap">
-            <table className="dashboard-table min-w-[800px] border-collapse">
+            <table className="dashboard-table min-w-[800px] max-md:min-w-[700px] border-collapse">
               <thead>
                 <tr className="table-header">
                   <th className="table-cell table-header-text text-left whitespace-nowrap">Date</th>
@@ -3447,7 +3447,7 @@ const ToggleSwitch = ({
       ) : subscriptionHistory.length ? (
         <div className="dashboard-table-shell">
           <div className="dashboard-table-wrap">
-            <table className="dashboard-table min-w-[880px]">
+            <table className="dashboard-table min-w-[880px] max-md:min-w-[720px]">
               <thead>
                 <tr className="table-header">
                   <th className="table-cell table-header-text text-left">Plan</th>
@@ -3534,7 +3534,7 @@ const ToggleSwitch = ({
       ) : (
         <div className="dashboard-table-shell">
           <div className="dashboard-table-wrap">
-            <table className="dashboard-table min-w-[900px]">
+            <table className="dashboard-table min-w-[900px] max-md:min-w-[720px]">
               <thead>
                 <tr className="table-header">
                   <th className="table-cell table-header-text text-left">Date</th>
