@@ -246,44 +246,46 @@ export function DashboardLayout({ children, contentScroll = "page" }: DashboardL
 
           {showGlobalRibbon && (
             <div className="dashboard-nav-divider shrink-0 border-t px-2 pb-2 pt-1.5 sm:px-3 md:px-4">
-              <div className="dashboard-module-panel flex flex-wrap items-center justify-between gap-1.5 rounded-lg px-2 py-1.5 text-[11px]">
-                <div className="flex flex-wrap items-center gap-1.5 text-slate-300">
-                  <span className="inline-flex items-center gap-1 rounded-md border border-emerald-400/30 bg-emerald-500/10 px-1.5 py-0.5 text-emerald-200">
-                    <Clock className="h-3.5 w-3.5" />
-                    {nowISTTimeText}
-                  </span>
-                  <span className="inline-flex items-center gap-1 rounded-md border border-border px-1.5 py-0.5">
-                    {nowISTDateText}
-                  </span>
-                  <span className="inline-flex items-center gap-1 rounded-md border border-border px-1.5 py-0.5">
-                    <User className="h-3.5 w-3.5 text-cyan-300" />
-                    {activeStaff?.name || "Owner"}
-                  </span>
-                  <span
-                    className={`inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 ${
-                      isConnected
-                        ? "border-emerald-400/40 bg-emerald-500/10 text-emerald-200"
-                        : "border-amber-400/40 bg-amber-500/10 text-amber-200"
-                    }`}
-                  >
-                    {isConnected ? <Wifi className="h-3.5 w-3.5" /> : <WifiOff className="h-3.5 w-3.5" />}
-                    {isConnected ? "Live" : "Syncing"}
-                  </span>
-                  {platforms.map((platform) => {
-                    const PlatformIcon = platform.icon
-                    return (
-                      <span
-                        key={`global-ribbon-${platform.type}`}
-                        className="inline-flex items-center gap-1 rounded-md border border-border px-1.5 py-0.5"
-                        title={`${platform.name}: ${platform.used}/${platform.total}`}
-                      >
-                        <PlatformIcon className="h-3.5 w-3.5" style={{ color: platform.color }} />
-                        <span>{platform.used}/{platform.total}</span>
-                      </span>
-                    )
-                  })}
+              <div className="dashboard-module-panel flex items-center justify-between gap-1.5 rounded-lg px-2 py-1.5 text-[11px] md:flex-wrap max-md:flex-nowrap">
+                <div className="min-w-0 flex-1 max-md:overflow-x-auto max-md:[scrollbar-width:none] max-md:[&::-webkit-scrollbar]:hidden md:overflow-visible">
+                  <div className="flex items-center gap-1.5 text-slate-300 md:flex-wrap max-md:w-max max-md:whitespace-nowrap">
+                    <span className="inline-flex items-center gap-1 rounded-md border border-emerald-400/30 bg-emerald-500/10 px-1.5 py-0.5 text-emerald-200">
+                      <Clock className="h-3.5 w-3.5" />
+                      {nowISTTimeText}
+                    </span>
+                    <span className="inline-flex items-center gap-1 rounded-md border border-border px-1.5 py-0.5">
+                      {nowISTDateText}
+                    </span>
+                    <span className="inline-flex items-center gap-1 rounded-md border border-border px-1.5 py-0.5">
+                      <User className="h-3.5 w-3.5 text-cyan-300" />
+                      {activeStaff?.name || "Owner"}
+                    </span>
+                    <span
+                      className={`inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 ${
+                        isConnected
+                          ? "border-emerald-400/40 bg-emerald-500/10 text-emerald-200"
+                          : "border-amber-400/40 bg-amber-500/10 text-amber-200"
+                      }`}
+                    >
+                      {isConnected ? <Wifi className="h-3.5 w-3.5" /> : <WifiOff className="h-3.5 w-3.5" />}
+                      {isConnected ? "Live" : "Syncing"}
+                    </span>
+                    {platforms.map((platform) => {
+                      const PlatformIcon = platform.icon
+                      return (
+                        <span
+                          key={`global-ribbon-${platform.type}`}
+                          className="inline-flex items-center gap-1 rounded-md border border-border px-1.5 py-0.5"
+                          title={`${platform.name}: ${platform.used}/${platform.total}`}
+                        >
+                          <PlatformIcon className="h-3.5 w-3.5" style={{ color: platform.color }} />
+                          <span>{platform.used}/{platform.total}</span>
+                        </span>
+                      )
+                    })}
+                  </div>
                 </div>
-                <div className="flex items-center gap-1.5">
+                <div className="ml-1 flex shrink-0 items-center gap-1.5">
                   <NotificationButton vendorId={vendorId} />
                   <button
                     type="button"
