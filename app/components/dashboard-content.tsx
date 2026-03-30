@@ -378,6 +378,20 @@ export function DashboardContent() {
     </motion.div>
   )
 
+  const mobileMetricsStrip = (
+    <div className="dashboard-module-card flex w-full items-center justify-between gap-1 rounded-xl border border-border/60 bg-background/45 px-1.5 py-1 md:hidden">
+      <div className="min-w-0 rounded-lg border border-blue-400/25 bg-blue-500/10 px-1.5 py-1 text-[10px] font-semibold text-blue-200">
+        Bk {currentStats.todayBookings}
+      </div>
+      <div className="min-w-0 rounded-lg border border-yellow-400/25 bg-yellow-500/10 px-1.5 py-1 text-[10px] font-semibold text-yellow-200">
+        Pd {formatMoney(currentStats.netPendingAmount)}
+      </div>
+      <div className="min-w-0 rounded-lg border border-emerald-400/25 bg-emerald-500/10 px-1.5 py-1 text-[10px] font-semibold text-emerald-200">
+        Er {formatMoney(currentStats.netEarnings)}
+      </div>
+    </div>
+  )
+
   if (!dashboardData) {
     return <HashLoader className="py-[42vh]" />
   }
@@ -387,7 +401,7 @@ export function DashboardContent() {
       {dashboardData?.available ? (
         <HashLoader className="py-[50vh]" />
       ) : (
-        <div className="relative flex h-full min-h-0 flex-col gap-2 overflow-hidden text-foreground sm:gap-3">
+        <div className="relative flex h-full min-h-0 flex-col gap-2 overflow-hidden text-foreground max-md:gap-1.5 sm:gap-3">
           {isLocked && <LockedOverlay />}
           <div
             className={`flex min-h-0 flex-1 flex-col overflow-hidden ${
@@ -421,35 +435,37 @@ export function DashboardContent() {
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="gaming-panel shrink-0 rounded-xl p-2 md:p-2.5"
+            className="gaming-panel shrink-0 rounded-xl p-2 max-md:p-1.5 md:p-2.5"
           >
-            <div className="grid grid-cols-1 gap-1.5 lg:grid-cols-[minmax(200px,1fr)_minmax(0,1.8fr)_auto] lg:items-center">
+            <div className="grid grid-cols-1 gap-1.5 max-md:grid-cols-[minmax(0,1fr)_minmax(138px,42vw)] max-md:items-start max-md:gap-1 lg:grid-cols-[minmax(200px,1fr)_minmax(0,1.8fr)_auto] lg:items-center">
               <div className="min-w-0">
                 <div className="flex items-start justify-between gap-2 lg:block">
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-                      <h1 className="premium-heading dashboard-hero-title leading-tight max-md:text-[1.15rem] max-md:tracking-[0.02em]">
+                      <h1 className="premium-heading dashboard-hero-title leading-tight max-md:text-[1.1rem] max-md:tracking-[0.02em]">
                         Cafe Command
                       </h1>
                     </div>
-                    <p className="premium-subtle mt-0.5 text-[11px] leading-relaxed sm:text-xs">
+                    <p className="premium-subtle mt-0.5 text-[10.5px] leading-relaxed sm:text-xs">
                       Live operations at a glance.
                     </p>
                   </div>
                 </div>
               </div>
 
-              <div className="min-w-0">
+              <div className="min-w-0 max-md:hidden">
                 <div className="min-w-0">
                   {topMetricsStrip}
                 </div>
               </div>
-              <div />
+              <div className="max-md:w-full max-md:self-start">
+                {mobileMetricsStrip}
+              </div>
             </div>
           </motion.div>
 
           {/* Main Layout Grid */}
-          <div className="mt-2 sm:mt-3 grid grid-cols-1 gap-2 sm:gap-3 xl:grid-cols-12 flex-1 min-h-0 max-md:h-[68svh] max-md:grid-rows-[1fr_1fr]">
+          <div className="mt-2 grid grid-cols-1 gap-2 max-md:mt-1 max-md:gap-1.5 sm:mt-3 sm:gap-3 xl:grid-cols-12 flex-1 min-h-0 max-md:h-[calc(100svh-14rem)] max-md:min-h-[520px] max-md:grid-rows-[1.05fr_0.95fr]">
 
             {/* Left Column */}
             <div className="space-y-2 sm:space-y-4 flex flex-col min-h-0 xl:col-span-8 2xl:col-span-9 max-md:h-full max-md:min-h-0">
@@ -459,9 +475,9 @@ export function DashboardContent() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.3 }}
-                className="flex-1 min-h-0 lg:h-full"
+                className="flex-1 min-h-0 lg:h-full max-md:overflow-hidden"
               >
-                <div className="h-full overflow-hidden relative">
+                <div className="relative h-full overflow-hidden">
                   <CurrentSlots
                     currentSlots={dashboardData.currentSlots}
                     historyBookings={dashboardData.historyBookings || []}
@@ -479,7 +495,7 @@ export function DashboardContent() {
               transition={{ delay: 0.4 }}
               className="flex flex-col min-h-0 xl:col-span-4 2xl:col-span-3 xl:h-full max-md:h-full max-md:min-h-0"
             >
-              <div className="relative flex-1 min-h-[320px] xl:min-h-0 rounded-xl xl:h-full overflow-hidden max-md:min-h-0 max-md:h-full">
+              <div className="relative flex-1 min-h-[320px] overflow-hidden rounded-xl xl:h-full xl:min-h-0 max-md:min-h-0 max-md:h-full">
                 <UpcomingBookings
                   upcomingBookings={dashboardData.upcomingBookings || []}
                   vendorId={vendorId?.toString()}
