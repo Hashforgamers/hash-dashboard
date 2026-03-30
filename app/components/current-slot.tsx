@@ -919,7 +919,7 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
 
             <div className="hidden h-full lg:block">
             <div className="dashboard-table-wrap h-full">
-              <table ref={tableRef} className="dashboard-module-table min-w-[760px] w-full divide-y">
+              <table ref={tableRef} className="dashboard-module-table min-w-[760px] max-md:min-w-[680px] w-full divide-y">
                 <thead className="dashboard-module-table-head sticky top-0 z-10">
                   <tr>
                     {['Name', 'System', 'Time', 'Progress', 'Extra', 'Action'].map((heading) => (
@@ -1514,7 +1514,7 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
 
                 <div className="hidden h-full lg:block">
                 <div className="dashboard-table-wrap h-full">
-                  <table className="dashboard-module-table w-full min-w-[760px] divide-y">
+                  <table className="dashboard-module-table w-full min-w-[760px] max-md:min-w-[680px] divide-y">
                     <thead className="dashboard-module-table-head sticky top-0 z-10">
                       <tr>
                         {["Name", "System", "Time", "Progress", "Extra", "Action"].map((heading) => (
