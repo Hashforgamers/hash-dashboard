@@ -237,7 +237,7 @@ h3,
 h4,
 h5,
 h6 {
-  font-family: var(--font-ui);
+  font-family: var(--font-display);
   font-weight: 700;
   letter-spacing: 0.03em;
   line-height: 1.2;
@@ -463,6 +463,22 @@ h6 {
 
 .dashboard-module :is(h1, h2, h3, h4, h5, h6, p, span, div, button, input, select, textarea, th, td, label, a) {
   font-family: inherit;
+}
+
+.dashboard-typography :is(h1, h2, h3, h4, h5, h6),
+.dashboard-nav :is(h1, h2, h3, h4, h5, h6),
+.dashboard-module :is(h1, h2, h3, h4, h5, h6),
+.premium-heading,
+.dash-title {
+  font-family: var(--font-display);
+}
+
+.dashboard-typography :is(p, span, label, a, button, input, select, textarea, th, td, li, dt, dd),
+.dashboard-nav :is(a, button, span, p, label, input),
+.dashboard-module :is(p, span, div, button, input, select, textarea, th, td, label, a),
+.premium-subtle,
+.dash-subtitle {
+  font-family: var(--font-ui);
 }
 
 .dashboard-module-panel {
@@ -1072,7 +1088,7 @@ h6 {
 }
 
 .dash-title {
-  font-family: var(--font-ui);
+  font-family: var(--font-display);
   font-size: clamp(0.85rem, 0.45vw + 0.76rem, 1.05rem);
   font-weight: 700;
   letter-spacing: 0.03em;
