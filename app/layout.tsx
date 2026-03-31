@@ -1,6 +1,6 @@
 import { ThemeProvider } from "next-themes";
 import { AuthProvider } from "./AuthProvider";
-import { Inter } from "next/font/google";
+import { Orbitron, Rajdhani } from "next/font/google";
 import type { Metadata, Viewport } from "next";
 
 import "./globals.css";
@@ -12,9 +12,17 @@ import { DashboardDataProvider } from "./context/DashboardDataContext";
 import { DashboardDataBus } from "./context/DashboardDataBus";
 import { TableDragScroll } from "./components/TableDragScroll";
 
-const inter = Inter({
+const rajdhani = Rajdhani({
   subsets: ["latin"],
-  variable: "--font-inter",
+  variable: "--font-rajdhani",
+  weight: ["300", "400", "500", "600", "700"],
+  display: "swap",
+});
+
+const orbitron = Orbitron({
+  subsets: ["latin"],
+  variable: "--font-orbitron",
+  weight: ["400", "500", "600", "700", "800", "900"],
   display: "swap",
 });
 
@@ -77,7 +85,9 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head />
-      <body className={`${inter.variable} bg-background text-foreground`}>
+      <body
+        className={`${rajdhani.variable} ${orbitron.variable} bg-background text-foreground`}
+      >
         <AuthProvider>
           {" "}
           {/* Wrap inside AuthProvider */}

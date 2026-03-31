@@ -8,7 +8,7 @@ html {
 
 body {
   @apply bg-background text-foreground;
-  font-family: var(--font-inter), Arial, Helvetica, sans-serif;
+  font-family: var(--font-rajdhani), "Rajdhani", Arial, Helvetica, sans-serif;
   min-height: 100vh;
 }
 
@@ -96,13 +96,22 @@ html {
 
 body {
   @apply bg-background text-foreground;
-  font-family: var(--font-inter), Arial, Helvetica, sans-serif;
+  font-family: var(--font-rajdhani), "Rajdhani", Arial, Helvetica, sans-serif;
   min-height: 100vh;
 }
 
 /* Ensure the background stays consistent during the theme switch */
 .dark body {
   background-color: hsl(var(--background));
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-orbitron), "Orbitron", Arial, Helvetica, sans-serif;
 }
   
 }
