@@ -3034,21 +3034,22 @@ function TopBar({
               const Icon = resolveSafeConsoleIcon(consoleItem.icon, consoleItem.type)
               const label = consoleItem.name || consoleItem.type
               return (
-              <SegmentedButton
-                key={key}
-                active={selectedConsole === key}
-                icon={Icon}
-                onClick={() => onConsoleChange(key)}
-              >
-                {label}
-              </SegmentedButton>
-            )
-          })}
-          {activeTypes.length === 0 && (
-            <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs text-amber-200">
-              No consoles configured for booking. Add devices in `Manage Gaming Console`.
-            </div>
-          )}
+                <SegmentedButton
+                  key={key}
+                  active={selectedConsole === key}
+                  icon={Icon}
+                  onClick={() => onConsoleChange(key)}
+                >
+                  {label}
+                </SegmentedButton>
+              )
+            })}
+            {activeConsoles.length === 0 && (
+              <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs text-amber-200">
+                No consoles configured for booking. Add devices in `Manage Gaming Console`.
+              </div>
+            )}
+          </div>
         </div>
       </Card>
     </div>
@@ -3398,26 +3399,30 @@ function ScheduleGrid({
           return <div key={`${day.fullDate}-${gameConsole.id}-${timeIndex}`} className="booking-lane-cell" />
         }
 
-          // ✅ Show available slots with count
-          else {
-            timeSlots.push(
-              <div
-                key={`${day.fullDate}-${slot.slot_id}`}
-                className={cn("w-full h-full", compact ? "min-h-[32px]" : "min-h-[40px]")}
-              >
-                <SlotPill
-                  label={`${Math.max(getSlotDurationMinutes(slot), 30)}m`}
-                  color={getConsoleColor(gameConsole.id)}
-                  icon={getConsoleIcon(gameConsole.type)}
-                  onClick={() => handleSlotClick(day, time, gameConsole)}
-                  selected={isSelected}
-                  disabled={false}
-                  compact={compact}
-                />
-              </div>
-            )
-          }
-        })
+        const isSelected = isSlotSelected(slot.slot_id, day.fullDate, gameConsole.id ?? undefined)
+        const isBooked = !Boolean(slot.is_available)
+        const isPastTime = isPastSlotInIST(day.fullDate, slot.end_time, slot.start_time)
+
+        const content = isPastTime ? (
+          <div
+            onClick={() => handleSlotClick(day, time, gameConsole)}
+            className="booking-slot group relative flex h-full w-full cursor-pointer items-center justify-center gap-1 rounded-md border border-violet-400/30 bg-violet-400/15 text-[11px] font-semibold text-violet-100 transition-colors hover:bg-violet-400/25"
+            title="Past slot - tap to view booking history"
+          >
+            <Clock className="h-3 w-3" />
+            <span>Past</span>
+          </div>
+        ) : (
+          <SlotPill
+            label={`${Math.max(getSlotDurationMinutes(slot), 30)}m`}
+            color={getConsoleColor(gameConsole.id)}
+            icon={getConsoleIcon(gameConsole.type)}
+            onClick={() => handleSlotClick(day, time, gameConsole)}
+            selected={isSelected}
+            disabled={isBooked}
+            compact={compact}
+          />
+        )
 
         return (
           <div

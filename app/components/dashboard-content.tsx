@@ -469,30 +469,26 @@ export function DashboardContent() {
                 <div className="dashboard-block-eyebrow">Snapshot</div>
                 <h2 className="dashboard-block-title">Operations</h2>
               </div>
+              {mobileMetricsStrip}
             </div>
 
-              {/* ✅ Current Slots - locked when subscription expired */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3 }}
-                className="flex-1 min-h-0 lg:h-full max-md:overflow-hidden"
-              >
-                <div className="relative h-full overflow-hidden">
-                  <CurrentSlots
-                    currentSlots={dashboardData.currentSlots}
-                    historyBookings={dashboardData.historyBookings || []}
-                    refreshSlots={refreshSlots}
-                    setRefreshSlots={setRefreshSlots}
-                  />
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              className="flex min-h-0 flex-col xl:col-span-8 2xl:col-span-9"
+            >
+              <div className="dashboard-module-head">
+                <div>
+                  <div className="dashboard-block-eyebrow">Live Floor</div>
+                  <h2 className="dashboard-block-title">Current Sessions</h2>
                 </div>
                 <div className="dashboard-module-head__meta">
                   <span>{occupiedConsoles} occupied</span>
                   <span>{availableConsoles} ready</span>
                 </div>
               </div>
-
-              <div className="gaming-panel dashboard-module-panel dashboard-panel-card dashboard-live-shell dashboard-orbit-surface relative flex-1 overflow-hidden rounded-[32px]">
+              <div className="gaming-panel dashboard-module-panel dashboard-panel-card dashboard-live-shell dashboard-orbit-surface relative flex-1 min-h-[360px] overflow-hidden rounded-[32px] xl:min-h-0">
                 <CurrentSlots
                   currentSlots={dashboardData.currentSlots}
                   historyBookings={dashboardData.historyBookings || []}
@@ -526,8 +522,7 @@ export function DashboardContent() {
                 />
               </div>
             </motion.div>
-          </div>
-
+          </motion.section>
           </div>
         </div>
       )}
