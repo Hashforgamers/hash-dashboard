@@ -298,7 +298,7 @@ export function DashboardLayout({ children, contentScroll = "page" }: DashboardL
                 <div className="min-w-0 flex-1 max-md:overflow-x-auto max-md:[scrollbar-width:none] max-md:[&::-webkit-scrollbar]:hidden md:overflow-visible">
                   <div className="flex items-center gap-1.5 text-slate-300 md:flex-wrap max-md:w-max max-md:whitespace-nowrap">
                     <span className="inline-flex items-center gap-1 rounded-md border border-emerald-400/30 bg-emerald-500/10 px-1.5 py-0.5 text-emerald-200">
-                      <Clock className="h-3.5 w-3.5" />
+                      <HugeiconsIcon icon={Clock01Icon} size={14} strokeWidth={1.8} />
                       {nowISTTimeText}
                     </span>
                     <span className="inline-flex items-center gap-1 rounded-md border border-border px-1.5 py-0.5">
