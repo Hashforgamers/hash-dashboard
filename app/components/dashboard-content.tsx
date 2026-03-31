@@ -6,9 +6,15 @@ import { UpcomingBookings } from "./upcoming-booking"
 import { CurrentSlots } from "./current-slot"
 import { motion } from "framer-motion"
 import {
-  IndianRupee, CalendarCheck, WalletCards, Eye, EyeOff,
-  TrendingUp, Lock
-} from 'lucide-react'
+  AnalyticsUpIcon,
+  Calendar02Icon,
+  DollarCircleIcon,
+  LockIcon,
+  ViewIcon,
+  ViewOffIcon,
+  WalletCardsIcon,
+} from "@hugeicons/core-free-icons"
+import { HugeiconsIcon } from "@hugeicons/react"
 import { useDashboardData } from "@/app/context/DashboardDataContext"
 import HashLoader from "./ui/HashLoader"
 import { useSocket } from "../context/SocketContext"
@@ -24,7 +30,7 @@ function LockedOverlay() {
     <div className="absolute inset-0 z-30 flex flex-col items-center justify-center gap-4 rounded-lg bg-background/75 backdrop-blur-sm">
       <div className="flex flex-col items-center gap-3 text-center px-6">
         <div className="p-4 bg-destructive/10 rounded-full">
-          <Lock className="w-8 h-8 text-destructive" />
+          <HugeiconsIcon icon={LockIcon} size={32} strokeWidth={1.8} className="text-destructive" />
         </div>
         <div>
           <h3 className="font-bold text-base text-foreground">Dashboard Locked</h3>
@@ -47,8 +53,9 @@ export function DashboardContent() {
   const [showEarnings, setShowEarnings] = useState(false)
   const [showPending, setShowPending] = useState(false)
   const [refreshSlots, setRefreshSlots] = useState(false)
-  const { vendorId, landingData, refreshLanding, refreshConsoles } = useDashboardData()
+  const { vendorId, landingData, consoles, refreshLanding, refreshConsoles } = useDashboardData()
   const [dashboardData, setDashboardData] = useState<any>(null)
+  const [bookingInfo, setBookingInfo] = useState<any[]>([])
   const [realTimeStats, setRealTimeStats] = useState<{
     todayEarnings?: number
     todayBookings?: number
@@ -100,6 +107,12 @@ export function DashboardContent() {
       }
     }
   }, [landingData])
+
+  useEffect(() => {
+    if (Array.isArray(consoles) && consoles.length > 0) {
+      setBookingInfo(consoles)
+    }
+  }, [consoles])
 
   const loadLandingData = useCallback(async () => {
     await refreshLanding()
@@ -211,7 +224,9 @@ export function DashboardContent() {
     }
 
     function handleSocketResync() {
-      joinVendor(vendorId)
+      if (vendorId != null) {
+        joinVendor(vendorId)
+      }
       loadLandingData()
       loadConsoleData()
     }
@@ -262,121 +277,91 @@ export function DashboardContent() {
   }
 
   const formatMoney = (value?: number) => `₹${Number(value || 0).toFixed(2)}`
+  const totalConsoles = Array.isArray(bookingInfo) ? bookingInfo.length : 0
+  const occupiedConsoles = Array.isArray(bookingInfo)
+    ? bookingInfo.filter((item: any) => item?.status === false || item?.is_available === false).length
+    : 0
+  const availableConsoles = Math.max(totalConsoles - occupiedConsoles, 0)
+  const occupancyRate = totalConsoles > 0 ? Math.round((occupiedConsoles / totalConsoles) * 100) : 0
+  const nextQueueCount = Array.isArray(dashboardData?.upcomingBookings) ? dashboardData.upcomingBookings.length : 0
+  const liveSessionsCount = Array.isArray(dashboardData?.currentSlots) ? dashboardData.currentSlots.length : 0
+  const trendPrefix = currentStats.todayBookingsChange >= 0 ? "+" : ""
 
-  const topMetricsStrip = (
-    <motion.div
-      initial={{ opacity: 0, x: -20 }}
-      animate={{ opacity: 1, x: 0 }}
-      transition={{ duration: 0.3 }}
-      className="flex flex-wrap items-stretch gap-1.5 sm:gap-2 max-md:flex max-md:snap-x max-md:gap-2 max-md:overflow-x-auto max-md:pb-1 max-md:[scrollbar-width:none] max-md:[&::-webkit-scrollbar]:hidden"
-    >
-      <motion.div
-        animate={{ scale: realTimeStats.lastUpdate ? [1, 1.05, 1] : 1 }}
-        transition={{ duration: 0.5 }}
-        className="min-w-[168px] flex-1 max-md:min-w-[64%] max-md:snap-start"
-      >
-        <Card className="gaming-kpi-card h-full rounded-lg transition-all duration-200">
-          <CardContent className="p-2">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-1 sm:gap-2">
-                <div className="rounded-full bg-emerald-500/20 p-1">
-                  <IndianRupee className="h-3 w-3 text-emerald-400" />
-                </div>
-                <span className="dash-kpi-label">Earnings (Net)</span>
-              </div>
-              <button onClick={() => setShowEarnings(!showEarnings)} className="text-emerald-400 transition-colors hover:text-emerald-300">
-                {showEarnings ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
-              </button>
-            </div>
-            <div className="mt-1 flex items-center justify-between">
-              <motion.p
-                key={currentStats.netEarnings}
-                initial={{ scale: 0.8, opacity: 0.5 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={{ duration: 0.3 }}
-                className="text-sm font-semibold text-foreground sm:text-base"
-              >
-                {showEarnings ? formatMoney(currentStats.netEarnings) : "₹•••••"}
-              </motion.p>
-              <span className="text-[10px] font-semibold uppercase tracking-wide text-emerald-300">Today</span>
-            </div>
-          </CardContent>
-        </Card>
-      </motion.div>
+  const metricCards = [
+    {
+      key: "earnings",
+      label: "Net Earnings",
+      accentClass: "text-[#16FF00]",
+      icon: DollarCircleIcon,
+      value: showEarnings ? formatMoney(currentStats.netEarnings) : "₹•••••",
+      meta: "Today",
+      action: (
+        <button
+          onClick={() => setShowEarnings(!showEarnings)}
+          className="dashboard-metric-action"
+          aria-label={showEarnings ? "Hide earnings" : "Show earnings"}
+        >
+          <HugeiconsIcon icon={showEarnings ? ViewOffIcon : ViewIcon} size={14} strokeWidth={1.8} />
+        </button>
+      ),
+    },
+    {
+      key: "bookings",
+      label: "Live Bookings",
+      accentClass: "text-[#38BDF8]",
+      icon: Calendar02Icon,
+      value: String(currentStats.todayBookings),
+      meta: `${trendPrefix}${currentStats.todayBookingsChange}%`,
+      action: <span className="dashboard-metric-badge is-cyan">Trend</span>,
+    },
+    {
+      key: "pending",
+      label: "Pending Net",
+      accentClass: "text-[#F97316]",
+      icon: WalletCardsIcon,
+      value: showPending ? formatMoney(currentStats.netPendingAmount) : "₹•••••",
+      meta: nextQueueCount > 0 ? `${nextQueueCount} queued` : "Clear",
+      action: (
+        <button
+          onClick={() => setShowPending(!showPending)}
+          className="dashboard-metric-action"
+          aria-label={showPending ? "Hide pending amount" : "Show pending amount"}
+        >
+          <HugeiconsIcon icon={showPending ? ViewOffIcon : ViewIcon} size={14} strokeWidth={1.8} />
+        </button>
+      ),
+    },
+    {
+      key: "occupancy",
+      label: "Floor Usage",
+      accentClass: "text-[#F7FAFC]",
+      icon: AnalyticsUpIcon,
+      value: `${occupancyRate}%`,
+      meta: `${occupiedConsoles}/${totalConsoles || 0}`,
+      action: <span className="dashboard-metric-badge">Live</span>,
+    },
+  ]
 
-      <motion.div
-        animate={{ scale: realTimeStats.lastUpdate ? [1, 1.05, 1] : 1 }}
-        transition={{ duration: 0.5 }}
-        className="min-w-[150px] flex-1 max-md:min-w-[58%] max-md:snap-start"
-      >
-        <Card className="gaming-kpi-card h-full rounded-lg transition-all duration-200">
-          <CardContent className="p-2">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-1 sm:gap-2">
-                <div className="rounded-full bg-blue-500/20 p-1">
-                  <CalendarCheck className="h-3 w-3 text-blue-400" />
-                </div>
-                <span className="dash-kpi-label">Bookings</span>
-              </div>
-              <span className="text-[10px] font-bold text-green-400">+{currentStats.todayBookingsChange}%</span>
-            </div>
-            <div className="mt-1 flex items-center justify-between">
-              <motion.p
-                key={currentStats.todayBookings}
-                initial={{ scale: 0.8, opacity: 0.5 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={{ duration: 0.3 }}
-                className="text-sm font-semibold text-foreground sm:text-base"
-              >
-                {currentStats.todayBookings}
-              </motion.p>
-              <div className="flex items-center gap-1 text-[10px] text-blue-400">
-                <TrendingUp className="h-3 w-3" />
-                <span>Today</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </motion.div>
-
-      <motion.div
-        animate={{ scale: realTimeStats.lastUpdate ? [1, 1.05, 1] : 1 }}
-        transition={{ duration: 0.5 }}
-        className="min-w-[168px] flex-1 max-md:min-w-[64%] max-md:snap-start"
-      >
-        <Card className="gaming-kpi-card h-full rounded-lg transition-all duration-200">
-          <CardContent className="p-2">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-1 sm:gap-2">
-                <div className="rounded-full bg-yellow-500/20 p-1">
-                  <WalletCards className="h-3 w-3 text-yellow-400" />
-                </div>
-                <span className="dash-kpi-label">Pending (Net)</span>
-              </div>
-              <button onClick={() => setShowPending(!showPending)} className="text-yellow-400 transition-colors hover:text-yellow-300">
-                {showPending ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
-              </button>
-            </div>
-            <div className="mt-1 flex items-center justify-between">
-              <motion.p
-                key={currentStats.netPendingAmount}
-                initial={{ scale: 0.8, opacity: 0.5 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={{ duration: 0.3 }}
-                className="text-sm font-semibold text-foreground sm:text-base"
-              >
-                {showPending ? formatMoney(currentStats.netPendingAmount) : "₹•••••"}
-              </motion.p>
-              <div className="flex items-center gap-1 text-[10px] text-yellow-400">
-                <div className="h-2 w-2 animate-pulse rounded-full bg-yellow-400" />
-                <span>Today</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </motion.div>
-    </motion.div>
-  )
+  const insightCards = [
+    {
+      label: "Console Availability",
+      value: `${availableConsoles}`,
+      meta: "ready",
+      accent: "cyan",
+    },
+    {
+      label: "Active Sessions",
+      value: `${liveSessionsCount}`,
+      meta: "live",
+      accent: "accent",
+    },
+    {
+      label: "Upcoming Queue",
+      value: `${nextQueueCount}`,
+      meta: "queued",
+      accent: "warm",
+    },
+  ]
 
   const mobileMetricsStrip = (
     <div className="dashboard-module-card flex w-full items-center justify-between gap-1 rounded-xl border border-border/60 bg-background/45 px-1.5 py-1 md:hidden">
@@ -401,10 +386,10 @@ export function DashboardContent() {
       {dashboardData?.available ? (
         <HashLoader className="py-[50vh]" />
       ) : (
-        <div className="relative flex h-full min-h-0 flex-col gap-2 overflow-hidden text-foreground max-md:gap-1.5 sm:gap-3">
+        <div className="dashboard-redesign relative flex h-full min-h-0 flex-col gap-4 overflow-hidden rounded-[30px] text-foreground sm:gap-5">
           {isLocked && <LockedOverlay />}
           <div
-            className={`flex min-h-0 flex-1 flex-col overflow-hidden ${
+            className={`dashboard-redesign__inner flex min-h-0 flex-1 flex-col overflow-hidden ${
               isLocked ? "pointer-events-none select-none opacity-70" : ""
             }`}
           >
@@ -431,71 +416,105 @@ export function DashboardContent() {
             </motion.div>
           )}  */}
 
-          {/* Top Compact Row */}
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
+          <motion.section
+            initial={{ opacity: 0, y: -18 }}
             animate={{ opacity: 1, y: 0 }}
-            className="gaming-panel shrink-0 rounded-xl p-2 max-md:p-1.5 md:p-2.5"
+            className="dashboard-command-stage gaming-panel dashboard-module-panel dashboard-stage-card shrink-0 rounded-[32px]"
           >
-            <div className="grid grid-cols-1 gap-1.5 max-md:grid-cols-[minmax(0,1fr)_minmax(138px,42vw)] max-md:items-start max-md:gap-1 lg:grid-cols-[minmax(200px,1fr)_minmax(0,1.8fr)_auto] lg:items-center">
+            <div className="dashboard-command-stage__header">
               <div className="min-w-0">
-                <div className="flex items-start justify-between gap-2 lg:block">
-                  <div className="min-w-0">
-                    <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-                      <h1 className="premium-heading dashboard-hero-title leading-tight max-md:text-[1.1rem] max-md:tracking-[0.02em]">
-                        Cafe Command
-                      </h1>
+                <div className="dashboard-command-stage__eyebrow">
+                  <span className={`dashboard-status-dot ${isConnected ? "is-live" : ""}`} />
+                  {isConnected ? "Live" : "Offline"}
+                </div>
+                <h1 className="dashboard-command-stage__title">Cafe Command</h1>
+              </div>
+
+              <div className="dashboard-command-stage__chips">
+                <span className="cafe-pill">{availableConsoles} ready</span>
+                <span className="cafe-pill">{liveSessionsCount} live</span>
+                <span className="cafe-pill">{nextQueueCount} queued</span>
+              </div>
+            </div>
+
+            <div className="dashboard-metric-grid">
+              {metricCards.map((card) => (
+                <Card key={card.key} className="gaming-kpi-card dashboard-kpi-card dashboard-metric-card border rounded-[24px] transition-all duration-200">
+                  <CardContent className="p-0">
+                    <div className="dashboard-metric-card__top">
+                      <div className="flex items-center gap-2">
+                        <span className={`dashboard-metric-card__icon ${card.accentClass}`}>
+                          <HugeiconsIcon icon={card.icon} size={15} strokeWidth={1.8} />
+                        </span>
+                        <span className="dash-kpi-label">{card.label}</span>
+                      </div>
+                      {card.action}
                     </div>
-                    <p className="premium-subtle mt-0.5 text-[10.5px] leading-relaxed sm:text-xs">
-                      Live operations at a glance.
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="min-w-0 max-md:hidden">
-                <div className="min-w-0">
-                  {topMetricsStrip}
-                </div>
-              </div>
-              <div className="max-md:w-full max-md:self-start">
-                {mobileMetricsStrip}
-              </div>
+                    <div className="dashboard-metric-card__value">{card.value}</div>
+                    <div className="dashboard-metric-card__meta">{card.meta}</div>
+                  </CardContent>
+                </Card>
+              ))}
             </div>
-          </motion.div>
+          </motion.section>
 
-          {/* Main Layout Grid */}
-          <div className="mt-2 grid grid-cols-1 gap-2 max-md:mt-1 max-md:gap-1.5 sm:mt-3 sm:gap-3 xl:grid-cols-12 flex-1 min-h-0 max-md:h-[calc(100svh-14rem)] max-md:min-h-[520px] max-md:grid-rows-[1.05fr_0.95fr]">
-
-            {/* Left Column */}
-            <div className="space-y-2 sm:space-y-4 flex flex-col min-h-0 xl:col-span-8 2xl:col-span-9 max-md:h-full max-md:min-h-0">
-
-              {/* ✅ Current Slots - locked when subscription expired */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3 }}
-                className="flex-1 min-h-0 lg:h-full max-md:overflow-hidden"
-              >
-                <div className="relative h-full overflow-hidden">
-                  <CurrentSlots
-                    currentSlots={dashboardData.currentSlots}
-                    historyBookings={dashboardData.historyBookings || []}
-                    refreshSlots={refreshSlots}
-                    setRefreshSlots={setRefreshSlots}
-                  />
-                </div>
-              </motion.div>
+          <motion.section
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.08 }}
+            className="dashboard-insight-grid shrink-0"
+          >
+            <div className="dashboard-insight-banner gaming-panel dashboard-module-panel dashboard-panel-card rounded-[28px]">
+              <div>
+                <div className="dashboard-block-eyebrow">Snapshot</div>
+                <h2 className="dashboard-block-title">Operations</h2>
+              </div>
+              {mobileMetricsStrip}
             </div>
 
-            {/* ✅ Right Column - Upcoming Bookings - locked when subscription expired */}
             <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.4 }}
-              className="flex flex-col min-h-0 xl:col-span-4 2xl:col-span-3 xl:h-full max-md:h-full max-md:min-h-0"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              className="flex min-h-0 flex-col xl:col-span-8 2xl:col-span-9"
             >
-              <div className="relative flex-1 min-h-[320px] overflow-hidden rounded-xl xl:h-full xl:min-h-0 max-md:min-h-0 max-md:h-full">
+              <div className="dashboard-module-head">
+                <div>
+                  <div className="dashboard-block-eyebrow">Live Floor</div>
+                  <h2 className="dashboard-block-title">Current Sessions</h2>
+                </div>
+                <div className="dashboard-module-head__meta">
+                  <span>{occupiedConsoles} occupied</span>
+                  <span>{availableConsoles} ready</span>
+                </div>
+              </div>
+              <div className="gaming-panel dashboard-module-panel dashboard-panel-card dashboard-live-shell dashboard-orbit-surface relative flex-1 min-h-[360px] overflow-hidden rounded-[32px] xl:min-h-0">
+                <CurrentSlots
+                  currentSlots={dashboardData.currentSlots}
+                  historyBookings={dashboardData.historyBookings || []}
+                  refreshSlots={refreshSlots}
+                  setRefreshSlots={setRefreshSlots}
+                />
+              </div>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, x: 18 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.22 }}
+              className="flex min-h-0 flex-col xl:col-span-4 2xl:col-span-3"
+            >
+              <div className="dashboard-module-head">
+                <div>
+                  <div className="dashboard-block-eyebrow">Queue</div>
+                  <h2 className="dashboard-block-title">Upcoming Queue</h2>
+                </div>
+                <div className="dashboard-module-head__meta">
+                  <span>{nextQueueCount} bookings</span>
+                </div>
+              </div>
+
+              <div className="gaming-panel dashboard-module-panel dashboard-panel-card dashboard-upcoming-shell dashboard-orbit-surface relative flex-1 min-h-[360px] overflow-hidden rounded-[32px] xl:min-h-0">
                 <UpcomingBookings
                   upcomingBookings={dashboardData.upcomingBookings || []}
                   vendorId={vendorId?.toString()}
@@ -503,8 +522,7 @@ export function DashboardContent() {
                 />
               </div>
             </motion.div>
-          </div>
-
+          </motion.section>
           </div>
         </div>
       )}
