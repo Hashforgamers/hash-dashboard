@@ -31,7 +31,6 @@ import {
   Sparkles,
   Ticket,
   AlertCircle,
-  Clock,
   SlidersHorizontal
 } from "lucide-react"
 import { BOOKING_URL, DASHBOARD_URL } from '@/src/config/env'
@@ -1546,7 +1545,7 @@ const getEffectivePrice = (slot: SelectedSlot): number => {
       accent: "violet",
     },
     "Monthly Credit": {
-      icon: Clock,
+      icon: CalendarClock,
       hint: "Bill in monthly cycle",
       accent: "amber",
     },
@@ -3409,7 +3408,7 @@ function ScheduleGrid({
             className="booking-slot group relative flex h-full w-full cursor-pointer items-center justify-center gap-1 rounded-md border border-violet-400/30 bg-violet-400/15 text-[11px] font-semibold text-violet-100 transition-colors hover:bg-violet-400/25"
             title="Past slot - tap to view booking history"
           >
-            <Clock className="h-3 w-3" />
+            <CalendarClock className="h-3 w-3" />
             <span>Past</span>
           </div>
         ) : (
@@ -3678,7 +3677,7 @@ function RecentBookings({
         <h3 className="booking-contrast-heading flex items-center gap-2 text-lg font-semibold">
           {/* ✅ Show different icon based on booking type */}
           {hasPastBookings ? (
-            <Clock className="booking-contrast-subtle h-5 w-5" />
+            <CalendarClock className="booking-contrast-subtle h-5 w-5" />
           ) : (
             <CalendarDays className="w-5 h-5 text-emerald-600" />
           )}
@@ -3831,7 +3830,7 @@ function RecentBookings({
         <div className="booking-contrast-muted text-sm">
           {hasPastBookings ? (
             <span className="flex items-center gap-2">
-              <Clock className="w-4 h-4" />
+              <CalendarClock className="w-4 h-4" />
               Historical records for this time slot
             </span>
           ) : (
