@@ -27,6 +27,11 @@ import { useSubscription } from "@/hooks/useSubscription"
 import { useSocket } from "../context/SocketContext"
 import { useDashboardData } from "../context/DashboardDataContext"
 import { NotificationButton } from "../components/NotificationButton"
+import {
+  normalizeConsoleSlug,
+  resolveConsoleColor,
+  resolveConsoleIcon,
+} from "../components/console-catalog"
 import { HASH_LOGO_URL } from "@/src/config/branding"
 
 interface DashboardLayoutProps {
@@ -305,7 +310,7 @@ export function DashboardLayout({ children, contentScroll = "page" }: DashboardL
                       {nowISTDateText}
                     </span>
                     <span className="inline-flex items-center gap-1 rounded-md border border-border px-1.5 py-0.5">
-                      <User className="h-3.5 w-3.5 text-cyan-300" />
+                      <HugeiconsIcon icon={User} size={14} strokeWidth={1.8} className="text-cyan-300" />
                       {activeStaff?.name || "Owner"}
                     </span>
                     <span
@@ -315,7 +320,11 @@ export function DashboardLayout({ children, contentScroll = "page" }: DashboardL
                           : "border-amber-400/40 bg-amber-500/10 text-amber-200"
                       }`}
                     >
-                      {isConnected ? <Wifi className="h-3.5 w-3.5" /> : <WifiOff className="h-3.5 w-3.5" />}
+                      {isConnected ? (
+                        <HugeiconsIcon icon={Wifi} size={14} strokeWidth={1.8} />
+                      ) : (
+                        <HugeiconsIcon icon={WifiOff} size={14} strokeWidth={1.8} />
+                      )}
                       {isConnected ? "Live" : "Syncing"}
                     </span>
                     {platforms.map((platform) => {
