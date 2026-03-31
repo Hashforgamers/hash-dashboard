@@ -363,6 +363,20 @@ export function DashboardContent() {
     },
   ]
 
+  const mobileMetricsStrip = (
+    <div className="dashboard-module-card flex w-full items-center justify-between gap-1 rounded-xl border border-border/60 bg-background/45 px-1.5 py-1 md:hidden">
+      <div className="min-w-0 rounded-lg border border-blue-400/25 bg-blue-500/10 px-1.5 py-1 text-[10px] font-semibold text-blue-200">
+        Bk {currentStats.todayBookings}
+      </div>
+      <div className="min-w-0 rounded-lg border border-yellow-400/25 bg-yellow-500/10 px-1.5 py-1 text-[10px] font-semibold text-yellow-200">
+        Pd {formatMoney(currentStats.netPendingAmount)}
+      </div>
+      <div className="min-w-0 rounded-lg border border-emerald-400/25 bg-emerald-500/10 px-1.5 py-1 text-[10px] font-semibold text-emerald-200">
+        Er {formatMoney(currentStats.netEarnings)}
+      </div>
+    </div>
+  )
+
   if (!dashboardData) {
     return <HashLoader className="py-[42vh]" />
   }
@@ -457,26 +471,20 @@ export function DashboardContent() {
               </div>
             </div>
 
-            {insightCards.map((card) => (
-              <div key={card.label} className={`dashboard-insight-tile gaming-panel dashboard-module-panel dashboard-panel-card rounded-[28px] accent-${card.accent}`}>
-                <div className="dashboard-block-eyebrow">{card.label}</div>
-                <div className="dashboard-insight-value">{card.value}</div>
-                <div className="dashboard-insight-meta">{card.meta}</div>
-              </div>
-            ))}
-          </motion.section>
-
-          <div className="dashboard-main-grid mt-1 grid min-h-0 flex-1 grid-cols-1 gap-4 sm:gap-5 xl:grid-cols-12">
-            <motion.div
-              initial={{ opacity: 0, y: 18 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.15 }}
-              className="flex min-h-0 flex-col xl:col-span-8 2xl:col-span-9"
-            >
-              <div className="dashboard-module-head">
-                <div>
-                  <div className="dashboard-block-eyebrow">Live</div>
-                  <h2 className="dashboard-block-title">Active Sessions</h2>
+              {/* ✅ Current Slots - locked when subscription expired */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+                className="flex-1 min-h-0 lg:h-full max-md:overflow-hidden"
+              >
+                <div className="relative h-full overflow-hidden">
+                  <CurrentSlots
+                    currentSlots={dashboardData.currentSlots}
+                    historyBookings={dashboardData.historyBookings || []}
+                    refreshSlots={refreshSlots}
+                    setRefreshSlots={setRefreshSlots}
+                  />
                 </div>
                 <div className="dashboard-module-head__meta">
                   <span>{occupiedConsoles} occupied</span>

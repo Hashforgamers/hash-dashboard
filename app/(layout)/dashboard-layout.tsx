@@ -54,17 +54,49 @@ export function DashboardLayout({ children, contentScroll = "page" }: DashboardL
   const showGlobalRibbon = true
 
   const platforms = useMemo(() => {
-    const platformMap = [
-      { name: "PC", type: "pc", icon: ComputerIcon, color: "#38bdf8" },
-      { name: "PS5", type: "ps5", icon: GameController02Icon, color: "#a855f7" },
-      { name: "Xbox", type: "xbox", icon: GamepadDirectionalIcon, color: "#16FF00" },
-      { name: "VR", type: "vr", icon: VirtualRealityVrIcon, color: "#f59e0b" },
+    const source = Array.isArray(consoles) ? consoles : []
+    const grouped = new Map<
+      string,
+      { total: number; used: number; displayName?: string }
+    >()
+
+    source.forEach((item: any) => {
+      const slug = normalizeConsoleSlug(item?.type || item?.console_type || item?.console_slug || item?.game_name)
+      if (!slug) return
+      const current = grouped.get(slug) || { total: 0, used: 0, displayName: undefined }
+      current.total += 1
+      if (item?.status === false) current.used += 1
+      current.displayName =
+        current.displayName ||
+        item?.console_display_name ||
+        item?.consoleTypeName ||
+        item?.console_name ||
+        item?.type
+      grouped.set(slug, current)
+    })
+
+    const preferredOrder = ["pc", "playstation", "xbox", "vr_headset", "private_room", "vip_room", "bootcamp_room"]
+    const allTypes = Array.from(grouped.keys())
+    const sortedTypes = [
+      ...preferredOrder.filter((slug) => grouped.has(slug)),
+      ...allTypes.filter((slug) => !preferredOrder.includes(slug)).sort((a, b) => a.localeCompare(b)),
     ]
-    return platformMap.map((platform) => {
-      const source = Array.isArray(consoles) ? consoles.filter((item: any) => item?.type === platform.type) : []
-      const total = source.length
-      const used = source.filter((item: any) => item?.status === false).length
-      return { ...platform, total, used }
+
+    return sortedTypes.map((slug) => {
+      const counts = grouped.get(slug)!
+      const Icon = resolveConsoleIcon(undefined, slug)
+      const fallbackName = slug
+        .split("_")
+        .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+        .join(" ")
+      return {
+        type: slug,
+        name: String(counts.displayName || fallbackName),
+        icon: Icon,
+        color: resolveConsoleColor(slug),
+        total: counts.total,
+        used: counts.used,
+      }
     })
   }, [consoles])
 
@@ -262,48 +294,46 @@ export function DashboardLayout({ children, contentScroll = "page" }: DashboardL
 
           {showGlobalRibbon && (
             <div className="dashboard-nav-divider shrink-0 border-t px-2 pb-2 pt-1.5 sm:px-3 md:px-4">
-              <div className="dashboard-module-panel dashboard-global-ribbon flex flex-wrap items-center justify-between gap-2 rounded-[20px] px-3 py-2 text-[11px]">
-                <div className="flex flex-wrap items-center gap-1.5 text-slate-300">
-                  <span className="inline-flex items-center gap-1 rounded-md border border-emerald-400/30 bg-emerald-500/10 px-1.5 py-0.5 text-emerald-200">
-                    <HugeiconsIcon icon={Clock01Icon} size={14} strokeWidth={1.8} />
-                    {nowISTTimeText}
-                  </span>
-                  <span className="inline-flex items-center gap-1 rounded-md border border-border px-1.5 py-0.5">
-                    {nowISTDateText}
-                  </span>
-                  <span className="inline-flex items-center gap-1 rounded-md border border-border px-1.5 py-0.5">
-                    <HugeiconsIcon icon={User} size={14} strokeWidth={1.8} className="text-cyan-300" />
-                    {activeStaff?.name || "Owner"}
-                  </span>
-                  <span
-                    className={`inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 ${
-                      isConnected
-                        ? "border-emerald-400/40 bg-emerald-500/10 text-emerald-200"
-                        : "border-amber-400/40 bg-amber-500/10 text-amber-200"
-                    }`}
-                  >
-                    {isConnected ? (
-                      <HugeiconsIcon icon={Wifi} size={14} strokeWidth={1.8} />
-                    ) : (
-                      <HugeiconsIcon icon={WifiOff} size={14} strokeWidth={1.8} />
-                    )}
-                    {isConnected ? "Live" : "Syncing"}
-                  </span>
-                  {platforms.map((platform) => {
-                    const PlatformIcon = platform.icon
-                    return (
-                      <span
-                        key={`global-ribbon-${platform.type}`}
-                        className="inline-flex items-center gap-1 rounded-md border border-border px-1.5 py-0.5"
-                        title={`${platform.name}: ${platform.used}/${platform.total}`}
-                      >
-                        <HugeiconsIcon icon={PlatformIcon} size={14} strokeWidth={1.8} style={{ color: platform.color }} />
-                        <span>{platform.used}/{platform.total}</span>
-                      </span>
-                    )
-                  })}
+              <div className="dashboard-module-panel flex items-center justify-between gap-1.5 rounded-lg px-2 py-1.5 text-[11px] md:flex-wrap max-md:flex-nowrap">
+                <div className="min-w-0 flex-1 max-md:overflow-x-auto max-md:[scrollbar-width:none] max-md:[&::-webkit-scrollbar]:hidden md:overflow-visible">
+                  <div className="flex items-center gap-1.5 text-slate-300 md:flex-wrap max-md:w-max max-md:whitespace-nowrap">
+                    <span className="inline-flex items-center gap-1 rounded-md border border-emerald-400/30 bg-emerald-500/10 px-1.5 py-0.5 text-emerald-200">
+                      <Clock className="h-3.5 w-3.5" />
+                      {nowISTTimeText}
+                    </span>
+                    <span className="inline-flex items-center gap-1 rounded-md border border-border px-1.5 py-0.5">
+                      {nowISTDateText}
+                    </span>
+                    <span className="inline-flex items-center gap-1 rounded-md border border-border px-1.5 py-0.5">
+                      <User className="h-3.5 w-3.5 text-cyan-300" />
+                      {activeStaff?.name || "Owner"}
+                    </span>
+                    <span
+                      className={`inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 ${
+                        isConnected
+                          ? "border-emerald-400/40 bg-emerald-500/10 text-emerald-200"
+                          : "border-amber-400/40 bg-amber-500/10 text-amber-200"
+                      }`}
+                    >
+                      {isConnected ? <Wifi className="h-3.5 w-3.5" /> : <WifiOff className="h-3.5 w-3.5" />}
+                      {isConnected ? "Live" : "Syncing"}
+                    </span>
+                    {platforms.map((platform) => {
+                      const PlatformIcon = platform.icon
+                      return (
+                        <span
+                          key={`global-ribbon-${platform.type}`}
+                          className="inline-flex items-center gap-1 rounded-md border border-border px-1.5 py-0.5"
+                          title={`${platform.name}: ${platform.used}/${platform.total}`}
+                        >
+                          <PlatformIcon className="h-3.5 w-3.5" style={{ color: platform.color }} />
+                          <span>{platform.used}/{platform.total}</span>
+                        </span>
+                      )
+                    })}
+                  </div>
                 </div>
-                <div className="flex items-center gap-1.5">
+                <div className="ml-1 flex shrink-0 items-center gap-1.5">
                   <NotificationButton vendorId={vendorId} />
                   <button
                     type="button"

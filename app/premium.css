@@ -857,6 +857,50 @@ h6 {
   background: var(--dash-module-hover);
 }
 
+@media (max-width: 767px) {
+  .dashboard-table-shell {
+    border-radius: 0.65rem;
+    box-shadow: 0 8px 18px hsl(220 20% 20% / 0.06);
+  }
+
+  .dashboard-table-wrap {
+    max-height: none;
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+  }
+
+  .dashboard-table,
+  .dashboard-module-table {
+    min-width: 620px;
+  }
+
+  .dashboard-table th {
+    padding: 0.5rem 0.6rem;
+    font-size: 0.62rem;
+    letter-spacing: 0.06em;
+    white-space: nowrap;
+  }
+
+  .dashboard-table td {
+    padding: 0.58rem 0.6rem;
+    font-size: 0.78rem;
+  }
+
+  .dashboard-module-table-head .dashboard-module-table-header,
+  .dashboard-module-table th {
+    font-size: 0.62rem;
+    letter-spacing: 0.06em;
+    padding: 0.5rem 0.6rem;
+    white-space: nowrap;
+  }
+
+  .dashboard-module-table td {
+    padding: 0.58rem 0.6rem;
+    font-size: 0.78rem;
+  }
+}
+
 .dashboard-module-empty {
   color: var(--dash-module-empty);
   text-align: center;

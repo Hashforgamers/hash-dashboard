@@ -22,8 +22,6 @@ import {
   Power,
   Monitor,
   Gamepad,
-  Tv,
-  Headset,
   Cpu,
   Building2,
   CpuIcon as Gpu,
@@ -40,6 +38,7 @@ import  HashLoader  from "./ui/HashLoader";
 
 import { DASHBOARD_URL } from "@/src/config/env";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { normalizeConsoleSlug, resolveConsoleIcon } from "./console-catalog";
 
 
 
@@ -56,7 +55,7 @@ export function ConsoleList({ onEdit, refreshKey = 0 }: ConsoleListProps) {
   const [deletingConsoleId, setDeletingConsoleId] = useState<number | null>(null);
   const [releasingConsoleId, setReleasingConsoleId] = useState<number | null>(null);
   const [unlinkingConsoleId, setUnlinkingConsoleId] = useState<number | null>(null);
-  const [activeGroup, setActiveGroup] = useState<"all" | "pc" | "ps5" | "xbox" | "vr">("all");
+  const [activeGroup, setActiveGroup] = useState<string>("all");
 
   const loadConsoles = async (currentVendorId: number, force = false) => {
     if (!currentVendorId) return;
@@ -120,23 +119,18 @@ export function ConsoleList({ onEdit, refreshKey = 0 }: ConsoleListProps) {
 
 
 
-  const consoleIconByType: Record<string, any> = {
-    pc: Monitor,
-    ps5: Tv,
-    xbox: Gamepad,
-    vr: Headset,
-  };
-
   const consolelistdata = data.map((item: any) => {
-    const normalizedType = String(item.type || "pc").toLowerCase();
+    const normalizedType = normalizeConsoleSlug(String(item.type || "")) || "unknown";
     const occupancyState = String(item.occupancyState || "").toLowerCase() || (item.status ? "free" : "occupied");
     const statusLabel = String(item.statusLabel || "").trim() || (occupancyState === "free" ? "Free" : "Occupied");
+    const displayType = String(item.consoleDisplayName || item.type || "Console");
     return {
       id: item.id,
       type: normalizedType,
+      displayType,
       name: item.name || "Unknown Console",
       number: item.number || "N/A",
-      icon: consoleIconByType[normalizedType] || Monitor,
+      icon: resolveConsoleIcon(item.icon, normalizedType),
       brand: item.brand || "Unknown Brand",
       processor: item.processor || "N/A",
       gpu: item.gpu || "N/A",
@@ -159,33 +153,31 @@ export function ConsoleList({ onEdit, refreshKey = 0 }: ConsoleListProps) {
     };
   });
 
-  const typeMeta: Record<"pc" | "ps5" | "xbox" | "vr", { label: string; icon: any }> = {
-    pc: { label: "PC", icon: Monitor },
-    ps5: { label: "PS5", icon: Tv },
-    xbox: { label: "Xbox", icon: Gamepad },
-    vr: { label: "VR", icon: Headset },
-  };
-
-  const groupOrder: Array<"pc" | "ps5" | "xbox" | "vr"> = ["pc", "ps5", "xbox", "vr"];
-
   const groupedConsoles = useMemo(() => {
-    const grouped: Record<"pc" | "ps5" | "xbox" | "vr", any[]> = {
-      pc: [],
-      ps5: [],
-      xbox: [],
-      vr: [],
-    };
+    const grouped: Record<string, any[]> = {};
 
     consolelistdata.forEach((console: any) => {
-      if (grouped[console.type as keyof typeof grouped]) {
-        grouped[console.type as keyof typeof grouped].push(console);
-      } else {
-        grouped.pc.push(console);
-      }
+      const key = String(console.type || "unknown");
+      grouped[key] = grouped[key] || [];
+      grouped[key].push(console);
     });
 
     return grouped;
   }, [consolelistdata]);
+
+  const groupKeys = useMemo(() => Object.keys(groupedConsoles).sort(), [groupedConsoles]);
+
+  const typeMeta = useMemo(() => {
+    const meta: Record<string, { label: string; icon: any }> = {};
+    groupKeys.forEach((key) => {
+      const sample = groupedConsoles[key]?.[0];
+      meta[key] = {
+        label: sample?.displayType || key.replace(/_/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase()),
+        icon: sample?.icon || resolveConsoleIcon(undefined, key),
+      };
+    });
+    return meta;
+  }, [groupKeys, groupedConsoles]);
 
 
   const handleDelete = async (id: number): Promise<void> => {
@@ -288,8 +280,10 @@ export function ConsoleList({ onEdit, refreshKey = 0 }: ConsoleListProps) {
 
 
   const visibleGroups = activeGroup === "all"
-    ? groupOrder.filter((group) => groupedConsoles[group].length > 0)
-    : [activeGroup];
+    ? groupKeys.filter((group) => (groupedConsoles[group] || []).length > 0)
+    : groupKeys.includes(activeGroup)
+      ? [activeGroup]
+      : [];
 
   return (
     <div className="dashboard-module dashboard-typography flex h-full min-h-0 flex-col gap-4 overflow-hidden">
@@ -306,9 +300,9 @@ export function ConsoleList({ onEdit, refreshKey = 0 }: ConsoleListProps) {
           >
             All ({consolelistdata.length})
           </button>
-          {groupOrder.map((group) => {
-            const Icon = typeMeta[group].icon;
-            const count = groupedConsoles[group].length;
+          {groupKeys.map((group) => {
+            const Icon = typeMeta[group]?.icon || Monitor;
+            const count = (groupedConsoles[group] || []).length;
             return (
               <button
                 key={group}
@@ -321,7 +315,7 @@ export function ConsoleList({ onEdit, refreshKey = 0 }: ConsoleListProps) {
                 }`}
               >
                 <Icon className="h-3.5 w-3.5" />
-                {typeMeta[group].label} ({count})
+                {typeMeta[group]?.label || group} ({count})
               </button>
             );
           })}
@@ -331,13 +325,13 @@ export function ConsoleList({ onEdit, refreshKey = 0 }: ConsoleListProps) {
       <div className="min-h-0 flex-1 overflow-y-auto pr-1">
         <div className="space-y-4">
           {visibleGroups.map((group) => {
-            const consolesForGroup = groupedConsoles[group];
-            const GroupIcon = typeMeta[group].icon;
+            const consolesForGroup = groupedConsoles[group] || [];
+            const GroupIcon = typeMeta[group]?.icon || Monitor;
             return (
               <div key={group} className="space-y-2">
                 <div className="flex items-center gap-2 px-1">
                   <GroupIcon className="h-4 w-4 text-slate-700 dark:text-cyan-300" />
-                  <h3 className="dash-title !text-sm">{typeMeta[group].label} Consoles</h3>
+                  <h3 className="dash-title !text-sm">{typeMeta[group]?.label || group} Consoles</h3>
                   <span className="rounded-full border border-cyan-400/35 bg-cyan-500/10 px-2 py-0.5 text-xs text-slate-900 dark:text-cyan-200">
                     {consolesForGroup.length}
                   </span>

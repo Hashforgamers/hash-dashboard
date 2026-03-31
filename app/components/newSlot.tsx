@@ -22,7 +22,10 @@ import {
   Loader2,
   Tv,
   Gamepad,
+  Gamepad2,
   Headset,
+  Joystick,
+  Rocket,
   CalendarDays,
   Users,
   Sparkles,
@@ -37,7 +40,8 @@ import MealSelector from './mealSelector'
 import CreditAccountModal, { type MonthlyCreditAccountSummary } from './credit-account-modal'
 
 type PillColor = "green" | "blue" | "purple" | "yellow" | "red"
-type ConsoleFilter = "PC" | "PS5" | "Xbox" | "VR"
+type ConsoleFilter = string
+type SquadPricingMode = "squad_discount" | "controller_pricing" | "solo_only"
 
 interface SelectedSlot {
   slot_id: number
@@ -73,9 +77,17 @@ interface ControllerPricingConfig {
 
 const normalizeControllerType = (name: string | undefined): "ps5" | "xbox" | null => {
   const value = (name || "").toLowerCase()
-  if (value.includes("ps")) return "ps5"
+  if (value.includes("ps") || value.includes("playstation")) return "ps5"
   if (value.includes("xbox")) return "xbox"
   return null
+}
+
+const resolveConsoleIcon = (iconKey?: string, slugHint?: string) => {
+  return resolveCatalogIcon(iconKey, slugHint)
+}
+
+const resolveConsoleColor = (slugHint?: string) => {
+  return resolveCatalogColor(slugHint)
 }
 
 const calculateControllerFare = (config: ControllerPricingConfig, quantity: number): number => {
@@ -132,6 +144,12 @@ import {
 import { Search, CalendarClock, XCircle, ListTodo } from "lucide-react"
 import axios from "axios"
 import { useDashboardData } from "@/app/context/DashboardDataContext"
+import {
+  normalizeConsoleSlug as normalizeCatalogSlug,
+  resolveConsoleColor as resolveCatalogColor,
+  resolveConsoleIcon as resolveCatalogIcon,
+  type ConsoleCatalogItem,
+} from "./console-catalog"
 
 interface SelectedMeal {
   menu_item_id: number
@@ -170,6 +188,16 @@ interface BookingFieldConfig {
   email: { visible: boolean; required: boolean }
 }
 
+interface SquadPlatformRule {
+  enabled: boolean
+  max_players: number
+  pricing_mode: SquadPricingMode
+  console_slug?: string
+  display_name?: string
+  input_mode?: string
+  controller_policy?: string
+}
+
 interface SquadMemberInput {
   id: string
   name: string
@@ -182,6 +210,27 @@ interface SlotBookingFormProps {
   selectedSlots: SelectedSlot[]
   onBookingComplete: () => void
   availableConsoles: ConsoleType[]
+}
+
+const resolveSafeConsoleIcon = (iconCandidate: unknown, slugHint?: string) => {
+  if (typeof iconCandidate === "function") return iconCandidate as any
+  return resolveConsoleIcon(undefined, slugHint)
+}
+
+const sanitizeConsoleEntry = (entry: any): ConsoleType => {
+  const slug = normalizeConsoleSlugLikeBackend(entry?.type || entry?.slug || entry?.name || "pc") || "pc"
+  const name = String(entry?.name || entry?.display_name || slug).trim()
+  const price = Number(entry?.price || 0)
+  return {
+    type: slug,
+    name,
+    id: Number(entry?.id) || null,
+    price: Number.isFinite(price) ? price : 0,
+    icon: resolveSafeConsoleIcon(entry?.icon, slug),
+    iconColor: String(entry?.iconColor || resolveConsoleColor(slug)),
+    color: "grey",
+    description: String(entry?.description || `${name} Console`),
+  }
 }
 
 // ============= OPTIMIZATION 1: Request Cache =============
@@ -359,15 +408,40 @@ async function fetchSlotsBatch(vendorId: number, gameIds: number[], dates: strin
 
 // Update this constant
 const PAYMENT_TYPES = ['Cash', 'UPI', 'Pass', 'Monthly Credit'] as const
-const DEFAULT_SQUAD_PRICING_POLICY: Record<string, Record<string, number>> = {
+const DEFAULT_SQUAD_PRICING_POLICY_FALLBACK: Record<string, Record<string, number>> = {
   pc: { "2": 0, "3": 3, "4": 5, "5": 8 },
 }
 
-const SQUAD_PLATFORM_RULES: Record<string, { enabled: boolean; maxPlayers: number; pricingMode: "squad_discount" | "controller_pricing" | "solo_only" }> = {
-  pc: { enabled: true, maxPlayers: 10, pricingMode: "squad_discount" },
-  ps: { enabled: true, maxPlayers: 4, pricingMode: "controller_pricing" },
-  xbox: { enabled: true, maxPlayers: 4, pricingMode: "controller_pricing" },
-  vr: { enabled: false, maxPlayers: 1, pricingMode: "solo_only" },
+const CONSOLE_GROUP_ALIASES: Record<string, string> = {
+  pc: "pc",
+  computer: "pc",
+  gaming_pc: "pc",
+  playstation: "ps",
+  ps: "ps",
+  ps4: "ps",
+  ps5: "ps",
+  x_box: "xbox",
+  xbox: "xbox",
+  vr: "vr",
+  vr_headset: "vr",
+  virtual_reality: "vr",
+}
+
+const normalizeConsoleSlugLikeBackend = (raw: string | undefined | null): string => {
+  return normalizeCatalogSlug(raw)
+}
+
+const toLegacySquadGroup = (rawSlugOrGroup: string | undefined | null): string => {
+  const normalized = normalizeConsoleSlugLikeBackend(rawSlugOrGroup)
+  return CONSOLE_GROUP_ALIASES[normalized] || normalized
+}
+
+const resolveControllerPricingKey = (rawSlugOrGroup: string | undefined | null): "ps5" | "xbox" | null => {
+  const normalized = normalizeConsoleSlugLikeBackend(rawSlugOrGroup)
+  if (!normalized) return null
+  if (["ps", "ps4", "ps5", "playstation"].includes(normalized)) return "ps5"
+  if (normalized.includes("xbox")) return "xbox"
+  return null
 }
 
 const DEFAULT_BOOKING_FIELD_CONFIG: BookingFieldConfig = {
@@ -425,6 +499,8 @@ function SlotBookingForm({
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [activePricing, setActivePricing] = useState<Record<string, ActivePricingEntry>>({})
   const [squadPricingPolicy, setSquadPricingPolicy] = useState<Record<string, Record<string, number>>>({})
+  const [squadPlatformRules, setSquadPlatformRules] = useState<Record<string, SquadPlatformRule>>({})
+  const [availableSquadGroups, setAvailableSquadGroups] = useState<string[]>([])
 
 
 
@@ -917,13 +993,50 @@ useEffect(() => {
       const res = await fetch(`${BOOKING_URL}/api/vendor/${vendorId}/squad-pricing-policy`)
       const data = await res.json()
       if (res.ok && data?.success && data?.policy) {
-        setSquadPricingPolicy(data.policy)
+        const nextPolicy: Record<string, Record<string, number>> = {}
+        Object.entries(data.policy as Record<string, Record<string, number>>).forEach(([group, grid]) => {
+          const normalizedGroup = toLegacySquadGroup(group)
+          nextPolicy[normalizedGroup] = Object.entries(grid || {}).reduce((acc, [k, v]) => {
+            const playerCount = Number(k)
+            const discount = Number(v)
+            if (!Number.isNaN(playerCount) && !Number.isNaN(discount)) {
+              acc[String(playerCount)] = discount
+            }
+            return acc
+          }, {} as Record<string, number>)
+        })
+        setSquadPricingPolicy(nextPolicy)
+
+        const incomingRules = (data?.platform_rules || {}) as Record<string, SquadPlatformRule>
+        const nextRules: Record<string, SquadPlatformRule> = {}
+        Object.entries(incomingRules).forEach(([group, rule]) => {
+          const normalizedGroup = toLegacySquadGroup(group)
+          nextRules[normalizedGroup] = {
+            enabled: Boolean(rule?.enabled),
+            max_players: Number(rule?.max_players || 1),
+            pricing_mode: (rule?.pricing_mode || "solo_only") as SquadPricingMode,
+            console_slug: String(rule?.console_slug || ""),
+            display_name: String(rule?.display_name || normalizedGroup),
+            input_mode: String(rule?.input_mode || ""),
+            controller_policy: String(rule?.controller_policy || ""),
+          }
+        })
+        setSquadPlatformRules(nextRules)
+
+        const groupsFromApi = Array.isArray(data?.available_console_groups)
+          ? data.available_console_groups.map((group: string) => toLegacySquadGroup(group))
+          : Object.keys(nextRules)
+        setAvailableSquadGroups(Array.from(new Set(groupsFromApi)))
       } else {
-        setSquadPricingPolicy(DEFAULT_SQUAD_PRICING_POLICY)
+        setSquadPricingPolicy(DEFAULT_SQUAD_PRICING_POLICY_FALLBACK)
+        setSquadPlatformRules({})
+        setAvailableSquadGroups(Object.keys(DEFAULT_SQUAD_PRICING_POLICY_FALLBACK))
       }
     } catch (err) {
       console.error('❌ Failed to fetch squad pricing policy:', err)
-      setSquadPricingPolicy(DEFAULT_SQUAD_PRICING_POLICY)
+      setSquadPricingPolicy(DEFAULT_SQUAD_PRICING_POLICY_FALLBACK)
+      setSquadPlatformRules({})
+      setAvailableSquadGroups(Object.keys(DEFAULT_SQUAD_PRICING_POLICY_FALLBACK))
     }
   }
 
@@ -1162,29 +1275,48 @@ const getEffectivePrice = (slot: SelectedSlot): number => {
   }
 
   const selectedConsoleName = (selectedSlots[0]?.console_name || '').toLowerCase()
-  const selectedControllerType = normalizeControllerType(selectedSlots[0]?.console_name)
+  const selectedConsoleSlug = normalizeConsoleSlugLikeBackend(selectedSlots[0]?.console_name || "")
+  const preferredSquadGroup = toLegacySquadGroup(selectedConsoleSlug || selectedConsoleName)
+  const squadConsoleGroup = useMemo(() => {
+    const knownRuleKeys = Object.keys(squadPlatformRules || {})
+    if (knownRuleKeys.length === 0) return preferredSquadGroup || "pc"
+    if (preferredSquadGroup && squadPlatformRules[preferredSquadGroup]) return preferredSquadGroup
+    if (selectedConsoleSlug && squadPlatformRules[selectedConsoleSlug]) return selectedConsoleSlug
+    const bySlugMatch = knownRuleKeys.find((group) => {
+      const ruleSlug = normalizeConsoleSlugLikeBackend(squadPlatformRules[group]?.console_slug || "")
+      return Boolean(ruleSlug) && ruleSlug === selectedConsoleSlug
+    })
+    if (bySlugMatch) return bySlugMatch
+    const fromAvailable = availableSquadGroups.find((group) => squadPlatformRules[group])
+    if (fromAvailable) return fromAvailable
+    return knownRuleKeys[0]
+  }, [availableSquadGroups, preferredSquadGroup, selectedConsoleSlug, squadPlatformRules])
+  const squadPlatformRule = squadPlatformRules[squadConsoleGroup] || {
+    enabled: false,
+    max_players: 1,
+    pricing_mode: "solo_only" as SquadPricingMode,
+    console_slug: selectedConsoleSlug,
+    display_name: selectedSlots[0]?.console_name || squadConsoleGroup,
+    input_mode: "",
+    controller_policy: "",
+  }
+  const selectedControllerType = (
+    resolveControllerPricingKey(squadConsoleGroup)
+    || resolveControllerPricingKey(squadPlatformRule.console_slug)
+    || normalizeControllerType(selectedSlots[0]?.console_name)
+  )
   const supportsExtraController = selectedControllerType !== null && hasControllerPricingConfigured
   const bookingFlowMode: "solo" | "squad" = isSquadMode ? "squad" : "solo"
-  const squadConsoleGroup = (() => {
-    if (selectedConsoleName.includes("ps")) return "ps"
-    if (selectedConsoleName.includes("xbox")) return "xbox"
-    if (selectedConsoleName.includes("vr")) return "vr"
-    if (selectedConsoleName.includes("pc")) return "pc"
-    return "pc"
-  })()
-  const squadPlatformRule = SQUAD_PLATFORM_RULES[squadConsoleGroup] || SQUAD_PLATFORM_RULES.vr
   const squadSupported = Boolean(squadPlatformRule.enabled)
-  const squadUsesDiscountEngine = squadPlatformRule.pricingMode === "squad_discount"
-  const squadPolicyForConsole =
-    (squadConsoleGroup === "pc"
-      ? (squadPricingPolicy[squadConsoleGroup] || DEFAULT_SQUAD_PRICING_POLICY[squadConsoleGroup] || DEFAULT_SQUAD_PRICING_POLICY.pc)
-      : {})
+  const squadUsesDiscountEngine = squadPlatformRule.pricing_mode === "squad_discount"
+  const squadPolicyForConsole = squadPricingPolicy[squadConsoleGroup]
+    || (squadUsesDiscountEngine ? DEFAULT_SQUAD_PRICING_POLICY_FALLBACK.pc : {})
   const squadMaxPlayers = (() => {
     if (squadUsesDiscountEngine) {
       const keys = Object.keys(squadPolicyForConsole).map((k) => Number(k)).filter((v) => !Number.isNaN(v))
       if (keys.length > 0) return Math.max(...keys)
     }
-    return Number(squadPlatformRule.maxPlayers || 1)
+    return Number(squadPlatformRule.max_players || 1)
   })()
   const includedControllers = selectedControllerType ? 1 : 0
   const suggestedExtraControllerQty = isSquadMode && selectedControllerType
@@ -1374,7 +1506,7 @@ const getEffectivePrice = (slot: SelectedSlot): number => {
 
   const mealsTotal = selectedMeals.reduce((sum, meal) => sum + meal.total, 0)
   const consoleUnitTotal = selectedSlots.reduce((sum, slot) => sum + getEffectivePrice(slot), 0)
-  const squadConsoleMultiplier = isSquadMode && squadConsoleGroup === "pc" ? squadPlayerCount : 1
+  const squadConsoleMultiplier = isSquadMode && squadUsesDiscountEngine ? squadPlayerCount : 1
   const consoleTotal = isSquadMode ? Number((consoleUnitTotal * squadConsoleMultiplier).toFixed(2)) : consoleUnitTotal
   const squadDiscountPercent = (() => {
     if (!isSquadMode || !squadUsesDiscountEngine) return 0
@@ -1842,7 +1974,7 @@ const getEffectivePrice = (slot: SelectedSlot): number => {
           discountPercentPreview: isSquadMode ? squadDiscountPercent : 0,
           discountAmountPreview: isSquadMode ? squadDiscountAmount : 0,
           consoleGroup: squadConsoleGroup,
-          pricingMode: squadPlatformRule.pricingMode,
+          pricingMode: squadPlatformRule.pricing_mode,
           members: isSquadMode
             ? squadMembers
                 .filter((m) => m.name.trim() && m.phone.trim())
@@ -2515,7 +2647,13 @@ if (response.ok || result.success === true || result.success === 'true') {
                           <div className="text-xs text-gray-600 dark:text-gray-300">
                             Max players: <span className="font-semibold">{squadMaxPlayers}</span>
                             <span className="ml-2">
-                              Mode: <span className="font-semibold">{squadUsesDiscountEngine ? "PC discount rule engine" : "Controller pricing"}</span>
+                              Mode: <span className="font-semibold">
+                                {squadPlatformRule.pricing_mode === "squad_discount"
+                                  ? "Squad discount"
+                                  : squadPlatformRule.pricing_mode === "controller_pricing"
+                                  ? "Controller pricing"
+                                  : "Solo only"}
+                              </span>
                             </span>
                             {selectedControllerType && (
                               <span className="ml-2">
@@ -2556,7 +2694,7 @@ if (response.ok || result.success === true || result.success === 'true') {
                     <div className="space-y-3">
                       <div className="flex justify-between items-center py-2 border-b border-gray-200 dark:border-gray-600">
                         <span className="text-gray-600 dark:text-gray-400">
-                          Console Total{isSquadMode && squadConsoleGroup === "pc" ? ` (₹${consoleUnitTotal} x ${squadPlayerCount})` : ""}:
+                          Console Total{isSquadMode && squadUsesDiscountEngine ? ` (₹${consoleUnitTotal} x ${squadPlayerCount})` : ""}:
                         </span>
                         <span className="font-medium text-gray-800 dark:text-white">₹{consoleTotal}</span>
                       </div>
@@ -2849,15 +2987,8 @@ function TopBar({
 }) {
   const [menuOpen, setMenuOpen] = useState(false)
   const [showManageView, setShowManageView] = useState<'change' | 'reject' | 'list' | null>(null)
-  const consoleIcons = {
-    PC: Monitor,
-    PS5: MonitorPlay,
-    Xbox: Gamepad,
-    VR: Headset
-  }
-  const orderedTypes: ConsoleFilter[] = ["PC", "PS5", "Xbox", "VR"]
-  const activeTypes = orderedTypes.filter((type) =>
-    availableConsoles.some((c) => c.type === type)
+  const activeConsoles = [...availableConsoles].sort((a, b) =>
+    String(a?.name || a?.type || "").localeCompare(String(b?.name || b?.type || ""))
   )
   
   // Conditional rendering for management views
@@ -2893,93 +3024,23 @@ function TopBar({
 
   // Main TopBar return
   return (
-    <div className={cn("booking-toolbar mb-4 flex flex-col gap-3", compact && "mb-2 gap-2")}>
-      <div className="booking-toolbar-top">
-        <div className="booking-flow-card">
-          <div className="booking-flow-card__eyebrow">Booking flow</div>
-          <div className="booking-flow-card__title">Choose platform, select slots, create booking</div>
-          <div className="booking-flow-card__copy">
-            {selectedSlots.length > 0
-              ? `${selectedSlots.length} slot${selectedSlots.length > 1 ? "s" : ""} selected on ${selectedConsole}. Continue to create a booking.`
-              : "Start with a platform, then tap any available slot in the grid below."}
-          </div>
-        </div>
-
-        <div className="booking-toolbar-actions">
-          <Button
-            onClick={onNewBooking}
-            disabled={selectedSlots.length === 0}
-            className={cn(
-              "booking-primary-action rounded-lg shadow-lg transition-all duration-200",
-              "px-4 py-2 text-xs font-semibold sm:px-5 sm:text-sm",
-              selectedSlots.length > 0 
-                ? "ui-action-primary"
-                : "bg-slate-600 text-white cursor-not-allowed"
-            )}
-          >
-            <Plus className="mr-2 h-4 w-4" />
-            {selectedSlots.length > 0 ? `Create Booking (${selectedSlots.length})` : "Select Slots to Continue"}
-          </Button>
-
-          <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
-            <DropdownMenuTrigger asChild>
-              <Button 
-                variant="outline"
-                size="icon" 
-                className="booking-secondary-action ui-toolbar-menu rounded-lg"
-              >
-                <MoreVertical className="w-5 h-5" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56 border-slate-200 bg-white text-slate-900 shadow-lg dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100">
-              <DropdownMenuItem onClick={() => {
-                setShowManageView('change');
-                setMenuOpen(false);
-              }}>
-                <CalendarClock className="w-4 h-4 mr-2" />
-                Change Booking
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => {
-                setShowManageView('reject');
-                setMenuOpen(false);
-              }}>
-                <XCircle className="w-4 h-4 mr-2" />
-                Reject Booking
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => {
-                setShowManageView('list');
-                setMenuOpen(false);
-              }}>
-                <ListTodo className="w-4 h-4 mr-2" />
-                List Bookings
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      </div>
-
-      <Card className={cn("booking-console-panel rounded-xl border border-slate-300 bg-white/90 p-3 shadow-sm backdrop-blur-sm dark:border-slate-700 dark:bg-slate-800/50", compact && "p-3")}>
-        <div className="booking-console-panel__header">
-          <div>
-            <span className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">Console platform</span>
-            <p className="booking-console-panel__copy">Switch platform to narrow the slot map and avoid booking errors.</p>
-          </div>
-          <div className="booking-console-panel__meta">
-            <span>{activeTypes.length} active</span>
-            <span>{selectedConsole}</span>
-          </div>
-        </div>
-        <div className="booking-console-chip-row">
-          {activeTypes.map((key) => {
-            const Icon = consoleIcons[key]
-            return (
+    <div className={cn("mb-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between", compact && "mb-2 gap-2")}>
+      <Card className={cn("rounded-xl border border-slate-300 bg-white/90 p-3 shadow-sm backdrop-blur-sm dark:border-slate-700 dark:bg-slate-800/50", compact && "p-2")}>
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">Select Console</span>
+          <div className="flex flex-wrap items-center gap-2">
+            {activeConsoles.map((consoleItem) => {
+              const key = consoleItem.type
+              const Icon = resolveSafeConsoleIcon(consoleItem.icon, consoleItem.type)
+              const label = consoleItem.name || consoleItem.type
+              return (
               <SegmentedButton
                 key={key}
                 active={selectedConsole === key}
                 icon={Icon}
-                onClick={() => onConsoleChange(key as ConsoleFilter)}
+                onClick={() => onConsoleChange(key)}
               >
-                {key}
+                {label}
               </SegmentedButton>
             )
           })}
@@ -3133,13 +3194,7 @@ function ScheduleGrid({
   })
 
   const getConsoleIcon = (consoleType: string) => {
-    switch (consoleType) {
-      case 'PC': return Monitor
-      case 'PS5': return MonitorPlay
-      case 'Xbox': return Gamepad
-      case 'VR': return Headset
-      default: return Monitor
-    }
+    return resolveConsoleIcon(undefined, consoleType)
   }
 
   const getConsoleColor = (consoleId: number | null): PillColor => {
@@ -3343,51 +3398,26 @@ function ScheduleGrid({
           return <div key={`${day.fullDate}-${gameConsole.id}-${timeIndex}`} className="booking-lane-cell" />
         }
 
-        const isSelected = isSlotSelected(slot.slot_id, day.fullDate, slot.console_id)
-        const isPastTime = isPastSlotInIST(day.fullDate, slot.end_time, slot.start_time)
-        const isFullyBooked = (slot.available_slot || 0) === 0
-
-        let content: React.ReactNode
-
-        if (isPastTime) {
-          content = (
-            <div
-              onClick={() => handleSlotClick(day, time, gameConsole)}
-              className={cn(
-                "booking-lane-state booking-lane-state--past",
-                compact ? "min-h-[32px]" : "min-h-[40px]"
-              )}
-              title="Past slot - Click to view past bookings"
-            >
-              <Clock className="h-4 w-4 mr-1" />
-              <span className="text-xs font-semibold">Past</span>
-            </div>
-          )
-        } else if (isFullyBooked) {
-          content = (
-            <div
-              className={cn(
-                "booking-lane-state booking-lane-state--full",
-                compact ? "min-h-[32px]" : "min-h-[40px]"
-              )}
-              title="Fully booked"
-            >
-              <X className="h-5 w-5 stroke-[3]" />
-            </div>
-          )
-        } else {
-          content = (
-            <SlotPill
-              label={`${slot.available_slot} open • ${Math.max(getSlotDurationMinutes(slot), 30)}m`}
-              color={getConsoleColor(gameConsole.id)}
-              icon={getConsoleIcon(gameConsole.type)}
-              onClick={() => handleSlotClick(day, time, gameConsole)}
-              selected={isSelected}
-              disabled={false}
-              compact={compact}
-            />
-          )
-        }
+          // ✅ Show available slots with count
+          else {
+            timeSlots.push(
+              <div
+                key={`${day.fullDate}-${slot.slot_id}`}
+                className={cn("w-full h-full", compact ? "min-h-[32px]" : "min-h-[40px]")}
+              >
+                <SlotPill
+                  label={`${Math.max(getSlotDurationMinutes(slot), 30)}m`}
+                  color={getConsoleColor(gameConsole.id)}
+                  icon={getConsoleIcon(gameConsole.type)}
+                  onClick={() => handleSlotClick(day, time, gameConsole)}
+                  selected={isSelected}
+                  disabled={false}
+                  compact={compact}
+                />
+              </div>
+            )
+          }
+        })
 
         return (
           <div
@@ -4642,7 +4672,7 @@ interface SlotManagementProps {
 
 export default function SlotManagement({ embedded = false }: SlotManagementProps) {
   const { moduleCache, moduleVersions, setModuleCache } = useDashboardData()
-  const [selectedConsole, setSelectedConsole] = useState<ConsoleFilter>("PC")
+  const [selectedConsole, setSelectedConsole] = useState<ConsoleFilter>("")
   const [selectedSlots, setSelectedSlots] = useState<SelectedSlot[]>([])
   const [showBookingForm, setShowBookingForm] = useState(false)
   const [availableConsoles, setAvailableConsoles] = useState<ConsoleType[]>([])
@@ -4675,7 +4705,10 @@ const [isLoadingBookings, setIsLoadingBookings] = useState(false)
       const data = parsed?.data as BookingCacheData | undefined
       if (!data || Date.now() - ts > SNAPSHOT_TTL) return null
       if (!Array.isArray(data.availableConsoles) || typeof data.allSlots !== "object") return null
-      return data
+      return {
+        ...data,
+        availableConsoles: data.availableConsoles.map((entry: any) => sanitizeConsoleEntry(entry)),
+      }
     } catch {
       return null
     }
@@ -4695,7 +4728,7 @@ const [isLoadingBookings, setIsLoadingBookings] = useState(false)
   const bookingVersion = moduleVersions[bookingVersionKey] || 0
 
   const applyBookingCache = (data: BookingCacheData) => {
-    setAvailableConsoles(data.availableConsoles)
+    setAvailableConsoles((data.availableConsoles || []).map((entry: any) => sanitizeConsoleEntry(entry)))
     setAllSlots(data.allSlots)
     if (data.selectedConsole) {
       setSelectedConsole(data.selectedConsole)
@@ -4712,47 +4745,73 @@ const [isLoadingBookings, setIsLoadingBookings] = useState(false)
       console.time("⏱️ Total fetch time")
 
       console.log("📡 Fetching consoles...")
-      const consolesUrl = `${BOOKING_URL}/api/getAllConsole/vendor/${resolvedVendorId}${forceFresh ? `?t=${Date.now()}` : ""}`
-      const consolesData = await fetchWithDedup(consolesUrl)
+      const cacheBust = forceFresh ? `?t=${Date.now()}` : ""
+      const consolesUrl = `${BOOKING_URL}/api/getAllConsole/vendor/${resolvedVendorId}${cacheBust}`
+      const consoleTypesUrl = `${BOOKING_URL}/api/console-types/vendor/${resolvedVendorId}${cacheBust}`
+      const [consolesData, consoleTypesData] = await Promise.all([
+        fetchWithDedup(consolesUrl),
+        fetchWithDedup(consoleTypesUrl).catch(() => null),
+      ])
 
-      const consoleTemplate = [
-        { type: "PC" as ConsoleFilter, name: "PC Gaming", icon: Monitor, iconColor: "#7c3aed" },
-        { type: "PS5" as ConsoleFilter, name: "PlayStation 5", icon: Tv, iconColor: "#2563eb" },
-        { type: "Xbox" as ConsoleFilter, name: "Xbox Series", icon: Gamepad, iconColor: "#059669" },
-        { type: "VR" as ConsoleFilter, name: "VR Gaming", icon: Headset, iconColor: "#ea580c" },
-      ]
+      const resolvedByType = new Map<string, ConsoleType>()
+      const rawGames = Array.isArray(consolesData?.games) ? consolesData.games : []
+      const rawCatalog = Array.isArray(consoleTypesData?.console_types)
+        ? (consoleTypesData.console_types as ConsoleCatalogItem[])
+        : Array.isArray(consolesData?.catalog)
+          ? (consolesData.catalog as ConsoleCatalogItem[])
+          : []
 
-      const consolesResolved = consoleTemplate
-        .map(template => {
-          const matchedConsole = consolesData.games?.find((game: any) => {
-            const apiName = (game.console_name || '').toLowerCase()
-            const templateType = template.type.toLowerCase()
+      const gameBySlug = new Map<string, any>()
+      rawGames.forEach((game: any) => {
+        const hasLiveConsoles = Number(game?.console_count ?? 0) > 0
+        if (!hasLiveConsoles) return
+        const normalizedSlug = normalizeConsoleSlugLikeBackend(
+          game?.console_slug || game?.console_name
+        )
+        if (!normalizedSlug || gameBySlug.has(normalizedSlug)) return
+        gameBySlug.set(normalizedSlug, game)
+      })
 
-            const hasLiveConsoles = Number(game.console_count ?? 0) > 0
-            if (!hasLiveConsoles) return false
-
-            return apiName.includes(templateType) ||
-              (templateType === 'pc' && (apiName.includes('gaming') || apiName.includes('computer'))) ||
-              (templateType === 'ps5' && (apiName.includes('playstation') || apiName.includes('sony'))) ||
-              (templateType === 'xbox' && (apiName.includes('series') || apiName.includes('microsoft'))) ||
-              (templateType === 'vr' && (apiName.includes('virtual') || apiName.includes('reality')))
-          })
-
-          if (matchedConsole) {
-            return {
-              type: template.type,
-              name: matchedConsole.console_name,
-              id: matchedConsole.id,
-              price: matchedConsole.console_price,
-              icon: template.icon,
-              iconColor: template.iconColor,
-              color: "grey" as const,
-              description: `${template.type} Gaming Console`
-            }
-          }
-          return null
+      rawCatalog.forEach((catalogItem) => {
+        const slug = normalizeConsoleSlugLikeBackend(catalogItem?.slug)
+        if (!slug) return
+        const mappedGame = gameBySlug.get(slug)
+        if (!mappedGame) return
+        if (resolvedByType.has(slug)) return
+        const displayName = String(
+          catalogItem?.display_name || mappedGame?.console_display_name || mappedGame?.console_name || slug
+        ).trim()
+        resolvedByType.set(slug, {
+          type: slug,
+          name: displayName,
+          id: Number(mappedGame?.id) || null,
+          price: Number(mappedGame?.console_price) || 0,
+          icon: resolveConsoleIcon(catalogItem?.icon || mappedGame?.icon, slug),
+          iconColor: resolveConsoleColor(slug),
+          color: "grey" as const,
+          description: `${displayName} Console`,
         })
-        .filter(Boolean) as ConsoleType[]
+      })
+
+      rawGames.forEach((game: any) => {
+        const hasLiveConsoles = Number(game?.console_count ?? 0) > 0
+        if (!hasLiveConsoles) return
+        const slug = normalizeConsoleSlugLikeBackend(game?.console_slug || game?.console_name)
+        if (!slug || resolvedByType.has(slug)) return
+        const displayName = String(game?.console_display_name || game?.console_name || slug).trim()
+        resolvedByType.set(slug, {
+          type: slug,
+          name: displayName,
+          id: Number(game?.id) || null,
+          price: Number(game?.console_price) || 0,
+          icon: resolveConsoleIcon(game?.icon, slug),
+          iconColor: resolveConsoleColor(slug),
+          color: "grey" as const,
+          description: `${displayName} Console`,
+        })
+      })
+
+      const consolesResolved = Array.from(resolvedByType.values())
 
       if (consolesResolved.length === 0) {
         console.log("⚠️ No consoles available")
@@ -4864,16 +4923,10 @@ const [isLoadingBookings, setIsLoadingBookings] = useState(false)
         })
       }
 
-      const presentConsoleIds = new Set<number>()
-      Object.values(slotsData).forEach((daySlots: any[]) => {
-        daySlots.forEach((slot: any) => {
-          if (slot?.console_id != null) presentConsoleIds.add(Number(slot.console_id))
-        })
-      })
-      const filteredConsoles = consolesResolved.filter((c) => c.id != null && presentConsoleIds.has(Number(c.id)))
+      const filteredConsoles = consolesResolved.filter((c) => c.id != null)
       let nextSelectedConsole = selectedConsole
       if (filteredConsoles.length > 0 && !filteredConsoles.some((c) => c.type === selectedConsole)) {
-        nextSelectedConsole = filteredConsoles[0].type as ConsoleFilter
+        nextSelectedConsole = filteredConsoles[0].type
       }
 
       console.timeEnd("⏱️ Total fetch time")

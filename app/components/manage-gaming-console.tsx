@@ -1,16 +1,24 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Card,
   CardHeader,
   CardTitle,
   CardDescription,
 } from "@/components/ui/card";
-import { PlusCircle, List, Monitor, Gamepad, Tv, Headset, ArrowLeft, Sparkles } from 'lucide-react';
+import { PlusCircle, List, Monitor, ArrowLeft, Sparkles, Tv, Gamepad, Headset } from 'lucide-react';
 import { AddConsoleForm } from "./add-console-form";
 import { ConsoleList } from "./console-list";
 import { EditConsoleForm } from "./edit-console-form";
 import { motion, AnimatePresence } from "framer-motion";
+import { jwtDecode } from "jwt-decode";
+import { DASHBOARD_URL } from "@/src/config/env";
+import {
+  normalizeConsoleSlug,
+  resolveConsoleColor,
+  resolveConsoleIcon,
+  type ConsoleCatalogItem,
+} from "./console-catalog";
 
 const actions = [
   {
@@ -29,7 +37,7 @@ const actions = [
   },
 ];
 
-const consoleTypes = [
+const DEFAULT_CONSOLE_TYPES = [
   {
     type: "pc",
     name: "PC",
@@ -63,8 +71,55 @@ const consoleTypes = [
 export function ManageGamingConsole() {
   const [selectedAction, setSelectedAction] = useState<string | null>(null);
   const [selectedConsoleType, setSelectedConsoleType] = useState<string | null>(null);
+  const [consoleTypes, setConsoleTypes] = useState(DEFAULT_CONSOLE_TYPES);
   const [editingConsole, setEditingConsole] = useState<any | null>(null);
   const [listRefreshKey, setListRefreshKey] = useState(0);
+
+  useEffect(() => {
+    const token = localStorage.getItem("jwtToken");
+    if (!token) return;
+    let vendorId: number | null = null;
+    try {
+      const decoded = jwtDecode<{ sub?: { id?: number } | number }>(token);
+      if (typeof decoded?.sub === "number") vendorId = decoded.sub;
+      else vendorId = Number(decoded?.sub?.id || 0) || null;
+    } catch {
+      vendorId = null;
+    }
+    if (!vendorId) return;
+
+    let isMounted = true;
+    const loadConsoleTypes = async () => {
+      try {
+        const response = await fetch(`${DASHBOARD_URL}/api/console-types?vendor_id=${vendorId}`);
+        const data = await response.json();
+        const items = Array.isArray(data?.console_types) ? (data.console_types as ConsoleCatalogItem[]) : [];
+        if (!isMounted || items.length === 0) return;
+        const dynamic = items
+          .filter((item) => item?.is_active !== false)
+          .map((item) => {
+            const slug = normalizeConsoleSlug(item.slug);
+            const displayName = String(item.display_name || slug).trim();
+            return {
+              type: slug,
+              name: displayName,
+              icon: resolveConsoleIcon(item.icon, slug),
+              iconColor: resolveConsoleColor(slug),
+              description: `${displayName} systems`,
+            };
+          });
+        if (dynamic.length > 0) {
+          setConsoleTypes(dynamic);
+        }
+      } catch {
+        // Keep defaults when catalog API is unavailable.
+      }
+    };
+    loadConsoleTypes();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const handleActionClick = (actionType: string) => {
     setSelectedAction(actionType);
