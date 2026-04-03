@@ -1417,7 +1417,7 @@ export default function ConsolePricing() {
     : controllerConsoleTabs[0]?.type || "";
 
   return (
-    <div className="console-pricing-page dashboard-module dashboard-typography flex h-full min-h-0 flex-col gap-4 overflow-y-auto overflow-x-hidden px-1 pb-2 sm:px-2">
+    <div className="console-pricing-page dashboard-module dashboard-typography relative flex h-full min-h-0 flex-col gap-4 overflow-y-auto overflow-x-hidden px-1 pb-2 sm:px-2">
 
       {/* ✅ Success Toast */}
       <AnimatePresence>
@@ -2451,7 +2451,7 @@ export default function ConsolePricing() {
       {/* ✅ Offer Form Modal */}
       <AnimatePresence>
         {showOfferForm && (
-          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100] p-4">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-40 p-4">
             <motion.div
               initial={{ scale: 0.95, opacity: 0, y: 10 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
