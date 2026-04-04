@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import {
   LayoutDashboard,
@@ -65,6 +65,7 @@ const navItems: NavItem[] = [
 
 export function MainNav({ className, onItemClick, isNavPinned = false, ...props }: MainNavProps) {
   const pathname = usePathname();
+  const router = useRouter();
   const { setTheme, theme } = useTheme();
   const { can, setActiveByPin, clearAccessSession, setSelectedCafe } = useAccess();
   const [pinDialogOpen, setPinDialogOpen] = useState(false);
@@ -99,6 +100,14 @@ export function MainNav({ className, onItemClick, isNavPinned = false, ...props 
     setPin("");
   };
 
+  const handleNavMouseDown = (event: React.MouseEvent, href: string) => {
+    if (event.button !== 0) return;
+    if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+    if (pathname === href) return;
+    event.preventDefault();
+    router.push(href);
+  };
+
   return (
     <>
       <nav
@@ -116,6 +125,7 @@ export function MainNav({ className, onItemClick, isNavPinned = false, ...props 
                 <Link
                   key={href}
                   href={href}
+                  onMouseDown={(event) => handleNavMouseDown(event, href)}
                   onClick={() => {
                     if (href === "/select-cafe") {
                       clearStorageExceptVendor();
