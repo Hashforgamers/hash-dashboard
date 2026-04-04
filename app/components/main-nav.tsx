@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import {
   LayoutDashboard,
@@ -65,24 +65,12 @@ const navItems: NavItem[] = [
 
 export function MainNav({ className, onItemClick, isNavPinned = false, ...props }: MainNavProps) {
   const pathname = usePathname();
-  const router = useRouter();
   const { setTheme, theme } = useTheme();
-  const { can, setActiveByPin, clearAccessSession, setSelectedCafe } = useAccess();
+  const { can, setActiveByPin, activeStaff } = useAccess();
   const [pinDialogOpen, setPinDialogOpen] = useState(false);
   const [pin, setPin] = useState("");
   const responsiveItemPaddingClass = isNavPinned ? "md:px-3 xl:px-3" : "md:px-3 xl:px-2 xl:group-hover:px-3";
   const responsiveLabelClass = isNavPinned ? "whitespace-nowrap md:block xl:block" : "whitespace-nowrap md:block xl:hidden xl:group-hover:block";
-
-  const clearStorageExceptVendor = () => {
-    const keysToKeep = ["vendor_login_email", "vendors"];
-    Object.keys(localStorage).forEach((key) => {
-      if (!keysToKeep.includes(key)) {
-        localStorage.removeItem(key);
-      }
-    });
-    setSelectedCafe(null);
-    clearAccessSession();
-  };
 
   const handleSwitchUser = async () => {
     if (!/^\d{4}$/.test(pin)) {
@@ -100,12 +88,12 @@ export function MainNav({ className, onItemClick, isNavPinned = false, ...props 
     setPin("");
   };
 
-  const handleNavMouseDown = (event: React.MouseEvent, href: string) => {
-    if (event.button !== 0) return;
-    if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
-    if (pathname === href) return;
-    event.preventDefault();
-    router.push(href);
+  const canShowItem = (permission: Permission) => {
+    const onSelectCafeRoute = pathname === "/select-cafe" || pathname?.startsWith("/select-cafe/");
+    if (!activeStaff) return true;
+    if (permission === "cafe.switch") return true;
+    if (onSelectCafeRoute) return true;
+    return can(permission);
   };
 
   return (
@@ -120,18 +108,12 @@ export function MainNav({ className, onItemClick, isNavPinned = false, ...props 
         <div className="min-h-0 flex-1 overflow-y-auto pr-1">
           <div className="flex flex-col space-y-[clamp(0.08rem,0.25vh,0.2rem)]">
             {navItems
-              .filter((item) => can(item.permission))
+              .filter((item) => canShowItem(item.permission))
               .map(({ href, icon: Icon, label }) => (
                 <Link
                   key={href}
                   href={href}
-                  onMouseDown={(event) => handleNavMouseDown(event, href)}
-                  onClick={() => {
-                    if (href === "/select-cafe") {
-                      clearStorageExceptVendor();
-                    }
-                    onItemClick?.();
-                  }}
+                  onClick={() => onItemClick?.()}
                   className={cn(
                     "dashboard-nav-item group/nav flex min-h-[32px] items-center gap-2 rounded-lg border px-2.5 py-[clamp(0.2rem,0.55vh,0.38rem)] text-sm font-medium leading-tight transition-all duration-200",
                     responsiveItemPaddingClass,
@@ -154,7 +136,7 @@ export function MainNav({ className, onItemClick, isNavPinned = false, ...props 
           {can("staff.manage") && (
             <Link
               href="/employee-access"
-              onClick={onItemClick}
+              onClick={() => onItemClick?.()}
               className={cn(
                 "dashboard-nav-item group/nav flex min-h-[30px] items-center gap-2 rounded-lg border px-2.5 py-[clamp(0.14rem,0.42vh,0.28rem)] text-sm font-medium leading-tight transition-all duration-200",
                 responsiveItemPaddingClass,
@@ -189,7 +171,7 @@ export function MainNav({ className, onItemClick, isNavPinned = false, ...props 
           {can("account.manage") && (
             <Link
               href="/account"
-              onClick={onItemClick}
+              onClick={() => onItemClick?.()}
               className={cn(
                 "dashboard-nav-item group/nav flex min-h-[30px] items-center gap-2 rounded-lg border px-2.5 py-[clamp(0.14rem,0.42vh,0.28rem)] text-sm font-medium leading-tight transition-all duration-200",
                 responsiveItemPaddingClass,
