@@ -12,6 +12,7 @@ import { LOGIN_URL, VENDOR_ONBOARD_URL } from "@/src/config/env"
 import { toast } from "sonner"
 import { useAccess } from "@/app/context/AccessContext"
 import { accessApi } from "@/lib/access-api"
+import { DashboardLayout } from "../../(layout)/dashboard-layout"
 
 const INDIA_STATES = [
   "Andhra Pradesh",
@@ -420,7 +421,8 @@ export default function SelectCafePage() {
   }
 
   return (
-    <div className="premium-shell flex min-h-screen flex-col items-center justify-center overflow-hidden p-3 sm:p-4 md:p-8">
+    <DashboardLayout contentScroll="contained">
+      <div className="premium-shell flex min-h-full flex-col items-center justify-center overflow-hidden p-3 sm:p-4 md:p-8">
       <div className="relative z-20 flex w-full max-w-7xl flex-col items-center gap-8 md:gap-12">
         <div className="text-center space-y-4 md:space-y-6">
           <h1 className="premium-heading select-none text-4xl font-bold tracking-tight text-slate-900 md:mb-2 md:text-5xl lg:text-7xl dark:text-white">
@@ -1013,6 +1015,7 @@ export default function SelectCafePage() {
         }
         .animate-shake { animation: shake 0.5s ease-in-out; }
       `}</style>
-    </div>
+      </div>
+    </DashboardLayout>
   )
 }
