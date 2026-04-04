@@ -142,7 +142,7 @@ export function DashboardLayout({ children, contentScroll = "page" }: DashboardL
 
   return (
     <div className="premium-shell dashboard-typography flex h-dvh overflow-hidden text-foreground">
-      <header className="dashboard-nav dashboard-nav-surface dashboard-nav-divider fixed left-0 right-0 top-0 z-20 flex items-center justify-between border-b px-4 py-3 backdrop-blur md:hidden">
+      <header className="dashboard-nav dashboard-nav-surface dashboard-nav-divider fixed left-0 right-0 top-0 z-[120] flex items-center justify-between border-b px-4 py-3 backdrop-blur md:hidden">
         <div className="flex items-center">
           <Image
             src="/hash_for_gamer_logo.png"
@@ -166,7 +166,7 @@ export function DashboardLayout({ children, contentScroll = "page" }: DashboardL
       <div className="flex min-h-0 flex-1 overflow-hidden pt-[58px] md:pt-0">
         <aside
           className={`
-            dashboard-nav dashboard-nav-surface dashboard-nav-divider group fixed left-0 top-0 z-30 flex h-full w-[86vw] max-w-72 flex-col overflow-hidden border-r p-3 backdrop-blur-md transition-transform duration-300 ease-out
+            dashboard-nav dashboard-nav-surface dashboard-nav-divider group fixed left-0 top-0 z-[130] flex h-full w-[86vw] max-w-72 flex-col overflow-hidden border-r p-3 backdrop-blur-md transition-transform duration-300 ease-out
             md:sticky md:top-0 md:h-dvh md:w-72 md:max-w-none md:translate-x-0 md:shrink-0
             ${isNavPinned ? "xl:w-72" : "xl:w-[76px] xl:hover:w-72"}
             ${isNavOpen ? "translate-x-0" : "-translate-x-full"}
@@ -203,7 +203,7 @@ export function DashboardLayout({ children, contentScroll = "page" }: DashboardL
 
         {isNavOpen && (
           <div
-            className="fixed inset-0 z-20 bg-black/55 backdrop-blur-[1px] md:hidden"
+            className="fixed inset-0 z-[125] bg-black/55 backdrop-blur-[1px] md:hidden"
             onClick={() => setIsNavOpen(false)}
           />
         )}
