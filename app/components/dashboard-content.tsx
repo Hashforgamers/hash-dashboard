@@ -318,7 +318,12 @@ export function DashboardContent() {
                 </div>
                 <span className="dash-kpi-label">Bookings</span>
               </div>
-              <span className="text-[10px] font-bold text-green-400">+{currentStats.todayBookingsChange}%</span>
+              <span
+                className={`text-[10px] font-semibold ${isConnected ? "text-emerald-300" : "text-amber-300"}`}
+                title={isConnected ? "Realtime updates connected" : "Realtime reconnecting"}
+              >
+                {isConnected ? "Live" : "Syncing"}
+              </span>
             </div>
             <div className="mt-1 flex items-center justify-between">
               <motion.p
