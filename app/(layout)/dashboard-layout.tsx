@@ -166,7 +166,7 @@ export function DashboardLayout({ children, contentScroll = "page" }: DashboardL
       <div className="flex min-h-0 flex-1 overflow-hidden pt-[58px] md:pt-0">
         <aside
           className={`
-            dashboard-nav dashboard-nav-surface dashboard-nav-divider group fixed left-0 top-0 z-[130] flex h-full w-[86vw] max-w-72 flex-col overflow-hidden border-r p-3 backdrop-blur-md transition-transform duration-300 ease-out
+            dashboard-nav dashboard-nav-surface dashboard-nav-divider group fixed left-0 top-0 z-[130] pointer-events-auto flex h-full w-[86vw] max-w-72 flex-col overflow-hidden border-r p-3 backdrop-blur-md transition-transform duration-300 ease-out
             md:sticky md:top-0 md:h-dvh md:w-72 md:max-w-none md:translate-x-0 md:shrink-0
             ${isNavPinned ? "xl:w-72" : "xl:w-[76px] xl:hover:w-72"}
             ${isNavOpen ? "translate-x-0" : "-translate-x-full"}
@@ -208,10 +208,10 @@ export function DashboardLayout({ children, contentScroll = "page" }: DashboardL
           />
         )}
 
-        <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden">
+        <div className="relative z-0 flex min-h-0 flex-1 flex-col overflow-hidden">
           <main
             data-dashboard-scroll-root="true"
-            className={`min-h-0 h-full flex-1 overflow-y-auto px-2 pb-2 pt-2 sm:px-3 sm:pb-3 md:px-4 md:pb-4 md:pt-4 ${
+            className={`relative z-0 min-h-0 h-full flex-1 overflow-y-auto px-2 pb-2 pt-2 sm:px-3 sm:pb-3 md:px-4 md:pb-4 md:pt-4 ${
               contentScroll === "contained" ? "overflow-x-hidden" : ""
             }`}
           >
