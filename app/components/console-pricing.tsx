@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Monitor,
@@ -63,6 +63,14 @@ import {
 } from "./console-pricing/utils";
 
 export default function ConsolePricing() {
+  const renderCountRef = useRef(0);
+  const cacheSyncRunsRef = useRef(0);
+  const priceStateSetCountRef = useRef(0);
+  const lastPriceSetAtRef = useRef<string>("");
+  const [debugEnabled, setDebugEnabled] = useState(false);
+
+  renderCountRef.current += 1;
+
   const { vendorId: contextVendorId } = useDashboardData();
   const [consoleTypes, setConsoleTypes] = useState<ConsoleType[]>(DEFAULT_CONSOLE_TYPES);
   const [prices, setPrices] = useState<PricingState>(() => {
@@ -147,6 +155,32 @@ export default function ConsolePricing() {
   });
 
   const validatePrice = (value: number) => value >= 0 && value <= 10000;
+  const mergePricingState = (prev: PricingState, incoming: PricingState, types: ConsoleType[]): PricingState => {
+    const next = { ...prev, ...incoming };
+    types.forEach((consoleType) => {
+      if (!next[consoleType.type]) {
+        next[consoleType.type] = { value: 0, isValid: true, hasChanged: false };
+      }
+    });
+    return next;
+  };
+  const isPricingStateEqual = (a: PricingState, b: PricingState) => {
+    const keys = new Set([...Object.keys(a), ...Object.keys(b)]);
+    for (const key of keys) {
+      const left = a[key];
+      const right = b[key];
+      if (!left && !right) continue;
+      if (!left || !right) return false;
+      if (
+        Number(left.value) !== Number(right.value) ||
+        Boolean(left.isValid) !== Boolean(right.isValid) ||
+        Boolean(left.hasChanged) !== Boolean(right.hasChanged)
+      ) {
+        return false;
+      }
+    }
+    return true;
+  };
 
   const basePricingKey = vendorId ? `pricing_base:${vendorId}` : "pricing_base:0";
   const offersKey = vendorId ? `pricing_offers:${vendorId}` : "pricing_offers:0";
@@ -336,17 +370,53 @@ export default function ConsolePricing() {
   }, [vendorId]);
 
   useEffect(() => {
+    const enabled = new URLSearchParams(window.location.search).get("debugPricing") === "1";
+    setDebugEnabled(enabled);
+    if (enabled) {
+      console.info("[console-pricing-debug] enabled (via ?debugPricing=1)");
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!debugEnabled) return;
+    const snapshot = {
+      renders: renderCountRef.current,
+      cacheSyncRuns: cacheSyncRunsRef.current,
+      priceStateSets: priceStateSetCountRef.current,
+      lastPriceSetAt: lastPriceSetAtRef.current || "-",
+      activeTab,
+      showOfferForm,
+      vendorId,
+    };
+    (window as any).__consolePricingDebug = snapshot;
+    console.debug("[console-pricing-debug] render", snapshot);
+  });
+
+  useEffect(() => {
     if (!vendorId) return;
+    cacheSyncRunsRef.current += 1;
+    if (debugEnabled) {
+      console.debug("[console-pricing-debug] base-pricing sync start", {
+        run: cacheSyncRunsRef.current,
+        hasCached: Boolean(cachedBasePricing && Object.keys(cachedBasePricing).length > 0),
+      });
+    }
     if (cachedBasePricing && Object.keys(cachedBasePricing).length > 0) {
       const normalizedCached = normalizePricingState(cachedBasePricing);
       setPrices((prev) => {
-        const next = { ...prev, ...normalizedCached };
-        consoleTypes.forEach((consoleType) => {
-          if (!next[consoleType.type]) {
-            next[consoleType.type] = { value: 0, isValid: true, hasChanged: false };
+        const next = mergePricingState(prev, normalizedCached, consoleTypes);
+        const changed = !isPricingStateEqual(prev, next);
+        if (changed) {
+          priceStateSetCountRef.current += 1;
+          lastPriceSetAtRef.current = new Date().toISOString();
+          if (debugEnabled) {
+            console.debug("[console-pricing-debug] setPrices from cache", {
+              count: priceStateSetCountRef.current,
+              at: lastPriceSetAtRef.current,
+            });
           }
-        });
-        return next;
+        }
+        return changed ? next : prev;
       });
       return;
     }
@@ -354,11 +424,25 @@ export default function ConsolePricing() {
       .then((data) => {
         if (data) {
           const normalizedFresh = normalizePricingState(data);
-          setPrices((prev) => ({ ...prev, ...normalizedFresh }));
+          setPrices((prev) => {
+            const next = mergePricingState(prev, normalizedFresh, consoleTypes);
+            const changed = !isPricingStateEqual(prev, next);
+            if (changed) {
+              priceStateSetCountRef.current += 1;
+              lastPriceSetAtRef.current = new Date().toISOString();
+              if (debugEnabled) {
+                console.debug("[console-pricing-debug] setPrices from fresh fetch", {
+                  count: priceStateSetCountRef.current,
+                  at: lastPriceSetAtRef.current,
+                });
+              }
+            }
+            return changed ? next : prev;
+          });
         }
       })
       .catch((error) => console.error("Error fetching prices:", error));
-  }, [vendorId, cachedBasePricing, consoleTypes, refreshBasePricingCache]);
+  }, [vendorId, cachedBasePricing, consoleTypes, refreshBasePricingCache, debugEnabled]);
 
   useEffect(() => {
     if (vendorId && activeTab === "offers") {
@@ -1196,6 +1280,11 @@ export default function ConsolePricing() {
 
   return (
     <div className="console-pricing-page dashboard-module dashboard-typography relative flex h-full min-h-0 flex-col gap-4 overflow-y-auto overflow-x-hidden px-1 pb-2 sm:px-2">
+      {debugEnabled && (
+        <div className="pointer-events-none fixed left-20 top-3 z-[30060] rounded-md border border-cyan-400/40 bg-slate-950/90 px-2 py-1 text-[10px] text-cyan-100">
+          r:{renderCountRef.current} sync:{cacheSyncRunsRef.current} set:{priceStateSetCountRef.current}
+        </div>
+      )}
 
       {/* ✅ Success Toast */}
       <AnimatePresence>
