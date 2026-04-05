@@ -1275,7 +1275,7 @@ export default function ConsolePricing() {
   const inactiveTabButtonClass =
     "border-slate-200 bg-white text-slate-700 hover:border-cyan-300/40 hover:bg-slate-50 hover:text-slate-900 dark:border-transparent dark:bg-slate-900/40 dark:text-slate-300 dark:hover:border-cyan-400/25 dark:hover:bg-slate-800/80 dark:hover:text-cyan-100";
   const pricingCardClass =
-    "dashboard-module-surface rounded-xl p-4 transition-all duration-200 hover:shadow-lg hover:shadow-cyan-500/10";
+    "dashboard-module-surface !border-0 rounded-xl p-4 transition-all duration-200 hover:shadow-lg hover:shadow-cyan-500/10";
   const inputSurfaceClass =
     "dashboard-module-input text-slate-900 placeholder:text-slate-400 focus-visible:ring-cyan-400/60 dark:text-slate-100 dark:placeholder:text-slate-400";
   const selectSurfaceClass =
@@ -1318,14 +1318,6 @@ export default function ConsolePricing() {
     ? activeControllerConsole
     : controllerConsoleTabs[0]?.type || "";
   const editedConsoleCount = consoleTypes.filter((console) => prices[console.type]?.hasChanged).length;
-  const configuredConsoleCount = consoleTypes.filter((console) => Number(prices[console.type]?.value || 0) > 0).length;
-  const averageConfiguredPrice = (() => {
-    const values = consoleTypes
-      .map((console) => Number(prices[console.type]?.value || 0))
-      .filter((value) => value > 0);
-    if (values.length === 0) return 0;
-    return round2(values.reduce((sum, value) => sum + value, 0) / values.length);
-  })();
 
   return (
     <div className="console-pricing-page dashboard-module dashboard-typography relative flex h-full min-h-0 flex-col gap-4 overflow-y-auto overflow-x-hidden px-1 pb-2 sm:px-2">
@@ -1371,29 +1363,10 @@ export default function ConsolePricing() {
               Select a cafe first to edit console pricing.
             </div>
           )}
-          <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
-            <div className={summaryCardClass}>
-              <p className="text-[11px] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400">Consoles</p>
-              <p className="text-lg font-semibold text-slate-900 dark:text-cyan-100">{consoleTypes.length}</p>
-            </div>
-            <div className={summaryCardClass}>
-              <p className="text-[11px] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400">Configured</p>
-              <p className="text-lg font-semibold text-slate-900 dark:text-cyan-100">{configuredConsoleCount}</p>
-            </div>
-            <div className={summaryCardClass}>
-              <p className="text-[11px] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400">Edited</p>
-              <p className="text-lg font-semibold text-slate-900 dark:text-cyan-100">{editedConsoleCount}</p>
-            </div>
-            <div className={summaryCardClass}>
-              <p className="text-[11px] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400">Avg Price</p>
-              <p className="text-lg font-semibold text-slate-900 dark:text-cyan-100">₹{averageConfiguredPrice}</p>
-            </div>
-          </div>
-
           <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
             {consoleTypes.map((console) => (
               <div key={console.type} className={`${pricingCardClass} relative`}>
-                <div className={`${console.color} mb-4 flex items-center justify-between gap-3 rounded-lg border border-cyan-400/15 p-3`}>
+                <div className={`${console.color} mb-4 flex items-center justify-between gap-3 rounded-lg p-3`}>
                   <div className="flex items-center gap-3">
                     <div className="feature-action-icon p-1.5">
                       <console.icon className="icon-md" style={{ color: console.iconColor }} />
