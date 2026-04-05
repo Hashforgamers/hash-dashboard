@@ -3028,13 +3028,13 @@ const ToggleSwitch = ({
                       className="group"
                     >
                       <div className={cn(
-                        "flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 rounded-xl border transition-all duration-200 hover:shadow-md gap-3",
+                        "grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_180px] items-center p-4 rounded-xl border transition-all duration-200 hover:shadow-md gap-3 sm:gap-4",
                         method.is_enabled 
                           ? "border-primary/50 bg-primary/5" 
                           : "border-border bg-muted/20 hover:border-primary/30"
                       )}>
                         {/* Method Info */}
-                        <div className="flex items-start sm:items-center space-x-4 flex-1 min-w-0 w-full sm:w-auto">
+                        <div className="flex items-start sm:items-center space-x-4 min-w-0 w-full">
                           <div className="flex-shrink-0">
                             {normalizedName === 'pay_at_cafe' ? (
                               <div className={cn(
@@ -3111,11 +3111,11 @@ const ToggleSwitch = ({
                         </div>
 
                         {/* Toggle Switch */}
-                        <div className="flex items-center space-x-3 sm:space-x-4 w-full sm:w-auto sm:ml-auto">
+                        <div className="flex items-center justify-between sm:justify-end space-x-3 sm:space-x-4 w-full sm:w-[180px] sm:ml-auto">
                           {/* Status Text */}
-                          <div className="text-left sm:text-right min-w-[70px] flex-1 sm:flex-initial">
+                          <div className="text-left sm:text-right min-w-[88px] flex-1 sm:flex-initial">
                             {isAutoManaged ? (
-                              <span className="body-text-small text-gray-400 font-medium">AUTO</span>
+                              <span className="body-text-small text-gray-400 font-semibold tracking-[0.06em]">AUTO</span>
                             ) : togglingMethod === method.pay_method_id ? (
                               <span className="body-text-small text-primary font-medium">
                                 {method.is_enabled ? 'Removing...' : 'Adding...'}
