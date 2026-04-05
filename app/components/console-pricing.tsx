@@ -1269,11 +1269,11 @@ export default function ConsolePricing() {
   const iconButtonClass =
     "inline-flex items-center justify-center rounded-lg border border-emerald-300/50 bg-emerald-50 p-2 text-emerald-700 transition-all duration-200 hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-emerald-400/30 dark:bg-emerald-500/10 dark:text-emerald-300 dark:hover:bg-emerald-500/20";
   const tabButtonBaseClass =
-    "inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-xs font-semibold transition-all sm:text-sm";
+    "inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-xs font-semibold transition-all sm:text-sm border-slate-500/30";
   const activeTabButtonClass =
-    "dashboard-module-tab-active border-cyan-400/35 bg-cyan-500/12 text-slate-900 dark:bg-cyan-500/15 dark:text-cyan-100";
+    "dashboard-module-tab-active border-cyan-400/30 bg-cyan-500/12 text-slate-900 dark:bg-cyan-500/15 dark:text-cyan-100";
   const inactiveTabButtonClass =
-    "border-slate-200 bg-white text-slate-700 hover:border-cyan-300/40 hover:bg-slate-50 hover:text-slate-900 dark:border-transparent dark:bg-slate-900/40 dark:text-slate-300 dark:hover:border-cyan-400/25 dark:hover:bg-slate-800/80 dark:hover:text-cyan-100";
+    "bg-white/75 text-slate-700 hover:border-cyan-300/30 hover:bg-white/90 hover:text-slate-900 dark:border-slate-600/30 dark:bg-slate-900/35 dark:text-slate-300 dark:hover:border-cyan-400/20 dark:hover:bg-slate-800/70 dark:hover:text-cyan-100";
   const pricingCardClass =
     "dashboard-module-surface !border-0 rounded-xl p-4 transition-all duration-200 hover:shadow-lg hover:shadow-cyan-500/10";
   const inputSurfaceClass =
@@ -1384,20 +1384,17 @@ export default function ConsolePricing() {
                 </div>
 
                 <p className="table-header-text mb-2">Price per Slot (₹)</p>
-                <div className="relative">
-                  <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-slate-500 dark:text-slate-400">₹</span>
-                  <Input
-                    type="number"
-                    min={0}
-                    max={10000}
-                    step={1}
-                    inputMode="numeric"
-                    placeholder="0"
-                    value={String(prices[console.type]?.value ?? "")}
-                    onChange={(e) => handlePriceChange(console.type, e.target.value)}
-                    className={`${inputSurfaceClass} pl-8 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none`}
-                  />
-                </div>
+                <Input
+                  type="number"
+                  min={0}
+                  max={10000}
+                  step={1}
+                  inputMode="numeric"
+                  placeholder="0"
+                  value={String(prices[console.type]?.value ?? "")}
+                  onChange={(e) => handlePriceChange(console.type, e.target.value)}
+                  className={`${inputSurfaceClass} [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none`}
+                />
                 {errors[console.type] && (
                   <p className="text-destructive text-xs font-medium mt-1.5">
                     {errors[console.type]}
