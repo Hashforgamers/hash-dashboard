@@ -29,6 +29,13 @@ const getPricingAliases = (type: string): string[] => {
   return [normalized];
 };
 
+export const toBackendPricingKey = (type: string): string => {
+  const normalized = normalizeConsoleSlug(type);
+  if (normalized === "playstation") return "ps5";
+  if (normalized === "vr_headset") return "vr";
+  return normalized;
+};
+
 export const readPricingValue = (pricingPayload: Record<string, unknown>, type: string): number => {
   for (const alias of getPricingAliases(type)) {
     const raw = pricingPayload?.[alias];
