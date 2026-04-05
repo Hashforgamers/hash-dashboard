@@ -60,6 +60,7 @@ import {
   readPricingValue,
   round2,
   squadRowKey,
+  toBackendPricingKey,
 } from "./console-pricing/utils";
 
 export default function ConsolePricing() {
@@ -731,9 +732,10 @@ export default function ConsolePricing() {
     setIsLoading(true);
     try {
       const payload = consoleTypes.reduce((acc, consoleType) => {
-        const key = normalizeConsoleSlug(consoleType.type);
-        const value = prices[key]?.value ?? prices[consoleType.type]?.value ?? 0;
-        acc[key] = value;
+        const normalizedKey = normalizeConsoleSlug(consoleType.type);
+        const payloadKey = toBackendPricingKey(normalizedKey);
+        const value = prices[normalizedKey]?.value ?? prices[consoleType.type]?.value ?? 0;
+        acc[payloadKey] = value;
         return acc;
       }, {} as Record<string, number>);
       const response = await fetch(`${DASHBOARD_URL}/api/vendor/${vendorId}/console-pricing`, {
@@ -743,6 +745,7 @@ export default function ConsolePricing() {
       });
       if (!response.ok) throw new Error("Failed");
       showToast("Pricing updated successfully!");
+      await refreshBasePricingCache(true);
       setPrices((prev) => {
         const n = { ...prev };
         Object.keys(n).forEach((k) => (n[k].hasChanged = false));
