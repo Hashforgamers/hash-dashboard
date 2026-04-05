@@ -2935,8 +2935,10 @@ const ToggleSwitch = ({
         )}
       </CardContent>
     </Card>
+  </>
+)}
 
-    {page === "Payment Methods" && (<Card className="content-card shadow-lg">
+{page === "Payment Methods" && (<Card className="content-card shadow-lg">
       <CardHeader>
         <CardTitle className="card-title flex items-center gap-2">
           <Settings className="icon-lg" />
@@ -3215,8 +3217,6 @@ const ToggleSwitch = ({
         )}
       </CardContent>
     </Card>)}
-  </>
-)}
 
 
 {/* ==================== PAYOUT HISTORY PAGE ==================== */}
