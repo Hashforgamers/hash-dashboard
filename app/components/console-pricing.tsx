@@ -412,6 +412,13 @@ export default function ConsolePricing() {
     fetchMonthlyCreditAccounts();
   }, [vendorId, activeTab]);
 
+  useEffect(() => {
+    if (activeTab !== "offers" && showOfferForm) {
+      setShowOfferForm(false);
+      resetOfferForm();
+    }
+  }, [activeTab, showOfferForm]);
+
   const fetchControllerPricing = async () => {
     if (!vendorId) return;
     setIsLoadingControllerPricing(true);
@@ -1243,7 +1250,7 @@ export default function ConsolePricing() {
                 {/* Price Input */}
                 <p className="table-header-text mb-2">Price per Slot (₹)</p>
                 <Input
-                  type="text"
+                  type="number"
                   inputMode="decimal"
                   placeholder="0"
                   value={String(prices[console.type]?.value ?? "")}
@@ -2045,22 +2052,24 @@ export default function ConsolePricing() {
         </motion.div>
       )}
 
-      <OfferFormModal
-        showOfferForm={showOfferForm}
-        editingOffer={editingOffer}
-        offerForm={offerForm}
-        setOfferForm={setOfferForm}
-        availableGames={availableGames}
-        setShowOfferForm={setShowOfferForm}
-        onResetOfferForm={resetOfferForm}
-        onSubmit={editingOffer ? handleUpdateOffer : handleCreateOffer}
-        isCreatingOffer={isCreatingOffer}
-        isUpdatingOffer={isUpdatingOffer}
-        inputSurfaceClass={inputSurfaceClass}
-        selectSurfaceClass={selectSurfaceClass}
-        primaryButtonClass={primaryButtonClass}
-        secondaryButtonClass={secondaryButtonClass}
-      />
+      {activeTab === "offers" && showOfferForm && (
+        <OfferFormModal
+          showOfferForm={showOfferForm}
+          editingOffer={editingOffer}
+          offerForm={offerForm}
+          setOfferForm={setOfferForm}
+          availableGames={availableGames}
+          setShowOfferForm={setShowOfferForm}
+          onResetOfferForm={resetOfferForm}
+          onSubmit={editingOffer ? handleUpdateOffer : handleCreateOffer}
+          isCreatingOffer={isCreatingOffer}
+          isUpdatingOffer={isUpdatingOffer}
+          inputSurfaceClass={inputSurfaceClass}
+          selectSurfaceClass={selectSurfaceClass}
+          primaryButtonClass={primaryButtonClass}
+          secondaryButtonClass={secondaryButtonClass}
+        />
+      )}
     </div>
   );
 }
