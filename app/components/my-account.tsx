@@ -268,6 +268,20 @@ const clearPaymentMethodMessages = () => {
   setPaymentMethodSuccess(null);
 };
 
+const normalizePaymentMethodName = (methodName: string) => {
+  const cleaned = String(methodName || "").trim().toLowerCase().replace(/[-_]/g, " ");
+  if (["pay at cafe", "pay in cafe", "pay at cafe", "pay_in_cafe"].includes(cleaned)) {
+    return "pay_at_cafe";
+  }
+  if (["hash", "hash global pass", "hash_global_pass"].includes(cleaned)) {
+    return "hash_global_pass";
+  }
+  if (["cafe specific pass", "cafe_specific_pass", "vendor pass"].includes(cleaned)) {
+    return "cafe_specific_pass";
+  }
+  return cleaned;
+};
+
 
 // Add OTP verification functions
 const checkPageVerification = async (pageType) => {
@@ -586,6 +600,8 @@ useEffect(() => {
   } else if (page === "Notification Preferences") {
     fetchNotificationPreferences();
     fetchPayAtCafeAutomation();
+  } else if (page === "Payment Methods") {
+    fetchPaymentMethods();
   } else if (page === "Subscription Details") {
     fetchSubscriptionHistory();
   } else if (page === "Settlement Report") {
@@ -1737,7 +1753,7 @@ const ToggleSwitch = ({
                     { icon: Building2, label: "Business Details" },
                     { icon: Clock, label: "Operating Hours" },  
                     { icon: DollarSign, label: "GST Setup" },
-                    
+                    { icon: Settings, label: "Payment Methods" },
                     { icon: FileCheck, label: "Verified Documents" },
                     { icon: CreditCard, label: "Bank Details" },  
                     { icon: DollarSign, label: "Payout History" },
@@ -2920,8 +2936,7 @@ const ToggleSwitch = ({
       </CardContent>
     </Card>
 
-    {/* Legacy Payment Methods block intentionally hidden per latest product UX direction */}
-    {false && (<Card className="content-card shadow-lg">
+    {page === "Payment Methods" && (<Card className="content-card shadow-lg">
       <CardHeader>
         <CardTitle className="card-title flex items-center gap-2">
           <Settings className="icon-lg" />
@@ -2999,7 +3014,10 @@ const ToggleSwitch = ({
                 
                 {/* Payment Method List */}
                 <div className="space-y-3">
-                  {paymentMethods.map((method, index) => (
+                  {paymentMethods.map((method, index) => {
+                    const normalizedName = normalizePaymentMethodName(method.method_name);
+                    const isAutoManaged = method.is_auto_managed || normalizedName === "cafe_specific_pass";
+                    return (
                     <motion.div
                       key={method.pay_method_id}
                       initial={{ opacity: 0, y: 10 }}
@@ -3016,7 +3034,7 @@ const ToggleSwitch = ({
                         {/* Method Info */}
                         <div className="flex items-start sm:items-center space-x-4 flex-1 min-w-0 w-full sm:w-auto">
                           <div className="flex-shrink-0">
-                            {method.method_name === 'pay_at_cafe' ? (
+                            {normalizedName === 'pay_at_cafe' ? (
                               <div className={cn(
                                 "w-12 h-12 rounded-xl flex items-center justify-center border transition-colors",
                                 method.is_enabled 
@@ -3026,6 +3044,18 @@ const ToggleSwitch = ({
                                 <Coffee className={cn(
                                   "icon-lg transition-colors",
                                   method.is_enabled ? "text-blue-600" : "text-blue-400"
+                                )} />
+                              </div>
+                            ) : normalizedName === "cafe_specific_pass" ? (
+                              <div className={cn(
+                                "w-12 h-12 rounded-xl flex items-center justify-center border transition-colors",
+                                method.is_enabled 
+                                  ? "bg-emerald-500/30 border-emerald-500/50" 
+                                  : "bg-emerald-500/10 border-emerald-500/20"
+                              )}>
+                                <Wallet className={cn(
+                                  "icon-lg transition-colors",
+                                  method.is_enabled ? "text-emerald-500" : "text-emerald-300"
                                 )} />
                               </div>
                             ) : (
@@ -3070,7 +3100,9 @@ const ToggleSwitch = ({
                               <span className={cn(
                                 method.is_enabled ? "text-green-600" : "text-gray-500"
                               )}>
-                                {method.is_enabled ? "Registered for your cafe" : "Not registered"}
+                                {isAutoManaged
+                                  ? (method.is_enabled ? "Auto-enabled (active cafe pass found)" : "Auto-disabled (no active cafe pass)")
+                                  : (method.is_enabled ? "Registered for your cafe" : "Not registered")}
                               </span>
                             </div>
                           </div>
@@ -3080,7 +3112,9 @@ const ToggleSwitch = ({
                         <div className="flex items-center space-x-3 sm:space-x-4 w-full sm:w-auto sm:ml-auto">
                           {/* Status Text */}
                           <div className="text-left sm:text-right min-w-[70px] flex-1 sm:flex-initial">
-                            {togglingMethod === method.pay_method_id ? (
+                            {isAutoManaged ? (
+                              <span className="body-text-small text-gray-400 font-medium">AUTO</span>
+                            ) : togglingMethod === method.pay_method_id ? (
                               <span className="body-text-small text-primary font-medium">
                                 {method.is_enabled ? 'Removing...' : 'Adding...'}
                               </span>
@@ -3099,7 +3133,7 @@ const ToggleSwitch = ({
                             <ToggleSwitch
                               enabled={method.is_enabled}
                               onToggle={() => handleTogglePaymentMethod(method.pay_method_id, method.is_enabled)}
-                              disabled={togglingMethod !== null && togglingMethod !== method.pay_method_id}
+                              disabled={isAutoManaged || (togglingMethod !== null && togglingMethod !== method.pay_method_id)}
                               loading={togglingMethod === method.pay_method_id}
                               size="default"
                             />
@@ -3107,7 +3141,8 @@ const ToggleSwitch = ({
                         </div>
                       </div>
                     </motion.div>
-                  ))}
+                    );
+                  })}
                 </div>
                 
                 {/* Summary Footer */}
