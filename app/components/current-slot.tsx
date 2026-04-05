@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, Gamepad2, Monitor, Headset, Loader2, RefreshCw, UtensilsCrossed, Plus, ChevronDown, ChevronUp } from "lucide-react";
+import { Search, Gamepad2, Monitor, Headset, Loader2, RefreshCw, UtensilsCrossed, Plus, ChevronDown, ChevronUp, Phone } from "lucide-react";
 import { jwtDecode } from "jwt-decode";
 import { FaCheck, FaPowerOff } from 'react-icons/fa';
 import { BOOKING_URL, DASHBOARD_URL } from "@/src/config/env";
@@ -155,6 +155,21 @@ const getConsoleVisual = (consoleType: string) => {
     return { icon: Monitor, className: "text-cyan-400" };
   }
   return { icon: Monitor, className: "text-slate-300" };
+};
+
+const getBookingPhone = (booking: any): string => {
+  const raw =
+    booking?.customer_phone ||
+    booking?.phone ||
+    booking?.phone_number ||
+    booking?.user_phone ||
+    booking?.contactNumber ||
+    booking?.contact_number ||
+    booking?.customer?.phone ||
+    booking?.user?.phone ||
+    booking?.customerPhone ||
+    "";
+  return String(raw || "").trim();
 };
 
 const releaseSlot = async (consoleType: string, gameId: string, consoleId: string, vendorId: any, setRefreshSlots: any) => {
@@ -342,6 +357,7 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
           slotId: data.slotId,
           bookingId: data.bookId,
           username: data.username,
+          customerPhone: data.customer_phone || data.phone || data.phone_number || data.user_phone || data.contact_number || "",
           consoleType: data.consoleType,
           consoleNumber: data.consoleNumber,
           consoleCode: data.consoleCode,
@@ -459,6 +475,7 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
       ? mergedSlots.filter(
           (slot) =>
             (slot.username || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+            (getBookingPhone(slot).toLowerCase()).includes(searchQuery.toLowerCase()) ||
             (slot.consoleType || '').toLowerCase().includes(searchQuery.toLowerCase())
         )
       : mergedSlots;
@@ -483,6 +500,7 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
       if (!term) return true;
       return (
         String(b?.username || "").toLowerCase().includes(term) ||
+        getBookingPhone(b).toLowerCase().includes(term) ||
         String(b?.consoleName || b?.consoleType || "").toLowerCase().includes(term)
       );
     });
@@ -781,6 +799,7 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                     );
                     const squadEnabled = Boolean(booking?.squadEnabled || squadPlayerCount > 1);
                     const captainMember = squadMembers.find((member: any) => Boolean(member?.is_captain)) || squadMembers[0] || null;
+                    const bookingPhone = getBookingPhone(booking);
                     return (
                       <motion.div
                         key={`live-mobile-${uniqueKey}`}
@@ -791,6 +810,9 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                         <div className="flex items-start justify-between gap-2">
                           <div className="min-w-0">
                             <p className="truncate text-sm font-semibold text-slate-100">{booking.username || "Guest"}</p>
+                            {bookingPhone && (
+                              <p className="truncate text-xs text-slate-400">{bookingPhone}</p>
+                            )}
                             <p className="truncate text-xs text-slate-400">
                               {booking.consoleType || "Gaming Console"} · {booking.startTime || "N/A"} - {booking.endTime || "N/A"}
                             </p>
@@ -1029,6 +1051,7 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                           booking?.squadDetails?.suggested_extra_controller_qty ||
                           0
                         );
+                        const bookingPhone = getBookingPhone(booking);
 
                         return (
                           <motion.tr
@@ -1073,6 +1096,12 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                                       {squadPlayerCount - squadMemberNames.length > 0
                                         ? ` +${squadPlayerCount - squadMemberNames.length}`
                                         : ""}
+                                    </div>
+                                  )}
+                                  {bookingPhone && (
+                                    <div className="mt-0.5 inline-flex items-center gap-1 text-xs text-slate-400">
+                                      <Phone className="h-3 w-3" />
+                                      <span className="truncate">{bookingPhone}</span>
                                     </div>
                                   )}
                                 </div>

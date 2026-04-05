@@ -2,7 +2,7 @@ import { Card } from "@/components/ui/card";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   Monitor, Play, X, Gamepad2, Calendar, Clock, User, Search,
-  DollarSign, CalendarDays, Users, Timer, AlertCircle, Filter,
+  DollarSign, CalendarDays, Users, Timer, AlertCircle, Filter, Phone,
   BadgeCheck, Calendar as CalendarIcon, ChevronDown, RefreshCw, UtensilsCrossed, Plus
 } from "lucide-react";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
@@ -121,6 +121,20 @@ const canMarkNoShowNow = (booking: any) => {
   const range = getBookingTimeRange(booking);
   if (!range) return false;
   return getNowIST() >= range.start;
+};
+
+const getBookingPhone = (booking: any): string => {
+  const raw =
+    booking?.customer_phone ||
+    booking?.phone ||
+    booking?.phone_number ||
+    booking?.user_phone ||
+    booking?.contactNumber ||
+    booking?.contact_number ||
+    booking?.customer?.phone ||
+    booking?.user?.phone ||
+    "";
+  return String(raw || "").trim();
 };
 
 
@@ -502,6 +516,7 @@ export function UpcomingBookings({
       const term = searchTerm.trim().toLowerCase();
       filtered = filtered.filter(booking => 
         ((booking.username || '').toLowerCase()).includes(term) ||
+        (getBookingPhone(booking).toLowerCase()).includes(term) ||
         ((booking.consoleType || '').toLowerCase()).includes(term)
       );
     }
@@ -1092,6 +1107,7 @@ export function UpcomingBookings({
                     const paymentBadgeClass = isPayAtCafe
                       ? "border-amber-400/40 bg-amber-500/15 text-amber-200"
                       : "border-emerald-400/40 bg-emerald-500/15 text-emerald-200";
+                    const bookingPhone = getBookingPhone(booking);
                     return (
                     <motion.div
                       key={booking.bookingId}
@@ -1124,6 +1140,12 @@ export function UpcomingBookings({
                               <Clock className="h-3 w-3 shrink-0 text-slate-400" />
                               <span className="truncate">{booking.time || "No time set"}</span>
                             </div>
+                            {bookingPhone && (
+                              <div className="mt-1 flex items-center gap-1.5 text-[11px] text-slate-300">
+                                <Phone className="h-3 w-3 shrink-0 text-slate-400" />
+                                <span className="truncate">{bookingPhone}</span>
+                              </div>
+                            )}
                           </div>
 
                           <div className="flex shrink-0 items-center gap-1">
