@@ -157,7 +157,12 @@ export default function ConsolePricing() {
 
   const validatePrice = (value: number) => value >= 0 && value <= 10000;
   const mergePricingState = (prev: PricingState, incoming: PricingState, types: ConsoleType[]): PricingState => {
-    const next = { ...prev, ...incoming };
+    const next = { ...prev };
+    Object.entries(incoming).forEach(([key, value]) => {
+      // Preserve local unsaved edits from being overwritten by cache sync.
+      if (prev[key]?.hasChanged) return;
+      next[key] = value;
+    });
     types.forEach((consoleType) => {
       if (!next[consoleType.type]) {
         next[consoleType.type] = { value: 0, isValid: true, hasChanged: false };
