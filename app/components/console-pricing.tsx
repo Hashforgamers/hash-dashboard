@@ -4,22 +4,9 @@ import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Monitor,
-  Tv,
-  Gamepad,
-  Headset,
   Check,
-  IndianRupee,
   Plus,
-  Calendar,
-  Clock,
-  Pencil,
-  Trash2,
-  X,
-  Sparkles,
-  PlusCircle,
   Loader2,
-  LayoutGrid,
-  Table as TableIcon,
   Minus,
   Save,
   Users,
@@ -36,238 +23,44 @@ import {
   resolveConsoleIcon,
   type ConsoleCatalogItem,
 } from "./console-catalog";
-
-interface ConsoleType {
-  type: string;
-  name: string;
-  icon: React.ComponentType<any>;
-  color: string;
-  iconColor: string;
-  description: string;
-}
-
-const DEFAULT_CONSOLE_TYPES: ConsoleType[] = [
-  {
-    type: "pc",
-    name: "PC",
-    icon: Monitor,
-    color: "bg-purple-500/10",
-    iconColor: "#a855f7",
-    description: "Gaming PCs and Workstations",
-  },
-  {
-    type: "ps5",
-    name: "PS5",
-    icon: Tv,
-    color: "bg-blue-500/10",
-    iconColor: "#3b82f6",
-    description: "PlayStation 5 Gaming Consoles",
-  },
-  {
-    type: "xbox",
-    name: "Xbox",
-    icon: Gamepad,
-    color: "bg-emerald-500/10",
-    iconColor: "#10b981",
-    description: "Xbox Series Gaming Consoles",
-  },
-  {
-    type: "vr",
-    name: "VR",
-    icon: Headset,
-    color: "bg-yellow-500/10",
-    iconColor: "#f59e0b",
-    description: "Virtual Reality Systems",
-  },
-];
-
-const PRETTY_LABEL_OVERRIDES: Record<string, string> = {
-  pc: "PC",
-  playstation: "PlayStation",
-  xbox: "Xbox",
-  vr_headset: "VR Headset",
-  private_room: "Private Room",
-  vip_room: "VIP Room",
-  bootcamp_room: "Bootcamp Room",
-};
-
-const toTitleCase = (value: string) =>
-  value
-    .split("_")
-    .filter(Boolean)
-    .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
-    .join(" ");
-
-const getConsoleDisplayName = (slug: string, fallback?: string) =>
-  String(fallback || PRETTY_LABEL_OVERRIDES[slug] || toTitleCase(slug || "Console")).trim();
-
-const getPricingAliases = (type: string): string[] => {
-  const normalized = normalizeConsoleSlug(type);
-  if (normalized === "playstation") return ["playstation", "ps5", "ps"];
-  if (normalized === "vr_headset") return ["vr_headset", "vr"];
-  return [normalized];
-};
-
-const readPricingValue = (pricingPayload: Record<string, unknown>, type: string): number => {
-  for (const alias of getPricingAliases(type)) {
-    const raw = pricingPayload?.[alias];
-    if (raw !== undefined && raw !== null) return parseCurrencyInput(raw);
-  }
-  return 0;
-};
-
-interface PricingState {
-  [key: string]: {
-    value: number;
-    isValid: boolean;
-    hasChanged: boolean;
-  };
-}
-
-interface PricingOffer {
-  id: number;
-  vendor_id: number;
-  available_game_id: number;
-  console_type: string;
-  default_price: number;
-  offered_price: number;
-  discount_percentage: number;
-  start_date: string;
-  start_time: string;
-  end_date: string;
-  end_time: string;
-  offer_name: string;
-  offer_description: string | null;
-  is_active: boolean;
-  is_currently_active: boolean;
-  created_at: string;
-  updated_at: string;
-}
-
-interface AvailableGame {
-  id: number;
-  game_name: string;
-  single_slot_price: number;
-}
-
-interface ControllerTier {
-  id: string;
-  quantity: number;
-  total_price: number;
-}
-
-interface ControllerPricingRule {
-  base_price: number;
-  tiers: ControllerTier[];
-}
-
-type SquadPricingState = Record<string, Record<string, number>>;
-
-interface VendorTaxProfile {
-  vendor_id: number;
-  gst_registered: boolean;
-  gst_enabled: boolean;
-  gst_rate: number;
-  tax_inclusive: boolean;
-  gstin?: string;
-  legal_name?: string;
-  state_code?: string;
-  place_of_supply_state_code?: string;
-}
-
-interface MonthlyCreditAccount {
-  id: number;
-  vendor_id: number;
-  user_id: number;
-  credit_limit: number;
-  outstanding_amount: number;
-  billing_cycle_day: number;
-  grace_days: number;
-  is_active: boolean;
-  notes?: string;
-}
-
-interface VendorUser {
-  id: number;
-  name: string;
-  email?: string;
-  phone?: string;
-}
-
-interface MonthlyCreditLedgerEntry {
-  id: number;
-  entry_type: string;
-  amount: number;
-  description?: string;
-  booked_date?: string | null;
-  due_date?: string | null;
-  created_at?: string | null;
-}
-
-type ControllerPricingState = Record<string, ControllerPricingRule>;
-
-const defaultControllerPricing: ControllerPricingState = {};
-
-const controllerPreviewQuantities = [1, 2, 3, 4];
-const squadMaxPlayersByConsole: Record<string, number> = {
-  pc: 10,
-};
-const squadGroupLabelByConsoleType: Record<string, string> = {
-  pc: "pc",
-};
-const squadRuleDefaults: SquadPricingState = {
-  pc: { "2": 0, "3": 3, "4": 5, "5": 8 },
-};
-
-const normalizeSquadPricing = (rawData: unknown): SquadPricingState => {
-  const source = (rawData && typeof rawData === "object" ? (rawData as any).pricing || rawData : {}) as Record<string, unknown>;
-  const normalized: SquadPricingState = { pc: {} };
-
-  Object.keys(normalized).forEach((group) => {
-    const maxPlayers = squadMaxPlayersByConsole[group] || 10;
-    const incomingGroup = source?.[group];
-    const rules: Record<string, number> = {};
-
-    if (incomingGroup && typeof incomingGroup === "object") {
-      Object.entries(incomingGroup as Record<string, unknown>).forEach(([players, discount]) => {
-        const playerCount = Number(players);
-        if (!Number.isFinite(playerCount) || playerCount < 2 || playerCount > maxPlayers) return;
-
-        const rawDiscount = typeof discount === "object" && discount !== null
-          ? Number((discount as any).discount_percent ?? 0)
-          : Number(discount ?? 0);
-        if (!Number.isFinite(rawDiscount)) return;
-
-        rules[String(playerCount)] = Math.max(0, Math.min(100, round2(rawDiscount)));
-      });
-    }
-
-    normalized[group] = rules;
-  });
-
-  return normalized;
-};
-
-const round2 = (value: number) => Math.round((value + Number.EPSILON) * 100) / 100;
-function parseCurrencyInput(value: unknown): number {
-  if (typeof value === "number") return Number.isFinite(value) ? value : 0;
-  if (typeof value !== "string") return 0;
-  const normalized = value.replace(/[^0-9.-]/g, "");
-  const parsed = Number(normalized);
-  return Number.isFinite(parsed) ? parsed : 0;
-}
-const discountToFinalUnitAmount = (base: number, discountPercent: number) =>
-  round2(Math.max(0, base - (base * Math.max(0, Math.min(90, discountPercent))) / 100));
-const discountToFinalTotalAmount = (base: number, discountPercent: number, players: number) =>
-  round2(discountToFinalUnitAmount(base, discountPercent) * Math.max(1, players));
-const finalTotalAmountToDiscount = (base: number, finalTotalAmount: number, players: number) => {
-  if (!base || base <= 0) return 0;
-  const safePlayers = Math.max(1, players);
-  const maxTotal = base * safePlayers;
-  const normalizedFinalTotal = Math.max(0, Math.min(maxTotal, finalTotalAmount));
-  return round2(((maxTotal - normalizedFinalTotal) / maxTotal) * 100);
-};
-const squadRowKey = (group: string, players: number) => `${group}-${players}`;
+import {
+  DEFAULT_CONSOLE_TYPES,
+  controllerPreviewQuantities,
+  defaultControllerPricing,
+  squadGroupLabelByConsoleType,
+  squadMaxPlayersByConsole,
+  squadRuleDefaults,
+} from "./console-pricing/constants";
+import { OfferFormModal } from "./console-pricing/offer-form-modal";
+import { OffersSection } from "./console-pricing/offers-section";
+import { ConsolePricingTabNav } from "./console-pricing/tab-nav";
+import type {
+  AvailableGame,
+  ConsoleType,
+  ControllerPricingState,
+  ControllerTier,
+  CreditFormState,
+  MonthlyCreditAccount,
+  MonthlyCreditLedgerEntry,
+  OfferFormState,
+  PricingOffer,
+  PricingState,
+  PricingTab,
+  SquadPricingState,
+  VendorTaxProfile,
+  VendorUser,
+} from "./console-pricing/types";
+import {
+  discountToFinalTotalAmount,
+  finalTotalAmountToDiscount,
+  getConsoleDisplayName,
+  normalizePricingState,
+  normalizeSquadPricing,
+  parseCurrencyInput,
+  readPricingValue,
+  round2,
+  squadRowKey,
+} from "./console-pricing/utils";
 
 export default function ConsolePricing() {
   const { vendorId: contextVendorId } = useDashboardData();
@@ -285,7 +78,7 @@ export default function ConsolePricing() {
   const [successMessage, setSuccessMessage] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [vendorId, setVendorId] = useState<number | null>(null);
-  const [activeTab, setActiveTab] = useState<"default" | "offers" | "controllers" | "squad" | "gst" | "credit">("default");
+  const [activeTab, setActiveTab] = useState<PricingTab>("default");
   const [viewMode, setViewMode] = useState<"grid" | "table">("table");
   const [offers, setOffers] = useState<PricingOffer[]>([]);
   const [availableGames, setAvailableGames] = useState<AvailableGame[]>([]);
@@ -330,7 +123,7 @@ export default function ConsolePricing() {
   const [isLoadingCredit, setIsLoadingCredit] = useState(false);
   const [isSavingCredit, setIsSavingCredit] = useState(false);
   const [creditError, setCreditError] = useState<string | null>(null);
-  const [creditForm, setCreditForm] = useState({
+  const [creditForm, setCreditForm] = useState<CreditFormState>({
     user_id: "",
     credit_limit: "",
     billing_cycle_day: "1",
@@ -342,7 +135,7 @@ export default function ConsolePricing() {
   const [statementRows, setStatementRows] = useState<MonthlyCreditLedgerEntry[]>([]);
   const [isLoadingStatement, setIsLoadingStatement] = useState(false);
 
-  const [offerForm, setOfferForm] = useState({
+  const [offerForm, setOfferForm] = useState<OfferFormState>({
     available_game_id: "",
     offered_price: "",
     start_date: "",
@@ -354,28 +147,6 @@ export default function ConsolePricing() {
   });
 
   const validatePrice = (value: number) => value >= 0 && value <= 10000;
-
-  const normalizePricingState = (raw: PricingState | Record<string, any>) => {
-    const next: PricingState = {};
-    Object.entries(raw || {}).forEach(([key, value]) => {
-      const normalizedKey = normalizeConsoleSlug(key);
-      if (!normalizedKey) return;
-      if (value && typeof value === "object" && "value" in value) {
-        next[normalizedKey] = {
-          value: parseCurrencyInput((value as any).value),
-          isValid: (value as any).isValid !== false,
-          hasChanged: Boolean((value as any).hasChanged),
-        };
-        return;
-      }
-      next[normalizedKey] = {
-        value: parseCurrencyInput(value),
-        isValid: true,
-        hasChanged: false,
-      };
-    });
-    return next;
-  };
 
   const basePricingKey = vendorId ? `pricing_base:${vendorId}` : "pricing_base:0";
   const offersKey = vendorId ? `pricing_offers:${vendorId}` : "pricing_offers:0";
@@ -1434,53 +1205,13 @@ export default function ConsolePricing() {
         )}
       </AnimatePresence>
 
-      {/* ✅ Tab Navigation - uses global .tab-container */}
-      <div className="gaming-panel dashboard-module-panel mb-2 flex w-full shrink-0 items-center gap-2 rounded-xl p-2">
-        <button
-          onClick={() => setActiveTab("default")}
-          className={`${tabButtonBaseClass} ${
-            activeTab === "default"
-              ? activeTabButtonClass
-              : inactiveTabButtonClass
-          }`}
-        >
-          <IndianRupee className="icon-md" />
-          Default Pricing
-        </button>
-        <button
-          onClick={() => setActiveTab("offers")}
-          className={`${tabButtonBaseClass} ${
-            activeTab === "offers"
-              ? activeTabButtonClass
-              : inactiveTabButtonClass
-          }`}
-        >
-          <Sparkles className="icon-md" />
-          Promotional Offers
-        </button>
-        <button
-          onClick={() => setActiveTab("controllers")}
-          className={`${tabButtonBaseClass} ${
-            activeTab === "controllers"
-              ? activeTabButtonClass
-              : inactiveTabButtonClass
-          }`}
-        >
-          <Gamepad className="icon-md" />
-          Controller Pricing
-        </button>
-        <button
-          onClick={() => setActiveTab("squad")}
-          className={`${tabButtonBaseClass} ${
-            activeTab === "squad"
-              ? activeTabButtonClass
-              : inactiveTabButtonClass
-          }`}
-        >
-          <Users className="icon-md" />
-          Squad Pricing
-        </button>
-      </div>
+      <ConsolePricingTabNav
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        tabButtonBaseClass={tabButtonBaseClass}
+        activeTabButtonClass={activeTabButtonClass}
+        inactiveTabButtonClass={inactiveTabButtonClass}
+      />
 
       {/* ✅ Default Pricing Tab */}
       {activeTab === "default" && (
@@ -1560,156 +1291,22 @@ export default function ConsolePricing() {
         </motion.div>
       )}
 
-      {/* ✅ Promotional Offers Tab */}
       {activeTab === "offers" && (
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.2 }}
-          className="flex flex-1 min-h-0 flex-col gap-4 overflow-hidden"
-        >
-          {/* Offers Header Row */}
-          <div className="gaming-panel shrink-0 flex flex-wrap items-center justify-between gap-3 rounded-xl p-3">
-            <div className="flex items-center gap-3">
-              <h2 className="section-title">Active Promotions</h2>
-
-              {/* View Toggle */}
-              <div className="dashboard-module-tab-group flex items-center gap-1 rounded-lg p-1">
-                <button
-                  onClick={() => setViewMode("grid")}
-                  className={`p-1.5 rounded-md transition-all ${
-                    viewMode === "grid"
-                      ? "dashboard-module-tab-active bg-cyan-500/12 text-slate-900 shadow-sm dark:text-cyan-100"
-                      : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-cyan-100"
-                  }`}
-                  title="Grid View"
-                >
-                  <LayoutGrid className="icon-md" />
-                </button>
-                <button
-                  onClick={() => setViewMode("table")}
-                  className={`p-1.5 rounded-md transition-all ${
-                    viewMode === "table"
-                      ? "dashboard-module-tab-active bg-cyan-500/12 text-slate-900 shadow-sm dark:text-cyan-100"
-                      : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-cyan-100"
-                  }`}
-                  title="Table View"
-                >
-                  <TableIcon className="icon-md" />
-                </button>
-              </div>
-            </div>
-
-            <button
-              onClick={() => setShowOfferForm(true)}
-              className={primaryButtonClass}
-            >
-              <PlusCircle className="icon-md" />
-              New Offer
-            </button>
-          </div>
-
-          {/* Offers Content */}
-          {isLoadingOffers ? (
-            <div className="flex-1 flex flex-col items-center justify-center gap-3 text-muted-foreground">
-              <Loader2 className="w-10 h-10 animate-spin text-blue-400" />
-              <p className="body-text-muted">Loading offers...</p>
-            </div>
-          ) : offers.length === 0 ? (
-            <div className="gaming-panel flex flex-1 flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed border-cyan-400/20 py-16">
-              <Sparkles className="w-12 h-12 text-muted-foreground/30" />
-              <h3 className="section-title text-muted-foreground/60">No active offers yet</h3>
-              <p className="body-text-muted">Create your first promotional offer</p>
-              <button onClick={() => setShowOfferForm(true)} className={`${secondaryButtonClass} mt-2`}>
-                <Plus className="icon-md" />
-                Add New Offer
-              </button>
-            </div>
-          ) : viewMode === "grid" ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4 overflow-y-auto pb-4">
-              {offers.map((offer) => {
-                const Icon = getConsoleIcon(offer.console_type);
-                const isDeleting = deletingOfferId === offer.id;
-                return (
-                  <Card key={offer.id} className="dashboard-module-surface flex flex-col transition-all duration-200 hover:shadow-lg hover:shadow-cyan-500/10">
-                    <CardHeader className="flex flex-row items-start justify-between border-b border-cyan-500/15 p-4">
-                      <div className="min-w-0 flex-1 pr-2">
-                        <h2 className="card-title truncate">{offer.offer_name}</h2>
-                        <div className="flex items-center gap-1.5 mt-1">
-                          <Icon className="w-3 h-3 text-blue-400 shrink-0" />
-                          <span className="table-header-text text-slate-700 dark:text-cyan-100/80">{offer.console_type}</span>
-                          {offer.is_currently_active && (
-                            <span className="flex items-center gap-1 rounded border border-emerald-300/40 bg-emerald-50 px-1.5 py-0.5 text-[9px] font-bold text-emerald-700 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-300">
-                              <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse" />
-                              LIVE
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                      <div className="flex gap-1 shrink-0">
-                        <button
-                          onClick={() => handleEditOffer(offer)}
-                          className={iconButtonClass}
-                          title="Edit"
-                        >
-                          <Pencil className="w-3.5 h-3.5 text-emerald-400" />
-                        </button>
-                        <button
-                          onClick={() => handleDeleteOffer(offer.id)}
-                          disabled={isDeleting}
-                          className={destructiveIconButtonClass}
-                          title="Delete"
-                        >
-                          {isDeleting ? (
-                            <Loader2 className="w-3.5 h-3.5 text-destructive animate-spin" />
-                          ) : (
-                            <Trash2 className="w-3.5 h-3.5 text-destructive" />
-                          )}
-                        </button>
-                      </div>
-                    </CardHeader>
-
-                    <CardContent className="p-4 space-y-4">
-                      {/* Pricing */}
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="stat-value-large text-sky-700 dark:text-blue-400">₹{offer.offered_price}</p>
-                          <p className="table-header-text mt-0.5">Offer Rate</p>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-sm text-slate-500 line-through dark:text-slate-400">₹{offer.default_price}</p>
-                          <span className="mt-1 inline-block rounded-full border border-emerald-300/40 bg-emerald-50 px-2 py-0.5 text-xs font-bold text-emerald-700 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-300">
-                            {offer.discount_percentage}% OFF
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Date/Time */}
-                      <div className="border-t border-dashed border-border pt-3 space-y-1.5">
-                        <div className="flex items-center gap-2 body-text-muted">
-                          <Calendar className="icon-md text-blue-400/70 shrink-0" />
-                          <span>{offer.start_date} → {offer.end_date}</span>
-                        </div>
-                        <div className="flex items-center gap-2 body-text-muted">
-                          <Clock className="icon-md text-blue-400/70 shrink-0" />
-                          <span>{offer.start_time} - {offer.end_time}</span>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                );
-              })}
-            </div>
-          ) : (
-            <OffersTable
-              offers={offers}
-              onEdit={handleEditOffer}
-              onDelete={handleDeleteOffer}
-              deletingOfferId={deletingOfferId}
-              getConsoleIcon={getConsoleIcon}
-            />
-          )}
-        </motion.div>
+        <OffersSection
+          offers={offers}
+          viewMode={viewMode}
+          setViewMode={setViewMode}
+          setShowOfferForm={setShowOfferForm}
+          isLoadingOffers={isLoadingOffers}
+          deletingOfferId={deletingOfferId}
+          getConsoleIcon={getConsoleIcon}
+          onEditOffer={handleEditOffer}
+          onDeleteOffer={handleDeleteOffer}
+          primaryButtonClass={primaryButtonClass}
+          secondaryButtonClass={secondaryButtonClass}
+          iconButtonClass={iconButtonClass}
+          destructiveIconButtonClass={destructiveIconButtonClass}
+        />
       )}
 
       {activeTab === "controllers" && (
@@ -2448,252 +2045,22 @@ export default function ConsolePricing() {
         </motion.div>
       )}
 
-      {/* ✅ Offer Form Modal */}
-      <AnimatePresence>
-        {showOfferForm && (
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-40 p-4">
-            <motion.div
-              initial={{ scale: 0.95, opacity: 0, y: 10 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.95, opacity: 0, y: 10 }}
-              transition={{ duration: 0.2 }}
-              className="ui-dialog-surface w-full max-w-md overflow-hidden rounded-xl shadow-2xl"
-            >
-              {/* Modal Header */}
-              <div className="flex items-center justify-between border-b border-cyan-500/20 px-5 py-4">
-                <h2 className="card-title">
-                  {editingOffer ? "Edit Promotion" : "Create New Promotion"}
-                </h2>
-                <button
-                  onClick={() => { setShowOfferForm(false); resetOfferForm(); }}
-                  className="slot-booking-modal-close inline-flex items-center justify-center rounded-lg p-2"
-                >
-                  <X className="icon-md" />
-                </button>
-              </div>
-
-              {/* Modal Body */}
-              <div className="p-5 space-y-4 max-h-[70vh] overflow-y-auto">
-
-                {/* Offer Title */}
-                <div className="space-y-1.5">
-                  <label className="table-header-text">Offer Title *</label>
-                  <Input
-                    placeholder="e.g. Weekend Bash 2024"
-                    value={offerForm.offer_name}
-                    onChange={(e) => setOfferForm({ ...offerForm, offer_name: e.target.value })}
-                    className={inputSurfaceClass}
-                  />
-                </div>
-
-                {/* Console Type */}
-                <div className="space-y-1.5">
-                  <label className="table-header-text">Console Type *</label>
-                  <select
-                    className={selectSurfaceClass}
-                    value={offerForm.available_game_id}
-                    onChange={(e) => setOfferForm({ ...offerForm, available_game_id: e.target.value })}
-                    disabled={!!editingOffer}
-                  >
-                    <option value="">Choose console type...</option>
-                    {availableGames.map((g) => (
-                      <option key={g.id} value={g.id}>
-                        {g.game_name} (Base ₹{g.single_slot_price})
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Promo Rate */}
-                <div className="space-y-1.5">
-                  <label className="table-header-text">Promo Rate (₹) *</label>
-                  <Input
-                    type="number"
-                    placeholder="Enter discounted price"
-                    value={offerForm.offered_price}
-                    onChange={(e) => setOfferForm({ ...offerForm, offered_price: e.target.value })}
-                    className={`${inputSurfaceClass} [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none`}
-                  />
-                </div>
-
-                {/* Start Date + Time */}
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1.5">
-                    <label className="table-header-text">Start Date</label>
-                    <Input
-                      type="date"
-                      value={offerForm.start_date}
-                      onChange={(e) => setOfferForm({ ...offerForm, start_date: e.target.value })}
-                      className={inputSurfaceClass}
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="table-header-text">Start Time</label>
-                    <Input
-                      type="time"
-                      value={offerForm.start_time}
-                      onChange={(e) => setOfferForm({ ...offerForm, start_time: e.target.value })}
-                      className={inputSurfaceClass}
-                    />
-                  </div>
-                </div>
-
-                {/* End Date + Time */}
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1.5">
-                    <label className="table-header-text">End Date</label>
-                    <Input
-                      type="date"
-                      value={offerForm.end_date}
-                      onChange={(e) => setOfferForm({ ...offerForm, end_date: e.target.value })}
-                      className={inputSurfaceClass}
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="table-header-text">End Time</label>
-                    <Input
-                      type="time"
-                      value={offerForm.end_time}
-                      onChange={(e) => setOfferForm({ ...offerForm, end_time: e.target.value })}
-                      className={inputSurfaceClass}
-                    />
-                  </div>
-                </div>
-
-                {/* Description (optional) */}
-                <div className="space-y-1.5">
-                  <label className="table-header-text">Description (Optional)</label>
-                  <Input
-                    placeholder="Short description..."
-                    value={offerForm.offer_description}
-                    onChange={(e) => setOfferForm({ ...offerForm, offer_description: e.target.value })}
-                    className={inputSurfaceClass}
-                  />
-                </div>
-              </div>
-
-              {/* Modal Footer */}
-              <div className="flex gap-3 border-t border-cyan-500/20 px-5 py-4">
-                <button
-                  onClick={() => { setShowOfferForm(false); resetOfferForm(); }}
-                  className={`${secondaryButtonClass} flex-1`}
-                  disabled={isCreatingOffer || isUpdatingOffer}
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={editingOffer ? handleUpdateOffer : handleCreateOffer}
-                  disabled={isCreatingOffer || isUpdatingOffer}
-                  className={`${primaryButtonClass} flex-1`}
-                >
-                  {/* ✅ Loader in button while creating/updating */}
-                  {isCreatingOffer || isUpdatingOffer ? (
-                    <>
-                      <Loader2 className="icon-md animate-spin" />
-                      {editingOffer ? "Saving..." : "Creating..."}
-                    </>
-                  ) : (
-                    <>
-                      <Check className="icon-md" />
-                      {editingOffer ? "Save Changes" : "Create Offer"}
-                    </>
-                  )}
-                </button>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
-    </div>
-  );
-}
-
-// ✅ Table View Component - aligned with global CSS
-function OffersTable({ offers, onEdit, onDelete, deletingOfferId, getConsoleIcon }: any) {
-  return (
-    <div className="dashboard-table-shell">
-      <div className="dashboard-table-wrap">
-        <table className="dashboard-table text-left">
-          <thead className="dashboard-module-table-head sticky top-0 z-10">
-            <tr>
-              {["Offer Name", "Console", "Pricing", "Validity", "Actions"].map((h) => (
-                <th key={h} className="table-cell dashboard-module-table-header text-[11px] font-bold uppercase tracking-wider sm:text-xs">
-                  {h}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {offers.map((offer: any) => {
-              const Icon = getConsoleIcon(offer.console_type);
-              const isDeleting = deletingOfferId === offer.id;
-              return (
-                <tr key={offer.id} className="table-row border-b border-cyan-500/10 last:border-0">
-                  <td className="table-cell">
-                    <p className="body-text font-semibold">{offer.offer_name}</p>
-                    {offer.is_currently_active && (
-                      <span className="mt-0.5 flex items-center gap-1 text-[10px] font-bold text-emerald-700 dark:text-emerald-300">
-                        <span className="h-1 w-1 rounded-full bg-emerald-500 animate-pulse dark:bg-emerald-400" />
-                        LIVE NOW
-                      </span>
-                    )}
-                  </td>
-                  <td className="table-cell">
-                    <div className="flex items-center gap-2 body-text-muted">
-                      <Icon className="icon-md text-blue-400" />
-                      <span>{offer.console_type}</span>
-                    </div>
-                  </td>
-                  <td className="table-cell">
-                    <div className="flex items-center gap-2">
-                      <span className="stat-value text-sky-700 dark:text-blue-400">₹{offer.offered_price}</span>
-                      <span className="body-text-muted line-through">₹{offer.default_price}</span>
-                      <span className="rounded bg-emerald-50 px-1.5 py-0.5 text-[10px] font-bold text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300">
-                        {offer.discount_percentage}%
-                      </span>
-                    </div>
-                  </td>
-                  <td className="table-cell">
-                    <div className="space-y-0.5 body-text-muted">
-                      <div className="flex items-center gap-1.5">
-                        <Calendar className="icon-md shrink-0" />
-                        <span>Valid From: {offer.start_date} {offer.start_time}</span>
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <Clock className="icon-md shrink-0" />
-                        <span>Valid To: {offer.end_date} {offer.end_time}</span>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="table-cell">
-                    <div className="flex items-center gap-1">
-                      <button
-                        onClick={() => onEdit(offer)}
-                        className="inline-flex items-center justify-center rounded-lg border border-emerald-300/50 bg-emerald-50 p-2 text-emerald-700 transition-all duration-200 hover:bg-emerald-100 dark:border-emerald-400/30 dark:bg-emerald-500/10 dark:text-emerald-300 dark:hover:bg-emerald-500/20"
-                        title="Edit"
-                      >
-                        <Pencil className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
-                      </button>
-                      <button
-                        onClick={() => onDelete(offer.id)}
-                        disabled={isDeleting}
-                        className="inline-flex items-center justify-center rounded-lg border border-rose-300/50 bg-rose-50 p-2 text-rose-600 transition-all duration-200 hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-rose-400/30 dark:bg-rose-500/10 dark:text-rose-300 dark:hover:bg-rose-500/20"
-                        title="Delete"
-                      >
-                        {isDeleting ? (
-                          <Loader2 className="w-3.5 h-3.5 text-destructive animate-spin" />
-                        ) : (
-                          <Trash2 className="w-3.5 h-3.5 text-destructive" />
-                        )}
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
+      <OfferFormModal
+        showOfferForm={showOfferForm}
+        editingOffer={editingOffer}
+        offerForm={offerForm}
+        setOfferForm={setOfferForm}
+        availableGames={availableGames}
+        setShowOfferForm={setShowOfferForm}
+        onResetOfferForm={resetOfferForm}
+        onSubmit={editingOffer ? handleUpdateOffer : handleCreateOffer}
+        isCreatingOffer={isCreatingOffer}
+        isUpdatingOffer={isUpdatingOffer}
+        inputSurfaceClass={inputSurfaceClass}
+        selectSurfaceClass={selectSurfaceClass}
+        primaryButtonClass={primaryButtonClass}
+        secondaryButtonClass={secondaryButtonClass}
+      />
     </div>
   );
 }
