@@ -36,7 +36,10 @@ export function DashboardLayout({ children, contentScroll = "page" }: DashboardL
   const hasAccess = activeStaff ? canAccessPath(pathname, activeStaff.permissions) : true
   const subscriptionExempt = ["/subscription", "/select-cafe"]
   const hasSubscriptionAccess = !isLocked || subscriptionExempt.some((path) => pathname === path || pathname.startsWith(`${path}/`))
-  const showGlobalRibbon = true
+  const isSelectCafeRoute = pathname === "/select-cafe" || pathname.startsWith("/select-cafe/")
+  const showSidebar = !isSelectCafeRoute
+  const showMobileHeader = !isSelectCafeRoute
+  const showGlobalRibbon = !isSelectCafeRoute
 
   const platforms = useMemo(() => {
     const source = Array.isArray(consoles) ? consoles : []
@@ -142,49 +145,9 @@ export function DashboardLayout({ children, contentScroll = "page" }: DashboardL
 
   return (
     <div className="premium-shell dashboard-typography flex h-dvh overflow-hidden text-foreground">
-      <header className="dashboard-nav dashboard-nav-surface dashboard-nav-divider fixed left-0 right-0 top-0 z-[20030] flex items-center justify-between border-b px-4 py-3 backdrop-blur md:hidden">
-        <div className="flex items-center">
-          <Image
-            src="/hash_for_gamer_logo.png"
-            alt="Hash Logo"
-            width={36}
-            height={36}
-            className="shrink-0 rounded-md"
-          />
-        </div>
-
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => setIsNavOpen(!isNavOpen)}
-          className="md:hidden"
-        >
-          {isNavOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-        </Button>
-      </header>
-
-      <div className="flex min-h-0 flex-1 overflow-hidden pt-[58px] md:pt-0">
-        <aside
-          className={`
-            dashboard-nav dashboard-nav-surface dashboard-nav-divider group fixed left-0 top-0 z-[20040] pointer-events-auto flex h-full w-[86vw] max-w-72 flex-col overflow-hidden border-r p-3 backdrop-blur-md transition-transform duration-300 ease-out
-            md:sticky md:top-0 md:h-dvh md:w-72 md:max-w-none md:translate-x-0 md:shrink-0
-            ${isNavPinned ? "xl:w-72" : "xl:w-[76px] xl:hover:w-72"}
-            ${isNavOpen ? "translate-x-0" : "-translate-x-full"}
-          `}
-        >
-          <button
-            type="button"
-            aria-label={isNavPinned ? "Unpin sidebar" : "Pin sidebar"}
-            title={isNavPinned ? "Unpin sidebar" : "Pin sidebar"}
-            onClick={() => setIsNavPinned((prev) => !prev)}
-            className={`dashboard-nav-panel absolute right-2 top-2 z-10 hidden rounded-md border p-1.5 text-muted-foreground transition-colors hover:text-foreground md:inline-flex ${
-              isNavPinned ? "xl:inline-flex" : "xl:hidden xl:group-hover:inline-flex"
-            }`}
-          >
-            {isNavPinned ? <PinOff className="h-4 w-4" /> : <Pin className="h-4 w-4" />}
-          </button>
-
-          <div className="mb-3 hidden items-end space-x-2 overflow-hidden md:mb-4 md:flex">
+      {showMobileHeader && (
+        <header className="dashboard-nav dashboard-nav-surface dashboard-nav-divider fixed left-0 right-0 top-0 z-[20030] flex items-center justify-between border-b px-4 py-3 backdrop-blur md:hidden">
+          <div className="flex items-center">
             <Image
               src="/hash_for_gamer_logo.png"
               alt="Hash Logo"
@@ -194,14 +157,58 @@ export function DashboardLayout({ children, contentScroll = "page" }: DashboardL
             />
           </div>
 
-          <MainNav
-            className="min-h-0 flex-1 items-start"
-            onItemClick={() => setIsNavOpen(false)}
-            isNavPinned={isNavPinned}
-          />
-        </aside>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setIsNavOpen(!isNavOpen)}
+            className="md:hidden"
+          >
+            {isNavOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+          </Button>
+        </header>
+      )}
 
-        {isNavOpen && (
+      <div className={`flex min-h-0 flex-1 overflow-hidden ${showMobileHeader ? "pt-[58px] md:pt-0" : ""}`}>
+        {showSidebar && (
+          <aside
+            className={`
+              dashboard-nav dashboard-nav-surface dashboard-nav-divider group fixed left-0 top-0 z-[20040] pointer-events-auto flex h-full w-[86vw] max-w-72 flex-col overflow-hidden border-r p-3 backdrop-blur-md transition-transform duration-300 ease-out
+              md:sticky md:top-0 md:h-dvh md:w-72 md:max-w-none md:translate-x-0 md:shrink-0
+              ${isNavPinned ? "xl:w-72" : "xl:w-[76px] xl:hover:w-72"}
+              ${isNavOpen ? "translate-x-0" : "-translate-x-full"}
+            `}
+          >
+            <button
+              type="button"
+              aria-label={isNavPinned ? "Unpin sidebar" : "Pin sidebar"}
+              title={isNavPinned ? "Unpin sidebar" : "Pin sidebar"}
+              onClick={() => setIsNavPinned((prev) => !prev)}
+              className={`dashboard-nav-panel absolute right-2 top-2 z-10 hidden rounded-md border p-1.5 text-muted-foreground transition-colors hover:text-foreground md:inline-flex ${
+                isNavPinned ? "xl:inline-flex" : "xl:hidden xl:group-hover:inline-flex"
+              }`}
+            >
+              {isNavPinned ? <PinOff className="h-4 w-4" /> : <Pin className="h-4 w-4" />}
+            </button>
+
+            <div className="mb-3 hidden items-end space-x-2 overflow-hidden md:mb-4 md:flex">
+              <Image
+                src="/hash_for_gamer_logo.png"
+                alt="Hash Logo"
+                width={36}
+                height={36}
+                className="shrink-0 rounded-md"
+              />
+            </div>
+
+            <MainNav
+              className="min-h-0 flex-1 items-start"
+              onItemClick={() => setIsNavOpen(false)}
+              isNavPinned={isNavPinned}
+            />
+          </aside>
+        )}
+
+        {showSidebar && isNavOpen && (
           <div
             className="fixed inset-0 z-[20020] bg-black/55 backdrop-blur-[1px] md:hidden"
             onClick={() => setIsNavOpen(false)}

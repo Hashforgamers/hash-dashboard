@@ -1,4 +1,4 @@
-import { AnimatePresence, motion } from "framer-motion";
+import { motion } from "framer-motion";
 import { Check, Loader2, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { AvailableGame, OfferFormState, PricingOffer } from "./types";
@@ -36,17 +36,16 @@ export function OfferFormModal({
   primaryButtonClass,
   secondaryButtonClass,
 }: OfferFormModalProps) {
+  if (!showOfferForm) return null;
+
   return (
-    <AnimatePresence>
-      {showOfferForm && (
-        <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-40 p-4">
-          <motion.div
-            initial={{ scale: 0.95, opacity: 0, y: 10 }}
-            animate={{ scale: 1, opacity: 1, y: 0 }}
-            exit={{ scale: 0.95, opacity: 0, y: 10 }}
-            transition={{ duration: 0.2 }}
-            className="ui-dialog-surface w-full max-w-md overflow-hidden rounded-xl shadow-2xl"
-          >
+    <div className="fixed inset-0 z-[30050] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+      <motion.div
+        initial={{ scale: 0.95, opacity: 0, y: 10 }}
+        animate={{ scale: 1, opacity: 1, y: 0 }}
+        transition={{ duration: 0.2 }}
+        className="ui-dialog-surface w-full max-w-md overflow-hidden rounded-xl shadow-2xl"
+      >
             <div className="flex items-center justify-between border-b border-cyan-500/20 px-5 py-4">
               <h2 className="card-title">{editingOffer ? "Edit Promotion" : "Create New Promotion"}</h2>
               <button
@@ -181,9 +180,7 @@ export function OfferFormModal({
                 )}
               </button>
             </div>
-          </motion.div>
-        </div>
-      )}
-    </AnimatePresence>
+      </motion.div>
+    </div>
   );
 }
