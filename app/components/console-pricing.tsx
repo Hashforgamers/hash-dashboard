@@ -156,6 +156,21 @@ export default function ConsolePricing() {
   });
 
   const validatePrice = (value: number) => value >= 0 && value <= 10000;
+  const buildPricingStateFromIncoming = (incoming: PricingState, types: ConsoleType[]): PricingState => {
+    const next: PricingState = { ...incoming };
+    types.forEach((consoleType) => {
+      if (!next[consoleType.type]) {
+        next[consoleType.type] = { value: 0, isValid: true, hasChanged: false };
+      } else {
+        next[consoleType.type] = {
+          value: Number(next[consoleType.type].value || 0),
+          isValid: true,
+          hasChanged: false,
+        };
+      }
+    });
+    return next;
+  };
   const mergePricingState = (prev: PricingState, incoming: PricingState, types: ConsoleType[]): PricingState => {
     const next = { ...prev };
     Object.entries(incoming).forEach(([key, value]) => {
@@ -763,6 +778,23 @@ export default function ConsolePricing() {
     }
   };
 
+  const handleResetDefaultPricing = async () => {
+    if (!vendorId) return;
+    setIsLoading(true);
+    try {
+      const fresh = await refreshBasePricingCache(true);
+      const normalized = normalizePricingState((fresh || {}) as PricingState);
+      setPrices(buildPricingStateFromIncoming(normalized, consoleTypes));
+      setErrors({});
+      showToast("Default pricing reset to latest saved values.");
+    } catch (error) {
+      console.error("Failed to reset default pricing", error);
+      alert("Unable to reset pricing.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleCreateOffer = async () => {
     if (!vendorId) return;
     setIsCreatingOffer(true); // ✅ loader on
@@ -1285,6 +1317,15 @@ export default function ConsolePricing() {
   const activeControllerConfigType = controllerConsoleTabs.some((c) => c.type === activeControllerConsole)
     ? activeControllerConsole
     : controllerConsoleTabs[0]?.type || "";
+  const editedConsoleCount = consoleTypes.filter((console) => prices[console.type]?.hasChanged).length;
+  const configuredConsoleCount = consoleTypes.filter((console) => Number(prices[console.type]?.value || 0) > 0).length;
+  const averageConfiguredPrice = (() => {
+    const values = consoleTypes
+      .map((console) => Number(prices[console.type]?.value || 0))
+      .filter((value) => value > 0);
+    if (values.length === 0) return 0;
+    return round2(values.reduce((sum, value) => sum + value, 0) / values.length);
+  })();
 
   return (
     <div className="console-pricing-page dashboard-module dashboard-typography relative flex h-full min-h-0 flex-col gap-4 overflow-y-auto overflow-x-hidden px-1 pb-2 sm:px-2">
@@ -1330,37 +1371,65 @@ export default function ConsolePricing() {
               Select a cafe first to edit console pricing.
             </div>
           )}
+          <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
+            <div className={summaryCardClass}>
+              <p className="text-[11px] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400">Consoles</p>
+              <p className="text-lg font-semibold text-slate-900 dark:text-cyan-100">{consoleTypes.length}</p>
+            </div>
+            <div className={summaryCardClass}>
+              <p className="text-[11px] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400">Configured</p>
+              <p className="text-lg font-semibold text-slate-900 dark:text-cyan-100">{configuredConsoleCount}</p>
+            </div>
+            <div className={summaryCardClass}>
+              <p className="text-[11px] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400">Edited</p>
+              <p className="text-lg font-semibold text-slate-900 dark:text-cyan-100">{editedConsoleCount}</p>
+            </div>
+            <div className={summaryCardClass}>
+              <p className="text-[11px] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400">Avg Price</p>
+              <p className="text-lg font-semibold text-slate-900 dark:text-cyan-100">₹{averageConfiguredPrice}</p>
+            </div>
+          </div>
+
           <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
             {consoleTypes.map((console) => (
-              <div key={console.type} className={pricingCardClass}>
-                {/* Console Type Header */}
-                <div className={`${console.color} mb-4 flex items-center gap-3 rounded-lg border border-cyan-400/15 p-3`}>
-                  <div className="feature-action-icon p-1.5">
-                    <console.icon className="icon-md" style={{ color: console.iconColor }} />
+              <div key={console.type} className={`${pricingCardClass} relative`}>
+                <div className={`${console.color} mb-4 flex items-center justify-between gap-3 rounded-lg border border-cyan-400/15 p-3`}>
+                  <div className="flex items-center gap-3">
+                    <div className="feature-action-icon p-1.5">
+                      <console.icon className="icon-md" style={{ color: console.iconColor }} />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-slate-900 dark:text-cyan-100">{console.name}</p>
+                      <p className="premium-subtle text-xs">{console.description}</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-sm font-semibold text-slate-900 dark:text-cyan-100">{console.name}</p>
-                    <p className="premium-subtle text-xs">{console.description}</p>
-                  </div>
+                  {prices[console.type]?.hasChanged && (
+                    <span className="rounded-full border border-cyan-300/40 bg-cyan-50 px-2 py-0.5 text-[10px] font-semibold text-sky-700 dark:border-cyan-400/30 dark:bg-cyan-500/10 dark:text-cyan-200">
+                      Edited
+                    </span>
+                  )}
                 </div>
 
-                {/* Price Input */}
                 <p className="table-header-text mb-2">Price per Slot (₹)</p>
-                <Input
-                  type="number"
-                  inputMode="decimal"
-                  placeholder="0"
-                  value={String(prices[console.type]?.value ?? "")}
-                  onChange={(e) => handlePriceChange(console.type, e.target.value)}
-                  className={inputSurfaceClass}
-                />
+                <div className="relative">
+                  <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-slate-500 dark:text-slate-400">₹</span>
+                  <Input
+                    type="number"
+                    min={0}
+                    max={10000}
+                    step={1}
+                    inputMode="numeric"
+                    placeholder="0"
+                    value={String(prices[console.type]?.value ?? "")}
+                    onChange={(e) => handlePriceChange(console.type, e.target.value)}
+                    className={`${inputSurfaceClass} pl-8 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none`}
+                  />
+                </div>
                 {errors[console.type] && (
                   <p className="text-destructive text-xs font-medium mt-1.5">
                     {errors[console.type]}
                   </p>
                 )}
-
-                {/* Changed indicator */}
                 {prices[console.type]?.hasChanged && (
                   <motion.p
                     initial={{ opacity: 0 }}
@@ -1374,24 +1443,41 @@ export default function ConsolePricing() {
             ))}
           </div>
 
-          {/* Save Button */}
-          <button
-            onClick={handleSave}
-            disabled={!canSave || isLoading}
-            className={`${primaryButtonClass} px-6 py-2.5`}
-          >
-            {isLoading ? (
-              <>
-                <Loader2 className="icon-md animate-spin" />
-                Saving...
-              </>
-            ) : (
-              <>
-                <Check className="icon-md" />
-                Save Pricing Changes
-              </>
-            )}
-          </button>
+          <div className="sticky bottom-2 z-10">
+            <div className="dashboard-module-panel flex flex-wrap items-center justify-between gap-3 rounded-xl px-3 py-2 backdrop-blur">
+              <p className="text-xs text-slate-600 dark:text-slate-300">
+                {editedConsoleCount > 0
+                  ? `${editedConsoleCount} console${editedConsoleCount > 1 ? "s" : ""} edited`
+                  : "No unsaved changes"}
+              </p>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleResetDefaultPricing}
+                  disabled={isLoading}
+                  className={secondaryButtonClass}
+                >
+                  Reset
+                </button>
+                <button
+                  onClick={handleSave}
+                  disabled={!canSave || isLoading}
+                  className={`${primaryButtonClass} px-6 py-2.5`}
+                >
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="icon-md animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <Check className="icon-md" />
+                      Save Pricing Changes
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
         </motion.div>
       )}
 
