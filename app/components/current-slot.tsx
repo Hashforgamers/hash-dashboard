@@ -414,6 +414,7 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                   detail: {
                     bookingId: releasingSlot.bookingId || releasingSlot.bookId,
                     username: releasingSlot.username,
+                    customer_phone: getBookingPhone(releasingSlot),
                     date: releasingSlot.date,
                     time: `${releasingSlot.startTime} - ${releasingSlot.endTime}`,
                     consoleName: releasingSlot.consoleType,
@@ -1516,6 +1517,7 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                       const normalizedStatus = normalizeHistoryStatus(b);
                       const statusLabel = historyStatusLabel(normalizedStatus);
                       const systemText = `${b.consoleName || b.consoleType || "Console"}${b.consoleBrand ? ` • ${b.consoleBrand}` : ""}${b.consoleNumber ? ` • ${b.consoleNumber}` : ""}`;
+                      const bookingPhone = getBookingPhone(b);
                       return (
                         <div
                           key={`history-mobile-${b.bookingId || i}-${b.date}`}
@@ -1524,6 +1526,9 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                           <div className="flex items-center justify-between gap-2">
                             <div className="min-w-0">
                               <p className="truncate text-sm font-semibold text-slate-100">{b.username || "Guest"}</p>
+                              {bookingPhone && (
+                                <p className="truncate text-xs text-slate-400">{bookingPhone}</p>
+                              )}
                               <p className="truncate text-xs text-slate-300">{systemText}</p>
                             </div>
                             <span className={`rounded-full border px-2 py-0.5 text-[11px] capitalize ${historyStatusChipClass(normalizedStatus)}`}>
@@ -1562,10 +1567,17 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                         const normalizedStatus = normalizeHistoryStatus(b);
                         const statusLabel = historyStatusLabel(normalizedStatus);
                         const systemText = `${b.consoleName || b.consoleType || "Console"}${b.consoleBrand ? ` • ${b.consoleBrand}` : ""}${b.consoleNumber ? ` • ${b.consoleNumber}` : ""}`;
+                        const bookingPhone = getBookingPhone(b);
                         return (
                           <tr key={`${b.bookingId || i}-${b.date}`} className="dashboard-module-row transition-colors">
                             <td className="px-3 py-3 md:px-4">
                               <div className="text-sm font-semibold text-slate-100">{b.username || "Guest"}</div>
+                              {bookingPhone && (
+                                <div className="text-xs text-slate-400 inline-flex items-center gap-1">
+                                  <Phone className="h-3 w-3" />
+                                  <span>{bookingPhone}</span>
+                                </div>
+                              )}
                               <div className="text-xs text-slate-400">{b.bookingId ? `#${b.bookingId}` : "-"}</div>
                             </td>
                             <td className="px-3 py-3 md:px-4 text-xs text-slate-100">{systemText}</td>
