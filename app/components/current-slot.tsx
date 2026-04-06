@@ -434,6 +434,7 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                     bookingId: releasingSlot.bookingId || releasingSlot.bookId,
                     username: releasingSlot.username,
                     customer_phone: getBookingPhone(releasingSlot),
+                    customer_email: getBookingEmail(releasingSlot),
                     date: releasingSlot.date,
                     time: `${releasingSlot.startTime} - ${releasingSlot.endTime}`,
                     consoleName: releasingSlot.consoleType,
