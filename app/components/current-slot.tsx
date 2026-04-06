@@ -1677,27 +1677,27 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                     </p>
                   </div>
                   <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                    <div className="rounded-lg border border-slate-700/80 bg-slate-900/70 p-3">
+                    <div className="min-w-0 rounded-lg border border-slate-700/80 bg-slate-900/70 p-3">
                       <p className="text-xs uppercase tracking-wide text-slate-400">Phone</p>
                       <p className="mt-1 inline-flex items-center gap-1 text-slate-100">
                         <Phone className="h-3 w-3" />
                         <span>{getBookingPhone(contactOverlay.booking) || "-"}</span>
                       </p>
                     </div>
-                    <div className="rounded-lg border border-slate-700/80 bg-slate-900/70 p-3">
+                    <div className="min-w-0 rounded-lg border border-slate-700/80 bg-slate-900/70 p-3">
                       <p className="text-xs uppercase tracking-wide text-slate-400">Email</p>
-                      <p className="mt-1 inline-flex items-center gap-1 truncate text-slate-100">
-                        <Mail className="h-3 w-3" />
-                        <span className="truncate">{getBookingEmail(contactOverlay.booking) || "-"}</span>
+                      <p className="mt-1 flex min-w-0 items-start gap-1 text-slate-100">
+                        <Mail className="mt-0.5 h-3 w-3 shrink-0" />
+                        <span className="break-all">{getBookingEmail(contactOverlay.booking) || "-"}</span>
                       </p>
                     </div>
-                    <div className="rounded-lg border border-slate-700/80 bg-slate-900/70 p-3">
+                    <div className="min-w-0 rounded-lg border border-slate-700/80 bg-slate-900/70 p-3">
                       <p className="text-xs uppercase tracking-wide text-slate-400">User ID</p>
                       <p className="mt-1 text-slate-100">
                         {contactOverlay.booking?.userId || contactOverlay.booking?.user_id || "-"}
                       </p>
                     </div>
-                    <div className="rounded-lg border border-slate-700/80 bg-slate-900/70 p-3">
+                    <div className="min-w-0 rounded-lg border border-slate-700/80 bg-slate-900/70 p-3">
                       <p className="text-xs uppercase tracking-wide text-slate-400">Booking ID</p>
                       <p className="mt-1 text-slate-100">
                         {contactOverlay.booking?.bookingId || contactOverlay.booking?.bookId || "-"}
