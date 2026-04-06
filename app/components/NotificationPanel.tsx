@@ -135,6 +135,11 @@ export function NotificationPanel({
   const [isQueueSummaryLoading, setIsQueueSummaryLoading] = useState(false)
   const [isQueueListLoading, setIsQueueListLoading] = useState(false)
   const [queueError, setQueueError] = useState<string | null>(null)
+  const [isQueueOverlayOpen, setIsQueueOverlayOpen] = useState(false)
+  const [queueActionProcessing, setQueueActionProcessing] = useState<{
+    bookingId: number | null
+    action: "accept" | "reject" | null
+  }>({ bookingId: null, action: null })
 
   useEffect(() => {
     if (payAtCafeSummary) setQueueSummary(payAtCafeSummary)
@@ -214,6 +219,10 @@ export function NotificationPanel({
     void fetchQueueSummary()
     void fetchQueueList(selectedQueueStatus)
   }, [isOpen, vendorId])
+
+  useEffect(() => {
+    if (!isOpen) setIsQueueOverlayOpen(false)
+  }, [isOpen])
 
 
   const handleAccept = async (notification: PayAtCafeNotification) => {
@@ -376,6 +385,81 @@ export function NotificationPanel({
     })
   }
 
+  const parseTimeToMinutes = (time12h: string) => {
+    const match = String(time12h || "").trim().match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i)
+    if (!match) return null
+    const hour12 = Number(match[1])
+    const minute = Number(match[2])
+    const suffix = match[3].toUpperCase()
+    if (!Number.isFinite(hour12) || !Number.isFinite(minute)) return null
+    let hour24 = hour12 % 12
+    if (suffix === "PM") hour24 += 12
+    return (hour24 * 60) + minute
+  }
+
+  const getIstNow = () => {
+    const now = new Date()
+    const istDate = now.toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" })
+    const istTime = now.toLocaleTimeString("en-GB", {
+      timeZone: "Asia/Kolkata",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    })
+    const [h, m] = istTime.split(":").map((v) => Number(v))
+    return {
+      date: istDate,
+      minutes: (Number.isFinite(h) ? h : 0) * 60 + (Number.isFinite(m) ? m : 0),
+    }
+  }
+
+  const isQueueItemPastInIST = (item: PayAtCafeQueueItem) => {
+    const nowIst = getIstNow()
+    const itemDate = String(item.date || "")
+    if (!itemDate) return false
+    if (itemDate < nowIst.date) return true
+    if (itemDate > nowIst.date) return false
+    const endSegment = String(item.time || "").split("-")[1]?.trim()
+    const endMinutes = endSegment ? parseTimeToMinutes(endSegment) : null
+    if (endMinutes === null) return false
+    return endMinutes <= nowIst.minutes
+  }
+
+  const handleQueueBookingAction = async (item: PayAtCafeQueueItem, action: "accept" | "reject") => {
+    if (!vendorId || queueActionProcessing.bookingId) return
+    try {
+      setQueueActionProcessing({ bookingId: item.booking_id, action })
+      const endpoint = action === "accept" ? "accept" : "reject"
+      const payload: any = {
+        booking_id: item.booking_id,
+        vendor_id: vendorId,
+        action_source: "manual_dashboard",
+      }
+      if (action === "reject") payload.rejection_reason = "Rejected by vendor"
+      const response = await fetch(`${BOOKING_URL}/api/pay-at-cafe/${endpoint}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      })
+      const result = await response.json().catch(() => ({}))
+      if (!response.ok || !result?.success) {
+        throw new Error(result?.message || `Failed to ${action} booking`)
+      }
+      showToast(`✅ Booking ${action === "accept" ? "accepted" : "rejected"} successfully`, "success")
+      onRemoveNotification(item.booking_id)
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("refresh-dashboard"))
+      }
+      await fetchQueueSummary()
+      await fetchQueueList(selectedQueueStatus)
+    } catch (error) {
+      console.error(`Error performing ${action} from queue overlay:`, error)
+      showToast(`❌ Unable to ${action} booking`, "error")
+    } finally {
+      setQueueActionProcessing({ bookingId: null, action: null })
+    }
+  }
+
 
   const notificationCount = notifications.length
   const queueStatusCards: Array<{
@@ -437,96 +521,38 @@ export function NotificationPanel({
             {/* Content */}
             <div className="max-h-[70vh] overflow-y-auto bg-transparent p-2 sm:p-3">
               <div className="dashboard-module-card mb-3 rounded-xl border border-cyan-400/25 bg-cyan-500/5 p-3">
-                <div className="mb-3 flex flex-wrap items-center gap-2">
-                  <p className="text-xs font-semibold uppercase tracking-[0.12em] text-cyan-200">
+                <div className="mb-2 flex items-center justify-between gap-2">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-cyan-200">
                     Pay At Cafe Queue
                   </p>
                   <Button
                     type="button"
                     size="sm"
-                    variant={queueFilterMode === "single" ? "default" : "outline"}
-                    onClick={() => setQueueFilterMode("single")}
-                    className={`h-7 px-2 text-[11px] ${queueFilterMode === "single" ? "dashboard-btn-primary" : "border-border bg-muted/40 text-muted-foreground"}`}
-                  >
-                    Single Date
-                  </Button>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant={queueFilterMode === "range" ? "default" : "outline"}
-                    onClick={() => setQueueFilterMode("range")}
-                    className={`h-7 px-2 text-[11px] ${queueFilterMode === "range" ? "dashboard-btn-primary" : "border-border bg-muted/40 text-muted-foreground"}`}
-                  >
-                    Date Range
-                  </Button>
-                </div>
-
-                <div className="mb-3 flex flex-wrap items-end gap-2">
-                  {queueFilterMode === "single" ? (
-                    <label className="flex flex-col gap-1 text-[11px] text-muted-foreground">
-                      Date
-                      <input
-                        type="date"
-                        value={singleDate}
-                        onChange={(e) => setSingleDate(e.target.value)}
-                        className="h-8 rounded-md border border-border bg-background px-2 text-xs text-foreground"
-                      />
-                    </label>
-                  ) : (
-                    <>
-                      <label className="flex flex-col gap-1 text-[11px] text-muted-foreground">
-                        Start
-                        <input
-                          type="date"
-                          value={startDate}
-                          onChange={(e) => setStartDate(e.target.value)}
-                          className="h-8 rounded-md border border-border bg-background px-2 text-xs text-foreground"
-                        />
-                      </label>
-                      <label className="flex flex-col gap-1 text-[11px] text-muted-foreground">
-                        End
-                        <input
-                          type="date"
-                          value={endDate}
-                          onChange={(e) => setEndDate(e.target.value)}
-                          className="h-8 rounded-md border border-border bg-background px-2 text-xs text-foreground"
-                        />
-                      </label>
-                    </>
-                  )}
-                  <Button
-                    type="button"
-                    size="sm"
                     onClick={async () => {
+                      setIsQueueOverlayOpen(true)
                       await fetchQueueSummary()
                       await fetchQueueList(selectedQueueStatus)
                     }}
-                    className="h-8 dashboard-btn-primary text-xs"
-                    disabled={isQueueSummaryLoading || isQueueListLoading}
+                    className="h-7 dashboard-btn-primary px-2 text-[11px]"
                   >
-                    Apply
+                    Open Queue
                   </Button>
                 </div>
-
-                <div className="grid grid-cols-2 gap-2 text-xs md:grid-cols-3">
+                <div className="grid grid-cols-3 gap-1.5 text-[11px]">
                   {queueStatusCards.map((card) => {
-                    const isActive = selectedQueueStatus === card.key
                     return (
                       <button
                         type="button"
                         key={card.key}
-                        className={`rounded-md border px-2 py-1 text-left transition ${
-                          isActive
-                            ? "border-cyan-400/45 bg-cyan-500/15"
-                            : "border-border bg-muted/40 hover:border-cyan-400/30"
-                        }`}
+                        className="rounded-md border border-border bg-muted/40 px-2 py-1 text-left transition hover:border-cyan-400/30"
                         onClick={async () => {
                           setSelectedQueueStatus(card.key)
+                          setIsQueueOverlayOpen(true)
                           await fetchQueueList(card.key)
                         }}
                       >
                         <span className="text-muted-foreground">{card.label}</span>
-                        <div className={`font-semibold underline decoration-dotted underline-offset-2 ${card.valueClass}`}>
+                        <div className={`font-semibold ${card.valueClass}`}>
                           {card.value}
                         </div>
                       </button>
@@ -535,41 +561,10 @@ export function NotificationPanel({
                 </div>
 
                 {queueError && (
-                  <p className="mt-2 text-xs text-rose-300">{queueError}</p>
+                  <p className="mt-1 text-[11px] text-rose-300">{queueError}</p>
                 )}
                 {(isQueueSummaryLoading || isQueueListLoading) && (
-                  <p className="mt-2 text-xs text-cyan-200">Loading queue data...</p>
-                )}
-              </div>
-
-              <div className="dashboard-module-card mb-3 rounded-xl border border-border bg-muted/20 p-3">
-                <div className="mb-2 flex items-center justify-between">
-                  <p className="text-xs font-semibold uppercase tracking-[0.12em] text-cyan-200">
-                    {queueStatusCards.find((c) => c.key === selectedQueueStatus)?.label} List
-                  </p>
-                  <Badge className="border border-cyan-400/40 bg-cyan-500/15 text-cyan-200 text-[10px]">
-                    {queueItems.length}
-                  </Badge>
-                </div>
-                {queueItems.length === 0 ? (
-                  <p className="text-xs text-muted-foreground">No records found for selected filter.</p>
-                ) : (
-                  <div className="space-y-2">
-                    {queueItems.map((item) => (
-                      <div key={`${selectedQueueStatus}-${item.booking_id}`} className="rounded-md border border-border bg-muted/30 p-2 text-xs">
-                        <div className="flex items-center justify-between gap-2">
-                          <p className="font-semibold text-foreground">{item.username}</p>
-                          <span className="font-semibold text-amber-300">₹{Number(item.amount || 0).toFixed(0)}</span>
-                        </div>
-                        <p className="text-muted-foreground">{item.game_name}</p>
-                        <p className="text-muted-foreground">{formatDisplayDate(item.date)} • {item.time}</p>
-                        <div className="mt-1 flex flex-wrap gap-3 text-muted-foreground">
-                          <span>Phone: {item.phone || "-"}</span>
-                          <span>Email: {item.email || "-"}</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+                  <p className="mt-1 text-[11px] text-cyan-200">Loading...</p>
                 )}
               </div>
 
@@ -811,6 +806,205 @@ export function NotificationPanel({
               )}
             </div>
           </motion.div>
+
+          <AnimatePresence>
+            {isQueueOverlayOpen && (
+              <>
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  onClick={() => setIsQueueOverlayOpen(false)}
+                  className="fixed inset-0 z-[70] bg-black/45 backdrop-blur-sm"
+                />
+                <motion.div
+                  initial={{ opacity: 0, y: 12, scale: 0.98 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: 12, scale: 0.98 }}
+                  className="dashboard-module-panel fixed left-4 right-4 top-20 z-[80] max-h-[78vh] overflow-hidden rounded-2xl border border-cyan-400/30 bg-background md:left-1/2 md:right-auto md:w-[42rem] md:-translate-x-1/2"
+                >
+                  <div className="flex items-center justify-between border-b border-border bg-muted/30 px-4 py-3">
+                    <div className="flex items-center gap-2">
+                      <h4 className="dash-title !text-sm">Pay At Cafe Queue</h4>
+                      <Badge className="border border-cyan-400/35 bg-cyan-500/10 text-cyan-200 text-[10px]">
+                        {queueFilterMode === "single" ? singleDate : `${startDate} to ${endDate}`}
+                      </Badge>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setIsQueueOverlayOpen(false)}
+                      className="h-7 w-7 rounded-full p-0 text-slate-300 hover:bg-cyan-500/10"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+
+                  <div className="max-h-[66vh] space-y-3 overflow-y-auto p-3">
+                    <div className="rounded-lg border border-border bg-muted/20 p-3">
+                      <div className="mb-2 flex flex-wrap items-center gap-2">
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant={queueFilterMode === "single" ? "default" : "outline"}
+                          onClick={() => setQueueFilterMode("single")}
+                          className={`h-7 px-2 text-[11px] ${queueFilterMode === "single" ? "dashboard-btn-primary" : "border-border bg-muted/40 text-muted-foreground"}`}
+                        >
+                          Single Date
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant={queueFilterMode === "range" ? "default" : "outline"}
+                          onClick={() => setQueueFilterMode("range")}
+                          className={`h-7 px-2 text-[11px] ${queueFilterMode === "range" ? "dashboard-btn-primary" : "border-border bg-muted/40 text-muted-foreground"}`}
+                        >
+                          Date Range
+                        </Button>
+                      </div>
+                      <div className="flex flex-wrap items-end gap-2">
+                        {queueFilterMode === "single" ? (
+                          <label className="flex flex-col gap-1 text-[11px] text-muted-foreground">
+                            Date
+                            <input
+                              type="date"
+                              value={singleDate}
+                              onChange={(e) => setSingleDate(e.target.value)}
+                              className="h-8 rounded-md border border-border bg-background px-2 text-xs text-foreground"
+                            />
+                          </label>
+                        ) : (
+                          <>
+                            <label className="flex flex-col gap-1 text-[11px] text-muted-foreground">
+                              Start
+                              <input
+                                type="date"
+                                value={startDate}
+                                onChange={(e) => setStartDate(e.target.value)}
+                                className="h-8 rounded-md border border-border bg-background px-2 text-xs text-foreground"
+                              />
+                            </label>
+                            <label className="flex flex-col gap-1 text-[11px] text-muted-foreground">
+                              End
+                              <input
+                                type="date"
+                                value={endDate}
+                                onChange={(e) => setEndDate(e.target.value)}
+                                className="h-8 rounded-md border border-border bg-background px-2 text-xs text-foreground"
+                              />
+                            </label>
+                          </>
+                        )}
+                        <Button
+                          type="button"
+                          size="sm"
+                          onClick={async () => {
+                            await fetchQueueSummary()
+                            await fetchQueueList(selectedQueueStatus)
+                          }}
+                          className="h-8 dashboard-btn-primary text-xs"
+                          disabled={isQueueSummaryLoading || isQueueListLoading}
+                        >
+                          Apply
+                        </Button>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2 text-xs md:grid-cols-3">
+                      {queueStatusCards.map((card) => {
+                        const isActive = selectedQueueStatus === card.key
+                        return (
+                          <button
+                            type="button"
+                            key={card.key}
+                            className={`rounded-md border px-2 py-1 text-left transition ${
+                              isActive
+                                ? "border-cyan-400/45 bg-cyan-500/15"
+                                : "border-border bg-muted/40 hover:border-cyan-400/30"
+                            }`}
+                            onClick={async () => {
+                              setSelectedQueueStatus(card.key)
+                              await fetchQueueList(card.key)
+                            }}
+                          >
+                            <span className="text-muted-foreground">{card.label}</span>
+                            <div className={`font-semibold underline decoration-dotted underline-offset-2 ${card.valueClass}`}>
+                              {card.value}
+                            </div>
+                          </button>
+                        )
+                      })}
+                    </div>
+
+                    {queueError && <p className="text-xs text-rose-300">{queueError}</p>}
+
+                    <div className="rounded-lg border border-border bg-muted/20 p-3">
+                      <div className="mb-2 flex items-center justify-between">
+                        <p className="text-xs font-semibold uppercase tracking-[0.12em] text-cyan-200">
+                          {queueStatusCards.find((c) => c.key === selectedQueueStatus)?.label} List
+                        </p>
+                        <Badge className="border border-cyan-400/40 bg-cyan-500/15 text-cyan-200 text-[10px]">
+                          {queueItems.length}
+                        </Badge>
+                      </div>
+                      {queueItems.length === 0 ? (
+                        <p className="text-xs text-muted-foreground">No records found for selected filter.</p>
+                      ) : (
+                        <div className="space-y-2">
+                          {queueItems.map((item) => {
+                            const isPastPending = selectedQueueStatus === "pending" && isQueueItemPastInIST(item)
+                            const isItemProcessing = queueActionProcessing.bookingId === item.booking_id
+                            return (
+                              <div key={`${selectedQueueStatus}-${item.booking_id}`} className="rounded-md border border-border bg-muted/30 p-2 text-xs">
+                                <div className="flex items-center justify-between gap-2">
+                                  <p className="font-semibold text-foreground">{item.username}</p>
+                                  <span className="font-semibold text-amber-300">₹{Number(item.amount || 0).toFixed(0)}</span>
+                                </div>
+                                <p className="text-muted-foreground">{item.game_name}</p>
+                                <p className="text-muted-foreground">{formatDisplayDate(item.date)} • {item.time}</p>
+                                <div className="mt-1 flex flex-wrap gap-3 text-muted-foreground">
+                                  <span>Phone: {item.phone || "-"}</span>
+                                  <span className="min-w-0 break-all">Email: {item.email || "-"}</span>
+                                </div>
+                                {selectedQueueStatus === "pending" && (
+                                  <div className="mt-2 flex gap-2">
+                                    {!isPastPending && (
+                                      <Button
+                                        type="button"
+                                        onClick={() => handleQueueBookingAction(item, "accept")}
+                                        disabled={isItemProcessing}
+                                        className="h-7 dashboard-btn-primary px-2 text-[11px]"
+                                      >
+                                        {isItemProcessing && queueActionProcessing.action === "accept" ? "Accepting..." : "Accept"}
+                                      </Button>
+                                    )}
+                                    <Button
+                                      type="button"
+                                      onClick={() => handleQueueBookingAction(item, "reject")}
+                                      disabled={isItemProcessing}
+                                      variant="outline"
+                                      className="h-7 border-rose-400/45 bg-rose-500/10 px-2 text-[11px] text-rose-200 hover:bg-rose-500/20"
+                                    >
+                                      {isItemProcessing && queueActionProcessing.action === "reject" ? "Rejecting..." : "Reject"}
+                                    </Button>
+                                    {isPastPending && (
+                                      <span className="self-center text-[10px] text-amber-300">
+                                        Past session (IST): reject only
+                                      </span>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
+                            )
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </motion.div>
+              </>
+            )}
+          </AnimatePresence>
         </>
       )}
     </AnimatePresence>
