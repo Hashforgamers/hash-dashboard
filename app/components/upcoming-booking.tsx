@@ -1342,19 +1342,19 @@ export function UpcomingBookings({
                 </p>
               </div>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                <div className="rounded-lg border border-slate-700/80 bg-slate-900/70 p-3">
+                <div className="min-w-0 rounded-lg border border-slate-700/80 bg-slate-900/70 p-3">
                   <p className="text-xs uppercase tracking-wide text-slate-400">Phone</p>
                   <p className="mt-1 text-slate-100">{getBookingPhone(contactOverlay.booking) || "-"}</p>
                 </div>
-                <div className="rounded-lg border border-slate-700/80 bg-slate-900/70 p-3">
+                <div className="min-w-0 rounded-lg border border-slate-700/80 bg-slate-900/70 p-3">
                   <p className="text-xs uppercase tracking-wide text-slate-400">Email</p>
-                  <p className="mt-1 truncate text-slate-100">{getBookingEmail(contactOverlay.booking) || "-"}</p>
+                  <p className="mt-1 break-all text-slate-100">{getBookingEmail(contactOverlay.booking) || "-"}</p>
                 </div>
-                <div className="rounded-lg border border-slate-700/80 bg-slate-900/70 p-3">
+                <div className="min-w-0 rounded-lg border border-slate-700/80 bg-slate-900/70 p-3">
                   <p className="text-xs uppercase tracking-wide text-slate-400">User ID</p>
                   <p className="mt-1 text-slate-100">{contactOverlay.booking?.userId || contactOverlay.booking?.user_id || "-"}</p>
                 </div>
-                <div className="rounded-lg border border-slate-700/80 bg-slate-900/70 p-3">
+                <div className="min-w-0 rounded-lg border border-slate-700/80 bg-slate-900/70 p-3">
                   <p className="text-xs uppercase tracking-wide text-slate-400">Booking ID</p>
                   <p className="mt-1 text-slate-100">{contactOverlay.booking?.bookingId || "-"}</p>
                 </div>
