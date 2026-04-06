@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Bell, X, Check, Clock, User, Calendar, Wallet, Gamepad2, FileWarning } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -75,6 +75,22 @@ interface PayAtCafeQueueSummary {
   auto_rejected: number
 }
 
+type QueueFilterMode = "single" | "range"
+type QueueStatusKey = "requested" | "pending" | "accepted" | "rejected" | "auto_accepted" | "auto_rejected"
+
+interface PayAtCafeQueueItem {
+  booking_id: number
+  user_id: number
+  username: string
+  phone?: string | null
+  email?: string | null
+  game_name: string
+  date: string
+  time: string
+  amount: number
+  action_source?: string | null
+  action_at?: string | null
+}
 
 interface NotificationPanelProps {
   vendorId: number | null
@@ -105,6 +121,99 @@ export function NotificationPanel({
     bookingId: null,
     action: null
   })
+  const todayStr = useMemo(() => {
+    const now = new Date()
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`
+  }, [])
+  const [queueFilterMode, setQueueFilterMode] = useState<QueueFilterMode>("single")
+  const [singleDate, setSingleDate] = useState(todayStr)
+  const [startDate, setStartDate] = useState(todayStr)
+  const [endDate, setEndDate] = useState(todayStr)
+  const [queueSummary, setQueueSummary] = useState<PayAtCafeQueueSummary | null>(payAtCafeSummary || null)
+  const [selectedQueueStatus, setSelectedQueueStatus] = useState<QueueStatusKey>("pending")
+  const [queueItems, setQueueItems] = useState<PayAtCafeQueueItem[]>([])
+  const [isQueueSummaryLoading, setIsQueueSummaryLoading] = useState(false)
+  const [isQueueListLoading, setIsQueueListLoading] = useState(false)
+  const [queueError, setQueueError] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (payAtCafeSummary) setQueueSummary(payAtCafeSummary)
+  }, [payAtCafeSummary])
+
+  const buildQueueFilterQuery = () => {
+    const params = new URLSearchParams()
+    if (queueFilterMode === "single") {
+      if (!singleDate) return null
+      params.set("date", singleDate)
+    } else {
+      if (!startDate || !endDate) return null
+      params.set("start_date", startDate)
+      params.set("end_date", endDate)
+    }
+    return params
+  }
+
+  const fetchQueueSummary = async () => {
+    if (!vendorId) return
+    const params = buildQueueFilterQuery()
+    if (!params) {
+      setQueueError("Please select date filter")
+      return
+    }
+
+    try {
+      setIsQueueSummaryLoading(true)
+      setQueueError(null)
+      const res = await fetch(`${BOOKING_URL}/api/pay-at-cafe/queue-summary/${vendorId}?${params.toString()}`)
+      const json = await res.json().catch(() => ({}))
+      if (!res.ok || !json?.success || !json?.summary) {
+        throw new Error(json?.message || "Failed to load queue summary")
+      }
+      setQueueSummary({
+        requested: Number(json.summary.requested || 0),
+        pending: Number(json.summary.pending || 0),
+        accepted: Number(json.summary.accepted || 0),
+        rejected: Number(json.summary.rejected || 0),
+        auto_accepted: Number(json.summary.auto_accepted || 0),
+        auto_rejected: Number(json.summary.auto_rejected || 0),
+      })
+    } catch (err: any) {
+      setQueueError(err?.message || "Failed to load queue summary")
+    } finally {
+      setIsQueueSummaryLoading(false)
+    }
+  }
+
+  const fetchQueueList = async (status: QueueStatusKey) => {
+    if (!vendorId) return
+    const params = buildQueueFilterQuery()
+    if (!params) {
+      setQueueError("Please select date filter")
+      return
+    }
+
+    try {
+      setIsQueueListLoading(true)
+      setQueueError(null)
+      params.set("status", status)
+      const res = await fetch(`${BOOKING_URL}/api/pay-at-cafe/queue-list/${vendorId}?${params.toString()}`)
+      const json = await res.json().catch(() => ({}))
+      if (!res.ok || !json?.success) {
+        throw new Error(json?.message || "Failed to load queue list")
+      }
+      setQueueItems(Array.isArray(json.items) ? json.items : [])
+    } catch (err: any) {
+      setQueueError(err?.message || "Failed to load queue list")
+    } finally {
+      setIsQueueListLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    if (!isOpen || !vendorId) return
+    void fetchQueueSummary()
+    void fetchQueueList(selectedQueueStatus)
+  }, [isOpen, vendorId])
 
 
   const handleAccept = async (notification: PayAtCafeNotification) => {
@@ -269,6 +378,19 @@ export function NotificationPanel({
 
 
   const notificationCount = notifications.length
+  const queueStatusCards: Array<{
+    key: QueueStatusKey
+    label: string
+    value: number
+    valueClass: string
+  }> = [
+    { key: "requested", label: "Requested", value: Number(queueSummary?.requested || 0), valueClass: "text-foreground" },
+    { key: "accepted", label: "Accepted", value: Number(queueSummary?.accepted || 0), valueClass: "text-emerald-300" },
+    { key: "rejected", label: "Rejected", value: Number(queueSummary?.rejected || 0), valueClass: "text-rose-300" },
+    { key: "pending", label: "Pending", value: Number(queueSummary?.pending || 0), valueClass: "text-amber-300" },
+    { key: "auto_accepted", label: "Auto Accepted", value: Number(queueSummary?.auto_accepted || 0), valueClass: "text-emerald-300" },
+    { key: "auto_rejected", label: "Auto Rejected", value: Number(queueSummary?.auto_rejected || 0), valueClass: "text-rose-300" },
+  ]
 
 
   return (
@@ -314,39 +436,143 @@ export function NotificationPanel({
 
             {/* Content */}
             <div className="max-h-[70vh] overflow-y-auto bg-transparent p-2 sm:p-3">
-              {payAtCafeSummary && (
-                <div className="dashboard-module-card mb-3 rounded-xl border border-cyan-400/25 bg-cyan-500/5 p-3">
-                  <p className="mb-2 text-xs font-semibold uppercase tracking-[0.12em] text-cyan-200">
-                    Pay At Cafe Queue (Today)
+              <div className="dashboard-module-card mb-3 rounded-xl border border-cyan-400/25 bg-cyan-500/5 p-3">
+                <div className="mb-3 flex flex-wrap items-center gap-2">
+                  <p className="text-xs font-semibold uppercase tracking-[0.12em] text-cyan-200">
+                    Pay At Cafe Queue
                   </p>
-                  <div className="grid grid-cols-2 gap-2 text-xs md:grid-cols-3">
-                    <div className="rounded-md border border-border bg-muted/40 px-2 py-1">
-                      <span className="text-muted-foreground">Requested</span>
-                      <div className="font-semibold text-foreground">{payAtCafeSummary.requested}</div>
-                    </div>
-                    <div className="rounded-md border border-border bg-muted/40 px-2 py-1">
-                      <span className="text-muted-foreground">Accepted</span>
-                      <div className="font-semibold text-emerald-300">{payAtCafeSummary.accepted}</div>
-                    </div>
-                    <div className="rounded-md border border-border bg-muted/40 px-2 py-1">
-                      <span className="text-muted-foreground">Rejected</span>
-                      <div className="font-semibold text-rose-300">{payAtCafeSummary.rejected}</div>
-                    </div>
-                    <div className="rounded-md border border-border bg-muted/40 px-2 py-1">
-                      <span className="text-muted-foreground">Pending</span>
-                      <div className="font-semibold text-amber-300">{payAtCafeSummary.pending}</div>
-                    </div>
-                    <div className="rounded-md border border-border bg-muted/40 px-2 py-1">
-                      <span className="text-muted-foreground">Auto Accepted</span>
-                      <div className="font-semibold text-emerald-300">{payAtCafeSummary.auto_accepted}</div>
-                    </div>
-                    <div className="rounded-md border border-border bg-muted/40 px-2 py-1">
-                      <span className="text-muted-foreground">Auto Rejected</span>
-                      <div className="font-semibold text-rose-300">{payAtCafeSummary.auto_rejected}</div>
-                    </div>
-                  </div>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant={queueFilterMode === "single" ? "default" : "outline"}
+                    onClick={() => setQueueFilterMode("single")}
+                    className={`h-7 px-2 text-[11px] ${queueFilterMode === "single" ? "dashboard-btn-primary" : "border-border bg-muted/40 text-muted-foreground"}`}
+                  >
+                    Single Date
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant={queueFilterMode === "range" ? "default" : "outline"}
+                    onClick={() => setQueueFilterMode("range")}
+                    className={`h-7 px-2 text-[11px] ${queueFilterMode === "range" ? "dashboard-btn-primary" : "border-border bg-muted/40 text-muted-foreground"}`}
+                  >
+                    Date Range
+                  </Button>
                 </div>
-              )}
+
+                <div className="mb-3 flex flex-wrap items-end gap-2">
+                  {queueFilterMode === "single" ? (
+                    <label className="flex flex-col gap-1 text-[11px] text-muted-foreground">
+                      Date
+                      <input
+                        type="date"
+                        value={singleDate}
+                        onChange={(e) => setSingleDate(e.target.value)}
+                        className="h-8 rounded-md border border-border bg-background px-2 text-xs text-foreground"
+                      />
+                    </label>
+                  ) : (
+                    <>
+                      <label className="flex flex-col gap-1 text-[11px] text-muted-foreground">
+                        Start
+                        <input
+                          type="date"
+                          value={startDate}
+                          onChange={(e) => setStartDate(e.target.value)}
+                          className="h-8 rounded-md border border-border bg-background px-2 text-xs text-foreground"
+                        />
+                      </label>
+                      <label className="flex flex-col gap-1 text-[11px] text-muted-foreground">
+                        End
+                        <input
+                          type="date"
+                          value={endDate}
+                          onChange={(e) => setEndDate(e.target.value)}
+                          className="h-8 rounded-md border border-border bg-background px-2 text-xs text-foreground"
+                        />
+                      </label>
+                    </>
+                  )}
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={async () => {
+                      await fetchQueueSummary()
+                      await fetchQueueList(selectedQueueStatus)
+                    }}
+                    className="h-8 dashboard-btn-primary text-xs"
+                    disabled={isQueueSummaryLoading || isQueueListLoading}
+                  >
+                    Apply
+                  </Button>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 text-xs md:grid-cols-3">
+                  {queueStatusCards.map((card) => {
+                    const isActive = selectedQueueStatus === card.key
+                    return (
+                      <button
+                        type="button"
+                        key={card.key}
+                        className={`rounded-md border px-2 py-1 text-left transition ${
+                          isActive
+                            ? "border-cyan-400/45 bg-cyan-500/15"
+                            : "border-border bg-muted/40 hover:border-cyan-400/30"
+                        }`}
+                        onClick={async () => {
+                          setSelectedQueueStatus(card.key)
+                          await fetchQueueList(card.key)
+                        }}
+                      >
+                        <span className="text-muted-foreground">{card.label}</span>
+                        <div className={`font-semibold underline decoration-dotted underline-offset-2 ${card.valueClass}`}>
+                          {card.value}
+                        </div>
+                      </button>
+                    )
+                  })}
+                </div>
+
+                {queueError && (
+                  <p className="mt-2 text-xs text-rose-300">{queueError}</p>
+                )}
+                {(isQueueSummaryLoading || isQueueListLoading) && (
+                  <p className="mt-2 text-xs text-cyan-200">Loading queue data...</p>
+                )}
+              </div>
+
+              <div className="dashboard-module-card mb-3 rounded-xl border border-border bg-muted/20 p-3">
+                <div className="mb-2 flex items-center justify-between">
+                  <p className="text-xs font-semibold uppercase tracking-[0.12em] text-cyan-200">
+                    {queueStatusCards.find((c) => c.key === selectedQueueStatus)?.label} List
+                  </p>
+                  <Badge className="border border-cyan-400/40 bg-cyan-500/15 text-cyan-200 text-[10px]">
+                    {queueItems.length}
+                  </Badge>
+                </div>
+                {queueItems.length === 0 ? (
+                  <p className="text-xs text-muted-foreground">No records found for selected filter.</p>
+                ) : (
+                  <div className="space-y-2">
+                    {queueItems.map((item) => (
+                      <div key={`${selectedQueueStatus}-${item.booking_id}`} className="rounded-md border border-border bg-muted/30 p-2 text-xs">
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="font-semibold text-foreground">{item.username}</p>
+                          <span className="font-semibold text-amber-300">₹{Number(item.amount || 0).toFixed(0)}</span>
+                        </div>
+                        <p className="text-muted-foreground">{item.game_name}</p>
+                        <p className="text-muted-foreground">{formatDisplayDate(item.date)} • {item.time}</p>
+                        <div className="mt-1 flex flex-wrap gap-3 text-muted-foreground">
+                          <span>Phone: {item.phone || "-"}</span>
+                          <span>Email: {item.email || "-"}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
               {notifications.length === 0 ? (
                 <div className="dashboard-module-card px-6 py-12 text-center">
                   <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full border border-border bg-muted/40">
