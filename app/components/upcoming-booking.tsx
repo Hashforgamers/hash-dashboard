@@ -2,7 +2,7 @@ import { Card } from "@/components/ui/card";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   Monitor, Play, X, Gamepad2, Calendar, Clock, User, Search,
-  DollarSign, CalendarDays, Users, Timer, AlertCircle, Filter, Phone,
+  DollarSign, CalendarDays, Users, Timer, AlertCircle, Filter, Phone, Mail,
   BadgeCheck, Calendar as CalendarIcon, ChevronDown, RefreshCw, UtensilsCrossed, Plus
 } from "lucide-react";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
@@ -133,6 +133,18 @@ const getBookingPhone = (booking: any): string => {
     booking?.contact_number ||
     booking?.customer?.phone ||
     booking?.user?.phone ||
+    "";
+  return String(raw || "").trim();
+};
+
+const getBookingEmail = (booking: any): string => {
+  const raw =
+    booking?.customer_email ||
+    booking?.email ||
+    booking?.user_email ||
+    booking?.contact_email ||
+    booking?.customer?.email ||
+    booking?.user?.email ||
     "";
   return String(raw || "").trim();
 };
@@ -293,6 +305,13 @@ export function UpcomingBookings({
     customerName: '',
     mode: 'view' as 'view' | 'add',
     hasExistingMeals: false
+  });
+  const [contactOverlay, setContactOverlay] = useState<{
+    open: boolean;
+    booking: any | null;
+  }>({
+    open: false,
+    booking: null,
   });
 
   const [cancelDialog, setCancelDialog] = useState<{
@@ -1108,6 +1127,7 @@ export function UpcomingBookings({
                       ? "border-amber-400/40 bg-amber-500/15 text-amber-200"
                       : "border-emerald-400/40 bg-emerald-500/15 text-emerald-200";
                     const bookingPhone = getBookingPhone(booking);
+                    const bookingEmail = getBookingEmail(booking);
                     return (
                     <motion.div
                       key={booking.bookingId}
@@ -1127,9 +1147,17 @@ export function UpcomingBookings({
                           <div className="min-w-0 flex-1">
                             <div className="flex min-w-0 items-center gap-1.5">
                               <User className="h-3.5 w-3.5 shrink-0 text-slate-300" />
-                              <span className="truncate dash-title !text-[12px] sm:!text-[13px]">
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setContactOverlay({ open: true, booking });
+                                }}
+                                className="truncate dash-title !text-[12px] sm:!text-[13px] text-left underline decoration-dotted underline-offset-2 hover:text-cyan-200 transition-colors cursor-pointer"
+                                title="View customer contact details"
+                              >
                                 {booking.username || "Guest User"}
-                              </span>
+                              </button>
                               {squadEnabled && (
                                 <span className="shrink-0 rounded-full border border-sky-400/40 bg-sky-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-sky-200">
                                   x{squadPlayerCount}
@@ -1144,6 +1172,12 @@ export function UpcomingBookings({
                               <div className="mt-1 flex items-center gap-1.5 text-[11px] text-slate-300">
                                 <Phone className="h-3 w-3 shrink-0 text-slate-400" />
                                 <span className="truncate">{bookingPhone}</span>
+                              </div>
+                            )}
+                            {bookingEmail && (
+                              <div className="mt-1 flex items-center gap-1.5 text-[11px] text-slate-300">
+                                <Mail className="h-3 w-3 shrink-0 text-slate-400" />
+                                <span className="truncate">{bookingEmail}</span>
                               </div>
                             )}
                           </div>
@@ -1280,6 +1314,62 @@ export function UpcomingBookings({
           )}
         </div>
       </div>
+
+      {isMounted && contactOverlay.open && createPortal(
+        <div
+          className="fixed inset-0 z-[1100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+          onClick={() => setContactOverlay({ open: false, booking: null })}
+        >
+          <div
+            className="w-full max-w-md rounded-xl border border-cyan-500/30 bg-slate-950 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between border-b border-cyan-500/20 px-4 py-3">
+              <h3 className="text-sm font-semibold uppercase tracking-[0.08em] text-cyan-200">Customer Contact</h3>
+              <button
+                type="button"
+                onClick={() => setContactOverlay({ open: false, booking: null })}
+                className="rounded-md border border-slate-600 px-2 py-1 text-xs text-slate-300 hover:bg-slate-800"
+              >
+                Close
+              </button>
+            </div>
+            <div className="space-y-3 px-4 py-4 text-sm">
+              <div className="rounded-lg border border-slate-700/80 bg-slate-900/70 p-3">
+                <p className="text-xs uppercase tracking-wide text-slate-400">Name</p>
+                <p className="mt-1 font-semibold text-slate-100">
+                  {contactOverlay.booking?.username || "Guest User"}
+                </p>
+              </div>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <div className="rounded-lg border border-slate-700/80 bg-slate-900/70 p-3">
+                  <p className="text-xs uppercase tracking-wide text-slate-400">Phone</p>
+                  <p className="mt-1 text-slate-100">{getBookingPhone(contactOverlay.booking) || "-"}</p>
+                </div>
+                <div className="rounded-lg border border-slate-700/80 bg-slate-900/70 p-3">
+                  <p className="text-xs uppercase tracking-wide text-slate-400">Email</p>
+                  <p className="mt-1 truncate text-slate-100">{getBookingEmail(contactOverlay.booking) || "-"}</p>
+                </div>
+                <div className="rounded-lg border border-slate-700/80 bg-slate-900/70 p-3">
+                  <p className="text-xs uppercase tracking-wide text-slate-400">User ID</p>
+                  <p className="mt-1 text-slate-100">{contactOverlay.booking?.userId || contactOverlay.booking?.user_id || "-"}</p>
+                </div>
+                <div className="rounded-lg border border-slate-700/80 bg-slate-900/70 p-3">
+                  <p className="text-xs uppercase tracking-wide text-slate-400">Booking ID</p>
+                  <p className="mt-1 text-slate-100">{contactOverlay.booking?.bookingId || "-"}</p>
+                </div>
+              </div>
+              <div className="rounded-lg border border-slate-700/80 bg-slate-900/70 p-3">
+                <p className="text-xs uppercase tracking-wide text-slate-400">Session</p>
+                <p className="mt-1 text-slate-100">
+                  {contactOverlay.booking?.consoleType || "Console"} • {contactOverlay.booking?.time || "Time not set"}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
       
       {/* ✅ FIXED: Render modal using Portal at document root level */}
       {isMounted && createPortal(

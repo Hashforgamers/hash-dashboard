@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, Gamepad2, Monitor, Headset, Loader2, RefreshCw, UtensilsCrossed, Plus, ChevronDown, ChevronUp, Phone } from "lucide-react";
+import { Search, Gamepad2, Monitor, Headset, Loader2, RefreshCw, UtensilsCrossed, Plus, ChevronDown, ChevronUp, Phone, Mail } from "lucide-react";
 import { jwtDecode } from "jwt-decode";
 import { FaCheck, FaPowerOff } from 'react-icons/fa';
 import { BOOKING_URL, DASHBOARD_URL } from "@/src/config/env";
@@ -172,6 +172,18 @@ const getBookingPhone = (booking: any): string => {
   return String(raw || "").trim();
 };
 
+const getBookingEmail = (booking: any): string => {
+  const raw =
+    booking?.customer_email ||
+    booking?.email ||
+    booking?.user_email ||
+    booking?.contact_email ||
+    booking?.customer?.email ||
+    booking?.user?.email ||
+    "";
+  return String(raw || "").trim();
+};
+
 const releaseSlot = async (consoleType: string, gameId: string, consoleId: string, vendorId: any, setRefreshSlots: any) => {
   try {
     console.log('🔄 Client: Calling release API for console:', consoleId);
@@ -245,6 +257,13 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
   const [expandedLiveRows, setExpandedLiveRows] = useState<Record<string, boolean>>({});
   const [mealPickerBookingId, setMealPickerBookingId] = useState<string | null>(null);
   const [mealPickerMemberPosByBooking, setMealPickerMemberPosByBooking] = useState<Record<string, number>>({});
+  const [contactOverlay, setContactOverlay] = useState<{
+    open: boolean;
+    booking: any | null;
+  }>({
+    open: false,
+    booking: null,
+  });
 
   // Get vendorId
   useEffect(() => {
@@ -810,7 +829,14 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                       >
                         <div className="flex items-start justify-between gap-2">
                           <div className="min-w-0">
-                            <p className="truncate text-sm font-semibold text-slate-100">{booking.username || "Guest"}</p>
+                            <button
+                              type="button"
+                              onClick={() => setContactOverlay({ open: true, booking })}
+                              className="truncate text-sm font-semibold text-slate-100 underline decoration-dotted underline-offset-2 hover:text-cyan-200 transition-colors"
+                              title="View customer contact details"
+                            >
+                              {booking.username || "Guest"}
+                            </button>
                             {bookingPhone && (
                               <p className="truncate text-xs text-slate-400">{bookingPhone}</p>
                             )}
@@ -1073,7 +1099,14 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                                 <div className="min-w-0 flex-1">
                                   <div className="flex items-center gap-1 flex-wrap">
                                     <div className="truncate dash-title !text-sm">
-                                      {booking.username || 'Guest'}
+                                      <button
+                                        type="button"
+                                        onClick={() => setContactOverlay({ open: true, booking })}
+                                        className="truncate text-left underline decoration-dotted underline-offset-2 hover:text-cyan-200 transition-colors"
+                                        title="View customer contact details"
+                                      >
+                                        {booking.username || 'Guest'}
+                                      </button>
                                     </div>
                                     {squadEnabled && (
                                       <span className="rounded-full border border-emerald-400/40 bg-emerald-500/10 px-2 py-0.5 text-xs font-semibold text-emerald-200">
@@ -1614,6 +1647,71 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
               formatTime={formatTime}
               releaseSlot={releaseSlot}
             />
+          )}
+
+          {contactOverlay.open && (
+            <div
+              className="fixed inset-0 z-[1100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+              onClick={() => setContactOverlay({ open: false, booking: null })}
+            >
+              <div
+                className="w-full max-w-md rounded-xl border border-cyan-500/30 bg-slate-950 shadow-2xl"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="flex items-center justify-between border-b border-cyan-500/20 px-4 py-3">
+                  <h3 className="text-sm font-semibold uppercase tracking-[0.08em] text-cyan-200">Customer Contact</h3>
+                  <button
+                    type="button"
+                    onClick={() => setContactOverlay({ open: false, booking: null })}
+                    className="rounded-md border border-slate-600 px-2 py-1 text-xs text-slate-300 hover:bg-slate-800"
+                  >
+                    Close
+                  </button>
+                </div>
+                <div className="space-y-3 px-4 py-4 text-sm">
+                  <div className="rounded-lg border border-slate-700/80 bg-slate-900/70 p-3">
+                    <p className="text-xs uppercase tracking-wide text-slate-400">Name</p>
+                    <p className="mt-1 font-semibold text-slate-100">
+                      {contactOverlay.booking?.username || "Guest User"}
+                    </p>
+                  </div>
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    <div className="rounded-lg border border-slate-700/80 bg-slate-900/70 p-3">
+                      <p className="text-xs uppercase tracking-wide text-slate-400">Phone</p>
+                      <p className="mt-1 inline-flex items-center gap-1 text-slate-100">
+                        <Phone className="h-3 w-3" />
+                        <span>{getBookingPhone(contactOverlay.booking) || "-"}</span>
+                      </p>
+                    </div>
+                    <div className="rounded-lg border border-slate-700/80 bg-slate-900/70 p-3">
+                      <p className="text-xs uppercase tracking-wide text-slate-400">Email</p>
+                      <p className="mt-1 inline-flex items-center gap-1 truncate text-slate-100">
+                        <Mail className="h-3 w-3" />
+                        <span className="truncate">{getBookingEmail(contactOverlay.booking) || "-"}</span>
+                      </p>
+                    </div>
+                    <div className="rounded-lg border border-slate-700/80 bg-slate-900/70 p-3">
+                      <p className="text-xs uppercase tracking-wide text-slate-400">User ID</p>
+                      <p className="mt-1 text-slate-100">
+                        {contactOverlay.booking?.userId || contactOverlay.booking?.user_id || "-"}
+                      </p>
+                    </div>
+                    <div className="rounded-lg border border-slate-700/80 bg-slate-900/70 p-3">
+                      <p className="text-xs uppercase tracking-wide text-slate-400">Booking ID</p>
+                      <p className="mt-1 text-slate-100">
+                        {contactOverlay.booking?.bookingId || contactOverlay.booking?.bookId || "-"}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="rounded-lg border border-slate-700/80 bg-slate-900/70 p-3">
+                    <p className="text-xs uppercase tracking-wide text-slate-400">Session</p>
+                    <p className="mt-1 text-slate-100">
+                      {contactOverlay.booking?.consoleType || "Console"} • {contactOverlay.booking?.startTime || "N/A"} - {contactOverlay.booking?.endTime || "N/A"}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
           )}
           
           {/* ✅ ENHANCED: MealDetailsModal with updated props */}
