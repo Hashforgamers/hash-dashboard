@@ -374,19 +374,20 @@ export function UpcomingBookings({
       console.log('📅 Real-time upcoming booking:', data)
       
       const eventVendorId = Number(data?.vendorId ?? data?.vendor_id);
+      const incomingBookingId = Number(data?.bookingId ?? data?.booking_id ?? data?.bookId ?? data?.book_id);
       if (!data || !eventVendorId) {
         console.warn('Invalid upcoming booking data:', data);
         return;
       }
       
-      if (eventVendorId === parseInt(vendorId) && (data.status === 'Confirmed' || data.status === 'confirmed')) {
+      if (eventVendorId === parseInt(vendorId) && Number.isFinite(incomingBookingId) && (data.status === 'Confirmed' || data.status === 'confirmed')) {
         setUpcomingBookings(prev => {
           if (!Array.isArray(prev)) prev = [];
           
-          const exists = prev.some(booking => booking?.bookingId === data.bookingId)
+          const exists = prev.some(booking => Number(booking?.bookingId) === incomingBookingId)
           if (!exists) {
             console.log('➕ Adding new booking immediately')
-            return [data, ...prev]
+            return [{ ...data, bookingId: incomingBookingId }, ...prev]
           }
           return prev
         })
@@ -397,6 +398,7 @@ export function UpcomingBookings({
       console.log('🔄 Booking update:', data)
       
       const eventVendorId = Number(data?.vendorId ?? data?.vendor_id);
+      const incomingBookingId = Number(data?.bookingId ?? data?.booking_id ?? data?.bookId ?? data?.book_id);
       if (!data || !eventVendorId) {
         console.warn('Invalid booking update data:', data);
         return;
@@ -407,13 +409,13 @@ export function UpcomingBookings({
         setUpcomingBookings(prev => {
           if (!Array.isArray(prev)) prev = [];
           
-          if ((data.status === 'Confirmed' || data.status === 'confirmed') && !prev.some(b => b?.bookingId === data.bookingId)) {
-            return [data, ...prev]
+          if ((data.status === 'Confirmed' || data.status === 'confirmed') && Number.isFinite(incomingBookingId) && !prev.some(b => Number(b?.bookingId) === incomingBookingId)) {
+            return [{ ...data, bookingId: incomingBookingId }, ...prev]
           }
 
           const mapped = prev.map(booking => 
-            booking?.bookingId === data.bookingId 
-              ? { ...booking, ...data }
+            Number(booking?.bookingId) === incomingBookingId 
+              ? { ...booking, ...data, bookingId: incomingBookingId }
               : booking
           )
 

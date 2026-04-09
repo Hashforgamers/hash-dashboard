@@ -9,6 +9,10 @@ type SocketPayload = {
   vendor_id?: number;
   action?: string;
   module?: string;
+  bookingId?: number;
+  booking_id?: number;
+  bookId?: number;
+  book_id?: number;
 };
 
 const TERMINAL_BOOKING_STATUSES = ["cancelled", "canceled", "rejected", "completed", "discarded", "no_show"];
@@ -36,6 +40,8 @@ const MODULE_EVENT_MAP: Record<string, string> = {
 export function DashboardDataBus() {
   const { socket, isConnected, joinVendor } = useSocket();
   const { vendorId, landingData, consoles, setLandingData, setConsoles, bumpModuleVersion } = useDashboardData();
+  const resolveBookingId = (payload: any) =>
+    Number(payload?.bookingId ?? payload?.booking_id ?? payload?.bookId ?? payload?.book_id ?? 0);
 
   useEffect(() => {
     if (!socket || !vendorId || !isConnected) return;
@@ -75,6 +81,8 @@ export function DashboardDataBus() {
       const eventVendorId = Number(data?.vendorId ?? data?.vendor_id);
       if (eventVendorId && eventVendorId !== vendorId) return;
       if (!landingData) return;
+      const incomingBookingId = resolveBookingId(data);
+      if (!incomingBookingId) return;
 
       const status = String(data?.status || "").toLowerCase();
       if (status !== "confirmed") return;
@@ -82,8 +90,8 @@ export function DashboardDataBus() {
       const next = Array.isArray(landingData.upcomingBookings)
         ? [...landingData.upcomingBookings]
         : [];
-      if (!next.some((b: any) => b?.bookingId === data.bookingId)) {
-        next.unshift(data);
+      if (!next.some((b: any) => Number(b?.bookingId) === incomingBookingId)) {
+        next.unshift({ ...data, bookingId: incomingBookingId });
         setLandingData({ ...landingData, upcomingBookings: next });
       }
     }
@@ -92,10 +100,11 @@ export function DashboardDataBus() {
       const eventVendorId = Number(data?.vendorId ?? data?.vendor_id);
       if (eventVendorId && eventVendorId !== vendorId) return;
       if (!landingData) return;
+      const incomingBookingId = resolveBookingId(data);
 
       const currentSlots = Array.isArray(landingData.currentSlots) ? [...landingData.currentSlots] : [];
       const exists = currentSlots.some(
-        (slot: any) => slot?.bookId === data?.bookId || slot?.bookingId === data?.bookId
+        (slot: any) => resolveBookingId(slot) === incomingBookingId
       );
       if (!exists) {
         currentSlots.unshift(data);
@@ -103,7 +112,7 @@ export function DashboardDataBus() {
 
       const upcoming = Array.isArray(landingData.upcomingBookings) ? landingData.upcomingBookings : [];
       const filteredUpcoming = upcoming.filter(
-        (b: any) => Number(b?.bookingId) !== Number(data?.bookId)
+        (b: any) => Number(b?.bookingId) !== incomingBookingId
       );
 
       setLandingData({
@@ -119,15 +128,29 @@ export function DashboardDataBus() {
       if (!landingData) return;
 
       const status = String(data?.status || "").toLowerCase();
+      const incomingBookingId = resolveBookingId(data);
       const upcoming = Array.isArray(landingData.upcomingBookings) ? [...landingData.upcomingBookings] : [];
       const nextUpcoming = upcoming
-        .map((booking: any) => (booking?.bookingId === data.bookingId ? { ...booking, ...data } : booking))
+        .map((booking: any) => (Number(booking?.bookingId) === incomingBookingId ? { ...booking, ...data } : booking))
         .filter((booking: any) => {
           const s = String(booking?.status || "").toLowerCase();
           return !TERMINAL_BOOKING_STATUSES.includes(s);
         });
 
-      if ((status === "confirmed" || status === "paid") && !nextUpcoming.some((b: any) => b?.bookingId === data.bookingId)) {
+      if ((status === "checked_in" || status === "current") && incomingBookingId > 0) {
+        const nextCurrent = Array.isArray(landingData.currentSlots) ? [...landingData.currentSlots] : [];
+        if (!nextCurrent.some((slot: any) => resolveBookingId(slot) === incomingBookingId)) {
+          nextCurrent.unshift(data);
+        }
+        setLandingData({
+          ...landingData,
+          currentSlots: nextCurrent,
+          upcomingBookings: nextUpcoming.filter((b: any) => Number(b?.bookingId) !== incomingBookingId),
+        });
+        return;
+      }
+
+      if ((status === "confirmed" || status === "paid") && incomingBookingId > 0 && !nextUpcoming.some((b: any) => Number(b?.bookingId) === incomingBookingId)) {
         nextUpcoming.unshift(data);
       }
 

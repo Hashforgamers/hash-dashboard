@@ -821,7 +821,7 @@ export function NotificationPanel({
                   initial={{ opacity: 0, y: 12, scale: 0.98 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: 12, scale: 0.98 }}
-                  className="dashboard-module-panel fixed left-4 right-4 top-20 z-[80] max-h-[78vh] overflow-hidden rounded-2xl border border-cyan-400/30 bg-background md:left-1/2 md:right-auto md:w-[42rem] md:-translate-x-1/2"
+                  className="dashboard-module-panel fixed left-1/2 top-1/2 z-[80] w-[min(42rem,calc(100vw-2rem))] max-h-[78vh] -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-2xl border border-cyan-400/30 bg-background"
                 >
                   <div className="flex items-center justify-between border-b border-border bg-muted/30 px-4 py-3">
                     <div className="flex items-center gap-2">
