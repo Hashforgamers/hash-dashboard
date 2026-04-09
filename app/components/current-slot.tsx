@@ -372,9 +372,11 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
       const shouldProcess = dataVendorId === vendorId || !data.vendorId;
       
       if (shouldProcess) {
+        const resolvedBookingId = data.bookId || data.bookingId || data.book_id || data.booking_id
+        const resolvedSlotId = data.slotId || data.slot_id
         const newSlot = {
-          slotId: data.slotId,
-          bookingId: data.bookId,
+          slotId: resolvedSlotId,
+          bookingId: resolvedBookingId,
           username: data.username,
           customerPhone: data.customer_phone || data.phone || data.phone_number || data.user_phone || data.contact_number || "",
           consoleType: data.consoleType,
@@ -382,12 +384,12 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
           consoleCode: data.consoleCode,
           consoleId: data.consoleId || data.console_id,
           game_id: data.game_id,
-          startTime: data.startTime,
-          endTime: data.endTime,
+          startTime: data.startTime || data.start_time,
+          endTime: data.endTime || data.end_time,
           date: data.date,
           status: 'active',
-          slot_price: data.slot_price,
-          userId: data.userId,
+          slot_price: data.slot_price || data.single_slot_price,
+          userId: data.userId || data.user_id,
           hasMeals: data.hasMeals
         }
         
