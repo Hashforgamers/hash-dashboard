@@ -1,46 +1,49 @@
 /* Shared premium surface and motion system for core dashboard routes */
 
 :root {
-  --brand-accent: 173 94% 42%;
-  --brand-accent-strong: 171 97% 32%;
-  --brand-focus: 197 94% 44%;
-  --brand-highlight: 84 93% 49%;
-  --surface-0: 210 38% 97%;
-  --surface-1: 0 0% 100%;
-  --surface-2: 210 32% 94%;
-  --surface-strong: 214 24% 18%;
-  --surface-border: 210 20% 82%;
-  --surface-muted: 214 12% 52%;
-  --text-strong: 222 36% 14%;
-  --text-muted: 217 14% 46%;
+  --brand-accent: 111 100% 50%;
+  --brand-accent-strong: 111 100% 44%;
+  --brand-focus: 197 92% 60%;
+  --brand-highlight: 24 94% 55%;
+  --surface-0: 0 0% 2%;
+  --surface-1: 0 0% 6%;
+  --surface-2: 0 0% 8%;
+  --surface-strong: 0 0% 11%;
+  --surface-border: 0 0% 100%;
+  --surface-muted: 0 0% 45%;
+  --text-strong: 210 40% 98%;
+  --text-muted: 0 0% 68%;
   --font-ui: var(--font-rajdhani), "Rajdhani", "Segoe UI", sans-serif;
   --font-display: var(--font-orbitron), "Orbitron", "Segoe UI", sans-serif;
-  --premium-shell-bg: hsl(var(--surface-0));
+  --premium-shell-bg:
+    radial-gradient(circle at top, hsl(var(--brand-accent) / 0.14), transparent 42%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.02) 100%),
+    #050505;
   --premium-grid-line: transparent;
-  --premium-card-border: hsl(var(--surface-border) / 0.9);
-  --premium-card-bg: hsl(var(--surface-1));
-  --premium-card-shadow: 0 12px 28px hsl(220 20% 20% / 0.08);
+  --premium-card-border: rgba(255, 255, 255, 0.08);
+  --premium-card-bg: linear-gradient(180deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 100%);
+  --premium-card-shadow: 0 24px 80px rgba(0, 0, 0, 0.4);
   --premium-subtle-text: hsl(var(--text-muted));
   --premium-title-text: hsl(var(--text-strong));
   --premium-kpi-text: hsl(var(--text-strong));
-  --premium-pill-border: hsl(var(--surface-border) / 0.85);
-  --premium-pill-bg: hsl(var(--surface-1));
+  --premium-pill-border: rgba(255,255,255,0.08);
+  --premium-pill-bg: rgba(255,255,255,0.04);
   --premium-pill-text: hsl(var(--text-strong));
-  --gaming-panel-border: hsl(var(--surface-border) / 0.85);
-  --gaming-panel-bg: hsl(var(--surface-1));
-  --gaming-panel-shadow: 0 12px 26px hsl(220 20% 20% / 0.08);
-  --gaming-kpi-border: hsl(var(--surface-border) / 0.85);
-  --gaming-kpi-bg: hsl(var(--surface-1));
-  --gaming-kpi-shadow: 0 10px 22px hsl(220 18% 18% / 0.08);
-  --nav-shell-bg: hsl(var(--surface-1));
-  --nav-shell-border: hsl(var(--surface-border) / 0.85);
-  --nav-panel-bg: hsl(var(--surface-1));
-  --nav-panel-border: hsl(var(--surface-border) / 0.8);
-  --nav-divider: hsl(var(--surface-border) / 0.75);
-  --nav-hover-bg: hsl(var(--surface-2));
-  --nav-hover-border: hsl(var(--surface-border) / 0.9);
+  --gaming-panel-border: rgba(255,255,255,0.08);
+  --gaming-panel-bg: linear-gradient(180deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 100%);
+  --gaming-panel-shadow: 0 24px 80px rgba(0, 0, 0, 0.32);
+  --gaming-kpi-border: rgba(255,255,255,0.08);
+  --gaming-kpi-bg: linear-gradient(180deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 100%);
+  --gaming-kpi-shadow: 0 18px 36px rgba(0, 0, 0, 0.3);
+  --nav-shell-bg: rgba(255,255,255,0.03);
+  --nav-shell-border: rgba(255,255,255,0.08);
+  --nav-panel-bg: rgba(255,255,255,0.02);
+  --nav-panel-border: rgba(255,255,255,0.08);
+  --nav-divider: rgba(255,255,255,0.08);
+  --nav-hover-bg: rgba(255,255,255,0.06);
+  --nav-hover-border: rgba(255,255,255,0.08);
   --nav-active-bg: hsl(var(--brand-accent) / 0.14);
-  --nav-active-border: hsl(var(--brand-accent) / 0.45);
+  --nav-active-border: rgba(22,255,0,0.35);
   --nav-active-shadow: 0 0 0 1px hsl(var(--brand-accent) / 0.2) inset;
   --nav-icon-active: hsl(var(--brand-accent-strong));
   --nav-text: hsl(var(--text-strong));
@@ -48,31 +51,31 @@
   --nav-role-text: hsl(var(--brand-accent-strong));
   --nav-danger-text: hsl(0 70% 47%);
   --nav-danger-hover: hsl(0 74% 42%);
-  --dash-module-panel-bg: hsl(var(--surface-1));
-  --dash-module-panel-border: hsl(var(--surface-border) / 0.88);
-  --dash-module-panel-shadow: 0 16px 36px hsl(220 20% 20% / 0.08);
-  --dash-module-surface-bg: hsl(var(--surface-1));
-  --dash-module-surface-strong: hsl(var(--surface-2));
-  --dash-module-surface-border: hsl(var(--surface-border) / 0.85);
-  --dash-module-line: hsl(var(--surface-border) / 0.8);
-  --dash-module-hover: hsl(var(--surface-2));
-  --dash-module-input-bg: hsl(var(--surface-1));
-  --dash-module-input-border: hsl(var(--surface-border) / 0.9);
+  --dash-module-panel-bg: linear-gradient(180deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 100%);
+  --dash-module-panel-border: rgba(255,255,255,0.08);
+  --dash-module-panel-shadow: 0 24px 80px rgba(0,0,0,0.24);
+  --dash-module-surface-bg: rgba(255,255,255,0.02);
+  --dash-module-surface-strong: rgba(255,255,255,0.05);
+  --dash-module-surface-border: rgba(255,255,255,0.08);
+  --dash-module-line: rgba(255,255,255,0.08);
+  --dash-module-hover: rgba(255,255,255,0.06);
+  --dash-module-input-bg: rgba(255,255,255,0.03);
+  --dash-module-input-border: rgba(255,255,255,0.08);
   --dash-module-input-text: hsl(var(--text-strong));
   --dash-module-input-placeholder: hsl(var(--text-muted));
   --dash-module-muted: hsl(var(--text-muted));
   --dash-module-empty: hsl(var(--text-muted));
-  --dash-module-card-bg: hsl(var(--surface-1));
-  --dash-module-card-border: hsl(var(--surface-border) / 0.85);
+  --dash-module-card-bg: linear-gradient(180deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 100%);
+  --dash-module-card-border: rgba(255,255,255,0.08);
   --booking-text-strong: hsl(var(--text-strong));
   --booking-text-muted: hsl(var(--text-muted));
   --booking-text-subtle: hsl(var(--text-muted));
   --booking-link: hsl(var(--brand-accent-strong));
   --booking-link-hover: hsl(var(--brand-accent));
-  --action-primary-bg: hsl(173 80% 42%);
-  --action-primary-hover: hsl(173 82% 36%);
+  --action-primary-bg: #16FF00;
+  --action-primary-hover: #12e600;
   --action-primary-disabled: hsl(215 16% 68%);
-  --action-primary-text: hsl(0 0% 100%);
+  --action-primary-text: #050505;
   --toolbar-menu-bg: hsl(var(--surface-1) / 0.96);
   --toolbar-menu-hover: hsl(var(--surface-2));
   --toolbar-menu-border: hsl(var(--surface-border) / 0.85);
@@ -100,104 +103,7 @@
   --slot-modal-accent-border: hsl(var(--brand-focus) / 0.28);
   --slot-modal-accent-text: hsl(var(--brand-focus));
   --slot-modal-soft-bg: hsl(var(--surface-2));
-  --slot-modal-soft-border: hsl(var(--surface-border) / 0.85);
-}
-
-.dark {
-  --surface-0: 222 26% 10%;
-  --surface-1: 222 24% 13%;
-  --surface-2: 222 22% 17%;
-  --surface-strong: 220 20% 22%;
-  --surface-border: 216 20% 28%;
-  --surface-muted: 214 14% 62%;
-  --text-strong: 210 40% 98%;
-  --text-muted: 214 18% 70%;
-  --premium-shell-bg: hsl(var(--surface-0));
-  --premium-grid-line: transparent;
-  --premium-card-border: hsl(var(--surface-border) / 0.8);
-  --premium-card-bg: hsl(var(--surface-1));
-  --premium-card-shadow: 0 18px 40px hsl(220 40% 6% / 0.25);
-  --premium-subtle-text: hsl(var(--text-muted));
-  --premium-title-text: hsl(var(--text-strong));
-  --premium-kpi-text: hsl(var(--text-strong));
-  --premium-pill-border: hsl(var(--surface-border) / 0.8);
-  --premium-pill-bg: hsl(var(--surface-1));
-  --premium-pill-text: hsl(var(--text-strong));
-  --gaming-panel-border: hsl(var(--surface-border) / 0.8);
-  --gaming-panel-bg: hsl(var(--surface-1));
-  --gaming-panel-shadow: 0 18px 40px hsl(220 40% 6% / 0.22);
-  --gaming-kpi-border: hsl(var(--surface-border) / 0.8);
-  --gaming-kpi-bg: hsl(var(--surface-1));
-  --gaming-kpi-shadow: 0 12px 28px hsl(220 40% 6% / 0.22);
-  --nav-shell-bg: hsl(var(--surface-1));
-  --nav-shell-border: hsl(var(--surface-border) / 0.85);
-  --nav-panel-bg: hsl(var(--surface-2));
-  --nav-panel-border: hsl(var(--surface-border) / 0.8);
-  --nav-divider: hsl(var(--surface-border) / 0.8);
-  --nav-hover-bg: hsl(var(--surface-2));
-  --nav-hover-border: hsl(var(--surface-border) / 0.85);
-  --nav-active-bg: hsl(var(--brand-accent) / 0.2);
-  --nav-active-border: hsl(var(--brand-accent) / 0.5);
-  --nav-active-shadow: 0 0 0 1px hsl(var(--brand-accent) / 0.26) inset;
-  --nav-icon-active: hsl(var(--brand-accent));
-  --nav-text: hsl(var(--text-strong));
-  --nav-subtle-text: hsl(var(--text-muted));
-  --nav-role-text: hsl(var(--brand-accent));
-  --nav-danger-text: hsl(0 92% 74%);
-  --nav-danger-hover: hsl(0 96% 81%);
-  --dash-module-panel-bg: hsl(var(--surface-1));
-  --dash-module-panel-border: hsl(var(--surface-border) / 0.8);
-  --dash-module-panel-shadow: 0 18px 40px hsl(220 40% 6% / 0.22);
-  --dash-module-surface-bg: hsl(var(--surface-1));
-  --dash-module-surface-strong: hsl(var(--surface-2));
-  --dash-module-surface-border: hsl(var(--surface-border) / 0.8);
-  --dash-module-line: hsl(var(--surface-border) / 0.8);
-  --dash-module-hover: hsl(var(--surface-2));
-  --dash-module-input-bg: hsl(var(--surface-1));
-  --dash-module-input-border: hsl(var(--surface-border) / 0.85);
-  --dash-module-input-text: hsl(var(--text-strong));
-  --dash-module-input-placeholder: hsl(var(--text-muted));
-  --dash-module-muted: hsl(var(--text-muted));
-  --dash-module-empty: hsl(var(--text-muted));
-  --dash-module-card-bg: hsl(var(--surface-1));
-  --dash-module-card-border: hsl(var(--surface-border) / 0.8);
-  --booking-text-strong: hsl(var(--text-strong));
-  --booking-text-muted: hsl(var(--text-muted));
-  --booking-text-subtle: hsl(var(--text-muted));
-  --booking-link: hsl(var(--brand-accent));
-  --booking-link-hover: hsl(var(--brand-accent-strong));
-  --action-primary-bg: hsl(173 72% 40%);
-  --action-primary-hover: hsl(173 76% 46%);
-  --action-primary-disabled: hsl(218 14% 34%);
-  --action-primary-text: hsl(0 0% 100%);
-  --toolbar-menu-bg: hsl(var(--surface-2) / 0.95);
-  --toolbar-menu-hover: hsl(var(--surface-2));
-  --toolbar-menu-border: hsl(var(--surface-border) / 0.8);
-  --toolbar-menu-text: hsl(var(--text-strong));
-  --slot-modal-bg: hsl(var(--surface-1));
-  --slot-modal-border: hsl(var(--surface-border) / 0.85);
-  --slot-modal-text: hsl(var(--text-strong));
-  --slot-modal-muted: hsl(var(--text-muted));
-  --slot-modal-placeholder: hsl(var(--text-muted));
-  --slot-modal-card-bg: hsl(var(--surface-1));
-  --slot-modal-card-border: hsl(var(--surface-border) / 0.85);
-  --slot-modal-input-bg: hsl(var(--surface-1));
-  --slot-modal-input-border: hsl(var(--surface-border) / 0.85);
-  --slot-modal-close-bg: hsl(var(--surface-2));
-  --slot-modal-close-hover: hsl(var(--surface-border) / 0.2);
-  --slot-modal-close-text: hsl(var(--text-strong));
-  --slot-modal-footer-bg: hsl(var(--surface-2));
-  --slot-modal-footer-border: hsl(var(--surface-border) / 0.85);
-  --slot-modal-secondary-bg: hsl(var(--surface-strong));
-  --slot-modal-secondary-hover: hsl(var(--surface-strong) / 0.9);
-  --slot-modal-secondary-border: hsl(var(--surface-border) / 0.8);
-  --slot-modal-secondary-text: hsl(var(--text-strong));
-  --slot-modal-accent-bg: hsl(var(--brand-focus) / 0.12);
-  --slot-modal-accent-hover: hsl(var(--brand-focus) / 0.18);
-  --slot-modal-accent-border: hsl(var(--brand-focus) / 0.34);
-  --slot-modal-accent-text: hsl(var(--brand-focus));
-  --slot-modal-soft-bg: hsl(var(--surface-2));
-  --slot-modal-soft-border: hsl(var(--surface-border) / 0.8);
+  --slot-modal-soft-border: rgba(255,255,255,0.08);
 }
 
 html,
@@ -304,12 +210,16 @@ h6 {
   border: 1px solid var(--gaming-panel-border);
   background: var(--gaming-panel-bg);
   box-shadow: var(--gaming-panel-shadow);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
 }
 
 .gaming-kpi-card {
   border: 1px solid var(--gaming-kpi-border);
   background: var(--gaming-kpi-bg);
   box-shadow: var(--gaming-kpi-shadow);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
 }
 
 .gaming-kpi-card:hover {
@@ -485,11 +395,15 @@ h6 {
   border: 1px solid var(--dash-module-panel-border);
   background: var(--dash-module-panel-bg);
   box-shadow: var(--dash-module-panel-shadow);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
 }
 
 .dashboard-module-surface {
   border: 1px solid var(--dash-module-surface-border);
-  background: var(--dash-module-surface-bg);
+  background: linear-gradient(180deg, rgba(255,255,255,0.055) 0%, rgba(255,255,255,0.02) 100%);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }
 
 .dashboard-module-input {
@@ -615,9 +529,11 @@ h6 {
 
 .dashboard-card {
   border: 1px solid var(--dash-module-surface-border);
-  background: var(--dash-module-surface-bg);
+  background: linear-gradient(180deg, rgba(255,255,255,0.055) 0%, rgba(255,255,255,0.02) 100%);
   border-radius: 0.9rem;
   box-shadow: 0 16px 36px hsl(220 24% 12% / 0.12);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
 }
 
 .dashboard-card-header {
@@ -714,9 +630,11 @@ h6 {
 
 .dashboard-table-shell {
   border: 1px solid var(--dash-module-surface-border);
-  background: var(--dash-module-surface-bg);
+  background: linear-gradient(180deg, rgba(255,255,255,0.055) 0%, rgba(255,255,255,0.02) 100%);
   border-radius: 0.75rem;
   box-shadow: 0 10px 24px hsl(220 20% 20% / 0.08);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
 }
 
 .dashboard-table-wrap {
@@ -826,6 +744,59 @@ h6 {
   background: var(--dash-module-card-bg);
   border-radius: 0.9rem;
   box-shadow: 0 16px 32px hsl(220 18% 12% / 0.12);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+.live-session-card {
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.live-session-head {
+  padding: 0.35rem 0.35rem 0.1rem;
+}
+
+.live-session-title {
+  font-size: clamp(1rem, 0.55vw + 0.88rem, 1.2rem);
+  letter-spacing: 0.02em;
+}
+
+.live-session-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.6rem;
+  height: 1.5rem;
+  border-radius: 999px;
+  border: 1px solid rgba(22, 255, 0, 0.28);
+  background: rgba(22, 255, 0, 0.12);
+  color: #16ff00;
+  font-size: 0.74rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.live-session-tabs {
+  border-color: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.live-session-tools .dashboard-module-input {
+  border-color: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.live-session-table-shell {
+  border-radius: 1rem;
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.live-session-row td {
+  vertical-align: top;
+}
+
+.live-session-row:hover {
+  background: rgba(255, 255, 255, 0.04);
 }
 
 .feature-action-icon {
@@ -1189,6 +1160,48 @@ h6 {
   /* Allow wheel scroll to bubble naturally to parent containers when needed. */
   overscroll-behavior: auto;
   -webkit-overflow-scrolling: touch;
+}
+
+/* Normalize legacy utility backgrounds inside booking/dashboard modules
+   so old blue/gray/slate classes still render as the shared glass surface. */
+.feature-page-shell [class*="bg-slate-"],
+.feature-page-shell [class*="bg-gray-"],
+.feature-page-shell [class*="bg-zinc-"],
+.feature-page-shell [class*="bg-blue-"],
+.feature-page-shell [class*="dark:bg-slate-"],
+.feature-page-shell [class*="dark:bg-gray-"],
+.feature-page-shell [class*="dark:bg-zinc-"],
+.feature-page-shell [class*="dark:bg-blue-"],
+.dashboard-module [class*="bg-slate-"],
+.dashboard-module [class*="bg-gray-"],
+.dashboard-module [class*="bg-zinc-"],
+.dashboard-module [class*="bg-blue-"],
+.dashboard-module [class*="dark:bg-slate-"],
+.dashboard-module [class*="dark:bg-gray-"],
+.dashboard-module [class*="dark:bg-zinc-"],
+.dashboard-module [class*="dark:bg-blue-"] {
+  background: linear-gradient(180deg, rgba(255,255,255,0.055) 0%, rgba(255,255,255,0.02) 100%) !important;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.feature-page-shell [class*="border-slate-"],
+.feature-page-shell [class*="border-gray-"],
+.feature-page-shell [class*="border-zinc-"],
+.feature-page-shell [class*="border-blue-"],
+.feature-page-shell [class*="dark:border-slate-"],
+.feature-page-shell [class*="dark:border-gray-"],
+.feature-page-shell [class*="dark:border-zinc-"],
+.feature-page-shell [class*="dark:border-blue-"],
+.dashboard-module [class*="border-slate-"],
+.dashboard-module [class*="border-gray-"],
+.dashboard-module [class*="border-zinc-"],
+.dashboard-module [class*="border-blue-"],
+.dashboard-module [class*="dark:border-slate-"],
+.dashboard-module [class*="dark:border-gray-"],
+.dashboard-module [class*="dark:border-zinc-"],
+.dashboard-module [class*="dark:border-blue-"] {
+  border-color: rgba(255,255,255,0.08) !important;
 }
 
 @media (min-width: 640px) {

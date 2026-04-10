@@ -23,11 +23,10 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Loader2, Shield, Gamepad2, Lock, Mail, KeyRound } from "lucide-react";
+import { Loader2, Shield, KeyRound } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
 import { LOGIN_URL } from "../../../src/config/env";
-import { useTheme } from "next-themes";
 
 const formSchema = z.object({
   email: z.string().email({ message: "Invalid email address" }),
@@ -61,13 +60,6 @@ export default function LoginPage() {
     confirm_password: "",
   });
   const lastAttemptRef = useRef(0);
-  const { resolvedTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
   function createDummyJWT(identity: {
     id: number;
     type: string;
@@ -431,43 +423,29 @@ export default function LoginPage() {
         </div>
       )}
       <div className="relative z-10 w-full max-w-md">
-        <Card className="premium-card rounded-2xl border shadow-2xl">
-          <CardHeader className="text-center pb-8">
-            <div className="flex justify-center mb-6">
-              <div className="relative">
-                {!mounted ? (
-                  <Image
-                    src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"
-                    alt="Hash for Gamers"
-                    width={120}
-                    height={120}
-                    className="drop-shadow-2xl"
-                  />
-                ) : (
-                  <Image
-                    src={
-                      resolvedTheme === "dark"
-                        ? "/whitehashlogo.png"
-                        : "/blackhashlogo.png"
-                    }
-                    alt="Hash for Gamers"
-                    width={120}
-                    height={120}
-                    className="drop-shadow-2xl"
-                  />
-                )}
-                <div className="absolute inset-0 rounded-full bg-emerald-400/20 blur-xl animate-pulse"></div>
+        <Card className="premium-card rounded-[28px] border border-white/10 bg-transparent shadow-[0_24px_80px_rgba(0,0,0,0.45)] backdrop-blur-xl">
+          <CardHeader className="space-y-4 px-8 pb-6 pt-8 text-center">
+            <div className="mb-2 flex justify-center">
+              <div className="relative flex h-24 w-24 items-center justify-center rounded-[24px] border border-white/10 bg-white/5">
+                <Image
+                  src="https://res.cloudinary.com/dxjjigepf/image/upload/v1774472136/favicon_tzhgsn.svg"
+                  alt="Hash for Gamers"
+                  width={88}
+                  height={88}
+                  className="drop-shadow-2xl"
+                />
+                <div className="absolute inset-0 rounded-[24px] bg-[radial-gradient(circle_at_top,rgba(22,255,0,0.16),transparent_55%)] blur-xl" />
               </div>
             </div>
-            <CardTitle className="premium-heading mb-2 text-3xl font-bold tracking-tight text-foreground">
-              Cafe Control Login
+            <CardTitle className="premium-heading mb-1 text-[2rem] font-bold tracking-[0.08em] text-[#F7FAFC]">
+              Hash Login
             </CardTitle>
-            <CardDescription className="premium-subtle text-base">
-              Enter your operator credentials to access live gaming operations.
+            <CardDescription className="mx-auto max-w-sm text-[15px] font-medium text-[rgba(255,255,255,0.82)]">
+              Enter your operator credentials to access the Hash command layer.
             </CardDescription>
           </CardHeader>
 
-          <CardContent className="space-y-6">
+          <CardContent className="space-y-6 px-8 pb-8">
             <Form {...form}>
               <form
                 onSubmit={form.handleSubmit(onSubmit)}
@@ -478,8 +456,7 @@ export default function LoginPage() {
                   name="email"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-foreground font-medium flex items-center gap-2">
-                        <Mail className="w-4 h-4 text-cyan-400" />
+                      <FormLabel className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[rgba(255,255,255,0.72)]">
                         Email Address
                       </FormLabel>
                       <FormControl>
@@ -487,7 +464,7 @@ export default function LoginPage() {
                           placeholder="Enter your email"
                           type="email"
                           autoComplete="email"
-                          className="h-12 bg-input border-input text-foreground placeholder:text-muted-foreground focus:border-cyan-400 focus:ring-cyan-400/20"
+                          className="h-12 rounded-2xl border border-white/15 bg-white/5 px-4 text-[15px] text-[#F7FAFC] placeholder:text-[rgba(255,255,255,0.68)] focus:border-[#38BDF8] focus:ring-2 focus:ring-[#38BDF8]/20"
                           {...field}
                           onChange={(e) => {
                             field.onChange(e);
@@ -506,13 +483,12 @@ export default function LoginPage() {
                   render={({ field }) => (
                     <FormItem>
                       <div className="flex justify-between items-center">
-                        <FormLabel className="text-foreground font-medium flex items-center gap-2">
-                          <Lock className="w-4 h-4 text-cyan-400" />
+                        <FormLabel className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[rgba(255,255,255,0.72)]">
                           Password
                         </FormLabel>
                         <Link
                           href="/login/forget-password"
-                          className="text-sm text-primary hover:text-primary/80 transition-colors duration-200 hover:underline"
+                          className="text-[11px] uppercase tracking-[0.18em] text-[#38BDF8] transition-colors duration-200 hover:text-[#16FF00]"
                         >
                           Forgot password?
                         </Link>
@@ -521,7 +497,7 @@ export default function LoginPage() {
                         <PasswordInput
                           placeholder="Enter your password"
                           autoComplete="current-password"
-                          className="h-12 bg-input border-input text-foreground placeholder:text-muted-foreground focus:border-cyan-400 focus:ring-cyan-400/20"
+                          className="h-12 rounded-2xl border border-white/15 bg-white/5 px-4 text-[15px] text-[#F7FAFC] placeholder:text-[rgba(255,255,255,0.68)] focus:border-[#38BDF8] focus:ring-2 focus:ring-[#38BDF8]/20"
                           {...field}
                           onChange={(e) => {
                             field.onChange(e);
@@ -535,9 +511,9 @@ export default function LoginPage() {
                 />
 
                 {loginError && (
-                  <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-3">
-                    <p className="text-destructive text-sm text-center flex items-center justify-center gap-2">
-                      <Shield className="w-4 h-4" />
+                  <div className="rounded-2xl border border-[#F97316]/20 bg-[#F97316]/10 p-3">
+                    <p className="text-sm text-center flex items-center justify-center gap-2 text-[#F97316]">
+                      <Shield className="h-4 w-4" />
                       {loginError}
                     </p>
                   </div>
@@ -545,7 +521,7 @@ export default function LoginPage() {
 
                 <Button
                   type="submit"
-                  className="w-full h-12 rounded-lg bg-gradient-to-r from-lime-500 via-emerald-500 to-cyan-500 font-semibold text-primary-foreground shadow-lg transition-all duration-200 hover:from-lime-400 hover:via-emerald-500 hover:to-cyan-400 hover:shadow-cyan-500/20 active:scale-[0.98]"
+                  className="h-12 w-full rounded-2xl border border-[#16FF00]/30 bg-[#16FF00] font-semibold uppercase tracking-[0.14em] text-[#050505] shadow-[0_18px_45px_rgba(22,255,0,0.22)] transition-all duration-200 hover:bg-[#12e600] hover:shadow-[0_20px_55px_rgba(22,255,0,0.3)] active:scale-[0.98]"
                   disabled={loading}
                 >
                   {loading ? (
@@ -554,23 +530,20 @@ export default function LoginPage() {
                       Signing In...
                     </>
                   ) : (
-                    <>
-                      <Gamepad2 className="mr-2 h-5 w-5" />
-                      Sign In
-                    </>
+                    <>Sign In</>
                   )}
                 </Button>
               </form>
             </Form>
 
             <div className="flex items-center justify-center gap-4 pt-4">
-              <div className="flex items-center gap-2 text-muted-foreground text-xs">
+              <div className="flex items-center gap-2 text-[12px] font-medium text-[rgba(255,255,255,0.78)]">
                 <Shield className="w-3 h-3" />
                 <span>Secure Login</span>
               </div>
-              <div className="w-1 h-1 bg-muted-foreground rounded-full"></div>
-              <div className="flex items-center gap-2 text-muted-foreground text-xs">
-                <Lock className="w-3 h-3" />
+              <div className="h-1 w-1 rounded-full bg-[rgba(255,255,255,0.6)]"></div>
+              <div className="flex items-center gap-2 text-[12px] font-medium text-[rgba(255,255,255,0.78)]">
+                <span className="h-2 w-2 rounded-full bg-[#16FF00]/70" />
                 <span>256-bit SSL</span>
               </div>
             </div>
@@ -578,7 +551,7 @@ export default function LoginPage() {
         </Card>
 
         <div className="text-center mt-8">
-          <p className="premium-subtle text-sm">
+          <p className="text-sm font-medium text-[rgba(255,255,255,0.78)]">
             © {new Date().getFullYear()} Hash for Gamers. All rights reserved.
           </p>
         </div>
