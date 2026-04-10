@@ -190,7 +190,13 @@ export function DashboardLayout({ children, contentScroll = "page" }: DashboardL
               {isNavPinned ? <PinOff className="h-4 w-4" /> : <Pin className="h-4 w-4" />}
             </button>
 
-            <div className="mb-3 hidden items-end space-x-2 overflow-hidden md:mb-4 md:flex">
+            <div
+              className={`mb-3 hidden overflow-hidden md:mb-4 md:flex ${
+                isNavPinned
+                  ? "items-end justify-start space-x-2"
+                  : "items-center justify-center xl:justify-center xl:group-hover:justify-start xl:group-hover:space-x-2"
+              }`}
+            >
               <Image
                 src="/hash_for_gamer_logo.png"
                 alt="Hash Logo"

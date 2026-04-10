@@ -210,12 +210,16 @@ h6 {
   border: 1px solid var(--gaming-panel-border);
   background: var(--gaming-panel-bg);
   box-shadow: var(--gaming-panel-shadow);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
 }
 
 .gaming-kpi-card {
   border: 1px solid var(--gaming-kpi-border);
   background: var(--gaming-kpi-bg);
   box-shadow: var(--gaming-kpi-shadow);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
 }
 
 .gaming-kpi-card:hover {
@@ -391,11 +395,15 @@ h6 {
   border: 1px solid var(--dash-module-panel-border);
   background: var(--dash-module-panel-bg);
   box-shadow: var(--dash-module-panel-shadow);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
 }
 
 .dashboard-module-surface {
   border: 1px solid var(--dash-module-surface-border);
-  background: var(--dash-module-surface-bg);
+  background: linear-gradient(180deg, rgba(255,255,255,0.055) 0%, rgba(255,255,255,0.02) 100%);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }
 
 .dashboard-module-input {
@@ -521,9 +529,11 @@ h6 {
 
 .dashboard-card {
   border: 1px solid var(--dash-module-surface-border);
-  background: var(--dash-module-surface-bg);
+  background: linear-gradient(180deg, rgba(255,255,255,0.055) 0%, rgba(255,255,255,0.02) 100%);
   border-radius: 0.9rem;
   box-shadow: 0 16px 36px hsl(220 24% 12% / 0.12);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
 }
 
 .dashboard-card-header {
@@ -620,9 +630,11 @@ h6 {
 
 .dashboard-table-shell {
   border: 1px solid var(--dash-module-surface-border);
-  background: var(--dash-module-surface-bg);
+  background: linear-gradient(180deg, rgba(255,255,255,0.055) 0%, rgba(255,255,255,0.02) 100%);
   border-radius: 0.75rem;
   box-shadow: 0 10px 24px hsl(220 20% 20% / 0.08);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
 }
 
 .dashboard-table-wrap {
@@ -732,6 +744,59 @@ h6 {
   background: var(--dash-module-card-bg);
   border-radius: 0.9rem;
   box-shadow: 0 16px 32px hsl(220 18% 12% / 0.12);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+.live-session-card {
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.live-session-head {
+  padding: 0.35rem 0.35rem 0.1rem;
+}
+
+.live-session-title {
+  font-size: clamp(1rem, 0.55vw + 0.88rem, 1.2rem);
+  letter-spacing: 0.02em;
+}
+
+.live-session-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.6rem;
+  height: 1.5rem;
+  border-radius: 999px;
+  border: 1px solid rgba(22, 255, 0, 0.28);
+  background: rgba(22, 255, 0, 0.12);
+  color: #16ff00;
+  font-size: 0.74rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.live-session-tabs {
+  border-color: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.live-session-tools .dashboard-module-input {
+  border-color: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.live-session-table-shell {
+  border-radius: 1rem;
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.live-session-row td {
+  vertical-align: top;
+}
+
+.live-session-row:hover {
+  background: rgba(255, 255, 255, 0.04);
 }
 
 .feature-action-icon {
@@ -1095,6 +1160,48 @@ h6 {
   /* Allow wheel scroll to bubble naturally to parent containers when needed. */
   overscroll-behavior: auto;
   -webkit-overflow-scrolling: touch;
+}
+
+/* Normalize legacy utility backgrounds inside booking/dashboard modules
+   so old blue/gray/slate classes still render as the shared glass surface. */
+.feature-page-shell [class*="bg-slate-"],
+.feature-page-shell [class*="bg-gray-"],
+.feature-page-shell [class*="bg-zinc-"],
+.feature-page-shell [class*="bg-blue-"],
+.feature-page-shell [class*="dark:bg-slate-"],
+.feature-page-shell [class*="dark:bg-gray-"],
+.feature-page-shell [class*="dark:bg-zinc-"],
+.feature-page-shell [class*="dark:bg-blue-"],
+.dashboard-module [class*="bg-slate-"],
+.dashboard-module [class*="bg-gray-"],
+.dashboard-module [class*="bg-zinc-"],
+.dashboard-module [class*="bg-blue-"],
+.dashboard-module [class*="dark:bg-slate-"],
+.dashboard-module [class*="dark:bg-gray-"],
+.dashboard-module [class*="dark:bg-zinc-"],
+.dashboard-module [class*="dark:bg-blue-"] {
+  background: linear-gradient(180deg, rgba(255,255,255,0.055) 0%, rgba(255,255,255,0.02) 100%) !important;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.feature-page-shell [class*="border-slate-"],
+.feature-page-shell [class*="border-gray-"],
+.feature-page-shell [class*="border-zinc-"],
+.feature-page-shell [class*="border-blue-"],
+.feature-page-shell [class*="dark:border-slate-"],
+.feature-page-shell [class*="dark:border-gray-"],
+.feature-page-shell [class*="dark:border-zinc-"],
+.feature-page-shell [class*="dark:border-blue-"],
+.dashboard-module [class*="border-slate-"],
+.dashboard-module [class*="border-gray-"],
+.dashboard-module [class*="border-zinc-"],
+.dashboard-module [class*="border-blue-"],
+.dashboard-module [class*="dark:border-slate-"],
+.dashboard-module [class*="dark:border-gray-"],
+.dashboard-module [class*="dark:border-zinc-"],
+.dashboard-module [class*="dark:border-blue-"] {
+  border-color: rgba(255,255,255,0.08) !important;
 }
 
 @media (min-width: 640px) {

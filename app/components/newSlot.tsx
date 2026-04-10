@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef, useMemo } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { jwtDecode } from 'jwt-decode'
+import { createPortal } from "react-dom"
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -522,9 +523,15 @@ function SlotBookingForm({
   const [creditAccountLoading, setCreditAccountLoading] = useState(false)
   const [creditAccountError, setCreditAccountError] = useState('')
   const [showCreditAccountModal, setShowCreditAccountModal] = useState(false)
+  const [portalReady, setPortalReady] = useState(false)
   const blurTimeoutRef = useRef<number | null>(null)
   const suggestionDebounceRef = useRef<number | null>(null)
   const suggestionAbortRef = useRef<AbortController | null>(null)
+
+  useEffect(() => {
+    setPortalReady(true)
+    return () => setPortalReady(false)
+  }, [])
 
 
   const getVendorIdFromToken = (): number | null => {
@@ -2069,7 +2076,8 @@ if (response.ok || result.success === true || result.success === 'true') {
   }
 
   if (isSubmitted) {
-    return (
+    if (!portalReady) return null
+    return createPortal(
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
@@ -2127,12 +2135,16 @@ if (response.ok || result.success === true || result.success === 'true') {
           </Button>
         </motion.div>
       </div>
+      ,
+      document.body
     )
   }
 
   if (!isOpen) return null
 
-  return (
+  if (!portalReady) return null
+
+  return createPortal(
     <AnimatePresence>
       <motion.div
         initial={{ opacity: 0 }}
@@ -2887,6 +2899,8 @@ if (response.ok || result.success === true || result.success === 'true') {
         </motion.div>
       </motion.div>
     </AnimatePresence>
+    ,
+    document.body
   )
 }
 
