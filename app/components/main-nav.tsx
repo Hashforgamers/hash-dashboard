@@ -71,6 +71,9 @@ export function MainNav({ className, onItemClick, isNavPinned = false, ...props 
   const [pin, setPin] = useState("");
   const responsiveItemPaddingClass = isNavPinned ? "md:px-3 xl:px-3" : "md:px-3 xl:px-2 xl:group-hover:px-3";
   const responsiveLabelClass = isNavPinned ? "whitespace-nowrap md:block xl:block" : "whitespace-nowrap md:block xl:hidden xl:group-hover:block";
+  const collapsedAlignClass = isNavPinned
+    ? "justify-start xl:justify-start"
+    : "justify-start xl:justify-center xl:group-hover:justify-start";
 
   const handleSwitchUser = async () => {
     if (!/^\d{4}$/.test(pin)) {
@@ -117,6 +120,7 @@ export function MainNav({ className, onItemClick, isNavPinned = false, ...props 
                   className={cn(
                     "dashboard-nav-item group/nav flex min-h-[32px] items-center gap-2 rounded-lg border px-2.5 py-[clamp(0.2rem,0.55vh,0.38rem)] text-sm font-medium leading-tight transition-all duration-200",
                     responsiveItemPaddingClass,
+                    collapsedAlignClass,
                     pathname === href ? "gaming-nav-active text-foreground" : "text-muted-foreground"
                   )}
                 >
@@ -140,6 +144,7 @@ export function MainNav({ className, onItemClick, isNavPinned = false, ...props 
               className={cn(
                 "dashboard-nav-item group/nav flex min-h-[30px] items-center gap-2 rounded-lg border px-2.5 py-[clamp(0.14rem,0.42vh,0.28rem)] text-sm font-medium leading-tight transition-all duration-200",
                 responsiveItemPaddingClass,
+                collapsedAlignClass,
                 pathname === "/employee-access" ? "gaming-nav-active text-foreground" : "text-muted-foreground"
               )}
             >
@@ -161,6 +166,7 @@ export function MainNav({ className, onItemClick, isNavPinned = false, ...props 
             className={cn(
               "dashboard-nav-item group/nav flex w-full min-h-[30px] items-center gap-2 rounded-lg border px-2.5 py-[clamp(0.14rem,0.42vh,0.28rem)] text-sm font-medium leading-tight transition-all duration-200",
               responsiveItemPaddingClass,
+              collapsedAlignClass,
               "text-muted-foreground"
             )}
           >
@@ -175,6 +181,7 @@ export function MainNav({ className, onItemClick, isNavPinned = false, ...props 
               className={cn(
                 "dashboard-nav-item group/nav flex min-h-[30px] items-center gap-2 rounded-lg border px-2.5 py-[clamp(0.14rem,0.42vh,0.28rem)] text-sm font-medium leading-tight transition-all duration-200",
                 responsiveItemPaddingClass,
+                collapsedAlignClass,
                 pathname === "/account" ? "gaming-nav-active text-foreground" : "text-muted-foreground"
               )}
             >
@@ -196,6 +203,7 @@ export function MainNav({ className, onItemClick, isNavPinned = false, ...props 
             className={cn(
               "dashboard-nav-item group/nav flex min-h-[30px] w-full items-center gap-2 rounded-lg border px-2.5 py-[clamp(0.14rem,0.42vh,0.28rem)] text-sm font-medium leading-tight transition-all duration-200",
               responsiveItemPaddingClass,
+              collapsedAlignClass,
               "text-muted-foreground"
             )}
           >

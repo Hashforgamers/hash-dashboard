@@ -72,8 +72,8 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
-    { media: "(prefers-color-scheme: dark)", color: "#0b1220" },
+    { media: "(prefers-color-scheme: light)", color: "#050505" },
+    { media: "(prefers-color-scheme: dark)", color: "#050505" },
   ],
 };
 
@@ -83,11 +83,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html
+      lang="en"
+      suppressHydrationWarning
+      className={`${rajdhani.variable} ${orbitron.variable}`}
+    >
       <head />
-      <body
-        className={`${rajdhani.variable} ${orbitron.variable} bg-background text-foreground`}
-      >
+      <body className="bg-background text-foreground">
         <AuthProvider>
           {" "}
           {/* Wrap inside AuthProvider */}

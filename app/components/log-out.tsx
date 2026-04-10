@@ -9,9 +9,12 @@ interface ButtonDestructiveProps {
 export function ButtonDestructive({ isNavPinned = false }: ButtonDestructiveProps) {
   const responsiveItemPaddingClass = isNavPinned ? "md:px-3 xl:px-3" : "md:px-3 xl:px-2 xl:group-hover/nav:px-3";
   const responsiveLabelClass = isNavPinned ? "whitespace-nowrap md:block xl:block" : "whitespace-nowrap md:block xl:hidden xl:group-hover:block";
+  const collapsedAlignClass = isNavPinned
+    ? "justify-start xl:justify-start"
+    : "justify-start xl:justify-center xl:group-hover/nav:justify-start";
   return (
     <button
-      className={`dashboard-nav-item dashboard-nav-danger group/nav flex min-h-[32px] items-center gap-2 rounded-lg border px-2.5 py-[clamp(0.2rem,0.55vh,0.38rem)] text-sm font-medium leading-tight transition-all duration-200 ${responsiveItemPaddingClass}`}
+      className={`dashboard-nav-item dashboard-nav-danger group/nav flex min-h-[32px] items-center gap-2 rounded-lg border px-2.5 py-[clamp(0.2rem,0.55vh,0.38rem)] text-sm font-medium leading-tight transition-all duration-200 ${responsiveItemPaddingClass} ${collapsedAlignClass}`}
       onClick={() => {
         localStorage.removeItem("jwtToken");
         localStorage.removeItem("tokenExpiration");

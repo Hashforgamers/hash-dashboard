@@ -726,21 +726,24 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
   const item = { hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } };
 
   return (
-    <div className="dashboard-module dashboard-module-panel flex h-full min-h-0 flex-col overflow-hidden rounded-2xl p-2 sm:p-3 lg:p-4">
+    <div className="dashboard-module dashboard-module-panel live-session-card flex h-full min-h-0 flex-col overflow-hidden rounded-2xl p-2 sm:p-3 lg:p-4">
       {currentSlots?.available ? (
         <div className="flex h-full items-center justify-center">
           <HashLoader />
         </div>
       ) : (
         <>
-          <div className="mb-3 flex shrink-0 flex-col items-start justify-between gap-3 sm:flex-row sm:items-center sm:gap-4">
+          <div className="live-session-head mb-3 flex shrink-0 flex-col items-start justify-between gap-3 sm:flex-row sm:items-center sm:gap-4">
             <div className="flex items-center gap-2">
-              <span className="dash-title">
-                {activeTab === 'live'
-                  ? `Live Console Sessions (${filteredSlots.length})`
-                  : `Past Sessions (${filteredHistoryBookings.length})`}
-              </span>
-              <div className="dashboard-module-tab-group ml-2 flex items-center gap-1 rounded-md p-0.5">
+              <div className="flex items-center gap-2">
+                <span className="dash-title live-session-title">
+                  {activeTab === 'live' ? 'Live Console Sessions' : 'Past Sessions'}
+                </span>
+                <span className="live-session-count">
+                  {activeTab === 'live' ? filteredSlots.length : filteredHistoryBookings.length}
+                </span>
+              </div>
+              <div className="dashboard-module-tab-group live-session-tabs ml-2 flex items-center gap-1 rounded-md p-0.5">
                 <button
                   onClick={() => setActiveTab('live')}
                   className={`rounded px-2.5 py-1 text-sm ${activeTab === 'live' ? 'dashboard-module-tab-active' : 'dashboard-module-tab'}`}
@@ -756,7 +759,7 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
               </div>
             </div>
 
-            <div className="flex w-full items-center gap-2 sm:w-auto sm:justify-end">
+            <div className="live-session-tools flex w-full items-center gap-2 sm:w-auto sm:justify-end">
               <input
                 type="date"
                 value={historyDate}
@@ -793,7 +796,7 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
             variants={container}
             initial="hidden"
             animate="show"
-            className="dashboard-table-shell flex-1 min-h-0 backdrop-blur-sm"
+            className="dashboard-table-shell live-session-table-shell flex-1 min-h-0 backdrop-blur-sm"
           >
             <div className="lg:hidden h-full overflow-y-auto p-2">
               {Array.isArray(filteredSlots) && filteredSlots.length > 0 ? (
@@ -1087,7 +1090,7 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                           <motion.tr
                             key={uniqueKey}
                             variants={item}
-                            className="dashboard-module-row transition-colors"
+                            className="dashboard-module-row live-session-row transition-colors"
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, x: -20 }}

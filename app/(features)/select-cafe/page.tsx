@@ -422,18 +422,18 @@ export default function SelectCafePage() {
 
   return (
     <DashboardLayout contentScroll="contained">
-      <div className="premium-shell flex min-h-full flex-col items-center justify-center overflow-hidden p-3 sm:p-4 md:p-8">
-      <div className="relative z-20 flex w-full max-w-7xl flex-col items-center gap-8 md:gap-12">
-        <div className="text-center space-y-4 md:space-y-6">
-          <h1 className="premium-heading select-none text-4xl font-bold tracking-tight text-slate-900 md:mb-2 md:text-5xl lg:text-7xl dark:text-white">
+      <div className="premium-shell flex min-h-full flex-col items-center justify-center overflow-hidden px-4 py-8 sm:px-6 md:px-8">
+      <div className="relative z-20 flex w-full max-w-6xl flex-col items-center gap-8 md:gap-10">
+        <div className="space-y-4 text-center">
+          <h1 className="premium-heading select-none text-[2.1rem] font-bold tracking-[0.08em] text-[#F7FAFC] md:text-[3rem] lg:text-[4.5rem]">
             Select Your Arena
           </h1>
-          <p className="premium-subtle mx-auto max-w-2xl select-none text-lg leading-relaxed md:text-lg">
+          <p className="premium-subtle mx-auto max-w-2xl select-none text-sm leading-relaxed text-[rgba(255,255,255,0.68)] md:text-base">
             Choose a cafe, verify PIN, and launch your operations dashboard.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 w-full max-w-4xl">
+        <div className="grid w-full max-w-4xl grid-cols-1 gap-5 md:grid-cols-2 md:gap-6">
           {cafes.map((cafe, index) => (
             <div
               key={cafe.id}
@@ -442,18 +442,21 @@ export default function SelectCafePage() {
             >
               <button
                 onClick={() => handleCafeClick(cafe.id)}
-                className="premium-card relative min-h-[120px] w-full rounded-3xl p-6 backdrop-blur-xl transition-all duration-500 hover:-translate-y-2 hover:scale-105 md:min-h-[140px] md:p-8"
+                className="premium-card relative min-h-[132px] w-full rounded-[24px] border border-white/10 bg-transparent p-6 text-left shadow-[0_24px_80px_rgba(0,0,0,0.32)] backdrop-blur-xl transition-all duration-300 hover:-translate-y-1 hover:border-[#16FF00]/25 hover:bg-white/[0.03] md:min-h-[144px]"
               >
-                <div className="relative flex items-center space-x-4 md:space-x-6 h-full">
-                  <div className="feature-action-icon h-16 w-16 flex-shrink-0 shadow-lg transition-all duration-300 group-hover:scale-110 md:h-20 md:w-20">
-                    <Store className="w-8 h-8 text-emerald-600 md:w-10 md:h-10 dark:text-emerald-400" />
+                <div className="relative flex h-full items-center gap-4 md:gap-5">
+                  <div className="feature-action-icon h-16 w-16 flex-shrink-0 rounded-[20px] border border-white/10 bg-white/5 shadow-lg transition-all duration-300 group-hover:scale-105 md:h-[72px] md:w-[72px]">
+                    <Store className="h-8 w-8 text-[#16FF00] md:h-9 md:w-9" />
                   </div>
-                  <div className="flex-1 text-left space-y-1 md:space-y-2">
-                    <h3 className="text-lg font-bold leading-tight text-slate-900 transition-colors duration-300 group-hover:text-slate-700 md:text-xl lg:text-2xl dark:text-white dark:group-hover:text-white/90">
+                  <div className="flex-1 space-y-1">
+                    <p className="text-[9px] uppercase tracking-[0.22em] text-[rgba(255,255,255,0.45)]">
+                      Cafe Access
+                    </p>
+                    <h3 className="text-lg font-semibold leading-tight text-[#F7FAFC] transition-colors duration-300 md:text-[1.35rem]">
                       {cafe.name}
                     </h3>
-                    <p className="text-sm text-slate-600 transition-colors duration-300 group-hover:text-slate-500 md:text-base dark:text-slate-300 dark:group-hover:text-white/70">
-                      Operator Access
+                    <p className="text-sm text-[rgba(255,255,255,0.68)] md:text-[15px]">
+                      Operator access
                     </p>
                   </div>
                 </div>
@@ -464,17 +467,20 @@ export default function SelectCafePage() {
           <div className="group relative" style={{ animation: "fadeInUp 0.6s ease-out forwards" }}>
             <button
               onClick={() => handleCafeClick("add-new")}
-              className="premium-card relative min-h-[120px] w-full rounded-3xl border-2 border-dashed border-emerald-300/60 bg-white/90 p-6 shadow-xl backdrop-blur-xl transition-all duration-500 hover:-translate-y-2 hover:scale-105 md:min-h-[140px] md:p-8 dark:border-emerald-300/40 dark:bg-[hsl(var(--brand-accent)/0.14)]"
+              className="premium-card relative min-h-[132px] w-full rounded-[24px] border border-dashed border-[#38BDF8]/35 bg-transparent p-6 text-left shadow-[0_24px_80px_rgba(0,0,0,0.32)] backdrop-blur-xl transition-all duration-300 hover:-translate-y-1 hover:border-[#16FF00]/35 hover:bg-white/[0.03] md:min-h-[144px]"
             >
-              <div className="relative flex items-center space-x-4 md:space-x-6 h-full">
-                <div className="feature-action-icon h-16 w-16 flex-shrink-0 rounded-2xl transition-all duration-300 group-hover:scale-110 md:h-20 md:w-20">
-                  <Plus className="h-8 w-8 text-emerald-700 md:h-10 md:w-10 dark:text-white" />
+              <div className="relative flex h-full items-center gap-4 md:gap-5">
+                <div className="feature-action-icon h-16 w-16 flex-shrink-0 rounded-[20px] border border-white/10 bg-white/5 transition-all duration-300 group-hover:scale-105 md:h-[72px] md:w-[72px]">
+                  <Plus className="h-8 w-8 text-[#38BDF8] md:h-9 md:w-9" />
                 </div>
-                <div className="flex-1 text-left space-y-1 md:space-y-2">
-                  <h3 className="text-lg font-bold leading-tight text-slate-900 transition-colors duration-300 group-hover:text-slate-700 md:text-xl lg:text-2xl dark:text-white dark:group-hover:text-white/90">
+                <div className="flex-1 space-y-1">
+                  <p className="text-[9px] uppercase tracking-[0.22em] text-[rgba(255,255,255,0.45)]">
+                    New Setup
+                  </p>
+                  <h3 className="text-lg font-semibold leading-tight text-[#F7FAFC] transition-colors duration-300 md:text-[1.35rem]">
                     Add New Cafe
                   </h3>
-                  <p className="text-sm text-slate-600 transition-colors duration-300 group-hover:text-slate-500 md:text-base dark:text-slate-200 dark:group-hover:text-white/70">
+                  <p className="text-sm text-[rgba(255,255,255,0.68)] md:text-[15px]">
                     Register a new gaming cafe
                   </p>
                 </div>
