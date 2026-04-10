@@ -201,7 +201,7 @@ export function DashboardLayout({ children, contentScroll = "page" }: DashboardL
             </div>
 
             <MainNav
-              className="min-h-0 flex-1 items-start"
+              className={isNavPinned ? "min-h-0 flex-1 items-start" : "min-h-0 flex-1 items-start xl:items-center xl:group-hover:items-start"}
               onItemClick={() => setIsNavOpen(false)}
               isNavPinned={isNavPinned}
             />
