@@ -1,5 +1,6 @@
 // lib/api.ts
 import { DASHBOARD_URL } from "@/src/config/env"
+import { httpJson } from "@/lib/http-client"
 
 export interface ApiResponse<T = any> {
   success?: boolean
@@ -14,7 +15,6 @@ export async function apiCall<T = any>(
   options?: RequestInit
 ): Promise<ApiResponse<T>> {
   try {
-    // ✅ Add timestamp to prevent caching
     const separator = endpoint.includes('?') ? '&' : '?'
     const url = `${DASHBOARD_URL}${endpoint}${separator}t=${Date.now()}`
     
@@ -24,29 +24,20 @@ export async function apiCall<T = any>(
       baseHeaders["Content-Type"] = "application/json"
     }
 
-    const response = await fetch(url, {
+    const data = await httpJson<ApiResponse<T>>(url, {
       ...options,
       headers: {
         ...baseHeaders,
         ...(options?.headers || {}),
       },
       cache: "no-store",
-      // ✅ Add credentials for CORS
-      credentials: 'omit', // or 'include' if you need cookies
+      credentials: "omit",
+      timeoutMs: 12_000,
+      retries: method === "GET" ? 2 : 0,
+      retryDelayMs: 300,
+      dedupe: method === "GET",
+      dedupeKey: `${method}:${url}`,
     })
-
-    // ✅ Handle non-JSON responses (like 308 redirects)
-    const contentType = response.headers.get("content-type")
-    if (!contentType || !contentType.includes("application/json")) {
-      throw new Error(`Non-JSON response: ${response.status} ${response.statusText}`)
-    }
-
-    const data = await response.json()
-    
-    if (!response.ok) {
-      throw new Error(data.error || data.message || `Request failed: ${response.status}`)
-    }
-
     return data
   } catch (error: any) {
     console.error("API call failed:", endpoint, error)
@@ -65,16 +56,15 @@ export const subscriptionApi = {
   // Check if subscription is active
   checkStatus: async (vendorId: number) => {
     const url = `${DASHBOARD_URL}/api/vendors/${vendorId}/subscription/status?t=${Date.now()}`
-    const response = await fetch(url, {
-      method: "GET",
+    return httpJson(url, {
       cache: "no-store",
       credentials: "omit",
+      timeoutMs: 10_000,
+      retries: 2,
+      retryDelayMs: 250,
+      dedupe: true,
+      dedupeKey: `GET:${url}`,
     })
-    const data = await response.json()
-    if (!response.ok) {
-      throw new Error(data?.error || data?.message || `Request failed: ${response.status}`)
-    }
-    return data
   },
 
   // Get subscription details

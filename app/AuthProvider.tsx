@@ -3,6 +3,7 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { jwtDecode } from "jwt-decode";
+import { installNetworkRuntime } from "@/lib/network-runtime";
 
 const AuthContext = createContext({ isAuthenticated: false });
 
@@ -15,6 +16,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const router = useRouter();
 
   useEffect(() => {
+    installNetworkRuntime();
     const token = localStorage.getItem("jwtToken");
     const expiration = localStorage.getItem("tokenExpiration");
     let effectiveExpiration = expiration ? Number(expiration) : 0;

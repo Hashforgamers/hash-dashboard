@@ -2,6 +2,7 @@
 import { cacheService } from './cacheService'
 import { BOOKING_URL } from '../../../../../src/config/env'
 import type { ConsoleType, SlotData, ConsoleFilter } from '../../types/booking.types'
+import { httpJson } from '../../../../../lib/http-client'
 
 class SlotService {
   private baseURL = BOOKING_URL
@@ -16,13 +17,14 @@ class SlotService {
     }
 
     try {
-      const response = await fetch(`${this.baseURL}/api/getAllConsole/vendor/${vendorId}`)
-      
-      if (!response.ok) {
-        throw new Error(`Failed to fetch consoles: ${response.status}`)
-      }
-      
-      const data = await response.json()
+      const url = `${this.baseURL}/api/getAllConsole/vendor/${vendorId}`
+      const data = await httpJson<any>(url, {
+        timeoutMs: 10_000,
+        retries: 2,
+        dedupe: true,
+        dedupeKey: `GET:${url}`,
+        cacheTtlMs: 60_000,
+      })
       const consoles = this.transformConsoleData(data.games || [])
       
       cacheService.set(cacheKey, consoles, 300000)
@@ -51,20 +53,16 @@ class SlotService {
     try {
       const formattedDates = dates.map(d => d.replace(/-/g, ''))
       
-      const response = await fetch(`${this.baseURL}/api/getSlotsBatch/vendor/${vendorId}`, {
+      const data = await httpJson<SlotData>(`${this.baseURL}/api/getSlotsBatch/vendor/${vendorId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           game_ids: gameIds.length > 0 ? gameIds : [],
           dates: formattedDates 
-        })
+        }),
+        timeoutMs: 15_000,
+        retries: 0,
       })
-
-      if (!response.ok) {
-        throw new Error(`Batch fetch failed: ${response.status}`)
-      }
-
-      const data = await response.json()
       cacheService.set(cacheKey, data, 300000)
       console.log('✅ Slots fetched and cached')
       

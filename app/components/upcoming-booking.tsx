@@ -7,14 +7,14 @@ import {
 } from "lucide-react";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faIndianRupeeSign } from '@fortawesome/free-solid-svg-icons'
-import { useState, useEffect, useMemo } from "react";
+import { Dispatch, SetStateAction, useState, useEffect, useMemo } from "react";
 import { createPortal } from "react-dom"; // ✅ ADD THIS IMPORT
-import axios from "axios";
 import { format } from 'date-fns';
 import { BOOKING_URL, DASHBOARD_URL } from "@/src/config/env";
 import ResponsiveSearchFilter from "./ResponsiveSearchFilter";
 import MealDetailsModal from "./mealsDetailmodal";
 import { useSocket } from "../context/SocketContext";
+import { useApiClient } from "@/app/hooks/useApiClient";
 
 
 // Helper function for getting platform icons
@@ -258,7 +258,7 @@ const mergeConsecutiveBookings = (bookings: any[]) => {
 interface UpcomingBookingsProps {
   upcomingBookings: any[];
   vendorId?: string;
-  setRefreshSlots: (prev: boolean) => void;
+  setRefreshSlots: Dispatch<SetStateAction<boolean>>;
 }
 
 
@@ -267,6 +267,7 @@ export function UpcomingBookings({
   vendorId,
   setRefreshSlots
 }: UpcomingBookingsProps): JSX.Element {
+  const api = useApiClient();
   
   const { socket, isConnected, joinVendor } = useSocket()
   
@@ -367,8 +368,10 @@ export function UpcomingBookings({
     if (!socket || !vendorId || !isConnected) return
 
     console.log('📅 UpcomingBookings: Setting up socket listeners...')
+    const parsedVendorId = Number(vendorId)
+    if (!Number.isFinite(parsedVendorId)) return
     
-    joinVendor(parseInt(vendorId))
+    joinVendor(parsedVendorId)
 
     function handleUpcomingBooking(data: any) {
       console.log('📅 Real-time upcoming booking:', data)
@@ -380,7 +383,7 @@ export function UpcomingBookings({
         return;
       }
       
-      if (eventVendorId === parseInt(vendorId) && Number.isFinite(incomingBookingId) && (data.status === 'Confirmed' || data.status === 'confirmed')) {
+      if (eventVendorId === parsedVendorId && Number.isFinite(incomingBookingId) && (data.status === 'Confirmed' || data.status === 'confirmed')) {
         setUpcomingBookings(prev => {
           if (!Array.isArray(prev)) prev = [];
           
@@ -404,7 +407,7 @@ export function UpcomingBookings({
         return;
       }
       
-      if (eventVendorId === parseInt(vendorId)) {
+      if (eventVendorId === parsedVendorId) {
         const status = String(data.status || "").toLowerCase();
         setUpcomingBookings(prev => {
           if (!Array.isArray(prev)) prev = [];
@@ -435,7 +438,7 @@ export function UpcomingBookings({
       console.log('✅ Booking accepted from notification panel:', data)
       
       const eventVendorId = Number(data?.vendorId ?? data?.vendor_id);
-      if (eventVendorId === parseInt(vendorId)) {
+      if (eventVendorId === parsedVendorId) {
         setUpcomingBookings(prev => {
           if (!Array.isArray(prev)) prev = [];
           
@@ -453,7 +456,7 @@ export function UpcomingBookings({
       const eventVendorId = Number(data?.vendorId ?? data?.vendor_id);
       const vendorMatches = !data?.vendorId && !data?.vendor_id
         ? true
-        : eventVendorId === parseInt(vendorId);
+        : eventVendorId === parsedVendorId;
       if (!vendorMatches) return;
       const currentBookingId = Number(data?.bookingId ?? data?.bookId);
       if (!Number.isFinite(currentBookingId) || currentBookingId <= 0) return;
@@ -465,7 +468,7 @@ export function UpcomingBookings({
 
     function handleBookingPaymentUpdate(data: any) {
       const eventVendorId = Number(data?.vendorId ?? data?.vendor_id);
-      if (eventVendorId && vendorId && eventVendorId !== parseInt(vendorId)) return;
+      if (eventVendorId && vendorId && eventVendorId !== parsedVendorId) return;
       const eventType = String(data?.event || "").toLowerCase();
       const bookingId = Number(data?.bookingId ?? data?.booking_id);
       if (!Number.isFinite(bookingId) || bookingId <= 0) return;
@@ -622,13 +625,13 @@ export function UpcomingBookings({
       const apiUrl = `${DASHBOARD_URL}/api/getAllDevice/consoleTypeId/${gameId}/vendor/${vendorId}`;
       console.log('📡 API URL:', apiUrl);
       
-      const response = await axios.get(apiUrl);
-      console.log('📦 Raw API Response:', response.data);
-      console.log('📦 Response type:', typeof response.data);
-      console.log('📦 Is array:', Array.isArray(response.data));
+      const rows = await api.get<any[]>(apiUrl, { timeoutMs: 10_000, retries: 2 });
+      console.log('📦 Raw API Response:', rows);
+      console.log('📦 Response type:', typeof rows);
+      console.log('📦 Is array:', Array.isArray(rows));
       
-      if (response.data && Array.isArray(response.data)) {
-        console.log('🎮 All consoles before filtering:', response.data.map(c => ({
+      if (rows && Array.isArray(rows)) {
+        console.log('🎮 All consoles before filtering:', rows.map(c => ({
           id: c.consoleId,
           brand: c.brand,
           model: c.consoleModelNumber,
@@ -637,16 +640,16 @@ export function UpcomingBookings({
           raw: c
         })));
         
-        console.log('🔍 Checking is_available values:', response.data.map(c => ({
+        console.log('🔍 Checking is_available values:', rows.map(c => ({
           id: c.consoleId,
           is_available: c.is_available,
           type: typeof c.is_available,
           stringValue: String(c.is_available)
         })));
         
-        const strictFilter = response.data.filter((console: any) => console?.is_available === true);
-        const looseFilter = response.data.filter((console: any) => console?.is_available);
-        const stringFilter = response.data.filter((console: any) => 
+        const strictFilter = rows.filter((console: any) => console?.is_available === true);
+        const looseFilter = rows.filter((console: any) => console?.is_available);
+        const stringFilter = rows.filter((console: any) => 
           String(console?.is_available).toLowerCase() === 'true'
         );
         
@@ -674,19 +677,11 @@ export function UpcomingBookings({
         
         setAvailableConsoles(availableOnly);
       } else {
-        console.warn('⚠️ API response is not an array or is empty:', response.data);
+        console.warn('⚠️ API response is not an array or is empty:', rows);
         setAvailableConsoles([]);
       }
     } catch (error) {
       console.error("❌ Error fetching available consoles:", error);
-      if (axios.isAxiosError(error)) {
-        console.error("📡 API Error details:", {
-          status: error.response?.status,
-          statusText: error.response?.statusText,
-          data: error.response?.data,
-          url: error.config?.url
-        });
-      }
       setAvailableConsoles([]);
     } finally {
       setIsLoading(false);
@@ -727,12 +722,20 @@ export function UpcomingBookings({
 
       try {
         if (bookingIds.length > 1) {
-          await axios.post(url, payload);
+          await api.post(url, JSON.stringify(payload), {
+            headers: { "Content-Type": "application/json" },
+            timeoutMs: 12_000,
+            retries: 0,
+          });
         } else {
           if (payload) {
-            await axios.post(url, payload);
+            await api.post(url, JSON.stringify(payload), {
+              headers: { "Content-Type": "application/json" },
+              timeoutMs: 12_000,
+              retries: 0,
+            });
           } else {
-            await axios.post(url);
+            await api.post(url, undefined, { timeoutMs: 12_000, retries: 0 });
           }
         }
 
@@ -850,13 +853,12 @@ export function UpcomingBookings({
         repayment_type: cancelDialog.isPaid ? cancelDialog.repaymentType : "none",
         reason: cancelDialog.reason || "Cancelled from dashboard"
       }
-      const response = await fetch(`${BOOKING_URL}/api/bookings/cancel`, {
-        method: "POST",
+      const result = await api.post<any, string>(`${BOOKING_URL}/api/bookings/cancel`, JSON.stringify(payload), {
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
+        timeoutMs: 12_000,
+        retries: 0,
       })
-      const result = await response.json()
-      if (!response.ok || !result?.success) {
+      if (!result?.success) {
         throw new Error(result?.message || "Failed to cancel booking")
       }
       setUpcomingBookings(prev => {
@@ -891,13 +893,12 @@ export function UpcomingBookings({
         booking_ids: bookingIds,
         reason: noShowDialog.reason || "Marked as no-show from dashboard"
       }
-      const response = await fetch(`${BOOKING_URL}/api/bookings/no-show`, {
-        method: "POST",
+      const result = await api.post<any, string>(`${BOOKING_URL}/api/bookings/no-show`, JSON.stringify(payload), {
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
+        timeoutMs: 12_000,
+        retries: 0,
       })
-      const result = await response.json()
-      if (!response.ok || !result?.success) {
+      if (!result?.success) {
         throw new Error(result?.message || "Failed to mark no-show")
       }
       const noShowIds = Array.isArray(result?.no_show_ids) ? result.no_show_ids.map((id: any) => Number(id)) : []

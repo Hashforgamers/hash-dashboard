@@ -143,8 +143,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Search, CalendarClock, XCircle, ListTodo } from "lucide-react"
-import axios from "axios"
 import { useDashboardData } from "@/app/context/DashboardDataContext"
+import { useApiClient } from "@/app/hooks/useApiClient"
+import { httpJson } from "@/lib/http-client"
 import {
   normalizeConsoleSlug as normalizeCatalogSlug,
   resolveConsoleColor as resolveCatalogColor,
@@ -250,6 +251,10 @@ const decodeVendorIdFromStorage = (): number | null => {
     if (typeof decoded.sub === "object" && decoded.sub?.id) {
       return Number(decoded.sub.id)
     }
+    if (typeof decoded.sub === "string") {
+      const fromSub = Number(decoded.sub)
+      return Number.isFinite(fromSub) ? fromSub : null
+    }
     return null
   } catch {
     return null
@@ -353,8 +358,12 @@ async function fetchWithDedup(url: string): Promise<any> {
     return pendingRequests.get(url)
   }
 
-  const promise = fetch(url)
-    .then(res => res.json())
+  const promise = httpJson<any>(url, {
+      timeoutMs: 10_000,
+      retries: 2,
+      dedupe: true,
+      dedupeKey: `GET:${url}`,
+    })
     .then(data => {
       setCachedData(url, data)
       pendingRequests.delete(url)
@@ -381,22 +390,17 @@ async function fetchSlotsBatch(vendorId: number, gameIds: number[], dates: strin
   }
   
   try {
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ 
-        game_ids: gameIds,  // ✅ CORRECT KEY NAME
-        dates: dates 
-      })
+    const data = await httpJson<any>(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        game_ids: gameIds,
+        dates: dates,
+      }),
+      timeoutMs: 15_000,
+      retries: 0,
     })
-    
-    if (!response.ok) {
-      const errorText = await response.text()
-      console.error('❌ Batch API error:', errorText)
-      throw new Error(`Batch fetch failed: ${response.status}`)
-    }
-    
-    const data = await response.json()
+
     console.log('✅ Batch fetch successful:', data)
     if (!forceFresh) {
       setCachedData(cacheKey, data)
@@ -461,6 +465,7 @@ function SlotBookingForm({
   onBookingComplete,
   availableConsoles 
 }: SlotBookingFormProps) {
+  const api = useApiClient()
   console.log('🎯 SlotBookingForm rendered with:', { 
     isOpen, 
     selectedSlotsCount: selectedSlots.length,
@@ -653,11 +658,10 @@ function SlotBookingForm({
         limit: "8",
         booked_only: "true",
       })
-      const res = await fetch(
+      const data = await api.get<any[]>(
         `${BOOKING_URL}/api/vendor/${vendorId}/users?${params.toString()}`,
-        { signal: controller.signal }
+        { signal: controller.signal, timeoutMs: 10_000, retries: 1 }
       )
-      const data = await res.json().catch(() => [])
       const rows: UserSuggestion[] = Array.isArray(data) ? data : []
       setter(rows)
       upsertUsersInCache(rows)
@@ -688,8 +692,10 @@ function SlotBookingForm({
     const vendorId = getVendorIdFromToken()
     if (!vendorId) return
     try {
-      const res = await fetch(`${BOOKING_URL}/api/vendor/${vendorId}/booking-field-config`)
-      const data = await res.json().catch(() => ({}))
+      const data = await api.get<any>(`${BOOKING_URL}/api/vendor/${vendorId}/booking-field-config`, {
+        timeoutMs: 10_000,
+        retries: 1,
+      })
       const remoteConfig = sanitizeFieldConfig(
         (data?.config as BookingFieldConfig) || DEFAULT_BOOKING_FIELD_CONFIG
       )
@@ -710,18 +716,21 @@ function SlotBookingForm({
     setFieldConfigError("")
     const normalized = sanitizeFieldConfig(bookingFieldDraft)
     try {
-      const res = await fetch(`${BOOKING_URL}/api/vendor/${vendorId}/booking-field-config`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+      const data = await api.put<any, string>(
+        `${BOOKING_URL}/api/vendor/${vendorId}/booking-field-config`,
+        JSON.stringify({
           show_phone: normalized.phone.visible,
           require_phone: normalized.phone.required,
           show_email: normalized.email.visible,
           require_email: normalized.email.required,
         }),
-      })
-      const data = await res.json().catch(() => ({}))
-      if (!res.ok || data?.success === false) {
+        {
+          headers: { "Content-Type": "application/json" },
+          timeoutMs: 10_000,
+          retries: 0,
+        }
+      )
+      if (data?.success === false) {
         throw new Error(data?.message || "Failed to save field settings")
       }
       const savedConfig = sanitizeFieldConfig(
@@ -832,9 +841,11 @@ function SlotBookingForm({
         user_id: String(userId),
         hours_needed: String(hoursNeeded),
       })
-      const response = await fetch(`${BOOKING_URL}/api/pass/dashboard/valid-options?${params.toString()}`)
-      const data = await response.json().catch(() => ({}))
-      if (!response.ok || data?.success === false) {
+      const data = await api.get<any>(`${BOOKING_URL}/api/pass/dashboard/valid-options?${params.toString()}`, {
+        timeoutMs: 10_000,
+        retries: 1,
+      })
+      if (data?.success === false) {
         throw new Error(data?.message || "Failed to fetch valid passes")
       }
       const options: UserPassOption[] = Array.isArray(data?.passes) ? data.passes : []
@@ -876,17 +887,20 @@ function SlotBookingForm({
     setPassOtpMessage("")
     setPassError("")
     try {
-      const response = await fetch(`${BOOKING_URL}/api/pass/dashboard/otp/send`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+      const data = await api.post<any, string>(
+        `${BOOKING_URL}/api/pass/dashboard/otp/send`,
+        JSON.stringify({
           vendor_id: vendorId,
           user_id: userId,
           pass_uid: validatedPass.pass_uid,
         }),
-      })
-      const data = await response.json().catch(() => ({}))
-      if (!response.ok || data?.success === false) {
+        {
+          headers: { "Content-Type": "application/json" },
+          timeoutMs: 10_000,
+          retries: 0,
+        }
+      )
+      if (data?.success === false) {
         throw new Error(data?.message || "Failed to send OTP")
       }
       setPassOtpRequestId(data.otp_request_id || "")
@@ -908,16 +922,19 @@ function SlotBookingForm({
     setIsVerifyingPassOtp(true)
     setPassError("")
     try {
-      const response = await fetch(`${BOOKING_URL}/api/pass/dashboard/otp/verify`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+      const data = await api.post<any, string>(
+        `${BOOKING_URL}/api/pass/dashboard/otp/verify`,
+        JSON.stringify({
           otp_request_id: passOtpRequestId,
           otp: passOtpCode.trim(),
         }),
-      })
-      const data = await response.json().catch(() => ({}))
-      if (!response.ok || data?.success === false) {
+        {
+          headers: { "Content-Type": "application/json" },
+          timeoutMs: 10_000,
+          retries: 0,
+        }
+      )
+      if (data?.success === false) {
         throw new Error(data?.message || "Invalid OTP")
       }
       setPassVerificationToken(String(data.pass_verification_token || ""))
@@ -992,8 +1009,10 @@ useEffect(() => {
 
   const fetchActivePricing = async () => {
     try {
-      const res = await fetch(`${DASHBOARD_URL}/api/vendor/${vendorId}/active-pricing`)
-      const data = await res.json()
+      const data = await api.get<any>(`${DASHBOARD_URL}/api/vendor/${vendorId}/active-pricing`, {
+        timeoutMs: 10_000,
+        retries: 1,
+      })
       if (data.success) {
         console.log('🏷️ Active pricing loaded:', data.pricing)
         setActivePricing(data.pricing)
@@ -1005,9 +1024,11 @@ useEffect(() => {
 
   const fetchSquadPricingPolicy = async () => {
     try {
-      const res = await fetch(`${BOOKING_URL}/api/vendor/${vendorId}/squad-pricing-policy`)
-      const data = await res.json()
-      if (res.ok && data?.success && data?.policy) {
+      const data = await api.get<any>(`${BOOKING_URL}/api/vendor/${vendorId}/squad-pricing-policy`, {
+        timeoutMs: 10_000,
+        retries: 1,
+      })
+      if (data?.success && data?.policy) {
         const nextPolicy: Record<string, Record<string, number>> = {}
         Object.entries(data.policy as Record<string, Record<string, number>>).forEach(([group, grid]) => {
           const normalizedGroup = toLegacySquadGroup(group)
@@ -1080,10 +1101,10 @@ useEffect(() => {
     const fetchUsers = async () => {
       console.log('🔄 Fetching fresh user data from API...')
       try {
-        const response = await fetch(`${BOOKING_URL}/api/vendor/${vendorId}/users`)
-        console.log('👥 User API response status:', response.status)
-        
-        const data = await response.json()
+        const data = await api.get<any[]>(`${BOOKING_URL}/api/vendor/${vendorId}/users`, {
+          timeoutMs: 10_000,
+          retries: 1,
+        })
         console.log('👥 User data received:', data)
 
         if (Array.isArray(data)) {
@@ -1237,11 +1258,10 @@ useEffect(() => {
       setCreditAccountLoading(true)
       setCreditAccountError('')
       try {
-        const res = await fetch(`${BOOKING_URL}/api/vendor/${vendorId}/monthly-credit/accounts`)
-        const data = await res.json()
-        if (!res.ok) {
-          throw new Error(data?.message || data?.error || 'Unable to load monthly credit accounts')
-        }
+        const data = await api.get<any>(`${BOOKING_URL}/api/vendor/${vendorId}/monthly-credit/accounts`, {
+          timeoutMs: 10_000,
+          retries: 1,
+        })
         const accounts = Array.isArray(data?.accounts) ? data.accounts : []
         const matchedAccount = matchedPrimaryUser?.id
           ? accounts.find((row: any) => Number(row.user_id) === Number(matchedPrimaryUser.id))
@@ -1438,9 +1458,10 @@ const getEffectivePrice = (slot: SelectedSlot): number => {
 
       setIsControllerPricingLoading(true)
       try {
-        const response = await fetch(`${DASHBOARD_URL}/api/vendor/${vendorId}/controller-pricing`)
-        if (!response.ok) throw new Error("Failed to fetch controller pricing")
-        const data = await response.json()
+        const data = await api.get<any>(`${DASHBOARD_URL}/api/vendor/${vendorId}/controller-pricing`, {
+          timeoutMs: 10_000,
+          retries: 1,
+        })
         const entry = data?.pricing?.[selectedControllerType as "ps5" | "xbox"]
         const configured = Boolean(entry?.configured)
         setHasControllerPricingConfigured(configured)
@@ -1940,10 +1961,9 @@ const getEffectivePrice = (slot: SelectedSlot): number => {
       if (paymentType === 'Pass' && validatedPass) {
         const hoursToDeduct = selectedSlots.length * 0.5
 
-        const passRedeemResponse = await fetch(`${BOOKING_URL}/api/pass/redeem/dashboard`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
+        const passRedeemData = await api.post<any, string>(
+          `${BOOKING_URL}/api/pass/redeem/dashboard`,
+          JSON.stringify({
             pass_uid: validatedPass.pass_uid,
             vendor_id: vendorId,
             hours_to_deduct: hoursToDeduct,
@@ -1952,11 +1972,14 @@ const getEffectivePrice = (slot: SelectedSlot): number => {
             notes: `Booking for ${selectedSlots[0]?.console_name} - ${selectedSlots.length} slots`,
             pass_verification_token: passVerificationToken,
           }),
-        })
+          {
+            headers: { "Content-Type": "application/json" },
+            timeoutMs: 15_000,
+            retries: 0,
+          }
+        )
 
-        const passRedeemData = await passRedeemResponse.json()
-
-        if (!passRedeemResponse.ok || !passRedeemData.success) {
+        if (!passRedeemData.success) {
           alert(`Pass redemption failed: ${passRedeemData.error || passRedeemData.message || "Unknown error"}`)
           setIsSubmitting(false)
           return
@@ -2009,26 +2032,21 @@ const getEffectivePrice = (slot: SelectedSlot): number => {
         bookingHeaders.Authorization = `Bearer ${dashboardToken}`
       }
 
-      const response = await fetch(`${BOOKING_URL}/api/newBooking/vendor/${vendorId}`, {
-        method: 'POST',
-        headers: bookingHeaders,
-        body: JSON.stringify(bookingData),
-      })
+      const result = await api.post<any, string>(
+        `${BOOKING_URL}/api/newBooking/vendor/${vendorId}`,
+        JSON.stringify(bookingData),
+        {
+          headers: bookingHeaders,
+          timeoutMs: 20_000,
+          retries: 0,
+        }
+      )
 
-console.log('📥 API response status:', response.status)
+console.log('📥 API response status: success')
 
-// ✅ FIX: Check response.ok first (status 200-299 means success)
-if (!response.ok) {
-  const errorData = await response.json().catch(() => ({}))
-  throw new Error(errorData.message || 'Failed to submit booking')
-}
-
-const result = await response.json()
 console.log('📥 API response data:', result)
 
-// ✅ FIX: If response.ok is true, treat as success regardless of result.success
-// This handles cases where backend returns different success formats
-if (response.ok || result.success === true || result.success === 'true') {
+if (result?.success === true || result?.success === 'true' || result?.booking || result?.id) {
   console.log('✅ Booking created successfully!')
   setIsSubmitted(true)
 
@@ -2053,8 +2071,10 @@ if (response.ok || result.success === true || result.success === 'true') {
 
       if (!isUserExists) {
         console.log('👤 New user detected, refreshing user cache...')
-        const usersResponse = await fetch(`${BOOKING_URL}/api/vendor/${vendorId}/users`)
-        const updatedUsers = await usersResponse.json()
+        const updatedUsers = await api.get<any[]>(`${BOOKING_URL}/api/vendor/${vendorId}/users`, {
+          timeoutMs: 10_000,
+          retries: 1,
+        })
 
         if (Array.isArray(updatedUsers)) {
           localStorage.setItem(
@@ -3395,7 +3415,7 @@ function ScheduleGrid({
   }
 
   if (!matchingSlot) {
-    matchingSlot = findCoveringSlot(daySlots, time, gameConsole.id)
+    matchingSlot = findCoveringSlot(daySlots, time, gameConsole.id ?? undefined)
   }
 
   if (!matchingSlot) return
@@ -3461,7 +3481,7 @@ function ScheduleGrid({
           })
 
           if (consoleSlots.length === 0) {
-            const coveringSlot = findCoveringSlot(daySlots, time, gameConsole.id)
+            const coveringSlot = findCoveringSlot(daySlots, time, gameConsole.id ?? undefined)
             if (coveringSlot) {
               timeSlots.push(
                 <div
@@ -3915,6 +3935,7 @@ function RecentBookings({
 
 // ==================== CHANGE BOOKING FORM ====================
 function ChangeBookingForm() {
+  const api = useApiClient()
   const [bookingId, setBookingId] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [bookingFound, setBookingFound] = useState(false);
@@ -3925,11 +3946,7 @@ function ChangeBookingForm() {
   const [vendorId, setVendorId] = useState(null);
 
   useEffect(() => {
-    const token = localStorage.getItem("jwtToken");
-    if (token) {
-      const decoded_token = jwtDecode(token);
-      setVendorId(decoded_token.sub.id);
-    }
+    setVendorId(decodeVendorIdFromStorage());
   }, []);
 
   const handleSearch = async () => {
@@ -3937,10 +3954,12 @@ function ChangeBookingForm() {
 
     setIsLoading(true);
     try {
-      const response = await fetch(`${BOOKING_URL}/api/bookings/${bookingId}`);
-      const data = await response.json();
+      const data = await api.get<any>(`${BOOKING_URL}/api/bookings/${bookingId}`, {
+        timeoutMs: 10_000,
+        retries: 1,
+      });
 
-      if (response.ok && data.success && data.booking) {
+      if (data.success && data.booking) {
         setIsSubmitted(false);
         const { booking } = data;
         setBookingData({
@@ -3967,12 +3986,12 @@ function ChangeBookingForm() {
 
   const fetchAvailableSlots = async (vendorId, consoleTypeId, date) => {
     try {
-      const response = await fetch(
-        `${BOOKING_URL}/api/getSlots/vendor/${vendorId}/game/${consoleTypeId}/${date.replaceAll("-", "")}`
+      const data = await api.get<any>(
+        `${BOOKING_URL}/api/getSlots/vendor/${vendorId}/game/${consoleTypeId}/${date.replaceAll("-", "")}`,
+        { timeoutMs: 10_000, retries: 1 }
       );
-      const data = await response.json();
 
-      if (response.ok && data.slots) {
+      if (data.slots) {
         setAvailableSlots(data.slots);
       }
     } catch (error) {
@@ -3986,17 +4005,16 @@ function ChangeBookingForm() {
     if (!bookingData) return;
 
     try {
-      const response = await fetch(
+      const result = await api.put<any, string>(
         `${BOOKING_URL}/api/update_booking/${bookingId}`,
+        JSON.stringify(bookingData),
         {
-          method: "PUT",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(bookingData),
+          timeoutMs: 12_000,
+          retries: 0,
         }
       );
-
-      const result = await response.json();
-      if (response.ok) {
+      if (result?.success !== false) {
         setIsSubmitted(true);
       } else {
         alert("Failed to update booking.");
@@ -4171,6 +4189,7 @@ function ChangeBookingForm() {
 
 // ==================== REJECT BOOKING FORM ====================
 function RejectBookingForm() {
+  const api = useApiClient()
   const [bookingId, setBookingId] = useState("");
   const [bookingFound, setBookingFound] = useState(false);
   const [rejectionReason, setRejectionReason] = useState("");
@@ -4184,11 +4203,7 @@ function RejectBookingForm() {
   const [vendorId, setVendorId] = useState(null);
 
   useEffect(() => {
-    const token = localStorage.getItem("jwtToken");
-    if (token) {
-      const decoded_token = jwtDecode(token);
-      setVendorId(decoded_token.sub.id);
-    }
+    setVendorId(decodeVendorIdFromStorage());
   }, []);
 
   const handleSearch = async () => {
@@ -4196,10 +4211,12 @@ function RejectBookingForm() {
 
     setIsLoading(true);
     try {
-      const response = await fetch(`${BOOKING_URL}/api/bookings/${bookingId}`);
-      const data = await response.json();
+      const data = await api.get<any>(`${BOOKING_URL}/api/bookings/${bookingId}`, {
+        timeoutMs: 10_000,
+        retries: 1,
+      });
 
-      if (response.ok && data.success && data.booking) {
+      if (data.success && data.booking) {
         setIsSubmitted(false);
         const { booking } = data;
         setBookingData({
@@ -4239,18 +4256,22 @@ function RejectBookingForm() {
     setIsLoading(true);
 
     try {
-      const response = await fetch(`${BOOKING_URL}/api/bookings/reject`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+      const response = await api.post<any, string>(
+        `${BOOKING_URL}/api/bookings/reject`,
+        JSON.stringify({
           booking_id: bookingId,
           rejection_reason: rejectionReason,
           repayment_type: repaymentType,
           user_email: userEmail,
         }),
-      });
+        {
+          headers: { "Content-Type": "application/json" },
+          timeoutMs: 12_000,
+          retries: 0,
+        }
+      );
 
-      if (response.ok) {
+      if (response?.success !== false) {
         setIsSubmitted(true);
       } else {
         console.error("Error rejecting booking");
@@ -4467,6 +4488,7 @@ function RejectBookingForm() {
 
 // ==================== LIST BOOKING COMPONENT ====================
 function ListBooking() {
+  const api = useApiClient()
   interface BookingType {
     id: string;
     bookingDate: string;
@@ -4504,22 +4526,18 @@ function ListBooking() {
   }, [filteredBookings]);
 
   useEffect(() => {
-    const token = localStorage.getItem("jwtToken");
-    if (token) {
-      const decoded_token = jwtDecode(token);
-      setVendorId(decoded_token.sub.id);
-    }
+    setVendorId(decodeVendorIdFromStorage());
   }, []);
 
   const fetchData = async () => {
     try {
       const formattedDate = getISTMonthStartCompact();
-      const response = await axios.get(
+      const rows = await api.get<any[]>(
         `${BOOKING_URL}/api/getAllBooking/vendor/${vendorId}/${formattedDate}/`,
-        { headers: { "Content-Type": "application/json" } }
+        { headers: { "Content-Type": "application/json" }, timeoutMs: 12_000, retries: 1 }
       );
 
-      const mappedBookings = response.data.map((booking) => ({
+      const mappedBookings = (Array.isArray(rows) ? rows : []).map((booking) => ({
         id: booking.bookingId.toString(),
         bookingDate: booking.bookingDate,
         bookingTime: booking.bookingTime,
@@ -4535,7 +4553,7 @@ function ListBooking() {
       setBookings(mappedBookings);
       setFilteredBookings(mappedBookings);
     } catch (error) {
-      console.error("Error fetching data:", error.response ? error.response.data : error.message);
+      console.error("Error fetching data:", error);
     }
   };
 
