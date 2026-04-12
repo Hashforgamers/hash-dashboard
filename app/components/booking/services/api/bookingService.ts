@@ -1,6 +1,7 @@
 // services/api/bookingService.ts
 import { BOOKING_URL } from '../../../../../src/config/env'
 import type { BookingPayload, UserSuggestion, Pass } from '../../types/booking.types'
+import { httpJson } from '../../../../../lib/http-client'
 
 class BookingService {
   private baseURL = BOOKING_URL
@@ -12,21 +13,17 @@ class BookingService {
           localStorage.getItem('rbac_access_token_v1') || localStorage.getItem('jwtToken')
         )) || null
 
-      const response = await fetch(`${this.baseURL}/api/newBooking/vendor/${vendorId}`, {
-        method: 'POST',
+      const result = await httpJson<any>(`${this.baseURL}/api/newBooking/vendor/${vendorId}`, {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
-          'X-Client-Source': 'dashboard',
-          ...(token ? { Authorization: `Bearer ${token}` } : {})
+          "Content-Type": "application/json",
+          "X-Client-Source": "dashboard",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(payload),
+        timeoutMs: 20_000,
+        retries: 0,
       })
-
-      if (!response.ok) {
-        throw new Error('Failed to create booking')
-      }
-
-      const result = await response.json()
       
       if (result.success) {
         console.log('✅ Booking created successfully')
@@ -46,13 +43,14 @@ class BookingService {
 
   async fetchUsers(vendorId: number): Promise<UserSuggestion[]> {
     try {
-      const response = await fetch(`${this.baseURL}/api/vendor/${vendorId}/users`)
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch users')
-      }
-      
-      const data = await response.json()
+      const url = `${this.baseURL}/api/vendor/${vendorId}/users`
+      const data = await httpJson<any>(url, {
+        timeoutMs: 10_000,
+        retries: 2,
+        dedupe: true,
+        dedupeKey: `GET:${url}`,
+        cacheTtlMs: 30_000,
+      })
       return Array.isArray(data) ? data : []
     } catch (error) {
       console.error('❌ Error fetching users:', error)
@@ -62,15 +60,15 @@ class BookingService {
 
   async validatePass(vendorId: number, passUid: string): Promise<{ valid: boolean; pass?: Pass; error?: string }> {
     try {
-      const response = await fetch(`${this.baseURL}/api/pass/validate`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ pass_uid: passUid.trim(), vendor_id: vendorId })
+      const data = await httpJson<any>(`${this.baseURL}/api/pass/validate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ pass_uid: passUid.trim(), vendor_id: vendorId }),
+        timeoutMs: 10_000,
+        retries: 0,
       })
-
-      const data = await response.json()
       
-      if (response.ok && data.valid) {
+      if (data.valid) {
         return { valid: true, pass: data.pass }
       }
       
@@ -83,7 +81,7 @@ class BookingService {
 
   async redeemPass(vendorId: number, passUid: string, hoursToDeduct: number, sessionStart: string, sessionEnd: string, notes: string) {
     try {
-      const response = await fetch(`${this.baseURL}/api/pass/redeem/dashboard`, {
+      const data = await httpJson<any>(`${this.baseURL}/api/pass/redeem/dashboard`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -93,12 +91,12 @@ class BookingService {
           session_start: sessionStart,
           session_end: sessionEnd,
           notes
-        })
+        }),
+        timeoutMs: 15_000,
+        retries: 0,
       })
-
-      const data = await response.json()
       
-      if (!response.ok || !data.success) {
+      if (!data.success) {
         throw new Error(data.error || 'Failed to redeem pass')
       }
       

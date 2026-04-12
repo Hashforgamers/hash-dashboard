@@ -1,4 +1,5 @@
 import { DASHBOARD_URL } from "@/src/config/env";
+import { httpJson } from "@/lib/http-client";
 
 export type Role = "owner" | "manager" | "staff";
 
@@ -41,21 +42,18 @@ async function accessCall<T>(
   token?: string,
   options?: RequestInit
 ): Promise<T> {
-  const response = await fetch(withTimestamp(`${DASHBOARD_URL}/api/vendor/${vendorId}/access${path}`), {
+  const method = (options?.method || "GET").toUpperCase();
+  return httpJson<T>(withTimestamp(`${DASHBOARD_URL}/api/vendor/${vendorId}/access${path}`), {
     ...options,
     headers: {
       "Content-Type": "application/json",
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...options?.headers,
     },
+    timeoutMs: 10_000,
+    retries: method === "GET" ? 2 : 0,
+    dedupe: method === "GET",
   });
-
-  const data = await response.json().catch(() => ({}));
-  if (!response.ok) {
-    throw new Error(data.error || data.message || `Request failed (${response.status})`);
-  }
-
-  return data as T;
 }
 
 export const accessApi = {

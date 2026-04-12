@@ -1,0 +1,1151 @@
+<?xml version="1.0"?>
+<?mso-application progid="Excel.Sheet"?>
+<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
+ xmlns:o="urn:schemas-microsoft-com:office:office"
+ xmlns:x="urn:schemas-microsoft-com:office:excel"
+ xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"
+ xmlns:html="http://www.w3.org/TR/REC-html40">
+<Worksheet ss:Name="API Inventory"><Table>
+<Row>
+<Cell><Data ss:Type="String">endpoint_template</Data></Cell>
+<Cell><Data ss:Type="String">method</Data></Cell>
+<Cell><Data ss:Type="String">base_url</Data></Cell>
+<Cell><Data ss:Type="String">description</Data></Cell>
+<Cell><Data ss:Type="String">source_files</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">/api/packages/</Data></Cell>
+<Cell><Data ss:Type="String">POST</Data></Cell>
+<Cell><Data ss:Type="String">Relative /api (same-origin/proxy)</Data></Cell>
+<Cell><Data ss:Type="String">API used by dashboard feature</Data></Cell>
+<Cell><Data ss:Type="String">lib/api.ts</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">/api/pass/${userPassId}/history</Data></Cell>
+<Cell><Data ss:Type="String">GET</Data></Cell>
+<Cell><Data ss:Type="String">Relative /api (same-origin/proxy)</Data></Cell>
+<Cell><Data ss:Type="String">API used by dashboard feature</Data></Cell>
+<Cell><Data ss:Type="String">app/components/PassRedemption/PassHistory.tsx</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">/api/pass/redeem/dashboard</Data></Cell>
+<Cell><Data ss:Type="String">POST</Data></Cell>
+<Cell><Data ss:Type="String">Relative /api (same-origin/proxy)</Data></Cell>
+<Cell><Data ss:Type="String">Redeem pass from dashboard</Data></Cell>
+<Cell><Data ss:Type="String">app/components/PassRedemption/PassRedemption.tsx</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">/api/pass/validate</Data></Cell>
+<Cell><Data ss:Type="String">POST</Data></Cell>
+<Cell><Data ss:Type="String">Relative /api (same-origin/proxy)</Data></Cell>
+<Cell><Data ss:Type="String">Validate pass before booking</Data></Cell>
+<Cell><Data ss:Type="String">app/components/PassRedemption/PassRedemption.tsx</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">/api/vendors/${vendorId}/subscription/</Data></Cell>
+<Cell><Data ss:Type="String">GET</Data></Cell>
+<Cell><Data ss:Type="String">Relative /api (same-origin/proxy)</Data></Cell>
+<Cell><Data ss:Type="String">Subscription status, orders, history</Data></Cell>
+<Cell><Data ss:Type="String">lib/api.ts</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">/api/vendors/${vendorId}/subscription/create-order</Data></Cell>
+<Cell><Data ss:Type="String">POST</Data></Cell>
+<Cell><Data ss:Type="String">Relative /api (same-origin/proxy)</Data></Cell>
+<Cell><Data ss:Type="String">Subscription status, orders, history</Data></Cell>
+<Cell><Data ss:Type="String">lib/api.ts</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">/api/vendors/${vendorId}/subscription/history</Data></Cell>
+<Cell><Data ss:Type="String">POST</Data></Cell>
+<Cell><Data ss:Type="String">Relative /api (same-origin/proxy)</Data></Cell>
+<Cell><Data ss:Type="String">Subscription status, orders, history</Data></Cell>
+<Cell><Data ss:Type="String">lib/api.ts</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">/api/vendors/${vendorId}/subscription/verify-payment</Data></Cell>
+<Cell><Data ss:Type="String">POST</Data></Cell>
+<Cell><Data ss:Type="String">Relative /api (same-origin/proxy)</Data></Cell>
+<Cell><Data ss:Type="String">Subscription status, orders, history</Data></Cell>
+<Cell><Data ss:Type="String">lib/api.ts</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${API_BASE}/api/vendor/events/</Data></Cell>
+<Cell><Data ss:Type="String">POST</Data></Cell>
+<Cell><Data ss:Type="String">DASHBOARD_URL (via API_BASE)</Data></Cell>
+<Cell><Data ss:Type="String">Tournament events management</Data></Cell>
+<Cell><Data ss:Type="String">lib/event-api.ts</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${API_BASE}/api/vendor/events/${eventId}</Data></Cell>
+<Cell><Data ss:Type="String">PATCH</Data></Cell>
+<Cell><Data ss:Type="String">DASHBOARD_URL (via API_BASE)</Data></Cell>
+<Cell><Data ss:Type="String">Tournament events management</Data></Cell>
+<Cell><Data ss:Type="String">lib/event-api.ts</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${API_BASE}/api/vendor/events/${eventId}/registrations</Data></Cell>
+<Cell><Data ss:Type="String">GET</Data></Cell>
+<Cell><Data ss:Type="String">DASHBOARD_URL (via API_BASE)</Data></Cell>
+<Cell><Data ss:Type="String">Tournament events management</Data></Cell>
+<Cell><Data ss:Type="String">lib/event-api.ts</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${API_BASE}/api/vendor/events/${eventId}/results/publish</Data></Cell>
+<Cell><Data ss:Type="String">POST</Data></Cell>
+<Cell><Data ss:Type="String">DASHBOARD_URL (via API_BASE)</Data></Cell>
+<Cell><Data ss:Type="String">Tournament events management</Data></Cell>
+<Cell><Data ss:Type="String">lib/event-api.ts</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${API_BASE}/api/vendor/events/${eventId}/teams</Data></Cell>
+<Cell><Data ss:Type="String">GET</Data></Cell>
+<Cell><Data ss:Type="String">DASHBOARD_URL (via API_BASE)</Data></Cell>
+<Cell><Data ss:Type="String">Tournament events management</Data></Cell>
+<Cell><Data ss:Type="String">lib/event-api.ts</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${API_BASE}/api/vendor/events/${qs}</Data></Cell>
+<Cell><Data ss:Type="String">GET</Data></Cell>
+<Cell><Data ss:Type="String">DASHBOARD_URL (via API_BASE)</Data></Cell>
+<Cell><Data ss:Type="String">Tournament events management</Data></Cell>
+<Cell><Data ss:Type="String">lib/event-api.ts</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${API_BASE}/api/vendor/events/delete-banner</Data></Cell>
+<Cell><Data ss:Type="String">DELETE</Data></Cell>
+<Cell><Data ss:Type="String">DASHBOARD_URL (via API_BASE)</Data></Cell>
+<Cell><Data ss:Type="String">Tournament events management</Data></Cell>
+<Cell><Data ss:Type="String">lib/event-api.ts</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${API_BASE}/api/vendor/events/getJwt</Data></Cell>
+<Cell><Data ss:Type="String">POST</Data></Cell>
+<Cell><Data ss:Type="String">DASHBOARD_URL (via API_BASE)</Data></Cell>
+<Cell><Data ss:Type="String">Tournament events management</Data></Cell>
+<Cell><Data ss:Type="String">lib/event-api.ts</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${API_BASE}/api/vendor/events/upload-banner</Data></Cell>
+<Cell><Data ss:Type="String">POST</Data></Cell>
+<Cell><Data ss:Type="String">DASHBOARD_URL (via API_BASE)</Data></Cell>
+<Cell><Data ss:Type="String">Tournament events management</Data></Cell>
+<Cell><Data ss:Type="String">lib/event-api.ts</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${API_BASE}/api/vendor/reviews/</Data></Cell>
+<Cell><Data ss:Type="String">GET</Data></Cell>
+<Cell><Data ss:Type="String">DASHBOARD_URL (via API_BASE)</Data></Cell>
+<Cell><Data ss:Type="String">Reviews moderation and replies</Data></Cell>
+<Cell><Data ss:Type="String">lib/review-api.ts</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${API_BASE}/api/vendor/reviews/${reviewId}/response</Data></Cell>
+<Cell><Data ss:Type="String">PATCH</Data></Cell>
+<Cell><Data ss:Type="String">DASHBOARD_URL (via API_BASE)</Data></Cell>
+<Cell><Data ss:Type="String">Reviews moderation and replies</Data></Cell>
+<Cell><Data ss:Type="String">lib/review-api.ts</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${API_BASE}/api/vendor/reviews/${reviewId}/status</Data></Cell>
+<Cell><Data ss:Type="String">PATCH</Data></Cell>
+<Cell><Data ss:Type="String">DASHBOARD_URL (via API_BASE)</Data></Cell>
+<Cell><Data ss:Type="String">Reviews moderation and replies</Data></Cell>
+<Cell><Data ss:Type="String">lib/review-api.ts</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${API_BASE}/api/vendor/reviews/summary</Data></Cell>
+<Cell><Data ss:Type="String">GET</Data></Cell>
+<Cell><Data ss:Type="String">DASHBOARD_URL (via API_BASE)</Data></Cell>
+<Cell><Data ss:Type="String">Reviews moderation and replies</Data></Cell>
+<Cell><Data ss:Type="String">lib/review-api.ts</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${BOOKING_URL}/api/booking/${bookingId}/add-meals</Data></Cell>
+<Cell><Data ss:Type="String">POST</Data></Cell>
+<Cell><Data ss:Type="String">BOOKING_URL</Data></Cell>
+<Cell><Data ss:Type="String">API used by dashboard feature</Data></Cell>
+<Cell><Data ss:Type="String">app/components/mealsDetailmodal.tsx</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${BOOKING_URL}/api/booking/${bookingId}/payment-summary</Data></Cell>
+<Cell><Data ss:Type="String">GET</Data></Cell>
+<Cell><Data ss:Type="String">BOOKING_URL</Data></Cell>
+<Cell><Data ss:Type="String">Fetch booking payment summary</Data></Cell>
+<Cell><Data ss:Type="String">app/components/current-slot.tsx | app/components/extraBookingOverlay.tsx</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${BOOKING_URL}/api/booking/${bookingId}/settle-pending</Data></Cell>
+<Cell><Data ss:Type="String">POST</Data></Cell>
+<Cell><Data ss:Type="String">BOOKING_URL</Data></Cell>
+<Cell><Data ss:Type="String">Settle pending booking payment</Data></Cell>
+<Cell><Data ss:Type="String">app/components/extraBookingOverlay.tsx</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${BOOKING_URL}/api/booking/private</Data></Cell>
+<Cell><Data ss:Type="String">POST</Data></Cell>
+<Cell><Data ss:Type="String">BOOKING_URL</Data></Cell>
+<Cell><Data ss:Type="String">Create private booking</Data></Cell>
+<Cell><Data ss:Type="String">app/components/PrivateBooking.tsx</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${BOOKING_URL}/api/bookings/${bookingId}</Data></Cell>
+<Cell><Data ss:Type="String">GET</Data></Cell>
+<Cell><Data ss:Type="String">BOOKING_URL</Data></Cell>
+<Cell><Data ss:Type="String">API used by dashboard feature</Data></Cell>
+<Cell><Data ss:Type="String">app/components/manage-booking.tsx | app/components/newSlot.tsx | app/components/test2.tsx</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${BOOKING_URL}/api/bookings/cancel</Data></Cell>
+<Cell><Data ss:Type="String">POST</Data></Cell>
+<Cell><Data ss:Type="String">BOOKING_URL</Data></Cell>
+<Cell><Data ss:Type="String">Cancel booking</Data></Cell>
+<Cell><Data ss:Type="String">app/components/upcoming-booking.tsx</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${BOOKING_URL}/api/bookings/no-show</Data></Cell>
+<Cell><Data ss:Type="String">POST</Data></Cell>
+<Cell><Data ss:Type="String">BOOKING_URL</Data></Cell>
+<Cell><Data ss:Type="String">Mark booking as no-show</Data></Cell>
+<Cell><Data ss:Type="String">app/components/upcoming-booking.tsx</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${BOOKING_URL}/api/bookings/reject</Data></Cell>
+<Cell><Data ss:Type="String">POST</Data></Cell>
+<Cell><Data ss:Type="String">BOOKING_URL</Data></Cell>
+<Cell><Data ss:Type="String">Reject booking</Data></Cell>
+<Cell><Data ss:Type="String">app/components/manage-booking.tsx | app/components/newSlot.tsx | app/components/test2.tsx</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${BOOKING_URL}/api/console-types/vendor/${resolvedVendorId}${cacheBust}</Data></Cell>
+<Cell><Data ss:Type="String">UNKNOWN</Data></Cell>
+<Cell><Data ss:Type="String">BOOKING_URL</Data></Cell>
+<Cell><Data ss:Type="String">Fetch console type catalog</Data></Cell>
+<Cell><Data ss:Type="String">app/components/newSlot.tsx</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${BOOKING_URL}/api/console-types/vendor/${vendorId}</Data></Cell>
+<Cell><Data ss:Type="String">GET</Data></Cell>
+<Cell><Data ss:Type="String">BOOKING_URL</Data></Cell>
+<Cell><Data ss:Type="String">Fetch console type catalog</Data></Cell>
+<Cell><Data ss:Type="String">app/components/ConsoleSelector.tsx</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${BOOKING_URL}/api/extraBooking</Data></Cell>
+<Cell><Data ss:Type="String">POST</Data></Cell>
+<Cell><Data ss:Type="String">BOOKING_URL</Data></Cell>
+<Cell><Data ss:Type="String">Add extra booking amount/slots</Data></Cell>
+<Cell><Data ss:Type="String">app/components/extraBookingOverlay.tsx</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${BOOKING_URL}/api/getAllBooking/vendor/${vendorId}/${formattedDate}/</Data></Cell>
+<Cell><Data ss:Type="String">GET</Data></Cell>
+<Cell><Data ss:Type="String">BOOKING_URL</Data></Cell>
+<Cell><Data ss:Type="String">Fetch bookings list/history</Data></Cell>
+<Cell><Data ss:Type="String">app/components/manage-booking.tsx | app/components/newSlot.tsx</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${BOOKING_URL}/api/getAllConsole/vendor/${resolvedVendorId}${cacheBust}</Data></Cell>
+<Cell><Data ss:Type="String">UNKNOWN</Data></Cell>
+<Cell><Data ss:Type="String">BOOKING_URL</Data></Cell>
+<Cell><Data ss:Type="String">Fetch all consoles for vendor</Data></Cell>
+<Cell><Data ss:Type="String">app/components/newSlot.tsx</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${BOOKING_URL}/api/getAllConsole/vendor/${vendorId}</Data></Cell>
+<Cell><Data ss:Type="String">GET</Data></Cell>
+<Cell><Data ss:Type="String">BOOKING_URL</Data></Cell>
+<Cell><Data ss:Type="String">Fetch all consoles for vendor</Data></Cell>
+<Cell><Data ss:Type="String">app/components/ConsoleSelector.tsx | app/components/PrivateBooking.tsx | app/components/manage-booking.tsx | app/components/test.tsx</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${BOOKING_URL}/api/getSlotList/vendor/${vendorId}/game/${consoleTypeId}</Data></Cell>
+<Cell><Data ss:Type="String">GET</Data></Cell>
+<Cell><Data ss:Type="String">BOOKING_URL</Data></Cell>
+<Cell><Data ss:Type="String">API used by dashboard feature</Data></Cell>
+<Cell><Data ss:Type="String">app/components/rapid-bookings.tsx</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${BOOKING_URL}/api/getSlots/vendor/${resolvedVendorId}/game/${gameConsole.id}/${formattedDate}</Data></Cell>
+<Cell><Data ss:Type="String">UNKNOWN</Data></Cell>
+<Cell><Data ss:Type="String">BOOKING_URL</Data></Cell>
+<Cell><Data ss:Type="String">Fetch slot availability for console/date</Data></Cell>
+<Cell><Data ss:Type="String">app/components/newSlot.tsx</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${BOOKING_URL}/api/getSlots/vendor/${vendorId}/game/${gameConsole.id}/${formattedDate}</Data></Cell>
+<Cell><Data ss:Type="String">GET</Data></Cell>
+<Cell><Data ss:Type="String">BOOKING_URL</Data></Cell>
+<Cell><Data ss:Type="String">Fetch slot availability for console/date</Data></Cell>
+<Cell><Data ss:Type="String">app/components/test.tsx</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${BOOKING_URL}/api/newBooking/vendor/${vendorId}</Data></Cell>
+<Cell><Data ss:Type="String">POST</Data></Cell>
+<Cell><Data ss:Type="String">BOOKING_URL</Data></Cell>
+<Cell><Data ss:Type="String">Create new booking</Data></Cell>
+<Cell><Data ss:Type="String">app/components/BookingForm.tsx | app/components/newSlot.tsx | app/components/rapid-bookings.tsx | app/components/test.tsx</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${BOOKING_URL}/api/pass/dashboard/otp/send</Data></Cell>
+<Cell><Data ss:Type="String">POST</Data></Cell>
+<Cell><Data ss:Type="String">BOOKING_URL</Data></Cell>
+<Cell><Data ss:Type="String">Send pass OTP</Data></Cell>
+<Cell><Data ss:Type="String">app/components/newSlot.tsx</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${BOOKING_URL}/api/pass/dashboard/otp/verify</Data></Cell>
+<Cell><Data ss:Type="String">POST</Data></Cell>
+<Cell><Data ss:Type="String">BOOKING_URL</Data></Cell>
+<Cell><Data ss:Type="String">Verify pass OTP</Data></Cell>
+<Cell><Data ss:Type="String">app/components/newSlot.tsx</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${BOOKING_URL}/api/pass/dashboard/valid-options?${params.toString()}</Data></Cell>
+<Cell><Data ss:Type="String">GET</Data></Cell>
+<Cell><Data ss:Type="String">BOOKING_URL</Data></Cell>
+<Cell><Data ss:Type="String">Fetch valid pass options</Data></Cell>
+<Cell><Data ss:Type="String">app/components/newSlot.tsx</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${BOOKING_URL}/api/pass/redeem/dashboard</Data></Cell>
+<Cell><Data ss:Type="String">POST</Data></Cell>
+<Cell><Data ss:Type="String">BOOKING_URL</Data></Cell>
+<Cell><Data ss:Type="String">Redeem pass from dashboard</Data></Cell>
+<Cell><Data ss:Type="String">app/components/BookingForm.tsx | app/components/newSlot.tsx</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${BOOKING_URL}/api/pass/validate</Data></Cell>
+<Cell><Data ss:Type="String">POST</Data></Cell>
+<Cell><Data ss:Type="String">BOOKING_URL</Data></Cell>
+<Cell><Data ss:Type="String">Validate pass before booking</Data></Cell>
+<Cell><Data ss:Type="String">app/components/BookingForm.tsx</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${BOOKING_URL}/api/pay-at-cafe/${endpoint}</Data></Cell>
+<Cell><Data ss:Type="String">POST</Data></Cell>
+<Cell><Data ss:Type="String">BOOKING_URL</Data></Cell>
+<Cell><Data ss:Type="String">API used by dashboard feature</Data></Cell>
+<Cell><Data ss:Type="String">app/components/NotificationPanel.tsx</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${BOOKING_URL}/api/pay-at-cafe/accept</Data></Cell>
+<Cell><Data ss:Type="String">POST</Data></Cell>
+<Cell><Data ss:Type="String">BOOKING_URL</Data></Cell>
+<Cell><Data ss:Type="String">Accept pay-at-cafe request</Data></Cell>
+<Cell><Data ss:Type="String">app/components/NotificationPanel.tsx</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${BOOKING_URL}/api/pay-at-cafe/pending/${vendorId}</Data></Cell>
+<Cell><Data ss:Type="String">GET</Data></Cell>
+<Cell><Data ss:Type="String">BOOKING_URL</Data></Cell>
+<Cell><Data ss:Type="String">Fetch pending pay-at-cafe notifications</Data></Cell>
+<Cell><Data ss:Type="String">app/components/NotificationButton.tsx</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${BOOKING_URL}/api/pay-at-cafe/queue-list/${vendorId}?${params.toString()}</Data></Cell>
+<Cell><Data ss:Type="String">GET</Data></Cell>
+<Cell><Data ss:Type="String">BOOKING_URL</Data></Cell>
+<Cell><Data ss:Type="String">Fetch pay-at-cafe queue list</Data></Cell>
+<Cell><Data ss:Type="String">app/components/NotificationPanel.tsx</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${BOOKING_URL}/api/pay-at-cafe/queue-summary/${vendorId}?${params.toString()}</Data></Cell>
+<Cell><Data ss:Type="String">GET</Data></Cell>
+<Cell><Data ss:Type="String">BOOKING_URL</Data></Cell>
+<Cell><Data ss:Type="String">Fetch pay-at-cafe queue summary</Data></Cell>
+<Cell><Data ss:Type="String">app/components/NotificationPanel.tsx</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${BOOKING_URL}/api/pay-at-cafe/queue-summary/${vendorId}?date=${dateStr}</Data></Cell>
+<Cell><Data ss:Type="String">GET</Data></Cell>
+<Cell><Data ss:Type="String">BOOKING_URL</Data></Cell>
+<Cell><Data ss:Type="String">Fetch pay-at-cafe queue summary</Data></Cell>
+<Cell><Data ss:Type="String">app/components/NotificationButton.tsx</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${BOOKING_URL}/api/pay-at-cafe/reject</Data></Cell>
+<Cell><Data ss:Type="String">POST</Data></Cell>
+<Cell><Data ss:Type="String">BOOKING_URL</Data></Cell>
+<Cell><Data ss:Type="String">Reject pay-at-cafe request</Data></Cell>
+<Cell><Data ss:Type="String">app/components/NotificationPanel.tsx</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${BOOKING_URL}/api/pay-at-cafe/settings/${vendorId}</Data></Cell>
+<Cell><Data ss:Type="String">GET</Data></Cell>
+<Cell><Data ss:Type="String">BOOKING_URL</Data></Cell>
+<Cell><Data ss:Type="String">Fetch/update pay-at-cafe settings</Data></Cell>
+<Cell><Data ss:Type="String">app/components/my-account.tsx</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${BOOKING_URL}/api/pay-at-cafe/settings/${vendorId}</Data></Cell>
+<Cell><Data ss:Type="String">PUT</Data></Cell>
+<Cell><Data ss:Type="String">BOOKING_URL</Data></Cell>
+<Cell><Data ss:Type="String">Fetch/update pay-at-cafe settings</Data></Cell>
+<Cell><Data ss:Type="String">app/components/my-account.tsx</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${BOOKING_URL}/api/update_booking/${bookingId}</Data></Cell>
+<Cell><Data ss:Type="String">PUT</Data></Cell>
+<Cell><Data ss:Type="String">BOOKING_URL</Data></Cell>
+<Cell><Data ss:Type="String">API used by dashboard feature</Data></Cell>
+<Cell><Data ss:Type="String">app/components/manage-booking.tsx | app/components/newSlot.tsx | app/components/test2.tsx</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${BOOKING_URL}/api/vendor/${vendorId}/booking-field-config</Data></Cell>
+<Cell><Data ss:Type="String">GET</Data></Cell>
+<Cell><Data ss:Type="String">BOOKING_URL</Data></Cell>
+<Cell><Data ss:Type="String">API used by dashboard feature</Data></Cell>
+<Cell><Data ss:Type="String">app/components/newSlot.tsx</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${BOOKING_URL}/api/vendor/${vendorId}/booking-field-config</Data></Cell>
+<Cell><Data ss:Type="String">PUT</Data></Cell>
+<Cell><Data ss:Type="String">BOOKING_URL</Data></Cell>
+<Cell><Data ss:Type="String">API used by dashboard feature</Data></Cell>
+<Cell><Data ss:Type="String">app/components/newSlot.tsx</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${BOOKING_URL}/api/vendor/${vendorId}/monthly-credit/accounts</Data></Cell>
+<Cell><Data ss:Type="String">GET</Data></Cell>
+<Cell><Data ss:Type="String">BOOKING_URL</Data></Cell>
+<Cell><Data ss:Type="String">Manage monthly credit accounts</Data></Cell>
+<Cell><Data ss:Type="String">app/components/console-pricing.tsx | app/components/credit-account-modal.tsx | app/components/extraBookingOverlay.tsx | app/components/gamers-credit-control.tsx | app/components/newSlot.tsx</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${BOOKING_URL}/api/vendor/${vendorId}/monthly-credit/accounts</Data></Cell>
+<Cell><Data ss:Type="String">PUT</Data></Cell>
+<Cell><Data ss:Type="String">BOOKING_URL</Data></Cell>
+<Cell><Data ss:Type="String">Manage monthly credit accounts</Data></Cell>
+<Cell><Data ss:Type="String">app/components/console-pricing.tsx | app/components/credit-account-modal.tsx | app/components/gamers-credit-control.tsx</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${BOOKING_URL}/api/vendor/${vendorId}/monthly-credit/settle</Data></Cell>
+<Cell><Data ss:Type="String">POST</Data></Cell>
+<Cell><Data ss:Type="String">BOOKING_URL</Data></Cell>
+<Cell><Data ss:Type="String">Settle monthly credit balance</Data></Cell>
+<Cell><Data ss:Type="String">app/components/gamers-credit-control.tsx</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${BOOKING_URL}/api/vendor/${vendorId}/monthly-credit/statement/${userId}</Data></Cell>
+<Cell><Data ss:Type="String">GET</Data></Cell>
+<Cell><Data ss:Type="String">BOOKING_URL</Data></Cell>
+<Cell><Data ss:Type="String">Fetch monthly credit statement</Data></Cell>
+<Cell><Data ss:Type="String">app/components/console-pricing.tsx | app/components/gamers-credit-control.tsx</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${BOOKING_URL}/api/vendor/${vendorId}/slot-bookings?slot_ids=${slotIdsParam}&amp;date=${normalizedDate}${statusParam}</Data></Cell>
+<Cell><Data ss:Type="String">UNKNOWN</Data></Cell>
+<Cell><Data ss:Type="String">BOOKING_URL</Data></Cell>
+<Cell><Data ss:Type="String">Fetch bookings mapped to slot IDs</Data></Cell>
+<Cell><Data ss:Type="String">app/components/newSlot.tsx</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${BOOKING_URL}/api/vendor/${vendorId}/squad-pricing-policy</Data></Cell>
+<Cell><Data ss:Type="String">GET</Data></Cell>
+<Cell><Data ss:Type="String">BOOKING_URL</Data></Cell>
+<Cell><Data ss:Type="String">Fetch or update squad pricing rules</Data></Cell>
+<Cell><Data ss:Type="String">app/components/newSlot.tsx</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${BOOKING_URL}/api/vendor/${vendorId}/users</Data></Cell>
+<Cell><Data ss:Type="String">GET</Data></Cell>
+<Cell><Data ss:Type="String">BOOKING_URL</Data></Cell>
+<Cell><Data ss:Type="String">Fetch/create users for booking and credit</Data></Cell>
+<Cell><Data ss:Type="String">app/components/BookingForm.tsx | app/components/PrivateBooking.tsx | app/components/console-pricing.tsx | app/components/extraBookingOverlay.tsx | app/components/gamers-credit-control.tsx | app/components/newSlot.tsx | app/components/test.tsx</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${BOOKING_URL}/api/vendor/${vendorId}/users</Data></Cell>
+<Cell><Data ss:Type="String">POST</Data></Cell>
+<Cell><Data ss:Type="String">BOOKING_URL</Data></Cell>
+<Cell><Data ss:Type="String">Fetch/create users for booking and credit</Data></Cell>
+<Cell><Data ss:Type="String">app/components/credit-account-modal.tsx | app/components/gamers-credit-control.tsx</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${BOOKING_URL}/api/vendor/${vendorId}/users?${params.toString()}</Data></Cell>
+<Cell><Data ss:Type="String">GET</Data></Cell>
+<Cell><Data ss:Type="String">BOOKING_URL</Data></Cell>
+<Cell><Data ss:Type="String">Fetch/create users for booking and credit</Data></Cell>
+<Cell><Data ss:Type="String">app/components/newSlot.tsx</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${BOOKING_URL}/api/vendor/${vendorIdFromToken}/users</Data></Cell>
+<Cell><Data ss:Type="String">GET</Data></Cell>
+<Cell><Data ss:Type="String">BOOKING_URL</Data></Cell>
+<Cell><Data ss:Type="String">Fetch/create users for booking and credit</Data></Cell>
+<Cell><Data ss:Type="String">app/components/rapid-bookings.tsx</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${DASHBOARD_URL}/api/addConsole</Data></Cell>
+<Cell><Data ss:Type="String">POST</Data></Cell>
+<Cell><Data ss:Type="String">DASHBOARD_URL</Data></Cell>
+<Cell><Data ss:Type="String">API used by dashboard feature</Data></Cell>
+<Cell><Data ss:Type="String">app/components/add-console-form.tsx</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${DASHBOARD_URL}/api/assignConsoleToMultipleBookings</Data></Cell>
+<Cell><Data ss:Type="String">UNKNOWN</Data></Cell>
+<Cell><Data ss:Type="String">DASHBOARD_URL</Data></Cell>
+<Cell><Data ss:Type="String">Assign console to multiple bookings</Data></Cell>
+<Cell><Data ss:Type="String">app/components/upcoming-booking.tsx</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${DASHBOARD_URL}/api/booking/${bookingId}/details</Data></Cell>
+<Cell><Data ss:Type="String">GET</Data></Cell>
+<Cell><Data ss:Type="String">DASHBOARD_URL</Data></Cell>
+<Cell><Data ss:Type="String">API used by dashboard feature</Data></Cell>
+<Cell><Data ss:Type="String">app/components/mealsDetailmodal.tsx</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${DASHBOARD_URL}/api/console-types?vendor_id=${vendorId}</Data></Cell>
+<Cell><Data ss:Type="String">GET</Data></Cell>
+<Cell><Data ss:Type="String">DASHBOARD_URL</Data></Cell>
+<Cell><Data ss:Type="String">Fetch console type catalog</Data></Cell>
+<Cell><Data ss:Type="String">app/components/add-console-form.tsx | app/components/console-pricing.tsx | app/components/manage-gaming-console.tsx</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${DASHBOARD_URL}/api/console/${selectedConsoleId}</Data></Cell>
+<Cell><Data ss:Type="String">GET</Data></Cell>
+<Cell><Data ss:Type="String">DASHBOARD_URL</Data></Cell>
+<Cell><Data ss:Type="String">API used by dashboard feature</Data></Cell>
+<Cell><Data ss:Type="String">app/components/add-console-form.tsx</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${DASHBOARD_URL}/api/console/${vendorId}/${id}</Data></Cell>
+<Cell><Data ss:Type="String">DELETE</Data></Cell>
+<Cell><Data ss:Type="String">DASHBOARD_URL</Data></Cell>
+<Cell><Data ss:Type="String">API used by dashboard feature</Data></Cell>
+<Cell><Data ss:Type="String">app/components/console-list.tsx</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${DASHBOARD_URL}/api/console/update/vendor/${vendorId}</Data></Cell>
+<Cell><Data ss:Type="String">PUT</Data></Cell>
+<Cell><Data ss:Type="String">DASHBOARD_URL</Data></Cell>
+<Cell><Data ss:Type="String">API used by dashboard feature</Data></Cell>
+<Cell><Data ss:Type="String">app/components/edit-console-form.tsx</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${DASHBOARD_URL}/api/getAllDevice/consoleTypeId/${gameId}/vendor/${vendorId}</Data></Cell>
+<Cell><Data ss:Type="String">GET</Data></Cell>
+<Cell><Data ss:Type="String">DASHBOARD_URL</Data></Cell>
+<Cell><Data ss:Type="String">API used by dashboard feature</Data></Cell>
+<Cell><Data ss:Type="String">app/components/upcoming-booking.tsx</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${DASHBOARD_URL}/api/getAllDevice/vendor/${vendorId}</Data></Cell>
+<Cell><Data ss:Type="String">GET</Data></Cell>
+<Cell><Data ss:Type="String">DASHBOARD_URL</Data></Cell>
+<Cell><Data ss:Type="String">API used by dashboard feature</Data></Cell>
+<Cell><Data ss:Type="String">app/components/rapid-bookings.tsx</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${DASHBOARD_URL}/api/getConsoles/vendor/${currentVendorId}</Data></Cell>
+<Cell><Data ss:Type="String">GET</Data></Cell>
+<Cell><Data ss:Type="String">DASHBOARD_URL</Data></Cell>
+<Cell><Data ss:Type="String">Fetch console list</Data></Cell>
+<Cell><Data ss:Type="String">app/components/console-list.tsx</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${DASHBOARD_URL}/api/getConsoles/vendor/${vendorId}</Data></Cell>
+<Cell><Data ss:Type="String">GET</Data></Cell>
+<Cell><Data ss:Type="String">DASHBOARD_URL</Data></Cell>
+<Cell><Data ss:Type="String">Fetch console list</Data></Cell>
+<Cell><Data ss:Type="String">app/components/add-console-form.tsx | app/components/book-stats.tsx | app/context/DashboardDataContext.tsx</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${DASHBOARD_URL}/api/getLandingPage/vendor/${vendorId}</Data></Cell>
+<Cell><Data ss:Type="String">GET</Data></Cell>
+<Cell><Data ss:Type="String">DASHBOARD_URL</Data></Cell>
+<Cell><Data ss:Type="String">Fetch dashboard landing data</Data></Cell>
+<Cell><Data ss:Type="String">app/context/DashboardDataContext.tsx</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${DASHBOARD_URL}/api/getLandingPage/vendor/${vendorId}?history_date=${historyDate}</Data></Cell>
+<Cell><Data ss:Type="String">GET</Data></Cell>
+<Cell><Data ss:Type="String">DASHBOARD_URL</Data></Cell>
+<Cell><Data ss:Type="String">Fetch dashboard landing data</Data></Cell>
+<Cell><Data ss:Type="String">app/components/current-slot.tsx</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${DASHBOARD_URL}/api/pass_types</Data></Cell>
+<Cell><Data ss:Type="String">GET</Data></Cell>
+<Cell><Data ss:Type="String">DASHBOARD_URL</Data></Cell>
+<Cell><Data ss:Type="String">Fetch pass types</Data></Cell>
+<Cell><Data ss:Type="String">app/components/manage-pass.tsx</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${DASHBOARD_URL}/api/payment-methods/initialize</Data></Cell>
+<Cell><Data ss:Type="String">POST</Data></Cell>
+<Cell><Data ss:Type="String">DASHBOARD_URL</Data></Cell>
+<Cell><Data ss:Type="String">API used by dashboard feature</Data></Cell>
+<Cell><Data ss:Type="String">app/components/my-account.tsx</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${DASHBOARD_URL}/api/releaseDevice/consoleTypeId/${consoleItem.gameId}/console/${consoleItem.id}/vendor/${vendorId}</Data></Cell>
+<Cell><Data ss:Type="String">POST</Data></Cell>
+<Cell><Data ss:Type="String">DASHBOARD_URL</Data></Cell>
+<Cell><Data ss:Type="String">Release active console/session</Data></Cell>
+<Cell><Data ss:Type="String">app/components/console-list.tsx</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${DASHBOARD_URL}/api/releaseDevice/consoleTypeId/${gameId}/console/${consoleId}/vendor/${vendorId}</Data></Cell>
+<Cell><Data ss:Type="String">POST</Data></Cell>
+<Cell><Data ss:Type="String">DASHBOARD_URL</Data></Cell>
+<Cell><Data ss:Type="String">Release active console/session</Data></Cell>
+<Cell><Data ss:Type="String">app/components/current-slot.tsx</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${DASHBOARD_URL}/api/transactionReport/${vendorId}/${toDateApi}/${fromDateApi}</Data></Cell>
+<Cell><Data ss:Type="String">GET</Data></Cell>
+<Cell><Data ss:Type="String">DASHBOARD_URL</Data></Cell>
+<Cell><Data ss:Type="String">Fetch transaction report</Data></Cell>
+<Cell><Data ss:Type="String">app/components/transaction-table.tsx</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${DASHBOARD_URL}/api/updateDeviceStatus/consoleTypeId/${selectedGameId}/console/${primaryConsoleId}/bookingId/${selectedBookingId}/vendor/${vendorId}</Data></Cell>
+<Cell><Data ss:Type="String">UNKNOWN</Data></Cell>
+<Cell><Data ss:Type="String">DASHBOARD_URL</Data></Cell>
+<Cell><Data ss:Type="String">Assign/update console status for booking</Data></Cell>
+<Cell><Data ss:Type="String">app/components/upcoming-booking.tsx</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${DASHBOARD_URL}/api/vendor/${activeVendorId}/passes</Data></Cell>
+<Cell><Data ss:Type="String">GET</Data></Cell>
+<Cell><Data ss:Type="String">DASHBOARD_URL</Data></Cell>
+<Cell><Data ss:Type="String">Manage vendor passes</Data></Cell>
+<Cell><Data ss:Type="String">app/components/manage-pass.tsx</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${DASHBOARD_URL}/api/vendor/${activeVendorId}/passes</Data></Cell>
+<Cell><Data ss:Type="String">POST</Data></Cell>
+<Cell><Data ss:Type="String">DASHBOARD_URL</Data></Cell>
+<Cell><Data ss:Type="String">Manage vendor passes</Data></Cell>
+<Cell><Data ss:Type="String">app/components/manage-pass.tsx</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${DASHBOARD_URL}/api/vendor/${activeVendorId}/passes/${id}</Data></Cell>
+<Cell><Data ss:Type="String">PUT</Data></Cell>
+<Cell><Data ss:Type="String">DASHBOARD_URL</Data></Cell>
+<Cell><Data ss:Type="String">Manage vendor passes</Data></Cell>
+<Cell><Data ss:Type="String">app/components/manage-pass.tsx</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${DASHBOARD_URL}/api/vendor/${activeVendorId}/passes/${id}</Data></Cell>
+<Cell><Data ss:Type="String">DELETE</Data></Cell>
+<Cell><Data ss:Type="String">DASHBOARD_URL</Data></Cell>
+<Cell><Data ss:Type="String">Manage vendor passes</Data></Cell>
+<Cell><Data ss:Type="String">app/components/manage-pass.tsx</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${DASHBOARD_URL}/api/vendor/${VENDOR_ID}/extras/categories</Data></Cell>
+<Cell><Data ss:Type="String">GET</Data></Cell>
+<Cell><Data ss:Type="String">DASHBOARD_URL</Data></Cell>
+<Cell><Data ss:Type="String">API used by dashboard feature</Data></Cell>
+<Cell><Data ss:Type="String">app/components/manage-extras-page-content.tsx</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${DASHBOARD_URL}/api/vendor/${VENDOR_ID}/extras/category</Data></Cell>
+<Cell><Data ss:Type="String">POST</Data></Cell>
+<Cell><Data ss:Type="String">DASHBOARD_URL</Data></Cell>
+<Cell><Data ss:Type="String">API used by dashboard feature</Data></Cell>
+<Cell><Data ss:Type="String">app/components/manage-extras-page-content.tsx</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${DASHBOARD_URL}/api/vendor/${VENDOR_ID}/extras/category/${categoryId}/menu</Data></Cell>
+<Cell><Data ss:Type="String">POST</Data></Cell>
+<Cell><Data ss:Type="String">DASHBOARD_URL</Data></Cell>
+<Cell><Data ss:Type="String">API used by dashboard feature</Data></Cell>
+<Cell><Data ss:Type="String">app/components/manage-extras-page-content.tsx</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${DASHBOARD_URL}/api/vendor/${VENDOR_ID}/extras/category/${categoryId}/menu/${menuId}</Data></Cell>
+<Cell><Data ss:Type="String">PUT</Data></Cell>
+<Cell><Data ss:Type="String">DASHBOARD_URL</Data></Cell>
+<Cell><Data ss:Type="String">API used by dashboard feature</Data></Cell>
+<Cell><Data ss:Type="String">app/components/manage-extras-page-content.tsx</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${DASHBOARD_URL}/api/vendor/${VENDOR_ID}/extras/category/${categoryId}/menu/${menuId}</Data></Cell>
+<Cell><Data ss:Type="String">DELETE</Data></Cell>
+<Cell><Data ss:Type="String">DASHBOARD_URL</Data></Cell>
+<Cell><Data ss:Type="String">API used by dashboard feature</Data></Cell>
+<Cell><Data ss:Type="String">app/components/manage-extras-page-content.tsx</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${DASHBOARD_URL}/api/vendor/${VENDOR_ID}/extras/category/${id}</Data></Cell>
+<Cell><Data ss:Type="String">PUT</Data></Cell>
+<Cell><Data ss:Type="String">DASHBOARD_URL</Data></Cell>
+<Cell><Data ss:Type="String">API used by dashboard feature</Data></Cell>
+<Cell><Data ss:Type="String">app/components/manage-extras-page-content.tsx</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${DASHBOARD_URL}/api/vendor/${VENDOR_ID}/extras/category/${id}</Data></Cell>
+<Cell><Data ss:Type="String">DELETE</Data></Cell>
+<Cell><Data ss:Type="String">DASHBOARD_URL</Data></Cell>
+<Cell><Data ss:Type="String">API used by dashboard feature</Data></Cell>
+<Cell><Data ss:Type="String">app/components/manage-extras-page-content.tsx</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${DASHBOARD_URL}/api/vendor/${vendorId}/access${path}</Data></Cell>
+<Cell><Data ss:Type="String">GET</Data></Cell>
+<Cell><Data ss:Type="String">DASHBOARD_URL</Data></Cell>
+<Cell><Data ss:Type="String">API used by dashboard feature</Data></Cell>
+<Cell><Data ss:Type="String">lib/access-api.ts</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${DASHBOARD_URL}/api/vendor/${vendorId}/active-pricing</Data></Cell>
+<Cell><Data ss:Type="String">GET</Data></Cell>
+<Cell><Data ss:Type="String">DASHBOARD_URL</Data></Cell>
+<Cell><Data ss:Type="String">Fetch currently active pricing</Data></Cell>
+<Cell><Data ss:Type="String">app/components/newSlot.tsx</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${DASHBOARD_URL}/api/vendor/${vendorId}/available-games</Data></Cell>
+<Cell><Data ss:Type="String">GET</Data></Cell>
+<Cell><Data ss:Type="String">DASHBOARD_URL</Data></Cell>
+<Cell><Data ss:Type="String">API used by dashboard feature</Data></Cell>
+<Cell><Data ss:Type="String">app/components/console-pricing.tsx</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${DASHBOARD_URL}/api/vendor/${vendorId}/bank-details</Data></Cell>
+<Cell><Data ss:Type="String">GET</Data></Cell>
+<Cell><Data ss:Type="String">DASHBOARD_URL</Data></Cell>
+<Cell><Data ss:Type="String">Fetch/update bank details</Data></Cell>
+<Cell><Data ss:Type="String">app/components/my-account.tsx</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${DASHBOARD_URL}/api/vendor/${vendorId}/bank-details</Data></Cell>
+<Cell><Data ss:Type="String">POST</Data></Cell>
+<Cell><Data ss:Type="String">DASHBOARD_URL</Data></Cell>
+<Cell><Data ss:Type="String">Fetch/update bank details</Data></Cell>
+<Cell><Data ss:Type="String">app/components/my-account.tsx</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${DASHBOARD_URL}/api/vendor/${vendorId}/bank-details/history?limit=100</Data></Cell>
+<Cell><Data ss:Type="String">GET</Data></Cell>
+<Cell><Data ss:Type="String">DASHBOARD_URL</Data></Cell>
+<Cell><Data ss:Type="String">Fetch/update bank details</Data></Cell>
+<Cell><Data ss:Type="String">app/components/my-account.tsx</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${DASHBOARD_URL}/api/vendor/${vendorId}/business-details</Data></Cell>
+<Cell><Data ss:Type="String">PATCH</Data></Cell>
+<Cell><Data ss:Type="String">DASHBOARD_URL</Data></Cell>
+<Cell><Data ss:Type="String">API used by dashboard feature</Data></Cell>
+<Cell><Data ss:Type="String">app/components/my-account.tsx</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${DASHBOARD_URL}/api/vendor/${vendorId}/console-pricing</Data></Cell>
+<Cell><Data ss:Type="String">GET</Data></Cell>
+<Cell><Data ss:Type="String">DASHBOARD_URL</Data></Cell>
+<Cell><Data ss:Type="String">Fetch or update console pricing</Data></Cell>
+<Cell><Data ss:Type="String">app/components/console-pricing.tsx</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${DASHBOARD_URL}/api/vendor/${vendorId}/console-pricing</Data></Cell>
+<Cell><Data ss:Type="String">POST</Data></Cell>
+<Cell><Data ss:Type="String">DASHBOARD_URL</Data></Cell>
+<Cell><Data ss:Type="String">Fetch or update console pricing</Data></Cell>
+<Cell><Data ss:Type="String">app/components/console-pricing.tsx</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${DASHBOARD_URL}/api/vendor/${vendorId}/controller-pricing</Data></Cell>
+<Cell><Data ss:Type="String">GET</Data></Cell>
+<Cell><Data ss:Type="String">DASHBOARD_URL</Data></Cell>
+<Cell><Data ss:Type="String">Fetch or update controller pricing</Data></Cell>
+<Cell><Data ss:Type="String">app/components/BookingForm.tsx | app/components/booking/BookingComponents/SlotManagement/index.tsx | app/components/console-pricing.tsx | app/components/newSlot.tsx</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${DASHBOARD_URL}/api/vendor/${vendorId}/controller-pricing</Data></Cell>
+<Cell><Data ss:Type="String">PUT</Data></Cell>
+<Cell><Data ss:Type="String">DASHBOARD_URL</Data></Cell>
+<Cell><Data ss:Type="String">Fetch or update controller pricing</Data></Cell>
+<Cell><Data ss:Type="String">app/components/console-pricing.tsx</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${DASHBOARD_URL}/api/vendor/${vendorId}/dashboard</Data></Cell>
+<Cell><Data ss:Type="String">GET</Data></Cell>
+<Cell><Data ss:Type="String">DASHBOARD_URL</Data></Cell>
+<Cell><Data ss:Type="String">Fetch vendor dashboard summary</Data></Cell>
+<Cell><Data ss:Type="String">app/components/NotificationButton.tsx | app/components/my-account.tsx</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${DASHBOARD_URL}/api/vendor/${vendorId}/documents</Data></Cell>
+<Cell><Data ss:Type="String">POST</Data></Cell>
+<Cell><Data ss:Type="String">DASHBOARD_URL</Data></Cell>
+<Cell><Data ss:Type="String">Manage vendor documents</Data></Cell>
+<Cell><Data ss:Type="String">app/components/my-account.tsx</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${DASHBOARD_URL}/api/vendor/${vendorId}/documents/${documentId}</Data></Cell>
+<Cell><Data ss:Type="String">PUT</Data></Cell>
+<Cell><Data ss:Type="String">DASHBOARD_URL</Data></Cell>
+<Cell><Data ss:Type="String">Manage vendor documents</Data></Cell>
+<Cell><Data ss:Type="String">app/components/my-account.tsx</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${DASHBOARD_URL}/api/vendor/${vendorId}/extra-services</Data></Cell>
+<Cell><Data ss:Type="String">GET</Data></Cell>
+<Cell><Data ss:Type="String">DASHBOARD_URL</Data></Cell>
+<Cell><Data ss:Type="String">Manage extra services / meals / categories</Data></Cell>
+<Cell><Data ss:Type="String">app/components/booking/BookingComponents/SlotManagement/mealSelector.tsx | app/components/mealSelector.tsx | app/components/mealsDetailmodal.tsx</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${DASHBOARD_URL}/api/vendor/${vendorId}/knowYourGamer</Data></Cell>
+<Cell><Data ss:Type="String">GET</Data></Cell>
+<Cell><Data ss:Type="String">DASHBOARD_URL</Data></Cell>
+<Cell><Data ss:Type="String">Know Your Gamers data and stats</Data></Cell>
+<Cell><Data ss:Type="String">app/components/know-your-gamers.tsx</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${DASHBOARD_URL}/api/vendor/${vendorId}/knowYourGamer/stats</Data></Cell>
+<Cell><Data ss:Type="String">GET</Data></Cell>
+<Cell><Data ss:Type="String">DASHBOARD_URL</Data></Cell>
+<Cell><Data ss:Type="String">Know Your Gamers data and stats</Data></Cell>
+<Cell><Data ss:Type="String">app/components/know-your-gamers.tsx</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${DASHBOARD_URL}/api/vendor/${vendorId}/notification-preferences</Data></Cell>
+<Cell><Data ss:Type="String">GET</Data></Cell>
+<Cell><Data ss:Type="String">DASHBOARD_URL</Data></Cell>
+<Cell><Data ss:Type="String">Fetch/update notification preferences</Data></Cell>
+<Cell><Data ss:Type="String">app/components/my-account.tsx</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${DASHBOARD_URL}/api/vendor/${vendorId}/notification-preferences</Data></Cell>
+<Cell><Data ss:Type="String">PUT</Data></Cell>
+<Cell><Data ss:Type="String">DASHBOARD_URL</Data></Cell>
+<Cell><Data ss:Type="String">Fetch/update notification preferences</Data></Cell>
+<Cell><Data ss:Type="String">app/components/my-account.tsx</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${DASHBOARD_URL}/api/vendor/${vendorId}/paymentMethods</Data></Cell>
+<Cell><Data ss:Type="String">GET</Data></Cell>
+<Cell><Data ss:Type="String">DASHBOARD_URL</Data></Cell>
+<Cell><Data ss:Type="String">API used by dashboard feature</Data></Cell>
+<Cell><Data ss:Type="String">app/components/my-account.tsx</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${DASHBOARD_URL}/api/vendor/${vendorId}/paymentMethods/toggle</Data></Cell>
+<Cell><Data ss:Type="String">POST</Data></Cell>
+<Cell><Data ss:Type="String">DASHBOARD_URL</Data></Cell>
+<Cell><Data ss:Type="String">API used by dashboard feature</Data></Cell>
+<Cell><Data ss:Type="String">app/components/my-account.tsx</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${DASHBOARD_URL}/api/vendor/${vendorId}/payouts?page=${page}&amp;per_page=10</Data></Cell>
+<Cell><Data ss:Type="String">GET</Data></Cell>
+<Cell><Data ss:Type="String">DASHBOARD_URL</Data></Cell>
+<Cell><Data ss:Type="String">Fetch payouts</Data></Cell>
+<Cell><Data ss:Type="String">app/components/my-account.tsx</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${DASHBOARD_URL}/api/vendor/${vendorId}/pricing-offers</Data></Cell>
+<Cell><Data ss:Type="String">GET</Data></Cell>
+<Cell><Data ss:Type="String">DASHBOARD_URL</Data></Cell>
+<Cell><Data ss:Type="String">Manage pricing offers</Data></Cell>
+<Cell><Data ss:Type="String">app/components/console-pricing.tsx</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${DASHBOARD_URL}/api/vendor/${vendorId}/pricing-offers</Data></Cell>
+<Cell><Data ss:Type="String">POST</Data></Cell>
+<Cell><Data ss:Type="String">DASHBOARD_URL</Data></Cell>
+<Cell><Data ss:Type="String">Manage pricing offers</Data></Cell>
+<Cell><Data ss:Type="String">app/components/console-pricing.tsx</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${DASHBOARD_URL}/api/vendor/${vendorId}/pricing-offers/${editingOffer.id}</Data></Cell>
+<Cell><Data ss:Type="String">PUT</Data></Cell>
+<Cell><Data ss:Type="String">DASHBOARD_URL</Data></Cell>
+<Cell><Data ss:Type="String">Manage pricing offers</Data></Cell>
+<Cell><Data ss:Type="String">app/components/console-pricing.tsx</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${DASHBOARD_URL}/api/vendor/${vendorId}/pricing-offers/${id}</Data></Cell>
+<Cell><Data ss:Type="String">DELETE</Data></Cell>
+<Cell><Data ss:Type="String">DASHBOARD_URL</Data></Cell>
+<Cell><Data ss:Type="String">Manage pricing offers</Data></Cell>
+<Cell><Data ss:Type="String">app/components/console-pricing.tsx</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${DASHBOARD_URL}/api/vendor/${vendorId}/settlements/summary?from=${settlementFromDate}&amp;to=${settlementToDate}</Data></Cell>
+<Cell><Data ss:Type="String">GET</Data></Cell>
+<Cell><Data ss:Type="String">DASHBOARD_URL</Data></Cell>
+<Cell><Data ss:Type="String">Fetch settlements summary</Data></Cell>
+<Cell><Data ss:Type="String">app/components/my-account.tsx</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${DASHBOARD_URL}/api/vendor/${vendorId}/squad-pricing-rules</Data></Cell>
+<Cell><Data ss:Type="String">GET</Data></Cell>
+<Cell><Data ss:Type="String">DASHBOARD_URL</Data></Cell>
+<Cell><Data ss:Type="String">Fetch or update squad pricing rules</Data></Cell>
+<Cell><Data ss:Type="String">app/components/console-pricing.tsx</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${DASHBOARD_URL}/api/vendor/${vendorId}/squad-pricing-rules</Data></Cell>
+<Cell><Data ss:Type="String">PUT</Data></Cell>
+<Cell><Data ss:Type="String">DASHBOARD_URL</Data></Cell>
+<Cell><Data ss:Type="String">Fetch or update squad pricing rules</Data></Cell>
+<Cell><Data ss:Type="String">app/components/console-pricing.tsx</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${DASHBOARD_URL}/api/vendor/${vendorId}/tax-profile</Data></Cell>
+<Cell><Data ss:Type="String">GET</Data></Cell>
+<Cell><Data ss:Type="String">DASHBOARD_URL</Data></Cell>
+<Cell><Data ss:Type="String">Fetch/update tax profile</Data></Cell>
+<Cell><Data ss:Type="String">app/components/console-pricing.tsx | app/components/my-account.tsx | app/components/transaction-table.tsx</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${DASHBOARD_URL}/api/vendor/${vendorId}/tax-profile</Data></Cell>
+<Cell><Data ss:Type="String">PUT</Data></Cell>
+<Cell><Data ss:Type="String">DASHBOARD_URL</Data></Cell>
+<Cell><Data ss:Type="String">Fetch/update tax profile</Data></Cell>
+<Cell><Data ss:Type="String">app/components/console-pricing.tsx | app/components/my-account.tsx</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${DASHBOARD_URL}/api/vendor/${vendorId}/update-profile-image</Data></Cell>
+<Cell><Data ss:Type="String">POST</Data></Cell>
+<Cell><Data ss:Type="String">DASHBOARD_URL</Data></Cell>
+<Cell><Data ss:Type="String">Manage vendor media/images</Data></Cell>
+<Cell><Data ss:Type="String">app/components/my-account.tsx</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${DASHBOARD_URL}/api/vendor/master?email_id=${email}</Data></Cell>
+<Cell><Data ss:Type="String">GET</Data></Cell>
+<Cell><Data ss:Type="String">DASHBOARD_URL</Data></Cell>
+<Cell><Data ss:Type="String">API used by dashboard feature</Data></Cell>
+<Cell><Data ss:Type="String">app/(features)/master/page.tsx</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${DASHBOARD_URL}/api/vendors/${vendorId}/pcs/unlink</Data></Cell>
+<Cell><Data ss:Type="String">POST</Data></Cell>
+<Cell><Data ss:Type="String">DASHBOARD_URL</Data></Cell>
+<Cell><Data ss:Type="String">API used by dashboard feature</Data></Cell>
+<Cell><Data ss:Type="String">app/components/console-list.tsx</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${DASHBOARD_URL}/api/vendors/${vendorId}/subscription/history</Data></Cell>
+<Cell><Data ss:Type="String">GET</Data></Cell>
+<Cell><Data ss:Type="String">DASHBOARD_URL</Data></Cell>
+<Cell><Data ss:Type="String">Subscription status, orders, history</Data></Cell>
+<Cell><Data ss:Type="String">app/components/my-account.tsx</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${DASHBOARD_URL}/api/vendors/${vendorId}/subscription/status?t=${Date.now()}</Data></Cell>
+<Cell><Data ss:Type="String">GET</Data></Cell>
+<Cell><Data ss:Type="String">DASHBOARD_URL</Data></Cell>
+<Cell><Data ss:Type="String">Subscription status, orders, history</Data></Cell>
+<Cell><Data ss:Type="String">lib/api.ts</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${LOGIN_URL}/api/change-password</Data></Cell>
+<Cell><Data ss:Type="String">POST</Data></Cell>
+<Cell><Data ss:Type="String">LOGIN_URL</Data></Cell>
+<Cell><Data ss:Type="String">API used by dashboard feature</Data></Cell>
+<Cell><Data ss:Type="String">app/(features)/login/page.tsx</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${LOGIN_URL}/api/forgot-password</Data></Cell>
+<Cell><Data ss:Type="String">POST</Data></Cell>
+<Cell><Data ss:Type="String">LOGIN_URL</Data></Cell>
+<Cell><Data ss:Type="String">Start password reset flow</Data></Cell>
+<Cell><Data ss:Type="String">app/(features)/login/forget-password/page.tsx</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${LOGIN_URL}/api/login</Data></Cell>
+<Cell><Data ss:Type="String">POST</Data></Cell>
+<Cell><Data ss:Type="String">LOGIN_URL</Data></Cell>
+<Cell><Data ss:Type="String">User login</Data></Cell>
+<Cell><Data ss:Type="String">app/(features)/select-cafe/page.tsx</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${LOGIN_URL}/api/login?t=${timestamp}</Data></Cell>
+<Cell><Data ss:Type="String">UNKNOWN</Data></Cell>
+<Cell><Data ss:Type="String">LOGIN_URL</Data></Cell>
+<Cell><Data ss:Type="String">User login</Data></Cell>
+<Cell><Data ss:Type="String">app/(features)/login/page.tsx</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${LOGIN_URL}/api/reset-password</Data></Cell>
+<Cell><Data ss:Type="String">POST</Data></Cell>
+<Cell><Data ss:Type="String">LOGIN_URL</Data></Cell>
+<Cell><Data ss:Type="String">Set new password</Data></Cell>
+<Cell><Data ss:Type="String">app/(features)/login/forget-password/page.tsx</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${LOGIN_URL}/api/validatePin?t=${timestamp}</Data></Cell>
+<Cell><Data ss:Type="String">POST</Data></Cell>
+<Cell><Data ss:Type="String">LOGIN_URL</Data></Cell>
+<Cell><Data ss:Type="String">Validate owner/staff PIN</Data></Cell>
+<Cell><Data ss:Type="String">app/(features)/select-cafe/page.tsx | app/context/AccessContext.tsx</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${LOGIN_URL}/api/verify-reset-code</Data></Cell>
+<Cell><Data ss:Type="String">POST</Data></Cell>
+<Cell><Data ss:Type="String">LOGIN_URL</Data></Cell>
+<Cell><Data ss:Type="String">Verify password reset code</Data></Cell>
+<Cell><Data ss:Type="String">app/(features)/login/forget-password/page.tsx</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${process.env.NEXT_PUBLIC_DASHBOARD_URL}/api/vendors/${vendorId}/subscription/check-payment/${pollingOrderId}</Data></Cell>
+<Cell><Data ss:Type="String">GET</Data></Cell>
+<Cell><Data ss:Type="String">Unknown/Derived</Data></Cell>
+<Cell><Data ss:Type="String">Subscription status, orders, history</Data></Cell>
+<Cell><Data ss:Type="String">app/(features)/subscription/page.tsx</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${this.baseURL}/api/getAllConsole/vendor/${vendorId}</Data></Cell>
+<Cell><Data ss:Type="String">GET</Data></Cell>
+<Cell><Data ss:Type="String">BOOKING_URL (via service baseURL)</Data></Cell>
+<Cell><Data ss:Type="String">Fetch all consoles for vendor</Data></Cell>
+<Cell><Data ss:Type="String">app/components/booking/services/api/slotService.ts</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${this.baseURL}/api/getSlotsBatch/vendor/${vendorId}</Data></Cell>
+<Cell><Data ss:Type="String">POST</Data></Cell>
+<Cell><Data ss:Type="String">BOOKING_URL (via service baseURL)</Data></Cell>
+<Cell><Data ss:Type="String">Fetch slot availability in batch</Data></Cell>
+<Cell><Data ss:Type="String">app/components/booking/services/api/slotService.ts</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${this.baseURL}/api/newBooking/vendor/${vendorId}</Data></Cell>
+<Cell><Data ss:Type="String">POST</Data></Cell>
+<Cell><Data ss:Type="String">BOOKING_URL (via service baseURL)</Data></Cell>
+<Cell><Data ss:Type="String">Create new booking</Data></Cell>
+<Cell><Data ss:Type="String">app/components/booking/services/api/bookingService.ts</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${this.baseURL}/api/pass/redeem/dashboard</Data></Cell>
+<Cell><Data ss:Type="String">POST</Data></Cell>
+<Cell><Data ss:Type="String">BOOKING_URL (via service baseURL)</Data></Cell>
+<Cell><Data ss:Type="String">Redeem pass from dashboard</Data></Cell>
+<Cell><Data ss:Type="String">app/components/booking/services/api/bookingService.ts</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${this.baseURL}/api/pass/validate</Data></Cell>
+<Cell><Data ss:Type="String">POST</Data></Cell>
+<Cell><Data ss:Type="String">BOOKING_URL (via service baseURL)</Data></Cell>
+<Cell><Data ss:Type="String">Validate pass before booking</Data></Cell>
+<Cell><Data ss:Type="String">app/components/booking/services/api/bookingService.ts</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${this.baseURL}/api/vendor/${vendorId}/users</Data></Cell>
+<Cell><Data ss:Type="String">GET</Data></Cell>
+<Cell><Data ss:Type="String">BOOKING_URL (via service baseURL)</Data></Cell>
+<Cell><Data ss:Type="String">Fetch/create users for booking and credit</Data></Cell>
+<Cell><Data ss:Type="String">app/components/booking/services/api/bookingService.ts</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${VENDOR_ONBOARD_URL}/api/onboard</Data></Cell>
+<Cell><Data ss:Type="String">POST</Data></Cell>
+<Cell><Data ss:Type="String">VENDOR_ONBOARD_URL</Data></Cell>
+<Cell><Data ss:Type="String">Vendor onboarding / cafe selection</Data></Cell>
+<Cell><Data ss:Type="String">app/(features)/select-cafe/page.tsx</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${VENDOR_ONBOARD_URL}/api/orders</Data></Cell>
+<Cell><Data ss:Type="String">POST</Data></Cell>
+<Cell><Data ss:Type="String">VENDOR_ONBOARD_URL</Data></Cell>
+<Cell><Data ss:Type="String">Create vendor product orders</Data></Cell>
+<Cell><Data ss:Type="String">app/components/vendorOrder.tsx</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${VENDOR_ONBOARD_URL}/api/vendor/${vendorId}/add-image</Data></Cell>
+<Cell><Data ss:Type="String">POST</Data></Cell>
+<Cell><Data ss:Type="String">VENDOR_ONBOARD_URL</Data></Cell>
+<Cell><Data ss:Type="String">Manage vendor media/images</Data></Cell>
+<Cell><Data ss:Type="String">app/components/my-account.tsx</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${VENDOR_ONBOARD_URL}/api/vendor/${vendorId}/check-verification?page_type=${pageType}</Data></Cell>
+<Cell><Data ss:Type="String">GET</Data></Cell>
+<Cell><Data ss:Type="String">VENDOR_ONBOARD_URL</Data></Cell>
+<Cell><Data ss:Type="String">API used by dashboard feature</Data></Cell>
+<Cell><Data ss:Type="String">app/components/my-account.tsx</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${VENDOR_ONBOARD_URL}/api/vendor/${vendorId}/delete-image-by-url</Data></Cell>
+<Cell><Data ss:Type="String">DELETE</Data></Cell>
+<Cell><Data ss:Type="String">VENDOR_ONBOARD_URL</Data></Cell>
+<Cell><Data ss:Type="String">Manage vendor media/images</Data></Cell>
+<Cell><Data ss:Type="String">app/components/my-account.tsx</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${VENDOR_ONBOARD_URL}/api/vendor/${vendorId}/delete-image/${imageId}</Data></Cell>
+<Cell><Data ss:Type="String">DELETE</Data></Cell>
+<Cell><Data ss:Type="String">VENDOR_ONBOARD_URL</Data></Cell>
+<Cell><Data ss:Type="String">Manage vendor media/images</Data></Cell>
+<Cell><Data ss:Type="String">app/components/my-account.tsx</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${VENDOR_ONBOARD_URL}/api/vendor/${vendorId}/send-otp</Data></Cell>
+<Cell><Data ss:Type="String">POST</Data></Cell>
+<Cell><Data ss:Type="String">VENDOR_ONBOARD_URL</Data></Cell>
+<Cell><Data ss:Type="String">API used by dashboard feature</Data></Cell>
+<Cell><Data ss:Type="String">app/components/otpVerificationModal.tsx</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${VENDOR_ONBOARD_URL}/api/vendor/${vendorId}/updateSlot</Data></Cell>
+<Cell><Data ss:Type="String">POST</Data></Cell>
+<Cell><Data ss:Type="String">VENDOR_ONBOARD_URL</Data></Cell>
+<Cell><Data ss:Type="String">API used by dashboard feature</Data></Cell>
+<Cell><Data ss:Type="String">app/components/my-account.tsx</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${VENDOR_ONBOARD_URL}/api/vendor/${vendorId}/verify-otp</Data></Cell>
+<Cell><Data ss:Type="String">POST</Data></Cell>
+<Cell><Data ss:Type="String">VENDOR_ONBOARD_URL</Data></Cell>
+<Cell><Data ss:Type="String">API used by dashboard feature</Data></Cell>
+<Cell><Data ss:Type="String">app/components/otpVerificationModal.tsx</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">${VENDOR_ONBOARD_URL}/api/vendor/products</Data></Cell>
+<Cell><Data ss:Type="String">GET</Data></Cell>
+<Cell><Data ss:Type="String">VENDOR_ONBOARD_URL</Data></Cell>
+<Cell><Data ss:Type="String">Fetch vendor products for store</Data></Cell>
+<Cell><Data ss:Type="String">app/components/vendorOrder.tsx</Data></Cell>
+</Row>
+</Table></Worksheet>
+<Worksheet ss:Name="Base URLs"><Table>
+<Row>
+<Cell><Data ss:Type="String">base_url_key</Data></Cell>
+<Cell><Data ss:Type="String">env_variable</Data></Cell>
+<Cell><Data ss:Type="String">notes</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">DASHBOARD_URL</Data></Cell>
+<Cell><Data ss:Type="String">NEXT_PUBLIC_DASHBOARD_URL</Data></Cell>
+<Cell><Data ss:Type="String">Primary dashboard backend</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">BOOKING_URL</Data></Cell>
+<Cell><Data ss:Type="String">NEXT_PUBLIC_BOOKING_URL</Data></Cell>
+<Cell><Data ss:Type="String">Booking/slot/payment backend</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">LOGIN_URL</Data></Cell>
+<Cell><Data ss:Type="String">NEXT_PUBLIC_LOGIN_URL</Data></Cell>
+<Cell><Data ss:Type="String">Authentication and PIN endpoints</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">VENDOR_ONBOARD_URL</Data></Cell>
+<Cell><Data ss:Type="String">NEXT_PUBLIC_VENDOR_ONBOARD</Data></Cell>
+<Cell><Data ss:Type="String">Vendor onboarding and store/order endpoints</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">USER_ONBOARD_URL</Data></Cell>
+<Cell><Data ss:Type="String">NEXT_PUBLIC_USER_ONBOARD</Data></Cell>
+<Cell><Data ss:Type="String">User onboarding backend (configured)</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">DASHBOARD_URL (via API_BASE)</Data></Cell>
+<Cell><Data ss:Type="String">Derived in lib/event-api.ts and lib/review-api.ts</Data></Cell>
+<Cell><Data ss:Type="String">Fallback localhost in dev</Data></Cell>
+</Row>
+<Row>
+<Cell><Data ss:Type="String">Relative /api (same-origin/proxy)</Data></Cell>
+<Cell><Data ss:Type="String">N/A</Data></Cell>
+<Cell><Data ss:Type="String">Frontend relative route/proxy usage</Data></Cell>
+</Row>
+</Table></Worksheet>
+</Workbook>

@@ -1,0 +1,157 @@
+endpoint_template,method,base_url,description,source_files
+/api/packages/,POST,Relative /api (same-origin/proxy),API used by dashboard feature,lib/api.ts
+/api/pass/${userPassId}/history,GET,Relative /api (same-origin/proxy),API used by dashboard feature,app/components/PassRedemption/PassHistory.tsx
+/api/pass/redeem/dashboard,POST,Relative /api (same-origin/proxy),Redeem pass from dashboard,app/components/PassRedemption/PassRedemption.tsx
+/api/pass/validate,POST,Relative /api (same-origin/proxy),Validate pass before booking,app/components/PassRedemption/PassRedemption.tsx
+/api/vendors/${vendorId}/subscription/,GET,Relative /api (same-origin/proxy),"Subscription status, orders, history",lib/api.ts
+/api/vendors/${vendorId}/subscription/create-order,POST,Relative /api (same-origin/proxy),"Subscription status, orders, history",lib/api.ts
+/api/vendors/${vendorId}/subscription/history,POST,Relative /api (same-origin/proxy),"Subscription status, orders, history",lib/api.ts
+/api/vendors/${vendorId}/subscription/verify-payment,POST,Relative /api (same-origin/proxy),"Subscription status, orders, history",lib/api.ts
+${API_BASE}/api/vendor/events/,POST,DASHBOARD_URL (via API_BASE),Tournament events management,lib/event-api.ts
+${API_BASE}/api/vendor/events/${eventId},PATCH,DASHBOARD_URL (via API_BASE),Tournament events management,lib/event-api.ts
+${API_BASE}/api/vendor/events/${eventId}/registrations,GET,DASHBOARD_URL (via API_BASE),Tournament events management,lib/event-api.ts
+${API_BASE}/api/vendor/events/${eventId}/results/publish,POST,DASHBOARD_URL (via API_BASE),Tournament events management,lib/event-api.ts
+${API_BASE}/api/vendor/events/${eventId}/teams,GET,DASHBOARD_URL (via API_BASE),Tournament events management,lib/event-api.ts
+${API_BASE}/api/vendor/events/${qs},GET,DASHBOARD_URL (via API_BASE),Tournament events management,lib/event-api.ts
+${API_BASE}/api/vendor/events/delete-banner,DELETE,DASHBOARD_URL (via API_BASE),Tournament events management,lib/event-api.ts
+${API_BASE}/api/vendor/events/getJwt,POST,DASHBOARD_URL (via API_BASE),Tournament events management,lib/event-api.ts
+${API_BASE}/api/vendor/events/upload-banner,POST,DASHBOARD_URL (via API_BASE),Tournament events management,lib/event-api.ts
+${API_BASE}/api/vendor/reviews/,GET,DASHBOARD_URL (via API_BASE),Reviews moderation and replies,lib/review-api.ts
+${API_BASE}/api/vendor/reviews/${reviewId}/response,PATCH,DASHBOARD_URL (via API_BASE),Reviews moderation and replies,lib/review-api.ts
+${API_BASE}/api/vendor/reviews/${reviewId}/status,PATCH,DASHBOARD_URL (via API_BASE),Reviews moderation and replies,lib/review-api.ts
+${API_BASE}/api/vendor/reviews/summary,GET,DASHBOARD_URL (via API_BASE),Reviews moderation and replies,lib/review-api.ts
+${BOOKING_URL}/api/booking/${bookingId}/add-meals,POST,BOOKING_URL,API used by dashboard feature,app/components/mealsDetailmodal.tsx
+${BOOKING_URL}/api/booking/${bookingId}/payment-summary,GET,BOOKING_URL,Fetch booking payment summary,app/components/current-slot.tsx | app/components/extraBookingOverlay.tsx
+${BOOKING_URL}/api/booking/${bookingId}/settle-pending,POST,BOOKING_URL,Settle pending booking payment,app/components/extraBookingOverlay.tsx
+${BOOKING_URL}/api/booking/private,POST,BOOKING_URL,Create private booking,app/components/PrivateBooking.tsx
+${BOOKING_URL}/api/bookings/${bookingId},GET,BOOKING_URL,API used by dashboard feature,app/components/manage-booking.tsx | app/components/newSlot.tsx | app/components/test2.tsx
+${BOOKING_URL}/api/bookings/cancel,POST,BOOKING_URL,Cancel booking,app/components/upcoming-booking.tsx
+${BOOKING_URL}/api/bookings/no-show,POST,BOOKING_URL,Mark booking as no-show,app/components/upcoming-booking.tsx
+${BOOKING_URL}/api/bookings/reject,POST,BOOKING_URL,Reject booking,app/components/manage-booking.tsx | app/components/newSlot.tsx | app/components/test2.tsx
+${BOOKING_URL}/api/console-types/vendor/${resolvedVendorId}${cacheBust},UNKNOWN,BOOKING_URL,Fetch console type catalog,app/components/newSlot.tsx
+${BOOKING_URL}/api/console-types/vendor/${vendorId},GET,BOOKING_URL,Fetch console type catalog,app/components/ConsoleSelector.tsx
+${BOOKING_URL}/api/extraBooking,POST,BOOKING_URL,Add extra booking amount/slots,app/components/extraBookingOverlay.tsx
+${BOOKING_URL}/api/getAllBooking/vendor/${vendorId}/${formattedDate}/,GET,BOOKING_URL,Fetch bookings list/history,app/components/manage-booking.tsx | app/components/newSlot.tsx
+${BOOKING_URL}/api/getAllConsole/vendor/${resolvedVendorId}${cacheBust},UNKNOWN,BOOKING_URL,Fetch all consoles for vendor,app/components/newSlot.tsx
+${BOOKING_URL}/api/getAllConsole/vendor/${vendorId},GET,BOOKING_URL,Fetch all consoles for vendor,app/components/ConsoleSelector.tsx | app/components/PrivateBooking.tsx | app/components/manage-booking.tsx | app/components/test.tsx
+${BOOKING_URL}/api/getSlotList/vendor/${vendorId}/game/${consoleTypeId},GET,BOOKING_URL,API used by dashboard feature,app/components/rapid-bookings.tsx
+${BOOKING_URL}/api/getSlots/vendor/${resolvedVendorId}/game/${gameConsole.id}/${formattedDate},UNKNOWN,BOOKING_URL,Fetch slot availability for console/date,app/components/newSlot.tsx
+${BOOKING_URL}/api/getSlots/vendor/${vendorId}/game/${gameConsole.id}/${formattedDate},GET,BOOKING_URL,Fetch slot availability for console/date,app/components/test.tsx
+${BOOKING_URL}/api/newBooking/vendor/${vendorId},POST,BOOKING_URL,Create new booking,app/components/BookingForm.tsx | app/components/newSlot.tsx | app/components/rapid-bookings.tsx | app/components/test.tsx
+${BOOKING_URL}/api/pass/dashboard/otp/send,POST,BOOKING_URL,Send pass OTP,app/components/newSlot.tsx
+${BOOKING_URL}/api/pass/dashboard/otp/verify,POST,BOOKING_URL,Verify pass OTP,app/components/newSlot.tsx
+${BOOKING_URL}/api/pass/dashboard/valid-options?${params.toString()},GET,BOOKING_URL,Fetch valid pass options,app/components/newSlot.tsx
+${BOOKING_URL}/api/pass/redeem/dashboard,POST,BOOKING_URL,Redeem pass from dashboard,app/components/BookingForm.tsx | app/components/newSlot.tsx
+${BOOKING_URL}/api/pass/validate,POST,BOOKING_URL,Validate pass before booking,app/components/BookingForm.tsx
+${BOOKING_URL}/api/pay-at-cafe/${endpoint},POST,BOOKING_URL,API used by dashboard feature,app/components/NotificationPanel.tsx
+${BOOKING_URL}/api/pay-at-cafe/accept,POST,BOOKING_URL,Accept pay-at-cafe request,app/components/NotificationPanel.tsx
+${BOOKING_URL}/api/pay-at-cafe/pending/${vendorId},GET,BOOKING_URL,Fetch pending pay-at-cafe notifications,app/components/NotificationButton.tsx
+${BOOKING_URL}/api/pay-at-cafe/queue-list/${vendorId}?${params.toString()},GET,BOOKING_URL,Fetch pay-at-cafe queue list,app/components/NotificationPanel.tsx
+${BOOKING_URL}/api/pay-at-cafe/queue-summary/${vendorId}?${params.toString()},GET,BOOKING_URL,Fetch pay-at-cafe queue summary,app/components/NotificationPanel.tsx
+${BOOKING_URL}/api/pay-at-cafe/queue-summary/${vendorId}?date=${dateStr},GET,BOOKING_URL,Fetch pay-at-cafe queue summary,app/components/NotificationButton.tsx
+${BOOKING_URL}/api/pay-at-cafe/reject,POST,BOOKING_URL,Reject pay-at-cafe request,app/components/NotificationPanel.tsx
+${BOOKING_URL}/api/pay-at-cafe/settings/${vendorId},GET,BOOKING_URL,Fetch/update pay-at-cafe settings,app/components/my-account.tsx
+${BOOKING_URL}/api/pay-at-cafe/settings/${vendorId},PUT,BOOKING_URL,Fetch/update pay-at-cafe settings,app/components/my-account.tsx
+${BOOKING_URL}/api/update_booking/${bookingId},PUT,BOOKING_URL,API used by dashboard feature,app/components/manage-booking.tsx | app/components/newSlot.tsx | app/components/test2.tsx
+${BOOKING_URL}/api/vendor/${vendorId}/booking-field-config,GET,BOOKING_URL,API used by dashboard feature,app/components/newSlot.tsx
+${BOOKING_URL}/api/vendor/${vendorId}/booking-field-config,PUT,BOOKING_URL,API used by dashboard feature,app/components/newSlot.tsx
+${BOOKING_URL}/api/vendor/${vendorId}/monthly-credit/accounts,GET,BOOKING_URL,Manage monthly credit accounts,app/components/console-pricing.tsx | app/components/credit-account-modal.tsx | app/components/extraBookingOverlay.tsx | app/components/gamers-credit-control.tsx | app/components/newSlot.tsx
+${BOOKING_URL}/api/vendor/${vendorId}/monthly-credit/accounts,PUT,BOOKING_URL,Manage monthly credit accounts,app/components/console-pricing.tsx | app/components/credit-account-modal.tsx | app/components/gamers-credit-control.tsx
+${BOOKING_URL}/api/vendor/${vendorId}/monthly-credit/settle,POST,BOOKING_URL,Settle monthly credit balance,app/components/gamers-credit-control.tsx
+${BOOKING_URL}/api/vendor/${vendorId}/monthly-credit/statement/${userId},GET,BOOKING_URL,Fetch monthly credit statement,app/components/console-pricing.tsx | app/components/gamers-credit-control.tsx
+${BOOKING_URL}/api/vendor/${vendorId}/slot-bookings?slot_ids=${slotIdsParam}&date=${normalizedDate}${statusParam},UNKNOWN,BOOKING_URL,Fetch bookings mapped to slot IDs,app/components/newSlot.tsx
+${BOOKING_URL}/api/vendor/${vendorId}/squad-pricing-policy,GET,BOOKING_URL,Fetch or update squad pricing rules,app/components/newSlot.tsx
+${BOOKING_URL}/api/vendor/${vendorId}/users,GET,BOOKING_URL,Fetch/create users for booking and credit,app/components/BookingForm.tsx | app/components/PrivateBooking.tsx | app/components/console-pricing.tsx | app/components/extraBookingOverlay.tsx | app/components/gamers-credit-control.tsx | app/components/newSlot.tsx | app/components/test.tsx
+${BOOKING_URL}/api/vendor/${vendorId}/users,POST,BOOKING_URL,Fetch/create users for booking and credit,app/components/credit-account-modal.tsx | app/components/gamers-credit-control.tsx
+${BOOKING_URL}/api/vendor/${vendorId}/users?${params.toString()},GET,BOOKING_URL,Fetch/create users for booking and credit,app/components/newSlot.tsx
+${BOOKING_URL}/api/vendor/${vendorIdFromToken}/users,GET,BOOKING_URL,Fetch/create users for booking and credit,app/components/rapid-bookings.tsx
+${DASHBOARD_URL}/api/addConsole,POST,DASHBOARD_URL,API used by dashboard feature,app/components/add-console-form.tsx
+${DASHBOARD_URL}/api/assignConsoleToMultipleBookings,UNKNOWN,DASHBOARD_URL,Assign console to multiple bookings,app/components/upcoming-booking.tsx
+${DASHBOARD_URL}/api/booking/${bookingId}/details,GET,DASHBOARD_URL,API used by dashboard feature,app/components/mealsDetailmodal.tsx
+${DASHBOARD_URL}/api/console-types?vendor_id=${vendorId},GET,DASHBOARD_URL,Fetch console type catalog,app/components/add-console-form.tsx | app/components/console-pricing.tsx | app/components/manage-gaming-console.tsx
+${DASHBOARD_URL}/api/console/${selectedConsoleId},GET,DASHBOARD_URL,API used by dashboard feature,app/components/add-console-form.tsx
+${DASHBOARD_URL}/api/console/${vendorId}/${id},DELETE,DASHBOARD_URL,API used by dashboard feature,app/components/console-list.tsx
+${DASHBOARD_URL}/api/console/update/vendor/${vendorId},PUT,DASHBOARD_URL,API used by dashboard feature,app/components/edit-console-form.tsx
+${DASHBOARD_URL}/api/getAllDevice/consoleTypeId/${gameId}/vendor/${vendorId},GET,DASHBOARD_URL,API used by dashboard feature,app/components/upcoming-booking.tsx
+${DASHBOARD_URL}/api/getAllDevice/vendor/${vendorId},GET,DASHBOARD_URL,API used by dashboard feature,app/components/rapid-bookings.tsx
+${DASHBOARD_URL}/api/getConsoles/vendor/${currentVendorId},GET,DASHBOARD_URL,Fetch console list,app/components/console-list.tsx
+${DASHBOARD_URL}/api/getConsoles/vendor/${vendorId},GET,DASHBOARD_URL,Fetch console list,app/components/add-console-form.tsx | app/components/book-stats.tsx | app/context/DashboardDataContext.tsx
+${DASHBOARD_URL}/api/getLandingPage/vendor/${vendorId},GET,DASHBOARD_URL,Fetch dashboard landing data,app/context/DashboardDataContext.tsx
+${DASHBOARD_URL}/api/getLandingPage/vendor/${vendorId}?history_date=${historyDate},GET,DASHBOARD_URL,Fetch dashboard landing data,app/components/current-slot.tsx
+${DASHBOARD_URL}/api/pass_types,GET,DASHBOARD_URL,Fetch pass types,app/components/manage-pass.tsx
+${DASHBOARD_URL}/api/payment-methods/initialize,POST,DASHBOARD_URL,API used by dashboard feature,app/components/my-account.tsx
+${DASHBOARD_URL}/api/releaseDevice/consoleTypeId/${consoleItem.gameId}/console/${consoleItem.id}/vendor/${vendorId},POST,DASHBOARD_URL,Release active console/session,app/components/console-list.tsx
+${DASHBOARD_URL}/api/releaseDevice/consoleTypeId/${gameId}/console/${consoleId}/vendor/${vendorId},POST,DASHBOARD_URL,Release active console/session,app/components/current-slot.tsx
+${DASHBOARD_URL}/api/transactionReport/${vendorId}/${toDateApi}/${fromDateApi},GET,DASHBOARD_URL,Fetch transaction report,app/components/transaction-table.tsx
+${DASHBOARD_URL}/api/updateDeviceStatus/consoleTypeId/${selectedGameId}/console/${primaryConsoleId}/bookingId/${selectedBookingId}/vendor/${vendorId},UNKNOWN,DASHBOARD_URL,Assign/update console status for booking,app/components/upcoming-booking.tsx
+${DASHBOARD_URL}/api/vendor/${activeVendorId}/passes,GET,DASHBOARD_URL,Manage vendor passes,app/components/manage-pass.tsx
+${DASHBOARD_URL}/api/vendor/${activeVendorId}/passes,POST,DASHBOARD_URL,Manage vendor passes,app/components/manage-pass.tsx
+${DASHBOARD_URL}/api/vendor/${activeVendorId}/passes/${id},PUT,DASHBOARD_URL,Manage vendor passes,app/components/manage-pass.tsx
+${DASHBOARD_URL}/api/vendor/${activeVendorId}/passes/${id},DELETE,DASHBOARD_URL,Manage vendor passes,app/components/manage-pass.tsx
+${DASHBOARD_URL}/api/vendor/${VENDOR_ID}/extras/categories,GET,DASHBOARD_URL,API used by dashboard feature,app/components/manage-extras-page-content.tsx
+${DASHBOARD_URL}/api/vendor/${VENDOR_ID}/extras/category,POST,DASHBOARD_URL,API used by dashboard feature,app/components/manage-extras-page-content.tsx
+${DASHBOARD_URL}/api/vendor/${VENDOR_ID}/extras/category/${categoryId}/menu,POST,DASHBOARD_URL,API used by dashboard feature,app/components/manage-extras-page-content.tsx
+${DASHBOARD_URL}/api/vendor/${VENDOR_ID}/extras/category/${categoryId}/menu/${menuId},PUT,DASHBOARD_URL,API used by dashboard feature,app/components/manage-extras-page-content.tsx
+${DASHBOARD_URL}/api/vendor/${VENDOR_ID}/extras/category/${categoryId}/menu/${menuId},DELETE,DASHBOARD_URL,API used by dashboard feature,app/components/manage-extras-page-content.tsx
+${DASHBOARD_URL}/api/vendor/${VENDOR_ID}/extras/category/${id},PUT,DASHBOARD_URL,API used by dashboard feature,app/components/manage-extras-page-content.tsx
+${DASHBOARD_URL}/api/vendor/${VENDOR_ID}/extras/category/${id},DELETE,DASHBOARD_URL,API used by dashboard feature,app/components/manage-extras-page-content.tsx
+${DASHBOARD_URL}/api/vendor/${vendorId}/access${path},GET,DASHBOARD_URL,API used by dashboard feature,lib/access-api.ts
+${DASHBOARD_URL}/api/vendor/${vendorId}/active-pricing,GET,DASHBOARD_URL,Fetch currently active pricing,app/components/newSlot.tsx
+${DASHBOARD_URL}/api/vendor/${vendorId}/available-games,GET,DASHBOARD_URL,API used by dashboard feature,app/components/console-pricing.tsx
+${DASHBOARD_URL}/api/vendor/${vendorId}/bank-details,GET,DASHBOARD_URL,Fetch/update bank details,app/components/my-account.tsx
+${DASHBOARD_URL}/api/vendor/${vendorId}/bank-details,POST,DASHBOARD_URL,Fetch/update bank details,app/components/my-account.tsx
+${DASHBOARD_URL}/api/vendor/${vendorId}/bank-details/history?limit=100,GET,DASHBOARD_URL,Fetch/update bank details,app/components/my-account.tsx
+${DASHBOARD_URL}/api/vendor/${vendorId}/business-details,PATCH,DASHBOARD_URL,API used by dashboard feature,app/components/my-account.tsx
+${DASHBOARD_URL}/api/vendor/${vendorId}/console-pricing,GET,DASHBOARD_URL,Fetch or update console pricing,app/components/console-pricing.tsx
+${DASHBOARD_URL}/api/vendor/${vendorId}/console-pricing,POST,DASHBOARD_URL,Fetch or update console pricing,app/components/console-pricing.tsx
+${DASHBOARD_URL}/api/vendor/${vendorId}/controller-pricing,GET,DASHBOARD_URL,Fetch or update controller pricing,app/components/BookingForm.tsx | app/components/booking/BookingComponents/SlotManagement/index.tsx | app/components/console-pricing.tsx | app/components/newSlot.tsx
+${DASHBOARD_URL}/api/vendor/${vendorId}/controller-pricing,PUT,DASHBOARD_URL,Fetch or update controller pricing,app/components/console-pricing.tsx
+${DASHBOARD_URL}/api/vendor/${vendorId}/dashboard,GET,DASHBOARD_URL,Fetch vendor dashboard summary,app/components/NotificationButton.tsx | app/components/my-account.tsx
+${DASHBOARD_URL}/api/vendor/${vendorId}/documents,POST,DASHBOARD_URL,Manage vendor documents,app/components/my-account.tsx
+${DASHBOARD_URL}/api/vendor/${vendorId}/documents/${documentId},PUT,DASHBOARD_URL,Manage vendor documents,app/components/my-account.tsx
+${DASHBOARD_URL}/api/vendor/${vendorId}/extra-services,GET,DASHBOARD_URL,Manage extra services / meals / categories,app/components/booking/BookingComponents/SlotManagement/mealSelector.tsx | app/components/mealSelector.tsx | app/components/mealsDetailmodal.tsx
+${DASHBOARD_URL}/api/vendor/${vendorId}/knowYourGamer,GET,DASHBOARD_URL,Know Your Gamers data and stats,app/components/know-your-gamers.tsx
+${DASHBOARD_URL}/api/vendor/${vendorId}/knowYourGamer/stats,GET,DASHBOARD_URL,Know Your Gamers data and stats,app/components/know-your-gamers.tsx
+${DASHBOARD_URL}/api/vendor/${vendorId}/notification-preferences,GET,DASHBOARD_URL,Fetch/update notification preferences,app/components/my-account.tsx
+${DASHBOARD_URL}/api/vendor/${vendorId}/notification-preferences,PUT,DASHBOARD_URL,Fetch/update notification preferences,app/components/my-account.tsx
+${DASHBOARD_URL}/api/vendor/${vendorId}/paymentMethods,GET,DASHBOARD_URL,API used by dashboard feature,app/components/my-account.tsx
+${DASHBOARD_URL}/api/vendor/${vendorId}/paymentMethods/toggle,POST,DASHBOARD_URL,API used by dashboard feature,app/components/my-account.tsx
+${DASHBOARD_URL}/api/vendor/${vendorId}/payouts?page=${page}&per_page=10,GET,DASHBOARD_URL,Fetch payouts,app/components/my-account.tsx
+${DASHBOARD_URL}/api/vendor/${vendorId}/pricing-offers,GET,DASHBOARD_URL,Manage pricing offers,app/components/console-pricing.tsx
+${DASHBOARD_URL}/api/vendor/${vendorId}/pricing-offers,POST,DASHBOARD_URL,Manage pricing offers,app/components/console-pricing.tsx
+${DASHBOARD_URL}/api/vendor/${vendorId}/pricing-offers/${editingOffer.id},PUT,DASHBOARD_URL,Manage pricing offers,app/components/console-pricing.tsx
+${DASHBOARD_URL}/api/vendor/${vendorId}/pricing-offers/${id},DELETE,DASHBOARD_URL,Manage pricing offers,app/components/console-pricing.tsx
+${DASHBOARD_URL}/api/vendor/${vendorId}/settlements/summary?from=${settlementFromDate}&to=${settlementToDate},GET,DASHBOARD_URL,Fetch settlements summary,app/components/my-account.tsx
+${DASHBOARD_URL}/api/vendor/${vendorId}/squad-pricing-rules,GET,DASHBOARD_URL,Fetch or update squad pricing rules,app/components/console-pricing.tsx
+${DASHBOARD_URL}/api/vendor/${vendorId}/squad-pricing-rules,PUT,DASHBOARD_URL,Fetch or update squad pricing rules,app/components/console-pricing.tsx
+${DASHBOARD_URL}/api/vendor/${vendorId}/tax-profile,GET,DASHBOARD_URL,Fetch/update tax profile,app/components/console-pricing.tsx | app/components/my-account.tsx | app/components/transaction-table.tsx
+${DASHBOARD_URL}/api/vendor/${vendorId}/tax-profile,PUT,DASHBOARD_URL,Fetch/update tax profile,app/components/console-pricing.tsx | app/components/my-account.tsx
+${DASHBOARD_URL}/api/vendor/${vendorId}/update-profile-image,POST,DASHBOARD_URL,Manage vendor media/images,app/components/my-account.tsx
+${DASHBOARD_URL}/api/vendor/master?email_id=${email},GET,DASHBOARD_URL,API used by dashboard feature,app/(features)/master/page.tsx
+${DASHBOARD_URL}/api/vendors/${vendorId}/pcs/unlink,POST,DASHBOARD_URL,API used by dashboard feature,app/components/console-list.tsx
+${DASHBOARD_URL}/api/vendors/${vendorId}/subscription/history,GET,DASHBOARD_URL,"Subscription status, orders, history",app/components/my-account.tsx
+${DASHBOARD_URL}/api/vendors/${vendorId}/subscription/status?t=${Date.now()},GET,DASHBOARD_URL,"Subscription status, orders, history",lib/api.ts
+${LOGIN_URL}/api/change-password,POST,LOGIN_URL,API used by dashboard feature,app/(features)/login/page.tsx
+${LOGIN_URL}/api/forgot-password,POST,LOGIN_URL,Start password reset flow,app/(features)/login/forget-password/page.tsx
+${LOGIN_URL}/api/login,POST,LOGIN_URL,User login,app/(features)/select-cafe/page.tsx
+${LOGIN_URL}/api/login?t=${timestamp},UNKNOWN,LOGIN_URL,User login,app/(features)/login/page.tsx
+${LOGIN_URL}/api/reset-password,POST,LOGIN_URL,Set new password,app/(features)/login/forget-password/page.tsx
+${LOGIN_URL}/api/validatePin?t=${timestamp},POST,LOGIN_URL,Validate owner/staff PIN,app/(features)/select-cafe/page.tsx | app/context/AccessContext.tsx
+${LOGIN_URL}/api/verify-reset-code,POST,LOGIN_URL,Verify password reset code,app/(features)/login/forget-password/page.tsx
+${process.env.NEXT_PUBLIC_DASHBOARD_URL}/api/vendors/${vendorId}/subscription/check-payment/${pollingOrderId},GET,Unknown/Derived,"Subscription status, orders, history",app/(features)/subscription/page.tsx
+${this.baseURL}/api/getAllConsole/vendor/${vendorId},GET,BOOKING_URL (via service baseURL),Fetch all consoles for vendor,app/components/booking/services/api/slotService.ts
+${this.baseURL}/api/getSlotsBatch/vendor/${vendorId},POST,BOOKING_URL (via service baseURL),Fetch slot availability in batch,app/components/booking/services/api/slotService.ts
+${this.baseURL}/api/newBooking/vendor/${vendorId},POST,BOOKING_URL (via service baseURL),Create new booking,app/components/booking/services/api/bookingService.ts
+${this.baseURL}/api/pass/redeem/dashboard,POST,BOOKING_URL (via service baseURL),Redeem pass from dashboard,app/components/booking/services/api/bookingService.ts
+${this.baseURL}/api/pass/validate,POST,BOOKING_URL (via service baseURL),Validate pass before booking,app/components/booking/services/api/bookingService.ts
+${this.baseURL}/api/vendor/${vendorId}/users,GET,BOOKING_URL (via service baseURL),Fetch/create users for booking and credit,app/components/booking/services/api/bookingService.ts
+${VENDOR_ONBOARD_URL}/api/onboard,POST,VENDOR_ONBOARD_URL,Vendor onboarding / cafe selection,app/(features)/select-cafe/page.tsx
+${VENDOR_ONBOARD_URL}/api/orders,POST,VENDOR_ONBOARD_URL,Create vendor product orders,app/components/vendorOrder.tsx
+${VENDOR_ONBOARD_URL}/api/vendor/${vendorId}/add-image,POST,VENDOR_ONBOARD_URL,Manage vendor media/images,app/components/my-account.tsx
+${VENDOR_ONBOARD_URL}/api/vendor/${vendorId}/check-verification?page_type=${pageType},GET,VENDOR_ONBOARD_URL,API used by dashboard feature,app/components/my-account.tsx
+${VENDOR_ONBOARD_URL}/api/vendor/${vendorId}/delete-image-by-url,DELETE,VENDOR_ONBOARD_URL,Manage vendor media/images,app/components/my-account.tsx
+${VENDOR_ONBOARD_URL}/api/vendor/${vendorId}/delete-image/${imageId},DELETE,VENDOR_ONBOARD_URL,Manage vendor media/images,app/components/my-account.tsx
+${VENDOR_ONBOARD_URL}/api/vendor/${vendorId}/send-otp,POST,VENDOR_ONBOARD_URL,API used by dashboard feature,app/components/otpVerificationModal.tsx
+${VENDOR_ONBOARD_URL}/api/vendor/${vendorId}/updateSlot,POST,VENDOR_ONBOARD_URL,API used by dashboard feature,app/components/my-account.tsx
+${VENDOR_ONBOARD_URL}/api/vendor/${vendorId}/verify-otp,POST,VENDOR_ONBOARD_URL,API used by dashboard feature,app/components/otpVerificationModal.tsx
+${VENDOR_ONBOARD_URL}/api/vendor/products,GET,VENDOR_ONBOARD_URL,Fetch vendor products for store,app/components/vendorOrder.tsx

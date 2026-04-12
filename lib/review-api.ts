@@ -1,4 +1,5 @@
 import { DASHBOARD_URL } from "@/src/config/env";
+import { httpJson } from "@/lib/http-client";
 
 const API_BASE = DASHBOARD_URL || "http://localhost:5000";
 
@@ -52,18 +53,14 @@ export async function getReviewSummary(token: string, vendorId?: number): Promis
   const url = withQuery(`${API_BASE}/api/vendor/reviews/summary`, {
     vendor_id: vendorId,
   });
-  const res = await fetch(url, {
+  return httpJson<ReviewSummary>(url, {
     headers: { Authorization: `Bearer ${token}` },
+    timeoutMs: 10_000,
+    retries: 2,
+    dedupe: true,
+    dedupeKey: `GET:${url}`,
+    cacheTtlMs: 10_000,
   });
-  if (!res.ok) {
-    let message = "Failed to fetch review summary";
-    try {
-      const body = await res.json();
-      message = body?.message || body?.error || message;
-    } catch {}
-    throw new Error(message);
-  }
-  return res.json() as Promise<ReviewSummary>;
 }
 
 export async function listReviews(
@@ -71,18 +68,14 @@ export async function listReviews(
   params?: { status?: string; rating?: number | string; search?: string; limit?: number; offset?: number; vendor_id?: number }
 ): Promise<ReviewListResponse> {
   const url = withQuery(`${API_BASE}/api/vendor/reviews/`, params);
-  const res = await fetch(url, {
+  return httpJson<ReviewListResponse>(url, {
     headers: { Authorization: `Bearer ${token}` },
+    timeoutMs: 12_000,
+    retries: 2,
+    dedupe: true,
+    dedupeKey: `GET:${url}`,
+    cacheTtlMs: 7_000,
   });
-  if (!res.ok) {
-    let message = "Failed to fetch reviews";
-    try {
-      const body = await res.json();
-      message = body?.message || body?.error || message;
-    } catch {}
-    throw new Error(message);
-  }
-  return res.json() as Promise<ReviewListResponse>;
 }
 
 export async function respondToReview(
@@ -90,17 +83,16 @@ export async function respondToReview(
   reviewId: string,
   response_text: string
 ): Promise<{ ok: boolean }> {
-  const res = await fetch(`${API_BASE}/api/vendor/reviews/${reviewId}/response`, {
+  return httpJson<{ ok: boolean }>(`${API_BASE}/api/vendor/reviews/${reviewId}/response`, {
     method: "PATCH",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${token}`,
     },
     body: JSON.stringify({ response_text }),
+    timeoutMs: 10_000,
+    retries: 0,
   });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || "Failed to respond");
-  return data;
 }
 
 export async function updateReviewStatus(
@@ -108,15 +100,14 @@ export async function updateReviewStatus(
   reviewId: string,
   status: "published" | "hidden"
 ): Promise<{ ok: boolean }> {
-  const res = await fetch(`${API_BASE}/api/vendor/reviews/${reviewId}/status`, {
+  return httpJson<{ ok: boolean }>(`${API_BASE}/api/vendor/reviews/${reviewId}/status`, {
     method: "PATCH",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${token}`,
     },
     body: JSON.stringify({ status }),
+    timeoutMs: 10_000,
+    retries: 0,
   });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || "Failed to update status");
-  return data;
 }

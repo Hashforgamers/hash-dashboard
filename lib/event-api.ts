@@ -1,4 +1,5 @@
 import { DASHBOARD_URL } from "@/src/config/env";
+import { httpJson } from "@/lib/http-client";
 
 const API_BASE = DASHBOARD_URL || 'http://localhost:5000';
 
@@ -80,13 +81,13 @@ export async function getVendorJwt(
   vendorId: number,
   ttlMinutes = 480
 ): Promise<string> {
-  const res = await fetch(`${API_BASE}/api/vendor/events/getJwt`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+  const data = await httpJson<{ token: string }>(`${API_BASE}/api/vendor/events/getJwt`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ vendor_id: vendorId, ttl_minutes: ttlMinutes }),
+    timeoutMs: 10_000,
+    retries: 0,
   });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || 'Failed to issue JWT');
   return data.token as string;
 }
 
@@ -96,17 +97,16 @@ export async function createEvent(
   token: string,
   payload: EventPayload
 ): Promise<{ id: string }> {
-  const res = await fetch(`${API_BASE}/api/vendor/events/`, {
+  return httpJson<{ id: string }>(`${API_BASE}/api/vendor/events/`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${token}`,
     },
     body: JSON.stringify(payload),
+    timeoutMs: 15_000,
+    retries: 0,
   });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || 'Failed to create event');
-  return data;
 }
 
 export async function listEvents(
@@ -114,12 +114,15 @@ export async function listEvents(
   status?: string
 ): Promise<EventItem[]> {
   const qs  = status ? `?status=${status}` : '';
-  const res = await fetch(`${API_BASE}/api/vendor/events/${qs}`, {
+  return httpJson<EventItem[]>(`${API_BASE}/api/vendor/events/${qs}`, {
     headers: { Authorization: `Bearer ${token}` },
+    timeoutMs: 10_000,
+    retries: 2,
+    retryDelayMs: 250,
+    dedupe: true,
+    dedupeKey: `GET:${API_BASE}/api/vendor/events/${qs}`,
+    cacheTtlMs: 10_000,
   });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || 'Failed to fetch events');
-  return data as EventItem[];
 }
 
 export async function updateEvent(
@@ -127,17 +130,16 @@ export async function updateEvent(
   eventId: string,
   patch: Partial<EventPayload>
 ): Promise<{ ok: boolean }> {
-  const res = await fetch(`${API_BASE}/api/vendor/events/${eventId}`, {
+  return httpJson<{ ok: boolean }>(`${API_BASE}/api/vendor/events/${eventId}`, {
     method: 'PATCH',
     headers: {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${token}`,
     },
     body: JSON.stringify(patch),
+    timeoutMs: 15_000,
+    retries: 0,
   });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || 'Failed to update event');
-  return data;
 }
 
 // ─── Registrations ────────────────────────────────────────────────────────────
@@ -146,24 +148,36 @@ export async function getRegistrations(
   token: string,
   eventId: string
 ): Promise<Registration[]> {
-  const res = await fetch(
-    `${API_BASE}/api/vendor/events/${eventId}/registrations`,
-    { headers: { Authorization: `Bearer ${token}` } }
-  );
-  if (!res.ok) return [];
-  return res.json() as Promise<Registration[]>;
+  try {
+    return await httpJson<Registration[]>(`${API_BASE}/api/vendor/events/${eventId}/registrations`, {
+      headers: { Authorization: `Bearer ${token}` },
+      timeoutMs: 10_000,
+      retries: 2,
+      dedupe: true,
+      dedupeKey: `GET:${API_BASE}/api/vendor/events/${eventId}/registrations`,
+      cacheTtlMs: 7_000,
+    });
+  } catch {
+    return [];
+  }
 }
 
 export async function getTeams(
   token: string,
   eventId: string
 ): Promise<TeamItem[]> {
-  const res = await fetch(
-    `${API_BASE}/api/vendor/events/${eventId}/teams`,
-    { headers: { Authorization: `Bearer ${token}` } }
-  );
-  if (!res.ok) return [];
-  return res.json() as Promise<TeamItem[]>;
+  try {
+    return await httpJson<TeamItem[]>(`${API_BASE}/api/vendor/events/${eventId}/teams`, {
+      headers: { Authorization: `Bearer ${token}` },
+      timeoutMs: 10_000,
+      retries: 2,
+      dedupe: true,
+      dedupeKey: `GET:${API_BASE}/api/vendor/events/${eventId}/teams`,
+      cacheTtlMs: 7_000,
+    });
+  } catch {
+    return [];
+  }
 }
 
 export async function publishResults(
@@ -171,20 +185,16 @@ export async function publishResults(
   eventId: string,
   winners: WinnerInput[]
 ): Promise<{ ok: boolean }> {
-  const res = await fetch(
-    `${API_BASE}/api/vendor/events/${eventId}/results/publish`,
-    {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({ winners }),
-    }
-  );
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || 'Failed to publish results');
-  return data;
+  return httpJson<{ ok: boolean }>(`${API_BASE}/api/vendor/events/${eventId}/results/publish`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ winners }),
+    timeoutMs: 15_000,
+    retries: 0,
+  });
 }
 
 // ─── Banner (Cloudinary) ──────────────────────────────────────────────────────
@@ -199,26 +209,28 @@ export async function uploadEventBanner(
   formData.append('event_title', eventTitle);
 
   // ⚠️ No Content-Type header — browser sets multipart boundary automatically
-  const res = await fetch(`${API_BASE}/api/vendor/events/upload-banner`, {
+  return httpJson<BannerUploadResult>(`${API_BASE}/api/vendor/events/upload-banner`, {
     method: 'POST',
     headers: { Authorization: `Bearer ${token}` },
     body: formData,
+    timeoutMs: 25_000,
+    retries: 0,
   });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || 'Banner upload failed');
-  return data as BannerUploadResult;
 }
 
 export async function deleteEventBanner(
   token: string,
   publicId: string
 ): Promise<void> {
-  await fetch(`${API_BASE}/api/vendor/events/delete-banner`, {
+  await httpJson<void>(`${API_BASE}/api/vendor/events/delete-banner`, {
     method: 'DELETE',
     headers: {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${token}`,
     },
     body: JSON.stringify({ public_id: publicId }),
+    parseAs: "void",
+    timeoutMs: 10_000,
+    retries: 0,
   });
 }

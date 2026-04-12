@@ -32,9 +32,9 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
 import { Action as SonnerAction } from "sonner";
 import { error } from "console";
-import axios from "axios";
 import { BOOKING_URL } from "@/src/config/env";
 import BookingSystem from "./BookingSystem";
+import { useApiClient } from "@/app/hooks/useApiClient";
 
 
 const formSteps = [
@@ -146,6 +146,7 @@ const formVariants = {
 };
 
 export function ManageBooking() {
+  const api = useApiClient();
   const [selectedAction, setSelectedAction] = useState<string | null>(null);
   const [hoveredAction, setHoveredAction] = useState<string | null>(null);
 
@@ -166,13 +167,11 @@ export function ManageBooking() {
 
   async function fetchGames() {
     try {
-      const response = await fetch(
-        `${BOOKING_URL}/api/getAllConsole/vendor/${vendorId}`
-      ); // Replace with the actual API URL
-      if (!response.ok) {
-        throw new Error(`HTTP error! Status: ${response.status}`);
-      }
-      const games = await response.json();
+      const games = await api.get<any>(`${BOOKING_URL}/api/getAllConsole/vendor/${vendorId}`, {
+        timeoutMs: 10_000,
+        retries: 2,
+        dedupe: true,
+      });
       console.log(games);
       return games;
     } catch (error) {
@@ -280,6 +279,7 @@ export function ManageBooking() {
 // ... existing code ...
 
 function ChangeBookingForm() {
+  const api = useApiClient();
   const [bookingId, setBookingId] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [bookingFound, setBookingFound] = useState(false);
@@ -305,13 +305,13 @@ function ChangeBookingForm() {
 
     setIsLoading(true);
     try {
-      const response = await fetch(
-        `${BOOKING_URL}/api/bookings/${bookingId}`
-      );
-      const data = await response.json();
+      const data = await api.get<any>(`${BOOKING_URL}/api/bookings/${bookingId}`, {
+        timeoutMs: 10_000,
+        retries: 1,
+      });
       console.log("Fetched Booking Data:", data);
 
-      if (response.ok && data.success && data.booking) {
+      if (data.success && data.booking) {
         setIsSubmitted(false);
         const { booking } = data;
         setBookingData({
@@ -340,13 +340,13 @@ function ChangeBookingForm() {
 
   const fetchAvailableSlots = async (vendorId, consoleTypeId, date) => {
     try {
-      const response = await fetch(
-        `${BOOKING_URL}/api/getSlots/vendor/${vendorId}/game/${consoleTypeId}/${date.replaceAll("-", "")}`
+      const data = await api.get<any>(
+        `${BOOKING_URL}/api/getSlots/vendor/${vendorId}/game/${consoleTypeId}/${date.replaceAll("-", "")}`,
+        { timeoutMs: 10_000, retries: 1 }
       );
-      const data = await response.json();
       console.log("Fetched Slots Data:", data);
 
-      if (response.ok && data.slots) {
+      if (data.slots) {
         setAvailableSlots(data.slots);
       }
     } catch (error) {
@@ -360,20 +360,17 @@ function ChangeBookingForm() {
     if (!bookingData) return;
 
     try {
-      const response = await fetch(
+      const result = await api.put<any, string>(
         `${BOOKING_URL}/api/update_booking/${bookingId}`,
+        JSON.stringify(bookingData),
         {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(bookingData),
+          headers: { "Content-Type": "application/json" },
+          timeoutMs: 12_000,
+          retries: 0,
         }
       );
-
-      const result = await response.json();
       console.log("Update Response:", result);
-      if (response.ok) {
+      if (result?.success !== false) {
         setIsSubmitted(true); // Mark as submitted
       } else {
         alert("Failed to update booking.");
@@ -537,6 +534,7 @@ function ChangeBookingForm() {
 
 
 function RejectBookingForm() {
+  const api = useApiClient();
   const [bookingId, setBookingId] = useState("");
   const [bookingFound, setBookingFound] = useState(false);
   const [rejectionReason, setRejectionReason] = useState("");
@@ -566,13 +564,13 @@ function RejectBookingForm() {
 
     setIsLoading(true);
     try {
-      const response = await fetch(
-        `${BOOKING_URL}/api/bookings/${bookingId}`
-      );
-      const data = await response.json();
+      const data = await api.get<any>(`${BOOKING_URL}/api/bookings/${bookingId}`, {
+        timeoutMs: 10_000,
+        retries: 1,
+      });
       console.log("Fetched Booking Data:", data);
 
-      if (response.ok && data.success && data.booking) {
+      if (data.success && data.booking) {
         setIsSubmitted(false);
         const { booking } = data;
         setBookingData({
@@ -616,21 +614,22 @@ function RejectBookingForm() {
     setIsLoading(true); // Trigger loader state
     
     try {
-      const response = await fetch(
+      const response = await api.post<any, string>(
         `${BOOKING_URL}/api/bookings/reject`,
+        JSON.stringify({
+          booking_id: bookingId,
+          rejection_reason: rejectionReason,
+          repayment_type: repaymentType,
+          user_email: userEmail,
+        }),
         {
-          method: "POST", // Use POST instead of DELETE
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            booking_id: bookingId,
-            rejection_reason: rejectionReason,
-            repayment_type: repaymentType,
-            user_email: userEmail,
-          }),
+          timeoutMs: 12_000,
+          retries: 0,
         }
       );
       
-      if (response.ok) {
+      if (response?.success !== false) {
         // Handle successful rejection here
         setIsSubmitted(true); // Mark as submitted
         console.log('Booking rejected');
@@ -846,6 +845,7 @@ function RejectBookingForm() {
 
 
 function ListBooking() {
+  const api = useApiClient();
   interface BookingType {
     id: string;
     bookingDate: string;
@@ -895,12 +895,12 @@ function ListBooking() {
       const today = new Date();
       const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
       const formattedDate = startOfMonth.toISOString().slice(0, 10).replace(/-/g, "");
-      const response = await axios.get(
+      const rows = await api.get<any[]>(
         `${BOOKING_URL}/api/getAllBooking/vendor/${vendorId}/${formattedDate}/`,
-        { headers: { "Content-Type": "application/json" } }
+        { headers: { "Content-Type": "application/json" }, timeoutMs: 12_000, retries: 1 }
       );
 
-      const mappedBookings = response.data.map((booking) => ({
+      const mappedBookings = (Array.isArray(rows) ? rows : []).map((booking) => ({
         id: booking.bookingId.toString(),
         bookingDate: booking.bookingDate,
         bookingTime: booking.bookingTime,
@@ -916,7 +916,7 @@ function ListBooking() {
       setBookings(mappedBookings);
       setFilteredBookings(mappedBookings);
     } catch (error) {
-      console.error("Error fetching data:", error.response ? error.response.data : error.message);
+      console.error("Error fetching data:", error);
     }
   };
 
