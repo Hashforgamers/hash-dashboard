@@ -4,6 +4,7 @@ import { createContext, useContext, useEffect, useState } from "react";
 import { jwtDecode } from "jwt-decode";
 import { Permission, ROLE_PERMISSIONS, StaffRole } from "@/lib/rbac";
 import { accessApi, Role } from "@/lib/access-api";
+import { LOGIN_URL } from "@/src/config/env";
 
 export interface StaffProfile {
   id: string;
@@ -381,8 +382,61 @@ export function AccessProvider({ children }: { children: React.ReactNode }) {
 
       return { ok: true, message: `Switched to ${unlocked.staff.name}` };
     } catch (e: any) {
-      accessDebug("Unlock failed", { cafeId: selectedCafeId, error: e?.message || "unknown" });
-      return { ok: false, message: e.message || "Invalid PIN" };
+      accessDebug("Unlock failed, trying owner PIN validation fallback", {
+        cafeId: selectedCafeId,
+        error: e?.message || "unknown",
+      });
+
+      // Fallback: owner/main cafe PIN is validated by login-service.
+      try {
+        const timestamp = Date.now();
+        const response = await fetch(`${LOGIN_URL}/api/validatePin?t=${timestamp}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            vendor_id: selectedCafeId,
+            pin,
+            timestamp,
+          }),
+        });
+
+        const data: any = await response.json().catch(() => ({}));
+        if (!response.ok || data?.status !== "success" || !data?.data?.token) {
+          const message =
+            data?.message ||
+            data?.error ||
+            e?.message ||
+            "Invalid PIN";
+          return { ok: false, message };
+        }
+
+        const ownerLoginToken = String(data.data.token);
+        localStorage.setItem("jwtToken", ownerLoginToken);
+
+        const ownerSession = await accessApi.getOwnerSession(selectedCafeId, ownerLoginToken);
+        localStorage.setItem(STORAGE_ACCESS_TOKEN, ownerSession.token);
+        accessDebug("Owner fallback success", {
+          cafeId: selectedCafeId,
+          role: ownerSession.staff.role,
+          name: ownerSession.staff.name,
+        });
+
+        setActiveStaff({
+          id: ownerSession.staff.id,
+          cafeId: selectedCafeId,
+          name: ownerSession.staff.name,
+          role: toRole(ownerSession.staff.role) as StaffRole,
+          permissions: ownerSession.staff.permissions as Permission[],
+        });
+
+        return { ok: true, message: `Switched to ${ownerSession.staff.name}` };
+      } catch (fallbackError: any) {
+        accessDebug("Owner fallback failed", {
+          cafeId: selectedCafeId,
+          error: fallbackError?.message || "unknown",
+        });
+        return { ok: false, message: fallbackError?.message || e?.message || "Invalid PIN" };
+      }
     }
   };
 

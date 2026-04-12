@@ -235,7 +235,7 @@ const VendorOrderPage: React.FC = () => {
           </div>
         ) : products.length === 0 ? (
           <div className="gaming-panel text-center py-8 sm:py-12">
-            <p className="body-text-muted">No products available.</p>
+            <p className="body-text-muted">No products available right now. Once Hash has something, we will show it here.</p>
             <button className={`${primaryButtonClass} mt-4`} onClick={() => fetchProducts(true)}>
               Refresh Products
             </button>
