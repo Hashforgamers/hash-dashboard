@@ -164,15 +164,9 @@ export function DashboardContent() {
     function handleConsoleAvailabilityEvent(data: any) {
       const eventVendorId = Number(data?.vendorId ?? data?.vendor_id)
       if (eventVendorId === vendorId && data?.console_id !== undefined) {
-        setBookingInfo((prev: any[]) =>
-          Array.isArray(prev)
-            ? prev.map((item: any) =>
-                Number(item?.id) === Number(data.console_id)
-                  ? { ...item, status: Boolean(data.is_available), is_available: Boolean(data.is_available) }
-                  : item
-              )
-            : prev
-        )
+        // Keep dashboard reactive without relying on removed local booking state.
+        setRefreshSlots((prev) => !prev)
+        loadConsoleData()
       }
     }
 
