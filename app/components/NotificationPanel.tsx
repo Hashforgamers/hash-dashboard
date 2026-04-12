@@ -503,10 +503,10 @@ export function NotificationPanel({
             animate={{ y: 0, opacity: 1, scale: 1 }}
             exit={{ y: -100, opacity: 0, scale: 0.95 }}
             transition={{ type: "spring", damping: 25, stiffness: 300 }}
-            className="dashboard-module-panel fixed left-4 right-4 top-16 z-[30010] max-h-[85vh] overflow-hidden rounded-2xl shadow-[0_18px_60px_rgba(2,6,23,0.35)] md:left-auto md:w-[26rem]"
+            className="dashboard-module-panel fixed left-4 right-4 top-16 z-[30010] max-h-[85vh] overflow-hidden rounded-2xl border border-slate-600/45 bg-slate-900/92 shadow-[0_18px_60px_rgba(2,6,23,0.5)] backdrop-blur-xl md:left-auto md:w-[26rem]"
           >
             {/* Header */}
-            <div className="flex items-center justify-between border-b border-border bg-muted/30 p-4">
+            <div className="flex items-center justify-between border-b border-slate-700/70 bg-slate-900/75 p-4">
               <div className="flex items-center gap-2">
                 <h3 className="dash-title !text-base">Notifications</h3>
                 {notificationCount > 0 && (
@@ -526,8 +526,8 @@ export function NotificationPanel({
             </div>
 
             {/* Content */}
-            <div className="max-h-[70vh] overflow-y-auto bg-transparent p-2 sm:p-3">
-              <div className="dashboard-module-card mb-3 rounded-xl border border-cyan-400/25 bg-cyan-500/5 p-3">
+            <div className="max-h-[70vh] overflow-y-auto bg-slate-900/45 p-2 sm:p-3">
+              <div className="dashboard-module-card mb-3 rounded-xl border border-cyan-400/25 bg-slate-900/65 p-3">
                 <div className="mb-2 flex items-center justify-between gap-2">
                   <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-cyan-200">
                     Pay At Cafe Queue
@@ -576,8 +576,8 @@ export function NotificationPanel({
               </div>
 
               {notifications.length === 0 ? (
-                <div className="dashboard-module-card px-6 py-12 text-center">
-                  <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full border border-border bg-muted/40">
+                <div className="dashboard-module-card rounded-xl border border-slate-600/45 bg-slate-900/65 px-6 py-12 text-center">
+                  <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full border border-slate-500/60 bg-slate-800/70">
                     <Bell className="h-8 w-8 text-muted-foreground opacity-70" />
                   </div>
                   <h4 className="mb-2 font-medium text-foreground">No notifications</h4>
