@@ -956,6 +956,7 @@ export function UpcomingBookings({
                   </div>
 
                   <div className="p-2 sm:p-3">
+                    <div className="rounded-lg border border-gray-200 bg-white/90 p-2 shadow-sm dark:border-zinc-700 dark:bg-zinc-900/70">
                     {isLoading ? (
                       <div className="flex items-center justify-center h-24 sm:h-32">
                         <div className="animate-spin rounded-full h-6 w-6 border-2 border-emerald-500 border-t-transparent"></div>
@@ -985,7 +986,7 @@ export function UpcomingBookings({
                                 ? selectedConsoleIds.includes(console.consoleId)
                                 : selectedConsole === console.consoleId)
                                 ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20"
-                                : "border-gray-200 dark:border-zinc-800 hover:border-emerald-500/50"
+                                : "border-gray-200 bg-white/70 dark:border-zinc-700 dark:bg-zinc-900/60 hover:border-emerald-500/50"
                             } p-2 sm:p-3 transition-all duration-200`}
                           >
                             <div className="flex items-center space-x-2">
@@ -1035,6 +1036,7 @@ export function UpcomingBookings({
                         Selected {selectedConsoleIds.length}/{requiredConsoleCount} consoles.
                       </p>
                     )}
+                    </div>
                   </div>
                 </Card>
               </motion.div>
