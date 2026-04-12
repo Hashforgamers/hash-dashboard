@@ -10,6 +10,7 @@ import {
   TrendingUp, Lock
 } from 'lucide-react'
 import { useDashboardData } from "@/app/context/DashboardDataContext"
+import { useAccess } from "@/app/context/AccessContext"
 import HashLoader from "./ui/HashLoader"
 import { useSocket } from "../context/SocketContext"
 import { useSubscription } from "@/hooks/useSubscription"
@@ -64,6 +65,8 @@ export function DashboardContent() {
 
   const { socket, isConnected, joinVendor } = useSocket()
   const { isLocked } = useSubscription()
+  const { activeStaff } = useAccess()
+  const isOwnerSession = (activeStaff?.role || "owner") === "owner"
 
   const showDashboardToast = useCallback((message: string, type: 'success' | 'error' | 'info' = 'info') => {
     const toast = document.createElement('div')
@@ -442,7 +445,13 @@ export function DashboardContent() {
             animate={{ opacity: 1, y: 0 }}
             className="gaming-panel shrink-0 rounded-xl p-2 max-md:p-1.5 md:p-2.5"
           >
-            <div className="grid grid-cols-1 gap-1.5 max-md:grid-cols-[minmax(0,1fr)_minmax(138px,42vw)] max-md:items-start max-md:gap-1 lg:grid-cols-[minmax(200px,1fr)_minmax(0,1.8fr)_auto] lg:items-center">
+            <div
+              className={
+                isOwnerSession
+                  ? "grid grid-cols-1 gap-1.5 max-md:grid-cols-[minmax(0,1fr)_minmax(138px,42vw)] max-md:items-start max-md:gap-1 lg:grid-cols-[minmax(200px,1fr)_minmax(0,1.8fr)_auto] lg:items-center"
+                  : "grid grid-cols-1 gap-1.5"
+              }
+            >
               <div className="min-w-0">
                 <div className="flex items-start justify-between gap-2 lg:block">
                   <div className="min-w-0">
@@ -460,11 +469,11 @@ export function DashboardContent() {
 
               <div className="min-w-0 max-md:hidden">
                 <div className="min-w-0">
-                  {topMetricsStrip}
+                  {isOwnerSession ? topMetricsStrip : null}
                 </div>
               </div>
               <div className="max-md:w-full max-md:self-start">
-                {mobileMetricsStrip}
+                {isOwnerSession ? mobileMetricsStrip : null}
               </div>
             </div>
           </motion.div>
