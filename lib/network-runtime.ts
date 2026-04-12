@@ -1,12 +1,14 @@
 "use client"
 
 import axios from "axios"
+import { ensureFreshLoginToken, getPreferredAuthToken, refreshLoginToken, shouldAttachAuth } from "@/lib/auth-session"
 
 const RETRYABLE_STATUS = new Set([408, 425, 429, 500, 502, 503, 504])
 
 declare global {
   interface Window {
     __hashNetworkRuntimeInstalled?: boolean
+    __hashOriginalFetch?: typeof window.fetch
   }
 }
 
@@ -47,12 +49,20 @@ export function installNetworkRuntime() {
   window.__hashNetworkRuntimeInstalled = true
 
   const originalFetch = window.fetch.bind(window)
+  window.__hashOriginalFetch = originalFetch
   const defaultTimeoutMs = 12_000
   const getRetries = 1
 
   window.fetch = async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
+    const rawUrl =
+      typeof input === "string"
+        ? input
+        : input instanceof URL
+        ? input.toString()
+        : input.url
     const method = ((init?.method || (input instanceof Request ? input.method : "GET")) || "GET").toUpperCase()
     const retries = method === "GET" || method === "HEAD" ? getRetries : 0
+    const skipAuthRefresh = (new Headers(init?.headers || undefined)).get("X-Skip-Auth-Refresh") === "1"
 
     for (let attempt = 0; attempt <= retries; attempt += 1) {
       const requestHeaders = new Headers(input instanceof Request ? input.headers : undefined)
@@ -60,6 +70,13 @@ export function installNetworkRuntime() {
       initHeaders.forEach((value, key) => requestHeaders.set(key, value))
       if (!requestHeaders.has("X-Client-Source")) {
         requestHeaders.set("X-Client-Source", "dashboard")
+      }
+      if (!requestHeaders.has("Authorization") && shouldAttachAuth(rawUrl)) {
+        await ensureFreshLoginToken(90)
+        const token = getPreferredAuthToken()
+        if (token) {
+          requestHeaders.set("Authorization", `Bearer ${token}`)
+        }
       }
 
       const { signal, cleanup } = withTimeoutSignal(defaultTimeoutMs, init?.signal || null)
@@ -70,6 +87,19 @@ export function installNetworkRuntime() {
           headers: requestHeaders,
           signal,
         })
+        if (response.status === 401 && !skipAuthRefresh && shouldAttachAuth(rawUrl)) {
+          const refreshed = await refreshLoginToken("401")
+          if (refreshed) {
+            requestHeaders.set("Authorization", `Bearer ${refreshed}`)
+            const retryResponse = await originalFetch(input, {
+              ...init,
+              method,
+              headers: requestHeaders,
+              signal,
+            })
+            return retryResponse
+          }
+        }
         if (attempt < retries && shouldRetry(response.status)) {
           await sleep(250 + Math.floor(Math.random() * 120))
           continue
@@ -89,6 +119,17 @@ export function installNetworkRuntime() {
   axios.defaults.timeout = 12_000
   axios.defaults.withCredentials = false
   axios.defaults.headers.common["X-Client-Source"] = "dashboard"
+  axios.interceptors.request.use(async (config) => {
+    const url = String(config.url || "")
+    if (config.headers && !config.headers.Authorization && shouldAttachAuth(url)) {
+      await ensureFreshLoginToken(90)
+      const token = getPreferredAuthToken()
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`
+      }
+    }
+    return config
+  })
 
   axios.interceptors.response.use(
     (response) => response,
@@ -101,6 +142,16 @@ export function installNetworkRuntime() {
       const retryCount = Number(config.__retryCount || 0)
       const maxRetries = retryableMethod ? 1 : 0
       const status = error?.response?.status
+
+      if (status === 401 && !config.__authRetried && shouldAttachAuth(String(config.url || ""))) {
+        config.__authRetried = true
+        const refreshed = await refreshLoginToken("401")
+        if (refreshed) {
+          config.headers = config.headers || {}
+          config.headers.Authorization = `Bearer ${refreshed}`
+          return axios(config)
+        }
+      }
 
       if (retryCount < maxRetries && (status == null || shouldRetry(status))) {
         config.__retryCount = retryCount + 1

@@ -331,10 +331,11 @@ export default function SelectCafePage() {
             const accessSession = await accessApi.unlockByPin(selectedCafeData.id, pin)
             localStorage.setItem("jwtToken", accessSession.token)
             localStorage.setItem("rbac_access_token_v1", accessSession.token)
+            localStorage.setItem("tokenExpiration", String(Date.now() + 24 * 60 * 60 * 1000))
             setActiveCafe(selectedCafeData.id)
 
-            const oneHour = 60 * 60
-            document.cookie = `jwt=${accessSession.token}; max-age=${oneHour}; path=/; SameSite=Lax; Secure`
+            const oneDay = 24 * 60 * 60
+            document.cookie = `jwt=${accessSession.token}; max-age=${oneDay}; path=/; SameSite=Lax; Secure`
 
             toast.success("Access granted!")
             router.replace("/dashboard")
@@ -360,6 +361,8 @@ export default function SelectCafePage() {
       // ✅ Handle 200 OK with status field
       if (data.status === "success") {
         localStorage.setItem("jwtToken", data.data.token)
+        const expiresInSec = Number(data?.data?.expires_in || 24 * 60 * 60)
+        localStorage.setItem("tokenExpiration", String(Date.now() + expiresInSec * 1000))
 
         // Bootstrap RBAC token with the same cafe PIN (owner/staff unlock path)
         try {
@@ -372,8 +375,8 @@ export default function SelectCafePage() {
 
         setActiveCafe(selectedCafeData.id)
 
-        const oneHour = 60 * 60
-        document.cookie = `jwt=${data.data.token}; max-age=${oneHour}; path=/; SameSite=Lax; Secure`
+        const maxAge = Math.max(60, expiresInSec)
+        document.cookie = `jwt=${data.data.token}; max-age=${maxAge}; path=/; SameSite=Lax; Secure`
 
         toast.success("Access granted!")
         router.replace("/dashboard")

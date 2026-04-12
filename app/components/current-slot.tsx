@@ -115,7 +115,17 @@ const formatHistoryDateLabel = (dateInput: any) => {
   }).format(d);
 };
 
+const normalizeStatusValue = (value: unknown) =>
+  String(value || "")
+    .toLowerCase()
+    .trim()
+    .replace(/[\s-]+/g, "_");
+
 const normalizeHistoryStatus = (booking: any) => {
+  const sessionOutcome = normalizeStatusValue(booking?.sessionOutcome);
+  if (sessionOutcome && ["played", "no_show", "not_played"].includes(sessionOutcome)) {
+    return sessionOutcome;
+  }
   const lifecycle = String(booking?.lifecycleStatus || "").toLowerCase().trim();
   if (lifecycle && !["upcoming", "current"].includes(lifecycle)) {
     return lifecycle;
@@ -125,25 +135,71 @@ const normalizeHistoryStatus = (booking: any) => {
     const normalized = record.toLowerCase().trim();
     if (normalized && !["true", "false"].includes(normalized)) return normalized;
   }
+  const status = booking?.status;
+  if (typeof status === "string") {
+    const normalized = status.toLowerCase().trim();
+    if (normalized && !["true", "false", "active"].includes(normalized)) return normalized;
+  }
   return "completed";
 };
 
-const historyStatusChipClass = (status: string) => {
-  if (status === "rejected") return "border-red-400/40 bg-red-500/15 text-red-200";
-  if (status === "discarded" || status === "no_show") {
-    return "border-orange-400/40 bg-orange-500/15 text-orange-200";
+type HistoryOutcome = "played" | "no_show" | "not_played";
+
+const getHistoryOutcome = (status: string): HistoryOutcome => {
+  const value = normalizeStatusValue(status);
+  if (
+    ["no_show", "noshow", "discarded", "absent", "missed", "dnf_no_show"].includes(value)
+  ) {
+    return "no_show";
   }
-  if (status === "cancelled" || status === "canceled") {
-    return "border-amber-400/40 bg-amber-500/15 text-amber-200";
+  if (
+    [
+      "cancelled",
+      "canceled",
+      "rejected",
+      "verification_failed",
+      "payment_failed",
+      "failed",
+      "expired",
+      "void",
+      "declined",
+      "refunded",
+      "not_played",
+    ].includes(value)
+  ) {
+    return "not_played";
+  }
+  return "played";
+};
+
+const historyStatusChipClass = (status: string) => {
+  const outcome = getHistoryOutcome(status);
+  if (outcome === "not_played") return "border-red-400/40 bg-red-500/15 text-red-200";
+  if (outcome === "no_show") {
+    return "border-orange-400/40 bg-orange-500/15 text-orange-200";
   }
   return "border-emerald-400/40 bg-emerald-500/15 text-emerald-200";
 };
 
-const historyStatusLabel = (status: string) => {
-  const value = String(status || "").toLowerCase().trim();
-  if (value === "discarded" || value === "no_show") return "No Show";
-  if (value === "verification_failed") return "Payment Failed";
-  return value.replace("_", " ");
+const historyStatusLabel = (status: string, booking?: any) => {
+  const serverLabel = String(booking?.sessionOutcomeLabel || "").trim();
+  const serverReason = String(booking?.sessionOutcomeReason || "").trim();
+  if (serverLabel) {
+    if (serverLabel.toLowerCase() === "not played" && serverReason && serverReason.toLowerCase() !== "not played") {
+      return `Not Played (${serverReason})`;
+    }
+    return serverLabel;
+  }
+  const value = normalizeStatusValue(status);
+  const outcome = getHistoryOutcome(status);
+  if (outcome === "played") return "Played";
+  if (outcome === "no_show") return "No Show";
+
+  // Preserve reason clarity for operations while keeping a stable top-level outcome.
+  if (value === "cancelled" || value === "canceled") return "Not Played (Cancelled)";
+  if (value === "rejected") return "Not Played (Rejected)";
+  if (value === "verification_failed" || value === "payment_failed") return "Not Played (Payment Failed)";
+  return "Not Played";
 };
 
 const getConsoleVisual = (consoleType: string) => {
@@ -1732,7 +1788,7 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                   <div className="space-y-2">
                     {filteredHistoryBookings.map((b: any, i: number) => {
                       const normalizedStatus = normalizeHistoryStatus(b);
-                      const statusLabel = historyStatusLabel(normalizedStatus);
+                      const statusLabel = historyStatusLabel(normalizedStatus, b);
                       const systemText = `${b.consoleName || b.consoleType || "Console"}${b.consoleBrand ? ` • ${b.consoleBrand}` : ""}${b.consoleNumber ? ` • ${b.consoleNumber}` : ""}`;
                       const bookingPhone = getBookingPhone(b);
                       return (
@@ -1768,7 +1824,7 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                   <table className="dashboard-module-table w-full min-w-[760px] max-md:min-w-[680px] divide-y">
                     <thead className="dashboard-module-table-head sticky top-0 z-10">
                       <tr>
-                        {["Name", "System", "Time", "Progress", "Extra", "Action"].map((heading) => (
+                        {["Name", "System", "Time", "Progress", "Extra", "Status"].map((heading) => (
                           <th
                             key={heading}
                             scope="col"
@@ -1782,7 +1838,7 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                     <tbody className="dashboard-module-table-body divide-y">
                       {filteredHistoryBookings.map((b: any, i: number) => {
                         const normalizedStatus = normalizeHistoryStatus(b);
-                        const statusLabel = historyStatusLabel(normalizedStatus);
+                        const statusLabel = historyStatusLabel(normalizedStatus, b);
                         const systemText = `${b.consoleName || b.consoleType || "Console"}${b.consoleBrand ? ` • ${b.consoleBrand}` : ""}${b.consoleNumber ? ` • ${b.consoleNumber}` : ""}`;
                         const bookingPhone = getBookingPhone(b);
                         return (
