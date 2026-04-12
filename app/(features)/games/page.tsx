@@ -14,7 +14,6 @@ import {
   Gamepad2,
   Plus,
   Search,
-  IndianRupee,
   Loader2,
   CheckCircle2,
   XCircle,
@@ -427,9 +426,6 @@ export default function GamesManagementPage() {
                         <th className="dashboard-module-table-header text-left py-3 px-4 text-xs font-bold uppercase tracking-wider">
                           Available On
                         </th>
-                        <th className="dashboard-module-table-header text-left py-3 px-4 text-xs font-bold uppercase tracking-wider">
-                          Avg Price
-                        </th>
                         <th className="dashboard-module-table-header text-center py-3 px-4 text-xs font-bold uppercase tracking-wider">
                           Actions
                         </th>
@@ -518,12 +514,6 @@ export default function GamesManagementPage() {
                                   </div>
                                 );
                               })}
-                            </div>
-                          </td>
-                          <td className="py-3 px-4">
-                            <div className="flex items-center gap-1 font-semibold text-sky-700 dark:text-primary">
-                              <IndianRupee className="w-4 h-4" />
-                              <span>{vg.avg_price.toFixed(0)}/hr</span>
                             </div>
                           </td>
                           <td className="py-3 px-4">

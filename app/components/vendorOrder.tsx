@@ -58,18 +58,19 @@ const VendorOrderPage: React.FC = () => {
   const { data: cachedProducts, refresh } = useModuleCache<Product[]>(cacheKey, fetcher, 300000, "store");
 
   useEffect(() => {
-    if (cachedProducts && cachedProducts.length > 0) {
+    if (Array.isArray(cachedProducts)) {
+      // Treat empty arrays as valid cached state to avoid forced refetch loops.
       setProducts(cachedProducts);
       return;
     }
-    fetchProducts();
+    fetchProducts(false);
   }, [cachedProducts]);
 
-  const fetchProducts = async () => {
+  const fetchProducts = async (force = true) => {
     setLoading(true);
     setError(null);
     try {
-      const next = await refresh(true);
+      const next = await refresh(force);
       if (Array.isArray(next)) {
         setProducts(next);
       }
@@ -207,7 +208,7 @@ const VendorOrderPage: React.FC = () => {
           <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-2 sm:p-3 text-destructive mb-2 max-w-lg mx-auto">
             <p className="body-text font-medium">Error:</p>
             <p className="body-text-small mt-1 break-words">{error}</p>
-            <button className={`${secondaryButtonClass} mt-2 border-destructive text-destructive`} onClick={fetchProducts}>
+            <button className={`${secondaryButtonClass} mt-2 border-destructive text-destructive`} onClick={() => fetchProducts(true)}>
               Try Again
             </button>
           </div>
@@ -235,7 +236,7 @@ const VendorOrderPage: React.FC = () => {
         ) : products.length === 0 ? (
           <div className="gaming-panel text-center py-8 sm:py-12">
             <p className="body-text-muted">No products available.</p>
-            <button className={`${primaryButtonClass} mt-4`} onClick={fetchProducts}>
+            <button className={`${primaryButtonClass} mt-4`} onClick={() => fetchProducts(true)}>
               Refresh Products
             </button>
           </div>

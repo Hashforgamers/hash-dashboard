@@ -80,15 +80,21 @@ const calculateExtraTime = (endTime: string, date: string) => {
 const calculateDuration = (startTime: string, endTime: string) => {
   if (!startTime || !endTime) return 0;
   const parseTimeToMinutes = (timeStr: string) => {
-    const [time, modifier] = timeStr.trim().split(" ");
-    let [hours, minutes] = time.split(":").map(Number);
+    const normalized = String(timeStr || "").trim();
+    if (!normalized) return 0;
+    const [time, modifierRaw] = normalized.split(" ");
+    const [rawHours, rawMinutes] = (time || "0:0").split(":");
+    let hours = Number(rawHours || 0);
+    const minutes = Number(rawMinutes || 0);
+    const modifier = String(modifierRaw || "").toUpperCase();
     if (modifier === "PM" && hours < 12) hours += 12;
     if (modifier === "AM" && hours === 12) hours = 0;
     return hours * 60 + minutes;
   };
   const startMinutes = parseTimeToMinutes(startTime);
   const endMinutes = parseTimeToMinutes(endTime);
-  return (endMinutes - startMinutes) * 60;
+  const diffMinutes = endMinutes - startMinutes;
+  return (diffMinutes >= 0 ? diffMinutes : diffMinutes + 24 * 60) * 60;
 };
 
 const calculateExtraAmount = (extraSeconds: number, ratePerHour = 1) => {
@@ -182,6 +188,188 @@ const getBookingEmail = (booking: any): string => {
     booking?.user?.email ||
     "";
   return String(raw || "").trim();
+};
+
+const formatTo12Hour = (hours24: number, minutes: number): string => {
+  const boundedHours = Math.max(0, Math.min(23, Number(hours24 || 0)));
+  const boundedMinutes = Math.max(0, Math.min(59, Number(minutes || 0)));
+  const period = boundedHours >= 12 ? "PM" : "AM";
+  const hour12 = boundedHours % 12 || 12;
+  return `${hour12}:${String(boundedMinutes).padStart(2, "0")} ${period}`;
+};
+
+const normalizeDisplayTime = (value: any): string => {
+  const raw = String(value || "").trim();
+  if (!raw) return "";
+
+  const twelveHour = raw.match(/^(\d{1,2}):(\d{2})\s*([APap][Mm])$/);
+  if (twelveHour) {
+    const hours = Number(twelveHour[1]);
+    const minutes = Number(twelveHour[2]);
+    const period = twelveHour[3].toUpperCase();
+    const normalizedHours = hours % 12 || 12;
+    return `${normalizedHours}:${String(minutes).padStart(2, "0")} ${period}`;
+  }
+
+  const plainTime = raw.match(/^(\d{1,2}):(\d{2})(?::\d{2})?$/);
+  if (plainTime) {
+    return formatTo12Hour(Number(plainTime[1]), Number(plainTime[2]));
+  }
+
+  const isoTime = raw.match(/T(\d{2}):(\d{2})(?::\d{2})?/);
+  if (isoTime) {
+    return formatTo12Hour(Number(isoTime[1]), Number(isoTime[2]));
+  }
+
+  return raw;
+};
+
+const extractTimeRange = (value: any): { start: string; end: string } => {
+  const raw = String(value || "").trim();
+  if (!raw) return { start: "", end: "" };
+  const parts = raw.split(/\s*-\s*/);
+  if (parts.length < 2) return { start: "", end: "" };
+  return {
+    start: normalizeDisplayTime(parts[0]),
+    end: normalizeDisplayTime(parts[1]),
+  };
+};
+
+const resolveBookingIdRaw = (slot: any): any => {
+  const direct =
+    slot?.bookingId ??
+    slot?.bookId ??
+    slot?.booking_id ??
+    slot?.book_id ??
+    slot?.booking?.id ??
+    slot?.booking?.booking_id ??
+    slot?.id;
+  if (direct !== null && direct !== undefined && String(direct).trim() !== "") return direct;
+
+  const nested = Array.isArray(slot?.bookings) ? slot.bookings : [];
+  for (const row of nested) {
+    const nestedId =
+      row?.bookingId ??
+      row?.bookId ??
+      row?.booking_id ??
+      row?.book_id ??
+      row?.booking?.id ??
+      row?.booking?.booking_id ??
+      row?.id;
+    if (nestedId !== null && nestedId !== undefined && String(nestedId).trim() !== "") return nestedId;
+  }
+
+  return null;
+};
+
+const getBookingIdString = (slot: any): string => {
+  const bookingId = resolveBookingIdRaw(slot);
+  return bookingId === null || bookingId === undefined ? "" : String(bookingId).trim();
+};
+
+const normalizeLiveSlot = (slot: any) => {
+  const entries = Array.isArray(slot?.bookings) ? slot.bookings : [];
+  const firstEntry = entries[0] || null;
+  const lastEntry = entries[entries.length - 1] || firstEntry;
+  const rangeFromTime = extractTimeRange(
+    slot?.time ?? slot?.slot_time ?? slot?.slotTime ?? firstEntry?.time ?? firstEntry?.slot_time
+  );
+
+  const startRaw =
+    slot?.startTime ??
+    slot?.start_time ??
+    slot?.start ??
+    firstEntry?.startTime ??
+    firstEntry?.start_time ??
+    firstEntry?.start ??
+    rangeFromTime.start;
+
+  const endRaw =
+    slot?.endTime ??
+    slot?.end_time ??
+    slot?.end ??
+    lastEntry?.endTime ??
+    lastEntry?.end_time ??
+    lastEntry?.end ??
+    rangeFromTime.end;
+
+  const bookingId = resolveBookingIdRaw(slot);
+  const slotId =
+    slot?.slotId ??
+    slot?.slot_id ??
+    firstEntry?.slotId ??
+    firstEntry?.slot_id ??
+    null;
+  const consoleId =
+    slot?.consoleId ??
+    slot?.console_id ??
+    firstEntry?.consoleId ??
+    firstEntry?.console_id ??
+    null;
+  const consoleNumberRaw =
+    slot?.consoleNumber ??
+    slot?.console_number ??
+    slot?.consoleNo ??
+    slot?.console_no ??
+    slot?.consoleCode ??
+    slot?.console_code ??
+    firstEntry?.consoleNumber ??
+    firstEntry?.console_number ??
+    consoleId;
+
+  const dateRaw =
+    slot?.date ??
+    slot?.booked_date ??
+    slot?.bookedDate ??
+    slot?.booking_date ??
+    firstEntry?.date ??
+    firstEntry?.booked_date ??
+    "";
+
+  return {
+    ...slot,
+    slotId: slotId,
+    slot_id: slot?.slot_id ?? slotId,
+    bookingId: bookingId,
+    bookId: slot?.bookId ?? slot?.book_id ?? bookingId,
+    booking_id: slot?.booking_id ?? bookingId,
+    book_id: slot?.book_id ?? bookingId,
+    startTime: normalizeDisplayTime(startRaw),
+    endTime: normalizeDisplayTime(endRaw),
+    date: String(dateRaw || "").trim(),
+    consoleType:
+      slot?.consoleType ??
+      slot?.console_type ??
+      slot?.consoleName ??
+      slot?.console_name ??
+      firstEntry?.consoleType ??
+      firstEntry?.console_type ??
+      slot?.game_name ??
+      "Gaming Console",
+    consoleNumber: consoleNumberRaw !== null && consoleNumberRaw !== undefined ? String(consoleNumberRaw) : "",
+    consoleId: consoleId,
+    hasMeals: Boolean(
+      slot?.hasMeals ??
+      slot?.has_meals ??
+      firstEntry?.hasMeals ??
+      firstEntry?.has_meals ??
+      (Array.isArray(slot?.extra_services) && slot.extra_services.length > 0)
+    ),
+    customerPhone:
+      slot?.customerPhone ??
+      slot?.customer_phone ??
+      firstEntry?.customer_phone ??
+      slot?.phone ??
+      slot?.phone_number ??
+      slot?.contact_number ??
+      "",
+    customerEmail:
+      slot?.customerEmail ??
+      slot?.customer_email ??
+      firstEntry?.customer_email ??
+      slot?.email ??
+      "",
+  };
 };
 
 const releaseSlot = async (consoleType: string, gameId: string, consoleId: string, vendorId: any, setRefreshSlots: any) => {
@@ -294,13 +482,14 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
   // Update from props
   useEffect(() => {
     if (initialSlots && Array.isArray(initialSlots)) {
-      setCurrentSlots(initialSlots)
+      const normalizedSlots = initialSlots.map((slot) => normalizeLiveSlot(slot))
+      setCurrentSlots(normalizedSlots)
       
       // ✅ Initialize meal status tracking
       const mealStatus: Record<string, boolean> = {};
-      initialSlots.forEach(slot => {
-        if (slot.bookingId || slot.bookId) {
-          const bookingId = String(slot.bookingId || slot.bookId);
+      normalizedSlots.forEach(slot => {
+        const bookingId = getBookingIdString(slot);
+        if (bookingId) {
           mealStatus[bookingId] = Boolean(slot.hasMeals);
         }
       });
@@ -345,7 +534,7 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
         // Also update the currentSlots to reflect hasMeals = true
         setCurrentSlots(prev => 
           prev.map(slot => {
-            const slotBookingId = String(slot.bookingId || slot.bookId || '');
+            const slotBookingId = getBookingIdString(slot);
             if (slotBookingId === String(bookingId)) {
               return { ...slot, hasMeals: true };
             }
@@ -372,31 +561,18 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
       const shouldProcess = dataVendorId === vendorId || !data.vendorId;
       
       if (shouldProcess) {
-        const resolvedBookingId = data.bookId || data.bookingId || data.book_id || data.booking_id
-        const resolvedSlotId = data.slotId || data.slot_id
-        const newSlot = {
-          slotId: resolvedSlotId,
-          bookingId: resolvedBookingId,
-          username: data.username,
-          customerPhone: data.customer_phone || data.phone || data.phone_number || data.user_phone || data.contact_number || "",
-          consoleType: data.consoleType,
-          consoleNumber: data.consoleNumber,
-          consoleCode: data.consoleCode,
-          consoleId: data.consoleId || data.console_id,
-          game_id: data.game_id,
-          startTime: data.startTime || data.start_time,
-          endTime: data.endTime || data.end_time,
-          date: data.date,
-          status: 'active',
+        const newSlot = normalizeLiveSlot({
+          ...data,
+          status: "active",
           slot_price: data.slot_price || data.single_slot_price,
           userId: data.userId || data.user_id,
-          hasMeals: data.hasMeals
-        }
+        })
+        const newBookingId = getBookingIdString(newSlot)
         
         setCurrentSlots(prevSlots => {
             const exists = prevSlots.some(slot => 
             slot.slotId === newSlot.slotId || 
-            slot.bookingId === newSlot.bookingId ||
+            (newBookingId && getBookingIdString(slot) === newBookingId) ||
             (
               (slot.consoleId && newSlot.consoleId && Number(slot.consoleId) === Number(newSlot.consoleId)) ||
               (slot.consoleNumber === newSlot.consoleNumber && slot.status === 'active')
@@ -405,11 +581,12 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
           
           if (!exists) {
             // ✅ Update meal status tracking for new slots
-            const bookingId = String(newSlot.bookingId);
-            setBookingMealStatus(prev => ({
-              ...prev,
-              [bookingId]: Boolean(newSlot.hasMeals)
-            }));
+            if (newBookingId) {
+              setBookingMealStatus(prev => ({
+                ...prev,
+                [newBookingId]: Boolean(newSlot.hasMeals)
+              }));
+            }
             
             return [newSlot, ...prevSlots]
           } else {
@@ -544,7 +721,7 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
     const bookingIds = Array.from(
       new Set(
         filteredSlots
-          .map((slot) => Number(slot.bookingId || slot.bookId))
+          .map((slot) => Number(getBookingIdString(slot)))
           .filter((id) => Number.isFinite(id) && id > 0)
       )
     );
@@ -605,6 +782,7 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
       console.log('🔍 CurrentSlots sample booking structure:', {
         bookingId: sampleSlot.bookingId,
         bookId: sampleSlot.bookId,
+        resolvedBookingId: getBookingIdString(sampleSlot),
         hasMeals: sampleSlot.hasMeals,
         username: sampleSlot.username
       });
@@ -811,7 +989,7 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                     const isReleasing = releasingSlots[uniqueKey] || false;
                     const progress = Math.min(100, (timer.elapsedTime / timer.duration) * 100);
                     const hasExtraTime = timer.extraTime > 0;
-                    const bookingIdToCheck = String(booking.bookingId || booking.bookId || "");
+                    const bookingIdToCheck = getBookingIdString(booking);
                     const outstandingDue = Number(bookingOutstandingDue[bookingIdToCheck] || 0);
                     const hasOutstandingDue = outstandingDue > 0.01;
                     const needsSettlement = hasExtraTime || hasOutstandingDue;
@@ -1002,7 +1180,7 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                         const isReleasing = releasingSlots[uniqueKey] || false;
                         const progress = Math.min(100, (timer.elapsedTime / timer.duration) * 100);
                         const hasExtraTime = timer.extraTime > 0;
-                        const bookingIdForDue = String(booking.bookingId || booking.bookId || "");
+                        const bookingIdForDue = getBookingIdString(booking);
                         const outstandingDue = Number(bookingOutstandingDue[bookingIdForDue] || 0);
                         const hasOutstandingDue = outstandingDue > 0.01;
                         const needsSettlement = hasExtraTime || hasOutstandingDue;
@@ -1017,7 +1195,7 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                               : "Stable";
 
                         // ✅ ENHANCED: Check meal status from both original data and local tracking
-                        const bookingIdToCheck = String(booking.bookingId || booking.bookId || '');
+                        const bookingIdToCheck = getBookingIdString(booking);
                         const hasMeals = bookingMealStatus[bookingIdToCheck] ?? booking.hasMeals ?? false;
                         const squadMembers = Array.isArray(booking?.squadMembers) ? booking.squadMembers : [];
                         const squadPlayerCount = Number(

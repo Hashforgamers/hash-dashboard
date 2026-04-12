@@ -93,7 +93,7 @@ export default function RootLayout({
         <AuthProvider>
           {" "}
           {/* Wrap inside AuthProvider */}
-          <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={true}>
+          <ThemeProvider attribute="class" forcedTheme="dark" enableSystem={false}>
           <SocketProvider>
             <SubscriptionProvider>
             <AccessProvider>
