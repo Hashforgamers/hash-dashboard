@@ -53,7 +53,7 @@ export default function ResponsiveSearchFilter({
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
               transition={{ type: "spring", bounce: 0.1, duration: 0.4 }}
-              className="dashboard-module-panel dashboard-module h-full w-[85vw] border-l border-slate-600/60 bg-slate-950/95 p-4 shadow-2xl backdrop-blur-xl sm:w-[400px]"
+              className="dashboard-module-panel dashboard-module upcoming-filter-drawer h-full w-[85vw] border-l border-white/15 p-4 shadow-2xl backdrop-blur-xl sm:w-[400px]"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Header */}
