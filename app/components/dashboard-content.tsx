@@ -519,7 +519,7 @@ export function DashboardContent() {
 
 function App() {
   return (
-    <div className="h-full min-h-0 bg-background">
+    <div className="h-full min-h-0 bg-transparent">
       <DashboardContent />
     </div>
   )
