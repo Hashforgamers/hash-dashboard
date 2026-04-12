@@ -3530,13 +3530,14 @@ if (isPastTime) {
 
           // ✅ Show available slots with count
           else {
+            const availableSlotCount = Number(slot.available_slot || 0)
             timeSlots.push(
               <div
                 key={`${day.fullDate}-${slot.slot_id}`}
                 className={cn("w-full h-full", compact ? "min-h-[32px]" : "min-h-[40px]")}
               >
                 <SlotPill
-                  label={`${Math.max(getSlotDurationMinutes(slot), 30)}m`}
+                  label={`${availableSlotCount} ${availableSlotCount === 1 ? "Slot" : "Slots"}`}
                   color={getConsoleColor(gameConsole.id)}
                   icon={getConsoleIcon(gameConsole.type)}
                   onClick={() => handleSlotClick(day, time, gameConsole)}
@@ -3579,7 +3580,7 @@ if (isPastTime) {
       <Card className="overflow-hidden rounded-2xl border border-slate-300 bg-white/90 shadow-sm backdrop-blur-sm dark:border-gray-700 dark:bg-gray-800/30">
         {detectedDurations.length > 1 && (
         <div className="border-b border-cyan-200 bg-cyan-50 px-4 py-2 text-xs text-cyan-800 dark:border-cyan-500/20 dark:bg-cyan-500/10 dark:text-cyan-100/90">
-          Mixed slot durations detected ({detectedDurations.join("m, ")}m). In-between cells show continuation of longer slots.
+          Mixed slot durations detected ({detectedDurations.join("m, ")}m). Cells now show available slot count.
         </div>
       )}
       <div
