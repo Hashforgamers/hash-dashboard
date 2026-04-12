@@ -201,7 +201,7 @@ export function MainNav({ className, onItemClick, isNavPinned = false, ...props 
             <DialogTitle>Switch Active User</DialogTitle>
           </DialogHeader>
           <div className="space-y-3">
-            <p className="text-sm text-muted-foreground">Enter employee PIN to switch dashboard access level.</p>
+            <p className="text-sm text-muted-foreground">Enter owner or employee PIN to switch dashboard access level.</p>
             <Input
               value={pin}
               onChange={(e) => setPin(e.target.value.replace(/\D/g, ""))}

@@ -196,6 +196,21 @@ export default function ManageExtraServices() {
   const setViewMode = (catId: number, mode: 'grid' | 'table') =>
     setViewModes(prev => ({ ...prev, [catId]: mode }))
 
+  const openMenuDialogForCategory = (categoryId: number) => {
+    setActiveCategoryId(categoryId)
+    setMenuForm({
+      name: "",
+      description: "",
+      price: "",
+      stock_quantity: "",
+      stock_unit: "units",
+      low_stock_threshold: "0",
+      imageFile: undefined,
+      is_active: true,
+    })
+    setShowMenuDlg(true)
+  }
+
   const fetchCategories = async (force = false) => {
     if (!vendorId) return
     try {
@@ -551,8 +566,17 @@ export default function ManageExtraServices() {
                           </span>
                         </div>
 
-                        {/* Right: View Toggle + Delete */}
+                        {/* Right: Add Meal + View Toggle + Delete */}
                         <div className="flex items-center gap-2 shrink-0">
+                          <button
+                            onClick={() => openMenuDialogForCategory(cat.id)}
+                            className={primaryButtonClass}
+                            title={`Add meal in ${cat.name}`}
+                          >
+                            <Plus className="icon-md" />
+                            Add Meal
+                          </button>
+
                           {/* ✅ View Mode Toggle */}
                           <div className="flex items-center gap-1 rounded-lg border border-slate-300 bg-white/90 p-1 dark:border-cyan-400/20 dark:bg-slate-900/60">
                             <button
@@ -688,26 +712,13 @@ export default function ManageExtraServices() {
                               transition={{ delay: 0.04 * (cat.items?.length ?? 0) }}
                             >
                               <Card
-                                onClick={() => {
-                                  setActiveCategoryId(cat.id)
-                                  setMenuForm({
-                                    name: "",
-                                    description: "",
-                                    price: "",
-                                    stock_quantity: "",
-                                    stock_unit: "units",
-                                    low_stock_threshold: "0",
-                                    imageFile: undefined,
-                                    is_active: true,
-                                  })
-                                  setShowMenuDlg(true)
-                                }}
+                                onClick={() => openMenuDialogForCategory(cat.id)}
                                 className="cursor-pointer overflow-hidden rounded-lg border-2 border-dashed border-cyan-300 bg-white/90 transition-all duration-200 hover:border-cyan-400 hover:shadow-md dark:border-cyan-400/25 dark:bg-slate-900/40 dark:hover:border-cyan-300/50"
                               >
                                 <CardContent className="p-0 flex items-center justify-center min-h-[100px]">
                                   <div className="flex flex-col items-center gap-1 p-4 text-slate-500 transition-colors hover:text-slate-900 dark:text-muted-foreground dark:hover:text-foreground">
                                     <Plus className="icon-xl" />
-                                    <span className="text-xs font-medium">Add Item</span>
+                                    <span className="text-xs font-medium">Add Meal</span>
                                   </div>
                                 </CardContent>
                               </Card>
@@ -729,6 +740,13 @@ export default function ManageExtraServices() {
                               <div className="flex flex-col items-center justify-center py-10 gap-2 text-muted-foreground">
                                 <UtensilsCrossed className="w-8 h-8 opacity-30" />
                                 <p className="body-text-muted">No items yet</p>
+                                <button
+                                  onClick={() => openMenuDialogForCategory(cat.id)}
+                                  className={`${primaryButtonClass} mt-1`}
+                                >
+                                  <Plus className="icon-md" />
+                                  Add Meal
+                                </button>
                               </div>
                             ) : (
                               <div className="dashboard-table-wrap">
