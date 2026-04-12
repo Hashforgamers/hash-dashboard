@@ -11,8 +11,6 @@ import {
   CalendarCheck,
   Users,
   DollarSign,
-  Moon,
-  Sun,
   UtensilsCrossed,
   Store,
   Ticket,
@@ -25,7 +23,6 @@ import {
   Wallet,
   Star,
 } from "lucide-react";
-import { useTheme } from "next-themes";
 import { ButtonDestructive } from "./log-out";
 import { useAccess } from "@/app/context/AccessContext";
 import { Permission } from "@/lib/rbac";
@@ -65,7 +62,6 @@ const navItems: NavItem[] = [
 
 export function MainNav({ className, onItemClick, isNavPinned = false, ...props }: MainNavProps) {
   const pathname = usePathname();
-  const { setTheme, theme } = useTheme();
   const { can, setActiveByPin, activeStaff } = useAccess();
   const [pinDialogOpen, setPinDialogOpen] = useState(false);
   const [pin, setPin] = useState("");
@@ -194,25 +190,6 @@ export function MainNav({ className, onItemClick, isNavPinned = false, ...props 
               <span className={responsiveLabelClass}>Settings</span>
             </Link>
           )}
-
-          <button
-            onClick={() => {
-              setTheme(theme === "dark" ? "light" : "dark");
-              onItemClick?.();
-            }}
-            className={cn(
-              "dashboard-nav-item group/nav flex min-h-[30px] w-full items-center gap-2 rounded-lg border px-2.5 py-[clamp(0.14rem,0.42vh,0.28rem)] text-sm font-medium leading-tight transition-all duration-200",
-              responsiveItemPaddingClass,
-              collapsedAlignClass,
-              "text-muted-foreground"
-            )}
-          >
-            <div className="relative flex h-5 w-5 items-center justify-center">
-              <Sun className={cn("absolute transition-transform duration-300", theme === "dark" ? "rotate-90 scale-0" : "rotate-0 scale-100")} />
-              <Moon className={cn("absolute transition-transform duration-300", theme === "dark" ? "rotate-0 scale-100" : "rotate-90 scale-0")} />
-            </div>
-            <span className={responsiveLabelClass}>Toggle Theme</span>
-          </button>
 
           <ButtonDestructive isNavPinned={isNavPinned} />
         </div>

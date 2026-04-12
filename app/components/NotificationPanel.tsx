@@ -2,6 +2,7 @@
 
 import React, { useEffect, useMemo, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { createPortal } from 'react-dom'
 import { Bell, X, Check, Clock, User, Calendar, Wallet, Gamepad2, FileWarning } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -114,6 +115,7 @@ export function NotificationPanel({
   socket,
   onBookingAccepted
 }: NotificationPanelProps) {
+  const [mounted, setMounted] = useState(false)
   const [processingAction, setProcessingAction] = useState<{
     bookingId: number | null
     action: 'accept' | 'reject' | null
@@ -140,6 +142,11 @@ export function NotificationPanel({
     bookingId: number | null
     action: "accept" | "reject" | null
   }>({ bookingId: null, action: null })
+
+  useEffect(() => {
+    setMounted(true)
+    return () => setMounted(false)
+  }, [])
 
   useEffect(() => {
     if (payAtCafeSummary) setQueueSummary(payAtCafeSummary)
@@ -477,7 +484,7 @@ export function NotificationPanel({
   ]
 
 
-  return (
+  const panelContent = (
     <AnimatePresence>
       {isOpen && (
         <>
@@ -487,7 +494,7 @@ export function NotificationPanel({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40"
+            className="fixed inset-0 z-[30000] bg-black/30 backdrop-blur-sm"
           />
 
           {/* Notification Panel */}
@@ -496,7 +503,7 @@ export function NotificationPanel({
             animate={{ y: 0, opacity: 1, scale: 1 }}
             exit={{ y: -100, opacity: 0, scale: 0.95 }}
             transition={{ type: "spring", damping: 25, stiffness: 300 }}
-            className="dashboard-module-panel fixed top-16 right-4 left-4 z-50 max-h-[85vh] overflow-hidden rounded-2xl shadow-[0_18px_60px_rgba(2,6,23,0.35)] md:left-auto md:w-[26rem]"
+            className="dashboard-module-panel fixed left-4 right-4 top-16 z-[30010] max-h-[85vh] overflow-hidden rounded-2xl shadow-[0_18px_60px_rgba(2,6,23,0.35)] md:left-auto md:w-[26rem]"
           >
             {/* Header */}
             <div className="flex items-center justify-between border-b border-border bg-muted/30 p-4">
@@ -815,13 +822,13 @@ export function NotificationPanel({
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
                   onClick={() => setIsQueueOverlayOpen(false)}
-                  className="fixed inset-0 z-[70] bg-black/45 backdrop-blur-sm"
+                  className="fixed inset-0 z-[30020] bg-black/45 backdrop-blur-sm"
                 />
                 <motion.div
                   initial={{ opacity: 0, y: 12, scale: 0.98 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: 12, scale: 0.98 }}
-                  className="dashboard-module-panel fixed left-1/2 top-1/2 z-[80] w-[min(42rem,calc(100vw-2rem))] max-h-[78vh] -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-2xl border border-cyan-400/30 bg-background"
+                  className="dashboard-module-panel fixed left-1/2 top-1/2 z-[30030] w-[min(42rem,calc(100vw-2rem))] max-h-[78vh] -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-2xl border border-cyan-400/30 bg-background"
                 >
                   <div className="flex items-center justify-between border-b border-border bg-muted/30 px-4 py-3">
                     <div className="flex items-center gap-2">
@@ -1009,4 +1016,7 @@ export function NotificationPanel({
       )}
     </AnimatePresence>
   )
+
+  if (!mounted) return null
+  return createPortal(panelContent, document.body)
 }

@@ -831,6 +831,13 @@ export function TransactionTable() {
               >
                 Unselect All
               </button>
+              <button
+                type="button"
+                className="rounded border border-slate-300 px-2 py-1 text-xs text-slate-900 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-800"
+                onClick={() => setShowColumnSelector(false)}
+              >
+                Close
+              </button>
             </div>
           </div>
           <div className="grid grid-cols-2 gap-2 md:grid-cols-4">

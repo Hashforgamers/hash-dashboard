@@ -209,6 +209,7 @@ interface SlotBookingFormProps {
   isOpen: boolean
   onClose: () => void
   selectedSlots: SelectedSlot[]
+  onRemoveSelectedSlot: (slot: SelectedSlot) => void
   onBookingComplete: () => void
   availableConsoles: ConsoleType[]
 }
@@ -456,6 +457,7 @@ function SlotBookingForm({
   isOpen, 
   onClose, 
   selectedSlots, 
+  onRemoveSelectedSlot,
   onBookingComplete,
   availableConsoles 
 }: SlotBookingFormProps) {
@@ -532,6 +534,12 @@ function SlotBookingForm({
     setPortalReady(true)
     return () => setPortalReady(false)
   }, [])
+
+  useEffect(() => {
+    if (isOpen && selectedSlots.length === 0) {
+      onClose()
+    }
+  }, [isOpen, selectedSlots.length, onClose])
 
 
   const getVendorIdFromToken = (): number | null => {
@@ -2264,34 +2272,44 @@ if (response.ok || result.success === true || result.success === 'true') {
                           <span className="text-gray-700 dark:text-gray-300">
                             <strong>{new Date(slot.date).toLocaleDateString('en-GB')}</strong> • {slot.start_time.slice(0, 5)}-{slot.end_time.slice(0, 5)} • {slot.console_name}
                           </span>
-                          {/* REPLACE THE SPAN ABOVE WITH THIS */}
-<span className="flex items-center gap-2 font-semibold">
-  {(() => {
-    const key = slot.console_name.toLowerCase()
-    const entry = activePricing[key] || 
-      Object.values(activePricing).find(p => 
-        p.console_type.toLowerCase() === slot.console_name.toLowerCase()
-      )
-    const isOffer = entry?.is_offer
-    return (
-      <>
-        {isOffer && (
-          <span className="line-through text-gray-400 text-xs">
-            ₹{slot.console_price}
-          </span>
-        )}
-        <span className={isOffer ? "text-orange-500" : "text-emerald-600 dark:text-emerald-400"}>
-          ₹{getEffectivePrice(slot)}
-        </span>
-        {isOffer && (
-          <span className="text-xs bg-orange-100 dark:bg-orange-900/30 text-orange-600 px-1.5 py-0.5 rounded-full">
-            🏷️ {entry?.offer_name}
-          </span>
-        )}
-      </>
-    )
-  })()}
-</span>
+                          <div className="flex items-center gap-2">
+                            <span className="flex items-center gap-2 font-semibold">
+                              {(() => {
+                                const key = slot.console_name.toLowerCase()
+                                const entry = activePricing[key] ||
+                                  Object.values(activePricing).find((p) =>
+                                    p.console_type.toLowerCase() === slot.console_name.toLowerCase()
+                                  )
+                                const isOffer = entry?.is_offer
+                                return (
+                                  <>
+                                    {isOffer && (
+                                      <span className="text-xs text-gray-400 line-through">
+                                        ₹{slot.console_price}
+                                      </span>
+                                    )}
+                                    <span className={isOffer ? "text-orange-500" : "text-emerald-600 dark:text-emerald-400"}>
+                                      ₹{getEffectivePrice(slot)}
+                                    </span>
+                                    {isOffer && (
+                                      <span className="rounded-full bg-orange-100 px-1.5 py-0.5 text-xs text-orange-600 dark:bg-orange-900/30">
+                                        🏷️ {entry?.offer_name}
+                                      </span>
+                                    )}
+                                  </>
+                                )
+                              })()}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => onRemoveSelectedSlot(slot)}
+                              className="rounded-md border border-red-500/40 bg-red-500/10 p-1 text-red-500 transition-colors hover:bg-red-500/20"
+                              title="Remove this slot"
+                              aria-label="Remove selected slot"
+                            >
+                              <X className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
 
                         </div>
                       ))}
@@ -5106,6 +5124,19 @@ useEffect(() => {
     }
   }
 
+  const handleRemoveSelectedSlot = (slotToRemove: SelectedSlot) => {
+    setSelectedSlots((prev) =>
+      prev.filter(
+        (slot) =>
+          !(
+            slot.slot_id === slotToRemove.slot_id &&
+            slot.date === slotToRemove.date &&
+            Number(slot.console_id) === Number(slotToRemove.console_id)
+          )
+      )
+    )
+  }
+
   const handleNewBooking = () => {
     if (selectedSlots.length > 0) {
       setShowBookingForm(true)
@@ -5204,6 +5235,7 @@ useEffect(() => {
         isOpen={showBookingForm}
         onClose={() => setShowBookingForm(false)}
         selectedSlots={selectedSlots}
+        onRemoveSelectedSlot={handleRemoveSelectedSlot}
         onBookingComplete={handleBookingComplete}
         availableConsoles={availableConsoles}
       />
