@@ -45,7 +45,7 @@ export default function ResponsiveSearchFilter({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-black bg-opacity-50 flex justify-end"
+            className="fixed inset-0 z-50 flex justify-end bg-black/55 backdrop-blur-sm"
             onClick={() => setShowOverlay(false)}
           >
             <motion.div
@@ -53,11 +53,11 @@ export default function ResponsiveSearchFilter({
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
               transition={{ type: "spring", bounce: 0.1, duration: 0.4 }}
-              className="dashboard-module-panel dashboard-module h-full w-[85vw] p-4 shadow-lg sm:w-[400px]"
+              className="dashboard-module-panel dashboard-module h-full w-[85vw] border-l border-slate-600/60 bg-slate-950/95 p-4 shadow-2xl backdrop-blur-xl sm:w-[400px]"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Header */}
-              <div className="flex items-center justify-between mb-4">
+              <div className="mb-4 flex items-center justify-between border-b border-slate-700/70 pb-3">
                 <h3 className="text-base font-medium text-foreground">Filters</h3>
                 <button onClick={() => setShowOverlay(false)}>
                   <X className="w-5 h-5 text-muted-foreground" />
