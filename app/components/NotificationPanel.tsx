@@ -828,96 +828,101 @@ export function NotificationPanel({
                   initial={{ opacity: 0, y: 12, scale: 0.98 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: 12, scale: 0.98 }}
-                  className="dashboard-module-panel fixed left-1/2 top-1/2 z-[30030] w-[min(42rem,calc(100vw-2rem))] max-h-[78vh] -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-2xl border border-cyan-400/30 bg-background"
+                  onClick={() => setIsQueueOverlayOpen(false)}
+                  className="fixed inset-0 z-[30030] flex items-center justify-center p-4"
                 >
-                  <div className="flex items-center justify-between border-b border-border bg-muted/30 px-4 py-3">
-                    <div className="flex items-center gap-2">
-                      <h4 className="dash-title !text-sm">Pay At Cafe Queue</h4>
-                      <Badge className="border border-cyan-400/35 bg-cyan-500/10 text-cyan-200 text-[10px]">
-                        {queueFilterMode === "single" ? singleDate : `${startDate} to ${endDate}`}
-                      </Badge>
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setIsQueueOverlayOpen(false)}
-                      className="h-7 w-7 rounded-full p-0 text-slate-300 hover:bg-cyan-500/10"
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                  </div>
-
-                  <div className="max-h-[66vh] space-y-3 overflow-y-auto p-3">
-                    <div className="rounded-lg border border-border bg-muted/20 p-3">
-                      <div className="mb-2 flex flex-wrap items-center gap-2">
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant={queueFilterMode === "single" ? "default" : "outline"}
-                          onClick={() => setQueueFilterMode("single")}
-                          className={`h-7 px-2 text-[11px] ${queueFilterMode === "single" ? "dashboard-btn-primary" : "border-border bg-muted/40 text-muted-foreground"}`}
-                        >
-                          Single Date
-                        </Button>
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant={queueFilterMode === "range" ? "default" : "outline"}
-                          onClick={() => setQueueFilterMode("range")}
-                          className={`h-7 px-2 text-[11px] ${queueFilterMode === "range" ? "dashboard-btn-primary" : "border-border bg-muted/40 text-muted-foreground"}`}
-                        >
-                          Date Range
-                        </Button>
+                  <div
+                    className="dashboard-module-panel w-[min(42rem,calc(100vw-2rem))] max-h-[78vh] overflow-hidden rounded-2xl border border-cyan-400/30 bg-background"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <div className="flex items-center justify-between border-b border-border bg-muted/30 px-4 py-3">
+                      <div className="flex items-center gap-2">
+                        <h4 className="dash-title !text-sm">Pay At Cafe Queue</h4>
+                        <Badge className="border border-cyan-400/35 bg-cyan-500/10 text-cyan-200 text-[10px]">
+                          {queueFilterMode === "single" ? singleDate : `${startDate} to ${endDate}`}
+                        </Badge>
                       </div>
-                      <div className="flex flex-wrap items-end gap-2">
-                        {queueFilterMode === "single" ? (
-                          <label className="flex flex-col gap-1 text-[11px] text-muted-foreground">
-                            Date
-                            <input
-                              type="date"
-                              value={singleDate}
-                              onChange={(e) => setSingleDate(e.target.value)}
-                              className="h-8 rounded-md border border-border bg-background px-2 text-xs text-foreground"
-                            />
-                          </label>
-                        ) : (
-                          <>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setIsQueueOverlayOpen(false)}
+                        className="h-7 w-7 rounded-full p-0 text-slate-300 hover:bg-cyan-500/10"
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+
+                    <div className="max-h-[66vh] space-y-3 overflow-y-auto p-3">
+                      <div className="rounded-lg border border-border bg-muted/20 p-3">
+                        <div className="mb-2 flex flex-wrap items-center gap-2">
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant={queueFilterMode === "single" ? "default" : "outline"}
+                            onClick={() => setQueueFilterMode("single")}
+                            className={`h-7 px-2 text-[11px] ${queueFilterMode === "single" ? "dashboard-btn-primary" : "border-border bg-muted/40 text-muted-foreground"}`}
+                          >
+                            Single Date
+                          </Button>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant={queueFilterMode === "range" ? "default" : "outline"}
+                            onClick={() => setQueueFilterMode("range")}
+                            className={`h-7 px-2 text-[11px] ${queueFilterMode === "range" ? "dashboard-btn-primary" : "border-border bg-muted/40 text-muted-foreground"}`}
+                          >
+                            Date Range
+                          </Button>
+                        </div>
+                        <div className="flex flex-wrap items-end gap-2">
+                          {queueFilterMode === "single" ? (
                             <label className="flex flex-col gap-1 text-[11px] text-muted-foreground">
-                              Start
+                              Date
                               <input
                                 type="date"
-                                value={startDate}
-                                onChange={(e) => setStartDate(e.target.value)}
+                                value={singleDate}
+                                onChange={(e) => setSingleDate(e.target.value)}
                                 className="h-8 rounded-md border border-border bg-background px-2 text-xs text-foreground"
                               />
                             </label>
-                            <label className="flex flex-col gap-1 text-[11px] text-muted-foreground">
-                              End
-                              <input
-                                type="date"
-                                value={endDate}
-                                onChange={(e) => setEndDate(e.target.value)}
-                                className="h-8 rounded-md border border-border bg-background px-2 text-xs text-foreground"
-                              />
-                            </label>
-                          </>
-                        )}
-                        <Button
-                          type="button"
-                          size="sm"
-                          onClick={async () => {
-                            await fetchQueueSummary()
-                            await fetchQueueList(selectedQueueStatus)
-                          }}
-                          className="h-8 dashboard-btn-primary text-xs"
-                          disabled={isQueueSummaryLoading || isQueueListLoading}
-                        >
-                          Apply
-                        </Button>
+                          ) : (
+                            <>
+                              <label className="flex flex-col gap-1 text-[11px] text-muted-foreground">
+                                Start
+                                <input
+                                  type="date"
+                                  value={startDate}
+                                  onChange={(e) => setStartDate(e.target.value)}
+                                  className="h-8 rounded-md border border-border bg-background px-2 text-xs text-foreground"
+                                />
+                              </label>
+                              <label className="flex flex-col gap-1 text-[11px] text-muted-foreground">
+                                End
+                                <input
+                                  type="date"
+                                  value={endDate}
+                                  onChange={(e) => setEndDate(e.target.value)}
+                                  className="h-8 rounded-md border border-border bg-background px-2 text-xs text-foreground"
+                                />
+                              </label>
+                            </>
+                          )}
+                          <Button
+                            type="button"
+                            size="sm"
+                            onClick={async () => {
+                              await fetchQueueSummary()
+                              await fetchQueueList(selectedQueueStatus)
+                            }}
+                            className="h-8 dashboard-btn-primary text-xs"
+                            disabled={isQueueSummaryLoading || isQueueListLoading}
+                          >
+                            Apply
+                          </Button>
+                        </div>
                       </div>
-                    </div>
 
-                    <div className="grid grid-cols-2 gap-2 text-xs md:grid-cols-3">
+                      <div className="grid grid-cols-2 gap-2 text-xs md:grid-cols-3">
                       {queueStatusCards.map((card) => {
                         const isActive = selectedQueueStatus === card.key
                         return (
@@ -1007,6 +1012,7 @@ export function NotificationPanel({
                         </div>
                       )}
                     </div>
+                  </div>
                   </div>
                 </motion.div>
               </>
