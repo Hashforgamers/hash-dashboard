@@ -1013,6 +1013,7 @@ export function NotificationPanel({
                       )}
                     </div>
                   </div>
+                  </div>
                 </motion.div>
               </>
             )}
