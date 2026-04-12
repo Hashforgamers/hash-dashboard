@@ -28,15 +28,16 @@ import { jwtDecode } from "jwt-decode";
 import { DASHBOARD_URL } from "@/src/config/env";
 import { VENDOR_ONBOARD_URL } from "@/src/config/env"
 import { BOOKING_URL } from "@/src/config/env"
-import axios from "axios";
 import HashLoader from "./ui/HashLoader";
 import { motion } from "framer-motion";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faIndianRupeeSign } from '@fortawesome/free-solid-svg-icons'
 import { OTPVerificationModal } from "./otpVerificationModal";
 import { useAccess } from "@/app/context/AccessContext";
+import { useApiClient } from "@/app/hooks/useApiClient";
 
 export function MyAccount() {
+  const api = useApiClient();
   const HFG_DEFAULT_LOGO = "https://res.cloudinary.com/dxjjigepf/image/upload/v1774472024/hash_for_gamer_logo_d1v4wc.png";
   const REQUIRED_DOCUMENT_TYPES: Array<{ key: string; label: string; hint: string }> = [
     { key: "business_registration", label: "Business Registration", hint: "GST/Udyam/MSME or equivalent registration proof." },
@@ -170,22 +171,25 @@ const fetchPaymentMethods = async () => {
   setPaymentMethodError(null);
   
   try {
-    const response = await axios.get(`${DASHBOARD_URL}/api/vendor/${vendorId}/paymentMethods`);
+    const response = await api.get<any>(`${DASHBOARD_URL}/api/vendor/${vendorId}/paymentMethods`, {
+      timeoutMs: 10_000,
+      retries: 1,
+    });
     
-    if (response.data.success) {
-      setPaymentMethods(response.data.payment_methods);
+    if (response.success) {
+      setPaymentMethods(response.payment_methods);
     } else {
-      throw new Error(response.data.error || 'Failed to fetch payment methods');
+      throw new Error(response.error || 'Failed to fetch payment methods');
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching payment methods:', error);
-    const errorMessage = error.response?.data?.error || 
+    const errorMessage = error?.details?.error || 
                         error.message || 
                         'Failed to load payment methods';
     setPaymentMethodError(errorMessage);
     
     // If no payment methods exist, try to initialize them
-    if (error.response?.status === 404 || errorMessage.includes('not found')) {
+    if (error?.status === 404 || errorMessage.includes('not found')) {
       await initializePaymentMethods();
     }
   } finally {
@@ -202,35 +206,35 @@ const handleTogglePaymentMethod = async (payMethodId, currentState) => {
   setPaymentMethodSuccess(null);
   
   try {
-    const response = await axios.post(
+    const response = await api.post<any, string>(
       `${DASHBOARD_URL}/api/vendor/${vendorId}/paymentMethods/toggle`,
-      { pay_method_id: payMethodId },
+      JSON.stringify({ pay_method_id: payMethodId }),
       {
-        headers: {
-          'Content-Type': 'application/json',
-        }
+        headers: { 'Content-Type': 'application/json' },
+        timeoutMs: 10_000,
+        retries: 0,
       }
     );
 
-    if (response.data.success) {
+    if (response.success) {
       // Update the local state
       setPaymentMethods(prevMethods => 
         prevMethods.map(method => 
           method.pay_method_id === payMethodId 
-            ? { ...method, is_enabled: response.data.data.is_enabled }
+            ? { ...method, is_enabled: response.is_enabled }
             : method
         )
       );
       
       // Show success message
-      setPaymentMethodSuccess(response.data.message);
+      setPaymentMethodSuccess(response.message);
       setTimeout(() => setPaymentMethodSuccess(null), 3000);
     } else {
-      throw new Error(response.data.error || 'Failed to toggle payment method');
+      throw new Error(response.error || 'Failed to toggle payment method');
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error toggling payment method:', error);
-    const errorMessage = error.response?.data?.error || 
+    const errorMessage = error?.details?.error || 
                         error.message || 
                         'Failed to update payment method';
     setPaymentMethodError(errorMessage);
@@ -246,9 +250,12 @@ const handleTogglePaymentMethod = async (payMethodId, currentState) => {
 const initializePaymentMethods = async () => {
   try {
     setPaymentMethodError(null);
-    const response = await axios.post(`${DASHBOARD_URL}/api/payment-methods/initialize`);
+    const response = await api.post<any>(`${DASHBOARD_URL}/api/payment-methods/initialize`, undefined, {
+      timeoutMs: 10_000,
+      retries: 0,
+    });
     
-    if (response.data.success) {
+    if (response.success) {
       // After initialization, fetch the payment methods again
       setTimeout(() => {
         fetchPaymentMethods();
@@ -286,8 +293,11 @@ const normalizePaymentMethodName = (methodName: string) => {
 // Add OTP verification functions
 const checkPageVerification = async (pageType) => {
   try {
-    const response = await axios.get(`${VENDOR_ONBOARD_URL}/api/vendor/${vendorId}/check-verification?page_type=${pageType}`);
-    return response.data.is_verified;
+    const response = await api.get<any>(`${VENDOR_ONBOARD_URL}/api/vendor/${vendorId}/check-verification?page_type=${pageType}`, {
+      timeoutMs: 10_000,
+      retries: 1,
+    });
+    return response.is_verified;
   } catch (error) {
     console.error('Error checking verification:', error);
     return false;
@@ -336,15 +346,18 @@ const fetchBankDetails = async () => {
   if (!vendorId) return;
   setLoadingBank(true);
   try {
-    const res = await axios.get(`${DASHBOARD_URL}/api/vendor/${vendorId}/bank-details`);
-    if (res.data.success) {
-      setBankDetails(res.data.bankDetails);
+    const res = await api.get<any>(`${DASHBOARD_URL}/api/vendor/${vendorId}/bank-details`, {
+      timeoutMs: 10_000,
+      retries: 1,
+    });
+    if (res.success) {
+      setBankDetails(res.bankDetails);
       setBankForm({
-        accountHolderName: res.data.bankDetails.accountHolderName || '',
-        bankName: res.data.bankDetails.bankName || '',
-        accountNumber: res.data.bankDetails.fullAccountNumber || '',
-        ifscCode: res.data.bankDetails.ifscCode || '',
-        upiId: res.data.bankDetails.upiId || '',
+        accountHolderName: res.bankDetails.accountHolderName || '',
+        bankName: res.bankDetails.bankName || '',
+        accountNumber: res.bankDetails.fullAccountNumber || '',
+        ifscCode: res.bankDetails.ifscCode || '',
+        upiId: res.bankDetails.upiId || '',
       });
     }
   } catch (error) {
@@ -359,9 +372,12 @@ const fetchBankDetailsHistory = async () => {
   if (!vendorId) return;
   setLoadingBankHistory(true);
   try {
-    const res = await axios.get(`${DASHBOARD_URL}/api/vendor/${vendorId}/bank-details/history?limit=100`);
-    if (res.data?.success && Array.isArray(res.data?.history)) {
-      setBankDetailsHistory(res.data.history);
+    const res = await api.get<any>(`${DASHBOARD_URL}/api/vendor/${vendorId}/bank-details/history?limit=100`, {
+      timeoutMs: 10_000,
+      retries: 1,
+    });
+    if (res?.success && Array.isArray(res?.history)) {
+      setBankDetailsHistory(res.history);
     } else {
       setBankDetailsHistory([]);
     }
@@ -378,10 +394,13 @@ const fetchPayouts = async (page = 1) => {
   if (!vendorId) return;
   setLoadingPayouts(true);
   try {
-    const res = await axios.get(`${DASHBOARD_URL}/api/vendor/${vendorId}/payouts?page=${page}&per_page=10`);
-    if (res.data.success && Array.isArray(res.data.payouts)) {
-      setPayouts(res.data.payouts);
-      setPayoutTotalPages(res.data.pagination?.total_pages || 1);
+    const res = await api.get<any>(`${DASHBOARD_URL}/api/vendor/${vendorId}/payouts?page=${page}&per_page=10`, {
+      timeoutMs: 10_000,
+      retries: 1,
+    });
+    if (res.success && Array.isArray(res.payouts)) {
+      setPayouts(res.payouts);
+      setPayoutTotalPages(res.pagination?.total_pages || 1);
     } else {
       setPayouts([]); // Fallback to empty array
       setPayoutTotalPages(1);
@@ -399,14 +418,17 @@ const fetchNotificationPreferences = async () => {
   if (!vendorId) return;
   setLoadingNotificationPrefs(true);
   try {
-    const res = await axios.get(`${DASHBOARD_URL}/api/vendor/${vendorId}/notification-preferences`);
-    if (res.data?.success && res.data?.preferences) {
+    const res = await api.get<any>(`${DASHBOARD_URL}/api/vendor/${vendorId}/notification-preferences`, {
+      timeoutMs: 10_000,
+      retries: 1,
+    });
+    if (res?.success && res?.preferences) {
       setNotificationPrefs({
-        app_booking_notifications_enabled: !!res.data.preferences.app_booking_notifications_enabled,
-        pay_at_cafe_enabled: !!res.data.preferences.pay_at_cafe_enabled,
-        hash_wallet_enabled: !!res.data.preferences.hash_wallet_enabled,
-        payment_gateway_enabled: !!res.data.preferences.payment_gateway_enabled,
-        pass_enabled: !!res.data.preferences.pass_enabled,
+        app_booking_notifications_enabled: !!res.preferences.app_booking_notifications_enabled,
+        pay_at_cafe_enabled: !!res.preferences.pay_at_cafe_enabled,
+        hash_wallet_enabled: !!res.preferences.hash_wallet_enabled,
+        payment_gateway_enabled: !!res.preferences.payment_gateway_enabled,
+        pass_enabled: !!res.preferences.pass_enabled,
       });
     }
   } catch (error) {
@@ -420,12 +442,15 @@ const fetchPayAtCafeAutomation = async () => {
   if (!vendorId) return;
   setLoadingPayAtCafeAutomation(true);
   try {
-    const res = await axios.get(`${BOOKING_URL}/api/pay-at-cafe/settings/${vendorId}`);
-    if (res.data?.success && res.data?.settings) {
+    const res = await api.get<any>(`${BOOKING_URL}/api/pay-at-cafe/settings/${vendorId}`, {
+      timeoutMs: 10_000,
+      retries: 1,
+    });
+    if (res?.success && res?.settings) {
       setPayAtCafeAutomation({
-        auto_accept_enabled: !!res.data.settings.auto_accept_enabled,
-        auto_reject_enabled: !!res.data.settings.auto_reject_enabled,
-        auto_reject_after_minutes: Number(res.data.settings.auto_reject_after_minutes || 15),
+        auto_accept_enabled: !!res.settings.auto_accept_enabled,
+        auto_reject_enabled: !!res.settings.auto_reject_enabled,
+        auto_reject_after_minutes: Number(res.settings.auto_reject_after_minutes || 15),
       });
     }
   } catch (error) {
@@ -444,12 +469,16 @@ const savePayAtCafeAutomation = async (next: any) => {
       auto_reject_enabled: !!next.auto_reject_enabled,
       auto_reject_after_minutes: Math.max(1, Math.min(240, Number(next.auto_reject_after_minutes || 15))),
     };
-    const res = await axios.put(`${BOOKING_URL}/api/pay-at-cafe/settings/${vendorId}`, payload);
-    if (res.data?.success && res.data?.settings) {
+    const res = await api.put<any, string>(`${BOOKING_URL}/api/pay-at-cafe/settings/${vendorId}`, JSON.stringify(payload), {
+      headers: { "Content-Type": "application/json" },
+      timeoutMs: 10_000,
+      retries: 0,
+    });
+    if (res?.success && res?.settings) {
       setPayAtCafeAutomation({
-        auto_accept_enabled: !!res.data.settings.auto_accept_enabled,
-        auto_reject_enabled: !!res.data.settings.auto_reject_enabled,
-        auto_reject_after_minutes: Number(res.data.settings.auto_reject_after_minutes || 15),
+        auto_accept_enabled: !!res.settings.auto_accept_enabled,
+        auto_reject_enabled: !!res.settings.auto_reject_enabled,
+        auto_reject_after_minutes: Number(res.settings.auto_reject_after_minutes || 15),
       });
     }
   } catch (error) {
@@ -464,12 +493,17 @@ const saveNotificationPreferences = async (nextPrefs: any) => {
   if (!vendorId) return;
   setSavingNotificationPrefs(true);
   try {
-    const res = await axios.put(
+    const res = await api.put<any, string>(
       `${DASHBOARD_URL}/api/vendor/${vendorId}/notification-preferences`,
-      nextPrefs
+      JSON.stringify(nextPrefs),
+      {
+        headers: { "Content-Type": "application/json" },
+        timeoutMs: 10_000,
+        retries: 0,
+      }
     );
-    if (res.data?.success) {
-      setNotificationPrefs(res.data.preferences || nextPrefs);
+    if (res?.success) {
+      setNotificationPrefs(res.preferences || nextPrefs);
     }
   } catch (error) {
     console.error("Error saving notification preferences:", error);
@@ -483,8 +517,11 @@ const fetchSubscriptionHistory = async () => {
   if (!vendorId) return;
   setLoadingSubscriptionHistory(true);
   try {
-    const res = await axios.get(`${DASHBOARD_URL}/api/vendors/${vendorId}/subscription/history`);
-    setSubscriptionHistory(Array.isArray(res.data?.subscriptions) ? res.data.subscriptions : []);
+    const res = await api.get<any>(`${DASHBOARD_URL}/api/vendors/${vendorId}/subscription/history`, {
+      timeoutMs: 10_000,
+      retries: 1,
+    });
+    setSubscriptionHistory(Array.isArray(res?.subscriptions) ? res.subscriptions : []);
   } catch (error) {
     console.error("Error fetching subscription history:", error);
     setSubscriptionHistory([]);
@@ -497,12 +534,13 @@ const fetchSettlementSummary = async () => {
   if (!vendorId) return;
   setLoadingSettlementSummary(true);
   try {
-    const res = await axios.get(
-      `${DASHBOARD_URL}/api/vendor/${vendorId}/settlements/summary?from=${settlementFromDate}&to=${settlementToDate}`
+    const res = await api.get<any>(
+      `${DASHBOARD_URL}/api/vendor/${vendorId}/settlements/summary?from=${settlementFromDate}&to=${settlementToDate}`,
+      { timeoutMs: 12_000, retries: 1 }
     );
-    if (res.data?.success) {
-      setSettlementRows(Array.isArray(res.data.rows) ? res.data.rows : []);
-      setSettlementTotals(res.data.totals || null);
+    if (res?.success) {
+      setSettlementRows(Array.isArray(res.rows) ? res.rows : []);
+      setSettlementTotals(res.totals || null);
     } else {
       setSettlementRows([]);
       setSettlementTotals(null);
@@ -567,20 +605,28 @@ const handleSaveBankDetails = async () => {
       changed_by_staff_id: activeStaff?.id || "owner",
     };
 
-    const response = await axios.post(`${DASHBOARD_URL}/api/vendor/${vendorId}/bank-details`, dataToSend);
+    const response = await api.post<any, string>(
+      `${DASHBOARD_URL}/api/vendor/${vendorId}/bank-details`,
+      JSON.stringify(dataToSend),
+      {
+        headers: { "Content-Type": "application/json" },
+        timeoutMs: 12_000,
+        retries: 0,
+      }
+    );
     
-    if (response.data.success) {
+    if (response.success) {
       alert('Bank details saved successfully!');
       setEditingBank(false);
       fetchBankDetails();
       fetchBankDetailsHistory();
     } else {
-      alert(response.data.message || 'Failed to save bank details');
+      alert(response.message || 'Failed to save bank details');
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error saving bank details:', error);
-    const errorMessage = error.response?.data?.error || 
-                        error.response?.data?.message || 
+    const errorMessage = error?.details?.error || 
+                        error?.details?.message || 
                         'Failed to save bank details. Please try again.';
     alert(errorMessage);
   } finally {
@@ -661,19 +707,17 @@ const handleSaveBusinessField = async (field: string) => {
     console.log(`Saving ${field}:`, updateData);
 
     // Call your new API endpoint
-    const response = await axios.patch(
+    const response = await api.patch<any, string>(
       `${DASHBOARD_URL}/api/vendor/${vendorId}/business-details`,
-      updateData,
+      JSON.stringify(updateData),
       {
-        headers: {
-          'Content-Type': 'application/json',
-          // Add authorization header if needed
-          // 'Authorization': `Bearer ${localStorage.getItem('jwtToken')}`
-        }
+        headers: { 'Content-Type': 'application/json' },
+        timeoutMs: 10_000,
+        retries: 0,
       }
     );
 
-    if (response.data.success) {
+    if (response.success) {
       // Success notification
       alert(`${field} updated successfully!`);
       
@@ -699,15 +743,15 @@ const handleSaveBusinessField = async (field: string) => {
       // window.dispatchEvent(new Event('refresh-dashboard'));
       
     } else {
-      throw new Error(response.data.message || 'Update failed');
+      throw new Error(response.message || 'Update failed');
     }
     
   } catch (error: any) {
     console.error('Error saving business field:', error);
     
     // Better error handling
-    const errorMessage = error.response?.data?.error || 
-                        error.response?.data?.message || 
+    const errorMessage = error?.details?.error || 
+                        error?.details?.message || 
                         error.message || 
                         'Error saving changes. Please try again.';
     
@@ -735,22 +779,20 @@ const handleProfileImageUpload = async (event: React.ChangeEvent<HTMLInputElemen
   formData.append("profileImage", file);
 
   try {
-    const response = await axios.post(
+    const response = await api.post<any, FormData>(
       `${DASHBOARD_URL}/api/vendor/${vendorId}/update-profile-image`,
       formData,
-      {
-        headers: { "Content-Type": "multipart/form-data" },
-      }
+      { timeoutMs: 20_000, retries: 0 }
     );
 
-    if (response.data.success) {
-      const uploadedImageUrl = response.data.profileImage.url;
+    if (response.success) {
+      const uploadedImageUrl = response.profileImage.url;
       setProfileImage(uploadedImageUrl);
       setProfileUploadMessage("Profile image updated successfully!");
       setTimeout(() => setProfileUploadMessage(null), 3000);
     } else {
-      console.error("Profile upload failed:", response.data.message);
-      setProfileUploadMessage(`Upload failed: ${response.data.message}`);
+      console.error("Profile upload failed:", response.message);
+      setProfileUploadMessage(`Upload failed: ${response.message}`);
       setTimeout(() => setProfileUploadMessage(null), 5000);
     }
   } catch (error) {
@@ -816,20 +858,18 @@ const updateOperatingHours = async (vendorId, dayData) => {
 
     console.log('Sending payload:', payload); // Debug log
 
-    const response = await fetch(`${VENDOR_ONBOARD_URL}/api/vendor/${vendorId}/updateSlot`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('jwtToken')}`
-      },
-      body: JSON.stringify(payload)
-    });
-
-    const result = await response.json();
-
-    if (!response.ok) {
-      throw new Error(result.message || 'Failed to update operating hours');
-    }
+    const result = await api.post<any, string>(
+      `${VENDOR_ONBOARD_URL}/api/vendor/${vendorId}/updateSlot`,
+      JSON.stringify(payload),
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("jwtToken")}`,
+        },
+        timeoutMs: 15_000,
+        retries: 0,
+      }
+    )
 
     return { success: true, data: result };
   } catch (error) {
@@ -1089,9 +1129,10 @@ const toast = {
     setLoadingGst(true);
     setGstMessage(null);
     try {
-      const res = await fetch(`${DASHBOARD_URL}/api/vendor/${vendorId}/tax-profile`);
-      if (!res.ok) throw new Error("Failed to fetch GST profile");
-      const data = await res.json();
+      const data = await api.get<any>(`${DASHBOARD_URL}/api/vendor/${vendorId}/tax-profile`, {
+        timeoutMs: 10_000,
+        retries: 1,
+      });
       const profile = data?.profile || {};
       setGstProfile({
         gst_registered: Boolean(profile.gst_registered),
@@ -1116,10 +1157,9 @@ const toast = {
     setSavingGst(true);
     setGstMessage(null);
     try {
-      const res = await fetch(`${DASHBOARD_URL}/api/vendor/${vendorId}/tax-profile`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+      const data = await api.put<any, string>(
+        `${DASHBOARD_URL}/api/vendor/${vendorId}/tax-profile`,
+        JSON.stringify({
           gst_registered: gstProfile.gst_registered,
           gst_enabled: gstProfile.gst_enabled,
           gst_rate: Number(gstProfile.gst_rate || 0),
@@ -1129,9 +1169,13 @@ const toast = {
           state_code: gstProfile.state_code || null,
           place_of_supply_state_code: gstProfile.place_of_supply_state_code || null,
         }),
-      });
-      const data = await res.json();
-      if (!res.ok || !data?.success) throw new Error(data?.message || "Failed to save GST setup");
+        {
+          headers: { "Content-Type": "application/json" },
+          timeoutMs: 10_000,
+          retries: 0,
+        }
+      );
+      if (!data?.success) throw new Error(data?.message || "Failed to save GST setup");
       setGstMessage("GST setup saved successfully.");
       setTimeout(() => setGstMessage(null), 2500);
     } catch (error) {
@@ -1152,22 +1196,20 @@ const toast = {
     formData.append("image", file);
 
     try {
-      const response = await axios.post(
+      const response = await api.post<any, FormData>(
         `${VENDOR_ONBOARD_URL}/api/vendor/${vendorId}/add-image`, // Corrected URL to use DASHBOARD_URL
         formData,
-        {
-          headers: { "Content-Type": "multipart/form-data" },
-        }
+        { timeoutMs: 20_000, retries: 0 }
       );
 
-      if (response.data.success) {
-        const uploadedImageUrl = response.data.image.url;
+      if (response.success) {
+        const uploadedImageUrl = response.image.url;
         setCafeImages((prevImages) => [...prevImages, uploadedImageUrl]);
         setUploadMessage("Image uploaded successfully!");
         setTimeout(() => setUploadMessage(null), 3000);
       } else {
-        console.error("Upload failed:", response.data.message);
-        setUploadMessage(`Upload failed: ${response.data.message}`);
+        console.error("Upload failed:", response.message);
+        setUploadMessage(`Upload failed: ${response.message}`);
         setTimeout(() => setUploadMessage(null), 5000);
       }
     } catch (error) {
@@ -1206,18 +1248,21 @@ const toast = {
     try {
       const formData = new FormData();
       formData.append("document", file);
-      const response = await axios.put(
+      const response = await api.put<any, FormData>(
         `${DASHBOARD_URL}/api/vendor/${vendorId}/documents/${documentId}`,
         formData,
-        { headers: { "Content-Type": "multipart/form-data" } }
+        { timeoutMs: 20_000, retries: 0 }
       );
-      if (!response?.data?.success) {
-        throw new Error(response?.data?.message || "Failed to update document");
+      if (!response?.success) {
+        throw new Error(response?.message || "Failed to update document");
       }
       setDocumentActionMessage("Document updated and sent for re-verification.");
-      const dashboardRes = await axios.get(`${DASHBOARD_URL}/api/vendor/${vendorId}/dashboard`);
-      if (dashboardRes?.data) {
-        setData(dashboardRes.data);
+      const dashboardRes = await api.get<any>(`${DASHBOARD_URL}/api/vendor/${vendorId}/dashboard`, {
+        timeoutMs: 10_000,
+        retries: 1,
+      });
+      if (dashboardRes) {
+        setData(dashboardRes);
       }
       window.dispatchEvent(new CustomEvent("refresh-dashboard"));
     } catch (error: any) {
@@ -1236,18 +1281,21 @@ const toast = {
       const formData = new FormData();
       formData.append("document_type", documentType);
       formData.append("document", file);
-      const response = await axios.post(
+      const response = await api.post<any, FormData>(
         `${DASHBOARD_URL}/api/vendor/${vendorId}/documents`,
         formData,
-        { headers: { "Content-Type": "multipart/form-data" } }
+        { timeoutMs: 20_000, retries: 0 }
       );
-      if (!response?.data?.success) {
-        throw new Error(response?.data?.message || "Failed to upload document");
+      if (!response?.success) {
+        throw new Error(response?.message || "Failed to upload document");
       }
       setDocumentActionMessage("Document uploaded and sent for verification.");
-      const dashboardRes = await axios.get(`${DASHBOARD_URL}/api/vendor/${vendorId}/dashboard`);
-      if (dashboardRes?.data) {
-        setData(dashboardRes.data);
+      const dashboardRes = await api.get<any>(`${DASHBOARD_URL}/api/vendor/${vendorId}/dashboard`, {
+        timeoutMs: 10_000,
+        retries: 1,
+      });
+      if (dashboardRes) {
+        setData(dashboardRes);
       }
       window.dispatchEvent(new CustomEvent("refresh-dashboard"));
     } catch (error: any) {
@@ -1323,19 +1371,21 @@ const toast = {
     setLoading(true);
     try {
       console.log("Fetching dashboard for vendor:", vendorId);
-      const res = await axios.get(
+      const res = await api.get<any>(
         `${DASHBOARD_URL}/api/vendor/${vendorId}/dashboard`
+      ,
+        { timeoutMs: 10_000, retries: 1 }
       );
-      console.log("API Response:", res.data);
+      console.log("API Response:", res);
 
       // Set profile image
-      const profileImg = res.data.cafeProfile.profileImage || HFG_DEFAULT_LOGO;
+      const profileImg = res.cafeProfile.profileImage || HFG_DEFAULT_LOGO;
       setProfileImage(profileImg);
 
-      if (res.data && res.data.cafeProfile) {
-        setData(res.data);
+      if (res && res.cafeProfile) {
+        setData(res);
         
-        const imagesData = res.data.cafeGallery?.images || [];
+        const imagesData = res.cafeGallery?.images || [];
         console.log("Images data:", imagesData); // Debug log
         
         // Check if images are objects with IDs or just URLs
@@ -1384,7 +1434,7 @@ const toast = {
           setCafeImages(images);
         }
       } else {
-        console.error("Dashboard API returned no expected data:", res.data);
+        console.error("Dashboard API returned no expected data:", res);
         setData(null);
       }
     } catch (error) {
@@ -1416,17 +1466,15 @@ const handleDeleteImageByUrl = async (imageIndex: number) => {
       throw new Error("Image URL not found");
     }
 
-    const response = await axios.delete(
+    const response = await api.del<any, string>(
       `${VENDOR_ONBOARD_URL}/api/vendor/${vendorId}/delete-image-by-url`,
-      {
-        data: { imageUrl: imageUrl },
-        headers: { "Content-Type": "application/json" },
-      }
+      JSON.stringify({ imageUrl: imageUrl }),
+      { headers: { "Content-Type": "application/json" }, timeoutMs: 10_000, retries: 0 }
     );
 
-    console.log('Delete response:', response.data);
+    console.log('Delete response:', response);
 
-    if (response.data.success) {
+    if (response.success) {
       setCafeImages((prevImages) =>
         prevImages.filter((_, index) => index !== imageIndex)
       );
@@ -1434,11 +1482,11 @@ const handleDeleteImageByUrl = async (imageIndex: number) => {
       setUploadMessage("Image deleted successfully!");
       setTimeout(() => setUploadMessage(null), 3000);
     } else {
-      throw new Error(response.data.message || 'Delete failed');
+      throw new Error(response.message || 'Delete failed');
     }
   } catch (error: any) {
     console.error("Error deleting image:", error);
-    const errorMessage = error.response?.data?.message || 
+    const errorMessage = error?.details?.message || 
                         error.message || 
                         'Error deleting image. Please try again.';
     setUploadMessage(errorMessage);
@@ -1462,11 +1510,14 @@ const handleDeleteImage = async (imageIndex: number) => {
       throw new Error("Image ID not found");
     }
 
-    const response = await axios.delete(
+    const response = await api.del<any>(
       `${VENDOR_ONBOARD_URL}/api/vendor/${vendorId}/delete-image/${imageId}`
+    ,
+      undefined,
+      { timeoutMs: 10_000, retries: 0 }
     );
 
-    if (response.data.success) {
+    if (response.success) {
       // Remove image from both arrays
       setCafeImages((prevImages) =>
         prevImages.filter((_, index) => index !== imageIndex)
@@ -1481,18 +1532,18 @@ const handleDeleteImage = async (imageIndex: number) => {
       setTimeout(() => setUploadMessage(null), 3000);
       
       // Optional: Update with remaining images from backend
-      if (response.data.remaining_images) {
-        const remainingUrls = response.data.remaining_images.map((img: any) => img.url);
+      if (response.remaining_images) {
+        const remainingUrls = response.remaining_images.map((img: any) => img.url);
         setCafeImages(remainingUrls);
-        setCafeImageObjects(response.data.remaining_images);
+        setCafeImageObjects(response.remaining_images);
       }
       
     } else {
-      throw new Error(response.data.message || 'Delete failed');
+      throw new Error(response.message || 'Delete failed');
     }
   } catch (error: any) {
     console.error("Error deleting image:", error);
-    const errorMessage = error.response?.data?.message || 
+    const errorMessage = error?.details?.message || 
                         error.message || 
                         'Error deleting image. Please try again.';
     setUploadMessage(errorMessage);

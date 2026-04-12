@@ -4,6 +4,7 @@ import { createContext, useContext, useEffect, useMemo, useRef, useState } from 
 import { jwtDecode } from "jwt-decode";
 import { DASHBOARD_URL } from "@/src/config/env";
 import { useAccess } from "./AccessContext";
+import { httpJson } from "@/lib/http-client";
 
 interface DashboardDataContextValue {
   vendorId: number | null;
@@ -63,15 +64,21 @@ export function DashboardDataProvider({ children }: { children: React.ReactNode 
   }, [selectedCafeId]);
 
   const refreshLanding = async (force = false): Promise<any | null> => {
-    if (!vendorId) return;
+    if (!vendorId) return null;
     const now = Date.now();
     if (!force && landingData && now - lastLandingRef.current < LANDING_TTL_MS) {
       return landingData;
     }
     setLandingLoading(true);
     try {
-      const res = await fetch(`${DASHBOARD_URL}/api/getLandingPage/vendor/${vendorId}`);
-      const data = await res.json();
+      const url = `${DASHBOARD_URL}/api/getLandingPage/vendor/${vendorId}`;
+      const data = await httpJson<any>(url, {
+        timeoutMs: 10_000,
+        retries: 2,
+        dedupe: true,
+        dedupeKey: `GET:${url}`,
+        cacheTtlMs: LANDING_TTL_MS,
+      });
       setLandingData(data);
       lastLandingRef.current = Date.now();
       return data;
@@ -84,15 +91,21 @@ export function DashboardDataProvider({ children }: { children: React.ReactNode 
   };
 
   const refreshConsoles = async (force = false): Promise<any[] | null> => {
-    if (!vendorId) return;
+    if (!vendorId) return null;
     const now = Date.now();
     if (!force && consoles.length > 0 && now - lastConsolesRef.current < CONSOLES_TTL_MS) {
       return consoles;
     }
     setConsolesLoading(true);
     try {
-      const res = await fetch(`${DASHBOARD_URL}/api/getConsoles/vendor/${vendorId}`);
-      const data = await res.json();
+      const url = `${DASHBOARD_URL}/api/getConsoles/vendor/${vendorId}`;
+      const data = await httpJson<any>(url, {
+        timeoutMs: 10_000,
+        retries: 2,
+        dedupe: true,
+        dedupeKey: `GET:${url}`,
+        cacheTtlMs: CONSOLES_TTL_MS,
+      });
       setConsoles(Array.isArray(data) ? data : []);
       lastConsolesRef.current = Date.now();
       return Array.isArray(data) ? data : [];

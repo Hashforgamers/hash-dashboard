@@ -1,0 +1,8 @@
+base_url_key,env_variable,service_directory,websocket_owner,notes
+DASHBOARD_URL,NEXT_PUBLIC_DASHBOARD_URL,hfg-dashboard-service,yes,Primary dashboard backend
+BOOKING_URL,NEXT_PUBLIC_BOOKING_URL,hfg-booking,yes,Booking/slot/payment backend
+LOGIN_URL,NEXT_PUBLIC_LOGIN_URL,hfg-login-service,no,Authentication and PIN endpoints
+VENDOR_ONBOARD_URL,NEXT_PUBLIC_VENDOR_ONBOARD,hfg-onboard,no,Vendor onboarding and store/order endpoints
+USER_ONBOARD_URL,NEXT_PUBLIC_USER_ONBOARD,hfg-user-onboard,no,User onboarding backend (configured)
+DASHBOARD_URL (via API_BASE),Derived in lib/event-api.ts and lib/review-api.ts,hfg-dashboard-service,yes,Fallback localhost in dev
+Relative /api (same-origin/proxy),N/A,hash-dashboard proxy route,no,Frontend same-origin API proxy usage
