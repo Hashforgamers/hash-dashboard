@@ -5012,8 +5012,42 @@ const fetchSlotBookings = async (slotIds: number[], date: string) => {
     console.log('📥 Slot bookings response:', data)
 
     if (data?.success && data?.bookings) {
-      setSlotBookings(data.bookings)
-      console.log(`✅ Loaded ${data.bookings.length} ${isPastDate ? 'past' : 'active'} bookings`)
+      const rawBookings = Array.isArray(data.bookings) ? data.bookings : []
+      const dedupedBookings = rawBookings.filter((booking: any, index: number, arr: any[]) => {
+        const bookingId = Number(booking?.booking_id || booking?.bookingId || 0)
+        if (bookingId > 0) {
+          return arr.findIndex((b: any) => Number(b?.booking_id || b?.bookingId || 0) === bookingId) === index
+        }
+
+        // Fallback for records without booking id
+        const fallbackKey = [
+          String(booking?.customer_phone || "").trim(),
+          String(booking?.customer_name || "").trim(),
+          String(booking?.booking_date || booking?.date || "").trim(),
+          String(booking?.slot_start_time || booking?.start_time || "").trim(),
+          String(booking?.slot_end_time || booking?.end_time || "").trim(),
+          String(booking?.status || "").trim(),
+        ].join("|")
+
+        return (
+          arr.findIndex((b: any) => {
+            const otherKey = [
+              String(b?.customer_phone || "").trim(),
+              String(b?.customer_name || "").trim(),
+              String(b?.booking_date || b?.date || "").trim(),
+              String(b?.slot_start_time || b?.start_time || "").trim(),
+              String(b?.slot_end_time || b?.end_time || "").trim(),
+              String(b?.status || "").trim(),
+            ].join("|")
+            return otherKey === fallbackKey
+          }) === index
+        )
+      })
+
+      setSlotBookings(dedupedBookings)
+      console.log(
+        `✅ Loaded ${dedupedBookings.length} unique ${isPastDate ? 'past' : 'active'} bookings (raw: ${rawBookings.length})`
+      )
     } else {
       setSlotBookings([])
       console.log('📭 No bookings found')
