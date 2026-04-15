@@ -6,6 +6,8 @@ import { Users, TrendingUp, Award, Clock, Search, Filter } from "lucide-react"
 import { DASHBOARD_URL } from "@/src/config/env"
 import { jwtDecode } from "jwt-decode"
 import { MobileCompactCard } from "@/components/ui/mobile-compact-card"
+import { usePathname, useRouter, useSearchParams } from "next/navigation"
+import { readEnumParam, readStringParam, updateSearchParams } from "@/lib/deeplink"
 
 // Define icon mapping
 const iconMap = {
@@ -17,12 +19,16 @@ const iconMap = {
 
 // Replace mock data with dynamic API call
 export function KnowYourGamers() {
+  const pathname = usePathname()
+  const router = useRouter()
+  const searchParams = useSearchParams()
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedTier, setSelectedTier] = useState("all")
   const [gamerData, setGamerData] = useState<any[]>([])
   const [stats, setStats] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [vendorId, setVendorId] = useState<number | null>(null)
+  const [deepLinkReady, setDeepLinkReady] = useState(false)
 
   const GAMER_CACHE_KEY = "gamerDataCache"
   const STATS_CACHE_KEY = "gamerStatsCache"
@@ -35,6 +41,14 @@ export function KnowYourGamers() {
       const decoded_token = jwtDecode<{ sub: { id: number } }>(token)
       setVendorId(decoded_token.sub.id)
     }
+  }, [])
+
+  useEffect(() => {
+    const linkedSearch = readStringParam(searchParams, "q", "")
+    const linkedTier = readEnumParam(searchParams, "tier", ["all", "platinum", "gold", "silver"], "all")
+    setSearchTerm(linkedSearch)
+    setSelectedTier(linkedTier)
+    setDeepLinkReady(true)
   }, [])
 
   useEffect(() => {
@@ -117,6 +131,18 @@ export function KnowYourGamers() {
 
     return () => clearInterval(pollingInterval)
   }, [vendorId])
+
+  useEffect(() => {
+    if (!deepLinkReady) return
+    const next = updateSearchParams(searchParams, {
+      q: searchTerm || null,
+      tier: selectedTier === "all" ? null : selectedTier,
+    })
+    const currentQuery = searchParams.toString()
+    const nextQuery = next.toString()
+    if (currentQuery === nextQuery) return
+    router.replace(nextQuery ? `${pathname}?${nextQuery}` : pathname, { scroll: false })
+  }, [deepLinkReady, searchTerm, selectedTier, pathname, router, searchParams])
 
   const filteredData = gamerData.filter((gamer) => {
     const matchesSearch =

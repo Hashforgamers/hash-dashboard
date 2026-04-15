@@ -33,6 +33,9 @@ import { jwtDecode } from "jwt-decode"
 import clsx from "clsx"
 import { DASHBOARD_URL } from "@/src/config/env"
 import { useModuleCache } from "@/app/hooks/useModuleCache"
+import { useIsMobile } from "@/components/ui/use-mobile"
+import { usePathname, useRouter, useSearchParams } from "next/navigation"
+import { readEnumParam, updateSearchParams } from "@/lib/deeplink"
 
 /* ------------------------------------------------------------------ */
 /*                         TYPE DEFINITIONS                            */
@@ -98,6 +101,11 @@ export default function ManageExtraServices() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [vendorId, setVendorId] = useState<number | null>(null)
+  const isMobile = useIsMobile()
+  const pathname = usePathname()
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const [deepLinkReady, setDeepLinkReady] = useState(false)
 
   const cacheKey = vendorId ? `extras:${vendorId}` : "extras:0"
 
@@ -153,6 +161,7 @@ export default function ManageExtraServices() {
 
   // ✅ View mode per category: { [categoryId]: 'grid' | 'table' }
   const [viewModes, setViewModes] = useState<Record<number, 'grid' | 'table'>>({})
+  const [defaultViewMode, setDefaultViewMode] = useState<'grid' | 'table'>('table')
 
   // ✅ Per-item delete loading
   const [deletingItemId, setDeletingItemId] = useState<number | null>(null)
@@ -191,10 +200,12 @@ export default function ManageExtraServices() {
      HELPERS
   --------------------------------------------------------------- */
   const getViewMode = (catId: number): 'grid' | 'table' =>
-    viewModes[catId] ?? 'table'
+    viewModes[catId] ?? defaultViewMode
 
-  const setViewMode = (catId: number, mode: 'grid' | 'table') =>
+  const setViewMode = (catId: number, mode: 'grid' | 'table') => {
+    setDefaultViewMode(mode)
     setViewModes(prev => ({ ...prev, [catId]: mode }))
+  }
 
   const openMenuDialogForCategory = (categoryId: number) => {
     setActiveCategoryId(categoryId)
@@ -384,6 +395,13 @@ export default function ManageExtraServices() {
 
   useEffect(() => {
     if (!isClient) return
+    const linkedMode = readEnumParam(searchParams, "extra_mode", ["grid", "table"], "table")
+    setDefaultViewMode(linkedMode)
+    setDeepLinkReady(true)
+  }, [isClient])
+
+  useEffect(() => {
+    if (!isClient) return
     try {
       const token = localStorage.getItem("jwtToken")
       if (!token) { setError('No authentication token found'); return }
@@ -403,6 +421,16 @@ export default function ManageExtraServices() {
     }
     fetchCategories()
   }, [vendorId, isClient, cachedCategories])
+
+  useEffect(() => {
+    if (!isClient || !deepLinkReady) return
+    const desiredMode = isMobile ? "grid" : defaultViewMode
+    const next = updateSearchParams(searchParams, { extra_mode: desiredMode })
+    const currentQuery = searchParams.toString()
+    const nextQuery = next.toString()
+    if (currentQuery === nextQuery) return
+    router.replace(nextQuery ? `${pathname}?${nextQuery}` : pathname, { scroll: false })
+  }, [isClient, deepLinkReady, isMobile, defaultViewMode, pathname, router, searchParams])
 
   const totalCategories = categories.length
   const totalItems = categories.reduce((sum, cat) => sum + cat.items.length, 0)
@@ -534,6 +562,7 @@ export default function ManageExtraServices() {
             {categories.map((cat, i) => {
               if (!cat?.id) return null
               const mode = getViewMode(cat.id)
+              const resolvedMode: 'grid' | 'table' = isMobile ? 'grid' : mode
               const isDeletingCat = deletingCategoryId === cat.id
 
               return (
@@ -578,7 +607,8 @@ export default function ManageExtraServices() {
                           </button>
 
                           {/* ✅ View Mode Toggle */}
-                          <div className="flex items-center gap-1 rounded-lg border border-slate-300 bg-white/90 p-1 dark:border-cyan-400/20 dark:bg-slate-900/60">
+                          {!isMobile && (
+                            <div className="flex items-center gap-1 rounded-lg border border-slate-300 bg-white/90 p-1 dark:border-cyan-400/20 dark:bg-slate-900/60">
                             <button
                               onClick={() => setViewMode(cat.id, 'grid')}
                               className={`p-1.5 rounded-md transition-all ${
@@ -601,7 +631,8 @@ export default function ManageExtraServices() {
                             >
                               <TableIcon className="icon-md" />
                             </button>
-                          </div>
+                            </div>
+                          )}
 
                           {/* Delete Category */}
                           <button
@@ -623,14 +654,14 @@ export default function ManageExtraServices() {
                       <AnimatePresence mode="wait">
 
                         {/* ✅ GRID VIEW */}
-                        {mode === 'grid' && (
+                        {resolvedMode === 'grid' && (
                           <motion.div
                             key="grid"
                             initial={{ opacity: 0, x: -10 }}
                             animate={{ opacity: 1, x: 0 }}
                             exit={{ opacity: 0, x: -10 }}
                             transition={{ duration: 0.2 }}
-                            className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6"
+                            className="grid grid-cols-2 gap-2 sm:gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6"
                           >
                             {Array.isArray(cat.items) && cat.items.map((item, idx) => {
                               if (!item?.id) return null
@@ -667,7 +698,7 @@ export default function ManageExtraServices() {
                                       </div>
 
                                       {/* Info */}
-                                      <div className="space-y-1 p-2.5">
+                                      <div className="space-y-1 p-2">
                                         <p className="body-text font-semibold truncate text-xs sm:text-sm">
                                           {item.name}
                                         </p>
@@ -676,13 +707,13 @@ export default function ManageExtraServices() {
                                             {item.description}
                                           </p>
                                         )}
-                                        <div className="flex items-center justify-between pt-0.5">
+                                        <div className="flex items-center justify-between gap-1 pt-0.5">
                                           <div className="flex items-center gap-0.5 text-blue-400 font-bold text-sm">
                                             <IndianRupee className="w-3 h-3" />
                                             <span>{item.price}</span>
                                           </div>
                                           <span className={clsx(
-                                            "rounded-full border px-2 py-0.5 text-[11px] font-semibold",
+                                            "rounded-full border px-1.5 py-0.5 text-[10px] font-semibold",
                                             item.is_low_stock
                                               ? "border-amber-300 bg-amber-50 text-amber-700 dark:border-amber-400/40 dark:bg-amber-500/15 dark:text-amber-300"
                                               : "border-slate-300 bg-slate-100 text-slate-700 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200"
@@ -690,7 +721,7 @@ export default function ManageExtraServices() {
                                             {item.stock_quantity ?? 0} {item.stock_unit || "units"}
                                           </span>
                                           <span className={clsx(
-                                            "px-2 py-0.5 rounded-full text-xs font-bold",
+                                            "px-1.5 py-0.5 rounded-full text-[10px] font-bold",
                                             item.is_active
                                               ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
                                               : "bg-muted/20 text-muted-foreground"
@@ -727,7 +758,7 @@ export default function ManageExtraServices() {
                         )}
 
                         {/* ✅ TABLE VIEW */}
-                        {mode === 'table' && (
+                        {resolvedMode === 'table' && (
                           <motion.div
                             key="table"
                             initial={{ opacity: 0, x: 10 }}

@@ -1,3 +1,4 @@
+import { Suspense } from "react"
 import { Sparkles } from "lucide-react"
 import { DashboardLayout } from "../../(layout)/dashboard-layout"
 import ManageExtraServices from "../../components/manageextra-service"
@@ -18,9 +19,11 @@ export default function ManageExtraServicePage() {
           </p>
         </div>
 
-        <div className="feature-page-content feature-page-content-scroll gaming-panel">
-          <ManageExtraServices />
-        </div>
+        <Suspense fallback={<div className="feature-page-content feature-page-content-scroll gaming-panel" />}>
+          <div className="feature-page-content feature-page-content-scroll gaming-panel">
+            <ManageExtraServices />
+          </div>
+        </Suspense>
       </div>
     </DashboardLayout>
   )

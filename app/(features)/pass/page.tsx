@@ -1,5 +1,6 @@
 "use client"
 
+import { Suspense } from "react";
 import { DashboardLayout } from "../../(layout)/dashboard-layout";
 import ManagePassesPage from "../../components/manage-pass";
 import { Sparkles } from "lucide-react";
@@ -20,9 +21,11 @@ export default function TransactionReportPage() {
           </p>
         </div>
 
-        <div className="feature-page-content feature-page-content-scroll gaming-panel">
-          <ManagePassesPage />
-        </div>
+        <Suspense fallback={<div className="feature-page-content feature-page-content-scroll gaming-panel" />}>
+          <div className="feature-page-content feature-page-content-scroll gaming-panel">
+            <ManagePassesPage />
+          </div>
+        </Suspense>
       </div>
     </DashboardLayout>
   );

@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { KnowYourGamers } from "../../components/know-your-gamers";
 import { DashboardLayout } from "../../(layout)/dashboard-layout";
 import { Sparkles } from "lucide-react";
@@ -18,9 +19,11 @@ export default function ManageKnowYourGamers() {
           </p>
         </div>
 
-        <div className="feature-page-content feature-page-content-scroll gaming-panel">
-          <KnowYourGamers />
-        </div>
+        <Suspense fallback={<div className="feature-page-content feature-page-content-scroll gaming-panel" />}>
+          <div className="feature-page-content feature-page-content-scroll gaming-panel">
+            <KnowYourGamers />
+          </div>
+        </Suspense>
       </div>
     </DashboardLayout>
   );

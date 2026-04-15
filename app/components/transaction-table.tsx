@@ -20,6 +20,8 @@ import React from "react";
 import { DASHBOARD_URL} from "@/src/config/env";
 import HashLoader from "./ui/HashLoader";
 import { MobileCompactCard } from "@/components/ui/mobile-compact-card";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { readStringParam, updateSearchParams } from "@/lib/deeplink";
 
 interface Transaction {
   id: number;
@@ -126,6 +128,9 @@ function getVendorIdFromToken(decoded: any): number | null {
 }
 
 export function TransactionTable() {
+  const pathname = usePathname();
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const getTodayISODate = () => {
     const d = new Date();
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
@@ -153,6 +158,7 @@ export function TransactionTable() {
   const [showFilter, setShowFilter] = useState(false);
   const [showColumnSelector, setShowColumnSelector] = useState(false);
   const [taxProfile, setTaxProfile] = useState<VendorTaxProfile | null>(null);
+  const [deepLinkReady, setDeepLinkReady] = useState(false);
   const [visibleColumns, setVisibleColumns] = useState<Record<ColumnKey, boolean>>({
     bookingId: true,
     slotDate: true,
@@ -263,6 +269,27 @@ export function TransactionTable() {
   }, []);
 
   useEffect(() => {
+    const q = readStringParam(searchParams, "q", "");
+    const linkedFrom = readStringParam(searchParams, "from", getMonthStartISODate());
+    const linkedTo = readStringParam(searchParams, "to", getTodayISODate());
+    const linkedPay = readStringParam(searchParams, "pay", "");
+    const linkedType = readStringParam(searchParams, "type", "");
+    const linkedSettle = readStringParam(searchParams, "settle", "");
+
+    setSearchTerm(q);
+    setFromDate(linkedFrom);
+    setToDate(linkedTo);
+    setAppliedFromDate(linkedFrom);
+    setAppliedToDate(linkedTo);
+    setFilters({
+      modeOfPayment: linkedPay || null,
+      bookingType: linkedType || null,
+      settlementStatus: linkedSettle || null,
+    });
+    setDeepLinkReady(true);
+  }, []);
+
+  useEffect(() => {
     if (!vendorId || !token) return;
 
     const POLL_INTERVAL = 60 * 1000; // 1 minute
@@ -312,6 +339,22 @@ export function TransactionTable() {
 
     return () => clearInterval(pollingInterval);
   }, [vendorId, token, appliedFromDate, appliedToDate]);
+
+  useEffect(() => {
+    if (!deepLinkReady) return;
+    const next = updateSearchParams(searchParams, {
+      q: searchTerm || null,
+      from: appliedFromDate || null,
+      to: appliedToDate || null,
+      pay: filters.modeOfPayment || null,
+      type: filters.bookingType || null,
+      settle: filters.settlementStatus || null,
+    });
+    const currentQuery = searchParams.toString();
+    const nextQuery = next.toString();
+    if (currentQuery === nextQuery) return;
+    router.replace(nextQuery ? `${pathname}?${nextQuery}` : pathname, { scroll: false });
+  }, [deepLinkReady, searchTerm, appliedFromDate, appliedToDate, filters, pathname, router, searchParams]);
 
   useEffect(() => {
     if (!vendorId) return;
