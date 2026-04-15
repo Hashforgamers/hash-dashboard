@@ -500,14 +500,14 @@ const MealDetailsModal: React.FC<MealDetailsModalProps> = ({
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-[60] flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm p-2 sm:p-4"
+        className="fixed inset-0 z-[1200] flex items-end justify-center bg-black bg-opacity-50 backdrop-blur-sm p-0 sm:items-center sm:p-4"
         onClick={(e) => e.target === e.currentTarget && onClose()}
       >
         <motion.div
           initial={{ opacity: 0, scale: 0.95, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 20 }}
-          className="relative w-full max-w-6xl bg-white dark:bg-gray-800 rounded-xl shadow-2xl overflow-hidden max-h-[95vh] flex flex-col"
+          className="relative flex h-[100dvh] max-h-[100dvh] w-full flex-col overflow-hidden rounded-none bg-white shadow-2xl dark:bg-gray-800 sm:h-auto sm:max-h-[95vh] sm:max-w-6xl sm:rounded-xl"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header - Responsive */}
@@ -920,7 +920,7 @@ const MealDetailsModal: React.FC<MealDetailsModalProps> = ({
 
                   {/* Menu items grid - Responsive */}
                   {!isLoadingMenu && !menuError && categories.length > 0 && selectedCategory && (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
+                    <div className="grid grid-cols-2 gap-2 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3 xl:grid-cols-4">
                       {categories
                         .find((c) => c.id === selectedCategory)
                         ?.menus?.map((item) => {
@@ -931,7 +931,7 @@ const MealDetailsModal: React.FC<MealDetailsModalProps> = ({
                             <motion.div
                               key={item.id}
                               layout
-                              className={`rounded-lg border-2 bg-white shadow-sm dark:bg-gray-700 ${
+                              className={`min-w-0 rounded-lg border-2 bg-white shadow-sm dark:bg-gray-700 ${
                                 quantity > 0
                                   ? "border-green-500 shadow-green-200"
                                   : "border-gray-200 dark:border-gray-600"
@@ -939,7 +939,7 @@ const MealDetailsModal: React.FC<MealDetailsModalProps> = ({
                               whileHover={{ y: -2 }}
                             >
                               {/* Image Container - Responsive */}
-                              <div className="relative h-24 sm:h-32 w-full overflow-hidden rounded-t-lg">
+                              <div className="relative h-20 w-full overflow-hidden rounded-t-lg sm:h-32">
                                 {item.images.length > 0 ? (
                                   <CachedImage
                                     src={item.images[0].image_url}
@@ -960,11 +960,11 @@ const MealDetailsModal: React.FC<MealDetailsModalProps> = ({
 
                               {/* Card Content - Responsive */}
                               <div className="p-2 sm:p-3">
-                                <h3 className="mb-1 font-semibold text-xs sm:text-sm text-gray-900 dark:text-gray-200 line-clamp-2">
+                                <h3 className="mb-1 truncate font-semibold text-[11px] text-gray-900 dark:text-gray-200 sm:text-sm sm:line-clamp-2">
                                   {item.name}
                                 </h3>
                                 {item.description && (
-                                  <p className="mb-2 sm:mb-3 text-xs text-gray-600 dark:text-gray-400 line-clamp-2">
+                                  <p className="mb-2 hidden text-xs text-gray-600 line-clamp-2 dark:text-gray-400 sm:mb-3 sm:block">
                                     {item.description}
                                   </p>
                                 )}
@@ -972,25 +972,25 @@ const MealDetailsModal: React.FC<MealDetailsModalProps> = ({
                                 {/* Price and Controls - Responsive */}
                                 <div className="flex items-center justify-between">
                                   <div className="flex items-center space-x-1 text-green-600">
-                                    <IndianRupee className="w-3 h-3 sm:w-4 sm:h-4" />
-                                    <span className="text-sm sm:text-base font-bold">{item.price}</span>
+                                    <IndianRupee className="h-3 w-3 sm:h-4 sm:w-4" />
+                                    <span className="text-xs font-bold sm:text-base">{item.price}</span>
                                   </div>
                                   <div className="flex items-center space-x-1 sm:space-x-2">
                                     <button
                                       onClick={() => updateMealQuantity(item, quantity - 1, categoryName)}
                                       disabled={quantity === 0}
-                                      className="flex h-6 w-6 sm:h-7 sm:w-7 items-center justify-center rounded-full bg-red-600 text-white disabled:opacity-50 disabled:cursor-not-allowed hover:bg-red-700 transition-colors"
+                                      className="flex h-6 w-6 items-center justify-center rounded-full bg-red-600 text-white transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50 sm:h-7 sm:w-7"
                                     >
-                                      <Minus className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
+                                      <Minus className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
                                     </button>
-                                    <span className="min-w-[16px] sm:min-w-[20px] text-center font-semibold text-xs sm:text-sm text-gray-900 dark:text-gray-100">
+                                    <span className="min-w-[14px] text-center text-[11px] font-semibold text-gray-900 dark:text-gray-100 sm:min-w-[20px] sm:text-sm">
                                       {quantity}
                                     </span>
                                     <button
                                       onClick={() => updateMealQuantity(item, quantity + 1, categoryName)}
-                                      className="flex h-6 w-6 sm:h-7 sm:w-7 items-center justify-center rounded-full bg-green-600 text-white hover:bg-green-700 transition-colors"
+                                      className="flex h-6 w-6 items-center justify-center rounded-full bg-green-600 text-white transition-colors hover:bg-green-700 sm:h-7 sm:w-7"
                                     >
-                                      <Plus className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
+                                      <Plus className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
                                     </button>
                                   </div>
                                 </div>
@@ -999,7 +999,7 @@ const MealDetailsModal: React.FC<MealDetailsModalProps> = ({
                                 {quantity > 0 && (
                                   <motion.p
                                     layout
-                                    className="mt-1.5 sm:mt-2 text-right font-semibold text-green-700 text-xs sm:text-sm"
+                                    className="mt-1 text-right text-[11px] font-semibold text-green-700 sm:mt-2 sm:text-sm"
                                   >
                                     Subtotal: ₹{(quantity * item.price).toFixed(2)}
                                   </motion.p>
