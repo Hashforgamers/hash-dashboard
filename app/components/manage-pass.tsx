@@ -24,6 +24,9 @@ import {
 } from "lucide-react";
 import { DASHBOARD_URL } from "@/src/config/env";
 import { useModuleCache } from "@/app/hooks/useModuleCache";
+import { useIsMobile } from "@/components/ui/use-mobile";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { readEnumParam, updateSearchParams } from "@/lib/deeplink";
 
 /* ------------------------------------------------------------------ */
 /*                          TYPE DEFINITIONS                           */
@@ -58,6 +61,11 @@ export default function ManagePassesPage() {
   const [viewMode, setViewMode] = useState<"grid" | "table">("table");
   const [hasMounted, setHasMounted] = useState(false);
   const [activeVendorId, setActiveVendorId] = useState<string>("1");
+  const isMobile = useIsMobile();
+  const pathname = usePathname();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const [deepLinkReady, setDeepLinkReady] = useState(false);
 
   const passTypesKey = "pass_types";
   const passesKey = `passes:${activeVendorId}`;
@@ -87,6 +95,13 @@ export default function ManagePassesPage() {
     const savedId = localStorage.getItem("selectedCafe") || "1";
     setActiveVendorId(savedId);
   }, []);
+
+  useEffect(() => {
+    if (!hasMounted) return;
+    const vm = readEnumParam(searchParams, "vm", ["grid", "table"], "table");
+    setViewMode(vm);
+    setDeepLinkReady(true);
+  }, [hasMounted]);
 
   useEffect(() => {
     if (!activeVendorId) return;
@@ -183,34 +198,48 @@ export default function ManagePassesPage() {
   const primaryButtonClass =
     "ui-action-primary inline-flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold shadow-md transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-50 sm:px-4 sm:text-sm";
 
+  useEffect(() => {
+    if (!hasMounted || !deepLinkReady) return;
+    const desiredMode = isMobile ? "grid" : viewMode;
+    const next = updateSearchParams(searchParams, { vm: desiredMode });
+    const currentQuery = searchParams.toString();
+    const nextQuery = next.toString();
+    if (currentQuery === nextQuery) return;
+    router.replace(nextQuery ? `${pathname}?${nextQuery}` : pathname, { scroll: false });
+  }, [viewMode, isMobile, hasMounted, deepLinkReady, pathname, router, searchParams]);
+
   return (
     <div className="dashboard-module dashboard-typography flex h-full min-h-0 flex-col gap-4 overflow-hidden px-1 pb-2 sm:px-2">
 
       {/* ✅ View Toggle */}
       <div className="gaming-panel dashboard-module-panel mb-2 shrink-0 flex flex-wrap items-center justify-between gap-3 rounded-xl p-3">
         <div className="dashboard-module-tab-group flex items-center gap-1 rounded-lg p-1">
-          <button
-            onClick={() => setViewMode("grid")}
-            className={`inline-flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-semibold transition-all sm:text-sm ${
-              viewMode === "grid"
-                ? "dashboard-module-tab-active bg-cyan-500/12 text-slate-900 shadow-sm dark:text-cyan-100"
-                : "text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-cyan-100"
-            }`}
-          >
-            <LayoutGrid className="icon-md" />
-            Grid
-          </button>
-          <button
-            onClick={() => setViewMode("table")}
-            className={`inline-flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-semibold transition-all sm:text-sm ${
-              viewMode === "table"
-                ? "dashboard-module-tab-active bg-cyan-500/12 text-slate-900 shadow-sm dark:text-cyan-100"
-                : "text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-cyan-100"
-            }`}
-          >
-            <TableIcon className="icon-md" />
-            List
-          </button>
+          {!isMobile && (
+            <>
+              <button
+                onClick={() => setViewMode("grid")}
+                className={`inline-flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-semibold transition-all sm:text-sm ${
+                  viewMode === "grid"
+                    ? "dashboard-module-tab-active bg-cyan-500/12 text-slate-900 shadow-sm dark:text-cyan-100"
+                    : "text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-cyan-100"
+                }`}
+              >
+                <LayoutGrid className="icon-md" />
+                Grid
+              </button>
+              <button
+                onClick={() => setViewMode("table")}
+                className={`inline-flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-semibold transition-all sm:text-sm ${
+                  viewMode === "table"
+                    ? "dashboard-module-tab-active bg-cyan-500/12 text-slate-900 shadow-sm dark:text-cyan-100"
+                    : "text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-cyan-100"
+                }`}
+              >
+                <TableIcon className="icon-md" />
+                List
+              </button>
+            </>
+          )}
         </div>
 
         <div className="flex items-center gap-2">
@@ -244,7 +273,7 @@ export default function ManagePassesPage() {
               <AddPassDialog passTypes={passTypes} onSave={handleAddPass} buttonClassName={primaryButtonClass} />
             </div>
           </div>
-        ) : viewMode === "grid" ? (
+        ) : (isMobile || viewMode === "grid") ? (
 
         /* ✅ GRID VIEW */
         <div className="section-spacing">
@@ -451,7 +480,6 @@ function PassCard({ pass, passTypes, onEdit, onDelete, deletingId }: any) {
           <button
             onClick={() => onDelete(pass.id)}
             disabled={deletingId === pass.id}
-            className="inline-flex items-center justify-center rounded-lg border border-rose-400/30 bg-rose-500/10 p-2 text-rose-300 transition-all duration-200 hover:border-rose-300/60 hover:bg-rose-500/20 disabled:cursor-not-allowed disabled:opacity-50"
             className="inline-flex items-center justify-center rounded-lg border border-rose-300/50 bg-rose-50 p-2 text-rose-600 transition-all duration-200 hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-rose-400/30 dark:bg-rose-500/10 dark:text-rose-300 dark:hover:bg-rose-500/20"
             title="Delete"
           >

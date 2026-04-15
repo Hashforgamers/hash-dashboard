@@ -1250,8 +1250,8 @@ export function UpcomingBookings({
                             )}
                           </div>
 
-                          <div className="flex shrink-0 items-center gap-1">
-                            <span className={`inline-flex h-7 items-center rounded-full border px-2 text-[11px] font-medium capitalize ${paymentBadgeClass}`}>
+                          <div className="flex max-w-[48%] shrink-0 flex-wrap items-center justify-end gap-1 sm:max-w-none sm:flex-nowrap">
+                            <span className={`inline-flex h-6 items-center rounded-full border px-2 text-[10px] font-medium capitalize sm:h-7 sm:text-[11px] ${paymentBadgeClass}`}>
                               {paymentBadgeLabel}
                             </span>
 
@@ -1263,11 +1263,11 @@ export function UpcomingBookings({
                                   e.stopPropagation();
                                   handleFoodIconClick(booking.bookingId, booking.username || 'Guest User', true);
                                 }}
-                                className="group inline-flex h-7 items-center gap-1 rounded-full border border-emerald-400/35 bg-emerald-500/10 px-2 transition-all duration-200 hover:bg-emerald-500/20"
+                                className="group inline-flex h-6 items-center gap-1 rounded-full border border-emerald-400/35 bg-emerald-500/10 px-2 transition-all duration-200 hover:bg-emerald-500/20 sm:h-7"
                                 title="View meals & add more"
                               >
                                 <UtensilsCrossed className="h-3 w-3 text-emerald-300 transition-colors group-hover:text-emerald-200" />
-                                <span className="hidden text-[10px] font-semibold text-emerald-200 sm:inline">Meals</span>
+                                <span className="text-[10px] font-semibold text-emerald-200">Meals</span>
                               </motion.button>
                             ) : (
                               <motion.button
@@ -1277,11 +1277,12 @@ export function UpcomingBookings({
                                   e.stopPropagation();
                                   handleAddFoodClick(booking.bookingId, booking.username || 'Guest User');
                                 }}
-                                className="group inline-flex h-7 items-center gap-1 rounded-full border border-dashed border-cyan-400/60 bg-cyan-500/10 px-2 transition-all duration-200 hover:bg-cyan-500/20"
+                                className="group inline-flex h-6 items-center gap-1 rounded-full border border-dashed border-cyan-400/60 bg-cyan-500/10 px-2 transition-all duration-200 hover:bg-cyan-500/20 sm:h-7"
                                 title="Add meals to this booking"
                               >
                                 <Plus className="h-3 w-3 text-cyan-300 transition-colors group-hover:text-cyan-200" />
                                 <UtensilsCrossed className="h-3 w-3 text-cyan-300 transition-colors group-hover:text-cyan-200" />
+                                <span className="text-[10px] font-semibold text-cyan-200">Add</span>
                               </motion.button>
                             )}
 

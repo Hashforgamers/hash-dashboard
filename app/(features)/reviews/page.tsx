@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { DashboardLayout } from "@/app/(layout)/dashboard-layout";
 import { Star, MessageSquare, EyeOff, Eye, Search } from "lucide-react";
 import {
@@ -14,6 +15,7 @@ import {
 import { useModuleCache } from "@/app/hooks/useModuleCache";
 import { useDashboardData } from "@/app/context/DashboardDataContext";
 import { MobileCompactCard } from "@/components/ui/mobile-compact-card";
+import { readEnumParam, readStringParam, updateSearchParams } from "@/lib/deeplink";
 
 function formatDate(value?: string | null) {
   if (!value) return "--";
@@ -36,6 +38,9 @@ function RatingStars({ rating }: { rating: number }) {
 }
 
 export default function ReviewsPage() {
+  const pathname = usePathname();
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const { vendorId } = useDashboardData();
   const [token, setToken] = useState<string | null>(null);
   const [summary, setSummary] = useState<ReviewSummary | null>(null);
@@ -49,6 +54,7 @@ export default function ReviewsPage() {
   const [search, setSearch] = useState("");
   const [responseDrafts, setResponseDrafts] = useState<Record<string, string>>({});
   const [actioningId, setActioningId] = useState<string | null>(null);
+  const [deepLinkReady, setDeepLinkReady] = useState(false);
 
   const summaryKey = vendorId ? `reviews_summary:${vendorId}` : "reviews_summary:0";
   const listKey = vendorId ? `reviews_list:${vendorId}:${statusFilter}:${ratingFilter}:${search}` : "reviews_list:0";
@@ -89,6 +95,16 @@ export default function ReviewsPage() {
     const accessToken =
       localStorage.getItem("rbac_access_token_v1") || localStorage.getItem("jwtToken");
     setToken(accessToken);
+  }, []);
+
+  useEffect(() => {
+    const linkedStatus = readEnumParam(searchParams, "status", ["all", "published", "hidden"], "all");
+    const linkedRating = readStringParam(searchParams, "rating", "");
+    const linkedSearch = readStringParam(searchParams, "q", "");
+    setStatusFilter(linkedStatus);
+    setRatingFilter(linkedRating);
+    setSearch(linkedSearch);
+    setDeepLinkReady(true);
   }, []);
 
   const refreshSummary = async () => {
@@ -136,6 +152,19 @@ export default function ReviewsPage() {
     }
     refreshReviews();
   }, [token, cachedList, statusFilter, ratingFilter, search]);
+
+  useEffect(() => {
+    if (!deepLinkReady) return;
+    const next = updateSearchParams(searchParams, {
+      status: statusFilter === "all" ? null : statusFilter,
+      rating: ratingFilter || null,
+      q: search || null,
+    });
+    const currentQuery = searchParams.toString();
+    const nextQuery = next.toString();
+    if (currentQuery === nextQuery) return;
+    router.replace(nextQuery ? `${pathname}?${nextQuery}` : pathname, { scroll: false });
+  }, [deepLinkReady, statusFilter, ratingFilter, search, pathname, router, searchParams]);
 
   const breakdown = useMemo(() => {
     const total = summary?.total || 0;
