@@ -5,6 +5,7 @@ import { format } from "date-fns"
 import { Users, TrendingUp, Award, Clock, Search, Filter } from "lucide-react"
 import { DASHBOARD_URL } from "@/src/config/env"
 import { jwtDecode } from "jwt-decode"
+import { MobileCompactCard } from "@/components/ui/mobile-compact-card"
 
 // Define icon mapping
 const iconMap = {
@@ -141,24 +142,24 @@ export function KnowYourGamers() {
   return (
     <div className="dashboard-module dashboard-typography flex h-full min-h-0 flex-col gap-4 p-1 sm:p-2">
       {/* Stats Cards */}
-      <div className="shrink-0 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="shrink-0 grid grid-cols-2 gap-2 sm:grid-cols-2 sm:gap-3 lg:grid-cols-4">
         {stats.map((stat, index) => {
           const Icon = iconMap[stat.icon as keyof typeof iconMap]
           return (
             <div
               key={index}
-              className="gaming-kpi-card rounded-xl border border-cyan-400/20 p-4"
+              className="gaming-kpi-card rounded-xl border border-cyan-400/20 p-3 sm:p-4"
             >
               <div className="flex items-center justify-between">
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-xs uppercase tracking-wide text-slate-500 sm:text-sm">{stat.title}</p>
-                  <h3 className="mt-1 truncate text-xl font-bold text-cyan-300 sm:text-2xl">{stat.value}</h3>
+                  <p className="truncate text-[10px] uppercase tracking-wide text-slate-500 sm:text-sm">{stat.title}</p>
+                  <h3 className="mt-1 truncate text-base font-bold text-cyan-300 sm:text-2xl">{stat.value}</h3>
                 </div>
-                <div className="ml-3 flex-shrink-0 rounded-full border border-cyan-400/25 bg-cyan-500/10 p-3">
-                  <Icon className="h-5 w-5 text-cyan-300 sm:h-6 sm:w-6" />
+                <div className="ml-2 flex-shrink-0 rounded-full border border-cyan-400/25 bg-cyan-500/10 p-2 sm:ml-3 sm:p-3">
+                  <Icon className="h-4 w-4 text-cyan-300 sm:h-6 sm:w-6" />
                 </div>
               </div>
-              <div className="mt-2 flex items-center text-xs sm:text-sm">
+              <div className="mt-2 flex items-center text-[11px] sm:text-sm">
                 <span className="text-emerald-300">{stat.change}</span>
                 <span className="ml-1 text-slate-500">vs last month</span>
               </div>
@@ -170,7 +171,7 @@ export function KnowYourGamers() {
       {/* Filters and Search */}
       <div className="gaming-panel shrink-0 rounded-xl border border-cyan-400/20">
         <div className="dashboard-toolbar p-4">
-          <div className="relative flex-1 min-w-[220px]">
+          <div className="relative flex-1 min-w-0 sm:min-w-[220px]">
             <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-500" />
             <input
               type="text"
@@ -180,10 +181,10 @@ export function KnowYourGamers() {
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          <div className="flex items-center gap-2 flex-shrink-0">
+          <div className="flex w-full items-center gap-2 sm:w-auto sm:flex-shrink-0">
             <Filter className="h-5 w-5 text-slate-500" />
             <select
-              className="dashboard-module-input h-10 min-w-0 px-3"
+              className="dashboard-module-input h-10 min-w-0 flex-1 px-3 sm:flex-none"
               value={selectedTier}
               onChange={(e) => setSelectedTier(e.target.value)}
             >
@@ -197,7 +198,55 @@ export function KnowYourGamers() {
       </div>
 
       {/* Data Table */}
-      <div className="dashboard-table-shell min-h-0 flex-1">
+      <div className="md:hidden space-y-3">
+        {loading ? (
+          <MobileCompactCard className="border-cyan-400/20 bg-slate-900/60 p-4 text-sm text-slate-400">
+            Loading gamers...
+          </MobileCompactCard>
+        ) : filteredData.length === 0 ? (
+          <MobileCompactCard className="border-cyan-400/20 bg-slate-900/60 p-4 text-sm text-slate-400">
+            No gamers found for this filter.
+          </MobileCompactCard>
+        ) : (
+          filteredData.map((gamer) => (
+            <MobileCompactCard key={gamer.id} className="border-cyan-400/20 bg-slate-900/60">
+              <div className="flex items-start justify-between gap-2">
+                <div>
+                  <p className="text-sm font-semibold text-cyan-300">{gamer.name}</p>
+                  <p className="text-xs text-slate-400">#{gamer.id} · {gamer.contact}</p>
+                </div>
+                <span className={`rounded-full px-2 py-1 text-[10px] font-semibold ${getTierBadgeClass(gamer.membershipTier)}`}>
+                  {gamer.membershipTier}
+                </span>
+              </div>
+              <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
+                <div className="rounded-md border border-cyan-500/10 bg-slate-950/40 p-2">
+                  <p className="text-slate-500">Total Slots</p>
+                  <p className="font-semibold text-slate-200">{gamer.totalSlots}</p>
+                </div>
+                <div className="rounded-md border border-cyan-500/10 bg-slate-950/40 p-2">
+                  <p className="text-slate-500">Avg / Slot</p>
+                  <p className="font-semibold text-slate-200">₹{gamer.averagePerSlot}</p>
+                </div>
+                <div className="rounded-md border border-cyan-500/10 bg-slate-950/40 p-2">
+                  <p className="text-slate-500">Total Amount</p>
+                  <p className="font-semibold text-slate-200">₹{gamer.totalAmount.toLocaleString()}</p>
+                </div>
+                <div className="rounded-md border border-cyan-500/10 bg-slate-950/40 p-2">
+                  <p className="text-slate-500">Net Revenue</p>
+                  <p className="font-semibold text-slate-200">₹{gamer.netRevenue.toLocaleString()}</p>
+                </div>
+              </div>
+              <p className="mt-2 text-[11px] text-slate-500">
+                Last Visit: {gamer.lastVisit ? format(new Date(gamer.lastVisit), "dd MMM yyyy") : "-"}
+              </p>
+              {gamer.notes ? <p className="mt-1 line-clamp-2 text-[11px] text-slate-400">{gamer.notes}</p> : null}
+            </MobileCompactCard>
+          ))
+        )}
+      </div>
+
+      <div className="dashboard-table-shell hidden min-h-0 flex-1 md:block">
         <div className="dashboard-table-wrap h-full">
           <table className="dashboard-table min-w-[1200px] max-md:min-w-[860px]">
             <thead className="dashboard-module-table-head">
@@ -266,7 +315,7 @@ export function KnowYourGamers() {
         </div>
 
         {/* Mobile-friendly message when table is scrollable */}
-        <div className="border-t border-cyan-500/20 p-4 text-center text-sm text-slate-500 sm:hidden">
+        <div className="border-t border-cyan-500/20 p-4 text-center text-sm text-slate-500">
           Scroll horizontally to view all columns
         </div>
       </div>

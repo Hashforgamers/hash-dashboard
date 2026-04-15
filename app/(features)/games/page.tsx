@@ -9,6 +9,7 @@ import {
   CardTitle,
   CardDescription,
 } from "@/components/ui/card";
+import { MobileCompactCard } from "@/components/ui/mobile-compact-card";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Gamepad2,
@@ -413,7 +414,63 @@ export default function GamesManagementPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="dashboard-table-wrap">
+                <div className="space-y-3 md:hidden">
+                  {vendorGames.map((vg) => (
+                    <MobileCompactCard key={`mobile_${vg.game.id}`} className="bg-slate-900/40">
+                      <div className="flex items-start gap-3">
+                        <div className="h-12 w-12 rounded bg-slate-200 dark:bg-slate-800 flex items-center justify-center flex-shrink-0">
+                          {vg.game.image_url ? (
+                            <img
+                              src={vg.game.image_url}
+                              alt={vg.game.name}
+                              className="h-full w-full object-cover rounded"
+                            />
+                          ) : (
+                            <Gamepad2 className="w-6 h-6 text-slate-600 dark:text-slate-200" />
+                          )}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-semibold text-foreground">{vg.game.name}</p>
+                          <p className="text-xs text-muted-foreground">{vg.game.genre || "N/A"} · {vg.total_consoles} consoles</p>
+                        </div>
+                      </div>
+                      <div className="mt-3 space-y-2">
+                        {vg.consoles.map((console) => {
+                          const consoleInfo = getConsoleInfo(console.console_type);
+                          return (
+                            <div
+                              key={`mobile_console_${console.vendor_game_id}`}
+                              className="flex items-center justify-between gap-2 rounded border border-cyan-300/25 bg-slate-950/40 px-2 py-1.5 text-xs"
+                            >
+                              <div className="min-w-0">
+                                <span className="mr-1">{consoleInfo.icon}</span>
+                                <span className="font-medium text-slate-100">#{console.console_number}</span>
+                                <span className={console.is_offer ? "ml-1 text-orange-400" : "ml-1 text-slate-400"}>
+                                  ₹{console.price_per_hour}/hr
+                                </span>
+                              </div>
+                              <button
+                                onClick={() =>
+                                  handleDeleteVendorGame(
+                                    console.vendor_game_id,
+                                    vg.game.name,
+                                    console.console_number
+                                  )
+                                }
+                                className="rounded p-1 text-red-400 hover:bg-red-500/10"
+                                aria-label={`Remove ${vg.game.name} from console ${console.console_number}`}
+                              >
+                                <XCircle className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </MobileCompactCard>
+                  ))}
+                </div>
+
+                <div className="hidden md:block dashboard-table-wrap">
                   <table className="dashboard-table">
                     <thead>
                       <tr className="border-b border-border">
