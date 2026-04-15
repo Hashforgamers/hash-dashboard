@@ -145,16 +145,91 @@ export default function SelectCafePage() {
 
   useEffect(() => {
     const userEmail = localStorage.getItem("vendor_account_email") || localStorage.getItem("vendor_login_email")
-    if (userEmail) {
-      setFormData((prev) => ({ ...prev, vendor_account_email: userEmail }))
+
+    const to24Hour = (value: string): string => {
+      const raw = String(value || "").trim()
+      if (!raw) return "09:00"
+      const m12 = raw.match(/^(\d{1,2}):(\d{2})\s*([APap][Mm])$/)
+      if (m12) {
+        let h = parseInt(m12[1], 10)
+        const mm = m12[2]
+        const meridiem = m12[3].toUpperCase()
+        if (meridiem === "PM" && h < 12) h += 12
+        if (meridiem === "AM" && h === 12) h = 0
+        return `${String(h).padStart(2, "0")}:${mm}`
+      }
+      const m24 = raw.match(/^(\d{1,2}):(\d{2})(?::\d{2})?$/)
+      if (m24) {
+        return `${String(parseInt(m24[1], 10)).padStart(2, "0")}:${m24[2]}`
+      }
+      return "09:00"
     }
 
     const initialTiming: Record<string, { open: string; close: string; closed: boolean }> = {}
     DAYS_OF_WEEK.forEach((day) => {
       initialTiming[day.key] = { open: "09:00", close: "22:00", closed: false }
     })
+
+    if (userEmail) {
+      setFormData((prev) => ({ ...prev, vendor_account_email: userEmail }))
+    }
     setFormData((prev) => ({ ...prev, timing: initialTiming }))
     refreshVendorList()
+
+    const hydrateBranchDefaults = async () => {
+      if (!userEmail) return
+      try {
+        const res = await fetch(`${VENDOR_ONBOARD_URL}/api/vendor/branch-defaults?email=${encodeURIComponent(userEmail)}`)
+        if (!res.ok) return
+        const payload = await res.json()
+        const defaults = payload?.defaults
+        if (!defaults || typeof defaults !== "object") return
+
+        setFormData((prev) => {
+          const nextTiming = { ...initialTiming }
+          const defaultsTiming = defaults.timing && typeof defaults.timing === "object" ? defaults.timing : {}
+          for (const day of DAYS_OF_WEEK) {
+            const dayDefaults = defaultsTiming[day.key] || {}
+            nextTiming[day.key] = {
+              open: to24Hour(dayDefaults.open || initialTiming[day.key].open),
+              close: to24Hour(dayDefaults.close || initialTiming[day.key].close),
+              closed: Boolean(dayDefaults.closed ?? initialTiming[day.key].closed),
+            }
+          }
+
+          return {
+            ...prev,
+            owner_name: defaults.owner_name || prev.owner_name,
+            vendor_account_email: defaults.vendor_account_email || prev.vendor_account_email || userEmail,
+            contact_info: {
+              ...prev.contact_info,
+              ...(defaults.contact_info || {}),
+              email: (defaults.contact_info?.email || prev.contact_info.email || userEmail),
+            },
+            physicalAddress: {
+              ...prev.physicalAddress,
+              ...(defaults.physicalAddress || {}),
+            },
+            business_registration_details: {
+              ...prev.business_registration_details,
+              ...(defaults.business_registration_details || {}),
+            },
+            document_submitted: {
+              ...prev.document_submitted,
+              ...(defaults.document_submitted || {}),
+            },
+            timing: nextTiming,
+            available_games: Array.isArray(defaults.available_games) && defaults.available_games.length > 0
+              ? defaults.available_games
+              : prev.available_games,
+          }
+        })
+      } catch (error) {
+        console.warn("Could not load branch defaults", error)
+      }
+    }
+
+    void hydrateBranchDefaults()
   }, [])
 
   const handleCafeClick = (id: string) => {
