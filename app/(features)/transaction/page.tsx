@@ -1,5 +1,6 @@
 "use client"
 
+import { Suspense } from "react";
 import { TransactionTable } from "../../components/transaction-table";
 import { DashboardLayout } from "../../(layout)/dashboard-layout";
 import { Sparkles } from "lucide-react";
@@ -18,9 +19,11 @@ export default function TransactionReportPage() {
           </p>
         </div>
 
-        <div className="feature-page-content feature-page-content-scroll gaming-panel flex min-h-0">
-          <TransactionTable />
-        </div>
+        <Suspense fallback={<div className="feature-page-content feature-page-content-scroll gaming-panel flex min-h-0" />}>
+          <div className="feature-page-content feature-page-content-scroll gaming-panel flex min-h-0">
+            <TransactionTable />
+          </div>
+        </Suspense>
       </div>
     </DashboardLayout>
   );

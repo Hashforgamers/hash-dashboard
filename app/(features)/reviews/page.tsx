@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { DashboardLayout } from "@/app/(layout)/dashboard-layout";
 import { Star, MessageSquare, EyeOff, Eye, Search } from "lucide-react";
@@ -37,7 +37,7 @@ function RatingStars({ rating }: { rating: number }) {
   );
 }
 
-export default function ReviewsPage() {
+function ReviewsPageContent() {
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -395,5 +395,13 @@ export default function ReviewsPage() {
         </div>
       </div>
     </DashboardLayout>
+  );
+}
+
+export default function ReviewsPage() {
+  return (
+    <Suspense fallback={<DashboardLayout contentScroll="contained"><div className="flex h-full min-h-0 flex-1 flex-col gap-3 sm:gap-4" /></DashboardLayout>}>
+      <ReviewsPageContent />
+    </Suspense>
   );
 }
