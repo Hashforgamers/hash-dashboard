@@ -27,6 +27,7 @@ import { useModuleCache } from "@/app/hooks/useModuleCache";
 import { useIsMobile } from "@/components/ui/use-mobile";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { readEnumParam, updateSearchParams } from "@/lib/deeplink";
+import { jwtDecode } from "jwt-decode";
 
 /* ------------------------------------------------------------------ */
 /*                          TYPE DEFINITIONS                           */
@@ -60,7 +61,7 @@ export default function ManagePassesPage() {
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [viewMode, setViewMode] = useState<"grid" | "table">("table");
   const [hasMounted, setHasMounted] = useState(false);
-  const [activeVendorId, setActiveVendorId] = useState<string>("1");
+  const [activeVendorId, setActiveVendorId] = useState<string>("");
   const isMobile = useIsMobile();
   const pathname = usePathname();
   const router = useRouter();
@@ -69,6 +70,50 @@ export default function ManagePassesPage() {
 
   const passTypesKey = "pass_types";
   const passesKey = `passes:${activeVendorId}`;
+  const passBasePath = `${DASHBOARD_URL}/api/vendor/${activeVendorId}/passes`;
+
+  const parseVendorId = (value: unknown): string | null => {
+    const n = Number(value);
+    if (Number.isFinite(n) && n > 0) return String(n);
+    return null;
+  };
+
+  const resolveVendorIdFromSession = (): string | null => {
+    try {
+      const accessToken = localStorage.getItem("rbac_access_token_v1");
+      const jwtToken = localStorage.getItem("jwtToken");
+      const token = accessToken || jwtToken;
+      if (token) {
+        const decoded: any = jwtDecode(token);
+        const tokenVendor =
+          parseVendorId(decoded?.vendor_id) ||
+          parseVendorId(decoded?.sub?.id) ||
+          (typeof decoded?.sub === "string" ? parseVendorId(decoded.sub) : null);
+        if (tokenVendor) return tokenVendor;
+      }
+    } catch {
+      // Ignore token parsing failures and continue to selectedCafe fallback.
+    }
+
+    const selectedCafeRaw = localStorage.getItem("selectedCafe");
+    if (!selectedCafeRaw || selectedCafeRaw === "master") return null;
+
+    try {
+      const parsed = JSON.parse(selectedCafeRaw);
+      if (parsed && typeof parsed === "object") {
+        const fromObject =
+          parseVendorId((parsed as any).id) ||
+          parseVendorId((parsed as any).vendor_id) ||
+          parseVendorId((parsed as any).vendorId) ||
+          parseVendorId((parsed as any).cafe_id);
+        if (fromObject) return fromObject;
+      }
+    } catch {
+      // selectedCafe may be a plain number string (e.g. "41")
+    }
+
+    return parseVendorId(selectedCafeRaw);
+  };
 
   const { data: cachedPassTypes, refresh: refreshPassTypes } = useModuleCache<PassType[]>(
     passTypesKey,
@@ -83,8 +128,21 @@ export default function ManagePassesPage() {
   const { data: cachedPasses, refresh: refreshPassesCache } = useModuleCache<CafePass[]>(
     passesKey,
     async () => {
-      const res = await axios.get(`${DASHBOARD_URL}/api/vendor/${activeVendorId}/passes`);
-      return res.data?.passes || res.data || [];
+      try {
+        const res = await axios.get(passBasePath);
+        return res.data?.passes || res.data || [];
+      } catch (error: any) {
+        if (error?.response?.status === 404) {
+          try {
+            const fallback = await axios.get(`${passBasePath}/`);
+            return fallback.data?.passes || fallback.data || [];
+          } catch (fallbackErr: any) {
+            if (fallbackErr?.response?.status === 404) return [];
+            throw fallbackErr;
+          }
+        }
+        throw error;
+      }
     },
     120000,
     passesKey
@@ -92,8 +150,8 @@ export default function ManagePassesPage() {
 
   useEffect(() => {
     setHasMounted(true);
-    const savedId = localStorage.getItem("selectedCafe") || "1";
-    setActiveVendorId(savedId);
+    const resolvedVendorId = resolveVendorIdFromSession();
+    if (resolvedVendorId) setActiveVendorId(resolvedVendorId);
   }, []);
 
   useEffect(() => {
@@ -104,7 +162,10 @@ export default function ManagePassesPage() {
   }, [hasMounted]);
 
   useEffect(() => {
-    if (!activeVendorId) return;
+    if (!activeVendorId) {
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     const hydrate = async () => {
       try {
@@ -128,16 +189,6 @@ export default function ManagePassesPage() {
     };
     hydrate();
   }, [activeVendorId, cachedPassTypes, cachedPasses, refreshPassTypes, refreshPassesCache]);
-
-  if (!hasMounted) {
-    return (
-      <div className="page-container">
-        <div className="flex items-center justify-center py-16">
-          <Loader2 className="icon-lg animate-spin text-blue-400" />
-        </div>
-      </div>
-    );
-  }
 
   const refreshPasses = async () => {
     try {
@@ -207,6 +258,16 @@ export default function ManagePassesPage() {
     if (currentQuery === nextQuery) return;
     router.replace(nextQuery ? `${pathname}?${nextQuery}` : pathname, { scroll: false });
   }, [viewMode, isMobile, hasMounted, deepLinkReady, pathname, router, searchParams]);
+
+  if (!hasMounted) {
+    return (
+      <div className="page-container">
+        <div className="flex items-center justify-center py-16">
+          <Loader2 className="icon-lg animate-spin text-blue-400" />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="dashboard-module dashboard-typography flex h-full min-h-0 flex-col gap-4 overflow-hidden px-1 pb-2 sm:px-2">
