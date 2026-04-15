@@ -640,9 +640,13 @@ h6 {
 .dashboard-table-wrap {
   width: 100%;
   overflow: auto;
+  overflow-x: auto;
+  overflow-y: auto;
   max-height: min(70vh, 720px);
   cursor: grab;
-  touch-action: pan-y;
+  touch-action: pan-x pan-y;
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
 }
 
 .dashboard-table-wrap[data-dragging="true"] {
@@ -694,13 +698,18 @@ h6 {
   .dashboard-table-wrap {
     max-height: none;
     overflow: auto;
+    overflow-x: auto;
+    overflow-y: auto;
     -webkit-overflow-scrolling: touch;
     overscroll-behavior: contain;
+    touch-action: pan-x pan-y;
   }
 
   .dashboard-table,
   .dashboard-module-table {
     min-width: 620px;
+    width: max-content;
+    max-width: none;
   }
 
   .dashboard-table th {

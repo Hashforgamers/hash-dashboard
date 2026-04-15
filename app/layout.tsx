@@ -11,6 +11,7 @@ import { AccessProvider } from "./context/AccessContext";
 import { DashboardDataProvider } from "./context/DashboardDataContext";
 import { DashboardDataBus } from "./context/DashboardDataBus";
 import { TableDragScroll } from "./components/TableDragScroll";
+import { MobileInstallBanner } from "./components/MobileInstallBanner";
 
 const rajdhani = Rajdhani({
   subsets: ["latin"],
@@ -100,6 +101,7 @@ export default function RootLayout({
               <DashboardDataProvider>
                 <DashboardDataBus />
                 <TableDragScroll />
+                <MobileInstallBanner />
                 {children}
               </DashboardDataProvider>
             </AccessProvider>
