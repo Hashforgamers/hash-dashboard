@@ -102,6 +102,26 @@ const calculateExtraAmount = (extraSeconds: number, ratePerHour = 1) => {
   return Math.ceil(extraHours * ratePerHour);
 };
 
+const getSafeBookingStartTime = (timeValue: any): string => {
+  if (typeof timeValue === "string") {
+    return timeValue.split(" - ")[0]?.trim() || "00:00";
+  }
+  if (Array.isArray(timeValue)) {
+    const first = timeValue[0];
+    return typeof first === "string" ? first.trim() || "00:00" : "00:00";
+  }
+  if (timeValue && typeof timeValue === "object") {
+    const startCandidate =
+      timeValue.start ||
+      timeValue.start_time ||
+      timeValue.from ||
+      timeValue.begin ||
+      "";
+    return String(startCandidate || "").trim() || "00:00";
+  }
+  return "00:00";
+};
+
 const formatHistoryDateLabel = (dateInput: any) => {
   if (!dateInput) return "Date not available";
   const d = new Date(dateInput);
@@ -761,8 +781,8 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
       );
     });
     return rows.sort((a: any, b: any) => {
-      const da = new Date(`${a?.date || ""} ${(a?.time || "00:00").split(" - ")[0]}`);
-      const db = new Date(`${b?.date || ""} ${(b?.time || "00:00").split(" - ")[0]}`);
+      const da = new Date(`${a?.date || ""} ${getSafeBookingStartTime(a?.time)}`);
+      const db = new Date(`${b?.date || ""} ${getSafeBookingStartTime(b?.time)}`);
       return db.getTime() - da.getTime();
     });
   }, [historyRows, searchQuery]);

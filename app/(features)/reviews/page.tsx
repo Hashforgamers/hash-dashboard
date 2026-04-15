@@ -13,6 +13,7 @@ import {
 } from "@/lib/review-api";
 import { useModuleCache } from "@/app/hooks/useModuleCache";
 import { useDashboardData } from "@/app/context/DashboardDataContext";
+import { MobileCompactCard } from "@/components/ui/mobile-compact-card";
 
 function formatDate(value?: string | null) {
   if (!value) return "--";
@@ -182,7 +183,7 @@ export default function ReviewsPage() {
   return (
     <DashboardLayout contentScroll="contained">
       <div className="flex h-full min-h-0 flex-1 flex-col gap-3 sm:gap-4">
-        <div className="gaming-panel shrink-0 rounded-xl p-4 sm:p-5">
+        <div className="gaming-panel shrink-0 rounded-xl p-3 sm:p-5">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <h1 className="premium-heading">Cafe Reviews</h1>
@@ -191,11 +192,11 @@ export default function ReviewsPage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
-          <div className="gaming-panel rounded-xl border border-cyan-400/20 bg-slate-950/45 p-4">
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-3 xl:grid-cols-3">
+          <div className="gaming-panel rounded-xl border border-cyan-400/20 bg-slate-950/45 p-3 sm:p-4">
             <p className="text-xs uppercase tracking-wide text-slate-400">Average Rating</p>
             <div className="mt-2 flex items-center gap-3">
-              <span className="text-3xl font-bold text-cyan-100">
+              <span className="text-2xl font-bold text-cyan-100 sm:text-3xl">
                 {summary ? summary.average.toFixed(2) : "--"}
               </span>
               <RatingStars rating={summary?.average || 0} />
@@ -205,7 +206,7 @@ export default function ReviewsPage() {
             </p>
           </div>
 
-          <div className="gaming-panel rounded-xl border border-cyan-400/20 bg-slate-950/45 p-4">
+          <div className="gaming-panel rounded-xl border border-cyan-400/20 bg-slate-950/45 p-3 sm:p-4">
             <p className="text-xs uppercase tracking-wide text-slate-400">Ratings Breakdown</p>
             <div className="mt-3 space-y-2">
               {breakdown.map((row) => (
@@ -223,7 +224,7 @@ export default function ReviewsPage() {
             </div>
           </div>
 
-          <div className="gaming-panel rounded-xl border border-cyan-400/20 bg-slate-950/45 p-4">
+          <div className="gaming-panel rounded-xl border border-cyan-400/20 bg-slate-950/45 p-3 sm:p-4">
             <p className="text-xs uppercase tracking-wide text-slate-400">Filters</p>
             <div className="dashboard-filter-stack mt-3">
               <select
@@ -248,7 +249,7 @@ export default function ReviewsPage() {
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                 <input
-                  className="dashboard-module-input h-10 w-full pl-10 pr-3"
+                  className="dashboard-module-input h-9 w-full pl-10 pr-3 sm:h-10"
                   placeholder="Search reviews..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
@@ -274,7 +275,7 @@ export default function ReviewsPage() {
             <h2 className="section-title">Recent Reviews</h2>
             <span className="text-xs text-slate-400">{reviews.length} items</span>
           </div>
-          <div className="max-h-[calc(100vh-420px)] overflow-y-auto p-4">
+          <div className="max-h-[calc(100vh-420px)] overflow-y-auto p-3 sm:p-4">
             {loading ? (
               <div className="dashboard-loader text-sm">Loading reviews...</div>
             ) : reviews.length === 0 ? (
@@ -282,7 +283,7 @@ export default function ReviewsPage() {
             ) : (
               <div className="space-y-4">
                 {reviews.map((review) => (
-                  <div key={review.id} className="rounded-xl border border-cyan-400/15 bg-slate-900/60 p-4">
+                  <MobileCompactCard key={review.id} className="bg-slate-900/60 sm:p-4">
                     <div className="flex flex-wrap items-center justify-between gap-3">
                       <div>
                         <p className="text-sm font-semibold text-slate-100">
@@ -317,7 +318,7 @@ export default function ReviewsPage() {
                       )}
                     </div>
 
-                    <div className="mt-4 space-y-2">
+                    <div className="mt-3 space-y-2 sm:mt-4">
                       <textarea
                         className="w-full rounded-lg border border-cyan-400/20 bg-slate-900/70 p-3 text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-400/60"
                         rows={3}
@@ -327,7 +328,7 @@ export default function ReviewsPage() {
                           setResponseDrafts((prev) => ({ ...prev, [review.id]: e.target.value }))
                         }
                       />
-                      <div className="flex items-center justify-between gap-2">
+                      <div className="flex flex-col items-stretch justify-between gap-2 sm:flex-row sm:items-center">
                         <button
                           className="inline-flex items-center gap-2 rounded-lg border border-cyan-400/30 bg-cyan-500/15 px-3 py-2 text-xs font-semibold text-cyan-200 transition-colors hover:border-cyan-300/70 hover:bg-cyan-500/25"
                           onClick={() => handleRespond(review.id)}
@@ -357,7 +358,7 @@ export default function ReviewsPage() {
                         )}
                       </div>
                     </div>
-                  </div>
+                  </MobileCompactCard>
                 ))}
               </div>
             )}

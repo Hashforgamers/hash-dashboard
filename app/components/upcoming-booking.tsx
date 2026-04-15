@@ -92,13 +92,68 @@ const parseMeridiemTime = (timeStr: string) => {
   return { hour: Math.max(0, Math.min(23, hour)), minute: Math.max(0, Math.min(59, minute)) };
 };
 
+const normalizeBookingTimeValue = (rawTime: any): string => {
+  if (typeof rawTime === "string") return rawTime.trim();
+
+  if (Array.isArray(rawTime)) {
+    if (rawTime.length >= 2 && rawTime.every((part) => typeof part === "string")) {
+      return `${String(rawTime[0]).trim()} - ${String(rawTime[1]).trim()}`;
+    }
+    return normalizeBookingTimeValue(rawTime[0]);
+  }
+
+  if (rawTime && typeof rawTime === "object") {
+    const startCandidate =
+      rawTime.start ||
+      rawTime.start_time ||
+      rawTime.from ||
+      rawTime.begin ||
+      rawTime.open;
+    const endCandidate =
+      rawTime.end ||
+      rawTime.end_time ||
+      rawTime.to ||
+      rawTime.finish ||
+      rawTime.close;
+    const start = startCandidate == null ? "" : String(startCandidate).trim();
+    const end = endCandidate == null ? "" : String(endCandidate).trim();
+    if (start && end) return `${start} - ${end}`;
+    if (start) return start;
+    if (end) return end;
+  }
+
+  return "";
+};
+
+const getNormalizedBookingTime = (booking: any): string =>
+  normalizeBookingTimeValue(
+    booking?.time ??
+      booking?.timeRange ??
+      booking?.time_range ??
+      booking?.slot_time ??
+      booking?.slotRange ??
+      booking?.slot_range
+  );
+
+const splitBookingTimeRange = (booking: any): [string, string] => {
+  const normalized = getNormalizedBookingTime(booking);
+  const parts = normalized.split(" - ").map((part) => part.trim()).filter(Boolean);
+  return [parts[0] || "", parts[1] || parts[0] || ""];
+};
+
+const withNormalizedBookingTime = (booking: any) => {
+  if (!booking || typeof booking !== "object") return booking;
+  const normalizedTime = getNormalizedBookingTime(booking);
+  return normalizedTime ? { ...booking, time: normalizedTime } : { ...booking };
+};
+
 const TERMINAL_BOOKING_STATUSES = ["cancelled", "canceled", "rejected", "completed", "discarded", "no_show"];
 
 const getBookingTimeRange = (booking: any) => {
-  if (!booking?.date || !booking?.time) return null;
+  if (!booking?.date) return null;
   const slotDate = parseBookingDateLocal(booking.date);
   if (!slotDate) return null;
-  const [startRaw, endRaw] = String(booking.time).split(" - ");
+  const [startRaw, endRaw] = splitBookingTimeRange(booking);
   if (!startRaw || !endRaw) return null;
   const startParsed = parseMeridiemTime(startRaw);
   const endParsed = parseMeridiemTime(endRaw);
@@ -201,21 +256,25 @@ const mergeConsecutiveBookings = (bookings: any[]) => {
 
     Object.values(grouped).forEach((group: any) => {
       const sorted = (group as any[]).sort((a, b) => {
-        const aStart = parseTime(a.time?.split(" - ")[0] || "");
-        const bStart = parseTime(b.time?.split(" - ")[0] || "");
+        const [aStartRaw] = splitBookingTimeRange(a);
+        const [bStartRaw] = splitBookingTimeRange(b);
+        const aStart = parseTime(aStartRaw);
+        const bStart = parseTime(bStartRaw);
         return aStart.getTime() - bStart.getTime();
       });
 
       let current = { ...sorted[0] };
-      let currentStart = parseTime(current.time?.split(" - ")[0] || "");
-      let currentEnd = parseTime(current.time?.split(" - ")[1] || "");
+      const [currentStartRaw, currentEndRaw] = splitBookingTimeRange(current);
+      let currentStart = parseTime(currentStartRaw);
+      let currentEnd = parseTime(currentEndRaw);
       let mergedIds = [current.bookingId];
       let totalPrice = current.slot_price || 0;
 
       for (let i = 1; i < sorted.length; i++) {
         const next = sorted[i];
-        const nextStart = parseTime(next.time?.split(" - ")[0] || "");
-        const nextEnd = parseTime(next.time?.split(" - ")[1] || "");
+        const [nextStartRaw, nextEndRaw] = splitBookingTimeRange(next);
+        const nextStart = parseTime(nextStartRaw);
+        const nextEnd = parseTime(nextEndRaw);
 
         if (nextStart.getTime() <= currentEnd.getTime()) {
           currentEnd = new Date(Math.max(currentEnd.getTime(), nextEnd.getTime()));
@@ -384,13 +443,14 @@ export function UpcomingBookings({
       }
       
       if (eventVendorId === parsedVendorId && Number.isFinite(incomingBookingId) && (data.status === 'Confirmed' || data.status === 'confirmed')) {
+        const normalizedIncoming = withNormalizedBookingTime(data);
         setUpcomingBookings(prev => {
           if (!Array.isArray(prev)) prev = [];
           
           const exists = prev.some(booking => Number(booking?.bookingId) === incomingBookingId)
           if (!exists) {
             console.log('➕ Adding new booking immediately')
-            return [{ ...data, bookingId: incomingBookingId }, ...prev]
+            return [{ ...normalizedIncoming, bookingId: incomingBookingId }, ...prev]
           }
           return prev
         })
@@ -409,16 +469,17 @@ export function UpcomingBookings({
       
       if (eventVendorId === parsedVendorId) {
         const status = String(data.status || "").toLowerCase();
+        const normalizedIncoming = withNormalizedBookingTime(data);
         setUpcomingBookings(prev => {
           if (!Array.isArray(prev)) prev = [];
           
           if ((data.status === 'Confirmed' || data.status === 'confirmed') && Number.isFinite(incomingBookingId) && !prev.some(b => Number(b?.bookingId) === incomingBookingId)) {
-            return [{ ...data, bookingId: incomingBookingId }, ...prev]
+            return [{ ...normalizedIncoming, bookingId: incomingBookingId }, ...prev]
           }
 
           const mapped = prev.map(booking => 
             Number(booking?.bookingId) === incomingBookingId 
-              ? { ...booking, ...data, bookingId: incomingBookingId }
+              ? { ...booking, ...normalizedIncoming, bookingId: incomingBookingId }
               : booking
           )
 
@@ -439,13 +500,14 @@ export function UpcomingBookings({
       
       const eventVendorId = Number(data?.vendorId ?? data?.vendor_id);
       if (eventVendorId === parsedVendorId) {
+        const normalizedIncoming = withNormalizedBookingTime(data);
         setUpcomingBookings(prev => {
           if (!Array.isArray(prev)) prev = [];
           
           const exists = prev.some(booking => booking?.bookingId === data.bookingId)
           if (!exists) {
             console.log('📅 ✅ Adding accepted booking to upcoming bookings immediately')
-            return [data, ...prev]
+            return [normalizedIncoming, ...prev]
           }
           return prev
         })
@@ -547,7 +609,8 @@ export function UpcomingBookings({
 
     if (timeFilter !== "all") {
       filtered = filtered.filter(booking => {
-        const timeOfDay = getTimeOfDay(booking.time?.split(" ")[0]);
+        const [startRaw] = splitBookingTimeRange(booking);
+        const timeOfDay = getTimeOfDay(startRaw.split(" ")[0] || "");
         return timeOfDay === timeFilter;
       });
     }
