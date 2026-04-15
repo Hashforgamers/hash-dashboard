@@ -783,23 +783,23 @@ export function TransactionTable() {
           <SearchIcon className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-500 dark:text-slate-400" />
           <Input
             placeholder="Search transactions..."
-            className="dashboard-module-input h-10 w-full pl-10"
+            className="dashboard-module-input h-10 w-full pl-10 text-sm"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
-        <div className="grid grid-cols-2 gap-2 md:flex md:flex-wrap">
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:flex md:flex-wrap">
           <Input
             type="date"
             value={fromDate}
             onChange={(e) => setFromDate(e.target.value)}
-            className="dashboard-module-input h-10 w-full md:w-[150px]"
+            className="dashboard-module-input col-span-1 h-10 w-full text-xs sm:text-sm md:w-[150px]"
           />
           <Input
             type="date"
             value={toDate}
             onChange={(e) => setToDate(e.target.value)}
-            className="dashboard-module-input h-10 w-full md:w-[150px]"
+            className="dashboard-module-input col-span-1 h-10 w-full text-xs sm:text-sm md:w-[150px]"
           />
           <motion.button
             whileHover={{ scale: 1.02 }}
@@ -807,7 +807,7 @@ export function TransactionTable() {
             animate="visible"
             variants={boxVariants}
             transition={{ duration: 0.1 }}
-            className="dashboard-action-button col-span-1 md:col-auto"
+            className="dashboard-action-button col-span-2 min-h-10 text-xs sm:col-span-1 sm:text-sm md:col-auto"
             onClick={() => {
               if (!fromDate || !toDate) return;
               if (fromDate > toDate) return;
@@ -823,7 +823,7 @@ export function TransactionTable() {
             animate="visible"
             variants={boxVariants}
             transition={{ duration: 0.1 }}
-            className="dashboard-action-button col-span-1 md:col-auto"
+            className="dashboard-action-button col-span-1 min-h-10 text-xs sm:text-sm md:col-auto"
             onClick={() => setShowColumnSelector((prev) => !prev)}
           >
             <span>Columns</span>
@@ -834,7 +834,7 @@ export function TransactionTable() {
             animate="visible"
             variants={boxVariants}
             transition={{ duration: 0.1 }}
-            className="dashboard-action-button col-span-1 md:col-auto"
+            className="dashboard-action-button col-span-1 min-h-10 text-xs sm:text-sm md:col-auto"
             onClick={() => setShowFilter(!showFilter)}
           >
             <FilterIcon className="h-4 w-4 mr-2" />
@@ -846,7 +846,7 @@ export function TransactionTable() {
             animate="visible"
             variants={boxVariants}
             transition={{ duration: 0.2 }}
-            className="dashboard-action-button col-span-1 md:col-auto"
+            className="dashboard-action-button col-span-2 min-h-10 text-xs sm:col-span-1 sm:text-sm md:col-auto"
             onClick={downloadFilteredData}
           >
             <Download className="h-4 w-4 mr-2" />
@@ -856,10 +856,17 @@ export function TransactionTable() {
       </motion.div>
 
       {showColumnSelector && (
-        <div className="dashboard-module-surface shrink-0 rounded-lg border p-3">
+        <div
+          className="fixed inset-0 z-40 bg-black/40 md:static md:bg-transparent"
+          onClick={() => setShowColumnSelector(false)}
+        >
+          <div
+            className="dashboard-module-surface fixed inset-x-2 bottom-2 top-20 shrink-0 overflow-y-auto rounded-lg border p-3 md:static md:max-h-none md:overflow-visible"
+            onClick={(e) => e.stopPropagation()}
+          >
           <div className="mb-2 flex items-center justify-between">
             <p className="text-sm font-semibold text-slate-900 dark:text-slate-200">Show/Hide Columns</p>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap justify-end gap-2">
               <button
                 type="button"
                 className="rounded border border-slate-300 px-2 py-1 text-xs text-slate-900 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-800"
@@ -895,7 +902,7 @@ export function TransactionTable() {
               </button>
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 md:grid-cols-4">
             {transactionColumns.map((col) => (
               <label key={col.key} className="flex items-center gap-2 text-xs text-slate-900 dark:text-slate-200">
                 <input
@@ -911,6 +918,7 @@ export function TransactionTable() {
                 {col.label}
               </label>
             ))}
+          </div>
           </div>
         </div>
       )}

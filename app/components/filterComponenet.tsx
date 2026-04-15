@@ -63,11 +63,13 @@ const FilterComponent: React.FC<FilterProps> = ({
           initial={{ opacity: 0, scale: 1 }}
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 1 }}
-          // className="fixed left-[80%] w-[25%] max-w-lg -translate-x-1/2 -translate-y-1/2 shadow-lg rounded-lg p-1 dark:border-gray-700 z-50 backdrop-blur-sm bg-black/30 "
-          // className="fixed left-[80%] w-[25%] w-full h-full flex items-center justify-center z-50 backdrop-blur-sm bg-black/30"
           className="fixed inset-0 z-50 bg-black/20 backdrop-blur-[1px]"
+          onClick={() => setShowFilter(false)}
         >
-          <Card className="dashboard-module dashboard-module-card fixed right-4 top-24 w-[min(92vw,24rem)] p-2 shadow-xl">
+          <Card
+            className="dashboard-module dashboard-module-card fixed inset-x-2 bottom-2 top-20 w-auto overflow-y-auto p-2 shadow-xl md:inset-x-auto md:bottom-auto md:right-4 md:top-24 md:w-[min(92vw,24rem)] md:overflow-visible"
+            onClick={(e) => e.stopPropagation()}
+          >
             <CardHeader className="top-0">
               <button
                 className="absolute right-2 rounded-md p-2 transition-all hover:scale-110 hover:bg-rose-50 dark:hover:bg-rose-500/20"
@@ -156,18 +158,18 @@ const FilterComponent: React.FC<FilterProps> = ({
               </div>
 
               {/* Buttons */}
-              <div className="flex justify-center mx-2 ">
+              <div className="mx-2 flex flex-col justify-center gap-2 sm:flex-row">
                 <Button
                   onClick={clearFilters}
                   variant="outline"
-                  className="mx-2 my-4 px-4 py-2 text-sm text-slate-900 hover:bg-rose-50 dark:text-white dark:hover:bg-rose-500/20"
+                  className="mx-0 my-2 px-4 py-2 text-sm text-slate-900 hover:bg-rose-50 sm:mx-2 sm:my-4 dark:text-white dark:hover:bg-rose-500/20"
                 >
                   Clear Filters
                 </Button>
                 <Button
                   onClick={applyFilters}
                   variant="outline"
-                  className="mx-2 my-4 border border-emerald-300 bg-white px-4 py-2 text-sm text-slate-900 hover:bg-emerald-50 dark:border-emerald-500/40 dark:bg-emerald-500/15 dark:text-emerald-200 dark:hover:bg-emerald-500/20"
+                  className="mx-0 my-2 border border-emerald-300 bg-white px-4 py-2 text-sm text-slate-900 hover:bg-emerald-50 sm:mx-2 sm:my-4 dark:border-emerald-500/40 dark:bg-emerald-500/15 dark:text-emerald-200 dark:hover:bg-emerald-500/20"
                 >
                   Apply
                 </Button>

@@ -484,31 +484,31 @@ export default function ManageExtraServices() {
         transition={{ delay: 0.08 }}
         className="gaming-panel shrink-0 rounded-xl p-3 sm:p-4"
       >
-        <div className="flex gap-2 overflow-x-auto pb-1 sm:gap-3">
-          <div className="gaming-kpi-card min-w-[155px] flex-1 rounded-xl p-3 sm:min-w-[170px] sm:p-4">
+        <div className="grid grid-cols-2 gap-2 pb-1 sm:flex sm:gap-3 sm:overflow-x-auto">
+          <div className="gaming-kpi-card min-w-0 rounded-xl p-2.5 sm:min-w-[170px] sm:flex-1 sm:p-4">
           <p className="text-xs uppercase tracking-wide text-slate-500">Categories</p>
-          <p className="mt-1 text-xl font-semibold text-cyan-300 sm:text-2xl">{totalCategories}</p>
+          <p className="mt-1 text-lg font-semibold text-cyan-300 sm:text-2xl">{totalCategories}</p>
         </div>
-          <div className="gaming-kpi-card min-w-[155px] flex-1 rounded-xl p-3 sm:min-w-[170px] sm:p-4">
+          <div className="gaming-kpi-card min-w-0 rounded-xl p-2.5 sm:min-w-[170px] sm:flex-1 sm:p-4">
           <p className="text-xs uppercase tracking-wide text-slate-500">Menu Items</p>
-          <p className="mt-1 text-xl font-semibold text-sky-300 sm:text-2xl">{totalItems}</p>
+          <p className="mt-1 text-lg font-semibold text-sky-300 sm:text-2xl">{totalItems}</p>
         </div>
-          <div className="gaming-kpi-card min-w-[155px] flex-1 rounded-xl p-3 sm:min-w-[170px] sm:p-4">
+          <div className="gaming-kpi-card min-w-0 rounded-xl p-2.5 sm:min-w-[170px] sm:flex-1 sm:p-4">
           <p className="text-xs uppercase tracking-wide text-slate-500">Active</p>
-          <p className="mt-1 text-xl font-semibold text-emerald-300 sm:text-2xl">{activeItems}</p>
+          <p className="mt-1 text-lg font-semibold text-emerald-300 sm:text-2xl">{activeItems}</p>
         </div>
-          <div className="gaming-kpi-card min-w-[155px] flex-1 rounded-xl p-3 sm:min-w-[170px] sm:p-4">
+          <div className="gaming-kpi-card min-w-0 rounded-xl p-2.5 sm:min-w-[170px] sm:flex-1 sm:p-4">
           <p className="text-xs uppercase tracking-wide text-slate-500">Avg Price</p>
-          <p className="mt-1 flex items-center text-xl font-semibold text-amber-300 sm:text-2xl">
+          <p className="mt-1 flex items-center text-lg font-semibold text-amber-300 sm:text-2xl">
             <IndianRupee className="mr-1 h-4 w-4 sm:h-5 sm:w-5" />
             {avgPrice}
           </p>
           </div>
-          <div className="min-w-[190px] flex-1 sm:min-w-[210px]">
+          <div className="col-span-2 min-w-0 sm:min-w-[210px] sm:flex-1">
             <button
               onClick={() => setShowCategoryDlg(true)}
               disabled={loading || !vendorId}
-              className={`${primaryButtonClass} h-full min-h-[88px] w-full`}
+              className={`${primaryButtonClass} h-full min-h-[56px] w-full sm:min-h-[88px]`}
             >
               <Plus className="icon-md" />
               New Category
