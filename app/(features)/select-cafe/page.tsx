@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Store, Lock, Unlock, Plus, X } from "lucide-react"
-import { LOGIN_URL, VENDOR_ONBOARD_URL } from "@/src/config/env"
+import { DASHBOARD_URL, LOGIN_URL, VENDOR_ONBOARD_URL } from "@/src/config/env"
 import { toast } from "sonner"
 import { useAccess } from "@/app/context/AccessContext"
 import { accessApi } from "@/lib/access-api"
@@ -63,8 +63,7 @@ const DAYS_OF_WEEK = [
   { key: "sun", label: "Sunday" },
 ]
 
-const CONSOLE_TYPES = ["pc", "ps5", "xbox"] as const
-type ConsoleType = (typeof CONSOLE_TYPES)[number]
+const DEFAULT_CONSOLE_TYPES = ["pc", "ps5", "xbox"]
 
 export default function SelectCafePage() {
   const [cafes, setCafes] = useState<{ id: string; name: string; type: string }[]>([])
@@ -75,6 +74,7 @@ export default function SelectCafePage() {
   const [isUnlocking, setIsUnlocking] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [consoleTypeOptions, setConsoleTypeOptions] = useState<string[]>(DEFAULT_CONSOLE_TYPES)
   const { setSelectedCafe: setActiveCafe } = useAccess()
   const router = useRouter()
 
@@ -103,7 +103,7 @@ export default function SelectCafePage() {
     },
     timing: {} as Record<string, { open: string; close: string; closed: boolean }>,
     opening_day: new Date().toISOString().split("T")[0],
-    available_games: [{ name: "pc", total_slot: 0, rate_per_slot: 0, gaming_type: "PC" as ConsoleType }],
+    available_games: [{ name: "pc", total_slot: 0, rate_per_slot: 0, gaming_type: "PC" }],
     document_submitted: {
       business_registration: false,
       owner_identification_proof: false,
@@ -176,6 +176,37 @@ export default function SelectCafePage() {
     setFormData((prev) => ({ ...prev, timing: initialTiming }))
     refreshVendorList()
 
+    const loadConsoleCatalog = async () => {
+      try {
+        const res = await fetch(`${DASHBOARD_URL}/api/console-types?include_inactive=false`)
+        if (!res.ok) return
+        const payload = await res.json()
+        const rows = Array.isArray(payload?.console_types) ? payload.console_types : []
+        const options: string[] = Array.from(
+          new Set(
+            rows
+              .map((item: any) => String(item?.slug || item?.name || "").trim().toLowerCase())
+              .filter(Boolean)
+          )
+        ) as string[]
+        if (options.length > 0) {
+          setConsoleTypeOptions(options)
+          setFormData((prev) => {
+            if (!Array.isArray(prev.available_games) || prev.available_games.length === 0) {
+              const first: string = options[0]
+              return {
+                ...prev,
+                available_games: [{ name: first, total_slot: 0, rate_per_slot: 0, gaming_type: first.toUpperCase() }],
+              }
+            }
+            return prev
+          })
+        }
+      } catch (error) {
+        console.warn("Could not load console catalog; using defaults", error)
+      }
+    }
+
     const hydrateBranchDefaults = async () => {
       if (!userEmail) return
       try {
@@ -229,6 +260,7 @@ export default function SelectCafePage() {
       }
     }
 
+    void loadConsoleCatalog()
     void hydrateBranchDefaults()
   }, [])
 
@@ -273,8 +305,8 @@ export default function SelectCafePage() {
       }
 
       for (const game of formData.available_games) {
-        if (!CONSOLE_TYPES.includes(game.name as ConsoleType)) {
-          toast.error("Available console must be one of: pc, ps5, xbox")
+        if (!consoleTypeOptions.includes(String(game.name || "").trim().toLowerCase())) {
+          toast.error("Available console must be from the console catalog")
           setIsSubmitting(false)
           return
         }
@@ -953,7 +985,7 @@ export default function SelectCafePage() {
                     <select
                       value={game.name}
                       onChange={(e) => {
-                        const value = e.target.value as ConsoleType
+                        const value = e.target.value
                         const games = [...formData.available_games]
                         games[index].name = value
                         games[index].gaming_type = value
@@ -962,7 +994,7 @@ export default function SelectCafePage() {
                       className={formSelectClass}
                     >
                       <option value="" disabled>Select console</option>
-                      {CONSOLE_TYPES.map((ct) => (
+                      {consoleTypeOptions.map((ct) => (
                         <option key={ct} value={ct}>{ct.toUpperCase()}</option>
                       ))}
                     </select>
@@ -1021,7 +1053,12 @@ export default function SelectCafePage() {
                     ...formData,
                     available_games: [
                       ...formData.available_games,
-                      { name: "pc", total_slot: 0, rate_per_slot: 0, gaming_type: "PC" as ConsoleType },
+                      {
+                        name: consoleTypeOptions[0] || "pc",
+                        total_slot: 0,
+                        rate_per_slot: 0,
+                        gaming_type: String(consoleTypeOptions[0] || "pc").toUpperCase(),
+                      },
                     ],
                   })
                 }
