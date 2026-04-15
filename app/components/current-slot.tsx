@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from "react";
+import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Search, Gamepad2, Monitor, Headset, Loader2, RefreshCw, UtensilsCrossed, Plus, ChevronDown, ChevronUp, Phone, Mail } from "lucide-react";
 import { jwtDecode } from "jwt-decode";
@@ -499,6 +500,7 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
   const [historyDate, setHistoryDate] = useState<string>("");
   const [historyRows, setHistoryRows] = useState<any[]>(Array.isArray(initialHistoryBookings) ? initialHistoryBookings : []);
   const [historyLoading, setHistoryLoading] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
   const tableRef = useRef<HTMLTableElement>(null);
 
   // ✅ ENHANCED: Updated meal details modal state with mode and meal status tracking
@@ -553,6 +555,10 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
       day: "2-digit",
     }).format(new Date());
     setHistoryDate(todayIst);
+  }, []);
+
+  useEffect(() => {
+    setIsMounted(true);
   }, []);
 
   // Update from props
@@ -1974,17 +1980,21 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
             </div>
           )}
           
-          {/* ✅ ENHANCED: MealDetailsModal with updated props */}
-          <MealDetailsModal
-            isOpen={mealDetailsModal.isOpen}
-            onClose={closeMealDetailsModal}
-            bookingId={mealDetailsModal.bookingId}
-            customerName={mealDetailsModal.customerName}
-            initialMode={mealDetailsModal.mode}
-            hasExistingMeals={mealDetailsModal.hasExistingMeals}
-            targetMember={mealDetailsModal.targetMember}
-            vendorId={String(vendorId || '')}
-          />
+          {/* ✅ Ensure meal overlay is attached to document body (mobile-safe, no clipping) */}
+          {isMounted &&
+            createPortal(
+              <MealDetailsModal
+                isOpen={mealDetailsModal.isOpen}
+                onClose={closeMealDetailsModal}
+                bookingId={mealDetailsModal.bookingId}
+                customerName={mealDetailsModal.customerName}
+                initialMode={mealDetailsModal.mode}
+                hasExistingMeals={mealDetailsModal.hasExistingMeals}
+                targetMember={mealDetailsModal.targetMember}
+                vendorId={String(vendorId || '')}
+              />,
+              document.body
+            )}
         </>
       )}
     </div>

@@ -991,20 +991,22 @@ export function UpcomingBookings({
       {/* 🚀 FIXED: Proper flex container structure */}
       <div className="dashboard-module dashboard-module-panel h-full flex flex-col overflow-hidden rounded-2xl p-2 sm:p-3 lg:p-4">
         <AnimatePresence>
-          {startCard && (
+          {isMounted && startCard && createPortal(
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 flex items-center justify-center z-[9999] bg-transparent backdrop-blur-sm p-2 sm:p-4"
+              className="fixed inset-0 z-[1200] flex items-end justify-center bg-black/65 p-0 backdrop-blur-sm sm:items-center sm:p-4"
+              onClick={(e) => e.currentTarget === e.target && setStartCard(false)}
             >
               <motion.div
                 initial={{ scale: 0.95, y: 20, opacity: 0 }}
                 animate={{ scale: 1, y: 0, opacity: 1 }}
                 exit={{ scale: 0.95, y: 20, opacity: 0 }}
-                className="w-full max-w-xs sm:max-w-md md:max-w-lg"
+                className="w-full sm:max-w-md md:max-w-lg"
+                onClick={(e) => e.stopPropagation()}
               >
-                <Card className="bg-gray-50 dark:bg-zinc-900 overflow-hidden border border-gray-200 dark:border-zinc-800">
+                <Card className="overflow-hidden rounded-t-2xl border border-gray-200 bg-white shadow-2xl dark:border-zinc-700 dark:bg-zinc-900 sm:rounded-2xl">
                   <div className="p-2 sm:p-3 border-b border-gray-200 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-800/50">
                     <div className="flex items-center justify-between">
                       <h2 className="text-sm font-semibold">
@@ -1019,8 +1021,8 @@ export function UpcomingBookings({
                     </div>
                   </div>
 
-                  <div className="p-2 sm:p-3">
-                    <div className="rounded-lg border border-gray-200 bg-white/90 p-2 shadow-sm dark:border-zinc-700 dark:bg-zinc-900/70">
+                  <div className="max-h-[78dvh] overflow-y-auto p-2 sm:max-h-none sm:p-3">
+                    <div className="rounded-lg border border-gray-200 bg-white p-2 shadow-sm dark:border-zinc-700 dark:bg-zinc-900/80">
                     {isLoading ? (
                       <div className="flex items-center justify-center h-24 sm:h-32">
                         <div className="animate-spin rounded-full h-6 w-6 border-2 border-emerald-500 border-t-transparent"></div>
@@ -1038,7 +1040,7 @@ export function UpcomingBookings({
                         </div>
                       </div>
                     ) : (
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                         {availableConsoles.map((console) => (
                           <motion.div
                             key={console.consoleId}
@@ -1075,7 +1077,7 @@ export function UpcomingBookings({
                           ? selectedConsoleIds.length !== requiredConsoleCount
                           : !selectedConsole)
                       }
-                      className={`w-full mt-4 py-2 sm:py-3 rounded-lg text-xs sm:text-sm font-medium flex items-center justify-center space-x-2 ${
+                      className={`mt-4 flex w-full items-center justify-center space-x-2 rounded-lg py-2 text-xs font-medium sm:py-3 sm:text-sm ${
                         ((isPcSquadStart
                           ? selectedConsoleIds.length === requiredConsoleCount
                           : !!selectedConsole) && !isLoading)
@@ -1104,7 +1106,8 @@ export function UpcomingBookings({
                   </div>
                 </Card>
               </motion.div>
-            </motion.div>
+            </motion.div>,
+            document.body
           )}
         </AnimatePresence>
 
