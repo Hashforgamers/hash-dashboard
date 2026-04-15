@@ -79,7 +79,7 @@ const Table = React.forwardRef<
   return (
     <div
       ref={wrapperRef}
-      className="dashboard-table-wrap relative w-full overflow-auto"
+      className="dashboard-table-wrap relative w-full overflow-x-auto overflow-y-auto"
       data-native-drag="true"
       data-dragging={isDragging ? "true" : "false"}
       onPointerDown={handlePointerDown}
