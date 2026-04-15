@@ -19,6 +19,7 @@ import { jwtDecode } from "jwt-decode";
 import React from "react";
 import { DASHBOARD_URL} from "@/src/config/env";
 import HashLoader from "./ui/HashLoader";
+import { MobileCompactCard } from "@/components/ui/mobile-compact-card";
 
 interface Transaction {
   id: number;
@@ -613,6 +614,17 @@ export function TransactionTable() {
     }
   };
 
+  const getSettlementBadgeClass = (status: string) => {
+    const normalized = String(status || "").toLowerCase();
+    if (normalized === "done") {
+      return "border-emerald-300 bg-emerald-50 text-emerald-800 dark:border-emerald-500/30 dark:bg-emerald-500/20 dark:text-emerald-400";
+    }
+    if (normalized === "pending") {
+      return "border-yellow-300 bg-yellow-50 text-yellow-800 dark:border-yellow-500/30 dark:bg-yellow-500/20 dark:text-yellow-400";
+    }
+    return "border-slate-300 text-slate-700 dark:border-slate-500/70 dark:text-slate-300";
+  };
+
   if (boolTrans) {
     return <HashLoader className="min-h-[500px]" />;
   }
@@ -620,7 +632,7 @@ export function TransactionTable() {
   return (
     <div className="flex h-full min-h-0 w-full min-w-0 flex-col gap-4 overflow-hidden sm:gap-5">
       {/* <CHANGE> Updated metric cards to use default card styling instead of colorful gradients */}
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4">
         <motion.div
           variants={cardVariants}
           initial="hidden"
@@ -628,17 +640,17 @@ export function TransactionTable() {
           transition={{ duration: 0.3, delay: 0 }}
         >
           <Card className="gaming-kpi-card rounded-xl border-cyan-500/20 backdrop-blur-sm">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1.5 sm:pb-2">
               <CardTitle className="dash-kpi-label">
                 Gross Revenue
               </CardTitle>
               <DollarSignIcon className="h-4 w-4 text-emerald-400" />
             </CardHeader>
             <CardContent>
-              <div className="dash-kpi-value !text-xl sm:!text-2xl">
+              <div className="dash-kpi-value !text-base sm:!text-2xl">
                 ₹{metrics.total.toFixed(2)}
               </div>
-              <p className="text-xs text-emerald-400">
+              <p className="text-[10px] text-emerald-400 sm:text-xs">
                 App Fee: ₹{metrics.appFeeTotal.toFixed(2)} · Net: ₹{metrics.netTotal.toFixed(2)}
               </p>
             </CardContent>
@@ -652,17 +664,17 @@ export function TransactionTable() {
           transition={{ duration: 0.3, delay: 0.1 }}
         >
           <Card className="gaming-kpi-card rounded-xl border-cyan-500/20 backdrop-blur-sm">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1.5 sm:pb-2">
               <CardTitle className="dash-kpi-label">
                 Unique Users
               </CardTitle>
               <UserIcon className="h-4 w-4 text-primary" />
             </CardHeader>
             <CardContent>
-              <div className="dash-kpi-value !text-xl sm:!text-2xl">
+              <div className="dash-kpi-value !text-base sm:!text-2xl">
                 {metrics.uniqueUsers}
               </div>
-              <p className="text-xs text-emerald-400">Distinct customers in view</p>
+              <p className="text-[10px] text-emerald-400 sm:text-xs">Distinct customers in view</p>
             </CardContent>
           </Card>
         </motion.div>
@@ -674,17 +686,17 @@ export function TransactionTable() {
           transition={{ duration: 0.3, delay: 0.2 }}
         >
           <Card className="gaming-kpi-card rounded-xl border-cyan-500/20 backdrop-blur-sm">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1.5 sm:pb-2">
               <CardTitle className="dash-kpi-label">
                 Pending Settlements
               </CardTitle>
               <ClockIcon className="h-4 w-4 text-yellow-400" />
             </CardHeader>
             <CardContent>
-              <div className="dash-kpi-value !text-xl sm:!text-2xl">
+              <div className="dash-kpi-value !text-base sm:!text-2xl">
                 {metrics.pendingSettlements}
               </div>
-              <p className="text-xs text-yellow-400">
+              <p className="text-[10px] text-yellow-400 sm:text-xs">
                 Requires attention
               </p>
             </CardContent>
@@ -698,17 +710,17 @@ export function TransactionTable() {
           transition={{ duration: 0.3, delay: 0.3 }}
         >
           <Card className="gaming-kpi-card rounded-xl border-cyan-500/20 backdrop-blur-sm">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1.5 sm:pb-2">
               <CardTitle className="dash-kpi-label">
                 Cash Transactions
               </CardTitle>
               <CreditCardIcon className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="dash-kpi-value !text-xl sm:!text-2xl">
+              <div className="dash-kpi-value !text-base sm:!text-2xl">
                 {metrics.cashTransactions}
               </div>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-[10px] text-muted-foreground sm:text-xs">
                 {metrics.cashPct.toFixed(1)}
                 % of total
               </p>
@@ -722,9 +734,9 @@ export function TransactionTable() {
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3, delay: 0.4 }}
-        className="dashboard-toolbar shrink-0"
+        className="dashboard-toolbar shrink-0 flex-col items-stretch gap-2 md:flex-row md:items-center"
       >
-        <div className="relative flex-1 min-w-[220px]">
+        <div className="relative min-w-0 flex-1 md:min-w-[220px]">
           <SearchIcon className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-500 dark:text-slate-400" />
           <Input
             placeholder="Search transactions..."
@@ -733,18 +745,18 @@ export function TransactionTable() {
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
-        <div className="flex gap-2">
+        <div className="grid grid-cols-2 gap-2 md:flex md:flex-wrap">
           <Input
             type="date"
             value={fromDate}
             onChange={(e) => setFromDate(e.target.value)}
-            className="dashboard-module-input h-10 w-[150px]"
+            className="dashboard-module-input h-10 w-full md:w-[150px]"
           />
           <Input
             type="date"
             value={toDate}
             onChange={(e) => setToDate(e.target.value)}
-            className="dashboard-module-input h-10 w-[150px]"
+            className="dashboard-module-input h-10 w-full md:w-[150px]"
           />
           <motion.button
             whileHover={{ scale: 1.02 }}
@@ -752,7 +764,7 @@ export function TransactionTable() {
             animate="visible"
             variants={boxVariants}
             transition={{ duration: 0.1 }}
-            className="dashboard-action-button"
+            className="dashboard-action-button col-span-1 md:col-auto"
             onClick={() => {
               if (!fromDate || !toDate) return;
               if (fromDate > toDate) return;
@@ -768,7 +780,7 @@ export function TransactionTable() {
             animate="visible"
             variants={boxVariants}
             transition={{ duration: 0.1 }}
-            className="dashboard-action-button"
+            className="dashboard-action-button col-span-1 md:col-auto"
             onClick={() => setShowColumnSelector((prev) => !prev)}
           >
             <span>Columns</span>
@@ -779,7 +791,7 @@ export function TransactionTable() {
             animate="visible"
             variants={boxVariants}
             transition={{ duration: 0.1 }}
-            className="dashboard-action-button"
+            className="dashboard-action-button col-span-1 md:col-auto"
             onClick={() => setShowFilter(!showFilter)}
           >
             <FilterIcon className="h-4 w-4 mr-2" />
@@ -791,7 +803,7 @@ export function TransactionTable() {
             animate="visible"
             variants={boxVariants}
             transition={{ duration: 0.2 }}
-            className="dashboard-action-button"
+            className="dashboard-action-button col-span-1 md:col-auto"
             onClick={downloadFilteredData}
           >
             <Download className="h-4 w-4 mr-2" />
@@ -867,13 +879,55 @@ export function TransactionTable() {
         setShowFilter={setShowFilter}
       />
 
+      <div className="md:hidden space-y-3 overflow-y-auto pr-1">
+        {filteredTransactions.length === 0 ? (
+          <MobileCompactCard className="border-slate-300/40 bg-slate-50/70 p-4 text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-400">
+            No transactions found for selected filters.
+          </MobileCompactCard>
+        ) : (
+          filteredTransactions.map((transaction) => (
+            <MobileCompactCard key={`mobile_txn_${transaction.id}`}>
+              <div className="flex items-start justify-between gap-2">
+                <div>
+                  <p className="text-sm font-semibold text-slate-100">{transaction.userName || "Unknown"}</p>
+                  <p className="text-[11px] text-slate-400">
+                    Booking #{transaction.bookingId ?? "-"} · {transaction.slotDate} {transaction.slotTime}
+                  </p>
+                </div>
+                <Badge variant="outline" className={`text-[10px] ${getSettlementBadgeClass(transaction.settlementStatus)}`}>
+                  {transaction.settlementStatus || "-"}
+                </Badge>
+              </div>
+              <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
+                <div className="rounded-md border border-cyan-500/10 bg-slate-950/40 p-2">
+                  <p className="text-slate-500">Total</p>
+                  <p className="font-semibold text-slate-100">₹{getTransactionTotalWithTax(transaction).toFixed(2)}</p>
+                </div>
+                <div className="rounded-md border border-cyan-500/10 bg-slate-950/40 p-2">
+                  <p className="text-slate-500">App Fee</p>
+                  <p className="font-semibold text-slate-100">₹{Number(transaction.appFeeAmount || 0).toFixed(2)}</p>
+                </div>
+                <div className="rounded-md border border-cyan-500/10 bg-slate-950/40 p-2">
+                  <p className="text-slate-500">Payment</p>
+                  <p className="font-semibold text-slate-100">{transaction.modeOfPayment || "-"}</p>
+                </div>
+                <div className="rounded-md border border-cyan-500/10 bg-slate-950/40 p-2">
+                  <p className="text-slate-500">Type</p>
+                  <p className="font-semibold text-slate-100">{transaction.bookingType || "-"}</p>
+                </div>
+              </div>
+            </MobileCompactCard>
+          ))
+        )}
+      </div>
+
       {/* <CHANGE> Updated table styling to match Figma reference with proper dark theme */}
       <motion.div
         variants={tableVariants}
         initial="hidden"
         animate="visible"
         transition={{ duration: 0.3, delay: 0.5 }}
-        className="dashboard-module-surface relative min-h-0 min-w-0 flex-1 overflow-hidden rounded-xl border"
+        className="dashboard-module-surface relative hidden min-h-0 min-w-0 flex-1 overflow-hidden rounded-xl border md:flex"
       >
         <div className="h-full min-h-0 w-full overflow-auto overscroll-contain [scrollbar-gutter:stable_both-edges]">
           <Table className="min-w-[1950px]">
