@@ -1,6 +1,7 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { IndianRupee, CreditCard, Smartphone, X, CheckCircle, Loader2, Gamepad2, Timer, Wallet, Receipt } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import { BOOKING_URL } from "@/src/config/env";
 import CreditAccountModal, { type MonthlyCreditAccountSummary } from "./credit-account-modal";
 
@@ -75,7 +76,13 @@ const ExtraBookingOverlay: React.FC<ExtraBookingOverlayProps> = ({
   const [creditAccountError, setCreditAccountError] = useState("");
   const [selectedUserProfile, setSelectedUserProfile] = useState<VendorUserSummary | null>(null);
   const [showCreditAccountModal, setShowCreditAccountModal] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
   const overlayRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setIsMounted(true);
+    return () => setIsMounted(false);
+  }, []);
 
   // Focus management for accessibility
   useEffect(() => {
@@ -473,10 +480,10 @@ const ExtraBookingOverlay: React.FC<ExtraBookingOverlayProps> = ({
 
   return (
     <AnimatePresence>
-      {showOverlay && selectedSlot && (
+      {showOverlay && selectedSlot && isMounted && createPortal(
         <>
           <motion.div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md"
+            className="fixed inset-0 z-[1300] flex items-end justify-center bg-black/70 p-0 backdrop-blur-md sm:items-center sm:p-4"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -484,7 +491,7 @@ const ExtraBookingOverlay: React.FC<ExtraBookingOverlayProps> = ({
           >
             <motion.div
             ref={overlayRef}
-            className="dashboard-module-panel relative w-full max-w-4xl mx-3 sm:mx-4 rounded-2xl p-4 sm:p-6 shadow-2xl max-h-[92vh] overflow-y-auto"
+            className="dashboard-module-panel relative h-[100dvh] max-h-[100dvh] w-full overflow-y-auto rounded-none p-3 shadow-2xl sm:mx-4 sm:h-auto sm:max-h-[92vh] sm:max-w-4xl sm:rounded-2xl sm:p-6"
             initial={{ scale: 0.95, y: 30, opacity: 0 }}
             animate={{ scale: 1, y: 0, opacity: 1 }}
             exit={{ scale: 0.95, y: 30, opacity: 0 }}
@@ -497,27 +504,27 @@ const ExtraBookingOverlay: React.FC<ExtraBookingOverlayProps> = ({
             <div className="pointer-events-none absolute -top-16 -right-16 h-40 w-40 rounded-full bg-cyan-500/10 blur-3xl" />
             <div className="pointer-events-none absolute -bottom-16 -left-16 h-40 w-40 rounded-full bg-emerald-500/10 blur-3xl" />
 
-            <div className="relative mb-4 sm:mb-5 flex flex-col sm:flex-row sm:items-start justify-between gap-2 sm:gap-3">
+            <div className="relative mb-3 flex flex-col justify-between gap-2 sm:mb-5 sm:flex-row sm:items-start sm:gap-3">
               <div>
-                <h2 id="extra-payment-title" className="text-2xl font-bold text-slate-100">
+                <h2 id="extra-payment-title" className="text-xl font-bold text-slate-100 sm:text-2xl">
                   Session Settlement
                 </h2>
-                <p className="mt-1 text-sm text-slate-300">
+                <p className="mt-1 text-xs text-slate-300 sm:text-sm">
                   Settle pending session charges (play time, meals, pay at cafe) before releasing the console.
                 </p>
                 {settlementPausedAt ? (
                   <p className="mt-1 text-xs text-cyan-300">Timer paused at {settlementPausedAt}</p>
                 ) : null}
               </div>
-              <span className="w-fit rounded-full border border-amber-500/30 bg-amber-500/15 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-amber-300">
+              <span className="w-fit rounded-full border border-amber-500/30 bg-amber-500/15 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-amber-300 sm:px-3 sm:text-[11px]">
                 Live Session
               </span>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_330px] gap-4">
+            <div className="grid grid-cols-1 gap-3 sm:gap-4 lg:grid-cols-[minmax(0,1fr)_330px]">
               <div>
-                <div className="relative mb-4 rounded-xl border border-slate-700/70 bg-slate-800/65 p-4">
-                  <div className="flex flex-wrap items-center gap-3 text-sm text-slate-200">
+                <div className="relative mb-3 rounded-xl border border-slate-700/70 bg-slate-800/65 p-3 sm:mb-4 sm:p-4">
+                  <div className="flex flex-wrap items-center gap-2 text-xs text-slate-200 sm:gap-3 sm:text-sm">
                     <span className="inline-flex items-center gap-1.5 rounded-md bg-slate-700/70 px-2.5 py-1">
                       <Gamepad2 className="h-4 w-4 text-cyan-300" />
                       {selectedSlot.consoleType} #{selectedSlot.consoleNumber}
@@ -527,7 +534,7 @@ const ExtraBookingOverlay: React.FC<ExtraBookingOverlayProps> = ({
                       Booking #{resolveBookingId(selectedSlot) || "N/A"}
                     </span>
                   </div>
-                  <p className="mt-2 text-sm text-slate-300">
+                  <p className="mt-2 text-xs text-slate-300 sm:text-sm">
                     Session for <span className="font-semibold text-slate-100">{selectedSlot.username}</span>
                     {computedExtraSeconds > 0
                       ? " has crossed allotted time."
@@ -535,28 +542,28 @@ const ExtraBookingOverlay: React.FC<ExtraBookingOverlayProps> = ({
                   </p>
                 </div>
 
-                <div className="mb-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-3">
+                <div className="mb-3 grid grid-cols-1 gap-2 sm:mb-4 sm:grid-cols-2 sm:gap-3">
+                  <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-2.5 sm:p-3">
                     <p className="text-xs font-medium text-red-200">Extra Time</p>
-                    <p className="mt-1 inline-flex items-center gap-1 text-lg font-bold text-red-300">
+                    <p className="mt-1 inline-flex items-center gap-1 text-base font-bold text-red-300 sm:text-lg">
                       <Timer className="h-4 w-4" />
                       {formatTime(computedExtraSeconds)}
                     </p>
                   </div>
-                  <div className="rounded-xl border border-cyan-500/30 bg-cyan-500/10 p-3">
+                  <div className="rounded-xl border border-cyan-500/30 bg-cyan-500/10 p-2.5 sm:p-3">
                     <p className="text-xs font-medium text-cyan-200">Extra Charge (Live)</p>
-                    <p className="mt-1 text-lg font-bold text-cyan-300">₹{computedExtraAmount.toFixed(2)}</p>
+                    <p className="mt-1 text-base font-bold text-cyan-300 sm:text-lg">₹{computedExtraAmount.toFixed(2)}</p>
                   </div>
-                  <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3">
+                  <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-2.5 sm:p-3">
                     <p className="text-xs font-medium text-emerald-200">Paid Initially</p>
-                    <p className="mt-1 inline-flex items-center gap-1 text-lg font-bold text-emerald-300">
+                    <p className="mt-1 inline-flex items-center gap-1 text-base font-bold text-emerald-300 sm:text-lg">
                       <Wallet className="h-4 w-4" />
                       ₹{(paymentSummary?.amount_paid ?? 0).toFixed(2)}
                     </p>
                   </div>
-                  <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-3">
+                  <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-2.5 sm:p-3">
                     <p className="text-xs font-medium text-amber-200">Collect Now</p>
-                    <p className="mt-1 text-lg font-bold text-amber-300">₹{payableAmount.toFixed(2)}</p>
+                    <p className="mt-1 text-base font-bold text-amber-300 sm:text-lg">₹{payableAmount.toFixed(2)}</p>
                   </div>
                 </div>
                 {(summaryLoading || summaryError) && (
@@ -570,8 +577,8 @@ const ExtraBookingOverlay: React.FC<ExtraBookingOverlayProps> = ({
                   </div>
                 )}
 
-                <div className="mb-4 grid grid-cols-1 xl:grid-cols-2 gap-3">
-                  <div className="rounded-xl border border-slate-700/70 bg-slate-800/55 p-3">
+                <div className="mb-3 grid grid-cols-1 gap-2 sm:mb-4 sm:gap-3 xl:grid-cols-2">
+                  <div className="rounded-xl border border-slate-700/70 bg-slate-800/55 p-2.5 sm:p-3">
                     <p className="mb-2 text-sm font-semibold text-slate-100">Amount To Collect Breakdown</p>
                     <div className="space-y-1.5 text-xs text-slate-300">
                       <div className="flex items-center justify-between">
@@ -603,7 +610,7 @@ const ExtraBookingOverlay: React.FC<ExtraBookingOverlayProps> = ({
                     </div>
                   </div>
 
-                  <div className="rounded-xl border border-slate-700/70 bg-slate-800/55 p-3">
+                  <div className="rounded-xl border border-slate-700/70 bg-slate-800/55 p-2.5 sm:p-3">
                     <p className="mb-2 text-sm font-semibold text-slate-100">Paid Amount Breakdown</p>
                     <div className="space-y-1.5 text-xs text-slate-300">
                       <div className="flex items-center justify-between">
@@ -627,8 +634,8 @@ const ExtraBookingOverlay: React.FC<ExtraBookingOverlayProps> = ({
                 </div>
               </div>
 
-              <div className="rounded-xl border border-slate-700/70 bg-slate-800/55 p-3 h-fit lg:sticky lg:top-2">
-                <div className="mb-4">
+              <div className="rounded-xl border border-slate-700/70 bg-slate-800/55 p-2.5 sm:p-3 lg:sticky lg:top-2 lg:h-fit">
+                <div className="mb-3 sm:mb-4">
                   <label htmlFor="waive-off-amount" className="mb-2 block text-sm font-medium text-slate-200">
                     Waive-Off Amount (₹)
                   </label>
@@ -638,7 +645,7 @@ const ExtraBookingOverlay: React.FC<ExtraBookingOverlayProps> = ({
                     value={waiveOffAmount}
                     onChange={handleWaiveOffChange}
                     pattern="[0-9]*\.?[0-9]*"
-                    className={`w-full rounded-lg border bg-slate-900/70 p-3 text-slate-100 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 transition-all duration-200 ${
+                    className={`w-full rounded-lg border bg-slate-900/70 p-2.5 text-sm text-slate-100 transition-all duration-200 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500 sm:p-3 ${
                       waiveOffError ? "border-red-500 focus:ring-red-500" : "border-slate-600"
                     }`}
                     placeholder="Enter waive-off amount (e.g., 50.00)"
@@ -653,7 +660,7 @@ const ExtraBookingOverlay: React.FC<ExtraBookingOverlayProps> = ({
                   )}
                 </div>
 
-                <div className="mb-5">
+                <div className="mb-4 sm:mb-5">
                   <label className="mb-2 block text-sm font-medium text-slate-200">
                     Select Payment Mode
                   </label>
@@ -668,7 +675,7 @@ const ExtraBookingOverlay: React.FC<ExtraBookingOverlayProps> = ({
                         key={key}
                         onClick={() => setPaymentMode(key)}
                         onKeyDown={(e) => handlePaymentModeKeyDown(e, key)}
-                        className={`flex flex-col items-center justify-center rounded-lg border p-2.5 sm:p-3 transition-all duration-200
+                        className={`flex min-h-16 flex-col items-center justify-center rounded-lg border p-2 sm:min-h-0 sm:p-3 transition-all duration-200
                           ${
                             paymentMode === key
                               ? "border-cyan-400 bg-cyan-500/20 ring-2 ring-cyan-500/30"
@@ -683,7 +690,7 @@ const ExtraBookingOverlay: React.FC<ExtraBookingOverlayProps> = ({
                           className={`mb-1.5 h-5 w-5 ${paymentMode === key ? "text-cyan-300" : "text-slate-400"}`}
                         />
                         <span
-                          className={`text-sm font-medium ${paymentMode === key ? "text-cyan-200" : "text-slate-200"}`}
+                          className={`text-xs font-medium sm:text-sm ${paymentMode === key ? "text-cyan-200" : "text-slate-200"}`}
                         >
                           {label}
                         </span>
@@ -693,7 +700,7 @@ const ExtraBookingOverlay: React.FC<ExtraBookingOverlayProps> = ({
                 </div>
 
                 {paymentMode === "credit" && (
-                  <div className="mb-5 rounded-xl border border-slate-700/70 bg-slate-900/60 p-3">
+                  <div className="mb-4 rounded-xl border border-slate-700/70 bg-slate-900/60 p-2.5 sm:mb-5 sm:p-3">
                     <div className="flex items-start justify-between gap-3">
                       <div>
                         <p className="text-sm font-semibold text-slate-100">Credit Account Status</p>
@@ -741,7 +748,7 @@ const ExtraBookingOverlay: React.FC<ExtraBookingOverlayProps> = ({
                 <div className="flex flex-col gap-2">
                   <motion.button
                     onClick={handleSettle}
-                    className="dashboard-btn-primary w-full rounded-md px-6 py-2 text-sm font-medium disabled:opacity-50"
+                    className="dashboard-btn-primary w-full rounded-md px-4 py-2.5 text-sm font-medium disabled:opacity-50 sm:px-6 sm:py-2"
                     disabled={loading || !!waiveOffError || !vendorId || (paymentMode === "credit" && (!creditAccount?.is_active || availableCreditAmount < payableAmount))}
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
@@ -769,7 +776,7 @@ const ExtraBookingOverlay: React.FC<ExtraBookingOverlayProps> = ({
                       setPaymentSummary(null);
                       setSummaryError("");
                     }}
-                    className="w-full rounded-md border border-slate-600 bg-slate-900/80 px-5 py-2 text-sm font-medium text-slate-200 transition-all duration-200 hover:bg-slate-800 disabled:opacity-50"
+                    className="w-full rounded-md border border-slate-600 bg-slate-900/80 px-4 py-2.5 text-sm font-medium text-slate-200 transition-all duration-200 hover:bg-slate-800 disabled:opacity-50 sm:px-5 sm:py-2"
                     disabled={loading}
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
@@ -806,7 +813,8 @@ const ExtraBookingOverlay: React.FC<ExtraBookingOverlayProps> = ({
               setShowCreditAccountModal(false);
             }}
           />
-        </>
+        </>,
+        document.body
       )}
     </AnimatePresence>
   );
