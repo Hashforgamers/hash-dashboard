@@ -638,23 +638,20 @@ export function UpcomingBookings({
   }, [mergedBookings]);
 
   // Enhanced start session handler with debugging
-  const start = (system: string, gameId: string, bookingId: string, booking: any) => {
+  const start = (booking: any) => {
     const resolvedSystem = String(
-      system ||
       booking?.consoleType ||
       booking?.system ||
       booking?.game ||
       ""
     ).trim();
     const resolvedGameId = String(
-      gameId ??
       booking?.game_id ??
       booking?.gameId ??
       booking?.consoleTypeId ??
       ""
     ).trim();
     const resolvedBookingId = String(
-      bookingId ??
       booking?.bookingId ??
       booking?.booking_id ??
       booking?.bookId ??
@@ -664,9 +661,7 @@ export function UpcomingBookings({
     const resolvedVendorId = String(vendorId || "").trim();
 
     console.log('🚀 Start clicked with params:', {
-      system,
-      gameId,
-      bookingId,
+      booking,
       resolvedSystem,
       resolvedGameId,
       resolvedBookingId,
@@ -1376,10 +1371,13 @@ export function UpcomingBookings({
                           <motion.button
                             whileHover={{ scale: 1.02 }}
                             whileTap={{ scale: 0.98 }}
-                            onClick={() =>
-                              start(booking.consoleType || "", booking.game_id, booking.bookingId, booking)
-                            }
-                            disabled={!canStartNow}
+                            onClick={() => {
+                              if (!canStartNow) {
+                                showToast("Session can be started only during its scheduled time.", "error");
+                                return;
+                              }
+                              start(booking);
+                            }}
                             className={`inline-flex h-8 min-w-[96px] items-center justify-center gap-1 rounded-md !px-2.5 !py-0 text-[11px] font-semibold transition-all sm:min-w-[104px] sm:text-xs ${
                               canStartNow
                                 ? "dashboard-btn-primary"
