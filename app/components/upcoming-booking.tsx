@@ -639,25 +639,59 @@ export function UpcomingBookings({
 
   // Enhanced start session handler with debugging
   const start = (system: string, gameId: string, bookingId: string, booking: any) => {
-    console.log('🚀 Start clicked with params:', { system, gameId, bookingId, vendorId });
+    const resolvedSystem = String(
+      system ||
+      booking?.consoleType ||
+      booking?.system ||
+      booking?.game ||
+      ""
+    ).trim();
+    const resolvedGameId = String(
+      gameId ??
+      booking?.game_id ??
+      booking?.gameId ??
+      booking?.consoleTypeId ??
+      ""
+    ).trim();
+    const resolvedBookingId = String(
+      bookingId ??
+      booking?.bookingId ??
+      booking?.booking_id ??
+      booking?.bookId ??
+      booking?.book_id ??
+      ""
+    ).trim();
+    const resolvedVendorId = String(vendorId || "").trim();
+
+    console.log('🚀 Start clicked with params:', {
+      system,
+      gameId,
+      bookingId,
+      resolvedSystem,
+      resolvedGameId,
+      resolvedBookingId,
+      resolvedVendorId
+    });
     
-    if (!system || !gameId || !bookingId) {
-      console.error('❌ Missing required parameters:', { system, gameId, bookingId });
+    if (!resolvedGameId || !resolvedBookingId) {
+      console.error('❌ Missing required parameters:', { resolvedGameId, resolvedBookingId, booking });
+      showToast("Unable to start session: booking details are incomplete.", "error");
       return;
     }
     
-    if (!vendorId) {
+    if (!resolvedVendorId) {
       console.error('❌ VendorId is not available');
+      showToast("Unable to start session: vendor is not resolved.", "error");
       return;
     }
     
-    setSelectedSystem(system);
-    setSelectedGameId(gameId);
-    setSelectedBookingId(bookingId);
+    setSelectedSystem(resolvedSystem);
+    setSelectedGameId(resolvedGameId);
+    setSelectedBookingId(resolvedBookingId);
     const consoleGroup = String(
       booking?.squadDetails?.console_group ||
       booking?.squadDetails?.consoleGroup ||
-      (String(system || "").toLowerCase().includes("pc") ? "pc" : "")
+      (String(resolvedSystem || "").toLowerCase().includes("pc") ? "pc" : "")
     ).toLowerCase();
     const pcSquad = Boolean(
       consoleGroup === "pc" &&
@@ -671,7 +705,7 @@ export function UpcomingBookings({
     setSelectedConsoleIds([]);
     setSelectedConsole(null);
     setStartCard(true);
-    fetchAvailableConsoles(gameId, vendorId);
+    fetchAvailableConsoles(resolvedGameId, resolvedVendorId);
   };
 
   // Enhanced fetch available consoles with comprehensive debugging
@@ -759,9 +793,14 @@ export function UpcomingBookings({
     if (effectiveSelected.length > 0 && selectedGameId && selectedBookingId) {
       setIsLoading(true);
 
-      const selectedMergedBooking = mergedBookings.find(
-        (booking) => booking.bookingId === selectedBookingId || booking.merged_booking_ids?.includes(selectedBookingId)
-      );
+      const selectedBookingIdStr = String(selectedBookingId);
+      const selectedMergedBooking = mergedBookings.find((booking) => {
+        const bookingIdMatch = String(booking?.bookingId) === selectedBookingIdStr;
+        const mergedMatch = Array.isArray(booking?.merged_booking_ids)
+          ? booking.merged_booking_ids.some((id: any) => String(id) === selectedBookingIdStr)
+          : false;
+        return bookingIdMatch || mergedMatch;
+      });
       const bookingIds = selectedMergedBooking?.merged_booking_ids || [selectedBookingId];
 
       const primaryConsoleId = effectiveSelected[0];
