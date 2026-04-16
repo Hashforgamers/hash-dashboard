@@ -1,7 +1,6 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { IndianRupee, CreditCard, Smartphone, X, CheckCircle, Loader2, Gamepad2, Timer, Wallet, Receipt } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
-import { createPortal } from "react-dom";
 import { BOOKING_URL } from "@/src/config/env";
 import CreditAccountModal, { type MonthlyCreditAccountSummary } from "./credit-account-modal";
 
@@ -76,13 +75,7 @@ const ExtraBookingOverlay: React.FC<ExtraBookingOverlayProps> = ({
   const [creditAccountError, setCreditAccountError] = useState("");
   const [selectedUserProfile, setSelectedUserProfile] = useState<VendorUserSummary | null>(null);
   const [showCreditAccountModal, setShowCreditAccountModal] = useState(false);
-  const [isMounted, setIsMounted] = useState(false);
   const overlayRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    setIsMounted(true);
-    return () => setIsMounted(false);
-  }, []);
 
   // Focus management for accessibility
   useEffect(() => {
@@ -480,10 +473,10 @@ const ExtraBookingOverlay: React.FC<ExtraBookingOverlayProps> = ({
 
   return (
     <AnimatePresence>
-      {showOverlay && selectedSlot && isMounted && createPortal(
+      {showOverlay && selectedSlot && (
         <>
           <motion.div
-            className="fixed inset-0 z-[1300] flex items-end justify-center bg-black/70 p-0 backdrop-blur-md sm:items-center sm:p-4"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md max-sm:items-end"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -491,7 +484,7 @@ const ExtraBookingOverlay: React.FC<ExtraBookingOverlayProps> = ({
           >
             <motion.div
             ref={overlayRef}
-            className="dashboard-module-panel relative h-[100dvh] max-h-[100dvh] w-full overflow-y-auto rounded-none p-3 shadow-2xl sm:mx-4 sm:h-auto sm:max-h-[92vh] sm:max-w-4xl sm:rounded-2xl sm:p-6"
+            className="dashboard-module-panel relative w-full max-w-4xl mx-3 sm:mx-4 rounded-2xl p-4 sm:p-6 shadow-2xl max-h-[92vh] overflow-y-auto max-sm:mx-0 max-sm:h-[100dvh] max-sm:max-h-[100dvh] max-sm:rounded-none max-sm:p-3"
             initial={{ scale: 0.95, y: 30, opacity: 0 }}
             animate={{ scale: 1, y: 0, opacity: 1 }}
             exit={{ scale: 0.95, y: 30, opacity: 0 }}
@@ -813,8 +806,7 @@ const ExtraBookingOverlay: React.FC<ExtraBookingOverlayProps> = ({
               setShowCreditAccountModal(false);
             }}
           />
-        </>,
-        document.body
+        </>
       )}
     </AnimatePresence>
   );
