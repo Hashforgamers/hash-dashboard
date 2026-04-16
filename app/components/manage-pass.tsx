@@ -613,14 +613,33 @@ function AddPassDialog({ passTypes, onSave, buttonClassName }: any) {
 
   const handleSubmit = async (e: any) => {
     e.preventDefault();
+    const parsedPrice = Number(form.price);
+    const parsedDays = Number(form.days_valid);
+    const parsedTotalHours = Number(form.total_hours);
+
+    if (!Number.isFinite(parsedPrice) || parsedPrice <= 0) {
+      alert("Please enter a valid price.");
+      return;
+    }
+    if (!Number.isFinite(parsedDays) || parsedDays <= 0) {
+      alert("Please enter valid days.");
+      return;
+    }
+    if (passMode === "hour_based" && (!Number.isFinite(parsedTotalHours) || parsedTotalHours <= 0)) {
+      alert("Please enter valid total hours for hour-based pass.");
+      return;
+    }
+
     setIsSubmitting(true);
     const payload = {
       ...form,
-      price: Number(form.price),
-      days_valid: Number(form.days_valid),
+      price: parsedPrice,
+      days_valid: parsedDays,
       pass_mode: passMode,
       total_hours:
-        passMode === "hour_based" ? Number(form.total_hours) : undefined,
+        passMode === "hour_based" ? parsedTotalHours : undefined,
+      hour_calculation_mode:
+        passMode === "hour_based" ? "actual_duration" : undefined,
     };
     await onSave(payload, () => {
       setOpen(false);
@@ -810,14 +829,34 @@ function EditPassDialog({ passObj, passTypes, onSave }: any) {
 
   const handleSubmit = async (e: any) => {
     e.preventDefault();
+    const parsedPrice = Number(form.price);
+    const parsedDays = Number(form.days_valid);
+    const parsedTotalHours = Number(form.total_hours);
+
+    if (!Number.isFinite(parsedPrice) || parsedPrice <= 0) {
+      alert("Please enter a valid price.");
+      return;
+    }
+    if (!Number.isFinite(parsedDays) || parsedDays <= 0) {
+      alert("Please enter valid days.");
+      return;
+    }
+    if (isHourBased && (!Number.isFinite(parsedTotalHours) || parsedTotalHours <= 0)) {
+      alert("Please enter valid total hours for hour-based pass.");
+      return;
+    }
+
     setIsSubmitting(true);
     await onSave(
       passObj.id,
       {
         ...form,
-        price: Number(form.price),
-        days_valid: Number(form.days_valid),
-        total_hours: passObj.pass_mode === "hour_based" ? Number(form.total_hours) : undefined,
+        price: parsedPrice,
+        days_valid: parsedDays,
+        total_hours: passObj.pass_mode === "hour_based" ? parsedTotalHours : undefined,
+        hour_calculation_mode: passObj.pass_mode === "hour_based"
+          ? (passObj.hour_calculation_mode || "actual_duration")
+          : undefined,
       },
       () => setOpen(false)
     );
