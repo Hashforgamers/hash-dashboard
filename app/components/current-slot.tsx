@@ -1900,7 +1900,7 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
             </div>
           )}
           
-          {activeTab === 'live' && (
+          {activeTab === 'live' && isMounted && createPortal(
             <ExtraBookingOverlay
               showOverlay={showOverlay}
               setShowOverlay={setShowOverlay}
@@ -1912,7 +1912,8 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
               calculateExtraAmount={calculateExtraAmount}
               formatTime={formatTime}
               releaseSlot={releaseSlot}
-            />
+            />,
+            document.body
           )}
 
           {contactOverlay.open && (
