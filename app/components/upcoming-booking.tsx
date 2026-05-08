@@ -1371,22 +1371,16 @@ export function UpcomingBookings({
                           <motion.button
                             whileHover={{ scale: 1.02 }}
                             whileTap={{ scale: 0.98 }}
-                            onClick={() => {
-                              if (!canStartNow) {
-                                showToast("Session can be started only during its scheduled time.", "error");
-                                return;
-                              }
-                              start(booking);
-                            }}
+                            onClick={() => start(booking)}
                             className={`inline-flex h-8 min-w-[96px] items-center justify-center gap-1 rounded-md !px-2.5 !py-0 text-[11px] font-semibold transition-all sm:min-w-[104px] sm:text-xs ${
                               canStartNow
                                 ? "dashboard-btn-primary"
-                                : "cursor-not-allowed bg-slate-700/70 text-slate-300"
+                                : "bg-slate-700/70 text-slate-300"
                             }`}
-                            title={canStartNow ? "Start session" : "Session can be started only during its scheduled time"}
+                            title={canStartNow ? "Start session" : "Start session (outside scheduled window)"}
                           >
                             <Play className="h-3 w-3 shrink-0" />
-                            <span className="truncate">{canStartNow ? "Start" : "Not Startable"}</span>
+                            <span className="truncate">Start</span>
                           </motion.button>
                           {canNoShow && (
                             <button
