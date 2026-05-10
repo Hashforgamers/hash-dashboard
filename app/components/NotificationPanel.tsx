@@ -3,7 +3,7 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { createPortal } from 'react-dom'
-import { Bell, X, Check, Clock, User, Calendar, Wallet, Gamepad2, FileWarning } from 'lucide-react'
+import { Bell, X, Check, Clock, User, Calendar, Wallet, Gamepad2, FileWarning, AlertTriangle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { BOOKING_URL } from '@/src/config/env'
@@ -65,7 +65,22 @@ interface DocumentStatusNotification {
   message: string
 }
 
-type DashboardNotification = PayAtCafeNotification | MealsAddedNotification | DocumentStatusNotification
+interface LowStockNotification {
+  kind: "low_stock"
+  notification_id: string
+  emitted_at?: string
+  vendorId: number
+  menuId: number
+  menuName: string
+  categoryId?: number
+  categoryName?: string
+  stockQuantity: number
+  stockUnit: string
+  lowStockThreshold: number
+  severity?: "low" | "critical"
+}
+
+type DashboardNotification = PayAtCafeNotification | MealsAddedNotification | DocumentStatusNotification | LowStockNotification
 
 interface PayAtCafeQueueSummary {
   requested: number
@@ -686,6 +701,64 @@ export function NotificationPanel({
                                 }}
                               >
                                 Open Settings
+                              </Button>
+                            </div>
+                          </div>
+                        </motion.div>
+                      )
+                    }
+
+                    const isLowStockNotice = (notification as any)?.kind === "low_stock"
+                    if (isLowStockNotice) {
+                      const lowStockNotice = notification as LowStockNotification
+                      const isCritical = lowStockNotice.severity === "critical"
+                      return (
+                        <motion.div
+                          key={lowStockNotice.notification_id}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, x: 20 }}
+                          transition={{ delay: index * 0.05 }}
+                          className={`dashboard-module-card rounded-xl p-4 transition-all duration-200 ${
+                            isCritical
+                              ? "border border-rose-400/35 bg-rose-500/10"
+                              : "border border-amber-400/35 bg-amber-500/10"
+                          }`}
+                        >
+                          <div className="space-y-3">
+                            <div className="flex items-center gap-2">
+                              <AlertTriangle className={`h-4 w-4 ${isCritical ? "text-rose-300" : "text-amber-300"}`} />
+                              <p className={`text-sm font-semibold ${isCritical ? "text-rose-100" : "text-amber-100"}`}>Low Stock Alert</p>
+                            </div>
+                            <p className={`text-xs ${isCritical ? "text-rose-100/90" : "text-amber-100/90"}`}>
+                              {lowStockNotice.menuName} ({lowStockNotice.categoryName || "Category"})
+                            </p>
+                            <p className={`text-xs ${isCritical ? "text-rose-100/90" : "text-amber-100/90"}`}>
+                              Stock: {lowStockNotice.stockQuantity} {lowStockNotice.stockUnit} | Threshold: {lowStockNotice.lowStockThreshold}
+                            </p>
+                            <div className="flex justify-end gap-2">
+                              <Button
+                                variant="outline"
+                                className={`h-8 text-xs ${
+                                  isCritical
+                                    ? "border-rose-400/45 bg-rose-500/10 text-rose-100 hover:bg-rose-500/20"
+                                    : "border-amber-400/45 bg-amber-500/10 text-amber-100 hover:bg-amber-500/20"
+                                }`}
+                                onClick={() => {
+                                  onClose()
+                                  if (typeof window !== "undefined") {
+                                    window.location.href = "/manage-extraservice?extra_mode=table"
+                                  }
+                                }}
+                              >
+                                Restock
+                              </Button>
+                              <Button
+                                variant="outline"
+                                className="h-8 border-slate-500/50 bg-slate-700/30 text-xs text-slate-200 hover:bg-slate-700/50"
+                                onClick={() => onRemoveNotification(lowStockNotice.notification_id)}
+                              >
+                                Dismiss
                               </Button>
                             </div>
                           </div>

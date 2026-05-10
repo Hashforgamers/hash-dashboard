@@ -9,7 +9,7 @@ import { useSocket } from '../context/SocketContext'
 import { BOOKING_URL } from '@/src/config/env'
 import { DASHBOARD_URL } from '@/src/config/env'
 
-type NotificationKind = "pay_at_cafe" | "meals_added" | "document_status"
+type NotificationKind = "pay_at_cafe" | "meals_added" | "document_status" | "low_stock"
 
 interface MealsAddedNotification {
   kind: "meals_added"
@@ -31,6 +31,21 @@ interface DocumentStatusNotification {
   statusType: "verified" | "rejected"
   title: string
   message: string
+}
+
+interface LowStockNotification {
+  kind: "low_stock"
+  notification_id: string
+  emitted_at?: string
+  vendorId: number
+  menuId: number
+  menuName: string
+  categoryId?: number
+  categoryName?: string
+  stockQuantity: number
+  stockUnit: string
+  lowStockThreshold: number
+  severity?: "low" | "critical"
 }
 
 interface PayAtCafeQueueSummary {
@@ -104,10 +119,12 @@ export function NotificationButton({
     try {
       console.log(`🔍 NotificationButton: Fetching pending bookings for vendor ${vendorId}...`)
       let docNotifications: DocumentStatusNotification[] = []
+      let lowStockNotifications: LowStockNotification[] = []
       try {
         const dashboardRes = await fetch(`${DASHBOARD_URL}/api/vendor/${vendorId}/dashboard`)
         const dashboardJson = await dashboardRes.json().catch(() => ({}))
         const alerts = Array.isArray(dashboardJson?.documentAlerts) ? dashboardJson.documentAlerts : []
+        const lowStockAlerts = Array.isArray(dashboardJson?.lowStockAlerts) ? dashboardJson.lowStockAlerts : []
         docNotifications = alerts.map((alert: any, idx: number) => ({
           kind: "document_status",
           notification_id: `doc_${String(alert?.type || "status")}_${vendorId}_${idx}_${encodeURIComponent(String(alert?.message || ""))}`,
@@ -116,6 +133,20 @@ export function NotificationButton({
           statusType: String(alert?.type || "").toLowerCase() === "verified" ? "verified" : "rejected",
           title: String(alert?.title || "Document Status"),
           message: String(alert?.message || "Document status changed."),
+        }))
+        lowStockNotifications = lowStockAlerts.map((alert: any, idx: number) => ({
+          kind: "low_stock",
+          notification_id: `low_stock_${vendorId}_${alert?.menu_id || idx}`,
+          emitted_at: new Date().toISOString(),
+          vendorId: Number(vendorId),
+          menuId: Number(alert?.menu_id || 0),
+          menuName: String(alert?.menu_name || "Menu item"),
+          categoryId: Number(alert?.category_id || 0),
+          categoryName: String(alert?.category_name || "Category"),
+          stockQuantity: Number(alert?.stock_quantity || 0),
+          stockUnit: String(alert?.stock_unit || "units"),
+          lowStockThreshold: Number(alert?.low_stock_threshold || 0),
+          severity: String(alert?.severity || "").toLowerCase() === "critical" ? "critical" : "low",
         }))
       } catch (docErr) {
         console.warn("NotificationButton: failed to fetch document alerts", docErr)
@@ -158,7 +189,7 @@ export function NotificationButton({
         const mapped = Array.from(deduped.values())
         setNotifications((prev) => {
           const mealNotices = prev.filter((n: any) => n.kind === "meals_added")
-          const merged = [...mapped, ...mealNotices, ...docNotifications]
+          const merged = [...mapped, ...mealNotices, ...docNotifications, ...lowStockNotifications]
           setUnreadCount(merged.length)
           return merged
         })
@@ -166,7 +197,7 @@ export function NotificationButton({
         console.log('📋 NotificationButton: No pending bookings found')
         setNotifications((prev) => {
           const mealNotices = prev.filter((n: any) => n.kind === "meals_added")
-          const merged = [...mealNotices, ...docNotifications]
+          const merged = [...mealNotices, ...docNotifications, ...lowStockNotifications]
           setUnreadCount(merged.length)
           return merged
         })
