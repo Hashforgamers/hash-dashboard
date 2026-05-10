@@ -166,6 +166,7 @@ export default function ManageExtraServices() {
   // ✅ Per-item delete loading
   const [deletingItemId, setDeletingItemId] = useState<number | null>(null)
   const [deletingCategoryId, setDeletingCategoryId] = useState<number | null>(null)
+  const [togglingItemId, setTogglingItemId] = useState<number | null>(null)
 
   /* Category form */
   const [showCategoryDlg, setShowCategoryDlg] = useState(false)
@@ -328,6 +329,30 @@ export default function ManageExtraServices() {
       alert(err instanceof Error ? err.message : 'Failed to delete menu item')
     } finally {
       setDeletingItemId(null)
+    }
+  }
+
+  const toggleMenuItemStatus = async (categoryId: number, item: ExtraServiceMenu) => {
+    if (!vendorId) return
+    setTogglingItemId(item.id)
+    try {
+      const res = await fetch(
+        `${API_BASE}/vendor/${vendorId}/extra-services/category/${categoryId}/menu/${item.id}/status`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ is_active: !item.is_active }),
+        }
+      )
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok || data?.success === false) {
+        throw new Error(data?.error || data?.message || `HTTP ${res.status}`)
+      }
+      await fetchCategories(true)
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Failed to toggle status")
+    } finally {
+      setTogglingItemId(null)
     }
   }
 
@@ -695,6 +720,17 @@ export default function ManageExtraServices() {
                                             : <Trash2 className="w-3 h-3 text-destructive" />
                                           }
                                         </button>
+                                        <button
+                                          onClick={() => toggleMenuItemStatus(cat.id, item)}
+                                          disabled={togglingItemId === item.id}
+                                          className="absolute left-1.5 top-1.5 inline-flex items-center justify-center rounded-md border border-cyan-400/35 bg-slate-950/80 px-1.5 py-1 text-[10px] font-semibold text-cyan-200 transition-all duration-200 hover:border-cyan-300 hover:bg-cyan-500/15 disabled:cursor-not-allowed disabled:opacity-50"
+                                          title={item.is_active ? "Deactivate item" : "Activate item"}
+                                        >
+                                          {togglingItemId === item.id
+                                            ? <Loader2 className="w-3 h-3 animate-spin" />
+                                            : (item.is_active ? "On" : "Off")
+                                          }
+                                        </button>
                                       </div>
 
                                       {/* Info */}
@@ -848,14 +884,22 @@ export default function ManageExtraServices() {
 
                                           {/* Status */}
                                           <td className="table-cell">
-                                            <span className={clsx(
-                                              "px-2 py-0.5 rounded-full text-xs font-bold border",
-                                              item.is_active
-                                                ? "border-emerald-300 bg-emerald-50 text-emerald-800 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-400"
-                                                : "border-border bg-muted/20 text-slate-600 dark:text-muted-foreground"
-                                            )}>
-                                              {item.is_active ? "Active" : "Inactive"}
-                                            </span>
+                                            <button
+                                              onClick={() => toggleMenuItemStatus(cat.id, item)}
+                                              disabled={togglingItemId === item.id}
+                                              className={clsx(
+                                                "px-2 py-0.5 rounded-full text-xs font-bold border transition-all disabled:cursor-not-allowed disabled:opacity-50",
+                                                item.is_active
+                                                  ? "border-emerald-300 bg-emerald-50 text-emerald-800 hover:bg-emerald-100 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-400"
+                                                  : "border-border bg-muted/20 text-slate-600 hover:bg-muted/40 dark:text-muted-foreground"
+                                              )}
+                                              title={item.is_active ? "Click to deactivate" : "Click to activate"}
+                                            >
+                                              {togglingItemId === item.id
+                                                ? <Loader2 className="inline-block h-3 w-3 animate-spin" />
+                                                : (item.is_active ? "Active" : "Inactive")
+                                              }
+                                            </button>
                                           </td>
 
                                           {/* Action */}
