@@ -4798,9 +4798,10 @@ const [isLoadingBookings, setIsLoadingBookings] = useState(false)
 
   const loadBookingData = async (
     resolvedVendorId: number,
-    options: { forceFresh?: boolean } = {}
+    options: { forceFresh?: boolean; initialOnly?: boolean } = {}
   ): Promise<BookingCacheData | null> => {
     const forceFresh = Boolean(options.forceFresh)
+    const initialOnly = Boolean(options.initialOnly)
     try {
       console.time("⏱️ Total fetch time")
 
@@ -4893,7 +4894,11 @@ const [isLoadingBookings, setIsLoadingBookings] = useState(false)
       })
 
       try {
-        const gameIds = consolesResolved.map(c => c.id).filter(Boolean) as number[]
+        const allGameIds = consolesResolved.map(c => c.id).filter(Boolean) as number[]
+        const preferredConsole = consolesResolved.find((c) => c.type === selectedConsole) || consolesResolved[0]
+        const gameIds = initialOnly
+          ? [Number(preferredConsole?.id || 0)].filter((id) => Number.isFinite(id) && id > 0)
+          : allGameIds
         const batchDates = dates.map(d => d.replace(/-/g, ""))
 
         console.log("🚀 Batch request:", { vendorId: resolvedVendorId, gameIds, dates: batchDates })
@@ -5096,6 +5101,7 @@ const fetchSlotBookings = async (slotIds: number[], date: string) => {
     if (!vendorId) return
 
     let hasLocalSnapshot = false
+    let cancelled = false
     // Instant local snapshot restore for fast perceived load.
     if (!cachedBooking) {
       const localSnapshot = readLocalSnapshot(vendorId)
@@ -5113,23 +5119,47 @@ const fetchSlotBookings = async (slotIds: number[], date: string) => {
       setIsLoading(true)
     }
 
-    loadBookingData(vendorId, { forceFresh: bookingVersion > 0 })
+    const shouldUseFastPath = !cachedBooking && !hasLocalSnapshot && bookingVersion <= 0
+
+    loadBookingData(vendorId, {
+      forceFresh: bookingVersion > 0,
+      initialOnly: shouldUseFastPath,
+    })
       .then((data) => {
-        if (!data) return
+        if (!data || cancelled) return
         setModuleCache(bookingCacheKey, data)
         writeLocalSnapshot(vendorId, data)
         applyBookingCache(data)
         setRecentBookings([])
+
+        // Progressive hydration: after first paint, fetch remaining console slots in background.
+        if (shouldUseFastPath) {
+          loadBookingData(vendorId, { forceFresh: false, initialOnly: false })
+            .then((fullData) => {
+              if (!fullData || cancelled) return
+              setModuleCache(bookingCacheKey, fullData)
+              writeLocalSnapshot(vendorId, fullData)
+              applyBookingCache(fullData)
+            })
+            .catch((error) => {
+              console.error("❌ Background full booking hydration failed:", error)
+            })
+        }
       })
       .catch((error) => {
         console.error("❌ Error loading booking data:", error)
       })
       .finally(() => {
+        if (cancelled) return
         if (!cachedBooking) {
           setIsLoading(false)
         }
         console.log("✅ Booking data load complete")
       })
+
+    return () => {
+      cancelled = true
+    }
   }, [vendorId, bookingVersion])
 
   // Fetch bookings when slots are selected
