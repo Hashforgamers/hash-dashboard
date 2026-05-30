@@ -7,7 +7,7 @@ import {
   Upload, X, ImageIcon, Sparkles,
 } from 'lucide-react';
 import { useEventsToken } from '@/hooks/useEventsToken';
-import { createEvent, uploadEventBanner, deleteEventBanner, EventStatus, } from '@/lib/event-api';
+import { createEvent, uploadEventBanner, deleteEventBanner, EventStatus, TournamentFormat, VetoMode } from '@/lib/event-api';
 import { jwtDecode } from 'jwt-decode';
 import { DashboardLayout } from '@/app/(layout)/dashboard-layout';
 
@@ -211,6 +211,15 @@ interface FormState {
   description: string;
   status: EventStatus;
   currency: string;
+  game: string;
+  format: TournamentFormat;
+  prize_pool: string;
+  team_size: number;
+  match_rules: string;
+  region: string;
+  server: string;
+  map_pool: string;
+  veto_mode: VetoMode;
   registration_fee: string;
   capacity_team: string;
   capacity_player: string;
@@ -237,6 +246,15 @@ export default function CreateTournamentPage() {
     description:      '',
     status:           'draft',
     currency:         'INR',
+    game:             'valorant',
+    format:           'single_elimination',
+    prize_pool:       '0',
+    team_size:        5,
+    match_rules:      '',
+    region:           'India',
+    server:           'Mumbai',
+    map_pool:         'Bind, Haven, Split, Ascent, Icebox, Lotus, Sunset',
+    veto_mode:        'bo1_ban_until_decider',
     registration_fee: '0',
     capacity_team:    '',
     capacity_player:  '',
@@ -355,6 +373,15 @@ export default function CreateTournamentPage() {
         registration_deadline: deadline?.toISOString(),
         registration_fee:      parseFloat(form.registration_fee) || 0,
         currency:              form.currency,
+        game:                  form.game.trim() || 'valorant',
+        format:                form.format,
+        prize_pool:            parseFloat(form.prize_pool) || 0,
+        team_size:             form.team_size,
+        match_rules:           form.match_rules.trim() || undefined,
+        region:                form.region.trim() || undefined,
+        server:                form.server.trim() || undefined,
+        map_pool:              form.map_pool.split(',').map((m) => m.trim()).filter(Boolean),
+        veto_mode:             form.veto_mode,
         capacity_team:         form.capacity_team   ? parseInt(form.capacity_team)   : undefined,
         capacity_player:       form.capacity_player ? parseInt(form.capacity_player) : undefined,
         min_team_size:         form.min_team_size,
@@ -560,6 +587,90 @@ export default function CreateTournamentPage() {
           </section>
 
           <section className={`${sectionPanelClass} xl:col-span-4`}>
+            <h2 className="section-title mb-1">Tournament Engine</h2>
+            <div className="h-px bg-cyan-500/20 mb-5" />
+            <div className="space-y-4">
+              <div>
+                <label className={labelClass}>Game</label>
+                <select
+                  className={selectClass}
+                  value={form.game}
+                  onChange={(e) => set('game', e.target.value)}
+                >
+                  <option value="valorant">Valorant</option>
+                  <option value="fc25">FC 25</option>
+                  <option value="bgmi">BGMI</option>
+                  <option value="custom">Custom Game</option>
+                </select>
+              </div>
+              <div>
+                <label className={labelClass}>Format</label>
+                <select
+                  className={selectClass}
+                  value={form.format}
+                  onChange={(e) => set('format', e.target.value as TournamentFormat)}
+                >
+                  <option value="single_elimination">Single Elimination</option>
+                  <option value="double_elimination" disabled>Double Elimination - Phase 2</option>
+                  <option value="swiss" disabled>Swiss - Phase 2</option>
+                  <option value="round_robin" disabled>Round Robin - Phase 2</option>
+                  <option value="group_playoffs" disabled>Group + Playoffs - Phase 2</option>
+                  <option value="ladder" disabled>Ladder - Phase 2</option>
+                  <option value="daily_cup" disabled>Daily Cup - Phase 2</option>
+                </select>
+              </div>
+              <div>
+                <label className={labelClass}>Region / Server</label>
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                  <input
+                    className={inputClass}
+                    placeholder="Region"
+                    value={form.region}
+                    onChange={(e) => set('region', e.target.value)}
+                  />
+                  <input
+                    className={inputClass}
+                    placeholder="Server"
+                    value={form.server}
+                    onChange={(e) => set('server', e.target.value)}
+                  />
+                </div>
+              </div>
+              <div>
+                <label className={labelClass}>Valorant Map Pool</label>
+                <input
+                  className={inputClass}
+                  placeholder="Bind, Haven, Ascent"
+                  value={form.map_pool}
+                  onChange={(e) => set('map_pool', e.target.value)}
+                />
+              </div>
+              <div>
+                <label className={labelClass}>Map Veto</label>
+                <select
+                  className={selectClass}
+                  value={form.veto_mode}
+                  onChange={(e) => set('veto_mode', e.target.value as VetoMode)}
+                >
+                  <option value="none">No Veto</option>
+                  <option value="bo1_ban_until_decider">BO1 Ban Until Decider</option>
+                  <option value="bo3_ban_pick_decider">BO3 Ban/Pick Decider</option>
+                </select>
+              </div>
+              <div>
+                <label className={labelClass}>Match Rules</label>
+                <textarea
+                  className={textareaClass}
+                  rows={4}
+                  placeholder="Lobby rules, reporting rules, late penalties, screenshot requirements..."
+                  value={form.match_rules}
+                  onChange={(e) => set('match_rules', e.target.value)}
+                />
+              </div>
+            </div>
+          </section>
+
+          <section className={`${sectionPanelClass} xl:col-span-4`}>
             <h2 className="section-title mb-1">Financials</h2>
             <div className="h-px bg-cyan-500/20 mb-5" />
             <div className="space-y-4">
@@ -580,20 +691,30 @@ export default function CreateTournamentPage() {
               <div>
                 <label className={labelClass}>
                   Prize Pool ({form.currency})
-                  <span className="ml-2 text-xs font-normal text-slate-400">
-                    (display only)
-                  </span>
                 </label>
                 <input
-                  className={`${inputClass} opacity-50`}
+                  className={inputClass}
                   type="number"
                   min={0}
                   placeholder="e.g., 1000"
-                  disabled
+                  value={form.prize_pool}
+                  onChange={(e) => set('prize_pool', e.target.value)}
                 />
-                <p className="mt-1 text-xs text-slate-400">
-                  Prize pool is managed separately.
-                </p>
+              </div>
+              <div>
+                <label className={labelClass}>Team Size</label>
+                <input
+                  className={inputClass}
+                  type="number"
+                  min={1}
+                  value={form.team_size}
+                  onChange={(e) => {
+                    const value = parseInt(e.target.value) || 1;
+                    set('team_size', value);
+                    set('min_team_size', value);
+                    set('max_team_size', value);
+                  }}
+                />
               </div>
             </div>
           </section>
