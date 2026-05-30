@@ -13,6 +13,7 @@ import { useEventsToken } from '@/hooks/useEventsToken';
 import { createEvent, uploadEventBanner, deleteEventBanner, EventStatus, TournamentFormat, VetoMode } from '@/lib/event-api';
 import { jwtDecode } from 'jwt-decode';
 import { DashboardLayout } from '@/app/(layout)/dashboard-layout';
+import { useDashboardData } from '@/app/context/DashboardDataContext';
 
  // TODO: replace with auth context
 
@@ -310,6 +311,7 @@ export default function CreateTournamentPage() {
   const router = useRouter();
    const [vendorId, setVendorId] = useState<number | null>(null)
   const { token, loading: tokenLoading } = useEventsToken(vendorId);
+  const { bumpModuleVersion } = useDashboardData();
 
   const [form, setForm] = useState<FormState>({
     title:            '',
@@ -493,6 +495,9 @@ export default function CreateTournamentPage() {
         banner_public_id,
       });
 
+      if (vendorId) {
+        bumpModuleVersion(`tournaments:${vendorId}`);
+      }
       router.push(`/tournaments/${ev.id}`);
     } catch (e) {
       setBannerUploading(false);
