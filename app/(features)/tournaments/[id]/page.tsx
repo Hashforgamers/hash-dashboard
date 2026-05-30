@@ -15,6 +15,7 @@ import {
   getTeams, TeamItem, publishResults, WinnerInput,
   getEvent, getMatches, openCheckIn, closeCheckIn, generateBracket,
   startMatch, submitAdminMatchResult, resolveMatchDispute, TournamentMatch,
+  updateEvent,
 } from '@/lib/event-api';
 import { jwtDecode } from 'jwt-decode';
 import { DashboardLayout } from '@/app/(layout)/dashboard-layout';
@@ -31,6 +32,24 @@ const EVENT_STATUS_BADGE: Record<EventStatus, string> = {
   completed: 'bg-purple-500/20 text-purple-300 border border-purple-500/30',
   canceled:  'bg-red-500/20 text-red-300 border border-red-500/30',
 };
+
+const EVENT_STATUS_LABEL: Record<EventStatus, string> = {
+  draft: 'Draft',
+  published: 'Published',
+  ongoing: 'Live',
+  completed: 'Completed',
+  canceled: 'Canceled',
+};
+
+const EVENT_STATUS_HELP: Record<EventStatus, string> = {
+  draft: 'Hidden from public registration until you publish.',
+  published: 'Visible to players and open for registration.',
+  ongoing: 'Tournament is live and ready for match operations.',
+  completed: 'Tournament is finished and results are final.',
+  canceled: 'Tournament is stopped and should not accept operations.',
+};
+
+const EVENT_STATUS_FLOW: EventStatus[] = ['draft', 'published', 'ongoing', 'completed', 'canceled'];
 
 const REG_BADGE: Record<RegistrationStatus, string> = {
   confirmed: 'bg-green-500/20 text-green-400',
@@ -75,6 +94,8 @@ export default function TournamentDetailPage() {
   const [publishError,  setPublishError]  = useState<string | null>(null);
   const [engineError,   setEngineError]   = useState<string | null>(null);
   const [engineBusy,    setEngineBusy]    = useState<string | null>(null);
+  const [statusBusy,    setStatusBusy]    = useState<EventStatus | null>(null);
+  const [statusError,   setStatusError]   = useState<string | null>(null);
   const [selectedWinners, setSelectedWinners] = useState<Record<string, string>>({});
   const [publishing,    setPublishing]    = useState(false);
   const [winners,       setWinners]       = useState<WinnerInput[]>([
@@ -236,6 +257,23 @@ export default function TournamentDetailPage() {
       setEngineError(error?.message || 'Tournament engine action failed.');
     } finally {
       setEngineBusy(null);
+    }
+  };
+
+  const handleStatusChange = async (nextStatus: EventStatus) => {
+    if (!token || !event || nextStatus === event.status) return;
+    setStatusError(null);
+    setStatusBusy(nextStatus);
+    try {
+      await updateEvent(token, eventId, { status: nextStatus });
+      setEvent((prev) => prev ? { ...prev, status: nextStatus } : prev);
+      await refreshEventCache(true).then((ev) => {
+        if (ev) setEvent(ev);
+      }).catch(() => null);
+    } catch (error: any) {
+      setStatusError(error?.message || 'Failed to update tournament status.');
+    } finally {
+      setStatusBusy(null);
     }
   };
 
@@ -431,6 +469,54 @@ export default function TournamentDetailPage() {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* ── Status Control ───────────────────────────── */}
+      <div className="gaming-panel rounded-xl border border-cyan-400/20 bg-slate-950/45 p-4 sm:p-5">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h3 className="section-title">Tournament Status</h3>
+            <p className="premium-subtle mt-1 text-sm">
+              Current state: {EVENT_STATUS_LABEL[event.status]}. {EVENT_STATUS_HELP[event.status]}
+            </p>
+          </div>
+          <span className={`rounded-full px-3 py-1 text-xs font-semibold ${EVENT_STATUS_BADGE[event.status]}`}>
+            {EVENT_STATUS_LABEL[event.status]}
+          </span>
+        </div>
+
+        <div className="mt-4 grid grid-cols-2 gap-2 md:grid-cols-5">
+          {EVENT_STATUS_FLOW.map((status) => {
+            const active = status === event.status;
+            const busy = statusBusy === status;
+            return (
+              <button
+                key={status}
+                type="button"
+                disabled={active || !!statusBusy}
+                onClick={() => handleStatusChange(status)}
+                className={`rounded-lg border px-3 py-2 text-left transition-all disabled:cursor-not-allowed ${
+                  active
+                    ? 'border-emerald-400/35 bg-emerald-500/10 text-emerald-100'
+                    : 'border-cyan-400/15 bg-slate-900/60 text-slate-300 hover:border-cyan-300/45 hover:bg-slate-800/80 hover:text-cyan-100 disabled:opacity-55'
+                }`}
+              >
+                <span className="block text-xs font-bold uppercase tracking-wider">
+                  {busy ? 'Updating...' : EVENT_STATUS_LABEL[status]}
+                </span>
+                <span className="mt-1 block text-[11px] leading-4 text-slate-400">
+                  {EVENT_STATUS_HELP[status]}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+
+        {statusError && (
+          <div className="mt-3 rounded-lg border border-rose-400/30 bg-rose-500/10 px-3 py-2 text-sm text-rose-200">
+            {statusError}
+          </div>
+        )}
       </div>
 
       {/* ── Stat Pills ────────────────────────────────── */}
