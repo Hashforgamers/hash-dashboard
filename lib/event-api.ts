@@ -9,6 +9,15 @@ const API_BASE = DASHBOARD_URL || 'http://localhost:5000';
 export type EventStatus       = 'draft' | 'published' | 'ongoing' | 'completed' | 'canceled';
 export type PaymentStatus     = 'pending' | 'paid' | 'failed' | 'refunded';
 export type RegistrationStatus = 'pending' | 'confirmed' | 'rejected' | 'canceled';
+export type TournamentFormat =
+  | 'single_elimination'
+  | 'double_elimination'
+  | 'swiss'
+  | 'round_robin'
+  | 'group_playoffs'
+  | 'ladder'
+  | 'daily_cup';
+export type VetoMode = 'none' | 'bo1_ban_until_decider' | 'bo3_ban_pick_decider';
 
 export interface EventPayload {
   title: string;
@@ -17,6 +26,17 @@ export interface EventPayload {
   end_at: string;
   registration_fee?: number;
   currency?: string;
+  game?: string;
+  format?: TournamentFormat;
+  prize_pool?: number;
+  team_size?: number;
+  match_rules?: string;
+  region?: string;
+  server?: string;
+  check_in_starts_at?: string;
+  check_in_ends_at?: string;
+  map_pool?: string[];
+  veto_mode?: VetoMode;
   registration_deadline?: string;
   capacity_team?: number;
   capacity_player?: number;
@@ -34,9 +54,27 @@ export interface EventPayload {
 export interface EventItem {
   id: string;
   title: string;
+  description?: string | null;
   status: EventStatus;
   start_at: string;
   end_at: string;
+  registration_fee?: number;
+  currency?: string;
+  game?: string;
+  format?: TournamentFormat;
+  prize_pool?: number;
+  team_size?: number;
+  match_rules?: string | null;
+  region?: string | null;
+  server?: string | null;
+  check_in_starts_at?: string | null;
+  check_in_ends_at?: string | null;
+  map_pool?: string[];
+  veto_mode?: VetoMode;
+  capacity_team?: number | null;
+  capacity_player?: number | null;
+  min_team_size?: number;
+  max_team_size?: number;
   banner_image_url?: string | null;
 }
 
@@ -51,6 +89,8 @@ export interface Registration {
   waiver_signed: boolean;
   payment_status: PaymentStatus;
   status: RegistrationStatus;
+  checked_in_at?: string | null;
+  seed_number?: number | null;
   notes: string | null;
   created_at: string;
 }
@@ -73,6 +113,52 @@ export interface WinnerInput {
 export interface BannerUploadResult {
   url: string;
   public_id: string;
+}
+
+export type MatchStatus =
+  | 'pending'
+  | 'ready'
+  | 'lobby_created'
+  | 'in_progress'
+  | 'awaiting_results'
+  | 'disputed'
+  | 'completed'
+  | 'admin_closed';
+
+export interface TournamentMatch {
+  id: string;
+  event_id: string;
+  round_number: number;
+  match_number: number;
+  status: MatchStatus;
+  team_a_id: string | null;
+  team_b_id: string | null;
+  team_a_name?: string | null;
+  team_b_name?: string | null;
+  winner_team_id: string | null;
+  winner_team_name?: string | null;
+  scheduled_at?: string | null;
+  lobby_instructions?: string | null;
+  map_name?: string | null;
+  server_region?: string | null;
+  admin_notes?: string | null;
+  map_pool?: string[];
+  veto_mode?: VetoMode;
+  team_a_captain_confirmed_at?: string | null;
+  team_b_captain_confirmed_at?: string | null;
+  observer_user_id?: number | null;
+  stream_url?: string | null;
+  match_timer_started_at?: string | null;
+}
+
+export interface BracketRound {
+  round_number: number;
+  matches: TournamentMatch[];
+}
+
+export interface TournamentBracket {
+  event_id: string;
+  rounds: BracketRound[];
 }
 
 // ─── JWT ─────────────────────────────────────────────────────────────────────
@@ -125,6 +211,20 @@ export async function listEvents(
   });
 }
 
+export async function getEvent(
+  token: string,
+  eventId: string
+): Promise<EventItem> {
+  return httpJson<EventItem>(`${API_BASE}/api/vendor/events/${eventId}`, {
+    headers: { Authorization: `Bearer ${token}` },
+    timeoutMs: 10_000,
+    retries: 2,
+    dedupe: true,
+    dedupeKey: `GET:${API_BASE}/api/vendor/events/${eventId}`,
+    cacheTtlMs: 10_000,
+  });
+}
+
 export async function updateEvent(
   token: string,
   eventId: string,
@@ -160,6 +260,102 @@ export async function getRegistrations(
   } catch {
     return [];
   }
+}
+
+export async function openCheckIn(token: string, eventId: string): Promise<{ ok: boolean; check_in_starts_at: string }> {
+  return httpJson(`${API_BASE}/api/vendor/events/${eventId}/check-in/open`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+    timeoutMs: 10_000,
+    retries: 0,
+  });
+}
+
+export async function closeCheckIn(token: string, eventId: string): Promise<{ ok: boolean; check_in_ends_at: string }> {
+  return httpJson(`${API_BASE}/api/vendor/events/${eventId}/check-in/close`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+    timeoutMs: 10_000,
+    retries: 0,
+  });
+}
+
+export async function generateBracket(
+  token: string,
+  eventId: string,
+  options: { require_check_in?: boolean; force?: boolean } = {}
+): Promise<TournamentBracket> {
+  return httpJson<TournamentBracket>(`${API_BASE}/api/vendor/events/${eventId}/bracket/generate`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(options),
+    timeoutMs: 20_000,
+    retries: 0,
+  });
+}
+
+export async function getBracket(token: string, eventId: string): Promise<TournamentBracket> {
+  return httpJson<TournamentBracket>(`${API_BASE}/api/vendor/events/${eventId}/bracket`, {
+    headers: { Authorization: `Bearer ${token}` },
+    timeoutMs: 10_000,
+    retries: 1,
+  });
+}
+
+export async function getMatches(token: string, eventId: string): Promise<TournamentMatch[]> {
+  return httpJson<TournamentMatch[]>(`${API_BASE}/api/vendor/events/${eventId}/matches`, {
+    headers: { Authorization: `Bearer ${token}` },
+    timeoutMs: 10_000,
+    retries: 1,
+  });
+}
+
+export async function startMatch(token: string, eventId: string, matchId: string): Promise<TournamentMatch> {
+  return httpJson<TournamentMatch>(`${API_BASE}/api/vendor/events/${eventId}/matches/${matchId}/start`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+    timeoutMs: 10_000,
+    retries: 0,
+  });
+}
+
+export async function submitAdminMatchResult(
+  token: string,
+  eventId: string,
+  matchId: string,
+  payload: { winner_team_id: string; team_a_score?: number; team_b_score?: number; screenshot_url?: string; notes?: string }
+): Promise<TournamentMatch> {
+  return httpJson<TournamentMatch>(`${API_BASE}/api/vendor/events/${eventId}/matches/${matchId}/admin-result`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(payload),
+    timeoutMs: 15_000,
+    retries: 0,
+  });
+}
+
+export async function resolveMatchDispute(
+  token: string,
+  eventId: string,
+  matchId: string,
+  payload: { winner_team_id?: string; resolution?: string }
+): Promise<TournamentMatch> {
+  return httpJson<TournamentMatch>(`${API_BASE}/api/vendor/events/${eventId}/matches/${matchId}/resolve-dispute`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(payload),
+    timeoutMs: 15_000,
+    retries: 0,
+  });
 }
 
 export async function getTeams(
