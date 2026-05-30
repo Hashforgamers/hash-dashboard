@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Plus, Search, MoreHorizontal, Trophy,
-  ChevronLeft, ChevronRight, Sparkles,
+  ChevronLeft, ChevronRight, Sparkles, RefreshCw,
 } from 'lucide-react';
 import { useEventsToken } from '@/hooks/useEventsToken';
 import { jwtDecode } from "jwt-decode"
@@ -46,6 +46,7 @@ export default function TournamentsPage() {
 
   const [events,       setEvents]       = useState<EventItem[]>([]);
   const [loadingData,  setLoadingData]  = useState(false);
+  const [dataError,    setDataError]    = useState<string | null>(null);
   const [search,       setSearch]       = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [page,         setPage]         = useState(1);
@@ -84,14 +85,31 @@ export default function TournamentsPage() {
     if (!token) return;
     if (cachedEvents) {
       setEvents(cachedEvents);
-      return;
     }
     setLoadingData(true);
+    setDataError(null);
     refreshEventsCache(true)
       .then((data) => setEvents(data || []))
-      .catch(console.error)
+      .catch((error) => {
+        console.error(error);
+        setDataError(error instanceof Error ? error.message : 'Failed to load tournaments.');
+      })
       .finally(() => setLoadingData(false));
   }, [token, statusFilter, cachedEvents, refreshEventsCache]);
+
+  const handleRefreshEvents = async () => {
+    setLoadingData(true);
+    setDataError(null);
+    try {
+      const data = await refreshEventsCache(true);
+      setEvents(data || []);
+    } catch (error) {
+      console.error(error);
+      setDataError(error instanceof Error ? error.message : 'Failed to load tournaments.');
+    } finally {
+      setLoadingData(false);
+    }
+  };
 
   const filtered   = events.filter((e) =>
     e.title.toLowerCase().includes(search.toLowerCase())
@@ -166,7 +184,21 @@ export default function TournamentsPage() {
               <option key={s} value={s}>{STATUS_LABEL[s]}</option>
             ))}
           </select>
+          <button
+            className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-cyan-300/25 bg-slate-900/70 px-3 text-xs font-semibold text-slate-200 transition-all hover:border-cyan-300/45 hover:bg-slate-800/80 hover:text-cyan-100 disabled:opacity-50"
+            onClick={handleRefreshEvents}
+            disabled={loadingData}
+          >
+            <RefreshCw className={`icon-sm ${loadingData ? 'animate-spin' : ''}`} />
+            Refresh
+          </button>
         </div>
+
+        {dataError && (
+          <div className="rounded-lg border border-rose-400/30 bg-rose-500/10 px-3 py-2 text-sm text-rose-200">
+            {dataError}
+          </div>
+        )}
 
         {/* ── Table ────────────────────────────────────── */}
         <div className="dashboard-table-shell">
@@ -200,9 +232,16 @@ export default function TournamentsPage() {
                       <p className="body-text-muted">
                         {search || statusFilter
                           ? 'No tournaments match your filters.'
-                          : 'No tournaments yet.'}
+                          : loadingData
+                            ? 'Checking latest tournaments...'
+                            : 'No tournaments returned for this cafe.'}
                       </p>
-                      {!search && !statusFilter && (
+                      {!search && !statusFilter && !loadingData && (
+                        <p className="max-w-md text-xs text-slate-400">
+                          If you just created one, use Refresh. If it still does not appear, the tournament may belong to another selected cafe/vendor.
+                        </p>
+                      )}
+                      {!search && !statusFilter && !loadingData && (
                         <button
                           className="btn-primary"
                           onClick={() => router.push('/tournaments/create')}
