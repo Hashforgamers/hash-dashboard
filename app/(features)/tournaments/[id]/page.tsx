@@ -9,10 +9,12 @@ import {
 } from 'lucide-react';
 import { useEventsToken } from '@/hooks/useEventsToken';
 import {
-  listEvents, getRegistrations,
+  getRegistrations,
   EventItem, Registration,
   EventStatus, RegistrationStatus, PaymentStatus,
   getTeams, TeamItem, publishResults, WinnerInput,
+  getEvent, getMatches, openCheckIn, closeCheckIn, generateBracket,
+  startMatch, submitAdminMatchResult, resolveMatchDispute, TournamentMatch,
 } from '@/lib/event-api';
 import { jwtDecode } from 'jwt-decode';
 import { DashboardLayout } from '@/app/(layout)/dashboard-layout';
@@ -65,10 +67,15 @@ export default function TournamentDetailPage() {
   const [loadingEvent,  setLoadingEvent]  = useState(true);
   const [loadingRegs,   setLoadingRegs]   = useState(true);
   const [teams,         setTeams]         = useState<TeamItem[]>([]);
+  const [matches,       setMatches]       = useState<TournamentMatch[]>([]);
   const [loadingTeams,  setLoadingTeams]  = useState(true);
+  const [loadingMatches,setLoadingMatches]= useState(true);
   const [search,        setSearch]        = useState('');
   const [regFilter,     setRegFilter]     = useState('');
   const [publishError,  setPublishError]  = useState<string | null>(null);
+  const [engineError,   setEngineError]   = useState<string | null>(null);
+  const [engineBusy,    setEngineBusy]    = useState<string | null>(null);
+  const [selectedWinners, setSelectedWinners] = useState<Record<string, string>>({});
   const [publishing,    setPublishing]    = useState(false);
   const [winners,       setWinners]       = useState<WinnerInput[]>([
     { rank: 1, team_id: '', verified_snapshot: '' },
@@ -103,8 +110,7 @@ export default function TournamentDetailPage() {
     eventKey,
     async () => {
       if (!token) return null;
-      const evs = await listEvents(token);
-      return evs.find((e) => e.id === eventId) ?? null;
+      return getEvent(token, eventId);
     },
     120000,
     versionKey
@@ -129,6 +135,18 @@ export default function TournamentDetailPage() {
     120000,
     versionKey
   );
+
+  const refreshMatches = async () => {
+    if (!token) return [];
+    setLoadingMatches(true);
+    try {
+      const data = await getMatches(token, eventId);
+      setMatches(data || []);
+      return data || [];
+    } finally {
+      setLoadingMatches(false);
+    }
+  };
   useEffect(() => {
     if (!token) return;
     if (cachedEvent) {
@@ -171,6 +189,11 @@ export default function TournamentDetailPage() {
       .finally(() => setLoadingTeams(false));
   }, [token, eventId, cachedTeams, refreshTeamsCache]);
 
+  useEffect(() => {
+    if (!token) return;
+    refreshMatches().catch(console.error);
+  }, [token, eventId]);
+
   // Helpers
   const fmt = (iso: string) =>
     new Date(iso).toLocaleDateString('en-US', {
@@ -191,6 +214,30 @@ export default function TournamentDetailPage() {
   const confirmed = registrations.filter((r) => r.status === 'confirmed').length;
   const pending   = registrations.filter((r) => r.status === 'pending').length;
   const paid      = registrations.filter((r) => r.payment_status === 'paid').length;
+  const checkedIn = registrations.filter((r) => r.checked_in_at).length;
+  const rounds = matches.reduce<Record<number, TournamentMatch[]>>((acc, match) => {
+    acc[match.round_number] = acc[match.round_number] || [];
+    acc[match.round_number].push(match);
+    return acc;
+  }, {});
+
+  const runEngineAction = async (key: string, action: () => Promise<unknown>) => {
+    if (!token) return;
+    setEngineError(null);
+    setEngineBusy(key);
+    try {
+      await action();
+      await Promise.all([
+        refreshEventCache(true).then((ev) => setEvent(ev ?? null)).catch(() => null),
+        refreshMatches().catch(() => []),
+        refreshRegsCache(true).then((data) => setRegistrations(data || [])).catch(() => null),
+      ]);
+    } catch (error: any) {
+      setEngineError(error?.message || 'Tournament engine action failed.');
+    } finally {
+      setEngineBusy(null);
+    }
+  };
 
   const handleWinnerChange = (index: number, patch: Partial<WinnerInput>) => {
     setWinners((prev) => {
@@ -392,7 +439,7 @@ export default function TournamentDetailPage() {
           { label: 'Total',     value: registrations.length, color: 'icon-blue',    icon: <Users        className="icon-md text-blue-400"    /> },
           { label: 'Confirmed', value: confirmed,            color: 'icon-green',   icon: <CheckCircle2 className="icon-md text-green-400"   /> },
           { label: 'Pending',   value: pending,              color: 'icon-yellow',  icon: <Clock        className="icon-md text-yellow-400"  /> },
-          { label: 'Paid',      value: paid,                 color: 'icon-emerald', icon: <CreditCard   className="icon-md text-emerald-400" /> },
+          { label: 'Checked In',value: checkedIn,            color: 'icon-emerald', icon: <CreditCard   className="icon-md text-emerald-400" /> },
         ].map(({ label, value, color, icon }) => (
           <div key={label} className="gaming-kpi-card rounded-xl border border-border p-4">
             <div className="flex items-center justify-between">
@@ -404,6 +451,159 @@ export default function TournamentDetailPage() {
             </div>
           </div>
         ))}
+      </div>
+
+      {/* Tournament Engine */}
+      <div className="gaming-panel rounded-xl border border-cyan-400/20 bg-slate-950/45 p-4 sm:p-5">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h3 className="section-title">Tournament Engine</h3>
+            <p className="premium-subtle text-sm">
+              {event.game || 'valorant'} | {event.format || 'single_elimination'} | Prize {event.currency || 'INR'} {event.prize_pool ?? 0}
+            </p>
+            <p className="premium-subtle text-sm">
+              Server {event.server || event.region || 'TBD'} | Veto {event.veto_mode || 'none'}
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <button
+              className="dashboard-btn-secondary inline-flex items-center justify-center gap-2 px-3 py-2 text-xs"
+              disabled={!!engineBusy}
+              onClick={() => runEngineAction('open-check-in', () => openCheckIn(token!, eventId))}
+            >
+              {engineBusy === 'open-check-in' ? 'Opening...' : 'Open Check-in'}
+            </button>
+            <button
+              className="dashboard-btn-secondary inline-flex items-center justify-center gap-2 px-3 py-2 text-xs"
+              disabled={!!engineBusy}
+              onClick={() => runEngineAction('close-check-in', () => closeCheckIn(token!, eventId))}
+            >
+              {engineBusy === 'close-check-in' ? 'Closing...' : 'Close Check-in'}
+            </button>
+            <button
+              className="dashboard-btn-primary inline-flex items-center justify-center gap-2 px-3 py-2 text-xs"
+              disabled={!!engineBusy}
+              onClick={() => runEngineAction('generate-bracket', () => generateBracket(token!, eventId, { require_check_in: checkedIn > 0, force: matches.length > 0 }))}
+            >
+              {engineBusy === 'generate-bracket' ? 'Generating...' : matches.length ? 'Regenerate Bracket' : 'Generate Bracket'}
+            </button>
+          </div>
+        </div>
+
+        {engineError && (
+          <div className="mt-3 rounded-lg border border-rose-400/30 bg-rose-500/10 px-3 py-2 text-sm text-rose-200">
+            {engineError}
+          </div>
+        )}
+
+        {event.match_rules && (
+          <div className="mt-4 rounded-lg border border-cyan-400/15 bg-slate-900/60 p-3">
+            <p className="text-xs font-bold uppercase tracking-wider text-cyan-100/80">Match Rules</p>
+            <p className="mt-1 whitespace-pre-wrap text-sm text-slate-200">{event.match_rules}</p>
+          </div>
+        )}
+
+        <div className="mt-4">
+          <div className="mb-3 flex items-center justify-between gap-3">
+            <h4 className="text-sm font-semibold text-cyan-100">Bracket & Matches</h4>
+            <span className="text-xs text-slate-400">{loadingMatches ? 'Loading matches...' : `${matches.length} matches`}</span>
+          </div>
+
+          {matches.length === 0 ? (
+            <div className="rounded-lg border border-cyan-400/15 bg-slate-900/45 p-6 text-center text-sm text-slate-400">
+              Generate a bracket after registrations/check-in to create live match cards.
+            </div>
+          ) : (
+            <div className="flex gap-3 overflow-x-auto pb-2">
+              {Object.keys(rounds).map((roundKey) => {
+                const roundNumber = Number(roundKey);
+                return (
+                  <div key={roundKey} className="min-w-[290px] flex-1 space-y-3">
+                    <div className="rounded-lg border border-cyan-400/20 bg-slate-900/70 px-3 py-2 text-sm font-semibold text-cyan-100">
+                      Round {roundNumber}
+                    </div>
+                    {rounds[roundNumber].map((match) => {
+                      const winnerValue = selectedWinners[match.id] || match.winner_team_id || '';
+                      return (
+                        <div key={match.id} className="rounded-lg border border-cyan-400/15 bg-slate-900/60 p-3">
+                          <div className="mb-2 flex items-center justify-between gap-2">
+                            <span className="text-xs font-bold uppercase tracking-wider text-cyan-100/80">
+                              Match {match.match_number}
+                            </span>
+                            <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${
+                              match.status === 'completed' ? 'bg-green-500/20 text-green-300' :
+                              match.status === 'disputed' ? 'bg-rose-500/20 text-rose-300' :
+                              match.status === 'in_progress' ? 'bg-blue-500/20 text-blue-300' :
+                              'bg-slate-700/80 text-slate-200'
+                            }`}>
+                              {match.status.replaceAll('_', ' ')}
+                            </span>
+                          </div>
+                          <div className="space-y-2">
+                            {[{ id: match.team_a_id, name: match.team_a_name || 'TBD' }, { id: match.team_b_id, name: match.team_b_name || 'TBD' }].map((team, idx) => (
+                              <div
+                                key={`${match.id}-${idx}`}
+                                className={`rounded-md border px-3 py-2 text-sm ${
+                                  team.id && team.id === match.winner_team_id
+                                    ? 'border-green-400/40 bg-green-500/10 text-green-100'
+                                    : 'border-cyan-400/10 bg-slate-950/50 text-slate-200'
+                                }`}
+                              >
+                                {team.name}
+                              </div>
+                            ))}
+                          </div>
+                          <div className="mt-3 space-y-2 text-xs text-slate-400">
+                            <p>Map: {match.map_name || 'Pending veto/admin'}</p>
+                            <p>Server: {match.server_region || event.server || event.region || 'TBD'}</p>
+                            {match.lobby_instructions && <p className="line-clamp-3">{match.lobby_instructions}</p>}
+                          </div>
+                          <div className="mt-3 space-y-2">
+                            <select
+                              className="dashboard-module-input h-9 w-full px-3 text-xs"
+                              value={winnerValue}
+                              onChange={(e) => setSelectedWinners((prev) => ({ ...prev, [match.id]: e.target.value }))}
+                              disabled={!match.team_a_id || !match.team_b_id || match.status === 'completed'}
+                            >
+                              <option value="">Select winner</option>
+                              {match.team_a_id && <option value={match.team_a_id}>{match.team_a_name}</option>}
+                              {match.team_b_id && <option value={match.team_b_id}>{match.team_b_name}</option>}
+                            </select>
+                            <div className="grid grid-cols-2 gap-2">
+                              <button
+                                className="dashboard-btn-secondary inline-flex items-center justify-center px-3 py-2 text-xs"
+                                disabled={!!engineBusy || !match.team_a_id || !match.team_b_id || match.status === 'completed'}
+                                onClick={() => runEngineAction(`start-${match.id}`, () => startMatch(token!, eventId, match.id))}
+                              >
+                                {engineBusy === `start-${match.id}` ? 'Starting...' : 'Start'}
+                              </button>
+                              <button
+                                className="dashboard-btn-primary inline-flex items-center justify-center px-3 py-2 text-xs"
+                                disabled={!!engineBusy || !winnerValue || match.status === 'completed'}
+                                onClick={() => runEngineAction(`result-${match.id}`, () => submitAdminMatchResult(token!, eventId, match.id, { winner_team_id: winnerValue }))}
+                              >
+                                {engineBusy === `result-${match.id}` ? 'Saving...' : 'Admin Result'}
+                              </button>
+                            </div>
+                            {match.status === 'disputed' && (
+                              <button
+                                className="w-full rounded-lg border border-rose-300/30 bg-rose-500/10 px-3 py-2 text-xs font-semibold text-rose-200 hover:bg-rose-500/20"
+                                disabled={!!engineBusy || !winnerValue}
+                                onClick={() => runEngineAction(`resolve-${match.id}`, () => resolveMatchDispute(token!, eventId, match.id, { winner_team_id: winnerValue, resolution: 'Resolved by cafe admin from dashboard.' }))}
+                              >
+                                {engineBusy === `resolve-${match.id}` ? 'Resolving...' : 'Resolve Dispute'}
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* ── Registrations Table ───────────────────────── */}
