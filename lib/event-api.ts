@@ -1,5 +1,5 @@
 import { DASHBOARD_URL } from "@/src/config/env";
-import { httpJson } from "@/lib/http-client";
+import { ApiError, httpJson } from "@/lib/http-client";
 
 const API_BASE = DASHBOARD_URL || 'http://localhost:5000';
 
@@ -161,6 +161,13 @@ export interface TournamentBracket {
   rounds: BracketRound[];
 }
 
+export interface TournamentDetail {
+  event: EventItem;
+  registrations: Registration[];
+  teams: TeamItem[];
+  matches: TournamentMatch[];
+}
+
 // ─── JWT ─────────────────────────────────────────────────────────────────────
 
 export async function getVendorJwt(
@@ -223,6 +230,33 @@ export async function getEvent(
     dedupeKey: `GET:${API_BASE}/api/vendor/events/${eventId}`,
     cacheTtlMs: 10_000,
   });
+}
+
+export async function getTournamentDetail(
+  token: string,
+  eventId: string
+): Promise<TournamentDetail> {
+  try {
+    return await httpJson<TournamentDetail>(`${API_BASE}/api/vendor/events/${eventId}/detail`, {
+      headers: { Authorization: `Bearer ${token}` },
+      timeoutMs: 10_000,
+      retries: 2,
+      dedupe: true,
+      dedupeKey: `GET:${API_BASE}/api/vendor/events/${eventId}/detail`,
+      cacheTtlMs: 7_000,
+    });
+  } catch (error) {
+    if (!(error instanceof ApiError) || error.status !== 404) {
+      throw error;
+    }
+    const [event, registrations, teams, matches] = await Promise.all([
+      getEvent(token, eventId),
+      getRegistrations(token, eventId),
+      getTeams(token, eventId),
+      getMatches(token, eventId),
+    ]);
+    return { event, registrations, teams, matches };
+  }
 }
 
 export async function updateEvent(
