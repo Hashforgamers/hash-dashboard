@@ -727,7 +727,7 @@ export default function CreateTournamentPage() {
                   <div className="mt-3 space-y-2 text-sm text-slate-300">
                     <div className="flex items-start gap-2">
                       <ShieldCheck className="mt-0.5 h-4 w-4 text-emerald-300" />
-                      <span>Open check-in from the tournament detail page after registration closes.</span>
+                      <span>Use check-in only when you want no-show teams excluded from the bracket.</span>
                     </div>
                     <div className="flex items-start gap-2">
                       <CalendarDays className="mt-0.5 h-4 w-4 text-cyan-300" />

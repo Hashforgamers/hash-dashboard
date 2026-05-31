@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useDashboardData } from "@/app/context/DashboardDataContext";
 
 export function useModuleCache<T>(
@@ -15,23 +15,30 @@ export function useModuleCache<T>(
   const version = moduleVersions[effectiveVersionKey] || 0;
   const [loading, setLoading] = useState(false);
   const data = cached?.data as T | undefined;
+  const fetcherRef = useRef(fetcher);
+  const setModuleCacheRef = useRef(setModuleCache);
+
+  useEffect(() => {
+    fetcherRef.current = fetcher;
+    setModuleCacheRef.current = setModuleCache;
+  }, [fetcher, setModuleCache]);
 
   const isFresh = useMemo(() => {
     if (!cached) return false;
     return Date.now() - cached.updatedAt < ttlMs;
   }, [cached, ttlMs]);
 
-  const refresh = async (force = false) => {
+  const refresh = useCallback(async (force = false) => {
     if (!force && isFresh && data !== undefined) return data;
     setLoading(true);
     try {
-      const next = await fetcher();
-      setModuleCache(key, next);
+      const next = await fetcherRef.current();
+      setModuleCacheRef.current(key, next);
       return next;
     } finally {
       setLoading(false);
     }
-  };
+  }, [data, isFresh, key]);
 
   useEffect(() => {
     if (!isFresh || data === undefined) {

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useCallback, useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import {
   Home, Search, Trophy,
@@ -9,13 +9,12 @@ import {
 } from 'lucide-react';
 import { useEventsToken } from '@/hooks/useEventsToken';
 import {
-  getRegistrations,
   EventItem, Registration,
   EventStatus, RegistrationStatus, PaymentStatus,
-  getTeams, TeamItem, publishResults, WinnerInput,
-  getEvent, getMatches, openCheckIn, closeCheckIn, generateBracket,
+  TeamItem, publishResults, WinnerInput,
+  getTournamentDetail, openCheckIn, closeCheckIn, generateBracket,
   startMatch, submitAdminMatchResult, resolveMatchDispute, TournamentMatch,
-  updateEvent,
+  TournamentDetail, updateEvent,
 } from '@/lib/event-api';
 import { jwtDecode } from 'jwt-decode';
 import { DashboardLayout } from '@/app/(layout)/dashboard-layout';
@@ -96,6 +95,7 @@ export default function TournamentDetailPage() {
   const [engineBusy,    setEngineBusy]    = useState<string | null>(null);
   const [statusBusy,    setStatusBusy]    = useState<EventStatus | null>(null);
   const [statusError,   setStatusError]   = useState<string | null>(null);
+  const [requireCheckInForBracket, setRequireCheckInForBracket] = useState(false);
   const [selectedWinners, setSelectedWinners] = useState<Record<string, string>>({});
   const [publishing,    setPublishing]    = useState(false);
   const [winners,       setWinners]       = useState<WinnerInput[]>([
@@ -122,98 +122,52 @@ export default function TournamentDetailPage() {
       }
     }, [cachedVendorId])
 
-  const eventKey = vendorId ? `tournament:${vendorId}:${eventId}` : "tournament:0";
-  const regsKey = `tournament_regs:${eventId}`;
-  const teamsKey = `tournament_teams:${eventId}`;
+  const detailKey = vendorId ? `tournament_detail:${vendorId}:${eventId}` : "tournament_detail:0";
   const versionKey = vendorId ? `tournaments:${vendorId}` : "tournaments:0";
 
-  const { data: cachedEvent, refresh: refreshEventCache } = useModuleCache<EventItem | null>(
-    eventKey,
+  const { data: cachedDetail, refresh: refreshDetailCache } = useModuleCache<TournamentDetail | null>(
+    detailKey,
     async () => {
       if (!token) return null;
-      return getEvent(token, eventId);
+      return getTournamentDetail(token, eventId);
     },
     120000,
     versionKey
   );
 
-  const { data: cachedRegs, refresh: refreshRegsCache } = useModuleCache<Registration[]>(
-    regsKey,
-    async () => {
-      if (!token) return [];
-      return getRegistrations(token, eventId);
-    },
-    120000,
-    versionKey
-  );
+  const hydrateDetail = useCallback((detail: TournamentDetail | null | undefined) => {
+    if (!detail) return;
+    setEvent(detail.event ?? null);
+    setRegistrations(detail.registrations || []);
+    setTeams(detail.teams || []);
+    setMatches(detail.matches || []);
+  }, []);
 
-  const { data: cachedTeams, refresh: refreshTeamsCache } = useModuleCache<TeamItem[]>(
-    teamsKey,
-    async () => {
-      if (!token) return [];
-      return getTeams(token, eventId);
-    },
-    120000,
-    versionKey
-  );
-
-  const refreshMatches = async () => {
-    if (!token) return [];
-    setLoadingMatches(true);
-    try {
-      const data = await getMatches(token, eventId);
-      setMatches(data || []);
-      return data || [];
-    } finally {
-      setLoadingMatches(false);
-    }
-  };
   useEffect(() => {
     if (!token) return;
-    if (cachedEvent) {
-      setEvent(cachedEvent);
+    if (cachedDetail) {
+      hydrateDetail(cachedDetail);
       setLoadingEvent(false);
-      return;
-    }
-    refreshEventCache(true)
-      .then((ev) => setEvent(ev ?? null))
-      .catch(console.error)
-      .finally(() => setLoadingEvent(false));
-  }, [token, eventId, cachedEvent, refreshEventCache]);
-
-  // Fetch registrations
-  useEffect(() => {
-    if (!token) return;
-    if (cachedRegs) {
-      setRegistrations(cachedRegs);
       setLoadingRegs(false);
-      return;
-    }
-    refreshRegsCache(true)
-      .then((data) => setRegistrations(data || []))
-      .catch(console.error)
-      .finally(() => setLoadingRegs(false));
-  }, [token, eventId, cachedRegs, refreshRegsCache]);
-
-  // Fetch teams
-  useEffect(() => {
-    if (!token) return;
-    if (cachedTeams) {
-      setTeams(cachedTeams);
       setLoadingTeams(false);
+      setLoadingMatches(false);
       return;
     }
-    setLoadingTeams(true);
-    refreshTeamsCache(true)
-      .then((data) => setTeams(data || []))
-      .catch(console.error)
-      .finally(() => setLoadingTeams(false));
-  }, [token, eventId, cachedTeams, refreshTeamsCache]);
 
-  useEffect(() => {
-    if (!token) return;
-    refreshMatches().catch(console.error);
-  }, [token, eventId]);
+    setLoadingEvent(true);
+    setLoadingRegs(true);
+    setLoadingTeams(true);
+    setLoadingMatches(true);
+    refreshDetailCache(true)
+      .then(hydrateDetail)
+      .catch(console.error)
+      .finally(() => {
+        setLoadingEvent(false);
+        setLoadingRegs(false);
+        setLoadingTeams(false);
+        setLoadingMatches(false);
+      });
+  }, [token, eventId, cachedDetail, refreshDetailCache, hydrateDetail]);
 
   // Helpers
   const fmt = (iso: string) =>
@@ -248,11 +202,7 @@ export default function TournamentDetailPage() {
     setEngineBusy(key);
     try {
       await action();
-      await Promise.all([
-        refreshEventCache(true).then((ev) => setEvent(ev ?? null)).catch(() => null),
-        refreshMatches().catch(() => []),
-        refreshRegsCache(true).then((data) => setRegistrations(data || [])).catch(() => null),
-      ]);
+      await refreshDetailCache(true).then(hydrateDetail).catch(() => null);
     } catch (error: any) {
       setEngineError(error?.message || 'Tournament engine action failed.');
     } finally {
@@ -267,9 +217,7 @@ export default function TournamentDetailPage() {
     try {
       await updateEvent(token, eventId, { status: nextStatus });
       setEvent((prev) => prev ? { ...prev, status: nextStatus } : prev);
-      await refreshEventCache(true).then((ev) => {
-        if (ev) setEvent(ev);
-      }).catch(() => null);
+      await refreshDetailCache(true).then(hydrateDetail).catch(() => null);
     } catch (error: any) {
       setStatusError(error?.message || 'Failed to update tournament status.');
     } finally {
@@ -553,27 +501,54 @@ export default function TournamentDetailPage() {
           </div>
           <div className="flex flex-wrap gap-2">
             <button
-              className="dashboard-btn-secondary inline-flex items-center justify-center gap-2 px-3 py-2 text-xs"
-              disabled={!!engineBusy}
-              onClick={() => runEngineAction('open-check-in', () => openCheckIn(token!, eventId))}
-            >
-              {engineBusy === 'open-check-in' ? 'Opening...' : 'Open Check-in'}
-            </button>
-            <button
-              className="dashboard-btn-secondary inline-flex items-center justify-center gap-2 px-3 py-2 text-xs"
-              disabled={!!engineBusy}
-              onClick={() => runEngineAction('close-check-in', () => closeCheckIn(token!, eventId))}
-            >
-              {engineBusy === 'close-check-in' ? 'Closing...' : 'Close Check-in'}
-            </button>
-            <button
               className="dashboard-btn-primary inline-flex items-center justify-center gap-2 px-3 py-2 text-xs"
               disabled={!!engineBusy}
-              onClick={() => runEngineAction('generate-bracket', () => generateBracket(token!, eventId, { require_check_in: checkedIn > 0, force: matches.length > 0 }))}
+              onClick={() => runEngineAction('generate-bracket', () => generateBracket(token!, eventId, { require_check_in: requireCheckInForBracket, force: matches.length > 0 }))}
             >
               {engineBusy === 'generate-bracket' ? 'Generating...' : matches.length ? 'Regenerate Bracket' : 'Generate Bracket'}
             </button>
           </div>
+        </div>
+
+        <div className="mt-4 rounded-lg border border-cyan-400/15 bg-slate-900/55 p-3">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <p className="text-sm font-semibold text-cyan-100">Bracket source</p>
+              <p className="mt-1 text-xs text-slate-400">
+                Default uses all confirmed registrations. Turn on check-in only for walk-in/LAN events where no-shows should be excluded.
+              </p>
+            </div>
+            <label className="flex cursor-pointer select-none items-center gap-2 rounded-lg border border-cyan-400/15 bg-slate-950/50 px-3 py-2 text-xs font-semibold text-slate-200">
+              <input
+                type="checkbox"
+                checked={requireCheckInForBracket}
+                onChange={(e) => setRequireCheckInForBracket(e.target.checked)}
+                className="h-4 w-4 rounded border-cyan-400/30 bg-slate-900/70 accent-cyan-400"
+              />
+              Require check-in
+            </label>
+          </div>
+          {requireCheckInForBracket && (
+            <div className="mt-3 flex flex-wrap gap-2">
+              <button
+                className="dashboard-btn-secondary inline-flex items-center justify-center gap-2 px-3 py-2 text-xs"
+                disabled={!!engineBusy}
+                onClick={() => runEngineAction('open-check-in', () => openCheckIn(token!, eventId))}
+              >
+                {engineBusy === 'open-check-in' ? 'Opening...' : 'Open Check-in'}
+              </button>
+              <button
+                className="dashboard-btn-secondary inline-flex items-center justify-center gap-2 px-3 py-2 text-xs"
+                disabled={!!engineBusy}
+                onClick={() => runEngineAction('close-check-in', () => closeCheckIn(token!, eventId))}
+              >
+                {engineBusy === 'close-check-in' ? 'Closing...' : 'Close Check-in'}
+              </button>
+              <span className="inline-flex items-center rounded-lg border border-cyan-400/10 px-3 py-2 text-xs text-slate-400">
+                {checkedIn} checked-in teams
+              </span>
+            </div>
+          )}
         </div>
 
         {engineError && (
@@ -597,7 +572,7 @@ export default function TournamentDetailPage() {
 
           {matches.length === 0 ? (
             <div className="rounded-lg border border-cyan-400/15 bg-slate-900/45 p-6 text-center text-sm text-slate-400">
-              Generate a bracket after registrations/check-in to create live match cards.
+              Generate a bracket from confirmed registrations to create live match cards.
             </div>
           ) : (
             <div className="flex gap-3 overflow-x-auto pb-2">
