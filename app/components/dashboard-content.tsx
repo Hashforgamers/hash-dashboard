@@ -4,19 +4,22 @@ import React, { useCallback, useEffect, useRef, useState } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { UpcomingBookings } from "./upcoming-booking"
 import { CurrentSlots } from "./current-slot"
+import SlotManagement from "./newSlot"
 import { motion } from "framer-motion"
 import {
   IndianRupee, CalendarCheck, WalletCards, Eye, EyeOff,
-  TrendingUp, Lock
+  TrendingUp, Lock, MonitorPlay, ExternalLink
 } from 'lucide-react'
 import { useDashboardData } from "@/app/context/DashboardDataContext"
 import { useAccess } from "@/app/context/AccessContext"
 import HashLoader from "./ui/HashLoader"
 import { useSocket } from "../context/SocketContext"
 import { useSubscription } from "@/hooks/useSubscription"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 
 const TERMINAL_BOOKING_STATUSES = ["cancelled", "canceled", "rejected", "completed", "discarded", "no_show"];
+const DASHBOARD_TABS = ["live", "booking"] as const
+type DashboardTab = (typeof DASHBOARD_TABS)[number]
 
 // ✅ Locked overlay component
 function LockedOverlay() {
@@ -45,9 +48,12 @@ function LockedOverlay() {
 }
 
 export function DashboardContent() {
+  const router = useRouter()
+  const searchParams = useSearchParams()
   const [showEarnings, setShowEarnings] = useState(false)
   const [showPending, setShowPending] = useState(false)
   const [refreshSlots, setRefreshSlots] = useState(false)
+  const [activeDashboardTab, setActiveDashboardTab] = useState<DashboardTab>("live")
   const { vendorId, landingData, refreshLanding, refreshConsoles } = useDashboardData()
   const [dashboardData, setDashboardData] = useState<any>(null)
   const [realTimeStats, setRealTimeStats] = useState<{
@@ -67,6 +73,23 @@ export function DashboardContent() {
   const { isLocked } = useSubscription()
   const { activeStaff } = useAccess()
   const isOwnerSession = (activeStaff?.role || "owner") === "owner"
+
+  useEffect(() => {
+    const requestedTab = searchParams.get("tab")
+    setActiveDashboardTab(requestedTab === "booking" ? "booking" : "live")
+  }, [searchParams])
+
+  const openDashboardTab = useCallback((tab: DashboardTab) => {
+    setActiveDashboardTab(tab)
+    const next = new URLSearchParams(searchParams.toString())
+    if (tab === "live") {
+      next.delete("tab")
+    } else {
+      next.set("tab", tab)
+    }
+    const query = next.toString()
+    router.replace(query ? `/dashboard?${query}` : "/dashboard", { scroll: false })
+  }, [router, searchParams])
 
   const showDashboardToast = useCallback((message: string, type: 'success' | 'error' | 'info' = 'info') => {
     const toast = document.createElement('div')
@@ -122,12 +145,13 @@ export function DashboardContent() {
     if (!socket || !vendorId || !isConnected) return
 
     console.log('📊 Dashboard: Setting up booking event listener for real-time stats updates')
-    joinVendor(vendorId)
+    const activeVendorId = vendorId
+    joinVendor(activeVendorId)
 
     function handleBookingEvent(data: any) {
       console.log('📅 Booking event received:', data)
       const eventVendorId = Number(data?.vendorId ?? data?.vendor_id)
-      if (eventVendorId === vendorId) {
+      if (eventVendorId === activeVendorId) {
         const status = (data.status || '').toLowerCase()
         const bookingStatus = String(data?.booking_status || '').toLowerCase()
         if (status === 'pending_acceptance' || bookingStatus === 'pending_acceptance') {
@@ -152,7 +176,7 @@ export function DashboardContent() {
     function handleUpcomingBookingEvent(data: any) {
       console.log('📅 Upcoming booking event received:', data)
       const eventVendorId = Number(data?.vendorId ?? data?.vendor_id)
-      if (eventVendorId === vendorId && (data.status === 'Confirmed' || data.status === 'confirmed')) {
+      if (eventVendorId === activeVendorId && (data.status === 'Confirmed' || data.status === 'confirmed')) {
         setRealTimeStats(prev => ({
           ...prev,
           todayBookings: (prev.todayBookings || 0) + 1,
@@ -163,7 +187,7 @@ export function DashboardContent() {
 
     function handleConsoleAvailabilityEvent(data: any) {
       const eventVendorId = Number(data?.vendorId ?? data?.vendor_id)
-      if (eventVendorId === vendorId && data?.console_id !== undefined) {
+      if (eventVendorId === activeVendorId && data?.console_id !== undefined) {
         // Keep dashboard reactive without relying on removed local booking state.
         setRefreshSlots((prev) => !prev)
         loadConsoleData()
@@ -172,7 +196,7 @@ export function DashboardContent() {
 
     function handleBookingPaymentUpdate(data: any) {
       const eventVendorId = Number(data?.vendorId ?? data?.vendor_id)
-      if (eventVendorId !== vendorId) return
+      if (eventVendorId !== activeVendorId) return
       const eventType = String(data?.event || "").toLowerCase()
       if (eventType === "meals_added") {
         const bookingId = data?.bookingId ?? data?.booking_id
@@ -208,7 +232,7 @@ export function DashboardContent() {
     }
 
     function handleSocketResync() {
-      joinVendor(vendorId)
+      joinVendor(activeVendorId)
       loadLandingData()
       loadConsoleData()
     }
@@ -470,48 +494,88 @@ export function DashboardContent() {
                 {isOwnerSession ? mobileMetricsStrip : null}
               </div>
             </div>
+
+            <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
+              <div className="tab-container">
+                <button
+                  type="button"
+                  onClick={() => openDashboardTab("live")}
+                  className={activeDashboardTab === "live" ? "tab-active" : "tab-inactive"}
+                >
+                  <MonitorPlay className="h-4 w-4" />
+                  <span>Live View</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => openDashboardTab("booking")}
+                  className={activeDashboardTab === "booking" ? "tab-active" : "tab-inactive"}
+                >
+                  <CalendarCheck className="h-4 w-4" />
+                  <span>Booking</span>
+                </button>
+              </div>
+              <button
+                type="button"
+                onClick={() => router.push("/booking")}
+                className="dashboard-action-button h-9 text-xs"
+                title="Open the full booking command center"
+              >
+                <ExternalLink className="h-3.5 w-3.5" />
+                Full Booking Center
+              </button>
+            </div>
           </motion.div>
 
-          {/* Main Layout Grid */}
-          <div className="mt-2 grid grid-cols-1 gap-2 max-md:mt-1 max-md:gap-1.5 sm:mt-3 sm:gap-3 xl:grid-cols-12 flex-1 min-h-0 max-md:h-[calc(100svh-14rem)] max-md:min-h-[520px] max-md:grid-rows-[1.05fr_0.95fr]">
+          {activeDashboardTab === "booking" ? (
+            <motion.div
+              key="dashboard-booking"
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mt-2 min-h-0 flex-1 overflow-hidden rounded-xl sm:mt-3"
+            >
+              <div className="gaming-panel h-full min-h-0 overflow-hidden rounded-xl p-0">
+                <SlotManagement embedded />
+              </div>
+            </motion.div>
+          ) : (
+            <div className="mt-2 grid grid-cols-1 gap-2 max-md:mt-1 max-md:gap-1.5 sm:mt-3 sm:gap-3 xl:grid-cols-12 flex-1 min-h-0 max-md:h-[calc(100svh-16.5rem)] max-md:min-h-[520px] max-md:grid-rows-[1.05fr_0.95fr]">
+              {/* Left Column */}
+              <div className="space-y-2 sm:space-y-4 flex flex-col min-h-0 xl:col-span-8 2xl:col-span-9 max-md:h-full max-md:min-h-0">
+                {/* ✅ Current Slots - locked when subscription expired */}
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3 }}
+                  className="flex-1 min-h-0 lg:h-full max-md:overflow-hidden"
+                >
+                  <div className="relative h-full overflow-hidden">
+                    <CurrentSlots
+                      currentSlots={dashboardData.currentSlots}
+                      historyBookings={dashboardData.historyBookings || []}
+                      refreshSlots={refreshSlots}
+                      setRefreshSlots={setRefreshSlots}
+                    />
+                  </div>
+                </motion.div>
+              </div>
 
-            {/* Left Column */}
-            <div className="space-y-2 sm:space-y-4 flex flex-col min-h-0 xl:col-span-8 2xl:col-span-9 max-md:h-full max-md:min-h-0">
-
-              {/* ✅ Current Slots - locked when subscription expired */}
+              {/* ✅ Right Column - Upcoming Bookings - locked when subscription expired */}
               <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3 }}
-                className="flex-1 min-h-0 lg:h-full max-md:overflow-hidden"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.4 }}
+                className="flex flex-col min-h-0 xl:col-span-4 2xl:col-span-3 xl:h-full max-md:h-full max-md:min-h-0"
               >
-                <div className="relative h-full overflow-hidden">
-                  <CurrentSlots
-                    currentSlots={dashboardData.currentSlots}
-                    historyBookings={dashboardData.historyBookings || []}
-                    refreshSlots={refreshSlots}
+                <div className="relative flex-1 min-h-[320px] overflow-hidden rounded-xl xl:h-full xl:min-h-0 max-md:min-h-0 max-md:h-full">
+                  <UpcomingBookings
+                    upcomingBookings={dashboardData.upcomingBookings || []}
+                    vendorId={vendorId?.toString()}
                     setRefreshSlots={setRefreshSlots}
                   />
                 </div>
               </motion.div>
             </div>
-
-            {/* ✅ Right Column - Upcoming Bookings - locked when subscription expired */}
-            <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.4 }}
-              className="flex flex-col min-h-0 xl:col-span-4 2xl:col-span-3 xl:h-full max-md:h-full max-md:min-h-0"
-            >
-              <div className="relative flex-1 min-h-[320px] overflow-hidden rounded-xl xl:h-full xl:min-h-0 max-md:min-h-0 max-md:h-full">
-                <UpcomingBookings
-                  upcomingBookings={dashboardData.upcomingBookings || []}
-                  vendorId={vendorId?.toString()}
-                  setRefreshSlots={setRefreshSlots}
-                />
-              </div>
-            </motion.div>
-          </div>
+          )}
 
           </div>
         </div>
