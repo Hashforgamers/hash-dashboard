@@ -1,7 +1,8 @@
 import { useState, useEffect, useMemo, useRef } from "react";
+import Link from "next/link";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, Gamepad2, Monitor, Headset, Loader2, RefreshCw, UtensilsCrossed, Plus, ChevronDown, ChevronUp, Phone, Mail } from "lucide-react";
+import { Search, Gamepad2, Monitor, Headset, Loader2, RefreshCw, UtensilsCrossed, Plus, ChevronDown, ChevronUp, Phone, Mail, CalendarCheck } from "lucide-react";
 import { jwtDecode } from "jwt-decode";
 import { FaCheck, FaPowerOff } from 'react-icons/fa';
 import { BOOKING_URL, DASHBOARD_URL } from "@/src/config/env";
@@ -1020,6 +1021,14 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
             </div>
 
             <div className="live-session-tools flex w-full items-center gap-2 sm:w-auto sm:justify-end">
+              <Link
+                href="/dashboard?tab=booking"
+                className="dashboard-action-button h-10 shrink-0 px-2.5 text-xs"
+                title="Create or manage bookings"
+              >
+                <CalendarCheck className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">Booking</span>
+              </Link>
               <input
                 type="date"
                 value={historyDate}
