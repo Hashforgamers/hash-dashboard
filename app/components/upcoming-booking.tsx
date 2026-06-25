@@ -1,9 +1,10 @@
 import { Card } from "@/components/ui/card";
+import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   Monitor, Play, X, Gamepad2, Calendar, Clock, User, Search,
   DollarSign, CalendarDays, Users, Timer, AlertCircle, Filter, Phone, Mail,
-  BadgeCheck, Calendar as CalendarIcon, ChevronDown, RefreshCw, UtensilsCrossed, Plus
+  BadgeCheck, Calendar as CalendarIcon, ChevronDown, RefreshCw, UtensilsCrossed, Plus, ExternalLink
 } from "lucide-react";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faIndianRupeeSign } from '@fortawesome/free-solid-svg-icons'
@@ -1153,15 +1154,25 @@ export function UpcomingBookings({
               {filteredBookings.length}
             </span>
           </div>
-          <ResponsiveSearchFilter
-            searchTerm={searchTerm}
-            setSearchTerm={setSearchTerm}
-            selectedDate={selectedDate}
-            setSelectedDate={setSelectedDate}
-            timeFilter={timeFilter}
-            setTimeFilter={setTimeFilter}
-            className="w-full sm:w-[300px] lg:w-[330px]"
-          />
+          <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center sm:justify-end">
+            <Link
+              href="/dashboard?tab=booking"
+              className="dashboard-action-button h-10 justify-center px-2.5 text-xs sm:w-auto"
+              title="Open booking inside dashboard"
+            >
+              <ExternalLink className="h-3.5 w-3.5" />
+              Booking
+            </Link>
+            <ResponsiveSearchFilter
+              searchTerm={searchTerm}
+              setSearchTerm={setSearchTerm}
+              selectedDate={selectedDate}
+              setSelectedDate={setSelectedDate}
+              timeFilter={timeFilter}
+              setTimeFilter={setTimeFilter}
+              className="w-full sm:w-[300px] lg:w-[330px]"
+            />
+          </div>
         </div>
 
         {/* 🚀 FIXED: Scrollable content area that takes remaining space */}
