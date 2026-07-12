@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import { useEventsToken } from '@/hooks/useEventsToken';
 import { jwtDecode } from "jwt-decode"
-import { listEvents, EventItem, EventStatus } from '@/lib/event-api';
+import { listEvents, EventItem, EventStatus, withEffectiveEventStatus } from '@/lib/event-api';
 import { DashboardLayout } from '@/app/(layout)/dashboard-layout';
 import { useModuleCache } from '@/app/hooks/useModuleCache';
 import { useDashboardData } from '@/app/context/DashboardDataContext';
@@ -75,7 +75,8 @@ export default function TournamentsPage() {
     cacheKey,
     async () => {
       if (!token) return [];
-      return listEvents(token, statusFilter || undefined);
+      const data = await listEvents(token, statusFilter || undefined);
+      return data.map(withEffectiveEventStatus);
     },
     120000,
     versionKey
@@ -84,12 +85,12 @@ export default function TournamentsPage() {
   useEffect(() => {
     if (!token) return;
     if (cachedEvents) {
-      setEvents(cachedEvents);
+      setEvents(cachedEvents.map(withEffectiveEventStatus));
     }
     setLoadingData(true);
     setDataError(null);
     refreshEventsCache(true)
-      .then((data) => setEvents(data || []))
+      .then((data) => setEvents((data || []).map(withEffectiveEventStatus)))
       .catch((error) => {
         console.error(error);
         setDataError(error instanceof Error ? error.message : 'Failed to load tournaments.');
@@ -102,7 +103,7 @@ export default function TournamentsPage() {
     setDataError(null);
     try {
       const data = await refreshEventsCache(true);
-      setEvents(data || []);
+      setEvents((data || []).map(withEffectiveEventStatus));
     } catch (error) {
       console.error(error);
       setDataError(error instanceof Error ? error.message : 'Failed to load tournaments.');

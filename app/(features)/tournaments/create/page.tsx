@@ -10,7 +10,7 @@ import {
   Eye, EyeOff, Zap,
 } from 'lucide-react';
 import { useEventsToken } from '@/hooks/useEventsToken';
-import { createEvent, uploadEventBanner, deleteEventBanner, EventStatus, TournamentFormat, VetoMode } from '@/lib/event-api';
+import { createEvent, uploadEventBanner, deleteEventBanner, EventStatus, TournamentFormat, VetoMode, getEffectiveEventStatus } from '@/lib/event-api';
 import { jwtDecode } from 'jwt-decode';
 import { DashboardLayout } from '@/app/(layout)/dashboard-layout';
 import { useDashboardData } from '@/app/context/DashboardDataContext';
@@ -438,6 +438,22 @@ export default function CreateTournamentPage() {
     deadline: deadline,
   };
 
+  const expectedStatus = startDate && endDate
+    ? getEffectiveEventStatus({
+        status: form.status,
+        start_at: startDate.toISOString(),
+        end_at: endDate.toISOString(),
+      })
+    : form.status;
+
+  const expectedStatusLabel: Record<EventStatus, string> = {
+    draft: 'Draft',
+    published: 'Published',
+    ongoing: 'Live',
+    completed: 'Completed',
+    canceled: 'Canceled',
+  };
+
   // ── Validation + Submit ───────────────────────────
   const handleSubmit = async () => {
     if (!token)                          return setError('Session not ready. Please wait a moment.');
@@ -535,7 +551,7 @@ export default function CreateTournamentPage() {
             </div>
             <div>
               <p className="text-[10px] font-bold uppercase tracking-wider text-cyan-100/60">Status</p>
-              <p className="mt-1 text-sm font-semibold text-slate-100">{form.status === 'published' ? 'Publishing' : 'Draft'}</p>
+              <p className="mt-1 text-sm font-semibold text-slate-100">{expectedStatusLabel[expectedStatus]}</p>
             </div>
             <div className="col-span-2 grid grid-cols-5 gap-1">
               {readyChecks.map((item) => (

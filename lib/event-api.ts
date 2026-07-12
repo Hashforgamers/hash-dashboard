@@ -168,6 +168,29 @@ export interface TournamentDetail {
   matches: TournamentMatch[];
 }
 
+const DATE_MANAGED_EVENT_STATUSES: EventStatus[] = ['published', 'ongoing'];
+
+export function getEffectiveEventStatus(event: Pick<EventItem, 'status' | 'start_at' | 'end_at'>): EventStatus {
+  if (!DATE_MANAGED_EVENT_STATUSES.includes(event.status)) {
+    return event.status;
+  }
+
+  const startAt = new Date(event.start_at).getTime();
+  const endAt = new Date(event.end_at).getTime();
+  const now = Date.now();
+
+  if (!Number.isFinite(startAt) || !Number.isFinite(endAt)) {
+    return event.status;
+  }
+  if (now > endAt) return 'completed';
+  if (now >= startAt) return 'ongoing';
+  return 'published';
+}
+
+export function withEffectiveEventStatus<T extends Pick<EventItem, 'status' | 'start_at' | 'end_at'>>(event: T): T {
+  return { ...event, status: getEffectiveEventStatus(event) };
+}
+
 // ─── JWT ─────────────────────────────────────────────────────────────────────
 
 export async function getVendorJwt(
