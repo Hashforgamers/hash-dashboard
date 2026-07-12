@@ -14,7 +14,7 @@ import {
   TeamItem, publishResults, WinnerInput,
   getTournamentDetail, openCheckIn, closeCheckIn, generateBracket,
   startMatch, submitAdminMatchResult, resolveMatchDispute, TournamentMatch,
-  TournamentDetail, updateEvent,
+  TournamentDetail, updateEvent, withEffectiveEventStatus,
 } from '@/lib/event-api';
 import { jwtDecode } from 'jwt-decode';
 import { DashboardLayout } from '@/app/(layout)/dashboard-layout';
@@ -137,7 +137,7 @@ export default function TournamentDetailPage() {
 
   const hydrateDetail = useCallback((detail: TournamentDetail | null | undefined) => {
     if (!detail) return;
-    setEvent(detail.event ?? null);
+    setEvent(detail.event ? withEffectiveEventStatus(detail.event) : null);
     setRegistrations(detail.registrations || []);
     setTeams(detail.teams || []);
     setMatches(detail.matches || []);
@@ -216,7 +216,7 @@ export default function TournamentDetailPage() {
     setStatusBusy(nextStatus);
     try {
       await updateEvent(token, eventId, { status: nextStatus });
-      setEvent((prev) => prev ? { ...prev, status: nextStatus } : prev);
+      setEvent((prev) => prev ? withEffectiveEventStatus({ ...prev, status: nextStatus }) : prev);
       await refreshDetailCache(true).then(hydrateDetail).catch(() => null);
     } catch (error: any) {
       setStatusError(error?.message || 'Failed to update tournament status.');
