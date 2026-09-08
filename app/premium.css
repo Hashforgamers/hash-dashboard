@@ -1749,3 +1749,143 @@ h6 {
     scroll-behavior: auto !important;
   }
 }
+
+/* Apple-inspired dashboard polish */
+.dashboard-nav-surface {
+  background: rgba(12, 12, 14, 0.82);
+  backdrop-filter: blur(26px) saturate(1.22);
+  -webkit-backdrop-filter: blur(26px) saturate(1.22);
+}
+
+.dashboard-nav-item {
+  min-height: 2.25rem;
+  border-radius: 0.5rem;
+  font-size: 0.86rem;
+  font-weight: 500;
+}
+
+.gaming-nav-active {
+  color: #f5f5f7;
+  background: rgba(48, 209, 88, 0.14);
+  border-color: rgba(48, 209, 88, 0.24);
+  box-shadow: inset 3px 0 0 #30d158;
+}
+
+.dashboard-nav-icon-active {
+  color: #30d158;
+}
+
+.dashboard-module-panel,
+.gaming-panel {
+  background: linear-gradient(180deg, rgba(28, 28, 30, 0.82) 0%, rgba(18, 18, 20, 0.78) 100%);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.gaming-kpi-card,
+.dashboard-module-card {
+  background: rgba(44, 44, 46, 0.56);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.gaming-kpi-card {
+  min-height: 4.25rem;
+}
+
+.dash-kpi-label {
+  color: #e5e5ea;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.dash-title,
+.live-session-title {
+  color: #f5f5f7;
+  font-size: 1rem;
+  font-weight: 650;
+}
+
+.dashboard-table-shell,
+.live-session-table-shell {
+  background: rgba(28, 28, 30, 0.44);
+  border-color: rgba(255, 255, 255, 0.1);
+  border-radius: 0.65rem;
+}
+
+.dashboard-module-table-head {
+  background: rgba(58, 58, 60, 0.72);
+}
+
+.dashboard-module-table-header,
+.dashboard-table th {
+  color: #a1a1a6;
+  font-size: 0.7rem;
+  font-weight: 650;
+  text-transform: none;
+}
+
+.dashboard-module-table td,
+.dashboard-table td {
+  color: #f5f5f7;
+  font-size: 0.86rem;
+}
+
+.dashboard-module-row:hover,
+.dashboard-table tbody tr:hover {
+  background: rgba(255, 255, 255, 0.045);
+}
+
+.dashboard-module-input {
+  min-height: 2.5rem;
+  background: rgba(58, 58, 60, 0.36);
+  border-color: rgba(255, 255, 255, 0.12);
+  color: #f5f5f7;
+}
+
+.dashboard-module-input::placeholder {
+  color: #8e8e93;
+}
+
+.dashboard-module-input:focus {
+  border-color: rgba(10, 132, 255, 0.72);
+  box-shadow: 0 0 0 3px rgba(10, 132, 255, 0.16);
+}
+
+.dashboard-action-button {
+  min-height: 2.25rem;
+  border-color: rgba(255, 255, 255, 0.12);
+  background: rgba(58, 58, 60, 0.38);
+  color: #f5f5f7;
+}
+
+.dashboard-action-button:hover {
+  background: rgba(72, 72, 74, 0.58);
+}
+
+.tab-container,
+.dashboard-module-tab-group {
+  border-color: rgba(255, 255, 255, 0.12);
+  background: rgba(58, 58, 60, 0.34);
+}
+
+.tab-active,
+.dashboard-module-tab-active {
+  background: rgba(255, 255, 255, 0.14);
+  color: #f5f5f7;
+}
+
+.tab-inactive,
+.dashboard-module-tab {
+  color: #a1a1a6;
+}
+
+.live-session-count {
+  min-width: 1.55rem;
+  height: 1.55rem;
+  border-color: rgba(48, 209, 88, 0.3);
+  background: rgba(48, 209, 88, 0.13);
+  color: #30d158;
+}
+
+.dashboard-module-empty {
+  color: #8e8e93;
+}
