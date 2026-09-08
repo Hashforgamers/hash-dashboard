@@ -364,7 +364,7 @@ export default function LoginPage() {
     <div className="premium-shell flex min-h-screen items-center justify-center overflow-hidden p-4 sm:p-6">
       {forceResetOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/65 p-4">
-          <div className="w-full max-w-md rounded-xl border border-slate-700/70 bg-slate-950 p-5 shadow-2xl">
+          <div className="w-full max-w-md rounded-lg border border-white/10 bg-[#1c1c1e]/95 p-5 shadow-2xl backdrop-blur-xl">
             <h3 className="text-lg font-semibold text-white">Set New Password</h3>
             <p className="mt-1 text-sm text-slate-300">
               Your temporary password is active. Set a new password to continue.
@@ -423,10 +423,10 @@ export default function LoginPage() {
         </div>
       )}
       <div className="relative z-10 w-full max-w-md">
-        <Card className="premium-card overflow-hidden rounded-xl border border-slate-700/60 bg-transparent shadow-[0_18px_50px_rgba(2,6,23,0.38)] backdrop-blur-xl">
-          <CardHeader className="space-y-4 border-b border-slate-700/60 px-8 pb-6 pt-8 text-center">
+        <Card className="premium-card overflow-hidden rounded-lg border border-white/10 bg-transparent shadow-[0_18px_44px_rgba(0,0,0,0.28)] backdrop-blur-xl">
+          <CardHeader className="space-y-4 border-b border-white/10 px-8 pb-6 pt-8 text-center">
             <div className="mb-2 flex justify-center">
-              <div className="relative flex h-20 w-20 items-center justify-center rounded-xl border border-slate-700/70 bg-slate-900/80">
+              <div className="relative flex h-20 w-20 items-center justify-center rounded-lg border border-white/10 bg-white/[0.06] shadow-inner">
                 <Image
                   src="/hash_for_gamer_logo.png"
                   alt="Hash for Gamers"
@@ -436,10 +436,10 @@ export default function LoginPage() {
                 />
               </div>
             </div>
-            <CardTitle className="premium-heading mb-1 text-2xl font-semibold text-[#F7FAFC]">
+            <CardTitle className="premium-heading mb-1 text-2xl font-semibold text-[#f5f5f7]">
               Sign in to Hash
             </CardTitle>
-            <CardDescription className="mx-auto max-w-sm text-[15px] font-medium text-[rgba(255,255,255,0.82)]">
+            <CardDescription className="mx-auto max-w-sm text-[15px] font-medium text-[#a1a1a6]">
               Access your gaming cafe operations dashboard.
             </CardDescription>
           </CardHeader>
@@ -455,7 +455,7 @@ export default function LoginPage() {
                   name="email"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-xs font-semibold text-slate-300">
+                      <FormLabel className="text-xs font-medium text-[#c7c7cc]">
                         Email Address
                       </FormLabel>
                       <FormControl>
@@ -463,7 +463,7 @@ export default function LoginPage() {
                           placeholder="Enter your email"
                           type="email"
                           autoComplete="email"
-                          className="h-11 rounded-lg border border-slate-700/80 bg-slate-950/60 px-3 text-[15px] text-[#F7FAFC] placeholder:text-slate-500 focus:border-sky-400 focus:ring-2 focus:ring-sky-400/20"
+                          className="h-11 rounded-lg border border-white/10 bg-white/[0.06] px-3 text-[15px] text-[#f5f5f7] placeholder:text-[#6e6e73] focus:border-[#0a84ff] focus:ring-2 focus:ring-[#0a84ff]/20"
                           {...field}
                           onChange={(e) => {
                             field.onChange(e);
@@ -482,12 +482,12 @@ export default function LoginPage() {
                   render={({ field }) => (
                     <FormItem>
                       <div className="flex justify-between items-center">
-                        <FormLabel className="text-xs font-semibold text-slate-300">
+                        <FormLabel className="text-xs font-medium text-[#c7c7cc]">
                           Password
                         </FormLabel>
                         <Link
                           href="/login/forget-password"
-                          className="text-xs font-semibold text-sky-300 transition-colors duration-200 hover:text-emerald-300"
+                          className="text-xs font-medium text-[#0a84ff] transition-colors duration-200 hover:text-[#64d2ff]"
                         >
                           Forgot password?
                         </Link>
@@ -496,7 +496,7 @@ export default function LoginPage() {
                         <PasswordInput
                           placeholder="Enter your password"
                           autoComplete="current-password"
-                          className="h-11 rounded-lg border border-slate-700/80 bg-slate-950/60 px-3 text-[15px] text-[#F7FAFC] placeholder:text-slate-500 focus:border-sky-400 focus:ring-2 focus:ring-sky-400/20"
+                          className="h-11 rounded-lg border border-white/10 bg-white/[0.06] px-3 text-[15px] text-[#f5f5f7] placeholder:text-[#6e6e73] focus:border-[#0a84ff] focus:ring-2 focus:ring-[#0a84ff]/20"
                           {...field}
                           onChange={(e) => {
                             field.onChange(e);
@@ -510,8 +510,8 @@ export default function LoginPage() {
                 />
 
                 {loginError && (
-                  <div className="rounded-lg border border-amber-400/25 bg-amber-500/10 p-3">
-                    <p className="text-sm text-center flex items-center justify-center gap-2 text-[#F97316]">
+                  <div className="rounded-lg border border-[#ff9f0a]/25 bg-[#ff9f0a]/10 p-3">
+                    <p className="text-sm text-center flex items-center justify-center gap-2 text-[#ffb340]">
                       <Shield className="h-4 w-4" />
                       {loginError}
                     </p>
@@ -520,7 +520,7 @@ export default function LoginPage() {
 
                 <Button
                   type="submit"
-                  className="h-11 w-full rounded-lg border border-emerald-400/30 bg-emerald-500 font-semibold text-slate-950 shadow-[0_14px_32px_rgba(34,197,94,0.18)] transition-all duration-200 hover:bg-emerald-400 active:scale-[0.99]"
+                  className="h-11 w-full rounded-lg border border-[#0a84ff]/30 bg-[#0a84ff] font-semibold text-white shadow-[0_14px_32px_rgba(10,132,255,0.2)] transition-all duration-200 hover:bg-[#0071e3] active:scale-[0.99]"
                   disabled={loading}
                 >
                   {loading ? (
@@ -535,14 +535,14 @@ export default function LoginPage() {
               </form>
             </Form>
 
-            <div className="flex items-center justify-center gap-4 border-t border-slate-700/50 pt-4">
-              <div className="flex items-center gap-2 text-[12px] font-medium text-slate-400">
+            <div className="flex items-center justify-center gap-4 border-t border-white/10 pt-4">
+              <div className="flex items-center gap-2 text-[12px] font-medium text-[#8e8e93]">
                 <Shield className="w-3 h-3" />
                 <span>Secure Login</span>
               </div>
-              <div className="h-1 w-1 rounded-full bg-slate-600"></div>
-              <div className="flex items-center gap-2 text-[12px] font-medium text-slate-400">
-                <span className="h-2 w-2 rounded-full bg-emerald-400/70" />
+              <div className="h-1 w-1 rounded-full bg-[#48484a]"></div>
+              <div className="flex items-center gap-2 text-[12px] font-medium text-[#8e8e93]">
+                <span className="h-2 w-2 rounded-full bg-[#30d158]/80" />
                 <span>Encrypted Session</span>
               </div>
             </div>
@@ -550,7 +550,7 @@ export default function LoginPage() {
         </Card>
 
         <div className="mt-6 text-center">
-          <p className="text-sm font-medium text-slate-500">
+          <p className="text-sm font-medium text-[#6e6e73]">
             © {new Date().getFullYear()} Hash for Gamers. All rights reserved.
           </p>
         </div>
