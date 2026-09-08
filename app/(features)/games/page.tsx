@@ -337,11 +337,11 @@ export default function GamesManagementPage() {
 
   return (
     <DashboardLayout contentScroll="contained">
-      <div className="dashboard-module dashboard-typography flex h-full min-h-0 flex-1 flex-col gap-3 sm:gap-4">
+      <div className="dashboard-module dashboard-typography dashboard-page-shell h-full">
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="gaming-panel shrink-0 rounded-xl p-4 sm:p-5"
+          className="gaming-panel"
         >
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>

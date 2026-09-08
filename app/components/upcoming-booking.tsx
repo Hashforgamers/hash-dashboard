@@ -1246,7 +1246,7 @@ export function UpcomingBookings({
                         duration: 0.3, 
                         delay: index * 0.02 
                       }}
-                      className="dashboard-module-card rounded-lg p-2 transition-all duration-200 hover:border-emerald-300/40 hover:shadow-[0_0_20px_rgba(16,185,129,0.08)] sm:p-2.5"
+                      className="dashboard-module-card rounded-lg p-2 transition-colors duration-200 hover:border-white/20 sm:p-2.5"
                     >
                       <div className="space-y-1.5">
                         {/* Compact identity row */}

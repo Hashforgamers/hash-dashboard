@@ -1149,35 +1149,86 @@ h6 {
   min-height: 0;
   flex: 1 1 auto;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 0.85rem;
+}
+
+.dashboard-page-shell {
+  display: flex;
+  min-height: 0;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 0.9rem;
+  color: #f5f5f7;
+}
+
+.dashboard-page-shell > .gaming-panel:first-child,
+.dashboard-page-shell > [class*="gaming-panel"]:first-child {
+  flex-shrink: 0;
+  border-radius: 0.6rem;
+  padding: 1rem 1.15rem;
+}
+
+.dashboard-page-shell h1.premium-heading,
+.dashboard-page-shell .premium-heading {
+  color: #f5f5f7;
+  font-size: 1.25rem;
+  font-weight: 650;
+  line-height: 1.15;
+}
+
+.dashboard-page-shell .premium-subtle {
+  color: #a1a1a6;
+  font-size: 0.86rem;
+}
+
+.dashboard-page-shell .premium-heading svg,
+.dashboard-page-shell > .gaming-panel:first-child svg {
+  color: #8e8e93 !important;
 }
 
 .feature-page-header {
   flex-shrink: 0;
-  border-radius: 0.75rem;
-  padding: 1rem;
+  border-radius: 0.6rem;
+  padding: 0.9rem 1rem;
+  background: rgba(28, 28, 30, 0.68);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .feature-page-header-row {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 0.5rem;
   flex-wrap: wrap;
+}
+
+.feature-page-header-row svg {
+  color: #8e8e93 !important;
+}
+
+.feature-page-header .premium-heading {
+  color: #f5f5f7;
+  font-size: 1.25rem;
+  font-weight: 650;
+  line-height: 1.15;
 }
 
 .feature-page-subtitle {
   margin-top: 0.25rem;
   max-width: 60ch;
-  font-size: var(--dash-fs-sm);
-  line-height: 1.5;
+  color: #a1a1a6;
+  font-size: 0.86rem;
+  line-height: 1.45;
 }
 
 .feature-page-content {
   min-height: 0;
   flex: 1 1 auto;
   overflow: hidden;
-  border-radius: 0.75rem;
-  padding: 0.5rem;
+  border-radius: 0.6rem;
+  padding: 0.75rem;
+  background: rgba(28, 28, 30, 0.54);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .feature-page-content-scroll {
@@ -1194,40 +1245,97 @@ h6 {
 .feature-page-shell [class*="bg-gray-"],
 .feature-page-shell [class*="bg-zinc-"],
 .feature-page-shell [class*="bg-blue-"],
+.feature-page-shell [class*="bg-cyan-"],
+.feature-page-shell [class*="bg-sky-"],
+.feature-page-shell [class*="bg-purple-"],
+.feature-page-shell [class*="bg-fuchsia-"],
 .feature-page-shell [class*="dark:bg-slate-"],
 .feature-page-shell [class*="dark:bg-gray-"],
 .feature-page-shell [class*="dark:bg-zinc-"],
 .feature-page-shell [class*="dark:bg-blue-"],
+.feature-page-shell [class*="dark:bg-cyan-"],
+.feature-page-shell [class*="dark:bg-sky-"],
+.feature-page-shell [class*="dark:bg-purple-"],
+.feature-page-shell [class*="dark:bg-fuchsia-"],
 .dashboard-module [class*="bg-slate-"],
 .dashboard-module [class*="bg-gray-"],
 .dashboard-module [class*="bg-zinc-"],
 .dashboard-module [class*="bg-blue-"],
+.dashboard-module [class*="bg-cyan-"],
+.dashboard-module [class*="bg-sky-"],
+.dashboard-module [class*="bg-purple-"],
+.dashboard-module [class*="bg-fuchsia-"],
 .dashboard-module [class*="dark:bg-slate-"],
 .dashboard-module [class*="dark:bg-gray-"],
 .dashboard-module [class*="dark:bg-zinc-"],
-.dashboard-module [class*="dark:bg-blue-"] {
-  background: linear-gradient(180deg, rgba(255,255,255,0.055) 0%, rgba(255,255,255,0.02) 100%) !important;
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+.dashboard-module [class*="dark:bg-blue-"],
+.dashboard-module [class*="dark:bg-cyan-"],
+.dashboard-module [class*="dark:bg-sky-"],
+.dashboard-module [class*="dark:bg-purple-"],
+.dashboard-module [class*="dark:bg-fuchsia-"] {
+  background: rgba(58, 58, 60, 0.36) !important;
+  backdrop-filter: blur(18px) saturate(1.14);
+  -webkit-backdrop-filter: blur(18px) saturate(1.14);
 }
 
 .feature-page-shell [class*="border-slate-"],
 .feature-page-shell [class*="border-gray-"],
 .feature-page-shell [class*="border-zinc-"],
 .feature-page-shell [class*="border-blue-"],
+.feature-page-shell [class*="border-cyan-"],
+.feature-page-shell [class*="border-sky-"],
+.feature-page-shell [class*="border-purple-"],
+.feature-page-shell [class*="border-fuchsia-"],
 .feature-page-shell [class*="dark:border-slate-"],
 .feature-page-shell [class*="dark:border-gray-"],
 .feature-page-shell [class*="dark:border-zinc-"],
 .feature-page-shell [class*="dark:border-blue-"],
+.feature-page-shell [class*="dark:border-cyan-"],
+.feature-page-shell [class*="dark:border-sky-"],
+.feature-page-shell [class*="dark:border-purple-"],
+.feature-page-shell [class*="dark:border-fuchsia-"],
 .dashboard-module [class*="border-slate-"],
 .dashboard-module [class*="border-gray-"],
 .dashboard-module [class*="border-zinc-"],
 .dashboard-module [class*="border-blue-"],
+.dashboard-module [class*="border-cyan-"],
+.dashboard-module [class*="border-sky-"],
+.dashboard-module [class*="border-purple-"],
+.dashboard-module [class*="border-fuchsia-"],
 .dashboard-module [class*="dark:border-slate-"],
 .dashboard-module [class*="dark:border-gray-"],
 .dashboard-module [class*="dark:border-zinc-"],
-.dashboard-module [class*="dark:border-blue-"] {
-  border-color: rgba(255,255,255,0.08) !important;
+.dashboard-module [class*="dark:border-blue-"],
+.dashboard-module [class*="dark:border-cyan-"],
+.dashboard-module [class*="dark:border-sky-"],
+.dashboard-module [class*="dark:border-purple-"],
+.dashboard-module [class*="dark:border-fuchsia-"] {
+  border-color: rgba(255,255,255,0.1) !important;
+}
+
+.feature-page-shell [class*="text-cyan-"],
+.feature-page-shell [class*="text-sky-"],
+.feature-page-shell [class*="text-blue-"],
+.feature-page-shell [class*="text-purple-"],
+.feature-page-shell [class*="text-fuchsia-"],
+.dashboard-module [class*="text-cyan-"],
+.dashboard-module [class*="text-sky-"],
+.dashboard-module [class*="text-blue-"],
+.dashboard-module [class*="text-purple-"],
+.dashboard-module [class*="text-fuchsia-"] {
+  color: #64d2ff !important;
+}
+
+.feature-page-shell [class*="shadow-cyan-"],
+.feature-page-shell [class*="shadow-blue-"],
+.feature-page-shell [class*="shadow-purple-"],
+.feature-page-shell [class*="hover:scale-"],
+.dashboard-module [class*="shadow-cyan-"],
+.dashboard-module [class*="shadow-blue-"],
+.dashboard-module [class*="shadow-purple-"],
+.dashboard-module [class*="hover:scale-"] {
+  box-shadow: none !important;
+  transform: none !important;
 }
 
 @media (min-width: 640px) {
@@ -1236,11 +1344,11 @@ h6 {
   }
 
   .feature-page-header {
-    padding: 1.25rem;
+    padding: 1rem 1.15rem;
   }
 
   .feature-page-content {
-    padding: 0.75rem;
+    padding: 0.9rem;
   }
 }
 
@@ -1887,5 +1995,57 @@ h6 {
 }
 
 .dashboard-module-empty {
+  color: #8e8e93;
+}
+
+.premium-shell [class*="tracking-"],
+.dashboard-module [class*="tracking-"],
+.feature-page-shell [class*="tracking-"],
+.dashboard-page-shell [class*="tracking-"] {
+  letter-spacing: 0 !important;
+}
+
+.premium-shell .rounded-2xl,
+.premium-shell .rounded-3xl,
+.dashboard-module .rounded-2xl,
+.dashboard-module .rounded-3xl,
+.feature-page-shell .rounded-2xl,
+.feature-page-shell .rounded-3xl,
+.dashboard-page-shell .rounded-2xl,
+.dashboard-page-shell .rounded-3xl {
+  border-radius: 0.75rem !important;
+}
+
+.premium-shell [class*="shadow-[0_0"],
+.premium-shell [class*="hover:shadow-[0_0"],
+.dashboard-module [class*="shadow-[0_0"],
+.dashboard-module [class*="hover:shadow-[0_0"],
+.feature-page-shell [class*="shadow-[0_0"],
+.feature-page-shell [class*="hover:shadow-[0_0"],
+.dashboard-page-shell [class*="shadow-[0_0"],
+.dashboard-page-shell [class*="hover:shadow-[0_0"] {
+  box-shadow: none !important;
+}
+
+.premium-shell [class*="hover:scale-"],
+.dashboard-module [class*="hover:scale-"],
+.feature-page-shell [class*="hover:scale-"],
+.dashboard-page-shell [class*="hover:scale-"] {
+  transform: none !important;
+}
+
+.premium-shell :is(input, select, textarea),
+.dashboard-module :is(input, select, textarea),
+.feature-page-shell :is(input, select, textarea),
+.dashboard-page-shell :is(input, select, textarea) {
+  border-color: rgba(255, 255, 255, 0.12);
+  background: rgba(58, 58, 60, 0.36);
+  color: #f5f5f7;
+}
+
+.premium-shell :is(input, select, textarea)::placeholder,
+.dashboard-module :is(input, select, textarea)::placeholder,
+.feature-page-shell :is(input, select, textarea)::placeholder,
+.dashboard-page-shell :is(input, select, textarea)::placeholder {
   color: #8e8e93;
 }
