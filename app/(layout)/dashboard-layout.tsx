@@ -30,7 +30,7 @@ export function DashboardLayout({ children, contentScroll = "page" }: DashboardL
   const pathname = usePathname()
   const router = useRouter()
   const { activeStaff } = useAccess()
-  const { isLocked } = useSubscription()
+  const { isLocked, status: subscriptionStatus, refreshStatus } = useSubscription()
   const { isConnected } = useSocket()
   const { vendorId, consoles, refreshLanding, refreshConsoles } = useDashboardData()
   const hasAccess = activeStaff ? canAccessPath(pathname, activeStaff.permissions) : true
@@ -92,13 +92,13 @@ export function DashboardLayout({ children, contentScroll = "page" }: DashboardL
     if (isManualRefreshing) return
     setIsManualRefreshing(true)
     try {
-      await Promise.all([refreshLanding(true), refreshConsoles(true)])
+      await Promise.all([refreshStatus(), refreshLanding(true), refreshConsoles(true)])
     } catch (err) {
       console.error("Global ribbon refresh failed:", err)
     } finally {
       setIsManualRefreshing(false)
     }
-  }, [isManualRefreshing, refreshLanding, refreshConsoles])
+  }, [isManualRefreshing, refreshStatus, refreshLanding, refreshConsoles])
 
   useEffect(() => {
     try {
@@ -244,8 +244,13 @@ export function DashboardLayout({ children, contentScroll = "page" }: DashboardL
                 <div className="w-full max-w-xl rounded-2xl border border-yellow-500/30 bg-yellow-500/10 p-6 text-center">
                   <h2 className="text-xl font-semibold text-yellow-200">Subscription Inactive</h2>
                   <p className="mt-2 text-sm text-yellow-100/80">
-                    This module is locked until your subscription is renewed.
+                    {subscriptionStatus?.message || "This module is locked until your subscription is renewed."}
                   </p>
+                  {subscriptionStatus?.latest_subscription ? (
+                    <p className="mt-2 text-xs text-yellow-100/60">
+                      Latest: {subscriptionStatus.latest_subscription.status || "unknown"} · {subscriptionStatus.latest_subscription.period_start || "-"} to {subscriptionStatus.latest_subscription.period_end || "-"}
+                    </p>
+                  ) : null}
                   <Button
                     className="mt-4"
                     onClick={() => router.push("/subscription")}
