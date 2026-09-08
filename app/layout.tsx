@@ -1,6 +1,5 @@
 import { ThemeProvider } from "next-themes";
 import { AuthProvider } from "./AuthProvider";
-import { Orbitron, Rajdhani } from "next/font/google";
 import type { Metadata, Viewport } from "next";
 
 import "./globals.css";
@@ -12,20 +11,6 @@ import { DashboardDataProvider } from "./context/DashboardDataContext";
 import { DashboardDataBus } from "./context/DashboardDataBus";
 import { TableDragScroll } from "./components/TableDragScroll";
 import { MobileInstallBanner } from "./components/MobileInstallBanner";
-
-const rajdhani = Rajdhani({
-  subsets: ["latin"],
-  variable: "--font-rajdhani",
-  weight: ["300", "400", "500", "600", "700"],
-  display: "swap",
-});
-
-const orbitron = Orbitron({
-  subsets: ["latin"],
-  variable: "--font-orbitron",
-  weight: ["400", "500", "600", "700", "800", "900"],
-  display: "swap",
-});
 
 const dashboardBaseUrl =
   process.env.NEXT_PUBLIC_DASHBOARD_URL || "https://dashboard.hashforgamers.com";
@@ -73,8 +58,8 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#050505" },
-    { media: "(prefers-color-scheme: dark)", color: "#050505" },
+    { media: "(prefers-color-scheme: light)", color: "#0b0b0d" },
+    { media: "(prefers-color-scheme: dark)", color: "#0b0b0d" },
   ],
 };
 
@@ -84,28 +69,22 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html
-      lang="en"
-      suppressHydrationWarning
-      className={`${rajdhani.variable} ${orbitron.variable}`}
-    >
+    <html lang="en" suppressHydrationWarning>
       <head />
       <body className="bg-background text-foreground">
         <AuthProvider>
-          {" "}
-          {/* Wrap inside AuthProvider */}
           <ThemeProvider attribute="class" forcedTheme="dark" enableSystem={false}>
-          <SocketProvider>
-            <SubscriptionProvider>
-            <AccessProvider>
-              <DashboardDataProvider>
-                <DashboardDataBus />
-                <TableDragScroll />
-                <MobileInstallBanner />
-                {children}
-              </DashboardDataProvider>
-            </AccessProvider>
-            </SubscriptionProvider>
+            <SocketProvider>
+              <SubscriptionProvider>
+                <AccessProvider>
+                  <DashboardDataProvider>
+                    <DashboardDataBus />
+                    <TableDragScroll />
+                    <MobileInstallBanner />
+                    {children}
+                  </DashboardDataProvider>
+                </AccessProvider>
+              </SubscriptionProvider>
             </SocketProvider>
           </ThemeProvider>
         </AuthProvider>
