@@ -237,8 +237,8 @@ export default function EmployeeAccessPage() {
 
   return (
     <DashboardLayout contentScroll="page">
-      <div className="access-scope flex flex-col gap-4">
-        <div className="gaming-panel shrink-0 rounded-xl border border-cyan-500/25 p-4">
+      <div className="access-scope dashboard-module dashboard-page-shell">
+        <div className="gaming-panel">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <div className="flex items-center gap-2">
@@ -247,7 +247,7 @@ export default function EmployeeAccessPage() {
               </div>
               <p className="premium-subtle mt-1">Onboard employees with auto-generated PIN and control service access by role.</p>
             </div>
-            <div className="inline-flex items-center gap-2 rounded-lg border border-cyan-400/35 bg-cyan-500/10 px-3 py-1 text-xs text-cyan-200">
+            <div className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/[0.06] px-3 py-1 text-xs text-[#c7c7cc]">
               <Shield className="h-3.5 w-3.5" />
               Active session: {activeStaff?.name || "Owner"} ({activeStaff?.role || "owner"})
             </div>
@@ -255,16 +255,16 @@ export default function EmployeeAccessPage() {
         </div>
 
         <Tabs defaultValue="add-employee" className="flex flex-col">
-          <TabsList className="gaming-panel h-auto w-full shrink-0 gap-1 overflow-x-auto rounded-xl border border-cyan-500/25 bg-slate-900/50 p-1 sm:w-fit">
+          <TabsList className="gaming-panel h-auto w-full shrink-0 gap-1 overflow-x-auto rounded-lg border border-white/10 bg-white/[0.06] p-1 sm:w-fit">
             <TabsTrigger
               value="add-employee"
-              className="rounded-lg px-4 py-2 text-xs font-semibold tracking-[0.06em] data-[state=active]:bg-cyan-500/20 data-[state=active]:text-cyan-100"
+              className="rounded-md px-4 py-2 text-xs font-semibold data-[state=active]:bg-white/[0.14] data-[state=active]:text-white"
             >
               Add Employee
             </TabsTrigger>
             <TabsTrigger
               value="service-mapping"
-              className="rounded-lg px-4 py-2 text-xs font-semibold tracking-[0.06em] data-[state=active]:bg-cyan-500/20 data-[state=active]:text-cyan-100"
+              className="rounded-md px-4 py-2 text-xs font-semibold data-[state=active]:bg-white/[0.14] data-[state=active]:text-white"
             >
               Role to Service Mapping
             </TabsTrigger>
@@ -274,7 +274,7 @@ export default function EmployeeAccessPage() {
             value="add-employee"
             className="mt-4 data-[state=inactive]:hidden data-[state=active]:flex data-[state=active]:flex-col data-[state=active]:gap-4"
           >
-            <div className="gaming-panel shrink-0 rounded-xl border border-cyan-500/25 p-4">
+            <div className="gaming-panel rounded-lg p-4">
               <h2 className="dash-title !text-sm">Add Employee</h2>
               <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-5">
                 <div className="space-y-1 md:col-span-3">
@@ -328,8 +328,8 @@ export default function EmployeeAccessPage() {
               )}
             </div>
 
-            <div className="min-h-0 flex-1 overflow-hidden rounded-xl border border-cyan-500/25 bg-slate-900/40">
-              <div className="hidden grid-cols-12 border-b border-cyan-500/20 px-3 py-2 text-xs font-semibold uppercase tracking-[0.08em] text-slate-400 md:grid">
+            <div className="dashboard-table-shell min-h-0 flex-1 overflow-hidden rounded-lg">
+              <div className="hidden grid-cols-12 border-b border-white/10 px-3 py-2 text-xs font-semibold text-[#a1a1a6] md:grid">
                 <div className="col-span-4">Employee</div>
                 <div className="col-span-2">Role</div>
                 <div className="col-span-2">Status</div>

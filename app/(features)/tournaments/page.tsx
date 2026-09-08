@@ -141,9 +141,9 @@ export default function TournamentsPage() {
 
   return (
     <DashboardLayout contentScroll="contained">
-    <div className="flex h-full min-h-0 flex-1 flex-col gap-3 sm:gap-4" onClick={() => setOpenMenuId(null)}>
+    <div className="dashboard-module dashboard-page-shell h-full" onClick={() => setOpenMenuId(null)}>
 
-      <div className="gaming-panel shrink-0 rounded-xl p-4 sm:p-5">
+      <div className="gaming-panel">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h1 className="premium-heading flex items-center gap-2">
