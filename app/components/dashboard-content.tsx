@@ -300,12 +300,12 @@ export function DashboardContent() {
           <CardContent className="p-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-1 sm:gap-2">
-                <div className="rounded-md bg-emerald-500/12 p-1.5">
-                  <IndianRupee className="h-3.5 w-3.5 text-emerald-300" />
+                <div className="rounded-md bg-[#30d158]/12 p-1.5">
+                  <IndianRupee className="h-3.5 w-3.5 text-[#30d158]" />
                 </div>
                 <span className="dash-kpi-label">Earnings (Net)</span>
               </div>
-              <button onClick={() => setShowEarnings(!showEarnings)} className="text-emerald-400 transition-colors hover:text-emerald-300">
+              <button onClick={() => setShowEarnings(!showEarnings)} className="text-[#8e8e93] transition-colors hover:text-[#f5f5f7]">
                 {showEarnings ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
               </button>
             </div>
@@ -319,7 +319,7 @@ export function DashboardContent() {
               >
                 {showEarnings ? formatMoney(currentStats.netEarnings) : "₹•••••"}
               </motion.p>
-              <span className="text-[10px] font-semibold uppercase text-emerald-300">Today</span>
+              <span className="text-[10px] font-medium text-[#8e8e93]">Today</span>
             </div>
           </CardContent>
         </Card>
@@ -334,13 +334,13 @@ export function DashboardContent() {
           <CardContent className="p-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-1 sm:gap-2">
-                <div className="rounded-md bg-blue-500/12 p-1.5">
-                  <CalendarCheck className="h-3.5 w-3.5 text-blue-300" />
+                <div className="rounded-md bg-[#0a84ff]/12 p-1.5">
+                  <CalendarCheck className="h-3.5 w-3.5 text-[#0a84ff]" />
                 </div>
                 <span className="dash-kpi-label">Bookings</span>
               </div>
               <span
-                className={`text-[10px] font-semibold ${isConnected ? "text-emerald-300" : "text-amber-300"}`}
+                className={`text-[10px] font-medium ${isConnected ? "text-[#30d158]" : "text-[#ff9f0a]"}`}
                 title={isConnected ? "Realtime updates connected" : "Realtime reconnecting"}
               >
                 {isConnected ? "Live" : "Syncing"}
@@ -356,7 +356,7 @@ export function DashboardContent() {
               >
                 {currentStats.todayBookings}
               </motion.p>
-              <div className="flex items-center gap-1 text-[10px] text-blue-400">
+              <div className="flex items-center gap-1 text-[10px] text-[#8e8e93]">
                 <TrendingUp className="h-3 w-3" />
                 <span>Today</span>
               </div>
@@ -374,12 +374,12 @@ export function DashboardContent() {
           <CardContent className="p-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-1 sm:gap-2">
-                <div className="rounded-md bg-yellow-500/12 p-1.5">
-                  <WalletCards className="h-3.5 w-3.5 text-yellow-300" />
+                <div className="rounded-md bg-[#ff9f0a]/12 p-1.5">
+                  <WalletCards className="h-3.5 w-3.5 text-[#ff9f0a]" />
                 </div>
                 <span className="dash-kpi-label">Pending (Net)</span>
               </div>
-              <button onClick={() => setShowPending(!showPending)} className="text-yellow-400 transition-colors hover:text-yellow-300">
+              <button onClick={() => setShowPending(!showPending)} className="text-[#8e8e93] transition-colors hover:text-[#f5f5f7]">
                 {showPending ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
               </button>
             </div>
@@ -393,8 +393,8 @@ export function DashboardContent() {
               >
                 {showPending ? formatMoney(currentStats.netPendingAmount) : "₹•••••"}
               </motion.p>
-              <div className="flex items-center gap-1 text-[10px] text-yellow-400">
-                <div className="h-2 w-2 animate-pulse rounded-full bg-yellow-400" />
+              <div className="flex items-center gap-1 text-[10px] text-[#8e8e93]">
+                <div className="h-1.5 w-1.5 rounded-full bg-[#ff9f0a]" />
                 <span>Today</span>
               </div>
             </div>
@@ -405,14 +405,14 @@ export function DashboardContent() {
   )
 
   const mobileMetricsStrip = (
-    <div className="dashboard-module-card flex w-full items-center justify-between gap-1 rounded-lg border border-border/60 bg-background/45 px-1.5 py-1 md:hidden">
-      <div className="min-w-0 rounded-lg border border-blue-400/25 bg-blue-500/10 px-1.5 py-1 text-[10px] font-semibold text-blue-200">
+    <div className="dashboard-module-card flex w-full items-center justify-between gap-1 rounded-lg border border-white/10 bg-white/[0.05] px-1.5 py-1 md:hidden">
+      <div className="min-w-0 rounded-md border border-[#0a84ff]/20 bg-[#0a84ff]/10 px-1.5 py-1 text-[10px] font-medium text-[#9dccff]">
         Bk {currentStats.todayBookings}
       </div>
-      <div className="min-w-0 rounded-lg border border-yellow-400/25 bg-yellow-500/10 px-1.5 py-1 text-[10px] font-semibold text-yellow-200">
+      <div className="min-w-0 rounded-md border border-[#ff9f0a]/20 bg-[#ff9f0a]/10 px-1.5 py-1 text-[10px] font-medium text-[#ffd60a]">
         Pd {formatMoney(currentStats.netPendingAmount)}
       </div>
-      <div className="min-w-0 rounded-lg border border-emerald-400/25 bg-emerald-500/10 px-1.5 py-1 text-[10px] font-semibold text-emerald-200">
+      <div className="min-w-0 rounded-md border border-[#30d158]/20 bg-[#30d158]/10 px-1.5 py-1 text-[10px] font-medium text-[#30d158]">
         Er {formatMoney(currentStats.netEarnings)}
       </div>
     </div>
@@ -461,7 +461,7 @@ export function DashboardContent() {
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="gaming-panel shrink-0 rounded-xl p-3 max-md:p-2 md:p-3.5"
+            className="gaming-panel shrink-0 rounded-lg p-3 max-md:p-2 md:p-3.5"
           >
             <div
               className={
@@ -531,9 +531,9 @@ export function DashboardContent() {
               key="dashboard-booking"
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
-              className="mt-2 min-h-0 flex-1 overflow-hidden rounded-xl sm:mt-3"
+              className="mt-2 min-h-0 flex-1 overflow-hidden rounded-lg sm:mt-3"
             >
-              <div className="gaming-panel h-full min-h-0 overflow-hidden rounded-xl p-0">
+              <div className="gaming-panel h-full min-h-0 overflow-hidden rounded-lg p-0">
                 <SlotManagement embedded />
               </div>
             </motion.div>
@@ -566,7 +566,7 @@ export function DashboardContent() {
                 transition={{ delay: 0.4 }}
                 className="flex flex-col min-h-0 xl:col-span-4 2xl:col-span-3 xl:h-full max-md:h-full max-md:min-h-0"
               >
-                <div className="relative flex-1 min-h-[320px] overflow-hidden rounded-xl xl:h-full xl:min-h-0 max-md:min-h-0 max-md:h-full">
+                <div className="relative flex-1 min-h-[320px] overflow-hidden rounded-lg xl:h-full xl:min-h-0 max-md:min-h-0 max-md:h-full">
                   <UpcomingBookings
                     upcomingBookings={dashboardData.upcomingBookings || []}
                     vendorId={vendorId?.toString()}
