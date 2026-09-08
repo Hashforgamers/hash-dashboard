@@ -1,10 +1,9 @@
 import { Card } from "@/components/ui/card";
-import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   Monitor, Play, X, Gamepad2, Calendar, Clock, User, Search,
   DollarSign, CalendarDays, Users, Timer, AlertCircle, Filter, Phone, Mail,
-  BadgeCheck, Calendar as CalendarIcon, ChevronDown, RefreshCw, UtensilsCrossed, Plus, ExternalLink
+  BadgeCheck, Calendar as CalendarIcon, ChevronDown, RefreshCw, UtensilsCrossed, Plus
 } from "lucide-react";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faIndianRupeeSign } from '@fortawesome/free-solid-svg-icons'
@@ -1024,7 +1023,7 @@ export function UpcomingBookings({
   return (
     <>
       {/* 🚀 FIXED: Proper flex container structure */}
-      <div className="dashboard-module dashboard-module-panel h-full flex flex-col overflow-hidden rounded-2xl p-2 sm:p-3 lg:p-4">
+      <div className="dashboard-module dashboard-module-panel h-full flex flex-col overflow-hidden rounded-lg p-3 sm:p-4">
         <AnimatePresence>
           {isMounted && startCard && createPortal(
             <motion.div
@@ -1147,22 +1146,14 @@ export function UpcomingBookings({
         </AnimatePresence>
 
         {/* Header + Search */}
-        <div className="mb-3 flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center sm:gap-4 flex-shrink-0">
+        <div className="mb-3 flex flex-col items-start justify-between gap-3 flex-shrink-0">
           <div className="flex items-center gap-2">
             <h3 className="dash-title">Upcoming Session Queue</h3>
-            <span className="rounded-full border border-emerald-400/40 bg-emerald-500/15 px-2.5 py-0.5 text-sm text-emerald-200">
+            <span className="live-session-count">
               {filteredBookings.length}
             </span>
           </div>
-          <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center sm:justify-end">
-            <Link
-              href="/dashboard?tab=booking"
-              className="dashboard-action-button h-10 justify-center px-2.5 text-xs sm:w-auto"
-              title="Open booking inside dashboard"
-            >
-              <ExternalLink className="h-3.5 w-3.5" />
-              Booking
-            </Link>
+          <div className="flex w-full flex-col gap-2">
             <ResponsiveSearchFilter
               searchTerm={searchTerm}
               setSearchTerm={setSearchTerm}
@@ -1170,7 +1161,7 @@ export function UpcomingBookings({
               setSelectedDate={setSelectedDate}
               timeFilter={timeFilter}
               setTimeFilter={setTimeFilter}
-              className="w-full sm:w-[300px] lg:w-[330px]"
+              className="w-full"
             />
           </div>
         </div>

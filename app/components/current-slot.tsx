@@ -1,8 +1,7 @@
 import { useState, useEffect, useMemo, useRef } from "react";
-import Link from "next/link";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, Gamepad2, Monitor, Headset, Loader2, RefreshCw, UtensilsCrossed, Plus, ChevronDown, ChevronUp, Phone, Mail, CalendarCheck } from "lucide-react";
+import { Search, Gamepad2, Monitor, Headset, Loader2, RefreshCw, UtensilsCrossed, Plus, ChevronDown, ChevronUp, Phone, Mail } from "lucide-react";
 import { jwtDecode } from "jwt-decode";
 import { FaCheck, FaPowerOff } from 'react-icons/fa';
 import { BOOKING_URL, DASHBOARD_URL } from "@/src/config/env";
@@ -987,16 +986,16 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
   const item = { hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } };
 
   return (
-    <div className="dashboard-module dashboard-module-panel live-session-card flex h-full min-h-0 flex-col overflow-hidden rounded-2xl p-2 sm:p-3 lg:p-4">
+    <div className="dashboard-module dashboard-module-panel live-session-card flex h-full min-h-0 flex-col overflow-hidden rounded-lg p-3 sm:p-4">
       {currentSlots?.available ? (
         <div className="flex h-full items-center justify-center">
           <HashLoader />
         </div>
       ) : (
         <>
-          <div className="live-session-head mb-3 flex shrink-0 flex-col items-start justify-between gap-3 sm:flex-row sm:items-center sm:gap-4">
-            <div className="flex items-center gap-2">
-              <div className="flex items-center gap-2">
+          <div className="live-session-head mb-3 flex shrink-0 flex-col items-start justify-between gap-3 xl:flex-row xl:items-center">
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="flex items-center gap-2 pr-1">
                 <span className="dash-title live-session-title">
                   {activeTab === 'live' ? 'Live Console Sessions' : 'Past Sessions'}
                 </span>
@@ -1020,15 +1019,7 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
               </div>
             </div>
 
-            <div className="live-session-tools flex w-full items-center gap-2 sm:w-auto sm:justify-end">
-              <Link
-                href="/dashboard?tab=booking"
-                className="dashboard-action-button h-10 shrink-0 px-2.5 text-xs"
-                title="Create or manage bookings"
-              >
-                <CalendarCheck className="h-3.5 w-3.5" />
-                <span className="hidden sm:inline">Booking</span>
-              </Link>
+            <div className="live-session-tools flex w-full items-center gap-2 xl:w-auto xl:justify-end">
               <input
                 type="date"
                 value={historyDate}
@@ -1044,7 +1035,7 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                   value={searchQuery}
                   onChange={handleSearch}
                   placeholder="Search by name or console..."
-                  className="dashboard-module-input w-full rounded-lg py-2.5 !pl-10 pr-3 text-sm sm:w-56 md:w-72"
+                  className="dashboard-module-input w-full rounded-lg py-2.5 !pl-10 pr-3 text-sm sm:w-64 xl:w-80"
                 />
               </div>
             </div>
