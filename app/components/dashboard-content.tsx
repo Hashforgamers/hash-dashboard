@@ -466,12 +466,12 @@ export function DashboardContent() {
             <div
               className={
                 isOwnerSession
-                  ? "grid grid-cols-1 gap-1.5 max-md:grid-cols-[minmax(0,1fr)_minmax(138px,42vw)] max-md:items-start max-md:gap-1 lg:grid-cols-[minmax(200px,1fr)_minmax(0,1.8fr)_auto] lg:items-center"
+                  ? "grid grid-cols-1 gap-3 max-md:grid-cols-[minmax(0,1fr)_minmax(138px,42vw)] max-md:items-start max-md:gap-1 lg:grid-cols-[minmax(245px,0.8fr)_minmax(0,1.9fr)_auto] lg:items-center"
                   : "grid grid-cols-1 gap-1.5"
               }
             >
               <div className="min-w-0">
-                <div className="flex items-start justify-between gap-2 lg:block">
+                <div className="flex h-full flex-col items-start justify-between gap-3">
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2 sm:gap-3">
                       <h1 className="premium-heading dashboard-hero-title leading-tight max-md:text-[1.1rem]">
@@ -481,6 +481,24 @@ export function DashboardContent() {
                     <p className="premium-subtle mt-0.5 text-[11px] leading-relaxed sm:text-xs">
                       Live sessions, bookings, and revenue for today.
                     </p>
+                  </div>
+                  <div className="tab-container">
+                    <button
+                      type="button"
+                      onClick={() => openDashboardTab("live")}
+                      className={activeDashboardTab === "live" ? "tab-active" : "tab-inactive"}
+                    >
+                      <MonitorPlay className="h-4 w-4" />
+                      <span>Live View</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => openDashboardTab("booking")}
+                      className={activeDashboardTab === "booking" ? "tab-active" : "tab-inactive"}
+                    >
+                      <CalendarCheck className="h-4 w-4" />
+                      <span>Booking</span>
+                    </button>
                   </div>
                 </div>
               </div>
@@ -493,36 +511,17 @@ export function DashboardContent() {
               <div className="max-md:w-full max-md:self-start">
                 {isOwnerSession ? mobileMetricsStrip : null}
               </div>
-            </div>
-
-            <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
-              <div className="tab-container">
+              <div className="hidden lg:flex lg:justify-end">
                 <button
                   type="button"
-                  onClick={() => openDashboardTab("live")}
-                  className={activeDashboardTab === "live" ? "tab-active" : "tab-inactive"}
+                  onClick={() => router.push("/booking")}
+                  className="dashboard-action-button h-9 whitespace-nowrap text-xs"
+                  title="Open the full booking command center"
                 >
-                  <MonitorPlay className="h-4 w-4" />
-                  <span>Live View</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => openDashboardTab("booking")}
-                  className={activeDashboardTab === "booking" ? "tab-active" : "tab-inactive"}
-                >
-                  <CalendarCheck className="h-4 w-4" />
-                  <span>Booking</span>
+                  <ExternalLink className="h-3.5 w-3.5" />
+                  Booking Center
                 </button>
               </div>
-              <button
-                type="button"
-                onClick={() => router.push("/booking")}
-                className="dashboard-action-button h-9 text-xs"
-                title="Open the full booking command center"
-              >
-                <ExternalLink className="h-3.5 w-3.5" />
-                Full Booking Center
-              </button>
             </div>
           </motion.div>
 
