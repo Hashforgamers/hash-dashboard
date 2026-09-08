@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 html {
-  background-color: #050505 !important;
+  background-color: #070b14 !important;
   font-family: var(--font-rajdhani), "Rajdhani", Arial, Helvetica, sans-serif;
 }
 
@@ -27,25 +27,25 @@ body {
 
 @layer base {
   :root {
-    --background: 0 0% 2%;
+    --background: 222 47% 5%;
     --foreground: 210 40% 98%;
-    --card: 0 0% 6%;
+    --card: 222 36% 8%;
     --card-foreground: 210 40% 98%;
-    --popover: 0 0% 6%;
+    --popover: 222 36% 8%;
     --popover-foreground: 210 40% 98%;
-    --primary: 111 100% 50%;
-    --primary-foreground: 0 0% 3%;
-    --secondary: 0 0% 9%;
+    --primary: 142 72% 45%;
+    --primary-foreground: 222 47% 5%;
+    --secondary: 221 30% 11%;
     --secondary-foreground: 210 40% 98%;
-    --muted: 0 0% 9%;
-    --muted-foreground: 0 0% 68%;
-    --accent: 0 0% 9%;
+    --muted: 221 30% 11%;
+    --muted-foreground: 215 16% 72%;
+    --accent: 221 30% 13%;
     --accent-foreground: 210 40% 98%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 100% / 0.08;
-    --input: 0 0% 100% / 0.08;
-    --ring: 111 100% 50%;
+    --border: 215 20% 65% / 0.16;
+    --input: 215 20% 65% / 0.18;
+    --ring: 142 72% 45%;
     --chart-1: 12 76% 61%;
     --chart-2: 173 58% 39%;
     --chart-3: 197 37% 24%;
@@ -63,25 +63,25 @@ body {
   }
 
   .dark {
-    --background: 217 33% 12%;
+    --background: 222 47% 5%;
     --foreground: 210 40% 98%;
-    --card: 217 33% 16%;
+    --card: 222 36% 8%;
     --card-foreground: 210 40% 98%;
-    --popover: 217 33% 16%;
+    --popover: 222 36% 8%;
     --popover-foreground: 210 40% 98%;
-    --primary: 217 91% 60%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 217 33% 16%;
+    --primary: 142 72% 45%;
+    --primary-foreground: 222 47% 5%;
+    --secondary: 221 30% 11%;
     --secondary-foreground: 210 40% 98%;
-    --muted: 217 33% 16%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217 33% 16%;
+    --muted: 221 30% 11%;
+    --muted-foreground: 215 16% 72%;
+    --accent: 221 30% 13%;
     --accent-foreground: 210 40% 98%;
     --destructive: 0 62.8% 50%;
     --destructive-foreground: 210 40% 98%;
-    --border: 217 33% 20%;
-    --input: 217 33% 16%;
-    --ring: 217 91% 60%;
+    --border: 215 20% 65% / 0.16;
+    --input: 215 20% 65% / 0.18;
+    --ring: 142 72% 45%;
   }
 
   * {
@@ -94,7 +94,7 @@ body {
   h4,
   h5,
   h6 {
-    font-family: var(--font-orbitron), "Orbitron", Arial, Helvetica, sans-serif;
+    font-family: var(--font-rajdhani), "Rajdhani", Arial, Helvetica, sans-serif;
   }
   
 }
@@ -105,7 +105,7 @@ body {
 @layer components {
   /* Page Container - Full viewport height with proper padding */
   .page-container {
-    @apply h-screen bg-background text-foreground p-2 sm:p-4 md:p-6 flex flex-col;
+    @apply h-screen bg-background text-foreground p-3 sm:p-4 md:p-5 flex flex-col;
   }
   
   /* Page Header - Consistent spacing from top */
@@ -120,7 +120,7 @@ body {
   
   /* Page Title */
   .page-title {
-    @apply text-xl sm:text-2xl md:text-3xl font-bold text-foreground mb-2;
+    @apply text-xl sm:text-2xl md:text-3xl font-semibold text-foreground mb-2;
   }
   
   /* Page Subtitle */
@@ -140,7 +140,7 @@ body {
 @layer components {
   /* Base Card Style */
   .card-base {
-    @apply bg-card border-border backdrop-blur-sm;
+    @apply bg-card/90 border-border shadow-sm backdrop-blur-sm;
   }
   
   /* Stat Card - Small metrics cards (Earnings, Bookings, Pending) */
@@ -225,17 +225,17 @@ body {
 @layer components {
   /* Tab Container */
   .tab-container {
-    @apply flex items-center gap-2 p-1 bg-muted rounded-lg w-fit flex-shrink-0;
+    @apply flex items-center gap-1 p-1 bg-muted/80 rounded-lg w-fit flex-shrink-0 border border-border/70;
   }
   
   /* Active Tab */
   .tab-active {
-    @apply flex items-center gap-2 px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm font-medium bg-background text-foreground shadow-sm transition-all duration-200;
+    @apply flex items-center gap-2 px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm font-semibold bg-slate-700/70 text-foreground shadow-sm transition-all duration-200;
   }
   
   /* Inactive Tab */
   .tab-inactive {
-    @apply flex items-center gap-2 px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm font-medium text-muted-foreground hover:text-foreground transition-all duration-200;
+    @apply flex items-center gap-2 px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm font-medium text-muted-foreground hover:bg-slate-800/70 hover:text-foreground transition-all duration-200;
   }
 }
 
@@ -245,7 +245,7 @@ body {
 @layer components {
   /* Primary Action Button */
   .btn-primary {
-    @apply bg-blue-600 hover:bg-blue-700 text-white px-3 sm:px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 flex items-center gap-2;
+    @apply bg-primary hover:bg-primary/90 text-primary-foreground px-3 sm:px-4 py-2 rounded-lg text-sm font-semibold transition-colors duration-200 flex items-center gap-2;
   }
   
   /* Secondary Button */
@@ -260,7 +260,7 @@ body {
 
   /* Dashboard Toolbar Buttons */
   .dashboard-action-button {
-    @apply inline-flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 text-sm font-medium text-foreground transition-colors duration-200 hover:bg-muted;
+    @apply inline-flex items-center gap-2 rounded-lg border border-border/80 bg-slate-900/70 px-3 py-2 text-sm font-semibold text-foreground shadow-sm transition-colors duration-200 hover:bg-slate-800/80;
   }
   
   /* Danger Button */
@@ -280,11 +280,11 @@ body {
 @layer components {
   /* Section Headers */
   .section-title {
-    @apply text-sm sm:text-base md:text-lg font-semibold text-foreground tracking-tight;
+    @apply text-sm sm:text-base md:text-lg font-semibold text-foreground;
   }
 
   .subsection-title {
-    @apply text-sm sm:text-base md:text-lg font-semibold text-foreground tracking-tight;
+    @apply text-sm sm:text-base md:text-lg font-semibold text-foreground;
   }
   
   .section-subtitle {
@@ -293,7 +293,7 @@ body {
   
   /* Card Headers */
   .card-title {
-    @apply text-base sm:text-lg font-semibold text-foreground tracking-tight;
+    @apply text-base sm:text-lg font-semibold text-foreground;
   }
   
   .card-subtitle {
@@ -323,7 +323,7 @@ body {
   }
 
   .dashboard-hero-title {
-    @apply text-lg sm:text-xl md:text-2xl font-semibold text-foreground tracking-tight;
+    @apply text-lg sm:text-xl md:text-2xl font-semibold text-foreground;
   }
   
   /* Form Labels */
@@ -333,7 +333,7 @@ body {
   
   /* Table Text */
   .table-header-text {
-    @apply text-xs font-semibold uppercase tracking-wide text-muted-foreground;
+    @apply text-xs font-semibold uppercase text-muted-foreground;
   }
   
   .table-cell-text {
