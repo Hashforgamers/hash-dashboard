@@ -289,19 +289,19 @@ export function DashboardContent() {
       initial={{ opacity: 0, x: -20 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.3 }}
-      className="flex flex-wrap items-stretch gap-1.5 sm:gap-2 max-md:flex max-md:snap-x max-md:gap-2 max-md:overflow-x-auto max-md:pb-1 max-md:[scrollbar-width:none] max-md:[&::-webkit-scrollbar]:hidden"
+      className="flex flex-wrap items-stretch gap-2 max-md:flex max-md:snap-x max-md:overflow-x-auto max-md:pb-1 max-md:[scrollbar-width:none] max-md:[&::-webkit-scrollbar]:hidden"
     >
       <motion.div
-        animate={{ scale: realTimeStats.lastUpdate ? [1, 1.05, 1] : 1 }}
+        animate={{ opacity: 1 }}
         transition={{ duration: 0.5 }}
         className="min-w-[168px] flex-1 max-md:min-w-[64%] max-md:snap-start"
       >
         <Card className="gaming-kpi-card h-full rounded-lg transition-all duration-200">
-          <CardContent className="p-2">
+          <CardContent className="p-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-1 sm:gap-2">
-                <div className="rounded-full bg-emerald-500/20 p-1">
-                  <IndianRupee className="h-3 w-3 text-emerald-400" />
+                <div className="rounded-md bg-emerald-500/12 p-1.5">
+                  <IndianRupee className="h-3.5 w-3.5 text-emerald-300" />
                 </div>
                 <span className="dash-kpi-label">Earnings (Net)</span>
               </div>
@@ -319,23 +319,23 @@ export function DashboardContent() {
               >
                 {showEarnings ? formatMoney(currentStats.netEarnings) : "₹•••••"}
               </motion.p>
-              <span className="text-[10px] font-semibold uppercase tracking-wide text-emerald-300">Today</span>
+              <span className="text-[10px] font-semibold uppercase text-emerald-300">Today</span>
             </div>
           </CardContent>
         </Card>
       </motion.div>
 
       <motion.div
-        animate={{ scale: realTimeStats.lastUpdate ? [1, 1.05, 1] : 1 }}
+        animate={{ opacity: 1 }}
         transition={{ duration: 0.5 }}
         className="min-w-[150px] flex-1 max-md:min-w-[58%] max-md:snap-start"
       >
         <Card className="gaming-kpi-card h-full rounded-lg transition-all duration-200">
-          <CardContent className="p-2">
+          <CardContent className="p-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-1 sm:gap-2">
-                <div className="rounded-full bg-blue-500/20 p-1">
-                  <CalendarCheck className="h-3 w-3 text-blue-400" />
+                <div className="rounded-md bg-blue-500/12 p-1.5">
+                  <CalendarCheck className="h-3.5 w-3.5 text-blue-300" />
                 </div>
                 <span className="dash-kpi-label">Bookings</span>
               </div>
@@ -366,16 +366,16 @@ export function DashboardContent() {
       </motion.div>
 
       <motion.div
-        animate={{ scale: realTimeStats.lastUpdate ? [1, 1.05, 1] : 1 }}
+        animate={{ opacity: 1 }}
         transition={{ duration: 0.5 }}
         className="min-w-[168px] flex-1 max-md:min-w-[64%] max-md:snap-start"
       >
         <Card className="gaming-kpi-card h-full rounded-lg transition-all duration-200">
-          <CardContent className="p-2">
+          <CardContent className="p-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-1 sm:gap-2">
-                <div className="rounded-full bg-yellow-500/20 p-1">
-                  <WalletCards className="h-3 w-3 text-yellow-400" />
+                <div className="rounded-md bg-yellow-500/12 p-1.5">
+                  <WalletCards className="h-3.5 w-3.5 text-yellow-300" />
                 </div>
                 <span className="dash-kpi-label">Pending (Net)</span>
               </div>
@@ -405,7 +405,7 @@ export function DashboardContent() {
   )
 
   const mobileMetricsStrip = (
-    <div className="dashboard-module-card flex w-full items-center justify-between gap-1 rounded-xl border border-border/60 bg-background/45 px-1.5 py-1 md:hidden">
+    <div className="dashboard-module-card flex w-full items-center justify-between gap-1 rounded-lg border border-border/60 bg-background/45 px-1.5 py-1 md:hidden">
       <div className="min-w-0 rounded-lg border border-blue-400/25 bg-blue-500/10 px-1.5 py-1 text-[10px] font-semibold text-blue-200">
         Bk {currentStats.todayBookings}
       </div>
@@ -461,7 +461,7 @@ export function DashboardContent() {
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="gaming-panel shrink-0 rounded-xl p-2 max-md:p-1.5 md:p-2.5"
+            className="gaming-panel shrink-0 rounded-xl p-3 max-md:p-2 md:p-3.5"
           >
             <div
               className={
@@ -474,12 +474,12 @@ export function DashboardContent() {
                 <div className="flex items-start justify-between gap-2 lg:block">
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-                      <h1 className="premium-heading dashboard-hero-title leading-tight max-md:text-[1.1rem] max-md:tracking-[0.02em]">
-                        Cafe Command
+                      <h1 className="premium-heading dashboard-hero-title leading-tight max-md:text-[1.1rem]">
+                        Operations Dashboard
                       </h1>
                     </div>
-                    <p className="premium-subtle mt-0.5 text-[10.5px] leading-relaxed sm:text-xs">
-                      Live operations at a glance.
+                    <p className="premium-subtle mt-0.5 text-[11px] leading-relaxed sm:text-xs">
+                      Live sessions, bookings, and revenue for today.
                     </p>
                   </div>
                 </div>
@@ -495,7 +495,7 @@ export function DashboardContent() {
               </div>
             </div>
 
-            <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
+            <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
               <div className="tab-container">
                 <button
                   type="button"

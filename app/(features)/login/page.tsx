@@ -361,10 +361,10 @@ export default function LoginPage() {
   }, [form]);
 
   return (
-    <div className="premium-shell flex min-h-screen items-center justify-center overflow-hidden p-3 sm:p-4">
+    <div className="premium-shell flex min-h-screen items-center justify-center overflow-hidden p-4 sm:p-6">
       {forceResetOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/65 p-4">
-          <div className="w-full max-w-md rounded-2xl border border-white/20 bg-slate-950 p-5 shadow-2xl">
+          <div className="w-full max-w-md rounded-xl border border-slate-700/70 bg-slate-950 p-5 shadow-2xl">
             <h3 className="text-lg font-semibold text-white">Set New Password</h3>
             <p className="mt-1 text-sm text-slate-300">
               Your temporary password is active. Set a new password to continue.
@@ -423,29 +423,28 @@ export default function LoginPage() {
         </div>
       )}
       <div className="relative z-10 w-full max-w-md">
-        <Card className="premium-card rounded-[28px] border border-white/10 bg-transparent shadow-[0_24px_80px_rgba(0,0,0,0.45)] backdrop-blur-xl">
-          <CardHeader className="space-y-4 px-8 pb-6 pt-8 text-center">
+        <Card className="premium-card overflow-hidden rounded-xl border border-slate-700/60 bg-transparent shadow-[0_18px_50px_rgba(2,6,23,0.38)] backdrop-blur-xl">
+          <CardHeader className="space-y-4 border-b border-slate-700/60 px-8 pb-6 pt-8 text-center">
             <div className="mb-2 flex justify-center">
-              <div className="relative flex h-24 w-24 items-center justify-center rounded-[24px] border border-white/10 bg-white/5">
+              <div className="relative flex h-20 w-20 items-center justify-center rounded-xl border border-slate-700/70 bg-slate-900/80">
                 <Image
-                  src="https://res.cloudinary.com/dxjjigepf/image/upload/v1774472136/favicon_tzhgsn.svg"
+                  src="/hash_for_gamer_logo.png"
                   alt="Hash for Gamers"
-                  width={88}
-                  height={88}
-                  className="drop-shadow-2xl"
+                  width={64}
+                  height={64}
+                  className="rounded-lg"
                 />
-                <div className="absolute inset-0 rounded-[24px] bg-[radial-gradient(circle_at_top,rgba(22,255,0,0.16),transparent_55%)] blur-xl" />
               </div>
             </div>
-            <CardTitle className="premium-heading mb-1 text-[2rem] font-bold tracking-[0.08em] text-[#F7FAFC]">
-              Hash Login
+            <CardTitle className="premium-heading mb-1 text-2xl font-semibold text-[#F7FAFC]">
+              Sign in to Hash
             </CardTitle>
             <CardDescription className="mx-auto max-w-sm text-[15px] font-medium text-[rgba(255,255,255,0.82)]">
-              Enter your operator credentials to access the Hash command layer.
+              Access your gaming cafe operations dashboard.
             </CardDescription>
           </CardHeader>
 
-          <CardContent className="space-y-6 px-8 pb-8">
+          <CardContent className="space-y-6 px-8 pb-8 pt-6">
             <Form {...form}>
               <form
                 onSubmit={form.handleSubmit(onSubmit)}
@@ -456,7 +455,7 @@ export default function LoginPage() {
                   name="email"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[rgba(255,255,255,0.72)]">
+                      <FormLabel className="text-xs font-semibold text-slate-300">
                         Email Address
                       </FormLabel>
                       <FormControl>
@@ -464,7 +463,7 @@ export default function LoginPage() {
                           placeholder="Enter your email"
                           type="email"
                           autoComplete="email"
-                          className="h-12 rounded-2xl border border-white/15 bg-white/5 px-4 text-[15px] text-[#F7FAFC] placeholder:text-[rgba(255,255,255,0.68)] focus:border-[#38BDF8] focus:ring-2 focus:ring-[#38BDF8]/20"
+                          className="h-11 rounded-lg border border-slate-700/80 bg-slate-950/60 px-3 text-[15px] text-[#F7FAFC] placeholder:text-slate-500 focus:border-sky-400 focus:ring-2 focus:ring-sky-400/20"
                           {...field}
                           onChange={(e) => {
                             field.onChange(e);
@@ -483,12 +482,12 @@ export default function LoginPage() {
                   render={({ field }) => (
                     <FormItem>
                       <div className="flex justify-between items-center">
-                        <FormLabel className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[rgba(255,255,255,0.72)]">
+                        <FormLabel className="text-xs font-semibold text-slate-300">
                           Password
                         </FormLabel>
                         <Link
                           href="/login/forget-password"
-                          className="text-[11px] uppercase tracking-[0.18em] text-[#38BDF8] transition-colors duration-200 hover:text-[#16FF00]"
+                          className="text-xs font-semibold text-sky-300 transition-colors duration-200 hover:text-emerald-300"
                         >
                           Forgot password?
                         </Link>
@@ -497,7 +496,7 @@ export default function LoginPage() {
                         <PasswordInput
                           placeholder="Enter your password"
                           autoComplete="current-password"
-                          className="h-12 rounded-2xl border border-white/15 bg-white/5 px-4 text-[15px] text-[#F7FAFC] placeholder:text-[rgba(255,255,255,0.68)] focus:border-[#38BDF8] focus:ring-2 focus:ring-[#38BDF8]/20"
+                          className="h-11 rounded-lg border border-slate-700/80 bg-slate-950/60 px-3 text-[15px] text-[#F7FAFC] placeholder:text-slate-500 focus:border-sky-400 focus:ring-2 focus:ring-sky-400/20"
                           {...field}
                           onChange={(e) => {
                             field.onChange(e);
@@ -511,7 +510,7 @@ export default function LoginPage() {
                 />
 
                 {loginError && (
-                  <div className="rounded-2xl border border-[#F97316]/20 bg-[#F97316]/10 p-3">
+                  <div className="rounded-lg border border-amber-400/25 bg-amber-500/10 p-3">
                     <p className="text-sm text-center flex items-center justify-center gap-2 text-[#F97316]">
                       <Shield className="h-4 w-4" />
                       {loginError}
@@ -521,7 +520,7 @@ export default function LoginPage() {
 
                 <Button
                   type="submit"
-                  className="h-12 w-full rounded-2xl border border-[#16FF00]/30 bg-[#16FF00] font-semibold uppercase tracking-[0.14em] text-[#050505] shadow-[0_18px_45px_rgba(22,255,0,0.22)] transition-all duration-200 hover:bg-[#12e600] hover:shadow-[0_20px_55px_rgba(22,255,0,0.3)] active:scale-[0.98]"
+                  className="h-11 w-full rounded-lg border border-emerald-400/30 bg-emerald-500 font-semibold text-slate-950 shadow-[0_14px_32px_rgba(34,197,94,0.18)] transition-all duration-200 hover:bg-emerald-400 active:scale-[0.99]"
                   disabled={loading}
                 >
                   {loading ? (
@@ -536,22 +535,22 @@ export default function LoginPage() {
               </form>
             </Form>
 
-            <div className="flex items-center justify-center gap-4 pt-4">
-              <div className="flex items-center gap-2 text-[12px] font-medium text-[rgba(255,255,255,0.78)]">
+            <div className="flex items-center justify-center gap-4 border-t border-slate-700/50 pt-4">
+              <div className="flex items-center gap-2 text-[12px] font-medium text-slate-400">
                 <Shield className="w-3 h-3" />
                 <span>Secure Login</span>
               </div>
-              <div className="h-1 w-1 rounded-full bg-[rgba(255,255,255,0.6)]"></div>
-              <div className="flex items-center gap-2 text-[12px] font-medium text-[rgba(255,255,255,0.78)]">
-                <span className="h-2 w-2 rounded-full bg-[#16FF00]/70" />
-                <span>256-bit SSL</span>
+              <div className="h-1 w-1 rounded-full bg-slate-600"></div>
+              <div className="flex items-center gap-2 text-[12px] font-medium text-slate-400">
+                <span className="h-2 w-2 rounded-full bg-emerald-400/70" />
+                <span>Encrypted Session</span>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <div className="text-center mt-8">
-          <p className="text-sm font-medium text-[rgba(255,255,255,0.78)]">
+        <div className="mt-6 text-center">
+          <p className="text-sm font-medium text-slate-500">
             © {new Date().getFullYear()} Hash for Gamers. All rights reserved.
           </p>
         </div>

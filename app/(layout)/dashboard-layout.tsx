@@ -153,7 +153,7 @@ export function DashboardLayout({ children, contentScroll = "page" }: DashboardL
               alt="Hash Logo"
               width={36}
               height={36}
-              className="shrink-0 rounded-md"
+              className="shrink-0 rounded-lg"
             />
           </div>
 
@@ -172,7 +172,7 @@ export function DashboardLayout({ children, contentScroll = "page" }: DashboardL
         {showSidebar && (
           <aside
             className={`
-              dashboard-nav dashboard-nav-surface dashboard-nav-divider group fixed left-0 top-0 z-[20040] pointer-events-auto flex h-full w-[86vw] max-w-72 flex-col overflow-hidden border-r p-3 backdrop-blur-md transition-transform duration-300 ease-out
+              dashboard-nav dashboard-nav-surface dashboard-nav-divider group fixed left-0 top-0 z-[20040] pointer-events-auto flex h-full w-[86vw] max-w-72 flex-col overflow-hidden border-r p-3 backdrop-blur-xl transition-transform duration-300 ease-out
               md:sticky md:top-0 md:h-dvh md:w-72 md:max-w-none md:translate-x-0 md:shrink-0
               ${isNavPinned ? "xl:w-72" : "xl:w-[76px] xl:hover:w-72"}
               ${isNavOpen ? "translate-x-0" : "-translate-x-full"}
@@ -202,7 +202,7 @@ export function DashboardLayout({ children, contentScroll = "page" }: DashboardL
                 alt="Hash Logo"
                 width={36}
                 height={36}
-                className="shrink-0 rounded-md"
+                className="shrink-0 rounded-lg"
               />
             </div>
 
@@ -224,7 +224,7 @@ export function DashboardLayout({ children, contentScroll = "page" }: DashboardL
         <div className="relative z-0 flex min-h-0 flex-1 flex-col overflow-hidden">
           <main
             data-dashboard-scroll-root="true"
-            className={`relative z-0 min-h-0 h-full flex-1 overflow-y-auto px-2 pb-2 pt-2 sm:px-3 sm:pb-3 md:px-4 md:pb-4 md:pt-4 ${
+            className={`relative z-0 min-h-0 h-full flex-1 overflow-y-auto px-2.5 pb-2.5 pt-2.5 sm:px-4 sm:pb-4 md:px-5 md:pb-5 md:pt-5 ${
               contentScroll === "contained" ? "overflow-x-hidden" : ""
             }`}
           >
@@ -259,10 +259,10 @@ export function DashboardLayout({ children, contentScroll = "page" }: DashboardL
 
           {showGlobalRibbon && (
             <div className="dashboard-nav-divider shrink-0 border-t px-2 pb-2 pt-1.5 sm:px-3 md:px-4">
-              <div className="dashboard-module-panel flex items-center justify-between gap-1.5 rounded-lg px-2 py-1.5 text-[11px] md:flex-wrap max-md:flex-nowrap">
+              <div className="dashboard-module-panel flex items-center justify-between gap-1.5 rounded-lg px-2.5 py-1.5 text-[11px] md:flex-wrap max-md:flex-nowrap">
                 <div className="min-w-0 flex-1 max-md:overflow-x-auto max-md:[scrollbar-width:none] max-md:[&::-webkit-scrollbar]:hidden md:overflow-visible">
                   <div className="flex items-center gap-1.5 text-slate-300 md:flex-wrap max-md:w-max max-md:whitespace-nowrap">
-                    <span className="inline-flex items-center gap-1 rounded-md border border-emerald-400/30 bg-emerald-500/10 px-1.5 py-0.5 text-emerald-200">
+                    <span className="inline-flex items-center gap-1 rounded-md border border-emerald-400/25 bg-emerald-500/10 px-1.5 py-0.5 text-emerald-200">
                       <Clock className="h-3.5 w-3.5" />
                       {nowISTTimeText}
                     </span>
@@ -303,7 +303,7 @@ export function DashboardLayout({ children, contentScroll = "page" }: DashboardL
                   <button
                     type="button"
                     onClick={handleManualRefresh}
-                    className="inline-flex items-center gap-1 rounded-md border border-cyan-400/40 bg-cyan-500/10 px-2 py-0.5 text-cyan-200 hover:bg-cyan-500/20"
+                    className="inline-flex items-center gap-1 rounded-md border border-border/80 bg-slate-900/70 px-2 py-0.5 text-slate-200 hover:bg-slate-800/80"
                     disabled={isManualRefreshing}
                     title="Refresh"
                     aria-label="Refresh dashboard data"

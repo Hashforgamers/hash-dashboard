@@ -1,79 +1,77 @@
 /* Shared premium surface and motion system for core dashboard routes */
 
 :root {
-  --brand-accent: 111 100% 50%;
-  --brand-accent-strong: 111 100% 44%;
-  --brand-focus: 197 92% 60%;
-  --brand-highlight: 24 94% 55%;
-  --surface-0: 0 0% 2%;
-  --surface-1: 0 0% 6%;
-  --surface-2: 0 0% 8%;
-  --surface-strong: 0 0% 11%;
+  --brand-accent: 142 72% 45%;
+  --brand-accent-strong: 142 69% 39%;
+  --brand-focus: 199 89% 55%;
+  --brand-highlight: 38 92% 52%;
+  --surface-0: 222 47% 5%;
+  --surface-1: 222 36% 8%;
+  --surface-2: 221 30% 11%;
+  --surface-strong: 220 24% 15%;
   --surface-border: 0 0% 100%;
   --surface-muted: 0 0% 45%;
   --text-strong: 210 40% 98%;
   --text-muted: 0 0% 68%;
   --font-ui: var(--font-rajdhani), "Rajdhani", "Segoe UI", sans-serif;
-  --font-display: var(--font-orbitron), "Orbitron", "Segoe UI", sans-serif;
+  --font-display: var(--font-rajdhani), "Rajdhani", "Segoe UI", sans-serif;
   --premium-shell-bg:
-    radial-gradient(circle at top, hsl(var(--brand-accent) / 0.14), transparent 42%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.02) 100%),
-    #050505;
+    linear-gradient(180deg, hsl(222 47% 5%) 0%, hsl(224 42% 7%) 46%, hsl(225 40% 6%) 100%);
   --premium-grid-line: transparent;
-  --premium-card-border: rgba(255, 255, 255, 0.08);
-  --premium-card-bg: linear-gradient(180deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 100%);
-  --premium-card-shadow: 0 24px 80px rgba(0, 0, 0, 0.4);
+  --premium-card-border: rgba(148, 163, 184, 0.18);
+  --premium-card-bg: linear-gradient(180deg, rgba(15, 23, 42, 0.94) 0%, rgba(15, 23, 42, 0.82) 100%);
+  --premium-card-shadow: 0 18px 50px rgba(2, 6, 23, 0.34);
   --premium-subtle-text: hsl(var(--text-muted));
   --premium-title-text: hsl(var(--text-strong));
   --premium-kpi-text: hsl(var(--text-strong));
   --premium-pill-border: rgba(255,255,255,0.08);
   --premium-pill-bg: rgba(255,255,255,0.04);
   --premium-pill-text: hsl(var(--text-strong));
-  --gaming-panel-border: rgba(255,255,255,0.08);
-  --gaming-panel-bg: linear-gradient(180deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 100%);
-  --gaming-panel-shadow: 0 24px 80px rgba(0, 0, 0, 0.32);
-  --gaming-kpi-border: rgba(255,255,255,0.08);
-  --gaming-kpi-bg: linear-gradient(180deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 100%);
-  --gaming-kpi-shadow: 0 18px 36px rgba(0, 0, 0, 0.3);
-  --nav-shell-bg: rgba(255,255,255,0.03);
-  --nav-shell-border: rgba(255,255,255,0.08);
-  --nav-panel-bg: rgba(255,255,255,0.02);
-  --nav-panel-border: rgba(255,255,255,0.08);
-  --nav-divider: rgba(255,255,255,0.08);
-  --nav-hover-bg: rgba(255,255,255,0.06);
-  --nav-hover-border: rgba(255,255,255,0.08);
-  --nav-active-bg: hsl(var(--brand-accent) / 0.14);
-  --nav-active-border: rgba(22,255,0,0.35);
-  --nav-active-shadow: 0 0 0 1px hsl(var(--brand-accent) / 0.2) inset;
+  --gaming-panel-border: rgba(148, 163, 184, 0.16);
+  --gaming-panel-bg: linear-gradient(180deg, rgba(15, 23, 42, 0.9) 0%, rgba(15, 23, 42, 0.74) 100%);
+  --gaming-panel-shadow: 0 14px 36px rgba(2, 6, 23, 0.26);
+  --gaming-kpi-border: rgba(148, 163, 184, 0.16);
+  --gaming-kpi-bg: rgba(15, 23, 42, 0.78);
+  --gaming-kpi-shadow: 0 10px 28px rgba(2, 6, 23, 0.22);
+  --nav-shell-bg: rgba(8, 13, 24, 0.92);
+  --nav-shell-border: rgba(148, 163, 184, 0.16);
+  --nav-panel-bg: rgba(15, 23, 42, 0.76);
+  --nav-panel-border: rgba(148, 163, 184, 0.16);
+  --nav-divider: rgba(148, 163, 184, 0.14);
+  --nav-hover-bg: rgba(30, 41, 59, 0.8);
+  --nav-hover-border: rgba(148, 163, 184, 0.18);
+  --nav-active-bg: hsl(var(--brand-accent) / 0.13);
+  --nav-active-border: hsl(var(--brand-accent) / 0.34);
+  --nav-active-shadow: inset 3px 0 0 hsl(var(--brand-accent));
   --nav-icon-active: hsl(var(--brand-accent-strong));
   --nav-text: hsl(var(--text-strong));
   --nav-subtle-text: hsl(var(--text-muted));
   --nav-role-text: hsl(var(--brand-accent-strong));
   --nav-danger-text: hsl(0 70% 47%);
   --nav-danger-hover: hsl(0 74% 42%);
-  --dash-module-panel-bg: linear-gradient(180deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 100%);
-  --dash-module-panel-border: rgba(255,255,255,0.08);
-  --dash-module-panel-shadow: 0 24px 80px rgba(0,0,0,0.24);
-  --dash-module-surface-bg: rgba(255,255,255,0.02);
-  --dash-module-surface-strong: rgba(255,255,255,0.05);
-  --dash-module-surface-border: rgba(255,255,255,0.08);
-  --dash-module-line: rgba(255,255,255,0.08);
-  --dash-module-hover: rgba(255,255,255,0.06);
-  --dash-module-input-bg: rgba(255,255,255,0.03);
-  --dash-module-input-border: rgba(255,255,255,0.08);
+  --dash-module-panel-bg: rgba(15, 23, 42, 0.78);
+  --dash-module-panel-border: rgba(148, 163, 184, 0.16);
+  --dash-module-panel-shadow: 0 14px 34px rgba(2, 6, 23, 0.22);
+  --dash-module-surface-bg: rgba(15, 23, 42, 0.66);
+  --dash-module-surface-strong: rgba(30, 41, 59, 0.72);
+  --dash-module-surface-border: rgba(148, 163, 184, 0.16);
+  --dash-module-line: rgba(148, 163, 184, 0.13);
+  --dash-module-hover: rgba(30, 41, 59, 0.64);
+  --dash-module-input-bg: rgba(15, 23, 42, 0.76);
+  --dash-module-input-border: rgba(148, 163, 184, 0.18);
   --dash-module-input-text: hsl(var(--text-strong));
   --dash-module-input-placeholder: hsl(var(--text-muted));
   --dash-module-muted: hsl(var(--text-muted));
   --dash-module-empty: hsl(var(--text-muted));
-  --dash-module-card-bg: linear-gradient(180deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 100%);
-  --dash-module-card-border: rgba(255,255,255,0.08);
+  --dash-module-card-bg: rgba(15, 23, 42, 0.7);
+  --dash-module-card-border: rgba(148, 163, 184, 0.15);
   --booking-text-strong: hsl(var(--text-strong));
   --booking-text-muted: hsl(var(--text-muted));
   --booking-text-subtle: hsl(var(--text-muted));
   --booking-link: hsl(var(--brand-accent-strong));
   --booking-link-hover: hsl(var(--brand-accent));
-  --action-primary-bg: #16FF00;
-  --action-primary-hover: #12e600;
+  --action-primary-bg: #22c55e;
+  --action-primary-hover: #16a34a;
   --action-primary-disabled: hsl(215 16% 68%);
   --action-primary-text: #050505;
   --toolbar-menu-bg: hsl(var(--surface-1) / 0.96);
@@ -110,8 +108,8 @@ html,
 body {
   font-family: var(--font-ui);
   font-weight: 400;
-  font-size: clamp(12px, 0.78vw + 8px, 15px);
-  letter-spacing: 0.01em;
+  font-size: 14px;
+  letter-spacing: 0;
   font-feature-settings: "ss01" on, "ss02" on, "cv01" on;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -145,14 +143,14 @@ h5,
 h6 {
   font-family: var(--font-display);
   font-weight: 700;
-  letter-spacing: 0.03em;
+  letter-spacing: 0;
   line-height: 1.2;
 }
 
 .premium-heading {
   font-family: var(--font-display);
-  letter-spacing: 0.03em;
-  text-transform: uppercase;
+  letter-spacing: 0;
+  text-transform: none;
   font-weight: 700;
 }
 
@@ -171,6 +169,19 @@ h6 {
   pointer-events: none;
   opacity: 0;
   background-image: none;
+}
+
+.premium-shell::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(148, 163, 184, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(148, 163, 184, 0.035) 1px, transparent 1px);
+  background-size: 32px 32px;
+  mask-image: linear-gradient(to bottom, black, transparent 72%);
 }
 
 .premium-card {
@@ -223,13 +234,13 @@ h6 {
 }
 
 .gaming-kpi-card:hover {
-  border-color: hsl(var(--brand-focus) / 0.45);
+  border-color: rgba(148, 163, 184, 0.28);
   transform: translateY(-1px);
 }
 
 .gaming-kpi-value {
   font-family: var(--font-rajdhani), "Rajdhani", "Segoe UI", sans-serif;
-  letter-spacing: -0.01em;
+  letter-spacing: 0;
 }
 
 .gaming-nav-active {
@@ -239,14 +250,14 @@ h6 {
 }
 
 .dashboard-typography {
-  --dash-fs-2xs: clamp(0.76rem, 0.16vw + 0.72rem, 0.84rem);
-  --dash-fs-xs: clamp(0.84rem, 0.2vw + 0.8rem, 0.92rem);
-  --dash-fs-sm: clamp(0.92rem, 0.24vw + 0.86rem, 1rem);
-  --dash-fs-base: clamp(1rem, 0.28vw + 0.92rem, 1.08rem);
-  --dash-fs-lg: clamp(1rem, 0.4vw + 0.9rem, 1.18rem);
-  --dash-fs-xl: clamp(1.14rem, 0.64vw + 0.98rem, 1.48rem);
-  --dash-fs-2xl: clamp(1.4rem, 1vw + 1.12rem, 2.08rem);
-  --dash-fs-3xl: clamp(1.72rem, 1.45vw + 1.22rem, 2.7rem);
+  --dash-fs-2xs: 0.72rem;
+  --dash-fs-xs: 0.8rem;
+  --dash-fs-sm: 0.9rem;
+  --dash-fs-base: 1rem;
+  --dash-fs-lg: 1.08rem;
+  --dash-fs-xl: 1.28rem;
+  --dash-fs-2xl: 1.68rem;
+  --dash-fs-3xl: 2rem;
   --dash-lh-tight: 1.18;
   --dash-lh-snug: 1.3;
   --dash-lh-base: 1.45;
@@ -313,14 +324,14 @@ h6 {
 .label-xs {
   font-size: var(--dash-fs-2xs);
   font-weight: 600;
-  letter-spacing: 0.08em;
+  letter-spacing: 0;
   text-transform: uppercase;
 }
 
 .label-sm {
   font-size: var(--dash-fs-xs);
   font-weight: 600;
-  letter-spacing: 0.04em;
+  letter-spacing: 0;
   text-transform: uppercase;
 }
 
@@ -410,7 +421,7 @@ h6 {
   border: 1px solid var(--dash-module-input-border);
   background: var(--dash-module-input-bg);
   color: var(--dash-module-input-text);
-  border-radius: 0.75rem;
+  border-radius: 0.5rem;
   padding: 0.55rem 0.9rem;
   font-size: var(--dash-fs-sm);
   line-height: var(--dash-lh-base);
@@ -465,9 +476,9 @@ h6 {
 .dashboard-btn-primary {
   border: 1px solid hsl(var(--brand-accent) / 0.6);
   background: hsl(var(--brand-accent));
-  color: hsl(0 0% 100%);
+  color: hsl(222 47% 5%);
   font-weight: 600;
-  border-radius: 0.75rem;
+  border-radius: 0.5rem;
   padding: 0.55rem 1rem;
   transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
 }
@@ -482,7 +493,7 @@ h6 {
   background: var(--dash-module-surface-bg);
   color: var(--premium-title-text);
   font-weight: 600;
-  border-radius: 0.75rem;
+  border-radius: 0.5rem;
   padding: 0.55rem 1rem;
 }
 
@@ -493,7 +504,7 @@ h6 {
   font-size: 0.7rem;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: 0;
   padding: 0.2rem 0.5rem;
   border-radius: 999px;
 }
@@ -530,8 +541,8 @@ h6 {
 .dashboard-card {
   border: 1px solid var(--dash-module-surface-border);
   background: linear-gradient(180deg, rgba(255,255,255,0.055) 0%, rgba(255,255,255,0.02) 100%);
-  border-radius: 0.9rem;
-  box-shadow: 0 16px 36px hsl(220 24% 12% / 0.12);
+  border-radius: 0.75rem;
+  box-shadow: 0 12px 28px rgba(2, 6, 23, 0.2);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
 }
@@ -572,13 +583,13 @@ h6 {
   border: 1px solid hsl(0 72% 54% / 0.35);
   background: hsl(0 72% 42% / 0.16);
   color: hsl(0 72% 82%);
-  border-radius: 0.75rem;
+  border-radius: 0.5rem;
   padding: 0.75rem 1rem;
 }
 
 .dashboard-module-tab-group {
   border: 1px solid var(--dash-module-surface-border);
-  background: hsl(0 0% 100% / 0.34);
+  background: rgba(15, 23, 42, 0.82);
 }
 
 .dark .dashboard-module-tab-group {
@@ -590,8 +601,9 @@ h6 {
 }
 
 .dashboard-module-tab-active {
-  background: hsl(var(--brand-accent) / 0.14);
-  color: hsl(var(--brand-accent-strong));
+  background: rgba(241, 245, 249, 0.1);
+  color: hsl(var(--text-strong));
+  box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.16);
 }
 
 .dark .dashboard-module-tab-active {
@@ -617,7 +629,7 @@ h6 {
 .dashboard-module-table-header {
   color: var(--dash-module-muted);
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: 0;
 }
 
 .dashboard-module-table-body {
@@ -675,7 +687,7 @@ h6 {
   font-size: 0.7rem;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: 0;
   color: var(--dash-module-muted);
   border-bottom: 1px solid var(--dash-module-line);
 }
@@ -715,7 +727,7 @@ h6 {
   .dashboard-table th {
     padding: 0.5rem 0.6rem;
     font-size: 0.62rem;
-    letter-spacing: 0.06em;
+    letter-spacing: 0;
     white-space: nowrap;
   }
 
@@ -727,7 +739,7 @@ h6 {
   .dashboard-module-table-head .dashboard-module-table-header,
   .dashboard-module-table th {
     font-size: 0.62rem;
-    letter-spacing: 0.06em;
+    letter-spacing: 0;
     padding: 0.5rem 0.6rem;
     white-space: nowrap;
   }
@@ -751,8 +763,8 @@ h6 {
 .dashboard-module-card {
   border: 1px solid var(--dash-module-card-border);
   background: var(--dash-module-card-bg);
-  border-radius: 0.9rem;
-  box-shadow: 0 16px 32px hsl(220 18% 12% / 0.12);
+  border-radius: 0.65rem;
+  box-shadow: 0 10px 24px rgba(2, 6, 23, 0.16);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
 }
@@ -766,8 +778,8 @@ h6 {
 }
 
 .live-session-title {
-  font-size: clamp(1rem, 0.55vw + 0.88rem, 1.2rem);
-  letter-spacing: 0.02em;
+  font-size: 1.15rem;
+  letter-spacing: 0;
 }
 
 .live-session-count {
@@ -1069,32 +1081,32 @@ h6 {
 
 .dash-title {
   font-family: var(--font-display);
-  font-size: clamp(0.85rem, 0.45vw + 0.76rem, 1.05rem);
+  font-size: 1.05rem;
   font-weight: 700;
-  letter-spacing: 0.03em;
+  letter-spacing: 0;
   color: var(--premium-title-text);
 }
 
 .dash-subtitle {
   font-family: var(--font-ui);
-  font-size: clamp(0.68rem, 0.35vw + 0.62rem, 0.82rem);
+  font-size: 0.82rem;
   font-weight: 400;
   color: var(--premium-subtle-text);
 }
 
 .dash-kpi-label {
   font-family: var(--font-ui);
-  font-size: clamp(0.74rem, 0.28vw + 0.68rem, 0.88rem);
+  font-size: 0.86rem;
   font-weight: 700;
-  letter-spacing: 0.02em;
+  letter-spacing: 0;
   color: var(--premium-title-text);
 }
 
 .dash-kpi-value {
   font-family: var(--font-ui);
-  font-size: clamp(1rem, 1vw + 0.84rem, 1.35rem);
+  font-size: 1.25rem;
   font-weight: 700;
-  letter-spacing: 0.03em;
+  letter-spacing: 0;
   color: var(--premium-kpi-text);
 }
 
@@ -1713,7 +1725,7 @@ h6 {
 
 @media (max-width: 640px) {
   .premium-heading {
-    letter-spacing: -0.01em;
+    letter-spacing: 0;
   }
 
   .premium-shell::before {
