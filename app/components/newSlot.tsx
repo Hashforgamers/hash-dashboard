@@ -4738,7 +4738,6 @@ function DashboardQuickBookingSlab({
   onSlotSelect,
   onNewBooking,
   allSlots,
-  fetchSlotBookings,
 }: {
   availableConsoles: ConsoleType[]
   selectedConsole: ConsoleFilter
@@ -4747,13 +4746,28 @@ function DashboardQuickBookingSlab({
   onSlotSelect: (slot: SelectedSlot) => void
   onNewBooking: () => void
   allSlots: { [key: string]: any[] }
-  fetchSlotBookings: (slotIds: number[], date: string) => Promise<void>
 }) {
   const today = getISTDateString(0)
   const [quickConsole, setQuickConsole] = useState<ConsoleFilter | null>(null)
   const activeConsoles = [...availableConsoles].sort((a, b) =>
     String(a?.name || a?.type || "").localeCompare(String(b?.name || b?.type || ""))
   )
+
+  useEffect(() => {
+    if (activeConsoles.length === 0) return
+    if (quickConsole && activeConsoles.some((consoleItem) => consoleItem.type === quickConsole)) return
+
+    const preferredConsole = selectedConsole
+      ? activeConsoles.find((consoleItem) => consoleItem.type === selectedConsole)
+      : null
+    const nextConsole = preferredConsole || activeConsoles[0]
+
+    if (nextConsole?.type) {
+      setQuickConsole(nextConsole.type)
+      onConsoleChange(nextConsole.type)
+    }
+  }, [activeConsoles, onConsoleChange, quickConsole, selectedConsole])
+
   const selectedConsoleItem =
     quickConsole
       ? activeConsoles.find((consoleItem) => consoleItem.type === quickConsole) || null
@@ -4762,24 +4776,16 @@ function DashboardQuickBookingSlab({
 
   const todaySlots = (allSlots[today] || [])
     .filter((slot: any) => Number(slot?.console_id) === selectedConsoleId)
+    .filter((slot: any) =>
+      Boolean(slot?.is_available) &&
+      !isPastSlotInIST(today, slot?.end_time, slot?.start_time) &&
+      Number(slot?.available_slot || 0) > 0
+    )
     .sort((a: any, b: any) => String(a.start_time).localeCompare(String(b.start_time)))
-  const visibleConsoles = selectedConsoleItem
-    ? activeConsoles.filter((consoleItem) => consoleItem.type !== selectedConsoleItem.type)
-    : activeConsoles
-
   const selectedTodayCount = selectedSlots.filter((slot) => slot.date === today).length
-  const availableTodayCount = todaySlots.filter((slot: any) =>
-    Boolean(slot?.is_available) &&
-    !isPastSlotInIST(today, slot?.end_time, slot?.start_time) &&
-    Number(slot?.available_slot || 0) > 0
-  ).length
+  const availableTodayCount = todaySlots.length
 
   const handleSlotButtonClick = (slot: any) => {
-    const isPastTime = isPastSlotInIST(today, slot.end_time, slot.start_time)
-    if (isPastTime) {
-      fetchSlotBookings([slot.slot_id], today)
-      return
-    }
     if (!slot.is_available || Number(slot.available_slot || 0) <= 0) return
 
     onSlotSelect({
@@ -4795,9 +4801,9 @@ function DashboardQuickBookingSlab({
   }
 
   return (
-    <div className={cn("dashboard-quick-booking", selectedConsoleItem && "dashboard-quick-booking-active")}>
+    <div className="dashboard-quick-booking">
       <div className="dashboard-quick-console-strip" aria-label="Choose console for quick booking">
-        {visibleConsoles.map((consoleItem) => {
+        {activeConsoles.map((consoleItem) => {
           const Icon = resolveSafeConsoleIcon(consoleItem.icon, consoleItem.type)
           const active = consoleItem.type === quickConsole
           const openSlotCount = (allSlots[today] || []).filter((slot: any) =>
@@ -4830,16 +4836,9 @@ function DashboardQuickBookingSlab({
         })}
       </div>
 
-      <AnimatePresence mode="wait">
-        {selectedConsoleItem && (
-          <motion.div
-            key={selectedConsoleItem.type}
-            initial={{ opacity: 0, x: 18 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -12 }}
-            transition={{ duration: 0.18, ease: "easeOut" }}
-            className="dashboard-quick-slot-panel"
-          >
+      <div className="dashboard-quick-slot-panel">
+        {selectedConsoleItem ? (
+          <>
             <div className="dashboard-quick-slot-summary">
               <div className="min-w-0">
                 <p className="dashboard-quick-slot-title">
@@ -4864,10 +4863,10 @@ function DashboardQuickBookingSlab({
               </Button>
             </div>
 
-            <div className="dashboard-slot-slider" aria-label="Today slot slider">
+            <div className="dashboard-slot-slider" aria-label="Available slots today">
               {todaySlots.length === 0 ? (
                 <div className="dashboard-slot-empty">
-                  No slots found for this console today.
+                  No bookable slots left today.
                 </div>
               ) : (
                 todaySlots.map((slot: any) => {
@@ -4877,37 +4876,34 @@ function DashboardQuickBookingSlab({
                       selected.slot_id === slot.slot_id &&
                       Number(selected.console_id) === selectedConsoleId
                   )
-                  const isPastTime = isPastSlotInIST(today, slot.end_time, slot.start_time)
-                  const isFull = Number(slot.available_slot || 0) <= 0
-                  const disabled = !slot.is_available || isFull
-
                   return (
                     <button
                       key={`${today}-${selectedConsoleId}-${slot.slot_id}`}
                       type="button"
                       onClick={() => handleSlotButtonClick(slot)}
-                      disabled={!isPastTime && disabled}
                       className={cn(
                         "dashboard-slot-chip",
-                        isSelected && "dashboard-slot-chip-selected",
-                        isPastTime && "dashboard-slot-chip-past",
-                        !isPastTime && disabled && "dashboard-slot-chip-full"
+                        isSelected && "dashboard-slot-chip-selected"
                       )}
                     >
                       <span className="dashboard-slot-time">
                         {String(slot.start_time).slice(0, 5)}
                       </span>
                       <span className="dashboard-slot-capacity">
-                        {isPastTime ? "Past" : isFull ? "Full" : `${slot.available_slot || 0} left`}
+                        {slot.available_slot || 0} left
                       </span>
                     </button>
                   )
                 })
               )}
             </div>
-          </motion.div>
+          </>
+        ) : (
+          <div className="dashboard-slot-empty">
+            Select a console type to see available slots.
+          </div>
         )}
-      </AnimatePresence>
+      </div>
     </div>
   )
 }
@@ -5458,7 +5454,6 @@ useEffect(() => {
                 onSlotSelect={handleSlotSelect}
                 onNewBooking={handleNewBooking}
                 allSlots={allSlots}
-                fetchSlotBookings={fetchSlotBookings}
               />
             ) : (
               <div className="shrink-0 space-y-3 sm:space-y-4">
