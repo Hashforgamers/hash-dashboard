@@ -4750,12 +4750,14 @@ function DashboardQuickBookingSlab({
   fetchSlotBookings: (slotIds: number[], date: string) => Promise<void>
 }) {
   const today = getISTDateString(0)
+  const [quickConsole, setQuickConsole] = useState<ConsoleFilter | null>(null)
   const activeConsoles = [...availableConsoles].sort((a, b) =>
     String(a?.name || a?.type || "").localeCompare(String(b?.name || b?.type || ""))
   )
   const selectedConsoleItem =
-    activeConsoles.find((consoleItem) => consoleItem.type === selectedConsole) ||
-    activeConsoles[0]
+    quickConsole
+      ? activeConsoles.find((consoleItem) => consoleItem.type === quickConsole) || null
+      : null
   const selectedConsoleId = Number(selectedConsoleItem?.id)
 
   const todaySlots = (allSlots[today] || [])
@@ -4794,14 +4796,22 @@ function DashboardQuickBookingSlab({
       <div className="dashboard-quick-console-strip" aria-label="Choose console for quick booking">
         {activeConsoles.map((consoleItem) => {
           const Icon = resolveSafeConsoleIcon(consoleItem.icon, consoleItem.type)
-          const active = consoleItem.type === selectedConsoleItem?.type
-          const slotCount = (allSlots[today] || []).filter((slot: any) => Number(slot?.console_id) === Number(consoleItem.id)).length
+          const active = consoleItem.type === quickConsole
+          const openSlotCount = (allSlots[today] || []).filter((slot: any) =>
+            Number(slot?.console_id) === Number(consoleItem.id) &&
+            Boolean(slot?.is_available) &&
+            !isPastSlotInIST(today, slot?.end_time, slot?.start_time) &&
+            Number(slot?.available_slot || 0) > 0
+          ).length
 
           return (
             <button
               key={`${consoleItem.type}-${consoleItem.id}`}
               type="button"
-              onClick={() => onConsoleChange(consoleItem.type)}
+              onClick={() => {
+                setQuickConsole(consoleItem.type)
+                onConsoleChange(consoleItem.type)
+              }}
               className={cn("dashboard-console-card", active && "dashboard-console-card-active")}
             >
               <span className="dashboard-console-icon">
@@ -4809,7 +4819,7 @@ function DashboardQuickBookingSlab({
               </span>
               <span className="min-w-0 flex-1 text-left">
                 <span className="dashboard-console-name">{consoleItem.name || consoleItem.type}</span>
-                <span className="dashboard-console-meta">{slotCount} today slots</span>
+                <span className="dashboard-console-meta">{openSlotCount} open today</span>
               </span>
             </button>
           )
@@ -4842,7 +4852,11 @@ function DashboardQuickBookingSlab({
         </div>
 
         <div className="dashboard-slot-slider" aria-label="Today slot slider">
-          {todaySlots.length === 0 ? (
+          {!selectedConsoleItem ? (
+            <div className="dashboard-slot-empty">
+              Choose a console to view today&apos;s slots.
+            </div>
+          ) : todaySlots.length === 0 ? (
             <div className="dashboard-slot-empty">
               No slots found for this console today.
             </div>
