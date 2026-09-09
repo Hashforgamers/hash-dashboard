@@ -3024,6 +3024,7 @@ function TopBar({
   onConsoleChange,
   availableConsoles,
   compact = false,
+  slab = false,
 }: { 
   selectedSlots: SelectedSlot[], 
   onNewBooking: () => void,
@@ -3031,6 +3032,7 @@ function TopBar({
   onConsoleChange: (gameConsole: ConsoleFilter) => void
   availableConsoles: ConsoleType[]
   compact?: boolean
+  slab?: boolean
 }) {
   const [menuOpen, setMenuOpen] = useState(false)
   const [showManageView, setShowManageView] = useState<'change' | 'reject' | 'list' | null>(null)
@@ -3071,7 +3073,7 @@ function TopBar({
 
   // Main TopBar return
   return (
-    <div className={cn("booking-topbar mb-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between", compact && "mb-2 gap-2")}>
+    <div className={cn("booking-topbar mb-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between", compact && "mb-2 gap-2", slab && "dashboard-booking-topbar")}>
       <Card className={cn("booking-console-filter rounded-xl border p-2.5 shadow-sm backdrop-blur-sm", compact && "p-2")}>
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
           <span className="booking-console-label text-xs font-medium uppercase tracking-wide">Select Console</span>
@@ -3120,7 +3122,7 @@ function TopBar({
             <Button 
               variant="outline"
               size="icon" 
-              className="ui-toolbar-menu rounded-lg"
+              className={cn("ui-toolbar-menu rounded-lg", slab && "dashboard-booking-menu-button")}
             >
               <MoreVertical className="w-5 h-5" />
             </Button>
@@ -3199,6 +3201,7 @@ function ScheduleGrid({
   isLoading,
   fetchSlotBookings,
   compact = false,
+  slab = false,
 }: {
   availableConsoles: ConsoleType[]
   selectedConsole: ConsoleFilter
@@ -3208,6 +3211,7 @@ function ScheduleGrid({
   isLoading: boolean
   fetchSlotBookings: (slotIds: number[], date: string) => Promise<void>
   compact?: boolean
+  slab?: boolean
 }) {
   const timelineRef = useRef<HTMLDivElement | null>(null)
   const isDraggingRef = useRef(false)
@@ -3227,7 +3231,7 @@ function ScheduleGrid({
     return days
   }
 
-  const days = getNext3Days()
+  const days = slab ? getNext3Days().slice(0, 1) : getNext3Days()
 
   const uniqueTimes = React.useMemo(() => {
     const allTimes = new Set<string>()
@@ -3262,7 +3266,7 @@ function ScheduleGrid({
       return Math.abs(minutes - nowMinutes) < Math.abs(bestMinutes - nowMinutes) ? idx : bestIndex
     }, 0)
 
-    const colWidth = compact ? 100 : 116
+    const colWidth = slab ? 92 : compact ? 100 : 116
     const targetLeft = Math.max(0, (nearestIndex * colWidth) - 160)
     timelineRef.current.scrollTo({ left: targetLeft, behavior: 'smooth' })
   }, [uniqueTimes])
@@ -3612,7 +3616,7 @@ if (isPastTime) {
         <div className="min-w-max">
           <div
             className={cn("booking-time-header grid", compact ? "gap-1 p-2 pb-2" : "gap-2 p-4 pb-3")}
-            style={{ gridTemplateColumns: `88px repeat(${uniqueTimes.length}, minmax(${compact ? 108 : 120}px, 1fr))` }}
+            style={{ gridTemplateColumns: `${slab ? 78 : 88}px repeat(${uniqueTimes.length}, minmax(${slab ? 92 : compact ? 108 : 120}px, 1fr))` }}
           >
             <div className="booking-date-heading sticky left-0 z-20 flex items-center justify-center text-center text-xs font-semibold uppercase backdrop-blur-sm">
               Date
@@ -3637,7 +3641,7 @@ if (isPastTime) {
                       : "booking-grid-row-idle",
                     compact ? "gap-1 p-2 py-1.5" : "gap-2 p-4 py-3"
                   )}
-                  style={{ gridTemplateColumns: `88px repeat(${uniqueTimes.length}, minmax(${compact ? 108 : 120}px, 1fr))` }}
+                  style={{ gridTemplateColumns: `${slab ? 78 : 88}px repeat(${uniqueTimes.length}, minmax(${slab ? 92 : compact ? 108 : 120}px, 1fr))` }}
                 >
                   <div
                     className={cn(
@@ -5271,6 +5275,7 @@ useEffect(() => {
                 onConsoleChange={handleConsoleChange}
                 availableConsoles={availableConsoles}
                 compact
+                slab={slab}
               />
               <ScheduleGrid
                 availableConsoles={availableConsoles}
@@ -5281,6 +5286,7 @@ useEffect(() => {
                 isLoading={isLoading}
                 fetchSlotBookings={fetchSlotBookings}
                 compact
+                slab={slab}
               />
             </div>
             {!slab && (
