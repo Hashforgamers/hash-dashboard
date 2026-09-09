@@ -1,6 +1,6 @@
 import { DashboardLayout } from "../../(layout)/dashboard-layout"
 import SlotManagement from "@/app/components/newSlot"
-import { Sparkles } from "lucide-react"
+import { PageHeader } from "../../components/page-header"
 
 
 
@@ -8,17 +8,7 @@ export default function ManageBookingPage() {
   return (
     <DashboardLayout contentScroll="contained">
       <div className="feature-page-shell">
-        <div className="feature-page-header booking-command-header">
-          <div className="feature-page-header-row">
-            <h1 className="premium-heading">
-              Booking Command Center
-            </h1>
-            <Sparkles className="h-4 w-4 sm:h-5 sm:w-5" />
-          </div>
-          <p className="feature-page-subtitle premium-subtle">
-            Create, update, and control all booking operations with real-time clarity.
-          </p>
-        </div>
+        <PageHeader title="Bookings" />
 
         <div className="feature-page-content feature-page-content-scroll booking-command-panel">
           <SlotManagement embedded />

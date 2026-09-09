@@ -144,7 +144,7 @@ export function DashboardLayout({ children, contentScroll = "page" }: DashboardL
   }, [])
 
   return (
-    <div className="premium-shell dashboard-typography flex h-dvh overflow-hidden text-foreground">
+    <div className="workspace-ui premium-shell dashboard-typography flex h-dvh overflow-hidden text-foreground">
       {showMobileHeader && (
         <header className="dashboard-nav dashboard-nav-surface dashboard-nav-divider fixed left-0 right-0 top-0 z-[20030] flex items-center justify-between border-b px-4 py-3 backdrop-blur md:hidden">
           <div className="flex items-center">
@@ -160,6 +160,7 @@ export function DashboardLayout({ children, contentScroll = "page" }: DashboardL
           <Button
             variant="ghost"
             size="sm"
+            aria-label={isNavOpen ? 'Close navigation' : 'Open navigation'}
             onClick={() => setIsNavOpen(!isNavOpen)}
             className="md:hidden"
           >
