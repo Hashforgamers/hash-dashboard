@@ -533,20 +533,6 @@ export function DashboardContent() {
                 transition={{ delay: 0.18 }}
                 className="dashboard-booking-slab gaming-panel shrink-0 overflow-hidden rounded-lg"
               >
-                <div className="dashboard-booking-slab-header">
-                  <div className="min-w-0">
-                    <div className="dashboard-slab-title">Quick Booking</div>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => router.push("/booking")}
-                    className="dashboard-action-button h-8 shrink-0 whitespace-nowrap text-xs"
-                    title="Open the full booking command center"
-                  >
-                    <ExternalLink className="h-3.5 w-3.5" />
-                    Full Center
-                  </button>
-                </div>
                 <div className="dashboard-booking-slab-body">
                   <SlotManagement embedded slab />
                 </div>
