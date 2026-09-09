@@ -1588,8 +1588,8 @@ h6 {
 }
 
 .dashboard-booking-slab {
-  min-height: 15.5rem;
-  max-height: 18.5rem;
+  min-height: 12.4rem;
+  max-height: 13.8rem;
   padding: 0;
   border-color: rgba(255, 255, 255, 0.1);
   background:
@@ -1602,13 +1602,13 @@ h6 {
   align-items: center;
   justify-content: space-between;
   gap: 0.85rem;
-  padding: 0.85rem 0.95rem 0.7rem;
+  padding: 0.68rem 0.85rem 0.58rem;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .dashboard-slab-title {
   color: #f5f5f7;
-  font-size: 0.95rem;
+  font-size: 0.86rem;
   font-weight: 650;
   line-height: 1.2;
 }
@@ -1616,23 +1616,31 @@ h6 {
 .dashboard-slab-subtitle {
   margin-top: 0.15rem;
   color: #8e8e93;
-  font-size: 0.76rem;
+  font-size: 0.72rem;
   line-height: 1.35;
 }
 
 .dashboard-booking-slab-body {
-  height: calc(100% - 3.85rem);
-  min-height: 11.4rem;
+  height: calc(100% - 3.25rem);
+  min-height: 9rem;
   overflow: hidden;
-  padding: 0.65rem 0.85rem 0.85rem;
+  padding: 0.55rem 0.75rem 0.7rem;
 }
 
 .dashboard-booking-slab-body .booking-topbar {
-  margin-bottom: 0.55rem;
+  margin-bottom: 0.42rem;
+  gap: 0.45rem;
+}
+
+.dashboard-booking-topbar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
 }
 
 .dashboard-booking-slab-body .booking-console-filter {
   width: 100%;
+  padding: 0.45rem !important;
 }
 
 .dashboard-booking-slab-body .booking-console-filter > div {
@@ -1641,38 +1649,69 @@ h6 {
 
 .dashboard-booking-slab-body .booking-console-label {
   font-size: 0.68rem;
+  display: none;
 }
 
 .dashboard-booking-slab-body .booking-console-tab {
-  min-height: 1.95rem;
-  padding: 0.42rem 0.62rem;
-  font-size: 0.68rem;
+  min-height: 1.72rem;
+  padding: 0.34rem 0.54rem;
+  font-size: 0.64rem;
 }
 
 .dashboard-booking-slab-body .booking-new-button {
-  min-height: 2.2rem;
+  min-height: 2.05rem;
+  padding-inline: 0.85rem;
+  white-space: nowrap;
+}
+
+.dashboard-booking-menu-button {
+  width: 2.05rem !important;
+  height: 2.05rem !important;
 }
 
 .dashboard-booking-slab-body .booking-schedule-card {
-  max-height: 8.6rem;
+  max-height: 5.8rem;
 }
 
 .dashboard-booking-slab-body .booking-time-header {
-  padding-top: 0.45rem !important;
-  padding-bottom: 0.4rem !important;
+  padding: 0.38rem 0.5rem !important;
+}
+
+.dashboard-booking-slab-body .booking-time-label {
+  font-size: 0.74rem;
+}
+
+.dashboard-booking-slab-body .booking-date-heading {
+  font-size: 0.68rem;
 }
 
 .dashboard-booking-slab-body .booking-grid-row {
-  padding-top: 0.35rem !important;
-  padding-bottom: 0.35rem !important;
+  padding: 0.42rem 0.5rem !important;
 }
 
 .dashboard-booking-slab-body .booking-slot-cell {
-  min-height: 2.1rem;
+  min-height: 2.02rem;
 }
 
 .dashboard-booking-slab-body .booking-slot-pill {
-  min-height: 1.85rem;
+  min-height: 1.74rem;
+  font-size: 0.64rem;
+}
+
+.dashboard-booking-slab-body .booking-slot-past,
+.dashboard-booking-slab-body .booking-slot-full,
+.dashboard-booking-slab-body .booking-slot-continuation {
+  min-height: 1.74rem;
+}
+
+.dashboard-booking-slab-body .booking-date-cell {
+  min-height: 2.02rem;
+  padding: 0.3rem 0.4rem;
+  font-size: 0.78rem;
+}
+
+.dashboard-booking-slab-body .booking-today-badge {
+  display: none;
 }
 
 .dashboard-booking-slab-stack {
@@ -1695,8 +1734,8 @@ h6 {
   }
 
   .dashboard-booking-slab {
-    min-height: 17rem;
-    max-height: 19rem;
+    min-height: 13.4rem;
+    max-height: 15rem;
   }
 
   .dashboard-booking-slab-header {
@@ -1704,8 +1743,12 @@ h6 {
   }
 
   .dashboard-booking-slab-body {
-    height: calc(100% - 4.4rem);
+    height: calc(100% - 4rem);
     padding: 0.6rem;
+  }
+
+  .dashboard-booking-topbar {
+    grid-template-columns: 1fr;
   }
 }
 
