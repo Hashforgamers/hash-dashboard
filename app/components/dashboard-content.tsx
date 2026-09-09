@@ -511,17 +511,6 @@ export function DashboardContent() {
               <div className="max-md:w-full max-md:self-start">
                 {isOwnerSession ? mobileMetricsStrip : null}
               </div>
-              <div className="hidden lg:flex lg:justify-end">
-                <button
-                  type="button"
-                  onClick={() => router.push("/booking")}
-                  className="dashboard-action-button h-9 whitespace-nowrap text-xs"
-                  title="Open the full booking command center"
-                >
-                  <ExternalLink className="h-3.5 w-3.5" />
-                  Booking Center
-                </button>
-              </div>
             </div>
           </motion.div>
 
