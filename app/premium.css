@@ -2729,4 +2729,6 @@ h6 {
   }
   .operations-dashboard .dashboard-module-panel { padding: 12px; }
   .operations-dashboard .dashboard-hero-title { font-size: 20px !important; }
+  .operations-dashboard .operations-summary > div { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+  .operations-dashboard .operations-summary .dashboard-module-card { flex-wrap: wrap; }
 }

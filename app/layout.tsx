@@ -4,6 +4,7 @@ import type { Metadata, Viewport } from "next";
 
 import "./globals.css";
 import "./premium.css";
+import "./workspace.css";
 import { SocketProvider } from "./context/SocketContext";
 import { SubscriptionProvider } from "./context/SubscriptionContext";
 import { AccessProvider } from "./context/AccessContext";
