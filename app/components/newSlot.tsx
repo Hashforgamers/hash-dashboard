@@ -6,6 +6,8 @@ import { jwtDecode } from 'jwt-decode'
 import { createPortal } from "react-dom"
 
 import { cn } from "@/lib/utils"
+import { creditAuthHeaders } from "@/lib/credit-auth"
+import { useAccess } from "@/app/context/AccessContext"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { 
@@ -465,6 +467,7 @@ function SlotBookingForm({
   onBookingComplete,
   availableConsoles 
 }: SlotBookingFormProps) {
+  const { can } = useAccess()
   const api = useApiClient()
   console.log('🎯 SlotBookingForm rendered with:', { 
     isOpen, 
@@ -1249,6 +1252,7 @@ useEffect(() => {
 
   useEffect(() => {
     if (!isOpen || paymentType !== 'Monthly Credit') return
+    if (!matchedPrimaryUser?.id) { setCreditAccount(null); return }
 
     const vendorId = getVendorIdFromToken()
     if (!vendorId) return
@@ -1258,7 +1262,8 @@ useEffect(() => {
       setCreditAccountLoading(true)
       setCreditAccountError('')
       try {
-        const data = await api.get<any>(`${BOOKING_URL}/api/vendor/${vendorId}/monthly-credit/accounts`, {
+        const data = await api.get<any>(`${BOOKING_URL}/api/vendor/${vendorId}/monthly-credit/eligibility/${matchedPrimaryUser.id}`, {
+          headers: creditAuthHeaders(),
           timeoutMs: 10_000,
           retries: 1,
         })
@@ -1675,6 +1680,8 @@ const getEffectivePrice = (slot: SelectedSlot): number => {
                 <button
                   type="button"
                   onClick={() => setShowCreditAccountModal(true)}
+                  disabled={!can("credit.manage")}
+                  title={can("credit.manage") ? "Create credit account" : "Ask a staff member with credit management access"}
                   className="rounded-lg border border-cyan-500/40 bg-cyan-500/10 px-3 py-1.5 text-xs font-medium text-cyan-700 dark:text-cyan-200"
                 >
                   Create Credit Account
