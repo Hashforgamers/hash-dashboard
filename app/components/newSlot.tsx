@@ -4811,6 +4811,7 @@ function DashboardQuickBookingSlab({
             <button
               key={`${consoleItem.type}-${consoleItem.id}`}
               type="button"
+              title={consoleItem.name || consoleItem.type}
               onClick={() => {
                 setQuickConsole(consoleItem.type)
                 onConsoleChange(consoleItem.type)
