@@ -1589,23 +1589,23 @@ const getEffectivePrice = (slot: SelectedSlot): number => {
   }
 
   const paymentMethodCard = (
-    <Card className="sb-card p-4 sm:p-5 md:p-6">
+    <Card className="sb-card p-4 sm:p-5">
       <div className="mb-4 flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">
-          <div className="rounded-md bg-yellow-100 p-1 dark:bg-yellow-900/30">
-            <CreditCard className="h-4 w-4 text-yellow-600" />
+          <div className="slot-section-icon">
+            <CreditCard className="h-4 w-4" />
           </div>
           <div>
-            <h3 className="text-lg font-semibold text-gray-800 dark:text-white">Payment Method</h3>
+            <h3 className="slot-section-title">Payment Method</h3>
             <p className="text-xs text-gray-500 dark:text-gray-400">Pick one to finish quickly</p>
           </div>
         </div>
-        <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700 dark:border-emerald-800 dark:bg-emerald-900/25 dark:text-emerald-300">
+        <span className="slot-booking-modal-soft rounded-full px-2.5 py-1 text-[11px] font-semibold text-emerald-700 dark:text-emerald-300">
           Selected: {paymentType}
         </span>
       </div>
 
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3">
         {PAYMENT_TYPES.map((type) => (
           (() => {
             const meta = paymentMethodMeta[type]
@@ -2106,11 +2106,11 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
   if (isSubmitted) {
     if (!portalReady) return null
     return createPortal(
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-3 backdrop-blur-xl sm:p-5">
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="slot-booking-modal max-w-md w-full rounded-2xl p-8 text-center"
+          className="slot-booking-modal w-full max-w-md rounded-xl p-8 text-center"
         >
           <motion.div
             initial={{ scale: 0 }}
@@ -2178,16 +2178,16 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
+        className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-3 backdrop-blur-xl sm:p-5"
       >
         <motion.div
           initial={{ scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0.9, opacity: 0 }}
-          className="slot-booking-modal flex w-full max-w-6xl max-h-[96vh] flex-col overflow-hidden rounded-2xl border shadow-2xl"
+          className="slot-booking-modal flex max-h-[92vh] w-full max-w-[1080px] flex-col overflow-hidden rounded-xl border shadow-2xl"
         >
-          <div className="relative flex items-center justify-between border-b p-4 sm:p-5 md:p-6">
-            <h2 className="premium-heading !text-xl sm:!text-2xl">New Slot Booking</h2>
+          <div className="slot-booking-modal-header relative flex items-center justify-between border-b px-5 py-4 sm:px-6">
+            <h2 className="premium-heading !text-xl sm:!text-[1.35rem]">New Slot Booking</h2>
             <div className="flex items-center gap-2">
               <button
                 type="button"
@@ -2196,7 +2196,7 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                   setBookingFieldDraft(bookingFieldConfig)
                   setIsFieldConfigOpen((prev) => !prev)
                 }}
-                className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs font-semibold text-gray-700 transition hover:border-emerald-500 hover:text-emerald-700 dark:border-gray-700 dark:bg-slate-900 dark:text-slate-200"
+                className="slot-booking-modal-secondary inline-flex h-9 items-center gap-2 rounded-lg px-3 text-xs font-semibold transition"
               >
                 <SlidersHorizontal className="h-3.5 w-3.5" />
                 Field Rules
@@ -2209,7 +2209,7 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
               </button>
             </div>
             {isFieldConfigOpen && (
-              <div className="absolute right-4 top-[calc(100%-2px)] z-30 w-[310px] rounded-xl border border-slate-300 bg-white p-3 shadow-xl dark:border-slate-700 dark:bg-slate-900">
+              <div className="slot-booking-popover absolute right-4 top-[calc(100%-2px)] z-30 w-[310px] rounded-xl border p-3 shadow-xl">
                 <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">Customer Field Configuration</p>
                 <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
                   Name stays mandatory. Keep at least one contact field required.
@@ -2269,7 +2269,7 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                   </button>
                   <button
                     type="button"
-                    className="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-60"
+                    className="ui-action-primary rounded-lg px-3 py-1.5 text-xs font-semibold disabled:opacity-60"
                     onClick={saveVendorFieldConfig}
                     disabled={isFieldConfigSaving}
                   >
@@ -2280,15 +2280,15 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
             )}
           </div>
 
-          <div className="flex-1 overflow-y-auto p-3 sm:p-4 md:p-6">
-            <form id="slot-booking-form" onSubmit={handleSubmit} className="space-y-4 sm:space-y-5 md:space-y-6 pb-4">
-              <div className="grid grid-cols-1 gap-4 md:gap-5 xl:grid-cols-3 xl:gap-6">
-                <div className="flex flex-col gap-4 md:gap-5 xl:col-span-2">
+          <div className="flex-1 overflow-y-auto px-4 py-4 sm:px-5 sm:py-5">
+            <form id="slot-booking-form" onSubmit={handleSubmit} className="space-y-4 pb-3">
+              <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
+                <div className="flex flex-col gap-4">
                   <Card className="sb-card p-4 order-1">
-                    <h3 className="text-lg font-semibold text-emerald-800 dark:text-emerald-200 mb-3">Selected Time Slots</h3>
+                    <h3 className="slot-section-title mb-3">Selected Time Slots</h3>
                     <div className="space-y-2">
                       {selectedSlots.map((slot, index) => (
-                        <div key={index} className="slot-booking-modal-soft flex items-center justify-between rounded-lg p-3 text-sm">
+                        <div key={index} className="slot-booking-modal-soft flex items-center justify-between gap-3 rounded-lg p-3 text-sm">
                           <span className="text-gray-700 dark:text-gray-300">
                             <strong>{new Date(slot.date).toLocaleDateString('en-GB')}</strong> • {slot.start_time.slice(0, 5)}-{slot.end_time.slice(0, 5)} • {slot.console_name}
                           </span>
@@ -2333,21 +2333,21 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
 
                         </div>
                       ))}
-                      <div className="text-right pt-2 border-t border-emerald-200 dark:border-emerald-700">
-                        <span className="text-emerald-700 dark:text-emerald-300 font-bold">
+                      <div className="slot-booking-total-line pt-3 text-right">
+                        <span className="font-bold">
                           Slots Total: ₹{consoleTotal}
                         </span>
                       </div>
                     </div>
                   </Card>
 
-                  <Card className="sb-card p-4 sm:p-5 md:p-6 order-3">
+                  <Card className="sb-card order-3 p-4 sm:p-5">
                     <div className="flex items-center gap-2 mb-4">
-                      <div className="p-1 bg-emerald-100 dark:bg-emerald-900/30 rounded">
-                        <Users className="w-4 h-4 text-emerald-600" />
+                      <div className="slot-section-icon">
+                        <Users className="w-4 h-4" />
                       </div>
                       <div>
-                        <h3 className="text-lg font-semibold text-gray-800 dark:text-white">
+                        <h3 className="slot-section-title">
                           {isSquadMode ? "Captain Information" : "Customer Information"}
                         </h3>
                         {isSquadMode && (
@@ -2612,19 +2612,14 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                     </AnimatePresence>
                   </Card>
 
-                  <Card className="sb-card p-4 order-2">
+                  <Card className="sb-card order-2 p-4">
                     <div className="flex items-center justify-between gap-3">
                       <div className="flex items-center gap-2">
-                        <div className={cn(
-                          "p-2 rounded-lg",
-                          bookingFlowMode === "squad"
-                            ? "bg-blue-500"
-                            : "bg-emerald-500"
-                        )}>
-                          <Users className="w-4 h-4 text-white" />
+                        <div className="slot-section-icon">
+                          <Users className="w-4 h-4" />
                         </div>
                         <div>
-                          <h3 className="text-sm font-semibold text-gray-800 dark:text-white">Booking Type</h3>
+                          <h3 className="slot-section-title !text-sm">Booking Type</h3>
                           <p className="text-xs text-gray-600 dark:text-gray-400">Switch mode quickly for staff workflow</p>
                         </div>
                       </div>
@@ -2637,7 +2632,7 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                         className={cn(
                           "rounded-lg border px-3 py-2 text-xs font-semibold transition-colors",
                           bookingFlowMode === "solo"
-                            ? "border-emerald-500 bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-200"
+                            ? "border-sky-400/70 bg-sky-500/15 text-sky-100"
                             : "border-gray-300 text-gray-700 dark:border-gray-600 dark:text-gray-300"
                         )}
                       >
@@ -2651,7 +2646,7 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                           "rounded-lg border px-3 py-2 text-xs font-semibold transition-colors",
                           !squadSupported && "cursor-not-allowed opacity-50",
                           bookingFlowMode === "squad"
-                            ? "border-blue-500 bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-200"
+                            ? "border-sky-400/70 bg-sky-500/15 text-sky-100"
                             : "border-gray-300 text-gray-700 dark:border-gray-600 dark:text-gray-300"
                         )}
                       >
@@ -2732,13 +2727,13 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
 
                 </div>
 
-                <div className="space-y-4 md:space-y-5">
-                  <Card className="sb-card p-4 sm:p-5 md:p-6">
+                <div className="space-y-4">
+                  <Card className="sb-card p-4 sm:p-5">
                     <div className="flex items-center gap-2 mb-4">
-                      <div className="p-1 bg-indigo-100 dark:bg-indigo-900/30 rounded">
-                        <Sparkles className="w-4 h-4 text-indigo-600" />
+                      <div className="slot-section-icon">
+                        <Sparkles className="w-4 h-4" />
                       </div>
-                      <h3 className="text-lg font-semibold text-gray-800 dark:text-white">Pricing Summary</h3>
+                      <h3 className="slot-section-title">Pricing Summary</h3>
                     </div>
 
                     <div className="space-y-3">
@@ -2879,7 +2874,7 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                 type="button"
                 onClick={onClose}
                 variant="outline"
-                className="slot-booking-modal-secondary flex-1"
+                className="slot-booking-modal-secondary h-10 flex-1"
               >
                 Cancel
               </Button>
@@ -2887,7 +2882,7 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                 type="submit"
                 form="slot-booking-form"
                 disabled={isSubmitting || (paymentType === 'Monthly Credit' && (!creditAccount?.is_active || availableCreditAmount < totalAmount))}
-                className="ui-action-primary flex-1 disabled:opacity-50"
+                className="ui-action-primary h-10 flex-1 disabled:opacity-50"
               >
                 {isSubmitting ? (
                   <div className="flex items-center gap-2">
@@ -2961,18 +2956,18 @@ function SlotPill({
 }) {
   const colorClasses: Record<PillColor, string> = {
     green: selected 
-      ? "bg-emerald-600 text-white ring-2 ring-emerald-400 shadow-lg" 
-      : "bg-emerald-600 text-white hover:bg-emerald-700",
+      ? "booking-slot-pill-selected" 
+      : "booking-slot-pill-open",
     blue: selected 
-      ? "bg-emerald-600 text-white ring-2 ring-emerald-400 shadow-lg"
-      : "bg-blue-600 text-white hover:bg-blue-700", 
+      ? "booking-slot-pill-selected"
+      : "booking-slot-pill-open", 
     purple: selected 
-      ? "bg-emerald-600 text-white ring-2 ring-emerald-400 shadow-lg"
-      : "bg-purple-600 text-white hover:bg-purple-700",
+      ? "booking-slot-pill-selected"
+      : "booking-slot-pill-open",
     yellow: selected 
-      ? "bg-emerald-600 text-white ring-2 ring-emerald-400 shadow-lg"
-      : "bg-yellow-500 text-white hover:bg-yellow-600",
-    red: "bg-red-600 text-white",
+      ? "booking-slot-pill-selected"
+      : "booking-slot-pill-open",
+    red: "booking-slot-pill-danger",
   }
 
   return (
@@ -2980,8 +2975,8 @@ function SlotPill({
       onClick={onClick}
       disabled={disabled}
       className={cn(
-        "w-full h-full flex items-center justify-center rounded-md text-[10px] font-bold uppercase tracking-wide",
-        compact ? "min-h-[30px]" : "min-h-[36px]",
+        "booking-slot-pill w-full h-full flex items-center justify-center rounded-md text-[10px] font-bold uppercase",
+        compact ? "min-h-[32px]" : "min-h-[38px]",
         "transition-all duration-200 cursor-pointer",
         disabled && "cursor-not-allowed opacity-60",
         colorClasses[color],
@@ -3009,11 +3004,11 @@ function SegmentedButton({
       type="button"
       onClick={onClick}
       className={cn(
-        "inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium uppercase",
+        "booking-console-tab inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium uppercase",
         "transition-all duration-200",
         active
-          ? "bg-blue-600 text-white shadow-md"
-          : "border border-slate-300 bg-white text-slate-700 hover:bg-slate-100 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600",
+          ? "booking-console-tab-active"
+          : "booking-console-tab-idle",
       )}
     >
       {Icon ? <Icon className="h-3.5 w-3.5" /> : null}
@@ -3076,10 +3071,10 @@ function TopBar({
 
   // Main TopBar return
   return (
-    <div className={cn("mb-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between", compact && "mb-2 gap-2")}>
-      <Card className={cn("rounded-xl border border-slate-300 bg-white/90 p-3 shadow-sm backdrop-blur-sm dark:border-slate-700 dark:bg-slate-800/50", compact && "p-2")}>
-        <div className="flex items-center gap-2">
-          <span className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">Select Console</span>
+    <div className={cn("booking-topbar mb-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between", compact && "mb-2 gap-2")}>
+      <Card className={cn("booking-console-filter rounded-xl border p-2.5 shadow-sm backdrop-blur-sm", compact && "p-2")}>
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+          <span className="booking-console-label text-xs font-medium uppercase tracking-wide">Select Console</span>
           <div className="flex flex-wrap items-center gap-2">
             {activeConsoles.map((consoleItem) => {
               const key = consoleItem.type
@@ -3108,11 +3103,11 @@ function TopBar({
           onClick={onNewBooking}
           disabled={selectedSlots.length === 0}
           className={cn(
-            "rounded-lg shadow-lg transition-all duration-200",
+            "booking-new-button rounded-lg transition-all duration-200",
             "px-4 py-2 text-xs font-semibold sm:px-5 sm:text-sm",
             selectedSlots.length > 0 
               ? "ui-action-primary"
-              : "bg-slate-600 text-white cursor-not-allowed"
+              : "booking-new-button-disabled cursor-not-allowed"
           )}
         >
           <Plus className="mr-2 h-4 w-4" />
@@ -3450,7 +3445,7 @@ function ScheduleGrid({
 
   if (isLoading) {
     return (
-      <Card className="rounded-2xl border border-gray-700 bg-gray-800/30 backdrop-blur-sm overflow-hidden">
+      <Card className="booking-schedule-card overflow-hidden rounded-xl border">
         <div className="flex items-center justify-center py-12">
           <div className="text-center">
             <Loader2 className="w-8 h-8 animate-spin text-blue-500 mx-auto mb-3" />
@@ -3487,14 +3482,14 @@ function ScheduleGrid({
                 <div
                   key={`continuation-${day.fullDate}-${gameConsole.id}-${time}`}
                   onClick={() => handleSlotClick(day, time, gameConsole)}
-                  className={cn(
-                    "group relative h-full w-full cursor-pointer overflow-hidden rounded-md border border-amber-400/20 bg-amber-200/10 transition-colors hover:bg-amber-200/20",
+      className={cn(
+        "booking-slot-continuation group relative h-full w-full cursor-pointer overflow-hidden rounded-md border transition-colors",
                     compact ? "min-h-[32px]" : "min-h-[40px]"
                   )}
                   title={`${gameConsole.name} slot continues (${coveringSlot.start_time?.slice(0, 5)}-${coveringSlot.end_time?.slice(0, 5)})`}
                 >
-                  <div className="absolute inset-x-2 top-1/2 h-[2px] -translate-y-1/2 rounded-full bg-amber-300/45 group-hover:bg-amber-200/70" />
-                  <div className="absolute right-2 top-1/2 h-1.5 w-1.5 -translate-y-1/2 rounded-full bg-amber-200/80 group-hover:bg-amber-100" />
+                  <div className="booking-slot-continuation-line absolute inset-x-2 top-1/2 h-[2px] -translate-y-1/2 rounded-full" />
+                  <div className="booking-slot-continuation-dot absolute right-2 top-1/2 h-1.5 w-1.5 -translate-y-1/2 rounded-full" />
                   <div className="sr-only">
                     Slot continues
                   </div>
@@ -3523,7 +3518,7 @@ if (isPastTime) {
       key={`past-${day.fullDate}-${gameConsole.id}`}
       onClick={() => handleSlotClick(day, time, gameConsole)} // ✅ Make clickable
       className={cn(
-        "w-full h-full flex items-center justify-center bg-gray-500 dark:bg-gray-600 text-white rounded-md cursor-pointer hover:bg-gray-600 dark:hover:bg-gray-700 transition-colors",
+        "booking-slot-past w-full h-full flex items-center justify-center rounded-md cursor-pointer transition-colors",
         compact ? "min-h-[32px]" : "min-h-[40px]"
       )}
       title="Past slot - Click to view past bookings"
@@ -3538,7 +3533,7 @@ if (isPastTime) {
     <div
       key={`unavailable-${day.fullDate}-${gameConsole.id}`}
       className={cn(
-        "w-full h-full flex items-center justify-center bg-red-600 text-white rounded-md cursor-not-allowed",
+        "booking-slot-full w-full h-full flex items-center justify-center rounded-md cursor-not-allowed",
         compact ? "min-h-[32px]" : "min-h-[40px]"
       )}
       title="Fully booked"
@@ -3585,7 +3580,7 @@ if (isPastTime) {
 
   if (uniqueTimes.length === 0) {
     return (
-      <Card className="rounded-2xl border border-gray-700 bg-gray-800/30 backdrop-blur-sm overflow-hidden">
+      <Card className="booking-schedule-card overflow-hidden rounded-xl border">
         <div className="flex items-center justify-center py-12">
           <div className="text-center">
             <CalendarDays className="w-12 h-12 text-gray-500 mx-auto mb-3" />
@@ -3597,9 +3592,9 @@ if (isPastTime) {
   }
 
   return (
-      <Card className="overflow-hidden rounded-2xl border border-slate-300 bg-white/90 shadow-sm backdrop-blur-sm dark:border-gray-700 dark:bg-gray-800/30">
+      <Card className="booking-schedule-card overflow-hidden rounded-xl border">
         {detectedDurations.length > 1 && (
-        <div className="border-b border-cyan-200 bg-cyan-50 px-4 py-2 text-xs text-cyan-800 dark:border-cyan-500/20 dark:bg-cyan-500/10 dark:text-cyan-100/90">
+        <div className="booking-schedule-notice border-b px-4 py-2 text-xs">
           Mixed slot durations detected ({detectedDurations.join("m, ")}m). Cells now show available slot count.
         </div>
       )}
@@ -3610,51 +3605,51 @@ if (isPastTime) {
         onMouseUp={stopDragging}
         onMouseLeave={stopDragging}
         className={cn(
-          "overflow-x-auto select-none",
+          "booking-timeline-scroll overflow-x-auto select-none",
           isDragging ? "cursor-grabbing" : "cursor-grab"
         )}
       >
         <div className="min-w-max">
           <div
-            className={cn("grid bg-slate-100/80 dark:bg-gray-800/50", compact ? "gap-1 p-2 pb-2" : "gap-2 p-4 pb-3")}
-            style={{ gridTemplateColumns: `80px repeat(${uniqueTimes.length}, minmax(${compact ? 96 : 110}px, 1fr))` }}
+            className={cn("booking-time-header grid", compact ? "gap-1 p-2 pb-2" : "gap-2 p-4 pb-3")}
+            style={{ gridTemplateColumns: `88px repeat(${uniqueTimes.length}, minmax(${compact ? 108 : 120}px, 1fr))` }}
           >
-            <div className="sticky left-0 z-20 flex items-center justify-center bg-slate-800/95 text-center text-xs font-semibold uppercase text-white backdrop-blur-sm">
+            <div className="booking-date-heading sticky left-0 z-20 flex items-center justify-center text-center text-xs font-semibold uppercase backdrop-blur-sm">
               Date
             </div>
             {uniqueTimes.map((time) => (
-              <div key={time} className="text-center text-sm font-bold text-slate-700 dark:text-gray-200">
+              <div key={time} className="booking-time-label text-center text-sm font-bold">
                 {time}
               </div>
             ))}
           </div>
 
-          <div className="border-t border-slate-300 dark:border-gray-700">
+          <div className="booking-grid-body border-t">
             {rows.map((row) => {
               const isTodayRow = row.fullDate === todayIST
               return (
                 <div
                   key={row.fullDate}
                   className={cn(
-                    "grid border-b border-slate-200 last:border-b-0 transition-colors dark:border-gray-700/50",
+                    "booking-grid-row grid border-b last:border-b-0 transition-colors",
                     isTodayRow
-                      ? "bg-cyan-50 ring-1 ring-inset ring-cyan-300/50 dark:bg-cyan-500/10 dark:ring-cyan-400/35"
-                      : "hover:bg-slate-100/70 dark:hover:bg-gray-700/20",
+                      ? "booking-grid-row-today"
+                      : "booking-grid-row-idle",
                     compact ? "gap-1 p-2 py-1.5" : "gap-2 p-4 py-3"
                   )}
-                  style={{ gridTemplateColumns: `80px repeat(${uniqueTimes.length}, minmax(${compact ? 96 : 110}px, 1fr))` }}
+                  style={{ gridTemplateColumns: `88px repeat(${uniqueTimes.length}, minmax(${compact ? 108 : 120}px, 1fr))` }}
                 >
                   <div
                     className={cn(
-                      "sticky left-0 z-20 flex items-center justify-center rounded-lg px-2 py-2 text-sm font-bold backdrop-blur-sm",
+                      "booking-date-cell sticky left-0 z-20 flex items-center justify-center rounded-lg px-2 py-2 text-sm font-bold backdrop-blur-sm",
                       isTodayRow
-                        ? "bg-cyan-100 text-cyan-900 ring-1 ring-cyan-300/60 dark:bg-cyan-500/20 dark:text-cyan-100 dark:ring-cyan-300/35"
-                        : "bg-slate-700/95 text-white"
+                        ? "booking-date-cell-today"
+                        : "booking-date-cell-idle"
                     )}
                   >
                     <span>{row.date}</span>
                     {isTodayRow && (
-                      <span className="ml-1.5 rounded-full bg-cyan-200 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-cyan-900 dark:bg-cyan-400/20 dark:text-cyan-100">
+                      <span className="booking-today-badge ml-1.5 rounded-full px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide">
                         Today
                       </span>
                     )}
@@ -3664,9 +3659,9 @@ if (isPastTime) {
                     <div
                       key={`${row.fullDate}-cell-${idx}`}
                       className={cn(
-                        "rounded-lg border border-slate-300 bg-white/85 backdrop-blur-sm dark:border-gray-700 dark:bg-gray-800/50",
-                        isTodayRow && "border-cyan-300 bg-cyan-50/70 dark:border-cyan-500/30 dark:bg-cyan-500/5",
-                        compact ? "min-h-[36px]" : "min-h-[44px]"
+                        "booking-slot-cell rounded-lg border backdrop-blur-sm",
+                        isTodayRow && "booking-slot-cell-today",
+                        compact ? "min-h-[38px]" : "min-h-[46px]"
                       )}
                     >
                       {content}
@@ -3700,7 +3695,7 @@ function RecentBookings({
   
   if (isLoading) {
     return (
-      <Card className={cn("booking-contrast-card mt-2 bg-slate-50 p-6 dark:bg-gray-700/30", fixedCard && "h-full min-h-0")}>
+      <Card className={cn("booking-detail-card mt-2 p-6", fixedCard && "h-full min-h-0")}>
         <div className="flex items-center justify-center py-8">
           <Loader2 className="w-6 h-6 animate-spin text-emerald-500" />
           <span className="booking-contrast-muted ml-2">Loading bookings...</span>
@@ -3711,9 +3706,9 @@ function RecentBookings({
 
   if (bookings.length === 0) {
     return (
-      <Card className={cn("booking-contrast-card mt-2 bg-slate-50 p-6 dark:bg-gray-700/30", fixedCard && "h-full min-h-0")}>
+      <Card className={cn("booking-detail-card mt-2 p-6", fixedCard && "h-full min-h-0")}>
         <div className="flex flex-col items-center justify-center py-8 text-center">
-          <div className="p-3 bg-gray-200 dark:bg-gray-600 rounded-full mb-3">
+          <div className="booking-empty-icon mb-3 rounded-full p-3">
             <AlertCircle className="booking-contrast-subtle h-6 w-6" />
           </div>
           <p className="booking-contrast-muted font-medium">
@@ -3730,7 +3725,7 @@ function RecentBookings({
   }
 
   return (
-    <Card className={cn("booking-contrast-card mt-2 bg-gray-50 p-4 dark:bg-gray-700/30", fixedCard && "h-full min-h-0 flex flex-col")}>
+    <Card className={cn("booking-detail-card mt-2 p-4", fixedCard && "h-full min-h-0 flex flex-col")}>
       <div className="flex items-center justify-between mb-4">
         <h3 className="booking-contrast-heading flex items-center gap-2 text-lg font-semibold">
           {/* ✅ Show different icon based on booking type */}
