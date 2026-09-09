@@ -997,7 +997,7 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
             <div className="flex flex-wrap items-center gap-2">
               <div className="flex items-center gap-2 pr-1">
                 <span className="dash-title live-session-title">
-                  {activeTab === 'live' ? 'Live Console Sessions' : 'Past Sessions'}
+                  {activeTab === 'live' ? 'Live Sessions' : 'Session History'}
                 </span>
                 <span className="live-session-count">
                   {activeTab === 'live' ? filteredSlots.length : filteredHistoryBookings.length}
@@ -1006,12 +1006,14 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
               <div className="dashboard-module-tab-group live-session-tabs ml-2 flex items-center gap-1 rounded-md p-0.5">
                 <button
                   onClick={() => setActiveTab('live')}
+                  aria-pressed={activeTab === 'live'}
                   className={`rounded px-2.5 py-1 text-sm ${activeTab === 'live' ? 'dashboard-module-tab-active' : 'dashboard-module-tab'}`}
                 >
                   Live
                 </button>
                 <button
                   onClick={() => setActiveTab('history')}
+                  aria-pressed={activeTab === 'history'}
                   className={`rounded px-2.5 py-1 text-sm ${activeTab === 'history' ? 'dashboard-module-tab-active' : 'dashboard-module-tab'}`}
                 >
                   History
@@ -1022,6 +1024,7 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
             <div className="live-session-tools flex w-full items-center gap-2 xl:w-auto xl:justify-end">
               <input
                 type="date"
+                aria-label="Session history date"
                 value={historyDate}
                 onChange={(e) => setHistoryDate(e.target.value)}
                 className={`dashboard-module-input w-[132px] rounded-lg px-3 py-2 text-sm sm:w-44 ${
@@ -1034,7 +1037,8 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                   type="text"
                   value={searchQuery}
                   onChange={handleSearch}
-                  placeholder="Search by name or console..."
+                  placeholder="Search sessions"
+                  aria-label="Search sessions by customer or console"
                   className="dashboard-module-input w-full rounded-lg py-2.5 !pl-10 pr-3 text-sm sm:w-64 xl:w-80"
                 />
               </div>
@@ -1237,7 +1241,7 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
               <table ref={tableRef} className="dashboard-module-table min-w-[760px] max-md:min-w-[680px] w-full divide-y">
                 <thead className="dashboard-module-table-head sticky top-0 z-10">
                   <tr>
-                    {['Name', 'System', 'Time', 'Progress', 'Extra', 'Action'].map((heading) => (
+                    {['Customer', 'Console', 'Schedule', 'Elapsed', 'Overtime / Due', 'Action'].map((heading) => (
                       <th
                         key={heading}
                         scope="col"
@@ -1676,8 +1680,7 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                                   />
                                 </div>
                                 <div className={`text-xs ${hasExtraTime ? "text-red-300" : "text-slate-400"}`}>
-                                  {hasExtraTime ? `Extended: ${formatTime(timer.extraTime)}` : `Remaining: ${formatTime(remainingTime)}`}
-                                  <span className="ml-1 text-slate-500">({progressState})</span>
+                                  {hasExtraTime ? 'Overtime' : `${formatTime(remainingTime)} left`}
                                 </div>
                               </div>
                             </td>

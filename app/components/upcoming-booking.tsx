@@ -1023,7 +1023,7 @@ export function UpcomingBookings({
   return (
     <>
       {/* 🚀 FIXED: Proper flex container structure */}
-      <div className="dashboard-module dashboard-module-panel h-full flex flex-col overflow-hidden rounded-lg p-3 sm:p-4">
+      <div className="upcoming-session-panel dashboard-module dashboard-module-panel h-full flex flex-col overflow-hidden rounded-lg p-3 sm:p-4">
         <AnimatePresence>
           {isMounted && startCard && createPortal(
             <motion.div
@@ -1148,7 +1148,7 @@ export function UpcomingBookings({
         {/* Header + Search */}
         <div className="mb-3 flex flex-col items-start justify-between gap-3 flex-shrink-0">
           <div className="flex items-center gap-2">
-            <h3 className="dash-title">Upcoming Session Queue</h3>
+            <h3 className="dash-title">Upcoming</h3>
             <span className="live-session-count">
               {filteredBookings.length}
             </span>
@@ -1171,10 +1171,11 @@ export function UpcomingBookings({
           {mergedBookings.length === 0 ? (
             <div className="dashboard-module-empty h-full flex flex-col items-center justify-center py-6 px-3">
               <CalendarIcon className="w-8 h-8 mb-2 opacity-50" />
-              <p className="text-sm font-medium">No bookings found</p>
+              <p className="text-sm font-medium">{searchTerm ? 'No matching bookings' : 'No upcoming bookings'}</p>
               <p className="text-xs mt-1 text-center">
-                {isConnected ? "Waiting for bookings..." : "Check filters"}
+                {searchTerm ? 'Try another customer or console.' : isConnected ? 'Your queue is up to date.' : 'Check connection and filters.'}
               </p>
+              <a href="/booking" className="operations-empty-action">New booking</a>
             </div>
           ) : (
             <div>
