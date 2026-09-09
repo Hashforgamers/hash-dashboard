@@ -4730,6 +4730,163 @@ interface SlotManagementProps {
   slab?: boolean
 }
 
+function DashboardQuickBookingSlab({
+  availableConsoles,
+  selectedConsole,
+  selectedSlots,
+  onConsoleChange,
+  onSlotSelect,
+  onNewBooking,
+  allSlots,
+  fetchSlotBookings,
+}: {
+  availableConsoles: ConsoleType[]
+  selectedConsole: ConsoleFilter
+  selectedSlots: SelectedSlot[]
+  onConsoleChange: (gameConsole: ConsoleFilter) => void
+  onSlotSelect: (slot: SelectedSlot) => void
+  onNewBooking: () => void
+  allSlots: { [key: string]: any[] }
+  fetchSlotBookings: (slotIds: number[], date: string) => Promise<void>
+}) {
+  const today = getISTDateString(0)
+  const activeConsoles = [...availableConsoles].sort((a, b) =>
+    String(a?.name || a?.type || "").localeCompare(String(b?.name || b?.type || ""))
+  )
+  const selectedConsoleItem =
+    activeConsoles.find((consoleItem) => consoleItem.type === selectedConsole) ||
+    activeConsoles[0]
+  const selectedConsoleId = Number(selectedConsoleItem?.id)
+
+  const todaySlots = (allSlots[today] || [])
+    .filter((slot: any) => Number(slot?.console_id) === selectedConsoleId)
+    .sort((a: any, b: any) => String(a.start_time).localeCompare(String(b.start_time)))
+
+  const selectedTodayCount = selectedSlots.filter((slot) => slot.date === today).length
+  const availableTodayCount = todaySlots.filter((slot: any) =>
+    Boolean(slot?.is_available) &&
+    !isPastSlotInIST(today, slot?.end_time, slot?.start_time) &&
+    Number(slot?.available_slot || 0) > 0
+  ).length
+
+  const handleSlotButtonClick = (slot: any) => {
+    const isPastTime = isPastSlotInIST(today, slot.end_time, slot.start_time)
+    if (isPastTime) {
+      fetchSlotBookings([slot.slot_id], today)
+      return
+    }
+    if (!slot.is_available || Number(slot.available_slot || 0) <= 0) return
+
+    onSlotSelect({
+      slot_id: slot.slot_id,
+      date: today,
+      start_time: slot.start_time,
+      end_time: slot.end_time,
+      console_id: selectedConsoleId,
+      console_name: selectedConsoleItem?.name || selectedConsoleItem?.type || selectedConsole,
+      console_price: slot.single_slot_price || selectedConsoleItem?.price || 0,
+      available_count: slot.available_slot || 0,
+    })
+  }
+
+  return (
+    <div className="dashboard-quick-booking">
+      <div className="dashboard-quick-console-strip" aria-label="Choose console for quick booking">
+        {activeConsoles.map((consoleItem) => {
+          const Icon = resolveSafeConsoleIcon(consoleItem.icon, consoleItem.type)
+          const active = consoleItem.type === selectedConsoleItem?.type
+          const slotCount = (allSlots[today] || []).filter((slot: any) => Number(slot?.console_id) === Number(consoleItem.id)).length
+
+          return (
+            <button
+              key={`${consoleItem.type}-${consoleItem.id}`}
+              type="button"
+              onClick={() => onConsoleChange(consoleItem.type)}
+              className={cn("dashboard-console-card", active && "dashboard-console-card-active")}
+            >
+              <span className="dashboard-console-icon">
+                <Icon className="h-4 w-4" />
+              </span>
+              <span className="min-w-0 flex-1 text-left">
+                <span className="dashboard-console-name">{consoleItem.name || consoleItem.type}</span>
+                <span className="dashboard-console-meta">{slotCount} today slots</span>
+              </span>
+            </button>
+          )
+        })}
+      </div>
+
+      <div className="dashboard-quick-slot-panel">
+        <div className="dashboard-quick-slot-summary">
+          <div className="min-w-0">
+            <p className="dashboard-quick-slot-title">
+              {selectedConsoleItem?.name || selectedConsole || "Select console"}
+            </p>
+            <p className="dashboard-quick-slot-copy">
+              {availableTodayCount} available today
+              {selectedTodayCount > 0 ? `, ${selectedTodayCount} selected` : ""}
+            </p>
+          </div>
+          <Button
+            type="button"
+            onClick={onNewBooking}
+            disabled={selectedSlots.length === 0}
+            className={cn(
+              "dashboard-quick-book-button",
+              selectedSlots.length > 0 ? "ui-action-primary" : "booking-new-button-disabled"
+            )}
+          >
+            <Plus className="h-3.5 w-3.5" />
+            Book {selectedSlots.length > 0 ? `(${selectedSlots.length})` : ""}
+          </Button>
+        </div>
+
+        <div className="dashboard-slot-slider" aria-label="Today slot slider">
+          {todaySlots.length === 0 ? (
+            <div className="dashboard-slot-empty">
+              No slots found for this console today.
+            </div>
+          ) : (
+            todaySlots.map((slot: any) => {
+              const isSelected = selectedSlots.some(
+                (selected) =>
+                  selected.date === today &&
+                  selected.slot_id === slot.slot_id &&
+                  Number(selected.console_id) === selectedConsoleId
+              )
+              const isPastTime = isPastSlotInIST(today, slot.end_time, slot.start_time)
+              const isFull = Number(slot.available_slot || 0) <= 0
+              const disabled = !slot.is_available || isFull
+
+              return (
+                <button
+                  key={`${today}-${selectedConsoleId}-${slot.slot_id}`}
+                  type="button"
+                  onClick={() => handleSlotButtonClick(slot)}
+                  disabled={!isPastTime && disabled}
+                  className={cn(
+                    "dashboard-slot-chip",
+                    isSelected && "dashboard-slot-chip-selected",
+                    isPastTime && "dashboard-slot-chip-past",
+                    !isPastTime && disabled && "dashboard-slot-chip-full"
+                  )}
+                >
+                  <span className="dashboard-slot-time">
+                    {String(slot.start_time).slice(0, 5)}
+                  </span>
+                  <span className="dashboard-slot-capacity">
+                    {isPastTime ? "Past" : isFull ? "Full" : `${slot.available_slot || 0} left`}
+                  </span>
+                </button>
+              )
+            })
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function SlotManagement({ embedded = false, slab = false }: SlotManagementProps) {
   const { moduleCache, moduleVersions, setModuleCache } = useDashboardData()
   const [selectedConsole, setSelectedConsole] = useState<ConsoleFilter>("")
@@ -5267,28 +5424,39 @@ useEffect(() => {
         )}
         {embedded ? (
           <>
-            <div className={cn("shrink-0 space-y-3 sm:space-y-4", slab && "dashboard-booking-slab-stack")}>
-              <TopBar
-                selectedSlots={selectedSlots}
-                onNewBooking={handleNewBooking}
+            {slab ? (
+              <DashboardQuickBookingSlab
+                availableConsoles={availableConsoles}
                 selectedConsole={selectedConsole}
+                selectedSlots={selectedSlots}
                 onConsoleChange={handleConsoleChange}
-                availableConsoles={availableConsoles}
-                compact
-                slab={slab}
-              />
-              <ScheduleGrid
-                availableConsoles={availableConsoles}
-                selectedConsole={selectedConsole}
-                selectedSlots={selectedSlots}
                 onSlotSelect={handleSlotSelect}
+                onNewBooking={handleNewBooking}
                 allSlots={allSlots}
-                isLoading={isLoading}
                 fetchSlotBookings={fetchSlotBookings}
-                compact
-                slab={slab}
               />
-            </div>
+            ) : (
+              <div className="shrink-0 space-y-3 sm:space-y-4">
+                <TopBar
+                  selectedSlots={selectedSlots}
+                  onNewBooking={handleNewBooking}
+                  selectedConsole={selectedConsole}
+                  onConsoleChange={handleConsoleChange}
+                  availableConsoles={availableConsoles}
+                  compact
+                />
+                <ScheduleGrid
+                  availableConsoles={availableConsoles}
+                  selectedConsole={selectedConsole}
+                  selectedSlots={selectedSlots}
+                  onSlotSelect={handleSlotSelect}
+                  allSlots={allSlots}
+                  isLoading={isLoading}
+                  fetchSlotBookings={fetchSlotBookings}
+                  compact
+                />
+              </div>
+            )}
             {!slab && (
               <div className="min-h-0 flex-1">
                 <RecentBookings bookings={slotBookings} isLoading={isLoadingBookings} fixedCard />
