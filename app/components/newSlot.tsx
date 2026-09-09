@@ -4782,8 +4782,6 @@ function DashboardQuickBookingSlab({
       Number(slot?.available_slot || 0) > 0
     )
     .sort((a: any, b: any) => String(a.start_time).localeCompare(String(b.start_time)))
-  const selectedTodayCount = selectedSlots.filter((slot) => slot.date === today).length
-  const availableTodayCount = todaySlots.length
 
   const handleSlotButtonClick = (slot: any) => {
     if (!slot.is_available || Number(slot.available_slot || 0) <= 0) return
@@ -4802,6 +4800,8 @@ function DashboardQuickBookingSlab({
 
   return (
     <div className="dashboard-quick-booking">
+      <div className="dashboard-quick-toolbar">
+      <h2 className="dashboard-slab-title">Quick Booking</h2>
       <div className="dashboard-quick-console-strip" aria-label="Choose console for quick booking">
         {activeConsoles.map((consoleItem) => {
           const Icon = resolveSafeConsoleIcon(consoleItem.icon, consoleItem.type)
@@ -4819,6 +4819,7 @@ function DashboardQuickBookingSlab({
               type="button"
               title={`${consoleItem.name || consoleItem.type}: ${openSlotCount} open today`}
               aria-label={`${consoleItem.name || consoleItem.type}, ${openSlotCount} open today`}
+              aria-pressed={active}
               onClick={() => {
                 setQuickConsole(consoleItem.type)
                 onConsoleChange(consoleItem.type)
@@ -4828,12 +4829,14 @@ function DashboardQuickBookingSlab({
               <span className="dashboard-console-icon">
                 <Icon className="h-4 w-4" />
               </span>
-              <span className="dashboard-console-count">{openSlotCount}</span>
             </button>
           )
         })}
       </div>
-
+      <span className="dashboard-quick-context">{selectedConsoleItem?.name || selectedConsoleItem?.type}</span>
+      <a href="/booking" className="dashboard-quick-center">Full Center</a>
+      </div>
+      <div className="dashboard-quick-slots-row">
       <div className="dashboard-slot-slider" aria-label="Available slots today">
         {!selectedConsoleItem ? (
           <div className="dashboard-slot-empty">Select console</div>
@@ -4852,6 +4855,7 @@ function DashboardQuickBookingSlab({
                 key={`${today}-${selectedConsoleId}-${slot.slot_id}`}
                 type="button"
                 title={`${String(slot.start_time).slice(0, 5)} - ${slot.available_slot || 0} left`}
+                aria-pressed={isSelected}
                 onClick={() => handleSlotButtonClick(slot)}
                 className={cn(
                   "dashboard-slot-chip",
@@ -4862,7 +4866,7 @@ function DashboardQuickBookingSlab({
                   {String(slot.start_time).slice(0, 5)}
                 </span>
                 <span className="dashboard-slot-capacity">
-                  {slot.available_slot || 0}
+                  {slot.available_slot || 0} available
                 </span>
               </button>
             )
@@ -4870,9 +4874,6 @@ function DashboardQuickBookingSlab({
         )}
       </div>
 
-      {selectedTodayCount > 0 && (
-        <div className="dashboard-quick-selected-count">{selectedTodayCount}</div>
-      )}
       <Button
         type="button"
         onClick={onNewBooking}
@@ -4885,6 +4886,7 @@ function DashboardQuickBookingSlab({
         <Plus className="h-3.5 w-3.5" />
         Book {selectedSlots.length > 0 ? `(${selectedSlots.length})` : ""}
       </Button>
+      </div>
     </div>
   )
 }
@@ -5412,9 +5414,9 @@ useEffect(() => {
   }
 
   return (
-    <main className={embedded ? "h-full min-h-0 bg-background overflow-hidden" : "min-h-screen bg-background"}>
+    <main className={slab ? "dashboard-quick-root" : embedded ? "h-full min-h-0 bg-background overflow-hidden" : "min-h-screen bg-background"}>
       <div
-        className={`mx-auto w-full max-w-full p-3 sm:p-4 md:p-6 ${
+        className={slab ? "dashboard-quick-root-inner" : `mx-auto w-full max-w-full p-3 sm:p-4 md:p-6 ${
           embedded ? "flex h-full min-h-0 flex-col gap-3 sm:gap-4" : ""
         }`}
       >
