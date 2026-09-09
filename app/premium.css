@@ -1588,8 +1588,8 @@ h6 {
 }
 
 .dashboard-booking-slab {
-  min-height: 12.4rem;
-  max-height: 13.8rem;
+  min-height: 11.2rem;
+  max-height: 12.5rem;
   padding: 0;
   border-color: rgba(255, 255, 255, 0.1);
   background:
@@ -1622,9 +1622,211 @@ h6 {
 
 .dashboard-booking-slab-body {
   height: calc(100% - 3.25rem);
-  min-height: 9rem;
+  min-height: 7.6rem;
   overflow: hidden;
   padding: 0.55rem 0.75rem 0.7rem;
+}
+
+.dashboard-quick-booking {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(20rem, 0.72fr);
+  gap: 0.7rem;
+  height: 100%;
+  min-height: 0;
+}
+
+.dashboard-quick-console-strip {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(8.8rem, 1fr));
+  gap: 0.55rem;
+  min-width: 0;
+  overflow: auto;
+  padding-right: 0.1rem;
+  scrollbar-width: none;
+}
+
+.dashboard-quick-console-strip::-webkit-scrollbar {
+  display: none;
+}
+
+.dashboard-console-card {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 0.62rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0.65rem;
+  background: rgba(44, 44, 46, 0.46);
+  padding: 0.66rem 0.7rem;
+  color: #d1d1d6;
+  text-align: left;
+  transition: border-color 160ms ease, background 160ms ease, color 160ms ease;
+}
+
+.dashboard-console-card:hover {
+  border-color: rgba(255, 255, 255, 0.18);
+  background: rgba(58, 58, 60, 0.6);
+  color: #f5f5f7;
+}
+
+.dashboard-console-card-active {
+  border-color: rgba(10, 132, 255, 0.62);
+  background: rgba(10, 132, 255, 0.15);
+  color: #f5f5f7;
+  box-shadow: inset 0 0 0 1px rgba(10, 132, 255, 0.14);
+}
+
+.dashboard-console-icon {
+  display: inline-flex;
+  width: 2.1rem;
+  height: 2.1rem;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.56rem;
+  background: rgba(255, 255, 255, 0.07);
+  color: #64d2ff;
+}
+
+.dashboard-console-name,
+.dashboard-console-meta {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dashboard-console-name {
+  color: inherit;
+  font-size: 0.78rem;
+  font-weight: 650;
+  line-height: 1.2;
+}
+
+.dashboard-console-meta {
+  margin-top: 0.14rem;
+  color: #8e8e93;
+  font-size: 0.68rem;
+}
+
+.dashboard-quick-slot-panel {
+  min-width: 0;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0.72rem;
+  background: rgba(22, 22, 24, 0.52);
+  padding: 0.58rem;
+}
+
+.dashboard-quick-slot-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.65rem;
+  margin-bottom: 0.52rem;
+}
+
+.dashboard-quick-slot-title {
+  color: #f5f5f7;
+  font-size: 0.82rem;
+  font-weight: 650;
+  line-height: 1.2;
+}
+
+.dashboard-quick-slot-copy {
+  margin-top: 0.12rem;
+  color: #8e8e93;
+  font-size: 0.68rem;
+}
+
+.dashboard-quick-book-button {
+  display: inline-flex;
+  height: 2rem;
+  min-width: 5.2rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  border-radius: 0.52rem;
+  padding-inline: 0.72rem;
+  font-size: 0.72rem;
+  font-weight: 650;
+  white-space: nowrap;
+}
+
+.dashboard-slot-slider {
+  display: flex;
+  gap: 0.45rem;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 0.05rem 0.05rem 0.3rem;
+  scroll-snap-type: x proximity;
+  scrollbar-color: rgba(142, 142, 147, 0.48) transparent;
+}
+
+.dashboard-slot-chip {
+  display: inline-flex;
+  min-width: 4.9rem;
+  flex: 0 0 auto;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 0.12rem;
+  scroll-snap-align: start;
+  border: 1px solid rgba(48, 209, 88, 0.24);
+  border-radius: 0.6rem;
+  background: rgba(48, 209, 88, 0.12);
+  padding: 0.48rem 0.56rem;
+  color: #c8f7d4;
+  transition: border-color 160ms ease, background 160ms ease, color 160ms ease;
+}
+
+.dashboard-slot-chip:hover:not(:disabled) {
+  border-color: rgba(48, 209, 88, 0.42);
+  background: rgba(48, 209, 88, 0.18);
+  color: #f5f5f7;
+}
+
+.dashboard-slot-chip-selected {
+  border-color: rgba(10, 132, 255, 0.72);
+  background: rgba(10, 132, 255, 0.22);
+  color: #f5f5f7;
+}
+
+.dashboard-slot-chip-past {
+  border-color: rgba(142, 142, 147, 0.22);
+  background: rgba(99, 99, 102, 0.18);
+  color: #c7c7cc;
+}
+
+.dashboard-slot-chip-full {
+  cursor: not-allowed;
+  border-color: rgba(255, 69, 58, 0.24);
+  background: rgba(255, 69, 58, 0.12);
+  color: #ffb3ad;
+}
+
+.dashboard-slot-time {
+  font-size: 0.82rem;
+  font-weight: 700;
+  line-height: 1.05;
+}
+
+.dashboard-slot-capacity {
+  color: currentColor;
+  font-size: 0.64rem;
+  font-weight: 600;
+  opacity: 0.74;
+}
+
+.dashboard-slot-empty {
+  display: flex;
+  min-height: 3.2rem;
+  min-width: 100%;
+  align-items: center;
+  justify-content: center;
+  border: 1px dashed rgba(255, 255, 255, 0.12);
+  border-radius: 0.6rem;
+  color: #8e8e93;
+  font-size: 0.72rem;
 }
 
 .dashboard-booking-slab-body .booking-topbar {
