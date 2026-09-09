@@ -1,5 +1,7 @@
 "use client";
 
+import { creditAuthHeaders } from "@/lib/credit-auth";
+import { useActionFeedback } from "../hooks/use-action-feedback";
 import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -64,6 +66,7 @@ import {
 } from "./console-pricing/utils";
 
 export default function ConsolePricing() {
+  const { reportError, confirmAction, feedback } = useActionFeedback();
   const renderCountRef = useRef(0);
   const cacheSyncRunsRef = useRef(0);
   const priceStateSetCountRef = useRef(0);
@@ -611,7 +614,7 @@ export default function ConsolePricing() {
     try {
       const res = await fetch(`${DASHBOARD_URL}/api/vendor/${vendorId}/tax-profile`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: creditAuthHeaders(),
         body: JSON.stringify({
           gst_registered: taxProfile.gst_registered,
           gst_enabled: taxProfile.gst_enabled,
@@ -653,7 +656,7 @@ export default function ConsolePricing() {
     setIsLoadingCredit(true);
     setCreditError(null);
     try {
-      const res = await fetch(`${BOOKING_URL}/api/vendor/${vendorId}/monthly-credit/accounts`);
+      const res = await fetch(`${BOOKING_URL}/api/vendor/${vendorId}/monthly-credit/accounts`, { headers: creditAuthHeaders() });
       if (!res.ok) throw new Error("Failed to fetch accounts");
       const data = await res.json();
       setMonthlyCreditAccounts(Array.isArray(data?.accounts) ? data.accounts : []);
@@ -678,7 +681,7 @@ export default function ConsolePricing() {
     try {
       const res = await fetch(`${BOOKING_URL}/api/vendor/${vendorId}/monthly-credit/accounts`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: creditAuthHeaders(),
         body: JSON.stringify({
           user_id: Number(creditForm.user_id),
           credit_limit: Number(creditForm.credit_limit || 0),
@@ -705,7 +708,7 @@ export default function ConsolePricing() {
     setStatementUserId(userId);
     setIsLoadingStatement(true);
     try {
-      const res = await fetch(`${BOOKING_URL}/api/vendor/${vendorId}/monthly-credit/statement/${userId}`);
+      const res = await fetch(`${BOOKING_URL}/api/vendor/${vendorId}/monthly-credit/statement/${userId}`, { headers: creditAuthHeaders() });
       const data = await res.json();
       if (!res.ok || !data?.success) throw new Error(data?.message || "Failed to fetch statement");
       setStatementRows(Array.isArray(data?.entries) ? data.entries : []);
@@ -760,7 +763,7 @@ export default function ConsolePricing() {
       }, {} as Record<string, number>);
       const response = await fetch(`${DASHBOARD_URL}/api/vendor/${vendorId}/console-pricing`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: creditAuthHeaders(),
         body: JSON.stringify(payload),
       });
       if (!response.ok) throw new Error("Failed");
@@ -772,7 +775,7 @@ export default function ConsolePricing() {
         return n;
       });
     } catch (error) {
-      alert("Error saving changes.");
+      reportError("Error saving changes.");
     } finally {
       setIsLoading(false);
     }
@@ -789,7 +792,7 @@ export default function ConsolePricing() {
       showToast("Default pricing reset to latest saved values.");
     } catch (error) {
       console.error("Failed to reset default pricing", error);
-      alert("Unable to reset pricing.");
+      reportError("Unable to reset pricing.");
     } finally {
       setIsLoading(false);
     }
@@ -801,7 +804,7 @@ export default function ConsolePricing() {
     try {
       const response = await fetch(`${DASHBOARD_URL}/api/vendor/${vendorId}/pricing-offers`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: creditAuthHeaders(),
         body: JSON.stringify({
           available_game_id: parseInt(offerForm.available_game_id),
           offered_price: parseFloat(offerForm.offered_price),
@@ -819,7 +822,7 @@ export default function ConsolePricing() {
       resetOfferForm();
       fetchOffers();
     } catch (error: any) {
-      alert(error.message || "Error creating offer");
+      reportError(error.message || "Error creating offer");
     } finally {
       setIsCreatingOffer(false); // ✅ loader off
     }
@@ -833,7 +836,7 @@ export default function ConsolePricing() {
         `${DASHBOARD_URL}/api/vendor/${vendorId}/pricing-offers/${editingOffer.id}`,
         {
           method: "PUT",
-          headers: { "Content-Type": "application/json" },
+          headers: creditAuthHeaders(),
           body: JSON.stringify({
             offered_price: parseFloat(offerForm.offered_price),
             start_date: offerForm.start_date,
@@ -851,23 +854,24 @@ export default function ConsolePricing() {
       resetOfferForm();
       fetchOffers();
     } catch (error) {
-      alert("Error updating offer");
+      reportError("Error updating offer");
     } finally {
       setIsUpdatingOffer(false); // ✅ loader off
     }
   };
 
   const handleDeleteOffer = async (id: number) => {
-    if (!vendorId || !confirm("Are you sure you want to delete this offer?")) return;
+    if (!vendorId || !(await confirmAction({ title: `Delete "${offers.find(o => o.id === id)?.name || "pricing offer"}"?`, description: "This removes the promotion from the pricing configuration. New bookings will no longer use this offer.", action: "Delete offer" }))) return;
     setDeletingOfferId(id); // ✅ loader on for this specific row
     try {
-      await fetch(`${DASHBOARD_URL}/api/vendor/${vendorId}/pricing-offers/${id}`, {
+      const response = await fetch(`${DASHBOARD_URL}/api/vendor/${vendorId}/pricing-offers/${id}`, {
         method: "DELETE",
       });
+      if (!response.ok) throw new Error("Unable to delete offer. Please retry.");
       showToast("Offer deleted!");
       fetchOffers();
     } catch (error) {
-      alert("Error deleting offer");
+      reportError("Error deleting offer");
     } finally {
       setDeletingOfferId(null); // ✅ loader off
     }
@@ -1029,7 +1033,7 @@ export default function ConsolePricing() {
     try {
       const response = await fetch(`${DASHBOARD_URL}/api/vendor/${vendorId}/controller-pricing`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: creditAuthHeaders(),
         body: JSON.stringify({ pricing: pricingPayload }),
       });
       const data = await response.json();
@@ -1236,7 +1240,7 @@ export default function ConsolePricing() {
 
       const response = await fetch(`${DASHBOARD_URL}/api/vendor/${vendorId}/squad-pricing-rules`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: creditAuthHeaders(),
         body: JSON.stringify({ pricing: pricingPayload }),
       });
       const data = await response.json();
@@ -1321,6 +1325,7 @@ export default function ConsolePricing() {
 
   return (
     <div className="console-pricing-page dashboard-module dashboard-typography relative flex h-full min-h-0 flex-col gap-4 overflow-y-auto overflow-x-hidden px-1 pb-2 sm:px-2">
+      {feedback}
       {debugEnabled && (
         <div className="pointer-events-none fixed left-20 top-3 z-[30060] rounded-md border border-cyan-400/40 bg-slate-950/90 px-2 py-1 text-[10px] text-cyan-100">
           r:{renderCountRef.current} sync:{cacheSyncRunsRef.current} set:{priceStateSetCountRef.current}

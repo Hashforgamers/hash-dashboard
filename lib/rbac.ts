@@ -6,6 +6,7 @@ export type Permission =
   | "extras.manage"
   | "gamers.view"
   | "pricing.manage"
+  | "credit.manage"
   | "passes.manage"
   | "store.manage"
   | "games.manage"
@@ -27,6 +28,7 @@ export const ROLE_PERMISSIONS: Record<StaffRole, Permission[]> = {
     "extras.manage",
     "gamers.view",
     "pricing.manage",
+    "credit.manage",
     "passes.manage",
     "store.manage",
     "games.manage",
@@ -45,6 +47,7 @@ export const ROLE_PERMISSIONS: Record<StaffRole, Permission[]> = {
     "extras.manage",
     "gamers.view",
     "pricing.manage",
+    "credit.manage",
     "passes.manage",
     "store.manage",
     "games.manage",
@@ -75,7 +78,7 @@ export const NAV_PERMISSION_MAP: NavItemPermission[] = [
   { href: "/manage-extraservice", permission: "extras.manage" },
   { href: "/know-your-gamers", permission: "gamers.view" },
   { href: "/console-pricing", permission: "pricing.manage" },
-  { href: "/gamers-credit", permission: "pricing.manage" },
+  { href: "/gamers-credit", permission: "credit.manage" },
   { href: "/pass", permission: "passes.manage" },
   { href: "/store", permission: "store.manage" },
   { href: "/games", permission: "games.manage" },
