@@ -4723,9 +4723,10 @@ function ListBooking() {
 
 interface SlotManagementProps {
   embedded?: boolean
+  slab?: boolean
 }
 
-export default function SlotManagement({ embedded = false }: SlotManagementProps) {
+export default function SlotManagement({ embedded = false, slab = false }: SlotManagementProps) {
   const { moduleCache, moduleVersions, setModuleCache } = useDashboardData()
   const [selectedConsole, setSelectedConsole] = useState<ConsoleFilter>("")
   const [selectedSlots, setSelectedSlots] = useState<SelectedSlot[]>([])
@@ -5262,7 +5263,7 @@ useEffect(() => {
         )}
         {embedded ? (
           <>
-            <div className="shrink-0 space-y-3 sm:space-y-4">
+            <div className={cn("shrink-0 space-y-3 sm:space-y-4", slab && "dashboard-booking-slab-stack")}>
               <TopBar
                 selectedSlots={selectedSlots}
                 onNewBooking={handleNewBooking}
@@ -5282,9 +5283,11 @@ useEffect(() => {
                 compact
               />
             </div>
-            <div className="min-h-0 flex-1">
-              <RecentBookings bookings={slotBookings} isLoading={isLoadingBookings} fixedCard />
-            </div>
+            {!slab && (
+              <div className="min-h-0 flex-1">
+                <RecentBookings bookings={slotBookings} isLoading={isLoadingBookings} fixedCard />
+              </div>
+            )}
           </>
         ) : (
           <>
