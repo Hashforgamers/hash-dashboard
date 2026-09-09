@@ -4802,99 +4802,89 @@ function DashboardQuickBookingSlab({
 
   return (
     <div className="dashboard-quick-booking">
-      <div className="dashboard-quick-slot-panel">
-        {selectedConsoleItem ? (
-          <>
-            <div className="dashboard-quick-slot-summary">
-              <div className="dashboard-quick-console-strip" aria-label="Choose console for quick booking">
-                {activeConsoles.map((consoleItem) => {
-                  const Icon = resolveSafeConsoleIcon(consoleItem.icon, consoleItem.type)
-                  const active = consoleItem.type === quickConsole
-                  const openSlotCount = (allSlots[today] || []).filter((slot: any) =>
-                    Number(slot?.console_id) === Number(consoleItem.id) &&
-                    Boolean(slot?.is_available) &&
-                    !isPastSlotInIST(today, slot?.end_time, slot?.start_time) &&
-                    Number(slot?.available_slot || 0) > 0
-                  ).length
+      <div className="dashboard-quick-console-strip" aria-label="Choose console for quick booking">
+        {activeConsoles.map((consoleItem) => {
+          const Icon = resolveSafeConsoleIcon(consoleItem.icon, consoleItem.type)
+          const active = consoleItem.type === quickConsole
+          const openSlotCount = (allSlots[today] || []).filter((slot: any) =>
+            Number(slot?.console_id) === Number(consoleItem.id) &&
+            Boolean(slot?.is_available) &&
+            !isPastSlotInIST(today, slot?.end_time, slot?.start_time) &&
+            Number(slot?.available_slot || 0) > 0
+          ).length
 
-                  return (
-                    <button
-                      key={`${consoleItem.type}-${consoleItem.id}`}
-                      type="button"
-                      title={`${consoleItem.name || consoleItem.type}: ${openSlotCount} open today`}
-                      aria-label={`${consoleItem.name || consoleItem.type}, ${openSlotCount} open today`}
-                      onClick={() => {
-                        setQuickConsole(consoleItem.type)
-                        onConsoleChange(consoleItem.type)
-                      }}
-                      className={cn("dashboard-console-card", active && "dashboard-console-card-active")}
-                    >
-                      <span className="dashboard-console-icon">
-                        <Icon className="h-4 w-4" />
-                      </span>
-                      <span className="dashboard-console-count">{openSlotCount}</span>
-                    </button>
-                  )
-                })}
-              </div>
-              {selectedTodayCount > 0 && (
-                <div className="dashboard-quick-selected-count">{selectedTodayCount} selected</div>
-              )}
-              <Button
+          return (
+            <button
+              key={`${consoleItem.type}-${consoleItem.id}`}
+              type="button"
+              title={`${consoleItem.name || consoleItem.type}: ${openSlotCount} open today`}
+              aria-label={`${consoleItem.name || consoleItem.type}, ${openSlotCount} open today`}
+              onClick={() => {
+                setQuickConsole(consoleItem.type)
+                onConsoleChange(consoleItem.type)
+              }}
+              className={cn("dashboard-console-card", active && "dashboard-console-card-active")}
+            >
+              <span className="dashboard-console-icon">
+                <Icon className="h-4 w-4" />
+              </span>
+              <span className="dashboard-console-count">{openSlotCount}</span>
+            </button>
+          )
+        })}
+      </div>
+
+      <div className="dashboard-slot-slider" aria-label="Available slots today">
+        {!selectedConsoleItem ? (
+          <div className="dashboard-slot-empty">Select console</div>
+        ) : todaySlots.length === 0 ? (
+          <div className="dashboard-slot-empty">No slots left today</div>
+        ) : (
+          todaySlots.map((slot: any) => {
+            const isSelected = selectedSlots.some(
+              (selected) =>
+                selected.date === today &&
+                selected.slot_id === slot.slot_id &&
+                Number(selected.console_id) === selectedConsoleId
+            )
+            return (
+              <button
+                key={`${today}-${selectedConsoleId}-${slot.slot_id}`}
                 type="button"
-                onClick={onNewBooking}
-                disabled={selectedSlots.length === 0}
+                title={`${String(slot.start_time).slice(0, 5)} - ${slot.available_slot || 0} left`}
+                onClick={() => handleSlotButtonClick(slot)}
                 className={cn(
-                  "dashboard-quick-book-button",
-                  selectedSlots.length > 0 ? "ui-action-primary" : "booking-new-button-disabled"
+                  "dashboard-slot-chip",
+                  isSelected && "dashboard-slot-chip-selected"
                 )}
               >
-                <Plus className="h-3.5 w-3.5" />
-                Book {selectedSlots.length > 0 ? `(${selectedSlots.length})` : ""}
-              </Button>
-            </div>
-
-            <div className="dashboard-slot-slider" aria-label="Available slots today">
-              {todaySlots.length === 0 ? (
-                <div className="dashboard-slot-empty">
-                  No bookable slots left today.
-                </div>
-              ) : (
-                todaySlots.map((slot: any) => {
-                  const isSelected = selectedSlots.some(
-                    (selected) =>
-                      selected.date === today &&
-                      selected.slot_id === slot.slot_id &&
-                      Number(selected.console_id) === selectedConsoleId
-                  )
-                  return (
-                    <button
-                      key={`${today}-${selectedConsoleId}-${slot.slot_id}`}
-                      type="button"
-                      onClick={() => handleSlotButtonClick(slot)}
-                      className={cn(
-                        "dashboard-slot-chip",
-                        isSelected && "dashboard-slot-chip-selected"
-                      )}
-                    >
-                      <span className="dashboard-slot-time">
-                        {String(slot.start_time).slice(0, 5)}
-                      </span>
-                      <span className="dashboard-slot-capacity">
-                        {slot.available_slot || 0} left
-                      </span>
-                    </button>
-                  )
-                })
-              )}
-            </div>
-          </>
-        ) : (
-          <div className="dashboard-slot-empty">
-            Select a console type to see available slots.
-          </div>
+                <span className="dashboard-slot-time">
+                  {String(slot.start_time).slice(0, 5)}
+                </span>
+                <span className="dashboard-slot-capacity">
+                  {slot.available_slot || 0}
+                </span>
+              </button>
+            )
+          })
         )}
       </div>
+
+      {selectedTodayCount > 0 && (
+        <div className="dashboard-quick-selected-count">{selectedTodayCount}</div>
+      )}
+      <Button
+        type="button"
+        onClick={onNewBooking}
+        disabled={selectedSlots.length === 0}
+        className={cn(
+          "dashboard-quick-book-button",
+          selectedSlots.length > 0 ? "ui-action-primary" : "booking-new-button-disabled"
+        )}
+      >
+        <Plus className="h-3.5 w-3.5" />
+        Book {selectedSlots.length > 0 ? `(${selectedSlots.length})` : ""}
+      </Button>
     </div>
   )
 }
