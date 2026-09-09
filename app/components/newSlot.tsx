@@ -4802,51 +4802,44 @@ function DashboardQuickBookingSlab({
 
   return (
     <div className="dashboard-quick-booking">
-      <div className="dashboard-quick-console-strip" aria-label="Choose console for quick booking">
-        {activeConsoles.map((consoleItem) => {
-          const Icon = resolveSafeConsoleIcon(consoleItem.icon, consoleItem.type)
-          const active = consoleItem.type === quickConsole
-          const openSlotCount = (allSlots[today] || []).filter((slot: any) =>
-            Number(slot?.console_id) === Number(consoleItem.id) &&
-            Boolean(slot?.is_available) &&
-            !isPastSlotInIST(today, slot?.end_time, slot?.start_time) &&
-            Number(slot?.available_slot || 0) > 0
-          ).length
-
-          return (
-            <button
-              key={`${consoleItem.type}-${consoleItem.id}`}
-              type="button"
-              title={`${consoleItem.name || consoleItem.type}: ${openSlotCount} open today`}
-              aria-label={`${consoleItem.name || consoleItem.type}, ${openSlotCount} open today`}
-              onClick={() => {
-                setQuickConsole(consoleItem.type)
-                onConsoleChange(consoleItem.type)
-              }}
-              className={cn("dashboard-console-card", active && "dashboard-console-card-active")}
-            >
-              <span className="dashboard-console-icon">
-                <Icon className="h-4 w-4" />
-              </span>
-              <span className="dashboard-console-count">{openSlotCount}</span>
-            </button>
-          )
-        })}
-      </div>
-
       <div className="dashboard-quick-slot-panel">
         {selectedConsoleItem ? (
           <>
             <div className="dashboard-quick-slot-summary">
-              <div className="min-w-0">
-                <p className="dashboard-quick-slot-title">
-                  {selectedConsoleItem.name || selectedConsoleItem.type}
-                  <span>{availableTodayCount}</span>
-                </p>
-                {selectedTodayCount > 0 && (
-                  <p className="dashboard-quick-slot-copy">{selectedTodayCount} selected</p>
-                )}
+              <div className="dashboard-quick-console-strip" aria-label="Choose console for quick booking">
+                {activeConsoles.map((consoleItem) => {
+                  const Icon = resolveSafeConsoleIcon(consoleItem.icon, consoleItem.type)
+                  const active = consoleItem.type === quickConsole
+                  const openSlotCount = (allSlots[today] || []).filter((slot: any) =>
+                    Number(slot?.console_id) === Number(consoleItem.id) &&
+                    Boolean(slot?.is_available) &&
+                    !isPastSlotInIST(today, slot?.end_time, slot?.start_time) &&
+                    Number(slot?.available_slot || 0) > 0
+                  ).length
+
+                  return (
+                    <button
+                      key={`${consoleItem.type}-${consoleItem.id}`}
+                      type="button"
+                      title={`${consoleItem.name || consoleItem.type}: ${openSlotCount} open today`}
+                      aria-label={`${consoleItem.name || consoleItem.type}, ${openSlotCount} open today`}
+                      onClick={() => {
+                        setQuickConsole(consoleItem.type)
+                        onConsoleChange(consoleItem.type)
+                      }}
+                      className={cn("dashboard-console-card", active && "dashboard-console-card-active")}
+                    >
+                      <span className="dashboard-console-icon">
+                        <Icon className="h-4 w-4" />
+                      </span>
+                      <span className="dashboard-console-count">{openSlotCount}</span>
+                    </button>
+                  )
+                })}
               </div>
+              {selectedTodayCount > 0 && (
+                <div className="dashboard-quick-selected-count">{selectedTodayCount} selected</div>
+              )}
               <Button
                 type="button"
                 onClick={onNewBooking}
