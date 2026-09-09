@@ -537,10 +537,35 @@ export function DashboardContent() {
               </div>
             </motion.div>
           ) : (
-            <div className="mt-2 grid grid-cols-1 gap-2 max-md:mt-1 max-md:gap-1.5 sm:mt-3 sm:gap-3 xl:grid-cols-12 flex-1 min-h-0 max-md:h-[calc(100svh-16.5rem)] max-md:min-h-[520px] max-md:grid-rows-[1.05fr_0.95fr]">
-              {/* Left Column */}
-              <div className="space-y-2 sm:space-y-4 flex flex-col min-h-0 xl:col-span-8 2xl:col-span-9 max-md:h-full max-md:min-h-0">
-                {/* ✅ Current Slots - locked when subscription expired */}
+            <div className="mt-2 flex min-h-0 flex-1 flex-col gap-2 max-md:mt-1 max-md:gap-1.5 sm:mt-3 sm:gap-3">
+              <motion.div
+                initial={{ opacity: 0, y: 14 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.18 }}
+                className="dashboard-booking-slab gaming-panel shrink-0 overflow-hidden rounded-lg"
+              >
+                <div className="dashboard-booking-slab-header">
+                  <div className="min-w-0">
+                    <h2 className="dashboard-slab-title">Quick Booking</h2>
+                    <p className="dashboard-slab-subtitle">Select a slot and create a booking without leaving live operations.</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => router.push("/booking")}
+                    className="dashboard-action-button h-8 shrink-0 whitespace-nowrap text-xs"
+                    title="Open the full booking command center"
+                  >
+                    <ExternalLink className="h-3.5 w-3.5" />
+                    Full Center
+                  </button>
+                </div>
+                <div className="dashboard-booking-slab-body">
+                  <SlotManagement embedded slab />
+                </div>
+              </motion.div>
+
+              <div className="grid flex-1 grid-cols-1 gap-2 overflow-hidden max-md:min-h-[520px] max-md:grid-rows-[1.05fr_0.95fr] max-md:gap-1.5 sm:gap-3 xl:grid-cols-12">
+                <div className="space-y-2 sm:space-y-4 flex flex-col min-h-0 xl:col-span-8 2xl:col-span-9 max-md:h-full max-md:min-h-0">
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -556,23 +581,23 @@ export function DashboardContent() {
                     />
                   </div>
                 </motion.div>
-              </div>
-
-              {/* ✅ Right Column - Upcoming Bookings - locked when subscription expired */}
-              <motion.div
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.4 }}
-                className="flex flex-col min-h-0 xl:col-span-4 2xl:col-span-3 xl:h-full max-md:h-full max-md:min-h-0"
-              >
-                <div className="relative flex-1 min-h-[320px] overflow-hidden rounded-lg xl:h-full xl:min-h-0 max-md:min-h-0 max-md:h-full">
-                  <UpcomingBookings
-                    upcomingBookings={dashboardData.upcomingBookings || []}
-                    vendorId={vendorId?.toString()}
-                    setRefreshSlots={setRefreshSlots}
-                  />
                 </div>
-              </motion.div>
+
+                <motion.div
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.4 }}
+                  className="flex flex-col min-h-0 xl:col-span-4 2xl:col-span-3 xl:h-full max-md:h-full max-md:min-h-0"
+                >
+                  <div className="relative flex-1 min-h-[320px] overflow-hidden rounded-lg xl:h-full xl:min-h-0 max-md:min-h-0 max-md:h-full">
+                    <UpcomingBookings
+                      upcomingBookings={dashboardData.upcomingBookings || []}
+                      vendorId={vendorId?.toString()}
+                      setRefreshSlots={setRefreshSlots}
+                    />
+                  </div>
+                </motion.div>
+              </div>
             </div>
           )}
 

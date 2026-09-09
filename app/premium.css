@@ -1587,6 +1587,99 @@ h6 {
   background: rgba(99, 99, 102, 0.28) !important;
 }
 
+.dashboard-booking-slab {
+  min-height: 15.5rem;
+  max-height: 18.5rem;
+  padding: 0;
+  border-color: rgba(255, 255, 255, 0.1);
+  background:
+    linear-gradient(180deg, rgba(28, 28, 30, 0.72), rgba(12, 12, 14, 0.62)),
+    radial-gradient(circle at 92% 0%, rgba(10, 132, 255, 0.1), transparent 24rem);
+}
+
+.dashboard-booking-slab-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.85rem;
+  padding: 0.85rem 0.95rem 0.7rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.dashboard-slab-title {
+  color: #f5f5f7;
+  font-size: 0.95rem;
+  font-weight: 650;
+  line-height: 1.2;
+}
+
+.dashboard-slab-subtitle {
+  margin-top: 0.15rem;
+  color: #8e8e93;
+  font-size: 0.76rem;
+  line-height: 1.35;
+}
+
+.dashboard-booking-slab-body {
+  height: calc(100% - 3.85rem);
+  min-height: 11.4rem;
+  overflow: hidden;
+  padding: 0.65rem 0.85rem 0.85rem;
+}
+
+.dashboard-booking-slab-body .booking-topbar {
+  margin-bottom: 0.55rem;
+}
+
+.dashboard-booking-slab-body .booking-console-filter {
+  width: 100%;
+}
+
+.dashboard-booking-slab-body .booking-console-filter > div {
+  align-items: center;
+}
+
+.dashboard-booking-slab-body .booking-console-label {
+  font-size: 0.68rem;
+}
+
+.dashboard-booking-slab-body .booking-console-tab {
+  min-height: 1.95rem;
+  padding: 0.42rem 0.62rem;
+  font-size: 0.68rem;
+}
+
+.dashboard-booking-slab-body .booking-new-button {
+  min-height: 2.2rem;
+}
+
+.dashboard-booking-slab-body .booking-schedule-card {
+  max-height: 8.6rem;
+}
+
+.dashboard-booking-slab-body .booking-time-header {
+  padding-top: 0.45rem !important;
+  padding-bottom: 0.4rem !important;
+}
+
+.dashboard-booking-slab-body .booking-grid-row {
+  padding-top: 0.35rem !important;
+  padding-bottom: 0.35rem !important;
+}
+
+.dashboard-booking-slab-body .booking-slot-cell {
+  min-height: 2.1rem;
+}
+
+.dashboard-booking-slab-body .booking-slot-pill {
+  min-height: 1.85rem;
+}
+
+.dashboard-booking-slab-stack {
+  height: 100%;
+  overflow: hidden;
+}
+
 @media (max-width: 767px) {
   .booking-command-panel {
     padding: 0.65rem;
@@ -1599,6 +1692,20 @@ h6 {
   .booking-console-tab {
     flex: 1 1 auto;
     justify-content: center;
+  }
+
+  .dashboard-booking-slab {
+    min-height: 17rem;
+    max-height: 19rem;
+  }
+
+  .dashboard-booking-slab-header {
+    align-items: flex-start;
+  }
+
+  .dashboard-booking-slab-body {
+    height: calc(100% - 4.4rem);
+    padding: 0.6rem;
   }
 }
 
