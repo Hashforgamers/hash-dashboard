@@ -1588,9 +1588,9 @@ h6 {
 }
 
 .dashboard-booking-slab {
-  height: 10.8rem;
-  min-height: 10.8rem;
-  max-height: 10.8rem;
+  height: 9.4rem;
+  min-height: 9.4rem;
+  max-height: 9.4rem;
   padding: 0;
   border-color: rgba(255, 255, 255, 0.1);
   background:
@@ -1603,13 +1603,13 @@ h6 {
   align-items: center;
   justify-content: space-between;
   gap: 0.85rem;
-  padding: 0.58rem 0.8rem 0.5rem;
+  padding: 0.5rem 0.75rem 0.45rem;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .dashboard-slab-title {
   color: #f5f5f7;
-  font-size: 0.86rem;
+  font-size: 0.82rem;
   font-weight: 650;
   line-height: 1.2;
 }
@@ -1617,21 +1617,22 @@ h6 {
 .dashboard-slab-subtitle {
   margin-top: 0.15rem;
   color: #8e8e93;
-  font-size: 0.72rem;
+  font-size: 0.68rem;
   line-height: 1.35;
 }
 
 .dashboard-booking-slab-body {
-  height: calc(100% - 2.95rem);
+  height: calc(100% - 2.72rem);
   min-height: 0;
   overflow: hidden;
-  padding: 0.55rem 0.75rem 0.7rem;
+  padding: 0.5rem 0.75rem 0.65rem;
 }
 
 .dashboard-quick-booking {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(18rem, 0.62fr);
-  gap: 0.7rem;
+  grid-template-columns: minmax(0, 1fr) minmax(19rem, 0.58fr);
+  align-items: stretch;
+  gap: 0.58rem;
   height: 100%;
   min-height: 0;
 }
@@ -1653,15 +1654,15 @@ h6 {
 
 .dashboard-console-card {
   display: flex;
-  min-width: 10.5rem;
-  max-width: 12.5rem;
-  flex: 0 0 10.5rem;
+  min-width: 9.2rem;
+  max-width: 9.2rem;
+  flex: 0 0 9.2rem;
   align-items: center;
   gap: 0.62rem;
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 0.65rem;
   background: rgba(44, 44, 46, 0.46);
-  padding: 0.62rem 0.68rem;
+  padding: 0.48rem 0.56rem;
   color: #d1d1d6;
   text-align: left;
   transition: border-color 160ms ease, background 160ms ease, color 160ms ease;
@@ -1683,8 +1684,8 @@ h6 {
 
 .dashboard-console-icon {
   display: inline-flex;
-  width: 1.95rem;
-  height: 1.95rem;
+  width: 1.72rem;
+  height: 1.72rem;
   flex: 0 0 auto;
   align-items: center;
   justify-content: center;
@@ -1703,7 +1704,7 @@ h6 {
 
 .dashboard-console-name {
   color: inherit;
-  font-size: 0.78rem;
+  font-size: 0.7rem;
   font-weight: 650;
   line-height: 1.2;
 }
@@ -1711,7 +1712,7 @@ h6 {
 .dashboard-console-meta {
   margin-top: 0.14rem;
   color: #8e8e93;
-  font-size: 0.68rem;
+  font-size: 0.61rem;
 }
 
 .dashboard-quick-slot-panel {
@@ -1720,7 +1721,7 @@ h6 {
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 0.72rem;
   background: rgba(22, 22, 24, 0.52);
-  padding: 0.58rem;
+  padding: 0.52rem;
 }
 
 .dashboard-quick-slot-summary {
@@ -1728,12 +1729,12 @@ h6 {
   align-items: center;
   justify-content: space-between;
   gap: 0.65rem;
-  margin-bottom: 0.52rem;
+  margin-bottom: 0.42rem;
 }
 
 .dashboard-quick-slot-title {
   color: #f5f5f7;
-  font-size: 0.82rem;
+  font-size: 0.76rem;
   font-weight: 650;
   line-height: 1.2;
 }
@@ -1741,19 +1742,19 @@ h6 {
 .dashboard-quick-slot-copy {
   margin-top: 0.12rem;
   color: #8e8e93;
-  font-size: 0.68rem;
+  font-size: 0.62rem;
 }
 
 .dashboard-quick-book-button {
   display: inline-flex;
-  height: 2rem;
-  min-width: 5.2rem;
+  height: 1.82rem;
+  min-width: 4.8rem;
   align-items: center;
   justify-content: center;
   gap: 0.35rem;
   border-radius: 0.52rem;
   padding-inline: 0.72rem;
-  font-size: 0.72rem;
+  font-size: 0.66rem;
   font-weight: 650;
   white-space: nowrap;
 }
@@ -1770,7 +1771,7 @@ h6 {
 
 .dashboard-slot-chip {
   display: inline-flex;
-  min-width: 4.9rem;
+  min-width: 4.35rem;
   flex: 0 0 auto;
   flex-direction: column;
   align-items: flex-start;
@@ -1780,7 +1781,7 @@ h6 {
   border: 1px solid rgba(48, 209, 88, 0.24);
   border-radius: 0.6rem;
   background: rgba(48, 209, 88, 0.12);
-  padding: 0.48rem 0.56rem;
+  padding: 0.38rem 0.48rem;
   color: #c8f7d4;
   transition: border-color 160ms ease, background 160ms ease, color 160ms ease;
 }
@@ -1811,28 +1812,28 @@ h6 {
 }
 
 .dashboard-slot-time {
-  font-size: 0.82rem;
+  font-size: 0.74rem;
   font-weight: 700;
   line-height: 1.05;
 }
 
 .dashboard-slot-capacity {
   color: currentColor;
-  font-size: 0.64rem;
+  font-size: 0.58rem;
   font-weight: 600;
   opacity: 0.74;
 }
 
 .dashboard-slot-empty {
   display: flex;
-  min-height: 3.55rem;
+  min-height: 2.7rem;
   min-width: 100%;
   align-items: center;
   justify-content: center;
   border: 1px dashed rgba(255, 255, 255, 0.12);
   border-radius: 0.6rem;
   color: #8e8e93;
-  font-size: 0.72rem;
+  font-size: 0.68rem;
 }
 
 @media (max-width: 767px) {
