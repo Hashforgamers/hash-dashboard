@@ -1639,7 +1639,7 @@ h6 {
 }
 
 .dashboard-quick-booking-active {
-  grid-template-columns: minmax(14rem, 0.44fr) minmax(0, 1fr);
+  grid-template-columns: minmax(9.5rem, 0.18fr) minmax(0, 1fr);
 }
 
 .dashboard-quick-console-strip {
@@ -1678,23 +1678,25 @@ h6 {
 }
 
 .dashboard-quick-booking-active .dashboard-console-card {
-  min-width: 7.4rem;
-  max-width: 7.4rem;
-  height: 3rem;
-  flex-basis: 7.4rem;
+  min-width: 2.5rem;
+  max-width: 2.5rem;
+  height: 2.5rem;
+  flex-basis: 2.5rem;
+  justify-content: center;
+  gap: 0;
+  padding: 0;
+  border-radius: 0.7rem;
 }
 
 .dashboard-quick-booking-active .dashboard-console-icon {
-  width: 1.45rem;
-  height: 1.45rem;
+  width: 1.65rem;
+  height: 1.65rem;
+  background: transparent;
 }
 
-.dashboard-quick-booking-active .dashboard-console-name {
-  font-size: 0.66rem !important;
-}
-
+.dashboard-quick-booking-active .dashboard-console-name,
 .dashboard-quick-booking-active .dashboard-console-meta {
-  font-size: 0.56rem !important;
+  display: none;
 }
 
 .dashboard-console-card:hover {
@@ -1752,8 +1754,7 @@ h6 {
   background: rgba(22, 22, 24, 0.52);
   padding: 0.45rem;
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.045),
-    -18px 0 44px rgba(0, 0, 0, 0.18);
+    inset 0 1px 0 rgba(255, 255, 255, 0.045);
 }
 
 .dashboard-quick-slot-summary {
@@ -1793,7 +1794,7 @@ h6 {
 
 .dashboard-slot-slider {
   display: flex;
-  gap: 0.45rem;
+  gap: 0.42rem;
   overflow-x: auto;
   overflow-y: hidden;
   padding: 0.02rem 0.02rem 0.22rem;
@@ -1803,17 +1804,19 @@ h6 {
 
 .dashboard-slot-chip {
   display: inline-flex;
-  min-width: 4.55rem;
+  width: 4.65rem;
+  min-width: 4.65rem;
+  height: 3rem;
   flex: 0 0 auto;
   flex-direction: column;
-  align-items: flex-start;
+  align-items: center;
   justify-content: center;
-  gap: 0.12rem;
+  gap: 0.18rem;
   scroll-snap-align: start;
   border: 1px solid rgba(48, 209, 88, 0.24);
   border-radius: 0.6rem;
   background: rgba(48, 209, 88, 0.12);
-  padding: 0.33rem 0.44rem;
+  padding: 0.36rem 0.42rem;
   color: #c8f7d4;
   transition: border-color 160ms ease, background 160ms ease, color 160ms ease;
 }
@@ -1844,16 +1847,21 @@ h6 {
 }
 
 .dashboard-slot-time {
-  font-size: 0.74rem;
+  width: 100%;
+  text-align: center;
+  font-size: 0.78rem;
   font-weight: 700;
-  line-height: 1.05;
+  line-height: 1;
 }
 
 .dashboard-slot-capacity {
+  width: 100%;
   color: currentColor;
-  font-size: 0.58rem;
+  font-size: 0.62rem;
   font-weight: 600;
+  line-height: 1;
   opacity: 0.74;
+  text-align: center;
 }
 
 .dashboard-slot-empty {
