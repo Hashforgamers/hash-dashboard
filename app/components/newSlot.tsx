@@ -4817,7 +4817,8 @@ function DashboardQuickBookingSlab({
             <button
               key={`${consoleItem.type}-${consoleItem.id}`}
               type="button"
-              title={consoleItem.name || consoleItem.type}
+              title={`${consoleItem.name || consoleItem.type}: ${openSlotCount} open today`}
+              aria-label={`${consoleItem.name || consoleItem.type}, ${openSlotCount} open today`}
               onClick={() => {
                 setQuickConsole(consoleItem.type)
                 onConsoleChange(consoleItem.type)
@@ -4827,10 +4828,7 @@ function DashboardQuickBookingSlab({
               <span className="dashboard-console-icon">
                 <Icon className="h-4 w-4" />
               </span>
-              <span className="min-w-0 flex-1 text-left">
-                <span className="dashboard-console-name">{consoleItem.name || consoleItem.type}</span>
-                <span className="dashboard-console-meta">{openSlotCount} open today</span>
-              </span>
+              <span className="dashboard-console-count">{openSlotCount}</span>
             </button>
           )
         })}
@@ -4843,11 +4841,11 @@ function DashboardQuickBookingSlab({
               <div className="min-w-0">
                 <p className="dashboard-quick-slot-title">
                   {selectedConsoleItem.name || selectedConsoleItem.type}
+                  <span>{availableTodayCount}</span>
                 </p>
-                <p className="dashboard-quick-slot-copy">
-                  {availableTodayCount} available today
-                  {selectedTodayCount > 0 ? `, ${selectedTodayCount} selected` : ""}
-                </p>
+                {selectedTodayCount > 0 && (
+                  <p className="dashboard-quick-slot-copy">{selectedTodayCount} selected</p>
+                )}
               </div>
               <Button
                 type="button"
