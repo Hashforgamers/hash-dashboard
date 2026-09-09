@@ -1,4 +1,5 @@
 "use client"
+import { useActionFeedback } from "../hooks/use-action-feedback";
 import React, { useEffect, useState } from "react"
 import {
   Card,
@@ -96,6 +97,7 @@ const getCategoryIcon = (categoryName: string) => {
 /*                           COMPONENT                                 */
 /* ------------------------------------------------------------------ */
 export default function ManageExtraServices() {
+  const { error: actionError, reportError, confirmAction, feedback } = useActionFeedback();
   const [isClient, setIsClient] = useState(false)
   const [categories, setCategories] = useState<ExtraServiceCategory[]>([])
   const [loading, setLoading] = useState(false)
@@ -257,21 +259,21 @@ export default function ManageExtraServices() {
       setCategoryForm({ name: "", description: "" })
       await fetchCategories(true)
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to create category')
+      reportError(err instanceof Error ? err.message : 'Failed to create category')
     } finally {
       setCategoryLoading(false)
     }
   }
 
   const deleteCategory = async (categoryId: number) => {
-    if (!confirm('Delete this category and all its items?') || !vendorId) return
+    if (!vendorId || !(await confirmAction({ title: `Delete "${categories.find(c => c.id === categoryId)?.name || "category"}"?`, description: "This deletes the category and all menu items inside it. This action cannot be undone.", action: "Delete category and items" }))) return
     setDeletingCategoryId(categoryId)
     try {
       const res = await fetch(`${API_BASE}/vendor/${vendorId}/extra-services/category/${categoryId}`, { method: "DELETE" })
       if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || `HTTP ${res.status}`)
       await fetchCategories(true)
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to delete category')
+      reportError(err instanceof Error ? err.message : 'Failed to delete category')
     } finally {
       setDeletingCategoryId(null)
     }
@@ -309,14 +311,14 @@ export default function ManageExtraServices() {
       })
       await fetchCategories(true)
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to create menu item')
+      reportError(err instanceof Error ? err.message : 'Failed to create menu item')
     } finally {
       setMenuLoading(false)
     }
   }
 
   const deleteMenuItem = async (categoryId: number, menuId: number) => {
-    if (!confirm('Delete this menu item?') || !vendorId) return
+    if (!vendorId || !(await confirmAction({ title: `Delete "${categories.find(c => c.id === categoryId)?.items.find(i => i.id === menuId)?.name || "menu item"}"?`, description: "This removes the item from the cafe menu. This action cannot be undone.", action: "Delete item" }))) return
     setDeletingItemId(menuId)
     try {
       const res = await fetch(
@@ -326,7 +328,7 @@ export default function ManageExtraServices() {
       if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || `HTTP ${res.status}`)
       await fetchCategories(true)
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to delete menu item')
+      reportError(err instanceof Error ? err.message : 'Failed to delete menu item')
     } finally {
       setDeletingItemId(null)
     }
@@ -350,7 +352,7 @@ export default function ManageExtraServices() {
       }
       await fetchCategories(true)
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Failed to toggle status")
+      reportError(err instanceof Error ? err.message : "Failed to toggle status")
     } finally {
       setTogglingItemId(null)
     }
@@ -378,12 +380,12 @@ export default function ManageExtraServices() {
       setInventoryLoading(true)
       const qty = Number(inventoryQuantity)
       if (!Number.isFinite(qty) || qty < 0) {
-        alert("Quantity must be a non-negative number")
+        reportError("Quantity must be a non-negative number")
         return
       }
       const threshold = Number(inventoryThreshold || 0)
       if (!Number.isFinite(threshold) || threshold < 0) {
-        alert("Low stock threshold must be a non-negative number")
+        reportError("Low stock threshold must be a non-negative number")
         return
       }
 
@@ -407,7 +409,7 @@ export default function ManageExtraServices() {
       setShowInventoryDlg(false)
       await fetchCategories(true)
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Failed to update inventory")
+      reportError(err instanceof Error ? err.message : "Failed to update inventory")
     } finally {
       setInventoryLoading(false)
     }
@@ -503,6 +505,7 @@ export default function ManageExtraServices() {
       animate={{ opacity: 1 }}
       className="dashboard-module dashboard-typography flex w-full flex-col gap-4 px-1 pb-2 sm:px-2"
     >
+      {feedback}
       <motion.div
         initial={{ opacity: 0, y: -14 }}
         animate={{ opacity: 1, y: 0 }}
@@ -940,6 +943,7 @@ export default function ManageExtraServices() {
       {/* ✅ Category Dialog */}
       <Dialog open={showCategoryDlg} onOpenChange={setShowCategoryDlg}>
         <DialogContent className="ui-dialog-surface w-[95vw] rounded-xl shadow-2xl sm:max-w-[425px]">
+          {actionError && <p role="alert" className="text-sm text-red-300">{actionError}</p>}
           <DialogHeader>
             <DialogTitle className="ui-dialog-title flex items-center gap-2 text-lg font-bold tracking-wide">
               <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-cyan-400/35 bg-cyan-500/10">
@@ -991,6 +995,7 @@ export default function ManageExtraServices() {
       {/* ✅ Menu Item Dialog */}
       <Dialog open={showMenuDlg} onOpenChange={setShowMenuDlg}>
         <DialogContent className="ui-dialog-surface w-[95vw] rounded-xl shadow-2xl sm:max-w-[500px]">
+          {actionError && <p role="alert" className="text-sm text-red-300">{actionError}</p>}
           <DialogHeader>
             <DialogTitle className="ui-dialog-title flex items-center gap-2 text-lg font-bold tracking-wide">
               <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-emerald-400/35 bg-emerald-500/10">
@@ -1112,6 +1117,7 @@ export default function ManageExtraServices() {
 
       <Dialog open={showInventoryDlg} onOpenChange={setShowInventoryDlg}>
         <DialogContent className="ui-dialog-surface w-[95vw] rounded-xl shadow-2xl sm:max-w-[430px]">
+          {actionError && <p role="alert" className="text-sm text-red-300">{actionError}</p>}
           <DialogHeader>
             <DialogTitle className="ui-dialog-title text-lg font-bold tracking-wide">Update Inventory</DialogTitle>
             <DialogDescription className="ui-dialog-subtle text-sm">
@@ -1139,6 +1145,8 @@ export default function ManageExtraServices() {
                   type="number"
                   min="0"
                   step="1"
+                  aria-label="Stock quantity"
+                  min={0}
                   value={inventoryQuantity}
                   onChange={(e) => setInventoryQuantity(e.target.value)}
                   className="ui-input-surface focus-visible:ring-cyan-400/60"
@@ -1160,6 +1168,7 @@ export default function ManageExtraServices() {
                 type="number"
                 min="0"
                 step="1"
+                aria-label="Low stock threshold"
                 value={inventoryThreshold}
                 onChange={(e) => setInventoryThreshold(e.target.value)}
                 className="ui-input-surface focus-visible:ring-cyan-400/60"

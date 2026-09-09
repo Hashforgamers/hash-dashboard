@@ -1,5 +1,6 @@
 "use client";
 
+import { useActionFeedback } from "../hooks/use-action-feedback";
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
@@ -55,6 +56,7 @@ type CafePass = {
 /*                          MAIN COMPONENT                             */
 /* ------------------------------------------------------------------ */
 export default function ManagePassesPage() {
+  const { reportError, confirmAction, feedback } = useActionFeedback();
   const [passes, setPasses] = useState<CafePass[]>([]);
   const [passTypes, setPassTypes] = useState<PassType[]>([]);
   const [loading, setLoading] = useState(true);
@@ -208,7 +210,7 @@ export default function ManagePassesPage() {
       await refreshPasses();
       close();
     } catch (error: any) {
-      alert(`Error: ${error.response?.data?.error || "Failed to create pass"}`);
+      throw new Error(error.response?.data?.error || "Failed to create pass");
     }
   };
 
@@ -225,12 +227,12 @@ export default function ManagePassesPage() {
       await refreshPasses();
       close();
     } catch (error: any) {
-      alert(`Error: ${error.response?.data?.error || "Failed to update pass"}`);
+      throw new Error(error.response?.data?.error || "Failed to update pass");
     }
   };
 
   const handleDeletePass = async (id: number) => {
-    if (!confirm("Are you sure you want to delete this pass?")) return;
+    if (!(await confirmAction({ title: `Delete "${passes.find(p => p.id === id)?.name || "pass"}"?`, description: "This removes the pass from the cafe catalog. Review any customer use before deleting.", action: "Delete pass" }))) return;
     setDeletingId(id);
     try {
       await axios.delete(
@@ -238,7 +240,7 @@ export default function ManagePassesPage() {
       );
       await refreshPasses();
     } catch (error: any) {
-      alert(`Error: ${error.response?.data?.error || "Failed to delete pass"}`);
+      reportError(`Error: ${error.response?.data?.error || "Failed to delete pass"}`);
     } finally {
       setDeletingId(null);
     }
@@ -271,6 +273,7 @@ export default function ManagePassesPage() {
 
   return (
     <div className="dashboard-module dashboard-typography flex h-full min-h-0 flex-col gap-4 overflow-hidden px-1 pb-2 sm:px-2">
+      {feedback}
 
       {/* ✅ View Toggle */}
       <div className="gaming-panel dashboard-module-panel mb-2 shrink-0 flex flex-wrap items-center justify-between gap-3 rounded-xl p-3">
@@ -599,6 +602,7 @@ function PassCard({ pass, passTypes, onEdit, onDelete, deletingId }: any) {
 /*                         ADD PASS DIALOG                             */
 /* ------------------------------------------------------------------ */
 function AddPassDialog({ passTypes, onSave, buttonClassName }: any) {
+  const { reportError, feedback } = useActionFeedback();
   const [open, setOpen] = useState(false);
   const [passMode, setPassMode] = useState<"date_based" | "hour_based">("date_based");
   const [form, setForm] = useState({
@@ -618,15 +622,15 @@ function AddPassDialog({ passTypes, onSave, buttonClassName }: any) {
     const parsedTotalHours = Number(form.total_hours);
 
     if (!Number.isFinite(parsedPrice) || parsedPrice <= 0) {
-      alert("Please enter a valid price.");
+      reportError("Please enter a valid price.");
       return;
     }
     if (!Number.isFinite(parsedDays) || parsedDays <= 0) {
-      alert("Please enter valid days.");
+      reportError("Please enter valid days.");
       return;
     }
     if (passMode === "hour_based" && (!Number.isFinite(parsedTotalHours) || parsedTotalHours <= 0)) {
-      alert("Please enter valid total hours for hour-based pass.");
+      reportError("Please enter valid total hours for hour-based pass.");
       return;
     }
 
@@ -641,6 +645,7 @@ function AddPassDialog({ passTypes, onSave, buttonClassName }: any) {
       hour_calculation_mode:
         passMode === "hour_based" ? "actual_duration" : undefined,
     };
+    try {
     await onSave(payload, () => {
       setOpen(false);
       setForm({
@@ -652,7 +657,11 @@ function AddPassDialog({ passTypes, onSave, buttonClassName }: any) {
         total_hours: "",
       });
     });
-    setIsSubmitting(false);
+    } catch (error) {
+      reportError(error instanceof Error ? error.message : "Unable to save pass.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -677,6 +686,7 @@ function AddPassDialog({ passTypes, onSave, buttonClassName }: any) {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4 pt-2">
+          {feedback}
           {/* Mode Toggle */}
           <div>
             <label className="table-header-text mb-2 block">Pass Mode</label>
@@ -728,6 +738,9 @@ function AddPassDialog({ passTypes, onSave, buttonClassName }: any) {
                 <IndianRupee className="absolute left-3 top-1/2 -translate-y-1/2 icon-md text-muted-foreground" />
                 <Input
                   type="number"
+                  min="0.01"
+                  step="0.01"
+                  aria-label="Pass price"
                   value={form.price}
                   onChange={(e) => setForm({ ...form, price: e.target.value })}
                   required
@@ -741,6 +754,9 @@ function AddPassDialog({ passTypes, onSave, buttonClassName }: any) {
                 <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 icon-md text-muted-foreground" />
                 <Input
                   type="number"
+                  min="1"
+                  step="1"
+                  aria-label="Validity in days"
                   value={form.days_valid}
                   onChange={(e) => setForm({ ...form, days_valid: e.target.value })}
                   required
@@ -758,6 +774,9 @@ function AddPassDialog({ passTypes, onSave, buttonClassName }: any) {
                 <Clock className="absolute left-3 top-1/2 -translate-y-1/2 icon-md text-muted-foreground" />
                 <Input
                   type="number"
+                  min="0.01"
+                  step="0.01"
+                  aria-label="Total pass hours"
                   value={form.total_hours}
                   onChange={(e) => setForm({ ...form, total_hours: e.target.value })}
                   required
@@ -817,6 +836,7 @@ function AddPassDialog({ passTypes, onSave, buttonClassName }: any) {
 /*                        EDIT PASS DIALOG                             */
 /* ------------------------------------------------------------------ */
 function EditPassDialog({ passObj, passTypes, onSave }: any) {
+  const { reportError, feedback } = useActionFeedback();
   const [open, setOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [form, setForm] = useState({
@@ -834,19 +854,20 @@ function EditPassDialog({ passObj, passTypes, onSave }: any) {
     const parsedTotalHours = Number(form.total_hours);
 
     if (!Number.isFinite(parsedPrice) || parsedPrice <= 0) {
-      alert("Please enter a valid price.");
+      reportError("Please enter a valid price.");
       return;
     }
     if (!Number.isFinite(parsedDays) || parsedDays <= 0) {
-      alert("Please enter valid days.");
+      reportError("Please enter valid days.");
       return;
     }
     if (isHourBased && (!Number.isFinite(parsedTotalHours) || parsedTotalHours <= 0)) {
-      alert("Please enter valid total hours for hour-based pass.");
+      reportError("Please enter valid total hours for hour-based pass.");
       return;
     }
 
     setIsSubmitting(true);
+    try {
     await onSave(
       passObj.id,
       {
@@ -860,7 +881,11 @@ function EditPassDialog({ passObj, passTypes, onSave }: any) {
       },
       () => setOpen(false)
     );
-    setIsSubmitting(false);
+    } catch (error) {
+      reportError(error instanceof Error ? error.message : "Unable to save pass.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const isHourBased = passObj.pass_mode === "hour_based";
@@ -881,6 +906,7 @@ function EditPassDialog({ passObj, passTypes, onSave }: any) {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4 pt-2">
+          {feedback}
           {/* Pass Name */}
           <div className="space-y-1.5">
             <label className="table-header-text">Pass Name *</label>
@@ -901,6 +927,9 @@ function EditPassDialog({ passObj, passTypes, onSave }: any) {
                 <IndianRupee className="absolute left-3 top-1/2 -translate-y-1/2 icon-md text-muted-foreground" />
                 <Input
                   type="number"
+                  min="0.01"
+                  step="0.01"
+                  aria-label="Pass price"
                   value={form.price}
                   onChange={(e) => setForm({ ...form, price: e.target.value })}
                   required
@@ -914,6 +943,9 @@ function EditPassDialog({ passObj, passTypes, onSave }: any) {
                 <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 icon-md text-muted-foreground" />
                 <Input
                   type="number"
+                  min="1"
+                  step="1"
+                  aria-label="Validity in days"
                   value={form.days_valid}
                   onChange={(e) => setForm({ ...form, days_valid: e.target.value })}
                   required
@@ -931,6 +963,9 @@ function EditPassDialog({ passObj, passTypes, onSave }: any) {
                 <Clock className="absolute left-3 top-1/2 -translate-y-1/2 icon-md text-muted-foreground" />
                 <Input
                   type="number"
+                  min="0.01"
+                  step="0.01"
+                  aria-label="Total pass hours"
                   value={form.total_hours}
                   onChange={(e) => setForm({ ...form, total_hours: e.target.value })}
                   className="ui-input-surface pl-9"

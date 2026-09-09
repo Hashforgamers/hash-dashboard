@@ -39,7 +39,7 @@ const SERVICE_PERMISSION_MAP: Array<{
   { label: "Reviews", permission: "reviews.manage", section: "Analytics" },
   { label: "Transaction Report", permission: "transactions.view", section: "Analytics" },
   { label: "Console Pricing", permission: "pricing.manage", section: "Admin" },
-  { label: "Gamers Credit", permission: "pricing.manage", section: "Admin" },
+  { label: "Gamers Credit", permission: "credit.manage", section: "Admin" },
   { label: "My Account", permission: "account.manage", section: "Admin" },
   { label: "Subscription", permission: "subscription.manage", section: "Admin" },
   { label: "Select Cafe", permission: "cafe.switch", section: "Admin" },

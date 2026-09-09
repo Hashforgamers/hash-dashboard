@@ -1,5 +1,6 @@
 "use client";
 
+import { creditAuthHeaders } from "@/lib/credit-auth";
 import React, { useEffect, useState } from "react";
 import { jwtDecode } from "jwt-decode";
 import { BOOKING_URL } from "@/src/config/env";
@@ -102,7 +103,7 @@ export default function GamersCreditControl() {
     if (!vendorId) return { users: [], accounts: [] };
     const [usersRes, accountsRes] = await Promise.all([
       fetch(`${BOOKING_URL}/api/vendor/${vendorId}/users`),
-      fetch(`${BOOKING_URL}/api/vendor/${vendorId}/monthly-credit/accounts`),
+      fetch(`${BOOKING_URL}/api/vendor/${vendorId}/monthly-credit/accounts`, { headers: creditAuthHeaders() }),
     ]);
     const users = usersRes.ok ? await usersRes.json() : [];
     const accounts = accountsRes.ok ? await accountsRes.json() : [];
@@ -188,7 +189,7 @@ export default function GamersCreditControl() {
 
         const createRes = await fetch(`${BOOKING_URL}/api/vendor/${vendorId}/users`, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: creditAuthHeaders(),
           body: JSON.stringify({
             name: form.customer_name.trim(),
             phone: form.phone_number.trim() || form.whatsapp_number.trim() || null,
@@ -215,7 +216,7 @@ export default function GamersCreditControl() {
 
       const res = await fetch(`${BOOKING_URL}/api/vendor/${vendorId}/monthly-credit/accounts`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: creditAuthHeaders(),
         body: JSON.stringify({
           user_id: targetUserId,
           customer_name: form.customer_name || null,
@@ -253,7 +254,7 @@ export default function GamersCreditControl() {
     setStatementUserId(userId);
     setIsLoadingStatement(true);
     try {
-      const res = await fetch(`${BOOKING_URL}/api/vendor/${vendorId}/monthly-credit/statement/${userId}`);
+      const res = await fetch(`${BOOKING_URL}/api/vendor/${vendorId}/monthly-credit/statement/${userId}`, { headers: creditAuthHeaders() });
       const data = await res.json();
       if (!res.ok || !data?.success) throw new Error(data?.message || "Failed to fetch statement");
       setStatementRows(Array.isArray(data?.entries) ? data.entries : []);
