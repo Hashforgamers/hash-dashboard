@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Plus, Search, MoreHorizontal, Trophy,
-  ChevronLeft, ChevronRight, Sparkles, RefreshCw,
+  ChevronLeft, ChevronRight, RefreshCw,
 } from 'lucide-react';
 import { useEventsToken } from '@/hooks/useEventsToken';
 import { jwtDecode } from "jwt-decode"
@@ -147,12 +147,8 @@ export default function TournamentsPage() {
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h1 className="premium-heading flex items-center gap-2">
-              Tournament Command
-              <Sparkles className="h-4 w-4 text-emerald-400 sm:h-5 sm:w-5" />
+              Tournaments
             </h1>
-            <p className="premium-subtle mt-1">
-              Manage all ongoing, upcoming, and completed tournaments.
-            </p>
           </div>
           <button
             className="dashboard-btn-primary inline-flex items-center justify-center gap-2 px-3 py-2 text-xs sm:px-4 sm:text-sm"

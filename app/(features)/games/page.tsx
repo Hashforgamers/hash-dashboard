@@ -20,7 +20,6 @@ import {
   XCircle,
   ArrowLeft,
   Image as ImageIcon,
-  Sparkles,
   Monitor,
   Tag,
 } from "lucide-react";
@@ -346,10 +345,8 @@ export default function GamesManagementPage() {
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <h1 className="premium-heading flex items-center gap-2">
-                Games Management
-                <Sparkles className="h-4 w-4 text-emerald-400 sm:h-5 sm:w-5" />
+                Games
               </h1>
-              <p className="premium-subtle mt-1">Manage games on your consoles</p>
             </div>
             <button onClick={() => setShowAddModal(true)} className={primaryButtonClass}>
               <Plus className="w-4 h-4" />
