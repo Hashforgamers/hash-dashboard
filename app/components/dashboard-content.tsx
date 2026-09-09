@@ -535,7 +535,7 @@ export function DashboardContent() {
               >
                 <div className="dashboard-booking-slab-header">
                   <div className="min-w-0">
-                    <h2 className="dashboard-slab-title">Quick Booking</h2>
+                    <div className="dashboard-slab-title">Quick Booking</div>
                     <p className="dashboard-slab-subtitle">Choose a console, then pick today&apos;s slot.</p>
                   </div>
                   <button
