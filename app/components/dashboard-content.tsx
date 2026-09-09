@@ -305,7 +305,7 @@ export function DashboardContent() {
                 </div>
                 <span className="dash-kpi-label">Earnings (Net)</span>
               </div>
-              <button onClick={() => setShowEarnings(!showEarnings)} className="text-[#8e8e93] transition-colors hover:text-[#f5f5f7]">
+              <button aria-label={showEarnings ? 'Hide earnings' : 'Show earnings'} onClick={() => setShowEarnings(!showEarnings)} className="text-[#8e8e93] transition-colors hover:text-[#f5f5f7]">
                 {showEarnings ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
               </button>
             </div>
@@ -379,7 +379,7 @@ export function DashboardContent() {
                 </div>
                 <span className="dash-kpi-label">Pending (Net)</span>
               </div>
-              <button onClick={() => setShowPending(!showPending)} className="text-[#8e8e93] transition-colors hover:text-[#f5f5f7]">
+              <button aria-label={showPending ? 'Hide pending amount' : 'Show pending amount'} onClick={() => setShowPending(!showPending)} className="text-[#8e8e93] transition-colors hover:text-[#f5f5f7]">
                 {showPending ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
               </button>
             </div>
@@ -407,13 +407,13 @@ export function DashboardContent() {
   const mobileMetricsStrip = (
     <div className="dashboard-module-card flex w-full items-center justify-between gap-1 rounded-lg border border-white/10 bg-white/[0.05] px-1.5 py-1 md:hidden">
       <div className="min-w-0 rounded-md border border-[#0a84ff]/20 bg-[#0a84ff]/10 px-1.5 py-1 text-[10px] font-medium text-[#9dccff]">
-        Bk {currentStats.todayBookings}
+        Bookings {currentStats.todayBookings}
       </div>
       <div className="min-w-0 rounded-md border border-[#ff9f0a]/20 bg-[#ff9f0a]/10 px-1.5 py-1 text-[10px] font-medium text-[#ffd60a]">
-        Pd {formatMoney(currentStats.netPendingAmount)}
+        Pending {showPending ? formatMoney(currentStats.netPendingAmount) : '••••'}
       </div>
       <div className="min-w-0 rounded-md border border-[#30d158]/20 bg-[#30d158]/10 px-1.5 py-1 text-[10px] font-medium text-[#30d158]">
-        Er {formatMoney(currentStats.netEarnings)}
+        Earnings {showEarnings ? formatMoney(currentStats.netEarnings) : '••••'}
       </div>
     </div>
   )
@@ -427,7 +427,7 @@ export function DashboardContent() {
       {dashboardData?.available ? (
         <HashLoader className="py-[50vh]" />
       ) : (
-        <div className="relative flex h-full min-h-0 flex-col gap-2 overflow-hidden text-foreground max-md:gap-1.5 sm:gap-3">
+        <div className="operations-dashboard relative flex h-full min-h-0 flex-col gap-2 overflow-hidden text-foreground max-md:gap-1.5 sm:gap-3">
           {isLocked && <LockedOverlay />}
           <div
             className={`flex min-h-0 flex-1 flex-col overflow-hidden ${
@@ -461,7 +461,7 @@ export function DashboardContent() {
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="gaming-panel shrink-0 rounded-lg p-3 max-md:p-2 md:p-3.5"
+            className="operations-summary shrink-0 p-3 max-md:p-2 md:p-3.5"
           >
             <div
               className={
@@ -475,11 +475,11 @@ export function DashboardContent() {
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2 sm:gap-3">
                       <h1 className="premium-heading dashboard-hero-title leading-tight max-md:text-[1.1rem]">
-                        Operations Dashboard
+                        Dashboard
                       </h1>
                     </div>
                     <p className="premium-subtle mt-0.5 text-[11px] leading-relaxed sm:text-xs">
-                      Live sessions, bookings, and revenue for today.
+                      Today&apos;s operations
                     </p>
                   </div>
                   <div className="tab-container">
@@ -489,7 +489,7 @@ export function DashboardContent() {
                       className={activeDashboardTab === "live" ? "tab-active" : "tab-inactive"}
                     >
                       <MonitorPlay className="h-4 w-4" />
-                      <span>Live View</span>
+                      <span>Overview</span>
                     </button>
                     <button
                       type="button"
@@ -497,7 +497,7 @@ export function DashboardContent() {
                       className={activeDashboardTab === "booking" ? "tab-active" : "tab-inactive"}
                     >
                       <CalendarCheck className="h-4 w-4" />
-                      <span>Booking</span>
+                      <span>Schedule</span>
                     </button>
                   </div>
                 </div>
@@ -538,7 +538,7 @@ export function DashboardContent() {
                 </div>
               </motion.div>
 
-              <div className="grid flex-1 grid-cols-1 gap-2 overflow-hidden max-md:min-h-[520px] max-md:grid-rows-[1.05fr_0.95fr] max-md:gap-1.5 sm:gap-3 xl:grid-cols-12">
+              <div className="operations-workspace grid flex-1 grid-cols-1 gap-2 overflow-hidden max-md:min-h-[520px] max-md:grid-rows-[1.05fr_0.95fr] max-md:gap-1.5 sm:gap-3 xl:grid-cols-12">
                 <div className="space-y-2 sm:space-y-4 flex flex-col min-h-0 xl:col-span-8 2xl:col-span-9 max-md:h-full max-md:min-h-0">
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
