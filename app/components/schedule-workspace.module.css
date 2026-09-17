@@ -37,3 +37,38 @@
 .recordsFooter { flex-shrink: 0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; padding: 5px 14px; border-top: 1px solid #303038; color: #94949f; font-size: 12px; background: #1c1c21; }
 .recordsFooter button { height: 26px; min-height: 26px; font-size: 11px; background: transparent; border-color: #393941; }
 @media (max-width: 640px) { .recordsHeader { padding: 7px 12px; } .recordsSummary, .recordsFooter { padding-left: 16px; padding-right: 16px; } }
+
+.consoleSelect { display: none; }
+@media (max-width: 1200px), (max-height: 800px) {
+  .schedule > div { padding: 10px; gap: 10px; }
+  .schedule :global(.booking-grid-row) { padding-top: 3px; padding-bottom: 3px; }
+  .schedule :global(.booking-slot-cell) { min-height: 30px; }
+  .schedule :global(.booking-slot-pill) { min-height: 28px; font-size: 11px; }
+  .schedule :global(.booking-date-cell) { padding-top: 4px; padding-bottom: 4px; }
+  .schedule :global(.booking-time-header) { padding-top: 5px; padding-bottom: 5px; }
+  .schedule :global(.booking-topbar) { flex-direction: row; align-items: center; margin-bottom: 4px; gap: 8px; }
+  .schedule :global(.booking-console-filter) { min-width: 0; padding: 5px 8px; }
+  .schedule :global(.booking-console-label) { display: none; }
+  .schedule .consoleTabs { display: none; }
+  .schedule .consoleSelect { display: block; width: 100%; min-height: 32px; padding: 4px 28px 4px 8px; border: 1px solid #3c3c44; border-radius: 6px; background: #222228; color: #ededf0; font-size: 12px; }
+  .recordsTable td:first-child, .recordsTable th:first-child { padding-left: 12px; }
+  .recordsTable td:last-child, .recordsTable th:last-child { padding-right: 12px; }
+}
+@media (max-width: 700px) {
+  .recordsTable { min-width: 0; }
+  .recordsTable thead { display: none; }
+  .recordsTable tbody { display: block; }
+  .recordsTable tbody tr { display: grid; grid-template-columns: minmax(0, 1fr) auto; padding: 8px 12px; gap: 4px 12px; border-bottom: 1px solid #303038; }
+  .recordsTable tbody td { height: auto; padding: 0; border: 0; font-size: 12px; }
+  .recordsTable tbody td:first-child, .recordsTable tbody td:last-child { padding: 0; }
+  .recordsTable td:nth-child(1) { grid-column: 1; grid-row: 1; }
+  .recordsTable td:nth-child(2) { grid-column: 1; grid-row: 2; }
+  .recordsTable td:nth-child(3) { grid-column: 1; grid-row: 3; }
+  .recordsTable td:nth-child(4) { grid-column: 2; grid-row: 1; text-align: right; }
+  .recordsTable td:nth-child(5) { grid-column: 1 / -1; grid-row: 4; }
+  .recordsTable td:nth-child(6) { grid-column: 2; grid-row: 2; }
+  .recordsFooter { font-size: 11px; gap: 4px; }
+  .recordsFooter button { padding-left: 7px; padding-right: 7px; }
+  .recordsHeader h3 { font-size: 12px; gap: 5px; }
+  .recordsHeader button { padding-left: 7px; padding-right: 7px; }
+}
