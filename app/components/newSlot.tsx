@@ -5425,10 +5425,10 @@ useEffect(() => {
   }
 
   return (
-    <main className={slab ? "dashboard-quick-root" : embedded ? `${scheduleStyles.schedule} h-full min-h-0 bg-background overflow-y-auto` : "min-h-screen bg-background"}>
+    <main className={slab ? "dashboard-quick-root" : embedded ? `${scheduleStyles.schedule} h-full min-h-0 bg-background overflow-hidden` : "min-h-screen bg-background"}>
       <div
         className={slab ? "dashboard-quick-root-inner" : `mx-auto w-full max-w-full p-3 sm:p-4 md:p-6 ${
-          embedded ? "flex min-h-full flex-col gap-5" : ""
+          embedded ? "flex h-full min-h-0 flex-col gap-3 overflow-hidden" : ""
         }`}
       >
         {isLoading && hasRenderableSnapshot && (
@@ -5472,7 +5472,7 @@ useEffect(() => {
               </div>
             )}
             {!slab && (
-              <div className="min-h-[480px] flex-1">
+              <div className="min-h-0 flex-1 overflow-hidden">
                 <BookingRecords key={vendorId} vendorId={vendorId} refreshKey={recordsRevision} />
               </div>
             )}
