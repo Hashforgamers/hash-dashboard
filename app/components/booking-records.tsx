@@ -67,10 +67,10 @@ export default function BookingRecords({ vendorId, refreshKey = 0 }: { vendorId:
   return (
     <section className={styles.records} aria-label="Booking records">
       <div className={styles.recordsHeader}>
-        <div className="flex items-start justify-between gap-3">
+        <div className="flex items-center justify-between gap-3">
           <div>
-            <h3 className="flex items-center gap-2 text-base font-semibold"><CalendarDays className="h-4 w-4 text-blue-400" />Booking records</h3>
-            <p className="mt-1 text-xs text-muted-foreground">Manage and review your booking history</p>
+            <h3 className="flex items-center gap-2 text-base font-semibold"><CalendarDays className="h-4 w-4 text-blue-400" />Booking records <span className="text-xs font-normal text-muted-foreground">({loading ? "…" : total.toLocaleString("en-IN")})</span></h3>
+
           </div>
           <div className="flex items-center gap-2"><Button variant="outline" size="sm" aria-expanded={filtersOpen} aria-controls="booking-record-filters" onClick={() => setFiltersOpen(value => !value)}><SlidersHorizontal className="mr-2 h-3.5 w-3.5" />Filters{Object.values(applied).some(Boolean) && <span className="ml-2 h-1.5 w-1.5 rounded-full bg-blue-400" />}<ChevronDown className={`ml-2 h-3.5 w-3.5 ${filtersOpen ? "rotate-180" : ""}`} /></Button><Button variant="ghost" size="icon" aria-label="Refresh booking records" disabled={loading || !vendorId} onClick={() => setRevision(value => value + 1)}><RotateCw className="h-4 w-4" /></Button></div>
         </div>
@@ -86,20 +86,19 @@ export default function BookingRecords({ vendorId, refreshKey = 0 }: { vendorId:
         </form>
         {invalidDates && <p role="alert" className="mt-2 text-xs text-red-400">The end date must be on or after the start date.</p>}
       </div>
-      <div className={styles.recordsSummary}>
-        <span><span className="font-medium text-foreground">{loading ? "…" : total.toLocaleString("en-IN")}</span> bookings <span className="mx-2 opacity-40">/</span> All statuses</span>
-        <span>{applied.date_from || applied.date_to ? `${applied.date_from || "Any date"} → ${applied.date_to || "Any date"}` : "All dates"}{applied.time_from || applied.time_to ? ` · ${applied.time_from || "00:00"}–${applied.time_to || "23:59"}` : ""} · IST</span>
-      </div>
+      {Object.values(applied).some(Boolean) && <div className={styles.recordsSummary}>
+        <span>{applied.date_from || "Any date"} – {applied.date_to || "Any date"} · {applied.time_from || "00:00"}–{applied.time_to || "23:59"} IST</span>
+      </div>}
       <div className={styles.recordsBody} aria-busy={loading}>
         {loading ? <div role="status" className="flex items-center justify-center gap-2 p-10 text-sm text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" />Loading records…</div>
           : error ? <div role="alert" className="p-8 text-center text-sm"><p>{error}</p><Button variant="outline" className="mt-3" onClick={() => setRevision(value => value + 1)}>Retry</Button></div>
-          : rows.length === 0 ? <div className="p-10 text-center"><p className="text-sm font-medium">{vendorId ? "No booking records found" : "Select a cafe to view booking records"}</p><p className="mt-1 text-xs text-muted-foreground">{vendorId ? "Try a wider date or time range, or reset the filters to see all records." : "Booking history will appear here once a cafe is selected."}</p></div>
+          : rows.length === 0 ? <div className="p-10 text-center"><p className="text-sm font-medium">{vendorId ? "No booking records found" : "Select a cafe to view booking records"}</p><p className="text-[11px] leading-4 text-muted-foreground">{vendorId ? "Try a wider date or time range, or reset the filters to see all records." : "Booking history will appear here once a cafe is selected."}</p></div>
           : <table className={styles.recordsTable}>
-            <thead className="text-xs text-muted-foreground"><tr>{["Booking", "Customer", "Date & time", "Status", "Extras", "Amount paid"].map(label => <th key={label} className="px-4 py-3 font-medium last:text-right">{label}</th>)}</tr></thead>
+            <thead className="text-xs text-muted-foreground"><tr>{["Booking", "Customer", "Date & time (IST)", "Status", "Extras", "Amount paid"].map(label => <th key={label} className="px-4 py-3 font-medium last:text-right">{label}</th>)}</tr></thead>
             <tbody>{rows.map(row => <tr key={row.booking_id} className="border-t border-border hover:bg-muted/30">
               <td className="px-4 py-3 font-medium text-blue-300">{row.booking_fid || `#BK-${row.booking_id}`}</td>
-              <td className="px-4 py-3"><div className="font-medium">{row.customer_name}</div><div className="mt-1 text-xs text-muted-foreground">{row.customer_phone}</div></td>
-              <td className="whitespace-nowrap px-4 py-3"><div>{row.booking_date ? new Date(`${row.booking_date.slice(0, 10)}T12:00:00`).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : "Date unavailable"}</div><div className="mt-1 text-xs text-muted-foreground">{row.slot_start_time || "—"} – {row.slot_end_time || "—"}</div></td>
+              <td className="px-4 py-3"><div className="font-medium">{row.customer_name}</div><div className="text-[11px] leading-4 text-muted-foreground">{row.customer_phone}</div></td>
+              <td className="whitespace-nowrap px-4 py-3"><div>{row.booking_date ? new Date(`${row.booking_date.slice(0, 10)}T12:00:00`).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : "Date unavailable"}</div><div className="text-[11px] leading-4 text-muted-foreground">{row.slot_start_time || "—"} – {row.slot_end_time || "—"}</div></td>
               <td className="px-4 py-3"><span className={`inline-block whitespace-nowrap rounded-full px-2.5 py-1 text-xs capitalize ${["cancelled", "rejected"].includes(row.status) ? "bg-red-500/10 text-red-400" : ["confirmed", "checked_in"].includes(row.status) ? "bg-emerald-500/10 text-emerald-400" : "bg-muted text-muted-foreground"}`}>{(row.status || "Unknown").replaceAll("_", " ")}</span></td>
               <td className="max-w-[200px] px-4 py-3 text-xs text-muted-foreground">{row.meal_selection || "—"}</td>
               <td className="px-4 py-3 text-right font-medium tabular-nums">{Number(row.amount_paid || 0).toLocaleString("en-IN", { style: "currency", currency: "INR" })}</td>
