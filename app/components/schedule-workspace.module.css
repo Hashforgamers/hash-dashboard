@@ -20,3 +20,20 @@
   .filters { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .records { min-height: 540px; }
 }
+
+/* Records own their height so dashboard flex layouts cannot clip their rows. */
+.records { display: flex; flex-direction: column; flex: none; width: 100%; height: auto; min-height: 0; overflow: hidden; border: 1px solid #303038; border-radius: 12px; background: #18181c; }
+.recordsHeader { padding: 20px 22px 16px; }
+.recordsHeader h3 { font-size: 16px; letter-spacing: -.02em; }
+.recordsHeader button { border-radius: 7px; font-size: 12px; }
+.recordsSummary { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; padding: 12px 22px; border-top: 1px solid #2c2c33; color: #94949f; font-size: 12px; }
+.recordsBody { flex: none; height: 360px; overflow: auto; scrollbar-width: thin; scrollbar-color: #45454f transparent; }
+.recordsTable { width: 100%; min-width: 760px; border-collapse: separate; border-spacing: 0; text-align: left; }
+.recordsTable thead th { position: sticky; top: 0; z-index: 1; background: #222228; border-bottom: 1px solid #34343c; color: #a7a7b2; padding-top: 12px; padding-bottom: 12px; }
+.recordsTable tbody td { height: 68px; border-bottom: 1px solid #2c2c33; vertical-align: middle; }
+.recordsTable tbody tr:last-child td { border-bottom: 0; }
+.recordsTable td:first-child, .recordsTable th:first-child { padding-left: 22px; }
+.recordsTable td:last-child, .recordsTable th:last-child { padding-right: 22px; }
+.recordsFooter { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; padding: 12px 22px; border-top: 1px solid #303038; color: #94949f; font-size: 12px; background: #1c1c21; }
+.recordsFooter button { height: 30px; font-size: 12px; background: transparent; border-color: #393941; }
+@media (max-width: 640px) { .recordsHeader { padding: 16px; } .recordsSummary, .recordsFooter { padding-left: 16px; padding-right: 16px; } .recordsBody { height: 340px; } }
