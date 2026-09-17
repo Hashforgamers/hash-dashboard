@@ -1,6 +1,7 @@
 "use client";
 
 
+import styles from "./console-list.module.css";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -259,7 +260,7 @@ export function ConsoleList({ onEdit, refreshKey = 0 }: ConsoleListProps) {
       <div className="flex min-h-[320px] items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <HashLoader size={60} />
-          <p className="dash-subtitle premium-subtle">Loading consoles...</p>
+          <p className="text-xs text-muted-foreground">Loading consoles...</p>
         </div>
       </div>
     );
@@ -286,12 +287,13 @@ export function ConsoleList({ onEdit, refreshKey = 0 }: ConsoleListProps) {
       : [];
 
   return (
-    <div className="dashboard-module dashboard-typography flex h-full min-h-0 flex-col gap-4 overflow-hidden">
-      <div className="gaming-panel shrink-0 rounded-xl border border-cyan-500/25 p-2">
+    <div className={`${styles.root} dashboard-module dashboard-typography flex h-full min-h-0 flex-col gap-3 overflow-hidden`}>
+      <div className={styles.filters}>
         <div className="flex flex-wrap gap-2">
           <button
             type="button"
             onClick={() => setActiveGroup("all")}
+            aria-pressed={activeGroup === "all"}
             className={`rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors sm:text-sm ${
               activeGroup === "all"
                 ? "border-cyan-400/55 bg-cyan-500/10 text-slate-900 dark:bg-cyan-500/15 dark:text-cyan-200"
@@ -308,6 +310,7 @@ export function ConsoleList({ onEdit, refreshKey = 0 }: ConsoleListProps) {
                 key={group}
                 type="button"
                 onClick={() => setActiveGroup(group)}
+                aria-pressed={activeGroup === group}
                 className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors sm:text-sm ${
                   activeGroup === group
                     ? "border-cyan-400/55 bg-cyan-500/10 text-slate-900 dark:bg-cyan-500/15 dark:text-cyan-200"
@@ -341,22 +344,22 @@ export function ConsoleList({ onEdit, refreshKey = 0 }: ConsoleListProps) {
               variants={container}
               initial="hidden"
               animate="show"
-              className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+              className={styles.grid}
             >
               {consolesForGroup.map((console) => (
                 <motion.div key={console.id} variants={item}>
-                  <Card className="gaming-panel group rounded-xl border border-cyan-500/25 transition-all duration-300 hover:scale-[1.01] hover:border-cyan-400/45 hover:shadow-[0_0_20px_rgba(6,182,212,0.12)]">
-                    <CardContent className="flex h-full flex-col p-4">
-                      <div className="mb-4 flex items-center justify-between">
+                  <Card className={styles.card}>
+                    <CardContent className={styles.content}>
+                      <div className={styles.identity}>
                         <div className="flex items-center space-x-3">
-                          <div className="feature-action-icon p-2.5 transition-colors group-hover:bg-slate-100 dark:group-hover:bg-slate-800/80">
+                          <div className={styles.icon}>
                             <console.icon className="h-7 w-7 text-slate-700 dark:text-cyan-300" />
                           </div>
                           <div>
                             <h3 className="dash-title !text-base leading-tight">
                               {console.name}
                             </h3>
-                            <p className="dash-subtitle premium-subtle">
+                            <p className="text-xs text-muted-foreground">
                               {console.number}
                             </p>
                           </div>
@@ -379,13 +382,13 @@ export function ConsoleList({ onEdit, refreshKey = 0 }: ConsoleListProps) {
                         )}
                       </div>
 
-                      <div className="flex-grow space-y-2.5 text-sm">
-                        <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+                      <div className="space-y-2 text-xs">
+                        <details className={styles.specs}><summary>Hardware details <span>{console.brand}</span></summary><div className="grid grid-cols-[80px_minmax(0,1fr)] gap-x-4 gap-y-2 pt-3">
                           <div className="flex items-center space-x-2">
                             <Building2 className="w-4 h-4 text-slate-500 dark:text-slate-400" />
                             <span className="text-slate-600 dark:text-slate-400">Brand</span>
                           </div>
-                          <span className="font-medium truncate text-slate-900 dark:text-slate-100">{console.brand}</span>
+                          <span className="font-medium break-words text-foreground">{console.brand}</span>
 
                           {console.type === "pc" ? (
                             <>
@@ -393,7 +396,7 @@ export function ConsoleList({ onEdit, refreshKey = 0 }: ConsoleListProps) {
                                 <Cpu className="w-4 h-4 text-slate-500 dark:text-slate-400" />
                                 <span className="text-slate-600 dark:text-slate-400">CPU</span>
                               </div>
-                              <span className="font-medium truncate text-slate-900 dark:text-slate-100">
+                              <span className="font-medium break-words text-foreground">
                                 {console.processor || "N/A"}
                               </span>
 
@@ -401,7 +404,7 @@ export function ConsoleList({ onEdit, refreshKey = 0 }: ConsoleListProps) {
                                 <Gpu className="w-4 h-4 text-slate-500 dark:text-slate-400" />
                                 <span className="text-slate-600 dark:text-slate-400">GPU</span>
                               </div>
-                              <span className="font-medium truncate text-slate-900 dark:text-slate-100">{console.gpu || "N/A"}</span>
+                              <span className="font-medium break-words text-foreground">{console.gpu || "N/A"}</span>
 
                               <div className="flex items-center space-x-2">
                                 <Memory className="w-4 h-4 text-slate-500 dark:text-slate-400" />
@@ -421,7 +424,7 @@ export function ConsoleList({ onEdit, refreshKey = 0 }: ConsoleListProps) {
                                 <Gamepad className="w-4 h-4 text-slate-500 dark:text-slate-400" />
                                 <span className="text-slate-600 dark:text-slate-400">Variant</span>
                               </div>
-                              <span className="font-medium truncate text-slate-900 dark:text-slate-100">{console.consoleModelType || "N/A"}</span>
+                              <span className="font-medium break-words text-foreground">{console.consoleModelType || "N/A"}</span>
 
                               <div className="flex items-center space-x-2">
                                 <HardDrive className="w-4 h-4 text-slate-500 dark:text-slate-400" />
@@ -432,7 +435,8 @@ export function ConsoleList({ onEdit, refreshKey = 0 }: ConsoleListProps) {
                           )}
                         </div>
 
-                        <div className="flex items-center justify-between border-t border-slate-200 pt-2 dark:border-slate-700/70">
+                        </details>
+                        <div className={styles.status}>
                           <div className="flex items-center space-x-2">
                             <Activity className="w-4 h-4 text-slate-500 dark:text-slate-400" />
                             <span className="text-slate-600 dark:text-slate-400">Status</span>
@@ -467,11 +471,7 @@ export function ConsoleList({ onEdit, refreshKey = 0 }: ConsoleListProps) {
                       </div>
 
                       <div
-                        className={`mt-4 flex justify-end space-x-2 transition-opacity ${
-                          deletingConsoleId === console.id
-                            ? "opacity-100"
-                            : "opacity-0 group-hover:opacity-100"
-                        }`}
+                        className={styles.actions}
                       >
                         <Button
                           variant="outline"
