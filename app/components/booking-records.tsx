@@ -5,6 +5,7 @@ import { CalendarDays, Loader2, RotateCw } from "lucide-react"
 import { BOOKING_URL } from "@/src/config/env"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import styles from "./schedule-workspace.module.css"
 
 interface BookingRecord {
   booking_id: number
@@ -63,18 +64,18 @@ export default function BookingRecords({ vendorId, refreshKey = 0 }: { vendorId:
 
   const pages = Math.max(1, Math.ceil(total / 25))
   return (
-    <section className="booking-detail-card flex h-full min-h-0 flex-col overflow-hidden rounded-xl border border-border" aria-label="Booking records">
+    <section className={`${styles.records} flex h-full min-h-[480px] flex-col overflow-hidden rounded-xl border border-border`} aria-label="Booking records">
       <div className="shrink-0 border-b border-border p-4">
         <div className="flex items-start justify-between gap-3">
           <div>
             <h3 className="flex items-center gap-2 text-base font-semibold"><CalendarDays className="h-4 w-4 text-blue-400" />Booking records</h3>
-            <p className="mt-1 text-xs text-muted-foreground">All booking statuses · Filter by booking date and start time (IST).</p>
+            <p className="mt-1 text-xs text-muted-foreground">Booking history across all statuses. Times shown in IST.</p>
           </div>
           <Button variant="ghost" size="icon" aria-label="Refresh booking records" disabled={loading || !vendorId} onClick={() => setRevision(value => value + 1)}><RotateCw className="h-4 w-4" /></Button>
         </div>
-        <form className="mt-4 flex flex-wrap items-end gap-3" onSubmit={event => { event.preventDefault(); if (!invalidDates) { setPage(1); setApplied({ ...filters }) } }}>
+        <form className={styles.filters} onSubmit={event => { event.preventDefault(); if (!invalidDates) { setPage(1); setApplied({ ...filters }) } }}>
           {([["date_from", "From date", "date"], ["date_to", "To date", "date"], ["time_from", "Starts after", "time"], ["time_to", "Starts before", "time"]] as const).map(([key, label, type]) => (
-            <label key={key} className="min-w-[125px] flex-1 space-y-1.5 text-xs text-muted-foreground">
+            <label key={key} className="min-w-0 space-y-1.5 text-xs text-muted-foreground">
               <span>{label}</span>
               <Input type={type} aria-label={label} value={filters[key]} onChange={event => setFilters(value => ({ ...value, [key]: event.target.value }))} className="h-9 text-xs text-foreground" />
             </label>
@@ -84,12 +85,12 @@ export default function BookingRecords({ vendorId, refreshKey = 0 }: { vendorId:
         </form>
         {invalidDates && <p role="alert" className="mt-2 text-xs text-red-400">The end date must be on or after the start date.</p>}
       </div>
-      <div className="min-h-0 flex-1 overflow-auto" aria-busy={loading}>
+      <div className="min-h-[260px] max-h-[520px] flex-1 overflow-auto" aria-busy={loading}>
         {loading ? <div role="status" className="flex items-center justify-center gap-2 p-10 text-sm text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" />Loading records…</div>
           : error ? <div role="alert" className="p-8 text-center text-sm"><p>{error}</p><Button variant="outline" className="mt-3" onClick={() => setRevision(value => value + 1)}>Retry</Button></div>
           : rows.length === 0 ? <div className="p-10 text-center"><p className="text-sm font-medium">{vendorId ? "No booking records found" : "Select a cafe to view booking records"}</p><p className="mt-1 text-xs text-muted-foreground">{vendorId ? "Try a wider date or time range, or reset the filters to see all records." : "Booking history will appear here once a cafe is selected."}</p></div>
           : <table className="w-full min-w-[740px] text-left text-sm">
-            <thead className="sticky top-0 bg-muted text-xs text-muted-foreground"><tr>{["Booking", "Customer", "Date & time", "Status", "Extras", "Amount paid"].map(label => <th key={label} className="px-4 py-3 font-medium last:text-right">{label}</th>)}</tr></thead>
+            <thead className="sticky top-0 z-10 bg-muted text-xs text-muted-foreground"><tr>{["Booking", "Customer", "Date & time", "Status", "Extras", "Amount paid"].map(label => <th key={label} className="px-4 py-3 font-medium last:text-right">{label}</th>)}</tr></thead>
             <tbody>{rows.map(row => <tr key={row.booking_id} className="border-t border-border hover:bg-muted/30">
               <td className="px-4 py-3 font-medium">{row.booking_fid || `#BK-${row.booking_id}`}</td>
               <td className="px-4 py-3"><div className="font-medium">{row.customer_name}</div><div className="mt-1 text-xs text-muted-foreground">{row.customer_phone}</div></td>
