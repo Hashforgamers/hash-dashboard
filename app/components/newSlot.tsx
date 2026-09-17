@@ -40,6 +40,7 @@ import {
 import { BOOKING_URL, DASHBOARD_URL } from '@/src/config/env'
 import { ConsoleType } from './types'
 import MealSelector from './mealSelector'
+import BookingRecords from "./booking-records"
 import CreditAccountModal, { type MonthlyCreditAccountSummary } from './credit-account-modal'
 
 type PillColor = "green" | "blue" | "purple" | "yellow" | "red"
@@ -4906,6 +4907,7 @@ export default function SlotManagement({ embedded = false, slab = false }: SlotM
   const [availableConsoles, setAvailableConsoles] = useState<ConsoleType[]>([])
   const [allSlots, setAllSlots] = useState<{ [key: string]: any[] }>({})
   const [recentBookings, setRecentBookings] = useState<any[]>([])
+  const [recordsRevision, setRecordsRevision] = useState(0)
   const [isLoading, setIsLoading] = useState(false)
     const [slotBookings, setSlotBookings] = useState<any[]>([])
 const [isLoadingBookings, setIsLoadingBookings] = useState(false)
@@ -5402,6 +5404,7 @@ useEffect(() => {
   }
 
   const handleBookingComplete = () => {
+    setRecordsRevision(value => value + 1)
     setSelectedSlots([])
     refreshBookingSnapshot(true)
   }
@@ -5469,7 +5472,7 @@ useEffect(() => {
             )}
             {!slab && (
               <div className="min-h-0 flex-1">
-                <RecentBookings bookings={slotBookings} isLoading={isLoadingBookings} fixedCard />
+                <BookingRecords key={vendorId} vendorId={vendorId} refreshKey={recordsRevision} />
               </div>
             )}
           </>
@@ -5491,7 +5494,7 @@ useEffect(() => {
               isLoading={isLoading}
               fetchSlotBookings={fetchSlotBookings}
             />
-            <RecentBookings bookings={slotBookings} isLoading={isLoadingBookings} />
+            <div className="mt-4 h-[520px]"><BookingRecords key={vendorId} vendorId={vendorId} refreshKey={recordsRevision} /></div>
           </>
         )}
       </div>
