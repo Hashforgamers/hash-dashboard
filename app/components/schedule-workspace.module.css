@@ -1,0 +1,22 @@
+.schedule { scrollbar-gutter: stable; }
+.schedule :global(.booking-schedule-card) { border-radius: 10px; box-shadow: none; }
+.schedule :global(.booking-slot-cell) { border-color: transparent !important; background: transparent !important; }
+.schedule :global(.booking-slot-pill) { min-height: 34px; font-size: 12px; font-weight: 500; text-transform: none; border-radius: 6px; }
+.schedule :global(.booking-slot-pill-open) { background: rgba(74, 133, 107, .09) !important; border-color: rgba(122, 163, 144, .16) !important; color: #b3cfc0 !important; }
+.schedule :global(.booking-slot-pill-open:hover) { background: rgba(74, 133, 107, .2) !important; border-color: #719e89 !important; }
+.schedule :global(.booking-slot-pill-selected) { background: #253d59 !important; border-color: #6ba5e7 !important; color: #edf5ff !important; }
+.schedule :global(.booking-grid-row-today) { background: rgba(75, 118, 162, .06) !important; }
+.schedule :global(.booking-time-label) { font-size: 12px; font-weight: 500; color: #a1a1aa; }
+.schedule :global(.booking-date-cell) { font-size: 12px; font-weight: 500; }
+.schedule :global(.booking-console-tab) { text-transform: none; font-weight: 500; }
+.records { background: #17171b; box-shadow: none; }
+.filters { display: grid; grid-template-columns: repeat(2, minmax(135px, 170px)) repeat(2, minmax(115px, 140px)) auto auto; align-items: end; justify-content: start; gap: 10px; margin-top: 16px; }
+.records table { font-variant-numeric: tabular-nums; }
+.records th { font-size: 11px; letter-spacing: .02em; }
+.records td { font-size: 13px; padding-top: 14px; padding-bottom: 14px; }
+.records input { color-scheme: dark; background: #202025; border-color: #38383f; border-radius: 6px; }
+@media (max-width: 1050px) { .filters { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+@media (max-width: 640px) {
+  .filters { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .records { min-height: 540px; }
+}
