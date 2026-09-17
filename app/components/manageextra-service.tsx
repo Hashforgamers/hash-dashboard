@@ -32,6 +32,7 @@ import {
 import Image from "next/image"
 import { jwtDecode } from "jwt-decode"
 import clsx from "clsx"
+import styles from "./extra-services.module.css"
 import { DASHBOARD_URL } from "@/src/config/env"
 import { useModuleCache } from "@/app/hooks/useModuleCache"
 import { useIsMobile } from "@/components/ui/use-mobile"
@@ -475,13 +476,13 @@ export default function ManageExtraServices() {
         )
       : 0
   const primaryButtonClass =
-    "ui-action-primary inline-flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold shadow-md transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-50 sm:px-4"
+    `${styles.primary} inline-flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold shadow-none transition-colors disabled:cursor-not-allowed disabled:opacity-50 sm:px-4`
   const secondaryButtonClass =
     "ui-action-secondary inline-flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-50 sm:px-4"
   const iconButtonClass =
-    "inline-flex h-8 w-8 items-center justify-center rounded-lg border border-cyan-300/40 bg-cyan-50 text-sky-700 transition-all duration-200 hover:border-cyan-400 hover:bg-cyan-100 dark:border-cyan-400/35 dark:bg-cyan-500/10 dark:text-cyan-200 dark:hover:bg-cyan-500/20"
+    styles.iconButton
   const destructiveIconButtonClass =
-    "inline-flex items-center justify-center rounded-lg border border-rose-400/30 bg-rose-500/10 p-2 text-rose-300 transition-all duration-200 hover:border-rose-300/60 hover:bg-rose-500/20 disabled:cursor-not-allowed disabled:opacity-50"
+    styles.deleteButton
 
   /* ---------------------------------------------------------------
      SSR GUARD
@@ -503,47 +504,28 @@ export default function ManageExtraServices() {
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="dashboard-module dashboard-typography flex w-full flex-col gap-4 px-1 pb-2 sm:px-2"
+      className={`${styles.root} dashboard-module dashboard-typography flex w-full flex-col gap-6 pb-4`}
     >
       {feedback}
-      <motion.div
-        initial={{ opacity: 0, y: -14 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.08 }}
-        className="gaming-panel shrink-0 rounded-xl p-3 sm:p-4"
-      >
-        <div className="grid grid-cols-2 gap-2 pb-1 sm:flex sm:gap-3 sm:overflow-x-auto">
-          <div className="gaming-kpi-card min-w-0 rounded-xl p-2.5 sm:min-w-[170px] sm:flex-1 sm:p-4">
-          <p className="text-xs uppercase tracking-wide text-slate-500">Categories</p>
-          <p className="mt-1 text-lg font-semibold text-cyan-300 sm:text-2xl">{totalCategories}</p>
-        </div>
-          <div className="gaming-kpi-card min-w-0 rounded-xl p-2.5 sm:min-w-[170px] sm:flex-1 sm:p-4">
-          <p className="text-xs uppercase tracking-wide text-slate-500">Menu Items</p>
-          <p className="mt-1 text-lg font-semibold text-sky-300 sm:text-2xl">{totalItems}</p>
-        </div>
-          <div className="gaming-kpi-card min-w-0 rounded-xl p-2.5 sm:min-w-[170px] sm:flex-1 sm:p-4">
-          <p className="text-xs uppercase tracking-wide text-slate-500">Active</p>
-          <p className="mt-1 text-lg font-semibold text-emerald-300 sm:text-2xl">{activeItems}</p>
-        </div>
-          <div className="gaming-kpi-card min-w-0 rounded-xl p-2.5 sm:min-w-[170px] sm:flex-1 sm:p-4">
-          <p className="text-xs uppercase tracking-wide text-slate-500">Avg Price</p>
-          <p className="mt-1 flex items-center text-lg font-semibold text-amber-300 sm:text-2xl">
-            <IndianRupee className="mr-1 h-4 w-4 sm:h-5 sm:w-5" />
-            {avgPrice}
-          </p>
+      <section className={styles.overview} aria-label="Service overview">
+        <div className={styles.toolbar}>
+          <div>
+            <h2 className={styles.heading}>Your service catalog</h2>
+            <p className={styles.subtitle}>Manage menu items, availability, and inventory in one place.</p>
           </div>
-          <div className="col-span-2 min-w-0 sm:min-w-[210px] sm:flex-1">
-            <button
-              onClick={() => setShowCategoryDlg(true)}
-              disabled={loading || !vendorId}
-              className={`${primaryButtonClass} h-full min-h-[56px] w-full sm:min-h-[88px]`}
-            >
-              <Plus className="icon-md" />
-              New Category
-            </button>
-          </div>
+          <button onClick={() => setShowCategoryDlg(true)} disabled={loading || !vendorId} className={primaryButtonClass}>
+            <Plus className="h-4 w-4" /> New category
+          </button>
         </div>
-      </motion.div>
+        <dl className={styles.stats}>
+          {[['Categories', totalCategories], ['Menu items', totalItems], ['Active items', activeItems], ['Average price', `₹${avgPrice.toLocaleString('en-IN')}`]].map(([label, value]) => (
+            <div key={label} className={styles.stat}>
+              <dt>{label}</dt>
+              <dd>{value}</dd>
+            </div>
+          ))}
+        </dl>
+      </section>
 
       <div className="w-full pr-1">
         {/* ✅ Error State */}
@@ -586,7 +568,7 @@ export default function ManageExtraServices() {
               </button>
             </div>
           ) : (
-            <div className="section-spacing pb-2">
+            <div className="space-y-6 pb-2">
             {categories.map((cat, i) => {
               if (!cat?.id) return null
               const mode = getViewMode(cat.id)
@@ -600,38 +582,38 @@ export default function ManageExtraServices() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.05 * i }}
                 >
-                  <Card className="gaming-panel overflow-hidden rounded-xl border-cyan-400/20 shadow-sm">
+                  <Card className={styles.category}>
                     {/* ✅ Category Header with view toggle */}
-                    <CardHeader className="content-card-padding border-b border-cyan-500/15 pb-3">
+                    <CardHeader className={styles.categoryHeader}>
                       <div className="flex items-center justify-between gap-3 flex-wrap">
                         {/* Left: Icon + Name */}
                         <div className="flex items-center gap-3 min-w-0 flex-1">
-                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-cyan-300 bg-cyan-50 dark:border-cyan-400/30 dark:bg-cyan-500/10">
+                          <div className={styles.categoryIcon}>
                             {getCategoryIcon(cat.name)}
                           </div>
                           <div className="min-w-0">
-                            <CardTitle className="truncate text-base font-bold tracking-wide text-slate-900 dark:text-cyan-100">
+                            <CardTitle className={styles.categoryTitle}>
                               {cat.name}
                             </CardTitle>
                             {cat.description && (
-                              <p className="mt-0.5 line-clamp-1 text-sm text-slate-500">{cat.description}</p>
+                              <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{cat.description}</p>
                             )}
                           </div>
                           {/* Item count badge */}
-                          <span className="shrink-0 rounded-full border border-cyan-300 bg-cyan-50 px-2 py-0.5 text-xs font-bold text-slate-900 dark:border-cyan-400/30 dark:bg-cyan-500/10 dark:text-cyan-300">
+                          <span className={styles.count}>
                             {cat.items.length} items
                           </span>
                         </div>
 
-                        {/* Right: Add Meal + View Toggle + Delete */}
+                        {/* Right: Add item + View Toggle + Delete */}
                         <div className="flex items-center gap-2 shrink-0">
                           <button
                             onClick={() => openMenuDialogForCategory(cat.id)}
                             className={primaryButtonClass}
-                            title={`Add meal in ${cat.name}`}
+                            title={`Add item in ${cat.name}`}
                           >
                             <Plus className="icon-md" />
-                            Add Meal
+                            Add item
                           </button>
 
                           {/* ✅ View Mode Toggle */}
@@ -645,6 +627,8 @@ export default function ManageExtraServices() {
                                   : 'text-slate-500 hover:text-slate-900 dark:text-muted-foreground dark:hover:text-cyan-200'
                               }`}
                               title="Grid View"
+                              aria-label="Grid view"
+                              aria-pressed={mode === 'grid'}
                             >
                               <LayoutGrid className="icon-md" />
                             </button>
@@ -656,6 +640,8 @@ export default function ManageExtraServices() {
                                   : 'text-slate-500 hover:text-slate-900 dark:text-muted-foreground dark:hover:text-cyan-200'
                               }`}
                               title="Table View"
+                              aria-label="Table view"
+                              aria-pressed={mode === 'table'}
                             >
                               <TableIcon className="icon-md" />
                             </button>
@@ -678,7 +664,7 @@ export default function ManageExtraServices() {
                       </div>
                     </CardHeader>
 
-                    <CardContent className="content-card-padding pt-3">
+                    <CardContent className={styles.categoryContent}>
                       <AnimatePresence mode="wait">
 
                         {/* ✅ GRID VIEW */}
@@ -689,7 +675,7 @@ export default function ManageExtraServices() {
                             animate={{ opacity: 1, x: 0 }}
                             exit={{ opacity: 0, x: -10 }}
                             transition={{ duration: 0.2 }}
-                            className="grid grid-cols-2 gap-2 sm:gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6"
+                            className="grid grid-cols-1 min-[400px]:grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-4"
                           >
                             {Array.isArray(cat.items) && cat.items.map((item, idx) => {
                               if (!item?.id) return null
@@ -701,7 +687,7 @@ export default function ManageExtraServices() {
                                   animate={{ opacity: 1, scale: 1 }}
                                   transition={{ delay: 0.04 * idx }}
                                 >
-                                  <Card className="dashboard-module-card overflow-hidden rounded-lg border border-cyan-400/25 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-cyan-500/10">
+                                  <Card className={styles.itemCard}>
                                     <CardContent className="p-0">
                                       {/* Image */}
                                       <div className="aspect-video relative">
@@ -737,7 +723,7 @@ export default function ManageExtraServices() {
                                       </div>
 
                                       {/* Info */}
-                                      <div className="space-y-1 p-2">
+                                      <div className="space-y-2 p-4">
                                         <p className="body-text font-semibold truncate text-xs sm:text-sm">
                                           {item.name}
                                         </p>
@@ -781,17 +767,14 @@ export default function ManageExtraServices() {
                               animate={{ opacity: 1, scale: 1 }}
                               transition={{ delay: 0.04 * (cat.items?.length ?? 0) }}
                             >
-                              <Card
+                              <button
+                                type="button"
                                 onClick={() => openMenuDialogForCategory(cat.id)}
-                                className="cursor-pointer overflow-hidden rounded-lg border-2 border-dashed border-cyan-300 bg-white/90 transition-all duration-200 hover:border-cyan-400 hover:shadow-md dark:border-cyan-400/25 dark:bg-slate-900/40 dark:hover:border-cyan-300/50"
+                                className={styles.addItem}
                               >
-                                <CardContent className="p-0 flex items-center justify-center min-h-[100px]">
-                                  <div className="flex flex-col items-center gap-1 p-4 text-slate-500 transition-colors hover:text-slate-900 dark:text-muted-foreground dark:hover:text-foreground">
-                                    <Plus className="icon-xl" />
-                                    <span className="text-xs font-medium">Add Meal</span>
-                                  </div>
-                                </CardContent>
-                              </Card>
+                                <Plus className="h-5 w-5" />
+                                <span>Add item</span>
+                              </button>
                             </motion.div>
                           </motion.div>
                         )}
@@ -804,7 +787,7 @@ export default function ManageExtraServices() {
                             animate={{ opacity: 1, x: 0 }}
                             exit={{ opacity: 0, x: 10 }}
                             transition={{ duration: 0.2 }}
-                            className="dashboard-table-shell"
+                            className={styles.tableShell}
                           >
                             {cat.items.length === 0 ? (
                               <div className="flex flex-col items-center justify-center py-10 gap-2 text-muted-foreground">
@@ -815,16 +798,16 @@ export default function ManageExtraServices() {
                                   className={`${primaryButtonClass} mt-1`}
                                 >
                                   <Plus className="icon-md" />
-                                  Add Meal
+                                  Add item
                                 </button>
                               </div>
                             ) : (
                               <div className="dashboard-table-wrap">
-                                <table className="dashboard-table text-left">
-                                  <thead className="dashboard-module-table-head">
+                                <table className={`${styles.table} text-left`}>
+                                  <thead className={styles.tableHead}>
                                     <tr>
                                       {["Item", "Description", "Price", "Inventory", "Status", "Action"].map(h => (
-                                        <th key={h} className="table-cell text-xs font-bold uppercase tracking-wider text-white dark:text-cyan-100/80">{h}</th>
+                                        <th key={h} className="text-xs font-medium">{h}</th>
                                       ))}
                                     </tr>
                                   </thead>
@@ -833,9 +816,9 @@ export default function ManageExtraServices() {
                                       if (!item?.id) return null
                                       const isDeleting = deletingItemId === item.id
                                       return (
-                                        <tr key={item.id} className="table-row border-b border-cyan-500/10 last:border-0">
+                                        <tr key={item.id} className={styles.tableRow}>
                                           {/* Item name + image */}
-                                          <td className="table-cell">
+                                          <td className={styles.cell}>
                                             <div className="flex items-center gap-3">
                                               <div className="relative w-10 h-10 rounded-lg overflow-hidden shrink-0 border border-border">
                                                 <Image
@@ -850,22 +833,22 @@ export default function ManageExtraServices() {
                                           </td>
 
                                           {/* Description */}
-                                          <td className="table-cell">
+                                          <td className={styles.cell}>
                                             <p className="body-text-muted line-clamp-2 max-w-[200px]">
                                               {item.description || '—'}
                                             </p>
                                           </td>
 
                                           {/* Price */}
-                                          <td className="table-cell">
-                                            <div className="flex items-center gap-0.5 font-bold text-sky-700 dark:text-blue-400">
+                                          <td className={styles.cell}>
+                                            <div className="flex items-center justify-end gap-0.5 font-semibold tabular-nums text-foreground">
                                               <IndianRupee className="icon-md" />
                                               <span>{item.price}</span>
                                             </div>
                                           </td>
 
                                           {/* Inventory */}
-                                          <td className="table-cell">
+                                          <td className={styles.cell}>
                                             <div className="flex items-center gap-2">
                                               <span className={clsx(
                                                 "rounded-full border px-2 py-0.5 text-xs font-semibold",
@@ -886,7 +869,7 @@ export default function ManageExtraServices() {
                                           </td>
 
                                           {/* Status */}
-                                          <td className="table-cell">
+                                          <td className={styles.cell}>
                                             <button
                                               onClick={() => toggleMenuItemStatus(cat.id, item)}
                                               disabled={togglingItemId === item.id}
@@ -906,7 +889,7 @@ export default function ManageExtraServices() {
                                           </td>
 
                                           {/* Action */}
-                                          <td className="table-cell">
+                                          <td className={styles.cell}>
                                             <button
                                               onClick={() => deleteMenuItem(cat.id, item.id)}
                                               disabled={isDeleting}
@@ -1146,7 +1129,6 @@ export default function ManageExtraServices() {
                   min="0"
                   step="1"
                   aria-label="Stock quantity"
-                  min={0}
                   value={inventoryQuantity}
                   onChange={(e) => setInventoryQuantity(e.target.value)}
                   className="ui-input-surface focus-visible:ring-cyan-400/60"

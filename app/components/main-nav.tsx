@@ -8,7 +8,6 @@ import {
   LayoutDashboard,
   Receipt,
   Gamepad2,
-  CalendarCheck,
   Users,
   DollarSign,
   UtensilsCrossed,
@@ -46,7 +45,6 @@ interface NavItem {
 const navItems: NavItem[] = [
   { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard", permission: "dashboard.view" },
   { href: "/gaming", icon: Laptop, label: "Manage Gaming Console", permission: "gaming.manage" },
-  { href: "/booking", icon: CalendarCheck, label: "Manage Booking", permission: "booking.manage" },
   { href: "/transaction", icon: Receipt, label: "Transaction Report", permission: "transactions.view" },
   { href: "/manage-extraservice", icon: UtensilsCrossed, label: "Extra Services", permission: "extras.manage" },
   { href: "/know-your-gamers", icon: Users, label: "Know Your Gamers", permission: "gamers.view" },
