@@ -3086,7 +3086,10 @@ function TopBar({
       <Card className={cn("booking-console-filter rounded-xl border p-2.5 shadow-sm backdrop-blur-sm", compact && "p-2")}>
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
           <span className="booking-console-label text-xs font-medium uppercase tracking-wide">Select Console</span>
-          <div className="flex flex-wrap items-center gap-2">
+          <select aria-label="Select console" value={selectedConsole} onChange={event => onConsoleChange(event.target.value)} className={scheduleStyles.consoleSelect}>
+            {activeConsoles.map(item => <option key={item.type} value={item.type}>{item.name || item.type}</option>)}
+          </select>
+          <div className={`${scheduleStyles.consoleTabs} flex flex-wrap items-center gap-2`}>
             {activeConsoles.map((consoleItem) => {
               const key = consoleItem.type
               const Icon = resolveSafeConsoleIcon(consoleItem.icon, consoleItem.type)
