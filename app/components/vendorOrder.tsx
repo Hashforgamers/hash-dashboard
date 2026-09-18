@@ -2,14 +2,12 @@
 
 import React, { useState, useEffect } from 'react';
 import {
-  Card,
-  CardContent,
-  CardHeader
+  Card
 } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { motion } from "framer-motion"
-import { ShoppingCart, Loader2, CheckCircle } from 'lucide-react'
+import { ShoppingCart, Loader2, CheckCircle, Package, RefreshCw, AlertCircle } from 'lucide-react'
 import Image from "next/image"
 import { VENDOR_ONBOARD_URL } from '@/src/config/env';
 import { useModuleCache } from "@/app/hooks/useModuleCache";
@@ -35,7 +33,7 @@ interface OrderItem {
 const VendorOrderPage: React.FC = () => {
   const VENDOR_ID = typeof window !== 'undefined' ? localStorage.getItem('selectedCafe') || '' : '';
   const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [productError, setProductError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [orderItems, setOrderItems] = useState<Record<string, number>>({});
   const [submitting, setSubmitting] = useState(false);
@@ -44,40 +42,38 @@ const VendorOrderPage: React.FC = () => {
 
   const cacheKey = "store_products";
   const fetcher = async () => {
-    const res = await fetch(`${VENDOR_ONBOARD_URL}/api/vendor/products`);
-    if (!res.ok) throw new Error('Failed to load products');
-    const data = await res.json();
-    return Array.isArray(data) ? data.map((p: any) => ({
-      ...p,
-      price: Number(p.price),
-      stock: Number(p.stock),
-      min_order_quantity: Number(p.min_order_quantity),
-    })) : [];
+    setProductError(null);
+    try {
+      if (!VENDOR_ONBOARD_URL) throw new Error('Store is not configured. Contact support.');
+      const res = await fetch(`${VENDOR_ONBOARD_URL}/api/vendor/products`);
+      if (!res.ok) throw new Error(`Unable to load products (HTTP ${res.status}).`);
+      const data = await res.json();
+      if (!Array.isArray(data)) throw new Error('The store returned an invalid product list.');
+      return data.map((p: Product) => ({
+        ...p,
+        price: Number(p.price),
+        stock: Number(p.stock),
+        min_order_quantity: Number(p.min_order_quantity),
+      }));
+    } catch (err) {
+      setProductError(err instanceof Error && err.message !== 'Failed to fetch'
+        ? err.message : 'Unable to connect to the store. Try again.');
+      throw err;
+    }
   };
 
-  const { data: cachedProducts, refresh } = useModuleCache<Product[]>(cacheKey, fetcher, 300000, "store");
+  const { data: cachedProducts, loading: fetchingProducts, refresh } = useModuleCache<Product[]>(cacheKey, fetcher, 300000, "store");
+  const loading = fetchingProducts || (cachedProducts === undefined && !productError);
 
   useEffect(() => {
-    if (Array.isArray(cachedProducts)) {
-      // Treat empty arrays as valid cached state to avoid forced refetch loops.
-      setProducts(cachedProducts);
-      return;
-    }
-    fetchProducts(false);
+    if (Array.isArray(cachedProducts)) setProducts(cachedProducts);
   }, [cachedProducts]);
 
-  const fetchProducts = async (force = true) => {
-    setLoading(true);
-    setError(null);
+  const fetchProducts = async () => {
     try {
-      const next = await refresh(force);
-      if (Array.isArray(next)) {
-        setProducts(next);
-      }
-    } catch (err) {
-      setError('Unable to load products');
-    } finally {
-      setLoading(false);
+      await refresh(true);
+    } catch {
+      // The fetcher reports product errors for initial loads and refreshes alike.
     }
   };
 
@@ -169,21 +165,18 @@ const VendorOrderPage: React.FC = () => {
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="relative flex h-full min-h-0 flex-col gap-4 overflow-hidden px-1 pb-2 sm:px-2"
+      className="relative flex h-full min-h-0 flex-col gap-3 overflow-hidden px-1 pb-2 sm:px-2"
     >
       {/* ---------- HEADER ---------- */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
-        className="gaming-panel shrink-0 rounded-xl p-3 sm:p-4"
+        className="shrink-0 rounded-lg border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-900"
       >
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h2 className="premium-heading !text-base sm:!text-lg md:!text-xl">Place Orders</h2>
-            <p className="premium-subtle">
-            Select products and quantities to order
-          </p>
+            <h2 className="text-sm font-semibold text-foreground">Products</h2>
           </div>
           <div className="flex items-center gap-2">
             <button
@@ -192,8 +185,7 @@ const VendorOrderPage: React.FC = () => {
               disabled={Object.keys(orderItems).length === 0}
             >
               <ShoppingCart className="icon-md" />
-              <span className="font-semibold">{Object.keys(orderItems).length}</span>
-              <span className="font-medium">Order</span>
+              <span>Review order ({Object.keys(orderItems).length})</span>
             </button>
             <div className="dashboard-badge sm:text-sm">
               ₹{totalAmount.toFixed(2)}
@@ -205,11 +197,14 @@ const VendorOrderPage: React.FC = () => {
       <div className="min-h-0 flex-1 overflow-y-auto pr-1">
         {/* ---------- ERROR STATE ---------- */}
         {error && (
-          <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-2 sm:p-3 text-destructive mb-2 max-w-lg mx-auto">
-            <p className="body-text font-medium">Error:</p>
-            <p className="body-text-small mt-1 break-words">{error}</p>
-            <button className={`${secondaryButtonClass} mt-2 border-destructive text-destructive`} onClick={() => fetchProducts(true)}>
-              Try Again
+          <div role="alert" className="mb-3 rounded-lg border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm text-destructive">{error}</div>
+        )}
+        {productError && !loading && (
+          <div role="alert" className="mb-3 flex flex-wrap items-center gap-3 rounded-lg border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-900">
+            <AlertCircle className="h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
+            <p className="flex-1 text-sm text-foreground">{productError}</p>
+            <button className={secondaryButtonClass} onClick={fetchProducts} disabled={fetchingProducts}>
+              <RefreshCw className="h-3.5 w-3.5" /> Retry
             </button>
           </div>
         )}
@@ -229,15 +224,16 @@ const VendorOrderPage: React.FC = () => {
 
         {/* ---------- PRODUCT LIST (SHORT CARDS) ---------- */}
         {loading ? (
-          <div className="gaming-panel text-center py-8 sm:py-12">
+          <div className="rounded-lg border border-slate-200 py-6 text-center dark:border-slate-800">
             <div className="inline-block animate-spin rounded-full h-6 w-6 sm:h-8 sm:w-8 border-b-2 border-primary"></div>
             <p className="body-text-muted mt-2">Loading products...</p>
           </div>
-        ) : products.length === 0 ? (
-          <div className="gaming-panel text-center py-8 sm:py-12">
-            <p className="body-text-muted">No products available right now. Once Hash has something, we will show it here.</p>
-            <button className={`${primaryButtonClass} mt-4`} onClick={() => fetchProducts(true)}>
-              Refresh Products
+        ) : products.length === 0 && productError ? null : products.length === 0 ? (
+          <div className="rounded-lg border border-slate-200 py-6 text-center dark:border-slate-800">
+            <Package className="mx-auto mb-2 h-5 w-5 text-muted-foreground" />
+            <p className="text-sm text-muted-foreground">No products available</p>
+            <button className={`${secondaryButtonClass} mt-3`} onClick={fetchProducts}>
+              Refresh
             </button>
           </div>
         ) : (
@@ -249,7 +245,7 @@ const VendorOrderPage: React.FC = () => {
                   initial={{ opacity: 0, scale: 0.97 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ delay: 0.03 * idx }}
-                  className="w-full max-w-[230px] mx-auto"
+                  className="w-full min-w-0"
                 >
                   <Card className="dashboard-module-card w-full min-h-[198px] flex flex-col justify-between overflow-hidden transition-shadow duration-300 hover:shadow-lg">
                     <div className="relative min-h-[84px] w-full aspect-video bg-black/5 dark:bg-white/5">
@@ -288,6 +284,7 @@ const VendorOrderPage: React.FC = () => {
                           handleQtyChange(product.product_id, val);
                         }}
                         className={quantityInputClass}
+                        aria-label={`Quantity for ${product.name}`}
                         placeholder="Qty"
                       />
                     </div>

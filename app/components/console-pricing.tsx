@@ -1265,21 +1265,21 @@ export default function ConsolePricing() {
     Object.values(prices).some((p) => p.hasChanged) &&
     Object.values(errors).length === 0;
   const primaryButtonClass =
-    "ui-action-primary inline-flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold shadow-md transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-50 sm:px-4 sm:text-sm";
+    "inline-flex h-9 items-center justify-center gap-2 rounded-md bg-sky-600 px-3 text-xs font-semibold text-white transition-colors hover:bg-sky-700 focus-visible:ring-2 focus-visible:ring-sky-500 disabled:cursor-not-allowed disabled:opacity-50";
   const secondaryButtonClass =
-    "ui-action-secondary inline-flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-50 sm:px-4 sm:text-sm";
+    "inline-flex h-9 items-center justify-center gap-2 rounded-md border border-slate-200 px-3 text-xs font-medium text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50";
   const destructiveIconButtonClass =
     "inline-flex items-center justify-center rounded-lg border border-rose-300/50 bg-rose-50 p-2 text-rose-600 transition-all duration-200 hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-rose-400/30 dark:bg-rose-500/10 dark:text-rose-300 dark:hover:bg-rose-500/20";
   const iconButtonClass =
     "inline-flex items-center justify-center rounded-lg border border-emerald-300/50 bg-emerald-50 p-2 text-emerald-700 transition-all duration-200 hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-emerald-400/30 dark:bg-emerald-500/10 dark:text-emerald-300 dark:hover:bg-emerald-500/20";
   const tabButtonBaseClass =
-    "inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-xs font-semibold transition-all sm:text-sm border-slate-500/30";
+    "inline-flex shrink-0 items-center gap-2 rounded-md px-3 py-2 text-xs font-medium transition-colors focus-visible:ring-2 focus-visible:ring-sky-500";
   const activeTabButtonClass =
-    "dashboard-module-tab-active border-cyan-400/30 bg-cyan-500/12 text-slate-900 dark:bg-cyan-500/15 dark:text-cyan-100";
+    "bg-white text-sky-700 shadow-sm dark:bg-slate-800 dark:text-sky-300";
   const inactiveTabButtonClass =
-    "bg-white/75 text-slate-700 hover:border-cyan-300/30 hover:bg-white/90 hover:text-slate-900 dark:border-slate-600/30 dark:bg-slate-900/35 dark:text-slate-300 dark:hover:border-cyan-400/20 dark:hover:bg-slate-800/70 dark:hover:text-cyan-100";
+    "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100";
   const pricingCardClass =
-    "dashboard-module-surface !border-0 rounded-xl p-4 transition-all duration-200 hover:shadow-lg hover:shadow-cyan-500/10";
+    "grid grid-cols-[minmax(0,1fr)_140px] items-center gap-x-4 gap-y-1 px-4 py-3 sm:grid-cols-[minmax(0,1fr)_180px]";
   const inputSurfaceClass =
     "dashboard-module-input text-slate-900 placeholder:text-slate-400 focus-visible:ring-cyan-400/60 dark:text-slate-100 dark:placeholder:text-slate-400";
   const selectSurfaceClass =
@@ -1324,7 +1324,7 @@ export default function ConsolePricing() {
   const editedConsoleCount = consoleTypes.filter((console) => prices[console.type]?.hasChanged).length;
 
   return (
-    <div className="console-pricing-page dashboard-module dashboard-typography relative flex h-full min-h-0 flex-col gap-4 overflow-y-auto overflow-x-hidden px-1 pb-2 sm:px-2">
+    <div className="console-pricing-page dashboard-module dashboard-typography relative flex h-full min-h-0 flex-col gap-3 overflow-y-auto overflow-x-hidden px-1 pb-2 sm:px-2">
       {feedback}
       {debugEnabled && (
         <div className="pointer-events-none fixed left-20 top-3 z-[30060] rounded-md border border-cyan-400/40 bg-slate-950/90 px-2 py-1 text-[10px] text-cyan-100">
@@ -1368,17 +1368,19 @@ export default function ConsolePricing() {
               Select a cafe first to edit console pricing.
             </div>
           )}
-          <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="mb-2 flex items-center justify-between px-4 text-xs font-medium text-slate-500 dark:text-slate-400">
+            <span>Console</span><span>Price / slot (₹)</span>
+          </div>
+          <div className="mb-3 overflow-hidden rounded-lg border border-slate-200 bg-white divide-y divide-slate-200 dark:border-slate-800 dark:bg-slate-950/40 dark:divide-slate-800">
             {consoleTypes.map((console) => (
               <div key={console.type} className={`${pricingCardClass} relative`}>
-                <div className={`${console.color} mb-4 flex items-center justify-between gap-3 rounded-lg p-3`}>
+                <div className="flex min-w-0 flex-wrap items-center justify-between gap-2">
                   <div className="flex items-center gap-3">
-                    <div className="feature-action-icon p-1.5">
-                      <console.icon className="icon-md" style={{ color: console.iconColor }} />
+                    <div className="rounded-md bg-slate-100 p-2 text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+                      <console.icon className="icon-md" />
                     </div>
                     <div>
                       <p className="text-sm font-semibold text-slate-900 dark:text-cyan-100">{console.name}</p>
-                      <p className="premium-subtle text-xs">{console.description}</p>
                     </div>
                   </div>
                   {prices[console.type]?.hasChanged && (
@@ -1388,8 +1390,9 @@ export default function ConsolePricing() {
                   )}
                 </div>
 
-                <p className="table-header-text mb-2">Price per Slot (₹)</p>
                 <Input
+                  aria-label={`${console.name} price per slot in rupees`}
+                  aria-invalid={Boolean(errors[console.type])}
                   type="number"
                   min={0}
                   max={10000}
@@ -1398,28 +1401,20 @@ export default function ConsolePricing() {
                   placeholder="0"
                   value={String(prices[console.type]?.value ?? "")}
                   onChange={(e) => handlePriceChange(console.type, e.target.value)}
-                  className={`${inputSurfaceClass} [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none`}
+                  className={`${inputSurfaceClass} h-9 text-right tabular-nums [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none`}
                 />
                 {errors[console.type] && (
-                  <p className="text-destructive text-xs font-medium mt-1.5">
+                  <p className="col-start-2 text-destructive text-xs font-medium mt-1">
                     {errors[console.type]}
                   </p>
                 )}
-                {prices[console.type]?.hasChanged && (
-                  <motion.p
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    className="text-xs text-blue-400 mt-1.5 font-medium"
-                  >
-                    ● Unsaved change
-                  </motion.p>
-                )}
+
               </div>
             ))}
           </div>
 
           <div className="sticky bottom-2 z-10">
-            <div className="dashboard-module-panel flex flex-wrap items-center justify-between gap-3 rounded-xl px-3 py-2 backdrop-blur">
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2 dark:border-slate-800 dark:bg-slate-900">
               <p className="text-xs text-slate-600 dark:text-slate-300">
                 {editedConsoleCount > 0
                   ? `${editedConsoleCount} console${editedConsoleCount > 1 ? "s" : ""} edited`
@@ -1428,7 +1423,7 @@ export default function ConsolePricing() {
               <div className="flex items-center gap-2">
                 <button
                   onClick={handleResetDefaultPricing}
-                  disabled={isLoading}
+                  disabled={isLoading || editedConsoleCount === 0}
                   className={secondaryButtonClass}
                 >
                   Reset
@@ -1436,7 +1431,7 @@ export default function ConsolePricing() {
                 <button
                   onClick={handleSave}
                   disabled={!canSave || isLoading}
-                  className={`${primaryButtonClass} px-6 py-2.5`}
+                  className={primaryButtonClass}
                 >
                   {isLoading ? (
                     <>
@@ -1446,7 +1441,7 @@ export default function ConsolePricing() {
                   ) : (
                     <>
                       <Check className="icon-md" />
-                      Save Pricing Changes
+                      Save changes
                     </>
                   )}
                 </button>
@@ -1484,8 +1479,7 @@ export default function ConsolePricing() {
           <div className="gaming-panel shrink-0 rounded-xl p-4">
             <h2 className="text-sm font-semibold text-foreground sm:text-base">Extra Controller Pricing</h2>
             <p className="body-text-muted mt-1">
-              Configure base and tier rates like 1 controller = ₹50, 2 controllers = ₹80.
-              Applies to all inventory console types where controller policy is enabled.
+              Set rates for additional controllers.
             </p>
             {controllerPricingError && (
               <p className="mt-2 text-xs font-medium text-rose-300">{controllerPricingError}</p>
@@ -1666,15 +1660,13 @@ export default function ConsolePricing() {
               <div>
                 <h2 className="flex items-center gap-2 text-sm font-semibold text-foreground sm:text-base">
                   <Users className="icon-md text-cyan-300" />
-                  Squad Pricing Rule Engine
+                  Squad pricing
                 </h2>
                 <p className="body-text-muted mt-1">
-                  Set PC squad discounts by player count with instant base/discount/final preview.
+                  Set discounts by player count.
                 </p>
               </div>
-              <div className="rounded-lg border border-emerald-300/40 bg-emerald-50 px-3 py-2 text-xs text-emerald-700 dark:border-emerald-400/30 dark:bg-emerald-500/10 dark:text-emerald-200">
-                Staff Friendly Mode
-              </div>
+
             </div>
             {squadPricingError && (
               <p className="mt-2 text-xs font-medium text-rose-300">{squadPricingError}</p>
@@ -1726,7 +1718,7 @@ export default function ConsolePricing() {
                       <CardHeader className="border-b border-cyan-500/15 bg-slate-50 pb-3 dark:bg-slate-900/55">
                         <div className="flex items-center justify-between gap-2">
                           <div className="flex items-center gap-2">
-                            <div className="feature-action-icon p-1.5">
+                            <div className="rounded-md bg-slate-100 p-2 text-slate-500 dark:bg-slate-800 dark:text-slate-400">
                               <Icon className="icon-md text-cyan-300" />
                             </div>
                             <div>
