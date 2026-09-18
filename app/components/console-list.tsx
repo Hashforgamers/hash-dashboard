@@ -29,6 +29,7 @@ import {
   MemoryStickIcon as Memory,
   HardDrive,
   Activity,
+  RotateCcw,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useState, useEffect, useMemo } from "react";
@@ -49,13 +50,20 @@ interface ConsoleListProps {
 }
 
 export function ConsoleList({ onEdit, refreshKey = 0 }: ConsoleListProps) {
-  const [data, setdata] = useState([]);
+  const [data, setdata] = useState<any[]>([]);
   const { vendorId: cachedVendorId, consoles: cachedConsoles, refreshConsoles, setConsoles: setCachedConsoles } = useDashboardData();
   const [vendorId, setVendorId] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [deletingConsoleId, setDeletingConsoleId] = useState<number | null>(null);
   const [releasingConsoleId, setReleasingConsoleId] = useState<number | null>(null);
   const [unlinkingConsoleId, setUnlinkingConsoleId] = useState<number | null>(null);
+  const [flippedCards, setFlippedCards] = useState<Record<number, boolean>>({});
+
+  const flipCard = (id: number, showHardware: boolean) => {
+    setFlippedCards((previous) => ({ ...previous, [id]: showHardware }));
+    requestAnimationFrame(() => document.getElementById(`console-${id}-${showHardware ? "back" : "front"}-button`)?.focus());
+  };
+
   const [activeGroup, setActiveGroup] = useState<string>("all");
 
   const loadConsoles = async (currentVendorId: number, force = false) => {
@@ -192,7 +200,7 @@ export function ConsoleList({ onEdit, refreshKey = 0 }: ConsoleListProps) {
       } else {
         console.log(response.data.message);
         setdata((prevData) => prevData.filter((item: any) => item.id !== id));
-        setCachedConsoles((prevData) => prevData.filter((item: any) => item.id !== id));
+        setCachedConsoles(data.filter((item: any) => item.id !== id));
       }
     } catch (error) {
       console.log("something while wrong to delete the data", error);
@@ -348,7 +356,10 @@ export function ConsoleList({ onEdit, refreshKey = 0 }: ConsoleListProps) {
             >
               {consolesForGroup.map((console) => (
                 <motion.div key={console.id} variants={item}>
-                  <Card className={styles.card}>
+                  <div className={styles.flipScene}>
+                  <div className={`${styles.flipInner} ${flippedCards[console.id] ? styles.flipped : ""}`}>
+                  <Card className={`${styles.card} ${styles.frontFace}`} aria-hidden={Boolean(flippedCards[console.id])}
+                    ref={(element) => { if (element) element.inert = Boolean(flippedCards[console.id]); }}>
                     <CardContent className={styles.content}>
                       <div className={styles.identity}>
                         <div className="flex items-center space-x-3">
@@ -383,59 +394,16 @@ export function ConsoleList({ onEdit, refreshKey = 0 }: ConsoleListProps) {
                       </div>
 
                       <div className="space-y-2 text-xs">
-                        <details className={styles.specs}><summary>Hardware details <span>{console.brand}</span></summary><div className="grid grid-cols-[80px_minmax(0,1fr)] gap-x-4 gap-y-2 pt-3">
-                          <div className="flex items-center space-x-2">
-                            <Building2 className="w-4 h-4 text-slate-500 dark:text-slate-400" />
-                            <span className="text-slate-600 dark:text-slate-400">Brand</span>
-                          </div>
-                          <span className="font-medium break-words text-foreground">{console.brand}</span>
+                        <button
+                          id={`console-${console.id}-front-button`}
+                          className={styles.flipButton}
+                          type="button"
+                          aria-label={`Show hardware details for ${console.name}`}
+                          onClick={() => flipCard(console.id, true)}
+                        >
+                          <span>Hardware details</span><RotateCcw aria-hidden="true" className="h-3.5 w-3.5" />
+                        </button>
 
-                          {console.type === "pc" ? (
-                            <>
-                              <div className="flex items-center space-x-2">
-                                <Cpu className="w-4 h-4 text-slate-500 dark:text-slate-400" />
-                                <span className="text-slate-600 dark:text-slate-400">CPU</span>
-                              </div>
-                              <span className="font-medium break-words text-foreground">
-                                {console.processor || "N/A"}
-                              </span>
-
-                              <div className="flex items-center space-x-2">
-                                <Gpu className="w-4 h-4 text-slate-500 dark:text-slate-400" />
-                                <span className="text-slate-600 dark:text-slate-400">GPU</span>
-                              </div>
-                              <span className="font-medium break-words text-foreground">{console.gpu || "N/A"}</span>
-
-                              <div className="flex items-center space-x-2">
-                                <Memory className="w-4 h-4 text-slate-500 dark:text-slate-400" />
-                                <span className="text-slate-600 dark:text-slate-400">RAM</span>
-                              </div>
-                              <span className="font-medium text-slate-900 dark:text-slate-100">{console.ram || "N/A"}</span>
-
-                              <div className="flex items-center space-x-2">
-                                <HardDrive className="w-4 h-4 text-slate-500 dark:text-slate-400" />
-                                <span className="text-slate-600 dark:text-slate-400">Storage</span>
-                              </div>
-                              <span className="font-medium text-slate-900 dark:text-slate-100">{console.storage || "N/A"}</span>
-                            </>
-                          ) : (
-                            <>
-                              <div className="flex items-center space-x-2">
-                                <Gamepad className="w-4 h-4 text-slate-500 dark:text-slate-400" />
-                                <span className="text-slate-600 dark:text-slate-400">Variant</span>
-                              </div>
-                              <span className="font-medium break-words text-foreground">{console.consoleModelType || "N/A"}</span>
-
-                              <div className="flex items-center space-x-2">
-                                <HardDrive className="w-4 h-4 text-slate-500 dark:text-slate-400" />
-                                <span className="text-slate-600 dark:text-slate-400">Storage</span>
-                              </div>
-                              <span className="font-medium text-slate-900 dark:text-slate-100">{console.storage || "N/A"}</span>
-                            </>
-                          )}
-                        </div>
-
-                        </details>
                         <div className={styles.status}>
                           <div className="flex items-center space-x-2">
                             <Activity className="w-4 h-4 text-slate-500 dark:text-slate-400" />
@@ -576,6 +544,74 @@ export function ConsoleList({ onEdit, refreshKey = 0 }: ConsoleListProps) {
                       </div>
                     </CardContent>
                   </Card>
+                  <Card className={`${styles.card} ${styles.backFace}`} aria-hidden={!flippedCards[console.id]}
+                    ref={(element) => { if (element) element.inert = !flippedCards[console.id]; }}
+                    onKeyDown={(event) => { if (event.key === "Escape") flipCard(console.id, false); }}>
+                    <CardContent className={styles.backContent}>
+                      <div className={styles.backHeader}>
+                        <div><h3 className="text-sm font-semibold">Hardware details</h3><p className="text-xs text-muted-foreground">{console.name}</p></div>
+                        <button id={`console-${console.id}-back-button`} type="button" className={styles.flipButton}
+                          aria-label={`Back to ${console.name}`} onClick={() => flipCard(console.id, false)}>
+                          <RotateCcw aria-hidden="true" className="h-3.5 w-3.5" /> Back
+                        </button>
+                      </div>
+                      <div className={styles.specs}>
+<div className="grid grid-cols-[80px_minmax(0,1fr)] gap-x-4 gap-y-2 pt-3">
+                          <div className="flex items-center space-x-2">
+                            <Building2 className="w-4 h-4 text-slate-500 dark:text-slate-400" />
+                            <span className="text-slate-600 dark:text-slate-400">Brand</span>
+                          </div>
+                          <span className="font-medium break-words text-foreground">{console.brand}</span>
+
+                          {console.type === "pc" ? (
+                            <>
+                              <div className="flex items-center space-x-2">
+                                <Cpu className="w-4 h-4 text-slate-500 dark:text-slate-400" />
+                                <span className="text-slate-600 dark:text-slate-400">CPU</span>
+                              </div>
+                              <span className="font-medium break-words text-foreground">
+                                {console.processor || "N/A"}
+                              </span>
+
+                              <div className="flex items-center space-x-2">
+                                <Gpu className="w-4 h-4 text-slate-500 dark:text-slate-400" />
+                                <span className="text-slate-600 dark:text-slate-400">GPU</span>
+                              </div>
+                              <span className="font-medium break-words text-foreground">{console.gpu || "N/A"}</span>
+
+                              <div className="flex items-center space-x-2">
+                                <Memory className="w-4 h-4 text-slate-500 dark:text-slate-400" />
+                                <span className="text-slate-600 dark:text-slate-400">RAM</span>
+                              </div>
+                              <span className="font-medium text-slate-900 dark:text-slate-100">{console.ram || "N/A"}</span>
+
+                              <div className="flex items-center space-x-2">
+                                <HardDrive className="w-4 h-4 text-slate-500 dark:text-slate-400" />
+                                <span className="text-slate-600 dark:text-slate-400">Storage</span>
+                              </div>
+                              <span className="font-medium text-slate-900 dark:text-slate-100">{console.storage || "N/A"}</span>
+                            </>
+                          ) : (
+                            <>
+                              <div className="flex items-center space-x-2">
+                                <Gamepad className="w-4 h-4 text-slate-500 dark:text-slate-400" />
+                                <span className="text-slate-600 dark:text-slate-400">Variant</span>
+                              </div>
+                              <span className="font-medium break-words text-foreground">{console.consoleModelType || "N/A"}</span>
+
+                              <div className="flex items-center space-x-2">
+                                <HardDrive className="w-4 h-4 text-slate-500 dark:text-slate-400" />
+                                <span className="text-slate-600 dark:text-slate-400">Storage</span>
+                              </div>
+                              <span className="font-medium text-slate-900 dark:text-slate-100">{console.storage || "N/A"}</span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                  </div>
+                  </div>
                 </motion.div>
               ))}
             </motion.div>

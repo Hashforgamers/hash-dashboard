@@ -122,17 +122,15 @@ export default function SubscriptionPage() {
   useEffect(() => {
     if (!pollingOrderId || !pollingPackage || !vendorId) return;
 
+    let checkingPayment = false;
+    let cancelled = false;
     const pollInterval = setInterval(async () => {
+      if (checkingPayment || cancelled) return;
+      checkingPayment = true;
       try {
-        const response = await fetch(
-          `${process.env.NEXT_PUBLIC_DASHBOARD_URL}/api/vendors/${vendorId}/subscription/check-payment/${pollingOrderId}`
-        );
-        const data = await response.json();
+        const data = await subscriptionApi.checkPayment(vendorId, pollingOrderId);
 
         if (data.paid && data.payment_id) {
-          clearInterval(pollInterval);
-          setPollingOrderId(null);
-          toast.success("Payment detected! Activating...");
 
           const activateResponse = await subscriptionApi.verifyPayment(vendorId, {
             razorpay_order_id: pollingOrderId,
@@ -143,7 +141,11 @@ export default function SubscriptionPage() {
             billing_cycle: pollingPackage.billingCycle,
           });
 
-          if (activateResponse.success) {
+          if (activateResponse.success && !cancelled) {
+            clearInterval(pollInterval);
+            setPollingOrderId(null);
+            setProcessing(null);
+            setFailedPayment(null);
             toast.success("Subscription activated! 🎉");
             await refreshStatus();
             setTimeout(() => router.push("/dashboard"), 2000);
@@ -151,10 +153,12 @@ export default function SubscriptionPage() {
         }
       } catch (error) {
         console.error("Polling error:", error);
+      } finally {
+        checkingPayment = false;
       }
     }, 2000);
 
-    return () => clearInterval(pollInterval);
+    return () => { cancelled = true; clearInterval(pollInterval); };
   }, [pollingOrderId, pollingPackage, vendorId, refreshStatus, router]);
 
   async function loadData() {
@@ -185,7 +189,7 @@ export default function SubscriptionPage() {
 
     setProcessing(pkg.code);
     try {
-      const action = currentSubscription ? "renew" : "new";
+      const action = currentSubscription?.package?.code === pkg.code ? "renew" : "new";
       const orderResponse = await subscriptionApi.createOrder(vendorId, pkg.code, action, selectedCycle);
 
       if (!orderResponse.success) throw new Error(orderResponse.error);
@@ -199,7 +203,6 @@ export default function SubscriptionPage() {
         pkg.name,
         orderResponse.key_id,
         async (response: RazorpayResponse) => {
-          setPollingOrderId(null);
           await verifyAndActivate(response, pkg.code, pkg.name, orderResponse.amount, action, selectedCycle);
         },
         () => setProcessing(null)
@@ -227,6 +230,8 @@ export default function SubscriptionPage() {
         billing_cycle: billingCycle,
       });
       if (verifyResponse.success) {
+        setPollingOrderId(null);
+        setFailedPayment(null);
         toast.success("Subscription activated! 🎉");
         await refreshStatus();
         setTimeout(() => router.push("/dashboard"), 2000);
