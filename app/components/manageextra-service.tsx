@@ -98,6 +98,7 @@ const getCategoryIcon = (categoryName: string) => {
 /*                           COMPONENT                                 */
 /* ------------------------------------------------------------------ */
 export default function ManageExtraServices() {
+  const [catalogSearch, setCatalogSearch] = useState("")
   const { error: actionError, reportError, confirmAction, feedback } = useActionFeedback();
   const [isClient, setIsClient] = useState(false)
   const [categories, setCategories] = useState<ExtraServiceCategory[]>([])
@@ -460,21 +461,13 @@ export default function ManageExtraServices() {
     router.replace(nextQuery ? `${pathname}?${nextQuery}` : pathname, { scroll: false })
   }, [isClient, deepLinkReady, isMobile, defaultViewMode, pathname, router, searchParams])
 
-  const totalCategories = categories.length
   const totalItems = categories.reduce((sum, cat) => sum + cat.items.length, 0)
-  const activeItems = categories.reduce(
-    (sum, cat) => sum + cat.items.filter((item) => item.is_active).length,
-    0
-  )
-  const avgPrice =
-    totalItems > 0
-      ? Math.round(
-          categories.reduce(
-            (sum, cat) => sum + cat.items.reduce((rowSum, item) => rowSum + Number(item.price || 0), 0),
-            0
-          ) / totalItems
-        )
-      : 0
+  const search = catalogSearch.trim().toLowerCase()
+  const visibleCategories = categories.map(category => ({
+    ...category,
+    items: category.name.toLowerCase().includes(search) ? category.items :
+      category.items.filter(item => `${item.name} ${item.description || ""}`.toLowerCase().includes(search)),
+  })).filter(category => !search || category.items.length > 0 || category.name.toLowerCase().includes(search))
   const primaryButtonClass =
     `${styles.primary} inline-flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold shadow-none transition-colors disabled:cursor-not-allowed disabled:opacity-50 sm:px-4`
   const secondaryButtonClass =
@@ -504,27 +497,19 @@ export default function ManageExtraServices() {
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className={`${styles.root} dashboard-module dashboard-typography flex w-full flex-col gap-6 pb-4`}
+      className={`${styles.root} dashboard-module dashboard-typography flex w-full flex-col gap-3 pb-2`}
     >
       {feedback}
       <section className={styles.overview} aria-label="Service overview">
         <div className={styles.toolbar}>
-          <div>
-            <h2 className={styles.heading}>Your service catalog</h2>
-            <p className={styles.subtitle}>Manage menu items, availability, and inventory in one place.</p>
-          </div>
+          <input className={styles.search} type="search" aria-label="Search service catalog"
+            placeholder="Search items or categories" value={catalogSearch}
+            onChange={event => setCatalogSearch(event.target.value)} />
+          <span className={styles.summary}>{totalItems} items</span>
           <button onClick={() => setShowCategoryDlg(true)} disabled={loading || !vendorId} className={primaryButtonClass}>
             <Plus className="h-4 w-4" /> New category
           </button>
         </div>
-        <dl className={styles.stats}>
-          {[['Categories', totalCategories], ['Menu items', totalItems], ['Active items', activeItems], ['Average price', `₹${avgPrice.toLocaleString('en-IN')}`]].map(([label, value]) => (
-            <div key={label} className={styles.stat}>
-              <dt>{label}</dt>
-              <dd>{value}</dd>
-            </div>
-          ))}
-        </dl>
       </section>
 
       <div className="w-full pr-1">
@@ -568,8 +553,11 @@ export default function ManageExtraServices() {
               </button>
             </div>
           ) : (
-            <div className="space-y-6 pb-2">
-            {categories.map((cat, i) => {
+            <div className="space-y-3 pb-2">
+            {visibleCategories.length === 0 && <div className={styles.empty} role="status">No matching items.
+              <button type="button" onClick={() => setCatalogSearch("")}>Clear search</button>
+            </div>}
+            {visibleCategories.map((cat, i) => {
               if (!cat?.id) return null
               const mode = getViewMode(cat.id)
               const resolvedMode: 'grid' | 'table' = isMobile ? 'grid' : mode
@@ -595,13 +583,10 @@ export default function ManageExtraServices() {
                             <CardTitle className={styles.categoryTitle}>
                               {cat.name}
                             </CardTitle>
-                            {cat.description && (
-                              <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{cat.description}</p>
-                            )}
                           </div>
                           {/* Item count badge */}
                           <span className={styles.count}>
-                            {cat.items.length} items
+                            {cat.items.length}
                           </span>
                         </div>
 
@@ -609,7 +594,7 @@ export default function ManageExtraServices() {
                         <div className="flex items-center gap-2 shrink-0">
                           <button
                             onClick={() => openMenuDialogForCategory(cat.id)}
-                            className={primaryButtonClass}
+                            className={styles.addButton}
                             title={`Add item in ${cat.name}`}
                           >
                             <Plus className="icon-md" />
@@ -690,7 +675,7 @@ export default function ManageExtraServices() {
                                   <Card className={styles.itemCard}>
                                     <CardContent className="p-0">
                                       {/* Image */}
-                                      <div className="aspect-video relative">
+                                      <div className={styles.itemImage}>
                                         <Image
                                           alt={item.name}
                                           src={item.image ?? "/placeholder.svg?height=140&width=220"}
@@ -723,7 +708,7 @@ export default function ManageExtraServices() {
                                       </div>
 
                                       {/* Info */}
-                                      <div className="space-y-2 p-4">
+                                      <div className="space-y-1.5 p-2.5">
                                         <p className="body-text font-semibold truncate text-xs sm:text-sm">
                                           {item.name}
                                         </p>

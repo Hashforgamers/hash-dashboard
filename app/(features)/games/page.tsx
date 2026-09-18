@@ -2,14 +2,8 @@
 
 import React, { useState, useEffect } from "react";
 import { DashboardLayout } from "../../(layout)/dashboard-layout";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card";
-import { MobileCompactCard } from "@/components/ui/mobile-compact-card";
+import { Card, CardContent } from "@/components/ui/card";
+import styles from "./games.module.css";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Gamepad2,
@@ -22,6 +16,7 @@ import {
   Image as ImageIcon,
   Monitor,
   Tag,
+  IndianRupee,
 } from "lucide-react";
 import { jwtDecode } from "jwt-decode";
 import { DASHBOARD_URL } from "@/src/config/env";
@@ -336,17 +331,18 @@ export default function GamesManagementPage() {
 
   return (
     <DashboardLayout contentScroll="contained">
-      <div className="dashboard-module dashboard-typography dashboard-page-shell h-full">
+      <div className={`dashboard-module dashboard-typography dashboard-page-shell h-full ${styles.page}`}>
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="gaming-panel"
+          className={styles.header}
         >
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <h1 className="premium-heading flex items-center gap-2">
-                Games
-              </h1>
+            <div className="flex items-center gap-2.5">
+              <h1 className="premium-heading">Games</h1>
+              <span className={styles.count} aria-label={`${vendorGames.length} games`}>
+                {vendorGames.length}
+              </span>
             </div>
             <button onClick={() => setShowAddModal(true)} className={primaryButtonClass}>
               <Plus className="w-4 h-4" />
@@ -355,7 +351,7 @@ export default function GamesManagementPage() {
           </div>
         </motion.div>
 
-        <div className="min-h-0 flex-1 overflow-y-auto pr-1">
+        <div className="min-h-0 flex-1 overflow-y-auto">
           {/* Success/Error Messages */}
           <AnimatePresence>
             {success && (
@@ -387,13 +383,13 @@ export default function GamesManagementPage() {
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="gaming-panel dashboard-module-panel rounded-xl border border-cyan-400/20 py-16 text-center"
+              className="dashboard-module-panel rounded-lg border border-border px-4 py-8 text-center"
             >
-              <Gamepad2 className="w-16 h-16 mx-auto text-muted-foreground/50 mb-4" />
-              <h3 className="text-xl font-semibold text-foreground mb-2">
-                No Games Added Yet
+              <Gamepad2 className="w-8 h-8 mx-auto text-muted-foreground/50 mb-3" />
+              <h3 className="text-sm font-semibold text-foreground mb-2">
+                No games yet
               </h3>
-              <p className="text-muted-foreground mb-6">
+              <p className="text-sm text-muted-foreground mb-4">
                 Start by adding games to your consoles
               </p>
               <button onClick={() => setShowAddModal(true)} className={primaryButtonClass}>
@@ -402,18 +398,11 @@ export default function GamesManagementPage() {
               </button>
             </motion.div>
           ) : (
-            <Card className="dashboard-module-surface overflow-hidden rounded-xl border-cyan-400/20">
-              <CardHeader className="border-b border-cyan-500/15">
-                <CardTitle className="text-slate-900 dark:text-cyan-100">Your Games</CardTitle>
-                <CardDescription className="text-slate-600 dark:text-slate-300/70">
-                  {vendorGames.length} game{vendorGames.length !== 1 ? "s" : ""}{" "}
-                  configured across your consoles
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3 md:hidden">
+            <Card className={`dashboard-module-surface overflow-hidden rounded-lg border-border ${styles.list}`}>
+              <CardContent className="p-0">
+                <div className="divide-y divide-white/10 md:hidden">
                   {vendorGames.map((vg) => (
-                    <MobileCompactCard key={`mobile_${vg.game.id}`} className="bg-slate-900/40">
+                    <div key={`mobile_${vg.game.id}`} className="p-3">
                       <div className="flex items-start gap-3">
                         <div className="h-12 w-12 rounded bg-slate-200 dark:bg-slate-800 flex items-center justify-center flex-shrink-0">
                           {vg.game.image_url ? (
@@ -437,11 +426,11 @@ export default function GamesManagementPage() {
                           return (
                             <div
                               key={`mobile_console_${console.vendor_game_id}`}
-                              className="flex items-center justify-between gap-2 rounded border border-cyan-300/25 bg-slate-950/40 px-2 py-1.5 text-xs"
+                              className={`flex items-center justify-between gap-2 text-xs ${styles.console}`}
                             >
                               <div className="min-w-0">
-                                <span className="mr-1">{consoleInfo.icon}</span>
-                                <span className="font-medium text-slate-100">#{console.console_number}</span>
+                                <span className="mr-1 text-muted-foreground">{consoleInfo.label}</span>
+                                <span className="font-medium text-foreground">#{console.console_number}</span>
                                 <span className={console.is_offer ? "ml-1 text-orange-400" : "ml-1 text-slate-400"}>
                                   ₹{console.price_per_hour}/hr
                                 </span>
@@ -463,12 +452,12 @@ export default function GamesManagementPage() {
                           );
                         })}
                       </div>
-                    </MobileCompactCard>
+                    </div>
                   ))}
                 </div>
 
                 <div className="hidden md:block dashboard-table-wrap">
-                  <table className="dashboard-table">
+                  <table className={`dashboard-table ${styles.table}`}>
                     <thead>
                       <tr className="border-b border-border">
                         <th className="dashboard-module-table-header text-left py-3 px-4 text-xs font-bold uppercase tracking-wider">
@@ -481,7 +470,7 @@ export default function GamesManagementPage() {
                           Available On
                         </th>
                         <th className="dashboard-module-table-header text-center py-3 px-4 text-xs font-bold uppercase tracking-wider">
-                          Actions
+                          Consoles
                         </th>
                       </tr>
                     </thead>
@@ -496,7 +485,7 @@ export default function GamesManagementPage() {
                         >
                           <td className="py-3 px-4">
                             <div className="flex items-center gap-3">
-                              <div className="w-12 h-12 rounded bg-slate-200 dark:bg-slate-800 flex items-center justify-center flex-shrink-0">
+                              <div className="w-9 h-9 rounded bg-slate-200 dark:bg-slate-800 flex items-center justify-center flex-shrink-0">
                                 {vg.game.image_url ? (
                                   <img
                                     src={vg.game.image_url}
@@ -533,9 +522,9 @@ export default function GamesManagementPage() {
                                 return (
                                   <div
                                     key={console.vendor_game_id}
-                                    className="group relative inline-flex items-center gap-1 rounded border border-cyan-300/30 bg-slate-50 px-2 py-1 text-xs dark:border-cyan-400/20 dark:bg-slate-900/60"
+                                    className={styles.console}
                                   >
-                                    <span>{consoleInfo.icon}</span>
+                                    <span className={styles.platform}>{consoleInfo.label}</span>
                                     <span className="font-medium">
                                       #{console.console_number}
                                     </span>
@@ -547,11 +536,10 @@ export default function GamesManagementPage() {
                                           : "text-slate-500 dark:text-muted-foreground"
                                       }
                                     >
-                                      (₹{console.price_per_hour}/hr
+                                      ₹{console.price_per_hour}/hr
                                       {console.is_offer && (
                                         <Tag className="w-3 h-3 inline ml-1" />
                                       )}
-                                      )
                                     </span>
                                     <button
                                       onClick={() =>
@@ -561,7 +549,9 @@ export default function GamesManagementPage() {
                                           console.console_number
                                         )
                                       }
-                                      className="ml-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                                      className={styles.remove}
+                                      aria-label={`Remove ${vg.game.name} from console ${console.console_number}`}
+                                      title={`Remove from console ${console.console_number}`}
                                     >
                                       <XCircle className="w-3 h-3 text-red-500 hover:text-red-600" />
                                     </button>
