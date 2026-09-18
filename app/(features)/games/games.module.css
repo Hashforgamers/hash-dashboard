@@ -1,0 +1,95 @@
+.page.page {
+  gap: 12px;
+}
+
+.header {
+  flex-shrink: 0;
+  padding: 0;
+}
+
+.count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 26px;
+  height: 24px;
+  padding: 0 7px;
+  border: 1px solid var(--dash-module-line, #323238);
+  border-radius: 6px;
+  color: var(--dash-module-muted, #a8a8b3);
+  font-size: 12px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+.page .list {
+  box-shadow: none;
+}
+
+.page .table {
+  min-width: 0;
+}
+
+.page .table th,
+.page .table td {
+  padding: 10px 14px;
+}
+
+.page .table th {
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: none;
+}
+
+.page .table td {
+  font-size: 13px;
+}
+
+.page .table th:last-child {
+  width: 90px;
+}
+
+.page .table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.console {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 7px;
+  border: 1px solid var(--dash-module-line, #323238);
+  border-radius: 5px;
+  background: var(--dash-module-surface-strong, #222226);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+.platform {
+  color: var(--dash-module-muted, #a8a8b3);
+}
+
+.remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+}
+
+.remove:hover,
+.remove:focus-visible {
+  background: rgb(239 68 68 / 12%);
+}
+
+.remove:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+}
+
+@media (max-width: 767px) {
+  .console {
+    display: flex;
+  }
+}

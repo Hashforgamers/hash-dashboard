@@ -56,7 +56,7 @@ export function OffersSection({
     >
       <div className="gaming-panel shrink-0 flex flex-wrap items-center justify-between gap-3 rounded-xl p-3">
         <div className="flex items-center gap-3">
-          <h2 className="section-title">Active Promotions</h2>
+          <h2 className="section-title">Offers</h2>
 
           <div className="dashboard-module-tab-group flex items-center gap-1 rounded-lg p-1">
             <button
@@ -96,10 +96,9 @@ export function OffersSection({
           <p className="body-text-muted">Loading offers...</p>
         </div>
       ) : offers.length === 0 ? (
-        <div className="gaming-panel flex flex-1 flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed border-cyan-400/20 py-16">
-          <Sparkles className="w-12 h-12 text-muted-foreground/30" />
+        <div className="flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-slate-300 py-8 dark:border-slate-700">
+          <Sparkles className="w-6 h-6 text-muted-foreground" />
           <h3 className="section-title text-muted-foreground/60">No active offers yet</h3>
-          <p className="body-text-muted">Create your first promotional offer</p>
           <button onClick={() => setShowOfferForm(true)} className={`${secondaryButtonClass} mt-2`}>
             <Plus className="icon-md" />
             Add New Offer
