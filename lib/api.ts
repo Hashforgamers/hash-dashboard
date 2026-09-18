@@ -10,21 +10,27 @@ export interface ApiResponse<T = any> {
   error?: string
 }
 
+function subscriptionAuthHeaders(): Record<string, string> {
+  if (typeof window === "undefined") return {}
+  const token = localStorage.getItem("rbac_access_token_v1") || localStorage.getItem("jwtToken")
+  return token ? { Authorization: `Bearer ${token}` } : {}
+}
+
 export async function apiCall<T = any>(
   endpoint: string,
   options?: RequestInit
-): Promise<ApiResponse<T>> {
+): Promise<ApiResponse<T> & T> {
   try {
     const separator = endpoint.includes('?') ? '&' : '?'
     const url = `${DASHBOARD_URL}${endpoint}${separator}t=${Date.now()}`
     
     const method = (options?.method || "GET").toUpperCase()
-    const baseHeaders: Record<string, string> = {}
+    const baseHeaders: Record<string, string> = subscriptionAuthHeaders()
     if (method !== "GET" && method !== "HEAD") {
       baseHeaders["Content-Type"] = "application/json"
     }
 
-    const data = await httpJson<ApiResponse<T>>(url, {
+    const data = await httpJson<ApiResponse<T> & T>(url, {
       ...options,
       headers: {
         ...baseHeaders,
@@ -57,6 +63,7 @@ export const subscriptionApi = {
   checkStatus: async (vendorId: number) => {
     const url = `${DASHBOARD_URL}/api/vendors/${vendorId}/subscription/status?t=${Date.now()}`
     return httpJson(url, {
+      headers: subscriptionAuthHeaders(),
       cache: "no-store",
       credentials: "omit",
       timeoutMs: 10_000,
@@ -104,6 +111,9 @@ export const subscriptionApi = {
       method: "POST",
       body: JSON.stringify(paymentData),
     }),
+
+  checkPayment: (vendorId: number, orderId: string) =>
+    apiCall(`/api/vendors/${vendorId}/subscription/check-payment/${encodeURIComponent(orderId)}`),
 
   // Get subscription history
   getHistory: (vendorId: number) =>

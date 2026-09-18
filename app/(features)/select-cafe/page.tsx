@@ -11,6 +11,7 @@ import { Store, Lock, Unlock, Plus, X } from "lucide-react"
 import { DASHBOARD_URL, LOGIN_URL, VENDOR_ONBOARD_URL } from "@/src/config/env"
 import { toast } from "sonner"
 import { useAccess } from "@/app/context/AccessContext"
+import { subscriptionApi } from "@/lib/api"
 import { accessApi } from "@/lib/access-api"
 import { DashboardLayout } from "../../(layout)/dashboard-layout"
 
@@ -486,7 +487,13 @@ export default function SelectCafePage() {
         document.cookie = `jwt=${data.data.token}; max-age=${maxAge}; path=/; SameSite=Lax; Secure`
 
         toast.success("Access granted!")
-        router.replace("/dashboard")
+        try {
+          const subscription = await subscriptionApi.checkStatus(Number(selectedCafeData.id)) as { is_active?: boolean }
+          router.replace(subscription.is_active ? "/dashboard" : "/subscription")
+        } catch {
+          // Subscription remains reachable when its status service is unavailable.
+          router.replace("/subscription")
+        }
       } else {
         // ✅ 200 but status !== "success" (custom error format from Flask)
         const message = data.message || "Invalid PIN. Please try again."
