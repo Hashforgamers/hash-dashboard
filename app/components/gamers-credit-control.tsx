@@ -116,7 +116,7 @@ export default function GamersCreditControl() {
   const { data: cachedCredit, refresh: refreshCredit } = useModuleCache<{ users: VendorUser[]; accounts: MonthlyCreditAccount[] }>(
     cacheKey,
     fetcher,
-    120000
+    120000, undefined, Boolean(vendorId)
   );
 
   useEffect(() => {
@@ -142,7 +142,7 @@ export default function GamersCreditControl() {
       setVendorUsers(Array.isArray(data.users) ? data.users : []);
       setAccounts(Array.isArray(data.accounts) ? data.accounts : []);
     }).catch(() => null);
-  }, [vendorId]);
+  }, [vendorId, cachedCredit, refreshCredit]);
 
   useEffect(() => {
     if (!settleUserId) return;

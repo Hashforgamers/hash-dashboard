@@ -234,7 +234,7 @@ export default function ConsolePricing() {
       return newPrices;
     },
     120000,
-    pricingVersionKey
+    pricingVersionKey, Boolean(vendorId)
   );
 
   const { data: cachedOffers, refresh: refreshOffersCache } = useModuleCache<PricingOffer[]>(
@@ -247,7 +247,7 @@ export default function ConsolePricing() {
       return Array.isArray(data?.offers) ? data.offers : [];
     },
     120000,
-    pricingVersionKey
+    pricingVersionKey, Boolean(vendorId && activeTab === "offers")
   );
 
   const { data: cachedControllerPricing, refresh: refreshControllerCache } = useModuleCache<ControllerPricingState>(
@@ -276,7 +276,7 @@ export default function ConsolePricing() {
       return next;
     },
     120000,
-    pricingVersionKey
+    pricingVersionKey, Boolean(vendorId && activeTab === "controllers")
   );
 
   const { data: cachedSquadPricing, refresh: refreshSquadCache } = useModuleCache<SquadPricingState>(
@@ -289,7 +289,7 @@ export default function ConsolePricing() {
       return Array.isArray(data?.rules) ? data.rules : data;
     },
     120000,
-    pricingVersionKey
+    pricingVersionKey, Boolean(vendorId && activeTab === "squad")
   );
 
   const { data: cachedTaxProfile, refresh: refreshTaxCache } = useModuleCache<VendorTaxProfile>(
@@ -302,7 +302,7 @@ export default function ConsolePricing() {
       return data?.profile || data;
     },
     120000,
-    pricingVersionKey
+    pricingVersionKey, Boolean(vendorId && activeTab === "gst")
   );
 
   const { data: cachedAvailableGames, refresh: refreshGamesCache } = useModuleCache<AvailableGame[]>(
@@ -317,7 +317,7 @@ export default function ConsolePricing() {
         : data.games || data.available_games || data.data || [];
     },
     120000,
-    pricingVersionKey
+    pricingVersionKey, Boolean(vendorId && activeTab === "offers")
   );
 
   useEffect(() => {

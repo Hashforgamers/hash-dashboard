@@ -52,12 +52,17 @@ function ReviewsPageContent() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [ratingFilter, setRatingFilter] = useState("");
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(search), 300);
+    return () => clearTimeout(timer);
+  }, [search]);
   const [responseDrafts, setResponseDrafts] = useState<Record<string, string>>({});
   const [actioningId, setActioningId] = useState<string | null>(null);
   const [deepLinkReady, setDeepLinkReady] = useState(false);
 
   const summaryKey = vendorId ? `reviews_summary:${vendorId}` : "reviews_summary:0";
-  const listKey = vendorId ? `reviews_list:${vendorId}:${statusFilter}:${ratingFilter}:${search}` : "reviews_list:0";
+  const listKey = vendorId ? `reviews_list:${vendorId}:${statusFilter}:${ratingFilter}:${debouncedSearch}` : "reviews_list:0";
   const versionKey = vendorId ? `reviews:${vendorId}` : "reviews:0";
 
   const summaryFetcher = async () => {
@@ -70,7 +75,7 @@ function ReviewsPageContent() {
     return listReviews(token, {
       status: statusFilter,
       rating: ratingFilter || undefined,
-      search: search || undefined,
+      search: debouncedSearch || undefined,
       limit: 50,
       offset: 0,
       vendor_id: vendorId || undefined,
@@ -81,13 +86,13 @@ function ReviewsPageContent() {
     summaryKey,
     summaryFetcher,
     120000,
-    versionKey
+    versionKey, Boolean(token && vendorId)
   );
   const { data: cachedList, refresh: refreshListCache } = useModuleCache<{ items: ReviewItem[] }>(
     listKey,
     listFetcher,
     120000,
-    versionKey
+    versionKey, Boolean(token && vendorId)
   );
 
   useEffect(() => {
@@ -139,6 +144,7 @@ function ReviewsPageContent() {
     if (!token) return;
     if (cachedSummary) {
       setSummary(cachedSummary);
+      setLoadingSummary(false);
       return;
     }
     refreshSummary();
@@ -148,10 +154,11 @@ function ReviewsPageContent() {
     if (!token) return;
     if (cachedList?.items) {
       setReviews(cachedList.items);
+      setLoading(false);
       return;
     }
     refreshReviews();
-  }, [token, cachedList, statusFilter, ratingFilter, search]);
+  }, [token, cachedList, statusFilter, ratingFilter, debouncedSearch]);
 
   useEffect(() => {
     if (!deepLinkReady) return;

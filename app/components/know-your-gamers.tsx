@@ -127,7 +127,7 @@ export function KnowYourGamers() {
     }
 
     loadGamerData(true) // Initial load with cache
-    pollingInterval = setInterval(() => loadGamerData(false), POLL_INTERVAL)
+    pollingInterval = setInterval(() => { if (!document.hidden) void loadGamerData(false); }, POLL_INTERVAL)
 
     return () => clearInterval(pollingInterval)
   }, [vendorId])
