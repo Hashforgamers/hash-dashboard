@@ -2020,7 +2020,7 @@ h6 {
 
 .slot-booking-modal .slot-section-title {
   color: hsl(0 0% 96%);
-  font-size: 0.98rem;
+  font-size: 0.875rem;
   font-weight: 650;
   line-height: 1.2;
   letter-spacing: 0;
@@ -2731,4 +2731,11 @@ h6 {
   .operations-dashboard .dashboard-hero-title { font-size: 20px !important; }
   .operations-dashboard .operations-summary > div { grid-template-columns: minmax(0, 1fr); gap: 12px; }
   .operations-dashboard .operations-summary .dashboard-module-card { flex-wrap: wrap; }
+}
+
+/* Compact booking section markers without changing controls in other modules. */
+.slot-booking-modal .slot-section-icon {
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 0.375rem;
 }

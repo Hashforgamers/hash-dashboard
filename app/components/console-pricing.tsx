@@ -76,6 +76,10 @@ export default function ConsolePricing() {
   renderCountRef.current += 1;
 
   const { vendorId: contextVendorId } = useDashboardData();
+  const [catalogVendorId, setCatalogVendorId] = useState<number | null>(null);
+  const [pricesVendorId, setPricesVendorId] = useState<number | null>(null);
+  const [catalogError, setCatalogError] = useState<string | null>(null);
+  const [catalogAttempt, setCatalogAttempt] = useState(0);
   const [consoleTypes, setConsoleTypes] = useState<ConsoleType[]>(DEFAULT_CONSOLE_TYPES);
   const [prices, setPrices] = useState<PricingState>(() => {
     const initialPrices: PricingState = {};
@@ -214,7 +218,7 @@ export default function ConsolePricing() {
   const gamesKey = vendorId ? `pricing_games:${vendorId}` : "pricing_games:0";
   const pricingVersionKey = vendorId ? `pricing:${vendorId}` : "pricing:0";
 
-  const { data: cachedBasePricing, refresh: refreshBasePricingCache } = useModuleCache<PricingState>(
+  const { data: cachedBasePricing, error: basePricingError, refresh: refreshBasePricingCache } = useModuleCache<PricingState>(
     basePricingKey,
     async () => {
       if (!vendorId) return {};
@@ -321,14 +325,14 @@ export default function ConsolePricing() {
   );
 
   useEffect(() => {
-    if (contextVendorId) {
-      setVendorId(contextVendorId);
-    }
+    setVendorId(contextVendorId);
   }, [contextVendorId]);
 
   useEffect(() => {
     if (!vendorId) return;
     let mounted = true;
+    setCatalogError(null);
+    setCatalogVendorId(null);
 
     const loadConsoleTypes = async () => {
       try {
@@ -337,8 +341,9 @@ export default function ConsolePricing() {
           fetch(`${DASHBOARD_URL}/api/vendor/${vendorId}/available-games`),
         ]);
 
-        const catalogJson = catalogRes.ok ? await catalogRes.json() : {};
-        const gamesJson = gamesRes.ok ? await gamesRes.json() : [];
+        if (!catalogRes.ok || !gamesRes.ok) throw new Error("Unable to load console types.");
+        const catalogJson = await catalogRes.json();
+        const gamesJson = await gamesRes.json();
         const catalogItems = Array.isArray(catalogJson?.console_types)
           ? (catalogJson.console_types as ConsoleCatalogItem[])
           : [];
@@ -369,9 +374,10 @@ export default function ConsolePricing() {
           addType(game?.platform_type || game?.game_name, game?.display_name || game?.game_name);
         });
 
-        if (!mounted || dynamicTypes.size === 0) return;
+        if (!mounted) return;
         const mergedTypes = Array.from(dynamicTypes.values());
         setConsoleTypes(mergedTypes);
+        setCatalogVendorId(vendorId);
         setPrices((prev) => {
           const next = { ...prev };
           mergedTypes.forEach((consoleType) => {
@@ -382,7 +388,7 @@ export default function ConsolePricing() {
           return next;
         });
       } catch {
-        // Keep fallback defaults if catalog fetch fails.
+        if (mounted) setCatalogError("Unable to load console pricing.");
       }
     };
 
@@ -391,7 +397,7 @@ export default function ConsolePricing() {
     return () => {
       mounted = false;
     };
-  }, [vendorId]);
+  }, [vendorId, catalogAttempt]);
 
   useEffect(() => {
     const enabled = new URLSearchParams(window.location.search).get("debugPricing") === "1";
@@ -425,7 +431,7 @@ export default function ConsolePricing() {
         hasCached: Boolean(cachedBasePricing && Object.keys(cachedBasePricing).length > 0),
       });
     }
-    if (cachedBasePricing && Object.keys(cachedBasePricing).length > 0) {
+    if (cachedBasePricing) {
       const normalizedCached = normalizePricingState(cachedBasePricing);
       setPrices((prev) => {
         const next = mergePricingState(prev, normalizedCached, consoleTypes);
@@ -442,30 +448,10 @@ export default function ConsolePricing() {
         }
         return changed ? next : prev;
       });
+      setPricesVendorId(vendorId);
       return;
     }
-    refreshBasePricingCache(true)
-      .then((data) => {
-        if (data) {
-          const normalizedFresh = normalizePricingState(data);
-          setPrices((prev) => {
-            const next = mergePricingState(prev, normalizedFresh, consoleTypes);
-            const changed = !isPricingStateEqual(prev, next);
-            if (changed) {
-              priceStateSetCountRef.current += 1;
-              lastPriceSetAtRef.current = new Date().toISOString();
-              if (debugEnabled) {
-                console.debug("[console-pricing-debug] setPrices from fresh fetch", {
-                  count: priceStateSetCountRef.current,
-                  at: lastPriceSetAtRef.current,
-                });
-              }
-            }
-            return changed ? next : prev;
-          });
-        }
-      })
-      .catch((error) => console.error("Error fetching prices:", error));
+
   }, [vendorId, cachedBasePricing, consoleTypes, refreshBasePricingCache, debugEnabled]);
 
   useEffect(() => {
@@ -1363,11 +1349,21 @@ export default function ConsolePricing() {
           transition={{ duration: 0.2 }}
           className="min-h-0 flex-1 overflow-y-auto pr-1"
         >
-          {!vendorId && (
-            <div className="mb-3 rounded-lg border border-amber-400/35 bg-amber-500/10 px-3 py-2 text-xs text-amber-200">
-              Select a cafe first to edit console pricing.
+          {catalogError || basePricingError ? (
+            <div role="alert" className="flex items-center gap-3 rounded-lg border border-slate-200 px-3 py-3 text-sm dark:border-slate-800">
+              <span>Unable to load console pricing.</span>
+              <button className={secondaryButtonClass} onClick={() => {
+                setCatalogAttempt((attempt) => attempt + 1);
+                void refreshBasePricingCache(true).catch(() => undefined);
+              }}>Retry</button>
             </div>
-          )}
+          ) : !vendorId || vendorId !== contextVendorId || catalogVendorId !== vendorId || pricesVendorId !== vendorId ? (
+            <div role="status" className="flex items-center gap-2 px-3 py-4 text-sm text-slate-500 dark:text-slate-400">
+              <Loader2 className="h-4 w-4 animate-spin" /> Loading pricing…
+            </div>
+          ) : consoleTypes.length === 0 ? (
+            <p className="px-3 py-4 text-sm text-slate-500">No consoles configured.</p>
+          ) : (<>
           <div className="mb-2 flex items-center justify-between px-4 text-xs font-medium text-slate-500 dark:text-slate-400">
             <span>Console</span><span>Price / slot (₹)</span>
           </div>
@@ -1448,6 +1444,7 @@ export default function ConsolePricing() {
               </div>
             </div>
           </div>
+          </>)}
         </motion.div>
       )}
 
