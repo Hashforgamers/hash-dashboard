@@ -1594,23 +1594,22 @@ const getEffectivePrice = (slot: SelectedSlot): number => {
   }
 
   const paymentMethodCard = (
-    <Card className="sb-card p-4 sm:p-5">
-      <div className="mb-4 flex items-center justify-between gap-3">
+    <Card className="sb-card p-3">
+      <div className="mb-2 flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <div className="slot-section-icon">
             <CreditCard className="h-4 w-4" />
           </div>
           <div>
             <h3 className="slot-section-title">Payment Method</h3>
-            <p className="text-xs text-gray-500 dark:text-gray-400">Pick one to finish quickly</p>
           </div>
         </div>
         <span className="slot-booking-modal-soft rounded-full px-2.5 py-1 text-[11px] font-semibold text-emerald-700 dark:text-emerald-300">
-          Selected: {paymentType}
+          {paymentType}
         </span>
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 gap-2">
         {PAYMENT_TYPES.map((type) => (
           (() => {
             const meta = paymentMethodMeta[type]
@@ -1633,14 +1632,14 @@ const getEffectivePrice = (slot: SelectedSlot): number => {
                   if (errors.payment) setErrors((prev) => ({ ...prev, payment: '' }))
                 }}
                 className={cn(
-                  "payment-option-card group min-h-[72px] rounded-xl p-3 transition-all duration-200",
+                  "payment-option-card group min-h-[56px] rounded-lg p-2 transition-all duration-200",
                   isActive
                     ? "payment-option-card-active"
                     : ""
                 )}
               >
                 <div className="flex items-center justify-between">
-                  <span className={cn("inline-flex h-8 w-8 items-center justify-center rounded-lg transition-colors", iconClass)}>
+                  <span className={cn("inline-flex h-6 w-6 items-center justify-center rounded-lg transition-colors", iconClass)}>
                     <Icon className="h-4 w-4" />
                   </span>
                   <span
@@ -1650,7 +1649,7 @@ const getEffectivePrice = (slot: SelectedSlot): number => {
                     )}
                   />
                 </div>
-                <p className="mt-2 text-sm font-semibold text-gray-800 dark:text-white text-left leading-tight">
+                <p className="mt-1 text-xs font-semibold text-gray-800 dark:text-white text-left leading-tight">
                   {type === "Monthly Credit" ? "Credit" : type}
                 </p>
               </motion.button>
@@ -2117,23 +2116,20 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="slot-booking-modal w-full max-w-md rounded-xl p-8 text-center"
+          className="slot-booking-modal w-full max-w-md rounded-xl p-5 text-center"
         >
           <motion.div
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             transition={{ type: 'spring', stiffness: 200, damping: 20 }}
-            className="w-16 h-16 mx-auto mb-6 rounded-full bg-emerald-500/15 flex items-center justify-center border border-emerald-400/30"
+            className="w-10 h-10 mx-auto mb-3 rounded-full bg-emerald-500/15 flex items-center justify-center border border-emerald-400/30"
           >
             <CheckCircle className="w-8 h-8 text-emerald-600 dark:text-emerald-300" />
           </motion.div>
 
-          <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-3">
+          <h2 className="text-lg font-semibold text-gray-800 dark:text-white mb-3">
             Booking Confirmed!
           </h2>
-          <p className="text-gray-600 dark:text-gray-300 mb-6">
-            Your slot booking has been successfully created.
-          </p>
 
           <div className="bg-emerald-50 dark:bg-emerald-900/20 rounded-lg p-4 mb-6 text-left">
             <div className="flex justify-between items-center py-2">
@@ -2191,10 +2187,10 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
           initial={{ scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0.9, opacity: 0 }}
-          className="slot-booking-modal flex max-h-[92vh] w-full max-w-[1080px] flex-col overflow-hidden rounded-xl border shadow-2xl"
+          className="slot-booking-modal flex max-h-[92vh] w-full max-w-[960px] flex-col overflow-hidden rounded-xl border shadow-2xl"
         >
-          <div className="slot-booking-modal-header relative flex items-center justify-between border-b px-5 py-4 sm:px-6">
-            <h2 className="premium-heading !text-xl sm:!text-[1.35rem]">New Slot Booking</h2>
+          <div className="slot-booking-modal-header relative flex items-center justify-between border-b px-4 py-3">
+            <h2 className="premium-heading !text-base">New Slot Booking</h2>
             <div className="flex items-center gap-2">
               <button
                 type="button"
@@ -2210,6 +2206,7 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
               </button>
               <button
                 onClick={onClose}
+                aria-label="Close booking"
                 className="slot-booking-modal-close rounded-lg p-2 transition-colors"
               >
                 <X className="w-5 h-5" />
@@ -2222,7 +2219,7 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                   Name stays mandatory. Keep at least one contact field required.
                 </p>
 
-                <div className="mt-3 space-y-3 text-xs">
+                <div className="mt-3 space-y-2 text-xs">
                   <div className="rounded-lg border border-slate-200 p-2 dark:border-slate-700">
                     <p className="font-semibold text-slate-700 dark:text-slate-200">Phone</p>
                     <div className="mt-2 flex items-center justify-between">
@@ -2287,15 +2284,15 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
             )}
           </div>
 
-          <div className="flex-1 overflow-y-auto px-4 py-4 sm:px-5 sm:py-5">
-            <form id="slot-booking-form" onSubmit={handleSubmit} className="space-y-4 pb-3">
-              <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
-                <div className="flex flex-col gap-4">
-                  <Card className="sb-card p-4 order-1">
-                    <h3 className="slot-section-title mb-3">Selected Time Slots</h3>
+          <div className="min-h-0 flex-1 overflow-y-auto p-3 text-sm">
+            <form id="slot-booking-form" onSubmit={handleSubmit} className="space-y-2">
+              <div className="grid grid-cols-1 gap-3 lg:grid-cols-[minmax(0,1fr)_300px]">
+                <div className="flex flex-col gap-3">
+                  <Card className="sb-card p-3 order-1">
+                    <h3 className="slot-section-title mb-2">Selected slots</h3>
                     <div className="space-y-2">
                       {selectedSlots.map((slot, index) => (
-                        <div key={index} className="slot-booking-modal-soft flex items-center justify-between gap-3 rounded-lg p-3 text-sm">
+                        <div key={index} className="slot-booking-modal-soft flex items-center justify-between gap-3 rounded-md px-2.5 py-2 text-xs">
                           <span className="text-gray-700 dark:text-gray-300">
                             <strong>{new Date(slot.date).toLocaleDateString('en-GB')}</strong> • {slot.start_time.slice(0, 5)}-{slot.end_time.slice(0, 5)} • {slot.console_name}
                           </span>
@@ -2348,14 +2345,14 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                     </div>
                   </Card>
 
-                  <Card className="sb-card order-3 p-4 sm:p-5">
-                    <div className="flex items-center gap-2 mb-4">
+                  <Card className="sb-card order-3 p-3">
+                    <div className="flex items-center gap-2 mb-2">
                       <div className="slot-section-icon">
                         <Users className="w-4 h-4" />
                       </div>
                       <div>
                         <h3 className="slot-section-title">
-                          {isSquadMode ? "Captain Information" : "Customer Information"}
+                          {isSquadMode ? "Captain" : "Customer"}
                         </h3>
                         {isSquadMode && (
                           <p className="text-xs text-gray-500 dark:text-gray-400">Primary contact for squad booking</p>
@@ -2365,7 +2362,7 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
 
                     <div
                       className={cn(
-                        "grid grid-cols-1 gap-4",
+                        "grid grid-cols-1 gap-3",
                         bookingFieldConfig.phone.visible && bookingFieldConfig.email.visible
                           ? "md:grid-cols-3"
                           : "md:grid-cols-2"
@@ -2672,7 +2669,7 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                           initial={{ opacity: 0, height: 0 }}
                           animate={{ opacity: 1, height: 'auto' }}
                           exit={{ opacity: 0, height: 0 }}
-                          className="mt-3 space-y-3"
+                          className="mt-3 space-y-2"
                         >
                           <div className="flex items-center justify-between rounded-lg border border-blue-200 bg-blue-50 px-3 py-2.5 dark:border-blue-700 dark:bg-blue-900/20">
                             <span className="text-xs text-blue-800 dark:text-blue-200 font-medium">Players in Squad</span>
@@ -2734,16 +2731,16 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
 
                 </div>
 
-                <div className="space-y-4">
-                  <Card className="sb-card p-4 sm:p-5">
-                    <div className="flex items-center gap-2 mb-4">
+                <div className="space-y-2">
+                  <Card className="sb-card p-3">
+                    <div className="flex items-center gap-2 mb-2">
                       <div className="slot-section-icon">
                         <Sparkles className="w-4 h-4" />
                       </div>
-                      <h3 className="slot-section-title">Pricing Summary</h3>
+                      <h3 className="slot-section-title">Summary</h3>
                     </div>
 
-                    <div className="space-y-3">
+                    <div className="space-y-2">
                       <div className="flex justify-between items-center py-2 border-b border-gray-200 dark:border-gray-600">
                         <span className="text-gray-600 dark:text-gray-400">
                           Console Total{isSquadMode && squadUsesDiscountEngine ? ` (₹${consoleUnitTotal} x ${squadPlayerCount})` : ""}:
@@ -2863,8 +2860,8 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                       )}
 
                       <div className="flex justify-between items-center py-3 bg-emerald-50 dark:bg-emerald-900/30 rounded-lg px-3">
-                        <span className="font-bold text-gray-800 dark:text-white text-lg">Final Total:</span>
-                        <span className="font-bold text-2xl text-emerald-600">₹{totalAmount}</span>
+                        <span className="font-semibold text-gray-800 dark:text-white text-sm">Total</span>
+                        <span className="font-semibold text-lg text-emerald-600">₹{totalAmount}</span>
                       </div>
                     </div>
                   </Card>
@@ -2875,13 +2872,13 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
             </form>
           </div>
 
-          <div className="slot-booking-modal-footer sticky bottom-0 z-20 p-3 backdrop-blur-md sm:p-4">
-            <div className="flex flex-col gap-3 sm:flex-row sm:gap-4">
+          <div className="slot-booking-modal-footer shrink-0 border-t px-3 py-2">
+            <div className="flex items-center justify-end gap-2">
               <Button
                 type="button"
                 onClick={onClose}
                 variant="outline"
-                className="slot-booking-modal-secondary h-10 flex-1"
+                className="slot-booking-modal-secondary h-9 px-4"
               >
                 Cancel
               </Button>
@@ -2889,17 +2886,17 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                 type="submit"
                 form="slot-booking-form"
                 disabled={isSubmitting || (paymentType === 'Monthly Credit' && (!creditAccount?.is_active || availableCreditAmount < totalAmount))}
-                className="ui-action-primary h-10 flex-1 disabled:opacity-50"
+                className="ui-action-primary h-9 px-4 disabled:opacity-50"
               >
                 {isSubmitting ? (
                   <div className="flex items-center gap-2">
                     <Loader2 className="w-4 h-4 animate-spin" />
-                    Creating Booking...
+                    Booking…
                   </div>
                 ) : (
                   <div className="flex items-center gap-2">
                     <CheckCircle className="w-4 h-4" />
-                    Complete Booking - ₹{totalAmount}
+                    Book · ₹{totalAmount}
                   </div>
                 )}
               </Button>
@@ -4747,6 +4744,7 @@ function DashboardQuickBookingSlab({
   onConsoleChange,
   onSlotSelect,
   onNewBooking,
+  onQuickBooking,
   allSlots,
 }: {
   availableConsoles: ConsoleType[]
@@ -4755,6 +4753,7 @@ function DashboardQuickBookingSlab({
   onConsoleChange: (gameConsole: ConsoleFilter) => void
   onSlotSelect: (slot: SelectedSlot) => void
   onNewBooking: () => void
+  onQuickBooking: (slot: SelectedSlot) => void
   allSlots: { [key: string]: any[] }
 }) {
   const today = getISTDateString(0)
@@ -4793,10 +4792,10 @@ function DashboardQuickBookingSlab({
     )
     .sort((a: any, b: any) => String(a.start_time).localeCompare(String(b.start_time)))
 
-  const handleSlotButtonClick = (slot: any) => {
+  const handleSlotButtonClick = (slot: any, openBooking = false) => {
     if (!slot.is_available || Number(slot.available_slot || 0) <= 0) return
 
-    onSlotSelect({
+    const selectedSlot: SelectedSlot = {
       slot_id: slot.slot_id,
       date: today,
       start_time: slot.start_time,
@@ -4805,7 +4804,9 @@ function DashboardQuickBookingSlab({
       console_name: selectedConsoleItem?.name || selectedConsoleItem?.type || selectedConsole,
       console_price: slot.single_slot_price || selectedConsoleItem?.price || 0,
       available_count: slot.available_slot || 0,
-    })
+    }
+    if (openBooking) onQuickBooking(selectedSlot)
+    else onSlotSelect(selectedSlot)
   }
 
   return (
@@ -4864,9 +4865,12 @@ function DashboardQuickBookingSlab({
               <button
                 key={`${today}-${selectedConsoleId}-${slot.slot_id}`}
                 type="button"
-                title={`${String(slot.start_time).slice(0, 5)} - ${slot.available_slot || 0} left`}
+                title={`${String(slot.start_time).slice(0, 5)} - ${slot.available_slot || 0} left. Click to select; double-click to book.`}
                 aria-pressed={isSelected}
-                onClick={() => handleSlotButtonClick(slot)}
+                onClick={(event) => {
+                  if (event.detail < 2) handleSlotButtonClick(slot)
+                }}
+                onDoubleClick={() => handleSlotButtonClick(slot, true)}
                 className={cn(
                   "dashboard-slot-chip",
                   isSelected && "dashboard-slot-chip-selected"
@@ -5392,6 +5396,16 @@ useEffect(() => {
     )
   }
 
+  const handleQuickBooking = (slot: SelectedSlot) => {
+    // A double-click also fires click events. Ensure the target remains selected
+    // and preserve any other slots the user has already chosen.
+    setSelectedSlots((previous) => previous.some((selected) =>
+      selected.slot_id === slot.slot_id && selected.date === slot.date &&
+      Number(selected.console_id) === Number(slot.console_id)
+    ) ? previous : [...previous, slot])
+    setShowBookingForm(true)
+  }
+
   const handleNewBooking = () => {
     if (selectedSlots.length > 0) {
       setShowBookingForm(true)
@@ -5448,6 +5462,7 @@ useEffect(() => {
                 onConsoleChange={handleConsoleChange}
                 onSlotSelect={handleSlotSelect}
                 onNewBooking={handleNewBooking}
+                onQuickBooking={handleQuickBooking}
                 allSlots={allSlots}
               />
             ) : (
