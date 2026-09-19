@@ -243,9 +243,8 @@ export default function EmployeeAccessPage() {
             <div>
               <div className="flex items-center gap-2">
                 <h1 className="premium-heading">Team Access</h1>
-                <Sparkles className="h-4 w-4 text-emerald-400 sm:h-5 sm:w-5" />
               </div>
-              <p className="premium-subtle mt-1">Onboard employees with auto-generated PIN and control service access by role.</p>
+
             </div>
             <div className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/[0.06] px-3 py-1 text-xs text-[#c7c7cc]">
               <Shield className="h-3.5 w-3.5" />
@@ -272,7 +271,7 @@ export default function EmployeeAccessPage() {
 
           <TabsContent
             value="add-employee"
-            className="mt-4 data-[state=inactive]:hidden data-[state=active]:flex data-[state=active]:flex-col data-[state=active]:gap-4"
+            className="mt-4 data-[state=inactive]:hidden data-[state=active]:flex data-[state=active]:flex-col data-[state=active]:gap-3"
           >
             <div className="gaming-panel rounded-lg p-4">
               <h2 className="dash-title !text-sm">Add Employee</h2>

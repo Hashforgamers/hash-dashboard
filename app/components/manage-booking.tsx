@@ -216,7 +216,7 @@ export function ManageBooking() {
         variants={container}
         initial="hidden"
         animate="show"
-        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
+        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3"
       >
         {actions.map((action) => (
           <motion.div
@@ -385,7 +385,7 @@ function ChangeBookingForm() {
   return (
     <form className="space-y-8">
       {/* Search Section */}
-      <div className="space-y-4">
+      <div className="space-y-3">
         <h3 className="text-lg font-semibold text-primary">Search Booking</h3>
         <div className="flex space-x-2">
           <Input
@@ -423,7 +423,7 @@ function ChangeBookingForm() {
       {bookingFound && bookingData && !isSubmitted ? (
         <div className="space-y-8">
           <h3 className="text-lg font-semibold">Gamer's Information</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             <div className="space-y-2">
               <Label htmlFor="name">Name</Label>
               <Input
@@ -468,7 +468,7 @@ function ChangeBookingForm() {
           </div>
 
           <h3 className="text-lg font-semibold">Booking Details</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div className="space-y-2">
               <Label htmlFor="bookingDate">Booking Date</Label>
               <Input
@@ -647,7 +647,7 @@ function RejectBookingForm() {
 
   return (    
       <form className="space-y-8" onSubmit={handleSubmit}>
-        <div className="space-y-4">
+        <div className="space-y-3">
           <h3 className="text-lg font-semibold text-primary">Search Booking</h3>
           <div className="flex space-x-2">
             <div className="flex-grow">
@@ -692,14 +692,14 @@ function RejectBookingForm() {
                 exit={{ opacity: 0, y: -20 }}
                 className="space-y-8"
               >
-                <div className="space-y-6">
+                <div className="space-y-3">
                   <h3 className="text-lg font-semibold text-primary">
                     Booking Information
                   </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <Card>
                       <CardContent className="pt-6">
-                        <div className="space-y-4">
+                        <div className="space-y-3">
                           <div className="flex justify-between">
                             <span className="text-muted-foreground">
                               Booking ID
@@ -724,7 +724,7 @@ function RejectBookingForm() {
 
                     <Card>
                       <CardContent className="pt-6">
-                        <div className="space-y-4">
+                        <div className="space-y-3">
                           <div className="flex justify-between">
                             <span className="text-muted-foreground">Customer</span>
                             <span className="font-medium">{bookingData.customer?.name || ""}</span>
@@ -749,11 +749,11 @@ function RejectBookingForm() {
                   </div>
                 </div>
 
-                <div className="space-y-6">
+                <div className="space-y-3">
                   <h3 className="text-lg font-semibold text-primary">
                     Rejection Details
                   </h3>
-                  <div className="space-y-4">
+                  <div className="space-y-3">
                     <div className="space-y-2">
                       <Label htmlFor="rejectionReason">Reason for Rejection</Label>
                       <Textarea

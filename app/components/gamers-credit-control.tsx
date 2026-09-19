@@ -511,7 +511,7 @@ export default function GamersCreditControl() {
     "text-slate-700 hover:bg-slate-50 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800/70 dark:hover:text-cyan-100";
 
   return (
-    <div className="dashboard-module dashboard-typography flex h-full min-h-0 flex-col gap-4 overflow-y-auto overflow-x-hidden pr-1">
+    <div className="dashboard-module dashboard-typography flex h-full min-h-0 flex-col gap-3 overflow-y-auto overflow-x-hidden pr-1">
       {notice && (
         <div className="rounded-lg border border-emerald-300/40 bg-emerald-50 px-3 py-2 text-xs text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300">
           {notice}
@@ -559,16 +559,14 @@ export default function GamersCreditControl() {
       </div>
 
       {activeTab === "setup" && (
-        <div className="grid min-h-0 flex-1 grid-cols-1 gap-4 xl:grid-cols-2">
+        <div className="grid min-h-0 flex-1 grid-cols-1 gap-3 xl:grid-cols-2">
           <Card className={`${cardClass} flex min-h-0 flex-col`}>
             <CardHeader className="border-b border-cyan-500/15 pb-3">
-              <h3 className="text-sm font-semibold text-cyan-100">Add Allowed Gamer Credit Account</h3>
-              <p className="text-xs text-slate-400">
-                Capture complete recovery details and monthly credit configuration for transparency.
-              </p>
+              <h3 className="text-sm font-semibold text-cyan-100">Credit Account</h3>
+
             </CardHeader>
             <CardContent className="flex-1 min-h-0 overflow-y-auto p-4">
-              <div className="space-y-3 pb-20">
+              <div className="space-y-3 pb-3">
             <div className={`space-y-2 ${isSetupSuggestionsOpen ? "pb-24" : ""}`}>
               <div className="relative">
                 <Input
@@ -653,8 +651,8 @@ export default function GamersCreditControl() {
 
           <Card className={`${cardClass} flex min-h-0 flex-col`}>
             <CardHeader className="border-b border-cyan-500/15 pb-3">
-              <h3 className="text-sm font-semibold text-slate-900 dark:text-cyan-100">Allowed Gamers List</h3>
-              <p className="text-xs text-slate-600 dark:text-slate-400">Click `Edit` on any account to prefill and update details.</p>
+              <h3 className="text-sm font-semibold text-slate-900 dark:text-cyan-100">Credit Accounts</h3>
+
             </CardHeader>
             <CardContent className="flex-1 min-h-0 overflow-y-auto space-y-2 p-4">
               {isLoadingAccounts ? (
@@ -712,11 +710,11 @@ export default function GamersCreditControl() {
       )}
 
       {activeTab === "ledger" && (
-        <div className="grid min-h-0 flex-1 grid-cols-1 gap-4 xl:grid-cols-2">
+        <div className="grid min-h-0 flex-1 grid-cols-1 gap-3 xl:grid-cols-2">
           <Card className={`${cardClass} flex min-h-0 flex-col`}>
             <CardHeader className="border-b border-cyan-500/15 pb-3">
-              <h3 className="text-sm font-semibold text-cyan-100">Accounts, Settlement & Proof Ledger</h3>
-              <p className="text-xs text-slate-400">Track outstanding, collect payment, and keep a full ledger trail.</p>
+              <h3 className="text-sm font-semibold text-cyan-100">Settlement</h3>
+
             </CardHeader>
             <CardContent className="flex flex-1 min-h-0 flex-col space-y-3 overflow-hidden p-4">
               <div className={`grid grid-cols-1 gap-2 sm:grid-cols-4 ${isLedgerSuggestionsOpen ? "pb-24" : ""}`}>
@@ -845,8 +843,8 @@ export default function GamersCreditControl() {
       {activeTab === "payments" && (
         <Card className={`${cardClass} flex min-h-0 flex-col`}>
           <CardHeader className="border-b border-cyan-500/15 pb-3">
-              <h3 className="text-sm font-semibold text-slate-900 dark:text-cyan-100">Payments List</h3>
-              <p className="text-xs text-slate-600 dark:text-slate-400">Track only payment collections for selected gamer with clear totals.</p>
+              <h3 className="text-sm font-semibold text-slate-900 dark:text-cyan-100">Payments</h3>
+
           </CardHeader>
           <CardContent className="flex-1 min-h-0 overflow-y-auto space-y-3 p-4">
             <div className={`grid grid-cols-1 gap-2 sm:grid-cols-4 ${isPaymentSuggestionsOpen ? "pb-24" : ""}`}>

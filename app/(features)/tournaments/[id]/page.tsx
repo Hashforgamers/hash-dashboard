@@ -327,7 +327,7 @@ export default function TournamentDetailPage() {
 
   return (
     <DashboardLayout>
-    <div className="flex-1 space-y-3 overflow-y-auto sm:space-y-4">
+    <div className="flex-1 space-y-3 overflow-y-auto sm:space-y-3">
 
       {/* ── Page Header ───────────────────────────────── */}
       <div className="gaming-panel rounded-xl p-4 sm:p-5">
@@ -368,7 +368,7 @@ export default function TournamentDetailPage() {
 
       {/* ── Tournament Details Card ───────────────────── */}
       <div className="gaming-panel content-card-padding mb-4 flex-shrink-0 rounded-xl border-cyan-400/20 bg-slate-950/45">
-        <div className="flex flex-col md:flex-row gap-6">
+        <div className="flex flex-col md:flex-row gap-3">
           {/* Banner / thumbnail */}
           <div className="w-full md:w-52 h-32 rounded-xl flex-shrink-0 overflow-hidden border border-border bg-muted/30 flex items-center justify-center">
             {event.banner_image_url ? (
@@ -397,7 +397,7 @@ export default function TournamentDetailPage() {
                 {event.status.charAt(0).toUpperCase() + event.status.slice(1)}
               </span>
             </div>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               <div>
                 <p className="body-text-muted mb-1">Start</p>
                 <p className="body-text font-medium text-sm">{fmt(event.start_at)}</p>
@@ -731,7 +731,7 @@ export default function TournamentDetailPage() {
                 ))
               ) : filteredRegs.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="table-cell text-center py-20">
+                  <td colSpan={6} className="table-cell text-center py-8">
                     <div className="flex flex-col items-center gap-2">
                       <Users className="w-10 h-10 text-muted-foreground/20" />
                       <p className="body-text-muted">
@@ -844,7 +844,7 @@ export default function TournamentDetailPage() {
                 ))
               ) : teams.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="table-cell text-center py-16">
+                  <td colSpan={4} className="table-cell text-center py-8">
                     <div className="flex flex-col items-center gap-2">
                       <Users className="w-10 h-10 text-muted-foreground/20" />
                       <p className="body-text-muted">No teams yet for this tournament.</p>

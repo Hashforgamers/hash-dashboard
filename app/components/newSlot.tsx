@@ -3711,7 +3711,7 @@ function RecentBookings({
   
   if (isLoading) {
     return (
-      <Card className={cn("booking-detail-card mt-2 p-6", fixedCard && "h-full min-h-0")}>
+      <Card className={cn("booking-detail-card mt-2 p-3", fixedCard && "h-full min-h-0")}>
         <div className="flex items-center justify-center py-8">
           <Loader2 className="w-6 h-6 animate-spin text-emerald-500" />
           <span className="booking-contrast-muted ml-2">Loading bookings...</span>
@@ -3722,7 +3722,7 @@ function RecentBookings({
 
   if (bookings.length === 0) {
     return (
-      <Card className={cn("booking-detail-card mt-2 p-6", fixedCard && "h-full min-h-0")}>
+      <Card className={cn("booking-detail-card mt-2 p-3", fixedCard && "h-full min-h-0")}>
         <div className="flex flex-col items-center justify-center py-8 text-center">
           <div className="booking-empty-icon mb-3 rounded-full p-3">
             <AlertCircle className="booking-contrast-subtle h-6 w-6" />
@@ -4038,8 +4038,8 @@ function ChangeBookingForm() {
   };
 
   return (
-    <div className="p-6">
-      <form className="space-y-8">
+    <div className="p-3">
+      <form className="space-y-3">
         {/* Search Section */}
         <div className="space-y-4">
           <h3 className="text-lg font-semibold text-gray-800 dark:text-white">Search Booking</h3>
@@ -4072,7 +4072,7 @@ function ChangeBookingForm() {
 
         {/* Booking Details */}
         {bookingFound && bookingData && !isSubmitted ? (
-          <div className="space-y-8">
+          <div className="space-y-3">
             <h3 className="text-lg font-semibold text-gray-800 dark:text-white">
               Gamer's Information
             </h3>
@@ -4296,8 +4296,8 @@ function RejectBookingForm() {
   };
 
   return (
-    <div className="p-6">
-      <form className="space-y-8" onSubmit={handleSubmit}>
+    <div className="p-3">
+      <form className="space-y-3" onSubmit={handleSubmit}>
         <div className="space-y-4">
           <h3 className="text-lg font-semibold text-gray-800 dark:text-white">Search Booking</h3>
           <div className="flex space-x-2">
@@ -4339,14 +4339,14 @@ function RejectBookingForm() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
-                className="space-y-8"
+                className="space-y-3"
               >
-                <div className="space-y-6">
+                <div className="space-y-3">
                   <h3 className="text-lg font-semibold text-gray-800 dark:text-white">
                     Booking Information
                   </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <Card className="bg-gray-50 dark:bg-gray-700/30 p-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <Card className="bg-gray-50 dark:bg-gray-700/30 p-3">
                       <div className="space-y-4">
                         <div className="flex justify-between">
                           <span className="text-gray-600 dark:text-gray-400">Booking ID</span>
@@ -4375,7 +4375,7 @@ function RejectBookingForm() {
                       </div>
                     </Card>
 
-                    <Card className="bg-gray-50 dark:bg-gray-700/30 p-6">
+                    <Card className="bg-gray-50 dark:bg-gray-700/30 p-3">
                       <div className="space-y-4">
                         <div className="flex justify-between">
                           <span className="text-gray-600 dark:text-gray-400">Customer</span>
@@ -4406,7 +4406,7 @@ function RejectBookingForm() {
                   </div>
                 </div>
 
-                <div className="space-y-6">
+                <div className="space-y-3">
                   <h3 className="text-lg font-semibold text-gray-800 dark:text-white">
                     Rejection Details
                   </h3>
@@ -5430,7 +5430,7 @@ useEffect(() => {
   return (
     <main className={slab ? "dashboard-quick-root" : embedded ? `${scheduleStyles.schedule} h-full min-h-0 bg-background overflow-hidden` : "min-h-screen bg-background"}>
       <div
-        className={slab ? "dashboard-quick-root-inner" : `mx-auto w-full max-w-full p-3 sm:p-4 md:p-6 ${
+        className={slab ? "dashboard-quick-root-inner" : `mx-auto w-full max-w-full p-3 ${
           embedded ? "flex h-full min-h-0 flex-col gap-3 overflow-hidden" : ""
         }`}
       >
@@ -5453,7 +5453,7 @@ useEffect(() => {
                 allSlots={allSlots}
               />
             ) : (
-              <div className="shrink-0 space-y-3 sm:space-y-4">
+              <div className="shrink-0 space-y-3">
                 <TopBar
                   selectedSlots={selectedSlots}
                   onNewBooking={handleNewBooking}

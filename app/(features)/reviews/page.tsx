@@ -216,13 +216,13 @@ function ReviewsPageContent() {
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <h1 className="premium-heading">Cafe Reviews</h1>
-              <p className="premium-subtle mt-1">Transparent feedback from gamers and responses from your team.</p>
+
             </div>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-3 xl:grid-cols-3">
-          <div className="gaming-panel rounded-xl border border-cyan-400/20 bg-slate-950/45 p-3 sm:p-4">
+        <div className="reviews-summary grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+          <div className="gaming-panel rounded-xl border border-cyan-400/20 bg-slate-950/45 p-3">
             <p className="text-xs uppercase tracking-wide text-slate-400">Average Rating</p>
             <div className="mt-2 flex items-center gap-3">
               <span className="text-2xl font-bold text-cyan-100 sm:text-3xl">
@@ -235,7 +235,7 @@ function ReviewsPageContent() {
             </p>
           </div>
 
-          <div className="gaming-panel rounded-xl border border-cyan-400/20 bg-slate-950/45 p-3 sm:p-4">
+          <div className="gaming-panel rounded-xl border border-cyan-400/20 bg-slate-950/45 p-3">
             <p className="text-xs uppercase tracking-wide text-slate-400">Ratings Breakdown</p>
             <div className="mt-3 space-y-2">
               {breakdown.map((row) => (
@@ -253,7 +253,7 @@ function ReviewsPageContent() {
             </div>
           </div>
 
-          <div className="gaming-panel rounded-xl border border-cyan-400/20 bg-slate-950/45 p-3 sm:p-4">
+          <div className="gaming-panel rounded-xl border border-cyan-400/20 bg-slate-950/45 p-3">
             <p className="text-xs uppercase tracking-wide text-slate-400">Filters</p>
             <div className="dashboard-filter-stack mt-3">
               <select
@@ -299,18 +299,18 @@ function ReviewsPageContent() {
           </div>
         ) : null}
 
-        <div className="gaming-panel flex-1 overflow-hidden rounded-xl border border-cyan-400/20 bg-slate-950/45">
-          <div className="flex items-center justify-between gap-3 border-b border-cyan-500/20 p-4">
+        <div className="reviews-list gaming-panel rounded-xl border border-cyan-400/20 bg-slate-950/45">
+          <div className="flex items-center justify-between gap-3 border-b border-cyan-500/20 px-3 py-2.5">
             <h2 className="section-title">Recent Reviews</h2>
             <span className="text-xs text-slate-400">{reviews.length} items</span>
           </div>
-          <div className="max-h-[calc(100vh-420px)] overflow-y-auto p-3 sm:p-4">
+          <div className="reviews-list-content">
             {loading ? (
               <div className="dashboard-loader text-sm">Loading reviews...</div>
             ) : reviews.length === 0 ? (
               <div className="dashboard-empty-state text-sm">No reviews yet.</div>
             ) : (
-              <div className="space-y-4">
+              <div className="space-y-3">
                 {reviews.map((review) => (
                   <MobileCompactCard key={review.id} className="bg-slate-900/60 sm:p-4">
                     <div className="flex flex-wrap items-center justify-between gap-3">

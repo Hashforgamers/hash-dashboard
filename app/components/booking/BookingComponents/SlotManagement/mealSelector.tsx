@@ -221,6 +221,7 @@ const MealSelector: React.FC<MealSelectorProps> = ({
       >
         <motion.div
           key="modal"
+          data-compact-dialog="meals"
           initial={{ opacity: 0, scale: 0.95, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 20 }}
@@ -228,13 +229,13 @@ const MealSelector: React.FC<MealSelectorProps> = ({
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
-          <div className="flex items-center justify-between border-b border-gray-300 p-4 dark:border-gray-700">
+          <div className="compact-dialog-header flex items-center justify-between border-b border-gray-300 p-4 dark:border-gray-700">
             <div className="flex items-center gap-3">
               <div className="rounded-lg bg-green-700 p-2 text-white">
                 <ChefHat size={20} />
               </div>
               <div>
-                <h2 className="text-lg font-bold text-gray-900 dark:text-white">
+                <h2 className="text-sm font-semibold text-gray-900 dark:text-white">
                   Add Meals & Extras
                 </h2>
                 <p className="text-xs text-gray-600 dark:text-gray-400">
@@ -253,9 +254,9 @@ const MealSelector: React.FC<MealSelectorProps> = ({
           </div>
 
           {/* Body */}
-          <div className="flex h-[calc(85vh-140px)] overflow-hidden">
+          <div className="compact-dialog-body">
             {/* Sidebar */}
-            <aside className="w-56 overflow-auto border-r border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-800">
+            <aside className="compact-meal-sidebar w-56 overflow-auto border-r border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-800">
               <h3 className="mb-3 text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase">
                 Categories
               </h3>
@@ -279,11 +280,6 @@ const MealSelector: React.FC<MealSelectorProps> = ({
                           {category.menu_count}
                         </span>
                       </div>
-                      {category.description && (
-                        <p className="mt-1 text-xs text-gray-600 line-clamp-2 dark:text-gray-400">
-                          {category.description}
-                        </p>
-                      )}
                     </button>
                   </li>
                 ))}
@@ -293,13 +289,13 @@ const MealSelector: React.FC<MealSelectorProps> = ({
             {/* Main content */}
             <section className="flex-1 overflow-auto p-4">
               {loading && (
-                <div className="flex flex-col items-center justify-center space-y-3 h-64">
+                <div className="flex flex-col items-center justify-center space-y-3 h-32">
                   <Loader2 size={36} className="animate-spin text-green-600" />
                   <p className="text-green-800 dark:text-green-400 text-sm">Loading meals…</p>
                 </div>
               )}
               {error && !loading && (
-                <div className="flex flex-col items-center justify-center gap-4 text-red-600 h-64">
+                <div className="flex flex-col items-center justify-center gap-4 text-red-600 h-32">
                   <Package size={48} />
                   <p className="text-sm">{error}</p>
                   <button
@@ -311,7 +307,7 @@ const MealSelector: React.FC<MealSelectorProps> = ({
                 </div>
               )}
               {!loading && !error && categories.length === 0 && (
-                <div className="flex flex-col items-center justify-center gap-4 text-gray-400 h-64">
+                <div className="flex flex-col items-center justify-center gap-4 text-gray-400 h-32">
                   <ChefHat size={48} />
                   <p className="text-sm">No meals available</p>
                 </div>
@@ -319,7 +315,7 @@ const MealSelector: React.FC<MealSelectorProps> = ({
 
               {/* Grid Layout */}
               {!loading && !error && categories.length > 0 && selectedCategory && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="compact-meal-grid">
                   {categories
                     .find((c) => c.id === selectedCategory)
                     ?.menus?.map((item) => {
@@ -337,7 +333,7 @@ const MealSelector: React.FC<MealSelectorProps> = ({
                           whileHover={{ y: -2 }}
                         >
                           {/* Image Container */}
-                          <div className="relative h-32 w-full overflow-hidden rounded-t-lg">
+                          <div className="compact-meal-image relative h-32 w-full overflow-hidden rounded-t-lg">
                             {item.images.length > 0 ? (
                               <CachedImage
                                 src={item.images[0].image_url}
@@ -371,7 +367,7 @@ const MealSelector: React.FC<MealSelectorProps> = ({
                             <div className="flex items-center justify-between">
                               <div className="flex items-center space-x-1 text-green-600">
                                 <IndianRupee size={16} />
-                                <span className="text-lg font-bold">{item.price}</span>
+                                <span className="text-sm font-semibold">{item.price}</span>
                               </div>
                               <div className="flex items-center space-x-2">
                                 <button
@@ -424,7 +420,7 @@ const MealSelector: React.FC<MealSelectorProps> = ({
           </div>
 
           {/* Footer */}
-          <div className="border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 p-4">
+          <div className="compact-dialog-footer border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
                 <div>
@@ -433,7 +429,7 @@ const MealSelector: React.FC<MealSelectorProps> = ({
                   </p>
                   <div className="flex items-center gap-1">
                     <IndianRupee className="w-4 h-4 text-green-600" />
-                    <span className="text-xl font-bold text-green-600">{getTotalCost()}</span>
+                    <span className="text-lg font-semibold text-green-600">{getTotalCost()}</span>
                   </div>
                 </div>
 

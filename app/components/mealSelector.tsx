@@ -221,6 +221,7 @@ const MealSelector: React.FC<MealSelectorProps> = ({
     >
       <motion.div
         key="modal"
+          data-compact-dialog="meals"
         initial={{ opacity: 0, scale: 0.95, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 20 }}
@@ -228,13 +229,13 @@ const MealSelector: React.FC<MealSelectorProps> = ({
         onClick={(e) => e.stopPropagation()}
       >
         {/* ✅ Compact Header */}
-        <div className="meal-selector-header flex items-center justify-between p-4">
+        <div className="compact-dialog-header meal-selector-header flex items-center justify-between p-4">
           <div className="flex items-center gap-3"> {/* ✅ gap-3 instead of gap-4 */}
             <div className="slot-booking-modal-accent rounded-lg p-2">
               <ChefHat size={20} /> {/* ✅ size 20 instead of 28 */}
             </div>
             <div>
-              <h2 className="text-lg font-bold text-gray-800 dark:text-white">
+              <h2 className="text-sm font-semibold text-gray-800 dark:text-white">
                 Add Meals & Extras
               </h2>
               <p className="text-xs text-gray-600 dark:text-gray-400">
@@ -261,9 +262,9 @@ const MealSelector: React.FC<MealSelectorProps> = ({
         </div>
 
         {/* Body */}
-        <div className="flex h-[calc(85vh-120px)] overflow-hidden"> {/* ✅ Adjusted height calculation */}
+        <div className="compact-dialog-body"> {/* ✅ Adjusted height calculation */}
           {/* ✅ Compact Sidebar */}
-          <aside className="meal-selector-sidebar w-56 overflow-auto p-3">
+          <aside className="compact-meal-sidebar meal-selector-sidebar w-56 overflow-auto p-3">
             <h3 className="mb-3 text-xs font-semibold uppercase text-gray-700 dark:text-gray-300">
               Categories
             </h3>
@@ -287,11 +288,6 @@ const MealSelector: React.FC<MealSelectorProps> = ({
                         {category.menu_count}
                       </span>
                     </div>
-                    {category.description && (
-                      <p className="mt-1 line-clamp-2 text-xs text-gray-500 dark:text-gray-400">
-                        {category.description}
-                      </p>
-                    )}
                   </button>
                 </li>
               ))}
@@ -301,13 +297,13 @@ const MealSelector: React.FC<MealSelectorProps> = ({
           {/* ✅ Compact Main content */}
           <section className="meal-selector-content flex-1 overflow-auto p-4">
             {loading && (
-              <div className="flex flex-col items-center justify-center space-y-3 h-64"> {/* ✅ h-64 for fixed height */}
+              <div className="flex flex-col items-center justify-center space-y-3 h-32"> {/* ✅ h-32 for fixed height */}
                 <Loader2 size={36} className="animate-spin text-green-600" /> {/* ✅ size 36 instead of 48 */}
                 <p className="text-green-800 dark:text-green-400 text-sm">Loading meals…</p> {/* ✅ text-sm */}
               </div>
             )}
             {error && !loading && (
-              <div className="flex flex-col items-center justify-center gap-4 text-red-600 h-64">
+              <div className="flex flex-col items-center justify-center gap-4 text-red-600 h-32">
                 <Package size={48} /> {/* ✅ size 48 instead of 64 */}
                 <p className="text-sm">{error}</p> {/* ✅ text-sm */}
                 <button
@@ -319,7 +315,7 @@ const MealSelector: React.FC<MealSelectorProps> = ({
               </div>
             )}
             {!loading && !error && categories.length === 0 && (
-              <div className="flex flex-col items-center justify-center gap-4 text-gray-400 h-64">
+              <div className="flex flex-col items-center justify-center gap-4 text-gray-400 h-32">
                 <ChefHat size={48} /> {/* ✅ size 48 instead of 64 */}
                 <p className="text-sm">No meals available</p> {/* ✅ text-sm */}
               </div>
@@ -330,7 +326,7 @@ const MealSelector: React.FC<MealSelectorProps> = ({
               !error &&
               categories.length > 0 &&
               selectedCategory && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"> {/* ✅ Grid layout with gap-4 */}
+                <div className="compact-meal-grid"> {/* ✅ Grid layout with gap-4 */}
                   {categories
                     .find((c) => c.id === selectedCategory)
                     ?.menus?.map((item) => {
@@ -348,7 +344,7 @@ const MealSelector: React.FC<MealSelectorProps> = ({
                           whileHover={{ y: -2 }} /* ✅ Less hover effect */
                         >
                           {/* ✅ Smaller Image Container */}
-                          <div className="relative h-32 w-full overflow-hidden rounded-t-lg"> {/* ✅ h-32 instead of h-48 */}
+                          <div className="compact-meal-image relative h-32 w-full overflow-hidden rounded-t-lg"> {/* ✅ h-32 instead of h-48 */}
                             {item.images.length > 0 ? (
                               <CachedImage
                                 src={item.images[0].image_url}
@@ -382,7 +378,7 @@ const MealSelector: React.FC<MealSelectorProps> = ({
                             <div className="flex items-center justify-between">
                               <div className="flex items-center space-x-1 text-emerald-600 dark:text-emerald-300">
                                 <IndianRupee size={16} /> {/* ✅ size 16 instead of 20 */}
-                                <span className="text-lg font-bold">{item.price}</span> {/* ✅ text-lg instead of text-xl */}
+                                <span className="text-sm font-semibold">{item.price}</span> {/* ✅ text-lg instead of text-xl */}
                               </div>
                               <div className="flex items-center space-x-2"> {/* ✅ space-x-2 instead of space-x-3 */}
                                 <button
@@ -431,7 +427,7 @@ const MealSelector: React.FC<MealSelectorProps> = ({
         </div>
 
         {/* ✅ Compact Footer */}
-        <div className="meal-selector-footer my-[-2vh] p-3">
+        <div className="compact-dialog-footer meal-selector-footer">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <div>
@@ -440,7 +436,7 @@ const MealSelector: React.FC<MealSelectorProps> = ({
                 </p>
                 <div className="flex items-center gap-1">
                   <IndianRupee className="h-4 w-4 text-emerald-600 dark:text-emerald-300" />
-                  <span className="text-xl font-bold text-emerald-600 dark:text-emerald-300">
+                  <span className="text-lg font-semibold text-emerald-600 dark:text-emerald-300">
                     {getTotalCost()}
                   </span>
                 </div>

@@ -673,9 +673,9 @@ export function TransactionTable() {
   }
 
   return (
-    <div className="flex h-full min-h-0 w-full min-w-0 flex-col gap-4 overflow-hidden sm:gap-5">
+    <div className="flex h-full min-h-0 w-full min-w-0 flex-col gap-3 overflow-hidden sm:gap-3">
       {/* <CHANGE> Updated metric cards to use default card styling instead of colorful gradients */}
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-2 sm:gap-3 lg:grid-cols-4">
         <motion.div
           variants={cardVariants}
           initial="hidden"
@@ -717,7 +717,7 @@ export function TransactionTable() {
               <div className="dash-kpi-value !text-base sm:!text-2xl">
                 {metrics.uniqueUsers}
               </div>
-              <p className="text-[10px] text-emerald-400 sm:text-xs">Distinct customers in view</p>
+
             </CardContent>
           </Card>
         </motion.div>
@@ -739,9 +739,7 @@ export function TransactionTable() {
               <div className="dash-kpi-value !text-base sm:!text-2xl">
                 {metrics.pendingSettlements}
               </div>
-              <p className="text-[10px] text-yellow-400 sm:text-xs">
-                Requires attention
-              </p>
+
             </CardContent>
           </Card>
         </motion.div>
