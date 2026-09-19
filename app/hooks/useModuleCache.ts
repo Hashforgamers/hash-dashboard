@@ -7,13 +7,15 @@ export function useModuleCache<T>(
   key: string,
   fetcher: () => Promise<T>,
   ttlMs = 120000,
-  versionKey?: string
+  versionKey?: string,
+  enabled = true
 ) {
   const { moduleCache, moduleVersions, setModuleCache } = useDashboardData();
   const cached = moduleCache[key];
   const effectiveVersionKey = versionKey || key;
   const version = moduleVersions[effectiveVersionKey] || 0;
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
   const data = cached?.data as T | undefined;
   const fetcherRef = useRef(fetcher);
   const setModuleCacheRef = useRef(setModuleCache);
@@ -31,16 +33,21 @@ export function useModuleCache<T>(
   const refresh = useCallback(async (force = false) => {
     if (!force && isFresh && data !== undefined) return data;
     setLoading(true);
+    setError(null);
     try {
       const next = await fetcherRef.current();
       setModuleCacheRef.current(key, next);
       return next;
+    } catch (cause) {
+      setError(cause instanceof Error ? cause : new Error("Failed to load data."));
+      throw cause;
     } finally {
       setLoading(false);
     }
   }, [data, isFresh, key]);
 
   useEffect(() => {
+    if (!enabled) return;
     if (!isFresh || data === undefined) {
       refresh().catch(() => null);
       return;
@@ -49,7 +56,7 @@ export function useModuleCache<T>(
       refresh(true).catch(() => null);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [key, effectiveVersionKey, version]);
+  }, [key, effectiveVersionKey, version, enabled]);
 
-  return { data: data as T | undefined, loading, refresh, isFresh };
+  return { data: data as T | undefined, loading, error, refresh, isFresh };
 }

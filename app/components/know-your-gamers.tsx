@@ -198,8 +198,8 @@ export function KnowYourGamers() {
       <div className="gaming-panel shrink-0 rounded-xl border border-cyan-400/20">
         <div className="dashboard-toolbar p-4">
           <div className="relative flex-1 min-w-0 sm:min-w-[220px]">
-            <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-500" />
-            <input
+            <Search data-search-icon="" aria-hidden="true" className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-500" />
+            <input data-search-input=""
               type="text"
               placeholder="Search by name or contact..."
               className="dashboard-module-input h-10 w-full pl-10 pr-4"

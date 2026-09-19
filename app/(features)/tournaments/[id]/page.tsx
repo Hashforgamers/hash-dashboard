@@ -125,14 +125,15 @@ export default function TournamentDetailPage() {
   const detailKey = vendorId ? `tournament_detail:${vendorId}:${eventId}` : "tournament_detail:0";
   const versionKey = vendorId ? `tournaments:${vendorId}` : "tournaments:0";
 
-  const { data: cachedDetail, refresh: refreshDetailCache } = useModuleCache<TournamentDetail | null>(
+  const { data: cachedDetail, loading: detailLoading, error: detailError, refresh: refreshDetailCache } = useModuleCache<TournamentDetail | null>(
     detailKey,
     async () => {
       if (!token) return null;
       return getTournamentDetail(token, eventId);
     },
     120000,
-    versionKey
+    versionKey,
+    Boolean(token && vendorId)
   );
 
   const hydrateDetail = useCallback((detail: TournamentDetail | null | undefined) => {
@@ -145,29 +146,13 @@ export default function TournamentDetailPage() {
 
   useEffect(() => {
     if (!token) return;
-    if (cachedDetail) {
-      hydrateDetail(cachedDetail);
-      setLoadingEvent(false);
-      setLoadingRegs(false);
-      setLoadingTeams(false);
-      setLoadingMatches(false);
-      return;
-    }
-
-    setLoadingEvent(true);
-    setLoadingRegs(true);
-    setLoadingTeams(true);
-    setLoadingMatches(true);
-    refreshDetailCache(true)
-      .then(hydrateDetail)
-      .catch(console.error)
-      .finally(() => {
-        setLoadingEvent(false);
-        setLoadingRegs(false);
-        setLoadingTeams(false);
-        setLoadingMatches(false);
-      });
-  }, [token, eventId, cachedDetail, refreshDetailCache, hydrateDetail]);
+    hydrateDetail(cachedDetail);
+    const pending = detailLoading || (!cachedDetail && !detailError);
+    setLoadingEvent(pending);
+    setLoadingRegs(pending);
+    setLoadingTeams(pending);
+    setLoadingMatches(pending);
+  }, [token, cachedDetail, detailLoading, detailError, hydrateDetail]);
 
   // Helpers
   const fmt = (iso: string) =>
@@ -682,8 +667,8 @@ export default function TournamentDetailPage() {
           </div>
           <div className="dashboard-action-bar">
             <div className="relative min-w-[180px]">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 icon-sm text-muted-foreground" />
-              <input
+              <Search data-search-icon="" aria-hidden="true" className="absolute left-3 top-1/2 -translate-y-1/2 icon-sm text-muted-foreground" />
+              <input data-search-input=""
                 className="dashboard-module-input h-9 w-full pl-10 pr-3"
                 placeholder="Search teams..."
                 value={search}

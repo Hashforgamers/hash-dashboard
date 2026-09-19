@@ -477,8 +477,8 @@ function RapidBookings() {
             {/* Search and Filter Toggle */}
             <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
               <div className="relative w-full md:w-96">
-                <Search className="absolute left-3 top-3 h-4 w-4 text-gray-500" />
-                <Input
+                <Search data-search-icon="" aria-hidden="true" className="absolute left-3 top-3 h-4 w-4 text-gray-500" />
+                <Input data-search-input=""
                   type="text"
                   placeholder="Search systems..."
                   value={searchQuery}
