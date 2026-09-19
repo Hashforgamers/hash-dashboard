@@ -12,10 +12,9 @@ interface TopBarProps {
 
 export const TopBar = ({ selectedSlots, onNewBooking }: TopBarProps) => {
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
+    <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-white">Slot Management</h1>
-        <p className="text-sm text-gray-400 mt-1">Manage and monitor console bookings</p>
+        <h1 className="text-lg font-semibold tracking-tight text-white">Slot Management</h1>
       </div>
 
       <div className="flex items-center gap-3">

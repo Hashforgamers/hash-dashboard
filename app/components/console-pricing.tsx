@@ -1474,13 +1474,10 @@ export default function ConsolePricing() {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.2 }}
-          className="flex flex-1 min-h-0 flex-col gap-4 overflow-hidden"
+          className="flex flex-1 min-h-0 flex-col gap-3 overflow-hidden"
         >
-          <div className="gaming-panel shrink-0 rounded-xl p-4">
+          <div className="shrink-0">
             <h2 className="text-sm font-semibold text-foreground sm:text-base">Extra Controller Pricing</h2>
-            <p className="body-text-muted mt-1">
-              Set rates for additional controllers.
-            </p>
             {controllerPricingError && (
               <p className="mt-2 text-xs font-medium text-rose-300">{controllerPricingError}</p>
             )}
@@ -1492,7 +1489,7 @@ export default function ConsolePricing() {
               <p className="body-text-muted">Loading controller pricing...</p>
             </div>
           ) : (
-          <div className="min-h-0 flex-1 overflow-y-auto pr-1 space-y-4">
+          <div className="min-h-0 flex-1 overflow-y-auto pr-1 space-y-3">
             {controllerConsoleTabs.length === 0 ? (
               <div className="dashboard-module-surface rounded-lg border border-dashed border-cyan-500/25 p-4 text-sm text-slate-600 dark:text-slate-300">
                 No controller-enabled console type found yet. Set controller policy in console catalog/inventory and refresh.
@@ -1535,7 +1532,7 @@ export default function ConsolePricing() {
                     </div>
                   </CardHeader>
 
-                  <CardContent className="space-y-4 p-4">
+                  <CardContent className="space-y-3 p-4">
                     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                       <div className="space-y-1.5">
                         <label className="table-header-text">Base Price (1 Controller)</label>
@@ -1653,18 +1650,15 @@ export default function ConsolePricing() {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.2 }}
-          className="flex flex-1 min-h-0 flex-col gap-4 overflow-hidden"
+          className="flex flex-1 min-h-0 flex-col gap-3 overflow-hidden"
         >
-          <div className="dashboard-module-panel shrink-0 rounded-xl p-4">
+          <div className="shrink-0">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <h2 className="flex items-center gap-2 text-sm font-semibold text-foreground sm:text-base">
                   <Users className="icon-md text-cyan-300" />
                   Squad pricing
                 </h2>
-                <p className="body-text-muted mt-1">
-                  Set discounts by player count.
-                </p>
               </div>
 
             </div>
@@ -1699,7 +1693,7 @@ export default function ConsolePricing() {
                 Loading squad rules...
               </div>
             ) : (
-              <div className="grid grid-cols-1 gap-4">
+              <div className="grid grid-cols-1 gap-3">
                 {consoleTypes.filter((console) => console.type === "pc").map((console) => {
                   const group = squadGroupLabelByConsoleType[console.type];
                   if (!group) return null;
@@ -1893,9 +1887,9 @@ export default function ConsolePricing() {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.2 }}
-          className="flex flex-1 min-h-0 flex-col gap-4 overflow-hidden"
+          className="flex flex-1 min-h-0 flex-col gap-3 overflow-hidden"
         >
-          <div className="gaming-panel shrink-0 rounded-xl p-4">
+          <div className="shrink-0">
             <h2 className="section-title">GST & Tax Setup</h2>
             <p className="body-text-muted mt-1">
               Define your gaming cafe GST profile once. Transactions will use this setup for CGST/SGST/IGST calculations.
@@ -1910,7 +1904,7 @@ export default function ConsolePricing() {
           ) : (
             <div className="min-h-0 flex-1 overflow-y-auto pr-1">
               <Card className="dashboard-module-surface rounded-xl">
-                <CardContent className="grid grid-cols-1 gap-4 p-4 sm:grid-cols-2">
+                <CardContent className="grid grid-cols-1 gap-3 p-4 sm:grid-cols-2">
                   <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200">
                     <input
                       type="checkbox"
@@ -2025,9 +2019,9 @@ export default function ConsolePricing() {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.2 }}
-          className="flex flex-1 min-h-0 flex-col gap-4 overflow-hidden"
+          className="flex flex-1 min-h-0 flex-col gap-3 overflow-hidden"
         >
-          <div className="gaming-panel shrink-0 rounded-xl p-4">
+          <div className="shrink-0">
             <h2 className="section-title">Known Player Monthly Credit</h2>
             <p className="body-text-muted mt-1">
               Allow trusted players to play now and settle at month-end. Configure user credit limit and billing cycle.
@@ -2035,7 +2029,7 @@ export default function ConsolePricing() {
             {creditError && <p className="mt-2 text-xs font-medium text-rose-300">{creditError}</p>}
           </div>
 
-          <div className="grid min-h-0 flex-1 grid-cols-1 gap-4 overflow-hidden xl:grid-cols-2">
+          <div className="grid min-h-0 flex-1 grid-cols-1 gap-3 overflow-hidden xl:grid-cols-2">
             <Card className="dashboard-module-surface min-h-0 rounded-xl">
               <CardHeader className="border-b border-cyan-500/15 pb-3">
                 <h3 className="card-title">Create / Update Credit Account</h3>

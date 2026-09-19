@@ -166,7 +166,7 @@ export function KnowYourGamers() {
   }
 
   return (
-    <div className="dashboard-module dashboard-typography flex h-full min-h-0 flex-col gap-4 p-1 sm:p-2">
+    <div className="dashboard-module dashboard-typography flex h-full min-h-0 flex-col gap-3">
       {/* Stats Cards */}
       <div className="shrink-0 grid grid-cols-2 gap-2 sm:grid-cols-2 sm:gap-3 lg:grid-cols-4">
         {stats.map((stat, index) => {
@@ -174,18 +174,18 @@ export function KnowYourGamers() {
           return (
             <div
               key={index}
-              className="gaming-kpi-card rounded-xl border border-cyan-400/20 p-3 sm:p-4"
+              className="gaming-kpi-card rounded-xl border border-cyan-400/20 p-3"
             >
               <div className="flex items-center justify-between">
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-[10px] uppercase tracking-wide text-slate-500 sm:text-sm">{stat.title}</p>
-                  <h3 className="mt-1 truncate text-base font-bold text-cyan-300 sm:text-2xl">{stat.value}</h3>
+                  <p className="truncate text-xs text-muted-foreground">{stat.title}</p>
+                  <h3 className="mt-1 truncate text-xl font-semibold text-foreground">{stat.value}</h3>
                 </div>
-                <div className="ml-2 flex-shrink-0 rounded-full border border-cyan-400/25 bg-cyan-500/10 p-2 sm:ml-3 sm:p-3">
-                  <Icon className="h-4 w-4 text-cyan-300 sm:h-6 sm:w-6" />
+                <div className="ml-2 flex-shrink-0 text-muted-foreground">
+                  <Icon className="h-4 w-4" />
                 </div>
               </div>
-              <div className="mt-2 flex items-center text-[11px] sm:text-sm">
+              <div className="mt-1 flex items-center text-[11px]">
                 <span className="text-emerald-300">{stat.change}</span>
                 <span className="ml-1 text-slate-500">vs last month</span>
               </div>

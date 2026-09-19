@@ -433,7 +433,7 @@ const handleSubmit = async (e: React.FormEvent) => {
           className="w-full max-w-6xl max-h-[95vh] overflow-y-auto bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-2xl"
         >
           {/* Header */}
-          <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700 sticky top-0 bg-white dark:bg-gray-800 z-10">
+          <div className="flex items-center justify-between p-3 border-b border-gray-200 dark:border-gray-700 sticky top-0 bg-white dark:bg-gray-800 z-10">
             <h2 className="text-2xl font-bold text-gray-800 dark:text-white">New Slot Booking</h2>
             <button
               onClick={handleClose}
@@ -444,11 +444,11 @@ const handleSubmit = async (e: React.FormEvent) => {
           </div>
 
           {/* Form Content */}
-          <div className="p-6">
-            <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="p-3">
+            <form onSubmit={handleSubmit} className="space-y-3">
               {/* Selected Slots Display */}
               <Card className="p-4 bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-700">
-                <h3 className="text-lg font-semibold text-emerald-800 dark:text-emerald-200 mb-3">
+                <h3 className="text-sm font-semibold text-emerald-800 dark:text-emerald-200 mb-3">
                   Selected Time Slots
                 </h3>
                 <div className="space-y-2">
@@ -556,7 +556,7 @@ const handleSubmit = async (e: React.FormEvent) => {
               <Button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full dashboard-btn-primary h-12 text-lg font-semibold"
+                className="w-full dashboard-btn-primary h-12 text-sm font-semibold"
               >
                 {isSubmitting ? 'Creating Booking...' : 'Confirm Booking'}
               </Button>

@@ -1,7 +1,7 @@
 .root { --extras-line: #303038; --extras-muted: #a1a1aa; min-width: 0; letter-spacing: 0; }
 .overview { padding: 0; }
-.toolbar { display: flex; align-items: center; gap: 12px; padding: 0 0 12px; border-bottom: 1px solid var(--extras-line); }
-.search { width: 300px; max-width: 100%; min-width: 0; height: 36px; padding: 0 12px; border: 1px solid #3a3a43; border-radius: 6px; background: #202025; color: #f4f4f5; font-size: 13px; }
+.toolbar { display: flex; align-items: center; gap: 8px; padding: 0 0 10px; border-bottom: 1px solid var(--extras-line); }
+.search { width: 300px; max-width: 100%; min-width: 0; height: 34px; padding: 0 12px; border: 1px solid #3a3a43; border-radius: 6px; background: #202025; color: #f4f4f5; font-size: 13px; }
 .summary { flex: 1; color: var(--extras-muted); font-size: 12px; white-space: nowrap; }
 .primary { min-height: 34px; background: #2878d4; color: white; border: 1px solid #438edf; white-space: nowrap; font-size: 12px !important; border-radius: 6px; padding: 6px 10px; }
 .primary:hover { background: #246bc0; }

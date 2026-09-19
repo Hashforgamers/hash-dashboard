@@ -543,7 +543,7 @@ export default function ManageExtraServices() {
               <p className="body-text-muted">Loading categories...</p>
             </div>
           ) : !Array.isArray(categories) || categories.length === 0 ? (
-            <div className="gaming-panel flex flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed border-cyan-400/20 py-16">
+            <div className="gaming-panel flex flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed border-cyan-400/20 py-8">
               <UtensilsCrossed className="w-12 h-12 text-muted-foreground/30" />
               <h3 className="section-title text-muted-foreground/60">No categories yet</h3>
               <p className="body-text-muted">Create your first category to get started</p>
