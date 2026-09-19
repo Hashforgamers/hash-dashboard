@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import {
   X,
   Plus,
@@ -10,7 +10,7 @@ import {
   ChefHat,
   Loader2
 } from "lucide-react";
-import { BOOKING_URL, DASHBOARD_URL } from "../../src/config/env";
+import { DASHBOARD_URL } from "../../src/config/env";
 
 interface MealImage {
   id: number;
@@ -225,7 +225,7 @@ const MealSelector: React.FC<MealSelectorProps> = ({
         initial={{ opacity: 0, scale: 0.95, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 20 }}
-        className="meal-selector-modal relative h-[85vh] w-full max-w-4xl overflow-hidden rounded-xl border shadow-2xl"
+        className="meal-selector-modal relative w-full max-w-3xl overflow-hidden rounded-xl border shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         {/* ✅ Compact Header */}
@@ -238,20 +238,12 @@ const MealSelector: React.FC<MealSelectorProps> = ({
               <h2 className="text-sm font-semibold text-gray-800 dark:text-white">
                 Add Meals & Extras
               </h2>
-              <p className="text-xs text-gray-600 dark:text-gray-400">
-                {categories.length} categories •{" "}
-                {categories.reduce((sum, c) => sum + c.menu_count, 0)} items
-              </p>
+
             </div>
           </div>
           <div className="flex items-center gap-2">
             <button
-              className="ui-action-primary rounded-lg px-4 py-2 text-sm focus:outline-none"
-              onClick={handleConfirm}
-            >
-              Add to Order
-            </button>
-            <button
+              type="button"
               className="slot-booking-modal-close rounded-lg p-2"
               onClick={onClose}
               aria-label="Close"
@@ -275,6 +267,7 @@ const MealSelector: React.FC<MealSelectorProps> = ({
               {categories.map((category) => (
                 <li key={category.id} className="mb-1.5"> {/* ✅ mb-1.5 instead of mb-2 */}
                   <button
+                    type="button"
                     className={`block w-full rounded-lg p-2 text-left transition-colors duration-200 ${
                       selectedCategory === category.id
                         ? "meal-selector-category-active"
@@ -295,7 +288,7 @@ const MealSelector: React.FC<MealSelectorProps> = ({
           </aside>
 
           {/* ✅ Compact Main content */}
-          <section className="meal-selector-content flex-1 overflow-auto p-4">
+          <section className="meal-selector-content min-w-0 flex-1 overflow-auto p-3">
             {loading && (
               <div className="flex flex-col items-center justify-center space-y-3 h-32"> {/* ✅ h-32 for fixed height */}
                 <Loader2 size={36} className="animate-spin text-green-600" /> {/* ✅ size 36 instead of 48 */}
@@ -307,6 +300,7 @@ const MealSelector: React.FC<MealSelectorProps> = ({
                 <Package size={48} /> {/* ✅ size 48 instead of 64 */}
                 <p className="text-sm">{error}</p> {/* ✅ text-sm */}
                 <button
+                  type="button"
                   onClick={fetchMeals}
                   className="rounded bg-green-700 px-4 py-2 text-white hover:bg-green-800 text-sm"
                 >
@@ -336,15 +330,14 @@ const MealSelector: React.FC<MealSelectorProps> = ({
                         <motion.div
                           key={item.id}
                           layout
-                          className={`meal-selector-item rounded-lg border-2 shadow-sm ${
+                          className={`meal-selector-item flex items-center gap-2.5 rounded-lg border p-2.5 ${
                             quantity > 0
-                              ? "meal-selector-item-active shadow-emerald-500/20"
+                              ? "meal-selector-item-active"
                               : ""
                           }`} /* ✅ Removed max-w-md, removed mb-6 */
-                          whileHover={{ y: -2 }} /* ✅ Less hover effect */
                         >
                           {/* ✅ Smaller Image Container */}
-                          <div className="compact-meal-image relative h-32 w-full overflow-hidden rounded-t-lg"> {/* ✅ h-32 instead of h-48 */}
+                          <div className="compact-meal-image relative shrink-0 overflow-hidden rounded-md"> {/* ✅ h-32 instead of h-48 */}
                             {item.images.length > 0 ? (
                               <CachedImage
                                 src={item.images[0].image_url}
@@ -356,24 +349,19 @@ const MealSelector: React.FC<MealSelectorProps> = ({
                                 <ChefHat className="text-green-500" size={32} /> {/* ✅ size 32 instead of 64 */}
                               </div>
                             )}
-                            {quantity > 0 && (
-                              <div className="absolute right-2 top-2 rounded-lg bg-cyan-500/90 px-2 py-1 text-xs font-semibold text-white">
-                                {quantity}
-                              </div>
-                            )}
                           </div>
 
                           {/* ✅ Compact Card Content */}
-                          <div className="p-3"> {/* ✅ p-3 instead of p-4 */}
+                          <div className="min-w-0 flex-1">
                             <h3 className="mb-1 line-clamp-1 text-sm font-semibold text-gray-800 dark:text-white">
                               {item.name}
                             </h3>
                             {item.description && (
-                              <p className="mb-3 line-clamp-2 text-xs text-gray-500 dark:text-gray-400">
+                              <p className="mb-1 line-clamp-1 text-xs text-gray-500 dark:text-gray-400">
                                 {item.description}
                               </p>
                             )}
-                            
+
                             {/* ✅ Compact Price and Controls */}
                             <div className="flex items-center justify-between">
                               <div className="flex items-center space-x-1 text-emerald-600 dark:text-emerald-300">
@@ -382,13 +370,15 @@ const MealSelector: React.FC<MealSelectorProps> = ({
                               </div>
                               <div className="flex items-center space-x-2"> {/* ✅ space-x-2 instead of space-x-3 */}
                                 <button
+                                  type="button"
                                   onClick={() =>
-                                    updateMealQuantity(item, quantity - 1, 
+                                    updateMealQuantity(item, quantity - 1,
                                       categories.find(c => c.id === selectedCategory)?.name || ""
                                     )
                                   }
+                                  aria-label={`Remove one ${item.name}`}
                                   disabled={quantity === 0}
-                                  className="flex h-7 w-7 items-center justify-center rounded-full bg-red-600 text-white disabled:opacity-50 disabled:cursor-not-allowed hover:bg-red-700 transition-colors" /* ✅ h-7 w-7 instead of h-8 w-8 */
+                                  className="slot-booking-modal-secondary flex h-8 w-8 items-center justify-center rounded-md disabled:opacity-40 disabled:cursor-not-allowed transition-colors" /* ✅ h-7 w-7 instead of h-8 w-8 */
                                 >
                                   <Minus size={12} /> {/* ✅ size 12 instead of 16 */}
                                 </button>
@@ -396,27 +386,20 @@ const MealSelector: React.FC<MealSelectorProps> = ({
                                   {quantity}
                                 </span>
                                 <button
+                                  type="button"
+                                  aria-label={`Add one ${item.name}`}
                                   onClick={() =>
                                     updateMealQuantity(item, quantity + 1,
                                       categories.find(c => c.id === selectedCategory)?.name || ""
                                     )
                                   }
-                                  className="flex h-7 w-7 items-center justify-center rounded-full bg-green-600 text-white hover:bg-green-700 transition-colors" /* ✅ h-7 w-7 */
+                                  className="slot-booking-modal-secondary flex h-8 w-8 items-center justify-center rounded-md transition-colors" /* ✅ h-7 w-7 */
                                 >
                                   <Plus size={12} /> {/* ✅ size 12 */}
                                 </button>
                               </div>
                             </div>
-                            
-                            {/* ✅ Compact Subtotal */}
-                            {quantity > 0 && (
-                              <motion.p
-                                layout
-                                className="mt-2 text-right text-sm font-semibold text-emerald-600 dark:text-emerald-300"
-                              >
-                                Subtotal: ₹{(quantity * item.price).toFixed(2)}
-                              </motion.p>
-                            )}
+
                           </div>
                         </motion.div>
                       );
@@ -436,14 +419,15 @@ const MealSelector: React.FC<MealSelectorProps> = ({
                 </p>
                 <div className="flex items-center gap-1">
                   <IndianRupee className="h-4 w-4 text-emerald-600 dark:text-emerald-300" />
-                  <span className="text-lg font-semibold text-emerald-600 dark:text-emerald-300">
-                    {getTotalCost()}
+                  <span className="text-sm font-semibold text-emerald-600 dark:text-emerald-300">
+                    {getTotalCost().toFixed(2)}
                   </span>
                 </div>
               </div>
-              
+
               {selectedMeals.length > 0 && (
                 <button
+                  type="button"
                   onClick={clearSelection}
                   className="text-xs text-rose-300 hover:text-rose-200 underline"
                 >
@@ -454,18 +438,21 @@ const MealSelector: React.FC<MealSelectorProps> = ({
 
             <div className="flex gap-2"> {/* ✅ gap-2 instead of gap-3 */}
               <button
+                type="button"
                 onClick={onClose}
                 className="slot-booking-modal-secondary rounded-lg px-4 py-2 text-sm font-medium"
               >
                 Cancel
               </button>
-              
+
               <button
+
+                type="button"
                 onClick={handleConfirm}
-                className="ui-action-primary flex items-center gap-2 rounded-lg px-6 py-2 text-sm font-bold shadow-lg transition-all" /* ✅ text-sm */
+                className="ui-action-primary flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors" /* ✅ text-sm */
               >
                 <ShoppingCart className="w-4 h-4" /> {/* ✅ w-4 h-4 */}
-                Add to Order
+                Apply
               </button>
             </div>
           </div>

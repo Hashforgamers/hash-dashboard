@@ -215,6 +215,8 @@ interface SlotBookingFormProps {
   onClose: () => void
   selectedSlots: SelectedSlot[]
   onRemoveSelectedSlot: (slot: SelectedSlot) => void
+  onSlotSelect: (slot: SelectedSlot) => void
+  allSlots: { [key: string]: any[] }
   onBookingComplete: () => void
   availableConsoles: ConsoleType[]
 }
@@ -464,6 +466,8 @@ function SlotBookingForm({
   onClose, 
   selectedSlots, 
   onRemoveSelectedSlot,
+  onSlotSelect,
+  allSlots,
   onBookingComplete,
   availableConsoles 
 }: SlotBookingFormProps) {
@@ -474,6 +478,19 @@ function SlotBookingForm({
     selectedSlotsCount: selectedSlots.length,
     selectedSlots 
   })
+
+  const [showSlotPicker, setShowSlotPicker] = useState(false)
+  const [pickerDate, setPickerDate] = useState("")
+  const [pickerConsole, setPickerConsole] = useState("")
+  const slotDates = Object.keys(allSlots).sort()
+  const activePickerDate = selectedSlots[0]?.date || pickerDate || slotDates[0] || ""
+  const activePickerConsole = String(selectedSlots[0]?.console_id || pickerConsole || availableConsoles[0]?.id || "")
+  const pickerConsoleItem = availableConsoles.find((item) => String(item.id) === activePickerConsole)
+  const pickerSlots = (allSlots[activePickerDate] || []).filter((slot: any) =>
+    String(slot.console_id) === activePickerConsole && Boolean(slot.is_available) &&
+    Number(slot.available_slot) > 0 &&
+    !isPastSlotInIST(activePickerDate, slot.end_time, slot.start_time)
+  ).sort((a: any, b: any) => String(a.start_time).localeCompare(String(b.start_time)))
 
   const [name, setName] = useState<string>('')
   const [email, setEmail] = useState<string>('')
@@ -2289,7 +2306,53 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
               <div className="grid grid-cols-1 gap-3 lg:grid-cols-[minmax(0,1fr)_300px]">
                 <div className="flex flex-col gap-3">
                   <Card className="sb-card p-3 order-1">
-                    <h3 className="slot-section-title mb-2">Selected slots</h3>
+                    <div className="mb-2 flex items-center justify-between gap-2">
+                      <h3 className="slot-section-title">Selected slots ({selectedSlots.length})</h3>
+                      <button type="button" aria-expanded={showSlotPicker} aria-controls="booking-slot-picker"
+                        onClick={() => setShowSlotPicker((open) => !open)}
+                        className="slot-booking-modal-accent inline-flex h-8 items-center gap-1 rounded-md px-2 text-xs font-medium">
+                        <Plus className="h-3.5 w-3.5" /> {showSlotPicker ? "Done" : "Add slots"}
+                      </button>
+                    </div>
+                    {showSlotPicker && (
+                      <div id="booking-slot-picker" className="mb-3 rounded-lg border border-slate-500/25 p-2.5">
+                        <div className="mb-2 grid grid-cols-2 gap-2">
+                          <label className="text-xs">Date
+                            <select disabled={selectedSlots.length > 0} title="One booking uses one date" value={activePickerDate} onChange={(event) => setPickerDate(event.target.value)}
+                              className="mt-1 h-9 w-full rounded-md border border-slate-500/30 bg-background px-2 text-sm">
+                              {slotDates.map((date) => <option key={date} value={date}>{date}</option>)}
+                            </select>
+                          </label>
+                          <label className="text-xs">Console
+                            <select disabled={selectedSlots.length > 0} title="One booking uses one console type" value={activePickerConsole} onChange={(event) => setPickerConsole(event.target.value)}
+                              className="mt-1 h-9 w-full rounded-md border border-slate-500/30 bg-background px-2 text-sm">
+                              {availableConsoles.map((item) => <option key={item.id} value={String(item.id)}>{item.name}</option>)}
+                            </select>
+                          </label>
+                        </div>
+                        <div className="flex max-h-40 flex-wrap gap-1.5 overflow-y-auto">
+                          {pickerSlots.map((slot: any) => {
+                            const selected = selectedSlots.some((item) => item.slot_id === slot.slot_id &&
+                              item.date === activePickerDate && String(item.console_id) === activePickerConsole)
+                            return <button key={slot.slot_id} type="button" aria-pressed={selected}
+                              disabled={isSubmitting}
+                              onClick={() => onSlotSelect({
+                                slot_id: slot.slot_id, date: activePickerDate,
+                                start_time: slot.start_time, end_time: slot.end_time,
+                                console_id: Number(activePickerConsole),
+                                console_name: pickerConsoleItem?.name || pickerConsoleItem?.type || "",
+                                console_price: slot.single_slot_price ?? pickerConsoleItem?.price ?? 0,
+                                available_count: Number(slot.available_slot),
+                              })}
+                              className={cn("rounded-md border px-2 py-1.5 text-xs tabular-nums transition-colors",
+                                selected ? "border-cyan-400 bg-cyan-500/15 text-cyan-600 dark:text-cyan-200" : "border-slate-500/30 hover:bg-slate-500/10")}>
+                              {String(slot.start_time).slice(0, 5)}–{String(slot.end_time).slice(0, 5)}
+                            </button>
+                          })}
+                          {pickerSlots.length === 0 && <p className="py-2 text-xs text-slate-500">No available slots.</p>}
+                        </div>
+                      </div>
+                    )}
                     <div className="space-y-2">
                       {selectedSlots.map((slot, index) => (
                         <div key={index} className="slot-booking-modal-soft flex items-center justify-between gap-3 rounded-md px-2.5 py-2 text-xs">
@@ -2885,7 +2948,7 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
               <Button
                 type="submit"
                 form="slot-booking-form"
-                disabled={isSubmitting || (paymentType === 'Monthly Credit' && (!creditAccount?.is_active || availableCreditAmount < totalAmount))}
+                disabled={selectedSlots.length === 0 || isSubmitting || (paymentType === 'Monthly Credit' && (!creditAccount?.is_active || availableCreditAmount < totalAmount))}
                 className="ui-action-primary h-9 px-4 disabled:opacity-50"
               >
                 {isSubmitting ? (
@@ -2946,6 +3009,7 @@ function SlotPill({
   color,
   icon: Icon,
   onClick,
+  onDoubleClick,
   selected = false,
   disabled = false,
   compact = false,
@@ -2954,6 +3018,7 @@ function SlotPill({
   color: PillColor
   icon?: React.ComponentType<{ className?: string }>
   onClick?: () => void
+  onDoubleClick?: () => void
   selected?: boolean
   disabled?: boolean
   compact?: boolean
@@ -2976,7 +3041,11 @@ function SlotPill({
 
   return (
     <button
-      onClick={onClick}
+      type="button"
+      onClick={(event) => { if (event.detail < 2) onClick?.() }}
+      onDoubleClick={onDoubleClick}
+      aria-pressed={selected}
+      title="Click to select; double-click to book"
       disabled={disabled}
       className={cn(
         "booking-slot-pill w-full h-full flex items-center justify-center rounded-md text-[10px] font-bold uppercase",
@@ -3204,6 +3273,7 @@ function ScheduleGrid({
   selectedConsole,
   selectedSlots,
   onSlotSelect,
+  onQuickBooking,
   allSlots,
   isLoading,
   fetchSlotBookings,
@@ -3214,6 +3284,7 @@ function ScheduleGrid({
   selectedConsole: ConsoleFilter
   selectedSlots: SelectedSlot[]
   onSlotSelect: (slot: SelectedSlot) => void
+  onQuickBooking: (slot: SelectedSlot) => void
   allSlots: { [key: string]: any[] }
   isLoading: boolean
   fetchSlotBookings: (slotIds: number[], date: string) => Promise<void>
@@ -3403,7 +3474,7 @@ function ScheduleGrid({
     })[0]
   }
 
-  const handleSlotClick = (dayData: any, time: string, gameConsole: ConsoleType) => {
+  const handleSlotClick = (dayData: any, time: string, gameConsole: ConsoleType, openBooking = false) => {
   const daySlots = allSlots[dayData.fullDate] || []
   
   let matchingSlot = daySlots.find(slot => {
@@ -3448,8 +3519,9 @@ function ScheduleGrid({
   }
 
   // ✅ For active slots, allow selection for new booking
-  if (matchingSlot.is_available) {
-    onSlotSelect(selectedSlot)
+  if (matchingSlot.is_available && Number(matchingSlot.available_slot) > 0) {
+    if (openBooking) onQuickBooking(selectedSlot)
+    else onSlotSelect(selectedSlot)
   }
 }
 
@@ -3492,7 +3564,8 @@ function ScheduleGrid({
               timeSlots.push(
                 <div
                   key={`continuation-${day.fullDate}-${gameConsole.id}-${time}`}
-                  onClick={() => handleSlotClick(day, time, gameConsole)}
+                  onClick={(event) => { if (event.detail < 2) handleSlotClick(day, time, gameConsole) }}
+                  onDoubleClick={() => handleSlotClick(day, time, gameConsole, true)}
       className={cn(
         "booking-slot-continuation group relative h-full w-full cursor-pointer overflow-hidden rounded-md border transition-colors",
                     compact ? "min-h-[32px]" : "min-h-[40px]"
@@ -3567,6 +3640,7 @@ if (isPastTime) {
                   color={getConsoleColor(gameConsole.id)}
                   icon={getConsoleIcon(gameConsole.type)}
                   onClick={() => handleSlotClick(day, time, gameConsole)}
+                  onDoubleClick={() => handleSlotClick(day, time, gameConsole, true)}
                   selected={isSelected}
                   disabled={false}
                   compact={compact}
@@ -5480,6 +5554,7 @@ useEffect(() => {
                   selectedConsole={selectedConsole}
                   selectedSlots={selectedSlots}
                   onSlotSelect={handleSlotSelect}
+                  onQuickBooking={handleQuickBooking}
                   allSlots={allSlots}
                   isLoading={isLoading}
                   fetchSlotBookings={fetchSlotBookings}
@@ -5507,6 +5582,7 @@ useEffect(() => {
               selectedConsole={selectedConsole}
               selectedSlots={selectedSlots}
               onSlotSelect={handleSlotSelect}
+                  onQuickBooking={handleQuickBooking}
               allSlots={allSlots}
               isLoading={isLoading}
               fetchSlotBookings={fetchSlotBookings}
@@ -5521,6 +5597,8 @@ useEffect(() => {
         onClose={() => setShowBookingForm(false)}
         selectedSlots={selectedSlots}
         onRemoveSelectedSlot={handleRemoveSelectedSlot}
+        onSlotSelect={handleSlotSelect}
+        allSlots={allSlots}
         onBookingComplete={handleBookingComplete}
         availableConsoles={availableConsoles}
       />
