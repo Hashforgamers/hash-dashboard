@@ -159,7 +159,7 @@ export default function TournamentsPage() {
         </div>
       </div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto pr-1 space-y-3 sm:space-y-4">
+      <div className="min-h-0 flex-1 overflow-y-auto pr-1 space-y-3 sm:space-y-3">
         {/* ── Filters ──────────────────────────────────── */}
         <div className="gaming-panel dashboard-toolbar mb-2 rounded-xl p-3">
           <div className="relative flex-1 min-w-[220px]">
@@ -223,7 +223,7 @@ export default function TournamentsPage() {
                 ))
               ) : paginated.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="table-cell text-center py-20">
+                  <td colSpan={5} className="table-cell text-center py-8">
                     <div className="flex flex-col items-center gap-3">
                       <Trophy className="w-10 h-10 text-muted-foreground/30" />
                       <p className="body-text-muted">

@@ -22,7 +22,6 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
-  CardDescription,
 } from "@/components/ui/card";
 import { 
   Gamepad2, 
@@ -384,17 +383,15 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
 
 
       {/* Header */}
-      <div className="mb-8">
-        <h1 className="premium-heading mb-2 !text-2xl sm:!text-3xl md:!text-4xl">
-          Add New {formProfile.displayName.toUpperCase()} Console
+      <div className="mb-3">
+        <h1 className="section-title">
+          Add {formProfile.displayName}
         </h1>
-        <p className="premium-subtle">
-          Fill out the information below to add a new console to your gaming cafe inventory
-        </p>
+
       </div>
 
 
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form onSubmit={handleSubmit} className="space-y-3">
         
         {/* Section 1: Quick Setup (Copy Console) */}
         <Card className="add-console-card">
@@ -403,11 +400,8 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
               <Copy className="h-5 w-5 text-slate-700 dark:text-cyan-300" />
               Quick Setup
             </CardTitle>
-            <CardDescription className="dash-subtitle premium-subtle">
-              Copy data from an existing console to speed up the process
-            </CardDescription>
           </CardHeader>
-          <CardContent className="pt-6">
+          <CardContent className="pt-3">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
               <div className="md:col-span-3 space-y-2">
                 <Label htmlFor="copyConsole">Copy From Existing Console</Label>
@@ -450,12 +444,9 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
               <Gamepad2 className="h-5 w-5 text-slate-700 dark:text-emerald-300" />
               Console Details
             </CardTitle>
-            <CardDescription className="dash-subtitle premium-subtle">
-              Enter the basic information about the console
-            </CardDescription>
           </CardHeader>
-          <CardContent className="pt-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <CardContent className="pt-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div className="space-y-2">
                 <Label htmlFor="consoleNumber">
                   Console Number <span className="text-red-500">*</span>
@@ -572,11 +563,8 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
               <HardDrive className="h-5 w-5 text-slate-700 dark:text-violet-300" />
               Hardware Specifications
             </CardTitle>
-            <CardDescription className="dash-subtitle premium-subtle">
-              Enter the technical specifications and hardware details
-            </CardDescription>
           </CardHeader>
-          <CardContent className="pt-6">
+          <CardContent className="pt-3">
             <DynamicHardwareFields
               profile={formProfile}
               formdata={formdata}
@@ -595,12 +583,9 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
               <Wrench className="h-5 w-5 text-slate-700 dark:text-orange-300" />
               Maintenance & Status
             </CardTitle>
-            <CardDescription className="dash-subtitle premium-subtle">
-              Enter maintenance and availability information
-            </CardDescription>
           </CardHeader>
-          <CardContent className="pt-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <CardContent className="pt-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div className="space-y-2">
                 <Label htmlFor="availableStatus">
                   Available Status <span className="text-red-500">*</span>
@@ -706,12 +691,9 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
               <DollarSign className="h-5 w-5 text-slate-700 dark:text-emerald-300" />
               Price & Cost Information
             </CardTitle>
-            <CardDescription className="dash-subtitle premium-subtle">
-              Enter pricing and warranty information
-            </CardDescription>
           </CardHeader>
-          <CardContent className="pt-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <CardContent className="pt-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div className="space-y-2">
                 <Label htmlFor="price">
                   Purchase Price <span className="text-red-500">*</span>

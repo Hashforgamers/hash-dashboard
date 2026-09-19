@@ -527,9 +527,9 @@ export default function CreateTournamentPage() {
 
   return (
     <DashboardLayout>
-    <div className="flex-1 space-y-4 overflow-y-auto sm:space-y-5">
+    <div className="flex-1 space-y-3 overflow-y-auto sm:space-y-5">
       <div className="gaming-panel rounded-xl p-4 sm:p-5">
-        <div className="flex flex-wrap items-start justify-between gap-4">
+        <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="max-w-3xl">
             <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-emerald-400/25 bg-emerald-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-emerald-200">
               <Zap className="h-3.5 w-3.5" />
@@ -573,7 +573,7 @@ export default function CreateTournamentPage() {
               <Trophy className="h-4 w-4 text-cyan-300" />
               Fast Setup Presets
             </h2>
-            <p className="premium-subtle text-sm">Start from a cafe-ready template, then tune the details.</p>
+
           </div>
         </div>
         <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
@@ -597,16 +597,16 @@ export default function CreateTournamentPage() {
       </div>
 
       <div className="w-full pb-6">
-        <div className="grid grid-cols-1 gap-4 xl:grid-cols-12">
+        <div className="grid grid-cols-1 gap-3 xl:grid-cols-12">
 
           <section className={`${sectionPanelClass} xl:col-span-7`}>
             <h2 className="section-title mb-1 flex items-center gap-2">
               <ListChecks className="h-4 w-4 text-cyan-300" />
               Public Listing
             </h2>
-            <p className="premium-subtle mb-4 text-sm">What players see before they register.</p>
+
             <div className="h-px bg-cyan-500/20 mb-5" />
-            <div className="space-y-4">
+            <div className="space-y-3">
               <div>
                 <label className={labelClass}>Tournament Name *</label>
                 <input
@@ -674,7 +674,7 @@ export default function CreateTournamentPage() {
               <ImageIcon className="h-4 w-4 text-cyan-300" />
               Banner
             </h2>
-            <p className="premium-subtle mb-4 text-sm">A strong banner makes the public tournament card easier to trust.</p>
+
             <div className="h-px bg-cyan-500/20 mb-5" />
             <BannerUploader
               preview={bannerPreview}
@@ -689,7 +689,7 @@ export default function CreateTournamentPage() {
               <Clock className="h-4 w-4 text-cyan-300" />
               Schedule & Check-in
             </h2>
-            <p className="premium-subtle mb-4 text-sm">Pick match day first, then set the registration cutoff.</p>
+
             <div className="h-px bg-cyan-500/20 mb-5" />
 
             <label className={`${labelClass} mb-3`}>Tournament Dates *</label>
@@ -737,7 +737,7 @@ export default function CreateTournamentPage() {
                 minDate={activePicker === 'end' ? (startDate ?? undefined) : undefined}
               />
 
-              <div className="space-y-4">
+              <div className="space-y-3">
                 <div className="rounded-lg border border-cyan-400/15 bg-slate-900/55 p-3">
                   <p className="text-xs font-bold uppercase tracking-wider text-cyan-100/70">Suggested operations</p>
                   <div className="mt-3 space-y-2 text-sm text-slate-300">
@@ -764,9 +764,9 @@ export default function CreateTournamentPage() {
               <Gamepad2 className="h-4 w-4 text-cyan-300" />
               Match Engine
             </h2>
-            <p className="premium-subtle mb-4 text-sm">How Hash will seed, create matches, and guide captains.</p>
+
             <div className="h-px bg-cyan-500/20 mb-5" />
-            <div className="space-y-4">
+            <div className="space-y-3">
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div>
                 <label className={labelClass}>Game</label>
@@ -855,9 +855,9 @@ export default function CreateTournamentPage() {
               <Users className="h-4 w-4 text-cyan-300" />
               Capacity & Prize
             </h2>
-            <p className="premium-subtle mb-4 text-sm">Keep this aligned with available PCs/consoles, seating, and staff bandwidth.</p>
+
             <div className="h-px bg-cyan-500/20 mb-5" />
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
               <div>
                 <label className={labelClass}>Max Teams</label>
                 <input

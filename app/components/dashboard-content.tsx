@@ -471,16 +471,14 @@ export function DashboardContent() {
               }
             >
               <div className="min-w-0">
-                <div className="flex h-full flex-col items-start justify-between gap-3">
+                <div className="flex h-full flex-col items-start justify-between gap-2">
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2 sm:gap-3">
                       <h1 className="premium-heading dashboard-hero-title leading-tight max-md:text-[1.1rem]">
                         Dashboard
                       </h1>
                     </div>
-                    <p className="premium-subtle mt-0.5 text-[11px] leading-relaxed sm:text-xs">
-                      Today&apos;s operations
-                    </p>
+
                   </div>
                   <div className="tab-container">
                     <button
@@ -539,7 +537,7 @@ export function DashboardContent() {
               </motion.div>
 
               <div className="operations-workspace grid flex-1 grid-cols-1 gap-2 overflow-hidden max-md:min-h-[520px] max-md:grid-rows-[1.05fr_0.95fr] max-md:gap-1.5 sm:gap-3 xl:grid-cols-12">
-                <div className="space-y-2 sm:space-y-4 flex flex-col min-h-0 xl:col-span-8 2xl:col-span-9 max-md:h-full max-md:min-h-0">
+                <div className="space-y-2 sm:space-y-3 flex flex-col min-h-0 xl:col-span-8 2xl:col-span-9 max-md:h-full max-md:min-h-0">
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}

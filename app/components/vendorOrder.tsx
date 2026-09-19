@@ -165,14 +165,14 @@ const VendorOrderPage: React.FC = () => {
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="relative flex h-full min-h-0 flex-col gap-3 overflow-hidden px-1 pb-2 sm:px-2"
+      className="relative flex h-full min-h-0 flex-col gap-3 overflow-hidden"
     >
       {/* ---------- HEADER ---------- */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
-        className="shrink-0 rounded-lg border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-900"
+        className="dashboard-toolbar shrink-0"
       >
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>

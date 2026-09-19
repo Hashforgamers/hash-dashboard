@@ -52,7 +52,7 @@ export function OffersSection({
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.2 }}
-      className="flex flex-1 min-h-0 flex-col gap-4 overflow-hidden"
+      className="flex flex-1 min-h-0 flex-col gap-3 overflow-hidden"
     >
       <div className="gaming-panel shrink-0 flex flex-wrap items-center justify-between gap-3 rounded-xl p-3">
         <div className="flex items-center gap-3">
@@ -105,7 +105,7 @@ export function OffersSection({
           </button>
         </div>
       ) : viewMode === "grid" ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4 overflow-y-auto pb-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-3 overflow-y-auto pb-4">
           {offers.map((offer) => {
             const Icon = getConsoleIcon(offer.console_type);
             const isDeleting = deletingOfferId === offer.id;
@@ -147,7 +147,7 @@ export function OffersSection({
                   </div>
                 </CardHeader>
 
-                <CardContent className="p-4 space-y-4">
+                <CardContent className="p-4 space-y-3">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="stat-value-large text-sky-700 dark:text-blue-400">₹{offer.offered_price}</p>

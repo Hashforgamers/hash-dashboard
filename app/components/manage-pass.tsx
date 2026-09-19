@@ -264,7 +264,7 @@ export default function ManagePassesPage() {
   if (!hasMounted) {
     return (
       <div className="page-container">
-        <div className="flex items-center justify-center py-16">
+        <div className="flex items-center justify-center py-8">
           <Loader2 className="icon-lg animate-spin text-blue-400" />
         </div>
       </div>
@@ -272,11 +272,11 @@ export default function ManagePassesPage() {
   }
 
   return (
-    <div className="dashboard-module dashboard-typography flex h-full min-h-0 flex-col gap-4 overflow-hidden px-1 pb-2 sm:px-2">
+    <div className="dashboard-module dashboard-typography flex h-full min-h-0 flex-col gap-3 overflow-hidden">
       {feedback}
 
       {/* ✅ View Toggle */}
-      <div className="gaming-panel dashboard-module-panel mb-2 shrink-0 flex flex-wrap items-center justify-between gap-3 rounded-xl p-3">
+      <div className="dashboard-toolbar shrink-0 flex flex-wrap items-center justify-between gap-3">
         <div className="dashboard-module-tab-group flex items-center gap-1 rounded-lg p-1">
           {!isMobile && (
             <>
@@ -324,12 +324,12 @@ export default function ManagePassesPage() {
       <div className="min-h-0 flex-1 overflow-y-auto pr-1">
         {/* ✅ Content */}
         {loading ? (
-          <div className="flex items-center justify-center gap-3 py-16 text-muted-foreground">
+          <div className="flex items-center justify-center gap-3 py-8 text-muted-foreground">
             <Loader2 className="w-8 h-8 animate-spin text-blue-400" />
             <p className="body-text-muted">Loading passes...</p>
           </div>
         ) : passes.length === 0 ? (
-          <div className="gaming-panel dashboard-module-panel flex flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed border-cyan-400/20 py-16">
+          <div className="gaming-panel dashboard-module-panel flex flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed border-cyan-400/20 py-8">
             <BadgeCheck className="w-12 h-12 text-muted-foreground/30" />
             <h3 className="section-title text-muted-foreground/60">No passes found</h3>
             <p className="body-text-muted">Create your first pass to get started</p>
@@ -352,7 +352,7 @@ export default function ManagePassesPage() {
                   {hourPasses.length}
                 </span>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-3">
                 {hourPasses.map((pass) => (
                   <PassCard
                     key={pass.id}
@@ -378,7 +378,7 @@ export default function ManagePassesPage() {
                   {datePasses.length}
                 </span>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-3">
                 {datePasses.map((pass) => (
                   <PassCard
                     key={pass.id}
@@ -685,7 +685,7 @@ function AddPassDialog({ passTypes, onSave, buttonClassName }: any) {
           <p className="ui-dialog-subtle mt-0.5 text-xs sm:text-sm">Configure your new membership pass</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4 pt-2">
+        <form onSubmit={handleSubmit} className="space-y-3 pt-2">
           {feedback}
           {/* Mode Toggle */}
           <div>
@@ -905,7 +905,7 @@ function EditPassDialog({ passObj, passTypes, onSave }: any) {
           <p className="body-text-muted mt-0.5">Update pass details</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4 pt-2">
+        <form onSubmit={handleSubmit} className="space-y-3 pt-2">
           {feedback}
           {/* Pass Name */}
           <div className="space-y-1.5">
