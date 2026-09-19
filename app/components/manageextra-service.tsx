@@ -160,7 +160,7 @@ export default function ManageExtraServices() {
   const { data: cachedCategories, loading: cacheLoading, refresh } = useModuleCache<ExtraServiceCategory[]>(
     cacheKey,
     fetcher,
-    120000
+    120000, undefined, Boolean(vendorId)
   )
 
   // ✅ View mode per category: { [categoryId]: 'grid' | 'table' }

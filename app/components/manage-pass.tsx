@@ -124,7 +124,7 @@ export default function ManagePassesPage() {
       return res.data || [];
     },
     600000,
-    passesKey
+    passesKey, Boolean(activeVendorId)
   );
 
   const { data: cachedPasses, refresh: refreshPassesCache } = useModuleCache<CafePass[]>(
@@ -147,7 +147,7 @@ export default function ManagePassesPage() {
       }
     },
     120000,
-    passesKey
+    passesKey, Boolean(activeVendorId)
   );
 
   useEffect(() => {

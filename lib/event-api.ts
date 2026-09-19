@@ -237,7 +237,6 @@ export async function listEvents(
     retryDelayMs: 250,
     dedupe: true,
     dedupeKey: `GET:${API_BASE}/api/vendor/events/${qs}`,
-    cacheTtlMs: 10_000,
   });
 }
 
@@ -251,7 +250,6 @@ export async function getEvent(
     retries: 2,
     dedupe: true,
     dedupeKey: `GET:${API_BASE}/api/vendor/events/${eventId}`,
-    cacheTtlMs: 10_000,
   });
 }
 
@@ -266,7 +264,6 @@ export async function getTournamentDetail(
       retries: 2,
       dedupe: true,
       dedupeKey: `GET:${API_BASE}/api/vendor/events/${eventId}/detail`,
-      cacheTtlMs: 7_000,
     });
   } catch (error) {
     if (!(error instanceof ApiError) || error.status !== 404) {
@@ -312,7 +309,6 @@ export async function getRegistrations(
       retries: 2,
       dedupe: true,
       dedupeKey: `GET:${API_BASE}/api/vendor/events/${eventId}/registrations`,
-      cacheTtlMs: 7_000,
     });
   } catch {
     return [];
@@ -426,7 +422,6 @@ export async function getTeams(
       retries: 2,
       dedupe: true,
       dedupeKey: `GET:${API_BASE}/api/vendor/events/${eventId}/teams`,
-      cacheTtlMs: 7_000,
     });
   } catch {
     return [];

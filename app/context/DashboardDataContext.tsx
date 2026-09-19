@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { createContext, useContext, useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { jwtDecode } from "jwt-decode";
 import { DASHBOARD_URL } from "@/src/config/env";
 import { useAccess } from "./AccessContext";
@@ -15,7 +15,7 @@ interface DashboardDataContextValue {
   refreshLanding: (force?: boolean) => Promise<any | null>;
   refreshConsoles: (force?: boolean) => Promise<any[] | null>;
   setLandingData: (data: any | null) => void;
-  setConsoles: (data: any[]) => void;
+  setConsoles: React.Dispatch<React.SetStateAction<any[]>>;
   moduleCache: Record<string, { data: any; updatedAt: number }>;
   moduleVersions: Record<string, number>;
   setModuleCache: (key: string, data: any) => void;
@@ -48,6 +48,14 @@ export function DashboardDataProvider({ children }: { children: React.ReactNode 
   const [consolesLoading, setConsolesLoading] = useState(false);
   const [moduleCache, setModuleCacheState] = useState<Record<string, { data: any; updatedAt: number }>>({});
   const [moduleVersions, setModuleVersions] = useState<Record<string, number>>({});
+  const currentVendorRef = useRef(vendorId);
+  currentVendorRef.current = vendorId;
+  const landingRef = useRef(landingData);
+  landingRef.current = landingData;
+  const consolesRef = useRef(consoles);
+  consolesRef.current = consoles;
+  const lastLandingVendorRef = useRef<number | null>(null);
+  const lastConsolesVendorRef = useRef<number | null>(null);
   const lastLandingRef = useRef<number>(0);
   const lastConsolesRef = useRef<number>(0);
 
@@ -58,16 +66,27 @@ export function DashboardDataProvider({ children }: { children: React.ReactNode 
       return;
     }
     const decoded = decodeVendorIdFromToken();
-    if (decoded) {
-      setVendorId(decoded);
-    }
+    setVendorId(decoded);
   }, [selectedCafeId]);
 
-  const refreshLanding = async (force = false): Promise<any | null> => {
+  useEffect(() => {
+    landingRef.current = null;
+    consolesRef.current = [];
+    lastLandingRef.current = 0;
+    lastConsolesRef.current = 0;
+    setLandingData(null);
+    setConsoles([]);
+    setLandingLoading(false);
+    setConsolesLoading(false);
+    setModuleCacheState({});
+    setModuleVersions({});
+  }, [vendorId]);
+
+  const refreshLanding = useCallback(async (force = false): Promise<any | null> => {
     if (!vendorId) return null;
     const now = Date.now();
-    if (!force && landingData && now - lastLandingRef.current < LANDING_TTL_MS) {
-      return landingData;
+    if (!force && lastLandingVendorRef.current === vendorId && landingRef.current && now - lastLandingRef.current < LANDING_TTL_MS) {
+      return landingRef.current;
     }
     setLandingLoading(true);
     try {
@@ -77,24 +96,27 @@ export function DashboardDataProvider({ children }: { children: React.ReactNode 
         retries: 2,
         dedupe: true,
         dedupeKey: `GET:${url}`,
-        cacheTtlMs: LANDING_TTL_MS,
+        cacheTtlMs: 0,
       });
+      if (currentVendorRef.current !== vendorId) return null;
       setLandingData(data);
+      landingRef.current = data;
+      lastLandingVendorRef.current = vendorId;
       lastLandingRef.current = Date.now();
       return data;
     } catch (error) {
       console.error("❌ DashboardDataProvider: landing fetch failed", error);
       return null;
     } finally {
-      setLandingLoading(false);
+      if (currentVendorRef.current === vendorId) setLandingLoading(false);
     }
-  };
+  }, [vendorId]);
 
-  const refreshConsoles = async (force = false): Promise<any[] | null> => {
+  const refreshConsoles = useCallback(async (force = false): Promise<any[] | null> => {
     if (!vendorId) return null;
     const now = Date.now();
-    if (!force && consoles.length > 0 && now - lastConsolesRef.current < CONSOLES_TTL_MS) {
-      return consoles;
+    if (!force && lastConsolesVendorRef.current === vendorId && consolesRef.current.length > 0 && now - lastConsolesRef.current < CONSOLES_TTL_MS) {
+      return consolesRef.current;
     }
     setConsolesLoading(true);
     try {
@@ -104,32 +126,35 @@ export function DashboardDataProvider({ children }: { children: React.ReactNode 
         retries: 2,
         dedupe: true,
         dedupeKey: `GET:${url}`,
-        cacheTtlMs: CONSOLES_TTL_MS,
+        cacheTtlMs: 0,
       });
+      if (currentVendorRef.current !== vendorId) return null;
       setConsoles(Array.isArray(data) ? data : []);
+      consolesRef.current = Array.isArray(data) ? data : [];
+      lastConsolesVendorRef.current = vendorId;
       lastConsolesRef.current = Date.now();
       return Array.isArray(data) ? data : [];
     } catch (error) {
       console.error("❌ DashboardDataProvider: consoles fetch failed", error);
       return null;
     } finally {
-      setConsolesLoading(false);
+      if (currentVendorRef.current === vendorId) setConsolesLoading(false);
     }
-  };
+  }, [vendorId]);
 
-  const setModuleCache = (key: string, data: any) => {
+  const setModuleCache = useCallback((key: string, data: any) => {
     setModuleCacheState((prev) => ({
       ...prev,
       [key]: { data, updatedAt: Date.now() },
     }));
-  };
+  }, []);
 
-  const bumpModuleVersion = (key: string) => {
+  const bumpModuleVersion = useCallback((key: string) => {
     setModuleVersions((prev) => ({
       ...prev,
       [key]: (prev[key] || 0) + 1,
     }));
-  };
+  }, []);
 
   const value = useMemo(
     () => ({
@@ -147,7 +172,7 @@ export function DashboardDataProvider({ children }: { children: React.ReactNode 
       setModuleCache,
       bumpModuleVersion,
     }),
-    [vendorId, landingData, consoles, landingLoading, consolesLoading, moduleCache, moduleVersions]
+    [vendorId, landingData, consoles, landingLoading, consolesLoading, moduleCache, moduleVersions, refreshLanding, refreshConsoles, setModuleCache, bumpModuleVersion]
   );
 
   return (
