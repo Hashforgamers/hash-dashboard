@@ -638,8 +638,8 @@ export default function GamesManagementPage() {
                       {/* Search */}
                       <div className="dashboard-module-surface mb-4 rounded-lg p-3">
                         <div className="relative">
-                          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                          <input
+                          <Search data-search-icon="" aria-hidden="true" className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                          <input data-search-input=""
                             type="text"
                             placeholder="Search games (e.g., GTA, Call of Duty)..."
                             value={searchTerm}

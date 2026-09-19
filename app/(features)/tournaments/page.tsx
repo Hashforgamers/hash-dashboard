@@ -44,9 +44,6 @@ export default function TournamentsPage() {
   const { vendorId: cachedVendorId } = useDashboardData();
   const { token, loading: tokenLoading, error: tokenError, refresh } = useEventsToken(vendorId);
 
-  const [events,       setEvents]       = useState<EventItem[]>([]);
-  const [loadingData,  setLoadingData]  = useState(false);
-  const [dataError,    setDataError]    = useState<string | null>(null);
   const [search,       setSearch]       = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [page,         setPage]         = useState(1);
@@ -71,7 +68,7 @@ export default function TournamentsPage() {
 
   const cacheKey = vendorId ? `tournaments:${vendorId}:${statusFilter || "all"}` : "tournaments:0";
   const versionKey = vendorId ? `tournaments:${vendorId}` : "tournaments:0";
-  const { data: cachedEvents, refresh: refreshEventsCache } = useModuleCache<EventItem[]>(
+  const { data: cachedEvents, loading: loadingData, error: loadError, refresh: refreshEventsCache } = useModuleCache<EventItem[]>(
     cacheKey,
     async () => {
       if (!token) return [];
@@ -79,37 +76,15 @@ export default function TournamentsPage() {
       return data.map(withEffectiveEventStatus);
     },
     120000,
-    versionKey
+    versionKey,
+    Boolean(token && vendorId)
   );
 
-  useEffect(() => {
-    if (!token) return;
-    if (cachedEvents) {
-      setEvents(cachedEvents.map(withEffectiveEventStatus));
-    }
-    setLoadingData(true);
-    setDataError(null);
-    refreshEventsCache(true)
-      .then((data) => setEvents((data || []).map(withEffectiveEventStatus)))
-      .catch((error) => {
-        console.error(error);
-        setDataError(error instanceof Error ? error.message : 'Failed to load tournaments.');
-      })
-      .finally(() => setLoadingData(false));
-  }, [token, statusFilter, cachedEvents, refreshEventsCache]);
-
-  const handleRefreshEvents = async () => {
-    setLoadingData(true);
-    setDataError(null);
-    try {
-      const data = await refreshEventsCache(true);
-      setEvents((data || []).map(withEffectiveEventStatus));
-    } catch (error) {
-      console.error(error);
-      setDataError(error instanceof Error ? error.message : 'Failed to load tournaments.');
-    } finally {
-      setLoadingData(false);
-    }
+  // Cache updates render the list; they must never trigger another forced fetch.
+  const events = (cachedEvents || []).map(withEffectiveEventStatus);
+  const dataError = loadError?.message;
+  const handleRefreshEvents = () => {
+    void refreshEventsCache(true).catch(() => undefined);
   };
 
   const filtered   = events.filter((e) =>
@@ -120,23 +95,23 @@ export default function TournamentsPage() {
 
   // ── Guards ────────────────────────────────────────────
   if (tokenLoading) return (
-    <div className="page-container items-center justify-center">
+    <DashboardLayout contentScroll="contained"><div className="flex h-full items-center justify-center">
       <div className="flex flex-col items-center gap-3">
         <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
         <p className="body-text-muted">Initializing session...</p>
       </div>
-    </div>
+    </div></DashboardLayout>
   );
 
   if (tokenError) return (
-    <div className="page-container items-center justify-center">
+    <DashboardLayout contentScroll="contained"><div className="flex h-full items-center justify-center">
       <div className="content-card content-card-padding text-center max-w-sm w-full">
         <p className="text-red-400 mb-4 body-text">{tokenError}</p>
         <button className="btn-primary w-full justify-center" onClick={refresh}>
           Retry
         </button>
       </div>
-    </div>
+    </div></DashboardLayout>
   );
 
   return (
@@ -163,8 +138,8 @@ export default function TournamentsPage() {
         {/* ── Filters ──────────────────────────────────── */}
         <div className="gaming-panel dashboard-toolbar mb-2 rounded-xl p-3">
           <div className="relative flex-1 min-w-[220px]">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 icon-md text-muted-foreground" />
-            <input
+            <Search data-search-icon="" aria-hidden="true" className="absolute left-3 top-1/2 -translate-y-1/2 icon-md text-muted-foreground" />
+            <input data-search-input=""
               className="dashboard-module-input h-10 w-full pl-10 pr-4"
               placeholder="Search tournaments..."
               value={search}

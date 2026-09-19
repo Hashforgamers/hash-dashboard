@@ -778,8 +778,8 @@ export function TransactionTable() {
         className="dashboard-toolbar shrink-0 flex-col items-stretch gap-2 md:flex-row md:items-center"
       >
         <div className="relative min-w-0 flex-1 md:min-w-[220px]">
-          <SearchIcon className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-500 dark:text-slate-400" />
-          <Input
+          <SearchIcon data-search-icon="" aria-hidden="true" className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-500 dark:text-slate-400" />
+          <Input data-search-input=""
             placeholder="Search transactions..."
             className="dashboard-module-input h-10 w-full pl-10 text-sm"
             value={searchTerm}

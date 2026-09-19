@@ -19,8 +19,8 @@ export default function ResponsiveSearchFilter({
       <div className="dashboard-toolbar">
         {/* Search Input */}
         <div className="relative flex-1 min-w-0">
-          <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400 sm:h-4 sm:w-4" />
-          <input
+          <Search data-search-icon="" aria-hidden="true" className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400 sm:h-4 sm:w-4" />
+          <input data-search-input=""
             type="text"
             placeholder="Search by name or console..."
             value={searchTerm}
