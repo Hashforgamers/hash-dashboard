@@ -278,3 +278,8 @@ svg[data-search-icon],
 @media (max-width: 640px) {
   [data-compact-dialog="meals"] .compact-meal-sidebar { width: 100%; max-height: 92px; }
 }
+
+/* Tournament overview uses the same compact hierarchy as other workspace pages. */
+.workspace-ui .tournament-detail .section-title { font-size: 14px; line-height: 20px; }
+.workspace-ui .tournament-detail .body-text-muted { font-size: 12px; line-height: 16px; }
+.workspace-ui .tournament-detail .body-text { font-size: 13px; line-height: 20px; }

@@ -4919,7 +4919,6 @@ function DashboardQuickBookingSlab({
         })}
       </div>
       <span className="dashboard-quick-context">{selectedConsoleItem?.name || selectedConsoleItem?.type}</span>
-      <a href="/booking" className="dashboard-quick-center">Full Center</a>
       </div>
       <div className="dashboard-quick-slots-row">
       <div className="dashboard-slot-slider" aria-label="Available slots today">

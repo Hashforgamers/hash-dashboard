@@ -312,19 +312,15 @@ export default function TournamentDetailPage() {
 
   return (
     <DashboardLayout>
-    <div className="flex-1 space-y-3 overflow-y-auto sm:space-y-3">
+    <div className="tournament-detail flex-1 space-y-3 overflow-y-auto">
 
       {/* ── Page Header ───────────────────────────────── */}
-      <div className="gaming-panel rounded-xl p-4 sm:p-5">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-          <h1 className="premium-heading flex items-center gap-2">
+          <h1 className="premium-heading !text-lg flex items-center gap-2">
             {event.title}
-            <Sparkles className="h-4 w-4 text-emerald-400 sm:h-5 sm:w-5" />
           </h1>
-          <p className="premium-subtle mt-1">
-            Manage tournament details, participants, and registrations.
-          </p>
         </div>
           <button className="inline-flex items-center justify-center gap-2 rounded-lg border border-cyan-300/25 bg-slate-900/70 px-3 py-2 text-xs font-semibold text-slate-200 transition-all duration-200 hover:border-cyan-300/45 hover:bg-slate-800/80 hover:text-cyan-100 sm:px-4 sm:text-sm" onClick={exportCSV}>
             <Download className="icon-sm" /> Export CSV
@@ -333,7 +329,7 @@ export default function TournamentDetailPage() {
       </div>
 
       {/* ── Breadcrumb ────────────────────────────────── */}
-      <nav className="gaming-panel flex flex-wrap items-center gap-2 rounded-xl p-3 text-xs text-slate-300/70 sm:text-sm">
+      <nav className="flex flex-wrap items-center gap-2 text-xs text-slate-400">
         <button
           onClick={() => router.push('/')}
           className="hover:text-foreground transition-colors inline-flex items-center gap-1"
@@ -352,10 +348,10 @@ export default function TournamentDetailPage() {
       </nav>
 
       {/* ── Tournament Details Card ───────────────────── */}
-      <div className="gaming-panel content-card-padding mb-4 flex-shrink-0 rounded-xl border-cyan-400/20 bg-slate-950/45">
-        <div className="flex flex-col md:flex-row gap-3">
+      <div className="gaming-panel flex-shrink-0 rounded-lg p-3">
+        <div className="flex flex-col sm:flex-row gap-3">
           {/* Banner / thumbnail */}
-          <div className="w-full md:w-52 h-32 rounded-xl flex-shrink-0 overflow-hidden border border-border bg-muted/30 flex items-center justify-center">
+          <div className="w-24 sm:w-32 h-20 rounded-lg flex-shrink-0 overflow-hidden border border-border bg-muted/30 flex items-center justify-center">
             {event.banner_image_url ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
@@ -373,8 +369,8 @@ export default function TournamentDetailPage() {
 
           {/* Info grid */}
           <div className="flex-1 min-w-0">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="section-title">Tournament Details</h2>
+            <div className="flex items-center justify-between mb-2">
+              <h2 className="section-title">Overview</h2>
               <span
                 className={`text-xs font-semibold px-3 py-1 rounded-full
                   ${EVENT_STATUS_BADGE[event.status]}`}
@@ -382,7 +378,7 @@ export default function TournamentDetailPage() {
                 {event.status.charAt(0).toUpperCase() + event.status.slice(1)}
               </span>
             </div>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 gap-3">
               <div>
                 <p className="body-text-muted mb-1">Start</p>
                 <p className="body-text font-medium text-sm">{fmt(event.start_at)}</p>
@@ -391,26 +387,18 @@ export default function TournamentDetailPage() {
                 <p className="body-text-muted mb-1">End</p>
                 <p className="body-text font-medium text-sm">{fmt(event.end_at)}</p>
               </div>
-              <div>
-                <p className="body-text-muted mb-1">Registrations</p>
-                <p className="stat-value-large">{registrations.length}</p>
-              </div>
-              <div>
-                <p className="body-text-muted mb-1">Confirmed</p>
-                <p className="stat-value-large text-green-400">{confirmed}</p>
-              </div>
             </div>
           </div>
         </div>
       </div>
 
       {/* ── Status Control ───────────────────────────── */}
-      <div className="gaming-panel rounded-xl border border-cyan-400/20 bg-slate-950/45 p-4 sm:p-5">
+      <div className="gaming-panel rounded-lg p-3">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <h3 className="section-title">Tournament Status</h3>
             <p className="premium-subtle mt-1 text-sm">
-              Current state: {EVENT_STATUS_LABEL[event.status]}. {EVENT_STATUS_HELP[event.status]}
+              {EVENT_STATUS_HELP[event.status]}
             </p>
           </div>
           <span className={`rounded-full px-3 py-1 text-xs font-semibold ${EVENT_STATUS_BADGE[event.status]}`}>
@@ -418,7 +406,7 @@ export default function TournamentDetailPage() {
           </span>
         </div>
 
-        <div className="mt-4 grid grid-cols-2 gap-2 md:grid-cols-5">
+        <div className="mt-2 flex flex-wrap gap-2">
           {EVENT_STATUS_FLOW.map((status) => {
             const active = status === event.status;
             const busy = statusBusy === status;
@@ -426,6 +414,7 @@ export default function TournamentDetailPage() {
               <button
                 key={status}
                 type="button"
+                title={EVENT_STATUS_HELP[status]}
                 disabled={active || !!statusBusy}
                 onClick={() => handleStatusChange(status)}
                 className={`rounded-lg border px-3 py-2 text-left transition-all disabled:cursor-not-allowed ${
@@ -436,9 +425,6 @@ export default function TournamentDetailPage() {
               >
                 <span className="block text-xs font-bold uppercase tracking-wider">
                   {busy ? 'Updating...' : EVENT_STATUS_LABEL[status]}
-                </span>
-                <span className="mt-1 block text-[11px] leading-4 text-slate-400">
-                  {EVENT_STATUS_HELP[status]}
                 </span>
               </button>
             );
@@ -453,30 +439,32 @@ export default function TournamentDetailPage() {
       </div>
 
       {/* ── Stat Pills ────────────────────────────────── */}
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4 mb-4 flex-shrink-0">
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 flex-shrink-0">
         {[
           { label: 'Total',     value: registrations.length, color: 'icon-blue',    icon: <Users        className="icon-md text-blue-400"    /> },
           { label: 'Confirmed', value: confirmed,            color: 'icon-green',   icon: <CheckCircle2 className="icon-md text-green-400"   /> },
           { label: 'Pending',   value: pending,              color: 'icon-yellow',  icon: <Clock        className="icon-md text-yellow-400"  /> },
           { label: 'Checked In',value: checkedIn,            color: 'icon-emerald', icon: <CreditCard   className="icon-md text-emerald-400" /> },
         ].map(({ label, value, color, icon }) => (
-          <div key={label} className="gaming-kpi-card rounded-xl border border-border p-4">
+          <div key={label} className="rounded-lg border border-border bg-muted/20 px-3 py-2">
             <div className="flex items-center justify-between">
               <div className="min-w-0">
                 <p className="text-xs uppercase tracking-wide text-slate-300/70">{label}</p>
-                <p className="mt-1 text-xl font-bold text-cyan-100 sm:text-2xl">{value}</p>
+                <p className="text-base font-semibold tabular-nums">{value}</p>
               </div>
-              <div className={`inline-flex h-10 w-10 items-center justify-center rounded-lg ${color}`}>{icon}</div>
+              <div className={`inline-flex h-7 w-7 items-center justify-center rounded-md ${color}`}>{icon}</div>
             </div>
           </div>
         ))}
       </div>
 
       {/* Tournament Engine */}
-      <div className="gaming-panel rounded-xl border border-cyan-400/20 bg-slate-950/45 p-4 sm:p-5">
+      <details className="gaming-panel rounded-lg p-3">
+        <summary className="cursor-pointer text-sm font-semibold">Match management · {matches.length} matches</summary>
+        <div className="mt-3">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <h3 className="section-title">Tournament Engine</h3>
+            <h3 className="section-title">Bracket controls</h3>
             <p className="premium-subtle text-sm">
               {event.game || 'valorant'} | {event.format || 'single_elimination'} | Prize {event.currency || 'INR'} {event.prize_pool ?? 0}
             </p>
@@ -500,7 +488,7 @@ export default function TournamentDetailPage() {
             <div>
               <p className="text-sm font-semibold text-cyan-100">Bracket source</p>
               <p className="mt-1 text-xs text-slate-400">
-                Default uses all confirmed registrations. Turn on check-in only for walk-in/LAN events where no-shows should be excluded.
+                Include confirmed registrations, or only checked-in teams.
               </p>
             </div>
             <label className="flex cursor-pointer select-none items-center gap-2 rounded-lg border border-cyan-400/15 bg-slate-950/50 px-3 py-2 text-xs font-semibold text-slate-200">
@@ -556,7 +544,7 @@ export default function TournamentDetailPage() {
           </div>
 
           {matches.length === 0 ? (
-            <div className="rounded-lg border border-cyan-400/15 bg-slate-900/45 p-6 text-center text-sm text-slate-400">
+            <div className="rounded-lg border border-cyan-400/15 bg-slate-900/45 p-3 text-center text-sm text-slate-400">
               Generate a bracket from confirmed registrations to create live match cards.
             </div>
           ) : (
@@ -650,12 +638,13 @@ export default function TournamentDetailPage() {
             </div>
           )}
         </div>
-      </div>
+        </div>
+      </details>
 
       {/* ── Registrations Table ───────────────────────── */}
       <div className="gaming-panel flex flex-col overflow-hidden rounded-xl border border-cyan-400/20 bg-slate-950/45">
         {/* Table toolbar */}
-        <div className="dashboard-toolbar justify-between gap-3 p-4 border-b border-cyan-500/20 flex-shrink-0">
+        <div className="dashboard-toolbar justify-between gap-3 p-3 border-b border-cyan-500/20 flex-shrink-0">
           <div className="flex items-center gap-2">
             <Users className="icon-md text-muted-foreground" />
             <h3 className="section-title">Registrations</h3>
@@ -795,7 +784,7 @@ export default function TournamentDetailPage() {
 
       {/* ── Teams ─────────────────────────────────────── */}
       <div className="gaming-panel flex flex-col overflow-hidden rounded-xl border border-cyan-400/20 bg-slate-950/45">
-        <div className="flex items-center justify-between gap-3 p-4 border-b border-cyan-500/20">
+        <div className="flex items-center justify-between gap-3 p-3 border-b border-cyan-500/20">
           <div className="flex items-center gap-2">
             <Trophy className="icon-md text-muted-foreground" />
             <h3 className="section-title">Teams</h3>
@@ -860,7 +849,7 @@ export default function TournamentDetailPage() {
       </div>
 
       {/* ── Publish Results ───────────────────────────── */}
-      <div className="gaming-panel rounded-xl border border-cyan-400/20 bg-slate-950/45 p-4 sm:p-5">
+      <div className="gaming-panel rounded-lg p-3">
         <div className="flex items-center justify-between gap-3 mb-4">
           <div>
             <h3 className="section-title">Publish Results</h3>
