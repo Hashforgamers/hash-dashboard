@@ -4,10 +4,10 @@ import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   ChevronLeft, ChevronRight, CalendarDays,
-  Upload, X, ImageIcon, Sparkles, Trophy,
+  Upload, X, ImageIcon, Trophy,
   Gamepad2, MapPinned, ShieldCheck, Users,
   Clock, Banknote, RadioTower, ListChecks,
-  Eye, EyeOff, Zap,
+  Eye, EyeOff,
 } from 'lucide-react';
 import { useEventsToken } from '@/hooks/useEventsToken';
 import { createEvent, uploadEventBanner, deleteEventBanner, EventStatus, TournamentFormat, VetoMode, getEffectiveEventStatus } from '@/lib/event-api';
@@ -112,13 +112,13 @@ function BannerUploader({
     <div className="space-y-2">
       <label className="form-label block">Event Banner</label>
       <p className="text-xs text-muted-foreground mb-3">
-        Recommended: 1200×630px — PNG, JPG or WEBP. Stored on Cloudinary.
+        1200 × 630 px · PNG, JPG or WEBP
       </p>
 
       {preview ? (
         /* ── Preview with hover controls ── */
         <div
-          className="relative w-full rounded-xl overflow-hidden border border-border group"
+          className="relative w-full max-h-48 rounded-lg overflow-hidden border border-border group"
           style={{ aspectRatio: '1200/630' }}
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -150,7 +150,7 @@ function BannerUploader({
           {uploading && (
             <div className="absolute inset-0 bg-black/70 flex flex-col items-center justify-center gap-2">
               <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-              <p className="text-white text-xs font-medium">Uploading to Cloudinary...</p>
+              <p className="text-white text-xs font-medium">Uploading...</p>
             </div>
           )}
         </div>
@@ -385,8 +385,6 @@ export default function CreateTournamentPage() {
   const mapPoolCount = form.map_pool.split(',').map((m) => m.trim()).filter(Boolean).length;
   const maxTeams = parseInt(form.capacity_team) || 0;
   const maxPlayers = parseInt(form.capacity_player) || (maxTeams && form.team_size ? maxTeams * form.team_size : 0);
-  const fee = parseFloat(form.registration_fee) || 0;
-  const prize = parseFloat(form.prize_pool) || 0;
   const readyChecks = [
     { label: 'Name', ready: Boolean(form.title.trim()) },
     { label: 'Dates', ready: Boolean(startDate && endDate) },
@@ -395,7 +393,7 @@ export default function CreateTournamentPage() {
     { label: 'Rules', ready: Boolean(form.match_rules.trim()) },
   ];
   const completionCount = readyChecks.filter((item) => item.ready).length;
-  const sectionPanelClass = "gaming-panel rounded-xl border border-cyan-400/20 bg-slate-950/45 p-4 sm:p-5";
+  const sectionPanelClass = "gaming-panel rounded-xl border border-cyan-400/20 bg-slate-950/45 p-3";
   const labelClass = "mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-cyan-100/80 sm:text-xs";
   const inputClass = "h-10 w-full rounded-lg border border-cyan-400/25 bg-slate-900/70 px-3 text-sm text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-400/60";
   const textareaClass = "w-full rounded-lg border border-cyan-400/25 bg-slate-900/70 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-400/60";
@@ -527,51 +525,21 @@ export default function CreateTournamentPage() {
 
   return (
     <DashboardLayout>
-    <div className="flex-1 space-y-3 overflow-y-auto sm:space-y-5">
-      <div className="gaming-panel rounded-xl p-4 sm:p-5">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div className="max-w-3xl">
-            <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-emerald-400/25 bg-emerald-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-emerald-200">
-              <Zap className="h-3.5 w-3.5" />
-              Organizer setup
-            </div>
-            <h1 className="premium-heading flex items-center gap-2">
-              Create Tournament
-              <Sparkles className="h-4 w-4 text-emerald-400 sm:h-5 sm:w-5" />
-            </h1>
-            <p className="premium-subtle mt-1 max-w-2xl">
-              Set the public listing, cafe logistics, match engine, and payout details from one control page.
-            </p>
-          </div>
-
-          <div className="grid min-w-[220px] grid-cols-2 gap-2 rounded-xl border border-cyan-400/20 bg-slate-950/50 p-3">
-            <div>
-              <p className="text-[10px] font-bold uppercase tracking-wider text-cyan-100/60">Readiness</p>
-              <p className="mt-1 text-2xl font-bold text-cyan-100">{completionCount}/5</p>
-            </div>
-            <div>
-              <p className="text-[10px] font-bold uppercase tracking-wider text-cyan-100/60">Status</p>
-              <p className="mt-1 text-sm font-semibold text-slate-100">{expectedStatusLabel[expectedStatus]}</p>
-            </div>
-            <div className="col-span-2 grid grid-cols-5 gap-1">
-              {readyChecks.map((item) => (
-                <div
-                  key={item.label}
-                  className={`h-1.5 rounded-full ${item.ready ? 'bg-emerald-400' : 'bg-slate-700'}`}
-                  title={item.label}
-                />
-              ))}
-            </div>
-          </div>
+    <div className="tournament-create flex-1 space-y-3 overflow-y-auto">
+      <header className="flex flex-wrap items-center justify-between gap-3">
+        <h1 className="premium-heading">Create Tournament</h1>
+        <div className="flex items-center gap-3 text-xs text-muted-foreground">
+          <span>{completionCount}/5 ready</span>
+          <span className="rounded-md border border-border px-2 py-1 text-foreground">{expectedStatusLabel[expectedStatus]}</span>
         </div>
-      </div>
+      </header>
 
-      <div className="gaming-panel rounded-xl border border-cyan-400/20 bg-slate-950/45 p-3 sm:p-4">
+      <div className="gaming-panel rounded-xl border border-cyan-400/20 bg-slate-950/45 p-3">
         <div className="mb-3 flex items-center justify-between gap-3">
           <div>
             <h2 className="section-title flex items-center gap-2">
               <Trophy className="h-4 w-4 text-cyan-300" />
-              Fast Setup Presets
+              Presets
             </h2>
 
           </div>
@@ -605,7 +573,7 @@ export default function CreateTournamentPage() {
               Public Listing
             </h2>
 
-            <div className="h-px bg-cyan-500/20 mb-5" />
+            <div className="h-px bg-cyan-500/20 mb-3" />
             <div className="space-y-3">
               <div>
                 <label className={labelClass}>Tournament Name *</label>
@@ -675,7 +643,7 @@ export default function CreateTournamentPage() {
               Banner
             </h2>
 
-            <div className="h-px bg-cyan-500/20 mb-5" />
+            <div className="h-px bg-cyan-500/20 mb-3" />
             <BannerUploader
               preview={bannerPreview}
               uploading={bannerUploading}
@@ -690,7 +658,7 @@ export default function CreateTournamentPage() {
               Schedule & Check-in
             </h2>
 
-            <div className="h-px bg-cyan-500/20 mb-5" />
+            <div className="h-px bg-cyan-500/20 mb-3" />
 
             <label className={`${labelClass} mb-3`}>Tournament Dates *</label>
             <div className="mb-3 flex flex-wrap gap-2">
@@ -765,7 +733,7 @@ export default function CreateTournamentPage() {
               Match Engine
             </h2>
 
-            <div className="h-px bg-cyan-500/20 mb-5" />
+            <div className="h-px bg-cyan-500/20 mb-3" />
             <div className="space-y-3">
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div>
@@ -856,7 +824,7 @@ export default function CreateTournamentPage() {
               Capacity & Prize
             </h2>
 
-            <div className="h-px bg-cyan-500/20 mb-5" />
+            <div className="h-px bg-cyan-500/20 mb-3" />
             <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
               <div>
                 <label className={labelClass}>Max Teams</label>
@@ -973,33 +941,7 @@ export default function CreateTournamentPage() {
             </div>
           </section>
 
-          <aside className={`${sectionPanelClass} xl:col-span-12`}>
-            <div className="grid grid-cols-1 gap-3 lg:grid-cols-5">
-              {[
-                { label: 'Game', value: form.game || 'Not set', icon: <Gamepad2 className="h-4 w-4 text-cyan-300" /> },
-                { label: 'Teams', value: maxTeams ? `${maxTeams} max` : 'Unset', icon: <Users className="h-4 w-4 text-blue-300" /> },
-                { label: 'Server', value: form.server || form.region || 'Unset', icon: <RadioTower className="h-4 w-4 text-emerald-300" /> },
-                { label: 'Prize', value: `${form.currency} ${prize}`, icon: <Banknote className="h-4 w-4 text-yellow-300" /> },
-                { label: 'Fee', value: `${form.currency} ${fee}`, icon: <Trophy className="h-4 w-4 text-orange-300" /> },
-              ].map((item) => (
-                <div key={item.label} className="rounded-lg border border-cyan-400/15 bg-slate-900/60 p-3">
-                  <div className="flex items-center gap-2">
-                    {item.icon}
-                    <p className="text-[10px] font-bold uppercase tracking-wider text-cyan-100/60">{item.label}</p>
-                  </div>
-                  <p className="mt-2 truncate text-sm font-semibold text-slate-100">{item.value}</p>
-                </div>
-              ))}
-            </div>
-            <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-slate-400">
-              <MapPinned className="h-4 w-4 text-cyan-300" />
-              <span>{mapPoolCount ? `${mapPoolCount} maps ready` : 'No map pool configured'}</span>
-              <span className="text-slate-600">|</span>
-              <span>{maxPlayers ? `${maxPlayers} player capacity` : 'Player capacity can be auto-derived from teams and size'}</span>
-              <span className="text-slate-600">|</span>
-              <span>{form.format.replaceAll('_', ' ')}</span>
-            </div>
-          </aside>
+
 
           {error && (
             <div className="rounded-lg border border-red-500/30 bg-red-500/10 p-3 xl:col-span-12">

@@ -1,4 +1,8 @@
 /* Shared staff workspace surfaces; status colors remain semantic. */
+.workspace-ui .tournament-create .section-title { font-size: 14px; line-height: 20px; }
+.workspace-ui .tournament-create .form-label { display: block; margin-bottom: 6px; font-size: 12px; line-height: 18px; font-weight: 500; letter-spacing: 0; text-transform: none; }
+.workspace-ui .tournament-create :is(input, select, textarea) { font-size: 13px; }
+.workspace-ui .tournament-create .gaming-panel { border-radius: 8px; }
 /* Account settings use one type scale across every section and breakpoint. */
 .workspace-ui .account-content { font-size: 13px; line-height: 20px; }
 .workspace-ui .account-layout { grid-template-columns: minmax(0, 1fr); }
