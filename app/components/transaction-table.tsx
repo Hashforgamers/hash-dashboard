@@ -1,4 +1,5 @@
 "use client";
+import { httpJson } from "@/lib/http-client";
 import { useMemo, useState, useEffect } from "react";
 import {
   Table,
@@ -301,23 +302,21 @@ export function TransactionTable() {
     // Backend route format: /transactionReport/<vendor_id>/<to_date>/<from_date>
     const apiUrl = `${DASHBOARD_URL}/api/transactionReport/${vendorId}/${toDateApi}/${fromDateApi}`;
 
-    const loadData = async () => {
-      setBoolTrans(true);
+    const controller = new AbortController();
+    let inFlight = false;
+    const loadData = async (initial = false) => {
+      if (inFlight || controller.signal.aborted || (!initial && document.hidden)) return;
+      inFlight = true;
+      if (initial) setBoolTrans(true);
 
       try {
-        const response = await fetch(apiUrl, {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
+        const data = await httpJson<Transaction[]>(apiUrl, {
+          headers: { Authorization: `Bearer ${token}` },
+          signal: controller.signal,
+          timeoutMs: 12000,
+          retries: 1,
         });
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! Status: ${response.status}`);
-        }
-
-        const data: Transaction[] = await response.json();
+        if (controller.signal.aborted) return;
         const sorted = [...(data || [])].sort((a, b) => {
           const aDate = new Date(`${a.slotDate} ${a.slotTime}`).getTime();
           const bDate = new Date(`${b.slotDate} ${b.slotTime}`).getTime();
@@ -327,17 +326,18 @@ export function TransactionTable() {
       } catch (error) {
         console.error("Error fetching transactions:", error);
       } finally {
-        setBoolTrans(false);
+        inFlight = false;
+        if (!controller.signal.aborted) setBoolTrans(false);
       }
     };
 
-    loadData();
+    void loadData(true);
 
     pollingInterval = setInterval(() => {
       loadData();
     }, POLL_INTERVAL);
 
-    return () => clearInterval(pollingInterval);
+    return () => { controller.abort(); clearInterval(pollingInterval); };
   }, [vendorId, token, appliedFromDate, appliedToDate]);
 
   useEffect(() => {

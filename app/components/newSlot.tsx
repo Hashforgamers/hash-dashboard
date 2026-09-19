@@ -384,7 +384,7 @@ async function fetchWithDedup(url: string): Promise<any> {
 
 // ============= OPTIMIZATION 3: Batch API Call =============
 async function fetchSlotsBatch(vendorId: number, gameIds: number[], dates: string[], forceFresh = false) {
-  const url = `${BOOKING_URL}/api/getSlotsBatch/vendor/${vendorId}${forceFresh ? `?t=${Date.now()}` : ""}`  // ✅ CORRECT ENDPOINT
+  const url = `${BOOKING_URL}/api/getSlotsBatch/vendor/${vendorId}${forceFresh ? "?refresh=1" : ""}`
   
   const cacheKey = `batch:${vendorId}:${gameIds.join(',')}:${dates.join(',')}`
   const cached = forceFresh ? null : getCachedData(cacheKey)
@@ -406,9 +406,7 @@ async function fetchSlotsBatch(vendorId: number, gameIds: number[], dates: strin
     })
 
     console.log('✅ Batch fetch successful:', data)
-    if (!forceFresh) {
-      setCachedData(cacheKey, data)
-    }
+    setCachedData(cacheKey, data)
     return data
   } catch (error) {
     console.error('❌ Batch fetch error:', error)

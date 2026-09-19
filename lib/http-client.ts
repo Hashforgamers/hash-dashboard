@@ -60,11 +60,12 @@ function parseMaybeJson(text: string) {
   }
 }
 
-function buildRequestKey(method: string, url: string, body: BodyInit | null | undefined, customKey?: string) {
-  if (customKey) return customKey
-  if (!body) return `${method}:${url}`
-  if (typeof body === "string") return `${method}:${url}:${body}`
-  return `${method}:${url}`
+function buildRequestKey(method: string, url: string, options: HttpJsonOptions) {
+  // A URL/custom key alone can share another cafe's authenticated response.
+  const headers = Array.from(new Headers(options.headers).entries()).sort(([a], [b]) => a.localeCompare(b))
+  return JSON.stringify([options.dedupeKey || `${method}:${url}`, method, url,
+    typeof options.body === "string" ? options.body : null,
+    headers, options.credentials || "same-origin", options.parseAs || "json"])
 }
 
 function withTimeoutSignal(timeoutMs: number, externalSignal?: AbortSignal | null): { signal: AbortSignal; cleanup: () => void } {
@@ -105,10 +106,12 @@ export async function httpJson<T = unknown>(url: string, options: HttpJsonOption
   const timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS
   const retries = options.retries ?? (isMethodIdempotent(method) ? DEFAULT_RETRIES : 0)
   const retryDelayMs = options.retryDelayMs ?? DEFAULT_RETRY_DELAY_MS
-  const dedupe = options.dedupe ?? isMethodIdempotent(method)
+  // Independently cancellable callers must not own another caller's request.
+  const dedupe = !options.signal && (options.dedupe ?? isMethodIdempotent(method))
   const parseAs = options.parseAs ?? "json"
   const cacheTtlMs = method === "GET" ? Math.max(0, options.cacheTtlMs ?? 0) : 0
-  const cacheKey = buildRequestKey(method, url, options.body, options.dedupeKey)
+  const cacheKey = buildRequestKey(method, url, options)
+  if (options.signal?.aborted) throw options.signal.reason || new Error("Request aborted")
 
   if (cacheTtlMs > 0) {
     cleanupExpiredCache()
@@ -139,12 +142,6 @@ export async function httpJson<T = unknown>(url: string, options: HttpJsonOption
 
           const apiError = new ApiError(String(message), response.status, url, body)
 
-          if (attempt < retries && isRetryableStatus(response.status) && isMethodIdempotent(method)) {
-            const jitter = Math.floor(Math.random() * 120)
-            await sleep(retryDelayMs * (attempt + 1) + jitter)
-            lastError = apiError
-            continue
-          }
           throw apiError
         }
 
@@ -155,13 +152,16 @@ export async function httpJson<T = unknown>(url: string, options: HttpJsonOption
         return body as T
       } catch (error) {
         lastError = error
-        const canRetry = attempt < retries && isMethodIdempotent(method)
+        const canRetry = !options.signal?.aborted && attempt < retries && isMethodIdempotent(method)
+          && (!(error instanceof ApiError) || isRetryableStatus(error.status))
         if (!canRetry) break
+        cleanup()
         const jitter = Math.floor(Math.random() * 120)
         await sleep(retryDelayMs * (attempt + 1) + jitter)
       } finally {
         cleanup()
       }
+      if (options.signal?.aborted) throw options.signal.reason || new Error("Request aborted")
     }
 
     if (lastError instanceof Error) throw lastError

@@ -2,7 +2,7 @@
 
 
 import { SOCKET_URL } from '@/src/config/env'
-import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react'
+import React, { createContext, useContext, useEffect, useState, useCallback, useMemo, ReactNode } from 'react'
 import { io, Socket } from 'socket.io-client'
 
 interface SocketContextValue {
@@ -72,7 +72,7 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
         window.clearInterval(heartbeatRef.current);
       }
       heartbeatRef.current = window.setInterval(() => {
-        if (!newSocket.connected) return;
+        if (!newSocket.connected || document.hidden) return;
         const now = Date.now();
         if (now - lastPongRef.current > 30000) {
           forceReconnect("pong_timeout");
@@ -115,16 +115,9 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
       markPong();
     });
 
-    newSocket.io.on("reconnect", () => {
-      console.log("🔁 Socket reconnected");
-      markPong();
-      joinedVendorsRef.current.forEach((vendorId) => {
-        newSocket.emit("dashboard_join_vendor", { vendor_id: vendorId });
-      });
-      if (typeof window !== "undefined") {
-        window.dispatchEvent(new CustomEvent("socket-reconnected"));
-      }
-    });
+    const handleVisible = () => {
+      if (!document.hidden) markPong();
+    };
 
     const handleOnline = () => {
       if (!newSocket.connected) {
@@ -139,6 +132,7 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
 
     if (typeof window !== "undefined") {
       window.addEventListener("online", handleOnline);
+      document.addEventListener("visibilitychange", handleVisible);
     }
 
     setSocket(newSocket);
@@ -150,12 +144,18 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
       }
       if (typeof window !== "undefined") {
         window.removeEventListener("online", handleOnline);
+        document.removeEventListener("visibilitychange", handleVisible);
       }
       newSocket.close();
     };
   }, []);
 
-  const joinVendor = (vendorId: number) => {
+  const joinVendor = useCallback((vendorId: number) => {
+    if (joinedVendorsRef.current.has(vendorId)) return;
+    for (const previous of joinedVendorsRef.current) {
+      socket?.emit("dashboard_leave_vendor", { vendor_id: previous });
+    }
+    joinedVendorsRef.current.clear();
     joinedVendorsRef.current.add(vendorId);
     if (socket?.connected) {
       console.log(`🏪 Joining vendor room: ${vendorId}`);
@@ -163,10 +163,11 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
     } else {
       console.warn("⚠️ Cannot join vendor, socket not connected");
     }
-  };
+  }, [socket]);
+  const value = useMemo(() => ({ socket, isConnected, joinVendor }), [socket, isConnected, joinVendor]);
 
   return (
-    <SocketContext.Provider value={{ socket, isConnected, joinVendor }}>
+    <SocketContext.Provider value={value}>
       {children}
     </SocketContext.Provider>
   );

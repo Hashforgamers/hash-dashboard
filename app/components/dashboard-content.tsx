@@ -128,18 +128,18 @@ export function DashboardContent() {
   }, [landingData])
 
   const loadLandingData = useCallback(async () => {
-    await refreshLanding()
+    await refreshLanding(true)
   }, [refreshLanding])
 
   const loadConsoleData = useCallback(async () => {
-    await refreshConsoles()
+    await refreshConsoles(true)
   }, [refreshConsoles])
 
   useEffect(() => {
     if (!vendorId) return
-    loadLandingData()
-    loadConsoleData()
-  }, [vendorId, loadLandingData, loadConsoleData])
+    void refreshLanding()
+    void refreshConsoles()
+  }, [vendorId, refreshLanding, refreshConsoles])
 
   useEffect(() => {
     if (!socket || !vendorId || !isConnected) return
@@ -157,14 +157,6 @@ export function DashboardContent() {
         if (status === 'pending_acceptance' || bookingStatus === 'pending_acceptance') {
           console.log('🔔 Dashboard: Pay-at-cafe pending event received')
         }
-        if (status === 'confirmed' || status === 'paid' || status === 'completed') {
-          setRealTimeStats(prev => ({
-            ...prev,
-            todayBookings: (prev.todayBookings || 0) + 1,
-            todayEarnings: (prev.todayEarnings || 0) + (data.amount || data.slot_price || 0),
-            lastUpdate: new Date().toLocaleTimeString()
-          }))
-        }
         if (TERMINAL_BOOKING_STATUSES.includes(status)) {
           if (typeof window !== 'undefined') {
             window.dispatchEvent(new CustomEvent('history-booking-add', { detail: data }))
@@ -179,7 +171,6 @@ export function DashboardContent() {
       if (eventVendorId === activeVendorId && (data.status === 'Confirmed' || data.status === 'confirmed')) {
         setRealTimeStats(prev => ({
           ...prev,
-          todayBookings: (prev.todayBookings || 0) + 1,
           lastUpdate: new Date().toLocaleTimeString()
         }))
       }
@@ -190,7 +181,6 @@ export function DashboardContent() {
       if (eventVendorId === activeVendorId && data?.console_id !== undefined) {
         // Keep dashboard reactive without relying on removed local booking state.
         setRefreshSlots((prev) => !prev)
-        loadConsoleData()
       }
     }
 
@@ -223,8 +213,6 @@ export function DashboardContent() {
         }
       }
       setRefreshSlots((prev) => !prev)
-      loadLandingData()
-      loadConsoleData()
       setRealTimeStats(prev => ({
         ...prev,
         lastUpdate: new Date().toLocaleTimeString(),
@@ -241,10 +229,6 @@ export function DashboardContent() {
     socket.on('upcoming_booking', handleUpcomingBookingEvent)
     socket.on('console_availability', handleConsoleAvailabilityEvent)
     socket.on('booking_payment_update', handleBookingPaymentUpdate)
-    socket.on('connect', handleSocketResync)
-    if (socket.io) {
-      socket.io.on('reconnect', handleSocketResync)
-    }
     window.addEventListener('socket-reconnected', handleSocketResync)
 
     return () => {
@@ -253,10 +237,6 @@ export function DashboardContent() {
       socket.off('upcoming_booking', handleUpcomingBookingEvent)
       socket.off('console_availability', handleConsoleAvailabilityEvent)
       socket.off('booking_payment_update', handleBookingPaymentUpdate)
-      socket.off('connect', handleSocketResync)
-      if (socket.io) {
-        socket.io.off('reconnect', handleSocketResync)
-      }
       window.removeEventListener('socket-reconnected', handleSocketResync)
     }
   }, [socket, vendorId, isConnected, joinVendor, loadLandingData, loadConsoleData])
