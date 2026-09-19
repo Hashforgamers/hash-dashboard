@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import {
-  ChevronLeft, ChevronRight, CalendarDays,
+  CalendarDays,
   Upload, X, ImageIcon, Trophy,
   Gamepad2, MapPinned, ShieldCheck, Users,
   Clock, Banknote, RadioTower, ListChecks,
@@ -11,82 +11,11 @@ import {
 } from 'lucide-react';
 import { useEventsToken } from '@/hooks/useEventsToken';
 import { createEvent, uploadEventBanner, deleteEventBanner, EventStatus, TournamentFormat, VetoMode, getEffectiveEventStatus } from '@/lib/event-api';
-import { jwtDecode } from 'jwt-decode';
+import { localDateTime, suggestedSchedule, quickTournamentStart, playerCapacity } from '@/lib/tournament-setup';
 import { DashboardLayout } from '@/app/(layout)/dashboard-layout';
 import { useDashboardData } from '@/app/context/DashboardDataContext';
 
  // TODO: replace with auth context
-
-// ─── Mini Calendar ────────────────────────────────────────────────────────────
-function MiniCalendar({
-  selected,
-  onSelect,
-  minDate,
-}: {
-  selected: Date | null;
-  onSelect: (d: Date) => void;
-  minDate?: Date;
-}) {
-  const [view, setView] = useState(selected ?? new Date());
-  const year        = view.getFullYear();
-  const month       = view.getMonth();
-  const firstDay    = new Date(year, month, 1).getDay();
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
-
-  return (
-    <div className="dashboard-module-panel rounded-xl p-3">
-      <div className="flex items-center justify-between mb-3">
-        <button
-          className="dashboard-btn-secondary inline-flex items-center justify-center rounded-md p-1.5"
-          onClick={() => setView(new Date(year, month - 1, 1))}
-        >
-          <ChevronLeft className="icon-sm" />
-        </button>
-        <span className="text-sm font-semibold text-foreground">
-          {view.toLocaleString('default', { month: 'long', year: 'numeric' })}
-        </span>
-        <button
-          className="dashboard-btn-secondary inline-flex items-center justify-center rounded-md p-1.5"
-          onClick={() => setView(new Date(year, month + 1, 1))}
-        >
-          <ChevronRight className="icon-sm" />
-        </button>
-      </div>
-      <div className="grid grid-cols-7 mb-1">
-        {['S','M','T','W','T','F','S'].map((d, i) => (
-          <div key={i} className="text-center text-xs text-muted-foreground py-1">{d}</div>
-        ))}
-      </div>
-      <div className="grid grid-cols-7 gap-y-1">
-        {Array.from({ length: firstDay }).map((_, i) => (
-          <div key={`e${i}`} />
-        ))}
-        {Array.from({ length: daysInMonth }, (_, i) => {
-          const day      = i + 1;
-          const date     = new Date(year, month, day);
-          const isSel    = selected?.toDateString() === date.toDateString();
-          const disabled = minDate
-            ? date < new Date(minDate.getFullYear(), minDate.getMonth(), minDate.getDate())
-            : false;
-          return (
-            <button
-              key={day}
-              disabled={disabled}
-              onClick={() => onSelect(date)}
-              className={`w-8 h-8 mx-auto rounded-full text-sm transition-colors
-                ${isSel    ? 'bg-cyan-500 text-white font-bold' : ''}
-                ${!isSel && !disabled ? 'hover:bg-slate-800 text-slate-100' : ''}
-                ${disabled ? 'text-muted-foreground/30 cursor-not-allowed' : ''}
-              `}
-            >
-              {day}
-            </button>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
 
 // ─── Banner Uploader ──────────────────────────────────────────────────────────
 function BannerUploader({
@@ -208,7 +137,6 @@ function BannerUploader({
 }
 
 // ─── Create Page ──────────────────────────────────────────────────────────────
-type DateTarget = 'start' | 'end' | 'deadline';
 
 interface FormState {
   title: string;
@@ -233,12 +161,6 @@ interface FormState {
   allow_individual: boolean;
   visibility: boolean;
 }
-
-const DATE_LABEL: Record<DateTarget, string> = {
-  start:    'Start Date',
-  end:      'End Date',
-  deadline: 'Reg. Deadline',
-};
 
 type TournamentPreset = {
   id: string;
@@ -309,9 +231,9 @@ const TOURNAMENT_PRESETS: TournamentPreset[] = [
 
 export default function CreateTournamentPage() {
   const router = useRouter();
-   const [vendorId, setVendorId] = useState<number | null>(null)
+  const { vendorId, bumpModuleVersion } = useDashboardData();
   const { token, loading: tokenLoading } = useEventsToken(vendorId);
-  const { bumpModuleVersion } = useDashboardData();
+  const [timezone, setTimezone] = useState("local time");
 
   const [form, setForm] = useState<FormState>({
     title:            '',
@@ -340,7 +262,10 @@ export default function CreateTournamentPage() {
   const [startDate,    setStartDate]    = useState<Date | null>(null);
   const [endDate,      setEndDate]      = useState<Date | null>(null);
   const [deadline,     setDeadline]     = useState<Date | null>(null);
-  const [activePicker, setActivePicker] = useState<DateTarget>('start');
+  const endEdited = useRef(false);
+  const deadlineEdited = useRef(false);
+  const [autoPlayers, setAutoPlayers] = useState(true);
+  const [selectedPreset, setSelectedPreset] = useState('');
 
   // Banner state
   const [bannerFile,      setBannerFile]      = useState<File | null>(null);
@@ -352,52 +277,46 @@ export default function CreateTournamentPage() {
   const [error,      setError]      = useState('');
 
   useEffect(() => {
-      const token = localStorage.getItem("jwtToken")
-      if (token) {
-        try {
-          const decoded_token = jwtDecode<{ sub: { id: number } }>(token)
-          console.log('🔑 Decoded vendor ID:', decoded_token.sub.id)
-          setVendorId(decoded_token.sub.id)
-        } catch (error) {
-          console.error('❌ Error decoding JWT token:', error)
-        }
-      }
-    }, [])
+    setTimezone(Intl.DateTimeFormat().resolvedOptions().timeZone);
+  }, []);
 
   const set = <K extends keyof FormState>(k: K, v: FormState[K]) =>
     setForm((f) => ({ ...f, [k]: v }));
   const applyPreset = (preset: TournamentPreset) => {
-    setForm((current) => ({ ...current, ...preset.patch }));
+    setForm((current) => ({ ...current, allow_solo: false, allow_individual: false,
+      region: 'India', server: '', map_pool: '', veto_mode: 'none', ...preset.patch }));
+    setAutoPlayers(true);
+    setSelectedPreset(preset.id);
   };
-  const applyQuickDate = (daysFromToday: number) => {
-    const start = new Date();
-    start.setDate(start.getDate() + daysFromToday);
-    start.setHours(18, 0, 0, 0);
-    const end = new Date(start);
-    end.setHours(23, 0, 0, 0);
-    const regDeadline = new Date(start);
-    regDeadline.setHours(12, 0, 0, 0);
+  const updateStart = (start: Date | null) => {
     setStartDate(start);
-    setEndDate(end);
-    setDeadline(regDeadline);
-    setActivePicker('start');
+    if (!start) return;
+    const suggested = suggestedSchedule(start);
+    if (!endEdited.current) setEndDate(suggested.end);
+    if (!deadlineEdited.current) setDeadline(suggested.deadline);
   };
+  const applyQuickDate = (choice: 'today' | 'tomorrow' | 'weekend') => {
+    endEdited.current = false;
+    deadlineEdited.current = false;
+    updateStart(quickTournamentStart(choice));
+  };
+  const effectivePlayerCapacity = autoPlayers ? playerCapacity(form.capacity_team, form.team_size) : form.capacity_player;
   const mapPoolCount = form.map_pool.split(',').map((m) => m.trim()).filter(Boolean).length;
   const maxTeams = parseInt(form.capacity_team) || 0;
-  const maxPlayers = parseInt(form.capacity_player) || (maxTeams && form.team_size ? maxTeams * form.team_size : 0);
+  const maxPlayers = parseInt(effectivePlayerCapacity) || 0;
   const readyChecks = [
     { label: 'Name', ready: Boolean(form.title.trim()) },
-    { label: 'Dates', ready: Boolean(startDate && endDate) },
+    { label: 'Dates', ready: Boolean(startDate && endDate && endDate > startDate && (!deadline || deadline < startDate)) },
     { label: 'Game', ready: Boolean(form.game && form.format) },
     { label: 'Capacity', ready: Boolean(maxTeams || maxPlayers) },
     { label: 'Rules', ready: Boolean(form.match_rules.trim()) },
   ];
   const completionCount = readyChecks.filter((item) => item.ready).length;
-  const sectionPanelClass = "gaming-panel rounded-xl border border-cyan-400/20 bg-slate-950/45 p-3";
-  const labelClass = "mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-cyan-100/80 sm:text-xs";
-  const inputClass = "h-10 w-full rounded-lg border border-cyan-400/25 bg-slate-900/70 px-3 text-sm text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-400/60";
+  const sectionPanelClass = "gaming-panel rounded-lg border border-border bg-muted/10 p-3";
+  const labelClass = "mb-1 block text-xs font-medium text-slate-300";
+  const inputClass = "h-9 w-full rounded-lg border border-cyan-400/25 bg-slate-900/70 px-3 text-sm text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-400/60";
   const textareaClass = "w-full rounded-lg border border-cyan-400/25 bg-slate-900/70 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-400/60";
-  const selectClass = "h-10 w-full rounded-lg border border-cyan-400/25 bg-slate-900/70 px-3 text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-cyan-400/60";
+  const selectClass = "h-9 w-full rounded-lg border border-cyan-400/25 bg-slate-900/70 px-3 text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-cyan-400/60";
   const primaryButtonClass = "dashboard-btn-primary inline-flex items-center justify-center gap-2 px-3 py-2 text-xs sm:px-4 sm:text-sm";
   const secondaryButtonClass = "inline-flex items-center justify-center gap-2 rounded-lg border border-cyan-300/25 bg-slate-900/70 px-3 py-2 text-xs font-semibold text-slate-200 transition-all duration-200 hover:border-cyan-300/45 hover:bg-slate-800/80 hover:text-cyan-100 disabled:cursor-not-allowed disabled:opacity-50 sm:px-4 sm:text-sm";
 
@@ -415,25 +334,6 @@ export default function CreateTournamentPage() {
     setBannerFile(null);
     setBannerPreview(null);
     setBannerPublicId(null);
-  };
-
-  // ── Calendar handler ──────────────────────────────
-  const handleDateSelect = (d: Date) => {
-    if (activePicker === 'start') {
-      setStartDate(d);
-      setActivePicker('end');
-    } else if (activePicker === 'end') {
-      setEndDate(d);
-      setActivePicker('deadline');
-    } else {
-      setDeadline(d);
-    }
-  };
-
-  const dateValueMap: Record<DateTarget, Date | null> = {
-    start:    startDate,
-    end:      endDate,
-    deadline: deadline,
   };
 
   const expectedStatus = startDate && endDate
@@ -458,10 +358,17 @@ export default function CreateTournamentPage() {
     if (!form.title.trim())              return setError('Tournament name is required.');
     if (!startDate)                      return setError('Start date is required.');
     if (!endDate)                        return setError('End date is required.');
-    if (endDate < startDate)             return setError('End date must be after start date.');
+    if (endDate <= startDate)             return setError('End date must be after start date.');
     if (form.min_team_size > form.max_team_size) return setError('Min team size cannot exceed max team size.');
     if (deadline && deadline >= startDate) return setError('Registration deadline must be before start date.');
 
+    if (submitting) return;
+    for (const [label, value] of [['Entry fee', form.registration_fee], ['Prize pool', form.prize_pool]] as const) {
+      if (!Number.isFinite(Number(value)) || Number(value) < 0) return setError(`${label} must be zero or more.`);
+    }
+    for (const [label, value] of [['Team capacity', form.capacity_team], ['Player capacity', effectivePlayerCapacity]] as const) {
+      if (value && (!Number.isInteger(Number(value)) || Number(value) < 1)) return setError(`${label} must be a positive whole number.`);
+    }
     setSubmitting(true);
     setError('');
 
@@ -498,7 +405,7 @@ export default function CreateTournamentPage() {
         map_pool:              form.map_pool.split(',').map((m) => m.trim()).filter(Boolean),
         veto_mode:             form.veto_mode,
         capacity_team:         form.capacity_team   ? parseInt(form.capacity_team)   : undefined,
-        capacity_player:       form.capacity_player ? parseInt(form.capacity_player) : undefined,
+        capacity_player:       effectivePlayerCapacity ? Number(effectivePlayerCapacity) : undefined,
         min_team_size:         form.min_team_size,
         max_team_size:         form.max_team_size,
         allow_solo:            form.allow_solo,
@@ -527,14 +434,14 @@ export default function CreateTournamentPage() {
     <DashboardLayout>
     <div className="tournament-create flex-1 space-y-3 overflow-y-auto">
       <header className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="premium-heading">Create Tournament</h1>
+        <h1 className="premium-heading !text-lg">Create Tournament</h1>
         <div className="flex items-center gap-3 text-xs text-muted-foreground">
           <span>{completionCount}/5 ready</span>
           <span className="rounded-md border border-border px-2 py-1 text-foreground">{expectedStatusLabel[expectedStatus]}</span>
         </div>
       </header>
 
-      <div className="gaming-panel rounded-xl border border-cyan-400/20 bg-slate-950/45 p-3">
+      <div className="gaming-panel rounded-lg border border-border bg-muted/10 p-3">
         <div className="mb-3 flex items-center justify-between gap-3">
           <div>
             <h2 className="section-title flex items-center gap-2">
@@ -544,33 +451,35 @@ export default function CreateTournamentPage() {
 
           </div>
         </div>
-        <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
+        <div className="flex flex-wrap gap-2">
           {TOURNAMENT_PRESETS.map((preset) => (
             <button
               key={preset.id}
               type="button"
               onClick={() => applyPreset(preset)}
+              aria-pressed={selectedPreset === preset.id}
+              title={preset.description}
               className="group rounded-lg border border-cyan-400/15 bg-slate-900/60 p-3 text-left transition-all hover:border-cyan-300/45 hover:bg-slate-800/70"
             >
               <div className="flex items-center justify-between gap-3">
                 <span className="text-sm font-semibold text-cyan-100">{preset.label}</span>
                 <span className="rounded-md border border-cyan-300/20 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-cyan-200 group-hover:bg-cyan-500/10">
-                  Apply
+                  {selectedPreset === preset.id ? "Selected" : "Use"}
                 </span>
               </div>
-              <p className="mt-2 text-xs leading-5 text-slate-400">{preset.description}</p>
+
             </button>
           ))}
         </div>
       </div>
 
       <div className="w-full pb-6">
-        <div className="grid grid-cols-1 gap-3 xl:grid-cols-12">
+        <div className="grid grid-cols-1 items-start gap-3 lg:grid-cols-12">
 
-          <section className={`${sectionPanelClass} xl:col-span-7`}>
+          <section className={`${sectionPanelClass} lg:col-span-6`}>
             <h2 className="section-title mb-1 flex items-center gap-2">
               <ListChecks className="h-4 w-4 text-cyan-300" />
-              Public Listing
+              Basics
             </h2>
 
             <div className="h-px bg-cyan-500/20 mb-3" />
@@ -588,7 +497,7 @@ export default function CreateTournamentPage() {
                 <label className={labelClass}>Description</label>
                 <textarea
                   className={textareaClass}
-                  rows={4}
+                  rows={2}
                   placeholder="Mention game mode, cafe check-in, prize highlights, and who can join."
                   value={form.description}
                   onChange={(e) => set('description', e.target.value)}
@@ -600,7 +509,7 @@ export default function CreateTournamentPage() {
                   <button
                     type="button"
                     onClick={() => set('visibility', !form.visibility)}
-                    className={`flex h-10 w-full items-center justify-center gap-2 rounded-lg border px-3 text-sm font-semibold transition-all ${
+                    className={`flex h-9 w-full items-center justify-center gap-2 rounded-lg border px-3 text-sm font-semibold transition-all ${
                       form.visibility
                         ? 'border-emerald-400/35 bg-emerald-500/10 text-emerald-100'
                         : 'border-slate-600 bg-slate-900/70 text-slate-300'
@@ -637,100 +546,42 @@ export default function CreateTournamentPage() {
             </div>
           </section>
 
-          <section className={`${sectionPanelClass} xl:col-span-5`}>
-            <h2 className="section-title mb-1 flex items-center gap-2">
-              <ImageIcon className="h-4 w-4 text-cyan-300" />
-              Banner
-            </h2>
 
-            <div className="h-px bg-cyan-500/20 mb-3" />
-            <BannerUploader
-              preview={bannerPreview}
-              uploading={bannerUploading}
-              onFileSelect={handleBannerSelect}
-              onRemove={handleBannerRemove}
-            />
-          </section>
 
-          <section className={`${sectionPanelClass} xl:col-span-7`}>
+          <section className={`${sectionPanelClass} lg:col-span-6`}>
             <h2 className="section-title mb-1 flex items-center gap-2">
               <Clock className="h-4 w-4 text-cyan-300" />
-              Schedule & Check-in
+              Schedule
             </h2>
 
             <div className="h-px bg-cyan-500/20 mb-3" />
 
-            <label className={`${labelClass} mb-3`}>Tournament Dates *</label>
             <div className="mb-3 flex flex-wrap gap-2">
-              {[
-                { label: 'Tonight', days: 0 },
-                { label: 'Tomorrow', days: 1 },
-                { label: 'This Weekend', days: 3 },
-              ].map((item) => (
-                <button
-                  key={item.label}
-                  type="button"
-                  onClick={() => applyQuickDate(item.days)}
-                  className="rounded-lg border border-cyan-300/20 bg-slate-900/70 px-3 py-2 text-xs font-semibold text-slate-200 transition-all hover:border-cyan-300/45 hover:bg-slate-800"
-                >
-                  {item.label}
-                </button>
+              {([['today', 'Today'], ['tomorrow', 'Tomorrow'], ['weekend', 'Saturday']] as const).map(([choice, label]) => (
+                <button key={choice} type="button" onClick={() => applyQuickDate(choice)} className={secondaryButtonClass}>{label}</button>
               ))}
             </div>
-            <div className="flex gap-2 mb-4 flex-wrap">
-              {(['start', 'end', 'deadline'] as DateTarget[]).map((t) => (
-                <button
-                  key={t}
-                  type="button"
-                  onClick={() => setActivePicker(t)}
-                  className={`inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-xs font-semibold transition-all
-                    ${activePicker === t
-                      ? 'border-cyan-400/60 bg-cyan-500/15 text-cyan-100'
-                      : 'border-cyan-300/25 bg-slate-900/70 text-slate-200 hover:border-cyan-300/45 hover:bg-slate-800/80'
-                    }
-                  `}
-                >
-                  <CalendarDays className="icon-xs" />
-                  {DATE_LABEL[t]}: {dateValueMap[t]
-                    ? dateValueMap[t]!.toLocaleDateString()
-                    : '—'}
-                </button>
-              ))}
+            <div className="grid gap-3 sm:grid-cols-2">
+              <label className={labelClass}>Starts *
+                <input type="datetime-local" className={`${inputClass} mt-1`} value={localDateTime(startDate)}
+                  onChange={(e) => updateStart(e.target.value ? new Date(e.target.value) : null)} />
+              </label>
+              <label className={labelClass}>Ends *
+                <input type="datetime-local" className={`${inputClass} mt-1`} min={localDateTime(startDate)} value={localDateTime(endDate)}
+                  onChange={(e) => { endEdited.current = true; setEndDate(e.target.value ? new Date(e.target.value) : null); }} />
+              </label>
+              <label className={`${labelClass} sm:col-span-2`}>Registration closes
+                <input type="datetime-local" className={`${inputClass} mt-1`} max={localDateTime(startDate)} value={localDateTime(deadline)}
+                  onChange={(e) => { deadlineEdited.current = true; setDeadline(e.target.value ? new Date(e.target.value) : null); }} />
+              </label>
             </div>
-
-            <div className="two-col-grid items-start">
-              <MiniCalendar
-                selected={dateValueMap[activePicker]}
-                onSelect={handleDateSelect}
-                minDate={activePicker === 'end' ? (startDate ?? undefined) : undefined}
-              />
-
-              <div className="space-y-3">
-                <div className="rounded-lg border border-cyan-400/15 bg-slate-900/55 p-3">
-                  <p className="text-xs font-bold uppercase tracking-wider text-cyan-100/70">Suggested operations</p>
-                  <div className="mt-3 space-y-2 text-sm text-slate-300">
-                    <div className="flex items-start gap-2">
-                      <ShieldCheck className="mt-0.5 h-4 w-4 text-emerald-300" />
-                      <span>Use check-in only when you want no-show teams excluded from the bracket.</span>
-                    </div>
-                    <div className="flex items-start gap-2">
-                      <CalendarDays className="mt-0.5 h-4 w-4 text-cyan-300" />
-                      <span>Generate bracket only after confirmed teams are ready.</span>
-                    </div>
-                    <div className="flex items-start gap-2">
-                      <Users className="mt-0.5 h-4 w-4 text-blue-300" />
-                      <span>Use capacity to match available PCs/consoles and cafe seating.</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <p className="mt-2 text-xs text-slate-400">Auto: 5-hour event, registration closes 1 hour before. Times are editable ({timezone}).</p>
           </section>
 
-          <section className={`${sectionPanelClass} xl:col-span-5`}>
+          <section className={`${sectionPanelClass} lg:col-span-6`}>
             <h2 className="section-title mb-1 flex items-center gap-2">
               <Gamepad2 className="h-4 w-4 text-cyan-300" />
-              Match Engine
+              Game & rules
             </h2>
 
             <div className="h-px bg-cyan-500/20 mb-3" />
@@ -757,15 +608,18 @@ export default function CreateTournamentPage() {
                   onChange={(e) => set('format', e.target.value as TournamentFormat)}
                 >
                   <option value="single_elimination">Single Elimination</option>
-                  <option value="double_elimination" disabled>Double Elimination - Phase 2</option>
-                  <option value="swiss" disabled>Swiss - Phase 2</option>
-                  <option value="round_robin" disabled>Round Robin - Phase 2</option>
-                  <option value="group_playoffs" disabled>Group + Playoffs - Phase 2</option>
-                  <option value="ladder" disabled>Ladder - Phase 2</option>
-                  <option value="daily_cup" disabled>Daily Cup - Phase 2</option>
+
+
+
+
+
+
                 </select>
               </div>
               </div>
+              <details className="rounded-lg border border-border p-2.5">
+                <summary className="cursor-pointer text-xs font-medium">Server, maps & veto</summary>
+                <div className="mt-3 space-y-3">
               <div>
                 <label className={labelClass}>Region / Server</label>
                 <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
@@ -805,11 +659,13 @@ export default function CreateTournamentPage() {
                   <option value="bo3_ban_pick_decider">BO3 Ban/Pick Decider</option>
                 </select>
               </div>
+                </div>
+              </details>
               <div>
                 <label className={labelClass}>Match Rules</label>
                 <textarea
                   className={textareaClass}
-                  rows={4}
+                  rows={2}
                   placeholder="Lobby rules, reporting rules, late penalties, screenshot requirements..."
                   value={form.match_rules}
                   onChange={(e) => set('match_rules', e.target.value)}
@@ -818,7 +674,7 @@ export default function CreateTournamentPage() {
             </div>
           </section>
 
-          <section className={`${sectionPanelClass} xl:col-span-7`}>
+          <section className={`${sectionPanelClass} lg:col-span-6`}>
             <h2 className="section-title mb-1 flex items-center gap-2">
               <Users className="h-4 w-4 text-cyan-300" />
               Capacity & Prize
@@ -838,13 +694,21 @@ export default function CreateTournamentPage() {
                 />
               </div>
               <div>
-                <label className={labelClass}>Max Players</label>
+                <div className="mb-1 flex items-center justify-between gap-2">
+                  <label className={labelClass} htmlFor="player-capacity">Max players</label>
+                  <label className="flex items-center gap-1.5 text-xs text-slate-400"><input type="checkbox" checked={autoPlayers} onChange={(e) => {
+                    if (!e.target.checked) set('capacity_player', effectivePlayerCapacity);
+                    setAutoPlayers(e.target.checked);
+                  }} /> Auto</label>
+                </div>
                 <input
                   className={inputClass}
                   type="number"
                   min={1}
                   placeholder="e.g., 80"
-                  value={form.capacity_player}
+                  id="player-capacity"
+                  readOnly={autoPlayers}
+                  value={effectivePlayerCapacity}
                   onChange={(e) => set('capacity_player', e.target.value)}
                 />
               </div>
@@ -943,13 +807,22 @@ export default function CreateTournamentPage() {
 
 
 
+          <details className={`${sectionPanelClass} lg:col-span-12`}>
+            <summary className="cursor-pointer text-sm font-semibold">Banner <span className="font-normal text-slate-400">· Optional</span></summary>
+            <div className="mt-3 max-w-md">
+              <BannerUploader preview={bannerPreview} uploading={bannerUploading} onFileSelect={handleBannerSelect} onRemove={handleBannerRemove} />
+            </div>
+          </details>
+
           {error && (
-            <div className="rounded-lg border border-red-500/30 bg-red-500/10 p-3 xl:col-span-12">
+            <div role="alert" className="rounded-lg border border-red-500/30 bg-red-500/10 p-3 lg:col-span-12">
               <p className="text-sm font-medium text-red-300">{error}</p>
             </div>
           )}
 
-          <div className="flex justify-end gap-3 pt-2 xl:col-span-12">
+          <div className="sticky bottom-0 z-10 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border bg-background px-3 py-2 lg:col-span-12">
+            <p className="text-xs text-muted-foreground">{maxTeams || '—'} teams · {maxPlayers || '—'} players · Entry {form.currency} {form.registration_fee || '0'}</p>
+            <div className="flex items-center gap-2">
             <button
               className={secondaryButtonClass}
               onClick={() => router.push('/tournaments')}
@@ -960,7 +833,7 @@ export default function CreateTournamentPage() {
             <button
               className={`${primaryButtonClass} min-w-[10rem] justify-center`}
               onClick={handleSubmit}
-              disabled={isLoading || tokenLoading}
+              disabled={isLoading || tokenLoading || !token}
             >
               {bannerUploading ? (
                 <>
@@ -978,6 +851,7 @@ export default function CreateTournamentPage() {
                 'Save as Draft'
               )}
             </button>
+            </div>
           </div>
         </div>
       </div>
