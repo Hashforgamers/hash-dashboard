@@ -1654,26 +1654,26 @@ const ToggleSwitch = ({
   });
 
   return (
-    <div className="min-h-screen overflow-y-auto bg-background text-foreground">
-      <div className="container py-6 md:py-8 space-y-8">
-        <div className="grid grid-cols-12 gap-6">
+    <div className="account-content min-w-0 text-foreground">
+      <div className="w-full space-y-3">
+        <div className="account-layout grid items-start gap-3">
           {/* Left Sidebar */}
           <motion.div
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.3 }}
-            className="col-span-12 md:col-span-3 space-y-4"
+            className="min-w-0 space-y-3"
           >
             {/* Cafe Profile Card - Now in sidebar */}
            {/** {cafeProfile && (
               <Card className="bg-card border border-border shadow-lg">
                 <CardHeader>
-                  <CardTitle className="text-foreground">Cafe Profile</CardTitle>
-                  <CardDescription className="text-muted-foreground">
+                  <CardTitle className="account-section-title flex items-center gap-2">Cafe Profile</CardTitle>
+                  <CardDescription className="account-description">
                     Your public profile information
                   </CardDescription>
                 </CardHeader>
-                <CardContent className="p-4 space-y-6">
+                <CardContent className="p-4 space-y-3">
                   <div className="flex flex-col items-center space-y-3">
                    
                     <div className="relative transition-transform duration-300 ease-in-out hover:scale-105">
@@ -1712,16 +1712,16 @@ const ToggleSwitch = ({
 {cafeProfile && (
   <Card className="account-panel overflow-hidden">
     <CardHeader className="space-y-1.5 pb-3">
-      <CardTitle className="text-base font-semibold uppercase tracking-[0.14em] text-cyan-100 md:text-lg">Cafe Profile</CardTitle>
-      <CardDescription className="text-xs text-slate-300 md:text-sm">
+      <CardTitle className="account-section-title flex items-center gap-2">Cafe Profile</CardTitle>
+      <CardDescription className="account-description">
         Your public profile information
       </CardDescription>
     </CardHeader>
-    <CardContent className="space-y-5 px-4 pb-5 pt-1 md:px-5">
+    <CardContent className="space-y-3 px-4 pb-5 pt-1 md:px-5">
       {/* Profile Upload Message */}
       {profileUploadMessage && (
         <div className={cn(
-          "rounded-lg border px-3 py-2 text-center text-xs font-medium md:text-sm",
+          "rounded-lg border px-3 py-2 text-center text-xs font-medium",
           profileUploadMessage.includes("successfully") 
             ? "border-emerald-400/40 bg-emerald-500/15 text-emerald-700 dark:text-emerald-200" 
             : "border-rose-400/40 bg-rose-500/15 text-rose-700 dark:text-rose-200"
@@ -1733,7 +1733,7 @@ const ToggleSwitch = ({
       <div className="flex flex-col items-center gap-3 text-center">
         {/* Editable Profile Image */}
         <div className="group relative transition-transform duration-300 ease-in-out hover:scale-105">
-          <div className="h-24 w-24 rounded-full bg-emerald-500/20 p-[4px] md:h-28 md:w-28">
+          <div className="h-20 w-20 rounded-full bg-muted p-[3px]">
             <div className="h-full w-full rounded-full bg-background flex items-center justify-center overflow-hidden">
               <img
                 src={profileImage || HFG_DEFAULT_LOGO}
@@ -1768,12 +1768,12 @@ const ToggleSwitch = ({
         </div>
         
         <div className="space-y-2">
-          <h3 className="text-base font-semibold text-slate-100 md:text-lg">{cafeProfile.name || "Cafe Name"}</h3>
+          <h3 className="text-base font-semibold text-slate-100">{cafeProfile.name || "Cafe Name"}</h3>
           <div className="flex flex-wrap items-center justify-center gap-2">
-            <span className="rounded-full border border-emerald-400/30 bg-emerald-500/15 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-emerald-700 dark:text-emerald-200 md:text-xs">
+            <span className="rounded-full border border-emerald-400/30 bg-emerald-500/15 px-2.5 py-1 text-xs font-medium text-emerald-700 dark:text-emerald-200">
               Gaming Cafe - Live
             </span>
-            <span className="rounded-full border border-cyan-400/30 bg-cyan-500/15 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-cyan-100 md:text-xs">
+            <span className="rounded-full border border-cyan-400/30 bg-cyan-500/15 px-2.5 py-1 text-xs font-medium text-cyan-100">
               {cafeProfile.membershipStatus || "Standard Member"}
             </span>
           </div>
@@ -1781,11 +1781,11 @@ const ToggleSwitch = ({
       </div>
       
       <div className="space-y-2">
-        <div className="flex items-center gap-2 rounded-lg border border-cyan-500/20 bg-slate-900/35 px-3 py-2 text-xs text-slate-200 md:text-sm">
+        <div className="flex items-center gap-2 rounded-lg border border-cyan-500/20 bg-slate-900/35 px-3 py-2 text-xs text-slate-200">
           <Globe className="h-4 w-4 text-cyan-300" />
           <span className="truncate">{cafeProfile.website || "Not Available"}</span>
         </div>
-        <div className="flex items-center gap-2 rounded-lg border border-cyan-500/20 bg-slate-900/35 px-3 py-2 text-xs text-slate-200 md:text-sm">
+        <div className="flex items-center gap-2 rounded-lg border border-cyan-500/20 bg-slate-900/35 px-3 py-2 text-xs text-slate-200">
           <Mail className="h-4 w-4 text-cyan-300" />
           <span className="truncate">{cafeProfile.email || "No Email Provided"}</span>
         </div>
@@ -1821,11 +1821,12 @@ const ToggleSwitch = ({
                       <Button
                         variant="ghost"
                         className={cn(
-                          "h-10 w-full justify-start rounded-lg border border-transparent text-xs font-medium uppercase tracking-[0.08em] text-slate-300 transition-all duration-200 hover:border-cyan-500/35 hover:bg-cyan-500/10 hover:text-cyan-100 md:h-11 md:text-sm",
+                          "account-nav-item w-full justify-start rounded-md border border-transparent text-slate-300 hover:bg-white/5 hover:text-white",
                           page === item.label
                             ? "border-cyan-400/50 bg-cyan-500/15 text-cyan-100 shadow-[inset_0_0_0_1px_rgba(34,211,238,0.25)]"
                             : ""
                         )}
+                        aria-current={page === item.label ? "page" : undefined}
                         onClick={handleViewInpage}
                         data-label={item.label}
                       >
@@ -1844,16 +1845,16 @@ const ToggleSwitch = ({
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, delay: 0.1 }}
-            className="col-span-12 md:col-span-9 space-y-6"
+            className="min-w-0 space-y-3"
           >
-            <form className="space-y-6">
+            <form className="space-y-3">
 
  {page === "Cafe Gallery" && (
   <div>
     <Card className="account-panel overflow-hidden">
       <CardHeader className="pb-4">
-        <CardTitle className="text-base font-semibold uppercase tracking-[0.12em] text-cyan-100 md:text-lg">Cafe Gallery</CardTitle>
-        <CardDescription className="text-xs text-slate-300 md:text-sm">
+        <CardTitle className="account-section-title flex items-center gap-2">Cafe Gallery</CardTitle>
+        <CardDescription className="account-description">
           Showcase your cafe's ambiance and offerings
         </CardDescription>
       </CardHeader>
@@ -1981,13 +1982,13 @@ const ToggleSwitch = ({
               {/**  {page === "Business Details" && businessDetails && (
                 <Card className="bg-card border border-border shadow-lg">
                   <CardHeader>
-                    <CardTitle className="text-foreground">Business Details</CardTitle>
-                    <CardDescription className="text-muted-foreground">
+                    <CardTitle className="account-section-title flex items-center gap-2">Business Details</CardTitle>
+                    <CardDescription className="account-description">
                       Update your cafe's basic information
                     </CardDescription>
                   </CardHeader>
-                  <CardContent className="space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <CardContent className="space-y-3">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                       <div className="space-y-2">
                         <Label className="text-foreground">Business Name</Label>
                         <Input
@@ -2037,12 +2038,12 @@ const ToggleSwitch = ({
                     {page === "Business Details" && businessDetails && (
   <Card className="account-panel overflow-hidden">
     <CardHeader className="pb-4">
-      <CardTitle className="text-base font-semibold uppercase tracking-[0.12em] text-cyan-100 md:text-lg">Business Details</CardTitle>
-      <CardDescription className="text-xs text-slate-300 md:text-sm">
+      <CardTitle className="account-section-title flex items-center gap-2">Business Details</CardTitle>
+      <CardDescription className="account-description">
         Update your cafe's basic information
       </CardDescription>
     </CardHeader>
-    <CardContent className="space-y-6">
+    <CardContent className="space-y-3">
       
       {/* Editable Business Details */}
       <div className="space-y-4">
@@ -2157,15 +2158,15 @@ const ToggleSwitch = ({
 {page === "Operating Hours" && (
   <Card className="account-panel overflow-hidden">
     <CardHeader className="pb-4">
-      <CardTitle className="flex items-center gap-2 text-base font-semibold uppercase tracking-[0.12em] text-cyan-100 md:text-lg">
+      <CardTitle className="account-section-title flex items-center gap-2">
         <Clock className="h-5 w-5 text-cyan-300" />
         Operating Hours
       </CardTitle>
-      <CardDescription className="text-xs text-slate-300 md:text-sm">
+      <CardDescription className="account-description">
         Manage your cafe's working hours and slot durations
       </CardDescription>
     </CardHeader>
-    <CardContent className="space-y-6">
+    <CardContent className="space-y-3">
       <div className="space-y-4">
         <Label className="text-foreground">Operating Hours</Label>
         <p className="text-xs text-slate-300">Set `open` and `close` to same time (or use `24H`) for 24-hour operation.</p>
@@ -2294,8 +2295,8 @@ const ToggleSwitch = ({
 {page === "GST Setup" && (
   <Card className="account-panel overflow-hidden">
     <CardHeader className="pb-4">
-      <CardTitle className="text-base font-semibold uppercase tracking-[0.12em] text-cyan-100 md:text-lg">GST Setup</CardTitle>
-      <CardDescription className="text-xs text-slate-300 md:text-sm">
+      <CardTitle className="account-section-title flex items-center gap-2">GST Setup</CardTitle>
+      <CardDescription className="account-description">
         Configure taxation profile for your cafe billing and transaction transparency.
       </CardDescription>
     </CardHeader>
@@ -2406,12 +2407,12 @@ const ToggleSwitch = ({
             {/**   {page === "Billing" && billingDetails && (
                 <Card className="bg-card border border-border shadow-lg">
                   <CardHeader>
-                    <CardTitle className="text-foreground">Subscription & Billing</CardTitle>
-                    <CardDescription className="text-muted-foreground">
+                    <CardTitle className="account-section-title flex items-center gap-2">Subscription & Billing</CardTitle>
+                    <CardDescription className="account-description">
                       Manage your subscription and payment details
                     </CardDescription>
                   </CardHeader>
-                  <CardContent className="space-y-6">
+                  <CardContent className="space-y-3">
                     <div className="rounded-lg border border-border p-4 bg-muted/20">
                       <div className="flex items-center justify-between">
                         <div className="space-y-1">
@@ -2485,8 +2486,8 @@ const ToggleSwitch = ({
               {page === "Verified Documents" && (
                 <Card className="account-panel overflow-hidden">
                   <CardHeader className="pb-4">
-                    <CardTitle className="text-base font-semibold uppercase tracking-[0.12em] text-cyan-100 md:text-lg">Verified Documents</CardTitle>
-                    <CardDescription className="text-xs text-slate-300 md:text-sm">
+                    <CardTitle className="account-section-title flex items-center gap-2">Verified Documents</CardTitle>
+                    <CardDescription className="account-description">
                       Manage and preview your uploaded business documents
                     </CardDescription>
                   </CardHeader>
@@ -2699,11 +2700,11 @@ const ToggleSwitch = ({
     {/* FIRST CARD - BANK TRANSFER DETAILS */}
     <Card className="content-card account-panel mb-6 overflow-hidden">
       <CardHeader className="pb-4">
-        <CardTitle className="card-title flex items-center gap-2 text-base font-semibold uppercase tracking-[0.12em] text-cyan-100 md:text-lg">
+        <CardTitle className="account-section-title flex items-center gap-2">
           <CreditCard className="icon-lg text-cyan-300" />
           Bank Details
         </CardTitle>
-        <CardDescription className="body-text-muted text-xs text-slate-300 md:text-sm">
+        <CardDescription className="account-description">
           Manage payout destination details (Bank + UPI).
         </CardDescription>
       </CardHeader>
@@ -2838,7 +2839,7 @@ const ToggleSwitch = ({
               </Badge>
             </div>
             
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {/* Show bank details only if account number exists */}
               {bankDetails.accountNumber && (
                 <>
@@ -2921,11 +2922,11 @@ const ToggleSwitch = ({
 
     <Card className="content-card account-panel mb-6 overflow-hidden">
       <CardHeader className="pb-4">
-        <CardTitle className="card-title flex items-center gap-2 text-base font-semibold uppercase tracking-[0.12em] text-cyan-100 md:text-lg">
+        <CardTitle className="account-section-title flex items-center gap-2">
           <Calendar className="icon-lg text-cyan-300" />
           Bank Details History
         </CardTitle>
-        <CardDescription className="body-text-muted text-xs text-slate-300 md:text-sm">
+        <CardDescription className="account-description">
           Track who changed bank/UPI details and verification status updates.
         </CardDescription>
       </CardHeader>
@@ -2991,11 +2992,11 @@ const ToggleSwitch = ({
 
 {page === "Payment Methods" && (<Card className="content-card shadow-lg">
       <CardHeader>
-        <CardTitle className="card-title flex items-center gap-2">
+        <CardTitle className="account-section-title flex items-center gap-2">
           <Settings className="icon-lg" />
           Payment Methods
         </CardTitle>
-        <CardDescription className="body-text-muted">
+        <CardDescription className="account-description">
           Select which payment methods you want to accept at your cafe
         </CardDescription>
       </CardHeader>
@@ -3274,11 +3275,11 @@ const ToggleSwitch = ({
 {page === "Payout History" && (
   <Card className="content-card account-panel overflow-hidden">
     <CardHeader className="pb-4">
-      <CardTitle className="card-title flex items-center gap-2 text-base font-semibold uppercase tracking-[0.12em] text-cyan-100 md:text-lg">
+      <CardTitle className="account-section-title flex items-center gap-2">
         <DollarSign className="icon-lg text-cyan-300" />
         Payout History
       </CardTitle>
-      <CardDescription className="body-text-muted text-xs text-slate-300 md:text-sm">
+      <CardDescription className="account-description">
         View your payout transaction history
       </CardDescription>
     </CardHeader>
@@ -3396,11 +3397,11 @@ const ToggleSwitch = ({
 {page === "Notification Preferences" && (
   <Card className="content-card account-panel overflow-hidden">
     <CardHeader className="pb-4">
-      <CardTitle className="card-title flex items-center gap-2 text-base font-semibold uppercase tracking-[0.12em] text-cyan-100 md:text-lg">
+      <CardTitle className="account-section-title flex items-center gap-2">
         <BellRing className="icon-lg text-cyan-300" />
         Booking Notifications
       </CardTitle>
-      <CardDescription className="body-text-muted text-xs text-slate-300 md:text-sm">
+      <CardDescription className="account-description">
         Control app booking alerts shown in your dashboard.
       </CardDescription>
     </CardHeader>
@@ -3517,11 +3518,11 @@ const ToggleSwitch = ({
 {page === "Subscription Details" && (
   <Card className="content-card account-panel overflow-hidden">
     <CardHeader className="pb-4">
-      <CardTitle className="card-title flex items-center gap-2 text-base font-semibold uppercase tracking-[0.12em] text-cyan-100 md:text-lg">
+      <CardTitle className="account-section-title flex items-center gap-2">
         <Wallet className="icon-lg text-cyan-300" />
         Subscription Details
       </CardTitle>
-      <CardDescription className="body-text-muted text-xs text-slate-300 md:text-sm">
+      <CardDescription className="account-description">
         View all purchased plans with invoice records.
       </CardDescription>
     </CardHeader>
@@ -3588,11 +3589,11 @@ const ToggleSwitch = ({
 {page === "Settlement Report" && (
   <Card className="content-card account-panel overflow-hidden">
     <CardHeader className="pb-4">
-      <CardTitle className="card-title flex items-center gap-2 text-base font-semibold uppercase tracking-[0.12em] text-cyan-100 md:text-lg">
+      <CardTitle className="account-section-title flex items-center gap-2">
         <Calendar className="icon-lg text-cyan-300" />
         Date-wise Settlement
       </CardTitle>
-      <CardDescription className="body-text-muted text-xs text-slate-300 md:text-sm">
+      <CardDescription className="account-description">
         Paid by Hash vs pending settlement by day.
       </CardDescription>
     </CardHeader>

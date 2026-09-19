@@ -21,8 +21,8 @@ export function TopBar() {
           </motion.h1>
           <div className="flex items-center space-x-6">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 dark:text-gray-400 w-4 h-4" />
-              <input
+              <Search data-search-icon="" aria-hidden="true" className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 dark:text-gray-400 w-4 h-4" />
+              <input data-search-input=""
                 type="text"
                 placeholder="Search..."
                 className="bg-white/50 border border-gray-300 rounded-full pl-10 pr-4 py-1.5 text-sm text-gray-800 dark:bg-gray-700/50 dark:text-gray-100 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 w-64 placeholder-gray-500 dark:placeholder-gray-400 transition-all duration-200 ease-in-out"

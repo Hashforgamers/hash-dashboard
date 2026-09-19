@@ -163,8 +163,8 @@ export default function TournamentsPage() {
         {/* ── Filters ──────────────────────────────────── */}
         <div className="gaming-panel dashboard-toolbar mb-2 rounded-xl p-3">
           <div className="relative flex-1 min-w-[220px]">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 icon-md text-muted-foreground" />
-            <input
+            <Search data-search-icon="" aria-hidden="true" className="absolute left-3 top-1/2 -translate-y-1/2 icon-md text-muted-foreground" />
+            <input data-search-input=""
               className="dashboard-module-input h-10 w-full pl-10 pr-4"
               placeholder="Search tournaments..."
               value={search}

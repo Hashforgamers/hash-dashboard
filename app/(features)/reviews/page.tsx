@@ -276,8 +276,8 @@ function ReviewsPageContent() {
                 ))}
               </select>
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                <input
+                <Search data-search-icon="" aria-hidden="true" className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                <input data-search-input=""
                   className="dashboard-module-input h-9 w-full pl-10 pr-3 sm:h-10"
                   placeholder="Search reviews..."
                   value={search}

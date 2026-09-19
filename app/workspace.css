@@ -1,4 +1,66 @@
 /* Shared staff workspace surfaces; status colors remain semantic. */
+/* Account settings use one type scale across every section and breakpoint. */
+.workspace-ui .account-content { font-size: 13px; line-height: 20px; }
+.workspace-ui .account-layout { grid-template-columns: minmax(0, 1fr); }
+.workspace-ui .account-content .account-section-title,
+.workspace-ui .account-content :is(h2, h3, .section-title, .card-title) {
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: 0;
+}
+.workspace-ui .account-content :is(p, li, h4, .body-text, .table-cell-text, .text-sm) {
+  font-size: 13px;
+  line-height: 20px;
+}
+.workspace-ui .account-content :is(label, .account-description, .body-text-muted, .body-text-small, .text-xs, .badge-text, .table-header-text) {
+  font-size: 12px;
+  line-height: 18px;
+  letter-spacing: 0;
+}
+.workspace-ui .account-content .account-description { color: #a1a1aa; }
+.workspace-ui .account-content label { font-weight: 500; }
+.workspace-ui .account-content :is(input, textarea, select, button[role="combobox"]) {
+  font-size: 13px;
+  line-height: 20px;
+}
+.workspace-ui .account-content :is(input:not([type="checkbox"]):not([type="radio"]):not([type="file"]), select, button[role="combobox"]) { height: 36px; }
+.workspace-ui .account-content button:not([role="switch"]):not([role="checkbox"]) { font-size: 12px; line-height: 18px; }
+.workspace-ui .account-content .account-nav-item { min-height: 36px; height: auto; padding: 8px 10px; white-space: normal; text-align: left; letter-spacing: 0; }
+.workspace-ui .account-content .account-nav-item svg { flex-shrink: 0; }
+.workspace-ui .account-content .account-section-title svg { width: 16px; height: 16px; }
+.workspace-ui .account-content [data-ui-card-header] { padding: 12px 14px; }
+.workspace-ui .account-content [data-ui-card-content] { padding: 12px 14px; }
+@media (min-width: 768px) {
+  .workspace-ui .account-layout { grid-template-columns: 240px minmax(0, 1fr); }
+}
+
+/* Keep icon clearance independent of generic input padding and Tailwind order. */
+input[data-search-input],
+.workspace-ui input[data-search-input] {
+  min-width: 0;
+  min-height: 36px;
+  height: 36px;
+  padding: 7px 36px;
+  border-radius: 6px;
+  font-size: 13px;
+  line-height: 20px;
+  text-overflow: ellipsis;
+}
+
+svg[data-search-icon],
+.workspace-ui svg[data-search-icon] {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  width: 16px;
+  height: 16px;
+  transform: translateY(-50%);
+  color: #a1a1aa;
+  pointer-events: none;
+}
+
 .workspace-ui {
   --premium-shell-bg: #111113;
   --gaming-panel-shadow: none;
