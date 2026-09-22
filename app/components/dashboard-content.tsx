@@ -5,6 +5,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { UpcomingBookings } from "./upcoming-booking"
 import { CurrentSlots } from "./current-slot"
 import SlotManagement from "./newSlot"
+import dynamic from "next/dynamic"
 import { motion } from "framer-motion"
 import {
   IndianRupee, CalendarCheck, WalletCards, Eye, EyeOff,
@@ -16,6 +17,11 @@ import HashLoader from "./ui/HashLoader"
 import { useSocket } from "../context/SocketContext"
 import { useSubscription } from "@/hooks/useSubscription"
 import { useRouter, useSearchParams } from "next/navigation"
+
+const DashboardWallet = dynamic(
+  () => import('./cafe-wallet-workspace').then(module => module.CafeWalletWorkspace),
+  { loading: () => <p role="status" className="p-3 text-xs text-muted-foreground">Loading wallet…</p> }
+)
 
 const TERMINAL_BOOKING_STATUSES = ["cancelled", "canceled", "rejected", "completed", "discarded", "no_show"];
 const DASHBOARD_TABS = ["live", "booking"] as const
@@ -71,7 +77,8 @@ export function DashboardContent() {
 
   const { socket, isConnected, joinVendor } = useSocket()
   const { isLocked } = useSubscription()
-  const { activeStaff } = useAccess()
+  const { activeStaff, can } = useAccess()
+  const [walletOpened, setWalletOpened] = useState(false)
   const isOwnerSession = (activeStaff?.role || "owner") === "owner"
 
   useEffect(() => {
@@ -491,6 +498,19 @@ export function DashboardContent() {
               </div>
             </div>
           </motion.div>
+
+          {can("wallet.topup") && (
+            <details className="gaming-panel mt-2 shrink-0 rounded-lg" onToggle={(event) => {
+              if (event.currentTarget.open) setWalletOpened(true)
+            }}>
+              <summary className="cursor-pointer select-none px-3 py-2 text-sm font-semibold">
+                Wallet & Shifts
+              </summary>
+              <div className="max-h-[45dvh] overflow-y-auto overscroll-contain border-t border-border">
+                {walletOpened && <DashboardWallet embedded />}
+              </div>
+            </details>
+          )}
 
           {activeDashboardTab === "booking" ? (
             <motion.div
