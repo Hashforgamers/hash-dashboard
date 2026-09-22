@@ -283,3 +283,12 @@ svg[data-search-icon],
 .workspace-ui .tournament-detail .section-title { font-size: 14px; line-height: 20px; }
 .workspace-ui .tournament-detail .body-text-muted { font-size: 12px; line-height: 16px; }
 .workspace-ui .tournament-detail .body-text { font-size: 13px; line-height: 20px; }
+
+/* Compact desk wallet operations. */
+.cafe-wallet-workspace { font-size: 13px; }
+.cafe-wallet-workspace label { font-size: 12px; }
+.cafe-wallet-workspace label > input:not([type="checkbox"]) { margin-top: 4px; height: 36px; font-size: 13px; }
+.cafe-wallet-workspace button { min-height: 32px; font-size: 12px; }
+.cafe-wallet-workspace td { padding: 8px; vertical-align: top; }
+.cafe-wallet-workspace th { color: hsl(var(--muted-foreground)); font-weight: 500; }
+.cafe-wallet-workspace details > summary { cursor: pointer; }
