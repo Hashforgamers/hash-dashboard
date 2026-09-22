@@ -43,6 +43,7 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
+  { href: "/cafe-wallet", icon: Wallet, label: "Cafe Wallet & Shifts", permission: "wallet.topup" },
   { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard", permission: "dashboard.view" },
   { href: "/gaming", icon: Laptop, label: "Manage Gaming Console", permission: "gaming.manage" },
   { href: "/transaction", icon: Receipt, label: "Transaction Report", permission: "transactions.view" },

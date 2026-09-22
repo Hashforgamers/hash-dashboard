@@ -1,17 +1,9 @@
-import { ThemeProvider } from "next-themes";
-import { AuthProvider } from "./AuthProvider";
+import { PublicRouteBoundary } from "./PublicRouteBoundary";
 import type { Metadata, Viewport } from "next";
 
 import "./globals.css";
 import "./premium.css";
 import "./workspace.css";
-import { SocketProvider } from "./context/SocketContext";
-import { SubscriptionProvider } from "./context/SubscriptionContext";
-import { AccessProvider } from "./context/AccessContext";
-import { DashboardDataProvider } from "./context/DashboardDataContext";
-import { DashboardDataBus } from "./context/DashboardDataBus";
-import { TableDragScroll } from "./components/TableDragScroll";
-import { MobileInstallBanner } from "./components/MobileInstallBanner";
 
 const dashboardBaseUrl =
   process.env.NEXT_PUBLIC_DASHBOARD_URL || "https://dashboard.hashforgamers.com";
@@ -73,22 +65,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <head />
       <body className="bg-background text-foreground">
-        <AuthProvider>
-          <ThemeProvider attribute="class" forcedTheme="dark" enableSystem={false}>
-            <SocketProvider>
-              <SubscriptionProvider>
-                <AccessProvider>
-                  <DashboardDataProvider>
-                    <DashboardDataBus />
-                    <TableDragScroll />
-                    <MobileInstallBanner />
-                    {children}
-                  </DashboardDataProvider>
-                </AccessProvider>
-              </SubscriptionProvider>
-            </SocketProvider>
-          </ThemeProvider>
-        </AuthProvider>
+        <PublicRouteBoundary>{children}</PublicRouteBoundary>
       </body>
     </html>
   );
