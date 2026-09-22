@@ -4,6 +4,7 @@ import { createContext, useContext, useEffect, useState } from "react";
 import { jwtDecode } from "jwt-decode";
 import { Permission, ROLE_PERMISSIONS, StaffRole } from "@/lib/rbac";
 import { accessApi, Role } from "@/lib/access-api";
+import { endCafeStaffSession } from "@/lib/cafe-api";
 import { LOGIN_URL } from "@/src/config/env";
 
 export interface StaffProfile {
@@ -369,6 +370,7 @@ export function AccessProvider({ children }: { children: React.ReactNode }) {
     try {
       accessDebug("Calling /unlock", { cafeId: selectedCafeId, pinLength: pin.length });
       const unlocked = await accessApi.unlockByPin(selectedCafeId, pin);
+      await endCafeStaffSession();
       localStorage.setItem(STORAGE_ACCESS_TOKEN, unlocked.token);
       accessDebug("Unlock success", { cafeId: selectedCafeId, role: unlocked.staff.role, name: unlocked.staff.name });
 
@@ -596,6 +598,7 @@ export function AccessProvider({ children }: { children: React.ReactNode }) {
   };
 
   const clearAccessSession = () => {
+    void endCafeStaffSession();
     setActiveStaff(null);
     localStorage.removeItem(STORAGE_ACTIVE);
     localStorage.removeItem(STORAGE_ACCESS_TOKEN);

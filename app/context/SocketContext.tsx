@@ -1,6 +1,7 @@
 "use client";
 
 
+import { getPreferredAuthToken } from "@/lib/auth-session";
 import { SOCKET_URL } from '@/src/config/env'
 import React, { createContext, useContext, useEffect, useState, useCallback, useMemo, ReactNode } from 'react'
 import { io, Socket } from 'socket.io-client'
@@ -35,6 +36,7 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
     console.log(`Trying to connect ${SOCKET_URL}`)
     const newSocket = io(`${SOCKET_URL}`, {
       transports: ['websocket', 'polling'],
+      auth: (callback) => callback({ token: getPreferredAuthToken() }),
       autoConnect: true,
       reconnection: true,
       reconnectionAttempts: Infinity,
@@ -72,7 +74,11 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
         window.clearInterval(heartbeatRef.current);
       }
       heartbeatRef.current = window.setInterval(() => {
-        if (!newSocket.connected || document.hidden) return;
+        if (document.hidden) return;
+        if (!newSocket.connected) {
+          if (getPreferredAuthToken()) newSocket.connect();
+          return;
+        }
         const now = Date.now();
         if (now - lastPongRef.current > 30000) {
           forceReconnect("pong_timeout");
@@ -135,6 +141,7 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
       document.addEventListener("visibilitychange", handleVisible);
     }
 
+    startHeartbeat();
     setSocket(newSocket);
 
     return () => {
