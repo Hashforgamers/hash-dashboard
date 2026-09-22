@@ -1,4 +1,7 @@
 export type Permission =
+  | "wallet.topup"
+  | "wallet.refund"
+  | "wallet.adjust"
   | "dashboard.view"
   | "gaming.manage"
   | "booking.manage"
@@ -21,6 +24,9 @@ export type StaffRole = "owner" | "manager" | "staff";
 
 export const ROLE_PERMISSIONS: Record<StaffRole, Permission[]> = {
   owner: [
+    "wallet.adjust",
+    "wallet.topup",
+    "wallet.refund",
     "dashboard.view",
     "gaming.manage",
     "booking.manage",
@@ -40,6 +46,8 @@ export const ROLE_PERMISSIONS: Record<StaffRole, Permission[]> = {
     "cafe.switch",
   ],
   manager: [
+    "wallet.topup",
+    "wallet.refund",
     "dashboard.view",
     "gaming.manage",
     "booking.manage",
@@ -56,6 +64,7 @@ export const ROLE_PERMISSIONS: Record<StaffRole, Permission[]> = {
     "cafe.switch",
   ],
   staff: [
+    "wallet.topup",
     "dashboard.view",
     "booking.manage",
     "gaming.manage",
@@ -71,6 +80,7 @@ export interface NavItemPermission {
 }
 
 export const NAV_PERMISSION_MAP: NavItemPermission[] = [
+  { href: "/cafe-wallet", permission: "wallet.topup" },
   { href: "/dashboard", permission: "dashboard.view" },
   { href: "/gaming", permission: "gaming.manage" },
   { href: "/booking", permission: "booking.manage" },
