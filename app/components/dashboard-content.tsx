@@ -448,17 +448,17 @@ export function DashboardContent() {
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="operations-summary shrink-0 p-3 max-md:p-2 md:p-3.5"
+            className="operations-summary shrink-0"
           >
             <div
               className={
                 isOwnerSession
-                  ? "grid grid-cols-1 gap-3 max-md:grid-cols-[minmax(0,1fr)_minmax(138px,42vw)] max-md:items-start max-md:gap-1 lg:grid-cols-[minmax(245px,0.8fr)_minmax(0,1.9fr)_auto] lg:items-center"
+                  ? "grid grid-cols-1 items-center gap-2 lg:grid-cols-[auto_minmax(0,1fr)]"
                   : "grid grid-cols-1 gap-1.5"
               }
             >
               <div className="min-w-0">
-                <div className="flex h-full flex-col items-start justify-between gap-2">
+                <div className="flex flex-wrap items-center gap-3">
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2 sm:gap-3">
                       <h1 className="premium-heading dashboard-hero-title leading-tight max-md:text-[1.1rem]">
@@ -493,14 +493,14 @@ export function DashboardContent() {
                   {isOwnerSession ? topMetricsStrip : null}
                 </div>
               </div>
-              <div className="max-md:w-full max-md:self-start">
+              <div className="w-full md:hidden">
                 {isOwnerSession ? mobileMetricsStrip : null}
               </div>
             </div>
           </motion.div>
 
           {can("wallet.topup") && (
-            <details className="gaming-panel mt-2 shrink-0 rounded-lg" onToggle={(event) => {
+            <details className="gaming-panel dashboard-wallet-panel mt-2 shrink-0 rounded-lg" onToggle={(event) => {
               if (event.currentTarget.open) setWalletOpened(true)
             }}>
               <summary className="cursor-pointer select-none px-3 py-2 text-sm font-semibold">
@@ -526,9 +526,9 @@ export function DashboardContent() {
           ) : (
             <div className="mt-2 flex min-h-0 flex-1 flex-col gap-2 max-md:mt-1 max-md:gap-1.5 sm:mt-3 sm:gap-3">
               <motion.div
-                initial={{ opacity: 0, y: 14 }}
+                initial={{ opacity: 0 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.18 }}
+                transition={{ duration: 0.15 }}
                 className="dashboard-booking-slab gaming-panel shrink-0 overflow-hidden rounded-lg"
               >
                 <div className="dashboard-booking-slab-body">
@@ -541,7 +541,7 @@ export function DashboardContent() {
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.3 }}
+                  transition={{ duration: 0.15 }}
                   className="flex-1 min-h-0 lg:h-full max-md:overflow-hidden"
                 >
                   <div className="relative h-full overflow-hidden">
@@ -558,7 +558,7 @@ export function DashboardContent() {
                 <motion.div
                   initial={{ opacity: 0, x: 20 }}
                   animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.4 }}
+                  transition={{ duration: 0.15 }}
                   className="flex flex-col min-h-0 xl:col-span-4 2xl:col-span-3 xl:h-full max-md:h-full max-md:min-h-0"
                 >
                   <div className="relative flex-1 min-h-[320px] overflow-hidden rounded-lg xl:h-full xl:min-h-0 max-md:min-h-0 max-md:h-full">
