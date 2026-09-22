@@ -518,12 +518,12 @@ export function NotificationPanel({
             animate={{ y: 0, opacity: 1, scale: 1 }}
             exit={{ y: -100, opacity: 0, scale: 0.95 }}
             transition={{ type: "spring", damping: 25, stiffness: 300 }}
-            className="dashboard-module-panel fixed left-4 right-4 top-16 z-[30010] max-h-[85vh] overflow-hidden rounded-2xl border border-slate-600/45 bg-slate-900/92 shadow-[0_18px_60px_rgba(2,6,23,0.5)] backdrop-blur-xl md:left-auto md:w-[26rem]"
+            className="dashboard-module-panel fixed left-4 right-4 top-16 z-[30010] max-h-[85vh] overflow-hidden rounded-lg border border-slate-600/45 bg-slate-900/92 shadow-[0_18px_60px_rgba(2,6,23,0.5)] backdrop-blur-xl md:left-auto md:w-[26rem]"
           >
             {/* Header */}
-            <div className="flex items-center justify-between border-b border-slate-700/70 bg-slate-900/75 p-4">
+            <div className="flex items-center justify-between border-b border-slate-700/70 bg-slate-900/75 px-3 py-2.5">
               <div className="flex items-center gap-2">
-                <h3 className="dash-title !text-base">Notifications</h3>
+                <h3 className="dash-title !text-sm">Notifications</h3>
                 {notificationCount > 0 && (
                   <Badge className="border border-cyan-400/40 bg-cyan-500/15 text-cyan-200 text-xs">
                     {notificationCount}
@@ -534,6 +534,7 @@ export function NotificationPanel({
                 variant="ghost"
                 size="sm"
                 onClick={onClose}
+                aria-label="Close notifications"
                 className="h-8 w-8 rounded-full p-0 text-slate-300 hover:bg-cyan-500/15 hover:text-cyan-200"
               >
                 <X className="w-4 h-4" />
@@ -544,8 +545,8 @@ export function NotificationPanel({
             <div className="max-h-[70vh] overflow-y-auto bg-slate-900/45 p-2 sm:p-3">
               <div className="dashboard-module-card mb-3 rounded-xl border border-cyan-400/25 bg-slate-900/65 p-3">
                 <div className="mb-2 flex items-center justify-between gap-2">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-cyan-200">
-                    Pay At Cafe Queue
+                  <p className="text-xs font-medium text-cyan-200">
+                    Payment queue
                   </p>
                   <Button
                     type="button"
@@ -557,7 +558,7 @@ export function NotificationPanel({
                     }}
                     className="h-7 dashboard-btn-primary px-2 text-[11px]"
                   >
-                    Open Queue
+                    View queue
                   </Button>
                 </div>
                 <div className="grid grid-cols-3 gap-1.5 text-[11px]">
@@ -591,17 +592,14 @@ export function NotificationPanel({
               </div>
 
               {notifications.length === 0 ? (
-                <div className="dashboard-module-card rounded-xl border border-slate-600/45 bg-slate-900/65 px-6 py-12 text-center">
-                  <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full border border-slate-500/60 bg-slate-800/70">
-                    <Bell className="h-8 w-8 text-muted-foreground opacity-70" />
+                <div className="dashboard-module-card rounded-xl border border-slate-600/45 bg-slate-900/65 px-3 py-5 text-center">
+                  <div className="mx-auto mb-2 flex h-8 w-8 items-center justify-center rounded-full border border-slate-500/60 bg-slate-800/70">
+                    <Bell className="h-4 w-4 text-muted-foreground opacity-70" />
                   </div>
                   <h4 className="mb-2 font-medium text-foreground">No notifications</h4>
-                  <p className="mx-auto max-w-sm text-sm leading-relaxed text-muted-foreground">
-                    Meal additions and pay-at-cafe requests will appear here for quick action.
-                  </p>
                 </div>
               ) : (
-                <div className="space-y-3">
+                <div className="space-y-2">
                   {notifications.map((notification, index) => {
                     const isMealNotice = (notification as any)?.kind === "meals_added"
                     const isThisBookingProcessing = !isMealNotice && processingAction.bookingId === (notification as any).bookingId
@@ -617,9 +615,9 @@ export function NotificationPanel({
                           animate={{ opacity: 1, y: 0 }}
                           exit={{ opacity: 0, x: 20 }}
                           transition={{ delay: index * 0.05 }}
-                          className="dashboard-module-card rounded-xl p-4 transition-all duration-200"
+                          className="dashboard-module-card rounded-lg p-3 transition-all duration-200"
                         >
-                          <div className="space-y-3">
+                          <div className="space-y-2">
                             <div className="flex items-center justify-between">
                               <div>
                                 <p className="text-sm font-semibold text-slate-100">Meals Added</p>
@@ -644,7 +642,7 @@ export function NotificationPanel({
                             </div>
                             <div className="rounded-lg border border-cyan-400/40 bg-cyan-500/10 p-3 text-center">
                               <span className="text-xs text-cyan-200">Amount to collect</span>
-                              <div className="text-2xl font-bold text-cyan-200">
+                              <div className="text-base font-semibold tabular-nums text-cyan-200">
                                 ₹{Number(mealNotice.amount_added || 0).toFixed(0)}
                               </div>
                             </div>
@@ -673,13 +671,13 @@ export function NotificationPanel({
                           animate={{ opacity: 1, y: 0 }}
                           exit={{ opacity: 0, x: 20 }}
                           transition={{ delay: index * 0.05 }}
-                          className={`dashboard-module-card rounded-xl p-4 transition-all duration-200 ${
+                          className={`dashboard-module-card rounded-lg p-3 transition-all duration-200 ${
                             isVerified
                               ? "border border-emerald-400/35 bg-emerald-500/10"
                               : "border border-rose-400/35 bg-rose-500/10"
                           }`}
                         >
-                          <div className="space-y-3">
+                          <div className="space-y-2">
                             <div className="flex items-center gap-2">
                               <FileWarning className={`h-4 w-4 ${isVerified ? "text-emerald-300" : "text-rose-300"}`} />
                               <p className={`text-sm font-semibold ${isVerified ? "text-emerald-100" : "text-rose-100"}`}>{docNotice.title}</p>
@@ -719,13 +717,13 @@ export function NotificationPanel({
                           animate={{ opacity: 1, y: 0 }}
                           exit={{ opacity: 0, x: 20 }}
                           transition={{ delay: index * 0.05 }}
-                          className={`dashboard-module-card rounded-xl p-4 transition-all duration-200 ${
+                          className={`dashboard-module-card rounded-lg p-3 transition-all duration-200 ${
                             isCritical
                               ? "border border-rose-400/35 bg-rose-500/10"
                               : "border border-amber-400/35 bg-amber-500/10"
                           }`}
                         >
-                          <div className="space-y-3">
+                          <div className="space-y-2">
                             <div className="flex items-center gap-2">
                               <AlertTriangle className={`h-4 w-4 ${isCritical ? "text-rose-300" : "text-amber-300"}`} />
                               <p className={`text-sm font-semibold ${isCritical ? "text-rose-100" : "text-amber-100"}`}>Low Stock Alert</p>
@@ -774,11 +772,11 @@ export function NotificationPanel({
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, x: 20 }}
                         transition={{ delay: index * 0.1 }}
-                        className={`dashboard-module-card rounded-xl p-4 transition-all duration-200 ${
+                        className={`dashboard-module-card rounded-lg p-3 transition-all duration-200 ${
                           isThisBookingProcessing ? 'opacity-75' : ''
                         }`}
                       >
-                        <div className="space-y-3">
+                        <div className="space-y-2">
 
                           {/* Header Row */}
                           <div className="flex items-center justify-between">
@@ -822,7 +820,7 @@ export function NotificationPanel({
                           </div>
 
                           {/* Time and Date */}
-                          <div className="flex items-center gap-4 text-sm text-slate-200">
+                          <div className="flex items-center gap-3 text-xs text-slate-200">
                             <div className="flex items-center gap-1">
                               <Clock className="w-3 h-3 text-slate-400" />
                               <span>{payNotice.time}</span>
@@ -834,17 +832,17 @@ export function NotificationPanel({
                           </div>
 
                           {/* ✅ CHANGED: Orange box clearly showing "To Be Paid", not green "Paid" */}
-                          <div className="rounded-lg border border-orange-400/40 bg-orange-500/10 p-3">
+                          <div className="flex flex-wrap items-center justify-between gap-1 rounded-md border border-orange-400/25 bg-orange-500/5 px-2.5 py-2">
                             <p className="mb-1 text-center text-xs font-medium text-orange-300">
-                              To Be Paid at Cafe
+                              To collect
                             </p>
                             <div className="text-center">
-                              <span className="text-2xl font-bold text-orange-300">
+                              <span className="text-base font-semibold tabular-nums text-orange-300">
                                 ₹{payNotice.total_amount ?? payNotice.game.single_slot_price}
                               </span>
                             </div>
                             {/* ✅ NEW: Subtle reminder so vendor knows what to do */}
-                            <p className="mt-1 text-center text-xs text-slate-400">
+                            <p className="w-full text-xs text-slate-400">
                               Collect after session completion
                             </p>
                           </div>
@@ -854,7 +852,7 @@ export function NotificationPanel({
                             <Button
                               onClick={() => handleAccept(payNotice)}
                               disabled={isThisBookingProcessing}
-                              className="h-9 flex-1 dashboard-btn-primary text-sm"
+                              className="h-8 flex-1 dashboard-btn-primary text-xs"
                             >
                               {isAcceptProcessing ? (
                                 <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
@@ -905,12 +903,12 @@ export function NotificationPanel({
                   className="fixed inset-0 z-[30030] flex items-center justify-center p-4"
                 >
                   <div
-                    className="dashboard-module-panel w-[min(42rem,calc(100vw-2rem))] max-h-[78vh] overflow-hidden rounded-2xl border border-cyan-400/30 bg-background"
+                    className="dashboard-module-panel w-[min(42rem,calc(100vw-2rem))] max-h-[78vh] overflow-hidden rounded-lg border border-cyan-400/30 bg-background"
                     onClick={(e) => e.stopPropagation()}
                   >
                     <div className="flex items-center justify-between border-b border-border bg-muted/30 px-4 py-3">
                       <div className="flex items-center gap-2">
-                        <h4 className="dash-title !text-sm">Pay At Cafe Queue</h4>
+                        <h4 className="dash-title !text-sm">Payment queue</h4>
                         <Badge className="border border-cyan-400/35 bg-cyan-500/10 text-cyan-200 text-[10px]">
                           {queueFilterMode === "single" ? singleDate : `${startDate} to ${endDate}`}
                         </Badge>
@@ -919,13 +917,14 @@ export function NotificationPanel({
                         variant="ghost"
                         size="sm"
                         onClick={() => setIsQueueOverlayOpen(false)}
+                        aria-label="Close payment queue"
                         className="h-7 w-7 rounded-full p-0 text-slate-300 hover:bg-cyan-500/10"
                       >
                         <X className="h-4 w-4" />
                       </Button>
                     </div>
 
-                    <div className="max-h-[66vh] space-y-3 overflow-y-auto p-3">
+                    <div className="max-h-[66vh] space-y-2 overflow-y-auto p-3">
                       <div className="rounded-lg border border-border bg-muted/20 p-3">
                         <div className="mb-2 flex flex-wrap items-center gap-2">
                           <Button
@@ -1025,7 +1024,7 @@ export function NotificationPanel({
 
                     <div className="rounded-lg border border-border bg-muted/20 p-3">
                       <div className="mb-2 flex items-center justify-between">
-                        <p className="text-xs font-semibold uppercase tracking-[0.12em] text-cyan-200">
+                        <p className="text-xs font-medium text-cyan-200">
                           {queueStatusCards.find((c) => c.key === selectedQueueStatus)?.label} List
                         </p>
                         <Badge className="border border-cyan-400/40 bg-cyan-500/15 text-cyan-200 text-[10px]">
@@ -1033,7 +1032,7 @@ export function NotificationPanel({
                         </Badge>
                       </div>
                       {queueItems.length === 0 ? (
-                        <p className="text-xs text-muted-foreground">No records found for selected filter.</p>
+                        <p className="text-xs text-muted-foreground">No matching bookings.</p>
                       ) : (
                         <div className="space-y-2">
                           {queueItems.map((item) => {
