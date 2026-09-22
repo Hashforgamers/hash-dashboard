@@ -292,3 +292,12 @@ svg[data-search-icon],
 .cafe-wallet-workspace td { padding: 8px; vertical-align: top; }
 .cafe-wallet-workspace th { color: hsl(var(--muted-foreground)); font-weight: 500; }
 .cafe-wallet-workspace details > summary { cursor: pointer; }
+
+/* Dashboard controls share one restrained, compact visual hierarchy. */
+.operations-dashboard .gaming-kpi-card > div { padding: 8px 10px; }
+.operations-dashboard .dashboard-wallet-panel { box-shadow: none; background: hsl(var(--card)); }
+.operations-dashboard .dashboard-wallet-panel > summary { padding: 8px 12px; font-size: 13px; }
+.operations-dashboard .dashboard-wallet-panel[open] > summary { border-bottom: 1px solid hsl(var(--border)); }
+.operations-dashboard .dashboard-quick-toolbar { gap: 8px; }
+.operations-dashboard .dashboard-slab-title { font-size: 13px; font-weight: 600; }
+.operations-dashboard .dashboard-quick-context { font-size: 12px; }
