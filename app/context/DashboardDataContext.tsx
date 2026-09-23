@@ -14,7 +14,7 @@ interface DashboardDataContextValue {
   consolesLoading: boolean;
   refreshLanding: (force?: boolean) => Promise<any | null>;
   refreshConsoles: (force?: boolean) => Promise<any[] | null>;
-  setLandingData: (data: any | null) => void;
+  setLandingData: React.Dispatch<React.SetStateAction<any>>;
   setConsoles: React.Dispatch<React.SetStateAction<any[]>>;
   moduleCache: Record<string, { data: any; updatedAt: number }>;
   moduleVersions: Record<string, number>;
@@ -88,7 +88,7 @@ export function DashboardDataProvider({ children }: { children: React.ReactNode 
     if (!force && lastLandingVendorRef.current === vendorId && landingRef.current && now - lastLandingRef.current < LANDING_TTL_MS) {
       return landingRef.current;
     }
-    setLandingLoading(true);
+    setLandingLoading(!landingRef.current);
     try {
       const url = `${DASHBOARD_URL}/api/getLandingPage/vendor/${vendorId}`;
       const data = await httpJson<any>(url, {
@@ -115,10 +115,10 @@ export function DashboardDataProvider({ children }: { children: React.ReactNode 
   const refreshConsoles = useCallback(async (force = false): Promise<any[] | null> => {
     if (!vendorId) return null;
     const now = Date.now();
-    if (!force && lastConsolesVendorRef.current === vendorId && consolesRef.current.length > 0 && now - lastConsolesRef.current < CONSOLES_TTL_MS) {
+    if (!force && lastConsolesVendorRef.current === vendorId && lastConsolesRef.current > 0 && now - lastConsolesRef.current < CONSOLES_TTL_MS) {
       return consolesRef.current;
     }
-    setConsolesLoading(true);
+    setConsolesLoading(lastConsolesRef.current === 0);
     try {
       const url = `${DASHBOARD_URL}/api/getConsoles/vendor/${vendorId}`;
       const data = await httpJson<any>(url, {

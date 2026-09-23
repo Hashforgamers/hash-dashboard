@@ -398,14 +398,14 @@ export function NotificationButton({
     void fetchPendingBookings()
   }, [isOpen, vendorId, fetchPendingBookings])
 
-  // Poll periodically as a resilience fallback if socket delivery is delayed.
+  // Poll only while disconnected; socket events and reconnects reconcile the list.
   useEffect(() => {
     if (!vendorId) return
     const timer = window.setInterval(() => {
-      void fetchPendingBookings()
-    }, 30000)
+      if (!isConnected && !document.hidden && navigator.onLine) void fetchPendingBookings()
+    }, 60000)
     return () => window.clearInterval(timer)
-  }, [vendorId, fetchPendingBookings])
+  }, [vendorId, isConnected, fetchPendingBookings])
 
   useEffect(() => {
     setUnreadCount(Array.isArray(notifications) ? notifications.length : 0)
