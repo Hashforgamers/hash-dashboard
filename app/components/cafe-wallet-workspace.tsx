@@ -4,9 +4,15 @@ import {useAccess} from '@/app/context/AccessContext';
 import {cafeCall, rupees, paise, CafePolicy, LedgerEntry, Shift} from '@/lib/cafe-api';
 import {Button} from '@/components/ui/button';
 import {Input} from '@/components/ui/input';
+import {Dialog, DialogContent, DialogHeader, DialogTitle} from '@/components/ui/dialog';
+import {CafeGamerSearch, CafeGamer} from './cafe-gamer-search';
+import {activityLabel, activityDetails, downloadActivityCsv} from '@/lib/cafe-activity';
 
-export function CafeWalletWorkspace({embedded = false}: {embedded?: boolean}) {
+export function CafeWalletWorkspace({embedded = false, view = "wallet"}: {embedded?: boolean; view?: "wallet"|"settings"|"activity"|"shift"}) {
   const {selectedCafeId, activeStaff, can} = useAccess();
+  const [showShift,setShowShift] = useState(false);
+  const [selectedGamer,setSelectedGamer] = useState<CafeGamer|null>(null);
+  const [activitySearch,setActivitySearch] = useState('');
   const [policy,setPolicy] = useState<CafePolicy|null>(null);
   const [shifts,setShifts] = useState<Shift[]>([]);
   const [userId,setUserId] = useState('');
@@ -23,34 +29,32 @@ export function CafeWalletWorkspace({embedded = false}: {embedded?: boolean}) {
   const [reason,setReason] = useState('');
   const [busy,setBusy] = useState(false);
   const actionLock = useRef(false);
-  const currentContext = `${selectedCafeId}:${activeStaff?.id}`;
+  const currentContext = `${selectedCafeId}:${activeStaff?.id}:${view}`;
   const contextRef = useRef(currentContext);
   contextRef.current = currentContext;
   const [message,setMessageState] = useState('');
   const setMessage = (value: string) => { if(contextRef.current===currentContext) setMessageState(value); };
-  const [audit,setAudit] = useState<{id:number; actor_name:string; action:string; created_at:string; details:unknown}[]>([]);
-  const [totals,setTotals] = useState<Record<string,number>>({});
+  const [audit,setAudit] = useState<{id:number|string; actor_name:string; action:string; created_at:string; details:unknown}[]>([]);
   const [idem,setIdem] = useState('');
   const [orders,setOrders] = useState<{id:string;user_id:number;collector:string;state:string;amount:number;items:{name:string;quantity:number}[]}[]>([]);
   const prefix = `/${selectedCafeId}`;
   const openShift = shifts.find(s=>!s.closed_at);
   async function refresh() {
     if(contextRef.current !== currentContext) return;
-    const [p,s,o,a,r] = await Promise.allSettled([
-      cafeCall<CafePolicy>(`${prefix}/policy`), cafeCall<Shift[]>(`${prefix}/shifts`),
-      can('store.manage') ? cafeCall<typeof orders>(`${prefix}/food/orders`) : Promise.resolve([]),
-      can('transactions.view') ? cafeCall<typeof audit>(`${prefix}/audit`) : Promise.resolve([]),
-      can('transactions.view') ? cafeCall<{totals:Record<string,number>}>(`${prefix}/report`) : Promise.resolve({totals:{}}),
+    const [p,s,o,a] = await Promise.allSettled([
+      view!=='activity' ? cafeCall<CafePolicy>(`${prefix}/policy`) : Promise.resolve(null),
+      view!=='settings' && can('wallet.topup') ? cafeCall<Shift[]>(`${prefix}/shifts`) : Promise.resolve([]),
+      view==='wallet' && can('store.manage') ? cafeCall<typeof orders>(`${prefix}/food/orders`) : Promise.resolve([]),
+      view==='activity' && can('transactions.view') ? cafeCall<typeof audit>(`${prefix}/activity`) : Promise.resolve([]),
     ]);
     if(contextRef.current !== currentContext) return;
     if(p.status==='rejected') throw p.reason;
     if(s.status==='rejected') throw s.reason;
     setPolicy(p.value); setShifts(s.value);
-    setMethod(current=>p.value.desk_methods.includes(current)?current:(p.value.desk_methods[0] || ''));
+    if(p.value) {const methods=p.value.desk_methods;setMethod(current=>methods.includes(current)?current:(methods[0]||''));}
     if(o.status==='fulfilled') setOrders(o.value);
     if(a.status==='fulfilled') setAudit(a.value);
-    if(r.status==='fulfilled') setTotals(r.value.totals);
-    if([o,a,r].some(result=>result.status==='rejected')) throw new Error('Wallet and shifts loaded; some activity is unavailable.');
+    if([o,a].some(result=>result.status==='rejected')) throw new Error('Wallet and shifts loaded; some activity is unavailable.');
   }
   async function action(fn:()=>Promise<void>) {
     if(actionLock.current) return;
@@ -60,13 +64,13 @@ export function CafeWalletWorkspace({embedded = false}: {embedded?: boolean}) {
     finally { actionLock.current = false; setBusy(false); }
   }
   useEffect(()=>{
-    setWallet(null); setLoadedUser(''); setUserId(''); setShifts([]); setPolicy(null);
-    setOrders([]); setAudit([]); setTotals({}); setIdem(''); setAdjustKey('');
+    setWallet(null); setLoadedUser(''); setUserId(''); setSelectedGamer(null); setShifts([]); setPolicy(null);
+    setOrders([]); setAudit([]); setIdem(''); setAdjustKey('');
     setAmount(''); setAdjustment(''); setReason(''); setClosingCash(''); setOpeningCash('0'); setMessage('');
     if(selectedCafeId && activeStaff) void refresh().catch(e=>{
       if(contextRef.current===currentContext) setMessage(e instanceof Error?e.message:'Unable to load cafe data');
     });
-  },[selectedCafeId,activeStaff?.id]);
+  },[selectedCafeId,activeStaff?.id,view]);
   useEffect(()=>{setClosingCash('');},[openShift?.id]);
   async function loadWallet(id=userId) {
     if(contextRef.current !== currentContext) return;
@@ -77,28 +81,39 @@ export function CafeWalletWorkspace({embedded = false}: {embedded?: boolean}) {
   }
   async function syncAfterWrite(notice: string, includeWallet = false) {
     setMessage(notice);
+    window.dispatchEvent(new CustomEvent('cafe-desk-updated',{detail:{source:view}}));
     try {
       await Promise.all([refresh(), includeWallet ? loadWallet(loadedUser) : Promise.resolve()]);
     } catch {
       setMessage(`${notice} Latest data could not be loaded. Refresh to verify.`);
     }
   }
+  useEffect(()=>{
+    if(view!=='wallet') return;
+    const reload=(event:Event)=>{if((event as CustomEvent).detail?.source==='wallet') return;void refresh().catch(e=>setMessage(e instanceof Error?e.message:'Unable to refresh'));};
+    window.addEventListener('cafe-desk-updated',reload);
+    return ()=>window.removeEventListener('cafe-desk-updated',reload);
+  },[selectedCafeId,activeStaff?.id,view]);
+  const filteredAudit=audit.filter(row=>`${row.actor_name} ${activityLabel(row.action)} ${activityDetails(row.details)}`.toLowerCase().includes(activitySearch.toLowerCase()));
   return <section aria-label="Cafe wallet and shifts" className={`cafe-wallet-workspace mx-auto w-full space-y-3 p-3 ${embedded ? "" : "max-w-6xl"}`}>
-    <header className="flex flex-wrap items-center justify-between gap-2"><h2 className={embedded ? "text-sm font-semibold" : "text-lg font-semibold"}>Cafe Wallet & Shifts</h2><span className="text-xs text-muted-foreground">{activeStaff?.name || 'Staff'} · INR</span></header>
+    <header className="flex flex-wrap items-center justify-between gap-2"><h2 className={embedded ? "text-sm font-semibold" : "text-lg font-semibold"}>{view==="settings"?"Cafe wallet payment settings":view==="activity"?"Staff activity":view==="shift"?"Manage shift":"Cafe wallet top-up"}</h2><span className="text-xs text-muted-foreground">{activeStaff?.name || 'Staff'} · INR</span>{view==='wallet'&&<Button variant="outline" onClick={()=>setShowShift(true)}>{openShift?'End shift':'Start shift'}</Button>}</header>
     {message && <div role="status" className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-amber-500/30 bg-amber-500/5 px-3 py-2 text-sm"><span>{message}</span><Button variant="ghost" disabled={busy} onClick={()=>action(async()=>{await refresh();if(loadedUser)await loadWallet(loadedUser);})}>Refresh</Button></div>}
     {!selectedCafeId ? <p>Select a cafe first.</p> : <fieldset disabled={busy} className="min-w-0 space-y-3">
-    <div className="grid items-start gap-3 lg:grid-cols-[300px_minmax(0,1fr)]">
+    <div className="space-y-3">
+    {view==='shift' && (
     <section className="space-y-3 rounded-lg border bg-card p-3"><div className="flex items-center justify-between"><h2 className="text-sm font-semibold">Your shift</h2><span className={`rounded-md px-2 py-1 text-xs ${openShift ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-300" : "bg-muted text-muted-foreground"}`}>{openShift?"Open":"Closed"}</span></div>
       <p className="text-xs text-muted-foreground">{openShift ? `Opening cash ${rupees(openShift.opening_cash)}` : 'Open a shift to collect payments.'}</p>
       {openShift?.expected_cash != null && <p className="text-sm">Expected cash <strong className="tabular-nums">{rupees(openShift.expected_cash)}</strong></p>}
-      <label className="block text-xs font-medium">{openShift?'Counted cash (₹)':'Opening cash (₹)'}<Input type="number" min="0" step="0.01" placeholder={openShift ? "Enter actual cash counted" : "0.00"} value={cash} onChange={e=>setCash(e.target.value)}/></label>
+      <label className="block text-xs font-medium">{openShift?'Cash counted at shift end (₹)':'Cash in drawer at shift start (₹)'}<Input type="number" min="0" step="0.01" placeholder={openShift ? "Enter actual cash counted" : "0.00"} value={cash} onChange={e=>setCash(e.target.value)}/></label>
       <Button disabled={busy || !policy || !cash || !can('wallet.topup')} onClick={()=>action(async()=>{
         await cafeCall(openShift?`${prefix}/shifts/${openShift.id}/close`:`${prefix}/shifts/open`, openShift?{counted_cash:paise(cash)}:{opening_cash:paise(cash)}); setClosingCash(''); await syncAfterWrite(openShift?'Shift closed.':'Shift opened.');
-      })}>{openShift?'Close and reconcile shift':'Open shift'}</Button>
-      {shifts.some(s=>s.closed_at) && <details className="border-t pt-2"><summary className="cursor-pointer text-xs font-medium">Recent shifts</summary><div className="mt-2 space-y-2">{shifts.filter(s=>s.closed_at).slice(0,5).map(s=><div className="rounded-md bg-muted/40 p-2 text-xs" key={s.id}><div className="flex justify-between gap-2"><span>{s.actor_name}</span><time className="text-muted-foreground">{new Date(s.closed_at!).toLocaleDateString()}</time></div><div className="mt-1 grid grid-cols-2 gap-1 text-muted-foreground"><span>Expected {rupees(s.expected_cash??0)}</span><span>Counted {rupees(s.counted_cash??0)}</span><span className={(s.counted_cash??0)!==(s.expected_cash??0)?'text-amber-600 dark:text-amber-300':''}>Difference {rupees((s.counted_cash??0)-(s.expected_cash??0))}</span><span>UPI {rupees(s.upi_receipts??0)}</span></div></div>)}</div></details>}
-    </section>
-    <section className="space-y-3 rounded-lg border bg-card p-3"><h2 className="text-sm font-semibold">Gamer balance</h2>
-      <form className="flex items-end gap-2" onSubmit={e=>{e.preventDefault();void action(()=>loadWallet());}}><label className="block min-w-0 flex-1 text-xs font-medium">Gamer ID<Input inputMode="numeric" placeholder="Enter gamer ID" disabled={busy} value={userId} onChange={e=>{setUserId(e.target.value);setWallet(null);setLoadedUser('');}}/></label><Button type="submit" disabled={busy || !/^\d+$/.test(userId)}>Find wallet</Button></form>
+      })}>{openShift?'End shift & check cash':'Start shift'}</Button>
+
+    </section>)}
+    {view==='wallet' && <section className="space-y-3 rounded-lg border bg-card p-3"><p className="text-xs text-muted-foreground">Balance is for this cafe only.</p>
+      <CafeGamerSearch key={currentContext} cafeId={selectedCafeId!} disabled={busy} onSelect={gamer=>{void action(async()=>{await loadWallet(String(gamer.id));if(contextRef.current===currentContext)setSelectedGamer(gamer);});}} />
+      {selectedGamer && <div className="rounded-md bg-muted/30 px-3 py-2 text-sm"><strong>{selectedGamer.name}</strong> · {selectedGamer.game_username||`#${selectedGamer.id}`}<span className="ml-2 text-xs text-muted-foreground">{selectedGamer.phone || selectedGamer.email}</span></div>}
+
       {wallet && <><div className="grid grid-cols-3 gap-2">{[['Available',wallet.balance-wallet.reserved],['Balance',wallet.balance],['Reserved',wallet.reserved]].map(([label,value])=><div key={label} className="rounded-md bg-muted/40 px-2.5 py-2"><p className="text-xs text-muted-foreground">{label}</p><p className="mt-1 text-sm font-semibold tabular-nums">{rupees(Number(value))}</p></div>)}</div>
       <div className="flex flex-wrap items-center gap-1.5">{[100,500,1000].map(value=><button type="button" key={value} disabled={busy} onClick={()=>{setAmount(String(value));setIdem('');}} className="rounded-md border px-2 py-1 text-xs hover:bg-muted">₹{value}</button>)}</div>
       {!openShift && <p className="text-xs text-amber-600 dark:text-amber-300">Open your shift to record payments.</p>}
@@ -111,10 +126,10 @@ export function CafeWalletWorkspace({embedded = false}: {embedded?: boolean}) {
       })}>Record received payment</Button>
       {(can('wallet.refund')||can('wallet.adjust')) && <label className="block">Reason for adjustment / reversal<Input value={reason} onChange={e=>{setReason(e.target.value);setAdjustKey('');}} placeholder="Required when reversing a transaction"/></label>}
       {can('wallet.adjust') && <div className="space-y-2"><label className="block">Balance adjustment (₹; negative to deduct)<Input type="number" step="0.01" value={adjustment} onChange={e=>{setAdjustment(e.target.value);setAdjustKey('');}}/></label><p className="text-sm text-muted-foreground">Use a reason above. Adjustments are not desk collections.</p><Button variant="outline" disabled={busy||!adjustment||!Number(adjustment)||reason.trim().length<3} onClick={()=>action(async()=>{const requestKey=adjustKey||crypto.randomUUID();setAdjustKey(requestKey);const value=adjustment.startsWith('-')?-paise(adjustment.slice(1)):paise(adjustment);await cafeCall(`${prefix}/wallets/${loadedUser}/adjustments`,{amount:value,reason,idempotency_key:requestKey});setAdjustment('');setAdjustKey('');await syncAfterWrite('Balance adjustment recorded.',true);})}>Record adjustment</Button></div>}
-      <div className="overflow-auto"><table className="w-full text-left text-xs"><thead><tr>{['Time','Type','Amount','Staff / actor','Reason','Action'].map(h=><th className="p-2 whitespace-nowrap" key={h}>{h}</th>)}</tr></thead><tbody>{wallet.ledger.map(e=><tr className="border-t" key={e.id}><td className="p-2 whitespace-nowrap">{new Date(e.created_at).toLocaleString()}</td><td>{e.kind}</td><td>{rupees(e.amount)}</td><td>{e.actor_name}</td><td>{e.reason}</td><td>{can('wallet.refund') && ['topup','capture'].includes(e.kind) && <Button variant="outline" disabled={busy||reason.trim().length<3} onClick={()=>action(async()=>{await cafeCall(`${prefix}/ledger/${e.id}/refund`,{reason,idempotency_key:`refund-${e.id}-${activeStaff?.id}`});await syncAfterWrite('Reversal recorded.',true);})}>Reverse</Button>}</td></tr>)}</tbody></table></div></>}
-    </section>
+      <div className="overflow-auto"><table className="w-full text-left text-xs [&_th]:bg-muted/40 [&_td]:px-2 [&_td]:py-2 [&_td]:align-top"><thead><tr>{['Date & time','Transaction','Amount','Staff member','Reason','Action'].map(h=><th className="p-2 whitespace-nowrap" key={h}>{h}</th>)}</tr></thead><tbody>{wallet.ledger.map(e=><tr className="border-t" key={e.id}><td className="p-2 whitespace-nowrap">{new Date(e.created_at).toLocaleString()}</td><td>{activityLabel(e.kind)}</td><td>{rupees(e.amount)}</td><td>{e.actor_name}</td><td>{e.reason}</td><td>{can('wallet.refund') && ['topup','capture'].includes(e.kind) && <Button variant="outline" disabled={busy||reason.trim().length<3} onClick={()=>action(async()=>{await cafeCall(`${prefix}/ledger/${e.id}/refund`,{reason,idempotency_key:`refund-${e.id}-${activeStaff?.id}`});await syncAfterWrite('Reversal recorded.',true);})}>Reverse</Button>}</td></tr>)}</tbody></table></div></>}
+    </section>}
     </div>
-    {policy && can('account.manage') && <details className="space-y-3 rounded-lg border bg-card p-3"><summary className="cursor-pointer text-sm font-semibold">Payment settings</summary>
+    {view==='settings' && policy && can('account.manage') && <details className="space-y-3 rounded-lg border bg-card p-3"><summary className="cursor-pointer text-sm font-semibold">Payment settings</summary>
       <p className="text-xs text-muted-foreground">Gaming uses cafe wallet; top-ups are collected at the desk.</p>
       <label className="block"><input type="checkbox" checked={policy.self_service} onChange={e=>setPolicy({...policy,self_service:e.target.checked})}/> Enable QR self-service</label>
       {['cash','cafe_upi'].map(m=><label className="mr-4" key={m}><input type="checkbox" checked={policy.desk_methods.includes(m)} onChange={e=>setPolicy({...policy,desk_methods:e.target.checked?[...policy.desk_methods,m]:policy.desk_methods.filter(x=>x!==m)})}/> {m==='cash'?'Cash':'Cafe UPI'}</label>)}
@@ -123,8 +138,16 @@ export function CafeWalletWorkspace({embedded = false}: {embedded?: boolean}) {
       <h3>Session durations and prices</h3>{policy.durations.map((d,i)=><div className="flex flex-wrap items-end gap-2" key={i}><label>Minutes<Input type="number" value={d.minutes} onChange={e=>setPolicy({...policy,durations:policy.durations.map((v,j)=>i===j?{...v,minutes:Number(e.target.value)}:v)})}/></label><label>Price ₹<Input type="number" step="0.01" value={d.amount/100} onChange={e=>setPolicy({...policy,durations:policy.durations.map((v,j)=>i===j?{...v,amount:Math.round(Number(e.target.value)*100)}:v)})}/></label><Button variant="outline" onClick={()=>setPolicy({...policy,durations:policy.durations.filter((_,j)=>j!==i)})}>Remove</Button></div>)}
       <Button variant="outline" onClick={()=>setPolicy({...policy,durations:[...policy.durations,{minutes:30,amount:5000}]})}>Add duration</Button>{' '}<Button disabled={busy || policy.desk_methods.length===0 || policy.durations.length===0} onClick={()=>action(async()=>{setPolicy(await cafeCall(`${prefix}/policy`,policy,'PUT'));setMessage('Payment policy saved.');})}>Save policy</Button>
     </details>}
-    {can('store.manage') && <section className="space-y-3 rounded-lg border bg-card p-3"><h2 className="text-sm font-semibold">Food orders</h2>{orders.length===0 && <p className="text-xs text-muted-foreground">No orders.</p>}{orders.map(o=><div key={o.id} className="border-t py-2 text-sm"><p>Gamer #{o.user_id} · {o.items.map(i=>`${i.quantity} × ${i.name}`).join(', ')} · {rupees(o.amount)}</p><p>{o.collector==='vendor'?'Food store collects directly':o.state==='paid'?'Paid at cafe':'Awaiting cafe payment'}</p>{o.collector==='cafe'&&o.state!=='paid'&&<Button disabled={busy||!openShift} onClick={()=>action(async()=>{await cafeCall(`${prefix}/food/orders/${o.id}/collect`,{method});await syncAfterWrite('Food payment recorded.');})}>Record {method==='cash'?'cash':'cafe UPI'} payment</Button>}</div>)}</section>}
-    {can('transactions.view') && <section className="space-y-3 rounded-lg border bg-card p-3"><h2 className="text-sm font-semibold">Collections and activity</h2><div className="grid grid-cols-2 gap-2 sm:grid-cols-4">{[['Top-ups',totals.topup||0],['Gaming',-(totals.capture||0)],['Reversals',totals.refund||0],['Food',totals.food_collection||0]].map(([label,value])=><div key={label} className="rounded-md bg-muted/40 px-3 py-2"><p className="text-xs text-muted-foreground">{label}</p><p className="mt-1 font-semibold tabular-nums">{rupees(Number(value))}</p></div>)}</div><p className="text-sm text-muted-foreground">Top-ups and gaming consumption are separate totals; do not add them as sales.</p><Button variant="outline" disabled={busy} onClick={()=>action(refresh)}>Refresh activity</Button><div className="max-h-80 overflow-auto">{audit.map(a=><details className="border-t py-2" key={a.id}><summary>{new Date(a.created_at).toLocaleString()} · {a.actor_name} · {a.action}</summary><pre className="whitespace-pre-wrap text-xs">{JSON.stringify(a.details,null,2)}</pre></details>)}</div></section>}
+    {view==='wallet' && can('store.manage') && <section className="space-y-3 rounded-lg border bg-card p-3"><h2 className="text-sm font-semibold">Food orders</h2>{orders.length===0 && <p className="text-xs text-muted-foreground">No orders.</p>}{orders.map(o=><div key={o.id} className="border-t py-2 text-sm"><p>Gamer #{o.user_id} · {o.items.map(i=>`${i.quantity} × ${i.name}`).join(', ')} · {rupees(o.amount)}</p><p>{o.collector==='vendor'?'Food store collects directly':o.state==='paid'?'Paid at cafe':'Awaiting cafe payment'}</p>{o.collector==='cafe'&&o.state!=='paid'&&<Button disabled={busy||!openShift} onClick={()=>action(async()=>{await cafeCall(`${prefix}/food/orders/${o.id}/collect`,{method});await syncAfterWrite('Food payment recorded.');})}>Record {method==='cash'?'cash':'cafe UPI'} payment</Button>}</div>)}</section>}
+    {view==='activity' && can('transactions.view') && <section className="space-y-3 rounded-lg border p-3">
+      <div className="flex flex-wrap items-center justify-between gap-2"><Input aria-label="Search activity" placeholder="Search staff or activity" value={activitySearch} onChange={e=>setActivitySearch(e.target.value)} className="max-w-xs" /><div className="flex gap-2"><Button variant="outline" disabled={busy} onClick={()=>action(refresh)}>Refresh</Button><Button variant="outline" disabled={!filteredAudit.length} onClick={()=>downloadActivityCsv([['Date & time','Staff member','Activity','Gamer ID','Details'],...filteredAudit.map(row=>[new Date(row.created_at).toLocaleString(),row.actor_name,activityLabel(row.action),String((row.details as any)?.user_id||'—'),activityDetails(row.details)])])}>Export CSV</Button></div></div>
+      <div className="overflow-auto"><table className="w-full text-left text-xs [&_th]:bg-muted/40 [&_td]:px-2 [&_td]:py-2 [&_td]:align-top"><thead><tr>{['Date & time','Staff member','Activity','Gamer ID','Details'].map(label=><th className="p-2 whitespace-nowrap" key={label}>{label}</th>)}</tr></thead><tbody>{filteredAudit.map(row=><tr className="border-t" key={row.id}><td className="whitespace-nowrap">{new Date(row.created_at).toLocaleString()}</td><td>{row.actor_name}</td><td>{activityLabel(row.action)}</td><td>{String((row.details as any)?.user_id||'—')}</td><td className="min-w-48">{activityDetails(row.details)}</td></tr>)}</tbody></table></div>
+      {!filteredAudit.length&&<p className="text-xs text-muted-foreground">No matching activity.</p>}
+      <p className="text-xs text-muted-foreground">Latest {audit.length} records</p>
+      {shifts.length>0&&<><h3 className="text-sm font-semibold">Your shift history</h3><div className="overflow-auto"><table className="w-full text-left text-xs [&_th]:bg-muted/40 [&_td]:px-2 [&_td]:py-2 [&_td]:align-top"><thead><tr>{['Shift ended','Staff member','Starting cash','Expected cash','Counted cash','Difference','UPI received'].map(label=><th key={label} className="p-2 whitespace-nowrap">{label}</th>)}</tr></thead><tbody>{shifts.filter(shift=>shift.closed_at).map(shift=><tr className="border-t" key={shift.id}><td>{new Date(shift.closed_at!).toLocaleString()}</td><td>{shift.actor_name}</td><td>{rupees(shift.opening_cash)}</td><td>{rupees(shift.expected_cash??0)}</td><td>{rupees(shift.counted_cash??0)}</td><td>{rupees((shift.counted_cash??0)-(shift.expected_cash??0))}</td><td>{rupees(shift.upi_receipts??0)}</td></tr>)}</tbody></table></div></>}
+    </section>}
+
     </fieldset>}
+    {view==='wallet'&&<Dialog open={showShift} onOpenChange={setShowShift}><DialogContent className="max-w-lg max-h-[85dvh] overflow-y-auto p-0"><DialogHeader className="sr-only"><DialogTitle>Manage your shift</DialogTitle></DialogHeader>{showShift&&<CafeWalletWorkspace embedded view="shift" />}</DialogContent></Dialog>}
   </section>;
 }
