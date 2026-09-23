@@ -23,8 +23,10 @@ const DashboardWallet = dynamic(
   { loading: () => <p role="status" className="p-3 text-xs text-muted-foreground">Loading wallet…</p> }
 )
 
+const DashboardCollections = dynamic(() => import('./cafe-collections').then(module => module.CafeCollections))
+
 const TERMINAL_BOOKING_STATUSES = ["cancelled", "canceled", "rejected", "completed", "discarded", "no_show"];
-const DASHBOARD_TABS = ["live", "booking"] as const
+const DASHBOARD_TABS = ["live", "booking", "wallet"] as const
 type DashboardTab = (typeof DASHBOARD_TABS)[number]
 
 // ✅ Locked overlay component
@@ -78,13 +80,12 @@ export function DashboardContent() {
   const { socket, isConnected, joinVendor } = useSocket()
   const { isLocked } = useSubscription()
   const { activeStaff, can } = useAccess()
-  const [walletOpened, setWalletOpened] = useState(false)
   const isOwnerSession = (activeStaff?.role || "owner") === "owner"
 
   useEffect(() => {
     const requestedTab = searchParams.get("tab")
-    setActiveDashboardTab(requestedTab === "booking" ? "booking" : "live")
-  }, [searchParams])
+    setActiveDashboardTab(requestedTab === "booking" ? "booking" : requestedTab === "wallet" && can("wallet.topup") ? "wallet" : "live")
+  }, [searchParams, activeStaff])
 
   const openDashboardTab = useCallback((tab: DashboardTab) => {
     setActiveDashboardTab(tab)
@@ -484,6 +485,10 @@ export function DashboardContent() {
                       <CalendarCheck className="h-4 w-4" />
                       <span>Schedule</span>
                     </button>
+                    {can("wallet.topup") && <button type="button" onClick={()=>openDashboardTab("wallet")}
+                      className={activeDashboardTab==="wallet"?"tab-active":"tab-inactive"}>
+                      <WalletCards className="h-4 w-4"/><span>Wallet top-up</span>
+                    </button>}
                   </div>
                 </div>
               </div>
@@ -499,20 +504,9 @@ export function DashboardContent() {
             </div>
           </motion.div>
 
-          {can("wallet.topup") && (
-            <details className="gaming-panel dashboard-wallet-panel mt-2 shrink-0 rounded-lg" onToggle={(event) => {
-              if (event.currentTarget.open) setWalletOpened(true)
-            }}>
-              <summary className="cursor-pointer select-none px-3 py-2 text-sm font-semibold">
-                Wallet & Shifts
-              </summary>
-              <div className="max-h-[45dvh] overflow-y-auto overscroll-contain border-t border-border">
-                {walletOpened && <DashboardWallet embedded />}
-              </div>
-            </details>
-          )}
-
-          {activeDashboardTab === "booking" ? (
+          {activeDashboardTab === "wallet" && can("wallet.topup") ? (
+            <div className="mt-2 min-h-0 flex-1 overflow-y-auto rounded-lg"><DashboardWallet embedded /></div>
+          ) : activeDashboardTab === "booking" ? (
             <motion.div
               key="dashboard-booking"
               initial={{ opacity: 0, y: 12 }}
@@ -525,6 +519,7 @@ export function DashboardContent() {
             </motion.div>
           ) : (
             <div className="mt-2 flex min-h-0 flex-1 flex-col gap-2 max-md:mt-1 max-md:gap-1.5 sm:mt-3 sm:gap-3">
+              <DashboardCollections />
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1, y: 0 }}
