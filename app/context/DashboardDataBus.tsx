@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
+import { createEventBatch } from "@/lib/event-batch";
 import { useSocket } from "./SocketContext";
 import { useDashboardData } from "./DashboardDataContext";
 
@@ -41,24 +42,52 @@ const MODULE_EVENT_MAP: Record<string, string> = {
 export function DashboardDataBus() {
   const { socket, isConnected, joinVendor } = useSocket();
   const { vendorId, setLandingData, setConsoles, bumpModuleVersion, refreshLanding, refreshConsoles } = useDashboardData();
+  const connectedVendor = useRef<number | null>(null);
   const resolveBookingId = (payload: any) =>
     Number(payload?.bookingId ?? payload?.booking_id ?? payload?.bookId ?? payload?.book_id ?? 0);
+
+  useEffect(() => {
+    if (!vendorId) return;
+    const resync = () => {
+      if (document.hidden || !navigator.onLine) return;
+      void refreshLanding(true);
+      void refreshConsoles(true);
+    };
+    if (isConnected) {
+      // Also catches reconnects that occur before React installs listeners.
+      if (connectedVendor.current === vendorId) resync();
+      connectedVendor.current = vendorId;
+    }
+    const visible = () => {
+      if (!document.hidden) {
+        void refreshLanding();
+        void refreshConsoles();
+      }
+    };
+    const timer = window.setInterval(() => {
+      if (!isConnected) resync();
+    }, 60_000);
+    document.addEventListener("visibilitychange", visible);
+    return () => {
+      window.clearInterval(timer);
+      document.removeEventListener("visibilitychange", visible);
+    };
+  }, [vendorId, isConnected, refreshLanding, refreshConsoles]);
 
   useEffect(() => {
     if (!socket || !vendorId || !isConnected) return;
     joinVendor(vendorId);
 
-    const dirtyModules = new Set<string>();
-    let timer: ReturnType<typeof setTimeout> | undefined;
-    const flush = () => {
-      timer = undefined;
+    // A Set coalesces the bridge's multiple events for the same mutation.
+    // Payload handlers below update the visible cache immediately; snapshots
+    // reconcile totals and fields absent from events at most once per batch.
+    const batch = createEventBatch<string>((dirtyModules) => {
       for (const key of dirtyModules) bumpModuleVersion(key);
       if (dirtyModules.has(`booking:${vendorId}`)) {
         void refreshLanding(true);
         void refreshConsoles(true);
       }
-      dirtyModules.clear();
-    };
+    });
     const handleModuleEvent = (event: string) => (payload: SocketPayload) => {
       const eventVendor = Number(payload?.vendorId ?? payload?.vendor_id);
       if (eventVendor && eventVendor !== vendorId) return;
@@ -70,8 +99,7 @@ export function DashboardDataBus() {
             : moduleKey === "booking"
               ? `booking:${vendorId}`
               : `${moduleKey}:${vendorId}`;
-        dirtyModules.add(versionKey);
-        if (!timer) timer = setTimeout(flush, 150);
+        batch.add(versionKey);
       }
     };
 
@@ -82,7 +110,7 @@ export function DashboardDataBus() {
     handlers.forEach(([event, handler]) => socket.on(event, handler));
 
     return () => {
-      if (timer) clearTimeout(timer);
+      batch.dispose();
       handlers.forEach(([event, handler]) => socket.off(event, handler));
     };
   }, [socket, vendorId, isConnected, joinVendor, bumpModuleVersion, refreshLanding, refreshConsoles]);
@@ -105,11 +133,10 @@ export function DashboardDataBus() {
         const next = Array.isArray(landingData.upcomingBookings)
           ? [...landingData.upcomingBookings]
           : [];
-        if (!next.some((b: any) => Number(b?.bookingId) === incomingBookingId)) {
-          next.unshift({ ...data, bookingId: incomingBookingId });
-          return { ...landingData, upcomingBookings: next };
-        }
-        return landingData;
+        const index = next.findIndex((b: any) => resolveBookingId(b) === incomingBookingId);
+        if (index < 0) next.unshift({ ...data, bookingId: incomingBookingId });
+        else next[index] = { ...next[index], ...data, bookingId: incomingBookingId };
+        return { ...landingData, upcomingBookings: next };
       });
     }
 
@@ -122,12 +149,9 @@ export function DashboardDataBus() {
         if (!incomingBookingId) return landingData;
 
         const currentSlots = Array.isArray(landingData.currentSlots) ? [...landingData.currentSlots] : [];
-        const exists = currentSlots.some(
-          (slot: any) => resolveBookingId(slot) === incomingBookingId
-        );
-        if (!exists) {
-          currentSlots.unshift(data);
-        }
+        const index = currentSlots.findIndex((slot: any) => resolveBookingId(slot) === incomingBookingId);
+        if (index < 0) currentSlots.unshift(data);
+        else currentSlots[index] = { ...currentSlots[index], ...data };
 
         const upcoming = Array.isArray(landingData.upcomingBookings) ? landingData.upcomingBookings : [];
         const filteredUpcoming = upcoming.filter(
@@ -181,7 +205,8 @@ export function DashboardDataBus() {
 
       const consoleId = Number(data?.console_id ?? data?.consoleId);
       if (!consoleId) return;
-      const isAvailable = Boolean(data?.is_available);
+      if (typeof data?.is_available !== "boolean") return;
+      const isAvailable = data.is_available;
 
       setConsoles((consoles) => consoles.map((c: any) => {
         if (Number(c?.id) !== consoleId) return c;
