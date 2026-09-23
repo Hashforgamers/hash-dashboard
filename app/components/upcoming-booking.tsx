@@ -1024,9 +1024,14 @@ export function UpcomingBookings({
     <>
       {/* 🚀 FIXED: Proper flex container structure */}
       <div className="upcoming-session-panel dashboard-module dashboard-module-panel h-full flex flex-col overflow-hidden rounded-lg p-3 sm:p-4">
-        <AnimatePresence>
-          {isMounted && startCard && createPortal(
+        {isMounted && createPortal(
+          <AnimatePresence>
+          {startCard && (
             <motion.div
+              key="start-session"
+              role="dialog"
+              aria-modal="true"
+              aria-label="Select console to start session"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -1140,10 +1145,11 @@ export function UpcomingBookings({
                   </div>
                 </Card>
               </motion.div>
-            </motion.div>,
-            document.body
+            </motion.div>
           )}
-        </AnimatePresence>
+          </AnimatePresence>,
+          document.body
+        )}
 
         {/* Header + Search */}
         <div className="mb-3 flex flex-col items-start justify-between gap-3 flex-shrink-0">
@@ -1372,6 +1378,7 @@ export function UpcomingBookings({
 
                         <div className="flex flex-wrap items-center justify-end gap-1.5">
                           <motion.button
+                            type="button"
                             whileHover={{ scale: 1.02 }}
                             whileTap={{ scale: 0.98 }}
                             onClick={() => start(booking)}
