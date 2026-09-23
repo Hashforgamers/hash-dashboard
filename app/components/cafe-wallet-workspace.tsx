@@ -96,9 +96,9 @@ export function CafeWalletWorkspace({embedded = false, view = "wallet"}: {embedd
     return ()=>window.removeEventListener('cafe-desk-updated',reload);
   },[selectedCafeId,activeStaff?.id,view]);
   const filteredAudit=audit.filter(row=>`${row.actor_name} ${activityLabel(row.action)} ${activityDetails(row.details)}`.toLowerCase().includes(activitySearch.toLowerCase()));
-  return <section aria-label="Cafe wallet and shifts" className={`cafe-wallet-workspace mx-auto w-full space-y-3 p-3 ${embedded ? "" : "max-w-6xl"}`}>
-    <header className="flex flex-wrap items-center justify-between gap-2"><h2 className={embedded ? "text-sm font-semibold" : "text-lg font-semibold"}>{view==="settings"?"Cafe wallet payment settings":view==="activity"?"Staff activity":view==="shift"?"Manage shift":"Wallet top-up"}</h2><span className="text-xs text-muted-foreground">{activeStaff?.name || 'Staff'} · INR</span>{view==='wallet'&&<Button variant="outline" onClick={()=>setShowShift(true)}>{openShift?'End shift':'Start shift'}</Button>}</header>
-    {message && <div role="status" className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-amber-500/30 bg-amber-500/5 px-3 py-2 text-sm"><span>{message}</span><Button variant="ghost" disabled={busy} onClick={()=>action(async()=>{await refresh();if(loadedUser)await loadWallet(loadedUser);})}>Refresh</Button></div>}
+  return <section aria-label="Cafe wallet and shifts" className={`cafe-wallet-workspace mx-auto w-full space-y-3 ${view==='wallet' ? "rounded-lg border bg-card p-4" : "p-3"} ${embedded ? "" : "max-w-6xl"}`}>
+    <header className="flex flex-wrap items-center justify-between gap-2 border-b pb-3"><div><h2 className="text-sm font-semibold">{view==="settings"?"Cafe wallet payment settings":view==="activity"?"Staff activity":view==="shift"?"Manage shift":"Add money to wallet"}</h2>{view==='wallet'&&<p className="mt-0.5 text-xs text-muted-foreground">Find a gamer and record their payment.</p>}</div><div className="flex items-center gap-3"><span className="text-xs text-muted-foreground">{activeStaff?.name || 'Staff'}</span>{view==='wallet'&&<Button size="sm" variant="outline" onClick={()=>setShowShift(true)}>{openShift?'End shift':'Start shift'}</Button>}</div></header>
+    {message && <div role="status" className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border bg-muted/30 px-3 py-2 text-sm"><span>{message}</span><Button variant="ghost" disabled={busy} onClick={()=>action(async()=>{await refresh();if(loadedUser)await loadWallet(loadedUser);})}>Refresh</Button></div>}
     {!selectedCafeId ? <p>Select a cafe first.</p> : <fieldset disabled={busy} className="min-w-0 space-y-3">
     <div className="space-y-3">
     {view==='shift' && (
@@ -111,37 +111,42 @@ export function CafeWalletWorkspace({embedded = false, view = "wallet"}: {embedd
       })}>{openShift?'End shift & check cash':'Start shift'}</Button>
 
     </section>)}
-    {view==='wallet' && <section className="mx-auto w-full max-w-4xl space-y-3 rounded-lg border bg-card p-3 sm:p-4">
+    {view==='wallet' && <section className="space-y-4"><div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(300px,420px)]"><div className="min-w-0 space-y-3">
       {!selectedGamer ? <CafeGamerSearch key={currentContext} cafeId={selectedCafeId!} disabled={busy} onSelect={gamer=>{void action(async()=>{await loadWallet(String(gamer.id));if(contextRef.current===currentContext){setSelectedGamer(gamer);setAmount('');setPaymentReceived(false);setReason('');setAdjustment('');}});}} /> :
         <div className="flex flex-wrap items-center justify-between gap-2 border-b pb-3">
           <div><h3 className="text-sm font-semibold">{selectedGamer.name || 'Gamer'}</h3><p className="text-xs text-muted-foreground">{selectedGamer.game_username || `#${selectedGamer.id}`} · {selectedGamer.phone || selectedGamer.email || `Hash ID ${selectedGamer.id}`}</p></div>
           <Button size="sm" variant="ghost" disabled={busy} onClick={()=>{setSelectedGamer(null);setWallet(null);setLoadedUser('');setAmount('');setPaymentReceived(false);setIdem('');setMessage('');}}>Change gamer</Button>
         </div>}
-      {wallet && selectedGamer && <>
-      <div className="grid gap-4 sm:grid-cols-2">
+      {wallet && <div className="flex flex-wrap items-center justify-between gap-2 rounded-md border bg-muted/20 p-3"><span className="text-xs text-muted-foreground">Available at this cafe</span><span className="text-lg font-semibold tabular-nums">{rupees(wallet.balance-wallet.reserved)}</span></div>}
+      {!selectedGamer && <p className="text-xs text-muted-foreground">Select a search result to view the gamer’s balance.</p>}
+      {busy&&!selectedGamer&&<p role="status" className="text-xs text-muted-foreground">Loading wallet…</p>}
+      </div><fieldset disabled={!wallet || !selectedGamer || busy} className="min-w-0 space-y-3 rounded-lg border bg-muted/20 p-3">
+        <h3 className="text-xs font-semibold">Payment details</h3>
+        {!selectedGamer&&<p className="text-xs text-muted-foreground">Select a gamer to continue.</p>}
         <div className="space-y-3">
-          <label className="block space-y-1 text-xs font-medium">Amount to add (₹)<Input autoFocus inputMode="decimal" type="number" min="0.01" step="0.01" placeholder="Enter amount" value={amount} onChange={e=>{setAmount(e.target.value);setIdem('');setPaymentReceived(false);}}/></label>
+          <label className="block space-y-1 text-xs font-medium">Amount to add (₹)<Input inputMode="decimal" type="number" min="0.01" step="0.01" placeholder="Enter amount" value={amount} onChange={e=>{setAmount(e.target.value);setIdem('');setPaymentReceived(false);}}/></label>
           <div className="flex flex-wrap gap-1.5">{[100,500,1000].map(value=><Button size="sm" variant={amount===String(value)?'secondary':'outline'} key={value} onClick={()=>{setAmount(String(value));setIdem('');setPaymentReceived(false);}}>₹{value}</Button>)}</div>
           <div className="space-y-1.5"><p className="text-xs font-medium">Payment method</p><div className="flex gap-2" role="group" aria-label="Payment method">{policy?.desk_methods.map(m=><Button key={m} size="sm" aria-pressed={method===m} variant={method===m?'secondary':'outline'} onClick={()=>{setMethod(m);setIdem('');setPaymentReceived(false);}}>{m==='cash'?'Cash':'UPI'}</Button>)}</div>{policy?.desk_methods.length===0&&<p className="text-xs text-muted-foreground">Enable a payment method in Settings.</p>}</div>
         </div>
         <div className="space-y-3 rounded-md bg-muted/30 p-3">
-          <div className="flex justify-between text-xs"><span className="text-muted-foreground">Current balance</span><span className="font-medium tabular-nums">{rupees(wallet.balance)}</span></div>
-          {wallet.reserved>0&&<div className="flex justify-between text-xs"><span className="text-muted-foreground">Held for gaming</span><span className="tabular-nums">{rupees(wallet.reserved)}</span></div>}
-          <div className="flex justify-between border-t pt-2 text-sm font-semibold"><span>Balance after top-up</span><span className="tabular-nums">{rupees(wallet.balance+(Number.isFinite(Number(amount))&&Number(amount)>0?Math.round(Number(amount)*100):0))}</span></div>
+          <div className="flex justify-between text-xs"><span className="text-muted-foreground">Current balance</span><span className="font-medium tabular-nums">{wallet ? rupees(wallet.balance) : '—'}</span></div>
+          {wallet && wallet.reserved>0&&<div className="flex justify-between text-xs"><span className="text-muted-foreground">Held for gaming</span><span className="tabular-nums">{rupees(wallet.reserved)}</span></div>}
+          <div className="flex justify-between border-t pt-2 text-sm font-semibold"><span>Balance after top-up</span><span className="tabular-nums">{wallet ? rupees(wallet.balance+(Number.isFinite(Number(amount))&&Number(amount)>0?Math.round(Number(amount)*100):0)) : '—'}</span></div>
           <p className="text-xs text-muted-foreground">Usable at this cafe only.</p>
           {!openShift ? <Button size="sm" variant="outline" disabled={!policy} onClick={()=>setShowShift(true)}>Start shift to accept payment</Button> : <label className="flex items-start gap-2 text-xs"><input type="checkbox" className="mt-0.5" checked={paymentReceived} onChange={e=>setPaymentReceived(e.target.checked)}/>{method==='cash'?'Cash received from gamer':'UPI payment verified in cafe account'}</label>}
           <Button className="w-full" disabled={busy || !openShift || !paymentReceived || !policy?.desk_methods.includes(method) || !/^\d+(\.\d{1,2})?$/.test(amount) || Number(amount)<=0 || !can('wallet.topup')} onClick={()=>action(async()=>{
+            if(!wallet || !selectedGamer) return;
             const requestKey=idem||crypto.randomUUID();setIdem(requestKey);
             const added=paise(amount);
             await cafeCall(`${prefix}/wallets/${loadedUser}/topups`,{amount:added,method,idempotency_key:requestKey});
             setIdem('');setAmount('');setPaymentReceived(false);await syncAfterWrite(`${rupees(added)} added to ${selectedGamer.name || 'gamer'}’s wallet.`,true);
           })}>{busy?'Saving…':'Add money'}</Button>
         </div>
-      </div>
-      <details className="border-t pt-3"><summary className="cursor-pointer text-xs font-medium">Transaction history & corrections</summary><div className="space-y-3 pt-3">
+      </fieldset></div>
+      {wallet && selectedGamer && <details className="border-t pt-3"><summary className="cursor-pointer text-xs font-medium">Transaction history & corrections</summary><div className="space-y-3 pt-3">
       {(can('wallet.refund')||can('wallet.adjust')) && <label className="block">Reason for correction or refund<Input value={reason} onChange={e=>{setReason(e.target.value);setAdjustKey('');}} placeholder="Explain why this correction is needed"/></label>}
       {can('wallet.adjust') && <div className="space-y-2"><label className="block">Balance correction (₹; use − to deduct)<Input type="number" step="0.01" value={adjustment} onChange={e=>{setAdjustment(e.target.value);setAdjustKey('');}}/></label><p className="text-sm text-muted-foreground">Use a reason above. Adjustments are not desk collections.</p><Button variant="outline" disabled={busy||!adjustment||!Number(adjustment)||reason.trim().length<3} onClick={()=>action(async()=>{const requestKey=adjustKey||crypto.randomUUID();setAdjustKey(requestKey);const value=adjustment.startsWith('-')?-paise(adjustment.slice(1)):paise(adjustment);await cafeCall(`${prefix}/wallets/${loadedUser}/adjustments`,{amount:value,reason,idempotency_key:requestKey});setAdjustment('');setAdjustKey('');await syncAfterWrite('Balance adjustment recorded.',true);})}>Save correction</Button></div>}
-      <div className="overflow-auto"><table className="w-full text-left text-xs [&_th]:bg-muted/40 [&_td]:px-2 [&_td]:py-2 [&_td]:align-top"><thead><tr>{['Date & time','Transaction','Amount','Staff member','Reason','Action'].map(h=><th className="p-2 whitespace-nowrap" key={h}>{h}</th>)}</tr></thead><tbody>{wallet.ledger.map(e=><tr className="border-t" key={e.id}><td className="p-2 whitespace-nowrap">{new Date(e.created_at).toLocaleString()}</td><td>{activityLabel(e.kind)}</td><td>{rupees(e.amount)}</td><td>{e.actor_name}</td><td>{e.reason}</td><td>{can('wallet.refund') && ['topup','capture'].includes(e.kind) && <Button variant="outline" disabled={busy||reason.trim().length<3} onClick={()=>action(async()=>{await cafeCall(`${prefix}/ledger/${e.id}/refund`,{reason,idempotency_key:`refund-${e.id}-${activeStaff?.id}`});await syncAfterWrite('Reversal recorded.',true);})}>Refund</Button>}</td></tr>)}</tbody></table></div>{wallet.ledger.length===0&&<p className="text-xs text-muted-foreground">No transactions yet.</p>}</div></details></>}
+      <div className="overflow-auto"><table className="w-full text-left text-xs [&_th]:bg-muted/40 [&_td]:px-2 [&_td]:py-2 [&_td]:align-top"><thead><tr>{['Date & time','Transaction','Amount','Staff member','Reason','Action'].map(h=><th className="p-2 whitespace-nowrap" key={h}>{h}</th>)}</tr></thead><tbody>{wallet.ledger.map(e=><tr className="border-t" key={e.id}><td className="p-2 whitespace-nowrap">{new Date(e.created_at).toLocaleString()}</td><td>{activityLabel(e.kind)}</td><td>{rupees(e.amount)}</td><td>{e.actor_name}</td><td>{e.reason}</td><td>{can('wallet.refund') && ['topup','capture'].includes(e.kind) && <Button variant="outline" disabled={busy||reason.trim().length<3} onClick={()=>action(async()=>{await cafeCall(`${prefix}/ledger/${e.id}/refund`,{reason,idempotency_key:`refund-${e.id}-${activeStaff?.id}`});await syncAfterWrite('Reversal recorded.',true);})}>Refund</Button>}</td></tr>)}</tbody></table></div>{wallet.ledger.length===0&&<p className="text-xs text-muted-foreground">No transactions yet.</p>}</div></details>}
     </section>}
     </div>
     {view==='settings' && policy && can('account.manage') && <details className="space-y-3 rounded-lg border bg-card p-3"><summary className="cursor-pointer text-sm font-semibold">Payment settings</summary>
