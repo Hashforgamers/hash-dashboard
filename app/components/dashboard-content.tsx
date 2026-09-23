@@ -225,17 +225,10 @@ export function DashboardContent() {
       }))
     }
 
-    function handleSocketResync() {
-      joinVendor(activeVendorId)
-      loadLandingData()
-      loadConsoleData()
-    }
-
     socket.on('booking', handleBookingEvent)
     socket.on('upcoming_booking', handleUpcomingBookingEvent)
     socket.on('console_availability', handleConsoleAvailabilityEvent)
     socket.on('booking_payment_update', handleBookingPaymentUpdate)
-    window.addEventListener('socket-reconnected', handleSocketResync)
 
     return () => {
       console.log('🧹 Cleaning up dashboard booking listeners')
@@ -243,7 +236,6 @@ export function DashboardContent() {
       socket.off('upcoming_booking', handleUpcomingBookingEvent)
       socket.off('console_availability', handleConsoleAvailabilityEvent)
       socket.off('booking_payment_update', handleBookingPaymentUpdate)
-      window.removeEventListener('socket-reconnected', handleSocketResync)
     }
   }, [socket, vendorId, isConnected, joinVendor, loadLandingData, loadConsoleData])
 
