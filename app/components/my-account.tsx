@@ -1,5 +1,6 @@
 "use client";
 
+import { CafeWalletWorkspace } from './cafe-wallet-workspace';
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -45,7 +46,7 @@ export function MyAccount() {
     { key: "tax_identification_number", label: "Tax Identification Number", hint: "GSTIN/PAN/Tax identifier document." },
     { key: "bank_acc_details", label: "Bank Account Details", hint: "Bank first-page proof with account holder details." },
   ];
-  const { activeStaff } = useAccess();
+  const { activeStaff, can } = useAccess();
   const isOwnerSession = (activeStaff?.role || "owner") === "owner";
   const [cafeImages, setCafeImages] = useState<string[]>([]);
   const [page, setPage] = useState<string | null>("Cafe Gallery");
@@ -1805,6 +1806,7 @@ const ToggleSwitch = ({
                     { icon: Clock, label: "Operating Hours" },  
                     { icon: DollarSign, label: "GST Setup" },
                     { icon: Settings, label: "Payment Methods" },
+                    ...(can("transactions.view") ? [{ icon: Clock, label: "Staff Activity" }] : []),
                     { icon: FileCheck, label: "Verified Documents" },
                     { icon: CreditCard, label: "Bank Details" },  
                     { icon: DollarSign, label: "Payout History" },
@@ -2990,7 +2992,9 @@ const ToggleSwitch = ({
   </>
 )}
 
-{page === "Payment Methods" && (<Card className="content-card shadow-lg">
+{page === "Staff Activity" && can("transactions.view") && <CafeWalletWorkspace embedded view="activity" />}
+
+{page === "Payment Methods" && (<>{can("account.manage")&&<CafeWalletWorkspace embedded view="settings" />}<Card className="content-card shadow-lg">
       <CardHeader>
         <CardTitle className="account-section-title flex items-center gap-2">
           <Settings className="icon-lg" />
@@ -3268,7 +3272,7 @@ const ToggleSwitch = ({
           </div>
         )}
       </CardContent>
-    </Card>)}
+    </Card></>)}
 
 
 {/* ==================== PAYOUT HISTORY PAGE ==================== */}
