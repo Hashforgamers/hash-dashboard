@@ -23,8 +23,6 @@ const DashboardWallet = dynamic(
   { loading: () => <p role="status" className="p-3 text-xs text-muted-foreground">Loading wallet…</p> }
 )
 
-const DashboardCollections = dynamic(() => import('./cafe-collections').then(module => module.CafeCollections))
-
 const TERMINAL_BOOKING_STATUSES = ["cancelled", "canceled", "rejected", "completed", "discarded", "no_show"];
 const DASHBOARD_TABS = ["live", "booking", "wallet"] as const
 type DashboardTab = (typeof DASHBOARD_TABS)[number]
@@ -519,7 +517,6 @@ export function DashboardContent() {
             </motion.div>
           ) : (
             <div className="mt-2 flex min-h-0 flex-1 flex-col gap-2 max-md:mt-1 max-md:gap-1.5 sm:mt-3 sm:gap-3">
-              <DashboardCollections />
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1, y: 0 }}
