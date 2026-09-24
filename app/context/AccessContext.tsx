@@ -5,6 +5,7 @@ import { jwtDecode } from "jwt-decode";
 import { Permission, ROLE_PERMISSIONS, StaffRole } from "@/lib/rbac";
 import { accessApi, Role } from "@/lib/access-api";
 import { endCafeStaffSession } from "@/lib/cafe-api";
+import { ensureFreshAccessToken } from "@/lib/auth-session";
 import { LOGIN_URL } from "@/src/config/env";
 
 export interface StaffProfile {
@@ -171,7 +172,9 @@ export function AccessProvider({ children }: { children: React.ReactNode }) {
   const [activeStaff, setActiveStaff] = useState<ActiveStaff | null>(null);
 
   const ensureRbacToken = async (cafeId: string): Promise<string | null> => {
-    const existing = getRbacToken();
+    const hadStaffSession = !!getRbacToken();
+    const existing = await ensureFreshAccessToken();
+    if (hadStaffSession && !existing) return null;
     if (existing) {
       accessDebug("Using existing RBAC token", { cafeId, token: maskToken(existing) });
       return existing;
@@ -302,6 +305,29 @@ export function AccessProvider({ children }: { children: React.ReactNode }) {
       localStorage.removeItem(STORAGE_ACTIVE);
     }
   }, [activeStaff]);
+
+  useEffect(() => {
+    const sync = () => {
+      const token = getRbacToken();
+      if (!token || !selectedCafeId) { setActiveStaff(null); return; }
+      try {
+        const claims = jwtDecode<DecodedToken>(token);
+        if (String(claims.vendor_id) !== selectedCafeId) return;
+        const staff = claims.staff;
+        if (staff?.id && staff.role) setActiveStaff({ id: staff.id, cafeId: selectedCafeId,
+          name: staff.name || "Staff", role: staff.role, permissions: (staff.permissions || []) as Permission[] });
+      } catch { setActiveStaff(null); }
+    };
+    const storage = (event: StorageEvent) => { if (event.key === STORAGE_ACCESS_TOKEN) sync(); };
+    window.addEventListener("access:renewed", sync);
+    window.addEventListener("access:expired", sync);
+    window.addEventListener("storage", storage);
+    return () => {
+      window.removeEventListener("access:renewed", sync);
+      window.removeEventListener("access:expired", sync);
+      window.removeEventListener("storage", storage);
+    };
+  }, [selectedCafeId]);
 
   const can = (permission: Permission) => {
     if (!activeStaff) return false;

@@ -1,5 +1,6 @@
 "use client";
 
+import { clearAuthSession } from "@/lib/auth-session";
 import { endCafeStaffSession } from "@/lib/cafe-api";
 import { LogOut } from "lucide-react";
 
@@ -18,10 +19,7 @@ export function ButtonDestructive({ isNavPinned = false }: ButtonDestructiveProp
       className={`dashboard-nav-item dashboard-nav-danger group/nav flex min-h-[32px] items-center gap-2 rounded-lg border px-2.5 py-[clamp(0.2rem,0.55vh,0.38rem)] text-sm font-medium leading-tight transition-all duration-200 ${responsiveItemPaddingClass} ${collapsedAlignClass}`}
       onClick={async () => {
         await endCafeStaffSession();
-        localStorage.removeItem("jwtToken");
-        localStorage.removeItem("tokenExpiration");
-        localStorage.removeItem("active_staff_session_v1");
-        localStorage.removeItem("rbac_access_token_v1");
+        clearAuthSession();
         window.location.href = "/login"; // Redirect after logout
       }}
     >
