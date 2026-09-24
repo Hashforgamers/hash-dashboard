@@ -181,6 +181,7 @@ Obtain a named access session using an existing access endpoint:
 | Method / path | Auth / body | Response |
 |---|---|---|
 | POST `/api/vendor/{vendor_id}/access/session/owner` | Owner vendor login bearer; no required body | `{token,vendor_id,staff:{id,name,role,permissions}}` |
+| POST `/api/vendor/{vendor_id}/access/session/refresh` | Current unexpired staff/owner access bearer; no body | Same session object; extends the existing session and reloads permissions |
 | POST `/api/vendor/{vendor_id}/access/unlock` | Staff PIN: `{"pin":"1234"}` | Same session object |
 
 Use the returned token for all routes below. It must have scope `vendor_access`, the matching cafe, a named staff claim and a live server-side staff session. Re-unlock on 401. UI permissions are hints; backend permissions are rechecked.

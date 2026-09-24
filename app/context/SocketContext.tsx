@@ -125,6 +125,12 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
       if (!document.hidden) markPong();
     };
 
+    const handleRenewed = () => {
+      // Socket handshakes must use the refreshed credential too.
+      newSocket.disconnect();
+      newSocket.connect();
+    };
+
     const handleOnline = () => {
       if (!newSocket.connected) {
         console.log("🌐 Back online, reconnecting socket...");
@@ -138,6 +144,7 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
 
     if (typeof window !== "undefined") {
       window.addEventListener("online", handleOnline);
+      window.addEventListener("auth:renewed", handleRenewed);
       document.addEventListener("visibilitychange", handleVisible);
     }
 
@@ -151,6 +158,7 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
       }
       if (typeof window !== "undefined") {
         window.removeEventListener("online", handleOnline);
+        window.removeEventListener("auth:renewed", handleRenewed);
         document.removeEventListener("visibilitychange", handleVisible);
       }
       newSocket.close();

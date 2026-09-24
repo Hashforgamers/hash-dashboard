@@ -1,7 +1,7 @@
 "use client"
 
 import axios from "axios"
-import { ensureFreshLoginToken, getPreferredAuthToken, refreshLoginToken, shouldAttachAuth } from "@/lib/auth-session"
+import { ensureFreshLoginToken, getPreferredAuthToken, refreshLoginToken, renewRequestAuthorization, shouldAttachAuth } from "@/lib/auth-session"
 
 const RETRYABLE_STATUS = new Set([408, 425, 429, 500, 502, 503, 504])
 
@@ -79,6 +79,9 @@ export function installNetworkRuntime() {
         }
       }
 
+      if (!skipAuthRefresh && requestHeaders.has("Authorization")) {
+        requestHeaders.set("Authorization", await renewRequestAuthorization(requestHeaders.get("Authorization")!))
+      }
       const { signal, cleanup } = withTimeoutSignal(defaultTimeoutMs, init?.signal || null)
       try {
         const response = await originalFetch(input, {
@@ -87,7 +90,7 @@ export function installNetworkRuntime() {
           headers: requestHeaders,
           signal,
         })
-        if (response.status === 401 && !skipAuthRefresh && shouldAttachAuth(rawUrl)) {
+        if (response.status === 401 && !skipAuthRefresh && shouldAttachAuth(rawUrl) && requestHeaders.get("Authorization") === `Bearer ${localStorage.getItem("jwtToken")}`) {
           const refreshed = await refreshLoginToken("401")
           if (refreshed) {
             requestHeaders.set("Authorization", `Bearer ${refreshed}`)
@@ -128,6 +131,9 @@ export function installNetworkRuntime() {
         config.headers.Authorization = `Bearer ${token}`
       }
     }
+    if (config.headers?.Authorization) {
+      config.headers.Authorization = await renewRequestAuthorization(String(config.headers.Authorization))
+    }
     return config
   })
 
@@ -143,7 +149,7 @@ export function installNetworkRuntime() {
       const maxRetries = retryableMethod ? 1 : 0
       const status = error?.response?.status
 
-      if (status === 401 && !config.__authRetried && shouldAttachAuth(String(config.url || ""))) {
+      if (status === 401 && !config.__authRetried && shouldAttachAuth(String(config.url || "")) && config.headers?.Authorization === `Bearer ${localStorage.getItem("jwtToken")}`) {
         config.__authRetried = true
         const refreshed = await refreshLoginToken("401")
         if (refreshed) {
