@@ -5035,20 +5035,30 @@ const [isLoadingBookings, setIsLoadingBookings] = useState(false)
   const bookingVersionKey = vendorId ? `booking:${vendorId}` : "booking:0"
   const cachedBooking = moduleCache[bookingCacheKey]?.data as BookingCacheData | undefined
   const bookingVersion = moduleVersions[bookingVersionKey] || 0
+  const snapshotRef = useRef<BookingCacheData | undefined>(cachedBooking)
+  snapshotRef.current = cachedBooking
+  const deselectTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const bookingsRequest = useRef(0)
+  const snapshotRequest = useRef(0)
+  useEffect(() => () => {
+    if (deselectTimer.current) clearTimeout(deselectTimer.current)
+    bookingsRequest.current += 1
+    snapshotRequest.current += 1
+  }, [])
 
   const applyBookingCache = (data: BookingCacheData) => {
     setAvailableConsoles((data.availableConsoles || []).map((entry: any) => sanitizeConsoleEntry(entry)))
     setAllSlots(data.allSlots)
-    if (data.selectedConsole) {
-      setSelectedConsole(data.selectedConsole)
-    }
+    setSelectedConsole((current) => data.availableConsoles.some(c => c.type === current)
+      ? current : data.selectedConsole)
     setIsLoading(false)
   }
 
   const loadBookingData = async (
     resolvedVendorId: number,
-    options: { forceFresh?: boolean; initialOnly?: boolean } = {}
+    options: { forceFresh?: boolean; initialOnly?: boolean; slotsOnly?: boolean } = {}
   ): Promise<BookingCacheData | null> => {
+    const requestId = ++snapshotRequest.current
     const forceFresh = Boolean(options.forceFresh)
     const initialOnly = Boolean(options.initialOnly)
     try {
@@ -5058,7 +5068,9 @@ const [isLoadingBookings, setIsLoadingBookings] = useState(false)
       const cacheBust = forceFresh ? `?t=${Date.now()}` : ""
       const consolesUrl = `${BOOKING_URL}/api/getAllConsole/vendor/${resolvedVendorId}${cacheBust}`
       const consoleTypesUrl = `${BOOKING_URL}/api/console-types/vendor/${resolvedVendorId}${cacheBust}`
-      const [consolesData, consoleTypesData] = await Promise.all([
+      const reusable = snapshotRef.current
+      const canReuseCatalog = options.slotsOnly && reusable?.availableConsoles.length
+      const [consolesData, consoleTypesData] = canReuseCatalog ? [null, null] : await Promise.all([
         fetchWithDedup(consolesUrl),
         fetchWithDedup(consoleTypesUrl).catch(() => null),
       ])
@@ -5121,7 +5133,9 @@ const [isLoadingBookings, setIsLoadingBookings] = useState(false)
         })
       })
 
-      const consolesResolved = Array.from(resolvedByType.values())
+      const consolesResolved = canReuseCatalog
+        ? reusable!.availableConsoles
+        : Array.from(resolvedByType.values())
 
       if (consolesResolved.length === 0) {
         console.log("⚠️ No consoles available")
@@ -5244,6 +5258,7 @@ const [isLoadingBookings, setIsLoadingBookings] = useState(false)
       }
 
       console.timeEnd("⏱️ Total fetch time")
+      if (requestId !== snapshotRequest.current) return null
       return { availableConsoles: filteredConsoles, allSlots: slotsData, selectedConsole: nextSelectedConsole, dates }
     } catch (error: any) {
       console.error('❌ Error in booking load:', error)
@@ -5251,9 +5266,9 @@ const [isLoadingBookings, setIsLoadingBookings] = useState(false)
     }
   }
 
-  const refreshBookingSnapshot = async (forceFresh = false) => {
+  const refreshBookingSnapshot = async (forceFresh = false, slotsOnly = false) => {
     if (!vendorId) return
-    const data = await loadBookingData(vendorId, { forceFresh })
+    const data = await loadBookingData(vendorId, { forceFresh, slotsOnly })
     if (!data) return
     setModuleCache(bookingCacheKey, data)
     writeLocalSnapshot(vendorId, data)
@@ -5261,6 +5276,7 @@ const [isLoadingBookings, setIsLoadingBookings] = useState(false)
   }
 
 const fetchSlotBookings = async (slotIds: number[], date: string) => {
+  const requestId = ++bookingsRequest.current
   const vendorId = getVendorIdFromToken()
   if (!vendorId || slotIds.length === 0) {
     setSlotBookings([])
@@ -5282,6 +5298,7 @@ const fetchSlotBookings = async (slotIds: number[], date: string) => {
 
     const url = `${BOOKING_URL}/api/vendor/${vendorId}/slot-bookings?slot_ids=${slotIdsParam}&date=${normalizedDate}${statusParam}`
     const data = await fetchWithDedup(url)
+    if (requestId !== bookingsRequest.current) return
     console.log('📥 Slot bookings response:', data)
 
     if (data?.success && data?.bookings) {
@@ -5327,9 +5344,9 @@ const fetchSlotBookings = async (slotIds: number[], date: string) => {
     }
   } catch (error) {
     console.error('❌ Error fetching slot bookings:', error)
-    setSlotBookings([])
+    if (requestId === bookingsRequest.current) setSlotBookings([])
   } finally {
-    setIsLoadingBookings(false)
+    if (requestId === bookingsRequest.current) setIsLoadingBookings(false)
   }
 }
 
@@ -5372,6 +5389,7 @@ const fetchSlotBookings = async (slotIds: number[], date: string) => {
 
     loadBookingData(vendorId, {
       forceFresh: bookingVersion > 0,
+      slotsOnly: bookingVersion > 0,
       initialOnly: shouldUseFastPath,
     })
       .then((data) => {
@@ -5418,7 +5436,9 @@ useEffect(() => {
     const date = selectedSlots[0].date // All slots should have same date
     fetchSlotBookings(slotIds, date)
   } else {
+    bookingsRequest.current += 1
     setSlotBookings([])
+    setIsLoadingBookings(false)
   }
 }, [selectedSlots])
 
@@ -5433,26 +5453,18 @@ useEffect(() => {
   }, [vendorId])
 
   const handleSlotSelect = (slot: SelectedSlot) => {
-    const isSelected = selectedSlots.some(
-      (s) =>
-        s.slot_id === slot.slot_id &&
-        s.date === slot.date &&
-        Number(s.console_id) === Number(slot.console_id)
-    )
-
-    if (isSelected) {
-      setSelectedSlots(
-        selectedSlots.filter(
-          (s) =>
-            !(
-              s.slot_id === slot.slot_id &&
-              s.date === slot.date &&
-              Number(s.console_id) === Number(slot.console_id)
-            )
-        )
-      )
+    if (deselectTimer.current) clearTimeout(deselectTimer.current)
+    const matches = (s: SelectedSlot) => s.slot_id === slot.slot_id && s.date === slot.date &&
+      Number(s.console_id) === Number(slot.console_id)
+    if (selectedSlots.some(matches)) {
+      // Keep an already-selected slot stable during the double-click gesture.
+      // Opening quick booking cancels this deselection before it can flash off.
+      deselectTimer.current = setTimeout(() => {
+        setSelectedSlots(previous => previous.filter(s => !matches(s)))
+        deselectTimer.current = null
+      }, 300)
     } else {
-      setSelectedSlots([...selectedSlots, slot])
+      setSelectedSlots(previous => previous.some(matches) ? previous : [...previous, slot])
     }
   }
 
@@ -5470,6 +5482,8 @@ useEffect(() => {
   }
 
   const handleQuickBooking = (slot: SelectedSlot) => {
+    if (deselectTimer.current) clearTimeout(deselectTimer.current)
+    deselectTimer.current = null
     // A double-click also fires click events. Ensure the target remains selected
     // and preserve any other slots the user has already chosen.
     setSelectedSlots((previous) => previous.some((selected) =>
@@ -5486,6 +5500,8 @@ useEffect(() => {
   }
 
   const handleConsoleChange = (consoleType: ConsoleFilter) => {
+    if (deselectTimer.current) clearTimeout(deselectTimer.current)
+    deselectTimer.current = null
     setSelectedConsole(consoleType)
     setSelectedSlots([])
     setSlotBookings([])
@@ -5495,7 +5511,7 @@ useEffect(() => {
   const handleBookingComplete = () => {
     setRecordsRevision(value => value + 1)
     setSelectedSlots([])
-    refreshBookingSnapshot(true)
+    refreshBookingSnapshot(true, true)
   }
 
   const hasRenderableSnapshot =

@@ -82,12 +82,18 @@ export function DashboardDataBus() {
     // Payload handlers below update the visible cache immediately; snapshots
     // reconcile totals and fields absent from events at most once per batch.
     const batch = createEventBatch<string>((dirtyModules) => {
-      for (const key of dirtyModules) bumpModuleVersion(key);
+      for (const key of dirtyModules) {
+        if (key !== `booking:${vendorId}`) bumpModuleVersion(key);
+      }
       if (dirtyModules.has(`booking:${vendorId}`)) {
         void refreshLanding(true);
         void refreshConsoles(true);
       }
     });
+    // Slot inventory cannot wait for the slower aggregate reconciliation.
+    const slotBatch = createEventBatch<string>((keys) => {
+      for (const key of keys) bumpModuleVersion(key);
+    }, 100);
     const handleModuleEvent = (event: string) => (payload: SocketPayload) => {
       const eventVendor = Number(payload?.vendorId ?? payload?.vendor_id);
       if (eventVendor && eventVendor !== vendorId) return;
@@ -99,6 +105,7 @@ export function DashboardDataBus() {
             : moduleKey === "booking"
               ? `booking:${vendorId}`
               : `${moduleKey}:${vendorId}`;
+        if (moduleKey === "booking") slotBatch.add(versionKey);
         batch.add(versionKey);
       }
     };
@@ -111,6 +118,7 @@ export function DashboardDataBus() {
 
     return () => {
       batch.dispose();
+      slotBatch.dispose();
       handlers.forEach(([event, handler]) => socket.off(event, handler));
     };
   }, [socket, vendorId, isConnected, joinVendor, bumpModuleVersion, refreshLanding, refreshConsoles]);
