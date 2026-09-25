@@ -149,7 +149,8 @@ import {
 import { Search, CalendarClock, XCircle, ListTodo } from "lucide-react"
 import { useDashboardData } from "@/app/context/DashboardDataContext"
 import { useApiClient } from "@/app/hooks/useApiClient"
-import { httpJson } from "@/lib/http-client"
+import { httpJson, clearHttpClientCache } from "@/lib/http-client"
+import { getBookingSettings } from "@/lib/booking-settings"
 import {
   normalizeConsoleSlug as normalizeCatalogSlug,
   resolveConsoleColor as resolveCatalogColor,
@@ -472,6 +473,12 @@ function SlotBookingForm({
   availableConsoles 
 }: SlotBookingFormProps) {
   const { can } = useAccess()
+  const { vendorId: settingsVendorId, moduleVersions } = useDashboardData()
+  const settingsVersion = moduleVersions[`pricing:${settingsVendorId}`] || 0
+  const settingsVendorRef = useRef(settingsVendorId)
+  settingsVendorRef.current = settingsVendorId
+  const [squadPolicyState, setSquadPolicyState] = useState<"loading" | "ready" | "error">("loading")
+  const [squadPolicyVendor, setSquadPolicyVendor] = useState<number | null>(null)
   const api = useApiClient()
   console.log('🎯 SlotBookingForm rendered with:', { 
     isOpen, 
@@ -526,7 +533,6 @@ function SlotBookingForm({
   const submittingRef = useRef(false)
   const [submitError, setSubmitError] = useState("")
   const [submissionUncertain, setSubmissionUncertain] = useState(false)
-  const [isSubmitted, setIsSubmitted] = useState<boolean>(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [activePricing, setActivePricing] = useState<Record<string, ActivePricingEntry>>({})
   const [squadPricingPolicy, setSquadPricingPolicy] = useState<Record<string, Record<string, number>>>({})
@@ -570,24 +576,7 @@ function SlotBookingForm({
   }, [isOpen, selectedSlots.length, onClose])
 
 
-  const getVendorIdFromToken = (): number | null => {
-    console.log('🔍 Getting vendor ID from token...')
-    const token = localStorage.getItem('jwtToken')
-    if (!token) {
-      console.log('❌ No JWT token found')
-      return null
-    }
-    try {
-      const decoded = jwtDecode<{ sub: { id: number } }>(token)
-      console.log('🔓 Decoded token:', decoded)
-      const vendorId = decoded.sub.id
-      console.log('🏪 Extracted vendor ID:', vendorId)
-      return vendorId
-    } catch (error) {
-      console.error('❌ Error decoding token:', error)
-      return null
-    }
-  }
+  const getVendorIdFromToken = (): number | null => settingsVendorId
 
   const sanitizeFieldConfig = (candidate: BookingFieldConfig): BookingFieldConfig => {
     const next: BookingFieldConfig = {
@@ -715,10 +704,8 @@ function SlotBookingForm({
     const vendorId = getVendorIdFromToken()
     if (!vendorId) return
     try {
-      const data = await api.get<any>(`${BOOKING_URL}/api/vendor/${vendorId}/booking-field-config`, {
-        timeoutMs: 10_000,
-        retries: 1,
-      })
+      const data = await getBookingSettings<any>(`${BOOKING_URL}/api/vendor/${vendorId}/booking-field-config`, settingsVersion)
+      if (settingsVendorRef.current !== vendorId) return
       const remoteConfig = sanitizeFieldConfig(
         (data?.config as BookingFieldConfig) || DEFAULT_BOOKING_FIELD_CONFIG
       )
@@ -726,6 +713,7 @@ function SlotBookingForm({
       setBookingFieldDraft(remoteConfig)
       setFieldConfigError("")
     } catch (error) {
+      if (settingsVendorRef.current !== vendorId) return
       console.error("❌ Failed to load booking field config:", error)
       setBookingFieldConfig(DEFAULT_BOOKING_FIELD_CONFIG)
       setBookingFieldDraft(DEFAULT_BOOKING_FIELD_CONFIG)
@@ -756,6 +744,7 @@ function SlotBookingForm({
       if (data?.success === false) {
         throw new Error(data?.message || "Failed to save field settings")
       }
+      clearHttpClientCache(`/api/vendor/${vendorId}/booking-field-config`)
       const savedConfig = sanitizeFieldConfig(
         (data?.config as BookingFieldConfig) || normalized
       )
@@ -1007,8 +996,22 @@ function SlotBookingForm({
       setSubmitError("")
       setSubmissionUncertain(false)
     }
-    loadVendorFieldConfig()
   }, [isOpen])
+
+  useEffect(() => {
+    setSquadPolicyState("loading")
+    setSquadPolicyVendor(null)
+    setSquadPlatformRules({})
+    setActivePricing({})
+    setHasControllerPricingConfigured(false)
+    setBookingFieldConfig(DEFAULT_BOOKING_FIELD_CONFIG)
+  }, [settingsVendorId])
+
+  // Warm setup before opening the form; reopens normally hit the shared cache.
+  useEffect(() => {
+    if (!settingsVendorId) return
+    void loadVendorFieldConfig()
+  }, [settingsVendorId, settingsVersion, isOpen])
 
   useEffect(() => {
     if (isOpen) return
@@ -1029,17 +1032,14 @@ function SlotBookingForm({
 
 // ADD THIS ENTIRE BLOCK
 useEffect(() => {
-  if (!isOpen) return
-
-  const vendorId = getVendorIdFromToken()
+  const vendorId = settingsVendorId
   if (!vendorId) return
+  let cancelled = false
 
   const fetchActivePricing = async () => {
     try {
-      const data = await api.get<any>(`${DASHBOARD_URL}/api/vendor/${vendorId}/active-pricing`, {
-        timeoutMs: 10_000,
-        retries: 1,
-      })
+      const data = await getBookingSettings<any>(`${DASHBOARD_URL}/api/vendor/${vendorId}/active-pricing`, settingsVersion)
+      if (cancelled) return
       if (data.success) {
         console.log('🏷️ Active pricing loaded:', data.pricing)
         setActivePricing(data.pricing)
@@ -1051,11 +1051,11 @@ useEffect(() => {
 
   const fetchSquadPricingPolicy = async () => {
     try {
-      const data = await api.get<any>(`${BOOKING_URL}/api/vendor/${vendorId}/squad-pricing-policy`, {
-        timeoutMs: 10_000,
-        retries: 1,
-      })
+      const data = await getBookingSettings<any>(`${BOOKING_URL}/api/vendor/${vendorId}/squad-pricing-policy`, settingsVersion)
+      if (cancelled) return
       if (data?.success && data?.policy) {
+        setSquadPolicyState("ready")
+        setSquadPolicyVendor(vendorId)
         const nextPolicy: Record<string, Record<string, number>> = {}
         Object.entries(data.policy as Record<string, Record<string, number>>).forEach(([group, grid]) => {
           const normalizedGroup = toLegacySquadGroup(group)
@@ -1091,11 +1091,14 @@ useEffect(() => {
           : Object.keys(nextRules)
         setAvailableSquadGroups(Array.from(new Set(groupsFromApi)))
       } else {
+        setSquadPolicyState("error")
         setSquadPricingPolicy(DEFAULT_SQUAD_PRICING_POLICY_FALLBACK)
         setSquadPlatformRules({})
         setAvailableSquadGroups(Object.keys(DEFAULT_SQUAD_PRICING_POLICY_FALLBACK))
       }
     } catch (err) {
+      if (cancelled) return
+      setSquadPolicyState("error")
       console.error('❌ Failed to fetch squad pricing policy:', err)
       setSquadPricingPolicy(DEFAULT_SQUAD_PRICING_POLICY_FALLBACK)
       setSquadPlatformRules({})
@@ -1105,7 +1108,10 @@ useEffect(() => {
 
   fetchActivePricing()
   fetchSquadPricingPolicy()
-}, [isOpen])
+  // This endpoint contains all controller types, so selection need not fetch it.
+  void getBookingSettings(`${DASHBOARD_URL}/api/vendor/${vendorId}/controller-pricing`, settingsVersion).catch(() => {})
+  return () => { cancelled = true }
+}, [settingsVendorId, settingsVersion, isOpen])
 
 
   useEffect(() => {
@@ -1351,9 +1357,7 @@ const getEffectivePrice = (slot: SelectedSlot): number => {
       return Boolean(ruleSlug) && ruleSlug === selectedConsoleSlug
     })
     if (bySlugMatch) return bySlugMatch
-    const fromAvailable = availableSquadGroups.find((group) => squadPlatformRules[group])
-    if (fromAvailable) return fromAvailable
-    return knownRuleKeys[0]
+    return preferredSquadGroup || selectedConsoleSlug
   }, [availableSquadGroups, preferredSquadGroup, selectedConsoleSlug, squadPlatformRules])
   const squadPlatformRule = squadPlatformRules[squadConsoleGroup] || {
     enabled: false,
@@ -1371,7 +1375,7 @@ const getEffectivePrice = (slot: SelectedSlot): number => {
   )
   const supportsExtraController = selectedControllerType !== null && hasControllerPricingConfigured
   const bookingFlowMode: "solo" | "squad" = isSquadMode ? "squad" : "solo"
-  const squadSupported = Boolean(squadPlatformRule.enabled)
+  const squadSupported = squadPolicyVendor === settingsVendorId && squadPolicyState === "ready" && Boolean(squadPlatformRule.enabled)
   const squadUsesDiscountEngine = squadPlatformRule.pricing_mode === "squad_discount"
   const squadPolicyForConsole = squadPricingPolicy[squadConsoleGroup]
     || (squadUsesDiscountEngine ? DEFAULT_SQUAD_PRICING_POLICY_FALLBACK.pc : {})
@@ -1487,10 +1491,8 @@ const getEffectivePrice = (slot: SelectedSlot): number => {
 
       setIsControllerPricingLoading(true)
       try {
-        const data = await api.get<any>(`${DASHBOARD_URL}/api/vendor/${vendorId}/controller-pricing`, {
-          timeoutMs: 10_000,
-          retries: 1,
-        })
+        const data = await getBookingSettings<any>(`${DASHBOARD_URL}/api/vendor/${vendorId}/controller-pricing`, settingsVersion)
+        if (settingsVendorRef.current !== vendorId) return
         const entry = data?.pricing?.[selectedControllerType as "ps5" | "xbox"]
         const configured = Boolean(entry?.configured)
         setHasControllerPricingConfigured(configured)
@@ -1513,7 +1515,7 @@ const getEffectivePrice = (slot: SelectedSlot): number => {
     }
 
     fetchControllerPricing()
-  }, [selectedControllerType])
+  }, [selectedControllerType, settingsVendorId, settingsVersion])
 
   useEffect(() => {
     if (!squadSupported && isSquadMode) {
@@ -2080,46 +2082,18 @@ console.log('📥 API response data:', result)
 
 if (result?.success === true || result?.success === 'true' || result?.booking || result?.id) {
   console.log('✅ Booking created successfully!')
-  setIsSubmitted(true)
+  // Return staff directly to the schedule after a confirmed server response.
+  onClose()
+  onBookingComplete()
 
   if (typeof window !== 'undefined') {
     console.log('📡 Dispatching refresh-dashboard event')
     window.dispatchEvent(new CustomEvent('refresh-dashboard'))
   }
 
-  // Update user cache
-  const userCacheKey = `userList:${vendorId}`
-  const cached = localStorage.getItem(userCacheKey)
-
-  if (cached) {
-    try {
-      const { data, timestamp } = JSON.parse(cached)
-
-      const isUserExists = data.some(
-        (user: any) =>
-          (email && user.email === email) ||
-          (phone && user.phone === phone)
-      )
-
-      if (!isUserExists) {
-        console.log('👤 New user detected, refreshing user cache...')
-        const updatedUsers = await api.get<any[]>(`${BOOKING_URL}/api/vendor/${vendorId}/users`, {
-          timeoutMs: 10_000,
-          retries: 1,
-        })
-
-        if (Array.isArray(updatedUsers)) {
-          localStorage.setItem(
-            userCacheKey,
-            JSON.stringify({ data: updatedUsers, timestamp: Date.now() })
-          )
-          console.log('✅ User cache updated with new user')
-        }
-      }
-    } catch (err) {
-      console.error('❌ Error checking or updating user cache:', err)
-    }
-  }
+  // Invalidate suggestions without holding the completed submission open
+  // for a full customer-list request.
+  try { localStorage.removeItem(`userList:${vendorId}`) } catch { /* Booking is already saved. */ }
 } else {
   // Only show error if response was not ok
   console.log('❌ Unexpected response format:', result)
@@ -2141,68 +2115,6 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
       setIsSubmitting(false)
       console.log('🏁 Form submission completed')
     }
-  }
-
-  if (isSubmitted) {
-    if (!portalReady) return null
-    return createPortal(
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-3 backdrop-blur-xl sm:p-5">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="slot-booking-modal w-full max-w-md rounded-xl p-5 text-center"
-        >
-          <motion.div
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            transition={{ type: 'spring', stiffness: 200, damping: 20 }}
-            className="w-10 h-10 mx-auto mb-3 rounded-full bg-emerald-500/15 flex items-center justify-center border border-emerald-400/30"
-          >
-            <CheckCircle className="w-8 h-8 text-emerald-600 dark:text-emerald-300" />
-          </motion.div>
-
-          <h2 className="text-lg font-semibold text-gray-800 dark:text-white mb-3">
-            Booking Confirmed!
-          </h2>
-
-          <div className="bg-emerald-50 dark:bg-emerald-900/20 rounded-lg p-4 mb-6 text-left">
-            <div className="flex justify-between items-center py-2">
-              <span className="text-gray-600 dark:text-gray-400">Console Type:</span>
-              <span className="font-medium text-gray-800 dark:text-white">{selectedSlots[0]?.console_name}</span>
-            </div>
-            <div className="flex justify-between items-center py-2">
-              <span className="text-gray-600 dark:text-gray-400">Slots:</span>
-              <span className="font-medium text-gray-800 dark:text-white">{selectedSlots.length}</span>
-            </div>
-            <div className="flex justify-between items-center py-2">
-              <span className="text-gray-600 dark:text-gray-400">Food & extras:</span>
-              <span className="font-medium text-gray-800 dark:text-white">
-                {selectedMeals.length === 0
-                  ? 'None'
-                  : selectedMeals.map(meal => `${meal.name} (${meal.quantity})`).join(', ')}
-              </span>
-            </div>
-            <div className="flex justify-between items-center py-2 border-t border-emerald-200 dark:border-emerald-700">
-              <span className="text-gray-600 dark:text-gray-400">Total Amount:</span>
-              <span className="font-bold text-emerald-600 text-xl">₹{totalAmount}</span>
-            </div>
-          </div>
-
-          <Button
-            onClick={() => {
-              onBookingComplete()
-              onClose()
-              setIsSubmitted(false)
-            }}
-            className="ui-action-primary w-full"
-          >
-            Create Another Booking
-          </Button>
-        </motion.div>
-      </div>
-      ,
-      document.body
-    )
   }
 
   if (!isOpen) return null
@@ -2732,6 +2644,7 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                         type="button"
                         onClick={() => setBookingModeQuick("squad")}
                         disabled={!squadSupported}
+                        title={squadPolicyState === "loading" ? "Loading session options" : squadPolicyState === "error" ? "Session options could not load. Solo booking is available." : !squadSupported ? "This console is configured for solo sessions" : "Book for a group"}
                         className={cn(
                           "rounded-lg border px-3 py-2 text-xs font-semibold transition-colors",
                           !squadSupported && "cursor-not-allowed opacity-50",
@@ -2743,10 +2656,8 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                         Squad
                       </button>
                     </div>
-                    {!squadSupported && (
-                      <p className="mt-2 text-xs text-amber-600 dark:text-amber-300">
-                        Squad booking is disabled for this console type.
-                      </p>
+                    {squadPolicyState === "error" && (
+                      <p className="mt-2 text-xs text-muted-foreground">Squad options could not load. You can still book a solo session.</p>
                     )}
 
                     <AnimatePresence>
@@ -5535,7 +5446,7 @@ useEffect(() => {
   const handleBookingComplete = () => {
     setRecordsRevision(value => value + 1)
     setSelectedSlots([])
-    refreshBookingSnapshot(true, true)
+    // The success event refreshes inventory and dashboard data together.
   }
 
   const hasRenderableSnapshot =
@@ -5632,6 +5543,7 @@ useEffect(() => {
       </div>
 
       <SlotBookingForm
+        key={recordsRevision}
         isOpen={showBookingForm}
         onClose={() => setShowBookingForm(false)}
         selectedSlots={selectedSlots}
