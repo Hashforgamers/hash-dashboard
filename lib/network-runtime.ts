@@ -82,7 +82,12 @@ export function installNetworkRuntime() {
       if (!skipAuthRefresh && requestHeaders.has("Authorization")) {
         requestHeaders.set("Authorization", await renewRequestAuthorization(requestHeaders.get("Authorization")!))
       }
-      const { signal, cleanup } = withTimeoutSignal(defaultTimeoutMs, init?.signal || null)
+      // httpJson owns its timeout and cancellation. Do not shorten a booking's
+      // explicit deadline with the global fallback used for raw fetch callers.
+      const requestedTimeout = (init as (RequestInit & { timeoutMs?: number }) | undefined)?.timeoutMs
+      const timeoutMs = typeof requestedTimeout === "number" && Number.isFinite(requestedTimeout) && requestedTimeout > 0
+        ? requestedTimeout : defaultTimeoutMs
+      const { signal, cleanup } = withTimeoutSignal(timeoutMs, init?.signal || (input instanceof Request ? input.signal : null))
       try {
         const response = await originalFetch(input, {
           ...init,
