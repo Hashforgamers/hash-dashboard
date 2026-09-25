@@ -1614,11 +1614,8 @@ const getEffectivePrice = (slot: SelectedSlot): number => {
     <Card className="sb-card p-3">
       <div className="mb-2 flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">
-          <div className="slot-section-icon">
-            <CreditCard className="h-4 w-4" />
-          </div>
           <div>
-            <h3 className="slot-section-title">Payment Method</h3>
+            <h3 className="slot-section-title">Payment method</h3>
           </div>
         </div>
         <span className="slot-booking-modal-soft rounded-full px-2.5 py-1 text-[11px] font-semibold text-emerald-700 dark:text-emerald-300">
@@ -2158,7 +2155,7 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
               <span className="font-medium text-gray-800 dark:text-white">{selectedSlots.length}</span>
             </div>
             <div className="flex justify-between items-center py-2">
-              <span className="text-gray-600 dark:text-gray-400">Meals & Extras:</span>
+              <span className="text-gray-600 dark:text-gray-400">Food & extras:</span>
               <span className="font-medium text-gray-800 dark:text-white">
                 {selectedMeals.length === 0
                   ? 'None'
@@ -2382,12 +2379,12 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                                         ₹{slot.console_price}
                                       </span>
                                     )}
-                                    <span className={isOffer ? "text-orange-500" : "text-emerald-600 dark:text-emerald-400"}>
+                                    <span className="slot-booking-price">
                                       ₹{getEffectivePrice(slot)}
                                     </span>
                                     {isOffer && (
-                                      <span className="rounded-full bg-orange-100 px-1.5 py-0.5 text-xs text-orange-600 dark:bg-orange-900/30">
-                                        🏷️ {entry?.offer_name}
+                                      <span className="slot-booking-offer">
+                                        {entry?.offer_name}
                                       </span>
                                     )}
                                   </>
@@ -2417,9 +2414,6 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
 
                   <Card className="sb-card order-2 p-3">
                     <div className="flex items-center gap-2 mb-2">
-                      <div className="slot-section-icon">
-                        <Users className="w-4 h-4" />
-                      </div>
                       <div>
                         <h3 className="slot-section-title">
                           {isSquadMode ? "Captain" : "Customer"}
@@ -2689,9 +2683,6 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                   <Card className="sb-card order-3 p-3">
                     <div className="flex items-center justify-between gap-3">
                       <div className="flex items-center gap-2">
-                        <div className="slot-section-icon">
-                          <Users className="w-4 h-4" />
-                        </div>
                         <div>
                           <h3 className="slot-section-title">Session type</h3>
 
@@ -2804,23 +2795,20 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                 <aside className="slot-booking-sidebar" aria-label="Booking payment">
                   <Card className="sb-card slot-booking-summary p-3">
                     <div className="flex items-center gap-2 mb-2">
-                      <div className="slot-section-icon">
-                        <Sparkles className="w-4 h-4" />
-                      </div>
                       <h3 className="slot-section-title">Price breakdown</h3>
                     </div>
 
                     <div className="space-y-2">
                       <div className="flex justify-between items-center py-2 border-b border-gray-200 dark:border-gray-600">
                         <span className="text-gray-600 dark:text-gray-400">
-                          Console Total{isSquadMode && squadUsesDiscountEngine ? ` (₹${consoleUnitTotal} x ${squadPlayerCount})` : ""}:
+                          Session charges{isSquadMode && squadUsesDiscountEngine ? ` (₹${consoleUnitTotal} x ${squadPlayerCount})` : ""}:
                         </span>
                         <span className="font-medium text-gray-800 dark:text-white">₹{consoleTotal}</span>
                       </div>
 
                       {isSquadMode && (
                         <div className="flex justify-between items-center py-2 border-b border-gray-200 dark:border-gray-600">
-                          <span className="text-gray-600 dark:text-gray-400">Squad Players:</span>
+                          <span className="text-gray-600 dark:text-gray-400">Players:</span>
                           <span className="font-medium text-gray-800 dark:text-white">{squadPlayerCount}</span>
                         </div>
                       )}
@@ -2889,14 +2877,14 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                       )}
 
                       <div className="flex justify-between items-center py-2 border-b border-gray-200 dark:border-gray-600">
-                        <span className="text-gray-600 dark:text-gray-400">Meals & Extras:</span>
+                        <span className="text-gray-600 dark:text-gray-400">Food & extras:</span>
                         <button
                           type="button"
                           onClick={() => setIsMealSelectorOpen(true)}
                           className="slot-booking-modal-accent flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm transition-all duration-200"
                         >
                           <Plus className="w-3 h-3" />
-                          {selectedMeals.length === 0 ? 'Add Meals & Extras' : `${selectedMeals.length} Selected`}
+                          {selectedMeals.length === 0 ? 'Add items' : `${selectedMeals.length} Selected`}
                         </button>
                       </div>
 
