@@ -43,3 +43,15 @@ snapshots preserve the current console filter. Live counts still depend on socke
 delivery and the slot API response; no client-side count is guessed.
 
 Interaction regression checks: `node --test tests/slot-interaction.test.cjs tests/event-batch.test.cjs`.
+
+Booking form setup is preloaded when the dashboard's cafe is known. Field rules,
+active pricing, squad policy and controller pricing use a shared 60-second HTTP
+cache scoped by URL, credential and pricing-event version. Concurrent warmup and
+form opens share requests. Saving field rules clears their cached response.
+Opening a solo booking does not wait for the squad-policy response. Unknown or
+failed squad-policy loading is not presented as a disabled console policy; the
+Squad button stays unavailable until a matching enabled rule is loaded. Unknown
+console types never borrow another console's squad rule. Server validation at
+submission remains authoritative.
+
+Settings regression checks: `node --test tests/booking-settings.test.cjs`.
