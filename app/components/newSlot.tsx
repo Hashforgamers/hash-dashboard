@@ -523,6 +523,9 @@ function SlotBookingForm({
   const [selectedMeals, setSelectedMeals] = useState<SelectedMeal[]>([])
   const [isMealSelectorOpen, setIsMealSelectorOpen] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false)
+  const submittingRef = useRef(false)
+  const [submitError, setSubmitError] = useState("")
+  const [submissionUncertain, setSubmissionUncertain] = useState(false)
   const [isSubmitted, setIsSubmitted] = useState<boolean>(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [activePricing, setActivePricing] = useState<Record<string, ActivePricingEntry>>({})
@@ -1000,6 +1003,10 @@ function SlotBookingForm({
 
   useEffect(() => {
     if (!isOpen) return
+    if (!submittingRef.current) {
+      setSubmitError("")
+      setSubmissionUncertain(false)
+    }
     loadVendorFieldConfig()
   }, [isOpen])
 
@@ -1959,6 +1966,8 @@ const getEffectivePrice = (slot: SelectedSlot): number => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (submittingRef.current || submissionUncertain) return
+    setSubmitError("")
     console.log('🚀 Form submission started')
     
     if (!validateForm()) {
@@ -1969,11 +1978,13 @@ const getEffectivePrice = (slot: SelectedSlot): number => {
     const vendorId = getVendorIdFromToken()
     if (!vendorId) {
       console.log('❌ No vendor ID, cannot submit')
-      alert('Please login again')
+      setSubmitError('Your session is unavailable. Sign in again before booking.')
       return
     }
 
+    submittingRef.current = true
     setIsSubmitting(true)
+    let passWasRedeemed = false
     console.log('📝 Preparing booking data...')
 
     try {
@@ -2000,10 +2011,11 @@ const getEffectivePrice = (slot: SelectedSlot): number => {
         )
 
         if (!passRedeemData.success) {
-          alert(`Pass redemption failed: ${passRedeemData.error || passRedeemData.message || "Unknown error"}`)
+          setSubmitError(`Pass redemption failed: ${passRedeemData.error || passRedeemData.message || "Unknown error"}`)
           setIsSubmitting(false)
           return
         }
+        passWasRedeemed = true
       }
 
 
@@ -2057,7 +2069,7 @@ const getEffectivePrice = (slot: SelectedSlot): number => {
         JSON.stringify(bookingData),
         {
           headers: bookingHeaders,
-          timeoutMs: 20_000,
+          timeoutMs: 45_000,
           retries: 0,
         }
       )
@@ -2111,13 +2123,21 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
 } else {
   // Only show error if response was not ok
   console.log('❌ Unexpected response format:', result)
-  alert(`Error: ${result.message || 'Unexpected response from server'}`)
+  setSubmissionUncertain(true)
+  setSubmitError('The server returned an unrecognized confirmation. Close this form and check Booking Records before creating another booking.')
 }
 
     } catch (error) {
       console.error('❌ Error submitting booking:', error)
-      alert(error instanceof Error ? error.message : 'Failed to create booking')
+      const message = error instanceof Error ? error.message : 'Failed to create booking'
+      const status = Number((error as { status?: number })?.status || 0)
+      const uncertain = !status || status >= 500 || status === 408 || passWasRedeemed
+      setSubmissionUncertain(uncertain)
+      setSubmitError(uncertain
+        ? `${passWasRedeemed ? 'The pass was redeemed, but booking confirmation did not arrive.' : 'Booking confirmation did not arrive. The booking may already have been saved.'} Close this form and check Booking Records${paymentType === 'Pass' ? ' and pass usage' : ''} before submitting again.`
+        : message)
     } finally {
+      submittingRef.current = false
       setIsSubmitting(false)
       console.log('🏁 Form submission completed')
     }
@@ -2307,6 +2327,11 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
 
           <div className="slot-booking-body min-h-0 flex-1 overflow-y-auto text-sm">
             <form id="slot-booking-form" onSubmit={handleSubmit} className="space-y-2">
+              {submitError && (
+                <div role="alert" className="rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs leading-relaxed text-amber-200">
+                  {submitError}
+                </div>
+              )}
               <div className="slot-booking-layout">
                 <div className="slot-booking-details">
                   <Card className="sb-card slot-booking-slots p-3 order-1">
@@ -2947,7 +2972,7 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
               <Button
                 type="submit"
                 form="slot-booking-form"
-                disabled={selectedSlots.length === 0 || isSubmitting || (paymentType === 'Monthly Credit' && (!creditAccount?.is_active || availableCreditAmount < totalAmount))}
+                disabled={selectedSlots.length === 0 || isSubmitting || submissionUncertain || (paymentType === 'Monthly Credit' && (!creditAccount?.is_active || availableCreditAmount < totalAmount))}
                 className="ui-action-primary h-9 px-4 disabled:opacity-50"
               >
                 {isSubmitting ? (
