@@ -2195,19 +2195,26 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
   return createPortal(
     <AnimatePresence>
       <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-3 backdrop-blur-xl sm:p-5"
+        initial={false}
+        className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-3 sm:p-5"
       >
         <motion.div
-          initial={{ scale: 0.9, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          exit={{ scale: 0.9, opacity: 0 }}
+          initial={false}
+          role="dialog"
+          aria-modal="true"
+          aria-label="New slot booking"
           className="slot-booking-modal flex max-h-[92vh] w-full max-w-[960px] flex-col overflow-hidden rounded-xl border shadow-2xl"
         >
           <div className="slot-booking-modal-header relative flex items-center justify-between border-b px-4 py-3">
-            <h2 className="premium-heading !text-base">New Slot Booking</h2>
+            <div className="min-w-0">
+              <h2 className="slot-booking-title">New booking</h2>
+              <p className="slot-booking-context">
+                {selectedSlots[0]?.console_name || "Gaming session"}
+                <span aria-hidden="true"> · </span>
+                {selectedSlots.length} {selectedSlots.length === 1 ? "slot" : "slots"}
+                {selectedSlots[0]?.date && <> · {new Date(`${selectedSlots[0].date}T12:00:00`).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}</>}
+              </p>
+            </div>
             <div className="flex items-center gap-2">
               <button
                 type="button"
@@ -2301,11 +2308,11 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
             )}
           </div>
 
-          <div className="min-h-0 flex-1 overflow-y-auto p-3 text-sm">
+          <div className="slot-booking-body min-h-0 flex-1 overflow-y-auto text-sm">
             <form id="slot-booking-form" onSubmit={handleSubmit} className="space-y-2">
-              <div className="grid grid-cols-1 gap-3 lg:grid-cols-[minmax(0,1fr)_300px]">
-                <div className="flex flex-col gap-3">
-                  <Card className="sb-card p-3 order-1">
+              <div className="slot-booking-layout">
+                <div className="slot-booking-details">
+                  <Card className="sb-card slot-booking-slots p-3 order-1">
                     <div className="mb-2 flex items-center justify-between gap-2">
                       <h3 className="slot-section-title">Selected slots ({selectedSlots.length})</h3>
                       <button type="button" aria-expanded={showSlotPicker} aria-controls="booking-slot-picker"
@@ -2353,9 +2360,9 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                         </div>
                       </div>
                     )}
-                    <div className="space-y-2">
-                      {selectedSlots.map((slot, index) => (
-                        <div key={index} className="slot-booking-modal-soft flex items-center justify-between gap-3 rounded-md px-2.5 py-2 text-xs">
+                    <div className="slot-booking-slot-list">
+                      {selectedSlots.map((slot) => (
+                        <div key={`${slot.date}-${slot.console_id}-${slot.slot_id}`} className="slot-booking-modal-soft flex items-center justify-between gap-3 rounded-md px-2.5 py-2 text-xs">
                           <span className="text-gray-700 dark:text-gray-300">
                             <strong>{new Date(slot.date).toLocaleDateString('en-GB')}</strong> • {slot.start_time.slice(0, 5)}-{slot.end_time.slice(0, 5)} • {slot.console_name}
                           </span>
@@ -2408,7 +2415,7 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                     </div>
                   </Card>
 
-                  <Card className="sb-card order-3 p-3">
+                  <Card className="sb-card order-2 p-3">
                     <div className="flex items-center gap-2 mb-2">
                       <div className="slot-section-icon">
                         <Users className="w-4 h-4" />
@@ -2679,15 +2686,15 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                     </AnimatePresence>
                   </Card>
 
-                  <Card className="sb-card order-2 p-4">
+                  <Card className="sb-card order-3 p-3">
                     <div className="flex items-center justify-between gap-3">
                       <div className="flex items-center gap-2">
                         <div className="slot-section-icon">
                           <Users className="w-4 h-4" />
                         </div>
                         <div>
-                          <h3 className="slot-section-title !text-sm">Booking Type</h3>
-                          <p className="text-xs text-gray-600 dark:text-gray-400">Switch mode quickly for staff workflow</p>
+                          <h3 className="slot-section-title">Session type</h3>
+
                         </div>
                       </div>
                     </div>
@@ -2794,13 +2801,13 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
 
                 </div>
 
-                <div className="space-y-2">
-                  <Card className="sb-card p-3">
+                <aside className="slot-booking-sidebar" aria-label="Booking payment">
+                  <Card className="sb-card slot-booking-summary p-3">
                     <div className="flex items-center gap-2 mb-2">
                       <div className="slot-section-icon">
                         <Sparkles className="w-4 h-4" />
                       </div>
-                      <h3 className="slot-section-title">Summary</h3>
+                      <h3 className="slot-section-title">Price breakdown</h3>
                     </div>
 
                     <div className="space-y-2">
@@ -2929,14 +2936,18 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                     </div>
                   </Card>
                   {paymentMethodCard}
-                </div>
+                </aside>
               </div>
 
             </form>
           </div>
 
           <div className="slot-booking-modal-footer shrink-0 border-t px-3 py-2">
-            <div className="flex items-center justify-end gap-2">
+            <div className="slot-booking-actions">
+              <div className="slot-booking-footer-total">
+                <span>Total payable</span>
+                <strong>₹{totalAmount.toLocaleString("en-IN")}</strong>
+              </div>
               <Button
                 type="button"
                 onClick={onClose}
@@ -2959,7 +2970,7 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                 ) : (
                   <div className="flex items-center gap-2">
                     <CheckCircle className="w-4 h-4" />
-                    Book · ₹{totalAmount}
+                    Confirm booking
                   </div>
                 )}
               </Button>
@@ -3048,7 +3059,7 @@ function SlotPill({
       title="Click to select; double-click to book"
       disabled={disabled}
       className={cn(
-        "booking-slot-pill w-full h-full flex items-center justify-center rounded-md text-[10px] font-bold uppercase",
+        "booking-slot-pill select-none w-full h-full flex items-center justify-center rounded-md text-[10px] font-bold uppercase",
         compact ? "min-h-[32px]" : "min-h-[38px]",
         "transition-all duration-200 cursor-pointer",
         disabled && "cursor-not-allowed opacity-60",
@@ -3567,7 +3578,7 @@ function ScheduleGrid({
                   onClick={(event) => { if (event.detail < 2) handleSlotClick(day, time, gameConsole) }}
                   onDoubleClick={() => handleSlotClick(day, time, gameConsole, true)}
       className={cn(
-        "booking-slot-continuation group relative h-full w-full cursor-pointer overflow-hidden rounded-md border transition-colors",
+        "booking-slot-continuation select-none group relative h-full w-full cursor-pointer overflow-hidden rounded-md border transition-colors",
                     compact ? "min-h-[32px]" : "min-h-[40px]"
                   )}
                   title={`${gameConsole.name} slot continues (${coveringSlot.start_time?.slice(0, 5)}-${coveringSlot.end_time?.slice(0, 5)})`}
@@ -4945,7 +4956,7 @@ function DashboardQuickBookingSlab({
                 }}
                 onDoubleClick={() => handleSlotButtonClick(slot, true)}
                 className={cn(
-                  "dashboard-slot-chip",
+                  "dashboard-slot-chip select-none",
                   isSelected && "dashboard-slot-chip-selected"
                 )}
               >
@@ -5456,16 +5467,16 @@ useEffect(() => {
     if (deselectTimer.current) clearTimeout(deselectTimer.current)
     const matches = (s: SelectedSlot) => s.slot_id === slot.slot_id && s.date === slot.date &&
       Number(s.console_id) === Number(slot.console_id)
-    if (selectedSlots.some(matches)) {
-      // Keep an already-selected slot stable during the double-click gesture.
-      // Opening quick booking cancels this deselection before it can flash off.
-      deselectTimer.current = setTimeout(() => {
-        setSelectedSlots(previous => previous.filter(s => !matches(s)))
-        deselectTimer.current = null
-      }, 300)
-    } else {
-      setSelectedSlots(previous => previous.some(matches) ? previous : [...previous, slot])
+    const toggle = () => {
+      setSelectedSlots(previous => previous.some(matches)
+        ? previous.filter(s => !matches(s)) : [...previous, slot])
+      deselectTimer.current = null
     }
+    // Resolve a grid single-click before painting selection. A double-click
+    // cancels this work and selects + opens in one React update.
+    // The picker inside the open form has no double-click action.
+    if (showBookingForm) toggle()
+    else deselectTimer.current = setTimeout(toggle, 250)
   }
 
   const handleRemoveSelectedSlot = (slotToRemove: SelectedSlot) => {

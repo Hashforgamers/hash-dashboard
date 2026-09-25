@@ -33,8 +33,11 @@ or replayable deltas, including aggregate totals.
 Validation: `node --test tests/event-batch.test.cjs` covers duplicate event storms,
 fixed-window follow-up batches and cancellation on cleanup.
 
-Slot selection is immediate. Deselection waits 300 ms so a double-click on an
-already-selected slot can open quick booking without flashing the selection off.
+Grid single-click selection waits 250 ms to distinguish it from a double-click.
+Double-click cancels the pending toggle, then selects and opens the form in one
+update. The open form's slot picker still toggles immediately. The booking dialog
+opens at its final size without nested fades, scaling or backdrop blur, and slot
+labels disable native double-click text selection.
 Late slot-booking reads and superseded snapshots are ignored, and background
 snapshots preserve the current console filter. Live counts still depend on socket
 delivery and the slot API response; no client-side count is guessed.
