@@ -17,7 +17,7 @@ const compiled = ts.transpileModule(handlers.join('\n'),{compilerOptions:{target
 function fixture(initial=[]) {
   let selected=initial, open=false; let id=0;
   const pending=new Map();
-  const context={get selectedSlots(){return selected},deselectTimer:{current:null},
+  const context={showBookingForm:false,get selectedSlots(){return selected},deselectTimer:{current:null},
     setSelectedSlots:value=>{selected=typeof value==='function'?value(selected):value},
     setShowBookingForm:value=>{open=value},setSelectedConsole:()=>{},setSlotBookings:()=>{},
     setTimeout:fn=>{pending.set(++id,fn);return id},clearTimeout:id=>pending.delete(id)};
@@ -32,8 +32,8 @@ test('double-click on selected slot never flashes selection off',()=>{
   f.handleQuickBooking(slot);f.tick();
   assert.equal(f.selected.length,1);assert.equal(f.open,true);
 });
-test('new slot selects immediately and quick booking does not duplicate it',()=>{
-  const f=fixture();f.handleSlotSelect(slot);assert.equal(f.selected.length,1);
+test('double-click opens without an intermediate selection paint',()=>{
+  const f=fixture();f.handleSlotSelect(slot);assert.equal(f.selected.length,0);
   f.handleQuickBooking(slot);f.tick();assert.equal(f.selected.length,1);
 });
 test('single click still deselects, while another selected slot is preserved',()=>{
@@ -43,4 +43,9 @@ test('single click still deselects, while another selected slot is preserved',()
 test('console switch cancels deferred selection changes',()=>{
   const f=fixture([slot]);f.handleSlotSelect(slot);f.handleConsoleChange('ps5');f.tick();
   assert.equal(f.selected.length,0);assert.equal(f.open,false);
+});
+
+test('single click selects after gesture resolution',()=>{
+  const f=fixture();f.handleSlotSelect(slot);assert.equal(f.selected.length,0);
+  f.tick();assert.equal(f.selected.length,1);assert.equal(f.open,false);
 });
