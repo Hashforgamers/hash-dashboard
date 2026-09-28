@@ -169,7 +169,7 @@ const canStartBookingNow = (booking: any) => {
   const range = getBookingTimeRange(booking);
   if (!range) return false;
   const now = getNowIST();
-  return now >= range.start && now <= range.end;
+  return now.getTime() >= range.start.getTime() - 5 * 60 * 1000 && now <= range.end;
 };
 
 const canMarkNoShowNow = (booking: any) => {
@@ -1387,7 +1387,7 @@ export function UpcomingBookings({
                                 ? "dashboard-btn-primary"
                                 : "bg-slate-700/70 text-slate-300"
                             }`}
-                            title={canStartNow ? "Start session" : "Start session (outside scheduled window)"}
+                            title={canStartNow ? "Start session" : "Start available 5 minutes before scheduled time"}
                           >
                             <Play className="h-3 w-3 shrink-0" />
                             <span className="truncate">Start</span>
