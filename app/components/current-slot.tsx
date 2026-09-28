@@ -681,46 +681,11 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
     function handleConsoleAvailability(data: any) {
       const dataVendorId = parseInt(data.vendorId || data.vendor_id)
       if (dataVendorId === vendorId) {
-        if (data.is_available === true) {
-          setCurrentSlots(prevSlots => {
-            const releasingSlot = prevSlots.find(
-              (slot) =>
-                Number(slot.consoleId || 0) === Number(data.console_id || 0) ||
-                String(slot.consoleNumber || "") === String(data.console_id || "")
-            )
-            if (releasingSlot && typeof window !== "undefined") {
-              window.dispatchEvent(
-                new CustomEvent("history-booking-add", {
-                  detail: {
-                    bookingId: releasingSlot.bookingId || releasingSlot.bookId,
-                    username: releasingSlot.username,
-                    customer_phone: getBookingPhone(releasingSlot),
-                    customer_email: getBookingEmail(releasingSlot),
-                    date: releasingSlot.date,
-                    time: `${releasingSlot.startTime} - ${releasingSlot.endTime}`,
-                    consoleName: releasingSlot.consoleType,
-                    consoleType: releasingSlot.consoleType,
-                    consoleNumber: releasingSlot.consoleNumber,
-                    lifecycleStatus: "completed",
-                    bookingRecordStatus: "completed",
-                  },
-                })
-              );
-            }
-
-            const updated = prevSlots.filter(
-              (slot) =>
-                Number(slot.consoleId || 0) !== Number(data.console_id || 0) &&
-                String(slot.consoleNumber || "") !== String(data.console_id || "")
-            )
-            return updated
-          })
-        } else {
-          // Occupancy became active; refresh dashboard to pull latest live rows immediately.
-          setRefreshSlots((prev: boolean) => !prev);
-          if (typeof window !== "undefined") {
-            window.dispatchEvent(new CustomEvent("refresh-dashboard"));
-          }
+        // Console availability is not proof that a booking was released.
+        // Refresh authoritative lifecycle state instead of manufacturing history.
+        setRefreshSlots((prev: boolean) => !prev);
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(new CustomEvent("refresh-dashboard"));
         }
       }
     }
