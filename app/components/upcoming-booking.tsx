@@ -1,3 +1,5 @@
+import { SessionConsoleDialog, type SessionConsole } from "./session-console-dialog";
+import UpcomingSlotManager from "./upcoming-slot-manager";
 import { Card } from "@/components/ui/card";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
@@ -7,7 +9,7 @@ import {
 } from "lucide-react";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faIndianRupeeSign } from '@fortawesome/free-solid-svg-icons'
-import { Dispatch, SetStateAction, useState, useEffect, useMemo } from "react";
+import { Dispatch, SetStateAction, useState, useEffect, useMemo, useRef } from "react";
 import { createPortal } from "react-dom"; // ✅ ADD THIS IMPORT
 import { format } from 'date-fns';
 import { BOOKING_URL, DASHBOARD_URL } from "@/src/config/env";
@@ -335,12 +337,15 @@ export function UpcomingBookings({
   // State for modal and console selection
   const [startCard, setStartCard] = useState(false);
   const [selectedSystem, setSelectedSystem] = useState("");
-  const [availableConsoles, setAvailableConsoles] = useState<any[]>([]);
-  const [selectedConsole, setSelectedConsole] = useState<number | null>(null);
+  const [availableConsoles, setAvailableConsoles] = useState<SessionConsole[]>([]);
   const [selectedConsoleIds, setSelectedConsoleIds] = useState<number[]>([]);
   const [requiredConsoleCount, setRequiredConsoleCount] = useState<number>(1);
   const [isPcSquadStart, setIsPcSquadStart] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [consoleError, setConsoleError] = useState("");
+  const submitInFlight = useRef(false);
+  const consoleRequest = useRef(0);
   const [selectedGameId, setSelectedGameId] = useState<string | null>(null);
   const [selectedBookingId, setSelectedBookingId] = useState<string | null>(null);
   const [expandedBookingRows, setExpandedBookingRows] = useState<Record<string, boolean>>({});
@@ -698,95 +703,42 @@ export function UpcomingBookings({
     setIsPcSquadStart(pcSquad);
     setRequiredConsoleCount(neededConsoles);
     setSelectedConsoleIds([]);
-    setSelectedConsole(null);
     setStartCard(true);
     fetchAvailableConsoles(resolvedGameId, resolvedVendorId);
   };
 
-  // Enhanced fetch available consoles with comprehensive debugging
-  const fetchAvailableConsoles = async (gameId: string, vendorId?: string) => {
-    if (!vendorId) {
-      console.error('❌ VendorId is missing for fetchAvailableConsoles');
-      return;
-    }
-    
-    console.log('🔍 Fetching consoles for gameId:', gameId, 'vendorId:', vendorId);
-    
+  const fetchAvailableConsoles = async (gameId: string, resolvedVendorId?: string) => {
+    if (!resolvedVendorId) return;
+    const requestId = ++consoleRequest.current;
     setIsLoading(true);
+    setConsoleError("");
+    setSelectedConsoleIds([]);
+    setAvailableConsoles([]);
     try {
-      const apiUrl = `${DASHBOARD_URL}/api/getAllDevice/consoleTypeId/${gameId}/vendor/${vendorId}`;
-      console.log('📡 API URL:', apiUrl);
-      
-      const rows = await api.get<any[]>(apiUrl, { timeoutMs: 10_000, retries: 2 });
-      console.log('📦 Raw API Response:', rows);
-      console.log('📦 Response type:', typeof rows);
-      console.log('📦 Is array:', Array.isArray(rows));
-      
-      if (rows && Array.isArray(rows)) {
-        console.log('🎮 All consoles before filtering:', rows.map(c => ({
-          id: c.consoleId,
-          brand: c.brand,
-          model: c.consoleModelNumber,
-          available: c.is_available,
-          status: c.status,
-          raw: c
-        })));
-        
-        console.log('🔍 Checking is_available values:', rows.map(c => ({
-          id: c.consoleId,
-          is_available: c.is_available,
-          type: typeof c.is_available,
-          stringValue: String(c.is_available)
-        })));
-        
-        const strictFilter = rows.filter((console: any) => console?.is_available === true);
-        const looseFilter = rows.filter((console: any) => console?.is_available);
-        const stringFilter = rows.filter((console: any) => 
-          String(console?.is_available).toLowerCase() === 'true'
-        );
-        
-        console.log('✅ Strict filter (=== true):', strictFilter.length, 'consoles');
-        console.log('✅ Loose filter (truthy):', looseFilter.length, 'consoles'); 
-        console.log('✅ String filter ("true"):', stringFilter.length, 'consoles');
-        
-        let availableOnly = strictFilter;
-        if (availableOnly.length === 0 && looseFilter.length > 0) {
-          availableOnly = looseFilter;
-          console.log('🔄 Using loose filter instead');
-        }
-        if (availableOnly.length === 0 && stringFilter.length > 0) {
-          availableOnly = stringFilter;
-          console.log('🔄 Using string filter instead');
-        }
-        
-        console.log('✅ Final available consoles:', availableOnly.length);
-        console.log('✅ Available console details:', availableOnly.map(c => ({
-          id: c.consoleId,
-          brand: c.brand,
-          model: c.consoleModelNumber,
-          available: c.is_available
-        })));
-        
-        setAvailableConsoles(availableOnly);
-      } else {
-        console.warn('⚠️ API response is not an array or is empty:', rows);
-        setAvailableConsoles([]);
-      }
+      const rows = await api.get<any[]>(`${DASHBOARD_URL}/api/getAllDevice/consoleTypeId/${gameId}/vendor/${resolvedVendorId}`, { timeoutMs: 10_000, retries: 2 });
+      if (requestId !== consoleRequest.current) return;
+      if (!Array.isArray(rows)) throw new Error("Unexpected console response. Please retry.");
+      const available = rows.filter((row) => [true, 1, "true", "1"].includes(row?.is_available))
+        .map((row) => ({ ...row, consoleId: Number(row.consoleId) }))
+        .filter((row) => Number.isSafeInteger(row.consoleId) && row.consoleId > 0);
+      setAvailableConsoles(Array.from(new Map(available.map((row) => [row.consoleId, row])).values()));
     } catch (error) {
-      console.error("❌ Error fetching available consoles:", error);
-      setAvailableConsoles([]);
+      if (requestId !== consoleRequest.current) return;
+      setConsoleError(error instanceof Error ? error.message : "Unable to load consoles. Please retry.");
     } finally {
-      setIsLoading(false);
+      if (requestId === consoleRequest.current) setIsLoading(false);
     }
   };
 
   // Handle session start submission
   const handleSubmit = async () => {
-    const effectiveSelected = selectedConsoleIds.length > 0
-      ? selectedConsoleIds
-      : (selectedConsole ? [selectedConsole] : []);
+    if (submitInFlight.current || isLoading || selectedConsoleIds.length !== requiredConsoleCount) return;
+    const effectiveSelected = selectedConsoleIds.filter((id) => availableConsoles.some((console) => console.consoleId === id));
+    if (effectiveSelected.length !== requiredConsoleCount) return;
     if (effectiveSelected.length > 0 && selectedGameId && selectedBookingId) {
-      setIsLoading(true);
+      submitInFlight.current = true;
+      setIsSubmitting(true);
+      setConsoleError("");
 
       const selectedBookingIdStr = String(selectedBookingId);
       const selectedMergedBooking = mergedBookings.find((booking) => {
@@ -844,34 +796,34 @@ export function UpcomingBookings({
         );
         
       } catch (error) {
-        console.error("Error updating console status:", error);
+        setConsoleError(error instanceof Error ? error.message : "Unable to start the session. Please retry.");
       } finally {
         if (typeof window !== "undefined") {
           window.dispatchEvent(new CustomEvent("refresh-dashboard"));
         }
-        setIsLoading(false);
+        submitInFlight.current = false;
+        setIsSubmitting(false);
       }
     }
   };
 
   // Handle console selection
   const handleConsoleSelection = (consoleId: number) => {
+    if (isSubmitting || isLoading) return;
+    setConsoleError("");
     if (!isPcSquadStart) {
-      setSelectedConsole(consoleId);
       setSelectedConsoleIds([consoleId]);
       return;
     }
     setSelectedConsoleIds((prev) => {
       if (prev.includes(consoleId)) {
         const next = prev.filter((id) => id !== consoleId);
-        setSelectedConsole(next[0] || null);
         return next;
       }
       if (prev.length >= requiredConsoleCount) {
         return prev;
       }
       const next = [...prev, consoleId];
-      setSelectedConsole(next[0] || null);
       return next;
     });
   };
@@ -1024,132 +976,20 @@ export function UpcomingBookings({
     <>
       {/* 🚀 FIXED: Proper flex container structure */}
       <div className="upcoming-session-panel dashboard-module dashboard-module-panel h-full flex flex-col overflow-hidden rounded-lg p-3 sm:p-4">
-        {isMounted && createPortal(
-          <AnimatePresence>
-          {startCard && (
-            <motion.div
-              key="start-session"
-              role="dialog"
-              aria-modal="true"
-              aria-label="Select console to start session"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 z-[1200] flex items-end justify-center bg-black/65 p-0 backdrop-blur-sm sm:items-center sm:p-4"
-              onClick={(e) => e.currentTarget === e.target && setStartCard(false)}
-            >
-              <motion.div
-                initial={{ scale: 0.95, y: 20, opacity: 0 }}
-                animate={{ scale: 1, y: 0, opacity: 1 }}
-                exit={{ scale: 0.95, y: 20, opacity: 0 }}
-                className="w-full sm:max-w-md md:max-w-lg"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <Card className="overflow-hidden rounded-t-2xl border border-gray-200 bg-white shadow-2xl dark:border-zinc-700 dark:bg-zinc-900 sm:rounded-2xl">
-                  <div className="p-2 sm:p-3 border-b border-gray-200 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-800/50">
-                    <div className="flex items-center justify-between">
-                      <h2 className="text-sm font-semibold">
-                        {isPcSquadStart ? `Select ${requiredConsoleCount} PC Consoles` : "Select Console"}
-                      </h2>
-                      <button
-                        onClick={() => setStartCard(false)}
-                        className="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-zinc-700"
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="max-h-[78dvh] overflow-y-auto p-2 sm:max-h-none sm:p-3">
-                    <div className="rounded-lg border border-gray-200 bg-white p-2 shadow-sm dark:border-zinc-700 dark:bg-zinc-900/80">
-                    {isLoading ? (
-                      <div className="flex items-center justify-center h-24 sm:h-32">
-                        <div className="animate-spin rounded-full h-6 w-6 border-2 border-emerald-500 border-t-transparent"></div>
-                      </div>
-                    ) : availableConsoles.length === 0 ? (
-                      <div className="text-center py-6">
-                        <AlertCircle className="w-8 h-8 text-amber-500 mx-auto mb-2" />
-                        <h3 className="text-sm font-medium mb-1">No Consoles Available</h3>
-                        <p className="text-gray-500 text-xs">All consoles are in use.</p>
-                        <div className="mt-4 p-2 bg-gray-100 dark:bg-zinc-800 rounded text-xs text-left">
-                          <p>Debug Info:</p>
-                          <p>GameId: {selectedGameId}</p>
-                          <p>VendorId: {vendorId}</p>
-                          <p>Check console for API response details</p>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                        {availableConsoles.map((console) => (
-                          <motion.div
-                            key={console.consoleId}
-                            whileHover={{ scale: 1.02 }}
-                            whileTap={{ scale: 0.98 }}
-                            onClick={() => handleConsoleSelection(console.consoleId)}
-                            className={`cursor-pointer rounded-lg border ${
-                              (isPcSquadStart
-                                ? selectedConsoleIds.includes(console.consoleId)
-                                : selectedConsole === console.consoleId)
-                                ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20"
-                                : "border-gray-200 bg-white/70 dark:border-zinc-700 dark:bg-zinc-900/60 hover:border-emerald-500/50"
-                            } p-2 sm:p-3 transition-all duration-200`}
-                          >
-                            <div className="flex items-center space-x-2">
-                              {getIcon(selectedSystem)}
-                              <div>
-                                <h3 className="text-sm font-medium">{console.brand}</h3>
-                                <p className="text-xs text-gray-500">{console.consoleModelNumber}</p>
-                              </div>
-                            </div>
-                          </motion.div>
-                        ))}
-                      </div>
-                    )}
-
-                    <motion.button
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      onClick={handleSubmit}
-                      disabled={
-                        isLoading ||
-                        (isPcSquadStart
-                          ? selectedConsoleIds.length !== requiredConsoleCount
-                          : !selectedConsole)
-                      }
-                      className={`mt-4 flex w-full items-center justify-center space-x-2 rounded-lg py-2 text-xs font-medium sm:py-3 sm:text-sm ${
-                        ((isPcSquadStart
-                          ? selectedConsoleIds.length === requiredConsoleCount
-                          : !!selectedConsole) && !isLoading)
-                          ? "bg-emerald-500 hover:bg-emerald-600 text-white"
-                          : "bg-gray-100 text-gray-400 cursor-not-allowed"
-                      }`}
-                    >
-                      {isLoading ? (
-                        <>
-                          <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
-                          <span>Processing...</span>
-                        </>
-                      ) : (
-                        <>
-                          <Play className="w-4 h-4" />
-                          <span>Start Session</span>
-                        </>
-                      )}
-                    </motion.button>
-                    {isPcSquadStart && (
-                      <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
-                        Selected {selectedConsoleIds.length}/{requiredConsoleCount} consoles.
-                      </p>
-                    )}
-                    </div>
-                  </div>
-                </Card>
-              </motion.div>
-            </motion.div>
-          )}
-          </AnimatePresence>,
-          document.body
-        )}
+        <SessionConsoleDialog
+          open={startCard}
+          onClose={() => { setStartCard(false); consoleRequest.current += 1; }}
+          consoles={availableConsoles}
+          selectedIds={selectedConsoleIds}
+          requiredCount={requiredConsoleCount}
+          system={selectedSystem}
+          loading={isLoading}
+          submitting={isSubmitting}
+          error={consoleError}
+          onSelect={handleConsoleSelection}
+          onRetry={() => { if (selectedGameId) fetchAvailableConsoles(selectedGameId, String(vendorId)); }}
+          onStart={handleSubmit}
+        />
 
         {/* Header + Search */}
         <div className="mb-3 flex flex-col items-start justify-between gap-3 flex-shrink-0">
@@ -1268,7 +1108,7 @@ export function UpcomingBookings({
                                   setContactOverlay({ open: true, booking });
                                 }}
                                 className="truncate dash-title !text-[12px] sm:!text-[13px] text-left underline decoration-dotted underline-offset-2 hover:text-cyan-200 transition-colors cursor-pointer"
-                                title="View customer contact details"
+                                title="View booking details and manage slots"
                               >
                                 {booking.username || "Guest User"}
                               </button>
@@ -1434,11 +1274,11 @@ export function UpcomingBookings({
           onClick={() => setContactOverlay({ open: false, booking: null })}
         >
           <div
-            className="w-full max-w-md rounded-xl border border-cyan-500/30 bg-slate-950 shadow-2xl"
+            className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-xl border border-cyan-500/30 bg-slate-950 shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between border-b border-cyan-500/20 px-4 py-3">
-              <h3 className="text-sm font-semibold uppercase tracking-[0.08em] text-cyan-200">Customer Contact</h3>
+              <h3 className="text-sm font-semibold uppercase tracking-[0.08em] text-cyan-200">Booking details</h3>
               <button
                 type="button"
                 onClick={() => setContactOverlay({ open: false, booking: null })}
@@ -1478,6 +1318,15 @@ export function UpcomingBookings({
                   {contactOverlay.booking?.consoleType || "Console"} • {contactOverlay.booking?.time || "Time not set"}
                 </p>
               </div>
+              <UpcomingSlotManager booking={contactOverlay.booking} vendorId={String(vendorId)} onChanged={() => {
+                setRefreshSlots(prev => !prev)
+                window.dispatchEvent(new CustomEvent('refresh-dashboard'))
+              }} onRemove={(slotBooking) => {
+                setContactOverlay({ open: false, booking: null })
+                const useCase = String(slotBooking.squadDetails?.payment_use_case || slotBooking.payment_use_case || '').toLowerCase()
+                const settlement = String(slotBooking.squadDetails?.settlement_status || slotBooking.settlement_status || '').toLowerCase()
+                openCancelDialog(slotBooking, useCase !== 'pay_at_cafe' && !['pending', 'unpaid', 'due'].includes(settlement))
+              }} />
             </div>
           </div>
         </div>,

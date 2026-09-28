@@ -212,13 +212,15 @@ interface SquadMemberInput {
 }
 
 interface SlotBookingFormProps {
+  overlayZIndex?: number
+  initialCustomer?: { name: string; phone: string; email: string }
   isOpen: boolean
   onClose: () => void
   selectedSlots: SelectedSlot[]
   onRemoveSelectedSlot: (slot: SelectedSlot) => void
   onSlotSelect: (slot: SelectedSlot) => void
   allSlots: { [key: string]: any[] }
-  onBookingComplete: () => void
+  onBookingComplete: (result?: any) => void
   availableConsoles: ConsoleType[]
 }
 
@@ -462,7 +464,9 @@ const DEFAULT_BOOKING_FIELD_CONFIG: BookingFieldConfig = {
 }
 
 
-function SlotBookingForm({ 
+export function SlotBookingForm({
+  initialCustomer,
+  overlayZIndex = 50,
   isOpen, 
   onClose, 
   selectedSlots, 
@@ -503,6 +507,13 @@ function SlotBookingForm({
   const [email, setEmail] = useState<string>('')
   const [phone, setPhone] = useState<string>('')
   const [paymentType, setPaymentType] = useState<string>('Cash')
+  useEffect(() => {
+    if (isOpen && initialCustomer) {
+      setName(initialCustomer.name)
+      setPhone(initialCustomer.phone)
+      setEmail(initialCustomer.email)
+    }
+  }, [isOpen, initialCustomer])
   const [passUid, setPassUid] = useState('')
   const [validatedPass, setValidatedPass] = useState<UserPassOption | null>(null)
   const [passError, setPassError] = useState('')
@@ -2057,7 +2068,7 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
   console.log('✅ Booking created successfully!')
   // Return staff directly to the schedule after a confirmed server response.
   onClose()
-  onBookingComplete()
+  onBookingComplete(result)
 
   if (typeof window !== 'undefined') {
     console.log('📡 Dispatching refresh-dashboard event')
@@ -2098,7 +2109,8 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
     <AnimatePresence>
       <motion.div
         initial={false}
-        className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-3 sm:p-5"
+        style={{ zIndex: overlayZIndex }}
+        className="fixed inset-0 flex items-center justify-center bg-black/45 p-3 sm:p-5"
       >
         <motion.div
           initial={false}
