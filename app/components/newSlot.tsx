@@ -563,6 +563,8 @@ function SlotBookingForm({
   const blurTimeoutRef = useRef<number | null>(null)
   const suggestionDebounceRef = useRef<number | null>(null)
   const suggestionAbortRef = useRef<AbortController | null>(null)
+  const suggestionVersionRef = useRef(0)
+  const [suggestionError, setSuggestionError] = useState('')
 
   useEffect(() => {
     setPortalReady(true)
@@ -648,55 +650,68 @@ function SlotBookingForm({
     })
   }
 
+  const cancelSuggestionFetch = () => {
+    suggestionVersionRef.current += 1
+    if (suggestionDebounceRef.current) clearTimeout(suggestionDebounceRef.current)
+    suggestionDebounceRef.current = null
+    suggestionAbortRef.current?.abort()
+    suggestionAbortRef.current = null
+    setIsSuggestionLoading({})
+  }
+
+  const showCachedSuggestions = (
+    field: "name" | "phone" | "email" | "all", query: string,
+    setter: React.Dispatch<React.SetStateAction<UserSuggestion[]>>
+  ) => {
+    const prefix = query.trim().toLowerCase()
+    const fields: ('name' | 'phone' | 'email')[] = field === 'all' ? ['name', 'phone', 'email'] : [field]
+    setter(userList.filter(user => fields.some(key => String(user[key] || '').toLowerCase().startsWith(prefix))).slice(0, 8))
+  }
+
   const fetchUserSuggestions = async (
-    field: "name" | "phone" | "email",
+    field: "name" | "phone" | "email" | "all",
     query: string,
     setter: React.Dispatch<React.SetStateAction<UserSuggestion[]>>
   ) => {
+    cancelSuggestionFetch()
     const vendorId = getVendorIdFromToken()
     if (!vendorId) return
-
-    if (suggestionAbortRef.current) {
-      suggestionAbortRef.current.abort()
-    }
+    const version = suggestionVersionRef.current
     const controller = new AbortController()
     suggestionAbortRef.current = controller
-
-    setIsSuggestionLoading((prev) => ({ ...prev, [field]: true }))
+    showCachedSuggestions(field, query, setter)
+    setSuggestionError('')
+    setIsSuggestionLoading({ [field]: true })
     try {
-      const params = new URLSearchParams({
-        q: query.trim(),
-        field,
-        limit: "8",
-        booked_only: "true",
-      })
+      const params = new URLSearchParams({ q: query.trim(), field, limit: "8", booked_only: "true" })
       const data = await api.get<any[]>(
         `${BOOKING_URL}/api/vendor/${vendorId}/users?${params.toString()}`,
-        { signal: controller.signal, timeoutMs: 10_000, retries: 1 }
+        { signal: controller.signal, timeoutMs: 8_000, retries: 0 }
       )
+      if (controller.signal.aborted || version !== suggestionVersionRef.current) return
       const rows: UserSuggestion[] = Array.isArray(data) ? data : []
       setter(rows)
       upsertUsersInCache(rows)
     } catch (error: any) {
-      if (error?.name !== "AbortError") {
-        console.error("❌ Failed to fetch user suggestions:", error)
-        setter([])
-      }
+      if (controller.signal.aborted || version !== suggestionVersionRef.current) return
+      console.error("Failed to fetch user suggestions:", error)
+      setSuggestionError('Customer search could not connect. Please retry.')
     } finally {
-      setIsSuggestionLoading((prev) => ({ ...prev, [field]: false }))
+      if (version === suggestionVersionRef.current) setIsSuggestionLoading({})
     }
   }
 
   const scheduleSuggestionFetch = (
-    field: "name" | "phone" | "email",
+    field: "name" | "phone" | "email" | "all",
     query: string,
     setter: React.Dispatch<React.SetStateAction<UserSuggestion[]>>
   ) => {
-    if (suggestionDebounceRef.current) {
-      clearTimeout(suggestionDebounceRef.current)
-    }
+    // Invalidate the previous request immediately, including during debounce.
+    cancelSuggestionFetch()
+    setSuggestionError('')
+    showCachedSuggestions(field, query, setter)
     suggestionDebounceRef.current = window.setTimeout(() => {
-      fetchUserSuggestions(field, query, setter)
+      void fetchUserSuggestions(field, query, setter)
     }, 180)
   }
 
@@ -1115,63 +1130,32 @@ useEffect(() => {
 
 
   useEffect(() => {
-    if (!isOpen) return
+    cancelSuggestionFetch()
+    setUserList([])
+    setNameSuggestions([])
+    setPhoneSuggestions([])
+    setEmailSuggestions([])
+    setSquadMemberSuggestions({})
+    setFocusedSquadMemberId(null)
+    setSuggestionError('')
+    setFocusedInput('')
+    if (!isOpen || !settingsVendorId) return
 
-    const vendorId = getVendorIdFromToken()
-    if (!vendorId) return
-    
-    console.log('👥 Fetching user list for vendor:', vendorId)
-    
-    const userCacheKey = `userList:${vendorId}`
-    const cachedData = localStorage.getItem(userCacheKey)
-
-    const isCacheValid = (timestamp: number) => {
-      const now = Date.now()
-      const tenMinutes = 10 * 60 * 1000
-      return now - timestamp < tenMinutes
+    // Warm a bounded set; never download every customer on modal open.
+    const controller = new AbortController()
+    let active = true
+    void api.get<UserSuggestion[]>(
+      `${BOOKING_URL}/api/vendor/${settingsVendorId}/users?booked_only=true&limit=8`,
+      { signal: controller.signal, timeoutMs: 8_000, retries: 0 }
+    ).then(rows => {
+      if (active && Array.isArray(rows)) upsertUsersInCache(rows)
+    }).catch(() => { /* Field searches have their own visible retry state. */ })
+    return () => {
+      active = false
+      controller.abort()
+      cancelSuggestionFetch()
     }
-
-    const fetchUsers = async () => {
-      console.log('🔄 Fetching fresh user data from API...')
-      try {
-        const data = await api.get<any[]>(`${BOOKING_URL}/api/vendor/${vendorId}/users`, {
-          timeoutMs: 10_000,
-          retries: 1,
-        })
-        console.log('👥 User data received:', data)
-
-        if (Array.isArray(data)) {
-          setUserList(data)
-          localStorage.setItem(
-            userCacheKey,
-            JSON.stringify({ data, timestamp: Date.now() })
-          )
-          console.log('✅ User list cached successfully')
-        }
-      } catch (error) {
-        console.error('❌ Error fetching users:', error)
-      }
-    }
-
-    if (cachedData) {
-      try {
-        const { data, timestamp } = JSON.parse(cachedData)
-        if (isCacheValid(timestamp)) {
-          console.log('✅ Using cached user data')
-          setUserList(Array.isArray(data) ? data : [])
-        } else {
-          console.log('⏰ Cache expired, fetching fresh data')
-          fetchUsers()
-        }
-      } catch (parseError) {
-        console.log('❌ Cache parse error, fetching fresh data')
-        fetchUsers()
-      }
-    } else {
-      console.log('📭 No cache found, fetching fresh data')
-      fetchUsers()
-    }
-  }, [isOpen])
+  }, [isOpen, settingsVendorId])
 
   const handleEmailInputChange = (value: string) => {
     setEmail(value)
@@ -1229,6 +1213,7 @@ useEffect(() => {
 
   const handleBlur = () => {
     blurTimeoutRef.current = window.setTimeout(() => {
+      cancelSuggestionFetch()
       setFocusedInput("")
       setEmailSuggestions([])
       setPhoneSuggestions([])
@@ -1238,6 +1223,8 @@ useEffect(() => {
   }
 
   const handleSuggestionClick = (user: UserSuggestion) => {
+    cancelSuggestionFetch()
+    setSuggestionError('')
     console.log('👤 User suggestion clicked:', user)
     if (blurTimeoutRef.current) {
       clearTimeout(blurTimeoutRef.current)
@@ -1418,36 +1405,20 @@ const getEffectivePrice = (slot: SelectedSlot): number => {
         member.id === memberId ? { ...member, [field]: value } : member
       )
     )
-    const query = String(value || "").trim().toLowerCase()
-    if (!query) {
-      setSquadMemberSuggestions((prev) => ({ ...prev, [memberId]: [] }))
-      return
-    }
-    const matches = userList
-      .filter((user) => {
-        const nameMatch = String(user.name || "").toLowerCase().includes(query)
-        const phoneMatch = String(user.phone || "").toLowerCase().includes(query)
-        const emailMatch = String(user.email || "").toLowerCase().includes(query)
-        return nameMatch || phoneMatch || emailMatch
-      })
-      .slice(0, 5)
-    setSquadMemberSuggestions((prev) => ({ ...prev, [memberId]: matches }))
     setFocusedSquadMemberId(memberId)
+    scheduleSuggestionFetch(field, value, squadSuggestionSetter(memberId))
   }
 
+  const squadSuggestionSetter = (memberId: string): React.Dispatch<React.SetStateAction<UserSuggestion[]>> =>
+    (value) => setSquadMemberSuggestions(prev => ({
+      ...prev,
+      [memberId]: typeof value === 'function' ? value(prev[memberId] || []) : value,
+    }))
+
   const handleSquadMemberFocus = (memberId: string, currentQuery = "") => {
-    const query = String(currentQuery || "").trim().toLowerCase()
-    const matches = (query
-      ? userList.filter((user) => {
-          const nameMatch = String(user.name || "").toLowerCase().includes(query)
-          const phoneMatch = String(user.phone || "").toLowerCase().includes(query)
-          const emailMatch = String(user.email || "").toLowerCase().includes(query)
-          return nameMatch || phoneMatch || emailMatch
-        })
-      : userList
-    ).slice(0, 5)
+    if (blurTimeoutRef.current) clearTimeout(blurTimeoutRef.current)
     setFocusedSquadMemberId(memberId)
-    setSquadMemberSuggestions((prev) => ({ ...prev, [memberId]: matches }))
+    void fetchUserSuggestions('all', currentQuery, squadSuggestionSetter(memberId))
   }
 
   const handleSquadMemberBlur = (memberId: string) => {
@@ -1458,6 +1429,8 @@ const getEffectivePrice = (slot: SelectedSlot): number => {
   }
 
   const handleSquadMemberSuggestionPick = (memberId: string, user: UserSuggestion) => {
+    cancelSuggestionFetch()
+    upsertUsersInCache([user])
     setSquadMembers((prev) =>
       prev.map((member) =>
         member.id === memberId
@@ -2355,6 +2328,16 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                         <h3 className="slot-section-title">
                           {isSquadMode ? "Captain" : "Customer"}
                         </h3>
+                        {suggestionError && (
+                          <p role="status" className="text-sm text-amber-600">
+                            {suggestionError}{' '}
+                            <button type="button" className="underline" onClick={() => {
+                              if (focusedInput === 'phone') void fetchUserSuggestions('phone', phone, setPhoneSuggestions)
+                              else if (focusedInput === 'email') void fetchUserSuggestions('email', email, setEmailSuggestions)
+                              else void fetchUserSuggestions('name', name, setNameSuggestions)
+                            }}>Retry</button>
+                          </p>
+                        )}
                         {isSquadMode && (
                           <p className="text-xs text-gray-500 dark:text-gray-400">Primary contact for squad booking</p>
                         )}
@@ -2390,13 +2373,16 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                         />
                         <User className="w-4 h-4 text-gray-400 absolute left-3 top-3.5" />
                         <AnimatePresence>
-                          {focusedInput === "name" && nameSuggestions.length > 0 && (
+                          {focusedInput === "name" && (nameSuggestions.length > 0 || isSuggestionLoading.name) && (
                             <motion.ul
                               initial={{ opacity: 0, y: -5 }}
                               animate={{ opacity: 1, y: 0 }}
                               exit={{ opacity: 0, y: -5 }}
                               className="absolute z-20 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg w-full mt-1 max-h-40 overflow-y-auto"
                             >
+                              {isSuggestionLoading.name && nameSuggestions.length === 0 && (
+                                <li className="px-3 py-2 text-sm text-gray-500">Searching customers…</li>
+                              )}
                               {nameSuggestions.slice(0, 5).map((user, idx) => (
                                 <motion.li
                                   key={idx}
