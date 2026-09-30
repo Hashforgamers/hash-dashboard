@@ -73,10 +73,10 @@ export const normalizeSquadPricing = (rawData: unknown): SquadPricingState => {
       string,
       unknown
     >;
-  const normalized: SquadPricingState = { pc: {} };
+  const normalized: SquadPricingState = Object.fromEntries(Object.keys(source).map(group => [group, {}]));
 
   Object.keys(normalized).forEach((group) => {
-    const maxPlayers = squadMaxPlayersByConsole[group] || 10;
+    const maxPlayers = Number((rawData as {max_players?:Record<string,number>})?.max_players?.[group] || squadMaxPlayersByConsole[group] || 64);
     const incomingGroup = source?.[group];
     const rules: Record<string, number> = {};
 
@@ -91,7 +91,7 @@ export const normalizeSquadPricing = (rawData: unknown): SquadPricingState => {
             : Number(discount ?? 0);
         if (!Number.isFinite(rawDiscount)) return;
 
-        rules[String(playerCount)] = Math.max(0, Math.min(100, round2(rawDiscount)));
+        rules[String(playerCount)] = Math.max(0, Math.min(90, round2(rawDiscount)));
       });
     }
 
@@ -105,7 +105,7 @@ export const discountToFinalUnitAmount = (base: number, discountPercent: number)
   round2(Math.max(0, base - (base * Math.max(0, Math.min(90, discountPercent))) / 100));
 
 export const discountToFinalTotalAmount = (base: number, discountPercent: number, players: number) =>
-  round2(discountToFinalUnitAmount(base, discountPercent) * Math.max(1, players));
+  round2(base * Math.max(1, players) * (1 - Math.max(0, Math.min(90, discountPercent)) / 100));
 
 export const finalTotalAmountToDiscount = (base: number, finalTotalAmount: number, players: number) => {
   if (!base || base <= 0) return 0;

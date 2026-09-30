@@ -20,7 +20,7 @@ export function paise(value: string) {
 }
 export type CafePolicy = {gaming_methods: string[]; topup_channels: string[]; desk_methods: string[];
   hash_online_collection: boolean; self_service: boolean; food_ordering: boolean;
-  food_collection: 'cafe'|'vendor'; durations: {minutes:number; amount:number}[]};
+  food_collection: 'cafe'|'vendor'; durations: {minutes:number; amount?:number|null; unavailable_reason?:string}[]};
 export type LedgerEntry = {id:number; kind:string; amount:number; method:string|null; actor_name:string; created_at:string; reason:string};
 export type Shift = {id:string; actor_name:string; opening_cash:number; closed_at:string|null; expected_cash:number|null; counted_cash:number|null; upi_receipts:number|null};
 
