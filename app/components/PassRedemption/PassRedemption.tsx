@@ -1,4 +1,7 @@
 // frontend/src/pages/PassRedemption.tsx
+import { approvePassBooking } from "@/lib/pass-booking-approval"
+import { creditAuthHeaders } from "@/lib/credit-auth"
+import { BOOKING_URL } from "@/src/config/env"
 import React, { useState } from 'react';
 import { Search, Clock, User, CheckCircle, XCircle } from 'lucide-react';
 import axios from 'axios';
@@ -42,10 +45,10 @@ const PassRedemption: React.FC<{ vendorId: number }> = ({ vendorId }) => {
     setPassDetails(null);
 
     try {
-      const response = await axios.post('/api/pass/validate', {
+      const response = await axios.post(`${BOOKING_URL}/api/pass/validate`, {
         pass_uid: passUid.trim().toUpperCase(),
         vendor_id: vendorId
-      });
+      }, { headers: creditAuthHeaders() });
 
       if (response.data.valid) {
         setPassDetails(response.data.pass);
@@ -79,15 +82,16 @@ const PassRedemption: React.FC<{ vendorId: number }> = ({ vendorId }) => {
     setSuccess('');
 
     try {
-      const response = await axios.post('/api/pass/redeem/dashboard', {
+      const approval = await approvePassBooking(vendorId, passUid.trim().toUpperCase());
+      const response = await axios.post(`${BOOKING_URL}/api/pass/redeem/dashboard`, {
         pass_uid: passUid.trim().toUpperCase(),
         vendor_id: vendorId,
         hours_to_deduct: hours,
         session_start: sessionStart || null,
         session_end: sessionEnd || null,
-        staff_id: null, // TODO: Get from auth context
+        pass_verification_token: approval,
         notes: notes.trim() || null
-      });
+      }, { headers: creditAuthHeaders() });
 
       const result: RedemptionResult = response.data;
       

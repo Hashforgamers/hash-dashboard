@@ -1,3 +1,6 @@
+
+import { approvePassBooking } from "@/lib/pass-booking-approval"
+import { creditAuthHeaders } from "@/lib/credit-auth"
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { jwtDecode } from 'jwt-decode';
@@ -211,7 +214,7 @@ const [isPrivateMode, setIsPrivateMode] = useState<boolean>(false);
     try {
       const response = await fetch(`${BOOKING_URL}/api/pass/validate`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: creditAuthHeaders(),
         body: JSON.stringify({
           pass_uid: uid.trim(),
           vendor_id: vendorId,
@@ -610,35 +613,12 @@ const [isPrivateMode, setIsPrivateMode] = useState<boolean>(false);
   // ✅ Updated Submit handler - includes pass redemption
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!validateForm()) return;
+    if (!validateForm() || !vendorId) return;
 
     setIsSubmitting(true);
     try {
-      // ✅ If payment is Pass, redeem pass first
-      if (paymentType === "Pass" && validatedPass) {
-        const hoursToDeduct = calculateHoursForSlots();
-
-        const passRedeemResponse = await fetch(`${BOOKING_URL}/api/pass/redeem/dashboard`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            pass_uid: passUid.trim(),
-            vendor_id: vendorId,
-            hours_to_deduct: hoursToDeduct,
-            session_start: availableSlots.find((s: any) => s.slot_id === selectedSlots[0])?.start_time.slice(0, 5),
-            session_end: availableSlots.find((s: any) => s.slot_id === selectedSlots[selectedSlots.length - 1])?.end_time.slice(0, 5),
-            notes: `Booking for ${selectedConsole.name} - ${selectedSlots.length} slots`,
-          }),
-        });
-
-        const passRedeemData = await passRedeemResponse.json();
-
-        if (!passRedeemResponse.ok || !passRedeemData.success) {
-          alert(`Pass redemption failed: ${passRedeemData.error}`);
-          setIsSubmitting(false);
-          return;
-        }
-      }
+      const passApproval = paymentType === 'Pass'
+        ? await approvePassBooking(vendorId, passUid.trim()) : undefined;
 
       // Create booking
       const bookingHeaders: Record<string, string> = {
@@ -661,6 +641,8 @@ const [isPrivateMode, setIsPrivateMode] = useState<boolean>(false);
           bookedDate: normalizeBookedDate(selectedDate),
           slotId: selectedSlots,
           paymentType: paymentType === "Monthly Credit" ? "monthly_credit" : paymentType,
+          pass_uid: paymentType === "Pass" ? passUid.trim() : undefined,
+          pass_verification_token: passApproval,
           bookingType: 'direct',
           waiveOffAmount: waiveOffAmount + autoWaiveOffAmount,
           extraControllerQty: supportsExtraController ? extraControllerQty : 0,

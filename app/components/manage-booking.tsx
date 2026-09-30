@@ -1,4 +1,6 @@
 "use client";
+
+import { creditAuthHeaders } from "@/lib/credit-auth"
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
@@ -623,7 +625,7 @@ function RejectBookingForm() {
           user_email: userEmail,
         }),
         {
-          headers: { "Content-Type": "application/json" },
+          headers: creditAuthHeaders(),
           timeoutMs: 12_000,
           retries: 0,
         }

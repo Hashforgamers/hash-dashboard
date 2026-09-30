@@ -1,5 +1,6 @@
 "use client";
 
+import { normalizeOperatingHours, validateOperatingDay, type OperatingDay } from "@/lib/operating-hours";
 import { CafeWalletWorkspace } from './cafe-wallet-workspace';
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
@@ -65,7 +66,9 @@ export function MyAccount() {
 
   // New state for operating hours editing
   const [editingSlot, setEditingSlot] = useState<string | null>(null);
-  const [hoursData, setHoursData] = useState<any[]>([]);
+  const [hoursData, setHoursData] = useState<OperatingDay[]>([]);
+  const savedHoursRef = useRef<OperatingDay[]>([]);
+  const [hoursMessage, setHoursMessage] = useState("");
   const [savingSlot, setSavingSlot] = useState<string | null>(null);
 
   // Add these new state variables after your existing state
@@ -189,10 +192,6 @@ const fetchPaymentMethods = async () => {
                         'Failed to load payment methods';
     setPaymentMethodError(errorMessage);
     
-    // If no payment methods exist, try to initialize them
-    if (error?.status === 404 || errorMessage.includes('not found')) {
-      await initializePaymentMethods();
-    }
   } finally {
     setLoadingPaymentMethods(false);
   }
@@ -209,9 +208,9 @@ const handleTogglePaymentMethod = async (payMethodId, currentState) => {
   try {
     const response = await api.post<any, string>(
       `${DASHBOARD_URL}/api/vendor/${vendorId}/paymentMethods/toggle`,
-      JSON.stringify({ pay_method_id: payMethodId }),
+      JSON.stringify({ pay_method_id: payMethodId, is_enabled: !currentState }),
       {
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('rbac_access_token_v1') || localStorage.getItem('jwtToken') || ''}` },
         timeoutMs: 10_000,
         retries: 0,
       }
@@ -222,7 +221,7 @@ const handleTogglePaymentMethod = async (payMethodId, currentState) => {
       setPaymentMethods(prevMethods => 
         prevMethods.map(method => 
           method.pay_method_id === payMethodId 
-            ? { ...method, is_enabled: response.is_enabled }
+            ? { ...method, is_enabled: response.data.is_enabled }
             : method
         )
       );
@@ -242,29 +241,6 @@ const handleTogglePaymentMethod = async (payMethodId, currentState) => {
     setTimeout(() => setPaymentMethodError(null), 5000);
   } finally {
     setTogglingMethod(null);
-  }
-};
-
-
-
-// Initialize payment methods if they don't exist
-const initializePaymentMethods = async () => {
-  try {
-    setPaymentMethodError(null);
-    const response = await api.post<any>(`${DASHBOARD_URL}/api/payment-methods/initialize`, undefined, {
-      timeoutMs: 10_000,
-      retries: 0,
-    });
-    
-    if (response.success) {
-      // After initialization, fetch the payment methods again
-      setTimeout(() => {
-        fetchPaymentMethods();
-      }, 500);
-    }
-  } catch (error) {
-    console.error('Error initializing payment methods:', error);
-    setPaymentMethodError('Failed to initialize payment methods. Please contact support.');
   }
 };
 
@@ -653,19 +629,7 @@ useEffect(() => {
     fetchSubscriptionHistory();
   } else if (page === "Settlement Report") {
     fetchSettlementSummary();
-  } else if (page === "Operating Hours") {
-    // Initialize hours data if needed
-    if (!hoursData.length && data?.operatingHours) {
-      const transformedHours = data.operatingHours.map(entry => ({
-        day: entry.day,
-        open: entry.open || "09:00",
-        close: entry.close || "18:00", 
-        slotDurationMinutes: entry.slotDurationMinutes || 30,
-        isEnabled: entry.isEnabled !== undefined ? entry.isEnabled : true,
-        hasChanges: false
-      }));
-      setHoursData(transformedHours);
-    }
+
   }
 }, [page, vendorId, payoutPage]);
 
@@ -812,7 +776,7 @@ const handleProfileImageUpload = async (event: React.ChangeEvent<HTMLInputElemen
  // Update these handler functions
 // Utility function to convert 24h to 12h format for display
 // Utility function to convert 24h to 12h format for API
-const convertTo12HourFormat = (time24) => {
+const convertTo12HourFormat = (time24: string) => {
   if (!time24) return "";
   if (time24 === "24:00") return "12:00 AM";
   const [hours, minutes] = time24.split(':');
@@ -842,7 +806,7 @@ const normalizeDayForApi = (dayValue: string) => {
 const OPERATING_HOURS_SAVE_WINDOW_DAYS = 14;
 
 // API function to update operating hours
-const updateOperatingHours = async (vendorId, dayData) => {
+const updateOperatingHours = async (vendorId: number, dayData: OperatingDay) => {
   try {
     const is24Hours = Boolean(dayData.isEnabled && dayData.open && dayData.close && dayData.open === dayData.close);
     const payload = {
@@ -857,7 +821,6 @@ const updateOperatingHours = async (vendorId, dayData) => {
       window_days: OPERATING_HOURS_SAVE_WINDOW_DAYS
     };
 
-    console.log('Sending payload:', payload); // Debug log
 
     const result = await api.post<any, string>(
       `${VENDOR_ONBOARD_URL}/api/vendor/${vendorId}/updateSlot`,
@@ -867,13 +830,13 @@ const updateOperatingHours = async (vendorId, dayData) => {
           "Content-Type": "application/json",
           Authorization: `Bearer ${localStorage.getItem("jwtToken")}`,
         },
-        timeoutMs: 15_000,
+        timeoutMs: 60_000,
         retries: 0,
       }
     )
 
     return { success: true, data: result };
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error updating operating hours:', error);
     return { success: false, error: error.message };
   }
@@ -882,7 +845,9 @@ const updateOperatingHours = async (vendorId, dayData) => {
 // Function to handle save slot (integrates with your existing UI)
 // Updated handleSaveSlot function
 const handleSaveSlot = async (day: string) => {
+  if (savingSlot) return;
   setSavingSlot(day);
+  setHoursMessage("");
   
   try {
     const token = localStorage.getItem("jwtToken");
@@ -897,9 +862,8 @@ const handleSaveSlot = async (day: string) => {
       throw new Error('Day data not found');
     }
 
-    if (dayData.isEnabled && (!dayData.open || !dayData.close || !dayData.slotDurationMinutes)) {
-      throw new Error('Please fill in all required fields');
-    }
+    const validationError = validateOperatingDay(dayData);
+    if (validationError) throw new Error(validationError);
 
     // Show initial feedback
     console.log('Starting slot update process...');
@@ -907,24 +871,13 @@ const handleSaveSlot = async (day: string) => {
     const result = await updateOperatingHours(currentVendorId, dayData);
     
     if (result.success) {
-      const asyncJobId = result?.data?.job_id;
-      const isAsyncAccepted = result?.data?.status === "running" || result?.data?.status === "queued";
-      if (isAsyncAccepted && asyncJobId) {
-        alert(`${day.charAt(0).toUpperCase() + day.slice(1)} update queued (Job: ${asyncJobId.slice(0, 8)}...). Changes will apply shortly.`);
-      } else {
-        alert(`${day.charAt(0).toUpperCase() + day.slice(1)} hours updated successfully!`);
-      }
-      
-      setHoursData(prevData => 
-        prevData.map(entry => 
-          entry.day === day 
-            ? { ...entry, hasChanges: false }
-            : entry
-        )
-      );
-
-  
-      
+      const confirmed = result.data?.operatingHours;
+      if (!confirmed) throw new Error('The server did not confirm the saved hours. Reload before retrying.');
+      const updated = normalizeOperatingHours(savedHoursRef.current.map(entry => entry.day === day ? confirmed : entry));
+      savedHoursRef.current = updated;
+      setHoursData(updated);
+      setData((previous: any) => ({ ...previous, operatingHours: updated }));
+      setHoursMessage(`${day.toUpperCase()} hours saved.`);
       setEditingSlot(null);
       window.dispatchEvent(new Event('refresh-dashboard'));
       
@@ -934,7 +887,7 @@ const handleSaveSlot = async (day: string) => {
     
   } catch (error: any) {
     console.error('Error saving slot:', error);
-    alert('Error: ' + (error.message || 'Failed to save operating hours'));
+    setHoursMessage(error.message || 'Failed to save operating hours');
   } finally {
     setSavingSlot(null);
   }
@@ -942,7 +895,7 @@ const handleSaveSlot = async (day: string) => {
 
 
 // Function to handle time changes with validation
-const handleTimeChange = (day, timeType, value) => {
+const handleTimeChange = (day: string, timeType: "open" | "close", value: string) => {
   setHoursData(prevData => 
     prevData.map(entry => {
       if (entry.day === day) {
@@ -954,12 +907,7 @@ const handleTimeChange = (day, timeType, value) => {
 };
 
 // Function to handle slot duration changes with validation
-const handleSlotDurationChange = (day, duration) => {
-  if (duration < 15 || duration > 240) {
-    toast.error('Slot duration must be between 15 and 240 minutes');
-    return;
-  }
-  
+const handleSlotDurationChange = (day: string, duration: number) => {
   setHoursData(prevData => 
     prevData.map(entry => 
       entry.day === day 
@@ -970,7 +918,7 @@ const handleSlotDurationChange = (day, duration) => {
 };
 
 // Function to handle enable/disable toggle
-const handleSlotToggle = (day, isEnabled) => {
+const handleSlotToggle = (day: string, isEnabled: boolean) => {
   setHoursData(prevData => 
     prevData.map(entry => 
       entry.day === day 
@@ -1027,58 +975,22 @@ const UpdatingOverlay = ({ visible }: { visible: boolean }) => {
 };
 
 
-// Add this useEffect to initialize hours data when data loads
+// Keep the last confirmed schedule separate from editable values.
 useEffect(() => {
-  if (data?.operatingHours) {
-    // Transform the operating hours data from your dashboard API
-    const transformedHours = data.operatingHours.map(entry => ({
-      day: entry.day,
-      open: entry.open || "09:00",
-      close: entry.close || "18:00", 
-      slotDurationMinutes: entry.slotDurationMinutes || 30,
-      isEnabled: entry.isEnabled !== undefined ? entry.isEnabled : true,
-      is24Hours: Boolean(entry.is24Hours),
-      hasChanges: false
-    }));
-    setHoursData(transformedHours);
-  } else {
-    // Initialize with default hours if no data exists
-    const defaultHours = [
-      'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'
-    ].map(day => ({
-      day: day.substring(0, 3), // mon, tue, etc.
-      open: "09:00",
-      close: "18:00",
-      slotDurationMinutes: 30,
-      isEnabled: true,
-      is24Hours: false,
-      hasChanges: false
-    }));
-    setHoursData(defaultHours);
-  }
-}, [data]);
+  if (!data?.operatingHours) return;
+  const confirmed = normalizeOperatingHours(data.operatingHours);
+  savedHoursRef.current = confirmed;
+  if (!editingSlot) setHoursData(confirmed);
+}, [data?.operatingHours, editingSlot]);
 
-// Add missing handleEditSlot function
-const handleEditSlot = (day) => {
+const handleEditSlot = (day: string) => {
+  setHoursMessage("");
   setEditingSlot(day);
 };
-
-// Add missing handleCancelEdit function  
 const handleCancelEdit = () => {
+  setHoursData(savedHoursRef.current.map(entry => ({ ...entry })));
   setEditingSlot(null);
-  // Reset any changes for the day being edited
-  if (data?.operatingHours) {
-    const originalData = data.operatingHours.find(entry => entry.day === editingSlot);
-    if (originalData) {
-      setHoursData(prevData => 
-        prevData.map(entry => 
-          entry.day === editingSlot 
-            ? { ...originalData, hasChanges: false }
-            : entry
-        )
-      );
-    }
-  }
+  setHoursMessage("");
 };
 
 // Add toast functionality (you can use react-hot-toast or any toast library)
@@ -2171,6 +2083,9 @@ const ToggleSwitch = ({
     <CardContent className="space-y-3">
       <div className="space-y-4">
         <Label className="text-foreground">Operating Hours</Label>
+        {hoursMessage && <p role="status" className="text-sm">{hoursMessage}</p>}
+        {!isOwnerSession && <p className="text-sm text-muted-foreground">Sign in as the cafe owner to change operating hours.</p>}
+        <p className="text-sm text-muted-foreground">Closing before opening means overnight. Equal times mean 24 hours. Existing bookings must be resolved before removing their slots.</p>
         <p className="text-xs text-slate-300">Set `open` and `close` to same time (or use `24H`) for 24-hour operation.</p>
         
         <div className="space-y-3">
@@ -2185,26 +2100,26 @@ const ToggleSwitch = ({
               <Checkbox 
                 id={`day-${entry.day}`}
                 checked={entry.isEnabled}
-                onCheckedChange={(checked) => handleSlotToggle(entry.day, checked)}
+                onCheckedChange={(checked) => handleSlotToggle(entry.day, checked === true)}
                 className="border-border data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground"
-                disabled={editingSlot !== null && editingSlot !== entry.day}
+                disabled={editingSlot !== entry.day || savingSlot !== null}
               />
               
               {/* Time Inputs */}
               <div className="flex-1 grid grid-cols-2 gap-3">
                 <Input 
                   type="time" 
-                  value={entry.open || "09:00"}
+                  value={entry.open}
                   onChange={(e) => handleTimeChange(entry.day, 'open', e.target.value)}
                   className={`bg-input border-input text-foreground ${!entry.isEnabled ? 'opacity-50' : ''}`}
-                  disabled={editingSlot !== entry.day || !entry.isEnabled}
+                  disabled={editingSlot !== entry.day || !entry.isEnabled || savingSlot !== null}
                 />
                 <Input 
                   type="time" 
-                  value={entry.close || "18:00"}
+                  value={entry.close}
                   onChange={(e) => handleTimeChange(entry.day, 'close', e.target.value)}
                   className={`bg-input border-input text-foreground ${!entry.isEnabled ? 'opacity-50' : ''}`}
-                  disabled={editingSlot !== entry.day || !entry.isEnabled}
+                  disabled={editingSlot !== entry.day || !entry.isEnabled || savingSlot !== null}
                 />
               </div>
               <Button
@@ -2215,7 +2130,7 @@ const ToggleSwitch = ({
                   handleTimeChange(entry.day, 'open', '00:00');
                   handleTimeChange(entry.day, 'close', '00:00');
                 }}
-                disabled={editingSlot !== entry.day || !entry.isEnabled}
+                disabled={editingSlot !== entry.day || !entry.isEnabled || savingSlot !== null}
                 className="text-xs"
               >
                 24H
@@ -2227,10 +2142,10 @@ const ToggleSwitch = ({
                 <div className="flex items-center">
                   <Input
                     type="number"
-                    value={entry.slotDurationMinutes || 30}
-                    onChange={(e) => handleSlotDurationChange(entry.day, parseInt(e.target.value) || 30)}
+                    value={Number.isNaN(entry.slotDurationMinutes) ? "" : entry.slotDurationMinutes}
+                    onChange={(e) => handleSlotDurationChange(entry.day, e.target.value === '' ? NaN : Number(e.target.value))}
                     className={`w-16 bg-input border-input text-foreground text-center rounded-r-none border-r-0 ${!entry.isEnabled ? 'opacity-50' : ''}`}
-                    disabled={editingSlot !== entry.day || !entry.isEnabled}
+                    disabled={editingSlot !== entry.day || !entry.isEnabled || savingSlot !== null}
                     min="15"
                     max="240"
                     step="15"
@@ -2279,7 +2194,7 @@ const ToggleSwitch = ({
                     variant="ghost"
                     size="sm"
                     onClick={() => handleEditSlot(entry.day)}
-                    disabled={editingSlot !== null}
+                    disabled={editingSlot !== null || !isOwnerSession}
                     className="text-muted-foreground hover:text-foreground hover:bg-muted p-2"
                   >
                     <Edit className="h-4 w-4" />
@@ -3074,7 +2989,7 @@ const ToggleSwitch = ({
                 <div className="space-y-3">
                   {paymentMethods.map((method, index) => {
                     const normalizedName = normalizePaymentMethodName(method.method_name);
-                    const isAutoManaged = method.is_auto_managed || normalizedName === "cafe_specific_pass";
+                    const isAutoManaged = Boolean(method.is_auto_managed);
                     return (
                     <motion.div
                       key={method.pay_method_id}

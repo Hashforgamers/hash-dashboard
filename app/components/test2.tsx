@@ -1,5 +1,7 @@
 
 "use client";
+
+import { creditAuthHeaders } from "@/lib/credit-auth"
 import { useState, useEffect } from "react";
 import { format } from "date-fns";
 import {
@@ -970,7 +972,7 @@ function RejectBookingForm() {
     try {
       const response = await fetch(`${BOOKING_URL}/api/bookings/reject`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: creditAuthHeaders(),
         body: JSON.stringify({
           booking_id: bookingId,
           rejection_reason: rejectionReason,
