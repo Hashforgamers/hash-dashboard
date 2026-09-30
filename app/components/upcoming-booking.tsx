@@ -1,3 +1,5 @@
+
+import { creditAuthHeaders } from "@/lib/credit-auth"
 import { SessionConsoleDialog, type SessionConsole } from "./session-console-dialog";
 import UpcomingSlotManager from "./upcoming-slot-manager";
 import { Card } from "@/components/ui/card";
@@ -903,7 +905,7 @@ export function UpcomingBookings({
         reason: cancelDialog.reason || "Cancelled from dashboard"
       }
       const result = await api.post<any, string>(`${BOOKING_URL}/api/bookings/cancel`, JSON.stringify(payload), {
-        headers: { "Content-Type": "application/json" },
+        headers: creditAuthHeaders(),
         timeoutMs: 12_000,
         retries: 0,
       })

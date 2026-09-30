@@ -175,6 +175,7 @@ interface UserSuggestion {
 }
 
 interface UserPassOption {
+  required_hours?: number
   id: number
   pass_uid: string
   user_id: number
@@ -873,13 +874,13 @@ export function SlotBookingForm({
     setPassOtpCode("")
 
     try {
-      const hoursNeeded = Math.max(selectedSlots.length * 0.5, 0.5)
       const params = new URLSearchParams({
         vendor_id: String(vendorId),
         user_id: String(userId),
-        hours_needed: String(hoursNeeded),
+        slot_ids: selectedSlots.map(slot => slot.slot_id).join(","),
       })
       const data = await api.get<any>(`${BOOKING_URL}/api/pass/dashboard/valid-options?${params.toString()}`, {
+        headers: creditAuthHeaders(),
         timeoutMs: 10_000,
         retries: 1,
       })
@@ -902,7 +903,7 @@ export function SlotBookingForm({
       setValidatedPass(selected)
       if (!selected.can_cover_hours) {
         setPassError(
-          `Selected pass has insufficient hours. Need ${hoursNeeded.toFixed(1)}h, short by ${selected.hours_shortfall.toFixed(1)}h.`
+          `Selected pass has insufficient hours. Need ${Number(selected.required_hours || 0).toFixed(2)}h, short by ${selected.hours_shortfall.toFixed(1)}h.`
         )
       } else {
         setPassError("")
@@ -933,7 +934,7 @@ export function SlotBookingForm({
           pass_uid: validatedPass.pass_uid,
         }),
         {
-          headers: { "Content-Type": "application/json" },
+          headers: creditAuthHeaders(),
           timeoutMs: 10_000,
           retries: 0,
         }
@@ -967,7 +968,7 @@ export function SlotBookingForm({
           otp: passOtpCode.trim(),
         }),
         {
-          headers: { "Content-Type": "application/json" },
+          headers: creditAuthHeaders(),
           timeoutMs: 10_000,
           retries: 0,
         }
@@ -1779,7 +1780,7 @@ const getEffectivePrice = (slot: SelectedSlot): number => {
                     </div>
                     <div className="flex justify-between text-emerald-600 dark:text-emerald-400">
                       <span>Hours Needed</span>
-                      <span className="font-bold">{(selectedSlots.length * 0.5).toFixed(1)} hrs</span>
+                      <span className="font-bold">{Number(validatedPass?.required_hours || 0).toFixed(2)} hrs</span>
                     </div>
                   </div>
                 </div>
@@ -1970,40 +1971,9 @@ const getEffectivePrice = (slot: SelectedSlot): number => {
 
     submittingRef.current = true
     setIsSubmitting(true)
-    let passWasRedeemed = false
     console.log('📝 Preparing booking data...')
 
     try {
-
-      if (paymentType === 'Pass' && validatedPass) {
-        const hoursToDeduct = selectedSlots.length * 0.5
-
-        const passRedeemData = await api.post<any, string>(
-          `${BOOKING_URL}/api/pass/redeem/dashboard`,
-          JSON.stringify({
-            pass_uid: validatedPass.pass_uid,
-            vendor_id: vendorId,
-            hours_to_deduct: hoursToDeduct,
-            session_start: selectedSlots[0]?.start_time.slice(0, 5),
-            session_end: selectedSlots[selectedSlots.length - 1]?.end_time.slice(0, 5),
-            notes: `Booking for ${selectedSlots[0]?.console_name} - ${selectedSlots.length} slots`,
-            pass_verification_token: passVerificationToken,
-          }),
-          {
-            headers: { "Content-Type": "application/json" },
-            timeoutMs: 15_000,
-            retries: 0,
-          }
-        )
-
-        if (!passRedeemData.success) {
-          setSubmitError(`Pass redemption failed: ${passRedeemData.error || passRedeemData.message || "Unknown error"}`)
-          setIsSubmitting(false)
-          return
-        }
-        passWasRedeemed = true
-      }
-
 
       const bookingData = {
         consoleType: selectedSlots[0]?.console_name || '',
@@ -2014,6 +1984,8 @@ const getEffectivePrice = (slot: SelectedSlot): number => {
         bookedDate: normalizeBookedDate(selectedSlots[0]?.date || ''),
         slotId: selectedSlots.map(slot => slot.slot_id),
         paymentType: paymentType === 'Monthly Credit' ? 'monthly_credit' : paymentType,
+        pass_uid: paymentType === 'Pass' ? validatedPass?.pass_uid : undefined,
+        pass_verification_token: paymentType === 'Pass' ? passVerificationToken : undefined,
         bookingType: isSquadMode ? 'squad' : 'direct',
         waiveOffAmount: waiveOffAmount + autoWaiveOffAmount,
         extraControllerQty: supportsExtraController ? extraControllerQty : 0,
@@ -2089,10 +2061,10 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
       console.error('❌ Error submitting booking:', error)
       const message = error instanceof Error ? error.message : 'Failed to create booking'
       const status = Number((error as { status?: number })?.status || 0)
-      const uncertain = !status || status >= 500 || status === 408 || passWasRedeemed
+      const uncertain = !status || status >= 500 || status === 408
       setSubmissionUncertain(uncertain)
       setSubmitError(uncertain
-        ? `${passWasRedeemed ? 'The pass was redeemed, but booking confirmation did not arrive.' : 'Booking confirmation did not arrive. The booking may already have been saved.'} Close this form and check Booking Records${paymentType === 'Pass' ? ' and pass usage' : ''} before submitting again.`
+        ? `Booking confirmation did not arrive. The booking may already have been saved. Close this form and check Booking Records${paymentType === 'Pass' ? ' and pass usage' : ''} before submitting again.`
         : message)
     } finally {
       submittingRef.current = false
@@ -4278,7 +4250,7 @@ function RejectBookingForm() {
           user_email: userEmail,
         }),
         {
-          headers: { "Content-Type": "application/json" },
+          headers: creditAuthHeaders(),
           timeoutMs: 12_000,
           retries: 0,
         }

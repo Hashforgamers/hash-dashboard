@@ -1,3 +1,4 @@
+import { creditAuthHeaders } from "@/lib/credit-auth"
 // services/api/bookingService.ts
 import { BOOKING_URL } from '../../../../../src/config/env'
 import type { BookingPayload, UserSuggestion, Pass } from '../../types/booking.types'
@@ -62,7 +63,7 @@ class BookingService {
     try {
       const data = await httpJson<any>(`${this.baseURL}/api/pass/validate`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: creditAuthHeaders(),
         body: JSON.stringify({ pass_uid: passUid.trim(), vendor_id: vendorId }),
         timeoutMs: 10_000,
         retries: 0,
@@ -79,33 +80,7 @@ class BookingService {
     }
   }
 
-  async redeemPass(vendorId: number, passUid: string, hoursToDeduct: number, sessionStart: string, sessionEnd: string, notes: string) {
-    try {
-      const data = await httpJson<any>(`${this.baseURL}/api/pass/redeem/dashboard`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          pass_uid: passUid.trim(),
-          vendor_id: vendorId,
-          hours_to_deduct: hoursToDeduct,
-          session_start: sessionStart,
-          session_end: sessionEnd,
-          notes
-        }),
-        timeoutMs: 15_000,
-        retries: 0,
-      })
-      
-      if (!data.success) {
-        throw new Error(data.error || 'Failed to redeem pass')
-      }
-      
-      return data
-    } catch (error) {
-      console.error('❌ Error redeeming pass:', error)
-      throw error
-    }
-  }
+
 }
 
 export const bookingService = new BookingService()

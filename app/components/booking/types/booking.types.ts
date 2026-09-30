@@ -91,6 +91,9 @@ export type BookingFormAction =
   | { type: 'RESET_FORM' }
 
 export interface BookingPayload {
+  pass_uid?: string
+  pass_verification_token?: string
+
   consoleType: string
   name: string
   email: string
