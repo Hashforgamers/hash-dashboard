@@ -30,7 +30,6 @@ import {
   controllerPreviewQuantities,
   defaultControllerPricing,
   squadGroupLabelByConsoleType,
-  squadMaxPlayersByConsole,
   squadRuleDefaults,
 } from "./console-pricing/constants";
 import { OfferFormModal } from "./console-pricing/offer-form-modal";
@@ -112,6 +111,7 @@ export default function ConsolePricing() {
   const [controllerPricingError, setControllerPricingError] = useState<string | null>(null);
   const [controllerPricingChanged, setControllerPricingChanged] = useState(false);
   const [activeControllerConsole, setActiveControllerConsole] = useState<string>("");
+  const [squadPlayerLimits, setSquadPlayerLimits] = useState<Record<string, number>>({});
   const [squadPricing, setSquadPricing] = useState<SquadPricingState>(squadRuleDefaults);
   const [isLoadingSquadPricing, setIsLoadingSquadPricing] = useState(false);
   const [isSavingSquadPricing, setIsSavingSquadPricing] = useState(false);
@@ -162,7 +162,7 @@ export default function ConsolePricing() {
     offer_description: "",
   });
 
-  const validatePrice = (value: number) => value >= 0 && value <= 10000;
+  const validatePrice = (value: number) => Number.isInteger(value) && value >= 0 && value <= 10000;
   const buildPricingStateFromIncoming = (incoming: PricingState, types: ConsoleType[]): PricingState => {
     const next: PricingState = { ...incoming };
     types.forEach((consoleType) => {
@@ -222,7 +222,7 @@ export default function ConsolePricing() {
     basePricingKey,
     async () => {
       if (!vendorId) return {};
-      const res = await fetch(`${DASHBOARD_URL}/api/vendor/${vendorId}/console-pricing`);
+      const res = await fetch(`${DASHBOARD_URL}/api/vendor/${vendorId}/console-pricing`, { headers: creditAuthHeaders() });
       if (!res.ok) throw new Error("Failed");
       const data = await res.json();
       const pricingPayload = data && typeof data === "object" ? (data as Record<string, unknown>) : {};
@@ -245,7 +245,7 @@ export default function ConsolePricing() {
     offersKey,
     async () => {
       if (!vendorId) return [];
-      const res = await fetch(`${DASHBOARD_URL}/api/vendor/${vendorId}/pricing-offers`);
+      const res = await fetch(`${DASHBOARD_URL}/api/vendor/${vendorId}/pricing-offers`, { headers: creditAuthHeaders() });
       if (!res.ok) throw new Error("Failed");
       const data = await res.json();
       return Array.isArray(data?.offers) ? data.offers : [];
@@ -258,7 +258,7 @@ export default function ConsolePricing() {
     controllerKey,
     async () => {
       if (!vendorId) return defaultControllerPricing;
-      const res = await fetch(`${DASHBOARD_URL}/api/vendor/${vendorId}/controller-pricing`);
+      const res = await fetch(`${DASHBOARD_URL}/api/vendor/${vendorId}/controller-pricing`, { headers: creditAuthHeaders() });
       if (!res.ok) throw new Error("Failed to fetch controller pricing");
       const data = await res.json();
       const pricingData = data?.pricing || {};
@@ -287,7 +287,7 @@ export default function ConsolePricing() {
     squadKey,
     async () => {
       if (!vendorId) return squadRuleDefaults;
-      const res = await fetch(`${DASHBOARD_URL}/api/vendor/${vendorId}/squad-pricing-rules`);
+      const res = await fetch(`${DASHBOARD_URL}/api/vendor/${vendorId}/squad-pricing-rules`, { headers: creditAuthHeaders() });
       if (!res.ok) throw new Error("Failed to fetch squad pricing rules");
       const data = await res.json();
       return Array.isArray(data?.rules) ? data.rules : data;
@@ -300,7 +300,7 @@ export default function ConsolePricing() {
     taxKey,
     async () => {
       if (!vendorId) return taxProfile;
-      const res = await fetch(`${DASHBOARD_URL}/api/vendor/${vendorId}/tax-profile`);
+      const res = await fetch(`${DASHBOARD_URL}/api/vendor/${vendorId}/tax-profile`, { headers: creditAuthHeaders() });
       const data = await res.json();
       if (!res.ok) throw new Error("Failed to fetch tax profile");
       return data?.profile || data;
@@ -313,7 +313,7 @@ export default function ConsolePricing() {
     gamesKey,
     async () => {
       if (!vendorId) return [];
-      const res = await fetch(`${DASHBOARD_URL}/api/vendor/${vendorId}/available-games`);
+      const res = await fetch(`${DASHBOARD_URL}/api/vendor/${vendorId}/available-games`, { headers: creditAuthHeaders() });
       if (!res.ok) throw new Error("Failed");
       const data = await res.json();
       return Array.isArray(data)
@@ -337,8 +337,8 @@ export default function ConsolePricing() {
     const loadConsoleTypes = async () => {
       try {
         const [catalogRes, gamesRes] = await Promise.all([
-          fetch(`${DASHBOARD_URL}/api/console-types?vendor_id=${vendorId}`),
-          fetch(`${DASHBOARD_URL}/api/vendor/${vendorId}/available-games`),
+          fetch(`${DASHBOARD_URL}/api/console-types?vendor_id=${vendorId}`, { headers: creditAuthHeaders() }),
+          fetch(`${DASHBOARD_URL}/api/vendor/${vendorId}/available-games`, { headers: creditAuthHeaders() }),
         ]);
 
         if (!catalogRes.ok || !gamesRes.ok) throw new Error("Unable to load console types.");
@@ -367,7 +367,7 @@ export default function ConsolePricing() {
         };
 
         catalogItems
-          .filter((item) => item?.is_active !== false)
+          .filter((item) => item?.is_active !== false && availableGameItems.some((game: any) => normalizeConsoleSlug(game.platform_type || game.game_name) === normalizeConsoleSlug(item.slug)))
           .forEach((item) => addType(item.slug, item.display_name, item.icon));
 
         availableGameItems.forEach((game: any) => {
@@ -486,6 +486,7 @@ export default function ConsolePricing() {
     if (!vendorId || activeTab !== "squad") return;
     if (cachedSquadPricing) {
       setSquadPricing(normalizeSquadPricing(cachedSquadPricing));
+      setSquadPlayerLimits(cachedSquadPricing.max_players || {});
       return;
     }
     fetchSquadPricingRules();
@@ -542,6 +543,7 @@ export default function ConsolePricing() {
     try {
       const data = await refreshSquadCache(true);
       setSquadPricing(normalizeSquadPricing(data));
+      setSquadPlayerLimits(data.max_players || {});
       setSquadFinalDraft({});
       setSquadRuleWarnings({});
       setSquadPricingChanged(false);
@@ -724,7 +726,7 @@ export default function ConsolePricing() {
 
   const handlePriceChange = (consoleType: string, inputValue: string) => {
     const numericValue = parseCurrencyInput(inputValue);
-    const isValid = validatePrice(numericValue);
+    const isValid = /^\d+$/.test(inputValue.replace(/[₹,\s]/g, "")) && validatePrice(numericValue);
     setPrices((prev) => ({
       ...prev,
       [consoleType]: { value: numericValue, isValid, hasChanged: true },
@@ -732,7 +734,7 @@ export default function ConsolePricing() {
     if (isValid) {
       setErrors((prev) => { const n = { ...prev }; delete n[consoleType]; return n; });
     } else {
-      setErrors((prev) => ({ ...prev, [consoleType]: "Price must be between ₹0 and ₹10,000" }));
+      setErrors((prev) => ({ ...prev, [consoleType]: "Use a whole-rupee slot price between ₹0 and ₹10,000" }));
     }
   };
 
@@ -752,7 +754,8 @@ export default function ConsolePricing() {
         headers: creditAuthHeaders(),
         body: JSON.stringify(payload),
       });
-      if (!response.ok) throw new Error("Failed");
+      const saved = await response.json();
+      if (!response.ok) throw new Error(saved.error || saved.message || "Unable to save pricing");
       showToast("Pricing updated successfully!");
       await refreshBasePricingCache(true);
       setPrices((prev) => {
@@ -761,7 +764,7 @@ export default function ConsolePricing() {
         return n;
       });
     } catch (error) {
-      reportError("Error saving changes.");
+      reportError(error instanceof Error ? error.message : "Error saving changes.");
     } finally {
       setIsLoading(false);
     }
@@ -852,6 +855,7 @@ export default function ConsolePricing() {
     try {
       const response = await fetch(`${DASHBOARD_URL}/api/vendor/${vendorId}/pricing-offers/${id}`, {
         method: "DELETE",
+        headers: creditAuthHeaders(),
       });
       if (!response.ok) throw new Error("Unable to delete offer. Please retry.");
       showToast("Offer deleted!");
@@ -898,7 +902,7 @@ export default function ConsolePricing() {
     Monitor;
 
   const updateControllerBasePrice = (consoleType: string, value: string) => {
-    const nextValue = Math.max(0, parseFloat(value) || 0);
+    const nextValue = value.trim() === "" ? 0 : Number(value);
     setControllerPricing((prev) => ({
       ...prev,
       [consoleType]: {
@@ -935,7 +939,7 @@ export default function ConsolePricing() {
     field: "quantity" | "total_price",
     value: string
   ) => {
-    const nextValue = Math.max(0, parseFloat(value) || 0);
+    const nextValue = value.trim() === "" ? 0 : Number(value);
     setControllerPricing((prev) => {
       const current = prev[consoleType] || { base_price: 0, tiers: [] };
       return {
@@ -946,7 +950,7 @@ export default function ConsolePricing() {
             tier.id === tierId
               ? {
                   ...tier,
-                  [field]: field === "quantity" ? Math.max(2, Math.round(nextValue)) : nextValue,
+                  [field]: nextValue,
                 }
               : tier
           ),
@@ -996,12 +1000,19 @@ export default function ConsolePricing() {
     setIsSavingControllerPricing(true);
     setControllerPricingError(null);
 
+    const invalid = controllerConsoleTabs.some(c => {
+      const config = controllerPricing[c.type];
+      return !config || !Number.isFinite(config.base_price) || config.base_price < 0 ||
+        config.tiers.some(t => !Number.isInteger(t.quantity) || t.quantity < 2 || t.quantity > 64 || !Number.isFinite(t.total_price) || t.total_price < 0) ||
+        new Set(config.tiers.map(t => t.quantity)).size !== config.tiers.length;
+    });
+    if (invalid) {setControllerPricingError('Use valid prices and unique whole controller quantities from 2 to 64.');setIsSavingControllerPricing(false);return;}
     const pricingPayload = controllerConsoleTabs.reduce(
       (acc, consoleType) => {
         const config = controllerPricing[consoleType.type] || { base_price: 0, tiers: [] };
         const normalizedTiers = config.tiers
           .map((tier) => ({
-            quantity: Math.max(2, Math.round(Number(tier.quantity || 0))),
+            quantity: Number(tier.quantity),
             total_price: Math.max(0, Number(tier.total_price || 0)),
           }))
           .filter((tier, index, arr) => arr.findIndex((t) => t.quantity === tier.quantity) === index)
@@ -1129,7 +1140,7 @@ export default function ConsolePricing() {
   };
 
   const changeSquadRulePlayerCount = (group: string, oldPlayerCount: number, nextValue: string) => {
-    const maxPlayers = squadMaxPlayersByConsole[group] || 10;
+    const maxPlayers = squadPlayerLimits[group] || 2;
     const parsed = Math.max(2, Math.min(maxPlayers, Math.round(Number(nextValue) || oldPlayerCount)));
     setSquadPricing((prev) => {
       const current = { ...(prev[group] || {}) };
@@ -1186,7 +1197,7 @@ export default function ConsolePricing() {
   };
 
   const addSquadRule = (group: string) => {
-    const maxPlayers = squadMaxPlayersByConsole[group] || 10;
+    const maxPlayers = squadPlayerLimits[group] || 2;
     setSquadPricing((prev) => {
       const current = { ...(prev[group] || {}) };
       let nextPlayerCount: number | null = null;
@@ -1209,20 +1220,15 @@ export default function ConsolePricing() {
     setSquadPricingError(null);
     try {
       const pricingPayload = Object.entries(squadPricing).reduce((acc, [group, rules]) => {
-        const consoleTypeKey =
-          group === "ps" ? "ps5" : group === "xbox" ? "xbox" : group === "pc" ? "pc" : "vr";
-        const basePrice = Number(prices?.[consoleTypeKey]?.value || 0);
         acc[group] = {};
         Object.entries(rules || {}).forEach(([players, discount]) => {
-          const playerCount = Math.max(1, Number(players) || 1);
           const discountPercent = round2(Math.max(0, Math.min(90, Number(discount) || 0)));
           acc[group][players] = {
             discount_percent: discountPercent,
-            final_amount: discountToFinalTotalAmount(basePrice, discountPercent, playerCount),
           };
         });
         return acc;
-      }, {} as Record<string, Record<string, { discount_percent: number; final_amount: number }>>);
+      }, {} as Record<string, Record<string, { discount_percent: number }>>);
 
       const response = await fetch(`${DASHBOARD_URL}/api/vendor/${vendorId}/squad-pricing-rules`, {
         method: "PUT",
@@ -1691,10 +1697,10 @@ export default function ConsolePricing() {
               </div>
             ) : (
               <div className="grid grid-cols-1 gap-3">
-                {consoleTypes.filter((console) => console.type === "pc").map((console) => {
-                  const group = squadGroupLabelByConsoleType[console.type];
+                {consoleTypes.filter((console) => Object.hasOwn(squadPricing, squadGroupLabelByConsoleType[console.type] || console.type)).map((console) => {
+                  const group = squadGroupLabelByConsoleType[console.type] || console.type;
                   if (!group) return null;
-                  const maxPlayers = squadMaxPlayersByConsole[group] || 6;
+                  const maxPlayers = squadPlayerLimits[group] || 2;
                   const basePrice = Number(prices?.[console.type]?.value || 0);
                   const rules = Object.entries(squadPricing?.[group] || {})
                     .map(([players, discount]) => ({ players: Number(players), discount: Number(discount || 0) }))
@@ -1836,7 +1842,7 @@ export default function ConsolePricing() {
                                     <button
                                       onClick={() => removeSquadRule(group, rule.players)}
                                       className={destructiveIconButtonClass}
-                                      title="Remove slab"
+                                      title="Remove discount for this player count"
                                     >
                                       <Minus className="icon-md" />
                                     </button>
