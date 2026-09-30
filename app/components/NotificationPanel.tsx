@@ -1,5 +1,7 @@
 "use client"
 
+import { creditAuthHeaders } from "@/lib/credit-auth"
+
 import React, { useEffect, useMemo, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { createPortal } from 'react-dom'
@@ -257,7 +259,7 @@ export function NotificationPanel({
 
       const response = await fetch(`${BOOKING_URL}/api/pay-at-cafe/accept`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: creditAuthHeaders(),
         body: JSON.stringify({
           booking_id: notification.bookingId,
           vendor_id: vendorId,
@@ -334,7 +336,7 @@ export function NotificationPanel({
 
       const response = await fetch(`${BOOKING_URL}/api/pay-at-cafe/reject`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: creditAuthHeaders(),
         body: JSON.stringify({
           booking_id:       notification.bookingId,
           vendor_id:        vendorId,

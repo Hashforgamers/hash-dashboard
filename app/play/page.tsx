@@ -7,7 +7,7 @@ import {Input} from '@/components/ui/input';
 
 type Booking={booking_id:number;game_name:string;starts_at:string;ends_at:string;can_start:boolean;reason:string|null};
 type Session={kind:string;id:string;state:string;minutes:number;amount:number;deadline:string;ends_at:string|null;checkout:Quote};
-type Quote={bookings?:Booking[];active_session_id?:string;cafe_name:string;console_number:number;available_balance:number;policy:CafePolicy};
+type Quote={enabled_payment_methods?:string[];bookings?:Booking[];active_session_id?:string;cafe_name:string;console_number:number;available_balance:number;policy:CafePolicy};
 export default function PlayPage() {
   const [buyNew,setBuyNew]=useState(false);
   const [qr,setQr]=useState(''); const [token,setToken]=useState('');
@@ -57,7 +57,8 @@ export default function PlayPage() {
         {!quote.policy.self_service?<p>Self-service is currently disabled. Please visit the desk.</p>:<>
         {quote.bookings?.map(booking=><article key={booking.booking_id} className="space-y-2 rounded-lg border p-4"><h3 className="font-semibold">Your booking · {booking.game_name}</h3><p>{new Date(booking.starts_at).toLocaleString()} – {new Date(booking.ends_at).toLocaleTimeString()}</p><p>No additional wallet payment.</p>{booking.reason&&<p>{booking.reason}</p>}<Button disabled={busy||!booking.can_start} onClick={()=>startBooking(booking)}>Start my booking</Button></article>)}
         {hasBooking&&<Button variant="outline" onClick={()=>setBuyNew(!buyNew)}>{buyNew?'Back to my bookings':'Buy a new session instead'}</Button>}
-        {(!hasBooking||buyNew)&&<><fieldset className="space-y-2"><legend>Choose your time</legend>{quote.policy.durations.map(d=><label key={d.minutes} className="flex justify-between rounded border p-3"><span><input type="radio" name="minutes" checked={minutes===d.minutes} onChange={()=>{setMinutes(d.minutes);}}/> {d.minutes} minutes</span>{rupees(d.amount)}</label>)}</fieldset>
+        {(!hasBooking||buyNew)&&quote.enabled_payment_methods&&!quote.enabled_payment_methods.includes('cafe_wallet')&&<p>Cafe wallet payments are disabled here. Book through the Hash app using another method accepted by this cafe, or visit the desk.</p>}
+        {(!hasBooking||buyNew)&&(!quote.enabled_payment_methods||quote.enabled_payment_methods.includes('cafe_wallet'))&&<><fieldset className="space-y-2"><legend>Choose your time</legend>{quote.policy.durations.map(d=><label key={d.minutes} className="flex justify-between rounded border p-3"><span><input type="radio" name="minutes" checked={minutes===d.minutes} onChange={()=>{setMinutes(d.minutes);}}/> {d.minutes} minutes</span>{rupees(d.amount)}</label>)}</fieldset>
         <p>Payment method: Cafe wallet</p><Button className="w-full" disabled={busy||!selected||quote.available_balance<selected.amount} onClick={()=>run(async()=>{
           const requestKey=sessionStorage.getItem(`cafe_request:${qr}:wallet:${minutes}:${selected?.amount}`)||crypto.randomUUID();sessionStorage.setItem(`cafe_request:${qr}:wallet:${minutes}:${selected?.amount}`,requestKey);
           const s=await cafeCall<Session>('/checkout',{qr,minutes,expected_amount:selected?.amount,payment_method:'cafe_wallet',idempotency_key:requestKey},'POST',token);

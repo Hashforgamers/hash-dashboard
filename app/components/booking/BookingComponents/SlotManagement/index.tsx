@@ -1,6 +1,7 @@
 // components/SlotManagement/SlotBookingForm/index.tsx
 'use client'
 
+import { approvePassBooking } from "@/lib/pass-booking-approval"
 import React, { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X } from 'lucide-react'
@@ -279,21 +280,8 @@ const handleSubmit = async (e: React.FormEvent) => {
   setIsSubmitting(true)
 
   try {
-    // Redeem pass if payment type is Pass
-    if (state.paymentType === 'Pass' && state.validatedPass) {
-      console.log('🎫 Redeeming pass...')
-      const hoursToDeduct = selectedSlots.length * 0.5
-      
-      await bookingService.redeemPass(
-        vendorId,
-        state.passUid,
-        hoursToDeduct,
-        selectedSlots[0]?.start_time.slice(0, 5) || '',
-        selectedSlots[selectedSlots.length - 1]?.end_time.slice(0, 5) || '',
-        `Booking for ${selectedSlots[0]?.console_name} - ${selectedSlots.length} slots`
-      )
-      console.log('✅ Pass redeemed successfully')
-    }
+    const passApproval = state.paymentType === 'Pass'
+      ? await approvePassBooking(vendorId, state.passUid) : undefined
 
     // ✅ FIXED: Match the exact format from your working code
     const totalWaiveOff = Number(state.waiveOffAmount || 0) + Number(autoWaiveOffAmount || 0)
@@ -306,6 +294,8 @@ const handleSubmit = async (e: React.FormEvent) => {
       bookedDate: normalizeBookedDate(selectedSlots[0]?.date || ''),
       slotId: selectedSlots.map(slot => slot.slot_id), // ✅ Keep as slot_id
       paymentType: state.paymentType,
+      pass_uid: state.paymentType === "Pass" ? state.passUid : undefined,
+      pass_verification_token: passApproval,
       waiveOffAmount: Number(totalWaiveOff.toFixed(2)),
       extraControllerQty: Number(state.extraControllerQty || 0),
       extraControllerFare: Number((state.extraControllerFare || 0).toFixed(2)),
