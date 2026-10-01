@@ -51,6 +51,7 @@ export function MyAccount() {
   const isOwnerSession = (activeStaff?.role || "owner") === "owner";
   const [cafeImages, setCafeImages] = useState<string[]>([]);
   const [page, setPage] = useState<string | null>("Cafe Gallery");
+  useEffect(() => { if (window.location.hash === "#subscription") setPage("Subscription Details"); }, []);
   const prevPageRef = useRef<string | null>(null);
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -3442,11 +3443,11 @@ const ToggleSwitch = ({
         Subscription Details
       </CardTitle>
       <CardDescription className="account-description">
-        View your current plan, upgrade, add PCs and download payment invoices.
+        Plan, PC licences and invoices.
       </CardDescription>
     </CardHeader>
     <CardContent>
-      <a href="/subscription" className="mb-4 inline-flex rounded-lg bg-cyan-600 px-4 py-2 font-medium text-white">Current plan · Upgrade · Add PCs · Invoices</a>
+      <a href="/subscription" className="mb-4 inline-flex rounded-lg bg-cyan-600 px-4 py-2 font-medium text-white">Manage subscription</a>
       {loadingSubscriptionHistory ? (
         <div className="flex items-center gap-2 text-sm text-slate-300">
           <Loader2 className="h-4 w-4 animate-spin" /> Loading subscriptions...
@@ -3500,7 +3501,7 @@ const ToggleSwitch = ({
           </div>
         </div>
       ) : (
-        <p className="text-sm text-muted-foreground">No subscription purchases found yet.</p>
+        <p className="text-sm text-muted-foreground">No payment history yet.</p>
       )}
     </CardContent>
   </Card>

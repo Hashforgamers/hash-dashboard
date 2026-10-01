@@ -5,13 +5,16 @@ import {useSubscription} from "@/hooks/useSubscription";
 import {createRazorpayOptions, openRazorpay} from "@/lib/razorpay";
 import {DASHBOARD_URL} from "@/src/config/env";
 import {Button} from "@/components/ui/button";
+import Link from "next/link";
 import {toast} from "sonner";
 
 type Plan={code:string;name:string;pc_limit:number;price:number;features:{plan_features?:string[];entitlements?:string[];extra_pc_monthly?:number}};
 type Terms={package_name:string;package_code:string;pc_limit:number;extra_pcs:number;billing_cycle:string;entitlements:string[]};
 type Purchase={id:string;state:string;terms:Terms;amount_paise:number;period_start:string;period_end:string;description:string;tax_note:string;key_id?:string;order_id?:string;invoice_number?:string;activation_error?:string};
 const money=(paise:number)=>new Intl.NumberFormat('en-IN',{style:'currency',currency:'INR'}).format(paise/100);
-const date=(value:string)=>new Date(value).toLocaleDateString('en-IN');
+const date=(value:string)=>new Date(value).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'});
+const featureLabels:Record<string,string>={kiosk:'PC kiosk',pricing:'Console pricing',cafe_wallet:'Cafe wallet',passes:'Passes',food:'Extra services',analytics:'Reports',tournaments:'Tournaments',staff:'Team access'};
+const features=(items:string[])=>items.map(item=>featureLabels[item]||item).join(' · ');
 
 export function SubscriptionManager(){
  const {vendorId,refreshStatus}=useSubscription();
@@ -71,31 +74,31 @@ export function SubscriptionManager(){
  }
  if(!vendorId)return <p className="p-6">Select a cafe to manage its subscription. <a className="underline" href="/select-cafe">Select cafe</a></p>;
  if(loading)return <p className="p-6">Loading subscription…</p>;
- return <div className="space-y-6 p-4 md:p-6">
-  <header><h1 className="text-2xl font-semibold">Subscription & PCs</h1><p className="text-sm text-muted-foreground">Review your plan, add kiosk capacity, and manage invoices.</p></header>
+ return <div className="space-y-4 p-4 text-sm subscription-workspace">
+  <header className="flex flex-wrap items-center justify-between gap-2"><div><Link href="/account#subscription" className="text-xs text-muted-foreground hover:underline">← Account settings</Link><h1 className="!!text-lg font-semibold">Subscription</h1></div><Link href="/gaming" className="text-xs underline">Gaming consoles</Link></header>
   {error&&<div role="alert" className="rounded border border-red-400 p-3">{error}<Button variant="outline" className="ml-3" onClick={()=>void load()}>Reload</Button></div>}
-  <section className="rounded-xl border p-5"><h2 className="font-semibold">Current subscription</h2>
-   {current?<><p>{current.commercial_terms?.package_name||current.package?.name} · {current.active_links||0} linked / {current.pc_limit} PC licences</p><p>Valid until {date(current.period_end)}</p><p className="text-sm text-muted-foreground">Included: {(current.commercial_terms?.entitlements||[]).join(', ')||'Core dashboard'}</p></>:<p>No active plan. Select a package below.</p>}
-   <p className="mt-2 text-sm text-muted-foreground">Upgrades charge the remaining-period difference and keep your renewal date. Renewals extend your existing period. Payments do not auto-renew. Adding hardware is separate from buying kiosk licences.</p>
+  <section className="rounded-lg border p-3"><h2 className="!text-sm font-semibold mb-2">Current plan</h2>
+   {current?<><p>{current.commercial_terms?.package_name||current.package?.name} · {current.active_links||0} linked / {current.pc_limit} PC licences</p><p>Valid until {date(current.period_end)}</p><details className="mt-2 text-xs text-muted-foreground"><summary className="cursor-pointer">Included features</summary><p className="mt-1">{features(current.commercial_terms?.entitlements||[])||'Core dashboard'}</p></details></>:<p>No active plan. Select a package below.</p>}
+   <details className="mt-2 text-xs text-muted-foreground"><summary className="cursor-pointer">Billing terms</summary><p className="mt-1">Upgrades are prorated and keep your renewal date. Renewals extend your plan. Payments do not auto-renew. PC licences do not include hardware.</p></details>
   </section>
-  <section><h2 className="mb-3 text-lg font-semibold">Upgrade, renew or add PCs</h2>
+  <section><h2 className="mb-2 !text-sm font-semibold">Upgrade, renew or add PCs</h2>
    <label>Billing period <select className="ml-2 rounded border bg-background p-2" value={cycle} onChange={e=>{setCycle(e.target.value);setPreview(null);}}>{['monthly','quarterly','yearly'].map(c=><option key={c}>{c}</option>)}</select></label>
-   <div className="mt-4 grid gap-4 md:grid-cols-3">{plans.map(plan=><article key={plan.code} className="space-y-3 rounded-xl border p-5">
-    <h3 className="text-lg font-semibold">{plan.name}</h3><p>{plan.pc_limit} included PCs / kiosks</p><p>Monthly base {money(plan.price*100)}</p>
+   <div className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">{plans.map(plan=><article key={plan.code} className="space-y-3 rounded-lg border p-3">
+    <h3 className="!text-base font-semibold">{plan.name}</h3><p>{plan.pc_limit} included PCs / kiosks</p><p>Monthly base {money(plan.price*100)}</p>
     <ul className="list-disc pl-5 text-sm">{(plan.features.plan_features||[]).map((f,i)=><li key={i}>{f}</li>)}</ul>
-    <p className="text-sm">Dashboard: {(plan.features.entitlements||[]).join(', ')||'Core features'}</p>
+    <details className="text-xs text-muted-foreground"><summary className="cursor-pointer">Included features</summary><p className="mt-1">{features(plan.features.entitlements||[])||'Core features'}</p></details>
     {Number(plan.features.extra_pc_monthly)>0&&<label className="block text-sm">Additional PCs ({money(Number(plan.features.extra_pc_monthly)*100)} each / month)<input aria-label={`Additional PCs for ${plan.name}`} className="mt-1 w-full rounded border bg-background p-2" type="number" min="0" max="10000" step="1" value={extra[plan.code]||0} onChange={e=>{setExtra(prev=>({...prev,[plan.code]:Number(e.target.value)}));setPreview(null);}}/></label>}
-    <Button disabled={busy} onClick={()=>void review(plan)}>Review invoice preview</Button>
+    <Button disabled={busy} onClick={()=>void review(plan)}>Review plan</Button>
    </article>)}</div>{!plans.length&&<p>No packages are currently available. Contact Hash.</p>}
   </section>
-  {preview&&<section role="dialog" aria-label="Invoice preview" className="space-y-3 rounded-xl border border-cyan-500 p-5">
-   <h2 className="text-xl font-semibold">Invoice preview — unpaid</h2><p>{preview.terms.package_name} · {preview.terms.pc_limit} PCs / kiosks</p>
+  {preview&&<section role="dialog" aria-label="Invoice preview" className="space-y-2 rounded-lg border border-cyan-500 p-3">
+   <h2 className="!text-lg font-semibold">Invoice preview — unpaid</h2><p>{preview.terms.package_name} · {preview.terms.pc_limit} PCs / kiosks</p>
    <p>{preview.description}</p><p>{date(preview.period_start)} – {date(preview.period_end)}</p><p className="text-2xl font-semibold">Total payable {money(preview.amount_paise)}</p>
    <p className="text-sm">{preview.tax_note} Preview valid for 15 minutes.</p>
-   <div className="flex flex-wrap gap-2"><Button disabled={busy} onClick={()=>void pay(preview)}>{preview.amount_paise?'Pay and activate':'Activate free plan'}</Button><Button variant="outline" onClick={()=>void invoice(preview)}>Open printable preview</Button><Button variant="ghost" onClick={()=>setPreview(null)}>Back</Button></div>
+   <div className="flex flex-wrap gap-2"><Button disabled={busy} onClick={()=>void pay(preview)}>{preview.amount_paise?'Pay and activate':'Activate free plan'}</Button><Button variant="outline" onClick={()=>void invoice(preview)}>Print preview</Button><Button variant="ghost" onClick={()=>setPreview(null)}>Back</Button></div>
   </section>}
-  <section><h2 className="mb-3 text-lg font-semibold">Payments & invoices</h2>
-   {purchases.length===0?<p>No purchases yet.</p>:purchases.map(row=><article key={row.id} className="mb-3 flex flex-wrap items-center justify-between gap-3 rounded border p-4"><div><strong>{row.terms.package_name}</strong><p>{money(row.amount_paise)} · {row.state==='paid'?'Paid':row.state==='paid_unapplied'?'Paid — contact Hash for activation':'Payment pending'} · {row.terms.pc_limit} PCs</p><p className="text-xs">{date(row.period_start)} – {date(row.period_end)}</p></div><div className="flex gap-2">{row.state!=='ordered'?<Button variant="outline" onClick={()=>void invoice(row)}>Open invoice / print</Button>:<><Button disabled={busy} onClick={()=>void pay(row)}>Resume payment</Button><Button variant="outline" onClick={()=>void reconcile(row.id).catch(e=>setError(e.message))}>Check payment</Button></>}</div></article>)}
+  <section><h2 className="mb-2 !text-sm font-semibold">Payments & invoices</h2>
+   {purchases.length===0?<p>No purchases yet.</p>:purchases.map(row=><article key={row.id} className="mb-3 flex flex-wrap items-center justify-between gap-2 rounded border p-3"><div><strong>{row.terms.package_name}</strong><p>{money(row.amount_paise)} · {row.state==='paid'?'Paid':row.state==='paid_unapplied'?'Paid — contact Hash for activation':'Payment pending'} · {row.terms.pc_limit} PCs</p><p className="text-xs">{date(row.period_start)} – {date(row.period_end)}</p></div><div className="flex gap-2">{row.state!=='ordered'?<Button variant="outline" onClick={()=>void invoice(row)}>Invoice</Button>:<><Button disabled={busy} onClick={()=>void pay(row)}>Resume payment</Button><Button variant="outline" onClick={()=>void reconcile(row.id).catch(e=>setError(e.message))}>Check payment</Button></>}</div></article>)}
   </section>
  </div>;
 }
