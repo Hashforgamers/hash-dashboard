@@ -178,11 +178,11 @@ export function ManageGamingConsole() {
     <div className="console-manager flex h-full min-h-0 w-full flex-col text-foreground">
       <div className="console-manager-header">
         <h1 className="premium-heading">Gaming Consoles</h1>
-        <section className="my-3 rounded-xl border p-4">
-          <h2 className="font-semibold">Install the Windows kiosk app</h2>
-          <p className="text-sm text-muted-foreground">Download the installer, run it on each cafe PC, then link the PC to this cafe. Each active link uses one kiosk licence.</p>
-          <div className="mt-2 flex flex-wrap gap-4"><a className="text-cyan-500 underline" href="https://drive.google.com/file/d/107quBG127Sg7lscQEusp_1vFqbvl1-CR/view" target="_blank" rel="noopener noreferrer">Download HashDashPC v1.0.0 (.exe)</a><a className="text-cyan-500 underline" href="https://drive.google.com/drive/folders/171RmdWLzuBhl0qE5xAhFvmtgyppmN0Cv?usp=sharing" target="_blank" rel="noopener noreferrer">All kiosk releases</a><a className="text-cyan-500 underline" href="/subscription">Manage licences / add PCs</a></div>
-        </section>
+        <div className="flex flex-wrap items-center gap-3 text-xs">
+          <a className="rounded-md border px-3 py-2 hover:bg-muted" href="https://drive.google.com/file/d/107quBG127Sg7lscQEusp_1vFqbvl1-CR/view" target="_blank" rel="noopener noreferrer">Download kiosk · Windows</a>
+          <a className="text-muted-foreground hover:underline" href="/subscription">PC licences</a>
+          <details className="relative"><summary className="cursor-pointer text-muted-foreground">Setup</summary><div className="absolute z-20 right-0 mt-2 w-64 rounded-lg border bg-background p-3 shadow-lg"><p>Install on each PC, then link it to your cafe. Each linked PC uses one licence.</p><a className="mt-2 inline-block underline" href="https://drive.google.com/drive/folders/171RmdWLzuBhl0qE5xAhFvmtgyppmN0Cv?usp=sharing" target="_blank" rel="noopener noreferrer">All releases</a></div></details>
+        </div>
         <div className="tab-container" aria-label="Console views">
           <button type="button" aria-pressed={selectedAction === "list"}
             className={selectedAction === "list" ? "tab-active" : "tab-inactive"}

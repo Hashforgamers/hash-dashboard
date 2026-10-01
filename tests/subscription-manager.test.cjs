@@ -16,7 +16,7 @@ function setup(preview=null,purchases=[]){
 }
 const tick=()=>new Promise(resolve=>setImmediate(resolve));
 test('plan review requests a server preview with quantity, without opening payment',async()=>{
- const t=setup();const review=t.nodes.find(n=>n.props?.children==='Review invoice preview');review.props.onClick();await tick();
+ const t=setup();const review=t.nodes.find(n=>n.props?.children==='Review plan');review.props.onClick();await tick();
  assert.equal(t.calls[0].path,'/api/vendors/1/subscription/preview');assert.deepEqual(JSON.parse(t.calls[0].options.body),{package_code:'pro',billing_cycle:'monthly',extra_pcs:2});
  assert.equal(t.calls.some(c=>c.gateway),false);assert.equal(t.updates.some(u=>u.i===3&&u.value.id==='quote-1'),true);
 });
@@ -27,7 +27,7 @@ test('accepted preview pays only its server quote and uses provider order amount
 });
 test('paid purchases offer invoice access and never another payment button',()=>{
  const t=setup(null,[{...quote,state:'paid',invoice_number:'HFG-SUB-1'}]);
- assert.ok(t.nodes.some(n=>n.props?.children==='Open invoice / print'));
+ assert.ok(t.nodes.some(n=>n.props?.children==='Invoice'));
  assert.equal(t.nodes.some(n=>n.props?.children==='Resume payment'),false);
 });
 test('pending purchase offers reconciliation and resumes the same quote',async()=>{
