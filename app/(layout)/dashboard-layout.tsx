@@ -35,7 +35,10 @@ export function DashboardLayout({ children, contentScroll = "page" }: DashboardL
   const { vendorId, consoles, refreshLanding, refreshConsoles } = useDashboardData()
   const hasAccess = activeStaff ? canAccessPath(pathname, activeStaff.permissions) : true
   const subscriptionExempt = ["/subscription", "/select-cafe"]
-  const hasSubscriptionAccess = !isLocked || subscriptionExempt.some((path) => pathname === path || pathname.startsWith(`${path}/`))
+  const featurePaths: Record<string,string> = {"/console-pricing":"pricing","/cafe-wallet":"cafe_wallet","/pass":"passes","/manage-extraservice":"food","/transaction":"analytics","/know-your-gamers":"analytics","/tournaments":"tournaments","/employee-access":"staff"}
+  const neededFeature = Object.entries(featurePaths).find(([path])=>pathname===path||pathname.startsWith(path+"/"))?.[1]
+  const hasPlanFeature = !neededFeature || Boolean(subscriptionStatus?.entitlements?.includes(neededFeature))
+  const hasSubscriptionAccess = (!isLocked && hasPlanFeature) || subscriptionExempt.some((path) => pathname === path || pathname.startsWith(`${path}/`))
   const isSelectCafeRoute = pathname === "/select-cafe" || pathname.startsWith("/select-cafe/")
   const showSidebar = !isSelectCafeRoute
   const showMobileHeader = !isSelectCafeRoute
@@ -246,9 +249,9 @@ export function DashboardLayout({ children, contentScroll = "page" }: DashboardL
             ) : (
               <div className="flex h-full min-h-[220px] items-center justify-center">
                 <div className="w-full max-w-xl rounded-lg border border-yellow-500/30 bg-yellow-500/10 p-6 text-center">
-                  <h2 className="text-xl font-semibold text-yellow-200">Subscription Inactive</h2>
+                  <h2 className="text-xl font-semibold text-yellow-200">Subscription access required</h2>
                   <p className="mt-2 text-sm text-yellow-100/80">
-                    {subscriptionStatus?.message || "This module is locked until your subscription is renewed."}
+                    {!hasPlanFeature ? "Upgrade to a plan that includes this feature." : subscriptionStatus?.message || "Renew your subscription to use this module."}
                   </p>
                   {subscriptionStatus?.latest_subscription ? (
                     <p className="mt-2 text-xs text-yellow-100/60">

@@ -178,6 +178,11 @@ export function ManageGamingConsole() {
     <div className="console-manager flex h-full min-h-0 w-full flex-col text-foreground">
       <div className="console-manager-header">
         <h1 className="premium-heading">Gaming Consoles</h1>
+        <section className="my-3 rounded-xl border p-4">
+          <h2 className="font-semibold">Install the Windows kiosk app</h2>
+          <p className="text-sm text-muted-foreground">Download the installer, run it on each cafe PC, then link the PC to this cafe. Each active link uses one kiosk licence.</p>
+          <div className="mt-2 flex flex-wrap gap-4"><a className="text-cyan-500 underline" href="https://drive.google.com/file/d/107quBG127Sg7lscQEusp_1vFqbvl1-CR/view" target="_blank" rel="noopener noreferrer">Download HashDashPC v1.0.0 (.exe)</a><a className="text-cyan-500 underline" href="https://drive.google.com/drive/folders/171RmdWLzuBhl0qE5xAhFvmtgyppmN0Cv?usp=sharing" target="_blank" rel="noopener noreferrer">All kiosk releases</a><a className="text-cyan-500 underline" href="/subscription">Manage licences / add PCs</a></div>
+        </section>
         <div className="tab-container" aria-label="Console views">
           <button type="button" aria-pressed={selectedAction === "list"}
             className={selectedAction === "list" ? "tab-active" : "tab-inactive"}

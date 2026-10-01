@@ -199,7 +199,7 @@ export async function getVendorJwt(
 ): Promise<string> {
   const data = await httpJson<{ token: string }>(`${API_BASE}/api/vendor/events/getJwt`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${localStorage.getItem("rbac_access_token_v1") || localStorage.getItem("jwtToken") || ""}` },
     body: JSON.stringify({ vendor_id: vendorId, ttl_minutes: ttlMinutes }),
     timeoutMs: 10_000,
     retries: 0,

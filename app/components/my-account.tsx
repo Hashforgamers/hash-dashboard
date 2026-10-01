@@ -3442,10 +3442,11 @@ const ToggleSwitch = ({
         Subscription Details
       </CardTitle>
       <CardDescription className="account-description">
-        View all purchased plans with invoice records.
+        View your current plan, upgrade, add PCs and download payment invoices.
       </CardDescription>
     </CardHeader>
     <CardContent>
+      <a href="/subscription" className="mb-4 inline-flex rounded-lg bg-cyan-600 px-4 py-2 font-medium text-white">Current plan · Upgrade · Add PCs · Invoices</a>
       {loadingSubscriptionHistory ? (
         <div className="flex items-center gap-2 text-sm text-slate-300">
           <Loader2 className="h-4 w-4 animate-spin" /> Loading subscriptions...
