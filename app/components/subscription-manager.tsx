@@ -20,6 +20,8 @@ export function SubscriptionManager(){
  const {vendorId,refreshStatus}=useSubscription();
  const [plans,setPlans]=useState<Plan[]>([]);const [current,setCurrent]=useState<any>(null);
  const [purchases,setPurchases]=useState<Purchase[]>([]);const [preview,setPreview]=useState<Purchase|null>(null);
+ const [additionalPCs,setAdditionalPCs]=useState(1);
+ const [section,setSection]=useState<'capacity'|'plans'|'invoices'>('capacity');
  const [cycle,setCycle]=useState('monthly');const [extra,setExtra]=useState<Record<string,number>>({});
  const [busy,setBusy]=useState(false);const [error,setError]=useState('');const [loading,setLoading]=useState(true);
  const base=`/api/vendors/${vendorId}/subscription`;
@@ -46,9 +48,9 @@ export function SubscriptionManager(){
   const timer=setInterval(async()=>{if(running||cancelled)return;running=true;try{for(const row of pending){if(cancelled)break;await reconcile(row.id);}}catch{/* Manual retry remains visible. */}finally{running=false;}},10000);
   return()=>{cancelled=true;clearInterval(timer);};
  },[purchases,reconcile]);
- async function review(plan:Plan){
+ async function review(plan:Plan,addToCurrent=false){
   setBusy(true);setError('');
-  try{setPreview(await apiCall<Purchase>(`${base}/preview`,{method:'POST',body:JSON.stringify({package_code:plan.code,billing_cycle:cycle,extra_pcs:extra[plan.code]||0})}));}
+  try{setPreview(await apiCall<Purchase>(`${base}/preview`,{method:'POST',body:JSON.stringify({package_code:plan.code,billing_cycle:cycle,extra_pcs:addToCurrent?additionalPCs:extra[plan.code]||0,...(addToCurrent?{action:'add_pcs'}:{})})}));}
   catch(e){setError(e instanceof Error?e.message:'Unable to preview');}finally{setBusy(false);}
  }
  async function pay(row:Purchase){
@@ -74,14 +76,21 @@ export function SubscriptionManager(){
  }
  if(!vendorId)return <p className="p-6">Select a cafe to manage its subscription. <a className="underline" href="/select-cafe">Select cafe</a></p>;
  if(loading)return <p className="p-6">Loading subscription…</p>;
- return <div className="space-y-4 p-4 text-sm subscription-workspace">
+ const currentPlan=plans.find(plan=>plan.code===(current?.commercial_terms?.package_code||current?.package?.code));
+ return <div className="mx-auto w-full max-w-5xl space-y-4 p-4 text-sm subscription-workspace">
   <header className="flex flex-wrap items-center justify-between gap-2"><div><Link href="/account#subscription" className="text-xs text-muted-foreground hover:underline">← Account settings</Link><h1 className="!!text-lg font-semibold">Subscription</h1></div><Link href="/gaming" className="text-xs underline">Gaming consoles</Link></header>
   {error&&<div role="alert" className="rounded border border-red-400 p-3">{error}<Button variant="outline" className="ml-3" onClick={()=>void load()}>Reload</Button></div>}
   <section className="rounded-lg border p-3"><h2 className="!text-sm font-semibold mb-2">Current plan</h2>
    {current?<><p>{current.commercial_terms?.package_name||current.package?.name} · {current.active_links||0} linked / {current.pc_limit} PC licences</p><p>Valid until {date(current.period_end)}</p><details className="mt-2 text-xs text-muted-foreground"><summary className="cursor-pointer">Included features</summary><p className="mt-1">{features(current.commercial_terms?.entitlements||[])||'Core dashboard'}</p></details></>:<p>No active plan. Select a package below.</p>}
    <details className="mt-2 text-xs text-muted-foreground"><summary className="cursor-pointer">Billing terms</summary><p className="mt-1">Upgrades are prorated and keep your renewal date. Renewals extend your plan. Payments do not auto-renew. PC licences do not include hardware.</p></details>
   </section>
-  <section><h2 className="mb-2 !text-sm font-semibold">Upgrade, renew or add PCs</h2>
+  <nav aria-label="Subscription sections" className="flex flex-wrap gap-1 border-b pb-2">{([['capacity','Add PCs'],['plans','Plans & renewal'],['invoices','Invoices']] as const).map(([key,label])=><Button key={key} size="sm" variant={section===key?'secondary':'ghost'} aria-pressed={section===key} onClick={()=>{setSection(key);setPreview(null);}}>{label}</Button>)}</nav>
+  {purchases.some(row=>row.state==='ordered'||row.state==='paid_unapplied')&&<p role="status" className="text-sm">A payment needs attention. <button className="underline" onClick={()=>setSection('invoices')}>View payments</button></p>}
+  {section==='capacity'&&<section className="rounded-lg border p-4 space-y-3"><div className="flex flex-wrap justify-between gap-2"><h2 className="!text-base font-semibold">PC capacity</h2><span className="text-muted-foreground">{Math.max(0,(current?.pc_limit||0)-(current?.active_links||0))} licences available</span></div>
+   <p className="text-muted-foreground">Link PCs within your existing limit in <Link href="/gaming" className="underline">Gaming consoles</Link>.</p>
+   {current&&currentPlan&&Number(currentPlan.features.extra_pc_monthly)>0?<><div className="flex flex-wrap items-end gap-3"><label className="text-xs">PCs to add<input className="mt-1 block w-24 rounded border bg-background px-3 py-2" type="number" min="1" max="10000" step="1" value={additionalPCs} onChange={e=>{setAdditionalPCs(Number(e.target.value));setPreview(null);}}/></label><Button disabled={busy||!Number.isInteger(additionalPCs)||additionalPCs<1} onClick={()=>void review(currentPlan,true)}>Review additional PCs</Button></div><p className="text-xs text-muted-foreground">{money(Number(currentPlan.features.extra_pc_monthly)*100)} / PC / month · Prorated until {date(current.period_end)}. Your plan and renewal date stay unchanged.</p></>:<p className="text-muted-foreground">{current?'Additional PC pricing is unavailable for your current plan. Contact Hash or choose a larger plan.':'Choose a plan to enable PC licences.'}</p>}
+  </section>}
+  {section==='plans'&&<section><h2 className="mb-2 !text-sm font-semibold">Plans & renewal</h2>
    <label>Billing period <select className="ml-2 rounded border bg-background p-2" value={cycle} onChange={e=>{setCycle(e.target.value);setPreview(null);}}>{['monthly','quarterly','yearly'].map(c=><option key={c}>{c}</option>)}</select></label>
    <div className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">{plans.map(plan=><article key={plan.code} className="space-y-3 rounded-lg border p-3">
     <h3 className="!text-base font-semibold">{plan.name}</h3><p>{plan.pc_limit} included PCs / kiosks</p><p>Monthly base {money(plan.price*100)}</p>
@@ -90,15 +99,15 @@ export function SubscriptionManager(){
     {Number(plan.features.extra_pc_monthly)>0&&<label className="block text-sm">Additional PCs ({money(Number(plan.features.extra_pc_monthly)*100)} each / month)<input aria-label={`Additional PCs for ${plan.name}`} className="mt-1 w-full rounded border bg-background p-2" type="number" min="0" max="10000" step="1" value={extra[plan.code]||0} onChange={e=>{setExtra(prev=>({...prev,[plan.code]:Number(e.target.value)}));setPreview(null);}}/></label>}
     <Button disabled={busy} onClick={()=>void review(plan)}>Review plan</Button>
    </article>)}</div>{!plans.length&&<p>No packages are currently available. Contact Hash.</p>}
-  </section>
+  </section>}
   {preview&&<section role="dialog" aria-label="Invoice preview" className="space-y-2 rounded-lg border border-cyan-500 p-3">
    <h2 className="!text-lg font-semibold">Invoice preview — unpaid</h2><p>{preview.terms.package_name} · {preview.terms.pc_limit} PCs / kiosks</p>
    <p>{preview.description}</p><p>{date(preview.period_start)} – {date(preview.period_end)}</p><p className="text-2xl font-semibold">Total payable {money(preview.amount_paise)}</p>
    <p className="text-sm">{preview.tax_note} Preview valid for 15 minutes.</p>
    <div className="flex flex-wrap gap-2"><Button disabled={busy} onClick={()=>void pay(preview)}>{preview.amount_paise?'Pay and activate':'Activate free plan'}</Button><Button variant="outline" onClick={()=>void invoice(preview)}>Print preview</Button><Button variant="ghost" onClick={()=>setPreview(null)}>Back</Button></div>
   </section>}
-  <section><h2 className="mb-2 !text-sm font-semibold">Payments & invoices</h2>
+  {section==='invoices'&&<section><h2 className="mb-2 !text-sm font-semibold">Payments & invoices</h2>
    {purchases.length===0?<p>No purchases yet.</p>:purchases.map(row=><article key={row.id} className="mb-3 flex flex-wrap items-center justify-between gap-2 rounded border p-3"><div><strong>{row.terms.package_name}</strong><p>{money(row.amount_paise)} · {row.state==='paid'?'Paid':row.state==='paid_unapplied'?'Paid — contact Hash for activation':'Payment pending'} · {row.terms.pc_limit} PCs</p><p className="text-xs">{date(row.period_start)} – {date(row.period_end)}</p></div><div className="flex gap-2">{row.state!=='ordered'?<Button variant="outline" onClick={()=>void invoice(row)}>Invoice</Button>:<><Button disabled={busy} onClick={()=>void pay(row)}>Resume payment</Button><Button variant="outline" onClick={()=>void reconcile(row.id).catch(e=>setError(e.message))}>Check payment</Button></>}</div></article>)}
-  </section>
+  </section>}
  </div>;
 }
