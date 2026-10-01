@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation"
 import { subscriptionApi } from "@/lib/api"
 
 interface SubscriptionStatus {
+  entitlements?: string[]
   is_active: boolean
   locked: boolean
   message: string
@@ -79,6 +80,7 @@ function normalizeSubscriptionStatus(raw: any): SubscriptionStatus {
     locked: Boolean(raw?.locked ?? !isActive),
     message: String(raw?.message || (isActive ? "Active" : "Subscription inactive")),
     server_time_utc: raw?.server_time_utc,
+    entitlements: Array.isArray(raw?.entitlements) ? raw.entitlements : [],
     active_subscription: raw?.active_subscription || null,
     latest_subscription: raw?.latest_subscription || null,
   }
