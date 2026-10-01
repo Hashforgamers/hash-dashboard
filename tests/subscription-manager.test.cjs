@@ -4,7 +4,7 @@ const fs=require('node:fs');const vm=require('node:vm');const ts=require('typesc
 const plan={code:'pro',name:'Pro',pc_limit:10,price:200,features:{plan_features:['PC kiosk'],entitlements:['kiosk'],extra_pc_monthly:20}};
 const quote={id:'quote-1',state:'preview',amount_paise:7000,terms:{package_name:'Pro',pc_limit:12},period_start:'2026-10-01',period_end:'2026-11-01',description:'Prorated',tax_note:'Total payable'};
 function setup(preview=null,purchases=[]){
- const state=[[plan],null,purchases,preview,'monthly',{pro:2},false,'',false];let index=0;const calls=[];const updates=[];
+ const state=[[plan],null,purchases,preview,1,purchases.length?'invoices':'plans','monthly',{pro:2},false,'',false];let index=0;const calls=[];const updates=[];
  const apiCall=async(path,options)=>{calls.push({path,options});if(path.endsWith('/preview'))return quote;if(path.endsWith('/pay'))return {...quote,state:'ordered',key_id:'test_key',order_id:'order-1'};return {purchases:[]};};
  const fakeReact={...React,useState:()=>{const i=index++;return[state[i],value=>updates.push({i,value})]},useEffect:()=>{},useCallback:fn=>fn};
  const modules={'react':fakeReact,'@/lib/api':{apiCall,subscriptionApi:{getPackages:async()=>({packages:[plan]}),getSubscription:async()=>({status:'none'})}},'@/hooks/useSubscription':{useSubscription:()=>({vendorId:1,refreshStatus:async()=>{}})},'@/lib/razorpay':{createRazorpayOptions:(...args)=>args,openRazorpay:async options=>calls.push({gateway:options})},'@/src/config/env':{DASHBOARD_URL:'http://test'},'@/components/ui/button':{Button:'button'},sonner:{toast:{success:()=>{}}}};
