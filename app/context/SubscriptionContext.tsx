@@ -88,7 +88,7 @@ function normalizeSubscriptionStatus(raw: any): SubscriptionStatus {
 
 export function SubscriptionProvider({ children }: { children: ReactNode }) {
   const [status, setStatus] = useState<SubscriptionStatus | null>(null)
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(true)
   const [vendorId, setVendorId] = useState<number | null>(null)
   const checkInFlight = useRef(false)
   const pathname = usePathname()
