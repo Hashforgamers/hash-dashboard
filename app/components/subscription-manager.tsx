@@ -77,7 +77,7 @@ export function SubscriptionManager(){
  if(!vendorId)return <p className="p-6">Select a cafe to manage its subscription. <a className="underline" href="/select-cafe">Select cafe</a></p>;
  if(loading)return <p className="p-6">Loading subscription…</p>;
  const currentPlan=plans.find(plan=>plan.code===(current?.commercial_terms?.package_code||current?.package?.code));
- return <div className="mx-auto w-full max-w-5xl space-y-4 p-4 text-sm subscription-workspace">
+ return <div className="w-full min-w-0 space-y-4 p-4 text-sm subscription-workspace">
   <header className="flex flex-wrap items-center justify-between gap-2"><div><Link href="/account#subscription" className="text-xs text-muted-foreground hover:underline">← Account settings</Link><h1 className="!!text-lg font-semibold">Subscription</h1></div><Link href="/gaming" className="text-xs underline">Gaming consoles</Link></header>
   {error&&<div role="alert" className="rounded border border-red-400 p-3">{error}<Button variant="outline" className="ml-3" onClick={()=>void load()}>Reload</Button></div>}
   <section className="rounded-lg border p-3"><h2 className="!text-sm font-semibold mb-2">Current plan</h2>
