@@ -1,6 +1,7 @@
 "use client";
 
 import { normalizeOperatingHours, validateOperatingDay, type OperatingDay } from "@/lib/operating-hours";
+import { CafeRequests } from './cafe-requests';
 import { CafeWalletWorkspace } from './cafe-wallet-workspace';
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
@@ -1570,6 +1571,7 @@ const ToggleSwitch = ({
   return (
     <div className="account-content min-w-0 text-foreground">
       <div className="w-full space-y-3">
+        <CafeRequests vendorId={vendorId} onDocuments={()=>setPage("Verified Documents")} />
         <div className="account-layout grid items-start gap-3">
           {/* Left Sidebar */}
           <motion.div
