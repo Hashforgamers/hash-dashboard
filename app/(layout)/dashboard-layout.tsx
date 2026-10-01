@@ -30,7 +30,7 @@ export function DashboardLayout({ children, contentScroll = "page" }: DashboardL
   const pathname = usePathname()
   const router = useRouter()
   const { activeStaff } = useAccess()
-  const { isLocked, status: subscriptionStatus, refreshStatus } = useSubscription()
+  const { isLocked, status: subscriptionStatus, loading: subscriptionLoading, refreshStatus } = useSubscription()
   const { isConnected } = useSocket()
   const { vendorId, consoles, refreshLanding, refreshConsoles } = useDashboardData()
   const hasAccess = activeStaff ? canAccessPath(pathname, activeStaff.permissions) : true
@@ -39,6 +39,8 @@ export function DashboardLayout({ children, contentScroll = "page" }: DashboardL
   const neededFeature = Object.entries(featurePaths).find(([path])=>pathname===path||pathname.startsWith(path+"/"))?.[1]
   const hasPlanFeature = !neededFeature || Boolean(subscriptionStatus?.entitlements?.includes(neededFeature))
   const hasSubscriptionAccess = (!isLocked && hasPlanFeature) || subscriptionExempt.some((path) => pathname === path || pathname.startsWith(`${path}/`))
+  const subscriptionPending = !subscriptionStatus && subscriptionLoading && !subscriptionExempt.some(path => pathname === path || pathname.startsWith(`${path}/`))
+  const subscriptionUnavailable = subscriptionStatus?.message === "Unable to verify subscription status"
   const isSelectCafeRoute = pathname === "/select-cafe" || pathname.startsWith("/select-cafe/")
   const showSidebar = !isSelectCafeRoute
   const showMobileHeader = !isSelectCafeRoute
@@ -235,7 +237,9 @@ export function DashboardLayout({ children, contentScroll = "page" }: DashboardL
               contentScroll === "contained" ? "overflow-x-hidden" : ""
             }`}
           >
-            {hasAccess && hasSubscriptionAccess ? (
+            {hasAccess && subscriptionPending ? (
+              <div role="status" aria-live="polite" className="flex min-h-[220px] items-center justify-center text-sm text-muted-foreground">Loading your workspace…</div>
+            ) : hasAccess && hasSubscriptionAccess ? (
               children
             ) : !hasAccess ? (
               <div className="flex h-full min-h-[220px] items-center justify-center">
@@ -249,9 +253,9 @@ export function DashboardLayout({ children, contentScroll = "page" }: DashboardL
             ) : (
               <div className="flex h-full min-h-[220px] items-center justify-center">
                 <div className="w-full max-w-xl rounded-lg border border-yellow-500/30 bg-yellow-500/10 p-6 text-center">
-                  <h2 className="text-xl font-semibold text-yellow-200">Subscription access required</h2>
+                  <h2 className="text-xl font-semibold text-yellow-200">{subscriptionUnavailable ? "Unable to verify subscription" : "Subscription access required"}</h2>
                   <p className="mt-2 text-sm text-yellow-100/80">
-                    {!hasPlanFeature ? "Upgrade to a plan that includes this feature." : subscriptionStatus?.message || "Renew your subscription to use this module."}
+                    {subscriptionUnavailable ? "Please retry the subscription check." : !hasPlanFeature ? "Upgrade to a plan that includes this feature." : subscriptionStatus?.message || "Renew your subscription to use this module."}
                   </p>
                   {subscriptionStatus?.latest_subscription ? (
                     <p className="mt-2 text-xs text-yellow-100/60">
@@ -260,9 +264,9 @@ export function DashboardLayout({ children, contentScroll = "page" }: DashboardL
                   ) : null}
                   <Button
                     className="mt-4"
-                    onClick={() => router.push("/subscription")}
+                    onClick={() => subscriptionUnavailable ? void refreshStatus() : router.push("/subscription")}
                   >
-                    Go To Subscription
+                    {subscriptionUnavailable ? "Retry" : "Go To Subscription"}
                   </Button>
                 </div>
               </div>
