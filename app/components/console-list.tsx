@@ -140,6 +140,7 @@ export function ConsoleList({ onEdit, refreshKey = 0 }: ConsoleListProps) {
     const displayType = String(item.consoleDisplayName || item.type || "Console");
     return {
       id: item.id,
+      currentQrSessionId: item.currentQrSessionId,
       type: normalizedType,
       displayType,
       name: item.name || "Unknown Console",
@@ -219,8 +220,10 @@ export function ConsoleList({ onEdit, refreshKey = 0 }: ConsoleListProps) {
     try {
       setReleasingConsoleId(consoleItem.id);
       await axios.post(
-        `${DASHBOARD_URL}/api/releaseDevice/consoleTypeId/${consoleItem.gameId}/console/${consoleItem.id}/vendor/${vendorId}`,
-        { bookingStats: {} },
+        consoleItem.currentQrSessionId
+          ? `${DASHBOARD_URL}/api/cafe/${vendorId}/sessions/${consoleItem.currentQrSessionId}/end`
+          : `${DASHBOARD_URL}/api/releaseDevice/consoleTypeId/${consoleItem.gameId}/console/${consoleItem.id}/vendor/${vendorId}`,
+        {},
         { headers: creditAuthHeaders() }
       );
 
@@ -353,12 +356,12 @@ export function ConsoleList({ onEdit, refreshKey = 0 }: ConsoleListProps) {
                     ref={(element) => { if (element) element.inert = Boolean(flippedCards[console.id]); }}>
                     <CardContent className={styles.content}>
                       <div className={styles.identity}>
-                        <div className="flex items-center space-x-3">
+                        <div className="flex min-w-0 flex-1 items-start gap-3">
                           <div className={styles.icon}>
                             <console.icon className="h-7 w-7 text-slate-700 dark:text-cyan-300" />
                           </div>
-                          <div>
-                            <h3 className="dash-title !text-base leading-tight">
+                          <div className="min-w-0 flex-1">
+                            <h3 title={console.name} className="dash-title line-clamp-2 !text-base leading-tight">
                               {console.name}
                             </h3>
                             <p className="text-xs text-muted-foreground">
@@ -412,7 +415,7 @@ export function ConsoleList({ onEdit, refreshKey = 0 }: ConsoleListProps) {
                                   </button>
                                 </TooltipTrigger>
                                 <TooltipContent side="top" className="max-w-xs text-xs leading-relaxed">
-                                  <p>Gamer: {console.currentUsername || "Unknown"}</p>
+                                  <p>Gamer: {console.currentUsername || "Session details unavailable"}</p>
                                   <p>Session: {console.currentStartTime || "--"} - {console.currentEndTime || "--"}</p>
                                   <p>Collectible: Rs {console.collectibleAmount.toFixed(2)}</p>
                                 </TooltipContent>

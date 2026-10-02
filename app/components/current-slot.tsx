@@ -1355,7 +1355,7 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                                       <button
                                         type="button"
                                         onClick={() => setContactOverlay({ open: true, booking })}
-                                        className="truncate text-left underline decoration-dotted underline-offset-2 hover:text-cyan-200 transition-colors"
+                                        className="live-session-customer-name truncate text-left font-semibold text-cyan-300 hover:text-cyan-200 transition-colors"
                                         title="View customer contact details"
                                       >
                                         {booking.username || 'Guest'}
