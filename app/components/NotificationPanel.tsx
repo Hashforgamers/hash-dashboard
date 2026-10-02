@@ -82,7 +82,11 @@ interface LowStockNotification {
   severity?: "low" | "critical"
 }
 
-type DashboardNotification = PayAtCafeNotification | MealsAddedNotification | DocumentStatusNotification | LowStockNotification
+interface CafeContinuationNotification {
+  kind:'cafe_continuation';notification_id:string;vendorId:number;userId:number;minutes:number;amount:number;expiresAt:string
+}
+
+type DashboardNotification = CafeContinuationNotification | PayAtCafeNotification | MealsAddedNotification | DocumentStatusNotification | LowStockNotification
 
 interface PayAtCafeQueueSummary {
   requested: number
@@ -603,6 +607,14 @@ export function NotificationPanel({
               ) : (
                 <div className="space-y-2">
                   {notifications.map((notification, index) => {
+                    if(notification.kind==='cafe_continuation') {
+                      return <div key={notification.notification_id} role="status" className="dashboard-module-card rounded-lg border border-amber-400/35 p-3">
+                        <p className="text-sm font-semibold">Owner approval needed</p>
+                        <p className="mt-1 text-xs">Gamer {notification.userId} requests {notification.minutes} more minutes for ₹{(notification.amount/100).toFixed(2)}, payable after play.</p>
+                        <p className="mt-1 text-xs">Review in Live Sessions. Expires {new Date(notification.expiresAt).toLocaleTimeString()}.</p>
+                        <Button variant="outline" className="mt-2 h-8 text-xs" onClick={()=>{onClose();window.location.href='/';}}>Open live sessions</Button>
+                      </div>
+                    }
                     const isMealNotice = (notification as any)?.kind === "meals_added"
                     const isThisBookingProcessing = !isMealNotice && processingAction.bookingId === (notification as any).bookingId
                     const isAcceptProcessing = isThisBookingProcessing && processingAction.action === 'accept'

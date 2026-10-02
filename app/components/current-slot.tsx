@@ -6,6 +6,7 @@ import { jwtDecode } from "jwt-decode";
 import { FaCheck, FaPowerOff } from 'react-icons/fa';
 import { BOOKING_URL, DASHBOARD_URL } from "@/src/config/env";
 import { mergeConsecutiveBookings } from "@/app/utils/slot-utils";
+import QrLiveSessions from "./qr-live-sessions";
 import HashLoader from './ui/HashLoader';
 import ExtraBookingOverlay from "./extraBookingOverlay";
 import MealDetailsModal from "./mealsDetailmodal";
@@ -488,6 +489,7 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
   const { socket, isConnected, joinVendor } = useSocket()
   
   const [currentSlots, setCurrentSlots] = useState(initialSlots || [])
+  const [qrSessionCount, setQrSessionCount] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredSlots, setFilteredSlots] = useState(currentSlots);
   const [releasingSlots, setReleasingSlots] = useState<Record<string, boolean>>({});
@@ -952,6 +954,7 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
 
   return (
     <div className="dashboard-module dashboard-module-panel live-session-card flex h-full min-h-0 flex-col overflow-hidden rounded-lg p-3 sm:p-4">
+      {activeTab === 'live' && <QrLiveSessions onCount={setQrSessionCount} />}
       {currentSlots?.available ? (
         <div className="flex h-full items-center justify-center">
           <HashLoader />
@@ -965,7 +968,7 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                   {activeTab === 'live' ? 'Live Sessions' : 'Session History'}
                 </span>
                 <span className="live-session-count">
-                  {activeTab === 'live' ? filteredSlots.length : filteredHistoryBookings.length}
+                  {activeTab === 'live' ? filteredSlots.length + qrSessionCount : filteredHistoryBookings.length}
                 </span>
               </div>
               <div className="dashboard-module-tab-group live-session-tabs ml-2 flex items-center gap-1 rounded-md p-0.5">
@@ -1195,7 +1198,7 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
               ) : (
                 <div className="dashboard-module-empty flex h-full flex-col items-center justify-center py-8">
                   <Search className="h-8 w-8 text-slate-600" />
-                  <p className="text-sm font-medium">No active slots found</p>
+                  <p className="text-sm font-medium">{qrSessionCount > 0 ? 'No desk or app sessions found' : 'No active slots found'}</p>
                   <p className="text-xs">{isConnected ? "Waiting for new sessions..." : "Check connection"}</p>
                 </div>
               )}
@@ -1753,7 +1756,7 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                           className="flex flex-col items-center space-y-2"
                         >
                           <Search className="h-7 w-7 text-slate-600 sm:h-8 sm:w-8" />
-                          <p className="text-xs sm:text-sm font-medium">No active slots found</p>
+                          <p className="text-xs sm:text-sm font-medium">{qrSessionCount > 0 ? 'No desk or app sessions found' : 'No active slots found'}</p>
                           <p className="text-xs">
                             {isConnected ? "Waiting for new sessions..." : "Check connection"}
                           </p>
