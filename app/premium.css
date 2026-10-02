@@ -2834,3 +2834,28 @@ h6 {
   font-size: 10px;
   font-weight: 500;
 }
+
+/* Stable widths keep all booking sources aligned while the middle columns scroll. */
+.operations-dashboard .live-session-data-table {
+  table-layout: fixed;
+  min-width: 1070px;
+}
+.operations-dashboard .live-session-data-table th:first-child,
+.operations-dashboard .live-session-data-table td:first-child {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  background: #18181b;
+  border-right: 1px solid #343439;
+  overflow: hidden;
+}
+.operations-dashboard .live-session-data-table th:first-child {
+  background: #232327;
+  z-index: 3;
+}
+.operations-dashboard .live-session-data-table td:nth-child(2) {
+  overflow: hidden;
+}
+.operations-dashboard .live-session-data-table td:nth-child(3) {
+  white-space: nowrap;
+}

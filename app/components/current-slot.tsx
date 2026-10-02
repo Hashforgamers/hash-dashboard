@@ -1216,7 +1216,11 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
 
             <div className="hidden h-full lg:block">
             <div className="dashboard-table-wrap h-full">
-              <table ref={tableRef} className="dashboard-module-table min-w-[760px] max-md:min-w-[680px] w-full divide-y">
+              <table ref={tableRef} className="dashboard-module-table live-session-data-table w-full divide-y">
+                <colgroup>
+                  <col style={{width:220}}/><col style={{width:240}}/><col style={{width:160}}/>
+                  <col style={{width:160}}/><col style={{width:170}}/><col style={{width:120}}/>
+                </colgroup>
                 <thead className="dashboard-module-table-head sticky top-0 z-10">
                   <tr>
                     {['Customer', 'Console', 'Schedule', 'Elapsed', 'Overtime / Due', 'Action'].map((heading) => (
