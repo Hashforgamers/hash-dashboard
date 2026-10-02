@@ -2835,7 +2835,7 @@ h6 {
   font-weight: 500;
 }
 
-/* Session columns scroll together; pinned cells must not cover adjacent data. */
+/* Session details scroll while the action stays visible at the right edge. */
 .operations-dashboard .live-session-data-table {
   table-layout: fixed;
   min-width: 1070px;
@@ -2880,6 +2880,14 @@ h6 {
 }
 .operations-dashboard .live-session-data-table th:last-child,
 .operations-dashboard .live-session-data-table td:last-child {
-  position: static;
-  border-left: 0;
+  position: sticky;
+  right: 0;
+  z-index: 2;
+  background: #19191c;
+  border-left: 1px solid hsl(0 0% 100% / 0.1);
+  box-shadow: -6px 0 10px -8px #000;
+}
+.operations-dashboard .live-session-data-table th:last-child {
+  z-index: 3;
+  background: #232327;
 }
