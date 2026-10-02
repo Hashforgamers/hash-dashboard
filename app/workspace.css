@@ -301,3 +301,25 @@ svg[data-search-icon],
 .operations-dashboard .dashboard-quick-toolbar { gap: 8px; }
 .operations-dashboard .dashboard-slab-title { font-size: 13px; font-weight: 600; }
 .operations-dashboard .dashboard-quick-context { font-size: 12px; }
+
+/* Account settings share one compact panel and control scale. */
+.workspace-ui .account-scope .account-panel { border-radius: 8px; box-shadow: none; }
+.workspace-ui .account-scope .account-panel > [data-ui-card-header] { padding: 14px 16px 10px; }
+.workspace-ui .account-scope .account-panel > [data-ui-card-content] { padding: 0 16px 14px; }
+.workspace-ui .account-scope .account-section-title { font-size: 15px; line-height: 1.4; font-weight: 600; }
+.workspace-ui .account-scope .account-description { font-size: 12px; line-height: 1.4; margin-top: 4px; }
+.workspace-ui .account-scope .account-nav-item { min-height: 34px; height: auto; padding: 7px 9px; font-size: 12px; }
+.workspace-ui .account-scope nav.space-y-2 > * + * { margin-top: 3px; }
+.workspace-ui .account-scope input:not([type=checkbox]):not([type=radio]):not([type=file]),
+.workspace-ui .account-scope select { min-height: 34px; height: 34px; font-size: 13px; }
+.workspace-ui .account-scope textarea { font-size: 13px; min-height: 80px; }
+.workspace-ui .account-scope label { font-size: 12px; }
+.workspace-ui .account-scope .account-gallery-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 180px)); gap: 10px; }
+.workspace-ui .account-scope .account-gallery-grid > * { aspect-ratio: 4 / 3; }
+.workspace-ui .account-scope .account-gallery-grid img { width: 100%; height: 100%; object-fit: cover; }
+@media (min-width: 1024px) {
+ .workspace-ui .account-scope .account-layout { grid-template-columns: 220px minmax(0, 1fr); gap: 12px; }
+}
+@media (max-width: 480px) {
+ .workspace-ui .account-scope .account-gallery-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}

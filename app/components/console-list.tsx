@@ -32,6 +32,7 @@ import {
   RotateCcw,
 } from "lucide-react";
 import { motion } from "framer-motion";
+import { useSearchParams } from "next/navigation";
 import { useState, useEffect, useMemo } from "react";
 import axios from "axios";
 import { jwtDecode } from "jwt-decode";
@@ -64,7 +65,10 @@ export function ConsoleList({ onEdit, refreshKey = 0 }: ConsoleListProps) {
     requestAnimationFrame(() => document.getElementById(`console-${id}-${showHardware ? "back" : "front"}-button`)?.focus());
   };
 
-  const [activeGroup, setActiveGroup] = useState<string>("all");
+  const [activeGroup, setActiveGroup] = useState<string>("");
+  const searchParams = useSearchParams();
+  const requestedGroup = searchParams.get("type");
+  useEffect(() => { setActiveGroup(requestedGroup || ""); }, [requestedGroup]);
 
   const loadConsoles = async (currentVendorId: number, force = false) => {
     if (!currentVendorId) return;
@@ -288,28 +292,13 @@ export function ConsoleList({ onEdit, refreshKey = 0 }: ConsoleListProps) {
   }
 
 
-  const visibleGroups = activeGroup === "all"
-    ? groupKeys.filter((group) => (groupedConsoles[group] || []).length > 0)
-    : groupKeys.includes(activeGroup)
-      ? [activeGroup]
-      : [];
+  const selectedGroup = groupKeys.includes(activeGroup) ? activeGroup : groupKeys[0];
+  const visibleGroups = selectedGroup ? [selectedGroup] : [];
 
   return (
     <div className={`${styles.root} dashboard-module dashboard-typography flex h-full min-h-0 flex-col gap-3 overflow-hidden`}>
       <div className={styles.filters}>
         <div className="flex flex-wrap gap-2">
-          <button
-            type="button"
-            onClick={() => setActiveGroup("all")}
-            aria-pressed={activeGroup === "all"}
-            className={`rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors sm:text-sm ${
-              activeGroup === "all"
-                ? "border-cyan-400/55 bg-cyan-500/10 text-slate-900 dark:bg-cyan-500/15 dark:text-cyan-200"
-                : "border-slate-300 bg-white/80 text-slate-700 hover:bg-slate-100 dark:border-slate-600/70 dark:bg-slate-800/60 dark:text-slate-300 dark:hover:bg-slate-700/70"
-            }`}
-          >
-            All ({consolelistdata.length})
-          </button>
           {groupKeys.map((group) => {
             const Icon = typeMeta[group]?.icon || Monitor;
             const count = (groupedConsoles[group] || []).length;
@@ -318,9 +307,9 @@ export function ConsoleList({ onEdit, refreshKey = 0 }: ConsoleListProps) {
                 key={group}
                 type="button"
                 onClick={() => setActiveGroup(group)}
-                aria-pressed={activeGroup === group}
+                aria-pressed={selectedGroup === group}
                 className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors sm:text-sm ${
-                  activeGroup === group
+                  selectedGroup === group
                     ? "border-cyan-400/55 bg-cyan-500/10 text-slate-900 dark:bg-cyan-500/15 dark:text-cyan-200"
                     : "border-slate-300 bg-white/80 text-slate-700 hover:bg-slate-100 dark:border-slate-600/70 dark:bg-slate-800/60 dark:text-slate-300 dark:hover:bg-slate-700/70"
                 }`}

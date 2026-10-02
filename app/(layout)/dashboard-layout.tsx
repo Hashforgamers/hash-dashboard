@@ -32,7 +32,7 @@ export function DashboardLayout({ children, contentScroll = "page" }: DashboardL
   const { activeStaff } = useAccess()
   const { isLocked, status: subscriptionStatus, loading: subscriptionLoading, refreshStatus } = useSubscription()
   const { isConnected } = useSocket()
-  const { vendorId, consoles, refreshLanding, refreshConsoles } = useDashboardData()
+  const { vendorId, consoles, consolesLoading, refreshLanding, refreshConsoles } = useDashboardData()
   const hasAccess = activeStaff ? canAccessPath(pathname, activeStaff.permissions) : true
   const subscriptionExempt = ["/subscription", "/select-cafe"]
   const featurePaths: Record<string,string> = {"/console-pricing":"pricing","/cafe-wallet":"cafe_wallet","/pass":"passes","/manage-extraservice":"food","/transaction":"analytics","/know-your-gamers":"analytics","/tournaments":"tournaments","/employee-access":"staff"}
@@ -45,6 +45,15 @@ export function DashboardLayout({ children, contentScroll = "page" }: DashboardL
   const showSidebar = !isSelectCafeRoute
   const showMobileHeader = !isSelectCafeRoute
   const showGlobalRibbon = !isSelectCafeRoute
+
+  useEffect(() => {
+    if (!vendorId || !showGlobalRibbon) return
+    const refresh = () => { if (document.visibilityState === "visible") void refreshConsoles() }
+    refresh()
+    const timer = window.setInterval(refresh, 60000)
+    window.addEventListener("focus", refresh)
+    return () => { window.clearInterval(timer); window.removeEventListener("focus", refresh) }
+  }, [vendorId, showGlobalRibbon, refreshConsoles])
 
   const platforms = useMemo(() => {
     const source = Array.isArray(consoles) ? consoles : []
@@ -285,10 +294,10 @@ export function DashboardLayout({ children, contentScroll = "page" }: DashboardL
                     <span className="inline-flex items-center gap-1 rounded-md border border-border px-1.5 py-0.5">
                       {nowISTDateText}
                     </span>
-                    <span className="inline-flex items-center gap-1 rounded-md border border-border px-1.5 py-0.5">
+                    <button type="button" onClick={()=>router.push("/account")} title="Open account settings" className="inline-flex items-center gap-1 rounded-md px-2 py-1 hover:bg-muted">
                       <User className="h-3.5 w-3.5 text-[#0a84ff]" />
                       {activeStaff?.name || "Owner"}
-                    </span>
+                    </button>
                     <span
                       className={`inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 ${
                         isConnected
@@ -297,19 +306,20 @@ export function DashboardLayout({ children, contentScroll = "page" }: DashboardL
                       }`}
                     >
                       {isConnected ? <Wifi className="h-3.5 w-3.5" /> : <WifiOff className="h-3.5 w-3.5" />}
-                      {isConnected ? "Live" : "Syncing"}
+                      {isConnected ? "Connected" : "Reconnecting…"}
                     </span>
+                    {consolesLoading && <span role="status" className="text-muted-foreground">Loading consoles…</span>}
                     {platforms.map((platform) => {
                       const PlatformIcon = platform.icon
                       return (
-                        <span
+                        <button type="button" onClick={()=>router.push(`/gaming?type=${encodeURIComponent(platform.type)}`)}
                           key={`global-ribbon-${platform.type}`}
                           className="inline-flex items-center gap-1 rounded-md border border-border px-1.5 py-0.5"
-                          title={`${platform.name}: ${platform.used}/${platform.total}`}
+                          title={`Manage ${platform.name} · ${platform.total} consoles`} aria-label={`Manage ${platform.name}, ${platform.total} consoles`}
                         >
                           <PlatformIcon className="h-3.5 w-3.5" style={{ color: platform.color }} />
-                          <span>{platform.used}/{platform.total}</span>
-                        </span>
+                          <span>{platform.name}</span><span className="font-medium">{platform.total}</span>
+                        </button>
                       )
                     })}
                   </div>
