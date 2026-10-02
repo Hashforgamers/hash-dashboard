@@ -1571,7 +1571,7 @@ const ToggleSwitch = ({
   return (
     <div className="account-content min-w-0 text-foreground">
       <div className="w-full space-y-3">
-        <CafeRequests vendorId={vendorId} onDocuments={()=>setPage("Verified Documents")} />
+        <CafeRequests notificationsOnly vendorId={vendorId} onDocuments={()=>setPage("Verified Documents")} />
         <div className="account-layout grid items-start gap-3">
           {/* Left Sidebar */}
           <motion.div
@@ -1728,6 +1728,7 @@ const ToggleSwitch = ({
                     { icon: BellRing, label: "Notification Preferences" },
                     { icon: Wallet, label: "Subscription Details" },
                     { icon: Calendar, label: "Settlement Report" },
+                    { icon: BellRing, label: "Report an issue" },
                   ].map((item, index) => (
                     <motion.div
                       key={item.label}
@@ -1764,6 +1765,7 @@ const ToggleSwitch = ({
             transition={{ duration: 0.3, delay: 0.1 }}
             className="min-w-0 space-y-3"
           >
+            {page === "Report an issue" && <CafeRequests vendorId={vendorId} onDocuments={()=>setPage("Verified Documents")} />}
             <form className="space-y-3">
 
  {page === "Cafe Gallery" && (
@@ -1772,7 +1774,7 @@ const ToggleSwitch = ({
       <CardHeader className="pb-4">
         <CardTitle className="account-section-title flex items-center gap-2">Cafe Gallery</CardTitle>
         <CardDescription className="account-description">
-          Showcase your cafe's ambiance and offerings
+          Photos shown on your cafe profile
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -1789,7 +1791,7 @@ const ToggleSwitch = ({
           </div>
         )}
         
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="account-gallery-grid">
           {cafeImages.map((image, index) => (
             <div
               key={index}
