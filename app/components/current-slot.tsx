@@ -490,6 +490,14 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
   
   const [currentSlots, setCurrentSlots] = useState(initialSlots || [])
   const [qrSessionCount, setQrSessionCount] = useState(0);
+  const [qrTableLayout, setQrTableLayout] = useState(false);
+  useEffect(() => {
+    const media = window.matchMedia('(min-width: 1024px)');
+    const update = () => setQrTableLayout(media.matches);
+    update();
+    media.addEventListener('change', update);
+    return () => media.removeEventListener('change', update);
+  }, []);
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredSlots, setFilteredSlots] = useState(currentSlots);
   const [releasingSlots, setReleasingSlots] = useState<Record<string, boolean>>({});
@@ -954,7 +962,6 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
 
   return (
     <div className="dashboard-module dashboard-module-panel live-session-card flex h-full min-h-0 flex-col overflow-hidden rounded-lg p-3 sm:p-4">
-      {activeTab === 'live' && <QrLiveSessions onCount={setQrSessionCount} />}
       {currentSlots?.available ? (
         <div className="flex h-full items-center justify-center">
           <HashLoader />
@@ -1031,6 +1038,7 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
             className="dashboard-table-shell live-session-table-shell flex-1 min-h-0 backdrop-blur-sm"
           >
             <div className="lg:hidden h-full overflow-y-auto p-2">
+              {!qrTableLayout && <QrLiveSessions search={searchQuery} onCount={setQrSessionCount} />}
               {Array.isArray(filteredSlots) && filteredSlots.length > 0 ? (
                 <div className="space-y-2">
                   {filteredSlots.map((booking) => {
@@ -1195,10 +1203,10 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                     );
                   })}
                 </div>
-              ) : (
+              ) : qrSessionCount > 0 ? null : (
                 <div className="dashboard-module-empty flex h-full flex-col items-center justify-center py-8">
                   <Search className="h-8 w-8 text-slate-600" />
-                  <p className="text-sm font-medium">{qrSessionCount > 0 ? 'No desk or app sessions found' : 'No active slots found'}</p>
+                  <p className="text-sm font-medium">No active sessions found</p>
                   <p className="text-xs">{isConnected ? "Waiting for new sessions..." : "Check connection"}</p>
                 </div>
               )}
@@ -1221,6 +1229,7 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                   </tr>
                 </thead>
                 <tbody className="dashboard-module-table-body divide-y">
+                  {qrTableLayout && <QrLiveSessions layout="rows" search={searchQuery} onCount={setQrSessionCount} />}
                   {Array.isArray(filteredSlots) && filteredSlots.length > 0 ? (
                     <AnimatePresence mode="popLayout">
                       {filteredSlots.map((booking, index) => {
@@ -1747,7 +1756,7 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                         );
                       })}
                     </AnimatePresence>
-                  ) : (
+                  ) : qrSessionCount > 0 ? null : (
                     <tr>
                       <td colSpan={6} className="px-4 py-10 text-center text-slate-400">
                         <motion.div
@@ -1756,7 +1765,7 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                           className="flex flex-col items-center space-y-2"
                         >
                           <Search className="h-7 w-7 text-slate-600 sm:h-8 sm:w-8" />
-                          <p className="text-xs sm:text-sm font-medium">{qrSessionCount > 0 ? 'No desk or app sessions found' : 'No active slots found'}</p>
+                          <p className="text-xs sm:text-sm font-medium">No active sessions found</p>
                           <p className="text-xs">
                             {isConnected ? "Waiting for new sessions..." : "Check connection"}
                           </p>
