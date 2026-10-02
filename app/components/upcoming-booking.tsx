@@ -1084,8 +1084,6 @@ export function UpcomingBookings({
                     const paymentBadgeClass = isPayAtCafe
                       ? "border-amber-400/40 bg-amber-500/15 text-amber-200"
                       : "border-emerald-400/40 bg-emerald-500/15 text-emerald-200";
-                    const bookingPhone = getBookingPhone(booking);
-                    const bookingEmail = getBookingEmail(booking);
                     return (
                     <motion.div
                       key={booking.bookingId}
@@ -1097,10 +1095,10 @@ export function UpcomingBookings({
                         duration: 0.3, 
                         delay: index * 0.02 
                       }}
-                      className="dashboard-module-card rounded-lg p-2 transition-colors duration-200 hover:border-white/20 sm:p-2.5"
+                      className="dashboard-module-card rounded-xl p-3 transition-colors duration-200 hover:border-white/20"
                     >
-                      <div className="space-y-1.5">
-                        {/* Compact identity row */}
+                      <div className="space-y-3">
+                        {/* Contacts are available in booking details. */}
                         <div className="flex items-start justify-between gap-2">
                           <div className="min-w-0 flex-1">
                             <div className="flex min-w-0 items-center gap-1.5">
@@ -1111,8 +1109,9 @@ export function UpcomingBookings({
                                   e.stopPropagation();
                                   setContactOverlay({ open: true, booking });
                                 }}
-                                className="truncate dash-title !text-[12px] sm:!text-[13px] text-left underline decoration-dotted underline-offset-2 hover:text-cyan-200 transition-colors cursor-pointer"
-                                title="View booking details and manage slots"
+                                className="truncate text-left text-sm font-semibold text-slate-100 transition-colors hover:text-cyan-300 focus-visible:rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-cyan-300"
+                                aria-label={`View contact and booking details for ${booking.username || 'Guest User'}`}
+                                title="View phone, email and booking details"
                               >
                                 {booking.username || "Guest User"}
                               </button>
@@ -1122,22 +1121,10 @@ export function UpcomingBookings({
                                 </span>
                               )}
                             </div>
-                            <div className="mt-1 flex items-center gap-1.5 text-[11px] text-slate-300">
+                            <div className="mt-1.5 flex items-center gap-1.5 text-xs text-slate-400">
                               <Clock className="h-3 w-3 shrink-0 text-slate-400" />
                               <span className="truncate">{booking.time || "No time set"}</span>
                             </div>
-                            {bookingPhone && (
-                              <div className="mt-1 flex items-center gap-1.5 text-[11px] text-slate-300">
-                                <Phone className="h-3 w-3 shrink-0 text-slate-400" />
-                                <span className="truncate">{bookingPhone}</span>
-                              </div>
-                            )}
-                            {bookingEmail && (
-                              <div className="mt-1 flex items-center gap-1.5 text-[11px] text-slate-300">
-                                <Mail className="h-3 w-3 shrink-0 text-slate-400" />
-                                <span className="truncate">{bookingEmail}</span>
-                              </div>
-                            )}
                           </div>
 
                           <div className="flex max-w-[48%] shrink-0 flex-wrap items-center justify-end gap-1 sm:max-w-none sm:flex-nowrap">
@@ -1249,7 +1236,7 @@ export function UpcomingBookings({
                           </div>
                         )}
 
-                        <div className="flex flex-wrap items-center justify-end gap-1.5">
+                        <div className="flex flex-wrap items-center justify-end gap-2 border-t border-white/5 pt-2">
                           <motion.button
                             type="button"
                             whileHover={{ scale: 1.02 }}
