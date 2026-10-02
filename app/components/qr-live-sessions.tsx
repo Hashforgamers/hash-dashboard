@@ -63,11 +63,11 @@ export default function QrLiveSessions({onCount,layout="cards",search=""}:{onCou
         const start = s.started_at ? Date.parse(s.started_at) : NaN;
         const elapsed = Number.isFinite(start) ? Math.max(0, Math.floor((now-start)/1000)) : 0;
         const progress = s.minutes>0 ? elapsed/(s.minutes*60)*100 : 0;
-        const scheduleTime = (value:string|null) => value ? new Date(value).toLocaleTimeString('en-IN',{timeZone:'Asia/Kolkata',hour:'numeric',minute:'2-digit'}) : 'Starting…';
+        const scheduleTime = (value:string|null) => value ? new Date(value).toLocaleTimeString('en-US',{timeZone:'Asia/Kolkata',hour:'numeric',minute:'2-digit'}) : 'Starting…';
         const cells=<>
           <td className="px-3 py-3 md:px-4"><div className="flex items-center gap-2"><User className="h-4 w-4 shrink-0 text-slate-400"/><div><p className="text-sm font-semibold text-cyan-300">{s.gamer_name}</p><span className="text-xs text-slate-400">Self QR · {s.kind==='owner_credit'?'Owner-approved':'Cafe wallet'}</span></div></div></td>
           <td className="px-3 py-3 md:px-4"><div className="flex items-center gap-2 text-sm"><Monitor className="h-4 w-4 text-cyan-300"/>PC {s.console_number}</div></td>
-          <td className="px-3 py-3 md:px-4"><div className="space-y-1 text-xs"><p><span className="text-slate-400">Start:</span> {scheduleTime(s.started_at)}</p><p><span className="text-slate-400">End:</span> {scheduleTime(s.ends_at)}</p></div></td>
+          <td className="px-3 py-3 md:px-4"><div className="space-y-1 whitespace-nowrap text-xs"><p><span className="text-slate-400">Start:</span> {scheduleTime(s.started_at)}</p><p><span className="text-slate-400">End:</span> {scheduleTime(s.ends_at)}</p></div></td>
           <td className="px-3 py-3 md:px-4">{s.state==='reserved'?<span className="text-xs text-slate-400">Starting…</span>:<LiveSessionTiming elapsed={elapsed} remaining={remaining} progress={progress}/>}</td>
           <td className="px-3 py-3 md:px-4"><div className="space-y-1 text-xs"><p className={s.payment_due>0?'font-semibold text-amber-300':'text-emerald-300'}>{s.payment_due>0?`${rupees(s.payment_due)} due`:'Paid'}</p><p className="text-slate-400">{rupees(s.amount)} · {s.minutes} min</p></div></td>
           <td className="px-3 py-3 md:px-4 text-xs">
