@@ -3,6 +3,7 @@ import { creditAuthHeaders } from "@/lib/credit-auth";
 import { useState, useEffect, useMemo, useRef } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
+import { LiveSessionDue } from "./live-session-due";
 import { Search, Gamepad2, Monitor, Headset, Loader2, RefreshCw, UtensilsCrossed, Plus, ChevronDown, ChevronUp, Phone, Mail } from "lucide-react";
 import { jwtDecode } from "jwt-decode";
 import { FaCheck, FaPowerOff } from 'react-icons/fa';
@@ -1385,12 +1386,7 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                                         : ""}
                                     </div>
                                   )}
-                                  {bookingPhone && (
-                                    <div className="mt-0.5 inline-flex items-center gap-1 text-xs text-slate-400">
-                                      <Phone className="h-3 w-3" />
-                                      <span className="truncate">{bookingPhone}</span>
-                                    </div>
-                                  )}
+                                  <div className="live-session-customer-meta text-xs text-slate-400">Regular booking</div>
                                 </div>
                                 
                                 {/* ✅ ENHANCED: Conditional rendering of meal/add food buttons */}
@@ -1633,22 +1629,7 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
 
                             {/* Extra Time cell - unchanged */}
                             <td className="px-3 py-3 md:px-4">
-                              <div className="flex flex-col gap-1">
-                                {hasExtraTime ? (
-                                  <div className="text-xs font-semibold text-red-400 sm:text-sm">
-                                    {formatTime(timer.extraTime)}
-                                  </div>
-                                ) : (
-                                  <span className="text-xs text-emerald-400 sm:text-sm">
-                                    00:00:00
-                                  </span>
-                                )}
-                                {hasOutstandingDue && (
-                                  <span className="text-[11px] font-semibold text-amber-300 sm:text-xs">
-                                    To be paid: ₹{outstandingDue.toFixed(2)}
-                                  </span>
-                                )}
-                              </div>
+                              <LiveSessionDue overtime={timer.extraTime || 0} amountDue={hasOutstandingDue ? outstandingDue : 0} />
                             </td>
 
                             {/* Action cell - unchanged */}

@@ -2891,3 +2891,33 @@ h6 {
   z-index: 3;
   background: #232327;
 }
+
+/* One typography and customer treatment for every live booking source. */
+.operations-dashboard .live-session-data-table .live-session-customer-name {
+  font-family: var(--font-ui);
+  color: #f1f5f9;
+  background: transparent;
+  padding: 0;
+  border: 0;
+  box-shadow: none;
+  user-select: none;
+}
+.operations-dashboard .live-session-data-table .live-session-customer-name:hover {
+  color: #fff;
+  background: transparent;
+}
+.operations-dashboard .live-session-data-table td :is(p, span, div, button) {
+  font-family: var(--font-ui);
+}
+.operations-dashboard .live-session-data-table .live-session-due {
+  font-size: 12px;
+  line-height: 1.5;
+}
+.operations-dashboard .live-session-data-table td:first-child > div {
+  gap: 8px;
+}
+.operations-dashboard .live-session-data-table td:first-child > div > div:first-child {
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+}
