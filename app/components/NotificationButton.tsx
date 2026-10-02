@@ -1,6 +1,8 @@
 "use client"
 
 import React, { useState, useEffect, useCallback } from 'react'
+import {useAccess} from '@/app/context/AccessContext'
+import {cafeCall} from '@/lib/cafe-api'
 import { Bell } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -68,6 +70,7 @@ export function NotificationButton({
   onBookingAccepted,
   latestBookingEvent // ✅ NEW: Booking events passed from Dashboard
 }: NotificationButtonProps) {
+  const {selectedCafeId,activeStaff}=useAccess()
   const [isOpen, setIsOpen] = useState(false)
   const [unreadCount, setUnreadCount] = useState(0)
   const [connectionStatus, setConnectionStatus] = useState<'disconnected' | 'connected' | 'joined_room'>('disconnected')
@@ -75,6 +78,27 @@ export function NotificationButton({
   const [payAtCafeSummary, setPayAtCafeSummary] = useState<PayAtCafeQueueSummary | null>(null)
 
   const { socket, isConnected, joinVendor } = useSocket()
+
+
+  useEffect(() => {
+    setNotifications(prev=>prev.filter(n=>n.kind!=='cafe_continuation'))
+    if(!selectedCafeId||!activeStaff)return
+    let alive=true
+    const refresh=async()=>{
+      try {
+        const data=await cafeCall<{requests:{id:string;user_id:number;minutes:number;amount:number;expires_at:string}[]}>(`/${selectedCafeId}/sessions/live`)
+        if(!alive)return
+        const notices=data.requests.map(r=>({kind:'cafe_continuation',notification_id:`continuation-${r.id}`,vendorId:Number(selectedCafeId),
+          userId:r.user_id,minutes:r.minutes,amount:r.amount,expiresAt:r.expires_at}))
+        setNotifications(prev=>[...notices,...prev.filter(n=>n.kind!=='cafe_continuation')])
+      } catch { /* Live Sessions surfaces refresh errors; preserve existing notices offline. */ }
+    }
+    void refresh()
+    const changed=(payload:{vendor_id?:number})=>{if(payload.vendor_id===Number(selectedCafeId))void refresh()}
+    const poll=setInterval(()=>void refresh(),15000)
+    socket?.on('cafe_session_updated',changed);socket?.on('connect',refresh)
+    return()=>{alive=false;clearInterval(poll);socket?.off('cafe_session_updated',changed);socket?.off('connect',refresh)}
+  },[selectedCafeId,activeStaff?.id,socket])
 
   const normalizeId = (value: any) => {
     if (value === null || value === undefined) return ""
