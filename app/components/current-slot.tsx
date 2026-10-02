@@ -1,3 +1,5 @@
+import { LiveSessionTiming } from "./live-session-timing";
+import { creditAuthHeaders } from "@/lib/credit-auth";
 import { useState, useEffect, useMemo, useRef } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -455,7 +457,7 @@ const releaseSlot = async (consoleType: string, gameId: string, consoleId: strin
     console.log('🔄 Client: Calling release API for console:', consoleId);
     const response = await fetch(`${DASHBOARD_URL}/api/releaseDevice/consoleTypeId/${gameId}/console/${consoleId}/vendor/${vendorId}`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: creditAuthHeaders(),
       body: JSON.stringify({ bookingStats: {} }),
     });
     if (response.ok) {
@@ -1622,44 +1624,7 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
 
                             {/* Progress cell - enhanced */}
                             <td className="px-3 py-3 md:px-4">
-                              <div className="space-y-1.5">
-                                <div className="flex items-center justify-between gap-2">
-                                  <div className="text-xs font-semibold text-slate-100 sm:text-sm">
-                                    {formatTime(timer.elapsedTime)}
-                                  </div>
-                                  <span
-                                    className={`rounded-full border px-1.5 py-0.5 text-[10px] font-semibold sm:text-xs ${
-                                      hasExtraTime
-                                        ? "border-red-500/40 bg-red-500/10 text-red-300"
-                                        : progressPercent >= 90
-                                          ? "border-yellow-500/40 bg-yellow-500/10 text-yellow-300"
-                                          : "border-emerald-500/40 bg-emerald-500/10 text-emerald-300"
-                                    }`}
-                                  >
-                                    {progressPercent}%
-                                  </span>
-                                </div>
-                                <div className="h-1.5 w-24 overflow-hidden rounded-full bg-slate-700/90 sm:w-28">
-                                  <motion.div
-                                    className={`h-full ${
-                                      hasExtraTime
-                                        ? "bg-red-500"
-                                        : progress < 75
-                                          ? "bg-emerald-500"
-                                          : progress < 90
-                                            ? "bg-yellow-500"
-                                            : "bg-orange-500"
-                                    }`}
-                                    style={{ width: `${progress}%` }}
-                                    initial={{ width: 0 }}
-                                    animate={{ width: `${progress}%` }}
-                                    transition={{ duration: 0.5 }}
-                                  />
-                                </div>
-                                <div className={`text-xs ${hasExtraTime ? "text-red-300" : "text-slate-400"}`}>
-                                  {hasExtraTime ? 'Overtime' : `${formatTime(remainingTime)} left`}
-                                </div>
-                              </div>
+                              <LiveSessionTiming elapsed={timer.elapsedTime || 0} remaining={remainingTime} progress={progressPercent} overtime={hasExtraTime} />
                             </td>
 
                             {/* Extra Time cell - unchanged */}

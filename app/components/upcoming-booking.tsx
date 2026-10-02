@@ -649,9 +649,9 @@ export function UpcomingBookings({
   // Enhanced start session handler with debugging
   const start = (booking: any) => {
     const resolvedSystem = String(
-      booking?.consoleType ||
-      booking?.system ||
       booking?.game ||
+      booking?.system ||
+      booking?.consoleType ||
       ""
     ).trim();
     const resolvedGameId = String(
@@ -776,19 +776,19 @@ export function UpcomingBookings({
       try {
         if (bookingIds.length > 1) {
           await api.post(url, JSON.stringify(payload), {
-            headers: { "Content-Type": "application/json" },
+            headers: creditAuthHeaders(),
             timeoutMs: 12_000,
             retries: 0,
           });
         } else {
           if (payload) {
             await api.post(url, JSON.stringify(payload), {
-              headers: { "Content-Type": "application/json" },
+              headers: creditAuthHeaders(),
               timeoutMs: 12_000,
               retries: 0,
             });
           } else {
-            await api.post(url, undefined, { timeoutMs: 12_000, retries: 0 });
+            await api.post(url, undefined, { headers: creditAuthHeaders(), timeoutMs: 12_000, retries: 0 });
           }
         }
 

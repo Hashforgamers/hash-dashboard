@@ -1,4 +1,6 @@
 'use client';
+import { LiveSessionTiming } from './live-session-timing';
+import { Monitor, Power, User } from 'lucide-react';
 import {useCallback, useEffect, useRef, useState} from 'react';
 import {useAccess} from '@/app/context/AccessContext';
 import {useSocket} from '@/app/context/SocketContext';
@@ -6,7 +8,7 @@ import {cafeCall, rupees} from '@/lib/cafe-api';
 
 type Request = {id:string;parent_id:string;minutes:number;amount:number;expires_at:string;email_delivery?:{sent:boolean;error:string|null}};
 type Session = {id:string;kind:string;state:string;gamer_name:string;console_number:number;
-  ends_at:string|null;payment_due:number;amount:number;minutes:number;continuation_request:Request|null};
+  started_at:string|null;ends_at:string|null;payment_due:number;amount:number;minutes:number;continuation_request:Request|null};
 type Snapshot = {items:Session[];requests:Request[]};
 
 export default function QrLiveSessions({onCount,layout="cards",search=""}:{onCount?:(count:number)=>void;layout?:"cards"|"rows";search?:string}) {
@@ -58,13 +60,17 @@ export default function QrLiveSessions({onCount,layout="cards",search=""}:{onCou
         const remaining=s.ends_at?Math.max(0,Math.ceil((Date.parse(s.ends_at)-now)/1000)):0;
         const request=s.continuation_request;
         const playing=s.state==='active'&&remaining>0;
+        const start = s.started_at ? Date.parse(s.started_at) : NaN;
+        const elapsed = Number.isFinite(start) ? Math.max(0, Math.floor((now-start)/1000)) : 0;
+        const progress = s.minutes>0 ? elapsed/(s.minutes*60)*100 : 0;
+        const scheduleTime = (value:string|null) => value ? new Date(value).toLocaleTimeString('en-IN',{timeZone:'Asia/Kolkata',hour:'numeric',minute:'2-digit'}) : 'Starting…';
         const cells=<>
-          <td className="px-3 py-3"><p className="font-semibold text-slate-100">{s.gamer_name}</p><span className="text-xs text-cyan-300">Self QR</span></td>
-          <td className="px-3 py-3 text-sm">PC {s.console_number}</td>
-          <td className="px-3 py-3 text-xs"><p>{s.minutes} min · {rupees(s.amount)}</p><p className="text-slate-400">{s.kind==='owner_credit'?'Owner-approved':'Cafe wallet'}</p></td>
-          <td className="px-3 py-3 text-sm tabular-nums">{s.state==='reserved'?'Starting…':playing?`${Math.floor(remaining/60)}m ${remaining%60}s left`:'Play stopped'}{playing&&remaining<=300&&<p className="text-xs text-amber-300">Time ends soon</p>}</td>
-          <td className="px-3 py-3 text-sm">{s.payment_due>0?<span className="text-amber-300">{rupees(s.payment_due)} due</span>:<span className="text-emerald-300">Paid</span>}</td>
-          <td className="px-3 py-3 text-xs">
+          <td className="px-3 py-3 md:px-4"><div className="flex items-center gap-2"><User className="h-4 w-4 shrink-0 text-slate-400"/><div><p className="text-sm font-semibold text-cyan-300">{s.gamer_name}</p><span className="text-xs text-slate-400">Self QR · {s.kind==='owner_credit'?'Owner-approved':'Cafe wallet'}</span></div></div></td>
+          <td className="px-3 py-3 md:px-4"><div className="flex items-center gap-2 text-sm"><Monitor className="h-4 w-4 text-cyan-300"/>PC {s.console_number}</div></td>
+          <td className="px-3 py-3 md:px-4"><div className="space-y-1 text-xs"><p><span className="text-slate-400">Start:</span> {scheduleTime(s.started_at)}</p><p><span className="text-slate-400">End:</span> {scheduleTime(s.ends_at)}</p></div></td>
+          <td className="px-3 py-3 md:px-4">{s.state==='reserved'?<span className="text-xs text-slate-400">Starting…</span>:<LiveSessionTiming elapsed={elapsed} remaining={remaining} progress={progress}/>}</td>
+          <td className="px-3 py-3 md:px-4"><div className="space-y-1 text-xs"><p className={s.payment_due>0?'font-semibold text-amber-300':'text-emerald-300'}>{s.payment_due>0?`${rupees(s.payment_due)} due`:'Paid'}</p><p className="text-slate-400">{rupees(s.amount)} · {s.minutes} min</p></div></td>
+          <td className="px-3 py-3 md:px-4 text-xs">
           {request&&<div className="mt-2 border-t pt-2"><p>Request: {request.minutes} min · {rupees(request.amount)} payable after play</p><p>Expires {new Date(request.expires_at).toLocaleTimeString()}</p>
             {activeStaff.role==='owner'?<div className="mt-1 flex gap-2">
               <button className="rounded border px-2 py-1 disabled:opacity-40" disabled={busy||playing||Date.parse(request.expires_at)<=now}
@@ -73,8 +79,8 @@ export default function QrLiveSessions({onCount,layout="cards",search=""}:{onCou
                 onClick={()=>action(`${prefix}/continuations/${request.id}/decision`,{decision:'reject'})}>Reject</button>
             </div>:<p>Owner approval required</p>}</div>}
           {['active','reserved'].includes(s.state)&&(activeStaff.role==='owner'||can('booking.manage'))&&<button
-            className="mt-2 rounded border px-2 py-1 disabled:opacity-40" disabled={busy}
-            onClick={()=>action(`${prefix}/sessions/${s.id}/end`,{},s.kind==='owner_credit'?'End play? The approved fixed-duration price remains payable.':'End this paid session? The paid fixed-duration price remains charged.')}>End session</button>}
+            className="inline-flex w-24 items-center justify-center gap-1 rounded-md bg-emerald-500 px-2 py-1 text-xs text-white transition-colors hover:bg-emerald-400 disabled:opacity-50" disabled={busy}
+            onClick={()=>action(`${prefix}/sessions/${s.id}/end`,{},s.kind==='owner_credit'?'End play? The approved fixed-duration price remains payable.':'End this paid session? The paid fixed-duration price remains charged.')}><Power className="h-3 w-3"/>Release</button>}
           {s.state==='completed'&&s.payment_due>0&&can('wallet.topup')&&<div className="mt-2 flex gap-2">{['cash','cafe_upi'].map(method=><button key={method}
             className="rounded border px-2 py-1 disabled:opacity-40" disabled={busy}
             onClick={()=>action(`${prefix}/sessions/${s.id}/settle`,{method,expected_amount:s.payment_due,idempotency_key:`session-settle-${s.id}-${method}`},`Confirm ${rupees(s.payment_due)} has actually been received via ${method==='cash'?'cash':'cafe UPI'}?`)}>Received {method==='cash'?'cash':'UPI'}</button>)}</div>}
