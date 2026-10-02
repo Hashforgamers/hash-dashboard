@@ -20,6 +20,7 @@ const TERMINAL_BOOKING_STATUSES = ["cancelled", "canceled", "rejected", "complet
 
 const MODULE_EVENT_MAP: Record<string, string> = {
   console_availability: "booking",
+  cafe_session_updated: "booking",
   booking: "booking",
   booking_updated: "booking",
   booking_queue_updated: "booking",

@@ -1,6 +1,6 @@
 'use client';
 import { LiveSessionTiming } from './live-session-timing';
-import { Monitor, Power, User } from 'lucide-react';
+import { Monitor, Power } from 'lucide-react';
 import {useCallback, useEffect, useRef, useState} from 'react';
 import {useAccess} from '@/app/context/AccessContext';
 import {useSocket} from '@/app/context/SocketContext';
@@ -65,7 +65,7 @@ export default function QrLiveSessions({onCount,layout="cards",search=""}:{onCou
         const progress = s.minutes>0 ? elapsed/(s.minutes*60)*100 : 0;
         const scheduleTime = (value:string|null) => value ? new Date(value).toLocaleTimeString('en-US',{timeZone:'Asia/Kolkata',hour:'numeric',minute:'2-digit'}) : 'Starting…';
         const cells=<>
-          <td className="px-3 py-3 md:px-4"><div className="flex items-center gap-2"><User className="h-4 w-4 shrink-0 text-slate-400"/><div><p className="text-sm font-semibold text-cyan-300">{s.gamer_name}</p><span className="text-xs text-slate-400">Self QR · {s.kind==='owner_credit'?'Owner-approved':'Cafe wallet'}</span></div></div></td>
+          <td className="px-3 py-3 md:px-4"><div className="flex items-center gap-2"><div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-500/20 text-xs font-semibold text-emerald-300">{(s.gamer_name||'Guest').slice(0,2).toUpperCase()}</div><div><p className="live-session-customer-name text-sm font-semibold text-cyan-300">{s.gamer_name}</p><span className="text-xs text-slate-400">Self QR · {s.kind==='owner_credit'?'Owner-approved':'Cafe wallet'}</span></div></div></td>
           <td className="px-3 py-3 md:px-4"><div className="flex items-center gap-2 text-sm"><Monitor className="h-4 w-4 text-cyan-300"/>PC {s.console_number}</div></td>
           <td className="px-3 py-3 md:px-4"><div className="space-y-1 whitespace-nowrap text-xs"><p><span className="text-slate-400">Start:</span> {scheduleTime(s.started_at)}</p><p><span className="text-slate-400">End:</span> {scheduleTime(s.ends_at)}</p></div></td>
           <td className="px-3 py-3 md:px-4">{s.state==='reserved'?<span className="text-xs text-slate-400">Starting…</span>:<LiveSessionTiming elapsed={elapsed} remaining={remaining} progress={progress}/>}</td>

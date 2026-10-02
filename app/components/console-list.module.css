@@ -34,3 +34,11 @@
 .flipButton { display: inline-flex; align-items: center; justify-content: space-between; gap: 8px; padding: 7px 0; color: hsl(var(--muted-foreground)); font-size: 11px; }
 .flipButton:hover { color: hsl(var(--foreground)); }
 @media (prefers-reduced-motion: reduce) { .flipInner { transition: none; } }
+
+/* Reserve equal space for names so hardware/status/action rows align. */
+.identity { min-height: 68px; align-items: flex-start; }
+.identity h3 { min-height: 36px; line-height: 18px !important; }
+.identity > span { flex-shrink: 0; }
+.frontFace .content { display: flex; flex-direction: column; min-height: 240px; }
+.actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); min-height: 72px; align-content: start; }
+.actions button { width: 100%; }
