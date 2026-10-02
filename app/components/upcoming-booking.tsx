@@ -7,7 +7,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { 
   Monitor, Play, X, Gamepad2, Calendar, Clock, User, Search,
   DollarSign, CalendarDays, Users, Timer, AlertCircle, Filter, Phone, Mail,
-  BadgeCheck, Calendar as CalendarIcon, ChevronDown, RefreshCw, UtensilsCrossed, Plus
+  BadgeCheck, Calendar as CalendarIcon, ChevronDown, RefreshCw, UtensilsCrossed, Plus, Copy, KeyRound
 } from "lucide-react";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faIndianRupeeSign } from '@fortawesome/free-solid-svg-icons'
@@ -252,7 +252,9 @@ const mergeConsecutiveBookings = (bookings: any[]) => {
     const grouped = (dateBookings as any[]).reduce((acc: any, booking) => {
       const userId = booking?.userId || 'unknown';
       const gameId = booking?.game_id || 'unknown';
-      const key = `${userId}_${gameId}`;
+      // Separate codes represent separate kiosk redemptions; keep their cards separate.
+      const accessCode = booking?.access_code || booking?.accessCode || booking?.bookingId;
+      const key = `${userId}_${gameId}_${accessCode}`;
       if (!acc[key]) acc[key] = [];
       acc[key].push(booking);
       return acc;
@@ -1190,6 +1192,35 @@ export function UpcomingBookings({
                               </button>
                             )}
                           </div>
+                        </div>
+
+                        <div className="flex items-center justify-between gap-2 rounded-md border border-cyan-400/25 bg-cyan-500/5 px-2 py-1.5">
+                          <div className="flex min-w-0 items-center gap-2">
+                            <KeyRound className="h-3.5 w-3.5 shrink-0 text-cyan-300" />
+                            <span className="text-[11px] text-slate-300">Access code</span>
+                            <span className="select-all font-mono text-sm font-semibold tracking-widest text-cyan-100">
+                              {booking.access_code || booking.accessCode || "Unavailable"}
+                            </span>
+                          </div>
+                          {(booking.access_code || booking.accessCode) && (
+                            <button
+                              type="button"
+                              aria-label="Copy gamer access code"
+                              title="Copy code to share with the gamer"
+                              className="rounded p-1 text-cyan-300 hover:bg-cyan-500/15 focus-visible:outline focus-visible:outline-2 focus-visible:outline-cyan-300"
+                              onClick={async (event) => {
+                                event.stopPropagation();
+                                try {
+                                  await navigator.clipboard.writeText(String(booking.access_code || booking.accessCode));
+                                  showToast("Access code copied. Share it with the gamer to start at the kiosk.");
+                                } catch {
+                                  showToast("Couldn't copy. Select the access code and copy it manually.", "error");
+                                }
+                              }}
+                            >
+                              <Copy className="h-3.5 w-3.5" />
+                            </button>
+                          )}
                         </div>
 
                         {squadEnabled && squadMemberNames.length > 0 && !expanded && (
