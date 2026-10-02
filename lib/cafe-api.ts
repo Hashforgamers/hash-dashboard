@@ -1,5 +1,9 @@
 import { DASHBOARD_URL } from '@/src/config/env';
 
+export class CafeApiError extends Error {
+  constructor(message:string, public readonly status:number) {super(message);this.name='CafeApiError';}
+}
+
 export async function cafeCall<T>(path: string, body?: unknown, method = body === undefined ? 'GET' : 'POST', token?: string): Promise<T> {
   const response = await fetch(`${DASHBOARD_URL}/api/cafe${path}`, {
     method, cache: 'no-store', signal: AbortSignal.timeout(15000), headers: {'Content-Type': 'application/json',
@@ -7,7 +11,7 @@ export async function cafeCall<T>(path: string, body?: unknown, method = body ==
     body: body === undefined ? undefined : JSON.stringify(body),
   });
   const result = await response.json();
-  if (!response.ok) throw new Error(result.error || 'Request failed');
+  if (!response.ok) throw new CafeApiError(result.error || 'Request failed',response.status);
   return result;
 }
 
