@@ -318,7 +318,7 @@ export function DashboardLayout({ children, contentScroll = "page" }: DashboardL
                           title={`Manage ${platform.name} · ${platform.total} consoles`} aria-label={`Manage ${platform.name}, ${platform.total} consoles`}
                         >
                           <PlatformIcon className="h-3.5 w-3.5" style={{ color: platform.color }} />
-                          <span>{platform.name}</span><span className="font-medium">{platform.total}</span>
+                          <span className="font-medium">{platform.total}</span>
                         </button>
                       )
                     })}
