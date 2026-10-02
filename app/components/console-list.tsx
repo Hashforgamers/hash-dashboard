@@ -1,6 +1,7 @@
 "use client";
 
 
+import { creditAuthHeaders } from "@/lib/credit-auth";
 import styles from "./console-list.module.css";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -219,7 +220,8 @@ export function ConsoleList({ onEdit, refreshKey = 0 }: ConsoleListProps) {
       setReleasingConsoleId(consoleItem.id);
       await axios.post(
         `${DASHBOARD_URL}/api/releaseDevice/consoleTypeId/${consoleItem.gameId}/console/${consoleItem.id}/vendor/${vendorId}`,
-        { bookingStats: {} }
+        { bookingStats: {} },
+        { headers: creditAuthHeaders() }
       );
 
       await loadConsoles(vendorId, true);
