@@ -13,6 +13,15 @@ export function CafeWalletWorkspace({embedded = false, view = "wallet"}: {embedd
   const [showShift,setShowShift] = useState(false);
   const [selectedGamer,setSelectedGamer] = useState<CafeGamer|null>(null);
   const [activitySearch,setActivitySearch] = useState('');
+  const [activityStaff,setActivityStaff] = useState('');
+  const [activityType,setActivityType] = useState('');
+  const [activityFrom,setActivityFrom] = useState('');
+  const [activityTo,setActivityTo] = useState('');
+  const [activityPage,setActivityPage] = useState(1);
+  const [activitySize,setActivitySize] = useState(25);
+  const [activityMeta,setActivityMeta] = useState({total:0,staff:[] as string[],actions:[] as string[]});
+  const activityRequest = useRef(0);
+  const [activityLoading,setActivityLoading] = useState(false);
   const [policy,setPolicy] = useState<CafePolicy|null>(null);
   const [shifts,setShifts] = useState<Shift[]>([]);
   const [userId,setUserId] = useState('');
@@ -46,7 +55,7 @@ export function CafeWalletWorkspace({embedded = false, view = "wallet"}: {embedd
       view!=='activity' ? cafeCall<CafePolicy>(`${prefix}/policy`) : Promise.resolve(null),
       view!=='settings' && can('wallet.topup') ? cafeCall<Shift[]>(`${prefix}/shifts`) : Promise.resolve([]),
       view==='wallet' && can('store.manage') ? cafeCall<typeof orders>(`${prefix}/food/orders`) : Promise.resolve([]),
-      view==='activity' && can('transactions.view') ? cafeCall<typeof audit>(`${prefix}/activity`) : Promise.resolve([]),
+      Promise.resolve([]),
     ]);
     if(contextRef.current !== currentContext) return;
     if(p.status==='rejected') throw p.reason;
@@ -54,7 +63,7 @@ export function CafeWalletWorkspace({embedded = false, view = "wallet"}: {embedd
     setPolicy(p.value); setShifts(s.value);
     if(p.value) {const methods=p.value.desk_methods;setMethod(current=>methods.includes(current)?current:(methods[0]||''));}
     if(o.status==='fulfilled') setOrders(o.value);
-    if(a.status==='fulfilled') setAudit(a.value);
+    if(view==='activity') await loadActivity();
     if([o,a].some(result=>result.status==='rejected')) throw new Error('Wallet and shifts loaded; some activity is unavailable.');
   }
   async function action(fn:()=>Promise<void>) {
@@ -66,7 +75,7 @@ export function CafeWalletWorkspace({embedded = false, view = "wallet"}: {embedd
   }
   useEffect(()=>{
     setWallet(null); setLoadedUser(''); setUserId(''); setSelectedGamer(null); setShifts([]); setPolicy(null);
-    setOrders([]); setAudit([]); setIdem(''); setAdjustKey('');
+    setOrders([]); setAudit([]); setActivityMeta({total:0,staff:[],actions:[]}); setActivityStaff(''); setActivityType(''); setActivityPage(1); setIdem(''); setAdjustKey('');
     setAmount(''); setPaymentReceived(false); setAdjustment(''); setReason(''); setClosingCash(''); setOpeningCash('0'); setMessage('');
     if(selectedCafeId && activeStaff) void refresh().catch(e=>{
       if(contextRef.current===currentContext) setMessage(e instanceof Error?e.message:'Unable to load cafe data');
@@ -95,7 +104,29 @@ export function CafeWalletWorkspace({embedded = false, view = "wallet"}: {embedd
     window.addEventListener('cafe-desk-updated',reload);
     return ()=>window.removeEventListener('cafe-desk-updated',reload);
   },[selectedCafeId,activeStaff?.id,view]);
-  const filteredAudit=audit.filter(row=>`${row.actor_name} ${activityLabel(row.action)} ${activityDetails(row.details)}`.toLowerCase().includes(activitySearch.toLowerCase()));
+  async function loadActivity() {
+    if(view!=='activity'||!selectedCafeId||!activeStaff||!can('transactions.view')) return;
+    const sequence=++activityRequest.current;
+    setActivityLoading(true);
+    const params=new URLSearchParams({page:String(activityPage),page_size:String(activitySize),search:activitySearch,staff:activityStaff,action:activityType,from:activityFrom,to:activityTo});
+    try {
+      const result=await cafeCall<{items:typeof audit;total:number;staff:string[];actions:string[]}>(`${prefix}/activity?${params}`);
+      if(sequence!==activityRequest.current||contextRef.current!==currentContext)return;
+      setAudit(result.items);setActivityMeta({total:result.total,staff:result.staff,actions:result.actions});
+      const last=Math.max(1,Math.ceil(result.total/activitySize));
+      if(activityPage>last)setActivityPage(last);
+    } finally {if(sequence===activityRequest.current)setActivityLoading(false);}
+  }
+  useEffect(()=>{
+    setActivityPage(1);
+  },[activitySearch,activityStaff,activityType,activityFrom,activityTo,activitySize,selectedCafeId]);
+  useEffect(()=>{
+    const timer=setTimeout(()=>void loadActivity().catch(e=>setMessage(e instanceof Error?e.message:'Unable to load activity')),250);
+    return()=>{clearTimeout(timer);activityRequest.current++;};
+  },[activityPage,activitySize,activitySearch,activityStaff,activityType,activityFrom,activityTo,selectedCafeId,activeStaff?.id,view]);
+  const filteredAudit=audit;
+  const activityPages=Math.max(1,Math.ceil(activityMeta.total/activitySize));
+
   return <section aria-label="Cafe wallet and shifts" className={`cafe-wallet-workspace mx-auto w-full space-y-3 ${view==='wallet' ? "rounded-lg border bg-card p-4" : "p-3"} ${embedded ? "" : "max-w-6xl"}`}>
     <header className="flex flex-wrap items-center justify-between gap-2 border-b pb-3"><div><h2 className="text-sm font-semibold">{view==="settings"?"Cafe wallet payment settings":view==="activity"?"Staff activity":view==="shift"?"Manage shift":"Add money to wallet"}</h2>{view==='wallet'&&<p className="mt-0.5 text-xs text-muted-foreground">Find a gamer and record their payment.</p>}</div><div className="flex items-center gap-3"><span className="text-xs text-muted-foreground">{activeStaff?.name || 'Staff'}</span>{view==='wallet'&&<Button size="sm" variant="outline" onClick={()=>setShowShift(true)}>{openShift?'End shift':'Start shift'}</Button>}</div></header>
     {message && <div role="status" className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border bg-muted/30 px-3 py-2 text-sm"><span>{message}</span><Button variant="ghost" disabled={busy} onClick={()=>action(async()=>{await refresh();if(loadedUser)await loadWallet(loadedUser);})}>Refresh</Button></div>}
@@ -149,21 +180,35 @@ export function CafeWalletWorkspace({embedded = false, view = "wallet"}: {embedd
       <div className="overflow-auto"><table className="w-full text-left text-xs [&_th]:bg-muted/40 [&_td]:px-2 [&_td]:py-2 [&_td]:align-top"><thead><tr>{['Date & time','Transaction','Amount','Staff member','Reason','Action'].map(h=><th className="p-2 whitespace-nowrap" key={h}>{h}</th>)}</tr></thead><tbody>{wallet.ledger.map(e=><tr className="border-t" key={e.id}><td className="p-2 whitespace-nowrap">{new Date(e.created_at).toLocaleString()}</td><td>{activityLabel(e.kind)}</td><td>{rupees(e.amount)}</td><td>{e.actor_name}</td><td>{e.reason}</td><td>{can('wallet.refund') && ['topup','capture'].includes(e.kind) && <Button variant="outline" disabled={busy||reason.trim().length<3} onClick={()=>action(async()=>{await cafeCall(`${prefix}/ledger/${e.id}/refund`,{reason,idempotency_key:`refund-${e.id}-${activeStaff?.id}`});await syncAfterWrite('Reversal recorded.',true);})}>Refund</Button>}</td></tr>)}</tbody></table></div>{wallet.ledger.length===0&&<p className="text-xs text-muted-foreground">No transactions yet.</p>}</div></details>}
     </section>}
     </div>
-    {view==='settings' && policy && can('account.manage') && <details className="space-y-3 rounded-lg border bg-card p-3"><summary className="cursor-pointer text-sm font-semibold">Payment settings</summary>
-      <p className="text-xs text-muted-foreground">Gaming uses cafe wallet; top-ups are collected at the desk.</p>
-      <label className="block"><input type="checkbox" checked={policy.self_service} onChange={e=>setPolicy({...policy,self_service:e.target.checked})}/> Enable QR self-service</label>
-      {['cash','cafe_upi'].map(m=><label className="mr-4" key={m}><input type="checkbox" checked={policy.desk_methods.includes(m)} onChange={e=>setPolicy({...policy,desk_methods:e.target.checked?[...policy.desk_methods,m]:policy.desk_methods.filter(x=>x!==m)})}/> {m==='cash'?'Cash':'Cafe UPI'}</label>)}
-      <label className="block"><input type="checkbox" checked={policy.food_ordering} onChange={e=>setPolicy({...policy,food_ordering:e.target.checked})}/> Food ordering enabled</label>
-      <label className="block">Food payment collected by <select className="rounded border bg-background p-2" value={policy.food_collection} onChange={e=>setPolicy({...policy,food_collection:e.target.value as 'cafe'|'vendor'})}><option value="vendor">Food vendor directly</option><option value="cafe">Cafe</option></select></label>
-      <p className="text-sm text-muted-foreground">QR session lengths, operating hours and prices follow Console Pricing automatically.</p>
-      <Button disabled={busy || policy.desk_methods.length===0} onClick={()=>action(async()=>{setPolicy(await cafeCall(`${prefix}/policy`,policy,'PUT'));setMessage('Payment policy saved.');})}>Save policy</Button>
-    </details>}
+    {view==='settings' && policy && can('account.manage') && <section className="payment-settings-panel rounded-xl border bg-card p-5">
+      <header className="mb-5"><h2 className="text-lg font-semibold">Payment settings</h2><p className="mt-1 text-sm text-muted-foreground">Manage QR self-service, wallet collections and food payments.</p></header>
+      <div className="grid gap-5 md:grid-cols-2">
+        <div className="space-y-4">
+          <label className="payment-setting-row"><div><span className="block text-sm font-medium">QR self-service</span><span className="mt-1 block text-xs text-muted-foreground">Gamers can start sessions using their cafe wallet.</span></div><input type="checkbox" role="switch" checked={policy.self_service} onChange={e=>setPolicy({...policy,self_service:e.target.checked})}/></label>
+          <fieldset className="rounded-lg border p-4"><legend className="px-1 text-sm font-medium">Wallet top-up collection</legend><p className="mb-3 text-xs text-muted-foreground">Choose the payment methods accepted at the desk.</p><div className="grid grid-cols-2 gap-3">{['cash','cafe_upi'].map(m=><label className="payment-method-choice" key={m}><input type="checkbox" checked={policy.desk_methods.includes(m)} onChange={e=>setPolicy({...policy,desk_methods:e.target.checked?[...policy.desk_methods,m]:policy.desk_methods.filter(x=>x!==m)})}/><span>{m==='cash'?'Cash':'Cafe UPI'}</span></label>)}</div>{policy.desk_methods.length===0&&<p className="mt-3 text-xs text-amber-400">Select at least one collection method.</p>}</fieldset>
+        </div>
+        <div className="space-y-4">
+          <label className="payment-setting-row"><div><span className="block text-sm font-medium">Food ordering</span><span className="mt-1 block text-xs text-muted-foreground">Allow gamers to order food during their session.</span></div><input type="checkbox" role="switch" checked={policy.food_ordering} onChange={e=>setPolicy({...policy,food_ordering:e.target.checked})}/></label>
+          <label className="block rounded-lg border p-4"><span className="mb-2 block text-sm font-medium">Food payment collection</span><select className="w-full rounded-md border bg-background px-3 py-2 text-sm" value={policy.food_collection} onChange={e=>setPolicy({...policy,food_collection:e.target.value as 'cafe'|'vendor'})}><option value="vendor">Food vendor collects directly</option><option value="cafe">Cafe collects payment</option></select></label>
+        </div>
+      </div>
+      <footer className="mt-5 flex flex-col gap-3 border-t pt-4 sm:flex-row sm:items-center sm:justify-between"><p className="max-w-lg text-xs text-muted-foreground">Session lengths, operating hours and prices follow Console Pricing.</p><Button disabled={busy || policy.desk_methods.length===0} onClick={()=>action(async()=>{setPolicy(await cafeCall(`${prefix}/policy`,policy,'PUT'));setMessage('Payment settings saved.');})}>{busy?'Saving…':'Save settings'}</Button></footer>
+    </section>}
     {view==='wallet' && can('store.manage') && orders.length>0 && <details className="rounded-lg border bg-card p-3"><summary className="cursor-pointer text-xs font-medium">Food payments</summary>{orders.length===0 && <p className="text-xs text-muted-foreground">No orders.</p>}{orders.map(o=><div key={o.id} className="border-t py-2 text-sm"><p>Gamer #{o.user_id} · {o.items.map(i=>`${i.quantity} × ${i.name}`).join(', ')} · {rupees(o.amount)}</p><p>{o.collector==='vendor'?'Food store collects directly':o.state==='paid'?'Paid at cafe':'Awaiting cafe payment'}</p>{o.collector==='cafe'&&o.state!=='paid'&&<Button disabled={busy||!openShift} onClick={()=>action(async()=>{await cafeCall(`${prefix}/food/orders/${o.id}/collect`,{method});await syncAfterWrite('Food payment recorded.');})}>Record {method==='cash'?'cash':'cafe UPI'} payment</Button>}</div>)}</details>}
-    {view==='activity' && can('transactions.view') && <section className="space-y-3 rounded-lg border p-3">
-      <div className="flex flex-wrap items-center justify-between gap-2"><Input aria-label="Search activity" placeholder="Search staff or activity" value={activitySearch} onChange={e=>setActivitySearch(e.target.value)} className="max-w-xs" /><div className="flex gap-2"><Button variant="outline" disabled={busy} onClick={()=>action(refresh)}>Refresh</Button><Button variant="outline" disabled={!filteredAudit.length} onClick={()=>downloadActivityCsv([['Date & time','Staff member','Activity','Gamer ID','Details'],...filteredAudit.map(row=>[new Date(row.created_at).toLocaleString(),row.actor_name,activityLabel(row.action),String((row.details as any)?.user_id||'—'),activityDetails(row.details)])])}>Export CSV</Button></div></div>
-      <div className="overflow-auto"><table className="w-full text-left text-xs [&_th]:bg-muted/40 [&_td]:px-2 [&_td]:py-2 [&_td]:align-top"><thead><tr>{['Date & time','Staff member','Activity','Gamer ID','Details'].map(label=><th className="p-2 whitespace-nowrap" key={label}>{label}</th>)}</tr></thead><tbody>{filteredAudit.map(row=><tr className="border-t" key={row.id}><td className="whitespace-nowrap">{new Date(row.created_at).toLocaleString()}</td><td>{row.actor_name}</td><td>{activityLabel(row.action)}</td><td>{String((row.details as any)?.user_id||'—')}</td><td className="min-w-48">{activityDetails(row.details)}</td></tr>)}</tbody></table></div>
-      {!filteredAudit.length&&<p className="text-xs text-muted-foreground">No matching activity.</p>}
-      <p className="text-xs text-muted-foreground">Latest {audit.length} records</p>
+    {view==='activity' && can('transactions.view') && <section className="staff-activity-panel space-y-4 rounded-xl border bg-card p-4">
+      <div className="flex flex-wrap items-center justify-between gap-3"><div><h3 className="text-base font-semibold">Activity history</h3><p className="mt-1 text-xs text-muted-foreground">Review staff actions and cafe payment records.</p></div><div className="flex gap-2"><Button variant="outline" disabled={busy||activityLoading} onClick={()=>action(loadActivity)}>Refresh</Button><Button variant="outline" disabled={activityLoading||!audit.length} onClick={()=>downloadActivityCsv([['Date & time (IST)','Staff member','Activity','Gamer ID','Details'],...audit.map(row=>[new Date(row.created_at).toLocaleString('en-IN',{timeZone:'Asia/Kolkata'}),row.actor_name,activityLabel(row.action),String((row.details as any)?.user_id||'—'),activityDetails(row.details)])])}>Export page</Button></div></div>
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+        <label className="text-xs text-muted-foreground">Search<Input className="mt-1" placeholder="Name, action or reason" value={activitySearch} onChange={e=>setActivitySearch(e.target.value)}/></label>
+        <label className="text-xs text-muted-foreground">Staff member<select value={activityStaff} onChange={e=>setActivityStaff(e.target.value)}><option value="">All staff</option>{activityMeta.staff.map(name=><option key={name}>{name}</option>)}</select></label>
+        <label className="text-xs text-muted-foreground">Activity type<select value={activityType} onChange={e=>setActivityType(e.target.value)}><option value="">All activities</option>{activityMeta.actions.map(type=><option key={type} value={type}>{activityLabel(type)}</option>)}</select></label>
+        <label className="text-xs text-muted-foreground">From (IST)<Input className="mt-1" type="date" value={activityFrom} max={activityTo||undefined} onChange={e=>setActivityFrom(e.target.value)}/></label>
+        <label className="text-xs text-muted-foreground">To (IST)<Input className="mt-1" type="date" value={activityTo} min={activityFrom||undefined} onChange={e=>setActivityTo(e.target.value)}/></label>
+      </div>
+      {(activitySearch||activityStaff||activityType||activityFrom||activityTo)&&<Button size="sm" variant="ghost" onClick={()=>{setActivitySearch('');setActivityStaff('');setActivityType('');setActivityFrom('');setActivityTo('');}}>Clear filters</Button>}
+      <div aria-live="polite" className="text-xs text-muted-foreground">{activityLoading?'Loading activity…':`${activityMeta.total} matching records`}</div>
+      <div className="overflow-auto"><table className="w-full text-left text-xs [&_th]:bg-muted/40 [&_td]:px-2 [&_td]:py-2 [&_td]:align-top"><thead><tr>{['Date & time (IST)','Staff member','Activity','Gamer ID','Details'].map(label=><th className="p-2 whitespace-nowrap" key={label}>{label}</th>)}</tr></thead><tbody>{filteredAudit.map(row=><tr className="border-t" key={row.id}><td className="whitespace-nowrap">{new Date(row.created_at).toLocaleString('en-IN',{timeZone:'Asia/Kolkata'})}</td><td>{row.actor_name}</td><td>{activityLabel(row.action)}</td><td>{String((row.details as any)?.user_id||'—')}</td><td className="min-w-48">{activityDetails(row.details)}</td></tr>)}</tbody></table></div>
+      {!activityLoading&&!filteredAudit.length&&<div className="rounded-lg border border-dashed py-10 text-center"><p className="text-sm font-medium">No activity found</p><p className="mt-1 text-xs text-muted-foreground">Try changing your filters or date range.</p></div>}
+      <footer className="flex flex-wrap items-center justify-between gap-3 border-t pt-3"><span className="text-xs text-muted-foreground">{activityMeta.total?`${(activityPage-1)*activitySize+1}–${Math.min(activityPage*activitySize,activityMeta.total)} of ${activityMeta.total}`:'0 records'}</span><div className="flex flex-wrap items-center gap-2"><label className="flex items-center gap-2 text-xs">Rows<select aria-label="Rows per page" value={activitySize} onChange={e=>setActivitySize(Number(e.target.value))}>{[10,25,50].map(size=><option key={size}>{size}</option>)}</select></label><Button size="sm" variant="outline" disabled={activityLoading||activityPage<=1} onClick={()=>setActivityPage(p=>p-1)}>Previous</Button><span className="text-xs">Page {activityPage} of {activityPages}</span><Button size="sm" variant="outline" disabled={activityLoading||activityPage>=activityPages} onClick={()=>setActivityPage(p=>p+1)}>Next</Button></div></footer>
       {shifts.length>0&&<><h3 className="text-sm font-semibold">Your shift history</h3><div className="overflow-auto"><table className="w-full text-left text-xs [&_th]:bg-muted/40 [&_td]:px-2 [&_td]:py-2 [&_td]:align-top"><thead><tr>{['Shift ended','Staff member','Starting cash','Expected cash','Counted cash','Difference','UPI received'].map(label=><th key={label} className="p-2 whitespace-nowrap">{label}</th>)}</tr></thead><tbody>{shifts.filter(shift=>shift.closed_at).map(shift=><tr className="border-t" key={shift.id}><td>{new Date(shift.closed_at!).toLocaleString()}</td><td>{shift.actor_name}</td><td>{rupees(shift.opening_cash)}</td><td>{rupees(shift.expected_cash??0)}</td><td>{rupees(shift.counted_cash??0)}</td><td>{rupees((shift.counted_cash??0)-(shift.expected_cash??0))}</td><td>{rupees(shift.upi_receipts??0)}</td></tr>)}</tbody></table></div></>}
     </section>}
 
