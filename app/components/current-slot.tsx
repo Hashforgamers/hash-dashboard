@@ -796,15 +796,17 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
     const token = localStorage.getItem("jwtToken");
 
     const fetchOutstanding = async () => {
+      setBookingOutstandingDue({});
       try {
         const results = await Promise.all(
           bookingIds.map(async (bookingId) => {
             try {
               const response = await fetch(`${BOOKING_URL}/api/booking/${bookingId}/payment-summary`, {
                 method: "GET",
+                cache: "no-store",
                 headers: {
                   "Content-Type": "application/json",
-                  ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                  ...creditAuthHeaders(),
                 },
                 signal: controller.signal,
               });
