@@ -1,3 +1,4 @@
+import { creditAuthHeaders } from "@/lib/credit-auth";
 import { AnimatePresence, motion } from "framer-motion";
 import { IndianRupee, CreditCard, Smartphone, X, CheckCircle, Loader2, Gamepad2, Timer, Wallet, Receipt } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
@@ -65,6 +66,8 @@ const ExtraBookingOverlay: React.FC<ExtraBookingOverlayProps> = ({
   const [loading, setLoading] = useState(false);
   const [waiveOffAmount, setWaiveOffAmount] = useState<string>("");
   const [waiveOffError, setWaiveOffError] = useState("");
+  const [settlementError,setSettlementError] = useState("");
+  const settlementKey = useRef("");
   const [frozenExtraSeconds, setFrozenExtraSeconds] = useState(0);
   const [settlementPausedAt, setSettlementPausedAt] = useState<string>("");
   const [paymentSummary, setPaymentSummary] = useState<PaymentSummary | null>(null);
@@ -111,6 +114,8 @@ const ExtraBookingOverlay: React.FC<ExtraBookingOverlayProps> = ({
       return;
     }
 
+    setSettlementError("");
+    settlementKey.current = crypto.randomUUID();
     let isMounted = true;
     const controller = new AbortController();
     const token = localStorage.getItem("jwtToken");
@@ -123,7 +128,7 @@ const ExtraBookingOverlay: React.FC<ExtraBookingOverlayProps> = ({
           method: "GET",
           headers: {
             "Content-Type": "application/json",
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            ...creditAuthHeaders(),
           },
           signal: controller.signal,
         });
@@ -174,7 +179,7 @@ const ExtraBookingOverlay: React.FC<ExtraBookingOverlayProps> = ({
     const token = localStorage.getItem("rbac_access_token_v1") || localStorage.getItem("jwtToken");
     const headers = {
       "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...creditAuthHeaders(),
     };
 
     const loadCreditState = async () => {
@@ -230,7 +235,7 @@ const ExtraBookingOverlay: React.FC<ExtraBookingOverlayProps> = ({
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("jwtToken")}`,
+          ...creditAuthHeaders(),
         },
         body: JSON.stringify(payload),
       });
@@ -255,7 +260,7 @@ const ExtraBookingOverlay: React.FC<ExtraBookingOverlayProps> = ({
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${localStorage.getItem("jwtToken")}`,
+        ...creditAuthHeaders(),
       },
       body: JSON.stringify({
         mode_of_payment: mode,
@@ -273,15 +278,17 @@ const ExtraBookingOverlay: React.FC<ExtraBookingOverlayProps> = ({
   // ✅ FIXED: Handle settle function with IMMEDIATE UI updates (exactly like release button)
   const handleSettle = async () => {
     if (!selectedSlot || !vendorId) {
-      setWaiveOffError("Invalid slot or vendor information");
+      setSettlementError("Invalid slot or vendor information");
       return;
     }
     const bookingId = resolveBookingId(selectedSlot);
     if (!bookingId) {
-      setWaiveOffError("Missing booking ID for settlement");
+      setSettlementError("Missing booking ID for settlement");
       return;
     }
 
+    if (loading) return;
+    setSettlementError("");
     setLoading(true);
     const extraTime = frozenExtraSeconds;
     const amount = calculateExtraAmount(extraTime, selectedSlot.slot_price || 100);
@@ -290,7 +297,9 @@ const ExtraBookingOverlay: React.FC<ExtraBookingOverlayProps> = ({
     const extraBookingPayload = {
       consoleNumber: selectedSlot.consoleId || selectedSlot.consoleNumber,
       consoleType: selectedSlot.consoleType,
-      date: new Date().toISOString().split("T")[0],
+      date: String(selectedSlot.date || "").slice(0,10),
+      booking_id: bookingId,
+      reference_id: `settlement-${settlementKey.current}`,
       slotId: selectedSlot.slotId,
       userId: selectedSlot.userId,
       username: selectedSlot.username,
@@ -324,7 +333,7 @@ const ExtraBookingOverlay: React.FC<ExtraBookingOverlayProps> = ({
         ? Array.from(bookingTypesSet)
         : ["extra", "additional_meals"];
 
-      await settlePendingBookingCharges(bookingId, paymentMode, parsedWaiveOff, bookingTypesPayload);
+      await settlePendingBookingCharges(bookingId, paymentMode === "credit" ? "monthly_credit" : paymentMode, parsedWaiveOff, bookingTypesPayload);
       console.log('💰 Pending charges settled successfully');
 
       const squadDetails = (selectedSlot?.squadDetails && typeof selectedSlot.squadDetails === "object")
@@ -373,7 +382,7 @@ const ExtraBookingOverlay: React.FC<ExtraBookingOverlayProps> = ({
         setShowOverlay(false);
         setSelectedSlot(null);
         setWaiveOffAmount("");
-        setWaiveOffError("");
+        setSettlementError("");
         setLoading(false);
         
         console.log('💰 UI updated immediately - settle complete');
@@ -381,7 +390,7 @@ const ExtraBookingOverlay: React.FC<ExtraBookingOverlayProps> = ({
       } else {
         // ✅ Release failed - show error, don't close overlay
         console.log('💰 Release slot failed');
-        setWaiveOffError("Failed to release slot. Please try again.");
+        setSettlementError("Failed to release slot. Please try again.");
         setLoading(false);
       }
 
@@ -389,7 +398,7 @@ const ExtraBookingOverlay: React.FC<ExtraBookingOverlayProps> = ({
       console.error('💰 Settle process failed:', err);
       
       // ✅ On ERROR - Show error, don't close overlay (let user retry)
-      setWaiveOffError("Failed to process payment. Please try again.");
+      setSettlementError(err instanceof Error ? err.message : "Unable to settle this session. Please retry.");
       setLoading(false);
       
       // ✅ Don't close overlay on error - let user try again
@@ -739,13 +748,14 @@ const ExtraBookingOverlay: React.FC<ExtraBookingOverlayProps> = ({
                   </div>
                 )}
 
+                {settlementError && <div role="alert" className="mb-3 rounded-lg border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-300">{settlementError}</div>}
                 <div className="settlement-actions flex flex-col gap-2">
                   <div className="mb-2 flex items-center justify-between border-t border-white/10 pt-3 text-sm"><span className="text-slate-400">Amount due</span><strong className="text-lg tabular-nums text-slate-100">₹{payableAmount.toFixed(2)}</strong></div>
                   <p className="mb-2 text-xs text-slate-400">{paymentMode === "credit" ? "This amount will be added to the customer’s credit account." : "Confirm only after receiving payment."}</p>
                   <motion.button
                     onClick={handleSettle}
                     className="dashboard-btn-primary w-full rounded-md px-4 py-2.5 text-sm font-medium disabled:opacity-50 sm:px-6 sm:py-2"
-                    disabled={loading || !!waiveOffError || !vendorId || (paymentMode === "credit" && (!creditAccount?.is_active || availableCreditAmount < payableAmount))}
+                    disabled={loading || summaryLoading || !!summaryError || !!waiveOffError || !vendorId || (paymentMode === "credit" && (!creditAccount?.is_active || availableCreditAmount < payableAmount))}
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     aria-label="Confirm settlement and release console"
