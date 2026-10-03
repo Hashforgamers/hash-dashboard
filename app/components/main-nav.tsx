@@ -1,4 +1,5 @@
 "use client";
+import { PrivatePin } from "./private-pin";
 
 import { useState } from "react";
 import Link from "next/link";
@@ -193,22 +194,17 @@ export function MainNav({ className, onItemClick, isNavPinned = false, ...props 
         </div>
       </nav>
 
-      <Dialog open={pinDialogOpen} onOpenChange={setPinDialogOpen}>
+      <Dialog open={pinDialogOpen} onOpenChange={open=>{setPinDialogOpen(open);setPin("");}}>
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
             <DialogTitle>Switch Active User</DialogTitle>
           </DialogHeader>
           <div className="space-y-3">
             <p className="text-sm text-muted-foreground">Enter owner or employee PIN to switch dashboard access level.</p>
-            <Input
-              value={pin}
-              onChange={(e) => setPin(e.target.value.replace(/\D/g, ""))}
-              maxLength={4}
-              placeholder="Enter 4-digit PIN"
-              onKeyDown={(e) => e.key === "Enter" && void handleSwitchUser()}
-            />
+            <PrivatePin value={pin} onChange={setPin} onEnter={()=>void handleSwitchUser()}/>
+
             <div className="flex items-center justify-end gap-2">
-              <Button variant="outline" onClick={() => setPinDialogOpen(false)}>
+              <Button variant="outline" onClick={() => {setPinDialogOpen(false);setPin("");}}>
                 Cancel
               </Button>
               <Button onClick={() => void handleSwitchUser()} disabled={pin.length !== 4}>

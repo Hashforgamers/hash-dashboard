@@ -1,5 +1,7 @@
 "use client";
 
+import { PrivatePin } from "@/app/components/private-pin";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useMemo, useState } from "react";
 import { DashboardLayout } from "../../(layout)/dashboard-layout";
 import { useAccess } from "@/app/context/AccessContext";
@@ -50,6 +52,8 @@ const SERVICE_PERMISSION_MAP: Array<{
 ];
 
 export default function EmployeeAccessPage() {
+  const [editingPin,setEditingPin] = useState<string|null>(null);
+  const [newPin,setNewPin] = useState("");
   const {
     can,
     staffProfiles,
@@ -92,7 +96,7 @@ export default function EmployeeAccessPage() {
 
       setLastCreatedPin(result.generatedPin || null);
       setLastCreatedName(name.trim());
-      toast.success(`Employee added. PIN: ${result.generatedPin}`);
+      toast.success("Employee added. Use Show to view their PIN.");
       setName("");
       setRoleState("staff");
     } finally {
@@ -160,8 +164,7 @@ export default function EmployeeAccessPage() {
     }
   };
 
-  const handleChangePin = async (staffId: string, currentPin?: string | null) => {
-    const entered = window.prompt("Enter new PIN (4 digits)", currentPin || "");
+  const handleChangePin = async (staffId: string, entered: string) => {
     if (!entered) return;
     const pin = entered.trim();
     if (!/^\d{4}$/.test(pin)) {
@@ -172,7 +175,7 @@ export default function EmployeeAccessPage() {
       (staff) => staff.id !== staffId && (staff.pinCode || "").trim() === pin
     );
     if (duplicateStaff) {
-      const message = `PIN ${pin} is already assigned to ${duplicateStaff.name}. Please use a different PIN.`;
+      const message = "This PIN is already assigned. Please use a different PIN.";
       toast.error(message);
       window.alert(message);
       return;
@@ -189,6 +192,7 @@ export default function EmployeeAccessPage() {
         return;
       }
       toast.success("PIN updated");
+      setEditingPin(null);setNewPin("");
     } catch (e: any) {
       const message = e?.message || "Failed to update PIN";
       toast.error(message);
@@ -234,7 +238,7 @@ export default function EmployeeAccessPage() {
             </p>
           </div>
         </div>
-      </DashboardLayout>
+    </DashboardLayout>
     );
   }
 
@@ -320,7 +324,7 @@ export default function EmployeeAccessPage() {
               {lastCreatedPin && (
                 <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-emerald-400/30 bg-emerald-500/10 px-3 py-2 text-sm">
                   <div className="text-emerald-200">
-                    <span className="font-semibold">{lastCreatedName}</span> PIN: <span className="tracking-widest">{lastCreatedPin}</span>
+                    <span className="font-semibold">{lastCreatedName}</span> PIN: <PrivatePin key={lastCreatedPin} value={lastCreatedPin}/>
                   </div>
                   <Button size="sm" variant="outline" onClick={() => copyPin(lastCreatedPin)}>
                     <Copy className="mr-2 h-3.5 w-3.5" />
@@ -385,11 +389,12 @@ export default function EmployeeAccessPage() {
                         <div className="md:col-span-2">
                           <p className="mb-1 text-[11px] uppercase tracking-[0.08em] text-slate-400 md:hidden">PIN</p>
                           <div className="flex items-center gap-2 tracking-wider text-slate-200">
-                            {staff.pinCode || "Not set"}
+                            {staff.pinCode ? <PrivatePin key={`${staff.id}:${staff.pinCode}`} value={staff.pinCode}/> : "Not set"}
                             {staff.pinCode && (
                               <button
                                 type="button"
                                 className="text-slate-400 transition-colors hover:text-cyan-300"
+                                aria-label={`Copy PIN for ${staff.name}`}
                                 onClick={() => copyPin(staff.pinCode as string)}
                                 disabled={Boolean(pendingStaffAction[staff.id])}
                               >
@@ -423,7 +428,7 @@ export default function EmployeeAccessPage() {
                             <Button
                               variant="secondary"
                               size="sm"
-                              onClick={() => void handleChangePin(staff.id, staff.pinCode)}
+                              onClick={() => {setEditingPin(staff.id);setNewPin("");}}
                               disabled={Boolean(pendingStaffAction[staff.id])}
                               className="col-span-2 md:col-span-1"
                             >
@@ -513,6 +518,9 @@ export default function EmployeeAccessPage() {
           </TabsContent>
         </Tabs>
       </div>
+      <Dialog open={Boolean(editingPin)} onOpenChange={open=>{if(!open){setEditingPin(null);setNewPin('');}}}>
+        <DialogContent className="sm:max-w-sm"><DialogHeader><DialogTitle>Change staff PIN</DialogTitle></DialogHeader><p className="text-sm text-muted-foreground">Choose a unique 4-digit PIN for this staff member.</p><PrivatePin value={newPin} onChange={setNewPin}/><div className="flex justify-end gap-2"><Button variant="outline" onClick={()=>{setEditingPin(null);setNewPin('');}}>Cancel</Button><Button disabled={newPin.length!==4||Boolean(editingPin&&pendingStaffAction[editingPin])} onClick={()=>{if(editingPin)void handleChangePin(editingPin,newPin);}}>Save PIN</Button></div></DialogContent>
+      </Dialog>
     </DashboardLayout>
   );
 }

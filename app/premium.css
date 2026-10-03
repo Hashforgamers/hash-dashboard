@@ -2921,3 +2921,107 @@ h6 {
   height: 32px;
   flex-shrink: 0;
 }
+
+/* Settlement uses a restrained invoice layout with a distinct payment area. */
+.session-settlement-modal {
+  background: #18181b;
+  border: 1px solid #343439;
+  font-family: var(--font-ui);
+  color: #e4e4e7;
+}
+.session-settlement-modal h2 { font-size: 20px; font-weight: 600; }
+.session-settlement-modal :is(p, span, label, input, button) { font-family: var(--font-ui); }
+.session-settlement-modal [class*="bg-slate-800"],
+.session-settlement-modal [class*="bg-slate-700"],
+.session-settlement-modal [class*="bg-red-500/10"],
+.session-settlement-modal [class*="bg-cyan-500/10"],
+.session-settlement-modal [class*="bg-emerald-500/10"],
+.session-settlement-modal [class*="bg-amber-500/10"] {
+  background: #202024;
+  border-color: #35353b;
+}
+.session-settlement-modal input { background: #18181b; font-variant-numeric: tabular-nums; }
+.session-settlement-modal [role="radio"] { min-height: 64px; }
+.session-settlement-modal [role="radio"][aria-checked="true"] {
+  background: #173b32;
+  border-color: #10b981;
+  box-shadow: none;
+}
+.session-settlement-modal .settlement-actions button { min-height: 40px; }
+.session-settlement-modal strong,
+.session-settlement-modal .font-bold { font-variant-numeric: tabular-nums; }
+
+.payment-settings-panel,
+.payment-methods-panel {
+  margin-bottom: 20px;
+  background: #18181b;
+  border-color: #343439;
+  box-shadow: none;
+  font-family: var(--font-ui);
+}
+.payment-setting-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  min-height: 84px;
+  padding: 16px;
+  border: 1px solid #343439;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.payment-settings-panel input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  accent-color: #10b981;
+  cursor: pointer;
+}
+.payment-settings-panel input[role="switch"] {
+  appearance: none;
+  width: 36px;
+  height: 20px;
+  border-radius: 12px;
+  background: #52525b;
+  position: relative;
+}
+.payment-settings-panel input[role="switch"]::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #fff;
+  transition: transform 150ms;
+}
+.payment-settings-panel input[role="switch"]:checked { background: #059669; }
+.payment-settings-panel input[role="switch"]:checked::after { transform: translateX(16px); }
+.payment-settings-panel input:focus-visible { outline: 2px solid #38bdf8; outline-offset: 3px; }
+.payment-method-choice { display: flex; align-items: center; gap: 10px; padding: 10px; border: 1px solid #343439; border-radius: 6px; font-size: 13px; cursor: pointer; }
+.payment-method-choice:has(input:checked) { border-color: #059669; background: #15352d; }
+.payment-methods-panel .body-text { font-size: 14px; line-height: 1.5; }
+.payment-methods-panel .body-text-small { font-size: 12px; line-height: 1.5; color: #a1a1aa; }
+.payment-methods-panel .account-section-title { font-size: 18px; font-weight: 600; }
+.payment-methods-panel .group > div { background: #202024; border-color: #343439; box-shadow: none; }
+.payment-methods-panel .w-12.h-12 { width: 40px; height: 40px; background: #29292e; border-color: #3f3f46; }
+.payment-methods-panel .badge-text { font-size: 11px; }
+
+.staff-activity-panel select {
+  display: block;
+  width: 100%;
+  margin-top: 4px;
+  min-height: 40px;
+  border: 1px solid #3f3f46;
+  border-radius: 6px;
+  padding: 8px 10px;
+  background: #18181b;
+  color: #e4e4e7;
+  font-size: 13px;
+}
+.staff-activity-panel footer select { margin: 0; min-height: 32px; width: auto; padding: 4px 8px; }
+.staff-activity-panel th { font-weight: 500; color: #a1a1aa; padding: 12px; }
+.staff-activity-panel td { padding: 12px !important; line-height: 1.5; }
+.staff-activity-panel tbody tr:hover { background: #242428; }
+.staff-activity-panel td:first-child { font-variant-numeric: tabular-nums; }
