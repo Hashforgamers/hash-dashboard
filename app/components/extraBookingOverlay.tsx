@@ -50,7 +50,7 @@ interface VendorUserSummary {
   phone: string;
 }
 
-const ExtraBookingOverlay: React.FC<ExtraBookingOverlayProps> = ({
+const SettlementOverlay: React.FC<ExtraBookingOverlayProps> = ({
   showOverlay,
   setShowOverlay,
   selectedSlot,
@@ -71,7 +71,9 @@ const ExtraBookingOverlay: React.FC<ExtraBookingOverlayProps> = ({
   const [frozenExtraSeconds, setFrozenExtraSeconds] = useState(0);
   const [settlementPausedAt, setSettlementPausedAt] = useState<string>("");
   const [paymentSummary, setPaymentSummary] = useState<PaymentSummary | null>(null);
-  const [summaryLoading, setSummaryLoading] = useState(false);
+  const [summaryLoading, setSummaryLoading] = useState(true);
+  const [summaryVersion,setSummaryVersion] = useState(0);
+  const [summaryBookingId,setSummaryBookingId] = useState<number|null>(null);
   const [summaryError, setSummaryError] = useState("");
   const [creditAccount, setCreditAccount] = useState<MonthlyCreditAccountSummary | null>(null);
   const [creditAccountLoading, setCreditAccountLoading] = useState(false);
@@ -106,11 +108,14 @@ const ExtraBookingOverlay: React.FC<ExtraBookingOverlayProps> = ({
       return;
     }
 
+    setPaymentSummary(null);
+    setSummaryBookingId(null);
+    setSummaryError("");
     const bookingId = resolveBookingId(selectedSlot);
     if (!bookingId) {
       setSummaryLoading(false);
       setPaymentSummary(null);
-      setSummaryError("Booking ID missing. Showing current extra charge only.");
+      setSummaryError("Cannot load settlement: booking ID is missing.");
       return;
     }
 
@@ -126,6 +131,7 @@ const ExtraBookingOverlay: React.FC<ExtraBookingOverlayProps> = ({
         setSummaryError("");
         const response = await fetch(`${BOOKING_URL}/api/booking/${bookingId}/payment-summary`, {
           method: "GET",
+          cache: "no-store",
           headers: {
             "Content-Type": "application/json",
             ...creditAuthHeaders(),
@@ -140,12 +146,15 @@ const ExtraBookingOverlay: React.FC<ExtraBookingOverlayProps> = ({
         const result = await response.json();
         if (isMounted && result?.success && result?.financial_summary) {
           setPaymentSummary(result.financial_summary as PaymentSummary);
+          setSummaryBookingId(bookingId);
+        } else if (isMounted) {
+          throw new Error("The server did not return a valid payment summary.");
         }
       } catch (error: any) {
         if (error?.name === "AbortError") return;
         if (isMounted) {
           setPaymentSummary(null);
-          setSummaryError("Unable to load full payment summary. Showing current extra charge.");
+          setSummaryError("Unable to verify settlement amounts. Retry to load the latest charges.");
         }
       } finally {
         if (isMounted) {
@@ -159,7 +168,7 @@ const ExtraBookingOverlay: React.FC<ExtraBookingOverlayProps> = ({
       isMounted = false;
       controller.abort();
     };
-  }, [showOverlay, selectedSlot]);
+  }, [showOverlay, selectedSlot, summaryVersion]);
 
   useEffect(() => {
     if (showOverlay && selectedSlot) {
@@ -291,7 +300,7 @@ const ExtraBookingOverlay: React.FC<ExtraBookingOverlayProps> = ({
     setSettlementError("");
     setLoading(true);
     const extraTime = frozenExtraSeconds;
-    const amount = calculateExtraAmount(extraTime, selectedSlot.slot_price || 100);
+    const amount = computedExtraAmount;
     const parsedWaiveOff = parseFloat(waiveOffAmount) || 0;
 
     const extraBookingPayload = {
@@ -426,7 +435,7 @@ const ExtraBookingOverlay: React.FC<ExtraBookingOverlayProps> = ({
       const localPendingBase = (paymentSummary?.line_items || [])
         .filter((item) => !isExtraType(item.booking_type) && isPendingStatus(item.settlement_status))
         .reduce((sum, item) => sum + Number(item.line_total || 0), 0);
-      const maxWaiveOff = localExtraAmount + localPendingMeals + localPendingExtra + localPendingBase;
+      const maxWaiveOff = dueBeforeWaive;
       if (parsedValue < 0) {
         setWaiveOffError("Waive-off amount cannot be negative");
         setWaiveOffAmount("");
@@ -440,7 +449,7 @@ const ExtraBookingOverlay: React.FC<ExtraBookingOverlayProps> = ({
   };
 
   const computedExtraSeconds = frozenExtraSeconds;
-  const computedExtraAmount = selectedSlot
+  const grossExtraAmount = selectedSlot
     ? calculateExtraAmount(computedExtraSeconds, selectedSlot.slot_price || 100)
     : 0;
   const pendingMealsAmount = (paymentSummary?.line_items || [])
@@ -464,6 +473,10 @@ const ExtraBookingOverlay: React.FC<ExtraBookingOverlayProps> = ({
     .filter((item) => String(item.booking_type || "").toLowerCase() === "extra" && isSettledStatus(item.settlement_status))
     .reduce((sum, item) => sum + Number(item.line_total || 0), 0);
   const totalPaidAmount = paidInitialAmount + paidMealsAmount + paidExtraAmount;
+  const recordedOvertime = (paymentSummary?.line_items || [])
+    .filter(item => String(item.booking_type || '').toLowerCase() === 'extra' && (isPendingStatus(item.settlement_status) || isSettledStatus(item.settlement_status)))
+    .reduce((sum,item) => sum + Number(item.components?.base_amount ?? item.line_total ?? 0),0);
+  const computedExtraAmount = Math.max(0, grossExtraAmount - recordedOvertime);
   const parsedWaiveOff = parseFloat(waiveOffAmount) || 0;
   const dueBeforeWaive = computedExtraAmount + pendingMealsAmount + historicalPendingExtraAmount + pendingBaseAmount;
   const payableAmount = Math.max(dueBeforeWaive - parsedWaiveOff, 0);
@@ -522,7 +535,10 @@ const ExtraBookingOverlay: React.FC<ExtraBookingOverlayProps> = ({
               </span>
             </div>
 
-            <div className="grid grid-cols-1 gap-3 sm:gap-4 lg:grid-cols-[minmax(0,1fr)_330px]">
+            {summaryLoading || !paymentSummary || summaryBookingId !== resolveBookingId(selectedSlot) ? <div className="rounded-xl border border-slate-700 p-8 text-center" aria-live="polite" aria-busy={summaryLoading}>
+              {summaryError ? <><p role="alert" className="text-sm text-red-300">{summaryError}</p><button type="button" className="mt-4 rounded-md border px-4 py-2 text-sm" onClick={()=>{setSummaryLoading(true);setSummaryVersion(v=>v+1);}}>Retry</button></> : <><Loader2 className="mx-auto mb-3 h-5 w-5 animate-spin text-slate-400"/><p className="text-sm">Verifying settlement amounts…</p><p className="mt-1 text-xs text-slate-400">Loading current payments and outstanding charges.</p></>}
+              <button type="button" className="mt-4 ml-2 rounded-md border px-4 py-2 text-sm" onClick={()=>setShowOverlay(false)}>Cancel</button>
+            </div> : <div className="grid grid-cols-1 gap-3 sm:gap-4 lg:grid-cols-[minmax(0,1fr)_330px]">
               <div>
                 <div className="relative mb-3 rounded-xl border border-slate-700/70 bg-slate-800/65 p-3 sm:mb-4 sm:p-4">
                   <div className="flex flex-wrap items-center gap-2 text-xs text-slate-200 sm:gap-3 sm:text-sm">
@@ -795,7 +811,7 @@ const ExtraBookingOverlay: React.FC<ExtraBookingOverlayProps> = ({
                   </motion.button>
                 </div>
               </div>
-            </div>
+            </div>}
             </motion.div>
           </motion.div>
           <CreditAccountModal
@@ -825,4 +841,6 @@ const ExtraBookingOverlay: React.FC<ExtraBookingOverlayProps> = ({
   );
 };
 
-export default ExtraBookingOverlay;
+export default function ExtraBookingOverlay(props:ExtraBookingOverlayProps) {
+  return <SettlementOverlay key={`${props.vendorId}:${props.selectedSlot?.bookingId || props.selectedSlot?.bookId}:${props.showOverlay}`} {...props}/>;
+}
