@@ -2914,14 +2914,14 @@ const ToggleSwitch = ({
 
 {page === "Staff Activity" && can("transactions.view") && <CafeWalletWorkspace embedded view="activity" />}
 
-{page === "Payment Methods" && (<>{can("account.manage")&&<CafeWalletWorkspace embedded view="settings" />}<Card className="content-card shadow-lg">
+{page === "Payment Methods" && (<>{can("account.manage")&&<CafeWalletWorkspace embedded view="settings" />}<Card className="payment-methods-panel content-card shadow-lg">
       <CardHeader>
         <CardTitle className="account-section-title flex items-center gap-2">
           <Settings className="icon-lg" />
           Payment Methods
         </CardTitle>
         <CardDescription className="account-description">
-          Select which payment methods you want to accept at your cafe
+          Choose how customers can pay for bookings at your cafe.
         </CardDescription>
       </CardHeader>
       <CardContent className="content-card-padding">
@@ -2982,7 +2982,7 @@ const ToggleSwitch = ({
                   <div className="flex items-center gap-2 flex-wrap">
                     <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0"></div>
                     <span className="body-text font-medium">
-                      Available Payment Methods ({paymentMethods.length})
+                      Booking payment methods ({paymentMethods.length})
                     </span>
                   </div>
                   <Badge variant="outline" className="badge-text w-fit">
@@ -3080,7 +3080,7 @@ const ToggleSwitch = ({
                               )}>
                                 {isAutoManaged
                                   ? (method.is_enabled ? "Auto-enabled (active cafe pass found)" : "Auto-disabled (no active cafe pass)")
-                                  : (method.is_enabled ? "Registered for your cafe" : "Not registered")}
+                                  : (method.is_enabled ? "Accepted at your cafe" : "Currently disabled")}
                               </span>
                             </div>
                           </div>
