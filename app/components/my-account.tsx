@@ -879,7 +879,7 @@ const handleSaveSlot = async (day: string) => {
       savedHoursRef.current = updated;
       setHoursData(updated);
       setData((previous: any) => ({ ...previous, operatingHours: updated }));
-      setHoursMessage(`${day.toUpperCase()} hours saved.`);
+      setHoursMessage(`${day.toUpperCase()} hours saved and applied to ${result.data?.updated_days ?? 0} scheduled dates.`);
       setEditingSlot(null);
       window.dispatchEvent(new Event('refresh-dashboard'));
       
@@ -1289,7 +1289,7 @@ const toast = {
       const res = await api.get<any>(
         `${DASHBOARD_URL}/api/vendor/${vendorId}/dashboard`
       ,
-        { timeoutMs: 10_000, retries: 1 }
+        { timeoutMs: 10_000, retries: 1, cache: "no-store", dedupe: false }
       );
       console.log("API Response:", res);
 
@@ -2144,19 +2144,19 @@ const ToggleSwitch = ({
               {/* Slot Duration Input */}
               <div className="flex items-center gap-1">
                 <Label className="text-xs text-muted-foreground whitespace-nowrap">Duration:</Label>
-                <div className="flex items-center">
+                <div className="relative flex items-center">
                   <Input
                     type="number"
                     value={Number.isNaN(entry.slotDurationMinutes) ? "" : entry.slotDurationMinutes}
                     onChange={(e) => handleSlotDurationChange(entry.day, e.target.value === '' ? NaN : Number(e.target.value))}
-                    className={`w-16 bg-input border-input text-foreground text-center rounded-r-none border-r-0 ${!entry.isEnabled ? 'opacity-50' : ''}`}
+                    className={`w-24 pr-9 bg-input border-input text-foreground text-center ${!entry.isEnabled ? 'opacity-50' : ''}`}
                     disabled={editingSlot !== entry.day || !entry.isEnabled || savingSlot !== null}
                     min="15"
                     max="240"
                     step="15"
                   />
-                  <div className="flex items-center justify-center mx-[-16px] px-2 py-1.5 bg-muted/50 border border-input rounded-r-md border-l-0 min-w-[32px]">
-                    <span className="text-xs text-muted-foreground mx-[-10px]">min</span>
+                  <div className="pointer-events-none absolute right-2 text-muted-foreground">
+                    <span className="text-xs text-muted-foreground">min</span>
                   </div>
                 </div>
               </div>
