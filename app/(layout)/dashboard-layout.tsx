@@ -294,9 +294,9 @@ export function DashboardLayout({ children, contentScroll = "page" }: DashboardL
                     <span className="inline-flex items-center gap-1 rounded-md border border-border px-1.5 py-0.5">
                       {nowISTDateText}
                     </span>
-                    <button type="button" onClick={()=>router.push("/account")} title="Open account settings" className="inline-flex items-center gap-1 rounded-md px-2 py-1 hover:bg-muted">
+                    <button type="button" onClick={()=>router.push("/account")} title={activeStaff ? `${activeStaff.name} · ${activeStaff.role} — Open account settings` : "Loading active session"} className="inline-flex items-center gap-1 rounded-md px-2 py-1 hover:bg-muted">
                       <User className="h-3.5 w-3.5 text-[#0a84ff]" />
-                      {activeStaff?.name || "Owner"}
+                      {activeStaff ? (activeStaff.role === "owner" ? "Owner" : `${activeStaff.name} · ${activeStaff.role === "manager" ? "Manager" : "Staff"}`) : "Loading user…"}
                     </button>
                     <span
                       className={`inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 ${
