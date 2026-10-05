@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { PlusCircle, List, Monitor, ArrowLeft, Tv, Gamepad, Headset } from 'lucide-react';
+import { KioskDownload } from "./kiosk-download";
 import { AddConsoleForm } from "./add-console-form";
 import { ConsoleList } from "./console-list";
 import { EditConsoleForm } from "./edit-console-form";
@@ -179,7 +180,7 @@ export function ManageGamingConsole() {
       <div className="console-manager-header">
         <h1 className="premium-heading">Gaming Consoles</h1>
         <div className="flex flex-wrap items-center gap-3 text-xs">
-          <a className="rounded-md border px-3 py-2 hover:bg-muted" href="https://drive.google.com/file/d/107quBG127Sg7lscQEusp_1vFqbvl1-CR/view" target="_blank" rel="noopener noreferrer">Download kiosk · Windows</a>
+          <KioskDownload />
           <a className="text-muted-foreground hover:underline" href="/subscription">PC licences</a>
           <details className="relative"><summary className="cursor-pointer text-muted-foreground">Setup</summary><div className="absolute z-20 right-0 mt-2 w-64 rounded-lg border bg-background p-3 shadow-lg"><p>Install on each PC, then link it to your cafe. Each linked PC uses one licence.</p><a className="mt-2 inline-block underline" href="https://drive.google.com/drive/folders/171RmdWLzuBhl0qE5xAhFvmtgyppmN0Cv?usp=sharing" target="_blank" rel="noopener noreferrer">All releases</a></div></details>
         </div>
