@@ -746,9 +746,10 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
       startTime: slot.startTime,
       endTime: slot.endTime,
       date: slot.date,
-      elapsedTime: calculateElapsedTime(slot.startTime || '', slot.date || ''),
-      extraTime: calculateExtraTime(slot.endTime || '', slot.date || ''),
-      duration: calculateDuration(slot.startTime || '', slot.endTime || ''),
+      runtime: slot.runtime,
+      elapsedTime: slot.runtime ? Math.max(0,Math.floor((Date.now()-Date.parse(slot.runtime.started_at))/1000)) : calculateElapsedTime(slot.startTime || '', slot.date || ''),
+      extraTime: slot.runtime ? Math.max(0,Math.floor((Date.now()-Date.parse(slot.runtime.reserved_until))/1000)) : calculateExtraTime(slot.endTime || '', slot.date || ''),
+      duration: slot.runtime ? Math.max(1,Math.floor((Date.parse(slot.runtime.reserved_until)-Date.parse(slot.runtime.started_at))/1000)) : calculateDuration(slot.startTime || '', slot.endTime || ''),
     }));
     setTimers(initialTimers);
   }, [currentSlots, searchQuery]);
@@ -857,8 +858,8 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
       setTimers((prevTimers) =>
         prevTimers.map((timer) => ({
           ...timer,
-          elapsedTime: calculateElapsedTime(timer.startTime || '', timer.date || ''),
-          extraTime: calculateExtraTime(timer.endTime || '', timer.date || ''),
+          elapsedTime: timer.runtime ? Math.max(0,Math.floor((Date.now()-Date.parse(timer.runtime.started_at))/1000)) : calculateElapsedTime(timer.startTime || '', timer.date || ''),
+          extraTime: timer.runtime ? Math.max(0,Math.floor((Date.now()-Date.parse(timer.runtime.reserved_until))/1000)) : calculateExtraTime(timer.endTime || '', timer.date || ''),
         }))
       );
     }, 1000);
@@ -1057,7 +1058,7 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                     const progress = Math.min(100, (timer.elapsedTime / timer.duration) * 100);
                     const hasExtraTime = timer.extraTime > 0;
                     const bookingIdToCheck = getBookingIdString(booking);
-                    const outstandingDue = Number(bookingOutstandingDue[bookingIdToCheck] || 0);
+                    const outstandingDue = Number(bookingOutstandingDue[bookingIdToCheck] || 0)+Number(booking.runtime?.billing?.amount_due_paise||0)/100;
                     const hasOutstandingDue = outstandingDue > 0.01;
                     const needsSettlement = hasExtraTime || hasOutstandingDue;
                     const remainingTime = Math.max((timer.duration || 0) - (timer.elapsedTime || 0), 0);
@@ -1253,7 +1254,7 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                         const progress = Math.min(100, (timer.elapsedTime / timer.duration) * 100);
                         const hasExtraTime = timer.extraTime > 0;
                         const bookingIdForDue = getBookingIdString(booking);
-                        const outstandingDue = Number(bookingOutstandingDue[bookingIdForDue] || 0);
+                        const outstandingDue = Number(bookingOutstandingDue[bookingIdForDue] || 0)+Number(booking.runtime?.billing?.amount_due_paise||0)/100;
                         const hasOutstandingDue = outstandingDue > 0.01;
                         const needsSettlement = hasExtraTime || hasOutstandingDue;
                         const remainingTime = Math.max((timer.duration || 0) - (timer.elapsedTime || 0), 0);

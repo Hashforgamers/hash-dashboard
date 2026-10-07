@@ -1,3 +1,4 @@
+import ExtensionSettlement from './session-extension-settlement';
 import { creditAuthHeaders } from "@/lib/credit-auth";
 import { AnimatePresence, motion } from "framer-motion";
 import { IndianRupee, CreditCard, Smartphone, X, CheckCircle, Loader2, Gamepad2, Timer, Wallet, Receipt } from "lucide-react";
@@ -15,7 +16,7 @@ interface ExtraBookingOverlayProps {
   calculateExtraTime: (endTime: string, date: string) => number;
   calculateExtraAmount: (extraSeconds: number, ratePerHour: number) => number;
   formatTime: (seconds: number) => string;
-  releaseSlot: (consoleType: string, gameId: string, consoleId: string, vendorId: any, setRefreshSlots: any) => Promise<boolean>;
+  releaseSlot: (consoleType: string, gameId: string, consoleId: string, vendorId: any, setRefreshSlots: any) => Promise<{ok:boolean;partial_release:boolean;payload:unknown}>;
 }
 
 interface PaymentSummaryLineItem {
@@ -371,7 +372,7 @@ const SettlementOverlay: React.FC<ExtraBookingOverlayProps> = ({
           vendorId,
           setRefreshSlots
         );
-        success = success && Boolean(released);
+        success = success && released.ok;
       }
       console.log('💰 Release slot result:', success);
 
@@ -842,5 +843,6 @@ const SettlementOverlay: React.FC<ExtraBookingOverlayProps> = ({
 };
 
 export default function ExtraBookingOverlay(props:ExtraBookingOverlayProps) {
+  if(props.showOverlay&&props.selectedSlot?.runtime?.runtime_id&&props.vendorId)return <ExtensionSettlement runtimeId={props.selectedSlot.runtime.runtime_id} vendorId={props.vendorId} onClose={()=>props.setShowOverlay(false)} onUpdated={()=>props.setRefreshSlots(prev=>!prev)}/>;
   return <SettlementOverlay key={`${props.vendorId}:${props.selectedSlot?.bookingId || props.selectedSlot?.bookId}:${props.showOverlay}`} {...props}/>;
 }
