@@ -10,6 +10,7 @@ export interface Booking {
   slot_price?: number;
   userId?: string;
   bookings?: Booking[];
+  runtime?: {runtime_id:string;revision:number;started_at:string;reserved_until:string;paid_until:string;ended_at:string|null;billing:{amount_due_paise:number}};
 }
 
 // Function to check if two slots are consecutive
