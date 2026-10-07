@@ -1,15 +1,18 @@
 'use client';
 import {useEffect, useRef, useState} from 'react';
+import {useSocket} from '@/app/context/SocketContext';
 import {useAccess} from '@/app/context/AccessContext';
 import {cafeCall, rupees, paise, CafePolicy, LedgerEntry, Shift} from '@/lib/cafe-api';
 import {Button} from '@/components/ui/button';
 import {Input} from '@/components/ui/input';
 import {Dialog, DialogContent, DialogHeader, DialogTitle} from '@/components/ui/dialog';
+import SessionExtensionSettings from './session-extension-settings';
 import {CafeGamerSearch, CafeGamer} from './cafe-gamer-search';
 import {activityLabel, activityDetails, downloadActivityCsv} from '@/lib/cafe-activity';
 
 export function CafeWalletWorkspace({embedded = false, view = "wallet"}: {embedded?: boolean; view?: "wallet"|"settings"|"activity"|"shift"}) {
   const {selectedCafeId, activeStaff, can} = useAccess();
+  const {socket}=useSocket();
   const [showShift,setShowShift] = useState(false);
   const [selectedGamer,setSelectedGamer] = useState<CafeGamer|null>(null);
   const [activitySearch,setActivitySearch] = useState('');
@@ -26,7 +29,7 @@ export function CafeWalletWorkspace({embedded = false, view = "wallet"}: {embedd
   const [shifts,setShifts] = useState<Shift[]>([]);
   const [userId,setUserId] = useState('');
   const [loadedUser,setLoadedUser] = useState('');
-  const [wallet,setWallet] = useState<{balance:number; reserved:number; ledger:LedgerEntry[]}|null>(null);
+  const [wallet,setWallet] = useState<{balance:number; reserved:number; credit_due_paise?:number;net_balance_paise?:number;ledger:LedgerEntry[]}|null>(null);
   const [amount,setAmount] = useState('');
   const [paymentReceived,setPaymentReceived] = useState(false);
   const [method,setMethod] = useState('cash');
@@ -85,7 +88,7 @@ export function CafeWalletWorkspace({embedded = false, view = "wallet"}: {embedd
   async function loadWallet(id=userId) {
     if(contextRef.current !== currentContext) return;
     if(!/^\d+$/.test(id)) throw new Error('Enter a gamer ID');
-    const result = await cafeCall<{balance:number;reserved:number;ledger:LedgerEntry[]}>(`${prefix}/wallets/${id}`);
+    const result = await cafeCall<{balance:number;reserved:number;credit_due_paise?:number;net_balance_paise?:number;ledger:LedgerEntry[]}>(`${prefix}/wallets/${id}`);
     if(contextRef.current !== currentContext) return;
     setWallet(result); setLoadedUser(id); if(id!==loadedUser){setIdem('');setAdjustKey('');}
   }
@@ -104,6 +107,12 @@ export function CafeWalletWorkspace({embedded = false, view = "wallet"}: {embedd
     window.addEventListener('cafe-desk-updated',reload);
     return ()=>window.removeEventListener('cafe-desk-updated',reload);
   },[selectedCafeId,activeStaff?.id,view]);
+  useEffect(()=>{
+    if(view!=='wallet'||!loadedUser)return;
+    const update=()=>{void loadWallet(loadedUser).catch(e=>setMessage(e instanceof Error?e.message:'Unable to refresh wallet'));};
+    socket?.on('session.updated',update);
+    return()=>{socket?.off('session.updated',update);};
+  },[socket,loadedUser,selectedCafeId,activeStaff?.id,view]);
   async function loadActivity() {
     if(view!=='activity'||!selectedCafeId||!activeStaff||!can('transactions.view')) return;
     const sequence=++activityRequest.current;
@@ -148,7 +157,7 @@ export function CafeWalletWorkspace({embedded = false, view = "wallet"}: {embedd
           <div><h3 className="text-sm font-semibold">{selectedGamer.name || 'Gamer'}</h3><p className="text-xs text-muted-foreground">{selectedGamer.game_username || `#${selectedGamer.id}`} · {selectedGamer.phone || selectedGamer.email || `Hash ID ${selectedGamer.id}`}</p></div>
           <Button size="sm" variant="ghost" disabled={busy} onClick={()=>{setSelectedGamer(null);setWallet(null);setLoadedUser('');setAmount('');setPaymentReceived(false);setIdem('');setMessage('');}}>Change gamer</Button>
         </div>}
-      {wallet && <div className="flex flex-wrap items-center justify-between gap-2 rounded-md border bg-muted/20 p-3"><span className="text-xs text-muted-foreground">Available at this cafe</span><span className="text-lg font-semibold tabular-nums">{rupees(wallet.balance-wallet.reserved)}</span></div>}
+      {wallet && <div className="rounded-md border bg-muted/20 p-3 text-sm"><div className="flex justify-between"><span>Cafe account balance</span><span className="font-semibold tabular-nums">{rupees(wallet.net_balance_paise??wallet.balance)}</span></div><div className="mt-1 flex justify-between text-xs text-muted-foreground"><span>Available wallet funds</span><span>{rupees(wallet.balance-wallet.reserved)}</span></div>{!!wallet.credit_due_paise&&<p className="mt-2 text-xs text-amber-500">Credit due {rupees(wallet.credit_due_paise)}. Top-ups repay this first.</p>}</div>}
       {!selectedGamer && <p className="text-xs text-muted-foreground">Select a search result to view the gamer’s balance.</p>}
       {busy&&!selectedGamer&&<p role="status" className="text-xs text-muted-foreground">Loading wallet…</p>}
       </div><fieldset disabled={!wallet || !selectedGamer || busy} className="min-w-0 space-y-3 rounded-lg border bg-muted/20 p-3">
@@ -162,7 +171,7 @@ export function CafeWalletWorkspace({embedded = false, view = "wallet"}: {embedd
         <div className="space-y-3 rounded-md bg-muted/30 p-3">
           <div className="flex justify-between text-xs"><span className="text-muted-foreground">Current balance</span><span className="font-medium tabular-nums">{wallet ? rupees(wallet.balance) : '—'}</span></div>
           {wallet && wallet.reserved>0&&<div className="flex justify-between text-xs"><span className="text-muted-foreground">Held for gaming</span><span className="tabular-nums">{rupees(wallet.reserved)}</span></div>}
-          <div className="flex justify-between border-t pt-2 text-sm font-semibold"><span>Balance after top-up</span><span className="tabular-nums">{wallet ? rupees(wallet.balance+(Number.isFinite(Number(amount))&&Number(amount)>0?Math.round(Number(amount)*100):0)) : '—'}</span></div>
+          <div className="flex justify-between border-t pt-2 text-sm font-semibold"><span>Balance after top-up</span><span className="tabular-nums">{wallet ? rupees((wallet.net_balance_paise??wallet.balance)+(Number.isFinite(Number(amount))&&Number(amount)>0?Math.round(Number(amount)*100):0)) : '—'}</span></div>
           <p className="text-xs text-muted-foreground">Usable at this cafe only.</p>
           {!openShift ? <Button size="sm" variant="outline" disabled={!policy} onClick={()=>setShowShift(true)}>Start shift to accept payment</Button> : <label className="flex items-start gap-2 text-xs"><input type="checkbox" className="mt-0.5" checked={paymentReceived} onChange={e=>setPaymentReceived(e.target.checked)}/>{method==='cash'?'Cash received from gamer':'UPI payment verified in cafe account'}</label>}
           <Button className="w-full" disabled={busy || !openShift || !paymentReceived || !policy?.desk_methods.includes(method) || !/^\d+(\.\d{1,2})?$/.test(amount) || Number(amount)<=0 || !can('wallet.topup')} onClick={()=>action(async()=>{
@@ -180,6 +189,7 @@ export function CafeWalletWorkspace({embedded = false, view = "wallet"}: {embedd
       <div className="overflow-auto"><table className="w-full text-left text-xs [&_th]:bg-muted/40 [&_td]:px-2 [&_td]:py-2 [&_td]:align-top"><thead><tr>{['Date & time','Transaction','Amount','Staff member','Reason','Action'].map(h=><th className="p-2 whitespace-nowrap" key={h}>{h}</th>)}</tr></thead><tbody>{wallet.ledger.map(e=><tr className="border-t" key={e.id}><td className="p-2 whitespace-nowrap">{new Date(e.created_at).toLocaleString()}</td><td>{activityLabel(e.kind)}</td><td>{rupees(e.amount)}</td><td>{e.actor_name}</td><td>{e.reason}</td><td>{can('wallet.refund') && ['topup','capture'].includes(e.kind) && <Button variant="outline" disabled={busy||reason.trim().length<3} onClick={()=>action(async()=>{await cafeCall(`${prefix}/ledger/${e.id}/refund`,{reason,idempotency_key:`refund-${e.id}-${activeStaff?.id}`});await syncAfterWrite('Reversal recorded.',true);})}>Refund</Button>}</td></tr>)}</tbody></table></div>{wallet.ledger.length===0&&<p className="text-xs text-muted-foreground">No transactions yet.</p>}</div></details>}
     </section>}
     </div>
+    {view==='settings' && <SessionExtensionSettings/>}
     {view==='settings' && policy && can('account.manage') && <section className="payment-settings-panel rounded-xl border bg-card p-5">
       <header className="mb-5"><h2 className="text-lg font-semibold">Payment settings</h2><p className="mt-1 text-sm text-muted-foreground">Manage QR self-service, wallet collections and food payments.</p></header>
       <div className="grid gap-5 md:grid-cols-2">

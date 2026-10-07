@@ -1,5 +1,6 @@
 "use client"
 
+import SessionExtensionWorkspace from './session-extension-workspace'
 import { creditAuthHeaders } from "@/lib/credit-auth"
 
 import React, { useEffect, useMemo, useState } from 'react'
@@ -597,6 +598,7 @@ export function NotificationPanel({
                 )}
               </div>
 
+              <SessionExtensionWorkspace/>
               {notifications.length === 0 ? (
                 <div className="dashboard-module-card rounded-xl border border-slate-600/45 bg-slate-900/65 px-3 py-5 text-center">
                   <div className="mx-auto mb-2 flex h-8 w-8 items-center justify-center rounded-full border border-slate-500/60 bg-slate-800/70">
