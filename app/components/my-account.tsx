@@ -1,4 +1,5 @@
 "use client";
+import OwnerSecuritySettings from "./owner-security-settings";
 
 import { normalizeOperatingHours, validateOperatingDay, type OperatingDay } from "@/lib/operating-hours";
 import { CafeRequests } from './cafe-requests';
@@ -1721,6 +1722,7 @@ const ToggleSwitch = ({
                     { icon: Clock, label: "Operating Hours" },  
                     { icon: DollarSign, label: "GST Setup" },
                     { icon: Settings, label: "Payment Methods" },
+                    ...(activeStaff?.role === "owner" ? [{ icon: Settings, label: "Owner Security" }] : []),
                     ...(can("transactions.view") ? [{ icon: Clock, label: "Staff Activity" }] : []),
                     { icon: FileCheck, label: "Verified Documents" },
                     { icon: CreditCard, label: "Bank Details" },  
@@ -2911,6 +2913,8 @@ const ToggleSwitch = ({
     </Card>
   </>
 )}
+
+{page === "Owner Security" && activeStaff?.role === "owner" && <OwnerSecuritySettings key={activeStaff.id} />}
 
 {page === "Staff Activity" && can("transactions.view") && <CafeWalletWorkspace embedded view="activity" />}
 
