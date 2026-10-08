@@ -1768,7 +1768,7 @@ const ToggleSwitch = ({
             className="min-w-0 space-y-3"
           >
             {page === "Report an issue" && <CafeRequests vendorId={vendorId} onDocuments={()=>setPage("Verified Documents")} />}
-            <form className="space-y-3">
+            <div className="space-y-3">
 
  {page === "Cafe Gallery" && (
   <div>
@@ -3601,7 +3601,7 @@ const ToggleSwitch = ({
                 <Button variant="outline" className="border-border text-foreground hover:bg-muted hover:text-foreground">Cancel</Button>
                 <Button type="submit" className="bg-primary hover:bg-primary/90 text-primary-foreground">Save Changes</Button>
               </div> **/}
-            </form>
+            </div>
           </motion.div>
         </div>
       </div>
