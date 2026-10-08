@@ -1,4 +1,5 @@
 "use client";
+import OwnerSecuritySettings from "./owner-security-settings";
 
 import { normalizeOperatingHours, validateOperatingDay, type OperatingDay } from "@/lib/operating-hours";
 import { CafeRequests } from './cafe-requests';
@@ -1721,6 +1722,7 @@ const ToggleSwitch = ({
                     { icon: Clock, label: "Operating Hours" },  
                     { icon: DollarSign, label: "GST Setup" },
                     { icon: Settings, label: "Payment Methods" },
+                    ...(activeStaff?.role === "owner" ? [{ icon: Settings, label: "Owner Security" }] : []),
                     ...(can("transactions.view") ? [{ icon: Clock, label: "Staff Activity" }] : []),
                     { icon: FileCheck, label: "Verified Documents" },
                     { icon: CreditCard, label: "Bank Details" },  
@@ -1766,7 +1768,7 @@ const ToggleSwitch = ({
             className="min-w-0 space-y-3"
           >
             {page === "Report an issue" && <CafeRequests vendorId={vendorId} onDocuments={()=>setPage("Verified Documents")} />}
-            <form className="space-y-3">
+            <div className="space-y-3">
 
  {page === "Cafe Gallery" && (
   <div>
@@ -2912,6 +2914,8 @@ const ToggleSwitch = ({
   </>
 )}
 
+{page === "Owner Security" && activeStaff?.role === "owner" && <OwnerSecuritySettings key={activeStaff.id} />}
+
 {page === "Staff Activity" && can("transactions.view") && <CafeWalletWorkspace embedded view="activity" />}
 
 {page === "Payment Methods" && (<>{can("account.manage")&&<CafeWalletWorkspace embedded view="settings" />}<Card className="payment-methods-panel content-card shadow-lg">
@@ -3597,7 +3601,7 @@ const ToggleSwitch = ({
                 <Button variant="outline" className="border-border text-foreground hover:bg-muted hover:text-foreground">Cancel</Button>
                 <Button type="submit" className="bg-primary hover:bg-primary/90 text-primary-foreground">Save Changes</Button>
               </div> **/}
-            </form>
+            </div>
           </motion.div>
         </div>
       </div>
