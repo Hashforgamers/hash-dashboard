@@ -1134,6 +1134,7 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                               transition={{ duration: 0.4 }}
                             />
                           </div>
+                          {booking.runtime?.billing?.payment_status==='extension_reserved' && !hasOutstandingDue && <p className="text-xs text-amber-300">Extra time · pay at desk</p>}
                           {hasOutstandingDue && (
                             <p className="text-xs font-semibold text-amber-300">
                               To be paid: ₹{outstandingDue.toFixed(2)}
@@ -1632,7 +1633,7 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
 
                             {/* Extra Time cell - unchanged */}
                             <td className="px-3 py-3 md:px-4">
-                              <LiveSessionDue overtime={timer.extraTime || 0} amountDue={hasOutstandingDue ? outstandingDue : 0} />
+                              <LiveSessionDue overtime={timer.extraTime || 0} amountDue={hasOutstandingDue ? outstandingDue : 0} paymentStatus={booking.runtime?.billing?.payment_status} />
                             </td>
 
                             {/* Action cell - unchanged */}
