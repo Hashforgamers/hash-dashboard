@@ -493,6 +493,7 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
   
   const [currentSlots, setCurrentSlots] = useState(initialSlots || [])
   const [qrSessionCount, setQrSessionCount] = useState(0);
+  const [qrLoadState,setQrLoadState]=useState<'loading'|'ready'|'error'>('loading');
   const [qrTableLayout, setQrTableLayout] = useState(false);
   useEffect(() => {
     const media = window.matchMedia('(min-width: 1024px)');
@@ -1044,7 +1045,7 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
             className="dashboard-table-shell live-session-table-shell flex-1 min-h-0 backdrop-blur-sm"
           >
             <div className="lg:hidden h-full overflow-y-auto p-2">
-              {!qrTableLayout && <QrLiveSessions search={searchQuery} onCount={setQrSessionCount} />}
+              {!qrTableLayout && <QrLiveSessions search={searchQuery} onCount={setQrSessionCount} onLoadState={setQrLoadState} />}
               {Array.isArray(filteredSlots) && filteredSlots.length > 0 ? (
                 <div className="space-y-2">
                   {filteredSlots.map((booking) => {
@@ -1210,7 +1211,7 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                     );
                   })}
                 </div>
-              ) : qrSessionCount > 0 ? null : (
+              ) : qrSessionCount > 0 || qrLoadState!=='ready' ? null : (
                 <div className="dashboard-module-empty flex h-full flex-col items-center justify-center py-8">
                   <Search className="h-8 w-8 text-slate-600" />
                   <p className="text-sm font-medium">No active sessions found</p>
@@ -1240,7 +1241,7 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                   </tr>
                 </thead>
                 <tbody className="dashboard-module-table-body divide-y">
-                  {qrTableLayout && <QrLiveSessions layout="rows" search={searchQuery} onCount={setQrSessionCount} />}
+                  {qrTableLayout && <QrLiveSessions layout="rows" search={searchQuery} onCount={setQrSessionCount} onLoadState={setQrLoadState} />}
                   {Array.isArray(filteredSlots) && filteredSlots.length > 0 ? (
                     <AnimatePresence mode="popLayout">
                       {filteredSlots.map((booking, index) => {
@@ -1710,7 +1711,7 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                         );
                       })}
                     </AnimatePresence>
-                  ) : qrSessionCount > 0 ? null : (
+                  ) : qrSessionCount > 0 || qrLoadState!=='ready' ? null : (
                     <tr>
                       <td colSpan={6} className="px-4 py-10 text-center text-slate-400">
                         <motion.div
