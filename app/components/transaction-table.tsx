@@ -1,4 +1,6 @@
 "use client";
+import CafeAuditPanel from "./cafe-audit-panel";
+import {Button} from "@/components/ui/button";
 import { httpJson } from "@/lib/http-client";
 import { useMemo, useState, useEffect } from "react";
 import {
@@ -142,6 +144,7 @@ export function TransactionTable() {
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-01`;
   };
 
+  const [reportView,setReportView]=useState<'bookings'|'ledger'>('bookings');
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [boolTrans, setBoolTrans] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
@@ -573,7 +576,7 @@ export function TransactionTable() {
       case "amount":
         return <TableCell className="px-4 py-3 text-right font-medium text-slate-900 dark:text-slate-100">₹{transaction.amount.toFixed(2)}</TableCell>;
       case "appFeeAmount":
-        return (
+  return (
           <TableCell className="px-4 py-3 text-right text-slate-700 dark:text-slate-300">
             ₹{Number(transaction.appFeeAmount || 0).toFixed(2)}
           </TableCell>
@@ -672,8 +675,11 @@ export function TransactionTable() {
     return <HashLoader className="min-h-[500px]" />;
   }
 
+  const reportTabs=<nav className="flex gap-2 border-b pb-2" aria-label="Transaction report views"><Button variant={reportView==='bookings'?'secondary':'ghost'} onClick={()=>setReportView('bookings')}>Booking transactions</Button><Button variant={reportView==='ledger'?'secondary':'ghost'} onClick={()=>setReportView('ledger')}>Money & wallet ledger</Button></nav>;
+  if(reportView==='ledger')return <div className="space-y-4 overflow-y-auto p-2">{reportTabs}{vendorId&&<CafeAuditPanel key={vendorId} vendorId={vendorId}/>}</div>;
   return (
     <div className="flex h-full min-h-0 w-full min-w-0 flex-col gap-3 overflow-hidden sm:gap-3">
+      {reportTabs}
       {/* <CHANGE> Updated metric cards to use default card styling instead of colorful gradients */}
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-2 sm:gap-3 lg:grid-cols-4">
         <motion.div

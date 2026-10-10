@@ -1,4 +1,6 @@
 "use client";
+import CafeAuditPanel from "./cafe-audit-panel";
+import {Dialog,DialogContent,DialogHeader,DialogTitle} from "@/components/ui/dialog";
 
 
 import { creditAuthHeaders } from "@/lib/credit-auth";
@@ -52,6 +54,7 @@ interface ConsoleListProps {
 }
 
 export function ConsoleList({ onEdit, refreshKey = 0 }: ConsoleListProps) {
+  const [historyConsole,setHistoryConsole]=useState<{id:number;name:string}|null>(null);
   const [data, setdata] = useState<any[]>([]);
   const { vendorId: cachedVendorId, consoles: cachedConsoles, refreshConsoles, setConsoles: setCachedConsoles } = useDashboardData();
   const [vendorId, setVendorId] = useState<number | null>(null);
@@ -444,6 +447,7 @@ export function ConsoleList({ onEdit, refreshKey = 0 }: ConsoleListProps) {
                           <Edit className="w-4 h-4 mr-1" />
                           Edit
                         </Button>
+                        <Button type="button" variant="outline" size="sm" onClick={()=>setHistoryConsole({id:console.id,name:console.name})}>History</Button>
                         {console.type === "pc" && console.kioskLinked && (
                           <Button
                             variant="outline"
@@ -614,6 +618,7 @@ export function ConsoleList({ onEdit, refreshKey = 0 }: ConsoleListProps) {
           })}
         </div>
       </div>
+      <Dialog open={!!historyConsole} onOpenChange={open=>{if(!open)setHistoryConsole(null);}}><DialogContent className="max-h-[85vh] max-w-6xl overflow-y-auto"><DialogHeader><DialogTitle>{historyConsole?.name||'Console'} — session history</DialogTitle></DialogHeader>{historyConsole&&vendorId&&<CafeAuditPanel key={`${vendorId}:${historyConsole.id}`} vendorId={vendorId} consoleId={historyConsole.id}/>}</DialogContent></Dialog>
     </div>
   );
 }
