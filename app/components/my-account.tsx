@@ -2978,6 +2978,7 @@ const ToggleSwitch = ({
           </div>
         ) : (
           <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">These switches control the payment methods accepted by this cafe in Hash. Cafe Wallet uses the balance held at this cafe for PC QR checkout. Global Hash Wallet is a separate balance.</p>
             {/* Available Payment Methods */}
             {Array.isArray(paymentMethods) && paymentMethods.length > 0 ? (
               <>
