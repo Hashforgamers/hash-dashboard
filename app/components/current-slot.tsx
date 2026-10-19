@@ -10,6 +10,7 @@ import { FaCheck, FaPowerOff } from 'react-icons/fa';
 import { BOOKING_URL, DASHBOARD_URL } from "@/src/config/env";
 import { mergeConsecutiveBookings } from "@/app/utils/slot-utils";
 import QrLiveSessions from "./qr-live-sessions";
+import SessionStatusSummary from './session-status-summary';
 import HashLoader from './ui/HashLoader';
 import ExtraBookingOverlay from "./extraBookingOverlay";
 import MealDetailsModal from "./mealsDetailmodal";
@@ -969,6 +970,7 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
 
   return (
     <div className="dashboard-module dashboard-module-panel live-session-card flex h-full min-h-0 flex-col overflow-hidden rounded-lg p-3 sm:p-4">
+      {activeTab==='live'&&<SessionStatusSummary/>}
       {currentSlots?.available ? (
         <div className="flex h-full items-center justify-center">
           <HashLoader />
