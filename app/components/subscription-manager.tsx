@@ -8,11 +8,12 @@ import {Button} from "@/components/ui/button";
 import Link from "next/link";
 import {toast} from "sonner";
 
-type Plan={code:string;name:string;pc_limit:number;price:number;features:{plan_features?:string[];entitlements?:string[];extra_pc_monthly?:number}};
+type Plan={code:string;name:string;pc_limit:number;price:number;cyclePrices?:Record<string,number>;features:{plan_features?:string[];entitlements?:string[];extra_pc_monthly?:number;quarterly_price_inr?:number;yearly_price_inr?:number}};
 type Terms={package_name:string;package_code:string;pc_limit:number;extra_pcs:number;billing_cycle:string;entitlements:string[]};
 type Purchase={id:string;state:string;terms:Terms;amount_paise:number;period_start:string;period_end:string;description:string;tax_note:string;key_id?:string;order_id?:string;invoice_number?:string;activation_error?:string};
 const money=(paise:number)=>new Intl.NumberFormat('en-IN',{style:'currency',currency:'INR'}).format(paise/100);
 const date=(value:string)=>new Date(value).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'});
+const billingPeriods:Record<string,{label:string;months:number}>={monthly:{label:'Monthly',months:1},quarterly:{label:'Quarterly',months:3},yearly:{label:'Yearly',months:12}};
 const featureLabels:Record<string,string>={kiosk:'PC kiosk',pricing:'Console pricing',cafe_wallet:'Cafe wallet',passes:'Passes',food:'Extra services',analytics:'Reports',tournaments:'Tournaments',staff:'Team access'};
 const features=(items:string[])=>items.map(item=>featureLabels[item]||item).join(' · ');
 
@@ -29,7 +30,7 @@ export function SubscriptionManager(){
   if(!vendorId)return;
   try{
    const [catalog,subscription,history]=await Promise.all([subscriptionApi.getPackages(),subscriptionApi.getSubscription(vendorId),apiCall<{purchases:Purchase[]}>(`/api/vendors/${vendorId}/subscription/purchases`)]);
-   setPlans(catalog.packages||[]);setCurrent(subscription.status==='none'?null:subscription);setPurchases(history.purchases);
+   setPlans((catalog.packages||[]).map((plan:Plan)=>({...plan,cyclePrices:{monthly:plan.price,quarterly:plan.price===0?0:catalog.dev_mode?plan.price:Number(plan.features.quarterly_price_inr??plan.price*3),yearly:plan.price===0?0:catalog.dev_mode?plan.price:Number(plan.features.yearly_price_inr??plan.price*12)}})));setCurrent(subscription.status==='none'?null:subscription);setPurchases(history.purchases);
    const terms=subscription.commercial_terms;
    if(terms){setCycle(terms.billing_cycle);setExtra(prev=>({...prev,[terms.package_code]:prev[terms.package_code]??terms.extra_pcs}));}
    setError('');
@@ -93,12 +94,13 @@ export function SubscriptionManager(){
    {current&&currentPlan&&Number(currentPlan.features.extra_pc_monthly)>0?<><div className="flex flex-wrap items-end gap-3"><label className="text-xs">PCs to add<input className="mt-1 block w-24 rounded border bg-background px-3 py-2" type="number" min="1" max="10000" step="1" value={additionalPCs} onChange={e=>{setAdditionalPCs(Number(e.target.value));setPreview(null);}}/></label><Button disabled={busy||!!pendingPurchase||!Number.isInteger(additionalPCs)||additionalPCs<1} onClick={()=>void review(currentPlan,true)}>Review additional PCs</Button></div><p className="text-xs text-muted-foreground">{money(Number(currentPlan.features.extra_pc_monthly)*100)} / PC / month · Prorated until {date(current.period_end)}. Your plan and renewal date stay unchanged.</p></>:<p className="text-muted-foreground">{current?'Additional PC pricing is unavailable for your current plan. Contact Hash or choose a larger plan.':'Choose a plan to enable PC licences.'}</p>}
   </section>}
   {section==='plans'&&<section><h2 className="mb-2 !text-sm font-semibold">Plans & renewal</h2>
-   <label>Billing period <select className="ml-2 rounded border bg-background p-2" value={cycle} onChange={e=>{setCycle(e.target.value);setPreview(null);}}>{['monthly','quarterly','yearly'].map(c=><option key={c}>{c}</option>)}</select></label>
+   <label>Billing period <select disabled={busy} className="ml-2 rounded border bg-background p-2" value={cycle} onChange={e=>{setCycle(e.target.value);setPreview(null);}}>{Object.entries(billingPeriods).map(([value,{label}])=><option key={value} value={value}>{label}</option>)}</select></label>
+   {current&&<p className="mt-2 text-xs text-muted-foreground">Your active subscription keeps its current billing period for renewals and prorated upgrades. A different billing period can be selected after it expires.</p>}
    <div className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">{plans.map(plan=><article key={plan.code} className="space-y-3 rounded-lg border p-3">
-    <h3 className="!text-base font-semibold">{plan.name}</h3><p>{plan.pc_limit} included PCs / kiosks</p><p>Monthly base {money(plan.price*100)}</p>
+    <h3 className="!text-base font-semibold">{plan.name}</h3><p>{plan.pc_limit} included PCs / kiosks</p><p>{billingPeriods[cycle]?.label} base {money((plan.cyclePrices?.[cycle]??plan.price*(billingPeriods[cycle]?.months||1))*100)}</p>
     <ul className="list-disc pl-5 text-sm">{(plan.features.plan_features||[]).map((f,i)=><li key={i}>{f}</li>)}</ul>
     <details className="text-xs text-muted-foreground"><summary className="cursor-pointer">Included features</summary><p className="mt-1">{features(plan.features.entitlements||[])||'Core features'}</p></details>
-    {Number(plan.features.extra_pc_monthly)>0&&<label className="block text-sm">Additional PCs ({money(Number(plan.features.extra_pc_monthly)*100)} each / month)<input aria-label={`Additional PCs for ${plan.name}`} className="mt-1 w-full rounded border bg-background p-2" type="number" min="0" max="10000" step="1" value={extra[plan.code]||0} onChange={e=>{setExtra(prev=>({...prev,[plan.code]:Number(e.target.value)}));setPreview(null);}}/></label>}
+    {Number(plan.features.extra_pc_monthly)>0&&<label className="block text-sm">Additional PCs ({money(Number(plan.features.extra_pc_monthly)*100*(billingPeriods[cycle]?.months||1))} each / {cycle==='yearly'?'year':cycle==='quarterly'?'quarter':'month'})<input aria-label={`Additional PCs for ${plan.name}`} className="mt-1 w-full rounded border bg-background p-2" type="number" min="0" max="10000" step="1" value={extra[plan.code]||0} onChange={e=>{setExtra(prev=>({...prev,[plan.code]:Number(e.target.value)}));setPreview(null);}}/></label>}
     <Button disabled={busy||!!pendingPurchase} onClick={()=>void review(plan)}>Review plan</Button>
    </article>)}</div>{!plans.length&&<p>No packages are currently available. Contact Hash.</p>}
   </section>}

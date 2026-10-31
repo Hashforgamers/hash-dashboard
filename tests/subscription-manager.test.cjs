@@ -3,8 +3,8 @@ const assert=require('node:assert/strict');
 const fs=require('node:fs');const vm=require('node:vm');const ts=require('typescript');const React=require('react');
 const plan={code:'pro',name:'Pro',pc_limit:10,price:200,features:{plan_features:['PC kiosk'],entitlements:['kiosk'],extra_pc_monthly:20}};
 const quote={id:'quote-1',state:'preview',amount_paise:7000,terms:{package_name:'Pro',pc_limit:12},period_start:'2026-10-01',period_end:'2026-11-01',description:'Prorated',tax_note:'Total payable'};
-function setup(preview=null,purchases=[]){
- const state=[[plan],null,purchases,preview,1,purchases.length?'invoices':'plans','monthly',{pro:2},false,'',false];let index=0;const calls=[];const updates=[];
+function setup(preview=null,purchases=[],cycle="monthly"){
+ const state=[[plan],null,purchases,preview,1,purchases.length?'invoices':'plans',cycle,{pro:2},false,'',false];let index=0;const calls=[];const updates=[];
  const apiCall=async(path,options)=>{calls.push({path,options});if(path.endsWith('/preview'))return quote;if(path.endsWith('/pay'))return {...quote,state:'ordered',key_id:'test_key',order_id:'order-1'};return {purchases:[]};};
  const fakeReact={...React,useState:()=>{const i=index++;return[state[i],value=>updates.push({i,value})]},useEffect:()=>{},useCallback:fn=>fn};
  const modules={'react':fakeReact,'@/lib/api':{apiCall,subscriptionApi:{getPackages:async()=>({packages:[plan]}),getSubscription:async()=>({status:'none'})}},'@/hooks/useSubscription':{useSubscription:()=>({vendorId:1,refreshStatus:async()=>{}})},'@/lib/razorpay':{createRazorpayOptions:(...args)=>args,openRazorpay:async options=>calls.push({gateway:options})},'@/src/config/env':{DASHBOARD_URL:'http://test'},'@/components/ui/button':{Button:'button'},sonner:{toast:{success:()=>{}}}};
@@ -36,3 +36,17 @@ test('pending purchase offers reconciliation and resumes the same quote',async()
  t.nodes.find(n=>n.props?.children==='Resume payment').props.onClick();await tick();
  assert.equal(t.calls[0].path,'/api/vendors/1/subscription/purchases/quote-1/pay');
 });
+
+for(const [cycle,base,extra] of [['monthly','₹200.00','₹20.00'],['quarterly','₹600.00','₹60.00'],['yearly','₹2,400.00','₹240.00']]){
+ test(`${cycle} selection updates displayed prices and the review request`,async()=>{
+  const t=setup(null,[],cycle);
+  const textOf=n=>Array.isArray(n)?n.map(textOf).join(''):typeof n==='object'&&n?textOf(n.props?.children):n??'';
+  assert.ok(t.nodes.some(n=>n.type==='p'&&textOf(n).includes(`base ${base}`)));
+  assert.ok(t.nodes.some(n=>n.type==='label'&&textOf(n).includes(`Additional PCs (${extra}`)));
+  t.nodes.find(n=>n.props?.children==='Review plan').props.onClick();await tick();
+  assert.equal(JSON.parse(t.calls[0].options.body).billing_cycle,cycle);
+  t.nodes.find(n=>n.type==='select').props.onChange({target:{value:'quarterly'}});
+  assert.ok(t.updates.some(u=>u.i===6&&u.value==='quarterly'));
+  assert.ok(t.updates.some(u=>u.i===3&&u.value===null));
+ });
+}
