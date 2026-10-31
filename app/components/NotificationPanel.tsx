@@ -1,12 +1,13 @@
 "use client"
 
 import SessionExtensionWorkspace from './session-extension-workspace'
+import styles from './notification-panel.module.css'
 import { creditAuthHeaders } from "@/lib/credit-auth"
 
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { createPortal } from 'react-dom'
-import { Bell, X, Check, Clock, User, Calendar, Wallet, Gamepad2, FileWarning, AlertTriangle } from 'lucide-react'
+import { Bell, X, Check, Clock, User, Calendar, Wallet, Gamepad2, FileWarning, AlertTriangle, ArrowUpRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { BOOKING_URL } from '@/src/config/env'
@@ -164,6 +165,28 @@ export function NotificationPanel({
     bookingId: number | null
     action: "accept" | "reject" | null
   }>({ bookingId: null, action: null })
+
+  const onCloseRef = useRef(onClose)
+  onCloseRef.current = onClose
+  const panelRef = useRef<HTMLDivElement>(null)
+  const queueRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (!isOpen) return
+    const previous = document.activeElement as HTMLElement | null
+    const frame = requestAnimationFrame(() => (isQueueOverlayOpen ? queueRef : panelRef).current?.querySelector<HTMLButtonElement>('button')?.focus())
+    const handleKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') { event.preventDefault(); isQueueOverlayOpen ? setIsQueueOverlayOpen(false) : onCloseRef.current(); return }
+      if (event.key !== 'Tab') return
+      const root = (isQueueOverlayOpen ? queueRef : panelRef).current
+      const controls = root?.querySelectorAll<HTMLElement>('button:not(:disabled), a[href], input:not(:disabled), select:not(:disabled), [tabindex="0"]')
+      if (!controls?.length) return
+      const first = controls[0], last = controls[controls.length - 1]
+      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus() }
+      else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus() }
+    }
+    document.addEventListener('keydown', handleKey)
+    return () => { cancelAnimationFrame(frame); document.removeEventListener('keydown', handleKey); previous?.focus() }
+  }, [isOpen, isQueueOverlayOpen])
 
   useEffect(() => {
     setMounted(true)
@@ -525,17 +548,20 @@ export function NotificationPanel({
             animate={{ y: 0, opacity: 1, scale: 1 }}
             exit={{ y: -100, opacity: 0, scale: 0.95 }}
             transition={{ type: "spring", damping: 25, stiffness: 300 }}
-            className="dashboard-module-panel fixed left-4 right-4 top-16 z-[30010] max-h-[85vh] overflow-hidden rounded-lg border border-slate-600/45 bg-slate-900/92 shadow-[0_18px_60px_rgba(2,6,23,0.5)] backdrop-blur-xl md:left-auto md:w-[26rem]"
+            className={styles.panel}
+            ref={panelRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="notification-panel-title"
           >
             {/* Header */}
-            <div className="flex items-center justify-between border-b border-slate-700/70 bg-slate-900/75 px-3 py-2.5">
-              <div className="flex items-center gap-2">
-                <h3 className="dash-title !text-sm">Notifications</h3>
-                {notificationCount > 0 && (
-                  <Badge className="border border-cyan-400/40 bg-cyan-500/15 text-cyan-200 text-xs">
-                    {notificationCount}
-                  </Badge>
-                )}
+            <div className={styles.header}>
+              <div>
+                <div className={styles.heading}>
+                  <h3 id="notification-panel-title" className={styles.title}>Notifications</h3>
+                  {notificationCount > 0 && <span className={styles.count} aria-label={`${notificationCount} account alerts`}>{notificationCount}</span>}
+                </div>
+                <p className={styles.subtitle}>Payments, account alerts & session activity</p>
               </div>
               <Button
                 variant="ghost"
@@ -549,11 +575,11 @@ export function NotificationPanel({
             </div>
 
             {/* Content */}
-            <div className="max-h-[70vh] overflow-y-auto bg-slate-900/45 p-2 sm:p-3">
-              <div className="dashboard-module-card mb-3 rounded-xl border border-cyan-400/25 bg-slate-900/65 p-3">
-                <div className="mb-2 flex items-center justify-between gap-2">
-                  <p className="text-xs font-medium text-cyan-200">
-                    Payment queue
+            <div className={styles.body}>
+              <div className={styles.queue}>
+                <div className={styles.sectionHead}>
+                  <p className={styles.sectionTitle}>
+                    <Wallet size={14} /> Payment queue
                   </p>
                   <Button
                     type="button"
@@ -563,26 +589,28 @@ export function NotificationPanel({
                       await fetchQueueSummary()
                       await fetchQueueList(selectedQueueStatus)
                     }}
-                    className="h-7 dashboard-btn-primary px-2 text-[11px]"
+                    variant="ghost"
+                    className={styles.queueLink}
                   >
-                    View queue
+                    View queue <ArrowUpRight size={13} />
                   </Button>
                 </div>
-                <div className="grid grid-cols-3 gap-1.5 text-[11px]">
+                <div className={styles.stats}>
                   {queueStatusCards.map((card) => {
                     return (
                       <button
                         type="button"
                         key={card.key}
-                        className="rounded-md border border-border bg-muted/40 px-2 py-1 text-left transition hover:border-cyan-400/30"
+                        className={styles.stat}
+                        aria-label={`${card.label}: ${card.value}. Open payment queue`}
                         onClick={async () => {
                           setSelectedQueueStatus(card.key)
                           setIsQueueOverlayOpen(true)
                           await fetchQueueList(card.key)
                         }}
                       >
-                        <span className="text-muted-foreground">{card.label}</span>
-                        <div className={`font-semibold ${card.valueClass}`}>
+                        <span className={styles.statLabel}>{card.label}</span>
+                        <div className={`${styles.statValue} ${card.valueClass}`}>
                           {card.value}
                         </div>
                       </button>
@@ -598,13 +626,12 @@ export function NotificationPanel({
                 )}
               </div>
 
-              <SessionExtensionWorkspace/>
               {notifications.length === 0 ? (
                 <div className="dashboard-module-card rounded-xl border border-slate-600/45 bg-slate-900/65 px-3 py-5 text-center">
                   <div className="mx-auto mb-2 flex h-8 w-8 items-center justify-center rounded-full border border-slate-500/60 bg-slate-800/70">
                     <Bell className="h-4 w-4 text-muted-foreground opacity-70" />
                   </div>
-                  <h4 className="mb-2 font-medium text-foreground">No notifications</h4>
+                  <h4 className="text-xs font-medium text-slate-400">No account alerts. You’re all caught up.</h4>
                 </div>
               ) : (
                 <div className="space-y-2">
@@ -687,7 +714,7 @@ export function NotificationPanel({
                           animate={{ opacity: 1, y: 0 }}
                           exit={{ opacity: 0, x: 20 }}
                           transition={{ delay: index * 0.05 }}
-                          className={`dashboard-module-card rounded-lg p-3 transition-all duration-200 ${
+                          className={`${styles.alertCard} dashboard-module-card rounded-lg p-3 transition-all duration-200 ${
                             isVerified
                               ? "border border-emerald-400/35 bg-emerald-500/10"
                               : "border border-rose-400/35 bg-rose-500/10"
@@ -714,7 +741,7 @@ export function NotificationPanel({
                                   }
                                 }}
                               >
-                                Open Settings
+                                Review document <ArrowUpRight size={13} />
                               </Button>
                             </div>
                           </div>
@@ -733,7 +760,7 @@ export function NotificationPanel({
                           animate={{ opacity: 1, y: 0 }}
                           exit={{ opacity: 0, x: 20 }}
                           transition={{ delay: index * 0.05 }}
-                          className={`dashboard-module-card rounded-lg p-3 transition-all duration-200 ${
+                          className={`${styles.alertCard} dashboard-module-card rounded-lg p-3 transition-all duration-200 ${
                             isCritical
                               ? "border border-rose-400/35 bg-rose-500/10"
                               : "border border-amber-400/35 bg-amber-500/10"
@@ -788,7 +815,7 @@ export function NotificationPanel({
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, x: 20 }}
                         transition={{ delay: index * 0.1 }}
-                        className={`dashboard-module-card rounded-lg p-3 transition-all duration-200 ${
+                        className={`${styles.alertCard} dashboard-module-card rounded-lg p-3 transition-all duration-200 ${
                           isThisBookingProcessing ? 'opacity-75' : ''
                         }`}
                       >
@@ -898,6 +925,7 @@ export function NotificationPanel({
                   })}
                 </div>
               )}
+              <SessionExtensionWorkspace/>
             </div>
           </motion.div>
 
@@ -919,6 +947,7 @@ export function NotificationPanel({
                   className="fixed inset-0 z-[30030] flex items-center justify-center p-4"
                 >
                   <div
+                    ref={queueRef}
                     className="dashboard-module-panel w-[min(42rem,calc(100vw-2rem))] max-h-[78vh] overflow-hidden rounded-lg border border-cyan-400/30 bg-background"
                     onClick={(e) => e.stopPropagation()}
                   >
