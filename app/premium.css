@@ -2714,9 +2714,11 @@ h6 {
 .operations-dashboard button:focus-visible,
 .operations-empty-action:focus-visible { outline: 2px solid #92c5ff; outline-offset: 2px; }
 @media (min-width: 1280px) {
+  .operations-dashboard .operations-booking-row,
   .operations-dashboard .operations-workspace {
     grid-template-columns: minmax(0, 1fr) minmax(300px, 30%);
   }
+  .operations-dashboard .operations-booking-row > *,
   .operations-dashboard .operations-workspace > * { grid-column: auto; min-width: 0; }
 }
 @media (max-width: 767px) {

@@ -1579,25 +1579,30 @@ const getEffectivePrice = (slot: SelectedSlot): number => {
 
   const paymentMethodMeta: Record<string, {
     icon: React.ComponentType<{ className?: string }>
+    label: string
     hint: string
     accent: string
   }> = {
     Cash: {
+      label: "Cash",
       icon: Wallet,
-      hint: "Collect directly at desk",
+      hint: "Collect payment at counter",
       accent: "emerald",
     },
     UPI: {
+      label: "UPI",
       icon: CreditCard,
       hint: "Scan and pay instantly",
       accent: "sky",
     },
     Pass: {
+      label: "Gaming Pass",
       icon: Ticket,
       hint: "Validate and redeem hours",
       accent: "violet",
     },
     "Monthly Credit": {
+      label: "Pay Later",
       icon: Clock,
       hint: "Bill in monthly cycle",
       accent: "amber",
@@ -1609,11 +1614,11 @@ const getEffectivePrice = (slot: SelectedSlot): number => {
       <div className="mb-2 flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <div>
-            <h3 className="slot-section-title">Payment method</h3>
+            <h3 className="slot-section-title">Payment Method</h3>
           </div>
         </div>
         <span className="slot-booking-modal-soft rounded-full px-2.5 py-1 text-[11px] font-semibold text-emerald-700 dark:text-emerald-300">
-          {paymentType}
+          {paymentMethodMeta[paymentType]?.label ?? paymentType}
         </span>
       </div>
 
@@ -1658,7 +1663,7 @@ const getEffectivePrice = (slot: SelectedSlot): number => {
                   />
                 </div>
                 <p className="mt-1 text-xs font-semibold text-gray-800 dark:text-white text-left leading-tight">
-                  {type === "Monthly Credit" ? "Credit" : type}
+                  {meta.label}
                 </p>
               </motion.button>
             )
@@ -2088,16 +2093,16 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
           initial={false}
           role="dialog"
           aria-modal="true"
-          aria-label="New slot booking"
+          aria-label="New Gaming Session"
           className="slot-booking-modal flex max-h-[92vh] w-full max-w-[960px] flex-col overflow-hidden rounded-xl border shadow-2xl"
         >
           <div className="slot-booking-modal-header relative flex items-center justify-between border-b px-4 py-3">
             <div className="min-w-0">
-              <h2 className="slot-booking-title">New booking</h2>
+              <h2 className="slot-booking-title">New Gaming Session</h2>
               <p className="slot-booking-context">
-                {selectedSlots[0]?.console_name || "Gaming session"}
+                {selectedSlots[0]?.console_name?.trim().toUpperCase() === "PC" ? "PC Gaming" : selectedSlots[0]?.console_name || "Gaming Session"}
                 <span aria-hidden="true"> · </span>
-                {selectedSlots.length} {selectedSlots.length === 1 ? "slot" : "slots"}
+                {selectedSlots.length} {selectedSlots.length === 1 ? "Slot" : "Slots"}
                 {selectedSlots[0]?.date && <> · {new Date(`${selectedSlots[0].date}T12:00:00`).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}</>}
               </p>
             </div>
@@ -2112,7 +2117,7 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                 className="slot-booking-modal-secondary inline-flex h-9 items-center gap-2 rounded-lg px-3 text-xs font-semibold transition"
               >
                 <SlidersHorizontal className="h-3.5 w-3.5" />
-                Field Rules
+                Booking Settings
               </button>
               <button
                 onClick={onClose}
@@ -2124,14 +2129,14 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
             </div>
             {isFieldConfigOpen && (
               <div className="slot-booking-popover absolute right-4 top-[calc(100%-2px)] z-30 w-[310px] rounded-xl border p-3 shadow-xl">
-                <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">Customer Field Configuration</p>
+                <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">Player Details</p>
                 <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                  Name stays mandatory. Keep at least one contact field required.
+                  Player Name and one contact field are required.
                 </p>
 
                 <div className="mt-3 space-y-2 text-xs">
                   <div className="rounded-lg border border-slate-200 p-2 dark:border-slate-700">
-                    <p className="font-semibold text-slate-700 dark:text-slate-200">Phone</p>
+                    <p className="font-semibold text-slate-700 dark:text-slate-200">Mobile Number</p>
                     <div className="mt-2 flex items-center justify-between">
                       <label className="text-slate-600 dark:text-slate-300">Show field</label>
                       <input
@@ -2205,11 +2210,11 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                 <div className="slot-booking-details">
                   <Card className="sb-card slot-booking-slots p-3 order-1">
                     <div className="mb-2 flex items-center justify-between gap-2">
-                      <h3 className="slot-section-title">Selected slots ({selectedSlots.length})</h3>
+                      <h3 className="slot-section-title">Selected Time Slots ({selectedSlots.length})</h3>
                       <button type="button" aria-expanded={showSlotPicker} aria-controls="booking-slot-picker"
                         onClick={() => setShowSlotPicker((open) => !open)}
                         className="slot-booking-modal-accent inline-flex h-8 items-center gap-1 rounded-md px-2 text-xs font-medium">
-                        <Plus className="h-3.5 w-3.5" /> {showSlotPicker ? "Done" : "Add slots"}
+                        <Plus className="h-3.5 w-3.5" /> {showSlotPicker ? "Done" : "Add Time"}
                       </button>
                     </div>
                     {showSlotPicker && (
@@ -2300,7 +2305,7 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                       ))}
                       <div className="slot-booking-total-line pt-3 text-right">
                         <span className="font-bold">
-                          Slots Total: ₹{consoleTotal}
+                          Gaming Subtotal: ₹{consoleTotal}
                         </span>
                       </div>
                     </div>
@@ -2310,7 +2315,7 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                     <div className="flex items-center gap-2 mb-2">
                       <div>
                         <h3 className="slot-section-title">
-                          {isSquadMode ? "Captain" : "Customer"}
+                          {isSquadMode ? "Squad Captain Details" : "Player Details"}
                         </h3>
                         {suggestionError && (
                           <p role="status" className="text-sm text-amber-600">
@@ -2344,7 +2349,7 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                           onFocus={handleNameFocus}
                           onBlur={handleBlur}
                           autoComplete="off"
-                          placeholder={isSquadMode ? "Captain full name" : "Full name"}
+                          placeholder={isSquadMode ? "Captain Name" : "Player Name"}
                           className={cn(
                             "w-full pl-10 pr-4 py-3 bg-white dark:bg-gray-800 border rounded-lg transition-all duration-200",
                             errors.name
@@ -2400,7 +2405,7 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                             onFocus={handlePhoneFocus}
                             onBlur={handleBlur}
                             autoComplete="off"
-                            placeholder={isSquadMode ? "Captain phone" : "Phone"}
+                            placeholder={isSquadMode ? "Captain Mobile Number" : "Mobile Number"}
                             className={cn(
                               "w-full pl-10 pr-4 py-3 bg-white dark:bg-gray-800 border rounded-lg transition-all duration-200",
                               errors.phone
@@ -2591,7 +2596,7 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                     <div className="flex items-center justify-between gap-3">
                       <div className="flex items-center gap-2">
                         <div>
-                          <h3 className="slot-section-title">Session type</h3>
+                          <h3 className="slot-section-title">Play Mode</h3>
 
                         </div>
                       </div>
@@ -2608,7 +2613,7 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                             : "border-gray-300 text-gray-700 dark:border-gray-600 dark:text-gray-300"
                         )}
                       >
-                        Solo
+                        Solo Play
                       </button>
                       <button
                         type="button"
@@ -2623,7 +2628,7 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                             : "border-gray-300 text-gray-700 dark:border-gray-600 dark:text-gray-300"
                         )}
                       >
-                        Squad
+                        Squad Play
                       </button>
                     </div>
                     {squadPolicyState === "error" && (
@@ -2701,13 +2706,13 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                 <aside className="slot-booking-sidebar" aria-label="Booking payment">
                   <Card className="sb-card slot-booking-summary p-3">
                     <div className="flex items-center gap-2 mb-2">
-                      <h3 className="slot-section-title">Price breakdown</h3>
+                      <h3 className="slot-section-title">Bill Summary</h3>
                     </div>
 
                     <div className="space-y-2">
                       <div className="flex justify-between items-center py-2 border-b border-gray-200 dark:border-gray-600">
                         <span className="text-gray-600 dark:text-gray-400">
-                          Session charges{isSquadMode && squadUsesDiscountEngine ? ` (₹${consoleUnitTotal} x ${squadPlayerCount})` : ""}:
+                          Gaming Charges{isSquadMode && squadUsesDiscountEngine ? ` (₹${consoleUnitTotal} x ${squadPlayerCount})` : ""}:
                         </span>
                         <span className="font-medium text-gray-800 dark:text-white">₹{consoleTotal}</span>
                       </div>
@@ -2729,7 +2734,7 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                       )}
 
                       <div className="flex justify-between items-center py-2 border-b border-gray-200 dark:border-gray-600">
-                        <span className="text-gray-600 dark:text-gray-400">Manual Waive Off:</span>
+                        <span className="text-gray-600 dark:text-gray-400">Additional Discount:</span>
                         <input
                           type="number"
                           value={waiveOffAmount}
@@ -2742,11 +2747,11 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
 
                       {autoWaiveOffAmount > 0 && (
                         <div className="flex justify-between items-center py-2 border-b border-gray-200 dark:border-gray-600 bg-orange-50 dark:bg-orange-900/20 rounded-lg px-3">
-                          <span className="text-orange-600 dark:text-orange-400 font-medium">⏰ Auto Waive Off:</span>
+                          <span className="text-orange-600 dark:text-orange-400 font-medium">Auto Discount:</span>
                           <div className="text-right">
                             <span className="font-bold text-orange-600 dark:text-orange-400">₹{Math.round(autoWaiveOffAmount)}</span>
                             <div className="text-xs text-orange-500 dark:text-orange-300">
-                              (Time-based discount)
+                              (Time-Based Savings)
                             </div>
                           </div>
                         </div>
@@ -2783,14 +2788,14 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                       )}
 
                       <div className="flex justify-between items-center py-2 border-b border-gray-200 dark:border-gray-600">
-                        <span className="text-gray-600 dark:text-gray-400">Food & extras:</span>
+                        <span className="text-gray-600 dark:text-gray-400">Snacks & Add-ons:</span>
                         <button
                           type="button"
                           onClick={() => setIsMealSelectorOpen(true)}
                           className="slot-booking-modal-accent flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm transition-all duration-200"
                         >
                           <Plus className="w-3 h-3" />
-                          {selectedMeals.length === 0 ? 'Add items' : `${selectedMeals.length} Selected`}
+                          {selectedMeals.length === 0 ? 'Add Items' : `${selectedMeals.length} Selected`}
                         </button>
                       </div>
 
@@ -2824,7 +2829,7 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                       )}
 
                       <div className="flex justify-between items-center py-3 bg-emerald-50 dark:bg-emerald-900/30 rounded-lg px-3">
-                        <span className="font-semibold text-gray-800 dark:text-white text-sm">Total</span>
+                        <span className="font-semibold text-gray-800 dark:text-white text-sm">Total Payable</span>
                         <span className="font-semibold text-lg text-emerald-600">₹{totalAmount}</span>
                       </div>
                     </div>
@@ -2864,7 +2869,7 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                 ) : (
                   <div className="flex items-center gap-2">
                     <CheckCircle className="w-4 h-4" />
-                    Confirm booking
+                    Confirm Booking
                   </div>
                 )}
               </Button>
@@ -3094,7 +3099,7 @@ function TopBar({
           )}
         >
           <Plus className="mr-2 h-4 w-4" />
-          New Booking {selectedSlots.length > 0 && `(${selectedSlots.length})`}
+          New Gaming Session {selectedSlots.length > 0 && `(${selectedSlots.length})`}
         </Button>
 
         {/* Dropdown Menu for Manage Bookings */}

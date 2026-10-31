@@ -1022,10 +1022,8 @@ export function UpcomingBookings({
             <div className="dashboard-module-empty h-full flex flex-col items-center justify-center py-6 px-3">
               <CalendarIcon className="w-8 h-8 mb-2 opacity-50" />
               <p className="text-sm font-medium">{searchTerm ? 'No matching bookings' : 'No upcoming bookings'}</p>
-              <p className="text-xs mt-1 text-center">
-                {searchTerm ? 'Try another customer or console.' : isConnected ? 'Your queue is up to date.' : 'Check connection and filters.'}
-              </p>
-              <a href="/booking" className="operations-empty-action">New booking</a>
+              {!isConnected && <p className="text-xs mt-1 text-center">Check connection and filters.</p>}
+              <a href="/booking" className="operations-empty-action">New Gaming Session</a>
             </div>
           ) : (
             <div>

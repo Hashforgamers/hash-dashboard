@@ -27,23 +27,10 @@
 .panel .alertCard button { font-size:11px; }
 .activity { margin-top:14px; padding-top:12px; border-top:1px solid #ffffff12; }
 .activityTitle { display:flex; align-items:center; gap:7px; margin:0; font-size:12px !important; font-weight:600; color:#c4cfdf; }
-.noticeList { margin:0; padding:0; list-style:none; }
-.notice { display:flex; align-items:center; gap:10px; min-height:56px; padding:8px 0; border-bottom:1px solid #ffffff09; }
-.noticeIcon { display:flex; align-items:center; justify-content:center; flex:none; width:30px; height:30px; border-radius:9px; background:#ffffff05; }
-.noticeContent { flex:1; min-width:0; }
-.noticeTitle { margin:0; font-size:12px !important; font-weight:500; }
-.noticeMeta { display:flex; flex-wrap:wrap; gap:3px 6px; margin-top:2px; color:#8c9aae; font-size:10px; }
-.noticeContext { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:220px; }
-.readButton { display:flex; align-items:center; justify-content:center; width:32px; height:32px; border:1px solid transparent; border-radius:7px; color:#8998ad; flex:none; }
-.readButton:hover { border-color:#ffffff16; background:#ffffff08; color:#b6efd2; }
-.readButton:disabled { opacity:.4; cursor:wait; }
-.showMore { width:100%; min-height:34px; margin-top:4px; border-radius:6px; font-size:11px; color:#9db0ca; }
-.showMore:hover { background:#ffffff05; color:#e8edf5; }
 .session { margin-top:8px; padding:10px; background:#ffffff04; border:1px solid #ffffff12; border-radius:9px; }
 .empty { padding:12px 0; color:#8998ad; font-size:12px; }
 .panel button:focus-visible { outline:2px solid #67d5f0; outline-offset:2px; }
 @media(max-width:480px) {
   .panel { top:56px; right:12px; max-height:calc(100dvh - 68px); }
-  .readButton { width:40px; height:40px; }
   .statLabel { font-size:10px; }
 }
