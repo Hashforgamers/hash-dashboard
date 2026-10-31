@@ -644,6 +644,7 @@ const handleEditBusinessField = (field: string) => {
   setEditingBusinessField(field);
   // Initialize form data with current values from API data
   setBusinessFormData({
+    displayName: businessDetails.displayName || "",
     businessName: businessDetails.businessName || data?.cafeProfile?.name || "John's Cafe",
     businessType: businessDetails.businessType || "cafe", 
     phone: businessDetails.phone || "",
@@ -686,21 +687,23 @@ const handleSaveBusinessField = async (field: string) => {
     );
 
     if (response.success) {
-      // Success notification
-      alert(`${field} updated successfully!`);
+      const savedValue = field === "displayName"
+        ? (response.data?.displayName ?? businessFormData[field])
+        : businessFormData[field];
+      alert(`${field === "displayName" ? "Display name" : field} updated successfully!`);
       
       // Update local data to reflect the change
       setData(prevData => ({
         ...prevData,
         businessDetails: {
           ...prevData.businessDetails,
-          [field]: businessFormData[field]
+          [field]: savedValue
         },
-        // Also update cafeProfile name if businessName was changed
-        ...(field === 'businessName' && {
+        ...((field === 'displayName' || field === 'businessName') && {
           cafeProfile: {
             ...prevData.cafeProfile,
-            name: businessFormData[field]
+            name: response.data?.publicName || prevData.businessDetails.businessName,
+            displayName: response.data?.displayName ?? prevData.cafeProfile.displayName
           }
         })
       }));
@@ -880,7 +883,8 @@ const handleSaveSlot = async (day: string) => {
       savedHoursRef.current = updated;
       setHoursData(updated);
       setData((previous: any) => ({ ...previous, operatingHours: updated }));
-      setHoursMessage(`${day.toUpperCase()} hours saved and applied to ${result.data?.updated_days ?? 0} scheduled dates.`);
+      const preserved = Number(result.data?.preserved_slots ?? 0);
+      setHoursMessage(`${day.toUpperCase()} hours saved and applied to ${result.data?.updated_days ?? 0} scheduled dates.${preserved ? ` ${preserved} booked or held slots kept; those slots are closed to new bookings.` : ""}`);
       setEditingSlot(null);
       window.dispatchEvent(new Event('refresh-dashboard'));
       
@@ -1969,6 +1973,7 @@ const ToggleSwitch = ({
       {/* Editable Business Details */}
       <div className="space-y-4">
         {[
+          { key: 'displayName', label: 'Display name', type: 'text', value: businessDetails.displayName || businessDetails.businessName },
           { key: 'phone', label: 'Phone', type: 'tel', value: businessDetails.phone || "+1 (555) 000-0000" },
           { key: 'website', label: 'Website', type: 'url', value: businessDetails.website || "https://cafe.example.com" },
           { key: 'address', label: 'Address', type: 'textarea', value: businessDetails.address || "123 Cafe Street, Food District, City, 12345" }
@@ -1978,6 +1983,7 @@ const ToggleSwitch = ({
             {/* Field Label and Content */}
             <div className="flex-1 space-y-1">
               <Label className="text-sm font-medium text-foreground">{field.label}</Label>
+              {field.key === "displayName" && <p className="text-xs text-muted-foreground">Shown to gamers in the app. Leave blank to use your business name. Your registered business name stays unchanged.</p>}
               
               {editingBusinessField === field.key ? (
                 // Edit Mode
@@ -1992,6 +1998,8 @@ const ToggleSwitch = ({
                   ) : (
                     <Input
                       type={field.type}
+                      maxLength={field.key === "displayName" ? 120 : undefined}
+                      aria-label={field.label}
                       value={businessFormData[field.key] || ''}
                       onChange={(e) => handleBusinessFieldChange(field.key, e.target.value)}
                       className="bg-input border-input text-foreground"
@@ -2092,7 +2100,7 @@ const ToggleSwitch = ({
         <Label className="text-foreground">Operating Hours</Label>
         {hoursMessage && <p role="status" className="text-sm">{hoursMessage}</p>}
         {!isOwnerSession && <p className="text-sm text-muted-foreground">Sign in as the cafe owner to change operating hours.</p>}
-        <p className="text-sm text-muted-foreground">Closing before opening means overnight. Equal times mean 24 hours. Existing bookings must be resolved before removing their slots.</p>
+        <p className="text-sm text-muted-foreground">Closing before opening means overnight. Equal times mean 24 hours. Changes apply to new bookings immediately. Existing bookings and held sessions are kept, even outside the new hours.</p>
         <p className="text-xs text-slate-300">Set `open` and `close` to same time (or use `24H`) for 24-hour operation.</p>
         
         <div className="space-y-3">
