@@ -1216,8 +1216,8 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
               ) : qrSessionCount > 0 || qrLoadState!=='ready' ? null : (
                 <div className="dashboard-module-empty flex h-full flex-col items-center justify-center py-8">
                   <Search className="h-8 w-8 text-slate-600" />
-                  <p className="text-sm font-medium">No active sessions found</p>
-                  <p className="text-xs">{isConnected ? "Waiting for new sessions..." : "Check connection"}</p>
+                  <p className="text-sm font-medium">No active sessions</p>
+                  {!isConnected && <p className="text-xs">Check connection</p>}
                 </div>
               )}
             </div>
@@ -1722,10 +1722,8 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                           className="flex flex-col items-center space-y-2"
                         >
                           <Search className="h-7 w-7 text-slate-600 sm:h-8 sm:w-8" />
-                          <p className="text-xs sm:text-sm font-medium">No active sessions found</p>
-                          <p className="text-xs">
-                            {isConnected ? "Waiting for new sessions..." : "Check connection"}
-                          </p>
+                          <p className="text-xs sm:text-sm font-medium">No active sessions</p>
+                          {!isConnected && <p className="text-xs">Check connection</p>}
                         </motion.div>
                       </td>
                     </tr>

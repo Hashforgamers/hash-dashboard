@@ -69,6 +69,11 @@ export default function PayAtCafeRequests({vendorId}:{vendorId:number|null}){
     window.addEventListener('refresh-dashboard',update);
     return()=>{context.current='';controller.current?.abort();clearInterval(timer);events.forEach(event=>socket?.off(event,update));window.removeEventListener('refresh-dashboard',update);};
   },[refresh,socket,vendorId,activeStaff?.id]);
+  useEffect(()=>{
+    if(!message)return;
+    const timer=setTimeout(()=>setMessage(''),3000);
+    return ()=>clearTimeout(timer);
+  },[message]);
   const index=Math.min(page,Math.max(0,requests.length-1));
   const row=requests[index];
   selectedRequest.current=row?.bookingId??null;
@@ -82,7 +87,7 @@ export default function PayAtCafeRequests({vendorId}:{vendorId:number|null}){
       if(!response.ok||!result.success)throw new Error(result.message||`Unable to ${decision} this request. Refresh and retry.`);
       if(context.current!==key)return;
       setRequests(previous=>previous.filter(item=>row.batch_id?item.batch_id!==row.batch_id:item.bookingId!==row.bookingId));
-      setMessage(decision==='accept'?'Booking accepted. Collect payment at the cafe.':'Booking request rejected.');
+      setMessage(decision==='accept'?'Booking accepted.':'Request rejected.');
       window.dispatchEvent(new CustomEvent('pay-at-cafe-requests-updated'));
       window.dispatchEvent(new CustomEvent('refresh-dashboard'));
       await refresh();
@@ -92,17 +97,17 @@ export default function PayAtCafeRequests({vendorId}:{vendorId:number|null}){
   return <section className={styles.panel} aria-label="Pay at Cafe requests">
     <header className={styles.header}>
       <div className={styles.heading}><Wallet size={15}/><h2>Pay at Cafe</h2>{requests.length>0&&<span className={styles.count}>{requests.length}</span>}</div>
-      <div className={styles.tools}><span className={styles.connection}><i className={isConnected?styles.live:styles.polling}/>{isConnected?'Live':'Auto-refresh'}</span><button type="button" title="Refresh requests" aria-label="Refresh payment requests" disabled={refreshing||!!busy} onClick={()=>void refresh()}><RefreshCw size={13} className={refreshing?'animate-spin':''}/></button></div>
+      <div className={styles.tools}><span className={styles.connection}><i className={isConnected?styles.live:styles.polling}/>{message || (isConnected?'Live':'Auto-refresh')}</span><button type="button" title="Refresh requests" aria-label="Refresh payment requests" disabled={refreshing||!!busy} onClick={()=>void refresh()}><RefreshCw size={13} className={refreshing?'animate-spin':''}/></button></div>
     </header>
     {error&&<p role="alert" className={styles.error}>{error}</p>}
     {loading?<div className={styles.empty}><Loader2 size={18} className="animate-spin"/><span>Loading requests…</span></div>:row?<>
-      <div className={styles.customer}><div><p className={styles.name}>{row.username||'Customer'}</p><p className={styles.meta}>{row.game?.game_name||row.consoleType||'Gaming session'}{Number(row.slot_count)>1?` · ${row.slot_count} slots`:''}</p></div><div className={styles.amount}>₹{Number(row.total_amount??row.slot_price?.single_slot_price??0).toLocaleString('en-IN')}<small>Collect at cafe</small></div></div>
+      <div className={styles.customer}><div><p className={styles.name}>{row.username||'Player'}</p><p className={styles.meta}>{row.game?.game_name||row.consoleType||'Gaming session'}{Number(row.slot_count)>1?` · ${row.slot_count} slots`:''}</p></div><div className={styles.amount}>₹{Number(row.total_amount??row.slot_price?.single_slot_price??0).toLocaleString('en-IN')}</div></div>
       <p className={styles.schedule}><Clock3 size={12}/><span>{bookingDate(row.date)} · {row.time||'Time unavailable'}</span></p>
       <footer className={styles.footer}>
         <div className={styles.pager}><button type="button" aria-label="Previous request" disabled={index===0||!!busy} onClick={()=>setPage(index-1)}><ChevronLeft size={14}/></button><span>{index+1} / {requests.length}</span><button type="button" aria-label="Next request" disabled={index>=requests.length-1||!!busy} onClick={()=>setPage(index+1)}><ChevronRight size={14}/></button></div>
         {can('booking.manage')?<div className={styles.actions}><button type="button" className={styles.reject} disabled={!!busy||refreshing||!!error} onClick={()=>void decide('reject')}>{busy==='reject'?<Loader2 size={13} className="animate-spin"/>:<X size={13}/>}Reject</button><button type="button" className={styles.accept} disabled={!!busy||refreshing||!!error} onClick={()=>void decide('accept')}>{busy==='accept'?<Loader2 size={13} className="animate-spin"/>:<Check size={13}/>}Accept</button></div>:<span className={styles.meta}>Manager approval required</span>}
       </footer>
-    </>:!error?<div className={styles.empty}><span className={styles.emptyIcon}><Check size={17}/></span><p>No pending requests<small>Customer requests will appear here.</small></p></div>:null}
-    {message&&<p role="status" className={styles.feedback}>{message}</p>}
+    </>:!error?<div className={styles.empty}><span className={styles.emptyIcon}><Check size={17}/></span><p>No pending requests</p></div>:null}
+    {message&&<p role="status" className="sr-only">{message}</p>}
   </section>;
 }

@@ -73,7 +73,6 @@ export function NotificationButton({
   const {selectedCafeId,activeStaff}=useAccess()
   const [isOpen, setIsOpen] = useState(false)
   const [unreadCount, setUnreadCount] = useState(0)
-  const [extensionUnread,setExtensionUnread]=useState(0)
   const [connectionStatus, setConnectionStatus] = useState<'disconnected' | 'connected' | 'joined_room'>('disconnected')
   const [notifications, setNotifications] = useState<any[]>([])
   const [payAtCafeSummary, setPayAtCafeSummary] = useState<PayAtCafeQueueSummary | null>(null)
@@ -82,16 +81,13 @@ export function NotificationButton({
 
 
   useEffect(() => {
-    setExtensionUnread(0)
     setNotifications(prev=>prev.filter(n=>n.kind!=='cafe_continuation'))
     if(!selectedCafeId||!activeStaff)return
     let alive=true
     const refresh=async()=>{
       try {
         const data=await cafeCall<{requests:{id:string;user_id:number;minutes:number;amount:number;expires_at:string}[]}>(`/${selectedCafeId}/sessions/live`)
-        const extensions=await cafeCall<{notices:unknown[]}>(`/${selectedCafeId}/extensions`).catch(()=>({notices:[]}))
         if(!alive)return
-        setExtensionUnread(extensions.notices.length)
         const notices=data.requests.map(r=>({kind:'cafe_continuation',notification_id:`continuation-${r.id}`,vendorId:Number(selectedCafeId),
           userId:r.user_id,minutes:r.minutes,amount:r.amount,expiresAt:r.expires_at}))
         setNotifications(prev=>[...notices,...prev.filter(n=>n.kind!=='cafe_continuation')])
@@ -505,19 +501,19 @@ export function NotificationButton({
           className="relative h-10 w-10 rounded-full border-0 bg-transparent p-0 shadow-none hover:bg-emerald-500/10 transition-colors duration-200"
         >
           <Bell className={`w-4 h-4 ${
-            unreadCount+extensionUnread > 0
+            unreadCount > 0
               ? 'text-orange-500 animate-pulse'
               : connectionStatus === 'joined_room'
                 ? 'text-green-500'
                 : 'text-muted-foreground'
           }`} />
 
-          {unreadCount+extensionUnread > 0 && (
+          {unreadCount > 0 && (
             <Badge
               variant="destructive"
               className="absolute -top-2 -right-2 h-5 w-5 p-0 flex items-center justify-center text-xs font-bold animate-bounce"
             >
-              {unreadCount+extensionUnread > 9 ? '9+' : unreadCount+extensionUnread}
+              {unreadCount > 9 ? '9+' : unreadCount}
             </Badge>
           )}
         </Button>
