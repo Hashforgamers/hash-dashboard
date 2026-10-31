@@ -236,6 +236,12 @@ export function NotificationButton({
     }
   }, [vendorId])
 
+  useEffect(() => {
+    const update = () => void fetchPendingBookings()
+    window.addEventListener('pay-at-cafe-requests-updated', update)
+    return () => window.removeEventListener('pay-at-cafe-requests-updated', update)
+  }, [fetchPendingBookings])
+
   // Stable callback for when NotificationPanel accepts a booking
   const handleBookingAcceptedFromPanel = useCallback((bookingData: any) => {
     console.log('🎯 NotificationButton: Booking accepted from NotificationPanel:', bookingData)

@@ -5,6 +5,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { UpcomingBookings } from "./upcoming-booking"
 import { CurrentSlots } from "./current-slot"
 import SlotManagement from "./newSlot"
+import PayAtCafeRequests from "./pay-at-cafe-requests"
 import dynamic from "next/dynamic"
 import { motion } from "framer-motion"
 import {
@@ -508,19 +509,24 @@ export function DashboardContent() {
               </div>
             </motion.div>
           ) : (
-            <div className="mt-2 flex min-h-0 flex-1 flex-col gap-2 max-md:mt-1 max-md:gap-1.5 sm:mt-3 sm:gap-3">
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.15 }}
-                className="dashboard-booking-slab gaming-panel shrink-0 overflow-hidden rounded-lg"
-              >
-                <div className="dashboard-booking-slab-body">
-                  <SlotManagement embedded slab />
+            <div className="mt-2 flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto xl:overflow-visible max-md:mt-1 max-md:gap-1.5 sm:mt-3 sm:gap-3">
+              <div className="grid shrink-0 grid-cols-1 gap-2 sm:gap-3 xl:grid-cols-12">
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.15 }}
+                  className="dashboard-booking-slab gaming-panel min-w-0 overflow-hidden rounded-lg xl:col-span-8 2xl:col-span-9"
+                >
+                  <div className="dashboard-booking-slab-body">
+                    <SlotManagement embedded slab />
+                  </div>
+                </motion.div>
+                <div className="min-w-0 xl:col-span-4 2xl:col-span-3">
+                  <PayAtCafeRequests vendorId={vendorId?Number(vendorId):null}/>
                 </div>
-              </motion.div>
+              </div>
 
-              <div className="operations-workspace grid flex-1 grid-cols-1 gap-2 overflow-hidden max-md:min-h-[520px] max-md:grid-rows-[1.05fr_0.95fr] max-md:gap-1.5 sm:gap-3 xl:grid-cols-12">
+              <div className="operations-workspace grid flex-1 grid-cols-1 gap-2 overflow-hidden max-xl:min-h-[520px] max-md:grid-rows-[1.05fr_0.95fr] max-md:gap-1.5 sm:gap-3 xl:grid-cols-12">
                 <div className="space-y-2 sm:space-y-3 flex flex-col min-h-0 xl:col-span-8 2xl:col-span-9 max-md:h-full max-md:min-h-0">
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
