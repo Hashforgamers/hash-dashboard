@@ -1,4 +1,6 @@
-.panel { display:flex; flex-direction:column; height:100%; min-height:0; padding:16px; border:1px solid #303034; border-radius:8px; background:#18181b; color:#e6eaf0; }
+.panel { display:flex; flex-direction:column; height:100%; min-height:11rem; box-sizing:border-box; contain:size; overflow:auto; overscroll-behavior:contain; padding:16px; border:1px solid #303034; border-radius:8px; background:#18181b; color:#e6eaf0; }
+/* Keep incoming requests from resizing the dashboard grid. Scroll unusually long content inside the card. */
+.panel > * { flex-shrink:0; }
 .header,.heading,.tools,.customer,.footer,.actions,.pager { display:flex; align-items:center; }
 .header,.customer,.footer { justify-content:space-between; gap:8px; }
 .heading { gap:7px; min-width:0; }
@@ -32,4 +34,4 @@
 .empty p { margin:0; font-size:12px !important; }.empty small { display:block; margin-top:3px; font-size:10px; color:#778492; }
 .panel .error { margin-top:8px; font-size:11px !important; color:#fda4af; }
 .panel .feedback { margin:6px 0 0; font-size:10px !important; color:#a7e3bc; }
-@media(max-width:1279px){.panel { min-height:92px; }.actions button { min-height:34px; padding:0 12px; }}
+@media(max-width:1279px){.actions button { min-height:34px; padding:0 12px; }}
