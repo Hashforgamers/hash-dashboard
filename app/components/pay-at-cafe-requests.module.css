@@ -1,6 +1,7 @@
-.panel { display:flex; flex-direction:column; height:100%; min-height:11rem; box-sizing:border-box; contain:size; overflow:auto; overscroll-behavior:contain; padding:16px; border:1px solid #303034; border-radius:8px; background:#18181b; color:#e6eaf0; }
+.panel { display:flex; flex-direction:column; height:100%; min-height:11rem; box-sizing:border-box; contain:size; overflow:hidden; padding:10px 14px; border:1px solid #303034; border-radius:8px; background:#18181b; color:#e6eaf0; }
 /* Keep incoming requests from resizing the dashboard grid. Scroll unusually long content inside the card. */
-.panel > * { flex-shrink:0; }
+.header,.footer { flex:none; }
+.body { display:flex; flex-direction:column; justify-content:safe center; flex:1; min-height:0; overflow:auto; overscroll-behavior:contain; overflow-wrap:anywhere; }
 .header,.heading,.tools,.customer,.footer,.actions,.pager { display:flex; align-items:center; }
 .header,.customer,.footer { justify-content:space-between; gap:8px; }
 .heading { gap:7px; min-width:0; }
@@ -15,15 +16,15 @@
 .panel button:hover:not(:disabled) { background:#ffffff0e; }
 .panel button:focus-visible { outline:2px solid #7dd3fc; outline-offset:2px; }
 .panel button:disabled { opacity:.4; cursor:not-allowed; }
-.customer { margin-top:10px; align-items:flex-start; }
+.customer { margin-top:2px; align-items:flex-start; }
 .customer>div:first-child { min-width:0; }
 .panel .name { font-size:13px !important; font-weight:600; margin:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .panel .meta { margin:2px 0 0; color:#929da9; font-size:10px !important; }
 .amount { flex:none; font-size:15px; font-weight:600; text-align:right; font-variant-numeric:tabular-nums; }
 .amount small { display:block; font-size:9px; font-weight:400; color:#929da9; }
-.panel .schedule { display:flex; align-items:center; gap:5px; margin:7px 0 10px; color:#b2bcc9; font-size:10px !important; }
-.footer { padding-top:8px; border-top:1px solid #ffffff0c; }
-.pager { gap:2px; font-size:10px; color:#929da9; font-variant-numeric:tabular-nums; }
+.panel .schedule { display:flex; align-items:center; gap:5px; margin:3px 0; color:#b2bcc9; font-size:10px !important; }
+.footer { justify-content:flex-end; padding-top:4px; border-top:1px solid #ffffff0c; }
+.pager { margin-right:auto; gap:2px; font-size:10px; color:#929da9; font-variant-numeric:tabular-nums; }
 .actions { gap:6px; }
 .actions button { display:flex; align-items:center; justify-content:center; gap:4px; height:29px; padding:0 9px; border-radius:6px; font-size:10px !important; font-weight:600; }
 .reject { color:#f4a9ae; border:1px solid #fda4af30; }
