@@ -10,7 +10,7 @@ import { FaCheck, FaPowerOff } from 'react-icons/fa';
 import { BOOKING_URL, DASHBOARD_URL } from "@/src/config/env";
 import { mergeConsecutiveBookings } from "@/app/utils/slot-utils";
 import QrLiveSessions from "./qr-live-sessions";
-import SessionStatusSummary from './session-status-summary';
+import { PcConfirmation, usePcConfirmations } from './pc-confirmation';
 import HashLoader from './ui/HashLoader';
 import ExtraBookingOverlay from "./extraBookingOverlay";
 import MealDetailsModal from "./mealsDetailmodal";
@@ -512,6 +512,7 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
   const [timers, setTimers] = useState<any[]>([]);
   const [error, setError] = useState<string>("");
   const [activeTab, setActiveTab] = useState<'live' | 'history'>('live');
+  const pcConfirmations = usePcConfirmations(activeTab === 'live');
   const [historyDate, setHistoryDate] = useState<string>("");
   const [historyRows, setHistoryRows] = useState<any[]>(Array.isArray(initialHistoryBookings) ? initialHistoryBookings : []);
   const [historyLoading, setHistoryLoading] = useState(false);
@@ -970,7 +971,6 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
 
   return (
     <div className="dashboard-module dashboard-module-panel live-session-card flex h-full min-h-0 flex-col overflow-hidden rounded-lg p-3 sm:p-4">
-      {activeTab==='live'&&<SessionStatusSummary/>}
       {currentSlots?.available ? (
         <div className="flex h-full items-center justify-center">
           <HashLoader />
@@ -1098,6 +1098,7 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                             <p className="truncate text-xs text-slate-400">
                               {booking.consoleType || "Gaming Console"} · {booking.startTime || "N/A"} - {booking.endTime || "N/A"}
                             </p>
+                            <PcConfirmation status={pcConfirmations.get(bookingIdToCheck)} />
                           </div>
                           <div className="flex max-w-[48%] flex-wrap items-center justify-end gap-1 sm:max-w-none">
                             {squadEnabled && (
@@ -1610,6 +1611,7 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                                     </span>
                                   </div>
                                 )}
+                                <PcConfirmation status={pcConfirmations.get(bookingIdToCheck)} />
                               </div>
                             </td>
 
