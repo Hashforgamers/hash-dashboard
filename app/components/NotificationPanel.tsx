@@ -561,7 +561,6 @@ export function NotificationPanel({
                   <h3 id="notification-panel-title" className={styles.title}>Notifications</h3>
                   {notificationCount > 0 && <span className={styles.count} aria-label={`${notificationCount} account alerts`}>{notificationCount}</span>}
                 </div>
-                <p className={styles.subtitle}>Payments, account alerts & session activity</p>
               </div>
               <Button
                 variant="ghost"
@@ -631,7 +630,7 @@ export function NotificationPanel({
                   <div className="mx-auto mb-2 flex h-8 w-8 items-center justify-center rounded-full border border-slate-500/60 bg-slate-800/70">
                     <Bell className="h-4 w-4 text-muted-foreground opacity-70" />
                   </div>
-                  <h4 className="text-xs font-medium text-slate-400">No account alerts. You’re all caught up.</h4>
+                  <h4 className="text-xs font-medium text-slate-400">No account alerts</h4>
                 </div>
               ) : (
                 <div className="space-y-2">

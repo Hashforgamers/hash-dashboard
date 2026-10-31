@@ -510,18 +510,18 @@ export function DashboardContent() {
             </motion.div>
           ) : (
             <div className="mt-2 flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto xl:overflow-visible max-md:mt-1 max-md:gap-1.5 sm:mt-3 sm:gap-3">
-              <div className="grid shrink-0 grid-cols-1 gap-2 sm:gap-3 xl:grid-cols-12">
+              <div className="operations-booking-row grid shrink-0 grid-cols-1 gap-2 sm:gap-3">
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ duration: 0.15 }}
-                  className="dashboard-booking-slab gaming-panel min-w-0 overflow-hidden rounded-lg xl:col-span-8 2xl:col-span-9"
+                  className="dashboard-booking-slab gaming-panel min-w-0 overflow-hidden rounded-lg"
                 >
                   <div className="dashboard-booking-slab-body">
                     <SlotManagement embedded slab />
                   </div>
                 </motion.div>
-                <div className="min-w-0 xl:col-span-4 2xl:col-span-3">
+                <div className="min-w-0">
                   <PayAtCafeRequests vendorId={vendorId?Number(vendorId):null}/>
                 </div>
               </div>
