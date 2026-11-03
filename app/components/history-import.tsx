@@ -67,11 +67,14 @@ export default function HistoryImport({vendor}: {vendor:number}) {
   const [review,setReview] = useState(false)
   const url = BOOKING_URL + "/api/vendor/" + vendor + "/desk-history"
   const [sheets,setSheets] = useState<{name:string; data:string[][]}[]>([])
-  function selectSheet(index:number, list = sheets) {
+  function selectSheet(index:number, list = sheets, fingerprint = fileKey) {
     const [head = [], ...rows] = list[index].data
     setHeaders(head); setSource(rows); setReview(false); setEntries([]); setArchive(false); setPage(0)
-    setIdColumn(head.findIndex(h => ["bookingid","bookingreference","bookingref","sessionid"].includes(normalize(h))))
-    setMap(Object.fromEntries(fields.map(f => [f,head.findIndex(h => aliases[f].some(alias => normalize(alias) === normalize(h)))])))
+    const id = head.findIndex(h => ["bookingid","bookingreference","bookingref","sessionid"].includes(normalize(h)))
+    setIdColumn(id)
+    const mapping = Object.fromEntries(fields.map(f => [f,head.findIndex(h => aliases[f].some(alias => normalize(alias) === normalize(h)))]))
+    setMap(mapping)
+    if (rows.length && fields.every(f => mapping[f] >= 0)) preview(rows, mapping, id, fingerprint, index)
     setSheetIndex(index)
   }
   const [sheetIndex,setSheetIndex] = useState(0)
@@ -82,7 +85,8 @@ export default function HistoryImport({vendor}: {vendor:number}) {
       const {Workbook} = await import("exceljs")
       const bytes = await file.arrayBuffer()
       const digest = await crypto.subtle.digest("SHA-256",bytes)
-      setFileKey(Array.from(new Uint8Array(digest), b => b.toString(16).padStart(2,"0")).join(""))
+      const fingerprint = Array.from(new Uint8Array(digest), b => b.toString(16).padStart(2,"0")).join("")
+      setFileKey(fingerprint)
       const workbook = new Workbook()
       await workbook.xlsx.load(bytes)
       const list = workbook.worksheets.filter(sheet => sheet.actualRowCount > 0).map(sheet => {
@@ -97,18 +101,18 @@ export default function HistoryImport({vendor}: {vendor:number}) {
         return {name:sheet.name,data}
       })
       if (!list.length) throw Error("Workbook has no data.")
-      setSheets(list); selectSheet(0,list)
+      setSheets(list); selectSheet(0,list,fingerprint)
     } catch(e) {setStatus(e instanceof Error ? e.message : "Could not read workbook.")}
     finally {setBusy(false)}
   }
-  function preview() {
+  function preview(data = source, mapping = fieldsMap, identity = idColumn, fingerprint = fileKey, sheet = sheetIndex) {
     let corrections = 0
     const seen = new Set<string>()
     const rows: Entry[] = []
-    for (const [i,cells] of source.entries()) {
-      const row = {key:fileKey + "-" + sheetIndex + "-" + i} as Entry
-      if (idColumn >= 0) {
-        const external = (cells[idColumn] || "").trim()
+    for (const [i,cells] of data.entries()) {
+      const row = {key:fingerprint + "-" + sheet + "-" + i} as Entry
+      if (identity >= 0) {
+        const external = (cells[identity] || "").trim()
         if (!external || external.length > 95 || seen.has(external)) {
           setStatus("Row "+(i+2)+" needs a unique booking ID. Fix the source or use workbook row identity.")
           return
@@ -117,7 +121,7 @@ export default function HistoryImport({vendor}: {vendor:number}) {
         row.key = "ref:"+external
       }
       for (const f of fields) {
-        const raw = cells[fieldsMap[f]!] || ""
+        const raw = cells[mapping[f]!] || ""
         row[f] = correct(f, raw)
         if (raw !== row[f]) corrections++
       }
@@ -136,30 +140,32 @@ export default function HistoryImport({vendor}: {vendor:number}) {
   }
   async function save(rows:Entry[], edit=false) {
     setBusy(true)
-    let inserted = 0, skipped = 0
+    let inserted = 0, skipped = 0, posted = 0
     try {
       for(let i=0;i<rows.length;i+=500) {
         const response = await fetch(url,{method:edit?"PATCH":"POST",headers:creditAuthHeaders(),body:JSON.stringify({rows:rows.slice(i,i+500)})})
         const result = await response.json()
         if (!response.ok) throw Error(result.error || "Could not save.")
-        inserted += result.inserted; skipped += result.skipped
+        inserted += result.inserted; skipped += result.skipped; posted += result.transactions_saved ?? result.inserted
       }
-      setStatus(edit?"Changes saved.":inserted+" imported · "+skipped+" already imported.")
+      window.dispatchEvent(new Event("desk-transactions-imported"))
+      setStatus(edit?"Changes saved.":posted+" transactions saved"+(skipped ? " · "+skipped+" existing history rows" : ""))
     } catch(e) {setStatus(inserted+" saved before error. "+String(e))}
     finally {setBusy(false)}
   }
   const issues = entries.filter(row => issue(row)).length
   const visible = archive ? entries : entries.slice(page*25,page*25+25)
-  return <Dialog><DialogTrigger className="rounded border px-2 py-1 text-xs">Import history</DialogTrigger>
-    <DialogContent className="max-h-[90vh] max-w-5xl overflow-auto bg-background"><DialogTitle>Past bookings</DialogTitle>
+  return <Dialog><DialogTrigger className="rounded border px-2 py-1 text-xs">Import Excel</DialogTrigger>
+    <DialogContent className="max-h-[90vh] max-w-5xl overflow-auto bg-background"><DialogTitle>Import past transactions</DialogTitle>
+      <p className="text-sm text-muted-foreground">Upload completed sessions. Review the amounts before adding them to Transaction Report.</p>
       <div className="flex flex-wrap items-center gap-3 text-sm"><label>Upload Excel (.xlsx) <input type="file" accept=".xlsx" disabled={busy} onChange={e => {if(e.target.files?.[0]) void upload(e.target.files[0]);e.target.value=""}}/></label>
       <button disabled={busy} onClick={() => history(0)}>View imported history</button></div>
       {!!sheets.length && !archive && <><label>Worksheet <select className="bg-background" disabled={busy} value={sheetIndex} onChange={e => selectSheet(Number(e.target.value))}>{sheets.map((s,i) => <option key={i} value={i}>{s.name}</option>)}</select></label>
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">{fields.map(f => <label className="text-xs capitalize" key={f}>{f}<select disabled={busy} className="block w-full rounded border bg-background p-1" value={fieldsMap[f] ?? -1} onChange={e => {setMap({...fieldsMap,[f]:Number(e.target.value)});setReview(false)}}>
+      <details key={sheetIndex} open={!review}><summary className="cursor-pointer text-sm">Match columns</summary><div className="grid grid-cols-2 gap-2 sm:grid-cols-3">{fields.map(f => <label className="text-xs capitalize" key={f}>{f}<select disabled={busy} className="block w-full rounded border bg-background p-1" value={fieldsMap[f] ?? -1} onChange={e => {setMap({...fieldsMap,[f]:Number(e.target.value)});setReview(false)}}>
         <option value={-1}>Choose column</option>{headers.map((h,i) => <option key={i} value={i}>{h || "Column "+(i+1)}</option>)}</select></label>)}</div>
       <label className="text-xs">Duplicate check <select disabled={busy} className="rounded border bg-background p-1" value={idColumn} onChange={e => {setIdColumn(Number(e.target.value));setReview(false)}}>
         <option value={-1}>Same workbook and row</option>{headers.map((h,i) => <option key={i} value={i}>Booking ID from {h || i+1}</option>)}</select></label>
-      <button className="rounded border p-1" disabled={busy || !source.length || fields.some(f => (fieldsMap[f] ?? -1)<0) || new Set(Object.values(fieldsMap)).size !== fields.length} onClick={preview}>Preview mapped rows</button></>}
+      <button className="rounded border p-1" disabled={busy || !source.length || fields.some(f => (fieldsMap[f] ?? -1)<0) || new Set(Object.values(fieldsMap)).size !== fields.length} onClick={() => preview()}>Preview mapped rows</button></details></>}
       {(review || archive) && <><div className="overflow-auto"><table className="w-full text-sm"><thead><tr>{[...fields,"Review"].map(f => <th className="text-left capitalize" key={f}>{f}</th>)}</tr></thead>
         <tbody>{visible.map((row,i) => <tr key={row.key}>{fields.map(f=><td key={f}>{review && source[page*25+i]?.[fieldsMap[f]!] !== row[f] && <small className="block text-muted-foreground">Was: {source[page*25+i]?.[fieldsMap[f]!] || "blank"}</small>}<input aria-label={f+" row "+(i+1)} disabled={busy} className="w-24 rounded border bg-background px-1" value={row[f]} onChange={e=>setEntries(prev=>prev.map(item=>item.key===row.key?{...item,[f]:e.target.value}:item))}/></td>)}<td>{issue(row) || (archive ? <button disabled={busy} onClick={()=>save([row],true)}>Save row</button> : "Ready")}</td></tr>)}</tbody></table></div>
         <div className="flex items-center gap-3 text-sm"><button disabled={busy||page===0} onClick={()=>archive?history((page-1)*50):setPage(page-1)}>Previous</button>Page {page+1}<button disabled={busy||(archive?entries.length<50:(page+1)*25>=entries.length)} onClick={()=>archive?history((page+1)*50):setPage(page+1)}>Next</button>
