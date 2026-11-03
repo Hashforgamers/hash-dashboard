@@ -1,5 +1,6 @@
 "use client";
 
+import DeskRateEditor from "./desk-rate-card";
 import { creditAuthHeaders } from "@/lib/credit-auth";
 import { useActionFeedback } from "../hooks/use-action-feedback";
 import React, { useState, useEffect, useRef } from "react";
@@ -1339,6 +1340,7 @@ export default function ConsolePricing() {
         )}
       </AnimatePresence>
 
+      <DeskRateEditor vendor={contextVendorId} games={availableGames} />
       <ConsolePricingTabNav
         activeTab={activeTab}
         setActiveTab={setActiveTab}

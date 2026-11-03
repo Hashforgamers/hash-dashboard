@@ -5,6 +5,7 @@ import { CalendarDays, Loader2, RotateCw, SlidersHorizontal, ChevronDown } from 
 import { BOOKING_URL } from "@/src/config/env"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import HistoryImport from "./history-import"
 import styles from "./schedule-workspace.module.css"
 
 interface BookingRecord {
@@ -72,7 +73,7 @@ export default function BookingRecords({ vendorId, refreshKey = 0 }: { vendorId:
             <h3 className="flex items-center gap-2 text-base font-semibold"><CalendarDays className="h-4 w-4 text-blue-400" />Booking records <span className="text-xs font-normal text-muted-foreground">({loading ? "…" : total.toLocaleString("en-IN")})</span></h3>
 
           </div>
-          <div className="flex items-center gap-2"><Button variant="outline" size="sm" aria-expanded={filtersOpen} aria-controls="booking-record-filters" onClick={() => setFiltersOpen(value => !value)}><SlidersHorizontal className="mr-2 h-3.5 w-3.5" />Filters{Object.values(applied).some(Boolean) && <span className="ml-2 h-1.5 w-1.5 rounded-full bg-blue-400" />}<ChevronDown className={`ml-2 h-3.5 w-3.5 ${filtersOpen ? "rotate-180" : ""}`} /></Button><Button variant="ghost" size="icon" aria-label="Refresh booking records" disabled={loading || !vendorId} onClick={() => setRevision(value => value + 1)}><RotateCw className="h-4 w-4" /></Button></div>
+          <div className="flex items-center gap-2">{vendorId && <HistoryImport key={vendorId} vendor={vendorId} />}<Button variant="outline" size="sm" aria-expanded={filtersOpen} aria-controls="booking-record-filters" onClick={() => setFiltersOpen(value => !value)}><SlidersHorizontal className="mr-2 h-3.5 w-3.5" />Filters{Object.values(applied).some(Boolean) && <span className="ml-2 h-1.5 w-1.5 rounded-full bg-blue-400" />}<ChevronDown className={`ml-2 h-3.5 w-3.5 ${filtersOpen ? "rotate-180" : ""}`} /></Button><Button variant="ghost" size="icon" aria-label="Refresh booking records" disabled={loading || !vendorId} onClick={() => setRevision(value => value + 1)}><RotateCw className="h-4 w-4" /></Button></div>
         </div>
         <form id="booking-record-filters" hidden={!filtersOpen} className={filtersOpen ? styles.filters : "hidden"} onSubmit={event => { event.preventDefault(); if (!invalidDates) { setPage(1); setApplied({ ...filters }); setFiltersOpen(false) } }}>
           {([["date_from", "From date", "date"], ["date_to", "To date", "date"], ["time_from", "Starts after", "time"], ["time_to", "Starts before", "time"]] as const).map(([key, label, type]) => (

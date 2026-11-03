@@ -605,6 +605,7 @@ function AddPassDialog({ passTypes, onSave, buttonClassName }: any) {
   const { reportError, feedback } = useActionFeedback();
   const [open, setOpen] = useState(false);
   const [passMode, setPassMode] = useState<"date_based" | "hour_based">("date_based");
+  const [pcOnly, setPcOnly] = useState(false);
   const [form, setForm] = useState({
     name: "",
     price: "",
@@ -637,6 +638,7 @@ function AddPassDialog({ passTypes, onSave, buttonClassName }: any) {
     setIsSubmitting(true);
     const payload = {
       ...form,
+      pc_only: passMode === "hour_based" && pcOnly,
       price: parsedPrice,
       days_valid: parsedDays,
       pass_mode: passMode,
@@ -648,6 +650,7 @@ function AddPassDialog({ passTypes, onSave, buttonClassName }: any) {
     try {
     await onSave(payload, () => {
       setOpen(false);
+      setPcOnly(false);
       setForm({
         name: "",
         price: "",
@@ -687,6 +690,26 @@ function AddPassDialog({ passTypes, onSave, buttonClassName }: any) {
 
         <form onSubmit={handleSubmit} className="space-y-3 pt-2">
           {feedback}
+          <label className="block text-sm">Membership template
+            <select className="mt-1 block w-full rounded border bg-background p-2" defaultValue="" onChange={event => {
+              const template = [
+                ["PC Day Pass", "700", "10", "1"],
+                ["PC Weekly Membership", "3500", "50", "7"],
+                ["PC Monthly Membership", "14000", "250", "30"],
+              ][Number(event.target.value)]
+              if (!template) return
+              const [name, price, total_hours, days_valid] = template
+              setPcOnly(true)
+              setPassMode("hour_based")
+              setForm(previous => ({ ...previous, name, price, total_hours, days_valid }))
+            }}>
+              <option value="" disabled>Custom pass or choose a template</option>
+              <option value="0">Day · 10 hours · ₹700</option>
+              <option value="1">Weekly · 50 hours · ₹3,500</option>
+              <option value="2">Monthly · 250 hours · ₹14,000</option>
+            </select>
+          </label>
+          {passMode === "hour_based" && <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={pcOnly} onChange={e => setPcOnly(e.target.checked)} />PC sessions only</label>}
           {/* Mode Toggle */}
           <div>
             <label className="table-header-text mb-2 block">Pass Mode</label>
