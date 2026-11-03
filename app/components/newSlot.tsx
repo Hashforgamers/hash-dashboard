@@ -219,6 +219,7 @@ interface SlotBookingFormProps {
   onClose: () => void
   selectedSlots: SelectedSlot[]
   onRemoveSelectedSlot: (slot: SelectedSlot) => void
+  onReplaceSlots?: (slots: SelectedSlot[]) => void
   onSlotSelect: (slot: SelectedSlot) => void
   allSlots: { [key: string]: any[] }
   onBookingComplete: (result?: any) => void
@@ -472,6 +473,7 @@ export function SlotBookingForm({
   onClose, 
   selectedSlots, 
   onRemoveSelectedSlot,
+  onReplaceSlots,
   onSlotSelect,
   allSlots,
   onBookingComplete,
@@ -504,6 +506,34 @@ export function SlotBookingForm({
     !isPastSlotInIST(activePickerDate, slot.end_time, slot.start_time)
   ).sort((a: any, b: any) => String(a.start_time).localeCompare(String(b.start_time)))
 
+  const [rangeStart, setRangeStart] = useState("")
+  const [rangeEnd, setRangeEnd] = useState("")
+  const [rangeError, setRangeError] = useState("")
+  function applyTimeRange() {
+    const range: SelectedSlot[] = []
+    let cursor = rangeStart
+    const visited = new Set<string>()
+    while (cursor && !visited.has(cursor)) {
+      visited.add(cursor)
+      const slot = pickerSlots.find(item => String(item.start_time).slice(0, 5) === cursor)
+      if (!slot) break
+      range.push({
+        slot_id: slot.slot_id, date: activePickerDate, start_time: slot.start_time,
+        end_time: slot.end_time, console_id: Number(activePickerConsole),
+        console_name: pickerConsoleItem?.name || pickerConsoleItem?.type || "",
+        console_price: slot.single_slot_price ?? pickerConsoleItem?.price ?? 0,
+        available_count: Number(slot.available_slot),
+      })
+      cursor = String(slot.end_time).slice(0, 5)
+      if (cursor === rangeEnd) {
+        onReplaceSlots?.(range)
+        setRangeError("")
+        return
+      }
+    }
+    setRangeError("Choose a continuous range of available slots on this date.")
+  }
+
   const [name, setName] = useState<string>('')
   const [email, setEmail] = useState<string>('')
   const [phone, setPhone] = useState<string>('')
@@ -532,7 +562,10 @@ export function SlotBookingForm({
   const [waiveOffAmount, setWaiveOffAmount] = useState<number>(0)
   const [extraControllerQty, setExtraControllerQty] = useState<number>(0)
   const [extraControllerFare, setExtraControllerFare] = useState<number>(0)
-  const [autoWaiveOffAmount, setAutoWaiveOffAmount] = useState<number>(0)
+  const [suggestedDiscount, setSuggestedDiscount] = useState<number>(0)
+  const [discountOverride, setDiscountOverride] = useState<number | null>(null)
+  const autoWaiveOffAmount = discountOverride ?? suggestedDiscount
+
   const [controllerPricingConfig, setControllerPricingConfig] = useState<ControllerPricingConfig>({
     base_price: 0,
     tiers: []
@@ -1009,11 +1042,12 @@ export function SlotBookingForm({
 
 
   useEffect(() => {
+    setDiscountOverride(null)
     if (selectedSlots.length > 0) {
       const autoWaiveOff = calculateAutoWaiveOff(selectedSlots)
-      setAutoWaiveOffAmount(autoWaiveOff)
+      setSuggestedDiscount(autoWaiveOff)
     } else {
-      setAutoWaiveOffAmount(0)
+      setSuggestedDiscount(0)
     }
   }, [selectedSlots])
 
@@ -2233,6 +2267,18 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                             </select>
                           </label>
                         </div>
+                        {onReplaceSlots && (
+                          <div className="mb-3 flex flex-wrap items-end gap-2">
+                            <label className="text-xs">From
+                              <input className="block rounded border bg-background p-1" type="time" value={rangeStart} onChange={e => setRangeStart(e.target.value)} />
+                            </label>
+                            <label className="text-xs">To
+                              <input className="block rounded border bg-background p-1" type="time" value={rangeEnd} onChange={e => setRangeEnd(e.target.value)} />
+                            </label>
+                            <button type="button" className="rounded border px-2 py-1 text-sm" disabled={!rangeStart || !rangeEnd || isSubmitting} onClick={applyTimeRange}>Set time range</button>
+                            {rangeError && <p role="alert" className="w-full text-xs text-red-500">{rangeError}</p>}
+                          </div>
+                        )}
                         <div className="flex max-h-40 flex-wrap gap-1.5 overflow-y-auto">
                           {pickerSlots.map((slot: any) => {
                             const selected = selectedSlots.some((item) => item.slot_id === slot.slot_id &&
@@ -2745,11 +2791,14 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                         />
                       </div>
 
-                      {autoWaiveOffAmount > 0 && (
+                      {suggestedDiscount > 0 && (
                         <div className="flex justify-between items-center py-2 border-b border-gray-200 dark:border-gray-600 bg-orange-50 dark:bg-orange-900/20 rounded-lg px-3">
                           <span className="text-orange-600 dark:text-orange-400 font-medium">Auto Discount:</span>
                           <div className="text-right">
-                            <span className="font-bold text-orange-600 dark:text-orange-400">₹{Math.round(autoWaiveOffAmount)}</span>
+                            <input aria-label="Auto Discount" type="number" min={0} max={Math.max(0, consoleTotal - squadDiscountAmount - waiveOffAmount)} step="0.01"
+                              className="w-20 rounded border bg-background px-2 py-1 text-right"
+                              value={autoWaiveOffAmount} onChange={e => setDiscountOverride(Math.max(0, Math.min(Number(e.target.value) || 0, consoleTotal - squadDiscountAmount - waiveOffAmount)))} />
+                            {discountOverride !== null && <button type="button" className="ml-2 text-xs underline" onClick={() => setDiscountOverride(null)}>Reset</button>}
                             <div className="text-xs text-orange-500 dark:text-orange-300">
                               (Time-Based Savings)
                             </div>
@@ -5522,6 +5571,7 @@ useEffect(() => {
         isOpen={showBookingForm}
         onClose={() => setShowBookingForm(false)}
         selectedSlots={selectedSlots}
+        onReplaceSlots={setSelectedSlots}
         onRemoveSelectedSlot={handleRemoveSelectedSlot}
         onSlotSelect={handleSlotSelect}
         allSlots={allSlots}
