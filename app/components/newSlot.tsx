@@ -6,6 +6,8 @@ import { jwtDecode } from 'jwt-decode'
 import { createPortal } from "react-dom"
 
 import { cn } from "@/lib/utils"
+import { contiguousDeskSlots, coveringDeskSlots } from "@/lib/desk-time-range"
+import { deskSubtotal, profiles, useDeskCards } from "./desk-rate-card"
 import { creditAuthHeaders } from "@/lib/credit-auth"
 import { useAccess } from "@/app/context/AccessContext"
 import { Button } from "@/components/ui/button"
@@ -213,6 +215,7 @@ interface SquadMemberInput {
 }
 
 interface SlotBookingFormProps {
+  defaultConsoleId?: number | null
   overlayZIndex?: number
   initialCustomer?: { name: string; phone: string; email: string }
   isOpen: boolean
@@ -474,6 +477,7 @@ export function SlotBookingForm({
   selectedSlots, 
   onRemoveSelectedSlot,
   onReplaceSlots,
+  defaultConsoleId,
   onSlotSelect,
   allSlots,
   onBookingComplete,
@@ -493,12 +497,12 @@ export function SlotBookingForm({
     selectedSlots 
   })
 
-  const [showSlotPicker, setShowSlotPicker] = useState(false)
+  const [showSlotPicker, setShowSlotPicker] = useState(true)
   const [pickerDate, setPickerDate] = useState("")
   const [pickerConsole, setPickerConsole] = useState("")
   const slotDates = Object.keys(allSlots).sort()
   const activePickerDate = selectedSlots[0]?.date || pickerDate || slotDates[0] || ""
-  const activePickerConsole = String(selectedSlots[0]?.console_id || pickerConsole || availableConsoles[0]?.id || "")
+  const activePickerConsole = String(selectedSlots[0]?.console_id || pickerConsole || defaultConsoleId || availableConsoles[0]?.id || "")
   const pickerConsoleItem = availableConsoles.find((item) => String(item.id) === activePickerConsole)
   const pickerSlots = (allSlots[activePickerDate] || []).filter((slot: any) =>
     String(slot.console_id) === activePickerConsole && Boolean(slot.is_available) &&
@@ -506,32 +510,25 @@ export function SlotBookingForm({
     !isPastSlotInIST(activePickerDate, slot.end_time, slot.start_time)
   ).sort((a: any, b: any) => String(a.start_time).localeCompare(String(b.start_time)))
 
-  const [rangeStart, setRangeStart] = useState("")
-  const [rangeEnd, setRangeEnd] = useState("")
-  const [rangeError, setRangeError] = useState("")
-  function applyTimeRange() {
-    const range: SelectedSlot[] = []
-    let cursor = rangeStart
-    const visited = new Set<string>()
-    while (cursor && !visited.has(cursor)) {
-      visited.add(cursor)
-      const slot = pickerSlots.find(item => String(item.start_time).slice(0, 5) === cursor)
-      if (!slot) break
-      range.push({
-        slot_id: slot.slot_id, date: activePickerDate, start_time: slot.start_time,
-        end_time: slot.end_time, console_id: Number(activePickerConsole),
-        console_name: pickerConsoleItem?.name || pickerConsoleItem?.type || "",
-        console_price: slot.single_slot_price ?? pickerConsoleItem?.price ?? 0,
-        available_count: Number(slot.available_slot),
-      })
-      cursor = String(slot.end_time).slice(0, 5)
-      if (cursor === rangeEnd) {
-        onReplaceSlots?.(range)
-        setRangeError("")
-        return
-      }
-    }
-    setRangeError("Choose a continuous range of available slots on this date.")
+  const clock = (value: string) => value.slice(0, 5)
+  const firstTime = selectedSlots[0]?.start_time || pickerSlots[0]?.start_time || ""
+  const continuousSlots = (start: string) => contiguousDeskSlots(pickerSlots, start)
+  const [typedStart, setTypedStart] = useState("")
+  const [typedEnd, setTypedEnd] = useState("")
+  const clearTypedTimes = () => { setTypedStart(""); setTypedEnd("") }
+  useEffect(() => { clearTypedTimes(); setShowSlotPicker(true) }, [isOpen, activePickerDate, activePickerConsole])
+  const coveringRange = coveringDeskSlots(pickerSlots, typedStart, typedEnd)
+  const rangeOptions = continuousSlots(firstTime)
+  function selectRange(start: string, count: number) {
+    clearTypedTimes()
+    const range = continuousSlots(start).slice(0, count)
+    if (range.length) onReplaceSlots?.(range.map(slot => ({
+      slot_id: slot.slot_id, date: activePickerDate, start_time: slot.start_time,
+      end_time: slot.end_time, console_id: Number(activePickerConsole),
+      console_name: pickerConsoleItem?.name || pickerConsoleItem?.type || "",
+      console_price: slot.single_slot_price ?? pickerConsoleItem?.price ?? 0,
+      available_count: Number(slot.available_slot),
+    })))
   }
 
   const [name, setName] = useState<string>('')
@@ -564,7 +561,6 @@ export function SlotBookingForm({
   const [extraControllerFare, setExtraControllerFare] = useState<number>(0)
   const [suggestedDiscount, setSuggestedDiscount] = useState<number>(0)
   const [discountOverride, setDiscountOverride] = useState<number | null>(null)
-  const autoWaiveOffAmount = discountOverride ?? suggestedDiscount
 
   const [controllerPricingConfig, setControllerPricingConfig] = useState<ControllerPricingConfig>({
     base_price: 0,
@@ -1406,7 +1402,13 @@ const getEffectivePrice = (slot: SelectedSlot): number => {
     || resolveControllerPricingKey(squadPlatformRule.console_slug)
     || normalizeControllerType(selectedSlots[0]?.console_name)
   )
-  const supportsExtraController = selectedControllerType !== null && hasControllerPricingConfigured
+  const { cards: deskCards, error: deskRateError } = useDeskCards(isOpen ? settingsVendorId : null)
+  const [deskChoice, setDeskChoice] = useState("")
+  const deviceCards = deskCards.filter(card => card.game_id === Number(activePickerConsole))
+  useEffect(() => { setDeskChoice("") }, [activePickerConsole, settingsVendorId, isOpen])
+  const deskCard = deviceCards.find(card => card.profile === deskChoice)
+  const controllersIncluded = !!deskCard && ["ps55", "ps65", "gta55", "gta65"].includes(deskCard.profile)
+  const supportsExtraController = !controllersIncluded && selectedControllerType !== null && hasControllerPricingConfigured
   const bookingFlowMode: "solo" | "squad" = isSquadMode ? "squad" : "solo"
   const squadSupported = squadPolicyVendor === settingsVendorId && squadPolicyState === "ready" && Boolean(squadPlatformRule.enabled)
   const squadUsesDiscountEngine = squadPlatformRule.pricing_mode === "squad_discount"
@@ -1569,11 +1571,11 @@ const getEffectivePrice = (slot: SelectedSlot): number => {
   }, [isSquadMode, squadPlayerCount, squadMembers.length])
 
   useEffect(() => {
-    if (!isSquadMode || !selectedControllerType) return
+    if (!isSquadMode || !supportsExtraController) return
     if (extraControllerQty !== suggestedExtraControllerQty) {
       setExtraControllerQty(suggestedExtraControllerQty)
     }
-  }, [isSquadMode, selectedControllerType, suggestedExtraControllerQty, extraControllerQty])
+  }, [isSquadMode, supportsExtraController, suggestedExtraControllerQty, extraControllerQty])
 
   useEffect(() => {
     if (!supportsExtraController && (extraControllerFare !== 0 || extraControllerQty !== 0)) {
@@ -1593,9 +1595,14 @@ const getEffectivePrice = (slot: SelectedSlot): number => {
   const mealsTotal = selectedMeals.reduce((sum, meal) => sum + meal.total, 0)
   const consoleUnitTotal = selectedSlots.reduce((sum, slot) => sum + getEffectivePrice(slot), 0)
   const squadConsoleMultiplier = isSquadMode && squadUsesDiscountEngine ? squadPlayerCount : 1
-  const consoleTotal = isSquadMode ? Number((consoleUnitTotal * squadConsoleMultiplier).toFixed(2)) : consoleUnitTotal
+  const slotMinutes = (slot: SelectedSlot) => {
+    const start = new Date(slot.date + "T" + slot.start_time + "+05:30").getTime()
+    return (getSlotEndTimestampIST(slot.date, slot.start_time, slot.end_time) - start) / 60000
+  }
+  const deskPrice = deskCard ? deskSubtotal(deskCard, selectedSlots.reduce((n, slot) => n + slotMinutes(slot), 0), isSquadMode ? squadPlayerCount : 1) : null
+  const consoleTotal = deskPrice ?? (isSquadMode ? Number((consoleUnitTotal * squadConsoleMultiplier).toFixed(2)) : consoleUnitTotal)
   const squadDiscountPercent = (() => {
-    if (!isSquadMode || !squadUsesDiscountEngine) return 0
+    if (deskCard || !isSquadMode || !squadUsesDiscountEngine) return 0
     const keys = Object.keys(squadPolicyForConsole).map((k) => Number(k)).filter((v) => !Number.isNaN(v)).sort((a, b) => a - b)
     if (keys.length === 0) return 0
     const minPlayers = keys[0]
@@ -1606,6 +1613,11 @@ const getEffectivePrice = (slot: SelectedSlot): number => {
   const squadDiscountAmount = isSquadMode
     ? Number(((consoleTotal * squadDiscountPercent) / 100).toFixed(2))
     : 0
+  const gamingNet = Math.max(0, consoleTotal - squadDiscountAmount)
+  const suggestedDeskDiscount = deskPrice !== null && consoleUnitTotal > 0
+    ? Math.round(suggestedDiscount * deskPrice / consoleUnitTotal * 100) / 100
+    : suggestedDiscount
+  const autoWaiveOffAmount = Math.min(Math.max(0, gamingNet - waiveOffAmount), discountOverride ?? suggestedDeskDiscount)
   const totalAmount = Math.max(
     0,
     consoleTotal - squadDiscountAmount - waiveOffAmount - autoWaiveOffAmount + extraControllerFare + mealsTotal
@@ -1943,6 +1955,18 @@ const getEffectivePrice = (slot: SelectedSlot): number => {
       }
     }
     if (selectedSlots.length === 0) newErrors.slots = 'Please select at least one time slot'
+    if (waiveOffAmount > gamingNet) {
+      setSubmitError("Additional Discount exceeds the gaming charges.")
+      return false
+    }
+    if (typedStart || typedEnd) {
+      setSubmitError("Apply or clear the requested times before confirming.")
+      return false
+    }
+    if (deskChoice && (!deskCard || deskPrice === null)) {
+      setSubmitError("Choose a rate card that covers this duration and player count.")
+      return false
+    }
     if (!paymentType) newErrors.payment = 'Please select a payment method'
     if (isSquadMode) {
       if (!squadSupported) {
@@ -2033,6 +2057,9 @@ const getEffectivePrice = (slot: SelectedSlot): number => {
           menu_item_id: meal.menu_item_id,
           quantity: meal.quantity
         })),
+        requireFullRange: true,
+        deskProfile: deskCard?.profile,
+        deskSubtotal: deskPrice ?? undefined,
         bookingMode: 'regular',
         squadDetails: {
           enabled: isSquadMode && squadSupported,
@@ -2133,12 +2160,13 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
           <div className="slot-booking-modal-header relative flex items-center justify-between border-b px-4 py-3">
             <div className="min-w-0">
               <h2 className="slot-booking-title">New Gaming Session</h2>
-              <p className="slot-booking-context">
-                {selectedSlots[0]?.console_name?.trim().toUpperCase() === "PC" ? "PC Gaming" : selectedSlots[0]?.console_name || "Gaming Session"}
-                <span aria-hidden="true"> · </span>
-                {selectedSlots.length} {selectedSlots.length === 1 ? "Slot" : "Slots"}
-                {selectedSlots[0]?.date && <> · {new Date(`${selectedSlots[0].date}T12:00:00`).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}</>}
-              </p>
+              {selectedSlots.length > 0 && <p className="slot-booking-context">
+                {selectedSlots[0].console_name?.trim().toUpperCase() === "PC" ? "PC Gaming" : selectedSlots[0].console_name}
+                {" · "}{selectedSlots.every((slot, i) => !i || selectedSlots[i-1].end_time === slot.start_time)
+                  ? <strong>{clock(selectedSlots[0].start_time)}–{clock(selectedSlots[selectedSlots.length-1].end_time)}</strong>
+                  : selectedSlots.length + " selected slots"}
+                {" · "}{new Date(selectedSlots[0].date + "T12:00:00").toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
+              </p>}
             </div>
             <div className="flex items-center gap-2">
               <button
@@ -2244,11 +2272,11 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                 <div className="slot-booking-details">
                   <Card className="sb-card slot-booking-slots p-3 order-1">
                     <div className="mb-2 flex items-center justify-between gap-2">
-                      <h3 className="slot-section-title">Selected Time Slots ({selectedSlots.length})</h3>
+                      <h3 className="slot-section-title">Session Time</h3>
                       <button type="button" aria-expanded={showSlotPicker} aria-controls="booking-slot-picker"
                         onClick={() => setShowSlotPicker((open) => !open)}
                         className="slot-booking-modal-accent inline-flex h-8 items-center gap-1 rounded-md px-2 text-xs font-medium">
-                        <Plus className="h-3.5 w-3.5" /> {showSlotPicker ? "Done" : "Add Time"}
+                        <Plus className="h-3.5 w-3.5" /> {showSlotPicker ? "Collapse" : "Change time"}
                       </button>
                     </div>
                     {showSlotPicker && (
@@ -2270,16 +2298,32 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                         {onReplaceSlots && (
                           <div className="mb-3 flex flex-wrap items-end gap-2">
                             <label className="text-xs">From
-                              <input className="block rounded border bg-background p-1" type="time" value={rangeStart} onChange={e => setRangeStart(e.target.value)} />
+                              <select className="block rounded border bg-background p-1" value={selectedSlots.length ? clock(firstTime) : ""} disabled={isSubmitting} onChange={e => selectRange(e.target.value, 1)}>
+                                <option value="" disabled>Start time</option>
+                                {pickerSlots.map(slot => <option key={slot.slot_id} value={clock(slot.start_time)}>{clock(slot.start_time)}</option>)}
+                              </select>
                             </label>
                             <label className="text-xs">To
-                              <input className="block rounded border bg-background p-1" type="time" value={rangeEnd} onChange={e => setRangeEnd(e.target.value)} />
+                              <select className="block rounded border bg-background p-1" value={rangeOptions.slice(0, selectedSlots.length).every((slot, i) => slot.slot_id === selectedSlots[i]?.slot_id) && selectedSlots.length <= rangeOptions.length ? selectedSlots.length : 0} disabled={isSubmitting || !selectedSlots.length} onChange={e => selectRange(firstTime, Number(e.target.value))}>
+                                <option value={0} disabled>End time</option>
+                                {rangeOptions.map((slot, i) => <option key={slot.slot_id} value={i + 1}>{clock(slot.end_time)}</option>)}
+                              </select>
                             </label>
-                            <button type="button" className="rounded border px-2 py-1 text-sm" disabled={!rangeStart || !rangeEnd || isSubmitting} onClick={applyTimeRange}>Set time range</button>
-                            {rangeError && <p role="alert" className="w-full text-xs text-red-500">{rangeError}</p>}
                           </div>
                         )}
-                        <div className="flex max-h-40 flex-wrap gap-1.5 overflow-y-auto">
+                        {onReplaceSlots && <details className="mb-2 text-xs"><summary className="cursor-pointer">Enter times manually</summary>
+                          <div className="mt-2 flex flex-wrap items-end gap-2">
+                            <label>Requested from<input type="time" className="block rounded border bg-background p-1" value={typedStart} onChange={e => setTypedStart(e.target.value)}/></label>
+                            <label>Requested to<input type="time" className="block rounded border bg-background p-1" value={typedEnd} onChange={e => setTypedEnd(e.target.value)}/></label>
+                            {!!coveringRange.length && <button type="button" className="rounded border px-2 py-1" onClick={() => selectRange(coveringRange[0].start_time, coveringRange.length)}>
+                              Use {clock(coveringRange[0].start_time)}–{clock(coveringRange[coveringRange.length-1].end_time)}
+                            </button>}
+                            {(typedStart || typedEnd) && <button type="button" onClick={clearTypedTimes}>Clear</button>}
+                          </div>
+                          {typedStart && typedEnd && !coveringRange.length && <p role="status">No continuous availability for those times.</p>}
+                        </details>}
+                        <details open={onReplaceSlots ? undefined : true}><summary className="cursor-pointer text-xs">Individual slots</summary>
+                        <div className="mt-2 flex max-h-40 flex-wrap gap-1.5 overflow-y-auto">
                           {pickerSlots.map((slot: any) => {
                             const selected = selectedSlots.some((item) => item.slot_id === slot.slot_id &&
                               item.date === activePickerDate && String(item.console_id) === activePickerConsole)
@@ -2299,9 +2343,16 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                             </button>
                           })}
                           {pickerSlots.length === 0 && <p className="py-2 text-xs text-slate-500">No available slots.</p>}
-                        </div>
+                        </div></details>
                       </div>
                     )}
+                    {deskRateError && <p role="status" className="text-xs">{deskRateError} Standard pricing applies.</p>}
+                    {deviceCards.length > 0 && <label className="mb-2 flex items-center gap-2 text-xs">Rate card
+                      <select className="rounded border bg-background p-1" value={deskChoice} onChange={e => setDeskChoice(e.target.value)}>
+                        <option value="">Standard pricing</option>
+                        {deviceCards.map(card => <option key={card.profile} value={card.profile}>{profiles[card.profile][0]}</option>)}
+                      </select>{deskCard && <span>{deskPrice === null ? "Unavailable for this duration or player count" : "Gaming subtotal ₹" + deskPrice}</span>}
+                    </label>}
                     <div className="slot-booking-slot-list">
                       {selectedSlots.map((slot) => (
                         <div key={`${slot.date}-${slot.console_id}-${slot.slot_id}`} className="slot-booking-modal-soft flex items-center justify-between gap-3 rounded-md px-2.5 py-2 text-xs">
@@ -2310,7 +2361,7 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                           </span>
                           <div className="flex items-center gap-2">
                             <span className="flex items-center gap-2 font-semibold">
-                              {(() => {
+                              {!deskCard && (() => {
                                 const key = slot.console_name.toLowerCase()
                                 const entry = activePricing[key] ||
                                   Object.values(activePricing).find((p) =>
@@ -2715,21 +2766,21 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                             Max players: <span className="font-semibold">{squadMaxPlayers}</span>
                             <span className="ml-2">
                               Mode: <span className="font-semibold">
-                                {squadPlatformRule.pricing_mode === "squad_discount"
+                                {deskCard ? profiles[deskCard.profile][0] : squadPlatformRule.pricing_mode === "squad_discount"
                                   ? "Squad discount"
                                   : squadPlatformRule.pricing_mode === "controller_pricing"
                                   ? "Controller pricing"
                                   : "Solo only"}
                               </span>
                             </span>
-                            {selectedControllerType && (
+                            {selectedControllerType && !controllersIncluded && (
                               <span className="ml-2">
                                 Suggested extra controllers: <span className="font-semibold">{suggestedExtraControllerQty}</span>
                               </span>
                             )}
                           </div>
 
-                          {selectedControllerType && (
+                          {selectedControllerType && !controllersIncluded && (
                             <div className="flex justify-end">
                               <button
                                 type="button"
@@ -2758,7 +2809,7 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                     <div className="space-y-2">
                       <div className="flex justify-between items-center py-2 border-b border-gray-200 dark:border-gray-600">
                         <span className="text-gray-600 dark:text-gray-400">
-                          Gaming Charges{isSquadMode && squadUsesDiscountEngine ? ` (₹${consoleUnitTotal} x ${squadPlayerCount})` : ""}:
+                          Gaming Charges{!deskCard && isSquadMode && squadUsesDiscountEngine ? ` (₹${consoleUnitTotal} x ${squadPlayerCount})` : ""}:
                         </span>
                         <span className="font-medium text-gray-800 dark:text-white">₹{consoleTotal}</span>
                       </div>
@@ -2784,7 +2835,7 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                         <input
                           type="number"
                           value={waiveOffAmount}
-                          onChange={(e) => setWaiveOffAmount(Number(e.target.value) || 0)}
+                          onChange={(e) => setWaiveOffAmount(Math.max(0, Math.min(gamingNet, Number(e.target.value) || 0)))}
                           placeholder="₹0"
                           className="w-20 text-right px-2 py-1 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-800 dark:text-white focus:border-emerald-500 focus:outline-none transition-colors"
                           min={0}
@@ -2907,7 +2958,7 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
               <Button
                 type="submit"
                 form="slot-booking-form"
-                disabled={selectedSlots.length === 0 || isSubmitting || submissionUncertain || (paymentType === 'Monthly Credit' && (!creditAccount?.is_active || availableCreditAmount < totalAmount))}
+                disabled={!!typedStart || !!typedEnd || (!!deskCard && deskPrice === null) || selectedSlots.length === 0 || isSubmitting || submissionUncertain || (paymentType === 'Monthly Credit' && (!creditAccount?.is_active || availableCreditAmount < totalAmount))}
                 className="ui-action-primary h-9 px-4 disabled:opacity-50"
               >
                 {isSubmitting ? (
@@ -3138,13 +3189,10 @@ function TopBar({
       <div className="flex items-center gap-2 sm:gap-3">
         <Button
           onClick={onNewBooking}
-          disabled={selectedSlots.length === 0}
           className={cn(
             "booking-new-button rounded-lg transition-all duration-200",
             "px-4 py-2 text-xs font-semibold sm:px-5 sm:text-sm",
-            selectedSlots.length > 0 
-              ? "ui-action-primary"
-              : "booking-new-button-disabled cursor-not-allowed"
+            "ui-action-primary"
           )}
         >
           <Plus className="mr-2 h-4 w-4" />
@@ -4923,10 +4971,9 @@ function DashboardQuickBookingSlab({
       <Button
         type="button"
         onClick={onNewBooking}
-        disabled={selectedSlots.length === 0}
         className={cn(
           "dashboard-quick-book-button",
-          selectedSlots.length > 0 ? "ui-action-primary" : "booking-new-button-disabled"
+          "ui-action-primary"
         )}
       >
         <Plus className="h-3.5 w-3.5" />
@@ -5452,11 +5499,7 @@ useEffect(() => {
     setShowBookingForm(true)
   }
 
-  const handleNewBooking = () => {
-    if (selectedSlots.length > 0) {
-      setShowBookingForm(true)
-    }
-  }
+  const handleNewBooking = () => setShowBookingForm(true)
 
   const handleConsoleChange = (consoleType: ConsoleFilter) => {
     if (deselectTimer.current) clearTimeout(deselectTimer.current)
@@ -5571,6 +5614,7 @@ useEffect(() => {
         isOpen={showBookingForm}
         onClose={() => setShowBookingForm(false)}
         selectedSlots={selectedSlots}
+        defaultConsoleId={availableConsoles.find(console => console.type === selectedConsole)?.id}
         onReplaceSlots={setSelectedSlots}
         onRemoveSelectedSlot={handleRemoveSelectedSlot}
         onSlotSelect={handleSlotSelect}
