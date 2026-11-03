@@ -1,4 +1,5 @@
 "use client";
+import HistoryImport from "./history-import";
 import CafeAuditPanel from "./cafe-audit-panel";
 import {Button} from "@/components/ui/button";
 import { httpJson } from "@/lib/http-client";
@@ -335,12 +336,14 @@ export function TransactionTable() {
     };
 
     void loadData(true);
+    const reloadImported = () => void loadData();
+    window.addEventListener("desk-transactions-imported", reloadImported);
 
     pollingInterval = setInterval(() => {
       loadData();
     }, POLL_INTERVAL);
 
-    return () => { controller.abort(); clearInterval(pollingInterval); };
+    return () => { window.removeEventListener("desk-transactions-imported", reloadImported); controller.abort(); clearInterval(pollingInterval); };
   }, [vendorId, token, appliedFromDate, appliedToDate]);
 
   useEffect(() => {
@@ -675,7 +678,7 @@ export function TransactionTable() {
     return <HashLoader className="min-h-[500px]" />;
   }
 
-  const reportTabs=<nav className="flex gap-2 border-b pb-2" aria-label="Transaction report views"><Button variant={reportView==='bookings'?'secondary':'ghost'} onClick={()=>setReportView('bookings')}>Booking transactions</Button><Button variant={reportView==='ledger'?'secondary':'ghost'} onClick={()=>setReportView('ledger')}>Money & wallet ledger</Button></nav>;
+  const reportTabs=<nav className="flex gap-2 border-b pb-2" aria-label="Transaction report views"><Button variant={reportView==='bookings'?'secondary':'ghost'} onClick={()=>setReportView('bookings')}>Booking transactions</Button><Button variant={reportView==='ledger'?'secondary':'ghost'} onClick={()=>setReportView('ledger')}>Money & wallet ledger</Button>{vendorId && <HistoryImport key={vendorId} vendor={vendorId} />}</nav>;
   if(reportView==='ledger')return <div className="space-y-4 overflow-y-auto p-2">{reportTabs}{vendorId&&<CafeAuditPanel key={vendorId} vendorId={vendorId}/>}</div>;
   return (
     <div className="flex h-full min-h-0 w-full min-w-0 flex-col gap-3 overflow-hidden sm:gap-3">
