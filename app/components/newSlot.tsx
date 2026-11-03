@@ -497,7 +497,7 @@ export function SlotBookingForm({
     selectedSlots 
   })
 
-  const [showSlotPicker, setShowSlotPicker] = useState(true)
+  const [timeMode, setTimeMode] = useState("range")
   const [pickerDate, setPickerDate] = useState("")
   const [pickerConsole, setPickerConsole] = useState("")
   const slotDates = Object.keys(allSlots).sort()
@@ -516,7 +516,7 @@ export function SlotBookingForm({
   const [typedStart, setTypedStart] = useState("")
   const [typedEnd, setTypedEnd] = useState("")
   const clearTypedTimes = () => { setTypedStart(""); setTypedEnd("") }
-  useEffect(() => { clearTypedTimes(); setShowSlotPicker(true) }, [isOpen, activePickerDate, activePickerConsole])
+  useEffect(() => { clearTypedTimes(); setTimeMode("range") }, [isOpen, activePickerDate, activePickerConsole])
   const coveringRange = coveringDeskSlots(pickerSlots, typedStart, typedEnd)
   const rangeOptions = continuousSlots(firstTime)
   function selectRange(start: string, count: number) {
@@ -1663,68 +1663,18 @@ const getEffectivePrice = (slot: SelectedSlot): number => {
 
   const paymentMethodCard = (
     <Card className="sb-card p-3">
-      <div className="mb-2 flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
-          <div>
-            <h3 className="slot-section-title">Payment Method</h3>
-          </div>
-        </div>
-        <span className="slot-booking-modal-soft rounded-full px-2.5 py-1 text-[11px] font-semibold text-emerald-700 dark:text-emerald-300">
-          {paymentMethodMeta[paymentType]?.label ?? paymentType}
-        </span>
-      </div>
-
-      <div className="grid grid-cols-2 gap-2">
-        {PAYMENT_TYPES.map((type) => (
-          (() => {
-            const meta = paymentMethodMeta[type]
-            const Icon = meta.icon
-            const isActive = paymentType === type
-            const iconClass = isActive
-              ? "payment-option-icon-active"
-              : "payment-option-icon"
-            return (
-              <motion.button
-                key={type}
-                type="button"
-                whileHover={{ y: -1 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={() => {
-                  setPaymentType(type)
-                  if (type !== 'Pass') {
-                    resetPassFlow()
-                  }
-                  if (errors.payment) setErrors((prev) => ({ ...prev, payment: '' }))
-                }}
-                className={cn(
-                  "payment-option-card group min-h-[56px] rounded-lg p-2 transition-all duration-200",
-                  isActive
-                    ? "payment-option-card-active"
-                    : ""
-                )}
-              >
-                <div className="flex items-center justify-between">
-                  <span className={cn("inline-flex h-6 w-6 items-center justify-center rounded-lg transition-colors", iconClass)}>
-                    <Icon className="h-4 w-4" />
-                  </span>
-                  <span
-                    className={cn(
-                      "payment-option-dot h-2.5 w-2.5 rounded-full",
-                      isActive ? "payment-option-dot-active" : ""
-                    )}
-                  />
-                </div>
-                <p className="mt-1 text-xs font-semibold text-gray-800 dark:text-white text-left leading-tight">
-                  {meta.label}
-                </p>
-              </motion.button>
-            )
-          })()
-        ))}
-      </div>
-      <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-        {paymentMethodMeta[paymentType]?.hint}
-      </p>
+      <label className="flex items-center justify-between gap-2">
+        <span className="slot-section-title">Payment</span>
+        <select className="min-w-0 rounded border bg-background px-2" value={paymentType} onChange={event => {
+          const method = event.target.value
+          setPaymentType(method)
+          if (method !== "Pass") resetPassFlow()
+          if (errors.payment) setErrors(previous => ({ ...previous, payment: "" }))
+        }}>
+          {PAYMENT_TYPES.map(method => <option key={method} value={method}>{paymentMethodMeta[method].label}</option>)}
+        </select>
+      </label>
+      {paymentType === "pay_at_cafe" && <p className="mt-1 text-xs text-muted-foreground">Collect when play ends.</p>}
       {paymentType === 'Monthly Credit' && (
         <div className="mt-2 space-y-2">
           <p className="rounded-md border border-amber-200 bg-amber-50 px-2.5 py-1.5 text-xs text-amber-700 dark:border-amber-700 dark:bg-amber-900/25 dark:text-amber-300">
@@ -2279,15 +2229,14 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                   <Card className="sb-card slot-booking-slots p-3 order-1">
                     <div className="mb-2 flex items-center justify-between gap-2">
                       <h3 className="slot-section-title">Session Time</h3>
-                      <button type="button" aria-expanded={showSlotPicker} aria-controls="booking-slot-picker"
-                        onClick={() => setShowSlotPicker((open) => !open)}
-                        className="slot-booking-modal-accent inline-flex h-8 items-center gap-1 rounded-md px-2 text-xs font-medium">
-                        <Plus className="h-3.5 w-3.5" /> {showSlotPicker ? "Collapse" : "Change time"}
-                      </button>
+                      {onReplaceSlots && <select aria-label="Time entry method" className="rounded border bg-background px-2 text-xs" value={timeMode} onChange={e => { clearTypedTimes(); setTimeMode(e.target.value) }}>
+                        <option value="range">Available times</option>
+                        <option value="manual">Enter times manually</option>
+                        <option value="slots">Individual slots</option>
+                      </select>}
                     </div>
-                    {showSlotPicker && (
-                      <div id="booking-slot-picker" className="mb-3 rounded-lg border border-slate-500/25 p-2.5">
-                        <div className="mb-2 grid grid-cols-2 gap-2">
+                    <div id="booking-slot-picker">
+                        {!selectedSlots.length && <div className="mb-2 grid grid-cols-2 gap-2">
                           <label className="text-xs">Date
                             <select disabled={selectedSlots.length > 0} title="One booking uses one date" value={activePickerDate} onChange={(event) => setPickerDate(event.target.value)}
                               className="mt-1 h-9 w-full rounded-md border border-slate-500/30 bg-background px-2 text-sm">
@@ -2300,8 +2249,8 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                               {availableConsoles.map((item) => <option key={item.id} value={String(item.id)}>{item.name}</option>)}
                             </select>
                           </label>
-                        </div>
-                        {onReplaceSlots && (
+                        </div>}
+                        {onReplaceSlots && timeMode === "range" && (
                           <div className="mb-3 flex flex-wrap items-end gap-2">
                             <label className="text-xs">From
                               <select className="block rounded border bg-background p-1" value={selectedSlots.length ? clock(firstTime) : ""} disabled={isSubmitting} onChange={e => selectRange(e.target.value, 1)}>
@@ -2317,7 +2266,7 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                             </label>
                           </div>
                         )}
-                        {onReplaceSlots && <details className="mb-2 text-xs"><summary className="cursor-pointer">Enter times manually</summary>
+                        {onReplaceSlots && timeMode === "manual" && <div className="mb-2 text-xs">
                           <div className="mt-2 flex flex-wrap items-end gap-2">
                             <label>Requested from<input type="time" className="block rounded border bg-background p-1" value={typedStart} onChange={e => setTypedStart(e.target.value)}/></label>
                             <label>Requested to<input type="time" className="block rounded border bg-background p-1" value={typedEnd} onChange={e => setTypedEnd(e.target.value)}/></label>
@@ -2327,8 +2276,8 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                             {(typedStart || typedEnd) && <button type="button" onClick={clearTypedTimes}>Clear</button>}
                           </div>
                           {typedStart && typedEnd && !coveringRange.length && <p role="status">No continuous availability for those times.</p>}
-                        </details>}
-                        <details open={onReplaceSlots ? undefined : true}><summary className="cursor-pointer text-xs">Individual slots</summary>
+                        </div>}
+                        {(!onReplaceSlots || timeMode === "slots") && (
                         <div className="mt-2 flex max-h-40 flex-wrap gap-1.5 overflow-y-auto">
                           {pickerSlots.map((slot: any) => {
                             const selected = selectedSlots.some((item) => item.slot_id === slot.slot_id &&
@@ -2349,9 +2298,8 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                             </button>
                           })}
                           {pickerSlots.length === 0 && <p className="py-2 text-xs text-slate-500">No available slots.</p>}
-                        </div></details>
-                      </div>
-                    )}
+                        </div>)}
+                    </div>
                     {deskRateError && <p role="status" className="text-xs">{deskRateError} Standard pricing applies.</p>}
                     {deviceCards.length > 0 && <label className="mb-2 flex items-center gap-2 text-xs">Rate card
                       <select className="rounded border bg-background p-1" value={deskChoice} onChange={e => setDeskChoice(e.target.value)}>
@@ -2359,7 +2307,7 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                         {deviceCards.map(card => <option key={card.profile} value={card.profile}>{profiles[card.profile][0]}</option>)}
                       </select>{deskCard && <span>{deskPrice === null ? "Unavailable for this duration or player count" : "Gaming subtotal ₹" + deskPrice}</span>}
                     </label>}
-                    <div className="slot-booking-slot-list">
+                    {(timeMode === "slots" || !onReplaceSlots) && <div className="slot-booking-slot-list">
                       {selectedSlots.map((slot) => (
                         <div key={`${slot.date}-${slot.console_id}-${slot.slot_id}`} className="slot-booking-modal-soft flex items-center justify-between gap-3 rounded-md px-2.5 py-2 text-xs">
                           <span className="text-gray-700 dark:text-gray-300">
@@ -2406,12 +2354,7 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
 
                         </div>
                       ))}
-                      <div className="slot-booking-total-line pt-3 text-right">
-                        <span className="font-bold">
-                          Gaming Subtotal: ₹{consoleTotal}
-                        </span>
-                      </div>
-                    </div>
+                    </div>}
                   </Card>
 
                   <Card className="sb-card order-2 p-3">
@@ -2849,16 +2792,14 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                       </div>
 
                       {suggestedDiscount > 0 && (
-                        <div className="flex justify-between items-center py-2 border-b border-gray-200 dark:border-gray-600 bg-orange-50 dark:bg-orange-900/20 rounded-lg px-3">
+                        <div className="flex justify-between items-center py-2 border-b border-gray-200 dark:border-gray-600">
                           <span className="text-orange-600 dark:text-orange-400 font-medium">Auto Discount:</span>
                           <div className="text-right">
                             <input aria-label="Auto Discount" type="number" min={0} max={Math.max(0, consoleTotal - squadDiscountAmount - waiveOffAmount)} step="0.01"
                               className="w-20 rounded border bg-background px-2 py-1 text-right"
                               value={autoWaiveOffAmount} onChange={e => setDiscountOverride(Math.max(0, Math.min(Number(e.target.value) || 0, consoleTotal - squadDiscountAmount - waiveOffAmount)))} />
                             {discountOverride !== null && <button type="button" className="ml-2 text-xs underline" onClick={() => setDiscountOverride(null)}>Reset</button>}
-                            <div className="text-xs text-orange-500 dark:text-orange-300">
-                              (Time-Based Savings)
-                            </div>
+
                           </div>
                         </div>
                       )}
@@ -2934,10 +2875,6 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                         </div>
                       )}
 
-                      <div className="flex justify-between items-center py-3 bg-emerald-50 dark:bg-emerald-900/30 rounded-lg px-3">
-                        <span className="font-semibold text-gray-800 dark:text-white text-sm">Total Payable</span>
-                        <span className="font-semibold text-lg text-emerald-600">₹{totalAmount}</span>
-                      </div>
                     </div>
                   </Card>
                   {paymentMethodCard}
