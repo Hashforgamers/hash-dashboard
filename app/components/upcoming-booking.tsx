@@ -254,7 +254,7 @@ const mergeConsecutiveBookings = (bookings: any[]) => {
       const gameId = booking?.game_id || 'unknown';
       // Separate codes represent separate kiosk redemptions; keep their cards separate.
       const accessCode = booking?.access_code || booking?.accessCode || booking?.bookingId;
-      const key = `${userId}_${gameId}_${accessCode}`;
+      const key = `${userId}_${gameId}_${accessCode}_${paymentBadge(booking)}`;
       if (!acc[key]) acc[key] = [];
       acc[key].push(booking);
       return acc;
@@ -320,6 +320,14 @@ const mergeConsecutiveBookings = (bookings: any[]) => {
 
 
 // Component props interface
+function paymentBadge(booking: any) {
+  const details = booking.squadDetails || {}
+  const status = String(booking.settlement_status || booking.settlementStatus || details.settlement_status || details.settlementStatus || "").toLowerCase()
+  if (["paid", "completed", "settled", "done"].includes(status)) return "Paid"
+  if (["pending", "unpaid", "due"].includes(status) || (booking.payment_use_case || details.payment_use_case || details.paymentUseCase) === "pay_at_cafe") return "Payment due"
+  return "Payment unverified"
+}
+
 interface UpcomingBookingsProps {
   upcomingBookings: any[];
   vendorId?: string;
@@ -1055,22 +1063,9 @@ export function UpcomingBookings({
                       booking?.squadDetails?.suggested_extra_controller_qty ||
                       0
                     );
-                    const paymentUseCase = String(
-                      booking?.squadDetails?.payment_use_case ||
-                      booking?.squadDetails?.paymentUseCase ||
-                      booking?.payment_use_case ||
-                      ""
-                    ).toLowerCase();
                     const hasMeals = Boolean(booking?.hasMeals);
-                    const settlementStatus = String(
-                      booking?.squadDetails?.settlement_status ||
-                      booking?.squadDetails?.settlementStatus ||
-                      booking?.settlement_status ||
-                      ""
-                    ).toLowerCase();
-                    const isPayAtCafe = paymentUseCase === "pay_at_cafe" ||
-                      ["pending", "unpaid", "due"].includes(settlementStatus);
-                    const isPaidBooking = !isPayAtCafe;
+                    const paymentBadgeLabel = paymentBadge(booking);
+                    const isPaidBooking = paymentBadgeLabel === "Paid";
                     const bookingRecordStatus = String(
                       booking?.bookingRecordStatus || booking?.status || ""
                     ).toLowerCase();
@@ -1078,8 +1073,7 @@ export function UpcomingBookings({
                     const canCancel = !["current", "completed"].includes(lifecycleStatus) &&
                       !TERMINAL_BOOKING_STATUSES.includes(bookingRecordStatus);
                     const canNoShow = canCancel && canMarkNoShowNow(booking);
-                    const paymentBadgeLabel = isPayAtCafe ? "To Be Paid" : "Paid";
-                    const paymentBadgeClass = isPayAtCafe
+                    const paymentBadgeClass = !isPaidBooking
                       ? "border-amber-400/40 bg-amber-500/15 text-amber-200"
                       : "border-emerald-400/40 bg-emerald-500/15 text-emerald-200";
                     return (
@@ -1341,9 +1335,7 @@ export function UpcomingBookings({
                 window.dispatchEvent(new CustomEvent('refresh-dashboard'))
               }} onRemove={(slotBooking) => {
                 setContactOverlay({ open: false, booking: null })
-                const useCase = String(slotBooking.squadDetails?.payment_use_case || slotBooking.payment_use_case || '').toLowerCase()
-                const settlement = String(slotBooking.squadDetails?.settlement_status || slotBooking.settlement_status || '').toLowerCase()
-                openCancelDialog(slotBooking, useCase !== 'pay_at_cafe' && !['pending', 'unpaid', 'due'].includes(settlement))
+                openCancelDialog(slotBooking, paymentBadge(slotBooking) === "Paid")
               }} />
             </div>
           </div>

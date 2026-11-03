@@ -28,14 +28,14 @@ In Passes → New Pass, select a template, review its editable price, hours, pas
 
 ## Migrate past bookings
 
-1. Open Booking records → Import history. Upload an .xlsx workbook with headers in the first populated row. Choose the worksheet.
+1. Open Transaction Report → Import Excel, or use Import Excel in Booking records. Upload an .xlsx workbook with headers in the first populated row. Choose the worksheet.
 2. Review the suggested column mapping for player, device, date, start time, end time and amount paid. Choose a different source column wherever necessary.
 3. Select Preview mapped rows. The preview trims whitespace, formats Excel dates and times, converts 12-hour times and removes supported rupee symbols and amount separators. Ambiguous text dates such as 03/04/2026 require an explicit YYYY-MM-DD date. Changed cells show their original value.
 4. Edit flagged cells. Only completed sessions can be imported. Times are café times (IST); an earlier end time means the session ended the next day. Check the amounts before selecting Import.
-5. Use View imported history to browse records and save corrections to individual rows. Imported amounts are historical records and do not create a payment, reserve capacity, or send a kiosk command.
+5. Use View imported history to browse records and save corrections to individual rows. Each imported amount appears as a completed historical payment in Transaction Report on the date the session ended. Payment method is unspecified. Edits update the same transaction. To post older archive-only rows, reimport the original workbook with the same row identity.
 
 Each sheet supports up to 10,000 rows and 150 columns in a workbook under 8 MB. Imports save in transactions of up to 500 rows. If interrupted, retry the same unchanged workbook and worksheet. The file fingerprint, sheet and row position identify rows already imported. When the source has a stable booking ID, map it under Duplicate check to skip that booking even across re-exports. Without a stable ID an edited or re-exported workbook has a different fingerprint; use the imported-history editor for corrections.
 
 ## Release
 
-Apply hfg-booking/sql/20261103_desk_rates_and_history.sql to the booking database, deploy the booking and dashboard services, then deploy hash-dashboard with its updated dependencies. Configure cards per café before using them. Verify one dashboard booking against the app schedule and a connected test kiosk.
+Apply hfg-booking/sql/20261103_desk_rates_and_history.sql followed by hfg-booking/sql/20261103_imported_transactions.sql to the booking database, deploy the booking and dashboard services, then deploy hash-dashboard with its updated dependencies. Configure cards per café before using them. Verify one dashboard booking against the app schedule and a connected test kiosk.
