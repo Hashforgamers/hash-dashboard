@@ -425,7 +425,7 @@ async function fetchSlotsBatch(vendorId: number, gameIds: number[], dates: strin
 }
 
 // Update this constant
-const PAYMENT_TYPES = ['Cash', 'UPI', 'Pass', 'Monthly Credit'] as const
+const PAYMENT_TYPES = ['Cash', 'UPI', 'pay_at_cafe', 'Pass', 'Monthly Credit'] as const
 const DEFAULT_SQUAD_PRICING_POLICY_FALLBACK: Record<string, Record<string, number>> = {
   pc: { "2": 0, "3": 3, "4": 5, "5": 8 },
 }
@@ -1647,8 +1647,14 @@ const getEffectivePrice = (slot: SelectedSlot): number => {
       hint: "Validate and redeem hours",
       accent: "violet",
     },
+    pay_at_cafe: {
+      label: "Pay After Session",
+      icon: Clock,
+      hint: "Collect the balance when the player finishes.",
+      accent: "amber",
+    },
     "Monthly Credit": {
-      label: "Pay Later",
+      label: "Monthly Credit",
       icon: Clock,
       hint: "Bill in monthly cycle",
       accent: "amber",

@@ -6,6 +6,10 @@ Open New Gaming Session from Schedule, or Book from Quick Booking. A preselected
 
 Live desk bookings use the existing booking endpoint, slot capacity and PC confirmation flow. Historical imports use a separate archive.
 
+## Collect at the end of play
+
+In New Gaming Session → Payment Method, choose **Pay After Session** and confirm the booking. The café must accept Pay at Cafe. The player can start with an unpaid balance. At session checkout, review the amount due and collect it using the actual payment method. Choose **Monthly Credit** only when posting to a player’s monthly credit account.
+
 ## Configure pricing
 
 In Console Pricing → Dashboard rate cards, choose the actual bookable device and a profile, edit the amounts, then save. For separate 55″ and 65″ inventory, assign the matching card to each bookable device group. A price label on a shared group cannot reserve a particular physical screen. Staff select the applicable rate card in New Gaming Session. Standard pricing remains available.
