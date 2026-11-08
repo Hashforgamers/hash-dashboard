@@ -12,7 +12,7 @@ In New Gaming Session → Payment Method, choose **Pay After Session** and confi
 
 ## Configure pricing
 
-In Console Pricing → Dashboard rate cards, choose the actual bookable device and a profile, edit the amounts, then save. For separate 55″ and 65″ inventory, assign the matching card to each bookable device group. A price label on a shared group cannot reserve a particular physical screen. Staff select the applicable rate card in New Gaming Session. Standard pricing remains available.
+In Console Pricing → Dashboard booking rates, choose the actual bookable device and pricing model. For PlayStation, select TV size (55 or 65 inch) and game variant (standard or GTA6), edit the amounts, then save. For separate 55″ and 65″ inventory, assign the matching card to each bookable device group. A price label on a shared group cannot reserve a particular physical screen. A single saved card is selected automatically in New Gaming Session. With multiple cards, staff must select the variant. Standard slot pricing is an explicit alternative. Booking confirmation waits for rates to load and is blocked if loading fails; it never silently falls back after a rate-service error.
 
 | Profile | Suggested charge |
 | --- | --- |
@@ -28,14 +28,20 @@ In Passes → New Pass, select a template, review its editable price, hours, pas
 
 ## Migrate past bookings
 
-1. Open Transaction Report → Import Excel, or use Import Excel in Booking records. Upload an .xlsx workbook with headers in the first populated row. Choose the worksheet.
-2. Review the suggested column mapping for player, device, date, start time, end time and amount paid. Choose a different source column wherever necessary.
-3. Select Preview mapped rows. The preview trims whitespace, formats Excel dates and times, converts 12-hour times and removes supported rupee symbols and amount separators. Ambiguous text dates such as 03/04/2026 require an explicit YYYY-MM-DD date. Changed cells show their original value.
-4. Edit flagged cells. Only completed sessions can be imported. Times are café times (IST); an earlier end time means the session ended the next day. Check the amounts before selecting Import.
-5. Use View imported history to browse records and save corrections to individual rows. Each imported amount appears as a completed historical payment in Transaction Report on the date the session ended. Payment method is unspecified. Edits update the same transaction. To post older archive-only rows, reimport the original workbook with the same row identity.
+1. Open Transaction Report → Import Excel, or use Import Excel in Booking records. Upload an .xlsx workbook with headers within the first 20 populated rows. Choose the worksheet.
+2. Review the suggested column mapping for player, device, date, start time, end time and amount received. Booking Total is recognized; Payment Status is mapped separately and never used as money. Choose a different source column wherever necessary.
+3. Select Preview mapped rows. The preview trims whitespace, formats Excel dates and times, converts 12-hour times and removes supported rupee symbols and amount separators. Ambiguous text dates such as 03/04/2026 require choosing the workbook date order or entering an explicit YYYY-MM-DD date. Changed cells show their original value.
+4. Edit flagged cells or exclude rows from the import. Payment statuses other than Paid/Completed/Settled/Success are flagged; verify amounts received before importing. Only completed sessions can be imported. Times are café times (IST); an earlier end time means the session ended the next day. Check the amounts before selecting Import.
+5. Use View imported history to browse records and save corrections to individual rows. Each imported amount appears as a completed historical payment in Transaction Report on the date the session ended. Payment method is unspecified. Edits update the same transaction. To post older archive-only rows, apply the backfill migration below, or reimport the original workbook with the same row identity. Unpaid history is not imported as paid revenue.
 
 Each sheet supports up to 10,000 rows and 150 columns in a workbook under 8 MB. Imports save in transactions of up to 500 rows. If interrupted, retry the same unchanged workbook and worksheet. The file fingerprint, sheet and row position identify rows already imported. When the source has a stable booking ID, map it under Duplicate check to skip that booking even across re-exports. Without a stable ID an edited or re-exported workbook has a different fingerprint; use the imported-history editor for corrections.
 
 ## Release
 
 Apply hfg-booking/sql/20261103_desk_rates_and_history.sql followed by hfg-booking/sql/20261103_imported_transactions.sql to the booking database, deploy the booking and dashboard services, then deploy hash-dashboard with its updated dependencies. Configure cards per café before using them. Verify one dashboard booking against the app schedule and a connected test kiosk.
+
+### November 8 repair
+
+After the two migrations above, run `hfg-booking/sql/20261108_backfill_imported_history.sql` in the **booking database** to post existing archive-only records. It can be rerun safely: existing import receipts are updated by their original reference, without creating live sessions, slot reservations, kiosk commands, or customer messages. Review existing imported amounts before applying the backfill. The script treats existing archive rows as verified payments, matching the original importer contract.
+
+Frontend changes are in `desk-rate-card.tsx`, `newSlot.tsx`, and `history-import.tsx`. The existing rate-card API remains compatible; the history API additionally validates optional `paymentStatus`. Deploy the booking service before the dashboard. Database setup errors now return a readable message rather than an HTML error. App and kiosk booking endpoints and slot durations remain unchanged.

@@ -7,11 +7,16 @@ const ts = require("typescript")
 const Excel = require("exceljs")
 const React = require("react")
 
-test("Excel upload maps headers, previews corrections, and imports only after ambiguous dates are edited", async () => {
+for (const statusWorkbook of [false,true]) test(statusWorkbook ? "Real cafe headers map amounts separately from payment status and exclude unpaid rows" : "Excel upload maps headers, previews corrections, and imports only after ambiguous dates are edited", async () => {
   const workbook = new Excel.Workbook()
   const sheet = workbook.addWorksheet("October")
-  sheet.addRows([["Customer Name","Console","Booking Date","From","To","Amount Paid","Booking ID"],
+  if (!statusWorkbook) sheet.addRows([["Customer Name","Console","Booking Date","From","To","Amount Paid","Booking ID"],
     [" Anu ","PC","03/04/2025","6:30 PM","7:30 PM","₹1,200.00","A-7"]])
+  if (statusWorkbook) {
+    sheet.addRows([["Cafe history"],[],["Customer Name","Station ID","Booking Date","Session Start","Session End","Booking Total (₹)","Payment Status","Booking ID"],
+      [" Anu ","PC","2025-04-03","6:30 PM","7:30 PM",1200,"Paid","A-7"],
+      ["Unpaid player","PS5","2025-04-03","6:30 PM","7:30 PM",250,"Pending","A-8"]])
+  }
   const bytes = await workbook.xlsx.writeBuffer()
   const requests = []
   const state = []
@@ -29,7 +34,7 @@ test("Excel upload maps headers, previews corrections, and imports only after am
   }
   const source = fs.readFileSync(path.join(__dirname,"../app/components/history-import.tsx"),"utf8")
   const code = ts.transpileModule(source,{compilerOptions:{jsx:ts.JsxEmit.ReactJSX,module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2020}}).outputText
-  vm.runInNewContext(code,{module,exports:module.exports, require:n=>deps[n]||require(n), crypto:require("node:crypto").webcrypto, Date,
+  vm.runInNewContext(code,{module,exports:module.exports, require:n=>deps[n]||require(n), crypto:require("node:crypto").webcrypto, Date, Event, window:{dispatchEvent(){}},
     fetch: async(url,options) => {requests.push(JSON.parse(options.body));return {ok:true,json:async()=>({inserted:1,skipped:0})}}})
   const render = () => {
     index=0
@@ -51,12 +56,15 @@ test("Excel upload maps headers, previews corrections, and imports only after am
   assert.ok(preview && !preview.props.disabled)
   preview.props.onClick()
   let nodes=render()
-  assert.ok(nodes.find(n=>n.props.children==="1 rows need review").props.disabled)
+  assert.ok(nodes.find(n=>n.props.children==="1 rows need review")?.props.disabled, JSON.stringify(nodes.filter(n=>n.type==="button" || n.props.role==="status").map(n=>n.props.children)))
   assert.equal(requests.length,0)
-  nodes.find(n=>n.props["aria-label"]==="date row 1").props.onChange({target:{value:"2025-04-03"}})
+  if (statusWorkbook) {
+    assert.equal(nodes.find(n=>n.props["aria-label"]==="paid row 1").props.value,"1200")
+    nodes.find(n=>n.props.children==="Exclude flagged rows").props.onClick()
+  } else nodes.find(n=>n.props["aria-label"]==="date row 1").props.onChange({target:{value:"2025-04-03"}})
   nodes=render()
   const submit=nodes.find(n=>n.props.children==="Import 1 bookings")
   assert.ok(!submit.props.disabled)
   await submit.props.onClick()
-  assert.deepEqual(requests[0].rows,[{key:"ref:A-7",player:"Anu",device:"PC",date:"2025-04-03",start:"18:30",end:"19:30",paid:"1200.00"}])
+  assert.deepEqual(requests[0].rows,[{key:"ref:A-7",player:"Anu",device:"PC",date:"2025-04-03",start:"18:30",end:"19:30",paid:statusWorkbook ? "1200" : "1200.00",...(statusWorkbook ? {paymentStatus:"Paid",excluded:false} : {})}])
 })
