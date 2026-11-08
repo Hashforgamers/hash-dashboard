@@ -6,15 +6,16 @@ import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "@/components/
 
 const aliases = {
   player: ["player","customer","player name","customer name","full name","name"],
-  device: ["device","console","console type","gaming device","station","machine"],
+  device: ["device","console","console type","gaming device","station","station id","machine"],
   date: ["date","booking date","session date","played on"],
-  start: ["start","from","start time","check in"],
-  end: ["end","to","end time","check out"],
-  paid: ["paid","amount","amount paid","total paid","total","total amount"],
+  start: ["start","from","start time","session start","check in"],
+  end: ["end","to","end time","session end","check out"],
+  paid: ["amount received","amount paid","total paid","paid","amount","booking total","total amount","total","net amount"],
 } as const
 type Field = keyof typeof aliases
-type Entry = Record<Field | "key",string>
+type Entry = Record<Field | "key",string> & {paymentStatus?:string; excluded?:boolean}
 const fields = Object.keys(aliases) as Field[]
+const labels: Record<Field,string> = {player:"Player name",device:"Device / station",date:"Session date",start:"Start time",end:"End time",paid:"Amount received (₹)"}
 const normalize = (value: string) => value.toLowerCase().replace(/[^a-z0-9]/g,"")
 
 function correct(field: Field, raw: string) {
@@ -42,6 +43,7 @@ function correct(field: Field, raw: string) {
 }
 
 function issue(row: Entry) {
+  if (row.paymentStatus && !["paid","completed","settled","success","successful"].includes(normalize(row.paymentStatus))) return "Payment is not settled — exclude or verify amount received"
   if (!row.player.trim() || !row.device.trim()) return "Player and device required"
   const day = new Date(row.date + "T00:00:00Z")
   if (!/^\d{4}-\d\d-\d\d$/.test(row.date) || !Number.isFinite(+day) || day.toISOString().slice(0,10) !== row.date) return "Use YYYY-MM-DD"
@@ -56,6 +58,8 @@ function issue(row: Entry) {
 export default function HistoryImport({vendor}: {vendor:number}) {
   const [headers,setHeaders] = useState<string[]>([])
   const [source,setSource] = useState<string[][]>([])
+  const [paymentColumn,setPaymentColumn] = useState(-1)
+  const [dateOrder,setDateOrder] = useState("review")
   const [idColumn,setIdColumn] = useState(-1)
   const [fileKey,setFileKey] = useState("")
   const [fieldsMap,setMap] = useState<Partial<Record<Field,number>>>({})
@@ -68,13 +72,18 @@ export default function HistoryImport({vendor}: {vendor:number}) {
   const url = BOOKING_URL + "/api/vendor/" + vendor + "/desk-history"
   const [sheets,setSheets] = useState<{name:string; data:string[][]}[]>([])
   function selectSheet(index:number, list = sheets, fingerprint = fileKey) {
-    const [head = [], ...rows] = list[index].data
+    const candidates = list[index].data.slice(0,20)
+    const score = (row:string[]) => fields.filter(f=>row.some(h=>aliases[f].some(a=>normalize(a)===normalize(h)))).length
+    const headerIndex = candidates.reduce((best,row,i)=>score(row)>score(candidates[best])?i:best,0)
+    const [head = [], ...rows] = list[index].data.slice(headerIndex)
     setHeaders(head); setSource(rows); setReview(false); setEntries([]); setArchive(false); setPage(0)
     const id = head.findIndex(h => ["bookingid","bookingreference","bookingref","sessionid"].includes(normalize(h)))
     setIdColumn(id)
-    const mapping = Object.fromEntries(fields.map(f => [f,head.findIndex(h => aliases[f].some(alias => normalize(alias) === normalize(h)))]))
+    const payment = head.findIndex(h=>["paymentstatus","settlementstatus"].includes(normalize(h)))
+    setPaymentColumn(payment)
+    const mapping = Object.fromEntries(fields.map(f => [f,aliases[f].map(alias => head.findIndex(h=>normalize(alias) === normalize(h))).find(i=>i>=0) ?? -1]))
     setMap(mapping)
-    if (rows.length && fields.every(f => mapping[f] >= 0)) preview(rows, mapping, id, fingerprint, index)
+    if (rows.length && fields.every(f => mapping[f] >= 0)) preview(rows, mapping, id, fingerprint, index, payment)
     setSheetIndex(index)
   }
   const [sheetIndex,setSheetIndex] = useState(0)
@@ -105,7 +114,7 @@ export default function HistoryImport({vendor}: {vendor:number}) {
     } catch(e) {setStatus(e instanceof Error ? e.message : "Could not read workbook.")}
     finally {setBusy(false)}
   }
-  function preview(data = source, mapping = fieldsMap, identity = idColumn, fingerprint = fileKey, sheet = sheetIndex) {
+  function preview(data = source, mapping = fieldsMap, identity = idColumn, fingerprint = fileKey, sheet = sheetIndex, payment = paymentColumn) {
     let corrections = 0
     const seen = new Set<string>()
     const rows: Entry[] = []
@@ -125,6 +134,11 @@ export default function HistoryImport({vendor}: {vendor:number}) {
         row[f] = correct(f, raw)
         if (raw !== row[f]) corrections++
       }
+      if (dateOrder !== "review") {
+        const match = row.date.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{4})$/)
+        if (match) row.date = [match[3],match[dateOrder === "dmy" ? 2 : 1].padStart(2,"0"),match[dateOrder === "dmy" ? 1 : 2].padStart(2,"0")].join("-")
+      }
+      if (payment >= 0) row.paymentStatus = (cells[payment] || "").trim() || "Unknown"
       rows.push(row)
     }
     setEntries(rows)
@@ -134,7 +148,7 @@ export default function HistoryImport({vendor}: {vendor:number}) {
     setBusy(true)
     try {
       const response = await fetch(url+"?offset="+offset,{headers:creditAuthHeaders()})
-      if (!response.ok) throw Error("Could not load imported history.")
+      if (!response.ok) { const failure = await response.json().catch(()=>({})); throw Error(failure.error || "Could not load imported history. Check the booking service and database setup.") }
       setEntries(await response.json());setPage(offset/50);setArchive(true);setReview(false);setStatus("")
     } catch(e) {setStatus(String(e))} finally {setBusy(false)}
   }
@@ -143,8 +157,9 @@ export default function HistoryImport({vendor}: {vendor:number}) {
     let inserted = 0, skipped = 0, posted = 0
     try {
       for(let i=0;i<rows.length;i+=500) {
+        setStatus("Saving rows " + (i+1) + "–" + Math.min(i+500,rows.length) + " of " + rows.length)
         const response = await fetch(url,{method:edit?"PATCH":"POST",headers:creditAuthHeaders(),body:JSON.stringify({rows:rows.slice(i,i+500)})})
-        const result = await response.json()
+        const result = await response.json().catch(()=>({error:"Import service could not process this request. Check the booking database migrations and retry."}))
         if (!response.ok) throw Error(result.error || "Could not save.")
         inserted += result.inserted; skipped += result.skipped; posted += result.transactions_saved ?? result.inserted
       }
@@ -153,23 +168,27 @@ export default function HistoryImport({vendor}: {vendor:number}) {
     } catch(e) {setStatus(inserted+" saved before error. "+String(e))}
     finally {setBusy(false)}
   }
-  const issues = entries.filter(row => issue(row)).length
+  const included = entries.filter(row=>!row.excluded)
+  const issues = included.filter(row => issue(row)).length
   const visible = archive ? entries : entries.slice(page*25,page*25+25)
   return <Dialog><DialogTrigger className="rounded border px-2 py-1 text-xs">Import Excel</DialogTrigger>
-    <DialogContent className="max-h-[90vh] max-w-5xl overflow-auto bg-background"><DialogTitle>Import past transactions</DialogTitle>
-      <p className="text-sm text-muted-foreground">Upload completed sessions. Review the amounts before adding them to Transaction Report.</p>
+    <DialogContent className="max-h-[90vh] max-w-6xl overflow-auto bg-background"><DialogTitle>Import past transactions</DialogTitle>
+      <p className="text-sm text-muted-foreground">1. Upload Excel → 2. Match columns → 3. Review &amp; import paid sessions</p>
       <div className="flex flex-wrap items-center gap-3 text-sm"><label>Upload Excel (.xlsx) <input type="file" accept=".xlsx" disabled={busy} onChange={e => {if(e.target.files?.[0]) void upload(e.target.files[0]);e.target.value=""}}/></label>
       <button disabled={busy} onClick={() => history(0)}>View imported history</button></div>
       {!!sheets.length && !archive && <><label>Worksheet <select className="bg-background" disabled={busy} value={sheetIndex} onChange={e => selectSheet(Number(e.target.value))}>{sheets.map((s,i) => <option key={i} value={i}>{s.name}</option>)}</select></label>
-      <details key={sheetIndex} open={!review}><summary className="cursor-pointer text-sm">Match columns</summary><div className="grid grid-cols-2 gap-2 sm:grid-cols-3">{fields.map(f => <label className="text-xs capitalize" key={f}>{f}<select disabled={busy} className="block w-full rounded border bg-background p-1" value={fieldsMap[f] ?? -1} onChange={e => {setMap({...fieldsMap,[f]:Number(e.target.value)});setReview(false)}}>
+      <details key={sheetIndex} open={!review}><summary className="cursor-pointer text-sm">Match columns</summary><div className="grid grid-cols-2 gap-2 sm:grid-cols-3">{fields.map(f => <label className="text-xs" key={f}>{labels[f]}<select disabled={busy} className="block w-full rounded border bg-background p-1" value={fieldsMap[f] ?? -1} onChange={e => {setMap({...fieldsMap,[f]:Number(e.target.value)});setReview(false)}}>
         <option value={-1}>Choose column</option>{headers.map((h,i) => <option key={i} value={i}>{h || "Column "+(i+1)}</option>)}</select></label>)}</div>
+      <div className="my-3 grid gap-3 sm:grid-cols-2"><label className="text-xs">Payment status (optional)<select className="block w-full rounded border bg-background p-2" value={paymentColumn} onChange={e=>{setPaymentColumn(Number(e.target.value));setReview(false)}}><option value={-1}>No status column — verify amounts received</option>{headers.map((h,i)=><option key={i} value={i}>{h}</option>)}</select></label>
+      <label className="text-xs">Dates in this workbook<select className="block w-full rounded border bg-background p-2" value={dateOrder} onChange={e=>{setDateOrder(e.target.value);setReview(false)}}><option value="review">Review ambiguous dates</option><option value="dmy">Day / month / year</option><option value="mdy">Month / day / year</option></select></label></div>
       <label className="text-xs">Duplicate check <select disabled={busy} className="rounded border bg-background p-1" value={idColumn} onChange={e => {setIdColumn(Number(e.target.value));setReview(false)}}>
         <option value={-1}>Same workbook and row</option>{headers.map((h,i) => <option key={i} value={i}>Booking ID from {h || i+1}</option>)}</select></label>
       <button className="rounded border p-1" disabled={busy || !source.length || fields.some(f => (fieldsMap[f] ?? -1)<0) || new Set(Object.values(fieldsMap)).size !== fields.length} onClick={() => preview()}>Preview mapped rows</button></details></>}
-      {(review || archive) && <><div className="overflow-auto"><table className="w-full text-sm"><thead><tr>{[...fields,"Review"].map(f => <th className="text-left capitalize" key={f}>{f}</th>)}</tr></thead>
-        <tbody>{visible.map((row,i) => <tr key={row.key}>{fields.map(f=><td key={f}>{review && source[page*25+i]?.[fieldsMap[f]!] !== row[f] && <small className="block text-muted-foreground">Was: {source[page*25+i]?.[fieldsMap[f]!] || "blank"}</small>}<input aria-label={f+" row "+(i+1)} disabled={busy} className="w-24 rounded border bg-background px-1" value={row[f]} onChange={e=>setEntries(prev=>prev.map(item=>item.key===row.key?{...item,[f]:e.target.value}:item))}/></td>)}<td>{issue(row) || (archive ? <button disabled={busy} onClick={()=>save([row],true)}>Save row</button> : "Ready")}</td></tr>)}</tbody></table></div>
+      {review && <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border p-3 text-sm"><span>{included.length} selected · {issues} need review · ₹{included.reduce((sum,row)=>sum+(Number(row.paid)||0),0 ).toLocaleString("en-IN")} selected amount</span><button disabled={busy} className="rounded border px-3 py-1" onClick={()=>setEntries(prev=>prev.map(row=>({...row,excluded:!!issue(row)})))}>Exclude flagged rows</button></div>}
+      {(review || archive) && <><div className="overflow-auto"><table className="w-full text-sm"><thead><tr>{[...fields,"Review"].map(f => <th className="p-2 text-left font-medium" key={f}>{labels[f as Field] || f}</th>)}</tr></thead>
+        <tbody>{visible.map((row,i) => <tr key={row.key} className={row.excluded ? "opacity-40 border-t" : "border-t"}>{fields.map(f=><td key={f} className="p-2">{review && source[page*25+i]?.[fieldsMap[f]!] !== row[f] && <small className="block max-w-40 truncate text-xs text-muted-foreground">Was: {source[page*25+i]?.[fieldsMap[f]!] || "blank"}</small>}<input aria-label={f+" row "+(i+1)} disabled={busy} className="h-9 w-full min-w-24 rounded border bg-background px-2" value={row[f]} onChange={e=>setEntries(prev=>prev.map(item=>item.key===row.key?{...item,[f]:e.target.value}:item))}/></td>)}<td className="min-w-44 p-2 text-xs">{review && <label className="mb-1 flex items-center gap-2"><input type="checkbox" checked={!row.excluded} onChange={e=>setEntries(prev=>prev.map(item=>item.key===row.key?{...item,excluded:!e.target.checked}:item))}/>Include</label>}{row.excluded ? "Excluded" : issue(row) || (archive ? <button disabled={busy} onClick={()=>save([row],true)}>Save row</button> : "Ready")}</td></tr>)}</tbody></table></div>
         <div className="flex items-center gap-3 text-sm"><button disabled={busy||page===0} onClick={()=>archive?history((page-1)*50):setPage(page-1)}>Previous</button>Page {page+1}<button disabled={busy||(archive?entries.length<50:(page+1)*25>=entries.length)} onClick={()=>archive?history((page+1)*50):setPage(page+1)}>Next</button>
-        {review && <button disabled={busy||!!issues||!entries.length} className="rounded border px-3 py-1" onClick={()=>save(entries)}>{issues ? issues+" rows need review" : "Import "+entries.length+" bookings"}</button>}</div></>}
-      <p role="status" className="text-sm">{busy?"Working…":status}</p>
+        {review && <button disabled={busy||!!issues||!included.length} className="rounded bg-primary text-primary-foreground px-3 py-2" onClick={()=>save(included)}>{issues ? issues+" rows need review" : "Import "+included.length+" bookings"}</button>}</div></>}
+      <p role="status" className="text-sm">{busy ? status || "Reading workbook…" : status}</p>
     </DialogContent></Dialog>
 }
