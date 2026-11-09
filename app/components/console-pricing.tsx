@@ -94,6 +94,7 @@ export default function ConsolePricing() {
   const [successMessage, setSuccessMessage] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [vendorId, setVendorId] = useState<number | null>(null);
+  const [pricingDevice, setPricingDevice] = useState("");
   const [activeTab, setActiveTab] = useState<PricingTab>("default");
   const [viewMode, setViewMode] = useState<"grid" | "table">("table");
   const [offers, setOffers] = useState<PricingOffer[]>([]);
@@ -378,6 +379,8 @@ export default function ConsolePricing() {
         if (!mounted) return;
         const mergedTypes = Array.from(dynamicTypes.values());
         setConsoleTypes(mergedTypes);
+        setAvailableGames(availableGameItems);
+        setPricingDevice(current => mergedTypes.some(item=>item.type === current) ? current : mergedTypes[0]?.type || "");
         setCatalogVendorId(vendorId);
         setPrices((prev) => {
           const next = { ...prev };
@@ -1340,7 +1343,6 @@ export default function ConsolePricing() {
         )}
       </AnimatePresence>
 
-      <DeskRateEditor vendor={contextVendorId} games={availableGames} />
       <ConsolePricingTabNav
         activeTab={activeTab}
         setActiveTab={setActiveTab}
@@ -1372,48 +1374,20 @@ export default function ConsolePricing() {
           ) : consoleTypes.length === 0 ? (
             <p className="px-3 py-4 text-sm text-slate-500">No consoles configured.</p>
           ) : (<>
-          <div className="mb-2 flex items-center justify-between px-4 text-xs font-medium text-slate-500 dark:text-slate-400">
-            <span>Console</span><span>Price / slot (₹)</span>
+          <div className="mb-3 flex flex-wrap gap-2" aria-label="Choose device pricing">
+            {consoleTypes.map(console=><button key={console.type} type="button" aria-pressed={(pricingDevice || consoleTypes[0]?.type) === console.type} onClick={()=>setPricingDevice(console.type)} className={`rounded-lg border px-4 py-2 text-sm ${(pricingDevice || consoleTypes[0]?.type) === console.type ? "border-primary bg-primary/10 text-primary" : "text-muted-foreground"}`}>{console.name}</button>)}
           </div>
-          <div className="mb-3 overflow-hidden rounded-lg border border-slate-200 bg-white divide-y divide-slate-200 dark:border-slate-800 dark:bg-slate-950/40 dark:divide-slate-800">
-            {consoleTypes.map((console) => (
-              <div key={console.type} className={`${pricingCardClass} relative`}>
-                <div className="flex min-w-0 flex-wrap items-center justify-between gap-2">
-                  <div className="flex items-center gap-3">
-                    <div className="rounded-md bg-slate-100 p-2 text-slate-500 dark:bg-slate-800 dark:text-slate-400">
-                      <console.icon className="icon-md" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold text-slate-900 dark:text-cyan-100">{console.name}</p>
-                    </div>
-                  </div>
-                  {prices[console.type]?.hasChanged && (
-                    <span className="rounded-full border border-cyan-300/40 bg-cyan-50 px-2 py-0.5 text-[10px] font-semibold text-sky-700 dark:border-cyan-400/30 dark:bg-cyan-500/10 dark:text-cyan-200">
-                      Edited
-                    </span>
-                  )}
-                </div>
-
-                <Input
-                  aria-label={`${console.name} price per slot in rupees`}
-                  aria-invalid={Boolean(errors[console.type])}
-                  type="number"
-                  min={0}
-                  max={10000}
-                  step={1}
-                  inputMode="numeric"
-                  placeholder="0"
-                  value={String(prices[console.type]?.value ?? "")}
-                  onChange={(e) => handlePriceChange(console.type, e.target.value)}
-                  className={`${inputSurfaceClass} h-9 text-right tabular-nums [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none`}
-                />
-                {errors[console.type] && (
-                  <p className="col-start-2 text-destructive text-xs font-medium mt-1">
-                    {errors[console.type]}
-                  </p>
-                )}
-
-              </div>
+          <div className="mb-3 grid gap-3">
+            {consoleTypes.filter(console=>console.type === (pricingDevice || consoleTypes[0]?.type)).map((console) => (
+              <DeskRateEditor key={`${contextVendorId}-${console.type}`} vendor={contextVendorId}
+                games={availableGames.filter(game=>normalizeConsoleSlug(game.platform_type || game.game_name) === normalizeConsoleSlug(console.type))}
+                baseRate={<div className="flex flex-wrap items-center justify-between gap-3">
+                  <label className="flex items-center gap-3 text-sm">Price per slot (₹)
+                    <Input aria-label={`${console.name} price per slot in rupees`} aria-invalid={Boolean(errors[console.type])} type="number" min={0} max={10000} step={1} inputMode="numeric" value={String(prices[console.type]?.value ?? "")} onChange={e=>handlePriceChange(console.type,e.target.value)} className={`${inputSurfaceClass} h-9 w-32 text-right tabular-nums`} />
+                  </label>
+                  {prices[console.type]?.hasChanged && <span className="text-xs text-amber-500">Unsaved slot rate</span>}
+                  {errors[console.type] && <p className="text-xs text-destructive">{errors[console.type]}</p>}
+                </div>} />
             ))}
           </div>
 
@@ -1445,7 +1419,7 @@ export default function ConsolePricing() {
                   ) : (
                     <>
                       <Check className="icon-md" />
-                      Save changes
+                      Save slot rates
                     </>
                   )}
                 </button>

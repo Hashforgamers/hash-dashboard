@@ -1404,7 +1404,7 @@ const getEffectivePrice = (slot: SelectedSlot): number => {
   )
   const { cards: deskCards, error: deskRateError, loading: deskRatesLoading } = useDeskCards(isOpen ? settingsVendorId : null)
   const [deskChoice, setDeskChoice] = useState("")
-  const deviceCards = deskCards.filter(card => card.game_id === Number(activePickerConsole))
+  const deviceCards = deskCards.filter(card => card.game_id === Number(activePickerConsole) && card.is_active !== false)
   useEffect(() => { setDeskChoice("") }, [activePickerConsole, settingsVendorId, isOpen])
   const effectiveDeskChoice = deskChoice || (deviceCards.length === 1 ? deviceCards[0].profile : "")
   const deskCard = deviceCards.find(card => card.profile === effectiveDeskChoice)
@@ -2019,6 +2019,7 @@ const getEffectivePrice = (slot: SelectedSlot): number => {
           quantity: meal.quantity
         })),
         requireFullRange: true,
+        deskPricingMode: deviceCards.length ? "variants" : "slot",
         deskProfile: deskCard?.profile,
         deskSubtotal: deskPrice ?? undefined,
         bookingMode: 'regular',
@@ -2306,10 +2307,9 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                         </div>)}
                     </div>
                     {deskRateError && <p role="status" className="text-xs">{deskRateError} Reopen this booking to retry.</p>}
-                    {deviceCards.length > 0 && <label className="mb-2 flex items-center gap-2 text-xs">Rate card
+                    {deviceCards.length > 0 && <label className="mb-2 flex items-center gap-2 text-xs">Session rate
                       <select className="rounded border bg-background p-1" value={effectiveDeskChoice} onChange={e => setDeskChoice(e.target.value)}>
                         <option value="" disabled>Choose pricing variant</option>
-                        <option value="standard">Standard slot pricing</option>
                         {deviceCards.map(card => <option key={card.profile} value={card.profile}>{profiles[card.profile][0]}</option>)}
                       </select>{deskCard && <span>{deskPrice === null ? "Unavailable for this duration or player count" : "Gaming subtotal ₹" + deskPrice}</span>}
                     </label>}
