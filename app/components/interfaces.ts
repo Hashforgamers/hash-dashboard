@@ -9,6 +9,7 @@ export interface ConsoleDetails {
 }
 
 export interface HardwareSpecifications {
+  screenSizeInches?: string;
   processorType: string;
   graphicsCard: string;
   ramSize: string;

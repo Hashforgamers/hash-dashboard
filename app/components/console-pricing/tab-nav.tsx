@@ -24,7 +24,7 @@ export function ConsolePricingTabNav({
         className={`${tabButtonBaseClass} ${activeTab === "default" ? activeTabButtonClass : inactiveTabButtonClass}`}
       >
         <IndianRupee className="icon-md" />
-        Slot rates
+        Pricing
       </button>
       <button
         aria-pressed={activeTab === "offers"}

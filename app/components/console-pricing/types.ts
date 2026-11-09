@@ -38,6 +38,7 @@ export interface PricingOffer {
 }
 
 export interface AvailableGame {
+  platform_type?: string;
   id: number;
   game_name: string;
   single_slot_price: number;

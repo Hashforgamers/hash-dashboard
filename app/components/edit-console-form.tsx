@@ -51,9 +51,12 @@ const NON_PC_MODEL_HINT: Record<Exclude<ConsoleType, "pc">, string> = {
 };
 
 export function EditConsoleForm({ console, onClose }: EditConsoleFormProps) {
-  const consoleType = String(console?.type || "pc").toLowerCase() as ConsoleType;
+  const rawConsoleType = String(console?.type || "pc").toLowerCase();
+  const consoleType = (rawConsoleType === "playstation" ? "ps5" : rawConsoleType === "vr_headset" ? "vr" : rawConsoleType) as ConsoleType;
   const visibleFields = TYPE_FIELDS[consoleType] || TYPE_FIELDS.pc;
 
+  const [screenSize, setScreenSize] = useState(String(console?.screenSizeInches || ""));
+  const isPlayStation = ["ps5", "playstation"].includes(consoleType);
   const [brand, setBrand] = useState(String(console?.brand || ""));
   const [name, setName] = useState(String(console?.name || ""));
   const [cpu, setCpu] = useState(String(console?.processor || ""));
@@ -110,6 +113,7 @@ export function EditConsoleForm({ console, onClose }: EditConsoleFormProps) {
         storage: visibleFields.includes("storage") ? storage.trim() : null,
         consoleModelType: consoleType === "pc" ? null : consoleModelType.trim(),
         status,
+        ...(isPlayStation ? { screenSizeInches: screenSize ? Number(screenSize) : null } : {}),
       },
     };
 
@@ -170,6 +174,7 @@ export function EditConsoleForm({ console, onClose }: EditConsoleFormProps) {
             </div>
           </div>
 
+          {isPlayStation && <div className="space-y-2"><Label htmlFor="screenSize">TV screen size (inches)</Label><Input id="screenSize" type="number" min={20} max={120} step={1} placeholder="55 or 65" value={screenSize} onChange={e=>setScreenSize(e.target.value)} /></div>}
           {consoleType !== "pc" && (
             <div className="space-y-2">
               <Label htmlFor="consoleModelType">Console Variant</Label>
