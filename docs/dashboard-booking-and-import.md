@@ -12,7 +12,14 @@ In New Gaming Session → Payment Method, choose **Pay After Session** and confi
 
 ## Configure pricing
 
-In Console Pricing → Dashboard booking rates, choose the actual bookable device and pricing model. For PlayStation, select TV size (55 or 65 inch) and game variant (standard or GTA6), edit the amounts, then save. For separate 55″ and 65″ inventory, assign the matching card to each bookable device group. A price label on a shared group cannot reserve a particular physical screen. A single saved card is selected automatically in New Gaming Session. With multiple cards, staff must select the variant. Standard slot pricing is an explicit alternative. Booking confirmation waits for rates to load and is blocked if loading fails; it never silently falls back after a rate-service error.
+In **Console Pricing → Pricing**, select a device. There is one editor with an explicit **Dashboard pricing** rule:
+
+- **Same price per slot:** the shared slot rate applies. Change the amount and choose **Save slot rates**.
+- **Duration / screen / player rates:** saved variants replace the slot rate for dashboard bookings. Save a rate to activate it. Switching back to slot pricing retains the variants for later use. Changes to the rule apply immediately and show a saved status.
+
+For PlayStation, choose the TV size and game variant, then enter per-player hourly prices. The app and kiosk's default rate is in a collapsed, labelled section inside the same editor. This preserves their existing booking contracts. New Gaming Session automatically uses the sole active variant, or requires a selection when several variants are active. There is no per-booking fallback to generic pricing. The server rejects outdated or missing variants rather than charging the wrong rate.
+
+In **Manage Gaming Console**, add or edit a PlayStation and set **TV screen size (inches)**. Existing consoles are left unset; staff must enter their actual size. The size is displayed alongside the console model. Screen-size metadata does not change shared slot capacity or automatically reserve a particular physical TV: staff still assign the appropriate console. Rates currently support the 55-inch and 65-inch presets.
 
 | Profile | Suggested charge |
 | --- | --- |
@@ -45,3 +52,15 @@ Apply hfg-booking/sql/20261103_desk_rates_and_history.sql followed by hfg-bookin
 After the two migrations above, run `hfg-booking/sql/20261108_backfill_imported_history.sql` in the **booking database** to post existing archive-only records. It can be rerun safely: existing import receipts are updated by their original reference, without creating live sessions, slot reservations, kiosk commands, or customer messages. Review existing imported amounts before applying the backfill. The script treats existing archive rows as verified payments, matching the original importer contract.
 
 Frontend changes are in `desk-rate-card.tsx`, `newSlot.tsx`, and `history-import.tsx`. The existing rate-card API remains compatible; the history API additionally validates optional `paymentStatus`. Deploy the booking service before the dashboard. Database setup errors now return a readable message rather than an HTML error. App and kiosk booking endpoints and slot durations remain unchanged.
+
+### Unified pricing and console screen-size release
+
+Apply these additive migrations before deploying the corresponding services:
+
+1. `hfg-dashboard-service/sql/20261108_console_screen_size.sql` in the console/dashboard database (the shared booking database if this deployment uses one database).
+2. `hfg-booking/sql/20261108_unified_pricing.sql` in the booking database, after the existing desk-rate migration.
+3. Deploy dashboard-service and booking-service, then hash-dashboard.
+
+Existing saved variants remain active. Slot-only devices remain on their existing slot rate. Switching a device to slot pricing disables its variants without deleting them. No existing bookings or receipts are repriced. New desk bookings record the applied pricing profile in their booking metadata. Older desk forms without variant support receive a clear instruction to use New Gaming Session when a device has active variants.
+
+The console API accepts and returns nullable `screenSizeInches` (integer 20–120). Omitted values on update preserve the saved size; explicit null clears it. Rate-card responses include `is_active`; `PUT /api/vendor/{vendor}/desk-rates/mode` accepts `game_id` and `mode` (`slot` or `variants`). Staff pricing permission and cafe scope apply to this action.

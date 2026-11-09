@@ -176,5 +176,6 @@ export const buildHardwarePayloadByProfile = (
     storageCapacity: hardware.storageCapacity || null,
     connectivity: profile.showConnectivity ? hardware.connectivity || null : null,
     consoleModelType: hardware.consoleModelType || null,
+    screenSizeInches: hardware.screenSizeInches ? Number(hardware.screenSizeInches) : null,
   };
 };

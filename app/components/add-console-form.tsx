@@ -222,6 +222,7 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
           storageCapacity: consoleData.hardwareSpecification.storageCapacity || "",
           connectivity: consoleData.hardwareSpecification.connectivity || "",
           consoleModelType: consoleData.hardwareSpecification.consoleModelType || "",
+          screenSizeInches: String(consoleData.hardwareSpecification.screenSizeInches || ""),
         },
         maintenanceStatus: {
           AvailableStatus: consoleData.maintenanceStatus.availableStatus,

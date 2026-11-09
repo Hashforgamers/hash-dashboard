@@ -66,6 +66,10 @@ export function DynamicHardwareFields({
 }: Props) {
   return (
     <>
+      {(["ps5", "playstation"].includes(profile.slug)) && <div className="space-y-2 mb-4">
+        <Label htmlFor="screenSizeInches">TV screen size (inches)</Label>
+        <Input id="screenSizeInches" type="number" min={20} max={120} step={1} placeholder="55 or 65" value={formdata.hardwareSpecifications.screenSizeInches || ""} onChange={e=>updateHardwareField(setformdata,"screenSizeInches",e.target.value)} />
+      </div>}
       {profile.requiresPcHardware ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-2">

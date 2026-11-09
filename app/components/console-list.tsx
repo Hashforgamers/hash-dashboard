@@ -155,6 +155,7 @@ export function ConsoleList({ onEdit, refreshKey = 0 }: ConsoleListProps) {
       ram: item.ram || "N/A",
       storage: item.storage || "N/A",
       consoleModelType: item.consoleModelType || "N/A",
+      screenSizeInches: item.screenSizeInches ?? null,
       status: occupancyState === "free",
       statusLabel,
       occupancyState,
@@ -595,7 +596,7 @@ export function ConsoleList({ onEdit, refreshKey = 0 }: ConsoleListProps) {
                                 <Gamepad className="w-4 h-4 text-slate-500 dark:text-slate-400" />
                                 <span className="text-slate-600 dark:text-slate-400">Variant</span>
                               </div>
-                              <span className="font-medium break-words text-foreground">{console.consoleModelType || "N/A"}</span>
+                              <span className="font-medium break-words text-foreground">{console.consoleModelType || "N/A"}{console.screenSizeInches ? ` · ${console.screenSizeInches}″ TV` : ""}</span>
 
                               <div className="flex items-center space-x-2">
                                 <HardDrive className="w-4 h-4 text-slate-500 dark:text-slate-400" />
