@@ -254,7 +254,8 @@ const mergeConsecutiveBookings = (bookings: any[]) => {
       const gameId = booking?.game_id || 'unknown';
       // Separate codes represent separate kiosk redemptions; keep their cards separate.
       const accessCode = booking?.access_code || booking?.accessCode || booking?.bookingId;
-      const key = `${userId}_${gameId}_${accessCode}_${paymentBadge(booking)}`;
+      const reservation = [...(booking?.squadDetails?.desk_console_ids || [])].sort((a:number,b:number)=>a-b).join(",");
+      const key = `${userId}_${gameId}_${accessCode}_${paymentBadge(booking)}_${reservation}`;
       if (!acc[key]) acc[key] = [];
       acc[key].push(booking);
       return acc;
@@ -358,6 +359,7 @@ export function UpcomingBookings({
   const [consoleError, setConsoleError] = useState("");
   const submitInFlight = useRef(false);
   const consoleRequest = useRef(0);
+  const reservedStartConsoles = useRef<number[]>([]);
   const [selectedGameId, setSelectedGameId] = useState<string | null>(null);
   const [selectedBookingId, setSelectedBookingId] = useState<string | null>(null);
   const [expandedBookingRows, setExpandedBookingRows] = useState<Record<string, boolean>>({});
@@ -716,10 +718,11 @@ export function UpcomingBookings({
     setRequiredConsoleCount(neededConsoles);
     setSelectedConsoleIds([]);
     setStartCard(true);
+    reservedStartConsoles.current = booking?.squadDetails?.desk_console_ids || [];
     fetchAvailableConsoles(resolvedGameId, resolvedVendorId);
   };
 
-  const fetchAvailableConsoles = async (gameId: string, resolvedVendorId?: string) => {
+  const fetchAvailableConsoles = async (gameId: string, resolvedVendorId?: string, reservedIds: number[] = reservedStartConsoles.current) => {
     if (!resolvedVendorId) return;
     const requestId = ++consoleRequest.current;
     setIsLoading(true);
@@ -733,7 +736,9 @@ export function UpcomingBookings({
       const available = rows.filter((row) => [true, 1, "true", "1"].includes(row?.is_available))
         .map((row) => ({ ...row, consoleId: Number(row.consoleId) }))
         .filter((row) => Number.isSafeInteger(row.consoleId) && row.consoleId > 0);
-      setAvailableConsoles(Array.from(new Map(available.map((row) => [row.consoleId, row])).values()));
+      const compatible = reservedIds.length ? available.filter(row=>reservedIds.includes(row.consoleId)) : available;
+      setAvailableConsoles(Array.from(new Map(compatible.map((row) => [row.consoleId, row])).values()));
+      if (reservedIds.length) setSelectedConsoleIds(compatible.map(row=>row.consoleId));
     } catch (error) {
       if (requestId !== consoleRequest.current) return;
       setConsoleError(error instanceof Error ? error.message : "Unable to load consoles. Please retry.");
@@ -1027,7 +1032,7 @@ export function UpcomingBookings({
         {/* 🚀 FIXED: Scrollable content area that takes remaining space */}
         <div className="min-h-0 flex-1 overflow-y-auto">
           {mergedBookings.length === 0 ? (
-            <div className="dashboard-module-empty h-full flex flex-col items-center justify-center py-6 px-3">
+            <div className="dashboard-module-empty flex flex-col items-center justify-center py-5 px-3">
               <CalendarIcon className="w-8 h-8 mb-2 opacity-50" />
               <p className="text-sm font-medium">{searchTerm ? 'No matching bookings' : 'No upcoming bookings'}</p>
               {!isConnected && <p className="text-xs mt-1 text-center">Check connection and filters.</p>}
