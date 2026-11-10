@@ -1,30 +1,28 @@
-const {test} = require('node:test')
-const assert = require('node:assert/strict')
-const fs = require('node:fs')
-const vm = require('node:vm')
-const ts = require('typescript')
-const path = require('node:path')
-const mod = {exports:{}}
-vm.runInNewContext(ts.transpileModule(fs.readFileSync(path.join(__dirname,'../app/components/desk-rate-card.tsx'),'utf8'),{compilerOptions:{jsx:ts.JsxEmit.ReactJSX,module:ts.ModuleKind.CommonJS}}).outputText,{module:mod,exports:mod.exports,require:n=>n.startsWith('@/')?{}:require(n)})
-const price = (profile,rates,minutes,players=1)=>mod.exports.deskSubtotal({game_id:1,profile,rates},minutes,players)
-test('PC rates use the complete duration with inclusive three-hour middle tier',()=>{
- assert.equal(price('pc',[100,90,80],90),150)
- assert.equal(price('pc',[100,90,80],120),180)
- assert.equal(price('pc',[100,90,80],180),270)
- assert.equal(price('pc',[100,90,80],240),320)
+const {test}=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm'),ts=require('typescript'),path=require('node:path')
+const mod={exports:{}}
+vm.runInNewContext(ts.transpileModule(fs.readFileSync(path.join(__dirname,'../app/components/desk-rate-card.tsx'),'utf8'),{compilerOptions:{jsx:ts.JsxEmit.ReactJSX,module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2020}}).outputText,{module:mod,exports:mod.exports,require:n=>n.startsWith('@/')?{}:require(n)})
+const rule=changes=>({min_minutes:1,max_minutes:null,min_players:1,max_players:8,unit_minutes:60,per_player:true,amount:'100',...changes})
+const price=(rules,minutes,players=1)=>mod.exports.deskSubtotal({definition:{rules}},minutes,players)
+test('Cafe-defined duration tiers use exact inclusive boundaries',()=>{
+ const rules=[rule({max_minutes:119}),rule({min_minutes:120,max_minutes:180,amount:'90'}),rule({min_minutes:181,amount:'80'})]
+ assert.equal(price(rules,90),150);assert.equal(price(rules,120),180);assert.equal(price(rules,180),270);assert.equal(price(rules,240),320)
 })
-test('PlayStation screen and player variants quote per-player hourly rates',()=>{
- assert.equal(price('ps55',[125,100,90,90],90,3),405)
- assert.equal(price('ps65',[150,125,100,100],60,2),250)
- assert.equal(price('gta55',[180],60,2),null)
+test('Custom player counts, time units and fixed session prices',()=>{
+ assert.equal(price([rule({amount:'99.50',unit_minutes:45})],90,6),1194)
+ assert.equal(price([rule({amount:'700',unit_minutes:0,per_player:false})],600,4),700)
+ assert.equal(price([rule({amount:'125',unit_minutes:0})],30,5),625)
 })
-test('Racing rejects unsupported durations and multiplayer',()=>{
- assert.equal(price('racing',[100,150],30),100)
- assert.equal(price('racing',[100,150],45),null)
- assert.equal(price('racing',[100,150],60,2),null)
+test('Gaps, overlaps and invalid drafts cannot produce a quote',()=>{
+ assert.equal(price([rule({max_players:2})],60,3),null)
+ assert.equal(price([rule(),rule()],60),null)
+ assert.equal(price([rule({amount:''})],60),null)
+ assert.equal(price([rule({unit_minutes:1.5})],60),null)
 })
-
-test('Half-paisa quotes round consistently with server decimal money',()=>{
- assert.equal(price('ps55',[2.01,2.01,2.01,2.01],30),1.01)
- assert.equal(price('ps55',[2.51,2.51,2.51,2.51],30),1.26)
+test('Fractional-hour rounding matches decimal server money',()=>{
+ assert.equal(price([rule({amount:'2.01'})],30),1.01)
+ assert.equal(price([rule({amount:'2.51'})],30),1.26)
+ assert.equal(price([rule({amount:'0.03'})],10),0.01)
+})
+test('Booking labels use saved custom screen and game values',()=>{
+ assert.equal(mod.exports.rateLabel({definition:{name:'Premium',screen_size_inches:77,game_variant:'Custom title'}}),'Premium · 77″ TV · Custom title')
 })

@@ -174,7 +174,7 @@ export function EditConsoleForm({ console, onClose }: EditConsoleFormProps) {
             </div>
           </div>
 
-          {isPlayStation && <div className="space-y-2"><Label htmlFor="screenSize">TV screen size (inches)</Label><Input id="screenSize" type="number" min={20} max={120} step={1} placeholder="55 or 65" value={screenSize} onChange={e=>setScreenSize(e.target.value)} /></div>}
+          {isPlayStation && <div className="space-y-2"><Label htmlFor="screenSize">TV screen size (inches)</Label><Input id="screenSize" type="number" min={1} max={1000} step={1} placeholder="Enter screen size" value={screenSize} onChange={e=>setScreenSize(e.target.value)} /></div>}
           {consoleType !== "pc" && (
             <div className="space-y-2">
               <Label htmlFor="consoleModelType">Console Variant</Label>
