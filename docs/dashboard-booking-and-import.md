@@ -10,28 +10,27 @@ Live desk bookings use the existing booking endpoint, slot capacity and PC confi
 
 In New Gaming Session → Payment Method, choose **Pay After Session** and confirm the booking. The café must accept Pay at Cafe. The player can start with an unpaid balance. At session checkout, review the amount due and collect it using the actual payment method. Choose **Monthly Credit** only when posting to a player’s monthly credit account.
 
-## Configure pricing
+## Configure and maintain custom pricing
 
-In **Console Pricing → Pricing**, select a device. There is one editor with an explicit **Dashboard pricing** rule:
+Open **Console Pricing → Pricing**, select the device, then choose **Same price per slot** or **Custom rate cards**. Slot pricing uses the shared default. Custom pricing uses enabled café-defined cards. Switching modes retains each card's enabled/disabled state.
 
-- **Same price per slot:** the shared slot rate applies. Change the amount and choose **Save slot rates**.
-- **Duration / screen / player rates:** saved variants replace the slot rate for dashboard bookings. Save a rate to activate it. Switching back to slot pricing retains the variants for later use. Changes to the rule apply immediately and show a saved status.
+Choose **New rate card**. Enter any rate name and pricing-model name, an optional TV size in whole inches, and any game variant/title/edition. TV sizes and game names are free-entry values, not preset lists. Set whether controllers are included to prevent duplicate controller fees.
 
-For PlayStation, choose the TV size and game variant, then enter per-player hourly prices. The app and kiosk's default rate is in a collapsed, labelled section inside the same editor. This preserves their existing booking contracts. New Gaming Session automatically uses the sole active variant, or requires a selection when several variants are active. There is no per-booking fallback to generic pricing. The server rejects outdated or missing variants rather than charging the wrong rate.
+Add price rules with duration and player-count ranges, amount, whole-group or per-player charging, and either a fixed session price or a custom time unit. Time-unit prices are prorated. All range boundaries are inclusive. For example, PC tiers may use 1–119, 120–180, and 181+ minutes. Rules can share times when their player ranges differ, but cannot overlap on both axes. Gaps are allowed; uncovered sessions cannot be booked against that card.
 
-In **Manage Gaming Console**, add or edit a PlayStation and set **TV screen size (inches)**. Existing consoles are left unset; staff must enter their actual size. The size is displayed alongside the console model. Screen-size metadata does not change shared slot capacity or automatically reserve a particular physical TV: staff still assign the appropriate console. Rates currently support the 55-inch and 65-inch presets.
+Use **Test price** before saving. It shows gaming charges before discounts and extras. Validation limits are 100 rules/card, 1–1,000 players, configured duration bounds/time units up to 10,080 minutes, and amounts up to ₹99,999,999 with two decimals. These limits do not replace the café's configured device capacity: maintain multiplayer support and capacity in console/squad settings.
 
-| Profile | Suggested charge |
-| --- | --- |
-| PC | Under 2 hours ₹100/hr, 2 through 3 hours ₹90/hr, above 3 hours ₹80/hr |
-| PS5 55″ | ₹125 / ₹100 / ₹90 / ₹90 per player per hour for 1–4 players |
-| PS5 65″ | ₹150 / ₹125 / ₹100 / ₹100 per player per hour for 1–4 players |
-| GTA6 55″ / 65″ | One player, ₹180 / ₹200 per hour |
-| Racing Sim | ₹100 for 30 minutes or ₹150 for 60 minutes |
+**Save & enable** creates a card. **Edit**, **Duplicate**, **Enable/Disable**, **Archive**, and **Restore** maintain it. Restoring leaves a card disabled until enabled explicitly. Archived cards remain accessible under **Show archived** and are excluded from new bookings. Duplicate copies the complete model/rules; sharing a model name alone does not link edits across cards. Concurrent edits require reloading the latest version.
 
-The PC tier applies to the entire selected duration. Three hours costs ₹270 at the suggested rates. Select Squad Play for multiple players. The backend calculates the desk subtotal again at checkout. A changed subtotal requires staff to review the price. PS5 player rates include controllers. Food and other selected extras appear separately in Bill Summary. Staff can adjust an elapsed-time Auto Discount or reset it to the suggestion.
+In **New Gaming Session**, staff see the custom card name, screen size and game variant. One enabled card is selected automatically; multiple cards require selection. The backend checks its version and price again. If custom mode has no enabled cards, booking stops instead of falling back to a different charge. Existing bookings keep their recorded prices.
 
-In Passes → New Pass, select a template, review its editable price, hours, pass type and validity, and save. The suggested day pass is ₹700 for 10 hours with one day of validity. Weekly is ₹3,500 for 50 hours over seven days. Monthly is ₹14,000 for 250 hours over 30 days. Templates use the existing café pass purchase and redemption flow. PC sessions only is enabled for these templates. A restricted pass must be redeemed against a PC booking. Clear this option before saving to make the pass available for other devices.
+### Screen sizes and the PC kiosk
+
+In **Manage Gaming Console**, add or edit a PlayStation and enter **TV screen size (inches)**. Any whole size from 1–1,000 is supported. Existing sizes are preserved; unset sizes remain unset. A pricing-card screen size identifies the price variant. Staff still assign the matching physical console; metadata alone does not reserve screen-specific capacity.
+
+The **kiosk is PC client software**, not a PlayStation device or separate console-pricing channel. Dashboard-created PC bookings retain the existing slot/PC confirmation flow. This work does not change kiosk software, slot durations, or customer-app checkout. The customer app's existing default slot rate remains separately labelled within the unified editor; desk-only custom prices do not silently replace it.
+
+Existing PC, PS5, GTA6 and racing cards retain their configured amounts and are presented as equivalent editable rule definitions. Saving converts them to stored custom definitions. New cards have no preset identity restriction; past bookings are not recalculated.
 
 ## Migrate past bookings
 
@@ -61,6 +60,18 @@ Apply these additive migrations before deploying the corresponding services:
 2. `hfg-booking/sql/20261108_unified_pricing.sql` in the booking database, after the existing desk-rate migration.
 3. Deploy dashboard-service and booking-service, then hash-dashboard.
 
-Existing saved variants remain active. Slot-only devices remain on their existing slot rate. Switching a device to slot pricing disables its variants without deleting them. No existing bookings or receipts are repriced. New desk bookings record the applied pricing profile in their booking metadata. Older desk forms without variant support receive a clear instruction to use New Gaming Session when a device has active variants.
+Existing saved variants remain active. Slot-only devices remain on their existing slot rate. Switching a device to slot pricing preserves its cards and their individual enabled states. No existing bookings or receipts are repriced. New desk bookings record the applied pricing profile in their booking metadata. Older desk forms without variant support receive a clear instruction to use New Gaming Session when a device has active variants.
 
-The console API accepts and returns nullable `screenSizeInches` (integer 20–120). Omitted values on update preserve the saved size; explicit null clears it. Rate-card responses include `is_active`; `PUT /api/vendor/{vendor}/desk-rates/mode` accepts `game_id` and `mode` (`slot` or `variants`). Staff pricing permission and cafe scope apply to this action.
+The console API accepts and returns nullable `screenSizeInches` (integer 1–1,000). Omitted values on update preserve the saved size; explicit null clears it. Rate-card responses include `is_active`; `PUT /api/vendor/{vendor}/desk-rates/mode` accepts `game_id` and `mode` (`slot` or `variants`). Staff pricing permission and cafe scope apply to this action.
+
+### November 9 custom-pricing release
+
+After the earlier desk-rate and unified-pricing migrations:
+
+1. Apply `hfg-booking/sql/20261109_custom_desk_pricing.sql` to the booking database. It adds editable definitions, archive/version fields, and independent per-device mode. It is safe to rerun.
+2. Apply `hfg-dashboard-service/sql/20261109_custom_screen_sizes.sql` after the screen-size column migration in the dashboard/console database.
+3. Deploy booking-service and dashboard-service, then hash-dashboard. Reload open dashboard tabs.
+
+`GET /api/vendor/{vendor}/desk-rates` includes `definition`, `revision`, `archived`, `is_active`, and `pricing_mode`. Create with a unique `profile` and a validated definition; update with the current revision. `PATCH` changes archival/enable state with the current revision. Pricing-management permission and café scope apply. Booking requests include `deskProfile`, `deskRevision`, and the displayed subtotal. The server recalculates and records the applied name, model, screen, game variant, version and slot amount.
+
+Rule JSON fields: `min_minutes`, nullable `max_minutes`, `min_players`, `max_players`, decimal-string `amount`, `unit_minutes` (0 = fixed session), and boolean `per_player`. Pricing models use these configurable arithmetic rules; executable formulas are not accepted.
