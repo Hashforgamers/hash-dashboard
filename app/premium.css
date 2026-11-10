@@ -2840,7 +2840,7 @@ h6 {
 /* Session details scroll while the action stays visible at the right edge. */
 .operations-dashboard .live-session-data-table {
   table-layout: fixed;
-  min-width: 1070px;
+  min-width: 990px;
 }
 .operations-dashboard .live-session-data-table th,
 .operations-dashboard .live-session-data-table td {
@@ -2855,7 +2855,7 @@ h6 {
   font-size: 12px !important;
 }
 .operations-dashboard .live-session-data-table td {
-  height: 92px;
+  height: 76px;
   font-size: 13px !important;
   line-height: 1.5;
 }

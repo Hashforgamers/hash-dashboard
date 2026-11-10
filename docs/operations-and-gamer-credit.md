@@ -33,3 +33,7 @@ Deploy booking-service and dashboard-service with the dashboard together, then r
 Console-to-rate mapping requires the separate SQL migration and configuration steps in [dashboard-booking-and-import.md](dashboard-booking-and-import.md). It remains necessary to configure rate-card console links before creating linked custom-rate bookings.
 
 Local verification: pricing/reservation PostgreSQL tests, credit validation and rejected-write route tests, frontend rate/console-picker/import tests, Python compilation and changed-file TypeScript syntax checks. A static preview of the actual Credit Accounts component was visually checked with sample data. Production sessions and payments were not created during verification. A repository-wide TypeScript check reports existing errors in older components; a clean full build is not claimed. Graphify refresh was attempted, but the command is unavailable in this environment.
+
+## Live session row layout
+
+Live Sessions uses Gamer, Console, Session Time, Duration, Status and Action. Session Time is a single start–end range. Duration shows elapsed play once (MM:SS under one hour, H:MM:SS thereafter, retaining hours beyond 24). Status shows Active, Overtime or Starting for a pending QR session; an unpaid amount remains beneath the badge. The previous percentage/progress bar, remaining-time text and separate overtime counter are removed from the operational rows, including mobile. Payment, release and settlement behaviour is unchanged.
