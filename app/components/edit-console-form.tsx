@@ -21,6 +21,7 @@ import {
 import { Building2, Cpu, CpuIcon as Gpu, MemoryStickIcon as Memory, HardDrive, Activity } from "lucide-react";
 import axios from "axios";
 import { jwtDecode } from "jwt-decode";
+import { ConsoleRateLinks } from "./desk-console-mapping";
 import { DASHBOARD_URL } from "@/src/config/env";
 
 type ConsoleType = "pc" | "ps5" | "xbox" | "vr";
@@ -174,6 +175,7 @@ export function EditConsoleForm({ console, onClose }: EditConsoleFormProps) {
             </div>
           </div>
 
+          <ConsoleRateLinks vendor={vendorId} consoleId={Number(console?.id)} />
           {isPlayStation && <div className="space-y-2"><Label htmlFor="screenSize">TV screen size (inches)</Label><Input id="screenSize" type="number" min={1} max={1000} step={1} placeholder="Enter screen size" value={screenSize} onChange={e=>setScreenSize(e.target.value)} /></div>}
           {consoleType !== "pc" && (
             <div className="space-y-2">

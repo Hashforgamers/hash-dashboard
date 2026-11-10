@@ -57,6 +57,7 @@ function LockedOverlay() {
 export function DashboardContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const [showAnalytics, setShowAnalytics] = useState(false)
   const [showEarnings, setShowEarnings] = useState(false)
   const [showPending, setShowPending] = useState(false)
   const [refreshSlots, setRefreshSlots] = useState(false)
@@ -484,16 +485,11 @@ export function DashboardContent() {
                 </div>
               </div>
 
-              <div className="min-w-0 max-md:hidden">
-                <div className="min-w-0">
-                  {isOwnerSession ? topMetricsStrip : null}
-                </div>
-              </div>
-              <div className="w-full md:hidden">
-                {isOwnerSession ? mobileMetricsStrip : null}
-              </div>
+              {isOwnerSession && activeDashboardTab === "live" && <button type="button" aria-expanded={showAnalytics} className="justify-self-end rounded border px-3 py-1.5 text-xs" onClick={()=>setShowAnalytics(!showAnalytics)}>{showAnalytics ? "Hide analytics" : "Show analytics"}</button>}
             </div>
           </motion.div>
+
+          {isOwnerSession && activeDashboardTab === "live" && showAnalytics && <div className="shrink-0">{topMetricsStrip}</div>}
 
           {activeDashboardTab === "wallet" && can("wallet.topup") ? (
             <div className="mt-2 min-h-0 flex-1 overflow-y-auto rounded-lg"><DashboardWallet embedded /></div>
@@ -526,7 +522,7 @@ export function DashboardContent() {
                 </div>
               </div>
 
-              <div className="operations-workspace grid flex-1 grid-cols-1 gap-2 overflow-hidden max-xl:min-h-[520px] max-md:grid-rows-[1.05fr_0.95fr] max-md:gap-1.5 sm:gap-3 xl:grid-cols-12">
+              <div className="operations-workspace grid flex-1 grid-cols-1 gap-2 overflow-hidden max-xl:min-h-[520px] max-md:grid-rows-[auto_auto] max-md:gap-1.5 sm:gap-3 xl:grid-cols-12">
                 <div className="space-y-2 sm:space-y-3 flex flex-col min-h-0 xl:col-span-8 2xl:col-span-9 max-md:h-full max-md:min-h-0">
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
@@ -551,7 +547,7 @@ export function DashboardContent() {
                   transition={{ duration: 0.15 }}
                   className="flex flex-col min-h-0 xl:col-span-4 2xl:col-span-3 xl:h-full max-md:h-full max-md:min-h-0"
                 >
-                  <div className="relative flex-1 min-h-[320px] overflow-hidden rounded-lg xl:h-full xl:min-h-0 max-md:min-h-0 max-md:h-full">
+                  <div className={`relative overflow-hidden rounded-lg ${(dashboardData.upcomingBookings || []).length ? "flex-1 min-h-[280px] xl:h-full xl:min-h-0" : "h-auto flex-none"}`}>
                     <UpcomingBookings
                       upcomingBookings={dashboardData.upcomingBookings || []}
                       vendorId={vendorId?.toString()}

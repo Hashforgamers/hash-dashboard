@@ -3027,3 +3027,8 @@ h6 {
 .staff-activity-panel td { padding: 12px !important; line-height: 1.5; }
 .staff-activity-panel tbody tr:hover { background: #242428; }
 .staff-activity-panel td:first-child { font-variant-numeric: tabular-nums; }
+
+/* Quick booking keeps every slot reachable, including the trailing item. */
+.dashboard-quick-slots-row { display: grid; grid-template-columns: minmax(0,1fr) auto; }
+.dashboard-slot-slider { scroll-snap-type: x proximity; scroll-padding-inline: 4px; padding-inline-end: 12px; overscroll-behavior-x: contain; }
+.dashboard-slot-slider .dashboard-slot-chip { scroll-snap-align: start; }

@@ -7,6 +7,7 @@ import { cafeCall } from '@/lib/cafe-api';
 
 type SessionState = {
   booking_id?: number;
+  console_type?: string;
   allocation_state: string;
   device_state: string;
 };
@@ -29,7 +30,7 @@ export function usePcConfirmations(enabled: boolean) {
         const data = await cafeCall<{ items: SessionState[] }>(`/${selectedCafeId}/session-state`);
         const next = new Map<string, Confirmation>();
         for (const session of data.items) {
-          if (!session.booking_id || session.allocation_state !== 'occupied' || session.device_state === 'confirmed') continue;
+          if (session.console_type !== 'pc' || !session.booking_id || session.allocation_state !== 'occupied' || !['pending','failed','requested','unconfirmed'].includes(session.device_state)) continue;
           const id = String(session.booking_id);
           if (next.get(id) !== 'failed') next.set(id, session.device_state === 'failed' ? 'failed' : 'pending');
         }
@@ -55,7 +56,6 @@ export function usePcConfirmations(enabled: boolean) {
 
 export function PcConfirmation({ status }: { status?: Confirmation }) {
   if (!status) return null;
-  return <span className="text-[11px] text-amber-300" title="Check the kiosk before starting another booking on this PC.">
-    {status === 'failed' ? 'PC start failed' : 'Awaiting PC'}
-  </span>;
+  const message = status === 'failed' ? 'PC start failed. Check the PC software before retrying.' : 'Start recorded; waiting for confirmation from the PC software.';
+  return <span tabIndex={0} role="img" aria-label={message} title={message} className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-amber-500/40 text-xs text-amber-400">{status === 'failed' ? '!' : '◷'}</span>;
 }

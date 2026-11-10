@@ -1,10 +1,11 @@
 "use client"
 import { useEffect, useState, type ReactNode } from "react"
+import { ConsoleLinks } from "./desk-console-mapping"
 import { BOOKING_URL } from "@/src/config/env"
 import { creditAuthHeaders } from "@/lib/credit-auth"
 
 export type PriceRule = { min_minutes: number; max_minutes: number | null; min_players: number; max_players: number; amount: string; unit_minutes: number; per_player: boolean }
-export type RateDefinition = { name: string; model_name: string; screen_size_inches: number | null; game_variant: string; controllers_included: boolean; rules: PriceRule[] }
+export type RateDefinition = { console_ids?: number[]; name: string; model_name: string; screen_size_inches: number | null; game_variant: string; controllers_included: boolean; rules: PriceRule[] }
 export type DeskCard = { game_id: number; profile: string; definition: RateDefinition; revision: number; is_active: boolean; archived: boolean; pricing_mode?: "slot" | "variants" }
 const blankRule = (): PriceRule => ({ min_minutes: 1, max_minutes: null, min_players: 1, max_players: 1, amount: "", unit_minutes: 60, per_player: false })
 const blankDefinition = (): RateDefinition => ({ name: "", model_name: "", screen_size_inches: null, game_variant: "", controllers_included: false, rules: [blankRule()] })
@@ -44,6 +45,13 @@ export function deskSubtotal(card: DeskCard, minutes: number, players: number) {
   const rounded = (numerator * BigInt(2) + denominator) / (denominator * BigInt(2))
   const total = Number(rounded)
   return Number.isSafeInteger(total) ? total / 100 : null
+}
+
+// Duration/player tiers are automatic; only genuinely ambiguous cards need a choice.
+export function resolveSessionRate(cards: DeskCard[], minutes: number, players: number, choice = "") {
+  const eligible = cards.filter(card => card.is_active !== false && !card.archived && card.pricing_mode !== "slot" && deskSubtotal(card, minutes, players) !== null)
+  const selected = eligible.find(card => card.profile === choice)
+  return { eligible, card: selected ?? (eligible.length === 1 ? eligible[0] : undefined) }
 }
 
 export default function DeskRateEditor({ vendor, games, baseRate }: { vendor: number | null; games: { id: number; game_name: string }[]; baseRate?: ReactNode }) {
@@ -128,6 +136,7 @@ export default function DeskRateEditor({ vendor, games, baseRate }: { vendor: nu
           <label className="text-xs">TV size · inches (optional)<input type="number" min={1} max={1000} step={1} list={`screens-${game}`} className={input} value={draft.screen_size_inches ?? ""} onChange={e => setDraft({ ...draft, screen_size_inches: e.target.value ? Number(e.target.value) : null })} placeholder="Any size" /><datalist id={`screens-${game}`}>{sizes.map(size => <option key={size} value={size!} />)}</datalist></label>
           <label className="text-xs">Game variant (optional)<input maxLength={120} list={`variants-${game}`} className={input} value={draft.game_variant} onChange={e => setDraft({ ...draft, game_variant: e.target.value })} placeholder="Any title or edition" /><datalist id={`variants-${game}`}>{variants.map(name => <option key={name} value={name} />)}</datalist></label>
         </div>
+        <ConsoleLinks vendor={vendor} game={Number(game)} screen={draft.screen_size_inches} value={draft.console_ids || []} onChange={ids => setDraft({ ...draft, console_ids: ids })} />
         <label className="flex items-center gap-2 text-xs"><input type="checkbox" checked={draft.controllers_included} onChange={e => setDraft({ ...draft, controllers_included: e.target.checked })} />Controllers included in these rates</label>
         <div className="flex items-center justify-between"><h4 className="text-sm font-medium">Price rules</h4><button type="button" disabled={draft.rules.length >= 100 || busy} className={button} onClick={() => setDraft({ ...draft, rules: [...draft.rules, blankRule()] })}>+ Add rule</button></div>
         <p className="text-xs text-muted-foreground">Ranges include both ends. Leave maximum time blank for no limit. Rules must not overlap.</p>

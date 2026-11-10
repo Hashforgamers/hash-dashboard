@@ -102,7 +102,9 @@ export default function CreditAccountModal({ open, vendorId, customer, onClose, 
         resolvedUserId = Number(userData.user.id)
       }
 
+      if (!window.confirm(`Set credit limit to ₹${Number(form.credit_limit || 0).toFixed(2)} for ${form.name}?`)) return;
       const accountPayload = {
+        confirmed: true,
         user_id: resolvedUserId,
         credit_limit: Number(form.credit_limit || 0),
         billing_cycle_day: Number(form.billing_cycle_day || 1),
