@@ -1125,36 +1125,9 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                           </div>
                         </div>
 
-                        <div className="mt-2 space-y-1.5">
-                          <div className="flex items-center justify-between text-xs">
-                            <span className="text-slate-300">Elapsed: {formatTime(timer.elapsedTime)}</span>
-                            <span className={`${hasExtraTime ? "text-red-300" : "text-slate-400"}`}>
-                              {hasExtraTime ? `Extended: ${formatTime(timer.extraTime)}` : `Remaining: ${formatTime(remainingTime)}`}
-                            </span>
-                          </div>
-                          <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-700/90">
-                            <motion.div
-                              className={`h-full ${
-                                hasExtraTime
-                                  ? "bg-red-500"
-                                  : progress < 75
-                                    ? "bg-emerald-500"
-                                    : progress < 90
-                                      ? "bg-yellow-500"
-                                      : "bg-orange-500"
-                              }`}
-                              style={{ width: `${progress}%` }}
-                              initial={{ width: 0 }}
-                              animate={{ width: `${progress}%` }}
-                              transition={{ duration: 0.4 }}
-                            />
-                          </div>
-                          {booking.runtime?.billing?.payment_status==='extension_reserved' && !hasOutstandingDue && <p className="text-xs text-amber-300">Extra time · pay at desk</p>}
-                          {hasOutstandingDue && (
-                            <p className="text-xs font-semibold text-amber-300">
-                              To be paid: ₹{outstandingDue.toFixed(2)}
-                            </p>
-                          )}
+                        <div className="mt-3 flex items-center justify-between gap-3">
+                          <div><p className="mb-1 text-xs text-muted-foreground">Duration</p><LiveSessionTiming elapsed={timer.elapsedTime || 0} /></div>
+                          <LiveSessionDue overtime={timer.extraTime || 0} amountDue={hasOutstandingDue ? outstandingDue : 0} paymentStatus={booking.runtime?.billing?.payment_status} />
                         </div>
 
                         <div className="mt-3 grid grid-cols-2 gap-1.5 sm:gap-2">
@@ -1238,12 +1211,12 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
             <div className="dashboard-table-wrap h-full">
               <table ref={tableRef} className="dashboard-module-table live-session-data-table w-full divide-y">
                 <colgroup>
-                  <col style={{width:220}}/><col style={{width:240}}/><col style={{width:160}}/>
-                  <col style={{width:160}}/><col style={{width:170}}/><col style={{width:120}}/>
+                  <col style={{width:210}}/><col style={{width:210}}/><col style={{width:210}}/>
+                  <col style={{width:100}}/><col style={{width:140}}/><col style={{width:120}}/>
                 </colgroup>
                 <thead className="dashboard-module-table-head sticky top-0 z-10">
                   <tr>
-                    {['Customer', 'Console', 'Schedule', 'Elapsed', 'Overtime / Due', 'Action'].map((heading) => (
+                    {['Gamer', 'Console', 'Session Time', 'Duration', 'Status', 'Action'].map((heading) => (
                       <th
                         key={heading}
                         scope="col"
@@ -1628,18 +1601,7 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
 
                             {/* Time cell - unchanged */}
                             <td className="px-3 py-3 md:px-4">
-                              <div className="text-xs space-y-0.5 sm:space-y-1">
-                                <div className="truncate">
-                                  <span className="hidden text-slate-400 sm:inline">Start:</span>
-                                  <span className="text-slate-400 sm:hidden">S:</span>{' '}
-                                  {booking.startTime || 'N/A'}
-                                </div>
-                                <div className="truncate">
-                                  <span className="hidden text-slate-400 sm:inline">End:</span>
-                                  <span className="text-slate-400 sm:hidden">E:</span>{' '}
-                                  {booking.endTime || 'N/A'}
-                                </div>
-                              </div>
+                              <span className="whitespace-nowrap text-sm text-foreground">{booking.startTime || '—'} – {booking.endTime || '—'}</span>
                             </td>
 
                             {/* Progress cell - enhanced */}
