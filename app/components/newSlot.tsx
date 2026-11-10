@@ -7,7 +7,7 @@ import { createPortal } from "react-dom"
 
 import { cn } from "@/lib/utils"
 import { contiguousDeskSlots, coveringDeskSlots } from "@/lib/desk-time-range"
-import { deskSubtotal, profiles, useDeskCards } from "./desk-rate-card"
+import { deskSubtotal, rateLabel, useDeskCards } from "./desk-rate-card"
 import { creditAuthHeaders } from "@/lib/credit-auth"
 import { useAccess } from "@/app/context/AccessContext"
 import { Button } from "@/components/ui/button"
@@ -1404,11 +1404,12 @@ const getEffectivePrice = (slot: SelectedSlot): number => {
   )
   const { cards: deskCards, error: deskRateError, loading: deskRatesLoading } = useDeskCards(isOpen ? settingsVendorId : null)
   const [deskChoice, setDeskChoice] = useState("")
-  const deviceCards = deskCards.filter(card => card.game_id === Number(activePickerConsole) && card.is_active !== false)
+  const deviceCards = deskCards.filter(card => card.game_id === Number(activePickerConsole) && card.is_active !== false && !card.archived && card.pricing_mode !== "slot")
   useEffect(() => { setDeskChoice("") }, [activePickerConsole, settingsVendorId, isOpen])
+  const variantPricingRequired = deskCards.some(card => card.game_id === Number(activePickerConsole) && card.pricing_mode === "variants") || deviceCards.length > 0
   const effectiveDeskChoice = deskChoice || (deviceCards.length === 1 ? deviceCards[0].profile : "")
   const deskCard = deviceCards.find(card => card.profile === effectiveDeskChoice)
-  const controllersIncluded = !!deskCard && ["ps55", "ps65", "gta55", "gta65"].includes(deskCard.profile)
+  const controllersIncluded = !!deskCard?.definition.controllers_included
   const supportsExtraController = !controllersIncluded && selectedControllerType !== null && hasControllerPricingConfigured
   const bookingFlowMode: "solo" | "squad" = isSquadMode ? "squad" : "solo"
   const squadSupported = squadPolicyVendor === settingsVendorId && squadPolicyState === "ready" && Boolean(squadPlatformRule.enabled)
@@ -1920,7 +1921,7 @@ const getEffectivePrice = (slot: SelectedSlot): number => {
       setSubmitError("Apply or clear the requested times before confirming.")
       return false
     }
-    if (deskRatesLoading || deskRateError || (deviceCards.length > 0 && !effectiveDeskChoice)) {
+    if (deskRatesLoading || deskRateError || (variantPricingRequired && !effectiveDeskChoice)) {
       setSubmitError(deskRateError || (deskRatesLoading ? "Loading booking rates. Please wait." : "Choose a pricing variant before confirming."))
       return false
     }
@@ -2019,8 +2020,9 @@ const getEffectivePrice = (slot: SelectedSlot): number => {
           quantity: meal.quantity
         })),
         requireFullRange: true,
-        deskPricingMode: deviceCards.length ? "variants" : "slot",
+        deskPricingMode: variantPricingRequired ? "variants" : "slot",
         deskProfile: deskCard?.profile,
+        deskRevision: deskCard?.revision,
         deskSubtotal: deskPrice ?? undefined,
         bookingMode: 'regular',
         squadDetails: {
@@ -2307,10 +2309,11 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                         </div>)}
                     </div>
                     {deskRateError && <p role="status" className="text-xs">{deskRateError} Reopen this booking to retry.</p>}
+                    {variantPricingRequired && !deviceCards.length && <p role="alert" className="text-xs text-amber-500">No enabled rate cards. Enable a card in Console Pricing before booking.</p>}
                     {deviceCards.length > 0 && <label className="mb-2 flex items-center gap-2 text-xs">Session rate
                       <select className="rounded border bg-background p-1" value={effectiveDeskChoice} onChange={e => setDeskChoice(e.target.value)}>
                         <option value="" disabled>Choose pricing variant</option>
-                        {deviceCards.map(card => <option key={card.profile} value={card.profile}>{profiles[card.profile][0]}</option>)}
+                        {deviceCards.map(card => <option key={card.profile} value={card.profile}>{rateLabel(card)}</option>)}
                       </select>{deskCard && <span>{deskPrice === null ? "Unavailable for this duration or player count" : "Gaming subtotal ₹" + deskPrice}</span>}
                     </label>}
                     {(timeMode === "slots" || !onReplaceSlots) && <div className="slot-booking-slot-list">
@@ -2721,7 +2724,7 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                             Max players: <span className="font-semibold">{squadMaxPlayers}</span>
                             <span className="ml-2">
                               Mode: <span className="font-semibold">
-                                {deskCard ? profiles[deskCard.profile][0] : squadPlatformRule.pricing_mode === "squad_discount"
+                                {deskCard ? rateLabel(deskCard) : squadPlatformRule.pricing_mode === "squad_discount"
                                   ? "Squad discount"
                                   : squadPlatformRule.pricing_mode === "controller_pricing"
                                   ? "Controller pricing"
@@ -2907,7 +2910,7 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
               <Button
                 type="submit"
                 form="slot-booking-form"
-                disabled={deskRatesLoading || !!deskRateError || (deviceCards.length > 0 && !effectiveDeskChoice) || !!typedStart || !!typedEnd || (!!deskCard && deskPrice === null) || selectedSlots.length === 0 || isSubmitting || submissionUncertain || (paymentType === 'Monthly Credit' && (!creditAccount?.is_active || availableCreditAmount < totalAmount))}
+                disabled={deskRatesLoading || !!deskRateError || (variantPricingRequired && !effectiveDeskChoice) || !!typedStart || !!typedEnd || (!!deskCard && deskPrice === null) || selectedSlots.length === 0 || isSubmitting || submissionUncertain || (paymentType === 'Monthly Credit' && (!creditAccount?.is_active || availableCreditAmount < totalAmount))}
                 className="ui-action-primary h-9 px-4 disabled:opacity-50"
               >
                 {isSubmitting ? (
