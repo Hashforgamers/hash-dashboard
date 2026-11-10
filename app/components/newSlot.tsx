@@ -7,7 +7,8 @@ import { createPortal } from "react-dom"
 
 import { cn } from "@/lib/utils"
 import { contiguousDeskSlots, coveringDeskSlots } from "@/lib/desk-time-range"
-import { deskSubtotal, rateLabel, useDeskCards } from "./desk-rate-card"
+import { DeskConsolePicker } from "./desk-console-picker"
+import { deskSubtotal, rateLabel, resolveSessionRate, useDeskCards } from "./desk-rate-card"
 import { creditAuthHeaders } from "@/lib/credit-auth"
 import { useAccess } from "@/app/context/AccessContext"
 import { Button } from "@/components/ui/button"
@@ -1403,12 +1404,18 @@ const getEffectivePrice = (slot: SelectedSlot): number => {
     || normalizeControllerType(selectedSlots[0]?.console_name)
   )
   const { cards: deskCards, error: deskRateError, loading: deskRatesLoading } = useDeskCards(isOpen ? settingsVendorId : null)
+  const [deskConsoleIds, setDeskConsoleIds] = useState<number[] | null>(null)
   const [deskChoice, setDeskChoice] = useState("")
   const deviceCards = deskCards.filter(card => card.game_id === Number(activePickerConsole) && card.is_active !== false && !card.archived && card.pricing_mode !== "slot")
   useEffect(() => { setDeskChoice("") }, [activePickerConsole, settingsVendorId, isOpen])
   const variantPricingRequired = deskCards.some(card => card.game_id === Number(activePickerConsole) && card.pricing_mode === "variants") || deviceCards.length > 0
-  const effectiveDeskChoice = deskChoice || (deviceCards.length === 1 ? deviceCards[0].profile : "")
-  const deskCard = deviceCards.find(card => card.profile === effectiveDeskChoice)
+  const slotMinutes = (slot: SelectedSlot) => {
+    const start = new Date(slot.date + "T" + slot.start_time + "+05:30").getTime()
+    return (getSlotEndTimestampIST(slot.date, slot.start_time, slot.end_time) - start) / 60000
+  }
+  const sessionMinutes = selectedSlots.reduce((n, slot) => n + slotMinutes(slot), 0)
+  const { eligible: matchingDeskCards, card: deskCard } = resolveSessionRate(deviceCards, sessionMinutes, isSquadMode ? squadPlayerCount : 1, deskChoice)
+  const effectiveDeskChoice = deskCard?.profile || ""
   const controllersIncluded = !!deskCard?.definition.controllers_included
   const supportsExtraController = !controllersIncluded && selectedControllerType !== null && hasControllerPricingConfigured
   const bookingFlowMode: "solo" | "squad" = isSquadMode ? "squad" : "solo"
@@ -1597,11 +1604,7 @@ const getEffectivePrice = (slot: SelectedSlot): number => {
   const mealsTotal = selectedMeals.reduce((sum, meal) => sum + meal.total, 0)
   const consoleUnitTotal = selectedSlots.reduce((sum, slot) => sum + getEffectivePrice(slot), 0)
   const squadConsoleMultiplier = isSquadMode && squadUsesDiscountEngine ? squadPlayerCount : 1
-  const slotMinutes = (slot: SelectedSlot) => {
-    const start = new Date(slot.date + "T" + slot.start_time + "+05:30").getTime()
-    return (getSlotEndTimestampIST(slot.date, slot.start_time, slot.end_time) - start) / 60000
-  }
-  const deskPrice = deskCard ? deskSubtotal(deskCard, selectedSlots.reduce((n, slot) => n + slotMinutes(slot), 0), isSquadMode ? squadPlayerCount : 1) : null
+  const deskPrice = deskCard ? deskSubtotal(deskCard, sessionMinutes, isSquadMode ? squadPlayerCount : 1) : null
   const consoleTotal = deskPrice ?? (isSquadMode ? Number((consoleUnitTotal * squadConsoleMultiplier).toFixed(2)) : consoleUnitTotal)
   const squadDiscountPercent = (() => {
     if (deskCard || !isSquadMode || !squadUsesDiscountEngine) return 0
@@ -1730,8 +1733,9 @@ const getEffectivePrice = (slot: SelectedSlot): number => {
         </div>
       )}
 
+      {paymentType === 'Monthly Credit' && creditAccount?.is_active && <p role="status" className={`text-xs ${totalAmount>availableCreditAmount?'text-red-500':'text-muted-foreground'}`}>{totalAmount>availableCreditAmount ? `This booking exceeds available credit by ₹${(totalAmount-availableCreditAmount).toFixed(2)}. Collect payment or review the account limit.` : `Available after booking: ₹${(availableCreditAmount-totalAmount).toFixed(2)}`}</p>}
       <AnimatePresence>
-        {paymentType === 'Pass' && (
+        {paymentType === 'Pass'  && (
           <motion.div
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
@@ -1921,6 +1925,7 @@ const getEffectivePrice = (slot: SelectedSlot): number => {
       setSubmitError("Apply or clear the requested times before confirming.")
       return false
     }
+    if (deskCard && !deskConsoleIds) { setSubmitError("Choose available consoles before confirming."); return false }
     if (deskRatesLoading || deskRateError || (variantPricingRequired && !effectiveDeskChoice)) {
       setSubmitError(deskRateError || (deskRatesLoading ? "Loading booking rates. Please wait." : "Choose a pricing variant before confirming."))
       return false
@@ -2022,6 +2027,7 @@ const getEffectivePrice = (slot: SelectedSlot): number => {
         requireFullRange: true,
         deskPricingMode: variantPricingRequired ? "variants" : "slot",
         deskProfile: deskCard?.profile,
+        deskConsoleIds: deskCard ? deskConsoleIds : undefined,
         deskRevision: deskCard?.revision,
         deskSubtotal: deskPrice ?? undefined,
         bookingMode: 'regular',
@@ -2310,12 +2316,16 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                     </div>
                     {deskRateError && <p role="status" className="text-xs">{deskRateError} Reopen this booking to retry.</p>}
                     {variantPricingRequired && !deviceCards.length && <p role="alert" className="text-xs text-amber-500">No enabled rate cards. Enable a card in Console Pricing before booking.</p>}
-                    {deviceCards.length > 0 && <label className="mb-2 flex items-center gap-2 text-xs">Session rate
-                      <select className="rounded border bg-background p-1" value={effectiveDeskChoice} onChange={e => setDeskChoice(e.target.value)}>
-                        <option value="" disabled>Choose pricing variant</option>
-                        {deviceCards.map(card => <option key={card.profile} value={card.profile}>{rateLabel(card)}</option>)}
-                      </select>{deskCard && <span>{deskPrice === null ? "Unavailable for this duration or player count" : "Gaming subtotal ₹" + deskPrice}</span>}
-                    </label>}
+                    {deviceCards.length > 0 && <div className="mb-2 flex flex-wrap items-center gap-2 text-xs">
+                      <span>Session rate</span>
+                      {matchingDeskCards.length > 1 ? <select aria-label="Session rate variant" className="rounded border bg-background p-1" value={effectiveDeskChoice} onChange={e => setDeskChoice(e.target.value)}>
+                        <option value="" disabled>Choose variant</option>
+                        {matchingDeskCards.map(card => <option key={card.profile} value={card.profile}>{rateLabel(card)}</option>)}
+                      </select> : deskCard ? <span className="font-medium">{rateLabel(deskCard)}</span> : null}
+                      {deskCard && <span className="text-emerald-500">₹{deskPrice} · Applied automatically</span>}
+                      {!matchingDeskCards.length && <span role="alert" className="text-amber-500">No rate covers this duration and player count.</span>}
+                    </div>}
+                    {deskCard && selectedSlots.length > 0 && <DeskConsolePicker key={`${activePickerConsole}-${deskCard.profile}`} vendor={settingsVendorId} game={Number(activePickerConsole)} profile={deskCard.profile} date={normalizeBookedDate(selectedSlots[0].date)} slotIds={selectedSlots.map(slot=>slot.slot_id)} quantity={isSquadMode && squadConsoleGroup === "pc" ? squadPlayerCount : 1} onChange={setDeskConsoleIds} />}
                     {(timeMode === "slots" || !onReplaceSlots) && <div className="slot-booking-slot-list">
                       {selectedSlots.map((slot) => (
                         <div key={`${slot.date}-${slot.console_id}-${slot.slot_id}`} className="slot-booking-modal-soft flex items-center justify-between gap-3 rounded-md px-2.5 py-2 text-xs">
@@ -2910,7 +2920,7 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
               <Button
                 type="submit"
                 form="slot-booking-form"
-                disabled={deskRatesLoading || !!deskRateError || (variantPricingRequired && !effectiveDeskChoice) || !!typedStart || !!typedEnd || (!!deskCard && deskPrice === null) || selectedSlots.length === 0 || isSubmitting || submissionUncertain || (paymentType === 'Monthly Credit' && (!creditAccount?.is_active || availableCreditAmount < totalAmount))}
+                disabled={(!!deskCard && !deskConsoleIds) || deskRatesLoading || !!deskRateError || (variantPricingRequired && !effectiveDeskChoice) || !!typedStart || !!typedEnd || (!!deskCard && deskPrice === null) || selectedSlots.length === 0 || isSubmitting || submissionUncertain || (paymentType === 'Monthly Credit' && (!creditAccount?.is_active || availableCreditAmount < totalAmount))}
                 className="ui-action-primary h-9 px-4 disabled:opacity-50"
               >
                 {isSubmitting ? (

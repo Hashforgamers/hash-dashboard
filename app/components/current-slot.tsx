@@ -547,6 +547,17 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
     booking: null,
   });
 
+  const prioritizedSlots = useMemo(() => [...filteredSlots].sort((a,b)=>{
+    const priority=(booking:any)=>{
+      const id=String(booking.bookingId||booking.booking_id||'');
+      const timer=timers.find((t:any)=>String(t.slotId)===String(booking.slotId));
+      const overdue=Number(timer?.extraTime||0)>0;
+      const due=Number(bookingOutstandingDue[id]||0)+Number(booking.runtime?.billing?.amount_due_paise||0)/100>0;
+      return (overdue?2:0)+(due?1:0);
+    };
+    return priority(b)-priority(a);
+  }),[filteredSlots,timers,bookingOutstandingDue]);
+
   // Get vendorId
   useEffect(() => {
     const token = localStorage.getItem("jwtToken");
@@ -1050,7 +1061,7 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
               {!qrTableLayout && <QrLiveSessions search={searchQuery} onCount={setQrSessionCount} onLoadState={setQrLoadState} />}
               {Array.isArray(filteredSlots) && filteredSlots.length > 0 ? (
                 <div className="space-y-2">
-                  {filteredSlots.map((booking) => {
+                  {prioritizedSlots.map((booking) => {
                     const timer = timers.find((t) => t.slotId === booking.slotId) || {
                       elapsedTime: 0,
                       extraTime: 0,
@@ -1247,7 +1258,7 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                   {qrTableLayout && <QrLiveSessions layout="rows" search={searchQuery} onCount={setQrSessionCount} onLoadState={setQrLoadState} />}
                   {Array.isArray(filteredSlots) && filteredSlots.length > 0 ? (
                     <AnimatePresence mode="popLayout">
-                      {filteredSlots.map((booking, index) => {
+                      {prioritizedSlots.map((booking, index) => {
                         const timer = timers.find((t) => t.slotId === booking.slotId) || {
                           elapsedTime: 0,
                           extraTime: 0,

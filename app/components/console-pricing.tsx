@@ -668,6 +668,7 @@ export default function ConsolePricing() {
       return;
     }
 
+    if (!window.confirm(`Save credit limit ₹${Number(creditForm.credit_limit || 0).toFixed(2)} for this gamer?`)) return;
     setIsSavingCredit(true);
     setCreditError(null);
     try {
@@ -675,6 +676,7 @@ export default function ConsolePricing() {
         method: "PUT",
         headers: creditAuthHeaders(),
         body: JSON.stringify({
+          confirmed: true,
           user_id: Number(creditForm.user_id),
           credit_limit: Number(creditForm.credit_limit || 0),
           billing_cycle_day: Number(creditForm.billing_cycle_day || 1),
