@@ -1211,8 +1211,8 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
             <div className="dashboard-table-wrap h-full">
               <table ref={tableRef} className="dashboard-module-table live-session-data-table w-full divide-y">
                 <colgroup>
-                  <col style={{width:210}}/><col style={{width:210}}/><col style={{width:210}}/>
-                  <col style={{width:100}}/><col style={{width:140}}/><col style={{width:120}}/>
+                  <col style={{width:"23%"}}/><col style={{width:"20%"}}/><col style={{width:"21%"}}/>
+                  <col style={{width:"12%"}}/><col style={{width:"13%"}}/><col style={{width:"11%"}}/>
                 </colgroup>
                 <thead className="dashboard-module-table-head sticky top-0 z-10">
                   <tr>
