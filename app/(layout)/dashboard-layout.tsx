@@ -186,14 +186,14 @@ export function DashboardLayout({ children, contentScroll = "page" }: DashboardL
 
       <div className={`flex min-h-0 flex-1 overflow-hidden ${showMobileHeader ? "pt-[58px] md:pt-0" : ""}`}>
         {showSidebar && (
-          <div className={`hidden shrink-0 md:block md:w-72 ${isNavPinned ? 'xl:w-72' : 'xl:w-[76px]'}`} aria-hidden="true" />
+          <div className={`hidden shrink-0 md:block md:w-60 ${isNavPinned ? 'xl:w-60' : 'xl:w-[64px]'}`} aria-hidden="true" />
         )}
         {showSidebar && (
           <aside
             className={`
-              dashboard-nav dashboard-nav-surface dashboard-nav-divider group fixed left-0 top-0 z-[20040] pointer-events-auto flex h-full w-[86vw] max-w-72 flex-col overflow-hidden border-r p-3 backdrop-blur-xl transition-transform duration-300 ease-out
-              md:fixed md:top-0 md:h-dvh md:w-72 md:max-w-none md:translate-x-0 md:shrink-0
-              ${isNavPinned ? "xl:w-72" : "xl:w-[76px] xl:hover:w-72"}
+              dashboard-nav dashboard-nav-surface dashboard-nav-divider group fixed left-0 top-0 z-[20040] pointer-events-auto flex h-full w-[86vw] max-w-60 flex-col overflow-hidden border-r p-3 backdrop-blur-xl transition-transform duration-300 ease-out
+              md:fixed md:top-0 md:h-dvh md:w-60 md:max-w-none md:translate-x-0 md:shrink-0
+              ${isNavPinned ? "xl:w-60" : "xl:w-[64px] xl:hover:w-60"}
               ${isNavOpen ? "translate-x-0" : "-translate-x-full"}
             `}
           >

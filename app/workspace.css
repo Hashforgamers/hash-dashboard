@@ -334,3 +334,60 @@ svg[data-search-icon],
 @media (max-width: 480px) {
  .workspace-ui .account-scope .account-gallery-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
+
+/* Workspace density: one type scale for navigation, forms and operational data. */
+.workspace-ui.dashboard-typography {
+  --dash-fs-2xs: 11px;
+  --dash-fs-xs: 12px;
+  --dash-fs-sm: 13px;
+  --dash-fs-base: 13px;
+  --dash-fs-lg: 14px;
+  --dash-fs-xl: 16px;
+  --dash-fs-2xl: 20px;
+  --dash-fs-3xl: 24px;
+  --premium-shell-bg: hsl(var(--background));
+  font-size: 13px;
+  -webkit-font-smoothing: antialiased;
+}
+.workspace-ui .dashboard-nav-item { min-height: 32px; border-radius: 8px; font-size: 13px; }
+.workspace-ui .dashboard-nav-item svg { width: 16px; height: 16px; }
+.workspace-ui .gaming-nav-active { background: var(--ws-thumb); border-color: transparent; }
+.workspace-ui .operations-summary { padding: 0 0 10px; }
+.workspace-ui .operations-summary .tab-container { background: var(--ws-fill); border-color: transparent; }
+.workspace-ui .operations-summary .tab-active { background: var(--ws-thumb); box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3); }
+.workspace-ui .operations-dashboard :is(.dashboard-module-panel, .dashboard-booking-slab) {
+  background: hsl(var(--card));
+  border-color: hsl(var(--border));
+  border-radius: 14px;
+}
+.workspace-ui .dashboard-quick-booking { padding: 12px; }
+.workspace-ui .dashboard-quick-toolbar { margin-bottom: 8px; }
+.workspace-ui .dashboard-quick-console-strip { padding-left: 10px; }
+.workspace-ui .dashboard-quick-booking .dashboard-slab-title { font-size: 13px !important; }
+.workspace-ui .dashboard-quick-booking .dashboard-slot-chip {
+  flex-basis: 80px; width: 80px; min-width: 80px; height: 48px; gap: 2px;
+  border-radius: 10px; background: rgba(255, 255, 255, 0.04); border-color: hsl(var(--border));
+}
+.workspace-ui .dashboard-quick-booking .dashboard-slot-chip-selected { background: hsl(var(--primary) / 0.18); border-color: hsl(var(--primary)); }
+.workspace-ui .dashboard-quick-booking .dashboard-slot-chip:hover { border-color: rgba(255, 255, 255, 0.24); }
+.workspace-ui .dashboard-quick-booking .dashboard-quick-book-button { min-width: 88px; }
+.workspace-ui .operations-dashboard .live-session-head { gap: 8px; margin-bottom: 12px; }
+.workspace-ui .operations-dashboard .live-session-data-table th { padding: 9px 10px; font-size: 11px !important; }
+.workspace-ui .operations-dashboard .live-session-data-table td { padding: 10px; }
+.workspace-ui .operations-dashboard .live-session-data-table td:last-child button { width: 76px; }
+.workspace-ui .operations-dashboard .live-session-data-table .live-session-customer-name { font-size: 13px !important; }
+.workspace-ui .operations-dashboard .dashboard-module-row:hover { background: rgba(255, 255, 255, 0.03); }
+.workspace-ui .operations-dashboard .live-session-data-table td:last-child { background: hsl(var(--card)); }
+.workspace-ui .operations-dashboard .dashboard-module-table-head,
+.workspace-ui .operations-dashboard .live-session-data-table th:last-child { background: hsl(var(--card)); }
+.workspace-ui .operations-dashboard .dashboard-module-empty { padding: 24px 12px; min-height: 140px; }
+@media (min-width: 1440px) {
+  .workspace-ui .operations-dashboard .live-session-head { flex-direction: row; align-items: center; }
+  .workspace-ui .operations-dashboard .live-session-tools { width: 240px; }
+}
+@media (max-width: 767px) {
+  .workspace-ui .dashboard-quick-toolbar { flex-wrap: wrap; }
+  .workspace-ui .dashboard-quick-console-strip { max-width: 100%; overflow-x: auto; }
+  .workspace-ui .dashboard-nav-item { min-height: 40px; }
+  .workspace-ui .operations-dashboard .tab-container button { min-height: 36px; }
+}

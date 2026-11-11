@@ -1,4 +1,4 @@
-.panel { display:flex; flex-direction:column; height:100%; min-height:11rem; box-sizing:border-box; contain:size; overflow:hidden; padding:10px 14px; border:1px solid hsl(var(--border)); border-radius:8px; background:hsl(var(--card)); color:hsl(var(--foreground)); }
+.panel { display:flex; flex-direction:column; height:100%; min-height:8.25rem; box-sizing:border-box; contain:size; overflow:hidden; padding:10px 14px; border:1px solid hsl(var(--border)); border-radius:14px; background:hsl(var(--card)); color:hsl(var(--foreground)); }
 /* Keep incoming requests from resizing the dashboard grid. Scroll unusually long content inside the card. */
 .header,.footer { flex:none; }
 .body { display:flex; flex-direction:column; justify-content:safe center; flex:1; min-height:0; overflow:auto; overscroll-behavior:contain; overflow-wrap:anywhere; }
