@@ -36,12 +36,12 @@ export const CustomerInfo = memo(({
   errors
 }: CustomerInfoProps) => {
   return (
-    <Card className="p-6 bg-gray-50 dark:bg-gray-700/30">
+    <Card className="p-6 bg-zinc-50 dark:bg-zinc-700/30">
       <div className="flex items-center gap-2 mb-4">
         <div className="p-1 bg-emerald-100 dark:bg-emerald-900/30 rounded">
           <User className="w-4 h-4 text-emerald-600" />
         </div>
-        <h3 className="text-lg font-semibold text-gray-800 dark:text-white">Customer Information</h3>
+        <h3 className="text-lg font-semibold text-zinc-800 dark:text-white">Customer Information</h3>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -56,16 +56,16 @@ export const CustomerInfo = memo(({
             autoComplete="off"
             placeholder="Email"
             className={cn(
-              'w-full pl-10 pr-4 py-3 bg-white dark:bg-gray-800 border rounded-lg transition-all duration-200',
+              'w-full pl-10 pr-4 py-3 bg-white dark:bg-zinc-800 border rounded-lg transition-all duration-200',
               errors.email
                 ? 'border-red-500 focus:border-red-500'
                 : focusedField === 'email'
                 ? 'border-emerald-500 focus:border-emerald-500'
-                : 'border-gray-300 dark:border-gray-600 focus:border-emerald-500',
+                : 'border-zinc-300 dark:border-zinc-600 focus:border-emerald-500',
               'focus:outline-none focus:ring-1 focus:ring-emerald-500/20'
             )}
           />
-          <Mail className="w-4 h-4 text-gray-400 absolute left-3 top-3.5" />
+          <Mail className="w-4 h-4 text-zinc-400 absolute left-3 top-3.5" />
           
           <AnimatePresence>
             {focusedField === 'email' && suggestions.length > 0 && (
@@ -90,16 +90,16 @@ export const CustomerInfo = memo(({
             autoComplete="off"
             placeholder="Phone"
             className={cn(
-              'w-full pl-10 pr-4 py-3 bg-white dark:bg-gray-800 border rounded-lg transition-all duration-200',
+              'w-full pl-10 pr-4 py-3 bg-white dark:bg-zinc-800 border rounded-lg transition-all duration-200',
               errors.phone
                 ? 'border-red-500 focus:border-red-500'
                 : focusedField === 'phone'
                 ? 'border-emerald-500 focus:border-emerald-500'
-                : 'border-gray-300 dark:border-gray-600 focus:border-emerald-500',
+                : 'border-zinc-300 dark:border-zinc-600 focus:border-emerald-500',
               'focus:outline-none focus:ring-1 focus:ring-emerald-500/20'
             )}
           />
-          <Phone className="w-4 h-4 text-gray-400 absolute left-3 top-3.5" />
+          <Phone className="w-4 h-4 text-zinc-400 absolute left-3 top-3.5" />
           
           <AnimatePresence>
             {focusedField === 'phone' && suggestions.length > 0 && (
@@ -123,16 +123,16 @@ export const CustomerInfo = memo(({
             onBlur={onBlur}
             placeholder="Full name"
             className={cn(
-              'w-full pl-10 pr-4 py-3 bg-white dark:bg-gray-800 border rounded-lg transition-all duration-200',
+              'w-full pl-10 pr-4 py-3 bg-white dark:bg-zinc-800 border rounded-lg transition-all duration-200',
               errors.name
                 ? 'border-red-500 focus:border-red-500'
                 : focusedField === 'name'
                 ? 'border-emerald-500 focus:border-emerald-500'
-                : 'border-gray-300 dark:border-gray-600 focus:border-emerald-500',
+                : 'border-zinc-300 dark:border-zinc-600 focus:border-emerald-500',
               'focus:outline-none focus:ring-1 focus:ring-emerald-500/20'
             )}
           />
-          <User className="w-4 h-4 text-gray-400 absolute left-3 top-3.5" />
+          <User className="w-4 h-4 text-zinc-400 absolute left-3 top-3.5" />
           
           <AnimatePresence>
             {focusedField === 'name' && suggestions.length > 0 && (
@@ -164,13 +164,13 @@ const SuggestionList = memo(({
     initial={{ opacity: 0, y: -5 }}
     animate={{ opacity: 1, y: 0 }}
     exit={{ opacity: 0, y: -5 }}
-    className="absolute z-20 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg w-full mt-1 max-h-40 overflow-y-auto"
+    className="absolute z-20 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg shadow-lg w-full mt-1 max-h-40 overflow-y-auto"
   >
     {suggestions.slice(0, 5).map((user, idx) => (
       <motion.li
         key={idx}
         whileHover={{ backgroundColor: 'rgba(16, 185, 129, 0.1)' }}
-        className="px-3 py-2 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 cursor-pointer border-b border-gray-100 dark:border-gray-700 last:border-b-0"
+        className="px-3 py-2 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 cursor-pointer border-b border-zinc-100 dark:border-zinc-700 last:border-b-0"
         onMouseDown={() => onSelect(user)}
       >
         <div className="flex items-center gap-2">
@@ -178,8 +178,8 @@ const SuggestionList = memo(({
             <User className="w-3 h-3 text-emerald-600" />
           </div>
           <div>
-            <p className="font-medium text-gray-800 dark:text-white text-sm">{user.name}</p>
-            <p className="text-gray-600 dark:text-gray-400 text-xs">{user.email}</p>
+            <p className="font-medium text-zinc-800 dark:text-white text-sm">{user.name}</p>
+            <p className="text-zinc-600 dark:text-zinc-400 text-xs">{user.email}</p>
           </div>
         </div>
       </motion.li>

@@ -1,7 +1,7 @@
 "use client"
 
 import { useCallback, useEffect, useMemo, useState } from "react"
-import { Clock, Menu, Pin, PinOff, RefreshCw, User, Wifi, WifiOff, X } from "lucide-react"
+import { Clock, Menu, Pin, PinOff, RefreshCw, User, X } from "lucide-react"
 import { usePathname, useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { MainNav } from "../components/main-nav"
@@ -12,6 +12,7 @@ import { useSubscription } from "@/hooks/useSubscription"
 import { useSocket } from "../context/SocketContext"
 import { useDashboardData } from "../context/DashboardDataContext"
 import { NotificationButton } from "../components/NotificationButton"
+import { CommandPalette } from "../components/command-palette"
 import { normalizeConsoleSlug, resolveConsoleColor, resolveConsoleIcon } from "../components/console-catalog"
 
 interface DashboardLayoutProps {
@@ -261,13 +262,13 @@ export function DashboardLayout({ children, contentScroll = "page" }: DashboardL
               </div>
             ) : (
               <div className="flex h-full min-h-[220px] items-center justify-center">
-                <div className="w-full max-w-xl rounded-lg border border-yellow-500/30 bg-yellow-500/10 p-6 text-center">
-                  <h2 className="text-xl font-semibold text-yellow-200">{subscriptionUnavailable ? "Unable to verify subscription" : "Subscription access required"}</h2>
-                  <p className="mt-2 text-sm text-yellow-100/80">
+                <div className="w-full max-w-xl rounded-lg border border-amber-500/30 bg-amber-500/10 p-6 text-center">
+                  <h2 className="text-xl font-semibold text-amber-200">{subscriptionUnavailable ? "Unable to verify subscription" : "Subscription access required"}</h2>
+                  <p className="mt-2 text-sm text-amber-100/80">
                     {subscriptionUnavailable ? "Please retry the subscription check." : !hasPlanFeature ? "Upgrade to a plan that includes this feature." : subscriptionStatus?.message || "Renew your subscription to use this module."}
                   </p>
                   {subscriptionStatus?.latest_subscription ? (
-                    <p className="mt-2 text-xs text-yellow-100/60">
+                    <p className="mt-2 text-xs text-amber-100/60">
                       Latest: {subscriptionStatus.latest_subscription.status || "unknown"} · {subscriptionStatus.latest_subscription.period_start || "-"} to {subscriptionStatus.latest_subscription.period_end || "-"}
                     </p>
                   ) : null}
@@ -283,29 +284,23 @@ export function DashboardLayout({ children, contentScroll = "page" }: DashboardL
           </main>
 
           {showGlobalRibbon && (
-            <div className="dashboard-nav-divider shrink-0 border-t px-2 pb-2 pt-1.5 sm:px-3 md:px-4">
-              <div className="dashboard-module-panel flex items-center justify-between gap-1.5 rounded-lg px-2.5 py-1.5 text-[11px] md:flex-wrap max-md:flex-nowrap">
+            <div className="dashboard-nav-divider shrink-0 border-t px-3 py-1.5 sm:px-4 md:px-5">
+              <div className="flex items-center justify-between gap-1.5 px-1 py-1 text-xs text-muted-foreground md:flex-wrap max-md:flex-nowrap">
                 <div className="min-w-0 flex-1 max-md:overflow-x-auto max-md:[scrollbar-width:none] max-md:[&::-webkit-scrollbar]:hidden md:overflow-visible">
-                  <div className="flex items-center gap-1.5 text-[#c7c7cc] md:flex-wrap max-md:w-max max-md:whitespace-nowrap">
-                    <span className="inline-flex items-center gap-1 rounded-md border border-[#30d158]/25 bg-[#30d158]/10 px-1.5 py-0.5 text-[#30d158]">
-                      <Clock className="h-3.5 w-3.5" />
+                  <div className="flex items-center gap-3 md:flex-wrap max-md:w-max max-md:whitespace-nowrap">
+                    <span className="inline-flex items-center gap-1.5 font-medium tabular-nums text-foreground">
+                      <Clock className="h-3.5 w-3.5 text-muted-foreground" />
                       {nowISTTimeText}
                     </span>
-                    <span className="inline-flex items-center gap-1 rounded-md border border-border px-1.5 py-0.5">
-                      {nowISTDateText}
-                    </span>
-                    <button type="button" onClick={()=>router.push("/account")} title={activeStaff ? `${activeStaff.name} · ${activeStaff.role} — Open account settings` : "Loading active session"} className="inline-flex items-center gap-1 rounded-md px-2 py-1 hover:bg-muted">
-                      <User className="h-3.5 w-3.5 text-[#0a84ff]" />
+                    <span>{nowISTDateText}</span>
+                    <button type="button" onClick={()=>router.push("/account")} title={activeStaff ? `${activeStaff.name} · ${activeStaff.role} — Open account settings` : "Loading active session"} className="inline-flex items-center gap-1.5 rounded-md px-1.5 py-0.5 transition-colors hover:bg-white/[0.06] hover:text-foreground">
+                      <User className="h-3.5 w-3.5" />
                       {activeStaff ? (activeStaff.role === "owner" ? "Owner" : `${activeStaff.name} · ${activeStaff.role === "manager" ? "Manager" : "Staff"}`) : "Loading user…"}
                     </button>
                     <span
-                      className={`inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 ${
-                        isConnected
-                          ? "border-[#30d158]/35 bg-[#30d158]/10 text-[#30d158]"
-                          : "border-[#ff9f0a]/35 bg-[#ff9f0a]/10 text-[#ffb340]"
-                      }`}
+                      className="inline-flex items-center gap-1.5"
                     >
-                      {isConnected ? <Wifi className="h-3.5 w-3.5" /> : <WifiOff className="h-3.5 w-3.5" />}
+                      <span aria-hidden="true" className={`h-1.5 w-1.5 rounded-full ${isConnected ? "bg-emerald-500" : "animate-pulse bg-amber-400"}`} />
                       {isConnected ? "Connected" : "Reconnecting…"}
                     </span>
                     {consolesLoading && <span role="status" className="text-muted-foreground">Loading consoles…</span>}
@@ -314,22 +309,23 @@ export function DashboardLayout({ children, contentScroll = "page" }: DashboardL
                       return (
                         <button type="button" onClick={()=>router.push(`/gaming?type=${encodeURIComponent(platform.type)}`)}
                           key={`global-ribbon-${platform.type}`}
-                          className="inline-flex items-center gap-1 rounded-md border border-border px-1.5 py-0.5"
+                          className="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 tabular-nums transition-colors hover:bg-white/[0.06] hover:text-foreground"
                           title={`Manage ${platform.name} · ${platform.total} consoles`} aria-label={`Manage ${platform.name}, ${platform.total} consoles`}
                         >
                           <PlatformIcon className="h-3.5 w-3.5" style={{ color: platform.color }} />
-                          <span className="font-medium">{platform.total}</span>
+                          <span>{platform.total}</span>
                         </button>
                       )
                     })}
                   </div>
                 </div>
                 <div className="ml-1 flex shrink-0 items-center gap-1.5">
+                  <CommandPalette onRefresh={() => void handleManualRefresh()} />
                   <NotificationButton vendorId={vendorId} />
                   <button
                     type="button"
                     onClick={handleManualRefresh}
-                    className="inline-flex items-center gap-1 rounded-md border border-white/10 bg-white/[0.06] px-2 py-0.5 text-[#f5f5f7] hover:bg-white/[0.1]"
+                    className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 transition-colors hover:bg-white/[0.06] hover:text-foreground disabled:opacity-60"
                     disabled={isManualRefreshing}
                     title="Refresh"
                     aria-label="Refresh dashboard data"

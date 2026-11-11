@@ -1,4 +1,5 @@
 import type { Config } from "tailwindcss";
+import colors from "tailwindcss/colors";
 
 const config: Config = {
   darkMode: ["class"],
@@ -9,6 +10,15 @@ const config: Config = {
     "*.{js,ts,jsx,tsx,mdx}"
   ],
   theme: {
+    // One palette for the whole dashboard: zinc = neutrals, emerald = success, red = danger,
+    // amber = warning, blue = primary/info, purple = premium. Other Tailwind colour families are
+    // intentionally not available, so screens can't drift back to slate/cyan/rose etc.
+    colors: {
+      inherit: colors.inherit, current: colors.current, transparent: colors.transparent,
+      black: colors.black, white: colors.white,
+      zinc: colors.zinc, emerald: colors.emerald, red: colors.red,
+      amber: colors.amber, blue: colors.blue, purple: colors.purple,
+    },
     extend: {
       colors: {
         background: 'hsl(var(--background))',

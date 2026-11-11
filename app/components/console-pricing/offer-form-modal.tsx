@@ -46,7 +46,7 @@ export function OfferFormModal({
         transition={{ duration: 0.2 }}
         className="ui-dialog-surface w-full max-w-md overflow-hidden rounded-xl shadow-2xl"
       >
-            <div className="flex items-center justify-between border-b border-cyan-500/20 px-5 py-4">
+            <div className="flex items-center justify-between border-b border-blue-500/20 px-5 py-4">
               <h2 className="card-title">{editingOffer ? "Edit Promotion" : "Create New Promotion"}</h2>
               <button
                 onClick={() => {
@@ -151,7 +151,7 @@ export function OfferFormModal({
               </div>
             </div>
 
-            <div className="flex gap-3 border-t border-cyan-500/20 px-5 py-4">
+            <div className="flex gap-3 border-t border-blue-500/20 px-5 py-4">
               <button
                 onClick={() => {
                   setShowOfferForm(false);

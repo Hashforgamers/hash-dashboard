@@ -16,7 +16,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { motion, AnimatePresence } from "framer-motion";
 import FilterComponent from "./filterComponenet";
 import { Input } from "@/components/ui/input";
-import { ArrowUpIcon, ArrowDownIcon, SearchIcon, DollarSignIcon, CreditCardIcon, UserIcon, ClockIcon, FilterIcon, Download } from 'lucide-react';
+import { ArrowUpIcon, ArrowDownIcon, SearchIcon, DollarSignIcon, CreditCardIcon, UserIcon, ClockIcon, FilterIcon, Download, ChevronRight } from 'lucide-react';
 import { saveAs } from "file-saver";
 import { Badge } from "@/components/ui/badge";
 import { jwtDecode } from "jwt-decode";
@@ -569,37 +569,37 @@ export function TransactionTable() {
   const renderTransactionCell = (transaction: Transaction, key: ColumnKey) => {
     switch (key) {
       case "bookingId":
-        return <TableCell className="px-4 py-3 text-slate-700 dark:text-slate-300">{transaction.bookingId ?? "-"}</TableCell>;
+        return <TableCell className="px-4 py-3 text-zinc-700 dark:text-zinc-300">{transaction.bookingId ?? "-"}</TableCell>;
       case "slotDate":
-        return <TableCell className="px-4 py-3 text-slate-700 dark:text-slate-300">{transaction.slotDate}</TableCell>;
+        return <TableCell className="px-4 py-3 text-zinc-700 dark:text-zinc-300">{transaction.slotDate}</TableCell>;
       case "slotTime":
-        return <TableCell className="px-4 py-3 text-slate-700 dark:text-slate-300">{transaction.slotTime}</TableCell>;
+        return <TableCell className="px-4 py-3 text-zinc-700 dark:text-zinc-300">{transaction.slotTime}</TableCell>;
       case "userName":
-        return <TableCell className="px-4 py-3 text-slate-900 dark:text-slate-100">{transaction.userName}</TableCell>;
+        return <TableCell className="px-4 py-3 text-zinc-900 dark:text-zinc-100">{transaction.userName}</TableCell>;
       case "amount":
-        return <TableCell className="px-4 py-3 text-right font-medium text-slate-900 dark:text-slate-100">₹{transaction.amount.toFixed(2)}</TableCell>;
+        return <TableCell className="px-4 py-3 text-right font-medium text-zinc-900 dark:text-zinc-100">₹{transaction.amount.toFixed(2)}</TableCell>;
       case "appFeeAmount":
   return (
-          <TableCell className="px-4 py-3 text-right text-slate-700 dark:text-slate-300">
+          <TableCell className="px-4 py-3 text-right text-zinc-700 dark:text-zinc-300">
             ₹{Number(transaction.appFeeAmount || 0).toFixed(2)}
           </TableCell>
         );
       case "netAmount":
         return (
-          <TableCell className="px-4 py-3 text-right font-medium text-slate-900 dark:text-slate-100">
+          <TableCell className="px-4 py-3 text-right font-medium text-zinc-900 dark:text-zinc-100">
             ₹{Number(transaction.netAmount ?? (transaction.amount - (transaction.appFeeAmount || 0))).toFixed(2)}
           </TableCell>
         );
       case "modeOfPayment":
         return (
           <TableCell className="px-4 py-3">
-            <Badge variant="secondary" className="bg-slate-200 text-slate-900 dark:bg-slate-700/80 dark:text-slate-200">{transaction.modeOfPayment}</Badge>
+            <Badge variant="secondary" className="bg-zinc-200 text-zinc-900 dark:bg-zinc-700/80 dark:text-zinc-200">{transaction.modeOfPayment}</Badge>
           </TableCell>
         );
       case "paymentUseCase":
         return (
           <TableCell className="px-4 py-3">
-            <Badge variant="outline" className="border-slate-300 text-slate-700 dark:border-slate-500/70 dark:text-slate-300">
+            <Badge variant="outline" className="border-zinc-300 text-zinc-700 dark:border-zinc-500/70 dark:text-zinc-300">
               {transaction.paymentUseCase || "-"}
             </Badge>
           </TableCell>
@@ -607,7 +607,7 @@ export function TransactionTable() {
       case "bookingType":
         return (
           <TableCell className="px-4 py-3">
-            <Badge variant="outline" className="border-slate-300 text-slate-700 dark:border-slate-500/70 dark:text-slate-300">{transaction.bookingType}</Badge>
+            <Badge variant="outline" className="border-zinc-300 text-zinc-700 dark:border-zinc-500/70 dark:text-zinc-300">{transaction.bookingType}</Badge>
           </TableCell>
         );
       case "settlementStatus":
@@ -625,8 +625,8 @@ export function TransactionTable() {
                 transaction.settlementStatus === "done"
                   ? "border-emerald-300 bg-emerald-50 text-emerald-800 dark:border-emerald-500/30 dark:bg-emerald-500/20 dark:text-emerald-400"
                   : transaction.settlementStatus === "pending"
-                  ? "border-yellow-300 bg-yellow-50 text-yellow-800 dark:border-yellow-500/30 dark:bg-yellow-500/20 dark:text-yellow-400"
-                  : "border-slate-300 text-slate-700 dark:border-slate-500/70 dark:text-slate-300"
+                  ? "border-amber-300 bg-amber-50 text-amber-800 dark:border-amber-500/30 dark:bg-amber-500/20 dark:text-amber-400"
+                  : "border-zinc-300 text-zinc-700 dark:border-zinc-500/70 dark:text-zinc-300"
               }
             >
               {transaction.settlementStatus}
@@ -634,18 +634,18 @@ export function TransactionTable() {
           </TableCell>
         );
       case "sourceChannel":
-        return <TableCell className="px-4 py-3 text-slate-700 dark:text-slate-300">{transaction.sourceChannel || "-"}</TableCell>;
+        return <TableCell className="px-4 py-3 text-zinc-700 dark:text-zinc-300">{transaction.sourceChannel || "-"}</TableCell>;
       case "staffName":
-        return <TableCell className="px-4 py-3 text-slate-700 dark:text-slate-300">{transaction.staffName || "-"}</TableCell>;
+        return <TableCell className="px-4 py-3 text-zinc-700 dark:text-zinc-300">{transaction.staffName || "-"}</TableCell>;
       case "breakup":
         return (
-          <TableCell className="px-4 py-3 text-xs text-slate-700 dark:text-slate-300">
+          <TableCell className="px-4 py-3 text-xs text-zinc-700 dark:text-zinc-300">
             B:{(transaction.baseAmount || 0).toFixed(0)} M:{(transaction.mealsAmount || 0).toFixed(0)} C:{(transaction.controllerAmount || 0).toFixed(0)} W:{(transaction.waiveOffAmount || 0).toFixed(0)}
           </TableCell>
         );
       case "gst":
         return (
-          <TableCell className="px-4 py-3 text-xs text-slate-700 dark:text-slate-300">
+          <TableCell className="px-4 py-3 text-xs text-zinc-700 dark:text-zinc-300">
             {transaction.gstRate ? `${transaction.gstRate}%` : "-"}
             {transaction.gstRate
               ? ` | C:${(transaction.cgstAmount || 0).toFixed(2)} S:${(transaction.sgstAmount || 0).toFixed(2)} I:${(transaction.igstAmount || 0).toFixed(2)}`
@@ -654,12 +654,12 @@ export function TransactionTable() {
         );
       case "totalWithTax":
         return (
-          <TableCell className="px-4 py-3 text-right font-medium text-slate-900 dark:text-slate-200">
+          <TableCell className="px-4 py-3 text-right font-medium text-zinc-900 dark:text-zinc-200">
             ₹{getTransactionTotalWithTax(transaction).toFixed(2)}
           </TableCell>
         );
       default:
-        return <TableCell className="px-4 py-3 text-slate-700 dark:text-slate-300">-</TableCell>;
+        return <TableCell className="px-4 py-3 text-zinc-700 dark:text-zinc-300">-</TableCell>;
     }
   };
 
@@ -669,9 +669,9 @@ export function TransactionTable() {
       return "border-emerald-300 bg-emerald-50 text-emerald-800 dark:border-emerald-500/30 dark:bg-emerald-500/20 dark:text-emerald-400";
     }
     if (normalized === "pending") {
-      return "border-yellow-300 bg-yellow-50 text-yellow-800 dark:border-yellow-500/30 dark:bg-yellow-500/20 dark:text-yellow-400";
+      return "border-amber-300 bg-amber-50 text-amber-800 dark:border-amber-500/30 dark:bg-amber-500/20 dark:text-amber-400";
     }
-    return "border-slate-300 text-slate-700 dark:border-slate-500/70 dark:text-slate-300";
+    return "border-zinc-300 text-zinc-700 dark:border-zinc-500/70 dark:text-zinc-300";
   };
 
   if (boolTrans) {
@@ -691,7 +691,7 @@ export function TransactionTable() {
           animate="visible"
           transition={{ duration: 0.3, delay: 0 }}
         >
-          <Card className="gaming-kpi-card rounded-xl border-cyan-500/20 backdrop-blur-sm">
+          <Card className="gaming-kpi-card">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1.5 sm:pb-2">
               <CardTitle className="dash-kpi-label">
                 Gross Revenue
@@ -715,7 +715,7 @@ export function TransactionTable() {
           animate="visible"
           transition={{ duration: 0.3, delay: 0.1 }}
         >
-          <Card className="gaming-kpi-card rounded-xl border-cyan-500/20 backdrop-blur-sm">
+          <Card className="gaming-kpi-card">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1.5 sm:pb-2">
               <CardTitle className="dash-kpi-label">
                 Unique Users
@@ -737,12 +737,12 @@ export function TransactionTable() {
           animate="visible"
           transition={{ duration: 0.3, delay: 0.2 }}
         >
-          <Card className="gaming-kpi-card rounded-xl border-cyan-500/20 backdrop-blur-sm">
+          <Card className="gaming-kpi-card">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1.5 sm:pb-2">
               <CardTitle className="dash-kpi-label">
                 Pending Settlements
               </CardTitle>
-              <ClockIcon className="h-4 w-4 text-yellow-400" />
+              <ClockIcon className="h-4 w-4 text-amber-400" />
             </CardHeader>
             <CardContent>
               <div className="dash-kpi-value !text-base sm:!text-2xl">
@@ -759,7 +759,7 @@ export function TransactionTable() {
           animate="visible"
           transition={{ duration: 0.3, delay: 0.3 }}
         >
-          <Card className="gaming-kpi-card rounded-xl border-cyan-500/20 backdrop-blur-sm">
+          <Card className="gaming-kpi-card">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1.5 sm:pb-2">
               <CardTitle className="dash-kpi-label">
                 Cash Transactions
@@ -787,7 +787,7 @@ export function TransactionTable() {
         className="dashboard-toolbar shrink-0 flex-col items-stretch gap-2 md:flex-row md:items-center"
       >
         <div className="relative min-w-0 flex-1 md:min-w-[220px]">
-          <SearchIcon data-search-icon="" aria-hidden="true" className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-500 dark:text-slate-400" />
+          <SearchIcon data-search-icon="" aria-hidden="true" className="absolute left-2.5 top-2.5 h-4 w-4 text-zinc-500 dark:text-zinc-400" />
           <Input data-search-input=""
             placeholder="Search transactions..."
             className="dashboard-module-input h-10 w-full pl-10 text-sm"
@@ -872,11 +872,11 @@ export function TransactionTable() {
             onClick={(e) => e.stopPropagation()}
           >
           <div className="mb-2 flex items-center justify-between">
-            <p className="text-sm font-semibold text-slate-900 dark:text-slate-200">Show/Hide Columns</p>
+            <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-200">Show/Hide Columns</p>
             <div className="flex flex-wrap justify-end gap-2">
               <button
                 type="button"
-                className="rounded border border-slate-300 px-2 py-1 text-xs text-slate-900 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-800"
+                className="rounded border border-zinc-300 px-2 py-1 text-xs text-zinc-900 hover:bg-zinc-50 dark:border-zinc-600 dark:text-zinc-200 dark:hover:bg-zinc-800"
                 onClick={() => {
                   setVisibleColumns((prev) => {
                     const next = { ...prev };
@@ -889,7 +889,7 @@ export function TransactionTable() {
               </button>
               <button
                 type="button"
-                className="rounded border border-slate-300 px-2 py-1 text-xs text-slate-900 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-800"
+                className="rounded border border-zinc-300 px-2 py-1 text-xs text-zinc-900 hover:bg-zinc-50 dark:border-zinc-600 dark:text-zinc-200 dark:hover:bg-zinc-800"
                 onClick={() => {
                   setVisibleColumns((prev) => {
                     const next = { ...prev };
@@ -902,7 +902,7 @@ export function TransactionTable() {
               </button>
               <button
                 type="button"
-                className="rounded border border-slate-300 px-2 py-1 text-xs text-slate-900 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-800"
+                className="rounded border border-zinc-300 px-2 py-1 text-xs text-zinc-900 hover:bg-zinc-50 dark:border-zinc-600 dark:text-zinc-200 dark:hover:bg-zinc-800"
                 onClick={() => setShowColumnSelector(false)}
               >
                 Close
@@ -911,7 +911,7 @@ export function TransactionTable() {
           </div>
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 md:grid-cols-4">
             {transactionColumns.map((col) => (
-              <label key={col.key} className="flex items-center gap-2 text-xs text-slate-900 dark:text-slate-200">
+              <label key={col.key} className="flex items-center gap-2 text-xs text-zinc-900 dark:text-zinc-200">
                 <input
                   type="checkbox"
                   checked={visibleColumns[col.key]}
@@ -939,7 +939,7 @@ export function TransactionTable() {
 
       <div className="md:hidden space-y-3 overflow-y-auto pr-1">
         {filteredTransactions.length === 0 ? (
-          <MobileCompactCard className="border-slate-300/40 bg-slate-50/70 p-4 text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-400">
+          <MobileCompactCard className="border-zinc-300/40 bg-zinc-50/70 p-4 text-sm text-zinc-600 dark:border-zinc-700 dark:bg-zinc-900/40 dark:text-zinc-400">
             No transactions found for selected filters.
           </MobileCompactCard>
         ) : (
@@ -947,8 +947,8 @@ export function TransactionTable() {
             <MobileCompactCard key={`mobile_txn_${transaction.id}`}>
               <div className="flex items-start justify-between gap-2">
                 <div>
-                  <p className="text-sm font-semibold text-slate-100">{transaction.userName || "Unknown"}</p>
-                  <p className="text-[11px] text-slate-400">
+                  <p className="text-sm font-semibold text-zinc-100">{transaction.userName || "Unknown"}</p>
+                  <p className="text-[11px] text-zinc-400">
                     Booking #{transaction.bookingId ?? "-"} · {transaction.slotDate} {transaction.slotTime}
                   </p>
                 </div>
@@ -957,21 +957,21 @@ export function TransactionTable() {
                 </Badge>
               </div>
               <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
-                <div className="rounded-md border border-cyan-500/10 bg-slate-950/40 p-2">
-                  <p className="text-slate-500">Total</p>
-                  <p className="font-semibold text-slate-100">₹{getTransactionTotalWithTax(transaction).toFixed(2)}</p>
+                <div className="rounded-md border border-blue-500/10 bg-zinc-950/40 p-2">
+                  <p className="text-zinc-500">Total</p>
+                  <p className="font-semibold text-zinc-100">₹{getTransactionTotalWithTax(transaction).toFixed(2)}</p>
                 </div>
-                <div className="rounded-md border border-cyan-500/10 bg-slate-950/40 p-2">
-                  <p className="text-slate-500">App Fee</p>
-                  <p className="font-semibold text-slate-100">₹{Number(transaction.appFeeAmount || 0).toFixed(2)}</p>
+                <div className="rounded-md border border-blue-500/10 bg-zinc-950/40 p-2">
+                  <p className="text-zinc-500">App Fee</p>
+                  <p className="font-semibold text-zinc-100">₹{Number(transaction.appFeeAmount || 0).toFixed(2)}</p>
                 </div>
-                <div className="rounded-md border border-cyan-500/10 bg-slate-950/40 p-2">
-                  <p className="text-slate-500">Payment</p>
-                  <p className="font-semibold text-slate-100">{transaction.modeOfPayment || "-"}</p>
+                <div className="rounded-md border border-blue-500/10 bg-zinc-950/40 p-2">
+                  <p className="text-zinc-500">Payment</p>
+                  <p className="font-semibold text-zinc-100">{transaction.modeOfPayment || "-"}</p>
                 </div>
-                <div className="rounded-md border border-cyan-500/10 bg-slate-950/40 p-2">
-                  <p className="text-slate-500">Type</p>
-                  <p className="font-semibold text-slate-100">{transaction.bookingType || "-"}</p>
+                <div className="rounded-md border border-blue-500/10 bg-zinc-950/40 p-2">
+                  <p className="text-zinc-500">Type</p>
+                  <p className="font-semibold text-zinc-100">{transaction.bookingType || "-"}</p>
                 </div>
               </div>
             </MobileCompactCard>
@@ -990,7 +990,7 @@ export function TransactionTable() {
         <div className="h-full min-h-0 w-full overflow-auto overscroll-contain [scrollbar-gutter:stable_both-edges]">
           <Table className="min-w-[1950px]">
             <TableHeader className="dashboard-module-table-head sticky top-0 backdrop-blur-sm">
-              <TableRow className="border-slate-200 hover:bg-transparent dark:border-slate-700">
+              <TableRow className="border-zinc-200 hover:bg-transparent dark:border-zinc-700">
                 {transactionColumns
                   .filter((col) => visibleColumns[col.key])
                   .map((col) => (
@@ -998,10 +998,10 @@ export function TransactionTable() {
                       {col.key === "breakup" ? (
                         <span className="group relative inline-flex items-center gap-1">
                           <span>{col.label}</span>
-                          <span className="inline-flex h-4 w-4 cursor-help items-center justify-center rounded-full border border-slate-300 text-[10px] text-slate-600 dark:border-slate-500 dark:text-slate-400">
+                          <span className="inline-flex h-4 w-4 cursor-help items-center justify-center rounded-full border border-zinc-300 text-[10px] text-zinc-600 dark:border-zinc-500 dark:text-zinc-400">
                             i
                           </span>
-                          <span className="pointer-events-none absolute left-0 top-6 z-50 hidden w-60 rounded-md border border-slate-300 bg-white px-2 py-1 text-[11px] font-normal text-slate-700 shadow-lg group-hover:block dark:border-slate-600 dark:bg-slate-900 dark:text-slate-300">
+                          <span className="pointer-events-none absolute left-0 top-6 z-50 hidden w-60 rounded-md border border-zinc-300 bg-white px-2 py-1 text-[11px] font-normal text-zinc-700 shadow-lg group-hover:block dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-300">
                             B = Base, M = Meals, C = Controller, W = Waive-off
                           </span>
                         </span>
@@ -1027,20 +1027,20 @@ export function TransactionTable() {
                     <motion.tr
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
-                      className="border-slate-200 transition-colors hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800/70"
+                      className="border-zinc-200 transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800/70"
                     >
                       {visibleCols.map((col, idx) => {
                         if (idx === 0) {
                           return (
-                            <TableCell key={`${slotDate}_${col.key}_date`} className="px-4 py-3 font-medium text-sky-700 dark:text-cyan-200">
+                            <TableCell key={`${slotDate}_${col.key}_date`} className="whitespace-nowrap px-4 py-3 font-medium text-foreground">
                               <button
                                 type="button"
                                 onClick={() => toggleDateExpand(slotDate)}
-                                className="inline-flex items-center gap-2 text-left"
+                                className="inline-flex items-center gap-2 whitespace-nowrap text-left"
                                 aria-expanded={expandedDates.includes(slotDate)}
                                 aria-label={`Toggle transactions for ${slotDate}`}
                               >
-                                <span className="text-xs">{expandedDates.includes(slotDate) ? "▲" : "▼"}</span>
+                                <ChevronRight aria-hidden="true" className={`h-4 w-4 text-muted-foreground transition-transform duration-200 ${expandedDates.includes(slotDate) ? "rotate-90" : ""}`} />
                                 <span>{slotDate}</span>
                               </button>
                             </TableCell>
@@ -1049,7 +1049,7 @@ export function TransactionTable() {
 
                         if (col.key === dayTotalTargetKey) {
                           return (
-                            <TableCell key={`${slotDate}_${col.key}_total`} className="px-4 py-3 text-right font-medium text-sky-700 dark:text-cyan-200">
+                            <TableCell key={`${slotDate}_${col.key}_total`} className="px-4 py-3 text-right font-medium text-blue-700 dark:text-blue-200">
                               ₹{dayTotalAmount.toFixed(2)}
                             </TableCell>
                           );
@@ -1071,12 +1071,12 @@ export function TransactionTable() {
                               initial={{ opacity: 0 }}
                               animate={{ opacity: 1 }}
                               exit={{ opacity: 0 }}
-                              className="border-slate-200 bg-slate-50/80 transition-colors hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900/60 dark:hover:bg-slate-800/70"
+                              className="border-zinc-200 bg-zinc-50/80 transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-900/60 dark:hover:bg-zinc-800/70"
                             >
                               {visibleCols.map((col, idx) => {
                                 if (idx === 0) {
                                   return (
-                                    <TableCell key={`${slotDate}_${userId}_${col.key}_summary`} className="px-4 py-3 font-medium text-slate-900 dark:text-slate-100">
+                                    <TableCell key={`${slotDate}_${userId}_${col.key}_summary`} className="px-4 py-3 font-medium text-zinc-900 dark:text-zinc-100">
                                       <button
                                         type="button"
                                         onClick={() => toggleUserExpand(slotDate, userId)}
@@ -1092,14 +1092,14 @@ export function TransactionTable() {
                                 }
                                 if (col.key === "amount" || col.key === "totalWithTax") {
                                   return (
-                                    <TableCell key={`${slotDate}_${userId}_${col.key}_sum`} className="px-4 py-3 text-right font-medium text-slate-900 dark:text-slate-100">
+                                    <TableCell key={`${slotDate}_${userId}_${col.key}_sum`} className="px-4 py-3 text-right font-medium text-zinc-900 dark:text-zinc-100">
                                       ₹{userGroup.totalAmount.toFixed(2)}
                                     </TableCell>
                                   );
                                 }
                                 if (col.key === "bookingType") {
                                   return (
-                                    <TableCell key={`${slotDate}_${userId}_${col.key}_count`} className="px-4 py-3 text-slate-700 dark:text-slate-300">
+                                    <TableCell key={`${slotDate}_${userId}_${col.key}_count`} className="px-4 py-3 text-zinc-700 dark:text-zinc-300">
                                       {userGroup.bookings.length} bookings
                                     </TableCell>
                                   );
@@ -1117,7 +1117,7 @@ export function TransactionTable() {
                                   animate={{ opacity: 1, y: 0 }}
                                   exit={{ opacity: 0, y: -6 }}
                                   transition={{ duration: 0.15 }}
-                                  className="border-slate-200 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800/55"
+                                  className="border-zinc-200 transition-colors hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-800/55"
                                 >
                                   {transactionColumns
                                     .filter((col) => visibleColumns[col.key])

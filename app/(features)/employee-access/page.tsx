@@ -253,7 +253,7 @@ export default function EmployeeAccessPage() {
               </div>
 
             </div>
-            <div className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/[0.06] px-3 py-1 text-xs text-[#c7c7cc]">
+            <div className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/[0.06] px-3 py-1 text-xs text-zinc-300">
               <Shield className="h-3.5 w-3.5" />
               Active session: {activeStaff?.name || "Owner"} ({activeStaff?.role || "owner"})
             </div>
@@ -291,13 +291,13 @@ export default function EmployeeAccessPage() {
                     onChange={(e) => setName(e.target.value)}
                     placeholder="e.g. Akash"
                     disabled={isCreating}
-                    className="border-slate-600/70 bg-slate-900/70"
+                    className="border-zinc-600/70 bg-zinc-900/70"
                   />
                 </div>
                 <div className="space-y-1 md:col-span-1">
                   <Label>Role</Label>
                   <Select value={role} onValueChange={(value: StaffRole) => setRoleState(value)} disabled={isCreating}>
-                    <SelectTrigger className="border-slate-600/70 bg-slate-900/70">
+                    <SelectTrigger className="border-zinc-600/70 bg-zinc-900/70">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -314,9 +314,9 @@ export default function EmployeeAccessPage() {
                 </div>
               </div>
 
-              <div className="mt-3 rounded-lg border border-slate-700/80 bg-slate-950/50 px-3 py-2 text-xs text-slate-300">
+              <div className="mt-3 rounded-lg border border-zinc-700/80 bg-zinc-950/50 px-3 py-2 text-xs text-zinc-300">
                 <div className="flex items-center gap-2">
-                  <KeyRound className="h-3.5 w-3.5 text-cyan-300" />
+                  <KeyRound className="h-3.5 w-3.5 text-blue-300" />
                   PIN is auto-generated in the background when an employee is created.
                 </div>
               </div>
@@ -335,7 +335,7 @@ export default function EmployeeAccessPage() {
             </div>
 
             <div className="dashboard-table-shell min-h-0 flex-1 overflow-hidden rounded-lg">
-              <div className="hidden grid-cols-12 border-b border-white/10 px-3 py-2 text-xs font-semibold text-[#a1a1a6] md:grid">
+              <div className="hidden grid-cols-12 border-b border-white/10 px-3 py-2 text-xs font-semibold text-zinc-400 md:grid">
                 <div className="col-span-4">Employee</div>
                 <div className="col-span-2">Role</div>
                 <div className="col-span-2">Status</div>
@@ -345,29 +345,29 @@ export default function EmployeeAccessPage() {
 
               <div className="h-full overflow-y-auto">
                 {staffProfiles.length === 0 ? (
-                  <div className="px-3 py-6 text-sm text-slate-400">No employees added for this cafe yet.</div>
+                  <div className="px-3 py-6 text-sm text-zinc-400">No employees added for this cafe yet.</div>
                 ) : (
                   staffProfiles.map((staff) => (
-                    <div key={staff.id} className="border-b border-slate-800/70 p-3 text-sm text-slate-200 md:px-3 md:py-2">
+                    <div key={staff.id} className="border-b border-zinc-800/70 p-3 text-sm text-zinc-200 md:px-3 md:py-2">
                       <div className="flex items-center gap-2 truncate font-medium md:hidden">
-                        <Users className="h-4 w-4 shrink-0 text-cyan-300" />
+                        <Users className="h-4 w-4 shrink-0 text-blue-300" />
                         <span className="truncate">{staff.name}</span>
                       </div>
 
                       <div className="mt-3 grid grid-cols-1 gap-3 md:mt-0 md:grid-cols-12 md:items-center">
                         <div className="hidden md:col-span-4 md:flex md:items-center md:gap-2 md:truncate md:font-medium">
-                          <Users className="h-4 w-4 text-cyan-300" />
+                          <Users className="h-4 w-4 text-blue-300" />
                           <span className="truncate">{staff.name}</span>
                         </div>
 
                         <div className="md:col-span-2">
-                          <p className="mb-1 text-[11px] uppercase tracking-[0.08em] text-slate-400 md:hidden">Role</p>
+                          <p className="mb-1 text-[11px] uppercase tracking-[0.08em] text-zinc-400 md:hidden">Role</p>
                           <Select
                             value={staff.role}
                             onValueChange={(value: StaffRole) => void handleSetRole(staff.id, value)}
                             disabled={Boolean(pendingStaffAction[staff.id])}
                           >
-                            <SelectTrigger className="h-8 border-slate-600/70 bg-slate-900/70">
+                            <SelectTrigger className="h-8 border-zinc-600/70 bg-zinc-900/70">
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
@@ -378,22 +378,22 @@ export default function EmployeeAccessPage() {
                         </div>
 
                         <div className="md:col-span-2">
-                          <p className="mb-1 text-[11px] uppercase tracking-[0.08em] text-slate-400 md:hidden">Status</p>
+                          <p className="mb-1 text-[11px] uppercase tracking-[0.08em] text-zinc-400 md:hidden">Status</p>
                           <Badge
-                            className={staff.isActive ? "border-emerald-400/30 bg-emerald-500/10 text-emerald-200" : "border-rose-400/30 bg-rose-500/10 text-rose-200"}
+                            className={staff.isActive ? "border-emerald-400/30 bg-emerald-500/10 text-emerald-200" : "border-red-400/30 bg-red-500/10 text-red-200"}
                           >
                             {staff.isActive ? "Active" : "Disabled"}
                           </Badge>
                         </div>
 
                         <div className="md:col-span-2">
-                          <p className="mb-1 text-[11px] uppercase tracking-[0.08em] text-slate-400 md:hidden">PIN</p>
-                          <div className="flex items-center gap-2 tracking-wider text-slate-200">
+                          <p className="mb-1 text-[11px] uppercase tracking-[0.08em] text-zinc-400 md:hidden">PIN</p>
+                          <div className="flex items-center gap-2 tracking-wider text-zinc-200">
                             {staff.pinCode ? <PrivatePin key={`${staff.id}:${staff.pinCode}`} value={staff.pinCode}/> : "Not set"}
                             {staff.pinCode && (
                               <button
                                 type="button"
-                                className="text-slate-400 transition-colors hover:text-cyan-300"
+                                className="text-zinc-400 transition-colors hover:text-blue-300"
                                 aria-label={`Copy PIN for ${staff.name}`}
                                 onClick={() => copyPin(staff.pinCode as string)}
                                 disabled={Boolean(pendingStaffAction[staff.id])}
@@ -406,7 +406,7 @@ export default function EmployeeAccessPage() {
 
                         <div className="md:col-span-2">
                           {pendingStaffAction[staff.id] && (
-                            <span className="mb-2 inline-block text-[11px] text-cyan-300">{STAFF_ACTION_LABELS[pendingStaffAction[staff.id]]}</span>
+                            <span className="mb-2 inline-block text-[11px] text-blue-300">{STAFF_ACTION_LABELS[pendingStaffAction[staff.id]]}</span>
                           )}
                           <div className="grid grid-cols-2 gap-2 md:flex md:items-center md:justify-end">
                             <Button
@@ -453,13 +453,13 @@ export default function EmployeeAccessPage() {
 
           <TabsContent
             value="service-mapping"
-            className="mt-4 min-h-0 flex-1 overflow-hidden rounded-xl border border-cyan-500/25 bg-slate-900/40 data-[state=inactive]:hidden data-[state=active]:flex data-[state=active]:flex-col"
+            className="mt-4 min-h-0 flex-1 overflow-hidden rounded-xl border border-blue-500/25 bg-zinc-900/40 data-[state=inactive]:hidden data-[state=active]:flex data-[state=active]:flex-col"
           >
-            <div className="flex items-center justify-between border-b border-cyan-500/20 px-3 py-2">
+            <div className="flex items-center justify-between border-b border-blue-500/20 px-3 py-2">
               <h2 className="dash-title !text-sm">Role to Service Mapping</h2>
               <div className="flex items-center gap-3">
                 {pendingPermissionKey && !isResettingPermissions && (
-                  <span className="inline-flex items-center text-xs text-cyan-300">
+                  <span className="inline-flex items-center text-xs text-blue-300">
                     <RefreshCw className="mr-1.5 h-3 w-3 animate-spin" />
                     Saving permission changes...
                   </span>
@@ -473,12 +473,12 @@ export default function EmployeeAccessPage() {
 
             <div className="min-h-0 flex-1 overflow-y-auto p-3">
               {Object.entries(serviceSections).map(([section, items]) => (
-                <div key={section} className="mb-4 rounded-lg border border-slate-700/80 bg-slate-950/50">
-                  <div className="border-b border-slate-700 px-3 py-2 text-xs font-semibold uppercase tracking-[0.08em] text-cyan-300">
+                <div key={section} className="mb-4 rounded-lg border border-zinc-700/80 bg-zinc-950/50">
+                  <div className="border-b border-zinc-700 px-3 py-2 text-xs font-semibold uppercase tracking-[0.08em] text-blue-300">
                     {section}
                   </div>
 
-                  <div className="hidden grid-cols-12 border-b border-slate-700/60 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-400 md:grid">
+                  <div className="hidden grid-cols-12 border-b border-zinc-700/60 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-zinc-400 md:grid">
                     <div className="col-span-6">Service</div>
                     <div className="col-span-2 text-center">Owner</div>
                     <div className="col-span-2 text-center">Manager</div>
@@ -486,8 +486,8 @@ export default function EmployeeAccessPage() {
                   </div>
 
                   {items.map((item) => (
-                    <div key={`${item.permission}-${item.label}`} className="border-b border-slate-800/60 px-3 py-2 text-sm md:grid md:grid-cols-12 md:items-center">
-                      <div className="text-slate-200 md:col-span-6">{item.label}</div>
+                    <div key={`${item.permission}-${item.label}`} className="border-b border-zinc-800/60 px-3 py-2 text-sm md:grid md:grid-cols-12 md:items-center">
+                      <div className="text-zinc-200 md:col-span-6">{item.label}</div>
 
                       <div className="mt-2 grid grid-cols-3 gap-2 md:col-span-6 md:mt-0 md:contents">
                         {ROLE_ORDER.map((roleKey) => {
@@ -496,7 +496,7 @@ export default function EmployeeAccessPage() {
 
                         return (
                           <div key={`${item.permission}-${roleKey}`} className="flex flex-col items-center gap-1 md:col-span-2 md:flex-row md:justify-center">
-                            <span className="text-[10px] uppercase tracking-[0.08em] text-slate-400 md:hidden">{roleKey}</span>
+                            <span className="text-[10px] uppercase tracking-[0.08em] text-zinc-400 md:hidden">{roleKey}</span>
                             <Switch
                               checked={checked}
                               disabled={isOwner || isResettingPermissions || pendingPermissionKey !== null}
@@ -511,7 +511,7 @@ export default function EmployeeAccessPage() {
                 </div>
               ))}
 
-              <div className="rounded-lg border border-slate-700/80 bg-slate-950/40 px-3 py-2 text-xs text-slate-400">
+              <div className="rounded-lg border border-zinc-700/80 bg-zinc-950/40 px-3 py-2 text-xs text-zinc-400">
                 Owner toggles are locked by design. Manager and Staff permissions are editable per cafe.
               </div>
             </div>

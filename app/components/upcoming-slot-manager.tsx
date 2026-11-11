@@ -1,4 +1,5 @@
 "use client"
+import { buttonVariants } from "@/components/ui/button";
 
 import { useEffect, useMemo, useState } from 'react'
 import { useApiClient } from '@/app/hooks/useApiClient'
@@ -71,21 +72,21 @@ export default function UpcomingSlotManager({ booking, vendorId, onRemove, onCha
     } finally { setSaving(false) }
   }
 
-  return <section className="space-y-3 border-t border-slate-700 pt-4" aria-label="Booking slots">
-    <div className="flex items-center justify-between"><h3 className="font-semibold">Slots</h3><button type="button" disabled={loading || !slots.length || saving} onClick={() => open('add')} className="rounded border border-cyan-700 px-3 py-1 text-cyan-300 disabled:opacity-40">+ Add slot</button></div>
+  return <section className="space-y-3 border-t border-zinc-700 pt-4" aria-label="Booking slots">
+    <div className="flex items-center justify-between"><h3 className="font-semibold">Slots</h3><button type="button" disabled={loading || !slots.length || saving} onClick={() => open('add')} className={buttonVariants({ variant: "soft-info", size: "sm" })}>+ Add slot</button></div>
     {loading && <p role="status">Loading slots…</p>}
     {error && <p role="alert" className="text-red-300">{error}</p>}
-    {slots.map(slot => <div key={slot.booking_id} className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-slate-900 p-3">
+    {slots.map(slot => <div key={slot.booking_id} className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-zinc-900 p-3">
       <span>{slot.date} · {slot.start_time.slice(0,5)}–{slot.end_time.slice(0,5)}</span>
-      <div className="flex gap-3"><button type="button" disabled={saving || slot.status !== 'confirmed'} onClick={() => open('edit', slot)} className="text-cyan-300 disabled:opacity-40">Edit</button><button type="button" disabled={saving || slot.status !== 'confirmed'} onClick={() => onRemove({ ...booking, bookingId: slot.booking_id, merged_booking_ids: [slot.booking_id] })} className="text-red-300 disabled:opacity-40">Remove</button></div>
+      <div className="flex gap-3"><button type="button" disabled={saving || slot.status !== 'confirmed'} onClick={() => open('edit', slot)} className="text-blue-300 disabled:opacity-40">Edit</button><button type="button" disabled={saving || slot.status !== 'confirmed'} onClick={() => onRemove({ ...booking, bookingId: slot.booking_id, merged_booking_ids: [slot.booking_id] })} className="text-red-300 disabled:opacity-40">Remove</button></div>
     </div>)}
-    {mode && <div className="space-y-3 rounded-lg border border-slate-600 p-3">
+    {mode && <div className="space-y-3 rounded-lg border border-zinc-600 p-3">
       <h4 className="font-semibold">{mode === 'add' ? 'Add another slot' : 'Move slot'}</h4>
-      <p className="text-xs text-slate-400">{mode === 'add' ? 'Review the price and payment method on the next screen.' : 'Choose the same duration. The original paid amount is retained.'}</p>
-      <label className="block">Date<input aria-label="Slot date" type="date" value={date} disabled={saving} onChange={e => setDate(e.target.value)} className="ml-3 rounded bg-slate-800 p-2" /></label>
-      <label className="block">Time<select aria-label="Available slot" value={selected} disabled={saving || choiceLoading} onChange={e => setSelected(e.target.value)} className="ml-3 rounded bg-slate-800 p-2"><option value="">{choiceLoading ? 'Loading…' : 'Choose a slot'}</option>{choices.map(slot => <option key={slot.slot_id} value={slot.slot_id}>{slot.start_time.slice(0,5)}–{slot.end_time.slice(0,5)}</option>)}</select></label>
+      <p className="text-xs text-zinc-400">{mode === 'add' ? 'Review the price and payment method on the next screen.' : 'Choose the same duration. The original paid amount is retained.'}</p>
+      <label className="block">Date<input aria-label="Slot date" type="date" value={date} disabled={saving} onChange={e => setDate(e.target.value)} className="ml-3 rounded bg-zinc-800 p-2" /></label>
+      <label className="block">Time<select aria-label="Available slot" value={selected} disabled={saving || choiceLoading} onChange={e => setSelected(e.target.value)} className="ml-3 rounded bg-zinc-800 p-2"><option value="">{choiceLoading ? 'Loading…' : 'Choose a slot'}</option>{choices.map(slot => <option key={slot.slot_id} value={slot.slot_id}>{slot.start_time.slice(0,5)}–{slot.end_time.slice(0,5)}</option>)}</select></label>
       {!choiceLoading && !choices.length && <p>No available slots for this date.</p>}
-      <div className="flex gap-3"><button type="button" disabled={saving || choiceLoading || !selected} onClick={save} className="rounded bg-cyan-700 px-3 py-2 disabled:opacity-40">{saving ? 'Saving…' : mode === 'add' ? 'Continue to booking' : 'Save slot'}</button><button type="button" disabled={saving} onClick={() => setMode(null)}>Cancel</button></div>
+      <div className="flex gap-3"><button type="button" disabled={saving || choiceLoading || !selected} onClick={save} className={buttonVariants({ variant: "default" })}>{saving ? 'Saving…' : mode === 'add' ? 'Continue to booking' : 'Save slot'}</button><button type="button" disabled={saving} onClick={() => setMode(null)}>Cancel</button></div>
     </div>}
     {newSlots.length > 0 && <SlotBookingForm isOpen overlayZIndex={1200} initialCustomer={customer} onReplaceSlots={setNewSlots} selectedSlots={newSlots} onClose={() => setNewSlots([])} onRemoveSelectedSlot={slot => setNewSlots(prev => prev.filter(s => s.slot_id !== slot.slot_id))} onSlotSelect={slot => setNewSlots(prev => [...prev, slot])} allSlots={{ [date]: choices.map(slot => ({ ...slot, console_id: gameId })) }} availableConsoles={[{ id: gameId, name: consoleName, type: consoleName, price: newSlots[0].console_price } as any]} onBookingComplete={(result) => {
         setNewSlots([]); setMode(null); onChanged()

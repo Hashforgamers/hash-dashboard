@@ -1,5 +1,6 @@
 "use client"
 
+import { toast } from "sonner";
 import React, { useState, useEffect, useRef, useMemo } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { jwtDecode } from 'jwt-decode'
@@ -11,7 +12,7 @@ import { DeskConsolePicker } from "./desk-console-picker"
 import { deskSubtotal, rateLabel, resolveSessionRate, useDeskCards } from "./desk-rate-card"
 import { creditAuthHeaders } from "@/lib/credit-auth"
 import { useAccess } from "@/app/context/AccessContext"
-import { Button } from "@/components/ui/button"
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Card } from "@/components/ui/card"
 import { 
   MoreVertical, 
@@ -1685,11 +1686,11 @@ const getEffectivePrice = (slot: SelectedSlot): number => {
           <p className="rounded-md border border-amber-200 bg-amber-50 px-2.5 py-1.5 text-xs text-amber-700 dark:border-amber-700 dark:bg-amber-900/25 dark:text-amber-300">
             Monthly credit works only for users with an active Gamers Credit account.
           </p>
-          <div className="rounded-xl border border-gray-300 bg-slate-50/60 p-3 dark:border-slate-700 dark:bg-slate-900/60">
+          <div className="rounded-xl border border-zinc-300 bg-zinc-50/60 p-3 dark:border-zinc-700 dark:bg-zinc-900/60">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div className="min-w-0">
-                <p className="text-sm font-semibold text-gray-800 dark:text-white">Credit Account Status</p>
-                <p className="text-xs text-gray-500 dark:text-slate-400">
+                <p className="text-sm font-semibold text-zinc-800 dark:text-white">Credit Account Status</p>
+                <p className="text-xs text-zinc-500 dark:text-zinc-400">
                   {matchedPrimaryUser?.id
                     ? `Matched customer: ${matchedPrimaryUser.name}`
                     : 'No known customer matched yet. Create credit on the fly if needed.'}
@@ -1701,14 +1702,14 @@ const getEffectivePrice = (slot: SelectedSlot): number => {
                   onClick={() => setShowCreditAccountModal(true)}
                   disabled={!can("credit.manage")}
                   title={can("credit.manage") ? "Create credit account" : "Ask a staff member with credit management access"}
-                  className="rounded-lg border border-cyan-500/40 bg-cyan-500/10 px-3 py-1.5 text-xs font-medium text-cyan-700 dark:text-cyan-200"
+                  className={buttonVariants({ variant: "soft-info", size: "sm" })}
                 >
                   Create Credit Account
                 </button>
               )}
             </div>
             {creditAccountLoading ? (
-              <p className="mt-2 text-xs text-gray-500 dark:text-slate-400">Loading credit account...</p>
+              <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">Loading credit account...</p>
             ) : creditAccount?.is_active ? (
               <div className="mt-2 grid grid-cols-1 gap-2 min-[480px]:grid-cols-2 xl:grid-cols-3">
                 <div className="min-w-0 rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-3 py-2">
@@ -1719,9 +1720,9 @@ const getEffectivePrice = (slot: SelectedSlot): number => {
                   <p className="text-xs uppercase tracking-wide text-amber-700 dark:text-amber-300">Outstanding</p>
                   <p className="break-words text-base font-semibold text-amber-900 dark:text-amber-100">₹{Number(creditAccount.outstanding_amount || 0).toFixed(2)}</p>
                 </div>
-                <div className="min-w-0 rounded-lg border border-cyan-500/20 bg-cyan-500/10 px-3 py-2 min-[480px]:col-span-2 xl:col-span-1">
-                  <p className="text-xs uppercase tracking-wide text-cyan-700 dark:text-cyan-300">Available</p>
-                  <p className="break-words text-base font-semibold text-cyan-900 dark:text-cyan-100">₹{availableCreditAmount.toFixed(2)}</p>
+                <div className="min-w-0 rounded-lg border border-blue-500/20 bg-blue-500/10 px-3 py-2 min-[480px]:col-span-2 xl:col-span-1">
+                  <p className="text-xs uppercase tracking-wide text-blue-700 dark:text-blue-300">Available</p>
+                  <p className="break-words text-base font-semibold text-blue-900 dark:text-blue-100">₹{availableCreditAmount.toFixed(2)}</p>
                 </div>
               </div>
             ) : (
@@ -1742,9 +1743,9 @@ const getEffectivePrice = (slot: SelectedSlot): number => {
             exit={{ opacity: 0, height: 0 }}
             className="mt-4 space-y-2"
           >
-            <div className="rounded-lg border border-gray-300 bg-white/70 p-3 dark:border-slate-700 dark:bg-slate-900/60">
+            <div className="rounded-lg border border-zinc-300 bg-white/70 p-3 dark:border-zinc-700 dark:bg-zinc-900/60">
               <div className="flex items-center justify-between gap-2">
-                <p className="text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-slate-300">
+                <p className="text-xs font-semibold uppercase tracking-wide text-zinc-600 dark:text-zinc-300">
                   Valid Passes
                 </p>
                 {isLoadingPassOptions ? (
@@ -1755,7 +1756,7 @@ const getEffectivePrice = (slot: SelectedSlot): number => {
                 <select
                   value={passUid}
                   onChange={(e) => handlePassSelectionChange(e.target.value)}
-                  className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-800"
+                  className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800"
                   disabled={isLoadingPassOptions || !passOptions.length}
                 >
                   <option value="">{passOptions.length ? "Select pass" : "No valid pass found"}</option>
@@ -1801,7 +1802,7 @@ const getEffectivePrice = (slot: SelectedSlot): number => {
             )}
 
             {validatedPass?.can_cover_hours && (
-              <div className="rounded-lg border border-gray-300 bg-white/70 p-3 dark:border-slate-700 dark:bg-slate-900/60">
+              <div className="rounded-lg border border-zinc-300 bg-white/70 p-3 dark:border-zinc-700 dark:bg-zinc-900/60">
                 <div className="flex flex-wrap items-center gap-2">
                   <Button
                     type="button"
@@ -1822,7 +1823,7 @@ const getEffectivePrice = (slot: SelectedSlot): number => {
                     value={passOtpCode}
                     onChange={(e) => setPassOtpCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
                     placeholder="6 digit OTP"
-                    className="h-8 w-28 rounded-md border border-gray-300 bg-white px-2.5 text-xs dark:border-slate-600 dark:bg-slate-800"
+                    className="h-8 w-28 rounded-md border border-zinc-300 bg-white px-2.5 text-xs dark:border-zinc-600 dark:bg-zinc-800"
                   />
                   <Button
                     type="button"
@@ -2161,16 +2162,16 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
             </div>
             {isFieldConfigOpen && (
               <div className="slot-booking-popover absolute right-4 top-[calc(100%-2px)] z-30 w-[310px] rounded-xl border p-3 shadow-xl">
-                <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">Player Details</p>
-                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Player Details</p>
+                <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
                   Player Name and one contact field are required.
                 </p>
 
                 <div className="mt-3 space-y-2 text-xs">
-                  <div className="rounded-lg border border-slate-200 p-2 dark:border-slate-700">
-                    <p className="font-semibold text-slate-700 dark:text-slate-200">Mobile Number</p>
+                  <div className="rounded-lg border border-zinc-200 p-2 dark:border-zinc-700">
+                    <p className="font-semibold text-zinc-700 dark:text-zinc-200">Mobile Number</p>
                     <div className="mt-2 flex items-center justify-between">
-                      <label className="text-slate-600 dark:text-slate-300">Show field</label>
+                      <label className="text-zinc-600 dark:text-zinc-300">Show field</label>
                       <input
                         type="checkbox"
                         checked={bookingFieldDraft.phone.visible}
@@ -2178,7 +2179,7 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                       />
                     </div>
                     <div className="mt-2 flex items-center justify-between">
-                      <label className="text-slate-600 dark:text-slate-300">Required</label>
+                      <label className="text-zinc-600 dark:text-zinc-300">Required</label>
                       <input
                         type="checkbox"
                         checked={bookingFieldDraft.phone.required}
@@ -2187,13 +2188,13 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                     </div>
                   </div>
 
-                  <div className="rounded-lg border border-slate-200 p-2 dark:border-slate-700">
-                    <p className="font-semibold text-slate-700 dark:text-slate-200">Email</p>
-                    <p className="mt-2 text-[11px] text-slate-500 dark:text-slate-400">
+                  <div className="rounded-lg border border-zinc-200 p-2 dark:border-zinc-700">
+                    <p className="font-semibold text-zinc-700 dark:text-zinc-200">Email</p>
+                    <p className="mt-2 text-[11px] text-zinc-500 dark:text-zinc-400">
                       Optional email stays hidden in form for faster desk booking.
                     </p>
                     <div className="mt-2 flex items-center justify-between">
-                      <label className="text-slate-600 dark:text-slate-300">Required</label>
+                      <label className="text-zinc-600 dark:text-zinc-300">Required</label>
                       <input
                         type="checkbox"
                         checked={bookingFieldDraft.email.required}
@@ -2210,7 +2211,7 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                 <div className="mt-3 flex justify-end gap-2">
                   <button
                     type="button"
-                    className="rounded-lg border border-slate-300 px-2.5 py-1.5 text-xs text-slate-600 dark:border-slate-700 dark:text-slate-300"
+                    className="rounded-lg border border-zinc-300 px-2.5 py-1.5 text-xs text-zinc-600 dark:border-zinc-700 dark:text-zinc-300"
                     onClick={() => {
                       setBookingFieldDraft(bookingFieldConfig)
                       setIsFieldConfigOpen(false)
@@ -2253,13 +2254,13 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                         {!selectedSlots.length && <div className="mb-2 grid grid-cols-2 gap-2">
                           <label className="text-xs">Date
                             <select disabled={selectedSlots.length > 0} title="One booking uses one date" value={activePickerDate} onChange={(event) => setPickerDate(event.target.value)}
-                              className="mt-1 h-9 w-full rounded-md border border-slate-500/30 bg-background px-2 text-sm">
+                              className="mt-1 h-9 w-full rounded-md border border-zinc-500/30 bg-background px-2 text-sm">
                               {slotDates.map((date) => <option key={date} value={date}>{date}</option>)}
                             </select>
                           </label>
                           <label className="text-xs">Console
                             <select disabled={selectedSlots.length > 0} title="One booking uses one console type" value={activePickerConsole} onChange={(event) => setPickerConsole(event.target.value)}
-                              className="mt-1 h-9 w-full rounded-md border border-slate-500/30 bg-background px-2 text-sm">
+                              className="mt-1 h-9 w-full rounded-md border border-zinc-500/30 bg-background px-2 text-sm">
                               {availableConsoles.map((item) => <option key={item.id} value={String(item.id)}>{item.name}</option>)}
                             </select>
                           </label>
@@ -2307,11 +2308,11 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                                 available_count: Number(slot.available_slot),
                               })}
                               className={cn("rounded-md border px-2 py-1.5 text-xs tabular-nums transition-colors",
-                                selected ? "border-cyan-400 bg-cyan-500/15 text-cyan-600 dark:text-cyan-200" : "border-slate-500/30 hover:bg-slate-500/10")}>
+                                selected ? "border-blue-400 bg-blue-500/15 text-blue-600 dark:text-blue-200" : "border-zinc-500/30 hover:bg-zinc-500/10")}>
                               {String(slot.start_time).slice(0, 5)}–{String(slot.end_time).slice(0, 5)}
                             </button>
                           })}
-                          {pickerSlots.length === 0 && <p className="py-2 text-xs text-slate-500">No available slots.</p>}
+                          {pickerSlots.length === 0 && <p className="py-2 text-xs text-zinc-500">No available slots.</p>}
                         </div>)}
                     </div>
                     {deskRateError && <p role="status" className="text-xs">{deskRateError} Reopen this booking to retry.</p>}
@@ -2329,7 +2330,7 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                     {(timeMode === "slots" || !onReplaceSlots) && <div className="slot-booking-slot-list">
                       {selectedSlots.map((slot) => (
                         <div key={`${slot.date}-${slot.console_id}-${slot.slot_id}`} className="slot-booking-modal-soft flex items-center justify-between gap-3 rounded-md px-2.5 py-2 text-xs">
-                          <span className="text-gray-700 dark:text-gray-300">
+                          <span className="text-zinc-700 dark:text-zinc-300">
                             <strong>{new Date(slot.date).toLocaleDateString('en-GB')}</strong> • {slot.start_time.slice(0, 5)}-{slot.end_time.slice(0, 5)} • {slot.console_name}
                           </span>
                           <div className="flex items-center gap-2">
@@ -2344,7 +2345,7 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                                 return (
                                   <>
                                     {isOffer && (
-                                      <span className="text-xs text-gray-400 line-through">
+                                      <span className="text-xs text-zinc-400 line-through">
                                         ₹{slot.console_price}
                                       </span>
                                     )}
@@ -2363,7 +2364,7 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                             <button
                               type="button"
                               onClick={() => onRemoveSelectedSlot(slot)}
-                              className="rounded-md border border-red-500/40 bg-red-500/10 p-1 text-red-500 transition-colors hover:bg-red-500/20"
+                              className={buttonVariants({ variant: "soft-danger", size: "icon-sm" })}
                               title="Remove this slot"
                               aria-label="Remove selected slot"
                             >
@@ -2393,7 +2394,7 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                           </p>
                         )}
                         {isSquadMode && (
-                          <p className="text-xs text-gray-500 dark:text-gray-400">Primary contact for squad booking</p>
+                          <p className="text-xs text-zinc-500 dark:text-zinc-400">Primary contact for squad booking</p>
                         )}
                       </div>
                     </div>
@@ -2416,32 +2417,32 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                           autoComplete="off"
                           placeholder={isSquadMode ? "Captain Name" : "Player Name"}
                           className={cn(
-                            "w-full pl-10 pr-4 py-3 bg-white dark:bg-gray-800 border rounded-lg transition-all duration-200",
+                            "w-full pl-10 pr-4 py-3 bg-white dark:bg-zinc-800 border rounded-lg transition-all duration-200",
                             errors.name
                               ? "border-red-500 focus:border-red-500"
                               : focusedInput === "name"
                               ? "border-emerald-500 focus:border-emerald-500"
-                              : "border-gray-300 dark:border-gray-600 focus:border-emerald-500",
+                              : "border-zinc-300 dark:border-zinc-600 focus:border-emerald-500",
                             "focus:outline-none focus:ring-1 focus:ring-emerald-500/20"
                           )}
                         />
-                        <User className="w-4 h-4 text-gray-400 absolute left-3 top-3.5" />
+                        <User className="w-4 h-4 text-zinc-400 absolute left-3 top-3.5" />
                         <AnimatePresence>
                           {focusedInput === "name" && (nameSuggestions.length > 0 || isSuggestionLoading.name) && (
                             <motion.ul
                               initial={{ opacity: 0, y: -5 }}
                               animate={{ opacity: 1, y: 0 }}
                               exit={{ opacity: 0, y: -5 }}
-                              className="absolute z-20 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg w-full mt-1 max-h-40 overflow-y-auto"
+                              className="absolute z-20 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg shadow-lg w-full mt-1 max-h-40 overflow-y-auto"
                             >
                               {isSuggestionLoading.name && nameSuggestions.length === 0 && (
-                                <li className="px-3 py-2 text-sm text-gray-500">Searching customers…</li>
+                                <li className="px-3 py-2 text-sm text-zinc-500">Searching customers…</li>
                               )}
                               {nameSuggestions.slice(0, 5).map((user, idx) => (
                                 <motion.li
                                   key={idx}
                                   whileHover={{ backgroundColor: "rgba(16, 185, 129, 0.1)" }}
-                                  className="px-3 py-2 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 cursor-pointer border-b border-gray-100 dark:border-gray-700 last:border-b-0"
+                                  className="px-3 py-2 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 cursor-pointer border-b border-zinc-100 dark:border-zinc-700 last:border-b-0"
                                   onMouseDown={() => handleSuggestionClick(user)}
                                 >
                                   <div className="flex items-center gap-2">
@@ -2449,8 +2450,8 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                                       <User className="w-3 h-3 text-emerald-600" />
                                     </div>
                                     <div>
-                                      <p className="font-medium text-gray-800 dark:text-white text-sm">{user.name}</p>
-                                      <p className="text-gray-600 dark:text-gray-400 text-xs">{user.phone || user.email}</p>
+                                      <p className="font-medium text-zinc-800 dark:text-white text-sm">{user.name}</p>
+                                      <p className="text-zinc-600 dark:text-zinc-400 text-xs">{user.phone || user.email}</p>
                                     </div>
                                   </div>
                                 </motion.li>
@@ -2472,32 +2473,32 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                             autoComplete="off"
                             placeholder={isSquadMode ? "Captain Mobile Number" : "Mobile Number"}
                             className={cn(
-                              "w-full pl-10 pr-4 py-3 bg-white dark:bg-gray-800 border rounded-lg transition-all duration-200",
+                              "w-full pl-10 pr-4 py-3 bg-white dark:bg-zinc-800 border rounded-lg transition-all duration-200",
                               errors.phone
                                 ? "border-red-500 focus:border-red-500"
                                 : focusedInput === "phone"
                                 ? "border-emerald-500 focus:border-emerald-500"
-                                : "border-gray-300 dark:border-gray-600 focus:border-emerald-500",
+                                : "border-zinc-300 dark:border-zinc-600 focus:border-emerald-500",
                               "focus:outline-none focus:ring-1 focus:ring-emerald-500/20"
                             )}
                           />
-                          <Phone className="w-4 h-4 text-gray-400 absolute left-3 top-3.5" />
+                          <Phone className="w-4 h-4 text-zinc-400 absolute left-3 top-3.5" />
                           <AnimatePresence>
                             {focusedInput === "phone" && (phoneSuggestions.length > 0 || isSuggestionLoading.phone) && (
                               <motion.ul
                                 initial={{ opacity: 0, y: -5 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 exit={{ opacity: 0, y: -5 }}
-                                className="absolute z-20 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg w-full mt-1 max-h-40 overflow-y-auto"
+                                className="absolute z-20 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg shadow-lg w-full mt-1 max-h-40 overflow-y-auto"
                               >
                                 {isSuggestionLoading.phone && phoneSuggestions.length === 0 && (
-                                  <li className="px-3 py-2 text-xs text-gray-500 dark:text-gray-400">Searching...</li>
+                                  <li className="px-3 py-2 text-xs text-zinc-500 dark:text-zinc-400">Searching...</li>
                                 )}
                                 {phoneSuggestions.slice(0, 5).map((user, idx) => (
                                   <motion.li
                                     key={idx}
                                     whileHover={{ backgroundColor: "rgba(16, 185, 129, 0.1)" }}
-                                    className="px-3 py-2 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 cursor-pointer border-b border-gray-100 dark:border-gray-700 last:border-b-0"
+                                    className="px-3 py-2 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 cursor-pointer border-b border-zinc-100 dark:border-zinc-700 last:border-b-0"
                                     onMouseDown={() => handleSuggestionClick(user)}
                                   >
                                     <div className="flex items-center gap-2">
@@ -2505,8 +2506,8 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                                         <User className="w-3 h-3 text-emerald-600" />
                                       </div>
                                       <div>
-                                        <p className="font-medium text-gray-800 dark:text-white text-sm">{user.name}</p>
-                                        <p className="text-gray-600 dark:text-gray-400 text-xs">{user.phone}</p>
+                                        <p className="font-medium text-zinc-800 dark:text-white text-sm">{user.name}</p>
+                                        <p className="text-zinc-600 dark:text-zinc-400 text-xs">{user.phone}</p>
                                       </div>
                                     </div>
                                   </motion.li>
@@ -2529,32 +2530,32 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                             autoComplete="off"
                             placeholder={isSquadMode ? "Captain email" : "Email"}
                             className={cn(
-                              "w-full pl-10 pr-4 py-3 bg-white dark:bg-gray-800 border rounded-lg transition-all duration-200",
+                              "w-full pl-10 pr-4 py-3 bg-white dark:bg-zinc-800 border rounded-lg transition-all duration-200",
                               errors.email
                                 ? "border-red-500 focus:border-red-500"
                                 : focusedInput === "email"
                                 ? "border-emerald-500 focus:border-emerald-500"
-                                : "border-gray-300 dark:border-gray-600 focus:border-emerald-500",
+                                : "border-zinc-300 dark:border-zinc-600 focus:border-emerald-500",
                               "focus:outline-none focus:ring-1 focus:ring-emerald-500/20"
                             )}
                           />
-                          <Mail className="w-4 h-4 text-gray-400 absolute left-3 top-3.5" />
+                          <Mail className="w-4 h-4 text-zinc-400 absolute left-3 top-3.5" />
                           <AnimatePresence>
                             {focusedInput === "email" && (emailSuggestions.length > 0 || isSuggestionLoading.email) && (
                               <motion.ul
                                 initial={{ opacity: 0, y: -5 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 exit={{ opacity: 0, y: -5 }}
-                                className="absolute z-20 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg w-full mt-1 max-h-40 overflow-y-auto"
+                                className="absolute z-20 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg shadow-lg w-full mt-1 max-h-40 overflow-y-auto"
                               >
                                 {isSuggestionLoading.email && emailSuggestions.length === 0 && (
-                                  <li className="px-3 py-2 text-xs text-gray-500 dark:text-gray-400">Searching...</li>
+                                  <li className="px-3 py-2 text-xs text-zinc-500 dark:text-zinc-400">Searching...</li>
                                 )}
                                 {emailSuggestions.slice(0, 5).map((user, idx) => (
                                   <motion.li
                                     key={idx}
                                     whileHover={{ backgroundColor: "rgba(16, 185, 129, 0.1)" }}
-                                    className="px-3 py-2 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 cursor-pointer border-b border-gray-100 dark:border-gray-700 last:border-b-0"
+                                    className="px-3 py-2 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 cursor-pointer border-b border-zinc-100 dark:border-zinc-700 last:border-b-0"
                                     onMouseDown={() => handleSuggestionClick(user)}
                                   >
                                     <div className="flex items-center gap-2">
@@ -2562,8 +2563,8 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                                         <User className="w-3 h-3 text-emerald-600" />
                                       </div>
                                       <div>
-                                        <p className="font-medium text-gray-800 dark:text-white text-sm">{user.name}</p>
-                                        <p className="text-gray-600 dark:text-gray-400 text-xs">{user.email}</p>
+                                        <p className="font-medium text-zinc-800 dark:text-white text-sm">{user.name}</p>
+                                        <p className="text-zinc-600 dark:text-zinc-400 text-xs">{user.email}</p>
                                       </div>
                                     </div>
                                   </motion.li>
@@ -2582,24 +2583,24 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                           initial={{ opacity: 0, height: 0 }}
                           animate={{ opacity: 1, height: 'auto' }}
                           exit={{ opacity: 0, height: 0 }}
-                          className="mt-4 rounded-lg border border-slate-200 p-3 dark:border-slate-700"
+                          className="mt-4 rounded-lg border border-zinc-200 p-3 dark:border-zinc-700"
                         >
                           <div className="mb-2 flex items-center justify-between">
-                            <p className="text-xs font-semibold text-gray-700 dark:text-gray-300">
+                            <p className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">
                               Squad Player Details (Optional)
                             </p>
                             <button
                               type="button"
                               onClick={addSquadMemberRow}
                               disabled={squadMembers.length >= maxQuickMembers}
-                              className="rounded border border-gray-300 px-2 py-1 text-xs text-gray-700 disabled:opacity-50 dark:border-gray-600 dark:text-gray-300"
+                              className="rounded border border-zinc-300 px-2 py-1 text-xs text-zinc-700 disabled:opacity-50 dark:border-zinc-600 dark:text-zinc-300"
                             >
                               Add Player
                             </button>
                           </div>
                             <div className="space-y-2">
                               {squadMembers.map((member, idx) => (
-                                <div key={member.id} className="rounded-md border border-slate-200 p-2 dark:border-slate-700">
+                                <div key={member.id} className="rounded-md border border-zinc-200 p-2 dark:border-zinc-700">
                                   <div className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_1fr_auto]">
                                     <input
                                       type="text"
@@ -2608,7 +2609,7 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                                       onFocus={() => handleSquadMemberFocus(member.id, member.name)}
                                       onBlur={() => handleSquadMemberBlur(member.id)}
                                       onChange={(e) => updateSquadMemberRow(member.id, "name", e.target.value)}
-                                      className="rounded border border-gray-300 bg-white px-3 py-2 text-xs dark:border-gray-600 dark:bg-gray-800"
+                                      className="rounded border border-zinc-300 bg-white px-3 py-2 text-xs dark:border-zinc-600 dark:bg-zinc-800"
                                     />
                                     <input
                                       type="tel"
@@ -2617,12 +2618,12 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                                       onFocus={() => handleSquadMemberFocus(member.id, member.phone)}
                                       onBlur={() => handleSquadMemberBlur(member.id)}
                                       onChange={(e) => updateSquadMemberRow(member.id, "phone", e.target.value)}
-                                      className="rounded border border-gray-300 bg-white px-3 py-2 text-xs dark:border-gray-600 dark:bg-gray-800"
+                                      className="rounded border border-zinc-300 bg-white px-3 py-2 text-xs dark:border-zinc-600 dark:bg-zinc-800"
                                     />
                                     <button
                                       type="button"
                                       onClick={() => removeSquadMemberRow(member.id)}
-                                      className="rounded border border-red-300 px-2 py-1 text-xs text-red-600 dark:border-red-700 dark:text-red-400"
+                                      className={buttonVariants({ variant: "soft-danger", size: "sm" })}
                                     >
                                       Remove
                                     </button>
@@ -2630,18 +2631,18 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                                   {focusedSquadMemberId === member.id &&
                                     Array.isArray(squadMemberSuggestions[member.id]) &&
                                     squadMemberSuggestions[member.id].length > 0 && (
-                                      <div className="mt-2 max-h-36 overflow-auto rounded border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900">
+                                      <div className="mt-2 max-h-36 overflow-auto rounded border border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-900">
                                         {squadMemberSuggestions[member.id].map((suggested, suggestionIdx) => (
                                           <button
                                             key={`${member.id}-sg-${suggestionIdx}`}
                                             type="button"
                                             onMouseDown={() => handleSquadMemberSuggestionPick(member.id, suggested)}
-                                            className="flex w-full items-center justify-between border-b border-slate-100 px-2 py-1.5 text-left text-xs last:border-b-0 hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-800"
+                                            className="flex w-full items-center justify-between border-b border-zinc-100 px-2 py-1.5 text-left text-xs last:border-b-0 hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-800"
                                           >
-                                            <span className="font-medium text-slate-700 dark:text-slate-200">
+                                            <span className="font-medium text-zinc-700 dark:text-zinc-200">
                                               {suggested.name}
                                             </span>
-                                            <span className="text-slate-500 dark:text-slate-400">
+                                            <span className="text-zinc-500 dark:text-zinc-400">
                                               {suggested.phone}
                                             </span>
                                           </button>
@@ -2674,8 +2675,8 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                         className={cn(
                           "rounded-lg border px-3 py-2 text-xs font-semibold transition-colors",
                           bookingFlowMode === "solo"
-                            ? "border-sky-400/70 bg-sky-500/15 text-sky-100"
-                            : "border-gray-300 text-gray-700 dark:border-gray-600 dark:text-gray-300"
+                            ? "border-blue-400/70 bg-blue-500/15 text-blue-100"
+                            : "border-zinc-300 text-zinc-700 dark:border-zinc-600 dark:text-zinc-300"
                         )}
                       >
                         Solo Play
@@ -2689,8 +2690,8 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                           "rounded-lg border px-3 py-2 text-xs font-semibold transition-colors",
                           !squadSupported && "cursor-not-allowed opacity-50",
                           bookingFlowMode === "squad"
-                            ? "border-sky-400/70 bg-sky-500/15 text-sky-100"
-                            : "border-gray-300 text-gray-700 dark:border-gray-600 dark:text-gray-300"
+                            ? "border-blue-400/70 bg-blue-500/15 text-blue-100"
+                            : "border-zinc-300 text-zinc-700 dark:border-zinc-600 dark:text-zinc-300"
                         )}
                       >
                         Squad Play
@@ -2714,7 +2715,7 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                               <button
                                 type="button"
                                 onClick={() => setSquadPlayerCount((prev) => Math.max(2, prev - 1))}
-                                className="inline-flex h-7 w-7 items-center justify-center rounded border border-blue-300 text-blue-700 dark:border-blue-600 dark:text-blue-300"
+                                className={buttonVariants({ variant: "soft-info", size: "icon-sm" })}
                               >
                                 -
                               </button>
@@ -2724,13 +2725,13 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                               <button
                                 type="button"
                                 onClick={() => setSquadPlayerCount((prev) => Math.min(squadMaxPlayers, prev + 1))}
-                                className="inline-flex h-7 w-7 items-center justify-center rounded border border-blue-300 text-blue-700 dark:border-blue-600 dark:text-blue-300"
+                                className={buttonVariants({ variant: "soft-info", size: "icon-sm" })}
                               >
                                 +
                               </button>
                             </div>
                           </div>
-                          <div className="text-xs text-gray-600 dark:text-gray-300">
+                          <div className="text-xs text-zinc-600 dark:text-zinc-300">
                             Max players: <span className="font-semibold">{squadMaxPlayers}</span>
                             <span className="ml-2">
                               Mode: <span className="font-semibold">
@@ -2753,7 +2754,7 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                               <button
                                 type="button"
                                 onClick={() => applyExtraControllerQty(suggestedExtraControllerQty)}
-                                className="rounded-md border border-cyan-300 px-2.5 py-1 text-xs text-cyan-700 hover:bg-cyan-50 dark:border-cyan-700 dark:text-cyan-300 dark:hover:bg-cyan-900/20"
+                                className={buttonVariants({ variant: "soft-info", size: "sm" })}
                               >
                                 Use suggested controllers
                               </button>
@@ -2775,22 +2776,22 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                     </div>
 
                     <div className="space-y-2">
-                      <div className="flex justify-between items-center py-2 border-b border-gray-200 dark:border-gray-600">
-                        <span className="text-gray-600 dark:text-gray-400">
+                      <div className="flex justify-between items-center py-2 border-b border-zinc-200 dark:border-zinc-600">
+                        <span className="text-zinc-600 dark:text-zinc-400">
                           Gaming Charges{!deskCard && isSquadMode && squadUsesDiscountEngine ? ` (₹${consoleUnitTotal} x ${squadPlayerCount})` : ""}:
                         </span>
-                        <span className="font-medium text-gray-800 dark:text-white">₹{consoleTotal}</span>
+                        <span className="font-medium text-zinc-800 dark:text-white">₹{consoleTotal}</span>
                       </div>
 
                       {isSquadMode && (
-                        <div className="flex justify-between items-center py-2 border-b border-gray-200 dark:border-gray-600">
-                          <span className="text-gray-600 dark:text-gray-400">Players:</span>
-                          <span className="font-medium text-gray-800 dark:text-white">{squadPlayerCount}</span>
+                        <div className="flex justify-between items-center py-2 border-b border-zinc-200 dark:border-zinc-600">
+                          <span className="text-zinc-600 dark:text-zinc-400">Players:</span>
+                          <span className="font-medium text-zinc-800 dark:text-white">{squadPlayerCount}</span>
                         </div>
                       )}
 
                       {isSquadMode && squadDiscountPercent > 0 && (
-                        <div className="flex justify-between items-center py-2 border-b border-gray-200 dark:border-gray-600 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg px-3">
+                        <div className="flex justify-between items-center py-2 border-b border-zinc-200 dark:border-zinc-600 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg px-3">
                           <span className="text-emerald-700 dark:text-emerald-300 font-medium">
                             Squad Discount ({squadDiscountPercent}%):
                           </span>
@@ -2798,21 +2799,21 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                         </div>
                       )}
 
-                      <div className="flex justify-between items-center py-2 border-b border-gray-200 dark:border-gray-600">
-                        <span className="text-gray-600 dark:text-gray-400">Additional Discount:</span>
+                      <div className="flex justify-between items-center py-2 border-b border-zinc-200 dark:border-zinc-600">
+                        <span className="text-zinc-600 dark:text-zinc-400">Additional Discount:</span>
                         <input
                           type="number"
                           value={waiveOffAmount}
                           onChange={(e) => setWaiveOffAmount(Math.max(0, Math.min(gamingNet, Number(e.target.value) || 0)))}
                           placeholder="₹0"
-                          className="w-20 text-right px-2 py-1 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-800 dark:text-white focus:border-emerald-500 focus:outline-none transition-colors"
+                          className="w-20 text-right px-2 py-1 rounded border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 text-zinc-800 dark:text-white focus:border-emerald-500 focus:outline-none transition-colors"
                           min={0}
                         />
                       </div>
 
                       {suggestedDiscount > 0 && (
-                        <div className="flex justify-between items-center py-2 border-b border-gray-200 dark:border-gray-600">
-                          <span className="text-orange-600 dark:text-orange-400 font-medium">Auto Discount:</span>
+                        <div className="flex justify-between items-center py-2 border-b border-zinc-200 dark:border-zinc-600">
+                          <span className="text-amber-600 dark:text-amber-400 font-medium">Auto Discount:</span>
                           <div className="text-right">
                             <input aria-label="Auto Discount" type="number" min={0} max={Math.max(0, consoleTotal - squadDiscountAmount - waiveOffAmount)} step="0.01"
                               className="w-20 rounded border bg-background px-2 py-1 text-right"
@@ -2824,37 +2825,37 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                       )}
 
                       {supportsExtraController && (
-                        <div className="flex justify-between items-center py-2 border-b border-gray-200 dark:border-gray-600">
-                          <span className="text-gray-600 dark:text-gray-400">Extra Controller:</span>
+                        <div className="flex justify-between items-center py-2 border-b border-zinc-200 dark:border-zinc-600">
+                          <span className="text-zinc-600 dark:text-zinc-400">Extra Controller:</span>
                           <div className="flex items-center gap-2">
                             <button
                               type="button"
                               onClick={() => applyExtraControllerQty(extraControllerQty - 1)}
-                              className="inline-flex h-7 w-7 items-center justify-center rounded border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300"
+                              className="inline-flex h-7 w-7 items-center justify-center rounded border border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300"
                               disabled={isControllerPricingLoading}
                             >
                               -
                             </button>
-                            <span className="w-14 text-center text-sm text-gray-800 dark:text-white">
+                            <span className="w-14 text-center text-sm text-zinc-800 dark:text-white">
                               {extraControllerQty} qty
                             </span>
                             <button
                               type="button"
                               onClick={() => applyExtraControllerQty(extraControllerQty + 1)}
-                              className="inline-flex h-7 w-7 items-center justify-center rounded border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300"
+                              className="inline-flex h-7 w-7 items-center justify-center rounded border border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300"
                               disabled={isControllerPricingLoading}
                             >
                               +
                             </button>
-                            <span className="w-16 text-right text-sm font-medium text-gray-800 dark:text-white">
+                            <span className="w-16 text-right text-sm font-medium text-zinc-800 dark:text-white">
                               ₹{extraControllerFare}
                             </span>
                           </div>
                         </div>
                       )}
 
-                      <div className="flex justify-between items-center py-2 border-b border-gray-200 dark:border-gray-600">
-                        <span className="text-gray-600 dark:text-gray-400">Snacks & Add-ons:</span>
+                      <div className="flex justify-between items-center py-2 border-b border-zinc-200 dark:border-zinc-600">
+                        <span className="text-zinc-600 dark:text-zinc-400">Snacks & Add-ons:</span>
                         <button
                           type="button"
                           onClick={() => setIsMealSelectorOpen(true)}
@@ -2866,27 +2867,27 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                       </div>
 
                       {selectedMeals.length > 0 && (
-                        <div className="py-2 border-b border-gray-200 dark:border-gray-600">
+                        <div className="py-2 border-b border-zinc-200 dark:border-zinc-600">
                           <div className="space-y-2">
                             {selectedMeals.map(meal => (
                               <div key={meal.menu_item_id} className="slot-booking-modal-soft rounded-lg p-3">
                                 <div className="flex justify-between items-start">
                                   <div className="flex-1">
-                                    <span className="text-sm font-medium text-gray-800 dark:text-white">
+                                    <span className="text-sm font-medium text-zinc-800 dark:text-white">
                                       {meal.name}
                                     </span>
-                                    <div className="mt-1 text-xs text-gray-600 dark:text-gray-400">
+                                    <div className="mt-1 text-xs text-zinc-600 dark:text-zinc-400">
                                       {meal.category} • ₹{meal.price} × {meal.quantity}
                                     </div>
                                   </div>
-                                  <span className="text-sm font-bold text-gray-800 dark:text-white">
+                                  <span className="text-sm font-bold text-zinc-800 dark:text-white">
                                     ₹{meal.total}
                                   </span>
                                 </div>
                               </div>
                             ))}
-                            <div className="border-t border-gray-200 pt-2 text-right dark:border-gray-600">
-                              <span className="text-sm font-bold text-gray-800 dark:text-white">
+                            <div className="border-t border-zinc-200 pt-2 text-right dark:border-zinc-600">
+                              <span className="text-sm font-bold text-zinc-800 dark:text-white">
                                 Meals Total: ₹{mealsTotal}
                               </span>
                             </div>
@@ -3106,7 +3107,7 @@ function TopBar({
             </Button>
           </div>
 
-          <Card className="bg-white dark:bg-gray-800 shadow-2xl">
+          <Card className="bg-white dark:bg-zinc-800 shadow-2xl">
             {showManageView === 'change' && <ChangeBookingForm />}
             {showManageView === 'reject' && <RejectBookingForm />}
             {showManageView === 'list' && <ListBooking />}
@@ -3172,7 +3173,7 @@ function TopBar({
               <MoreVertical className="w-5 h-5" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56 border-slate-200 bg-white text-slate-900 shadow-lg dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100">
+          <DropdownMenuContent align="end" className="w-56 border-zinc-200 bg-white text-zinc-900 shadow-lg dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100">
             <DropdownMenuItem onClick={() => {
               setShowManageView('change');
               setMenuOpen(false);
@@ -3217,9 +3218,9 @@ function ConsoleFilter({
   }
 
   return (
-    <Card className="mb-6 rounded-xl border border-slate-300 bg-white/90 p-4 shadow-sm backdrop-blur-sm dark:border-gray-700 dark:bg-gray-800/50">
+    <Card className="mb-6 rounded-xl border border-zinc-300 bg-white/90 p-4 shadow-sm backdrop-blur-sm dark:border-zinc-700 dark:bg-zinc-800/50">
       <div className="flex items-center gap-3">
-        <span className="text-xs font-medium uppercase text-slate-500 dark:text-gray-400">Select Console</span>
+        <span className="text-xs font-medium uppercase text-zinc-500 dark:text-zinc-400">Select Console</span>
         <div className="flex flex-wrap items-center gap-2">
           {Object.entries(consoleIcons).map(([key, Icon]) => (
             <SegmentedButton 
@@ -3501,7 +3502,7 @@ function ScheduleGrid({
         <div className="flex items-center justify-center py-12">
           <div className="text-center">
             <Loader2 className="w-8 h-8 animate-spin text-blue-500 mx-auto mb-3" />
-            <p className="text-gray-300">Loading available slots...</p>
+            <p className="text-zinc-300">Loading available slots...</p>
           </div>
         </div>
       </Card>
@@ -3637,8 +3638,8 @@ if (isPastTime) {
       <Card className="booking-schedule-card overflow-hidden rounded-xl border">
         <div className="flex items-center justify-center py-12">
           <div className="text-center">
-            <CalendarDays className="w-12 h-12 text-gray-500 mx-auto mb-3" />
-            <p className="text-gray-300">No slots available</p>
+            <CalendarDays className="w-12 h-12 text-zinc-500 mx-auto mb-3" />
+            <p className="text-zinc-300">No slots available</p>
           </div>
         </div>
       </Card>
@@ -3801,7 +3802,7 @@ function RecentBookings({
         
         {/* ✅ Show badge for past bookings */}
         {hasPastBookings && (
-          <span className="booking-contrast-muted rounded-full bg-gray-200 px-3 py-1 text-xs font-medium dark:bg-gray-700">
+          <span className="booking-contrast-muted rounded-full bg-zinc-200 px-3 py-1 text-xs font-medium dark:bg-zinc-700">
             History
           </span>
         )}
@@ -3811,12 +3812,12 @@ function RecentBookings({
         <Table>
           <TableHeader className="sticky top-0 z-20">
             <TableRow>
-              <TableHead className="booking-contrast-header sticky top-0 z-20 bg-gray-100 dark:bg-gray-800">Booking ID</TableHead>
-              <TableHead className="booking-contrast-header sticky top-0 z-20 bg-gray-100 dark:bg-gray-800">Customer Details</TableHead>
-              <TableHead className="booking-contrast-header sticky top-0 z-20 bg-gray-100 dark:bg-gray-800">Time</TableHead>
-              <TableHead className="booking-contrast-header sticky top-0 z-20 bg-gray-100 dark:bg-gray-800">Status</TableHead>
-              <TableHead className="booking-contrast-header sticky top-0 z-20 bg-gray-100 dark:bg-gray-800">Meal Selection</TableHead>
-              <TableHead className="booking-contrast-header sticky top-0 z-20 bg-gray-100 dark:bg-gray-800">Actions</TableHead>
+              <TableHead className="booking-contrast-header sticky top-0 z-20 bg-zinc-100 dark:bg-zinc-800">Booking ID</TableHead>
+              <TableHead className="booking-contrast-header sticky top-0 z-20 bg-zinc-100 dark:bg-zinc-800">Customer Details</TableHead>
+              <TableHead className="booking-contrast-header sticky top-0 z-20 bg-zinc-100 dark:bg-zinc-800">Time</TableHead>
+              <TableHead className="booking-contrast-header sticky top-0 z-20 bg-zinc-100 dark:bg-zinc-800">Status</TableHead>
+              <TableHead className="booking-contrast-header sticky top-0 z-20 bg-zinc-100 dark:bg-zinc-800">Meal Selection</TableHead>
+              <TableHead className="booking-contrast-header sticky top-0 z-20 bg-zinc-100 dark:bg-zinc-800">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -3824,7 +3825,7 @@ function RecentBookings({
               <TableRow 
                 key={booking.booking_id} 
                 className={cn(
-                  "hover:bg-gray-100 dark:hover:bg-gray-600/30",
+                  "hover:bg-zinc-100 dark:hover:bg-zinc-600/30",
                   hasPastBookings && "opacity-80" // Slightly fade past bookings
                 )}
               >
@@ -3833,7 +3834,7 @@ function RecentBookings({
                   <div className="flex flex-col gap-1">
                     <span>{booking.booking_fid || `#BK-${booking.booking_id}`}</span>
                     {(booking.squad_enabled || Number(booking.squad_player_count || 1) > 1) && (
-                      <span className="w-fit rounded-full border border-sky-400/40 bg-sky-500/15 px-2 py-0.5 text-[10px] font-semibold text-black dark:text-sky-200">
+                      <span className="w-fit rounded-full border border-blue-400/40 bg-blue-500/15 px-2 py-0.5 text-[10px] font-semibold text-black dark:text-blue-200">
                         Squad x{Math.max(1, Number(booking.squad_player_count || 1))}
                       </span>
                     )}
@@ -3884,10 +3885,10 @@ function RecentBookings({
                   <span className={cn(
                     "px-2 py-1 rounded-full text-xs font-medium",
                     // ✅ Enhanced status colors
-                    booking.status === 'confirmed' && "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
-                    booking.status === 'checked_in' && "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400",
+                    booking.status === 'confirmed' && "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
+                    booking.status === 'checked_in' && "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
                     booking.status === 'pending_verified' && "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
-                    booking.status === 'completed' && "bg-gray-100 text-black dark:bg-gray-700 dark:text-gray-300",
+                    booking.status === 'completed' && "bg-zinc-100 text-black dark:bg-zinc-700 dark:text-zinc-300",
                     booking.status === 'cancelled' && "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
                     booking.status === 'rejected' && "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
                   )}>
@@ -3919,7 +3920,7 @@ function RecentBookings({
                     className={cn(
                       "booking-contrast-heading text-xs",
                       hasPastBookings 
-                        ? "hover:bg-gray-100 dark:hover:bg-gray-700" 
+                        ? "hover:bg-zinc-100 dark:hover:bg-zinc-700" 
                         : "hover:bg-emerald-50 dark:hover:bg-emerald-900/30"
                     )}
                   >
@@ -3933,7 +3934,7 @@ function RecentBookings({
       </div>
       
       {/* ✅ NEW: Summary Footer */}
-      <div className="mt-4 flex items-center justify-between border-t border-gray-200 pt-4 dark:border-gray-600">
+      <div className="mt-4 flex items-center justify-between border-t border-zinc-200 pt-4 dark:border-zinc-600">
         <div className="booking-contrast-muted text-sm">
           {hasPastBookings ? (
             <span className="flex items-center gap-2">
@@ -3958,10 +3959,10 @@ function RecentBookings({
               <span key={status} className="flex items-center gap-1">
                 <span className={cn(
                   "w-2 h-2 rounded-full",
-                  status === 'confirmed' && "bg-green-500",
-                  status === 'checked_in' && "bg-orange-500",
+                  status === 'confirmed' && "bg-emerald-500",
+                  status === 'checked_in' && "bg-amber-500",
                   status === 'pending_verified' && "bg-blue-500",
-                  status === 'completed' && "bg-gray-500",
+                  status === 'completed' && "bg-zinc-500",
                   status === 'cancelled' && "bg-red-500"
                 )} />
                 <span className="booking-contrast-muted">
@@ -4066,7 +4067,7 @@ function ChangeBookingForm() {
       if (result?.success !== false) {
         setIsSubmitted(true);
       } else {
-        alert("Failed to update booking.");
+        toast.error("Failed to update booking.");
       }
     } catch (error) {
       console.error("Error updating booking:", error);
@@ -4080,22 +4081,20 @@ function ChangeBookingForm() {
       <form className="space-y-3">
         {/* Search Section */}
         <div className="space-y-4">
-          <h3 className="text-lg font-semibold text-gray-800 dark:text-white">Search Booking</h3>
+          <h3 className="text-lg font-semibold text-zinc-800 dark:text-white">Search Booking</h3>
           <div className="flex space-x-2">
             <input
               id="bookingId"
               placeholder="Enter Booking ID"
               value={bookingId}
               onChange={(e) => setBookingId(e.target.value)}
-              className="flex-1 px-4 py-3 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 text-gray-800 dark:text-white"
+              className="flex-1 px-4 py-3 bg-white dark:bg-zinc-700 border border-zinc-300 dark:border-zinc-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 text-zinc-800 dark:text-white"
             />
 
-            <Button
+            <Button variant="success"
               type="button"
               onClick={handleSearch}
-              disabled={isLoading}
-              className="min-w-[100px] bg-emerald-600 hover:bg-emerald-700"
-            >
+              disabled={isLoading} className="min-w-[100px]">
               {isLoading ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
               ) : (
@@ -4111,12 +4110,12 @@ function ChangeBookingForm() {
         {/* Booking Details */}
         {bookingFound && bookingData && !isSubmitted ? (
           <div className="space-y-3">
-            <h3 className="text-lg font-semibold text-gray-800 dark:text-white">
+            <h3 className="text-lg font-semibold text-zinc-800 dark:text-white">
               Gamer's Information
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Name</label>
+                <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Name</label>
                 <input
                   value={bookingData.customer?.name || ""}
                   onChange={(e) =>
@@ -4125,11 +4124,11 @@ function ChangeBookingForm() {
                       customer: { ...prev.customer, name: e.target.value },
                     }))
                   }
-                  className="w-full px-4 py-3 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 text-gray-800 dark:text-white"
+                  className="w-full px-4 py-3 bg-white dark:bg-zinc-700 border border-zinc-300 dark:border-zinc-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 text-zinc-800 dark:text-white"
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Email</label>
+                <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Email</label>
                 <input
                   type="email"
                   value={bookingData.customer?.email || ""}
@@ -4139,11 +4138,11 @@ function ChangeBookingForm() {
                       customer: { ...prev.customer, email: e.target.value },
                     }))
                   }
-                  className="w-full px-4 py-3 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 text-gray-800 dark:text-white"
+                  className="w-full px-4 py-3 bg-white dark:bg-zinc-700 border border-zinc-300 dark:border-zinc-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 text-zinc-800 dark:text-white"
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Phone Number</label>
+                <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Phone Number</label>
                 <input
                   type="tel"
                   value={bookingData.customer?.phone || ""}
@@ -4153,17 +4152,17 @@ function ChangeBookingForm() {
                       customer: { ...prev.customer, phone: e.target.value },
                     }))
                   }
-                  className="w-full px-4 py-3 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 text-gray-800 dark:text-white"
+                  className="w-full px-4 py-3 bg-white dark:bg-zinc-700 border border-zinc-300 dark:border-zinc-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 text-zinc-800 dark:text-white"
                 />
               </div>
             </div>
 
-            <h3 className="text-lg font-semibold text-gray-800 dark:text-white">
+            <h3 className="text-lg font-semibold text-zinc-800 dark:text-white">
               Booking Details
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Booking Date</label>
+                <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Booking Date</label>
                 <input
                   type="date"
                   value={bookingData.booking_date || ""}
@@ -4173,12 +4172,12 @@ function ChangeBookingForm() {
                       booking_date: e.target.value,
                     }))
                   }
-                  className="w-full px-4 py-3 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 text-gray-800 dark:text-white"
+                  className="w-full px-4 py-3 bg-white dark:bg-zinc-700 border border-zinc-300 dark:border-zinc-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 text-zinc-800 dark:text-white"
                 />
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Slot Time</label>
+                <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Slot Time</label>
                 <div className="grid grid-cols-6 gap-2">
                   {availableSlots.map((slot) => (
                     <Button
@@ -4205,11 +4204,9 @@ function ChangeBookingForm() {
               </div>
             </div>
 
-            <Button 
+            <Button variant="success" 
               onClick={handleUpdateBooking} 
-              disabled={isUpdating}
-              className="bg-emerald-600 hover:bg-emerald-700"
-            >
+              disabled={isUpdating}>
               {isUpdating ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -4337,20 +4334,18 @@ function RejectBookingForm() {
     <div className="p-3">
       <form className="space-y-3" onSubmit={handleSubmit}>
         <div className="space-y-4">
-          <h3 className="text-lg font-semibold text-gray-800 dark:text-white">Search Booking</h3>
+          <h3 className="text-lg font-semibold text-zinc-800 dark:text-white">Search Booking</h3>
           <div className="flex space-x-2">
             <input
               placeholder="Enter Booking ID"
               value={bookingId}
               onChange={(e) => setBookingId(e.target.value)}
-              className="flex-1 px-4 py-3 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 text-gray-800 dark:text-white"
+              className="flex-1 px-4 py-3 bg-white dark:bg-zinc-700 border border-zinc-300 dark:border-zinc-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 text-zinc-800 dark:text-white"
             />
-            <Button
+            <Button variant="success"
               type="button"
               onClick={handleSearch}
-              disabled={isLoading}
-              className="min-w-[100px] bg-emerald-600 hover:bg-emerald-700"
-            >
+              disabled={isLoading} className="min-w-[100px]">
               {isLoading ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
               ) : (
@@ -4380,62 +4375,62 @@ function RejectBookingForm() {
                 className="space-y-3"
               >
                 <div className="space-y-3">
-                  <h3 className="text-lg font-semibold text-gray-800 dark:text-white">
+                  <h3 className="text-lg font-semibold text-zinc-800 dark:text-white">
                     Booking Information
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <Card className="bg-gray-50 dark:bg-gray-700/30 p-3">
+                    <Card className="bg-zinc-50 dark:bg-zinc-700/30 p-3">
                       <div className="space-y-4">
                         <div className="flex justify-between">
-                          <span className="text-gray-600 dark:text-gray-400">Booking ID</span>
-                          <span className="font-medium text-gray-800 dark:text-white">
+                          <span className="text-zinc-600 dark:text-zinc-400">Booking ID</span>
+                          <span className="font-medium text-zinc-800 dark:text-white">
                             {bookingData.booking_id || ""}
                           </span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-gray-600 dark:text-gray-400">Date</span>
-                          <span className="font-medium text-gray-800 dark:text-white">
+                          <span className="text-zinc-600 dark:text-zinc-400">Date</span>
+                          <span className="font-medium text-zinc-800 dark:text-white">
                             {bookingData.booking_date || ""}
                           </span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-gray-600 dark:text-gray-400">Time Slot</span>
-                          <span className="font-medium text-gray-800 dark:text-white">
+                          <span className="text-zinc-600 dark:text-zinc-400">Time Slot</span>
+                          <span className="font-medium text-zinc-800 dark:text-white">
                             {bookingData.start_time || ""} - {bookingData.end_time || ""}
                           </span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-gray-600 dark:text-gray-400">System</span>
-                          <span className="font-medium text-gray-800 dark:text-white">
+                          <span className="text-zinc-600 dark:text-zinc-400">System</span>
+                          <span className="font-medium text-zinc-800 dark:text-white">
                             {bookingData.system || ""}
                           </span>
                         </div>
                       </div>
                     </Card>
 
-                    <Card className="bg-gray-50 dark:bg-gray-700/30 p-3">
+                    <Card className="bg-zinc-50 dark:bg-zinc-700/30 p-3">
                       <div className="space-y-4">
                         <div className="flex justify-between">
-                          <span className="text-gray-600 dark:text-gray-400">Customer</span>
-                          <span className="font-medium text-gray-800 dark:text-white">
+                          <span className="text-zinc-600 dark:text-zinc-400">Customer</span>
+                          <span className="font-medium text-zinc-800 dark:text-white">
                             {bookingData.customer?.name || ""}
                           </span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-gray-600 dark:text-gray-400">Email</span>
-                          <span className="font-medium text-gray-800 dark:text-white">
+                          <span className="text-zinc-600 dark:text-zinc-400">Email</span>
+                          <span className="font-medium text-zinc-800 dark:text-white">
                             {bookingData.customer?.email || ""}
                           </span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-gray-600 dark:text-gray-400">Phone</span>
-                          <span className="font-medium text-gray-800 dark:text-white">
+                          <span className="text-zinc-600 dark:text-zinc-400">Phone</span>
+                          <span className="font-medium text-zinc-800 dark:text-white">
                             {bookingData.customer?.phone || ""}
                           </span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-gray-600 dark:text-gray-400">Amount Paid</span>
-                          <span className="font-medium text-gray-800 dark:text-white">
+                          <span className="text-zinc-600 dark:text-zinc-400">Amount Paid</span>
+                          <span className="font-medium text-zinc-800 dark:text-white">
                             ₹{bookingData.amount_paid || ""}
                           </span>
                         </div>
@@ -4445,28 +4440,28 @@ function RejectBookingForm() {
                 </div>
 
                 <div className="space-y-3">
-                  <h3 className="text-lg font-semibold text-gray-800 dark:text-white">
+                  <h3 className="text-lg font-semibold text-zinc-800 dark:text-white">
                     Rejection Details
                   </h3>
                   <div className="space-y-4">
                     <div className="space-y-2">
-                      <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
                         Reason for Rejection
                       </label>
                       <textarea
                         value={rejectionReason}
                         onChange={(e) => setRejectionReason(e.target.value)}
                         placeholder="Please provide a detailed reason for rejecting this booking..."
-                        className="w-full min-h-[100px] px-4 py-3 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 text-gray-800 dark:text-white resize-none"
+                        className="w-full min-h-[100px] px-4 py-3 bg-white dark:bg-zinc-700 border border-zinc-300 dark:border-zinc-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 text-zinc-800 dark:text-white resize-none"
                       />
                     </div>
 
                     <div className="space-y-2">
-                      <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
                         Repayment Method
                       </label>
                       <Select value={repaymentType} onValueChange={setRepaymentType}>
-                        <SelectTrigger className="bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600">
+                        <SelectTrigger className="bg-white dark:bg-zinc-700 border-zinc-300 dark:border-zinc-600">
                           <SelectValue placeholder="Select repayment method" />
                         </SelectTrigger>
                         <SelectContent>
@@ -4662,7 +4657,7 @@ function ListBooking() {
     return (
       <span
         className={`rounded-full px-3 py-1 text-xs font-medium ${
-          variants[status] || "border border-slate-500/50 bg-slate-700/60 text-slate-200"
+          variants[status] || "border border-zinc-500/50 bg-zinc-700/60 text-zinc-200"
         }`}
       >
         {status}
@@ -4689,7 +4684,7 @@ function ListBooking() {
           placeholder="Search bookings..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full flex-1 rounded-lg border border-slate-600/70 bg-slate-800/70 px-4 py-2.5 text-sm text-slate-100 placeholder:text-slate-400 focus:border-cyan-400/60 focus:outline-none"
+          className="w-full flex-1 rounded-lg border border-zinc-600/70 bg-zinc-800/70 px-4 py-2.5 text-sm text-zinc-100 placeholder:text-zinc-400 focus:border-blue-400/60 focus:outline-none"
         />
         <Button onClick={handleSearch} className="ui-action-primary">
           <Search className="w-4 h-4 mr-2" />
@@ -4697,11 +4692,11 @@ function ListBooking() {
         </Button>
       </div>
 
-      <div className="overflow-hidden rounded-xl border border-slate-700 bg-slate-900/60">
+      <div className="overflow-hidden rounded-xl border border-zinc-700 bg-zinc-900/60">
         <div className="overflow-x-auto">
         <Table className="min-w-[980px]">
           <TableHeader>
-            <TableRow className="bg-slate-800/80">
+            <TableRow className="bg-zinc-800/80">
               {[
                 { label: "Booked Date", key: "bookedDate" },
                 { label: "Username", key: "username" },
@@ -4716,7 +4711,7 @@ function ListBooking() {
               ].map(({ label, key }) => (
                 <TableHead
                   key={key}
-                  className="cursor-pointer font-semibold text-slate-200 hover:bg-slate-700/70 transition-colors"
+                  className="cursor-pointer font-semibold text-zinc-200 hover:bg-zinc-700/70 transition-colors"
                   onClick={() => handleSort(key)}
                 >
                   {label}{" "}
@@ -4729,10 +4724,10 @@ function ListBooking() {
             {Object.entries(groupedBookings).map(([bookedDate, bookings]) => (
               <React.Fragment key={bookedDate}>
                 <TableRow
-                  className="cursor-pointer bg-slate-800/60 hover:bg-slate-700/70"
+                  className="cursor-pointer bg-zinc-800/60 hover:bg-zinc-700/70"
                   onClick={() => toggleDate(bookedDate)}
                 >
-                  <TableCell colSpan={10} className="font-bold text-slate-100">
+                  <TableCell colSpan={10} className="font-bold text-zinc-100">
                     {expandedDates[bookedDate] ? "▼" : "▶"}{" "}
                     {new Date(bookedDate).toDateString()} ({bookings.length})
                   </TableCell>
@@ -4746,22 +4741,22 @@ function ListBooking() {
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -20 }}
                       transition={{ delay: idx * 0.05 }}
-                      className="hover:bg-slate-800/60"
+                      className="hover:bg-zinc-800/60"
                     >
-                      <TableCell className="text-slate-200">{booking.bookedDate}</TableCell>
-                      <TableCell className="text-slate-200">{booking.username}</TableCell>
+                      <TableCell className="text-zinc-200">{booking.bookedDate}</TableCell>
+                      <TableCell className="text-zinc-200">{booking.username}</TableCell>
                       <TableCell>{getStatusBadge(booking.status)}</TableCell>
-                      <TableCell className="text-slate-300">{booking.id}</TableCell>
-                      <TableCell className="text-slate-300">{booking.bookingDate}</TableCell>
-                      <TableCell className="text-slate-300">{booking.bookingTime}</TableCell>
-                      <TableCell className="text-slate-300">{booking.consoleType}</TableCell>
-                      <TableCell className="text-slate-300">
+                      <TableCell className="text-zinc-300">{booking.id}</TableCell>
+                      <TableCell className="text-zinc-300">{booking.bookingDate}</TableCell>
+                      <TableCell className="text-zinc-300">{booking.bookingTime}</TableCell>
+                      <TableCell className="text-zinc-300">{booking.consoleType}</TableCell>
+                      <TableCell className="text-zinc-300">
                         {booking.startTime ? formatTime(booking.startTime) : "Not started"}
                       </TableCell>
-                      <TableCell className="text-slate-300">
+                      <TableCell className="text-zinc-300">
                         {booking.endTime ? formatTime(booking.endTime) : "Not ended"}
                       </TableCell>
-                      <TableCell className="text-slate-300">{booking.type}</TableCell>
+                      <TableCell className="text-zinc-300">{booking.type}</TableCell>
                     </motion.tr>
                   ))}
               </React.Fragment>
@@ -5486,7 +5481,7 @@ useEffect(() => {
       <main className={embedded ? "h-full min-h-0 bg-background flex items-center justify-center" : "min-h-screen bg-background flex items-center justify-center"}>
         <div className="text-center">
           <Loader2 className="w-12 h-12 animate-spin text-blue-500 mx-auto mb-4" />
-          <p className="text-black dark:text-slate-200">Loading slot data...</p>
+          <p className="text-black dark:text-zinc-200">Loading slot data...</p>
         </div>
       </main>
     )
@@ -5500,8 +5495,8 @@ useEffect(() => {
         }`}
       >
         {isLoading && hasRenderableSnapshot && (
-          <div className="mb-2 flex items-center gap-2 rounded-md border border-slate-700/60 bg-slate-900/40 px-3 py-1.5 text-xs text-slate-300">
-            <Loader2 className="h-3.5 w-3.5 animate-spin text-cyan-400" />
+          <div className="mb-2 flex items-center gap-2 rounded-md border border-zinc-700/60 bg-zinc-900/40 px-3 py-1.5 text-xs text-zinc-300">
+            <Loader2 className="h-3.5 w-3.5 animate-spin text-blue-400" />
             Syncing latest slots...
           </div>
         )}

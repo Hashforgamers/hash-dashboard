@@ -41,7 +41,7 @@ const DEFAULT_CONSOLE_TYPES = [
     type: "vr",
     name: "VR",
     icon: Headset,
-    iconColor: "#ea580c",
+    iconColor: "#d97706",
     description: "Virtual Reality Systems",
   },
 ];

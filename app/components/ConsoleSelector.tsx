@@ -129,7 +129,7 @@ const ConsoleSelector: React.FC<ConsoleSelectorProps> = ({ onSelectConsole }) =>
         </div>
       ) : !hasConsoles ? (
         <div className="py-10 text-center">
-          <p className="mb-2 text-gray-600 dark:text-gray-400">No available console types found for this cafe.</p>
+          <p className="mb-2 text-zinc-600 dark:text-zinc-400">No available console types found for this cafe.</p>
           {!vendorId && <p className="text-sm text-red-500">Please sign in again to continue.</p>}
         </div>
       ) : (
@@ -144,14 +144,14 @@ const ConsoleSelector: React.FC<ConsoleSelectorProps> = ({ onSelectConsole }) =>
               onClick={() => onSelectConsole(consoleType)}
               className="cursor-pointer"
             >
-              <div className="rounded-xl border border-gray-200 p-6 shadow-md transition-all hover:border-emerald-500 hover:shadow-lg dark:border-gray-700">
+              <div className="rounded-xl border border-zinc-200 p-6 shadow-md transition-all hover:border-emerald-500 hover:shadow-lg dark:border-zinc-700">
                 <div className="flex flex-col items-center space-y-4 text-center">
                   <div className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-50 dark:bg-emerald-900/20">
                     <consoleType.icon className="h-8 w-8" style={{ color: consoleType.iconColor }} />
                   </div>
                   <div>
-                    <h3 className="mb-1 text-xl font-semibold text-gray-800 dark:text-white">{consoleType.name}</h3>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">{consoleType.description}</p>
+                    <h3 className="mb-1 text-xl font-semibold text-zinc-800 dark:text-white">{consoleType.name}</h3>
+                    <p className="text-sm text-zinc-600 dark:text-zinc-400">{consoleType.description}</p>
                   </div>
                 </div>
               </div>

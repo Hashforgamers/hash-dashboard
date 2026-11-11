@@ -1,3 +1,5 @@
+import { buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 import { creditAuthHeaders } from "@/lib/credit-auth"
 import { SessionConsoleDialog, type SessionConsole } from "./session-console-dialog";
@@ -26,7 +28,7 @@ export function getIcon(system?: string | null): JSX.Element {
   const sys = (system || "").toLowerCase();
   
   if (sys.includes("ps5")) return <Gamepad2 className="w-4 h-4 text-blue-500" />;
-  if (sys.includes("xbox")) return <Gamepad2 className="w-4 h-4 text-green-500" />;
+  if (sys.includes("xbox")) return <Gamepad2 className="w-4 h-4 text-emerald-500" />;
   return <Monitor className="w-4 h-4 text-purple-500" />;
 }
 
@@ -421,7 +423,7 @@ export function UpcomingBookings({
   const showToast = (message: string, type: 'success' | 'error' = 'success') => {
     const toast = document.createElement('div')
     toast.className = `fixed top-4 right-4 px-6 py-3 rounded-lg shadow-xl z-[10000] text-white font-medium transform transition-all duration-300 ${
-      type === 'success' ? 'bg-emerald-500' : 'bg-rose-500'
+      type === 'success' ? 'bg-emerald-500' : 'bg-red-500'
     }`
     toast.innerHTML = `
       <div class="flex items-center gap-2">
@@ -1032,7 +1034,7 @@ export function UpcomingBookings({
         {/* 🚀 FIXED: Scrollable content area that takes remaining space */}
         <div className="min-h-0 flex-1 overflow-y-auto">
           {mergedBookings.length === 0 ? (
-            <div className="dashboard-module-empty flex flex-col items-center justify-center py-5 px-3">
+            <div className="dashboard-module-empty flex h-full flex-col items-center justify-center py-5 px-3">
               <CalendarIcon className="w-8 h-8 mb-2 opacity-50" />
               <p className="text-sm font-medium">{searchTerm ? 'No matching bookings' : 'No upcoming bookings'}</p>
               {!isConnected && <p className="text-xs mt-1 text-center">Check connection and filters.</p>}
@@ -1099,27 +1101,27 @@ export function UpcomingBookings({
                         <div className="flex items-start justify-between gap-2">
                           <div className="min-w-0 flex-1">
                             <div className="flex min-w-0 items-center gap-1.5">
-                              <User className="h-3.5 w-3.5 shrink-0 text-slate-300" />
+                              <User className="h-3.5 w-3.5 shrink-0 text-zinc-300" />
                               <button
                                 type="button"
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   setContactOverlay({ open: true, booking });
                                 }}
-                                className="truncate text-left text-sm font-semibold text-slate-100 transition-colors hover:text-cyan-300 focus-visible:rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-cyan-300"
+                                className="truncate text-left text-sm font-semibold text-zinc-100 transition-colors hover:text-blue-300 focus-visible:rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-300"
                                 aria-label={`View contact and booking details for ${booking.username || 'Guest User'}`}
                                 title="View phone, email and booking details"
                               >
                                 {booking.username || "Guest User"}
                               </button>
                               {squadEnabled && (
-                                <span className="shrink-0 rounded-full border border-sky-400/40 bg-sky-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-sky-200">
+                                <span className="shrink-0 rounded-full border border-blue-400/40 bg-blue-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-blue-200">
                                   x{squadPlayerCount}
                                 </span>
                               )}
                             </div>
-                            <div className="mt-1.5 flex items-center gap-1.5 text-xs text-slate-400">
-                              <Clock className="h-3 w-3 shrink-0 text-slate-400" />
+                            <div className="mt-1.5 flex items-center gap-1.5 text-xs text-zinc-400">
+                              <Clock className="h-3 w-3 shrink-0 text-zinc-400" />
                               <span className="truncate">{booking.time || "No time set"}</span>
                             </div>
                           </div>
@@ -1151,12 +1153,12 @@ export function UpcomingBookings({
                                   e.stopPropagation();
                                   handleAddFoodClick(booking.bookingId, booking.username || 'Guest User');
                                 }}
-                                className="group inline-flex h-6 items-center gap-1 rounded-full border border-dashed border-cyan-400/60 bg-cyan-500/10 px-2 transition-all duration-200 hover:bg-cyan-500/20 sm:h-7"
+                                className="group inline-flex h-6 items-center gap-1 rounded-full border border-dashed border-blue-400/60 bg-blue-500/10 px-2 transition-all duration-200 hover:bg-blue-500/20 sm:h-7"
                                 title="Add meals to this booking"
                               >
-                                <Plus className="h-3 w-3 text-cyan-300 transition-colors group-hover:text-cyan-200" />
-                                <UtensilsCrossed className="h-3 w-3 text-cyan-300 transition-colors group-hover:text-cyan-200" />
-                                <span className="text-[10px] font-semibold text-cyan-200">Add</span>
+                                <Plus className="h-3 w-3 text-blue-300 transition-colors group-hover:text-blue-200" />
+                                <UtensilsCrossed className="h-3 w-3 text-blue-300 transition-colors group-hover:text-blue-200" />
+                                <span className="text-[10px] font-semibold text-blue-200">Add</span>
                               </motion.button>
                             )}
 
@@ -1169,7 +1171,7 @@ export function UpcomingBookings({
                                     [bookingKey]: !expanded,
                                   }))
                                 }
-                                className="rounded border border-slate-500/50 p-1 text-slate-200 transition-colors hover:bg-slate-700/30"
+                                className="rounded border border-zinc-500/50 p-1 text-zinc-200 transition-colors hover:bg-zinc-700/30"
                                 title={expanded ? "Collapse squad details" : "Expand squad details"}
                               >
                                 <ChevronDown className={`h-3.5 w-3.5 transition-transform ${expanded ? "rotate-180" : ""}`} />
@@ -1178,11 +1180,11 @@ export function UpcomingBookings({
                           </div>
                         </div>
 
-                        <div className="flex items-center justify-between gap-2 rounded-md border border-cyan-400/25 bg-cyan-500/5 px-2 py-1.5">
+                        <div className="flex items-center justify-between gap-2 rounded-md border border-blue-400/25 bg-blue-500/5 px-2 py-1.5">
                           <div className="flex min-w-0 items-center gap-2">
-                            <KeyRound className="h-3.5 w-3.5 shrink-0 text-cyan-300" />
-                            <span className="text-[11px] text-slate-300">Access code</span>
-                            <span className="select-all font-mono text-sm font-semibold tracking-widest text-cyan-100">
+                            <KeyRound className="h-3.5 w-3.5 shrink-0 text-blue-300" />
+                            <span className="text-[11px] text-zinc-300">Access code</span>
+                            <span className="select-all font-mono text-sm font-semibold tracking-widest text-blue-100">
                               {booking.access_code || booking.accessCode || "Unavailable"}
                             </span>
                           </div>
@@ -1191,7 +1193,7 @@ export function UpcomingBookings({
                               type="button"
                               aria-label="Copy gamer access code"
                               title="Copy code to share with the gamer"
-                              className="rounded p-1 text-cyan-300 hover:bg-cyan-500/15 focus-visible:outline focus-visible:outline-2 focus-visible:outline-cyan-300"
+                              className="rounded p-1 text-blue-300 hover:bg-blue-500/15 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-300"
                               onClick={async (event) => {
                                 event.stopPropagation();
                                 try {
@@ -1208,7 +1210,7 @@ export function UpcomingBookings({
                         </div>
 
                         {squadEnabled && squadMemberNames.length > 0 && !expanded && (
-                          <p className="truncate text-[11px] text-slate-300">
+                          <p className="truncate text-[11px] text-zinc-300">
                             Members: {squadMemberNames.join(", ")}
                             {squadPlayerCount - squadMemberNames.length > 0
                               ? ` +${squadPlayerCount - squadMemberNames.length} more`
@@ -1216,7 +1218,7 @@ export function UpcomingBookings({
                           </p>
                         )}
                         {squadEnabled && expanded && (
-                          <div className="rounded-md border border-sky-400/25 bg-sky-500/10 p-1.5 text-[11px] text-sky-100">
+                          <div className="rounded-md border border-blue-400/25 bg-blue-500/10 p-1.5 text-[11px] text-blue-100">
                             <p className="font-semibold">Squad Details</p>
                             <p>Members: {squadMembers.map((m: any) => m?.name).filter(Boolean).join(", ") || "Not available"}</p>
                             {String(booking?.squadDetails?.console_group || "").toLowerCase() === "pc" ? (
@@ -1242,7 +1244,7 @@ export function UpcomingBookings({
                             className={`inline-flex h-8 min-w-[96px] items-center justify-center gap-1 rounded-md !px-2.5 !py-0 text-[11px] font-semibold transition-all sm:min-w-[104px] sm:text-xs ${
                               canStartNow
                                 ? "dashboard-btn-primary"
-                                : "bg-slate-700/70 text-slate-300"
+                                : "bg-zinc-700/70 text-zinc-300"
                             }`}
                             title={canStartNow ? "Start session" : "Start available 5 minutes before scheduled time"}
                           >
@@ -1256,7 +1258,7 @@ export function UpcomingBookings({
                                 e.stopPropagation();
                                 openNoShowDialog(booking);
                               }}
-                              className="inline-flex h-8 min-w-[86px] items-center justify-center rounded-md border border-amber-400/40 bg-amber-500/10 px-2.5 text-[11px] font-semibold text-amber-200 transition-all hover:bg-amber-500/20 sm:min-w-[92px] sm:text-xs"
+                              className={cn(buttonVariants({ variant: "soft-warning", size: "sm" }), "min-w-[86px] sm:min-w-[92px]")}
                             >
                               No Show
                             </button>
@@ -1268,7 +1270,7 @@ export function UpcomingBookings({
                                 e.stopPropagation();
                                 openCancelDialog(booking, isPaidBooking);
                               }}
-                              className="inline-flex h-8 min-w-[86px] items-center justify-center rounded-md border border-rose-400/40 bg-rose-500/10 px-2.5 text-[11px] font-semibold text-rose-200 transition-all hover:bg-rose-500/20 sm:min-w-[92px] sm:text-xs"
+                              className={cn(buttonVariants({ variant: "soft-danger", size: "sm" }), "min-w-[86px] sm:min-w-[92px]")}
                             >
                               Cancel
                             </button>
@@ -1291,47 +1293,47 @@ export function UpcomingBookings({
           onClick={() => setContactOverlay({ open: false, booking: null })}
         >
           <div
-            className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-xl border border-cyan-500/30 bg-slate-950 shadow-2xl"
+            className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-xl border border-blue-500/30 bg-zinc-950 shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between border-b border-cyan-500/20 px-4 py-3">
-              <h3 className="text-sm font-semibold uppercase tracking-[0.08em] text-cyan-200">Booking details</h3>
+            <div className="flex items-center justify-between border-b border-blue-500/20 px-4 py-3">
+              <h3 className="text-sm font-semibold uppercase tracking-[0.08em] text-blue-200">Booking details</h3>
               <button
                 type="button"
                 onClick={() => setContactOverlay({ open: false, booking: null })}
-                className="rounded-md border border-slate-600 px-2 py-1 text-xs text-slate-300 hover:bg-slate-800"
+                className="rounded-md border border-zinc-600 px-2 py-1 text-xs text-zinc-300 hover:bg-zinc-800"
               >
                 Close
               </button>
             </div>
             <div className="space-y-3 px-4 py-4 text-sm">
-              <div className="rounded-lg border border-slate-700/80 bg-slate-900/70 p-3">
-                <p className="text-xs uppercase tracking-wide text-slate-400">Name</p>
-                <p className="mt-1 font-semibold text-slate-100">
+              <div className="rounded-lg border border-zinc-700/80 bg-zinc-900/70 p-3">
+                <p className="text-xs uppercase tracking-wide text-zinc-400">Name</p>
+                <p className="mt-1 font-semibold text-zinc-100">
                   {contactOverlay.booking?.username || "Guest User"}
                 </p>
               </div>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                <div className="min-w-0 rounded-lg border border-slate-700/80 bg-slate-900/70 p-3">
-                  <p className="text-xs uppercase tracking-wide text-slate-400">Phone</p>
-                  <p className="mt-1 text-slate-100">{getBookingPhone(contactOverlay.booking) || "-"}</p>
+                <div className="min-w-0 rounded-lg border border-zinc-700/80 bg-zinc-900/70 p-3">
+                  <p className="text-xs uppercase tracking-wide text-zinc-400">Phone</p>
+                  <p className="mt-1 text-zinc-100">{getBookingPhone(contactOverlay.booking) || "-"}</p>
                 </div>
-                <div className="min-w-0 rounded-lg border border-slate-700/80 bg-slate-900/70 p-3">
-                  <p className="text-xs uppercase tracking-wide text-slate-400">Email</p>
-                  <p className="mt-1 break-all text-slate-100">{getBookingEmail(contactOverlay.booking) || "-"}</p>
+                <div className="min-w-0 rounded-lg border border-zinc-700/80 bg-zinc-900/70 p-3">
+                  <p className="text-xs uppercase tracking-wide text-zinc-400">Email</p>
+                  <p className="mt-1 break-all text-zinc-100">{getBookingEmail(contactOverlay.booking) || "-"}</p>
                 </div>
-                <div className="min-w-0 rounded-lg border border-slate-700/80 bg-slate-900/70 p-3">
-                  <p className="text-xs uppercase tracking-wide text-slate-400">User ID</p>
-                  <p className="mt-1 text-slate-100">{contactOverlay.booking?.userId || contactOverlay.booking?.user_id || "-"}</p>
+                <div className="min-w-0 rounded-lg border border-zinc-700/80 bg-zinc-900/70 p-3">
+                  <p className="text-xs uppercase tracking-wide text-zinc-400">User ID</p>
+                  <p className="mt-1 text-zinc-100">{contactOverlay.booking?.userId || contactOverlay.booking?.user_id || "-"}</p>
                 </div>
-                <div className="min-w-0 rounded-lg border border-slate-700/80 bg-slate-900/70 p-3">
-                  <p className="text-xs uppercase tracking-wide text-slate-400">Booking ID</p>
-                  <p className="mt-1 text-slate-100">{contactOverlay.booking?.bookingId || "-"}</p>
+                <div className="min-w-0 rounded-lg border border-zinc-700/80 bg-zinc-900/70 p-3">
+                  <p className="text-xs uppercase tracking-wide text-zinc-400">Booking ID</p>
+                  <p className="mt-1 text-zinc-100">{contactOverlay.booking?.bookingId || "-"}</p>
                 </div>
               </div>
-              <div className="rounded-lg border border-slate-700/80 bg-slate-900/70 p-3">
-                <p className="text-xs uppercase tracking-wide text-slate-400">Session</p>
-                <p className="mt-1 text-slate-100">
+              <div className="rounded-lg border border-zinc-700/80 bg-zinc-900/70 p-3">
+                <p className="text-xs uppercase tracking-wide text-zinc-400">Session</p>
+                <p className="mt-1 text-zinc-100">
                   {contactOverlay.booking?.consoleType || "Console"} • {contactOverlay.booking?.time || "Time not set"}
                 </p>
               </div>
@@ -1364,18 +1366,18 @@ export function UpcomingBookings({
 
       {isMounted && cancelDialog.open && createPortal(
         <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/40 p-4">
-          <div className="w-full max-w-md rounded-2xl border border-slate-700/60 bg-slate-900/95 p-5 shadow-2xl">
+          <div className="w-full max-w-md rounded-2xl border border-zinc-700/60 bg-zinc-900/95 p-5 shadow-2xl">
             <div className="flex items-center justify-between">
-              <h3 className="text-sm font-semibold text-slate-100">Cancel Booking</h3>
+              <h3 className="text-sm font-semibold text-zinc-100">Cancel Booking</h3>
               <button
                 type="button"
                 onClick={closeCancelDialog}
-                className="rounded-full border border-slate-600/60 p-1 text-slate-300 hover:bg-slate-800"
+                className="rounded-full border border-zinc-600/60 p-1 text-zinc-300 hover:bg-zinc-800"
               >
                 <X className="h-4 w-4" />
               </button>
             </div>
-            <p className="mt-2 text-xs text-slate-400">
+            <p className="mt-2 text-xs text-zinc-400">
               {cancelDialog.isPaid
                 ? "This booking is paid. Choose how you will repay the user."
                 : "This booking is unpaid. The slot will be released immediately."}
@@ -1383,7 +1385,7 @@ export function UpcomingBookings({
 
             {cancelDialog.isPaid && (
               <div className="mt-4 space-y-2">
-                <label className="text-xs font-medium text-slate-300">Repayment Method</label>
+                <label className="text-xs font-medium text-zinc-300">Repayment Method</label>
                 <select
                   value={cancelDialog.repaymentType}
                   onChange={(e) =>
@@ -1392,7 +1394,7 @@ export function UpcomingBookings({
                       repaymentType: e.target.value as any
                     }))
                   }
-                  className="w-full rounded-md border border-slate-600/60 bg-slate-800/70 px-3 py-2 text-xs text-slate-100"
+                  className="w-full rounded-md border border-zinc-600/60 bg-zinc-800/70 px-3 py-2 text-xs text-zinc-100"
                 >
                   <option value="refund">Refund to original payment</option>
                   <option value="credit">Credit to wallet/pass</option>
@@ -1402,12 +1404,12 @@ export function UpcomingBookings({
             )}
 
             <div className="mt-4 space-y-2">
-              <label className="text-xs font-medium text-slate-300">Reason (optional)</label>
+              <label className="text-xs font-medium text-zinc-300">Reason (optional)</label>
               <textarea
                 rows={2}
                 value={cancelDialog.reason}
                 onChange={(e) => setCancelDialog(prev => ({ ...prev, reason: e.target.value }))}
-                className="w-full rounded-md border border-slate-600/60 bg-slate-800/70 px-3 py-2 text-xs text-slate-100"
+                className="w-full rounded-md border border-zinc-600/60 bg-zinc-800/70 px-3 py-2 text-xs text-zinc-100"
                 placeholder="Add a short reason..."
               />
             </div>
@@ -1416,7 +1418,7 @@ export function UpcomingBookings({
               <button
                 type="button"
                 onClick={closeCancelDialog}
-                className="rounded-md border border-slate-600/60 px-3 py-2 text-xs text-slate-300 hover:bg-slate-800"
+                className="rounded-md border border-zinc-600/60 px-3 py-2 text-xs text-zinc-300 hover:bg-zinc-800"
               >
                 Keep Booking
               </button>
@@ -1424,7 +1426,7 @@ export function UpcomingBookings({
                 type="button"
                 onClick={handleCancelBooking}
                 disabled={cancelLoading}
-                className="rounded-md border border-rose-400/40 bg-rose-500/15 px-3 py-2 text-xs font-semibold text-rose-200 hover:bg-rose-500/25 disabled:cursor-not-allowed disabled:opacity-60"
+                className={cn(buttonVariants({ variant: "soft-danger", size: "sm" }), "disabled:cursor-not-allowed")}
               >
                 {cancelLoading ? "Cancelling..." : "Confirm Cancel"}
               </button>
@@ -1436,28 +1438,28 @@ export function UpcomingBookings({
 
       {isMounted && noShowDialog.open && createPortal(
         <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/40 p-4">
-          <div className="w-full max-w-md rounded-2xl border border-slate-700/60 bg-slate-900/95 p-5 shadow-2xl">
+          <div className="w-full max-w-md rounded-2xl border border-zinc-700/60 bg-zinc-900/95 p-5 shadow-2xl">
             <div className="flex items-center justify-between">
-              <h3 className="text-sm font-semibold text-slate-100">Mark Booking As No Show</h3>
+              <h3 className="text-sm font-semibold text-zinc-100">Mark Booking As No Show</h3>
               <button
                 type="button"
                 onClick={closeNoShowDialog}
-                className="rounded-full border border-slate-600/60 p-1 text-slate-300 hover:bg-slate-800"
+                className="rounded-full border border-zinc-600/60 p-1 text-zinc-300 hover:bg-zinc-800"
               >
                 <X className="h-4 w-4" />
               </button>
             </div>
-            <p className="mt-2 text-xs text-slate-400">
+            <p className="mt-2 text-xs text-zinc-400">
               This marks the booking as no-show, releases the slot, and updates settlement in real time.
             </p>
 
             <div className="mt-4 space-y-2">
-              <label className="text-xs font-medium text-slate-300">Reason (optional)</label>
+              <label className="text-xs font-medium text-zinc-300">Reason (optional)</label>
               <textarea
                 rows={2}
                 value={noShowDialog.reason}
                 onChange={(e) => setNoShowDialog(prev => ({ ...prev, reason: e.target.value }))}
-                className="w-full rounded-md border border-slate-600/60 bg-slate-800/70 px-3 py-2 text-xs text-slate-100"
+                className="w-full rounded-md border border-zinc-600/60 bg-zinc-800/70 px-3 py-2 text-xs text-zinc-100"
                 placeholder="User did not arrive..."
               />
             </div>
@@ -1466,7 +1468,7 @@ export function UpcomingBookings({
               <button
                 type="button"
                 onClick={closeNoShowDialog}
-                className="rounded-md border border-slate-600/60 px-3 py-2 text-xs text-slate-300 hover:bg-slate-800"
+                className="rounded-md border border-zinc-600/60 px-3 py-2 text-xs text-zinc-300 hover:bg-zinc-800"
               >
                 Back
               </button>
@@ -1474,7 +1476,7 @@ export function UpcomingBookings({
                 type="button"
                 onClick={handleMarkNoShow}
                 disabled={noShowLoading}
-                className="rounded-md border border-amber-400/40 bg-amber-500/15 px-3 py-2 text-xs font-semibold text-amber-200 hover:bg-amber-500/25 disabled:cursor-not-allowed disabled:opacity-60"
+                className={cn(buttonVariants({ variant: "soft-warning", size: "sm" }), "disabled:cursor-not-allowed")}
               >
                 {noShowLoading ? "Updating..." : "Confirm No Show"}
               </button>

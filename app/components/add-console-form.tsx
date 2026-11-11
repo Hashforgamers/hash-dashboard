@@ -1,6 +1,7 @@
 "use client";
 
 
+import { toast } from "sonner";
 import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -253,7 +254,7 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
   const handelfetch = async () => {
     setLoading(true);
     if (!vendorId) {
-      alert("Vendor ID is missing. Please log in again.");
+      toast.error("Vendor ID is missing. Please log in again.");
       setLoading(false);
       return;
     }
@@ -359,7 +360,7 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
       setDynamicAttributes(buildInitialDynamicAttributes(formProfile));
     } catch (error) {
       console.error("Error submitting console:", error);
-      alert("Failed to add console. Please check the form and try again.");
+      toast.error("Failed to add console. Please check the form and try again.");
     } finally {
       setLoading(false);
     }
@@ -398,7 +399,7 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
         <Card className="add-console-card">
           <CardHeader className="add-console-card-header">
             <CardTitle className="flex items-center gap-3 dash-title !text-lg">
-              <Copy className="h-5 w-5 text-slate-700 dark:text-cyan-300" />
+              <Copy className="h-5 w-5 text-zinc-700 dark:text-blue-300" />
               Quick Setup
             </CardTitle>
           </CardHeader>
@@ -442,7 +443,7 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
         <Card className="add-console-card">
           <CardHeader className="add-console-card-header">
             <CardTitle className="flex items-center gap-3 dash-title !text-lg">
-              <Gamepad2 className="h-5 w-5 text-slate-700 dark:text-emerald-300" />
+              <Gamepad2 className="h-5 w-5 text-zinc-700 dark:text-emerald-300" />
               Console Details
             </CardTitle>
           </CardHeader>
@@ -561,7 +562,7 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
         <Card className="add-console-card">
           <CardHeader className="add-console-card-header">
             <CardTitle className="flex items-center gap-3 dash-title !text-lg">
-              <HardDrive className="h-5 w-5 text-slate-700 dark:text-violet-300" />
+              <HardDrive className="h-5 w-5 text-zinc-700 dark:text-purple-300" />
               Hardware Specifications
             </CardTitle>
           </CardHeader>
@@ -581,7 +582,7 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
         <Card className="add-console-card">
           <CardHeader className="add-console-card-header">
             <CardTitle className="flex items-center gap-3 dash-title !text-lg">
-              <Wrench className="h-5 w-5 text-slate-700 dark:text-orange-300" />
+              <Wrench className="h-5 w-5 text-zinc-700 dark:text-amber-300" />
               Maintenance & Status
             </CardTitle>
           </CardHeader>
@@ -689,7 +690,7 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
         <Card className="add-console-card">
           <CardHeader className="add-console-card-header">
             <CardTitle className="flex items-center gap-3 dash-title !text-lg">
-              <DollarSign className="h-5 w-5 text-slate-700 dark:text-emerald-300" />
+              <DollarSign className="h-5 w-5 text-zinc-700 dark:text-emerald-300" />
               Price & Cost Information
             </CardTitle>
           </CardHeader>

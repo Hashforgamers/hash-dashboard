@@ -1,4 +1,7 @@
 "use client";
+import { cn } from "@/lib/utils";
+import { buttonVariants } from "@/components/ui/button";
+import { badgeVariants } from "@/components/ui/badge";
 
 import { useActionFeedback } from "../hooks/use-action-feedback";
 import { useEffect, useState } from "react";
@@ -249,7 +252,7 @@ export default function ManagePassesPage() {
   const datePasses = passes.filter((p) => p.pass_mode === "date_based");
   const hourPasses = passes.filter((p) => p.pass_mode === "hour_based");
   const primaryButtonClass =
-    "ui-action-primary inline-flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold shadow-md transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-50 sm:px-4 sm:text-sm";
+    buttonVariants();
 
   useEffect(() => {
     if (!hasMounted || !deepLinkReady) return;
@@ -284,8 +287,8 @@ export default function ManagePassesPage() {
                 onClick={() => setViewMode("grid")}
                 className={`inline-flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-semibold transition-all sm:text-sm ${
                   viewMode === "grid"
-                    ? "dashboard-module-tab-active bg-cyan-500/12 text-slate-900 shadow-sm dark:text-cyan-100"
-                    : "text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-cyan-100"
+                    ? "dashboard-module-tab-active bg-blue-500/12 text-zinc-900 shadow-sm dark:text-blue-100"
+                    : "text-zinc-600 hover:text-zinc-900 dark:text-zinc-300 dark:hover:text-blue-100"
                 }`}
               >
                 <LayoutGrid className="icon-md" />
@@ -295,8 +298,8 @@ export default function ManagePassesPage() {
                 onClick={() => setViewMode("table")}
                 className={`inline-flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-semibold transition-all sm:text-sm ${
                   viewMode === "table"
-                    ? "dashboard-module-tab-active bg-cyan-500/12 text-slate-900 shadow-sm dark:text-cyan-100"
-                    : "text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-cyan-100"
+                    ? "dashboard-module-tab-active bg-blue-500/12 text-zinc-900 shadow-sm dark:text-blue-100"
+                    : "text-zinc-600 hover:text-zinc-900 dark:text-zinc-300 dark:hover:text-blue-100"
                 }`}
               >
                 <TableIcon className="icon-md" />
@@ -309,10 +312,10 @@ export default function ManagePassesPage() {
         <div className="flex items-center gap-2">
           {!loading && passes.length > 0 && (
             <>
-            <span className="rounded-full border border-blue-300/40 bg-blue-50 px-2 py-0.5 text-xs font-bold text-sky-700 dark:border-blue-500/20 dark:bg-blue-500/10 dark:text-blue-400">
+            <span className={badgeVariants({ variant: "info" })}>
               {hourPasses.length} Hour-Based
             </span>
-            <span className="rounded-full border border-emerald-300/40 bg-emerald-50 px-2 py-0.5 text-xs font-bold text-emerald-700 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-400">
+            <span className={badgeVariants({ variant: "success" })}>
               {datePasses.length} Date-Based
             </span>
             </>
@@ -329,7 +332,7 @@ export default function ManagePassesPage() {
             <p className="body-text-muted">Loading passes...</p>
           </div>
         ) : passes.length === 0 ? (
-          <div className="gaming-panel dashboard-module-panel flex flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed border-cyan-400/20 py-8">
+          <div className="gaming-panel dashboard-module-panel flex flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed border-blue-400/20 py-8">
             <BadgeCheck className="w-12 h-12 text-muted-foreground/30" />
             <h3 className="section-title text-muted-foreground/60">No passes found</h3>
             <p className="body-text-muted">Create your first pass to get started</p>
@@ -348,7 +351,7 @@ export default function ManagePassesPage() {
                   <Clock className="icon-md text-blue-400" />
                 </div>
                 <h2 className="section-title">Hour-Based Passes</h2>
-                <span className="rounded-full border border-blue-300/40 bg-blue-50 px-2 py-0.5 text-xs font-bold text-sky-700 dark:border-blue-500/20 dark:bg-blue-500/10 dark:text-blue-400">
+                <span className={badgeVariants({ variant: "info" })}>
                   {hourPasses.length}
                 </span>
               </div>
@@ -374,7 +377,7 @@ export default function ManagePassesPage() {
                   <Calendar className="icon-md text-emerald-400" />
                 </div>
                 <h2 className="section-title">Date-Based Passes</h2>
-                <span className="rounded-full border border-emerald-300/40 bg-emerald-50 px-2 py-0.5 text-xs font-bold text-emerald-700 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-400">
+                <span className={badgeVariants({ variant: "success" })}>
                   {datePasses.length}
                 </span>
               </div>
@@ -426,7 +429,7 @@ function PassesTable({ passes, passTypes, onEdit, onDelete, deletingId }: any) {
           </thead>
           <tbody>
             {passes.map((pass: CafePass) => (
-              <tr key={pass.id} className="table-row border-b border-cyan-500/10 last:border-0">
+              <tr key={pass.id} className="table-row border-b border-blue-500/10 last:border-0">
 
                 {/* Name */}
                 <td className="table-cell">
@@ -443,7 +446,7 @@ function PassesTable({ passes, passTypes, onEdit, onDelete, deletingId }: any) {
                   <span
                     className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold border ${
                       pass.pass_mode === "hour_based"
-                        ? "border-blue-300/40 bg-blue-50 text-sky-700 dark:border-blue-500/20 dark:bg-blue-500/10 dark:text-blue-400"
+                        ? "border-blue-300/40 bg-blue-50 text-blue-700 dark:border-blue-500/20 dark:bg-blue-500/10 dark:text-blue-400"
                         : "border-emerald-300/40 bg-emerald-50 text-emerald-700 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-400"
                     }`}
                   >
@@ -458,7 +461,7 @@ function PassesTable({ passes, passTypes, onEdit, onDelete, deletingId }: any) {
 
                 {/* Price */}
                 <td className="table-cell">
-                  <div className="flex items-center gap-0.5 font-bold text-sky-700 dark:text-blue-400">
+                  <div className="flex items-center gap-0.5 font-bold text-blue-700 dark:text-blue-400">
                     <IndianRupee className="icon-md" />
                     <span>{pass.price}</span>
                   </div>
@@ -495,7 +498,7 @@ function PassesTable({ passes, passTypes, onEdit, onDelete, deletingId }: any) {
                     <button
                       onClick={() => onDelete(pass.id)}
                       disabled={deletingId === pass.id}
-                      className="inline-flex items-center justify-center rounded-lg border border-rose-300/50 bg-rose-50 p-2 text-rose-600 transition-all duration-200 hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-rose-400/30 dark:bg-rose-500/10 dark:text-rose-300 dark:hover:bg-rose-500/20"
+                      className={cn(buttonVariants({ variant: "soft-danger", size: "icon-sm" }), "disabled:cursor-not-allowed")}
                       title="Delete"
                     >
                       {deletingId === pass.id ? (
@@ -522,8 +525,8 @@ function PassCard({ pass, passTypes, onEdit, onDelete, deletingId }: any) {
   const isHourBased = pass.pass_mode === "hour_based";
 
   return (
-    <Card className="dashboard-module-surface transition-all duration-200 hover:shadow-lg hover:shadow-cyan-500/10">
-      <CardHeader className="flex flex-row items-start justify-between border-b border-cyan-500/15 p-4">
+    <Card className="dashboard-module-surface transition-all duration-200 hover:shadow-lg hover:shadow-blue-500/10">
+      <CardHeader className="flex flex-row items-start justify-between border-b border-blue-500/15 p-4">
         <div className="min-w-0 flex-1">
           <h2 className="card-title truncate">{pass.name}</h2>
           <div className="flex items-center gap-1.5 mt-1">
@@ -544,7 +547,7 @@ function PassCard({ pass, passTypes, onEdit, onDelete, deletingId }: any) {
           <button
             onClick={() => onDelete(pass.id)}
             disabled={deletingId === pass.id}
-            className="inline-flex items-center justify-center rounded-lg border border-rose-300/50 bg-rose-50 p-2 text-rose-600 transition-all duration-200 hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-rose-400/30 dark:bg-rose-500/10 dark:text-rose-300 dark:hover:bg-rose-500/20"
+            className={cn(buttonVariants({ variant: "soft-danger", size: "icon-sm" }), "disabled:cursor-not-allowed")}
             title="Delete"
           >
             {deletingId === pass.id ? (
@@ -560,7 +563,7 @@ function PassCard({ pass, passTypes, onEdit, onDelete, deletingId }: any) {
         {/* Price + Validity row */}
         <div className="flex items-center justify-between">
           <div>
-            <div className="flex items-center gap-0.5 text-xl font-bold text-sky-700 dark:text-blue-400">
+            <div className="flex items-center gap-0.5 text-xl font-bold text-blue-700 dark:text-blue-400">
               <IndianRupee className="w-4 h-4" />
               <span>{pass.price}</span>
             </div>
@@ -581,7 +584,7 @@ function PassCard({ pass, passTypes, onEdit, onDelete, deletingId }: any) {
           <span
             className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold border ${
               isHourBased
-                ? "border-blue-300/40 bg-blue-50 text-sky-700 dark:border-blue-500/20 dark:bg-blue-500/10 dark:text-blue-400"
+                ? "border-blue-300/40 bg-blue-50 text-blue-700 dark:border-blue-500/20 dark:bg-blue-500/10 dark:text-blue-400"
                 : "border-emerald-300/40 bg-emerald-50 text-emerald-700 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-400"
             }`}
           >
@@ -678,10 +681,10 @@ function AddPassDialog({ passTypes, onSave, buttonClassName }: any) {
 
       <DialogContent className="ui-dialog-surface w-[95vw] rounded-xl shadow-2xl sm:max-w-[520px]">
         {/* Modal Header */}
-        <div className="border-b border-cyan-500/20 px-1 pb-2">
+        <div className="border-b border-blue-500/20 px-1 pb-2">
           <DialogTitle className="ui-dialog-title flex items-center gap-2 text-base font-bold tracking-wide sm:text-lg">
             <span className="feature-action-icon inline-flex h-8 w-8 items-center justify-center rounded-lg">
-              <PlusCircle className="h-4 w-4 text-cyan-500 dark:text-cyan-300" />
+              <PlusCircle className="h-4 w-4 text-blue-500 dark:text-blue-300" />
             </span>
             Add New Pass
           </DialogTitle>
@@ -719,8 +722,8 @@ function AddPassDialog({ passTypes, onSave, buttonClassName }: any) {
                 onClick={() => setPassMode("date_based")}
                 className={`flex flex-1 items-center justify-center gap-2 rounded-md px-3 py-2 text-xs font-semibold transition-all sm:text-sm ${
                   passMode === "date_based"
-                    ? "dashboard-module-tab-active bg-cyan-500/12 text-slate-900 shadow-sm dark:text-cyan-100"
-                    : "text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-cyan-100"
+                    ? "dashboard-module-tab-active bg-blue-500/12 text-zinc-900 shadow-sm dark:text-blue-100"
+                    : "text-zinc-600 hover:text-zinc-900 dark:text-zinc-300 dark:hover:text-blue-100"
                 }`}
               >
                 <Calendar className="icon-md" />
@@ -731,8 +734,8 @@ function AddPassDialog({ passTypes, onSave, buttonClassName }: any) {
                 onClick={() => setPassMode("hour_based")}
                 className={`flex flex-1 items-center justify-center gap-2 rounded-md px-3 py-2 text-xs font-semibold transition-all sm:text-sm ${
                   passMode === "hour_based"
-                    ? "dashboard-module-tab-active bg-cyan-500/12 text-slate-900 shadow-sm dark:text-cyan-100"
-                    : "text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-cyan-100"
+                    ? "dashboard-module-tab-active bg-blue-500/12 text-zinc-900 shadow-sm dark:text-blue-100"
+                    : "text-zinc-600 hover:text-zinc-900 dark:text-zinc-300 dark:hover:text-blue-100"
                 }`}
               >
                 <Clock className="icon-md" />
@@ -822,7 +825,7 @@ function AddPassDialog({ passTypes, onSave, buttonClassName }: any) {
           </div>
 
           {/* Footer Buttons */}
-          <div className="flex gap-3 border-t border-cyan-500/20 pt-2">
+          <div className="flex gap-3 border-t border-blue-500/20 pt-2">
             <button
               type="button"
               onClick={() => setOpen(false)}
@@ -916,14 +919,14 @@ function EditPassDialog({ passObj, passTypes, onSave }: any) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <button className="inline-flex items-center justify-center rounded-lg border border-emerald-300/50 bg-emerald-50 p-2 text-emerald-700 transition-all duration-200 hover:bg-emerald-100 dark:border-emerald-400/30 dark:bg-emerald-500/10 dark:text-emerald-300 dark:hover:bg-emerald-500/20" title="Edit">
+        <button className={buttonVariants({ variant: "soft-success", size: "icon-sm" })} title="Edit">
           <Pencil className="icon-md text-emerald-600 dark:text-emerald-400" />
         </button>
       </DialogTrigger>
 
       <DialogContent className="ui-dialog-surface w-[95vw] rounded-xl shadow-2xl sm:max-w-[480px]">
         {/* Modal Header */}
-        <div className="border-b border-cyan-500/20 px-1 pb-2">
+        <div className="border-b border-blue-500/20 px-1 pb-2">
           <DialogTitle className="section-title">Edit Pass</DialogTitle>
           <p className="body-text-muted mt-0.5">Update pass details</p>
         </div>
@@ -1009,7 +1012,7 @@ function EditPassDialog({ passObj, passTypes, onSave }: any) {
           </div>
 
           {/* Footer */}
-          <div className="flex gap-3 border-t border-cyan-500/20 pt-2">
+          <div className="flex gap-3 border-t border-blue-500/20 pt-2">
             <button
               type="button"
               onClick={() => setOpen(false)}

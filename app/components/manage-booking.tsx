@@ -32,7 +32,7 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
-import { Action as SonnerAction } from "sonner";
+import { toast, Action as SonnerAction } from "sonner";
 import { error } from "console";
 import { BOOKING_URL } from "@/src/config/env";
 import BookingSystem from "./BookingSystem";
@@ -267,7 +267,7 @@ export function ManageBooking() {
             initial="hidden"
             animate="visible"
             exit="exit"
-            className="relative bg-card rounded-lg shadow-lg p-6 border dark:border-gray-800"
+            className="relative bg-card rounded-lg shadow-lg p-6 border dark:border-zinc-800"
           >
             <div className="absolute inset-0 bg-background/60 rounded-lg " />
             <div className="relative">{renderForm()}</div>
@@ -375,7 +375,7 @@ function ChangeBookingForm() {
       if (result?.success !== false) {
         setIsSubmitted(true); // Mark as submitted
       } else {
-        alert("Failed to update booking.");
+        toast.error("Failed to update booking.");
       }
     } catch (error) {
       console.error("Error updating booking:", error);
@@ -984,7 +984,7 @@ function ListBooking() {
       confirmed: "bg-emerald-100 dark:bg-emerald-950",
     };
     return (
-      <span className={`px-3 py-1 rounded-full ${variants[status] || 'bg-gray-300 text-black dark:bg-gray-700 dark:text-white'}`}>
+      <span className={`px-3 py-1 rounded-full ${variants[status] || 'bg-zinc-300 text-black dark:bg-zinc-700 dark:text-white'}`}>
         {status}
       </span>
     );

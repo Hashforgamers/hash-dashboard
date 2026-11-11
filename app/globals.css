@@ -3,7 +3,8 @@
 @tailwind utilities;
 
 html {
-  background-color: #0b0b0d !important;
+  color-scheme: dark; /* native date pickers, scrollbars and form controls render dark */
+  background-color: #0a0a0b !important;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Segoe UI", Arial, Helvetica, sans-serif;
 }
 
@@ -27,31 +28,31 @@ body {
 
 @layer base {
   :root {
-    --background: 240 6% 6%;
-    --foreground: 210 40% 98%;
-    --card: 240 5% 10%;
-    --card-foreground: 210 40% 98%;
-    --popover: 240 5% 10%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 211 100% 50%;
+    --background: 240 4% 4%;
+    --foreground: 0 0% 98%;
+    --card: 240 3% 11%;
+    --card-foreground: 0 0% 98%;
+    --popover: 240 2% 15%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 217 91% 60%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 240 4% 14%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 240 4% 14%;
-    --muted-foreground: 240 6% 70%;
-    --accent: 240 4% 18%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 215 20% 65% / 0.16;
-    --input: 215 20% 65% / 0.18;
-    --ring: 211 100% 50%;
-    --chart-1: 12 76% 61%;
-    --chart-2: 173 58% 39%;
-    --chart-3: 197 37% 24%;
-    --chart-4: 43 74% 66%;
-    --chart-5: 27 87% 67%;
-    --radius: 0.5rem;
+    --secondary: 240 3% 18%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 240 3% 18%;
+    --muted-foreground: 240 4% 61%;
+    --accent: 240 2% 23%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 0 0% 100% / 0.08;
+    --input: 0 0% 100% / 0.1;
+    --ring: 217 91% 60%;
+    --chart-1: 217 91% 60%;
+    --chart-2: 160 84% 39%;
+    --chart-3: 38 92% 50%;
+    --chart-4: 271 91% 65%;
+    --chart-5: 0 84% 60%;
+    --radius: 0.75rem;
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 240 5.3% 26.1%;
     --sidebar-primary: 240 5.9% 10%;
@@ -63,25 +64,25 @@ body {
   }
 
   .dark {
-    --background: 240 6% 6%;
-    --foreground: 210 40% 98%;
-    --card: 240 5% 10%;
-    --card-foreground: 210 40% 98%;
-    --popover: 240 5% 10%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 211 100% 50%;
+    --background: 240 4% 4%;
+    --foreground: 0 0% 98%;
+    --card: 240 3% 11%;
+    --card-foreground: 0 0% 98%;
+    --popover: 240 2% 15%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 217 91% 60%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 240 4% 14%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 240 4% 14%;
-    --muted-foreground: 240 6% 70%;
-    --accent: 240 4% 18%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 50%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 215 20% 65% / 0.16;
-    --input: 215 20% 65% / 0.18;
-    --ring: 211 100% 50%;
+    --secondary: 240 3% 18%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 240 3% 18%;
+    --muted-foreground: 240 4% 61%;
+    --accent: 240 2% 23%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 0 0% 100% / 0.08;
+    --input: 0 0% 100% / 0.1;
+    --ring: 217 91% 60%;
   }
 
   * {
@@ -270,7 +271,7 @@ body {
   
   /* Success Button */
   .btn-success {
-    @apply bg-green-600 hover:bg-green-700 text-white px-3 sm:px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200;
+    @apply bg-emerald-600 hover:bg-emerald-700 text-white px-3 sm:px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200;
   }
 }
 
@@ -328,7 +329,7 @@ body {
   
   /* Form Labels */
   .form-label {
-    @apply text-sm font-medium text-gray-700 dark:text-gray-300 mb-2;
+    @apply text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2;
   }
   
   /* Table Text */
@@ -360,7 +361,7 @@ body {
   }
   
   .icon-yellow {
-    @apply icon-container bg-yellow-500/20;
+    @apply icon-container bg-amber-500/20;
   }
   
   .icon-red {
@@ -372,7 +373,7 @@ body {
   }
   
   .icon-green {
-    @apply icon-container bg-green-500/20;
+    @apply icon-container bg-emerald-500/20;
   }
   
   /* Icon Sizes */

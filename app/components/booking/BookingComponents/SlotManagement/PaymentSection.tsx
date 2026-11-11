@@ -43,24 +43,24 @@ export const PaymentSection = memo(({
   return (
     <div className="space-y-4">
       {/* Private Mode Toggle */}
-      <Card className="p-4 bg-gray-50 dark:bg-gray-700/30">
+      <Card className="p-4 bg-zinc-50 dark:bg-zinc-700/30">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className={cn(
               'p-2 rounded-lg transition-all duration-300',
               isPrivateMode 
                 ? 'bg-purple-500' 
-                : 'bg-gray-300 dark:bg-gray-600'
+                : 'bg-zinc-300 dark:bg-zinc-600'
             )}>
               {isPrivateMode ? (
                 <Lock className="w-5 h-5 text-white" />
               ) : (
-                <Users className="w-5 h-5 text-gray-600 dark:text-gray-300" />
+                <Users className="w-5 h-5 text-zinc-600 dark:text-zinc-300" />
               )}
             </div>
             
             <div>
-              <h3 className="text-sm font-bold text-gray-800 dark:text-white flex items-center gap-2">
+              <h3 className="text-sm font-bold text-zinc-800 dark:text-white flex items-center gap-2">
                 {isPrivateMode ? (
                   <>
                     <span className="text-purple-600 dark:text-purple-400">Private Booking</span>
@@ -70,14 +70,14 @@ export const PaymentSection = memo(({
                   </>
                 ) : (
                   <>
-                    <span className="text-gray-700 dark:text-gray-300">Regular Booking</span>
-                    <span className="text-xs bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 px-2 py-0.5 rounded-full font-medium">
+                    <span className="text-zinc-700 dark:text-zinc-300">Regular Booking</span>
+                    <span className="text-xs bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 px-2 py-0.5 rounded-full font-medium">
                       Standard Mode
                     </span>
                   </>
                 )}
               </h3>
-              <p className="text-xs text-gray-600 dark:text-gray-400 mt-0.5">
+              <p className="text-xs text-zinc-600 dark:text-zinc-400 mt-0.5">
                 {isPrivateMode 
                   ? 'Walk-in or manual booking for internal tracking' 
                   : 'Online booking with standard workflow'}
@@ -94,7 +94,7 @@ export const PaymentSection = memo(({
               'focus:outline-none focus:ring-2 focus:ring-offset-2',
               isPrivateMode 
                 ? 'bg-purple-600 focus:ring-purple-500' 
-                : 'bg-gray-300 dark:bg-gray-600 focus:ring-gray-400'
+                : 'bg-zinc-300 dark:bg-zinc-600 focus:ring-zinc-400'
             )}
           >
             <motion.span
@@ -111,7 +111,7 @@ export const PaymentSection = memo(({
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
-              className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-600"
+              className="mt-3 pt-3 border-t border-zinc-200 dark:border-zinc-600"
             >
               <div className="bg-purple-50 dark:bg-purple-900/20 rounded-lg p-3">
                 <p className="text-xs text-purple-800 dark:text-purple-200 flex items-start gap-2">
@@ -127,12 +127,12 @@ export const PaymentSection = memo(({
       </Card>
 
       {/* Payment Type Selection */}
-      <Card className="p-6 bg-gray-50 dark:bg-gray-700/30">
+      <Card className="p-6 bg-zinc-50 dark:bg-zinc-700/30">
         <div className="flex items-center gap-2 mb-4">
           <div className="p-1 bg-emerald-100 dark:bg-emerald-900/30 rounded">
             <CreditCard className="w-4 h-4 text-emerald-600" />
           </div>
-          <h3 className="text-lg font-semibold text-gray-800 dark:text-white">Payment Method</h3>
+          <h3 className="text-lg font-semibold text-zinc-800 dark:text-white">Payment Method</h3>
         </div>
 
         <div className="grid grid-cols-3 gap-3">
@@ -149,20 +149,20 @@ export const PaymentSection = memo(({
                   'p-4 rounded-lg border-2 transition-all duration-200 flex flex-col items-center gap-2',
                   paymentType === option.value
                     ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20'
-                    : 'border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 hover:border-emerald-300'
+                    : 'border-zinc-200 dark:border-zinc-600 bg-white dark:bg-zinc-800 hover:border-emerald-300'
                 )}
               >
                 <Icon className={cn(
                   'w-6 h-6',
                   paymentType === option.value
                     ? 'text-emerald-600 dark:text-emerald-400'
-                    : 'text-gray-600 dark:text-gray-400'
+                    : 'text-zinc-600 dark:text-zinc-400'
                 )} />
                 <span className={cn(
                   'text-sm font-medium',
                   paymentType === option.value
                     ? 'text-emerald-700 dark:text-emerald-300'
-                    : 'text-gray-700 dark:text-gray-300'
+                    : 'text-zinc-700 dark:text-zinc-300'
                 )}>
                   {option.label}
                 </span>
@@ -195,21 +195,19 @@ export const PaymentSection = memo(({
                     onChange={(e) => onPassUidChange(e.target.value)}
                     placeholder="Enter Pass UID"
                     className={cn(
-                      'w-full px-4 py-3 bg-white dark:bg-gray-800 border rounded-lg',
+                      'w-full px-4 py-3 bg-white dark:bg-zinc-800 border rounded-lg',
                       errors.pass || passError
                         ? 'border-red-500 focus:border-red-500'
-                        : 'border-gray-300 dark:border-gray-600 focus:border-purple-500',
+                        : 'border-zinc-300 dark:border-zinc-600 focus:border-purple-500',
                       'focus:outline-none focus:ring-1 focus:ring-purple-500/20'
                     )}
                   />
                 </div>
                 
-                <Button
+                <Button variant="default"
                   type="button"
                   onClick={onPassValidate}
-                  disabled={isValidatingPass || !passUid.trim()}
-                  className="px-6 bg-purple-600 hover:bg-purple-700"
-                >
+                  disabled={isValidatingPass || !passUid.trim()}>
                   {isValidatingPass ? (
                     <>
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -232,13 +230,13 @@ export const PaymentSection = memo(({
                 <motion.div
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="mt-4 p-4 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-700"
+                  className="mt-4 p-4 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg border border-emerald-200 dark:border-emerald-700"
                 >
                   <div className="flex items-center gap-2 mb-2">
-                    <CheckCircle className="w-5 h-5 text-green-600" />
-                    <span className="font-semibold text-green-800 dark:text-green-200">Pass Validated</span>
+                    <CheckCircle className="w-5 h-5 text-emerald-600" />
+                    <span className="font-semibold text-emerald-800 dark:text-emerald-200">Pass Validated</span>
                   </div>
-                  <div className="space-y-1 text-sm text-gray-700 dark:text-gray-300">
+                  <div className="space-y-1 text-sm text-zinc-700 dark:text-zinc-300">
                     <p><strong>User:</strong> {validatedPass.user_name}</p>
                     <p><strong>Remaining Hours:</strong> {validatedPass.remaining_hours} hrs</p>
                   </div>

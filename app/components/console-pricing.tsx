@@ -1,4 +1,5 @@
 "use client";
+import { buttonVariants } from "@/components/ui/button";
 
 import DeskRateEditor from "./desk-rate-card";
 import { creditAuthHeaders } from "@/lib/credit-auth";
@@ -362,7 +363,7 @@ export default function ConsolePricing() {
             type: slug,
             name: displayName,
             icon: resolveConsoleIcon(typeof rawIcon === "string" ? rawIcon : undefined, slug),
-            color: "bg-cyan-500/10",
+            color: "bg-blue-500/10",
             iconColor: resolveConsoleColor(slug),
             description: `${displayName} systems`,
           });
@@ -668,7 +669,7 @@ export default function ConsolePricing() {
       return;
     }
 
-    if (!window.confirm(`Save credit limit ₹${Number(creditForm.credit_limit || 0).toFixed(2)} for this gamer?`)) return;
+    if (!(await confirmAction({ title: "Save credit limit?", description: `Set this gamer's credit limit to ₹${Number(creditForm.credit_limit || 0).toFixed(2)}.`, action: "Save limit" }))) return;
     setIsSavingCredit(true);
     setCreditError(null);
     try {
@@ -1263,25 +1264,25 @@ export default function ConsolePricing() {
     Object.values(prices).some((p) => p.hasChanged) &&
     Object.values(errors).length === 0;
   const primaryButtonClass =
-    "inline-flex h-9 items-center justify-center gap-2 rounded-md bg-sky-600 px-3 text-xs font-semibold text-white transition-colors hover:bg-sky-700 focus-visible:ring-2 focus-visible:ring-sky-500 disabled:cursor-not-allowed disabled:opacity-50";
+    buttonVariants();
   const secondaryButtonClass =
-    "inline-flex h-9 items-center justify-center gap-2 rounded-md border border-slate-200 px-3 text-xs font-medium text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50";
+    buttonVariants({ variant: "outline" });
   const destructiveIconButtonClass =
-    "inline-flex items-center justify-center rounded-lg border border-rose-300/50 bg-rose-50 p-2 text-rose-600 transition-all duration-200 hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-rose-400/30 dark:bg-rose-500/10 dark:text-rose-300 dark:hover:bg-rose-500/20";
+    buttonVariants({ variant: "soft-danger", size: "icon-sm" });
   const iconButtonClass =
-    "inline-flex items-center justify-center rounded-lg border border-emerald-300/50 bg-emerald-50 p-2 text-emerald-700 transition-all duration-200 hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-emerald-400/30 dark:bg-emerald-500/10 dark:text-emerald-300 dark:hover:bg-emerald-500/20";
+    buttonVariants({ variant: "soft-success", size: "icon-sm" });
   const tabButtonBaseClass =
-    "inline-flex shrink-0 items-center gap-2 rounded-md px-3 py-2 text-xs font-medium transition-colors focus-visible:ring-2 focus-visible:ring-sky-500";
+    "inline-flex shrink-0 items-center gap-2 rounded-md px-3 py-2 text-xs font-medium transition-colors focus-visible:ring-2 focus-visible:ring-blue-500";
   const activeTabButtonClass =
-    "bg-white text-sky-700 shadow-sm dark:bg-slate-800 dark:text-sky-300";
+    "bg-white text-blue-700 shadow-sm dark:bg-zinc-800 dark:text-blue-300";
   const inactiveTabButtonClass =
-    "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100";
+    "text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100";
   const pricingCardClass =
     "grid grid-cols-[minmax(0,1fr)_140px] items-center gap-x-4 gap-y-1 px-4 py-3 sm:grid-cols-[minmax(0,1fr)_180px]";
   const inputSurfaceClass =
-    "dashboard-module-input text-slate-900 placeholder:text-slate-400 focus-visible:ring-cyan-400/60 dark:text-slate-100 dark:placeholder:text-slate-400";
+    "dashboard-module-input text-zinc-900 placeholder:text-zinc-400 focus-visible:ring-blue-400/60 dark:text-zinc-100 dark:placeholder:text-zinc-400";
   const selectSurfaceClass =
-    "dashboard-module-input h-10 w-full rounded-md px-3 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-cyan-400/60 dark:text-slate-100";
+    "dashboard-module-input h-10 w-full rounded-md px-3 text-sm text-zinc-900 outline-none focus:ring-2 focus:ring-blue-400/60 dark:text-zinc-100";
   const summaryCardClass = "dashboard-module-surface rounded-lg p-3";
   const squadOverview = (() => {
     const groups = Object.keys(squadPricing || {});
@@ -1310,7 +1311,7 @@ export default function ConsolePricing() {
         type: normalizedType,
         name: displayName,
         icon: resolveConsoleIcon(undefined, normalizedType),
-        color: "bg-cyan-500/10",
+        color: "bg-blue-500/10",
         iconColor: resolveConsoleColor(normalizedType),
         description: `${displayName} systems`,
       } as ConsoleType;
@@ -1325,7 +1326,7 @@ export default function ConsolePricing() {
     <div className="console-pricing-page dashboard-module dashboard-typography relative flex h-full min-h-0 flex-col gap-3 overflow-y-auto overflow-x-hidden px-1 pb-2 sm:px-2">
       {feedback}
       {debugEnabled && (
-        <div className="pointer-events-none fixed left-20 top-3 z-[30060] rounded-md border border-cyan-400/40 bg-slate-950/90 px-2 py-1 text-[10px] text-cyan-100">
+        <div className="pointer-events-none fixed left-20 top-3 z-[30060] rounded-md border border-blue-400/40 bg-zinc-950/90 px-2 py-1 text-[10px] text-blue-100">
           r:{renderCountRef.current} sync:{cacheSyncRunsRef.current} set:{priceStateSetCountRef.current}
         </div>
       )}
@@ -1362,7 +1363,7 @@ export default function ConsolePricing() {
           className="min-h-0 flex-1 overflow-y-auto pr-1"
         >
           {catalogError || basePricingError ? (
-            <div role="alert" className="flex items-center gap-3 rounded-lg border border-slate-200 px-3 py-3 text-sm dark:border-slate-800">
+            <div role="alert" className="flex items-center gap-3 rounded-lg border border-zinc-200 px-3 py-3 text-sm dark:border-zinc-800">
               <span>Unable to load console pricing.</span>
               <button className={secondaryButtonClass} onClick={() => {
                 setCatalogAttempt((attempt) => attempt + 1);
@@ -1370,18 +1371,18 @@ export default function ConsolePricing() {
               }}>Retry</button>
             </div>
           ) : !vendorId || vendorId !== contextVendorId || catalogVendorId !== vendorId || pricesVendorId !== vendorId ? (
-            <div role="status" className="flex items-center gap-2 px-3 py-4 text-sm text-slate-500 dark:text-slate-400">
+            <div role="status" className="flex items-center gap-2 px-3 py-4 text-sm text-zinc-500 dark:text-zinc-400">
               <Loader2 className="h-4 w-4 animate-spin" /> Loading pricing…
             </div>
           ) : consoleTypes.length === 0 ? (
-            <p className="px-3 py-4 text-sm text-slate-500">No consoles configured.</p>
+            <p className="px-3 py-4 text-sm text-zinc-500">No consoles configured.</p>
           ) : (<>
           <div className="mb-3 flex flex-wrap gap-2" aria-label="Choose device pricing">
             {consoleTypes.map(console=><button key={console.type} type="button" aria-pressed={(pricingDevice || consoleTypes[0]?.type) === console.type} onClick={()=>setPricingDevice(console.type)} className={`rounded-lg border px-4 py-2 text-sm ${(pricingDevice || consoleTypes[0]?.type) === console.type ? "border-primary bg-primary/10 text-primary" : "text-muted-foreground"}`}>{console.name}</button>)}
           </div>
           <div className="mb-3 grid gap-3">
             {consoleTypes.filter(console=>console.type === (pricingDevice || consoleTypes[0]?.type)).map((console) => (
-              <DeskRateEditor key={`${contextVendorId}-${console.type}`} vendor={contextVendorId}
+              <DeskRateEditor key={`${contextVendorId}-${console.type}`} vendor={contextVendorId} title={console.name}
                 games={availableGames.filter(game=>normalizeConsoleSlug(game.platform_type || game.game_name) === normalizeConsoleSlug(console.type))}
                 baseRate={<div className="flex flex-wrap items-center justify-between gap-3">
                   <label className="flex items-center gap-3 text-sm">Price per slot (₹)
@@ -1394,8 +1395,8 @@ export default function ConsolePricing() {
           </div>
 
           <div className="sticky bottom-2 z-10">
-            <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2 dark:border-slate-800 dark:bg-slate-900">
-              <p className="text-xs text-slate-600 dark:text-slate-300">
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-zinc-200 bg-white px-3 py-2 dark:border-zinc-800 dark:bg-zinc-900">
+              <p className="text-xs text-zinc-600 dark:text-zinc-300">
                 {editedConsoleCount > 0
                   ? `${editedConsoleCount} console${editedConsoleCount > 1 ? "s" : ""} edited`
                   : "No unsaved changes"}
@@ -1460,7 +1461,7 @@ export default function ConsolePricing() {
           <div className="shrink-0">
             <h2 className="text-sm font-semibold text-foreground sm:text-base">Extra Controller Pricing</h2>
             {controllerPricingError && (
-              <p className="mt-2 text-xs font-medium text-rose-300">{controllerPricingError}</p>
+              <p className="mt-2 text-xs font-medium text-red-300">{controllerPricingError}</p>
             )}
           </div>
 
@@ -1472,7 +1473,7 @@ export default function ConsolePricing() {
           ) : (
           <div className="min-h-0 flex-1 overflow-y-auto pr-1 space-y-3">
             {controllerConsoleTabs.length === 0 ? (
-              <div className="dashboard-module-surface rounded-lg border border-dashed border-cyan-500/25 p-4 text-sm text-slate-600 dark:text-slate-300">
+              <div className="dashboard-module-surface rounded-lg border border-dashed border-blue-500/25 p-4 text-sm text-zinc-600 dark:text-zinc-300">
                 No controller-enabled console type found yet. Set controller policy in console catalog/inventory and refresh.
               </div>
             ) : null}
@@ -1487,8 +1488,8 @@ export default function ConsolePricing() {
                     onClick={() => setActiveControllerConsole(console.type)}
                     className={`inline-flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
                       isActive
-                        ? "dashboard-module-tab-active bg-cyan-500/12 text-slate-900 dark:text-cyan-100"
-                        : "text-slate-500 hover:text-slate-900 dark:text-slate-300 dark:hover:text-cyan-100"
+                        ? "dashboard-module-tab-active bg-blue-500/12 text-zinc-900 dark:text-blue-100"
+                        : "text-zinc-500 hover:text-zinc-900 dark:text-zinc-300 dark:hover:text-blue-100"
                     }`}
                   >
                     <Icon className="h-4 w-4" />
@@ -1506,9 +1507,9 @@ export default function ConsolePricing() {
               const sortedTiers = [...config.tiers].sort((a, b) => a.quantity - b.quantity);
               return (
                 <Card key={console.type} className="dashboard-module-surface rounded-xl">
-                  <CardHeader className="border-b border-cyan-500/15 pb-3">
+                  <CardHeader className="border-b border-blue-500/15 pb-3">
                     <div className="flex items-center gap-2">
-                      <Icon className="icon-md text-cyan-300" />
+                      <Icon className="icon-md text-blue-300" />
                       <span className="card-title">{console.name}</span>
                     </div>
                   </CardHeader>
@@ -1591,7 +1592,7 @@ export default function ConsolePricing() {
                         {controllerPreviewQuantities.map((qty) => (
                           <div key={`${console.type}-${qty}`} className="dashboard-module-card rounded-md p-2">
                             <p className="body-text-muted">{qty} controller{qty > 1 ? "s" : ""}</p>
-                            <p className="stat-value text-slate-900 dark:text-cyan-100">₹{calculateControllerTotal(console.type, qty)}</p>
+                            <p className="stat-value text-zinc-900 dark:text-blue-100">₹{calculateControllerTotal(console.type, qty)}</p>
                           </div>
                         ))}
                       </div>
@@ -1637,40 +1638,40 @@ export default function ConsolePricing() {
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <h2 className="flex items-center gap-2 text-sm font-semibold text-foreground sm:text-base">
-                  <Users className="icon-md text-cyan-300" />
+                  <Users className="icon-md text-blue-300" />
                   Squad pricing
                 </h2>
               </div>
 
             </div>
             {squadPricingError && (
-              <p className="mt-2 text-xs font-medium text-rose-300">{squadPricingError}</p>
+              <p className="mt-2 text-xs font-medium text-red-300">{squadPricingError}</p>
             )}
           </div>
 
           <div className="grid shrink-0 grid-cols-2 gap-3 sm:grid-cols-4">
             <div className={summaryCardClass}>
-              <p className="text-[11px] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400">Consoles</p>
-              <p className="text-lg font-semibold text-slate-900 dark:text-cyan-100">{squadOverview.consoleCount}</p>
+              <p className="text-[11px] uppercase tracking-[0.08em] text-zinc-500 dark:text-zinc-400">Consoles</p>
+              <p className="text-lg font-semibold text-zinc-900 dark:text-blue-100">{squadOverview.consoleCount}</p>
             </div>
             <div className={summaryCardClass}>
-              <p className="text-[11px] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400">Slabs</p>
-              <p className="text-lg font-semibold text-slate-900 dark:text-cyan-100">{squadOverview.slabCount}</p>
+              <p className="text-[11px] uppercase tracking-[0.08em] text-zinc-500 dark:text-zinc-400">Slabs</p>
+              <p className="text-lg font-semibold text-zinc-900 dark:text-blue-100">{squadOverview.slabCount}</p>
             </div>
             <div className={summaryCardClass}>
-              <p className="text-[11px] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400">Avg Discount</p>
-              <p className="text-lg font-semibold text-slate-900 dark:text-cyan-100">{squadOverview.avgDiscount}%</p>
+              <p className="text-[11px] uppercase tracking-[0.08em] text-zinc-500 dark:text-zinc-400">Avg Discount</p>
+              <p className="text-lg font-semibold text-zinc-900 dark:text-blue-100">{squadOverview.avgDiscount}%</p>
             </div>
             <div className={summaryCardClass}>
-              <p className="text-[11px] uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400">Top Discount</p>
-              <p className="text-lg font-semibold text-slate-900 dark:text-cyan-100">{squadOverview.highestDiscount}%</p>
+              <p className="text-[11px] uppercase tracking-[0.08em] text-zinc-500 dark:text-zinc-400">Top Discount</p>
+              <p className="text-lg font-semibold text-zinc-900 dark:text-blue-100">{squadOverview.highestDiscount}%</p>
             </div>
           </div>
 
           <div className="min-h-0 flex-1 overflow-y-auto pr-1">
             {isLoadingSquadPricing ? (
-              <div className="dashboard-module-surface flex h-full items-center justify-center rounded-xl p-6 text-slate-600 dark:text-slate-300">
-                <Loader2 className="mr-2 h-5 w-5 animate-spin text-cyan-300" />
+              <div className="dashboard-module-surface flex h-full items-center justify-center rounded-xl p-6 text-zinc-600 dark:text-zinc-300">
+                <Loader2 className="mr-2 h-5 w-5 animate-spin text-blue-300" />
                 Loading squad rules...
               </div>
             ) : (
@@ -1690,15 +1691,15 @@ export default function ConsolePricing() {
 
                   return (
                     <Card key={`squad-${console.type}`} className="dashboard-module-surface overflow-hidden rounded-xl">
-                      <CardHeader className="border-b border-cyan-500/15 bg-slate-50 pb-3 dark:bg-slate-900/55">
+                      <CardHeader className="border-b border-blue-500/15 bg-zinc-50 pb-3 dark:bg-zinc-900/55">
                         <div className="flex items-center justify-between gap-2">
                           <div className="flex items-center gap-2">
-                            <div className="rounded-md bg-slate-100 p-2 text-slate-500 dark:bg-slate-800 dark:text-slate-400">
-                              <Icon className="icon-md text-cyan-300" />
+                            <div className="rounded-md bg-zinc-100 p-2 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400">
+                              <Icon className="icon-md text-blue-300" />
                             </div>
                             <div>
                               <p className="card-title">{console.name}</p>
-                              <p className="text-xs text-slate-600 dark:text-slate-300">Base ₹{basePrice} per player</p>
+                              <p className="text-xs text-zinc-600 dark:text-zinc-300">Base ₹{basePrice} per player</p>
                             </div>
                           </div>
                           <button
@@ -1711,7 +1712,7 @@ export default function ConsolePricing() {
                           </button>
                         </div>
                         <div className="mt-2 flex flex-wrap gap-2 text-[11px]">
-                          <span className="rounded-full border border-cyan-300/40 bg-cyan-50 px-2 py-1 text-sky-700 dark:border-cyan-400/20 dark:bg-cyan-500/10 dark:text-cyan-200">
+                          <span className="rounded-full border border-blue-300/40 bg-blue-50 px-2 py-1 text-blue-700 dark:border-blue-400/20 dark:bg-blue-500/10 dark:text-blue-200">
                             {rules.length} slabs
                           </span>
                           <span className="rounded-full border border-emerald-300/40 bg-emerald-50 px-2 py-1 text-emerald-700 dark:border-emerald-400/20 dark:bg-emerald-500/10 dark:text-emerald-200">
@@ -1725,7 +1726,7 @@ export default function ConsolePricing() {
 
                       <CardContent className="space-y-3 p-4">
                         {rules.length === 0 ? (
-                          <div className="dashboard-module-card rounded-lg border border-dashed p-4 text-center text-sm text-slate-600 dark:text-slate-300">
+                          <div className="dashboard-module-card rounded-lg border border-dashed p-4 text-center text-sm text-zinc-600 dark:text-zinc-300">
                             No squad slabs configured for {console.name}.
                           </div>
                         ) : (
@@ -1783,7 +1784,7 @@ export default function ConsolePricing() {
                                         onChange={(e) => updateSquadRule(group, rule.players, e.target.value)}
                                         className={`${inputSurfaceClass} h-8`}
                                       />
-                                      <span className="text-xs text-slate-600 dark:text-slate-300">%</span>
+                                      <span className="text-xs text-zinc-600 dark:text-zinc-300">%</span>
                                     </div>
 
                                     <div className="flex items-center gap-2">
@@ -1798,7 +1799,7 @@ export default function ConsolePricing() {
                                       <button
                                         type="button"
                                         onClick={() => checkAndApplySquadFinalAmount(group, rule.players, basePrice)}
-                                        className="rounded border border-cyan-300/40 bg-cyan-50 px-2 py-1 text-[10px] font-semibold text-sky-700 hover:bg-cyan-100 dark:border-cyan-400/35 dark:bg-cyan-500/10 dark:text-cyan-200 dark:hover:bg-cyan-500/20"
+                                        className={buttonVariants({ variant: "soft-info", size: "sm" })}
                                       >
                                         Check
                                       </button>
@@ -1806,13 +1807,13 @@ export default function ConsolePricing() {
 
                                     <div className="dashboard-module-surface flex items-center justify-between rounded-md px-2 py-1.5 text-xs">
                                       <span
-                                        className={`text-slate-600 dark:text-slate-300 ${warningText ? "inline-flex items-center gap-1 text-amber-600 dark:text-amber-300" : ""}`}
+                                        className={`text-zinc-600 dark:text-zinc-300 ${warningText ? "inline-flex items-center gap-1 text-amber-600 dark:text-amber-300" : ""}`}
                                         title={warningText || undefined}
                                       >
                                         {warningText ? <AlertTriangle className="h-3.5 w-3.5" /> : null}
                                         {warningText ? "Review" : "OK"}
                                       </span>
-                                      <span className="text-slate-900 dark:text-cyan-100">
+                                      <span className="text-zinc-900 dark:text-blue-100">
                                         Unit ₹{finalUnitAmount} x {rule.players} = ₹{finalTotalAmount}
                                       </span>
                                     </div>
@@ -1875,7 +1876,7 @@ export default function ConsolePricing() {
             <p className="body-text-muted mt-1">
               Define your gaming cafe GST profile once. Transactions will use this setup for CGST/SGST/IGST calculations.
             </p>
-            {taxProfileError && <p className="mt-2 text-xs font-medium text-rose-300">{taxProfileError}</p>}
+            {taxProfileError && <p className="mt-2 text-xs font-medium text-red-300">{taxProfileError}</p>}
           </div>
 
           {isLoadingTaxProfile ? (
@@ -1886,7 +1887,7 @@ export default function ConsolePricing() {
             <div className="min-h-0 flex-1 overflow-y-auto pr-1">
               <Card className="dashboard-module-surface rounded-xl">
                 <CardContent className="grid grid-cols-1 gap-3 p-4 sm:grid-cols-2">
-                  <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200">
+                  <label className="flex items-center gap-2 text-sm text-zinc-700 dark:text-zinc-200">
                     <input
                       type="checkbox"
                       checked={taxProfile.gst_registered}
@@ -1894,7 +1895,7 @@ export default function ConsolePricing() {
                     />
                     GST Registered
                   </label>
-                  <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200">
+                  <label className="flex items-center gap-2 text-sm text-zinc-700 dark:text-zinc-200">
                     <input
                       type="checkbox"
                       checked={taxProfile.gst_enabled}
@@ -1964,7 +1965,7 @@ export default function ConsolePricing() {
                     />
                   </div>
 
-                  <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200 sm:col-span-2">
+                  <label className="flex items-center gap-2 text-sm text-zinc-700 dark:text-zinc-200 sm:col-span-2">
                     <input
                       type="checkbox"
                       checked={taxProfile.tax_inclusive}
@@ -2007,12 +2008,12 @@ export default function ConsolePricing() {
             <p className="body-text-muted mt-1">
               Allow trusted players to play now and settle at month-end. Configure user credit limit and billing cycle.
             </p>
-            {creditError && <p className="mt-2 text-xs font-medium text-rose-300">{creditError}</p>}
+            {creditError && <p className="mt-2 text-xs font-medium text-red-300">{creditError}</p>}
           </div>
 
           <div className="grid min-h-0 flex-1 grid-cols-1 gap-3 overflow-hidden xl:grid-cols-2">
             <Card className="dashboard-module-surface min-h-0 rounded-xl">
-              <CardHeader className="border-b border-cyan-500/15 pb-3">
+              <CardHeader className="border-b border-blue-500/15 pb-3">
                 <h3 className="card-title">Create / Update Credit Account</h3>
               </CardHeader>
               <CardContent className="space-y-3 p-4">
@@ -2067,7 +2068,7 @@ export default function ConsolePricing() {
                       className={inputSurfaceClass}
                     />
                   </div>
-                  <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200">
+                  <label className="flex items-center gap-2 text-sm text-zinc-700 dark:text-zinc-200">
                     <input
                       type="checkbox"
                       checked={creditForm.is_active}
@@ -2104,7 +2105,7 @@ export default function ConsolePricing() {
             </Card>
 
             <Card className="dashboard-module-surface min-h-0 rounded-xl">
-              <CardHeader className="border-b border-cyan-500/15 pb-3">
+              <CardHeader className="border-b border-blue-500/15 pb-3">
                 <h3 className="card-title">Configured Accounts</h3>
               </CardHeader>
               <CardContent className="min-h-0 space-y-3 overflow-y-auto p-4">
@@ -2122,16 +2123,16 @@ export default function ConsolePricing() {
                         <div key={account.id} className="dashboard-module-card rounded-lg p-3">
                           <div className="flex items-center justify-between">
                             <div>
-                              <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{user?.name || `User #${account.user_id}`}</p>
-                              <p className="text-xs text-slate-600 dark:text-slate-400">
+                              <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">{user?.name || `User #${account.user_id}`}</p>
+                              <p className="text-xs text-zinc-600 dark:text-zinc-400">
                                 Limit ₹{account.credit_limit} • Outstanding ₹{account.outstanding_amount}
                               </p>
-                              <p className="text-xs text-slate-600 dark:text-slate-400">
+                              <p className="text-xs text-zinc-600 dark:text-zinc-400">
                                 Cycle Day {account.billing_cycle_day} • Grace {account.grace_days} days
                               </p>
                             </div>
                             <div className="flex items-center gap-2">
-                              <span className={`text-[11px] font-semibold ${account.is_active ? "text-emerald-700 dark:text-emerald-300" : "text-rose-700 dark:text-rose-300"}`}>
+                              <span className={`text-[11px] font-semibold ${account.is_active ? "text-emerald-700 dark:text-emerald-300" : "text-red-700 dark:text-red-300"}`}>
                                 {account.is_active ? "Active" : "Inactive"}
                               </span>
                               <button
@@ -2150,7 +2151,7 @@ export default function ConsolePricing() {
 
                 {statementUserId && (
                   <div className="dashboard-module-surface rounded-lg p-3">
-                    <h4 className="text-sm font-semibold text-slate-900 dark:text-cyan-100">Statement for User #{statementUserId}</h4>
+                    <h4 className="text-sm font-semibold text-zinc-900 dark:text-blue-100">Statement for User #{statementUserId}</h4>
                     {isLoadingStatement ? (
                       <div className="py-4">
                         <Loader2 className="w-5 h-5 animate-spin text-blue-400" />
@@ -2161,10 +2162,10 @@ export default function ConsolePricing() {
                       <div className="mt-2 max-h-56 overflow-y-auto space-y-1">
                         {statementRows.map((row) => (
                           <div key={row.id} className="dashboard-module-card flex items-center justify-between rounded px-2 py-1 text-xs">
-                            <span className="text-slate-700 dark:text-slate-300">{row.entry_type}</span>
-                            <span className="text-slate-900 dark:text-slate-200">₹{Number(row.amount || 0).toFixed(2)}</span>
-                            <span className="text-slate-500 dark:text-slate-400">{row.booked_date || "-"}</span>
-                            <span className="text-slate-500 dark:text-slate-400">Due: {row.due_date || "-"}</span>
+                            <span className="text-zinc-700 dark:text-zinc-300">{row.entry_type}</span>
+                            <span className="text-zinc-900 dark:text-zinc-200">₹{Number(row.amount || 0).toFixed(2)}</span>
+                            <span className="text-zinc-500 dark:text-zinc-400">{row.booked_date || "-"}</span>
+                            <span className="text-zinc-500 dark:text-zinc-400">Due: {row.due_date || "-"}</span>
                           </div>
                         ))}
                       </div>

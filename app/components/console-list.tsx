@@ -1,4 +1,5 @@
 "use client";
+import { cn } from "@/lib/utils";
 import CafeAuditPanel from "./cafe-audit-panel";
 import {Dialog,DialogContent,DialogHeader,DialogTitle} from "@/components/ui/dialog";
 
@@ -7,7 +8,7 @@ import { creditAuthHeaders } from "@/lib/credit-auth";
 import styles from "./console-list.module.css";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { Badge, badgeVariants } from "@/components/ui/badge";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -17,9 +18,12 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { toast } from "sonner";
 import {
+  History,
+  MoreHorizontal,
   Edit,
   Trash2,
   Loader2,
@@ -55,6 +59,7 @@ interface ConsoleListProps {
 
 export function ConsoleList({ onEdit, refreshKey = 0 }: ConsoleListProps) {
   const [historyConsole,setHistoryConsole]=useState<{id:number;name:string}|null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: number; name: string } | null>(null);
   const [data, setdata] = useState<any[]>([]);
   const { vendorId: cachedVendorId, consoles: cachedConsoles, refreshConsoles, setConsoles: setCachedConsoles } = useDashboardData();
   const [vendorId, setVendorId] = useState<number | null>(null);
@@ -140,7 +145,7 @@ export function ConsoleList({ onEdit, refreshKey = 0 }: ConsoleListProps) {
     const normalizedType = normalizeConsoleSlug(String(item.type || "")) || "unknown";
     const occupancyState = String(item.occupancyState || "").toLowerCase() || (item.status ? "free" : "occupied");
     const statusLabel = String(item.statusLabel || "").trim() || (occupancyState === "free" ? "Free" : "Occupied");
-    const displayType = String(item.consoleDisplayName || item.type || "Console");
+    const displayType = String(item.consoleDisplayName || "");
     return {
       id: item.id,
       currentQrSessionId: item.currentQrSessionId,
@@ -191,7 +196,7 @@ export function ConsoleList({ onEdit, refreshKey = 0 }: ConsoleListProps) {
     groupKeys.forEach((key) => {
       const sample = groupedConsoles[key]?.[0];
       meta[key] = {
-        label: sample?.displayType || key.replace(/_/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase()),
+        label: sample?.displayType || key.replace(/_/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase()).replace(/\b(Pc|Vr|Vip)\b/g, (w: string) => w.toUpperCase()),
         icon: sample?.icon || resolveConsoleIcon(undefined, key),
       };
     });
@@ -211,9 +216,11 @@ export function ConsoleList({ onEdit, refreshKey = 0 }: ConsoleListProps) {
         console.log(response.data.message);
         setdata((prevData) => prevData.filter((item: any) => item.id !== id));
         setCachedConsoles(data.filter((item: any) => item.id !== id));
+        toast.success("Console deleted");
       }
     } catch (error) {
       console.log("something while wrong to delete the data", error);
+      toast.error("Couldn't delete the console. Please try again.");
     } finally {
       setDeletingConsoleId(null);
     }
@@ -250,8 +257,10 @@ export function ConsoleList({ onEdit, refreshKey = 0 }: ConsoleListProps) {
       );
       await loadConsoles(vendorId, true);
       window.dispatchEvent(new Event("refresh-dashboard"));
+      toast.success("Kiosk unlinked");
     } catch (error) {
       console.error("Failed to unlink kiosk:", error);
+      toast.error("Couldn't unlink the kiosk. Please try again.");
     } finally {
       setUnlinkingConsoleId(null);
     }
@@ -319,8 +328,8 @@ export function ConsoleList({ onEdit, refreshKey = 0 }: ConsoleListProps) {
                 aria-pressed={selectedGroup === group}
                 className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors sm:text-sm ${
                   selectedGroup === group
-                    ? "border-cyan-400/55 bg-cyan-500/10 text-slate-900 dark:bg-cyan-500/15 dark:text-cyan-200"
-                    : "border-slate-300 bg-white/80 text-slate-700 hover:bg-slate-100 dark:border-slate-600/70 dark:bg-slate-800/60 dark:text-slate-300 dark:hover:bg-slate-700/70"
+                    ? "border-blue-400/55 bg-blue-500/10 text-zinc-900 dark:bg-blue-500/15 dark:text-blue-200"
+                    : "border-zinc-300 bg-white/80 text-zinc-700 hover:bg-zinc-100 dark:border-zinc-600/70 dark:bg-zinc-800/60 dark:text-zinc-300 dark:hover:bg-zinc-700/70"
                 }`}
               >
                 <Icon className="h-3.5 w-3.5" />
@@ -339,9 +348,9 @@ export function ConsoleList({ onEdit, refreshKey = 0 }: ConsoleListProps) {
             return (
               <div key={group} className="space-y-2">
                 <div className="flex items-center gap-2 px-1">
-                  <GroupIcon className="h-4 w-4 text-slate-700 dark:text-cyan-300" />
+                  <GroupIcon className="h-4 w-4 text-zinc-700 dark:text-blue-300" />
                   <h3 className="dash-title !text-sm">{typeMeta[group]?.label || group} Consoles</h3>
-                  <span className="rounded-full border border-cyan-400/35 bg-cyan-500/10 px-2 py-0.5 text-xs text-slate-900 dark:text-cyan-200">
+                  <span className={badgeVariants({ variant: "info" })}>
                     {consolesForGroup.length}
                   </span>
                 </div>
@@ -362,7 +371,7 @@ export function ConsoleList({ onEdit, refreshKey = 0 }: ConsoleListProps) {
                       <div className={styles.identity}>
                         <div className="flex min-w-0 flex-1 items-start gap-3">
                           <div className={styles.icon}>
-                            <console.icon className="h-7 w-7 text-slate-700 dark:text-cyan-300" />
+                            <console.icon className="h-7 w-7 text-zinc-700 dark:text-blue-300" />
                           </div>
                           <div className="min-w-0 flex-1">
                             <h3 title={console.name} className="dash-title line-clamp-2 !text-base leading-tight">
@@ -377,7 +386,7 @@ export function ConsoleList({ onEdit, refreshKey = 0 }: ConsoleListProps) {
                           <TooltipProvider>
                             <Tooltip>
                               <TooltipTrigger asChild>
-                                <span className="inline-flex cursor-help items-center gap-2 rounded-full border border-emerald-400/40 bg-emerald-500/10 px-2 py-1 text-xs font-semibold text-emerald-700 dark:text-emerald-200">
+                                <span className={cn(badgeVariants({ variant: "success" }), "cursor-help gap-2")}>
                                   <span className="h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]" />
                                   Linked
                                 </span>
@@ -404,8 +413,8 @@ export function ConsoleList({ onEdit, refreshKey = 0 }: ConsoleListProps) {
 
                         <div className={styles.status}>
                           <div className="flex items-center space-x-2">
-                            <Activity className="w-4 h-4 text-slate-500 dark:text-slate-400" />
-                            <span className="text-slate-600 dark:text-slate-400">Status</span>
+                            <Activity className="w-4 h-4 text-zinc-500 dark:text-zinc-400" />
+                            <span className="text-zinc-600 dark:text-zinc-400">Status</span>
                           </div>
                           {console.occupancyState === "occupied" ? (
                             <TooltipProvider>
@@ -413,7 +422,7 @@ export function ConsoleList({ onEdit, refreshKey = 0 }: ConsoleListProps) {
                                 <TooltipTrigger asChild>
                                   <button
                                     type="button"
-                                    className="inline-flex cursor-help items-center rounded-md border border-amber-300 bg-amber-50 px-2.5 py-0.5 text-xs font-medium text-amber-800 dark:border-amber-400/40 dark:bg-amber-500/15 dark:text-amber-200"
+                                    className={cn(badgeVariants({ variant: "warning" }), "cursor-help")}
                                   >
                                     Occupied
                                   </button>
@@ -426,10 +435,7 @@ export function ConsoleList({ onEdit, refreshKey = 0 }: ConsoleListProps) {
                               </Tooltip>
                             </TooltipProvider>
                           ) : (
-                            <Badge className={console.occupancyState === "free"
-                              ? "border border-emerald-300 bg-emerald-50 text-emerald-800 dark:border-emerald-400/40 dark:bg-emerald-500/15 dark:text-emerald-200"
-                              : "border border-rose-300 bg-rose-50 text-rose-800 dark:border-rose-400/40 dark:bg-rose-500/15 dark:text-rose-200"}
-                            >
+                            <Badge variant={console.occupancyState === "free" ? "success" : "danger"}>
                               {console.occupancyState === "free" ? "Free" : "Under Maintenance"}
                             </Badge>
                           )}
@@ -439,45 +445,17 @@ export function ConsoleList({ onEdit, refreshKey = 0 }: ConsoleListProps) {
                       <div
                         className={styles.actions}
                       >
-                        <Button
-                          variant="outline"
+                        <Button variant="soft-info"
                           size="sm"
-                          onClick={() => onEdit(console)}
-                          className="border-cyan-300 bg-white text-slate-900 hover:bg-slate-50 dark:border-cyan-400/40 dark:bg-cyan-500/10 dark:text-cyan-200 dark:hover:bg-cyan-500/20"
-                        >
+                          onClick={() => onEdit(console)}>
                           <Edit className="w-4 h-4 mr-1" />
                           Edit
                         </Button>
-                        <Button type="button" variant="outline" size="sm" onClick={()=>setHistoryConsole({id:console.id,name:console.name})}>History</Button>
-                        {console.type === "pc" && console.kioskLinked && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleUnlink(console)}
-                            disabled={unlinkingConsoleId === console.id || deletingConsoleId !== null}
-                            className="border-emerald-300 bg-white text-emerald-800 hover:bg-emerald-50 dark:border-emerald-400/45 dark:bg-emerald-500/10 dark:text-emerald-200 dark:hover:bg-emerald-500/20"
-                          >
-                            {unlinkingConsoleId === console.id ? (
-                              <>
-                                <Loader2 className="w-4 h-4 mr-1 animate-spin" />
-                                Unlinking...
-                              </>
-                            ) : (
-                              <>
-                                <Power className="w-4 h-4 mr-1" />
-                                Unlink
-                              </>
-                            )}
-                          </Button>
-                        )}
                         {console.occupancyState === "occupied" && (
-                          <Button
-                            variant="outline"
+                          <Button variant="soft-warning"
                             size="sm"
                             onClick={() => handleRelease(console)}
-                            disabled={releasingConsoleId === console.id || deletingConsoleId !== null}
-                            className="border-amber-300 bg-white text-amber-800 hover:bg-amber-50 dark:border-amber-400/45 dark:bg-amber-500/10 dark:text-amber-200 dark:hover:bg-amber-500/20"
-                          >
+                            disabled={releasingConsoleId === console.id || deletingConsoleId !== null}>
                             {releasingConsoleId === console.id ? (
                               <>
                                 <Loader2 className="w-4 h-4 mr-1 animate-spin" />
@@ -491,55 +469,31 @@ export function ConsoleList({ onEdit, refreshKey = 0 }: ConsoleListProps) {
                             )}
                           </Button>
                         )}
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                              <Button
-                              variant="outline"
-                              size="sm"
-                              disabled={deletingConsoleId !== null}
-                              className="border-rose-300 bg-white text-rose-700 hover:bg-rose-50 dark:border-rose-400/45 dark:bg-rose-500/10 dark:text-rose-200 dark:hover:bg-rose-500/20"
-                            >
-                              {deletingConsoleId === console.id ? (
-                                <>
-                                  <Loader2 className="w-4 h-4 mr-1 animate-spin" />
-                                  Deleting...
-                                </>
-                              ) : (
-                                <>
-                                  <Trash2 className="w-4 h-4 mr-1" />
-                                  Delete
-                                </>
-                              )}
+                        {/* modal={false}: a modal menu that opens a dialog leaves the page unclickable (Radix focus bug) */}
+                        <DropdownMenu modal={false}>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="outline" size="sm" className={styles.more} aria-label={`More actions for ${console.name}`}>
+                              {deletingConsoleId === console.id || unlinkingConsoleId === console.id
+                                ? <Loader2 className="animate-spin" />
+                                : <MoreHorizontal />}
                             </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>
-                                Are you sure you want to delete?
-                              </AlertDialogTitle>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction
-                                className="bg-red-700 hover:bg-red-800 text-white flex items-center gap-2"
-                                onClick={() => handleDelete(console.id)}
-                                disabled={deletingConsoleId !== null}
-                              >
-                                {deletingConsoleId === console.id ? (
-                                  <>
-                                    <Loader2 className="w-4 h-4 animate-spin" />
-                                    Deleting...
-                                  </>
-                                ) : (
-                                  <>
-                                    <Trash2 size={18} />
-                                    Confirm Delete
-                                  </>
-                                )}
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onSelect={() => setHistoryConsole({ id: console.id, name: console.name })}>
+                              <History className="mr-2 h-4 w-4" />Session history
+                            </DropdownMenuItem>
+                            {console.type === "pc" && console.kioskLinked && (
+                              <DropdownMenuItem disabled={unlinkingConsoleId === console.id || deletingConsoleId !== null} onSelect={() => handleUnlink(console)}>
+                                <Power className="mr-2 h-4 w-4" />Unlink kiosk
+                              </DropdownMenuItem>
+                            )}
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem disabled={deletingConsoleId !== null} onSelect={() => setDeleteTarget({ id: console.id, name: console.name })}
+                              className="text-red-400 focus:bg-red-500/15 focus:text-red-300">
+                              <Trash2 className="mr-2 h-4 w-4" />Delete console
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </div>
                     </CardContent>
                   </Card>
@@ -557,52 +511,52 @@ export function ConsoleList({ onEdit, refreshKey = 0 }: ConsoleListProps) {
                       <div className={styles.specs}>
 <div className="grid grid-cols-[80px_minmax(0,1fr)] gap-x-4 gap-y-2 pt-3">
                           <div className="flex items-center space-x-2">
-                            <Building2 className="w-4 h-4 text-slate-500 dark:text-slate-400" />
-                            <span className="text-slate-600 dark:text-slate-400">Brand</span>
+                            <Building2 className="w-4 h-4 text-zinc-500 dark:text-zinc-400" />
+                            <span className="text-zinc-600 dark:text-zinc-400">Brand</span>
                           </div>
                           <span className="font-medium break-words text-foreground">{console.brand}</span>
 
                           {console.type === "pc" ? (
                             <>
                               <div className="flex items-center space-x-2">
-                                <Cpu className="w-4 h-4 text-slate-500 dark:text-slate-400" />
-                                <span className="text-slate-600 dark:text-slate-400">CPU</span>
+                                <Cpu className="w-4 h-4 text-zinc-500 dark:text-zinc-400" />
+                                <span className="text-zinc-600 dark:text-zinc-400">CPU</span>
                               </div>
                               <span className="font-medium break-words text-foreground">
                                 {console.processor || "N/A"}
                               </span>
 
                               <div className="flex items-center space-x-2">
-                                <Gpu className="w-4 h-4 text-slate-500 dark:text-slate-400" />
-                                <span className="text-slate-600 dark:text-slate-400">GPU</span>
+                                <Gpu className="w-4 h-4 text-zinc-500 dark:text-zinc-400" />
+                                <span className="text-zinc-600 dark:text-zinc-400">GPU</span>
                               </div>
                               <span className="font-medium break-words text-foreground">{console.gpu || "N/A"}</span>
 
                               <div className="flex items-center space-x-2">
-                                <Memory className="w-4 h-4 text-slate-500 dark:text-slate-400" />
-                                <span className="text-slate-600 dark:text-slate-400">RAM</span>
+                                <Memory className="w-4 h-4 text-zinc-500 dark:text-zinc-400" />
+                                <span className="text-zinc-600 dark:text-zinc-400">RAM</span>
                               </div>
-                              <span className="font-medium text-slate-900 dark:text-slate-100">{console.ram || "N/A"}</span>
+                              <span className="font-medium text-zinc-900 dark:text-zinc-100">{console.ram || "N/A"}</span>
 
                               <div className="flex items-center space-x-2">
-                                <HardDrive className="w-4 h-4 text-slate-500 dark:text-slate-400" />
-                                <span className="text-slate-600 dark:text-slate-400">Storage</span>
+                                <HardDrive className="w-4 h-4 text-zinc-500 dark:text-zinc-400" />
+                                <span className="text-zinc-600 dark:text-zinc-400">Storage</span>
                               </div>
-                              <span className="font-medium text-slate-900 dark:text-slate-100">{console.storage || "N/A"}</span>
+                              <span className="font-medium text-zinc-900 dark:text-zinc-100">{console.storage || "N/A"}</span>
                             </>
                           ) : (
                             <>
                               <div className="flex items-center space-x-2">
-                                <Gamepad className="w-4 h-4 text-slate-500 dark:text-slate-400" />
-                                <span className="text-slate-600 dark:text-slate-400">Variant</span>
+                                <Gamepad className="w-4 h-4 text-zinc-500 dark:text-zinc-400" />
+                                <span className="text-zinc-600 dark:text-zinc-400">Variant</span>
                               </div>
                               <span className="font-medium break-words text-foreground">{console.consoleModelType || "N/A"}{console.screenSizeInches ? ` · ${console.screenSizeInches}″ TV` : ""}</span>
 
                               <div className="flex items-center space-x-2">
-                                <HardDrive className="w-4 h-4 text-slate-500 dark:text-slate-400" />
-                                <span className="text-slate-600 dark:text-slate-400">Storage</span>
+                                <HardDrive className="w-4 h-4 text-zinc-500 dark:text-zinc-400" />
+                                <span className="text-zinc-600 dark:text-zinc-400">Storage</span>
                               </div>
-                              <span className="font-medium text-slate-900 dark:text-slate-100">{console.storage || "N/A"}</span>
+                              <span className="font-medium text-zinc-900 dark:text-zinc-100">{console.storage || "N/A"}</span>
                             </>
                           )}
                         </div>
@@ -619,6 +573,23 @@ export function ConsoleList({ onEdit, refreshKey = 0 }: ConsoleListProps) {
           })}
         </div>
       </div>
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete {deleteTarget?.name}?</AlertDialogTitle>
+            <AlertDialogDescription>This removes the console from your café. This can't be undone.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-700 text-white hover:bg-red-800"
+              onClick={() => { if (deleteTarget) void handleDelete(deleteTarget.id); }}
+            >
+              <Trash2 className="mr-2 h-4 w-4" />Delete console
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       <Dialog open={!!historyConsole} onOpenChange={open=>{if(!open)setHistoryConsole(null);}}><DialogContent className="max-h-[85vh] max-w-6xl overflow-y-auto"><DialogHeader><DialogTitle>{historyConsole?.name||'Console'} — session history</DialogTitle></DialogHeader>{historyConsole&&vendorId&&<CafeAuditPanel key={`${vendorId}:${historyConsole.id}`} vendorId={vendorId} consoleId={historyConsole.id}/>}</DialogContent></Dialog>
     </div>
   );

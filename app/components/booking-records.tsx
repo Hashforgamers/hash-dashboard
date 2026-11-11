@@ -82,7 +82,7 @@ export default function BookingRecords({ vendorId, refreshKey = 0 }: { vendorId:
               <Input type={type} aria-label={label} value={filters[key]} onChange={event => setFilters(value => ({ ...value, [key]: event.target.value }))} className="h-9 text-xs text-foreground" />
             </label>
           ))}
-          <Button type="submit" size="sm" disabled={invalidDates || !vendorId} className="h-9 bg-blue-600 text-white hover:bg-blue-500">Apply filters</Button>
+          <Button variant="default" type="submit" size="sm" disabled={invalidDates || !vendorId}>Apply filters</Button>
           <Button type="button" variant="ghost" size="sm" className="h-9" onClick={() => { setFilters(emptyFilters); setApplied(emptyFilters); setPage(1) }}>Reset</Button>
         </form>
         {invalidDates && <p role="alert" className="mt-2 text-xs text-red-400">The end date must be on or after the start date.</p>}

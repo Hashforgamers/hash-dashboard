@@ -479,13 +479,13 @@ export function NotificationButton({
   const getConnectionStatusInfo = () => {
     switch (connectionStatus) {
       case 'joined_room':
-        return { color: 'bg-green-500', title: 'Connected - Live notifications active' }
+        return { color: 'bg-emerald-500', title: 'Connected - Live notifications active' }
       case 'connected':
-        return { color: 'bg-yellow-500', title: 'Connected - Joining vendor room...' }
+        return { color: 'bg-amber-500', title: 'Connected - Joining vendor room...' }
       case 'disconnected':
         return { color: 'bg-red-500', title: 'Disconnected - Attempting to reconnect...' }
       default:
-        return { color: 'bg-gray-500', title: 'Unknown status' }
+        return { color: 'bg-zinc-500', title: 'Unknown status' }
     }
   }
 
@@ -502,9 +502,9 @@ export function NotificationButton({
         >
           <Bell className={`w-4 h-4 ${
             unreadCount > 0
-              ? 'text-orange-500 animate-pulse'
+              ? 'text-amber-500 animate-pulse'
               : connectionStatus === 'joined_room'
-                ? 'text-green-500'
+                ? 'text-emerald-500'
                 : 'text-muted-foreground'
           }`} />
 

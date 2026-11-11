@@ -219,7 +219,7 @@ export function DynamicHardwareFields({
         </div>
       )}
 
-      <div className="mt-6 rounded-lg border border-cyan-500/20 bg-cyan-500/5 p-4">
+      <div className="mt-6 rounded-lg border border-blue-500/20 bg-blue-500/5 p-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-2">
             <Label htmlFor="inputMode">

@@ -1,3 +1,5 @@
+import { buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 // Create ErrorBoundary.tsx
 import React from 'react';
 
@@ -37,7 +39,7 @@ class ErrorBoundary extends React.Component<
             </pre>
           </details>
           <button
-            className="mt-3 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+            className={cn(buttonVariants({ variant: "destructive" }), "mt-3")}
             onClick={() => this.setState({ hasError: false })}
           >
             Try Again

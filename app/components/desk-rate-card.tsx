@@ -1,4 +1,5 @@
 "use client"
+import { buttonVariants } from "@/components/ui/button";
 import { useEffect, useState, type ReactNode } from "react"
 import { ConsoleLinks } from "./desk-console-mapping"
 import { BOOKING_URL } from "@/src/config/env"
@@ -54,7 +55,7 @@ export function resolveSessionRate(cards: DeskCard[], minutes: number, players: 
   return { eligible, card: selected ?? (eligible.length === 1 ? eligible[0] : undefined) }
 }
 
-export default function DeskRateEditor({ vendor, games, baseRate }: { vendor: number | null; games: { id: number; game_name: string }[]; baseRate?: ReactNode }) {
+export default function DeskRateEditor({ vendor, games, baseRate, title }: { vendor: number | null; games: { id: number; game_name: string }[]; baseRate?: ReactNode; title?: string }) {
   const [revision, refresh] = useState(0)
   const { cards, error, loading } = useDeskCards(vendor, revision)
   const [game, setGame] = useState(String(games[0]?.id || ""))
@@ -70,7 +71,7 @@ export default function DeskRateEditor({ vendor, games, baseRate }: { vendor: nu
   const savedMode = gameCards[0]?.pricing_mode ?? (gameCards.some(card => card.is_active && !card.archived) ? "variants" : "slot")
   const mode = modeDraft ?? savedMode
   const input = "h-9 w-full rounded-md border bg-background px-2 text-sm"
-  const button = "rounded-md border px-3 py-1.5 text-xs disabled:opacity-50"
+  const button = buttonVariants({ variant: "outline", size: "sm" })
   const busy = loading || saving || !!error
   const endpoint = `${BOOKING_URL}/api/vendor/${vendor}/desk-rates`
   async function write(url: string, method: string, body: unknown) {
@@ -101,7 +102,7 @@ export default function DeskRateEditor({ vendor, games, baseRate }: { vendor: nu
   const variants = [...new Set(gameCards.map(card => card.definition.game_variant).filter(Boolean))]
   const sizes = [...new Set(gameCards.map(card => card.definition.screen_size_inches).filter(Boolean))]
   return <section className="space-y-4 rounded-xl border bg-card p-4">
-    <div className="flex flex-wrap items-center justify-between gap-3"><h2 className="font-semibold">{games.find(item => String(item.id) === game)?.game_name || "Device pricing"}</h2><span className="text-xs text-muted-foreground">{error ? "Pricing unavailable" : loading ? "Loading…" : savedMode === "variants" ? "Custom dashboard rates" : "Slot pricing"}</span></div>
+    <div className="flex flex-wrap items-center justify-between gap-3"><h2 className="font-semibold">{title || games.find(item => String(item.id) === game)?.game_name || "Device pricing"}</h2><span className="text-xs text-muted-foreground">{error ? "Pricing unavailable" : loading ? "Loading…" : savedMode === "variants" ? "Custom dashboard rates" : "Slot pricing"}</span></div>
     {games.length > 1 && <label className="block text-sm">Device<select className={input} value={game} onChange={e => { setGame(e.target.value); setDraft(null); setEditing(null); setModeDraft(null) }}>{games.map(item => <option key={item.id} value={item.id}>{item.game_name}</option>)}</select></label>}
     <label className="block text-sm">Dashboard pricing<select aria-label="Dashboard pricing rule" disabled={busy} className={`${input} mt-1 max-w-sm`} value={mode} onChange={async e => {
       const next = e.target.value as "slot" | "variants"

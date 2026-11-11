@@ -366,12 +366,12 @@ export default function LoginPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/65 p-4">
           <div className="w-full max-w-md rounded-lg border border-white/10 bg-[#1c1c1e]/95 p-5 shadow-2xl backdrop-blur-xl">
             <h3 className="text-lg font-semibold text-white">Set New Password</h3>
-            <p className="mt-1 text-sm text-slate-300">
+            <p className="mt-1 text-sm text-zinc-300">
               Your temporary password is active. Set a new password to continue.
             </p>
             <div className="mt-4 space-y-3">
               <div>
-                <label className="mb-1 block text-xs text-slate-300">New Password</label>
+                <label className="mb-1 block text-xs text-zinc-300">New Password</label>
                 <PasswordInput
                   placeholder="Enter new password"
                   autoComplete="new-password"
@@ -380,7 +380,7 @@ export default function LoginPage() {
                 />
               </div>
               <div>
-                <label className="mb-1 block text-xs text-slate-300">Confirm Password</label>
+                <label className="mb-1 block text-xs text-zinc-300">Confirm Password</label>
                 <PasswordInput
                   placeholder="Re-enter password"
                   autoComplete="new-password"
@@ -389,7 +389,7 @@ export default function LoginPage() {
                 />
               </div>
               {forceResetError && (
-                <p className="rounded-md border border-rose-400/30 bg-rose-500/10 px-3 py-2 text-sm text-rose-300">
+                <p className="rounded-md border border-red-400/30 bg-red-500/10 px-3 py-2 text-sm text-red-300">
                   {forceResetError}
                 </p>
               )}
@@ -436,10 +436,10 @@ export default function LoginPage() {
                 />
               </div>
             </div>
-            <CardTitle className="premium-heading mb-1 text-2xl font-semibold text-[#f5f5f7]">
+            <CardTitle className="premium-heading mb-1 text-2xl font-semibold text-zinc-50">
               Sign in to Hash
             </CardTitle>
-            <CardDescription className="mx-auto max-w-sm text-[15px] font-medium text-[#a1a1a6]">
+            <CardDescription className="mx-auto max-w-sm text-[15px] font-medium text-zinc-400">
               Access your gaming cafe operations dashboard.
             </CardDescription>
           </CardHeader>
@@ -455,7 +455,7 @@ export default function LoginPage() {
                   name="email"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-xs font-medium text-[#c7c7cc]">
+                      <FormLabel className="text-xs font-medium text-zinc-300">
                         Email Address
                       </FormLabel>
                       <FormControl>
@@ -463,7 +463,7 @@ export default function LoginPage() {
                           placeholder="Enter your email"
                           type="email"
                           autoComplete="email"
-                          className="h-11 rounded-lg border border-white/10 bg-white/[0.06] px-3 text-[15px] text-[#f5f5f7] placeholder:text-[#6e6e73] focus:border-[#0a84ff] focus:ring-2 focus:ring-[#0a84ff]/20"
+                          className="h-11 rounded-lg border border-white/10 bg-white/[0.06] px-3 text-[15px] text-zinc-50 placeholder:text-zinc-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
                           {...field}
                           onChange={(e) => {
                             field.onChange(e);
@@ -482,12 +482,12 @@ export default function LoginPage() {
                   render={({ field }) => (
                     <FormItem>
                       <div className="flex justify-between items-center">
-                        <FormLabel className="text-xs font-medium text-[#c7c7cc]">
+                        <FormLabel className="text-xs font-medium text-zinc-300">
                           Password
                         </FormLabel>
                         <Link
                           href="/login/forget-password"
-                          className="text-xs font-medium text-[#0a84ff] transition-colors duration-200 hover:text-[#64d2ff]"
+                          className="text-xs font-medium text-blue-500 transition-colors duration-200 hover:text-blue-400"
                         >
                           Forgot password?
                         </Link>
@@ -496,7 +496,7 @@ export default function LoginPage() {
                         <PasswordInput
                           placeholder="Enter your password"
                           autoComplete="current-password"
-                          className="h-11 rounded-lg border border-white/10 bg-white/[0.06] px-3 text-[15px] text-[#f5f5f7] placeholder:text-[#6e6e73] focus:border-[#0a84ff] focus:ring-2 focus:ring-[#0a84ff]/20"
+                          className="h-11 rounded-lg border border-white/10 bg-white/[0.06] px-3 text-[15px] text-zinc-50 placeholder:text-zinc-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
                           {...field}
                           onChange={(e) => {
                             field.onChange(e);
@@ -510,19 +510,18 @@ export default function LoginPage() {
                 />
 
                 {loginError && (
-                  <div className="rounded-lg border border-[#ff9f0a]/25 bg-[#ff9f0a]/10 p-3">
-                    <p className="text-sm text-center flex items-center justify-center gap-2 text-[#ffb340]">
+                  <div className="rounded-lg border border-amber-500/25 bg-amber-500/10 p-3">
+                    <p className="text-sm text-center flex items-center justify-center gap-2 text-amber-400">
                       <Shield className="h-4 w-4" />
                       {loginError}
                     </p>
                   </div>
                 )}
 
-                <Button
+                <Button variant="default" size="lg"
                   type="submit"
-                  className="h-11 w-full rounded-lg border border-[#0a84ff]/30 bg-[#0a84ff] font-semibold text-white shadow-[0_14px_32px_rgba(10,132,255,0.2)] transition-all duration-200 hover:bg-[#0071e3] active:scale-[0.99]"
-                  disabled={loading}
-                >
+                  
+                  disabled={loading} className="w-full active:scale-[0.99]">
                   {loading ? (
                     <>
                       <Loader2 className="mr-2 h-5 w-5 animate-spin" />
@@ -536,13 +535,13 @@ export default function LoginPage() {
             </Form>
 
             <div className="flex items-center justify-center gap-4 border-t border-white/10 pt-4">
-              <div className="flex items-center gap-2 text-[12px] font-medium text-[#8e8e93]">
+              <div className="flex items-center gap-2 text-[12px] font-medium text-zinc-400">
                 <Shield className="w-3 h-3" />
                 <span>Secure Login</span>
               </div>
               <div className="h-1 w-1 rounded-full bg-[#48484a]"></div>
-              <div className="flex items-center gap-2 text-[12px] font-medium text-[#8e8e93]">
-                <span className="h-2 w-2 rounded-full bg-[#30d158]/80" />
+              <div className="flex items-center gap-2 text-[12px] font-medium text-zinc-400">
+                <span className="h-2 w-2 rounded-full bg-emerald-500/80" />
                 <span>Encrypted Session</span>
               </div>
             </div>
@@ -550,7 +549,7 @@ export default function LoginPage() {
         </Card>
 
         <div className="mt-6 text-center">
-          <p className="text-sm font-medium text-[#6e6e73]">
+          <p className="text-sm font-medium text-zinc-500">
             © {new Date().getFullYear()} Hash for Gamers. All rights reserved.
           </p>
         </div>
