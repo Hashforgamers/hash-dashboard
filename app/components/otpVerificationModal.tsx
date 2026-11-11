@@ -15,7 +15,7 @@ export function OTPVerificationModal({
   vendorId, 
   pageType, 
   pageName 
-}) {
+}: any) {
   const [otp, setOtp] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');

@@ -673,7 +673,7 @@ function AddPassDialog({ passTypes, onSave, buttonClassName }: any) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <button className={buttonClassName || "btn-primary"}>
+        <button className={buttonClassName || buttonVariants()}>
           <PlusCircle className="icon-md" />
           New Pass
         </button>
@@ -1024,7 +1024,7 @@ function EditPassDialog({ passObj, passTypes, onSave }: any) {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="btn-primary flex-1 justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+              className={`${buttonVariants()} flex-1 disabled:cursor-not-allowed`}
             >
               {isSubmitting ? (
                 <>

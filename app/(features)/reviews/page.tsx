@@ -1,4 +1,5 @@
 "use client";
+import { RowsSkeleton } from "@/app/components/ui/page-skeleton";
 import { buttonVariants } from "@/components/ui/button";
 
 import { Suspense, useEffect, useMemo, useState } from "react";
@@ -314,9 +315,13 @@ function ReviewsPageContent() {
           </div>
           <div className="reviews-list-content">
             {loading ? (
-              <div className="dashboard-loader text-sm">Loading reviews...</div>
+              <RowsSkeleton rows={5} label="Loading reviews" />
             ) : reviews.length === 0 ? (
-              <div className="dashboard-empty-state text-sm">No reviews yet.</div>
+              <div className="dashboard-empty-state h-full">
+                <Star aria-hidden="true" />
+                <p>No reviews yet</p>
+                <span>Reviews from gamers will appear here.</span>
+              </div>
             ) : (
               <div className="space-y-3">
                 {reviews.map((review) => (

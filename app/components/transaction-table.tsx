@@ -1,4 +1,5 @@
 "use client";
+import { TableSkeleton } from "@/app/components/ui/page-skeleton";
 import HistoryImport from "./history-import";
 import CafeAuditPanel from "./cafe-audit-panel";
 import {Button} from "@/components/ui/button";
@@ -22,7 +23,6 @@ import { Badge } from "@/components/ui/badge";
 import { jwtDecode } from "jwt-decode";
 import React from "react";
 import { DASHBOARD_URL} from "@/src/config/env";
-import HashLoader from "./ui/HashLoader";
 import { MobileCompactCard } from "@/components/ui/mobile-compact-card";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { readStringParam, updateSearchParams } from "@/lib/deeplink";
@@ -675,10 +675,10 @@ export function TransactionTable() {
   };
 
   if (boolTrans) {
-    return <HashLoader className="min-h-[500px]" />;
+    return <TableSkeleton stats={4} rows={6} label="Loading transactions" />;
   }
 
-  const reportTabs=<nav className="flex gap-2 border-b pb-2" aria-label="Transaction report views"><Button variant={reportView==='bookings'?'secondary':'ghost'} onClick={()=>setReportView('bookings')}>Booking transactions</Button><Button variant={reportView==='ledger'?'secondary':'ghost'} onClick={()=>setReportView('ledger')}>Money & wallet ledger</Button>{vendorId && <HistoryImport key={vendorId} vendor={vendorId} />}</nav>;
+  const reportTabs=<div className="flex flex-wrap items-center justify-between gap-2"><nav className="ui-segmented" aria-label="Transaction report views"><button type="button" aria-pressed={reportView==='bookings'} onClick={()=>setReportView('bookings')}>Booking transactions</button><button type="button" aria-pressed={reportView==='ledger'} onClick={()=>setReportView('ledger')}>Money & wallet ledger</button></nav>{vendorId && <HistoryImport key={vendorId} vendor={vendorId} />}</div>;
   if(reportView==='ledger')return <div className="space-y-4 overflow-y-auto p-2">{reportTabs}{vendorId&&<CafeAuditPanel key={vendorId} vendorId={vendorId}/>}</div>;
   return (
     <div className="flex h-full min-h-0 w-full min-w-0 flex-col gap-3 overflow-hidden sm:gap-3">

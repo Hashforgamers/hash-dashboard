@@ -1,4 +1,6 @@
 "use client"
+import { RowsSkeleton } from "@/app/components/ui/page-skeleton";
+import { toast } from "sonner";
 
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { Clock, Menu, Pin, PinOff, RefreshCw, User, X } from "lucide-react"
@@ -110,6 +112,7 @@ export function DashboardLayout({ children, contentScroll = "page" }: DashboardL
       await Promise.all([refreshStatus(), refreshLanding(true), refreshConsoles(true)])
     } catch (err) {
       console.error("Global ribbon refresh failed:", err)
+      toast.error("Couldn't refresh. Check your connection and try again.")
     } finally {
       setIsManualRefreshing(false)
     }
@@ -248,7 +251,7 @@ export function DashboardLayout({ children, contentScroll = "page" }: DashboardL
             }`}
           >
             {hasAccess && subscriptionPending ? (
-              <div role="status" aria-live="polite" className="flex min-h-[220px] items-center justify-center text-sm text-muted-foreground">Loading your workspace…</div>
+              <RowsSkeleton rows={6} label="Loading your workspace" />
             ) : hasAccess && hasSubscriptionAccess ? (
               children
             ) : !hasAccess ? (
@@ -313,7 +316,7 @@ export function DashboardLayout({ children, contentScroll = "page" }: DashboardL
                           title={`Manage ${platform.name} · ${platform.total} consoles`} aria-label={`Manage ${platform.name}, ${platform.total} consoles`}
                         >
                           <PlatformIcon className="h-3.5 w-3.5" style={{ color: platform.color }} />
-                          <span>{platform.total}</span>
+                          <span>{platform.total}</span><span className="hidden 2xl:inline">{platform.name}</span>
                         </button>
                       )
                     })}

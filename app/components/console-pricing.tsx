@@ -857,7 +857,7 @@ export default function ConsolePricing() {
   };
 
   const handleDeleteOffer = async (id: number) => {
-    if (!vendorId || !(await confirmAction({ title: `Delete "${offers.find(o => o.id === id)?.name || "pricing offer"}"?`, description: "This removes the promotion from the pricing configuration. New bookings will no longer use this offer.", action: "Delete offer" }))) return;
+    if (!vendorId || !(await confirmAction({ title: `Delete "${offers.find(o => o.id === id)?.offer_name || "pricing offer"}"?`, description: "This removes the promotion from the pricing configuration. New bookings will no longer use this offer.", action: "Delete offer" }))) return;
     setDeletingOfferId(id); // ✅ loader on for this specific row
     try {
       const response = await fetch(`${DASHBOARD_URL}/api/vendor/${vendorId}/pricing-offers/${id}`, {
@@ -1375,10 +1375,10 @@ export default function ConsolePricing() {
               <Loader2 className="h-4 w-4 animate-spin" /> Loading pricing…
             </div>
           ) : consoleTypes.length === 0 ? (
-            <p className="px-3 py-4 text-sm text-zinc-500">No consoles configured.</p>
+            <div className="dashboard-empty-state"><p>No consoles yet</p><span>Prices are set per console type, so add your consoles first.</span><a href="/gaming" className={`${buttonVariants()} mt-3`}>Add consoles</a></div>
           ) : (<>
           <div className="mb-3 flex flex-wrap gap-2" aria-label="Choose device pricing">
-            {consoleTypes.map(console=><button key={console.type} type="button" aria-pressed={(pricingDevice || consoleTypes[0]?.type) === console.type} onClick={()=>setPricingDevice(console.type)} className={`rounded-lg border px-4 py-2 text-sm ${(pricingDevice || consoleTypes[0]?.type) === console.type ? "border-primary bg-primary/10 text-primary" : "text-muted-foreground"}`}>{console.name}</button>)}
+            {consoleTypes.map(console=><button key={console.type} type="button" aria-pressed={(pricingDevice || consoleTypes[0]?.type) === console.type} onClick={()=>setPricingDevice(console.type)} className="ui-chip">{console.name}</button>)}
           </div>
           <div className="mb-3 grid gap-3">
             {consoleTypes.filter(console=>console.type === (pricingDevice || consoleTypes[0]?.type)).map((console) => (

@@ -108,7 +108,7 @@ export default function TournamentsPage() {
     <DashboardLayout contentScroll="contained"><div className="flex h-full items-center justify-center">
       <div className="content-card content-card-padding text-center max-w-sm w-full">
         <p className="text-red-400 mb-4 body-text">{tokenError}</p>
-        <button className="btn-primary w-full justify-center" onClick={refresh}>
+        <button className={`${buttonVariants()} w-full`} onClick={refresh}>
           Retry
         </button>
       </div>
@@ -177,7 +177,7 @@ export default function TournamentsPage() {
         <div className="dashboard-table-shell">
           <div className="dashboard-table-wrap">
             <table className="dashboard-table">
-            <thead className="bg-zinc-900/70">
+            <thead className="border-b">
               <tr>
                 <th className="table-cell text-left text-[11px] font-bold uppercase tracking-wider text-blue-100/80 sm:text-xs">Tournament</th>
                 <th className="table-cell text-left text-[11px] font-bold uppercase tracking-wider text-blue-100/80 sm:text-xs">Start Date</th>
@@ -216,7 +216,7 @@ export default function TournamentsPage() {
                       )}
                       {!search && !statusFilter && !loadingData && (
                         <button
-                          className="btn-primary"
+                          className={buttonVariants()}
                           onClick={() => router.push('/tournaments/create')}
                         >
                           <Plus className="icon-sm" /> Create your first one

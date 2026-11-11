@@ -1,4 +1,5 @@
 "use client";
+import { CardGridSkeleton } from "@/app/components/ui/page-skeleton";
 import { cn } from "@/lib/utils";
 import CafeAuditPanel from "./cafe-audit-panel";
 import {Dialog,DialogContent,DialogHeader,DialogTitle} from "@/components/ui/dialog";
@@ -44,7 +45,6 @@ import { useState, useEffect, useMemo } from "react";
 import axios from "axios";
 import { jwtDecode } from "jwt-decode";
 import { useDashboardData } from "@/app/context/DashboardDataContext";
-import  HashLoader  from "./ui/HashLoader";
 
 import { DASHBOARD_URL } from "@/src/config/env";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -54,10 +54,11 @@ import { normalizeConsoleSlug, resolveConsoleIcon } from "./console-catalog";
 
 interface ConsoleListProps {
   onEdit: (console: any) => void;
+  onAdd?: () => void;
   refreshKey?: number;
 }
 
-export function ConsoleList({ onEdit, refreshKey = 0 }: ConsoleListProps) {
+export function ConsoleList({ onEdit, onAdd, refreshKey = 0 }: ConsoleListProps) {
   const [historyConsole,setHistoryConsole]=useState<{id:number;name:string}|null>(null);
   const [deleteTarget, setDeleteTarget] = useState<{ id: number; name: string } | null>(null);
   const [data, setdata] = useState<any[]>([]);
@@ -242,6 +243,7 @@ export function ConsoleList({ onEdit, refreshKey = 0 }: ConsoleListProps) {
       window.dispatchEvent(new Event("refresh-dashboard"));
     } catch (error) {
       console.error("Failed to release console:", error);
+      toast.error("Couldn't release the console. Please try again.");
     } finally {
       setReleasingConsoleId(null);
     }
@@ -287,12 +289,7 @@ export function ConsoleList({ onEdit, refreshKey = 0 }: ConsoleListProps) {
   // Show loading screen while fetching data
   if (isLoading) {
     return (
-      <div className="flex min-h-[320px] items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <HashLoader size={60} />
-          <p className="text-xs text-muted-foreground">Loading consoles...</p>
-        </div>
-      </div>
+      <CardGridSkeleton count={8} label="Loading consoles" />
     );
   }
 
@@ -300,11 +297,11 @@ export function ConsoleList({ onEdit, refreshKey = 0 }: ConsoleListProps) {
   // Show message if no consoles found
   if (!isLoading && consolelistdata.length === 0) {
     return (
-      <div className="flex min-h-[320px] items-center justify-center">
-        <div className="text-center">
-          <p className="dash-title">No consoles found</p>
-          <p className="dash-subtitle premium-subtle mt-2">Add a new console to get started</p>
-        </div>
+      <div className="dashboard-empty-state min-h-[320px]">
+        <Monitor aria-hidden="true" />
+        <p>No consoles yet</p>
+        <span>Add your PCs, consoles and rooms so staff can book them.</span>
+        {onAdd && <Button className="mt-3" onClick={onAdd}>Add console</Button>}
       </div>
     );
   }
@@ -326,11 +323,7 @@ export function ConsoleList({ onEdit, refreshKey = 0 }: ConsoleListProps) {
                 type="button"
                 onClick={() => setActiveGroup(group)}
                 aria-pressed={selectedGroup === group}
-                className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors sm:text-sm ${
-                  selectedGroup === group
-                    ? "border-blue-400/55 bg-blue-500/10 text-zinc-900 dark:bg-blue-500/15 dark:text-blue-200"
-                    : "border-zinc-300 bg-white/80 text-zinc-700 hover:bg-zinc-100 dark:border-zinc-600/70 dark:bg-zinc-800/60 dark:text-zinc-300 dark:hover:bg-zinc-700/70"
-                }`}
+                className="ui-chip"
               >
                 <Icon className="h-3.5 w-3.5" />
                 {typeMeta[group]?.label || group} ({count})

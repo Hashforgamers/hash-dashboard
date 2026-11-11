@@ -308,7 +308,7 @@ const MealDetailsModal: React.FC<MealDetailsModalProps> = ({
       console.log('📋 Menu API Response:', data);
       
       if (data.success && Array.isArray(data.categories)) {
-        const activeCategories = data.categories.filter(cat => cat.is_active && cat.menus?.length > 0);
+        const activeCategories = data.categories.filter((cat: any) => cat.is_active && cat.menus?.length > 0);
         setCategories(activeCategories);
         
         // Set first category as selected

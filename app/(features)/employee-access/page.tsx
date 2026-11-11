@@ -496,7 +496,7 @@ export default function EmployeeAccessPage() {
 
                         return (
                           <div key={`${item.permission}-${roleKey}`} className="flex flex-col items-center gap-1 md:col-span-2 md:flex-row md:justify-center">
-                            <span className="text-[10px] uppercase tracking-[0.08em] text-zinc-400 md:hidden">{roleKey}</span>
+                            <span className="text-[10px] uppercase keep-case tracking-[0.08em] text-zinc-400 md:hidden">{roleKey}</span>
                             <Switch
                               checked={checked}
                               disabled={isOwner || isResettingPermissions || pendingPermissionKey !== null}

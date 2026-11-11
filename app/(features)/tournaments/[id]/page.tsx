@@ -303,7 +303,7 @@ export default function TournamentDetailPage() {
         <Trophy className="w-10 h-10 text-muted-foreground/30 mx-auto mb-3" />
         <p className="body-text-muted mb-4">Tournament not found.</p>
         <button
-          className="btn-primary"
+          className={buttonVariants()}
           onClick={() => router.push('/tournaments')}
         >
           Back to Tournaments
@@ -684,7 +684,7 @@ export default function TournamentDetailPage() {
         <div className="dashboard-table-shell flex-1">
           <div className="dashboard-table-wrap">
             <table className="dashboard-table">
-            <thead className="sticky top-0 bg-zinc-900/70">
+            <thead className="sticky top-0 bg-card">
               <tr>
                 <th className="table-cell text-left text-[11px] font-bold uppercase tracking-wider text-blue-100/80 sm:text-xs">Team / Player</th>
                 <th className="table-cell text-left text-[11px] font-bold uppercase tracking-wider text-blue-100/80 sm:text-xs">Contact</th>
@@ -799,7 +799,7 @@ export default function TournamentDetailPage() {
         </div>
         <div className="dashboard-table-wrap flex-1">
           <table className="dashboard-table">
-            <thead className="sticky top-0 bg-zinc-900/70">
+            <thead className="sticky top-0 bg-card">
               <tr>
                 <th className="table-cell text-left text-[11px] font-bold uppercase tracking-wider text-blue-100/80 sm:text-xs">Team</th>
                 <th className="table-cell text-left text-[11px] font-bold uppercase tracking-wider text-blue-100/80 sm:text-xs">Type</th>

@@ -10,7 +10,7 @@ export default function ResponsiveSearchFilter({
   timeFilter,
   setTimeFilter,
   className = "",
-}) {
+}: any) {
   const [showOverlay, setShowOverlay] = useState(false);
 
   return (

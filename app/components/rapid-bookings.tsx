@@ -1,4 +1,5 @@
 "use client";
+import { toast } from "sonner";
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -17,7 +18,6 @@ import {
   Wallet,
   GamepadIcon,
   AlertCircle,
-  Cash,
   DollarSign,
   Loader2
 } from "lucide-react";
@@ -57,6 +57,8 @@ interface System {
   price: string;
   status: SystemStatus;
   number: string;
+  consoleModelNumber?: string;
+  consoleTypeName?: string;
 }
 
 interface Filters {
@@ -88,7 +90,8 @@ function RapidBookings() {
   const [selectedSlot, setSelectedSlot] = useState<any>(null);
 
   const [selectedSlots, setSelectedSlots] = React.useState<string[]>([]);
-  const [userList, setUserList] = useState<{ name: string; email: string; phone: string }[]>([]);
+  type UserType = { id?: number; name: string; email: string; phone: string };
+  const [userList, setUserList] = useState<UserType[]>([]);
   const [nameSuggestions, setNameSuggestions] = useState<UserType[]>([]);
   const [phoneSuggestions, setPhoneSuggestions] = useState<UserType[]>([]);
   const [phone, setPhone] = useState("");
@@ -97,7 +100,7 @@ function RapidBookings() {
 
 
   const [time, setTime] = useState("");
-  const [vendorId, setVendorId] = useState(null);
+  const [vendorId, setVendorId] = useState<any>(null);
   const [filters, setFilters] = useState<Filters>({
     type: "all",
     status: "all",
@@ -393,7 +396,7 @@ function RapidBookings() {
   };
 
 
-  const handleBooking = async (e) => {
+  const handleBooking = async (e: any) => {
     // e.preventDefault();
     setLoading(true);
     console.log("Form submission started");
@@ -458,6 +461,7 @@ function RapidBookings() {
     } catch (error: any) {
       console.error("Error creating booking:", error);
       console.error("Error details:", error.response?.data || error.message);
+      toast.error(error?.response?.data?.message || "Couldn't create the booking. Please try again.");
     } finally {
       setShowBookingForm(false);
       setLoading(false);
@@ -810,7 +814,7 @@ function RapidBookings() {
                                 setPhoneSuggestions([]);
                                 setNameSuggestions([]);
                                 setContactNumber(user.phone);
-                                setUserId(user.id);
+                                setUserId((user.id ?? "") as any); // keeps sending the numeric id, as before
                               }}
                             >
                               {user.phone} ({user.name})
@@ -849,7 +853,7 @@ function RapidBookings() {
                                 setSelectedName(user);
                                 setNameSuggestions([]);
                                 setPhoneSuggestions([]);
-                                setUserId(user.id);
+                                setUserId((user.id ?? "") as any); // keeps sending the numeric id, as before
                               }}
                             >
                               {user.name} ({user.phone})
@@ -1005,7 +1009,7 @@ function RapidBookings() {
                   </div>
                   <div className="flex justify-between pt-2 border-t font-bold">
                     <span>Total:</span>
-                    <span className="text-emerald-600">₹{selectedSlots.length * selectedSystem?.price}</span>
+                    <span className="text-emerald-600">₹{selectedSlots.length * Number(selectedSystem?.price ?? 0)}</span>
                   </div>
                 </div>
               </div>

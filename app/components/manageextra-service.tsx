@@ -1,4 +1,5 @@
 "use client"
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
 import { useActionFeedback } from "../hooks/use-action-feedback";
@@ -338,7 +339,7 @@ export default function ManageExtraServices() {
     }
   }
 
-  const toggleMenuItemStatus = async (categoryId: number, item: ExtraServiceMenu) => {
+  const toggleMenuItemStatus = async (categoryId: number, item: ExtraServiceMenu, isUndo = false) => {
     if (!vendorId) return
     setTogglingItemId(item.id)
     try {
@@ -355,6 +356,12 @@ export default function ManageExtraServices() {
         throw new Error(data?.error || data?.message || `HTTP ${res.status}`)
       }
       await fetchCategories(true)
+      if (!isUndo) {
+        // the toggle is its own inverse, so undo just flips it back
+        toast.success(`${item.name} turned ${item.is_active ? "off" : "on"}`, {
+          action: { label: "Undo", onClick: () => void toggleMenuItemStatus(categoryId, { ...item, is_active: !item.is_active }, true) },
+        })
+      }
     } catch (err) {
       reportError(err instanceof Error ? err.message : "Failed to toggle status")
     } finally {

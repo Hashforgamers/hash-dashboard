@@ -1,3 +1,4 @@
+import { RowsSkeleton } from "@/app/components/ui/page-skeleton";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { badgeVariants } from "@/components/ui/badge";
@@ -14,7 +15,6 @@ import { BOOKING_URL, DASHBOARD_URL } from "@/src/config/env";
 import { mergeConsecutiveBookings } from "@/app/utils/slot-utils";
 import QrLiveSessions from "./qr-live-sessions";
 import { PcConfirmation, usePcConfirmations } from './pc-confirmation';
-import HashLoader from './ui/HashLoader';
 import ExtraBookingOverlay from "./extraBookingOverlay";
 import MealDetailsModal from "./mealsDetailmodal";
 import { useSocket } from "../context/SocketContext";
@@ -485,6 +485,8 @@ const releaseSlot = async (consoleType: string, gameId: string, consoleId: strin
   }
 };
 
+const formatDue = (amount: number) => `₹${amount.toLocaleString("en-IN", { maximumFractionDigits: 2 })}`
+
 interface CurrentSlotsProps {
   currentSlots: any[];
   historyBookings?: any[];
@@ -558,7 +560,13 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
       const due=Number(bookingOutstandingDue[id]||0)+Number(booking.runtime?.billing?.amount_due_paise||0)/100>0;
       return (overdue?2:0)+(due?1:0);
     };
-    return priority(b)-priority(a);
+    // within the same priority: most overtime first, then the session ending soonest
+    const urgency=(booking:any)=>{
+      const timer:any=timers.find((t:any)=>String(t.slotId)===String(booking.slotId));
+      const over=Number(timer?.extraTime||0);
+      return over>0 ? -over : Math.max(Number(timer?.duration||0)-Number(timer?.elapsedTime||0),0);
+    };
+    return priority(b)-priority(a) || urgency(a)-urgency(b);
   }),[filteredSlots,timers,bookingOutstandingDue]);
 
   // Get vendorId
@@ -985,10 +993,8 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
 
   return (
     <div className="dashboard-module dashboard-module-panel live-session-card flex h-full min-h-0 flex-col overflow-hidden rounded-lg p-3 sm:p-4">
-      {currentSlots?.available ? (
-        <div className="flex h-full items-center justify-center">
-          <HashLoader />
-        </div>
+      {(currentSlots as any)?.available ? (
+        <RowsSkeleton rows={4} label="Loading live sessions" className="p-4" />
       ) : (
         <>
           <div className="live-session-head mb-3 flex shrink-0 flex-col items-start justify-between gap-3 xl:flex-row xl:items-center">
@@ -1173,7 +1179,7 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                               }}
                               className={buttonVariants({ variant: "warning", size: "sm" })}
                             >
-                              Settle
+                              Settle{hasOutstandingDue ? ` ${formatDue(outstandingDue)}` : ""}
                             </button>
                           ) : (
                             <button
@@ -1542,7 +1548,7 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                               <div className="space-y-1">
                                 {isPcSquad && pcMemberRows.length > 0 ? (
                                   <div className="space-y-1">
-                                      {(rowExpanded ? pcMemberRows : pcMemberRows.slice(0, 1)).map((entry, idx) => (
+                                      {(rowExpanded ? pcMemberRows : pcMemberRows.slice(0, 1)).map((entry: any, idx: any) => (
                                         <div
                                           key={`${bookingIdToCheck}-sys-member-${entry.idx}`}
                                           className="flex items-center justify-between gap-2 text-xs sm:text-sm"
@@ -1624,7 +1630,7 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                                         setShowOverlay(true);
                                         setError("");
                                       }}
-                                      className={cn(buttonVariants({ variant: "warning", size: "sm" }), "w-20 sm:w-24")}
+                                      className={cn(buttonVariants({ variant: "warning", size: "sm" }), "min-w-20 sm:min-w-24")}
                                     >
                                       <div className="flex items-center justify-center gap-1">
                                         <FaCheck className="w-2 h-2 sm:w-3 sm:h-3" />
@@ -1641,12 +1647,12 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                                     setShowOverlay(true);
                                     setError("");
                                   }}
-                                  className={cn(buttonVariants({ variant: "warning", size: "sm" }), "w-20 sm:w-24")}
+                                  className={cn(buttonVariants({ variant: "warning", size: "sm" }), "min-w-20 sm:min-w-24")}
                                 >
                                   <div className="flex items-center justify-center gap-1">
                                     <FaCheck className="w-2 h-2 sm:w-3 sm:h-3" />
-                                    <span className="hidden sm:inline">Settle</span>
-                                    <span className="sm:hidden">Set</span>
+                                    <span className="hidden sm:inline">Settle{hasOutstandingDue ? ` ${formatDue(outstandingDue)}` : ""}</span>
+                                    <span className="sm:hidden">{hasOutstandingDue ? formatDue(outstandingDue) : "Settle"}</span>
                                   </div>
                                 </button>
                               ) : (

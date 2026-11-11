@@ -33,7 +33,7 @@ export default function MasterAnalyticsPage() {
   const router = useRouter();
   const [selectedCafe, setSelectedCafe] = useState("Master Analytics");
   const [reportType, setReportType] = useState("Monthly");
-  const [analyticsData, setAnalyticsData] = useState(null);
+  const [analyticsData, setAnalyticsData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -169,7 +169,7 @@ export default function MasterAnalyticsPage() {
                   outerRadius={80}
                   label
                 >
-                  {data.paymentModes[selectedCafe].map((entry, idx) => (
+                  {data.paymentModes[selectedCafe].map((entry: any, idx: any) => (
                     <Cell key={idx} fill={COLORS[idx % COLORS.length]} />
                   ))}
                 </Pie>

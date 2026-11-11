@@ -247,6 +247,7 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
       setformdata(fillMissingFormData(copiedData, formProfile, dynamicAttributes));
     } catch (error) {
       console.error("Error copying console data:", error);
+      toast.error("Couldn't copy the console details. Please try again.");
     }
   };
 

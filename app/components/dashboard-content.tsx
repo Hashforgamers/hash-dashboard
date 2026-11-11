@@ -1,5 +1,8 @@
 "use client"
+import { DashboardSkeleton } from "@/app/components/ui/page-skeleton";
 import NumberFlow from "@number-flow/react"
+import { cn } from "@/lib/utils"
+import { buttonVariants } from "@/components/ui/button"
 
 import React, { useCallback, useEffect, useRef, useState } from "react"
 import { Card, CardContent } from "@/components/ui/card"
@@ -15,7 +18,6 @@ import {
 } from 'lucide-react'
 import { useDashboardData } from "@/app/context/DashboardDataContext"
 import { useAccess } from "@/app/context/AccessContext"
-import HashLoader from "./ui/HashLoader"
 import { useSocket } from "../context/SocketContext"
 import { useSubscription } from "@/hooks/useSubscription"
 import { useRouter, useSearchParams } from "next/navigation"
@@ -55,12 +57,25 @@ function LockedOverlay() {
   )
 }
 
+// Remembers a show/hide choice per browser; storage can be unavailable (private mode), so failures fall back to the default.
+function usePersistentFlag(key: string, initial: boolean) {
+  const [value, setValue] = useState(initial)
+  useEffect(() => {
+    try { const saved = localStorage.getItem(key); if (saved !== null) setValue(saved === "1") } catch {}
+  }, [key])
+  const update = useCallback((next: boolean) => {
+    setValue(next)
+    try { localStorage.setItem(key, next ? "1" : "0") } catch {}
+  }, [key])
+  return [value, update] as const
+}
+
 export function DashboardContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const [showAnalytics, setShowAnalytics] = useState(false)
-  const [showEarnings, setShowEarnings] = useState(false)
-  const [showPending, setShowPending] = useState(false)
+  const [showAnalytics, setShowAnalytics] = usePersistentFlag("dashboard_show_analytics_v1", true)
+  const [showEarnings, setShowEarnings] = usePersistentFlag("dashboard_show_earnings_v1", true)
+  const [showPending, setShowPending] = usePersistentFlag("dashboard_show_pending_v1", true)
   const [refreshSlots, setRefreshSlots] = useState(false)
   const [activeDashboardTab, setActiveDashboardTab] = useState<DashboardTab>("live")
   const { vendorId, landingData, refreshLanding, refreshConsoles } = useDashboardData()
@@ -389,13 +404,13 @@ export function DashboardContent() {
   )
 
   if (!dashboardData) {
-    return <HashLoader className="py-[42vh]" />
+    return <DashboardSkeleton />
   }
 
   return (
     <>
       {dashboardData?.available ? (
-        <HashLoader className="py-[50vh]" />
+        <DashboardSkeleton />
       ) : (
         <div className="operations-dashboard relative flex h-full min-h-0 flex-col gap-2 overflow-hidden text-foreground max-md:gap-1.5 sm:gap-3">
           {isLocked && <LockedOverlay />}
@@ -475,7 +490,7 @@ export function DashboardContent() {
                 </div>
               </div>
 
-              {isOwnerSession && activeDashboardTab === "live" && <button type="button" aria-expanded={showAnalytics} className="justify-self-end rounded border px-3 py-1.5 text-xs" onClick={()=>setShowAnalytics(!showAnalytics)}>{showAnalytics ? "Hide analytics" : "Show analytics"}</button>}
+              {isOwnerSession && activeDashboardTab === "live" && <button type="button" aria-expanded={showAnalytics} className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "justify-self-end text-muted-foreground")} onClick={()=>setShowAnalytics(!showAnalytics)}>{showAnalytics ? "Hide analytics" : "Show analytics"}</button>}
             </div>
           </motion.div>
 

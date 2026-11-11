@@ -1,3 +1,9 @@
+:root {
+  --ws-fill: rgba(118, 118, 128, 0.18);      /* Apple tertiary fill: inputs, segmented tracks */
+  --ws-fill-strong: rgba(118, 118, 128, 0.28);
+  --ws-thumb: rgba(255, 255, 255, 0.14);     /* selected segment / nav item */
+  --ws-focus: 0 0 0 3px hsl(var(--primary) / 0.35);
+}
 /* Shared staff workspace surfaces; status colors remain semantic. */
 .workspace-ui .tournament-create .section-title { font-size: 14px; line-height: 20px; }
 .workspace-ui .tournament-create .form-label { display: block; margin-bottom: 6px; font-size: 12px; line-height: 18px; font-weight: 500; letter-spacing: 0; text-transform: none; }
@@ -70,10 +76,6 @@ svg[data-search-icon],
   --gaming-panel-shadow: none;
   --premium-card-shadow: none;
   --dash-module-panel-shadow: none;
-  --ws-fill: rgba(118, 118, 128, 0.18);      /* Apple tertiary fill: inputs, segmented tracks */
-  --ws-fill-strong: rgba(118, 118, 128, 0.28);
-  --ws-thumb: rgba(255, 255, 255, 0.14);     /* selected segment / nav item */
-  --ws-focus: 0 0 0 3px hsl(var(--primary) / 0.35);
   font-size: 14px;
   line-height: 1.5;
   letter-spacing: -0.006em;
@@ -391,3 +393,39 @@ svg[data-search-icon],
   .workspace-ui .dashboard-nav-item { min-height: 40px; }
   .workspace-ui .operations-dashboard .tab-container button { min-height: 36px; }
 }
+
+/* Apple-style labels: sentence case, no letter-spaced all-caps. `keep-case` opts out where uppercase formats raw data. */
+.workspace-ui .uppercase:not(.keep-case) { text-transform: none; letter-spacing: normal; }
+/* Legibility floor: nothing smaller than 11px. */
+.workspace-ui :is(.text-\[9px\], .text-\[10px\]) { font-size: 11px; line-height: 14px; }
+/* One empty-state pattern: centred, muted icon, a title line, then quiet detail. */
+.workspace-ui :is(.dashboard-empty-state, .dashboard-module-empty) {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
+  min-height: 160px; padding: 32px 16px; text-align: center;
+  color: hsl(var(--muted-foreground)); font-size: 13px; line-height: 18px;
+}
+.workspace-ui :is(.dashboard-empty-state, .dashboard-module-empty) > svg { width: 28px; height: 28px; margin-bottom: 4px; opacity: 0.6; }
+.workspace-ui :is(.dashboard-empty-state, .dashboard-module-empty) > p:first-of-type { color: hsl(var(--foreground)); font-size: 14px; font-weight: 500; }
+/* Segmented control: switch between sections or views of one page. */
+.ui-segmented { display: inline-flex; gap: 2px; padding: 2px; border-radius: 9px; background: var(--ws-fill); max-width: 100%; overflow-x: auto; }
+.ui-segmented > :is(button, a) { min-height: 28px; padding: 4px 12px; border: 0; border-radius: 7px; background: transparent; color: hsl(var(--muted-foreground)); font-size: 13px; font-weight: 500; white-space: nowrap; transition: background 0.15s ease, color 0.15s ease; }
+.ui-segmented > :is(button, a):hover { color: hsl(var(--foreground)); }
+.ui-segmented > :is([aria-pressed="true"], [aria-selected="true"], [aria-current="page"]) { background: var(--ws-thumb); color: hsl(var(--foreground)); box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3); }
+/* Filter chips: pick one of several options such as console types. */
+.ui-chip { display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 12px; border: 1px solid transparent; border-radius: 999px; background: var(--ws-fill); color: hsl(var(--muted-foreground)); font-size: 13px; font-weight: 500; white-space: nowrap; transition: background 0.15s ease, color 0.15s ease; }
+.ui-chip:hover { background: var(--ws-fill-strong); color: hsl(var(--foreground)); }
+.ui-chip:is([aria-pressed="true"], [aria-selected="true"]) { background: hsl(var(--primary) / 0.18); color: #bfdbfe; }
+.ui-chip svg { width: 14px; height: 14px; }
+/* Phones: the slot strip reads as scrollable, and Book gets its own full-width row. */
+@media (max-width: 767px) {
+  .workspace-ui .dashboard-slot-slider { -webkit-mask-image: linear-gradient(to right, #000 82%, transparent); mask-image: linear-gradient(to right, #000 82%, transparent); }
+  /* wide tables scroll sideways with the first column pinned, so each row stays identifiable */
+  .workspace-ui :is(.dashboard-table, .dashboard-module-table, table) :is(th, td):first-child { position: sticky; left: 0; z-index: 1; background: hsl(var(--card)); }
+}
+@media (max-width: 479px) {
+  .workspace-ui .dashboard-quick-slots-row { grid-template-columns: minmax(0, 1fr); gap: 10px; }
+  .workspace-ui .dashboard-quick-booking .dashboard-quick-book-button { width: 100%; }
+}
+/* The install banner never covers an open popup or sheet. */
+body:has([aria-modal="true"], [role="dialog"][data-state="open"]) .install-banner { display: none; }
+.ui-segmented.grid { display: grid; }

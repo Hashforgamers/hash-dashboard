@@ -1,4 +1,5 @@
 "use client";
+import { SettingsSkeleton } from "@/app/components/ui/page-skeleton";
 import { toast } from "sonner";
 import OwnerSecuritySettings from "./owner-security-settings";
 
@@ -6,7 +7,7 @@ import { normalizeOperatingHours, validateOperatingDay, type OperatingDay } from
 import { CafeRequests } from './cafe-requests';
 import { CafeWalletWorkspace } from './cafe-wallet-workspace';
 import { useState, useEffect, useRef } from "react";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -33,7 +34,6 @@ import { jwtDecode } from "jwt-decode";
 import { DASHBOARD_URL } from "@/src/config/env";
 import { VENDOR_ONBOARD_URL } from "@/src/config/env"
 import { BOOKING_URL } from "@/src/config/env"
-import HashLoader from "./ui/HashLoader";
 import { motion } from "framer-motion";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faIndianRupeeSign } from '@fortawesome/free-solid-svg-icons'
@@ -58,7 +58,7 @@ export function MyAccount() {
   const prevPageRef = useRef<string | null>(null);
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState<boolean>(true);
-  const [vendorId, setVendorId] = useState(null);
+  const [vendorId, setVendorId] = useState<any>(null);
   const [uploadMessage, setUploadMessage] = useState<string | null>(null);
   const [previewDocument, setPreviewDocument] = useState<string | null>(null);
   const [previewDocumentName, setPreviewDocumentName] = useState<string>("");
@@ -86,7 +86,7 @@ const [businessFormData, setBusinessFormData] = useState<any>({});
 const [savingBusinessField, setSavingBusinessField] = useState<string | null>(null);
 
 // Bank Transfer Details state
-const [bankDetails, setBankDetails] = useState(null);
+const [bankDetails, setBankDetails] = useState<any>(null);
 const [loadingBank, setLoadingBank] = useState(false);
 const [bankForm, setBankForm] = useState({
   accountHolderName: '',
@@ -99,7 +99,7 @@ const [editingBank, setEditingBank] = useState(false);
 const [savingBank, setSavingBank] = useState(false);
 
 // Payout state
-const [payouts, setPayouts] = useState([]);
+const [payouts, setPayouts] = useState<any[]>([]);
 const [loadingPayouts, setLoadingPayouts] = useState(false);
 const [payoutPage, setPayoutPage] = useState(1);
 const [payoutTotalPages, setPayoutTotalPages] = useState(1);
@@ -159,11 +159,11 @@ const [savingGst, setSavingGst] = useState(false);
 const [gstMessage, setGstMessage] = useState<string | null>(null);
 
 // Add these state variables after your existing bank states
-const [paymentMethods, setPaymentMethods] = useState([]);
+const [paymentMethods, setPaymentMethods] = useState<any[]>([]);
 const [loadingPaymentMethods, setLoadingPaymentMethods] = useState(false);
-const [togglingMethod, setTogglingMethod] = useState(null);
-const [paymentMethodError, setPaymentMethodError] = useState(null);
-const [paymentMethodSuccess, setPaymentMethodSuccess] = useState(null);
+const [togglingMethod, setTogglingMethod] = useState<any>(null);
+const [paymentMethodError, setPaymentMethodError] = useState<any>(null);
+const [paymentMethodSuccess, setPaymentMethodSuccess] = useState<any>(null);
 const [otpLoading, setOtpLoading] = useState(false);
 const [bankDetailsHistory, setBankDetailsHistory] = useState<any[]>([]);
 const [loadingBankHistory, setLoadingBankHistory] = useState(false);
@@ -202,7 +202,7 @@ const fetchPaymentMethods = async () => {
 };
 
 // Toggle payment method
-const handleTogglePaymentMethod = async (payMethodId, currentState) => {
+const handleTogglePaymentMethod = async (payMethodId: any, currentState: any) => {
   if (!vendorId) return;
   
   setTogglingMethod(payMethodId);
@@ -272,7 +272,7 @@ const normalizePaymentMethodName = (methodName: string) => {
 
 
 // Add OTP verification functions
-const checkPageVerification = async (pageType) => {
+const checkPageVerification = async (pageType: any) => {
   try {
     const response = await api.get<any>(`${VENDOR_ONBOARD_URL}/api/vendor/${vendorId}/check-verification?page_type=${pageType}`, {
       timeoutMs: 10_000,
@@ -536,7 +536,7 @@ const fetchSettlementSummary = async () => {
 };
 
 // Handle bank form changes
-const handleBankFormChange = (field, value) => {
+const handleBankFormChange = (field: any, value: any) => {
   setBankForm(prev => ({ ...prev, [field]: value }));
 };
 
@@ -655,7 +655,7 @@ const handleEditBusinessField = (field: string) => {
 };
 
 const handleBusinessFieldChange = (field: string, value: string) => {
-  setBusinessFormData(prev => ({
+  setBusinessFormData((prev: any) => ({
     ...prev,
     [field]: value
   }));
@@ -694,7 +694,7 @@ const handleSaveBusinessField = async (field: string) => {
       toast.success(`${field === "displayName" ? "Display name" : field} updated successfully!`);
       
       // Update local data to reflect the change
-      setData(prevData => ({
+      setData((prevData: any) => ({
         ...prevData,
         businessDetails: {
           ...prevData.businessDetails,
@@ -1138,7 +1138,7 @@ const handleCancelEdit = () => {
     if (label === "Bank Details" || label === "Payout History") {
     await handleRestrictedPageClick(label);
   } else {
-    setPage(label);
+    setPage(label ?? null);
   }
   };
 
@@ -1468,7 +1468,7 @@ const handleDeleteImage = async (imageIndex: number) => {
     prevPageRef.current = page;
   }, [page]);
 
-  if (loading) return <HashLoader className="min-h-[500px]" />;
+  if (loading) return <SettingsSkeleton />;
   if (!data) return <div className="text-center text-destructive p-8">Failed to load data. Please try again later.</div>;
 
   // Add this Toggle Switch component before your main component
@@ -1478,7 +1478,7 @@ const ToggleSwitch = ({
   disabled = false, 
   loading = false,
   size = "default" 
-}) => {
+}: any) => {
   const sizeClasses = {
     sm: "w-8 h-4",
     default: "w-11 h-6",
@@ -1498,7 +1498,7 @@ const ToggleSwitch = ({
       disabled={disabled || loading}
       className={cn(
         "relative inline-flex shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2",
-        sizeClasses[size],
+        sizeClasses[size as keyof typeof sizeClasses],
         enabled 
           ? "bg-primary" 
           : "bg-zinc-200 dark:bg-zinc-700",
@@ -1511,7 +1511,7 @@ const ToggleSwitch = ({
       <span
         className={cn(
           "pointer-events-none relative inline-block rounded-full bg-white shadow transform ring-0 transition duration-200 ease-in-out",
-          thumbSizeClasses[size],
+          thumbSizeClasses[size as keyof typeof thumbSizeClasses],
           enabled 
             ? size === "sm" ? "translate-x-4" : size === "lg" ? "translate-x-7" : "translate-x-5"
             : "translate-x-0"
@@ -1705,45 +1705,50 @@ const ToggleSwitch = ({
             {/* Navigation Menu */}
             <Card className="account-panel overflow-hidden">
               <CardContent className="p-4">
-                <nav className="space-y-2">
+                <nav className="flex flex-col gap-4" aria-label="Settings sections">
                   {[
-                    { icon: ImageIcon, label: "Cafe Gallery" },
-                    { icon: Building2, label: "Business Details" },
-                    { icon: Clock, label: "Operating Hours" },  
-                    { icon: DollarSign, label: "GST Setup" },
-                    { icon: Settings, label: "Payment Methods" },
-                    ...(activeStaff?.role === "owner" ? [{ icon: Settings, label: "Owner Security" }] : []),
-                    ...(can("transactions.view") ? [{ icon: Clock, label: "Staff Activity" }] : []),
-                    { icon: FileCheck, label: "Verified Documents" },
-                    { icon: CreditCard, label: "Bank Details" },  
-                    { icon: DollarSign, label: "Payout History" },
-                    { icon: BellRing, label: "Notification Preferences" },
-                    { icon: Wallet, label: "Subscription Details" },
-                    { icon: Calendar, label: "Settlement Report" },
-                    { icon: BellRing, label: "Report an issue" },
-                  ].map((item, index) => (
-                    <motion.div
-                      key={item.label}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.05 * index }}
-                    >
-                      <Button
-                        variant="ghost"
-                        className={cn(
-                          "account-nav-item w-full justify-start rounded-md border border-transparent text-zinc-300 hover:bg-white/5 hover:text-white",
-                          page === item.label
-                            ? "border-blue-400/50 bg-blue-500/15 text-blue-100 shadow-[inset_0_0_0_1px_rgba(34,211,238,0.25)]"
-                            : ""
-                        )}
-                        aria-current={page === item.label ? "page" : undefined}
-                        onClick={handleViewInpage}
-                        data-label={item.label}
-                      >
-                        <item.icon className="mr-2 h-4 w-4 text-blue-300" />
-                        {item.label}
-                      </Button>
-                    </motion.div>
+                    { heading: "Café", items: [
+                      { icon: ImageIcon, label: "Cafe Gallery" },
+                      { icon: Building2, label: "Business Details" },
+                      { icon: Clock, label: "Operating Hours" },
+                    ] },
+                    { heading: "Payments", items: [
+                      { icon: Settings, label: "Payment Methods" },
+                      { icon: DollarSign, label: "GST Setup" },
+                      { icon: CreditCard, label: "Bank Details" },
+                      { icon: DollarSign, label: "Payout History" },
+                      { icon: Calendar, label: "Settlement Report" },
+                      { icon: Wallet, label: "Subscription Details" },
+                    ] },
+                    { heading: "Team & security", items: [
+                      ...(activeStaff?.role === "owner" ? [{ icon: Settings, label: "Owner Security" }] : []),
+                      ...(can("transactions.view") ? [{ icon: Clock, label: "Staff Activity" }] : []),
+                    ] },
+                    { heading: "Account", items: [
+                      { icon: FileCheck, label: "Verified Documents" },
+                      { icon: BellRing, label: "Notification Preferences" },
+                      { icon: BellRing, label: "Report an issue" },
+                    ] },
+                  ].filter((group) => group.items.length > 0).map((group) => (
+                    <div key={group.heading} className="flex flex-col gap-0.5">
+                      <p className="px-2 pb-1 text-xs font-medium text-muted-foreground">{group.heading}</p>
+                      {group.items.map((item) => (
+                        <Button
+                          key={item.label}
+                          variant="ghost"
+                          className={cn(
+                            "account-nav-item w-full justify-start rounded-lg text-zinc-300 hover:text-white",
+                            page === item.label ? "bg-white/10 text-foreground hover:bg-white/10" : ""
+                          )}
+                          aria-current={page === item.label ? "page" : undefined}
+                          onClick={handleViewInpage}
+                          data-label={item.label}
+                        >
+                          <item.icon className={cn("mr-2 h-4 w-4", page === item.label ? "text-primary" : "text-muted-foreground")} />
+                          {item.label}
+                        </Button>
+                      ))}
+                    </div>
                   ))}
                 </nav>
               </CardContent>
@@ -2698,7 +2703,7 @@ const ToggleSwitch = ({
                 type="button"
                 onClick={handleSaveBankDetails} 
                 disabled={savingBank}
-                className="btn-primary"
+                className={buttonVariants()}
               >
                 {savingBank ? (
                   <>
@@ -2792,7 +2797,7 @@ const ToggleSwitch = ({
               <Button 
                 type="button"
                 onClick={() => setEditingBank(true)}
-                className="btn-primary"
+                className={buttonVariants()}
               >
                 <Edit className="icon-md mr-2" />
                 Edit Bank Details
@@ -2817,7 +2822,7 @@ const ToggleSwitch = ({
             <Button 
               type="button"
               onClick={() => setEditingBank(true)}
-              className="btn-primary"
+              className={buttonVariants()}
             >
               <CreditCard className="icon-md mr-2" />
               Add Bank Details
@@ -2868,7 +2873,7 @@ const ToggleSwitch = ({
                       <td className="table-cell table-cell-text whitespace-nowrap">
                         {row.changed_by_name || row.changed_by_staff_id || "System"}
                       </td>
-                      <td className="table-cell table-cell-text whitespace-nowrap uppercase">
+                      <td className="table-cell table-cell-text whitespace-nowrap uppercase keep-case">
                         {row.payment_mode || "-"}
                       </td>
                       <td className="table-cell table-cell-text">
@@ -3162,7 +3167,7 @@ const ToggleSwitch = ({
                   type="button"
                   onClick={fetchPaymentMethods}
                   disabled={loadingPaymentMethods}
-                  className="btn-primary"
+                  className={buttonVariants()}
                 >
                   {loadingPaymentMethods ? (
                     <>
