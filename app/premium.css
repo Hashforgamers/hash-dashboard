@@ -2716,7 +2716,7 @@ h6 {
 @media (min-width: 1280px) {
   .operations-dashboard .operations-booking-row,
   .operations-dashboard .operations-workspace {
-    grid-template-columns: minmax(0, 1fr) minmax(300px, 30%);
+    grid-template-columns: minmax(0, 1fr) minmax(270px, 25%);
   }
   .operations-dashboard .operations-booking-row > *,
   .operations-dashboard .operations-workspace > * { grid-column: auto; min-width: 0; }
@@ -2840,7 +2840,7 @@ h6 {
 /* Session details scroll while the action stays visible at the right edge. */
 .operations-dashboard .live-session-data-table {
   table-layout: fixed;
-  min-width: 990px;
+  min-width: 880px;
 }
 .operations-dashboard .live-session-data-table th,
 .operations-dashboard .live-session-data-table td {
@@ -2848,14 +2848,14 @@ h6 {
   border-left: 0;
   border-right: 0;
   vertical-align: middle;
-  padding: 14px 12px;
+  padding: 10px 12px;
 }
 .operations-dashboard .live-session-data-table th {
   white-space: nowrap;
   font-size: 12px !important;
 }
 .operations-dashboard .live-session-data-table td {
-  height: 76px;
+  height: 64px;
   font-size: 13px !important;
   line-height: 1.5;
 }
