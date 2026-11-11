@@ -1,7 +1,7 @@
 .filters { flex-shrink: 0; padding: 0 0 10px; border-bottom: 1px solid hsl(var(--border)); }
 .filters button { background: transparent; border-color: transparent; color: hsl(var(--muted-foreground)); font-size: 12px; font-weight: 500; border-radius: 6px; }
 .filters button:hover { background: hsl(var(--muted)); }
-.filters button[aria-pressed="true"] { background: #26364a; color: #c2ddff; border-color: #3f5877; }
+.filters button[aria-pressed="true"] { background: rgba(255, 255, 255, 0.14); color: hsl(var(--foreground)); border-color: transparent; }
 .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr)); gap: 10px; align-items: start; }
 .root .card { border: 1px solid hsl(var(--border)); background: hsl(var(--card)); border-radius: 9px; box-shadow: none; }
 .content { padding: 12px; }
@@ -17,7 +17,7 @@
 .status span, .status button { font-size: 11px; font-weight: 500; }
 .actions { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin-top: 10px; padding-top: 9px; border-top: 1px solid hsl(var(--border)); }
 .actions svg { width: 12px; height: 12px; }
-.root button:focus-visible, .specs summary:focus-visible { outline: 2px solid #93c5fd; outline-offset: 2px; }
+.root button:focus-visible, .specs summary:focus-visible { outline: 2px solid hsl(var(--primary)); outline-offset: 2px; }
 @media (max-width: 640px) { .grid { grid-template-columns: minmax(0, 1fr); } .filters > div { flex-wrap: nowrap; overflow-x: auto; } .filters button { white-space: nowrap; flex-shrink: 0; } }
 .flipScene { perspective: 1100px; }
 .flipInner { position: relative; transform-style: preserve-3d; transition: transform 420ms ease; }

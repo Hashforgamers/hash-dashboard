@@ -537,7 +537,7 @@ export function DashboardContent() {
                   transition={{ duration: 0.15 }}
                   className="flex flex-col min-h-0 xl:col-span-4 2xl:col-span-3 xl:h-full max-md:h-full max-md:min-h-0"
                 >
-                  <div className={`relative overflow-hidden rounded-lg ${(dashboardData.upcomingBookings || []).length ? "flex-1 min-h-[280px] xl:h-full xl:min-h-0" : "h-auto flex-none"}`}>
+                  <div className="relative flex-1 min-h-[280px] overflow-hidden rounded-[14px] xl:h-full xl:min-h-0">
                     <UpcomingBookings
                       upcomingBookings={dashboardData.upcomingBookings || []}
                       vendorId={vendorId?.toString()}

@@ -1,8 +1,8 @@
-import { buttonVariants } from "@/components/ui/button";
 // components/booking/PrivateBookingForm.tsx
 
 'use client';
 
+import { buttonVariants } from "@/components/ui/button";
 import { toast } from "sonner";
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';

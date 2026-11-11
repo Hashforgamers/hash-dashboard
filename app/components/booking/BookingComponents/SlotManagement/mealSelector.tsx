@@ -1,8 +1,8 @@
-import { cn } from "@/lib/utils";
-import { buttonVariants } from "@/components/ui/button";
 // components/SlotManagement/mealSelector.tsx
 'use client'
 
+import { cn } from "@/lib/utils";
+import { buttonVariants } from "@/components/ui/button";
 import React, { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {

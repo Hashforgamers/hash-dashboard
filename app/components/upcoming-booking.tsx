@@ -1034,7 +1034,7 @@ export function UpcomingBookings({
         {/* 🚀 FIXED: Scrollable content area that takes remaining space */}
         <div className="min-h-0 flex-1 overflow-y-auto">
           {mergedBookings.length === 0 ? (
-            <div className="dashboard-module-empty flex flex-col items-center justify-center py-5 px-3">
+            <div className="dashboard-module-empty flex h-full flex-col items-center justify-center py-5 px-3">
               <CalendarIcon className="w-8 h-8 mb-2 opacity-50" />
               <p className="text-sm font-medium">{searchTerm ? 'No matching bookings' : 'No upcoming bookings'}</p>
               {!isConnected && <p className="text-xs mt-1 text-center">Check connection and filters.</p>}

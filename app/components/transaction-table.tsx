@@ -16,7 +16,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { motion, AnimatePresence } from "framer-motion";
 import FilterComponent from "./filterComponenet";
 import { Input } from "@/components/ui/input";
-import { ArrowUpIcon, ArrowDownIcon, SearchIcon, DollarSignIcon, CreditCardIcon, UserIcon, ClockIcon, FilterIcon, Download } from 'lucide-react';
+import { ArrowUpIcon, ArrowDownIcon, SearchIcon, DollarSignIcon, CreditCardIcon, UserIcon, ClockIcon, FilterIcon, Download, ChevronRight } from 'lucide-react';
 import { saveAs } from "file-saver";
 import { Badge } from "@/components/ui/badge";
 import { jwtDecode } from "jwt-decode";
@@ -691,7 +691,7 @@ export function TransactionTable() {
           animate="visible"
           transition={{ duration: 0.3, delay: 0 }}
         >
-          <Card className="gaming-kpi-card rounded-xl border-blue-500/20 backdrop-blur-sm">
+          <Card className="gaming-kpi-card">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1.5 sm:pb-2">
               <CardTitle className="dash-kpi-label">
                 Gross Revenue
@@ -715,7 +715,7 @@ export function TransactionTable() {
           animate="visible"
           transition={{ duration: 0.3, delay: 0.1 }}
         >
-          <Card className="gaming-kpi-card rounded-xl border-blue-500/20 backdrop-blur-sm">
+          <Card className="gaming-kpi-card">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1.5 sm:pb-2">
               <CardTitle className="dash-kpi-label">
                 Unique Users
@@ -737,7 +737,7 @@ export function TransactionTable() {
           animate="visible"
           transition={{ duration: 0.3, delay: 0.2 }}
         >
-          <Card className="gaming-kpi-card rounded-xl border-blue-500/20 backdrop-blur-sm">
+          <Card className="gaming-kpi-card">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1.5 sm:pb-2">
               <CardTitle className="dash-kpi-label">
                 Pending Settlements
@@ -759,7 +759,7 @@ export function TransactionTable() {
           animate="visible"
           transition={{ duration: 0.3, delay: 0.3 }}
         >
-          <Card className="gaming-kpi-card rounded-xl border-blue-500/20 backdrop-blur-sm">
+          <Card className="gaming-kpi-card">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1.5 sm:pb-2">
               <CardTitle className="dash-kpi-label">
                 Cash Transactions
@@ -1032,15 +1032,15 @@ export function TransactionTable() {
                       {visibleCols.map((col, idx) => {
                         if (idx === 0) {
                           return (
-                            <TableCell key={`${slotDate}_${col.key}_date`} className="px-4 py-3 font-medium text-blue-700 dark:text-blue-200">
+                            <TableCell key={`${slotDate}_${col.key}_date`} className="whitespace-nowrap px-4 py-3 font-medium text-foreground">
                               <button
                                 type="button"
                                 onClick={() => toggleDateExpand(slotDate)}
-                                className="inline-flex items-center gap-2 text-left"
+                                className="inline-flex items-center gap-2 whitespace-nowrap text-left"
                                 aria-expanded={expandedDates.includes(slotDate)}
                                 aria-label={`Toggle transactions for ${slotDate}`}
                               >
-                                <span className="text-xs">{expandedDates.includes(slotDate) ? "▲" : "▼"}</span>
+                                <ChevronRight aria-hidden="true" className={`h-4 w-4 text-muted-foreground transition-transform duration-200 ${expandedDates.includes(slotDate) ? "rotate-90" : ""}`} />
                                 <span>{slotDate}</span>
                               </button>
                             </TableCell>

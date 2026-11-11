@@ -37,7 +37,7 @@ export function CommandPalette({ onRefresh }: { onRefresh: () => void }) {
         onClick={() => setOpen(true)}
         aria-label="Search pages and actions"
         title="Search pages and actions (Ctrl/⌘ K)"
-        className="inline-flex items-center gap-1 rounded-md border border-white/10 bg-white/[0.06] px-2 py-0.5 text-zinc-50 hover:bg-white/[0.1]"
+        className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 transition-colors hover:bg-white/[0.06] hover:text-foreground"
       >
         <Search className="h-3.5 w-3.5" />
         <kbd className="hidden font-sans text-[10px] text-muted-foreground md:inline">⌘K</kbd>

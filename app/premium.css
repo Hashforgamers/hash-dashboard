@@ -5,71 +5,70 @@
   --brand-accent-strong: 221 83% 53%;
   --brand-focus: 211 100% 50%;
   --brand-highlight: 38 92% 52%;
-  --surface-0: 240 6% 6%;
-  --surface-1: 240 5% 10%;
-  --surface-2: 240 4% 14%;
-  --surface-strong: 240 4% 18%;
+  --surface-0: 240 4% 4%;
+  --surface-1: 240 3% 11%;
+  --surface-2: 240 3% 18%;
+  --surface-strong: 240 2% 23%;
   --surface-border: 0 0% 100%;
   --surface-muted: 0 0% 45%;
-  --text-strong: 210 40% 98%;
-  --text-muted: 240 6% 70%;
+  --text-strong: 0 0% 98%;
+  --text-muted: 240 4% 61%;
   --font-ui: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Segoe UI", sans-serif;
   --font-display: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI", sans-serif;
-  --premium-shell-bg:
-    linear-gradient(180deg, #111113 0%, #0b0b0d 52%, #08080a 100%);
+  --premium-shell-bg: hsl(var(--background));
   --premium-grid-line: transparent;
-  --premium-card-border: rgba(148, 163, 184, 0.18);
-  --premium-card-bg: rgba(28, 28, 30, 0.84);
-  --premium-card-shadow: 0 18px 44px rgba(0, 0, 0, 0.28);
+  --premium-card-border: hsl(var(--border));
+  --premium-card-bg: hsl(var(--card));
+  --premium-card-shadow: none;
   --premium-subtle-text: hsl(var(--text-muted));
   --premium-title-text: hsl(var(--text-strong));
   --premium-kpi-text: hsl(var(--text-strong));
-  --premium-pill-border: rgba(255,255,255,0.1);
-  --premium-pill-bg: rgba(255,255,255,0.06);
+  --premium-pill-border: hsl(var(--border));
+  --premium-pill-bg: rgba(255, 255, 255, 0.06);
   --premium-pill-text: hsl(var(--text-strong));
-  --gaming-panel-border: rgba(148, 163, 184, 0.16);
-  --gaming-panel-bg: rgba(28, 28, 30, 0.72);
-  --gaming-panel-shadow: 0 12px 30px rgba(0, 0, 0, 0.22);
-  --gaming-kpi-border: rgba(148, 163, 184, 0.16);
-  --gaming-kpi-bg: rgba(44, 44, 46, 0.72);
-  --gaming-kpi-shadow: 0 8px 22px rgba(0, 0, 0, 0.2);
-  --nav-shell-bg: rgba(18, 18, 20, 0.82);
-  --nav-shell-border: rgba(148, 163, 184, 0.16);
-  --nav-panel-bg: rgba(44, 44, 46, 0.58);
-  --nav-panel-border: rgba(148, 163, 184, 0.16);
-  --nav-divider: rgba(148, 163, 184, 0.14);
-  --nav-hover-bg: rgba(58, 58, 60, 0.72);
-  --nav-hover-border: rgba(148, 163, 184, 0.18);
-  --nav-active-bg: rgba(10, 132, 255, 0.16);
-  --nav-active-border: rgba(10, 132, 255, 0.32);
-  --nav-active-shadow: inset 3px 0 0 hsl(var(--brand-accent));
-  --nav-icon-active: hsl(var(--brand-accent-strong));
+  --gaming-panel-border: hsl(var(--border));
+  --gaming-panel-bg: hsl(var(--card));
+  --gaming-panel-shadow: none;
+  --gaming-kpi-border: hsl(var(--border));
+  --gaming-kpi-bg: hsl(var(--card));
+  --gaming-kpi-shadow: none;
+  --nav-shell-bg: rgba(22, 22, 24, 0.72);
+  --nav-shell-border: hsl(var(--border));
+  --nav-panel-bg: rgba(255, 255, 255, 0.04);
+  --nav-panel-border: hsl(var(--border));
+  --nav-divider: hsl(var(--border));
+  --nav-hover-bg: rgba(255, 255, 255, 0.06);
+  --nav-hover-border: transparent;
+  --nav-active-bg: rgba(255, 255, 255, 0.1);
+  --nav-active-border: transparent;
+  --nav-active-shadow: none;
+  --nav-icon-active: hsl(var(--primary));
   --nav-text: hsl(var(--text-strong));
   --nav-subtle-text: hsl(var(--text-muted));
-  --nav-role-text: hsl(var(--brand-accent-strong));
+  --nav-role-text: hsl(var(--primary));
   --nav-danger-text: hsl(0 70% 47%);
   --nav-danger-hover: hsl(0 74% 42%);
-  --dash-module-panel-bg: rgba(28, 28, 30, 0.72);
-  --dash-module-panel-border: rgba(148, 163, 184, 0.16);
-  --dash-module-panel-shadow: 0 12px 30px rgba(0, 0, 0, 0.22);
-  --dash-module-surface-bg: rgba(44, 44, 46, 0.52);
-  --dash-module-surface-strong: rgba(58, 58, 60, 0.68);
-  --dash-module-surface-border: rgba(148, 163, 184, 0.16);
-  --dash-module-line: rgba(148, 163, 184, 0.13);
-  --dash-module-hover: rgba(58, 58, 60, 0.55);
-  --dash-module-input-bg: rgba(28, 28, 30, 0.76);
-  --dash-module-input-border: rgba(148, 163, 184, 0.18);
+  --dash-module-panel-bg: hsl(var(--card));
+  --dash-module-panel-border: hsl(var(--border));
+  --dash-module-panel-shadow: none;
+  --dash-module-surface-bg: rgba(255, 255, 255, 0.04);
+  --dash-module-surface-strong: rgba(255, 255, 255, 0.08);
+  --dash-module-surface-border: hsl(var(--border));
+  --dash-module-line: hsl(var(--border));
+  --dash-module-hover: rgba(255, 255, 255, 0.05);
+  --dash-module-input-bg: rgba(118, 118, 128, 0.18);
+  --dash-module-input-border: transparent;
   --dash-module-input-text: hsl(var(--text-strong));
   --dash-module-input-placeholder: hsl(var(--text-muted));
   --dash-module-muted: hsl(var(--text-muted));
   --dash-module-empty: hsl(var(--text-muted));
-  --dash-module-card-bg: rgba(44, 44, 46, 0.58);
-  --dash-module-card-border: rgba(148, 163, 184, 0.15);
+  --dash-module-card-bg: rgba(255, 255, 255, 0.04);
+  --dash-module-card-border: hsl(var(--border));
   --booking-text-strong: hsl(var(--text-strong));
   --booking-text-muted: hsl(var(--text-muted));
   --booking-text-subtle: hsl(var(--text-muted));
-  --booking-link: hsl(var(--brand-accent-strong));
-  --booking-link-hover: hsl(var(--brand-accent));
+  --booking-link: hsl(var(--primary));
+  --booking-link-hover: hsl(var(--primary) / 0.85);
   --action-primary-bg: #3b82f6;
   --action-primary-hover: #2563eb;
   --action-primary-disabled: hsl(215 16% 68%);
@@ -178,9 +177,8 @@ h6 {
   z-index: -1;
   pointer-events: none;
   background:
-    radial-gradient(circle at 18% 12%, rgba(10, 132, 255, 0.12), transparent 28%),
-    radial-gradient(circle at 82% 6%, rgba(48, 209, 88, 0.08), transparent 24%);
-  opacity: 0.68;
+    none;
+  opacity: 0;
 }
 
 .premium-card {
@@ -230,15 +228,14 @@ h6 {
 .gaming-kpi-card {
   border: 1px solid var(--gaming-kpi-border);
   background: var(--gaming-kpi-bg);
-  border-radius: 0.5rem;
+  border-radius: 14px;
   box-shadow: var(--gaming-kpi-shadow);
   backdrop-filter: blur(18px) saturate(1.16);
   -webkit-backdrop-filter: blur(18px) saturate(1.16);
 }
 
 .gaming-kpi-card:hover {
-  border-color: rgba(148, 163, 184, 0.28);
-  transform: translateY(-1px);
+  border-color: hsl(var(--border));
 }
 
 .gaming-kpi-value {
@@ -408,7 +405,7 @@ h6 {
 .dashboard-module-panel {
   border: 1px solid var(--dash-module-panel-border);
   background: var(--dash-module-panel-bg);
-  border-radius: 0.5rem;
+  border-radius: 14px;
   box-shadow: var(--dash-module-panel-shadow);
   backdrop-filter: blur(22px) saturate(1.18);
   -webkit-backdrop-filter: blur(22px) saturate(1.18);
@@ -1028,10 +1025,10 @@ h6 {
 
 .dash-kpi-label {
   font-family: var(--font-ui);
-  font-size: 0.86rem;
-  font-weight: 700;
+  font-size: 0.8125rem;
+  font-weight: 500;
   letter-spacing: 0;
-  color: var(--premium-title-text);
+  color: hsl(var(--muted-foreground));
 }
 
 .dash-kpi-value {
@@ -2291,39 +2288,40 @@ h6 {
 
 /* Apple-inspired dashboard polish */
 .dashboard-nav-surface {
-  background: rgba(12, 12, 14, 0.82);
-  backdrop-filter: blur(26px) saturate(1.22);
-  -webkit-backdrop-filter: blur(26px) saturate(1.22);
+  background: var(--nav-shell-bg);
+  backdrop-filter: blur(30px) saturate(1.8);
+  -webkit-backdrop-filter: blur(30px) saturate(1.8);
 }
 
 .dashboard-nav-item {
-  min-height: 2.25rem;
+  min-height: 2rem;
   border-radius: 0.5rem;
-  font-size: 0.86rem;
+  font-size: 0.8125rem;
   font-weight: 500;
+  transition: background 0.15s ease, color 0.15s ease;
 }
 
 .gaming-nav-active {
-  color: #fafafa;
-  background: rgba(48, 209, 88, 0.14);
-  border-color: rgba(48, 209, 88, 0.24);
-  box-shadow: inset 3px 0 0 #10b981;
+  color: hsl(var(--foreground));
+  background: var(--nav-active-bg);
+  border-color: transparent;
+  box-shadow: none;
 }
 
 .dashboard-nav-icon-active {
-  color: #10b981;
+  color: var(--nav-icon-active);
 }
 
 .dashboard-module-panel,
 .gaming-panel {
-  background: linear-gradient(180deg, rgba(28, 28, 30, 0.82) 0%, rgba(18, 18, 20, 0.78) 100%);
-  border-color: rgba(255, 255, 255, 0.1);
+  background: hsl(var(--card));
+  border-color: hsl(var(--border));
 }
 
 .gaming-kpi-card,
 .dashboard-module-card {
-  background: rgba(44, 44, 46, 0.56);
-  border-color: rgba(255, 255, 255, 0.1);
+  background: hsl(var(--card));
+  border-color: hsl(var(--border));
 }
 
 .gaming-kpi-card {
