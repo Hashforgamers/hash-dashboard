@@ -1,4 +1,5 @@
 "use client";
+import { buttonVariants } from "@/components/ui/button";
 
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
@@ -30,7 +31,7 @@ function RatingStars({ rating }: { rating: number }) {
       {[1, 2, 3, 4, 5].map((n) => (
         <Star
           key={n}
-          className={`h-4 w-4 ${n <= safe ? "text-amber-400 fill-amber-400" : "text-slate-600"}`}
+          className={`h-4 w-4 ${n <= safe ? "text-amber-400 fill-amber-400" : "text-zinc-600"}`}
         />
       ))}
     </div>
@@ -229,39 +230,39 @@ function ReviewsPageContent() {
         </div>
 
         <div className="reviews-summary grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
-          <div className="gaming-panel rounded-xl border border-cyan-400/20 bg-slate-950/45 p-3">
-            <p className="text-xs uppercase tracking-wide text-slate-400">Average Rating</p>
+          <div className="gaming-panel rounded-xl border border-blue-400/20 bg-zinc-950/45 p-3">
+            <p className="text-xs uppercase tracking-wide text-zinc-400">Average Rating</p>
             <div className="mt-2 flex items-center gap-3">
-              <span className="text-2xl font-bold text-cyan-100 sm:text-3xl">
+              <span className="text-2xl font-bold text-blue-100 sm:text-3xl">
                 {summary ? summary.average.toFixed(2) : "--"}
               </span>
               <RatingStars rating={summary?.average || 0} />
             </div>
-            <p className="mt-1 text-xs text-slate-400">
+            <p className="mt-1 text-xs text-zinc-400">
               {loadingSummary ? "Loading..." : `Based on ${summary?.total || 0} reviews`}
             </p>
           </div>
 
-          <div className="gaming-panel rounded-xl border border-cyan-400/20 bg-slate-950/45 p-3">
-            <p className="text-xs uppercase tracking-wide text-slate-400">Ratings Breakdown</p>
+          <div className="gaming-panel rounded-xl border border-blue-400/20 bg-zinc-950/45 p-3">
+            <p className="text-xs uppercase tracking-wide text-zinc-400">Ratings Breakdown</p>
             <div className="mt-3 space-y-2">
               {breakdown.map((row) => (
                 <div key={row.rating} className="flex items-center gap-3">
-                  <span className="w-6 text-xs text-slate-300">{row.rating}★</span>
-                  <div className="h-2 flex-1 rounded-full bg-slate-800/70">
+                  <span className="w-6 text-xs text-zinc-300">{row.rating}★</span>
+                  <div className="h-2 flex-1 rounded-full bg-zinc-800/70">
                     <div
                       className="h-2 rounded-full bg-emerald-400/80"
                       style={{ width: `${row.pct}%` }}
                     />
                   </div>
-                  <span className="w-8 text-right text-xs text-slate-400">{row.count}</span>
+                  <span className="w-8 text-right text-xs text-zinc-400">{row.count}</span>
                 </div>
               ))}
             </div>
           </div>
 
-          <div className="gaming-panel rounded-xl border border-cyan-400/20 bg-slate-950/45 p-3">
-            <p className="text-xs uppercase tracking-wide text-slate-400">Filters</p>
+          <div className="gaming-panel rounded-xl border border-blue-400/20 bg-zinc-950/45 p-3">
+            <p className="text-xs uppercase tracking-wide text-zinc-400">Filters</p>
             <div className="dashboard-filter-stack mt-3">
               <select
                 className="dashboard-module-input h-10 w-full"
@@ -283,7 +284,7 @@ function ReviewsPageContent() {
                 ))}
               </select>
               <div className="relative">
-                <Search data-search-icon="" aria-hidden="true" className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                <Search data-search-icon="" aria-hidden="true" className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
                 <input data-search-input=""
                   className="dashboard-module-input h-9 w-full pl-10 pr-3 sm:h-10"
                   placeholder="Search reviews..."
@@ -301,15 +302,15 @@ function ReviewsPageContent() {
           </div>
         ) : null}
         {reviewsError ? (
-          <div className="rounded-xl border border-rose-500/35 bg-rose-500/10 p-3 text-xs text-rose-200">
+          <div className="rounded-xl border border-red-500/35 bg-red-500/10 p-3 text-xs text-red-200">
             Reviews sync issue: {reviewsError}
           </div>
         ) : null}
 
-        <div className="reviews-list gaming-panel rounded-xl border border-cyan-400/20 bg-slate-950/45">
-          <div className="flex items-center justify-between gap-3 border-b border-cyan-500/20 px-3 py-2.5">
+        <div className="reviews-list gaming-panel rounded-xl border border-blue-400/20 bg-zinc-950/45">
+          <div className="flex items-center justify-between gap-3 border-b border-blue-500/20 px-3 py-2.5">
             <h2 className="section-title">Recent Reviews</h2>
-            <span className="text-xs text-slate-400">{reviews.length} items</span>
+            <span className="text-xs text-zinc-400">{reviews.length} items</span>
           </div>
           <div className="reviews-list-content">
             {loading ? (
@@ -319,35 +320,35 @@ function ReviewsPageContent() {
             ) : (
               <div className="space-y-3">
                 {reviews.map((review) => (
-                  <MobileCompactCard key={review.id} className="bg-slate-900/60 sm:p-4">
+                  <MobileCompactCard key={review.id} className="bg-zinc-900/60 sm:p-4">
                     <div className="flex flex-wrap items-center justify-between gap-3">
                       <div>
-                        <p className="text-sm font-semibold text-slate-100">
+                        <p className="text-sm font-semibold text-zinc-100">
                           {review.user?.name || "Anonymous"}
                         </p>
-                        <p className="text-xs text-slate-400">
+                        <p className="text-xs text-zinc-400">
                           {formatDate(review.created_at)}
                         </p>
                       </div>
                       <div className="flex items-center gap-2">
                         <RatingStars rating={review.rating} />
-                        <span className="text-xs text-slate-400">{review.rating}/5</span>
+                        <span className="text-xs text-zinc-400">{review.rating}/5</span>
                       </div>
                     </div>
 
                     {review.title && (
-                      <p className="mt-3 text-sm font-medium text-slate-200">{review.title}</p>
+                      <p className="mt-3 text-sm font-medium text-zinc-200">{review.title}</p>
                     )}
                     {review.comment && (
-                      <p className="mt-1 text-sm text-slate-300">{review.comment}</p>
+                      <p className="mt-1 text-sm text-zinc-300">{review.comment}</p>
                     )}
 
-                    <div className="mt-4 flex flex-wrap items-center gap-2 text-xs text-slate-400">
-                      <span className={`rounded-full px-2 py-1 ${review.status === "published" ? "bg-emerald-500/15 text-emerald-300" : "bg-rose-500/15 text-rose-300"}`}>
+                    <div className="mt-4 flex flex-wrap items-center gap-2 text-xs text-zinc-400">
+                      <span className={`rounded-full px-2 py-1 ${review.status === "published" ? "bg-emerald-500/15 text-emerald-300" : "bg-red-500/15 text-red-300"}`}>
                         {review.status === "published" ? "Published" : "Hidden"}
                       </span>
                       {review.response_text && (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-cyan-500/10 px-2 py-1 text-cyan-200">
+                        <span className="inline-flex items-center gap-1 rounded-full bg-blue-500/10 px-2 py-1 text-blue-200">
                           <MessageSquare className="h-3 w-3" />
                           Responded
                         </span>
@@ -356,7 +357,7 @@ function ReviewsPageContent() {
 
                     <div className="mt-3 space-y-2 sm:mt-4">
                       <textarea
-                        className="w-full rounded-lg border border-cyan-400/20 bg-slate-900/70 p-3 text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-400/60"
+                        className="w-full rounded-lg border border-blue-400/20 bg-zinc-900/70 p-3 text-sm text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-blue-400/60"
                         rows={3}
                         placeholder="Write a response to this review..."
                         value={responseDrafts[review.id] ?? review.response_text ?? ""}
@@ -366,7 +367,7 @@ function ReviewsPageContent() {
                       />
                       <div className="flex flex-col items-stretch justify-between gap-2 sm:flex-row sm:items-center">
                         <button
-                          className="inline-flex items-center gap-2 rounded-lg border border-cyan-400/30 bg-cyan-500/15 px-3 py-2 text-xs font-semibold text-cyan-200 transition-colors hover:border-cyan-300/70 hover:bg-cyan-500/25"
+                          className={buttonVariants({ variant: "soft-info", size: "sm" })}
                           onClick={() => handleRespond(review.id)}
                           disabled={actioningId === review.id}
                         >
@@ -375,7 +376,7 @@ function ReviewsPageContent() {
                         </button>
                         {review.status === "published" ? (
                           <button
-                            className="inline-flex items-center gap-2 rounded-lg border border-rose-400/30 bg-rose-500/10 px-3 py-2 text-xs font-semibold text-rose-200 transition-colors hover:border-rose-300/60 hover:bg-rose-500/20"
+                            className={buttonVariants({ variant: "soft-danger", size: "sm" })}
                             onClick={() => handleToggleStatus(review.id, "hidden")}
                             disabled={actioningId === review.id}
                           >
@@ -384,7 +385,7 @@ function ReviewsPageContent() {
                           </button>
                         ) : (
                           <button
-                            className="inline-flex items-center gap-2 rounded-lg border border-emerald-400/30 bg-emerald-500/10 px-3 py-2 text-xs font-semibold text-emerald-200 transition-colors hover:border-emerald-300/60 hover:bg-emerald-500/20"
+                            className={buttonVariants({ variant: "soft-success", size: "sm" })}
                             onClick={() => handleToggleStatus(review.id, "published")}
                             disabled={actioningId === review.id}
                           >

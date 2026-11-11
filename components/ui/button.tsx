@@ -18,12 +18,22 @@ const buttonVariants = cva(
           "bg-secondary text-secondary-foreground hover:bg-secondary/80",
         ghost: "hover:bg-accent hover:text-accent-foreground",
         link: "text-primary underline-offset-4 hover:underline",
+        // solid status actions (e.g. Settle, Confirm payment)
+        success: "bg-emerald-600 text-white hover:bg-emerald-500",
+        warning: "bg-amber-500 text-zinc-950 hover:bg-amber-400",
+        // soft status actions: same tints as the matching Badge variants
+        "soft-success": "border border-emerald-400/40 bg-emerald-500/10 text-emerald-200 hover:bg-emerald-500/20",
+        "soft-warning": "border border-amber-400/40 bg-amber-500/10 text-amber-200 hover:bg-amber-500/20",
+        "soft-danger": "border border-red-400/40 bg-red-500/10 text-red-200 hover:bg-red-500/20",
+        "soft-info": "border border-blue-400/40 bg-blue-500/10 text-blue-200 hover:bg-blue-500/20",
       },
+      // one height scale for the dashboard: 36px default, 32px compact (tables, cards), 40px prominent
       size: {
-        default: "h-10 px-4 py-2",
-        sm: "h-9 rounded-md px-3",
-        lg: "h-11 rounded-md px-8",
-        icon: "h-10 w-10",
+        default: "h-9 px-4",
+        sm: "h-8 px-3 text-xs",
+        lg: "h-10 px-6",
+        icon: "h-9 w-9",
+        "icon-sm": "h-8 w-8",
       },
     },
     defaultVariants: {

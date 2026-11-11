@@ -12,6 +12,7 @@ import { useSubscription } from "@/hooks/useSubscription"
 import { useSocket } from "../context/SocketContext"
 import { useDashboardData } from "../context/DashboardDataContext"
 import { NotificationButton } from "../components/NotificationButton"
+import { CommandPalette } from "../components/command-palette"
 import { normalizeConsoleSlug, resolveConsoleColor, resolveConsoleIcon } from "../components/console-catalog"
 
 interface DashboardLayoutProps {
@@ -261,13 +262,13 @@ export function DashboardLayout({ children, contentScroll = "page" }: DashboardL
               </div>
             ) : (
               <div className="flex h-full min-h-[220px] items-center justify-center">
-                <div className="w-full max-w-xl rounded-lg border border-yellow-500/30 bg-yellow-500/10 p-6 text-center">
-                  <h2 className="text-xl font-semibold text-yellow-200">{subscriptionUnavailable ? "Unable to verify subscription" : "Subscription access required"}</h2>
-                  <p className="mt-2 text-sm text-yellow-100/80">
+                <div className="w-full max-w-xl rounded-lg border border-amber-500/30 bg-amber-500/10 p-6 text-center">
+                  <h2 className="text-xl font-semibold text-amber-200">{subscriptionUnavailable ? "Unable to verify subscription" : "Subscription access required"}</h2>
+                  <p className="mt-2 text-sm text-amber-100/80">
                     {subscriptionUnavailable ? "Please retry the subscription check." : !hasPlanFeature ? "Upgrade to a plan that includes this feature." : subscriptionStatus?.message || "Renew your subscription to use this module."}
                   </p>
                   {subscriptionStatus?.latest_subscription ? (
-                    <p className="mt-2 text-xs text-yellow-100/60">
+                    <p className="mt-2 text-xs text-amber-100/60">
                       Latest: {subscriptionStatus.latest_subscription.status || "unknown"} · {subscriptionStatus.latest_subscription.period_start || "-"} to {subscriptionStatus.latest_subscription.period_end || "-"}
                     </p>
                   ) : null}
@@ -286,8 +287,8 @@ export function DashboardLayout({ children, contentScroll = "page" }: DashboardL
             <div className="dashboard-nav-divider shrink-0 border-t px-2 pb-2 pt-1.5 sm:px-3 md:px-4">
               <div className="dashboard-module-panel flex items-center justify-between gap-1.5 rounded-lg px-2.5 py-1.5 text-[11px] md:flex-wrap max-md:flex-nowrap">
                 <div className="min-w-0 flex-1 max-md:overflow-x-auto max-md:[scrollbar-width:none] max-md:[&::-webkit-scrollbar]:hidden md:overflow-visible">
-                  <div className="flex items-center gap-1.5 text-[#c7c7cc] md:flex-wrap max-md:w-max max-md:whitespace-nowrap">
-                    <span className="inline-flex items-center gap-1 rounded-md border border-[#30d158]/25 bg-[#30d158]/10 px-1.5 py-0.5 text-[#30d158]">
+                  <div className="flex items-center gap-1.5 text-zinc-300 md:flex-wrap max-md:w-max max-md:whitespace-nowrap">
+                    <span className="inline-flex items-center gap-1 rounded-md border border-emerald-500/25 bg-emerald-500/10 px-1.5 py-0.5 text-emerald-500">
                       <Clock className="h-3.5 w-3.5" />
                       {nowISTTimeText}
                     </span>
@@ -295,14 +296,14 @@ export function DashboardLayout({ children, contentScroll = "page" }: DashboardL
                       {nowISTDateText}
                     </span>
                     <button type="button" onClick={()=>router.push("/account")} title={activeStaff ? `${activeStaff.name} · ${activeStaff.role} — Open account settings` : "Loading active session"} className="inline-flex items-center gap-1 rounded-md px-2 py-1 hover:bg-muted">
-                      <User className="h-3.5 w-3.5 text-[#0a84ff]" />
+                      <User className="h-3.5 w-3.5 text-blue-500" />
                       {activeStaff ? (activeStaff.role === "owner" ? "Owner" : `${activeStaff.name} · ${activeStaff.role === "manager" ? "Manager" : "Staff"}`) : "Loading user…"}
                     </button>
                     <span
                       className={`inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 ${
                         isConnected
-                          ? "border-[#30d158]/35 bg-[#30d158]/10 text-[#30d158]"
-                          : "border-[#ff9f0a]/35 bg-[#ff9f0a]/10 text-[#ffb340]"
+                          ? "border-emerald-500/35 bg-emerald-500/10 text-emerald-500"
+                          : "border-amber-500/35 bg-amber-500/10 text-amber-400"
                       }`}
                     >
                       {isConnected ? <Wifi className="h-3.5 w-3.5" /> : <WifiOff className="h-3.5 w-3.5" />}
@@ -325,11 +326,12 @@ export function DashboardLayout({ children, contentScroll = "page" }: DashboardL
                   </div>
                 </div>
                 <div className="ml-1 flex shrink-0 items-center gap-1.5">
+                  <CommandPalette onRefresh={() => void handleManualRefresh()} />
                   <NotificationButton vendorId={vendorId} />
                   <button
                     type="button"
                     onClick={handleManualRefresh}
-                    className="inline-flex items-center gap-1 rounded-md border border-white/10 bg-white/[0.06] px-2 py-0.5 text-[#f5f5f7] hover:bg-white/[0.1]"
+                    className="inline-flex items-center gap-1 rounded-md border border-white/10 bg-white/[0.06] px-2 py-0.5 text-zinc-50 hover:bg-white/[0.1]"
                     disabled={isManualRefreshing}
                     title="Refresh"
                     aria-label="Refresh dashboard data"

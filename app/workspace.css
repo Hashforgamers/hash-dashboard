@@ -95,7 +95,7 @@ svg[data-search-icon],
 .workspace-ui .console-type-picker { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; }
 .workspace-ui .console-type-option { display: flex; align-items: center; gap: 10px; padding: 14px; border: 1px solid #323238; border-radius: 6px; background: #19191d; text-align: left; font-size: 13px; }
 .workspace-ui .console-type-option:hover { background: #242429; border-color: #565660; }
-.workspace-ui .console-type-option:focus-visible { outline: 2px solid #80baff; outline-offset: 2px; }
+.workspace-ui .console-type-option:focus-visible { outline: 2px solid #93c5fd; outline-offset: 2px; }
 .workspace-ui .add-console-form .add-console-card { border-color: #323238; border-radius: 8px; background: #19191d; box-shadow: none; }
 .workspace-ui .add-console-form .add-console-card-header { background: transparent; padding: 12px 14px; }
 .workspace-ui .add-console-form .dash-title { font-size: 14px !important; }
@@ -187,14 +187,14 @@ svg[data-search-icon],
   background: #222226;
 }
 .workspace-ui :is(input, select, textarea):focus-visible {
-  outline: 2px solid #80baff;
+  outline: 2px solid #93c5fd;
   outline-offset: 1px;
 }
-.workspace-ui :is(.dashboard-btn-primary, .dashboard-btn-secondary, .dashboard-action-button, .ui-action-primary) {
+.workspace-ui :is(.dashboard-btn-primary, .dashboard-btn-secondary, .dashboard-action-button, .ui-action-primary, .ui-action-secondary) {
   min-height: 36px;
   border-radius: 6px;
-  font-size: 13px;
-  line-height: 18px;
+  font-size: 14px;
+  line-height: 20px;
   font-weight: 500;
   box-shadow: none;
 }

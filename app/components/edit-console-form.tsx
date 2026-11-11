@@ -141,8 +141,8 @@ export function EditConsoleForm({ console, onClose }: EditConsoleFormProps) {
       <DialogContent className="sm:max-w-[560px]">
         <DialogHeader>
           <DialogTitle>Edit Console</DialogTitle>
-          <p className="text-sm text-slate-400">
-            Console type: <span className="font-semibold uppercase text-cyan-200">{consoleType}</span> | Console #{String(console?.number || "N/A")}
+          <p className="text-sm text-zinc-400">
+            Console type: <span className="font-semibold uppercase text-blue-200">{consoleType}</span> | Console #{String(console?.number || "N/A")}
           </p>
         </DialogHeader>
 
@@ -220,7 +220,7 @@ export function EditConsoleForm({ console, onClose }: EditConsoleFormProps) {
           </div>
 
           {error && (
-            <div className="rounded-md border border-rose-500/40 bg-rose-500/10 px-3 py-2 text-sm text-rose-200">
+            <div className="rounded-md border border-red-500/40 bg-red-500/10 px-3 py-2 text-sm text-red-200">
               {error}
             </div>
           )}

@@ -18,9 +18,9 @@ export function BookingStats({ bookingStats }) {
       icon: Gamepad2,
       total: 30,
       booked: bookingStats.ps5Bookings || 0, // Similar assumptions for other platforms
-      colorClass: "bg-indigo-100 dark:bg-indigo-900/20",
-      iconColorClass: "text-indigo-500",
-      progressColorClass: "bg-indigo-500",
+      colorClass: "bg-blue-100 dark:bg-blue-900/20",
+      iconColorClass: "text-blue-500",
+      progressColorClass: "bg-blue-500",
     },
     {
       name: "Xbox",

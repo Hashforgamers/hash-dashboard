@@ -11,8 +11,8 @@ const data = [
   { name: "Cleared", value: 70, amount: "₹ 105,000" },
 ];
 
-// const COLORS = ["#098637", "#7acc04"]
-const COLORS = ["#7fd502", "#098637"];
+// const COLORS = ["#10b981", "#34d399"]
+const COLORS = ["#34d399", "#10b981"];
 
 const CustomTooltip = ({ active, payload }: any) => {
   if (active && payload && payload.length) {

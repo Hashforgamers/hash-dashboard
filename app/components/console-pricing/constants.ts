@@ -30,7 +30,7 @@ export const DEFAULT_CONSOLE_TYPES: ConsoleType[] = [
     type: "vr",
     name: "VR",
     icon: Headset,
-    color: "bg-yellow-500/10",
+    color: "bg-amber-500/10",
     iconColor: "#f59e0b",
     description: "Virtual Reality Systems",
   },

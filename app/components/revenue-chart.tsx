@@ -61,13 +61,13 @@ export function RevenueChart() {
               </defs>
               <XAxis 
                 dataKey="name"
-                stroke="#888888"
+                stroke="#a1a1aa"
                 fontSize={12}
                 tickLine={false}
                 axisLine={false}
               />
               <YAxis
-                stroke="#888888"
+                stroke="#a1a1aa"
                 fontSize={12}
                 tickLine={false}
                 axisLine={false}

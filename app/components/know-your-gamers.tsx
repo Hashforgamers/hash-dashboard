@@ -154,13 +154,13 @@ export function KnowYourGamers() {
   const getTierBadgeClass = (tier: string) => {
     const normalized = (tier || "").toLowerCase()
     if (normalized === "platinum") {
-      return "border border-cyan-300/40 bg-cyan-500/15 text-cyan-200"
+      return "border border-blue-300/40 bg-blue-500/15 text-blue-200"
     }
     if (normalized === "gold") {
       return "border border-amber-300/40 bg-amber-500/15 text-amber-200"
     }
     if (normalized === "silver") {
-      return "border border-slate-300/40 bg-slate-400/15 text-slate-200"
+      return "border border-zinc-300/40 bg-zinc-400/15 text-zinc-200"
     }
     return "border border-emerald-300/40 bg-emerald-500/15 text-emerald-200"
   }
@@ -174,7 +174,7 @@ export function KnowYourGamers() {
           return (
             <div
               key={index}
-              className="gaming-kpi-card rounded-xl border border-cyan-400/20 p-3"
+              className="gaming-kpi-card rounded-xl border border-blue-400/20 p-3"
             >
               <div className="flex items-center justify-between">
                 <div className="min-w-0 flex-1">
@@ -187,7 +187,7 @@ export function KnowYourGamers() {
               </div>
               <div className="mt-1 flex items-center text-[11px]">
                 <span className="text-emerald-300">{stat.change}</span>
-                <span className="ml-1 text-slate-500">vs last month</span>
+                <span className="ml-1 text-zinc-500">vs last month</span>
               </div>
             </div>
           )
@@ -195,10 +195,10 @@ export function KnowYourGamers() {
       </div>
 
       {/* Filters and Search */}
-      <div className="gaming-panel shrink-0 rounded-xl border border-cyan-400/20">
+      <div className="gaming-panel shrink-0 rounded-xl border border-blue-400/20">
         <div className="dashboard-toolbar p-4">
           <div className="relative flex-1 min-w-0 sm:min-w-[220px]">
-            <Search data-search-icon="" aria-hidden="true" className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-500" />
+            <Search data-search-icon="" aria-hidden="true" className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-zinc-500" />
             <input data-search-input=""
               type="text"
               placeholder="Search by name or contact..."
@@ -208,7 +208,7 @@ export function KnowYourGamers() {
             />
           </div>
           <div className="flex w-full items-center gap-2 sm:w-auto sm:flex-shrink-0">
-            <Filter className="h-5 w-5 text-slate-500" />
+            <Filter className="h-5 w-5 text-zinc-500" />
             <select
               className="dashboard-module-input h-10 min-w-0 flex-1 px-3 sm:flex-none"
               value={selectedTier}
@@ -226,47 +226,47 @@ export function KnowYourGamers() {
       {/* Data Table */}
       <div className="md:hidden space-y-3">
         {loading ? (
-          <MobileCompactCard className="border-cyan-400/20 bg-slate-900/60 p-4 text-sm text-slate-400">
+          <MobileCompactCard className="border-blue-400/20 bg-zinc-900/60 p-4 text-sm text-zinc-400">
             Loading gamers...
           </MobileCompactCard>
         ) : filteredData.length === 0 ? (
-          <MobileCompactCard className="border-cyan-400/20 bg-slate-900/60 p-4 text-sm text-slate-400">
+          <MobileCompactCard className="border-blue-400/20 bg-zinc-900/60 p-4 text-sm text-zinc-400">
             No gamers found for this filter.
           </MobileCompactCard>
         ) : (
           filteredData.map((gamer) => (
-            <MobileCompactCard key={gamer.id} className="border-cyan-400/20 bg-slate-900/60">
+            <MobileCompactCard key={gamer.id} className="border-blue-400/20 bg-zinc-900/60">
               <div className="flex items-start justify-between gap-2">
                 <div>
-                  <p className="text-sm font-semibold text-cyan-300">{gamer.name}</p>
-                  <p className="text-xs text-slate-400">#{gamer.id} · {gamer.contact}</p>
+                  <p className="text-sm font-semibold text-blue-300">{gamer.name}</p>
+                  <p className="text-xs text-zinc-400">#{gamer.id} · {gamer.contact}</p>
                 </div>
                 <span className={`rounded-full px-2 py-1 text-[10px] font-semibold ${getTierBadgeClass(gamer.membershipTier)}`}>
                   {gamer.membershipTier}
                 </span>
               </div>
               <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
-                <div className="rounded-md border border-cyan-500/10 bg-slate-950/40 p-2">
-                  <p className="text-slate-500">Total Slots</p>
-                  <p className="font-semibold text-slate-200">{gamer.totalSlots}</p>
+                <div className="rounded-md border border-blue-500/10 bg-zinc-950/40 p-2">
+                  <p className="text-zinc-500">Total Slots</p>
+                  <p className="font-semibold text-zinc-200">{gamer.totalSlots}</p>
                 </div>
-                <div className="rounded-md border border-cyan-500/10 bg-slate-950/40 p-2">
-                  <p className="text-slate-500">Avg / Slot</p>
-                  <p className="font-semibold text-slate-200">₹{gamer.averagePerSlot}</p>
+                <div className="rounded-md border border-blue-500/10 bg-zinc-950/40 p-2">
+                  <p className="text-zinc-500">Avg / Slot</p>
+                  <p className="font-semibold text-zinc-200">₹{gamer.averagePerSlot}</p>
                 </div>
-                <div className="rounded-md border border-cyan-500/10 bg-slate-950/40 p-2">
-                  <p className="text-slate-500">Total Amount</p>
-                  <p className="font-semibold text-slate-200">₹{gamer.totalAmount.toLocaleString()}</p>
+                <div className="rounded-md border border-blue-500/10 bg-zinc-950/40 p-2">
+                  <p className="text-zinc-500">Total Amount</p>
+                  <p className="font-semibold text-zinc-200">₹{gamer.totalAmount.toLocaleString()}</p>
                 </div>
-                <div className="rounded-md border border-cyan-500/10 bg-slate-950/40 p-2">
-                  <p className="text-slate-500">Net Revenue</p>
-                  <p className="font-semibold text-slate-200">₹{gamer.netRevenue.toLocaleString()}</p>
+                <div className="rounded-md border border-blue-500/10 bg-zinc-950/40 p-2">
+                  <p className="text-zinc-500">Net Revenue</p>
+                  <p className="font-semibold text-zinc-200">₹{gamer.netRevenue.toLocaleString()}</p>
                 </div>
               </div>
-              <p className="mt-2 text-[11px] text-slate-500">
+              <p className="mt-2 text-[11px] text-zinc-500">
                 Last Visit: {gamer.lastVisit ? format(new Date(gamer.lastVisit), "dd MMM yyyy") : "-"}
               </p>
-              {gamer.notes ? <p className="mt-1 line-clamp-2 text-[11px] text-slate-400">{gamer.notes}</p> : null}
+              {gamer.notes ? <p className="mt-1 line-clamp-2 text-[11px] text-zinc-400">{gamer.notes}</p> : null}
             </MobileCompactCard>
           ))
         )}
@@ -276,7 +276,7 @@ export function KnowYourGamers() {
         <div className="dashboard-table-wrap h-full">
           <table className="dashboard-table min-w-[1200px] max-md:min-w-[860px]">
             <thead className="dashboard-module-table-head">
-              <tr className="border-b border-cyan-500/20">
+              <tr className="border-b border-blue-500/20">
                 {[
                   "Customer ID",
                   "Name",
@@ -300,32 +300,32 @@ export function KnowYourGamers() {
                 ))}
               </tr>
             </thead>
-            <tbody className="dashboard-module-table-body divide-y divide-cyan-500/10">
+            <tbody className="dashboard-module-table-body divide-y divide-blue-500/10">
               {loading ? (
                 <tr>
-                  <td className="px-4 py-8 text-center text-sm text-slate-500" colSpan={12}>
+                  <td className="px-4 py-8 text-center text-sm text-zinc-500" colSpan={12}>
                     Loading gamers...
                   </td>
                 </tr>
               ) : filteredData.length === 0 ? (
                 <tr>
-                  <td className="px-4 py-8 text-center text-sm text-slate-500" colSpan={12}>
+                  <td className="px-4 py-8 text-center text-sm text-zinc-500" colSpan={12}>
                     No gamers found for this filter.
                   </td>
                 </tr>
               ) : (
                 filteredData.map((gamer) => (
-                <tr key={gamer.id} className="dashboard-module-row hover:bg-cyan-500/5">
-                  <td className="whitespace-nowrap px-4 py-3 text-sm text-slate-700">{gamer.id}</td>
-                  <td className="whitespace-nowrap px-4 py-3 text-sm font-semibold text-cyan-300">{gamer.name}</td>
-                  <td className="whitespace-nowrap px-4 py-3 text-sm text-slate-700">{gamer.contact}</td>
-                  <td className="whitespace-nowrap px-4 py-3 text-sm text-slate-700">{gamer.totalSlots}</td>
-                  <td className="whitespace-nowrap px-4 py-3 text-sm text-slate-700">₹{gamer.totalAmount.toLocaleString()}</td>
-                  <td className="whitespace-nowrap px-4 py-3 text-sm text-slate-700">₹{gamer.averagePerSlot}</td>
-                  <td className="whitespace-nowrap px-4 py-3 text-sm text-slate-700">{gamer.promoCodesUsed}</td>
-                  <td className="whitespace-nowrap px-4 py-3 text-sm text-slate-700">₹{gamer.discountAvailed.toLocaleString()}</td>
-                  <td className="whitespace-nowrap px-4 py-3 text-sm text-slate-700">₹{gamer.netRevenue.toLocaleString()}</td>
-                  <td className="whitespace-nowrap px-4 py-3 text-sm text-slate-700">
+                <tr key={gamer.id} className="dashboard-module-row hover:bg-blue-500/5">
+                  <td className="whitespace-nowrap px-4 py-3 text-sm text-zinc-700">{gamer.id}</td>
+                  <td className="whitespace-nowrap px-4 py-3 text-sm font-semibold text-blue-300">{gamer.name}</td>
+                  <td className="whitespace-nowrap px-4 py-3 text-sm text-zinc-700">{gamer.contact}</td>
+                  <td className="whitespace-nowrap px-4 py-3 text-sm text-zinc-700">{gamer.totalSlots}</td>
+                  <td className="whitespace-nowrap px-4 py-3 text-sm text-zinc-700">₹{gamer.totalAmount.toLocaleString()}</td>
+                  <td className="whitespace-nowrap px-4 py-3 text-sm text-zinc-700">₹{gamer.averagePerSlot}</td>
+                  <td className="whitespace-nowrap px-4 py-3 text-sm text-zinc-700">{gamer.promoCodesUsed}</td>
+                  <td className="whitespace-nowrap px-4 py-3 text-sm text-zinc-700">₹{gamer.discountAvailed.toLocaleString()}</td>
+                  <td className="whitespace-nowrap px-4 py-3 text-sm text-zinc-700">₹{gamer.netRevenue.toLocaleString()}</td>
+                  <td className="whitespace-nowrap px-4 py-3 text-sm text-zinc-700">
                     {gamer.lastVisit && format(new Date(gamer.lastVisit), "dd MMM yyyy")}
                   </td>
                   <td className="whitespace-nowrap px-4 py-3 text-sm">
@@ -333,7 +333,7 @@ export function KnowYourGamers() {
                       {gamer.membershipTier}
                     </span>
                   </td>
-                  <td className="max-w-[200px] truncate px-4 py-3 text-sm text-slate-500">{gamer.notes}</td>
+                  <td className="max-w-[200px] truncate px-4 py-3 text-sm text-zinc-500">{gamer.notes}</td>
                 </tr>
               )))}
             </tbody>
@@ -341,7 +341,7 @@ export function KnowYourGamers() {
         </div>
 
         {/* Mobile-friendly message when table is scrollable */}
-        <div className="border-t border-cyan-500/20 p-4 text-center text-sm text-slate-500">
+        <div className="border-t border-blue-500/20 p-4 text-center text-sm text-zinc-500">
           Scroll horizontally to view all columns
         </div>
       </div>

@@ -1,3 +1,5 @@
+import { buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 // components/MealDetailsModal.tsx - Complete responsive version
 import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -140,8 +142,8 @@ const CachedImage: React.FC<{
 
   if (error) {
     return (
-      <div className={`flex items-center justify-center bg-green-50 dark:bg-green-900/20 ${className}`}>
-        <ChefHat className="text-green-500 w-6 h-6 sm:w-8 sm:h-8" />
+      <div className={`flex items-center justify-center bg-emerald-50 dark:bg-emerald-900/20 ${className}`}>
+        <ChefHat className="text-emerald-500 w-6 h-6 sm:w-8 sm:h-8" />
       </div>
     );
   }
@@ -149,8 +151,8 @@ const CachedImage: React.FC<{
   return (
     <div className={`relative ${className}`}>
       {!loaded && (
-        <div className="absolute inset-0 flex items-center justify-center bg-green-50 dark:bg-green-900/20">
-          <Loader2 className="animate-spin text-green-500 w-4 h-4 sm:w-6 sm:h-6" />
+        <div className="absolute inset-0 flex items-center justify-center bg-emerald-50 dark:bg-emerald-900/20">
+          <Loader2 className="animate-spin text-emerald-500 w-4 h-4 sm:w-6 sm:h-6" />
         </div>
       )}
       <img
@@ -507,24 +509,24 @@ const MealDetailsModal: React.FC<MealDetailsModalProps> = ({
           initial={{ opacity: 0, scale: 0.95, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 20 }}
-          className="relative flex h-[100dvh] max-h-[100dvh] w-full flex-col overflow-hidden rounded-none bg-white shadow-2xl dark:bg-gray-800 sm:h-auto sm:max-h-[95vh] sm:max-w-6xl sm:rounded-xl"
+          className="relative flex h-[100dvh] max-h-[100dvh] w-full flex-col overflow-hidden rounded-none bg-white shadow-2xl dark:bg-zinc-800 sm:h-auto sm:max-h-[95vh] sm:max-w-6xl sm:rounded-xl"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header - Responsive */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 sm:p-4 border-b border-gray-200 dark:border-gray-700 bg-emerald-50/70 dark:bg-emerald-900/20 flex-shrink-0 gap-3 sm:gap-0">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 sm:p-4 border-b border-zinc-200 dark:border-zinc-700 bg-emerald-50/70 dark:bg-emerald-900/20 flex-shrink-0 gap-3 sm:gap-0">
             <div className="flex items-center gap-2 sm:gap-3">
               <div className="p-1.5 sm:p-2 bg-emerald-600 rounded-lg">
                 <ChefHat className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
               </div>
               <div>
-                <h3 className="text-base sm:text-lg font-bold text-gray-800 dark:text-white">
+                <h3 className="text-base sm:text-lg font-bold text-zinc-800 dark:text-white">
                   {mode === 'view' ? 'Meal Details' : 'Add More Meals'}
                 </h3>
-                <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
+                <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400">
                   {customerName}
                 </p>
                 {activeTargetMember && (
-                  <p className="text-[11px] sm:text-xs text-cyan-600 dark:text-cyan-300">
+                  <p className="text-[11px] sm:text-xs text-blue-600 dark:text-blue-300">
                     Target: {activeTargetMember.name || `Player ${activeTargetMember.member_position || ""}`}
                   </p>
                 )}
@@ -538,7 +540,7 @@ const MealDetailsModal: React.FC<MealDetailsModalProps> = ({
                 <motion.div
                   initial={{ opacity: 0, scale: 0.8 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  className="flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 rounded text-xs sm:text-sm"
+                  className="flex items-center gap-1 px-2 py-1 bg-emerald-100 text-emerald-700 rounded text-xs sm:text-sm"
                 >
                   <CheckCircle2 className="w-3 h-3 sm:w-4 sm:h-4" />
                   <span className="hidden sm:inline">{successMessage}</span>
@@ -548,15 +550,15 @@ const MealDetailsModal: React.FC<MealDetailsModalProps> = ({
 
               {/* Mode Toggle Buttons */}
               {(hasExistingMeals || mealDetails.length > 0) && (
-                <div className="flex bg-gray-100 dark:bg-gray-700 rounded-lg p-0.5 sm:p-1">
+                <div className="flex bg-zinc-100 dark:bg-zinc-700 rounded-lg p-0.5 sm:p-1">
                   <motion.button
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                     onClick={() => setMode('view')}
                     className={`px-2 sm:px-3 py-1 sm:py-1.5 rounded text-xs sm:text-sm font-medium transition-all duration-200 flex items-center gap-1 ${
                       mode === 'view' 
-                        ? 'bg-white dark:bg-gray-600 text-emerald-600 shadow-sm' 
-                        : 'text-gray-600 dark:text-gray-300 hover:text-emerald-600'
+                        ? 'bg-white dark:bg-zinc-600 text-emerald-600 shadow-sm' 
+                        : 'text-zinc-600 dark:text-zinc-300 hover:text-emerald-600'
                     }`}
                   >
                     <Eye className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
@@ -568,8 +570,8 @@ const MealDetailsModal: React.FC<MealDetailsModalProps> = ({
                     onClick={() => setMode('add')}
                     className={`px-2 sm:px-3 py-1 sm:py-1.5 rounded text-xs sm:text-sm font-medium transition-all duration-200 flex items-center gap-1 ${
                       mode === 'add' 
-                        ? 'bg-white dark:bg-gray-600 text-blue-600 shadow-sm' 
-                        : 'text-gray-600 dark:text-gray-300 hover:text-blue-600'
+                        ? 'bg-white dark:bg-zinc-600 text-blue-600 shadow-sm' 
+                        : 'text-zinc-600 dark:text-zinc-300 hover:text-blue-600'
                     }`}
                   >
                     <PlusCircle className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
@@ -593,9 +595,9 @@ const MealDetailsModal: React.FC<MealDetailsModalProps> = ({
               
               <button
                 onClick={onClose}
-                className="p-1 sm:p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"
+                className="p-1 sm:p-1.5 hover:bg-zinc-100 dark:hover:bg-zinc-700 rounded-full transition-colors"
               >
-                <X className="w-4 h-4 sm:w-5 sm:h-5 text-gray-500" />
+                <X className="w-4 h-4 sm:w-5 sm:h-5 text-zinc-500" />
               </button>
             </div>
           </div>
@@ -606,8 +608,8 @@ const MealDetailsModal: React.FC<MealDetailsModalProps> = ({
               /* View Mode - Show existing meals */
               <div className="p-3 sm:p-4 h-full overflow-y-auto">
                 {!loading && !error && isSquadBooking && (
-                  <div className="mb-4 rounded-lg border border-cyan-200 bg-cyan-50 p-3 dark:border-cyan-800 dark:bg-cyan-900/20">
-                    <div className="mb-2 flex items-center gap-2 text-cyan-700 dark:text-cyan-300">
+                  <div className="mb-4 rounded-lg border border-blue-200 bg-blue-50 p-3 dark:border-blue-800 dark:bg-blue-900/20">
+                    <div className="mb-2 flex items-center gap-2 text-blue-700 dark:text-blue-300">
                       <Users className="h-4 w-4" />
                       <span className="text-sm font-semibold">Squad Booking • {squadPlayerCount} Players</span>
                     </div>
@@ -618,19 +620,19 @@ const MealDetailsModal: React.FC<MealDetailsModalProps> = ({
                           .map((member) => (
                             <div
                               key={`${member.id || member.member_position || 0}-${member.phone_snapshot || member.name_snapshot || ''}`}
-                              className="rounded-md border border-cyan-200/80 bg-white/70 p-2 dark:border-cyan-700 dark:bg-slate-900/40"
+                              className="rounded-md border border-blue-200/80 bg-white/70 p-2 dark:border-blue-700 dark:bg-zinc-900/40"
                             >
-                              <div className="flex items-center gap-1 text-xs font-medium text-slate-800 dark:text-slate-100">
+                              <div className="flex items-center gap-1 text-xs font-medium text-zinc-800 dark:text-zinc-100">
                                 <User className="h-3.5 w-3.5" />
                                 <span>{member.name_snapshot || `Player ${member.member_position || ''}`}</span>
                                 {member.is_captain && (
-                                  <span className="rounded bg-cyan-100 px-1.5 py-0.5 text-[10px] text-cyan-700 dark:bg-cyan-900/40 dark:text-cyan-200">
+                                  <span className="rounded bg-blue-100 px-1.5 py-0.5 text-[10px] text-blue-700 dark:bg-blue-900/40 dark:text-blue-200">
                                     Captain
                                   </span>
                                 )}
                               </div>
                               {member.phone_snapshot && (
-                                <div className="mt-1 flex items-center gap-1 text-xs text-slate-600 dark:text-slate-300">
+                                <div className="mt-1 flex items-center gap-1 text-xs text-zinc-600 dark:text-zinc-300">
                                   <Phone className="h-3.5 w-3.5" />
                                   <span>{member.phone_snapshot}</span>
                                 </div>
@@ -640,7 +642,7 @@ const MealDetailsModal: React.FC<MealDetailsModalProps> = ({
                                 const consoleLabel = String(mappedConsole?.console_label || "").trim();
                                 if (!consoleLabel) return null;
                                 return (
-                                  <div className="mt-1 text-[11px] text-cyan-700 dark:text-cyan-300">
+                                  <div className="mt-1 text-[11px] text-blue-700 dark:text-blue-300">
                                     PC: {consoleLabel}
                                   </div>
                                 );
@@ -650,21 +652,21 @@ const MealDetailsModal: React.FC<MealDetailsModalProps> = ({
                       </div>
                     )}
                     {memberMealSummary.length > 0 && (
-                      <div className="mt-3 rounded-md border border-cyan-300/60 bg-white/80 p-2 dark:border-cyan-700 dark:bg-slate-900/50">
-                        <div className="mb-2 flex items-center justify-between gap-2 text-xs font-semibold text-cyan-700 dark:text-cyan-300">
+                      <div className="mt-3 rounded-md border border-blue-300/60 bg-white/80 p-2 dark:border-blue-700 dark:bg-zinc-900/50">
+                        <div className="mb-2 flex items-center justify-between gap-2 text-xs font-semibold text-blue-700 dark:text-blue-300">
                           <span>Who Was Served What</span>
                           <span>Attributed: ₹{attributedMealTotal.toFixed(2)}</span>
                         </div>
                         <div className="space-y-2">
                           {memberMealSummary.map((entry, idx) => (
-                            <div key={`ledger-summary-${idx}`} className="rounded border border-cyan-200/70 bg-cyan-50/40 px-2 py-1.5 text-xs dark:border-cyan-700/60 dark:bg-cyan-900/20">
+                            <div key={`ledger-summary-${idx}`} className="rounded border border-blue-200/70 bg-blue-50/40 px-2 py-1.5 text-xs dark:border-blue-700/60 dark:bg-blue-900/20">
                               <div className="flex items-center justify-between gap-2">
-                                <span className="font-medium text-slate-800 dark:text-slate-100">
+                                <span className="font-medium text-zinc-800 dark:text-zinc-100">
                                   {entry.member_name || `Player ${entry.member_position || ""}`}
                                 </span>
-                                <span className="text-cyan-700 dark:text-cyan-300">₹{Number(entry.total || 0).toFixed(2)}</span>
+                                <span className="text-blue-700 dark:text-blue-300">₹{Number(entry.total || 0).toFixed(2)}</span>
                               </div>
-                              <div className="mt-1 space-y-1 text-[11px] text-slate-700 dark:text-slate-200">
+                              <div className="mt-1 space-y-1 text-[11px] text-zinc-700 dark:text-zinc-200">
                                 {(entry.meals || []).map((meal, mealIdx) => (
                                   <div key={`ledger-summary-${idx}-meal-${mealIdx}`} className="flex items-center justify-between">
                                     <span>{meal.name || "Item"} x{Number(meal.quantity || 0)}</span>
@@ -688,7 +690,7 @@ const MealDetailsModal: React.FC<MealDetailsModalProps> = ({
                 {loading && (
                   <div className="flex flex-col items-center justify-center py-8">
                     <Loader2 className="w-6 h-6 sm:w-8 sm:h-8 animate-spin text-emerald-600 mb-3" />
-                    <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Loading meal details...</p>
+                    <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400">Loading meal details...</p>
                   </div>
                 )}
 
@@ -698,7 +700,7 @@ const MealDetailsModal: React.FC<MealDetailsModalProps> = ({
                     <p className="text-xs sm:text-sm text-center px-4">{error}</p>
                     <button
                       onClick={fetchMealDetails}
-                      className="mt-3 px-3 sm:px-4 py-1.5 sm:py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors text-xs sm:text-sm"
+                      className={cn(buttonVariants({ variant: "success", size: "sm" }), "mt-3")}
                     >
                       Retry
                     </button>
@@ -706,7 +708,7 @@ const MealDetailsModal: React.FC<MealDetailsModalProps> = ({
                 )}
 
                 {!loading && !error && mealDetails.length === 0 && (
-                  <div className="flex flex-col items-center justify-center py-8 text-gray-500">
+                  <div className="flex flex-col items-center justify-center py-8 text-zinc-500">
                     <UtensilsCrossed className="w-10 h-10 sm:w-12 sm:h-12 mb-3 opacity-50" />
                     <p className="text-base sm:text-lg font-medium mb-2">No meals ordered yet</p>
                     <p className="text-xs sm:text-sm mb-4 text-center px-4">This customer hasn't added any meals to their booking.</p>
@@ -724,7 +726,7 @@ const MealDetailsModal: React.FC<MealDetailsModalProps> = ({
 
                 {!loading && !error && mealDetails.length > 0 && (
                   <div className="space-y-4">
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between text-xs sm:text-sm text-gray-600 dark:text-gray-400 mb-3 gap-2">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 mb-3 gap-2">
                       <span>{getTotalItems()} items • Booking ID: {bookingId}</span>
                     </div>
 
@@ -767,7 +769,7 @@ const MealDetailsModal: React.FC<MealDetailsModalProps> = ({
                     {/* Total */}
                     <div className="border-t border-emerald-200 dark:border-emerald-600 pt-3 mt-4">
                       <div className="flex justify-between items-center">
-                        <span className="font-bold text-gray-800 dark:text-white text-sm sm:text-base">Total Meal Cost:</span>
+                        <span className="font-bold text-zinc-800 dark:text-white text-sm sm:text-base">Total Meal Cost:</span>
                         <div className="flex items-center gap-1">
                           <IndianRupee className="w-4 h-4 text-emerald-600" />
                           <span className="font-bold text-lg sm:text-xl text-emerald-600">
@@ -795,8 +797,8 @@ const MealDetailsModal: React.FC<MealDetailsModalProps> = ({
               <div className="flex h-full overflow-hidden">
                 {/* Sidebar with categories - Hidden on mobile, shown as dropdown */}
                 <div className="hidden sm:block">
-                  <aside className="w-48 lg:w-56 overflow-auto border-r border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-800 h-full">
-                    <h3 className="mb-3 text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase">
+                  <aside className="w-48 lg:w-56 overflow-auto border-r border-zinc-200 bg-zinc-50 p-3 dark:border-zinc-700 dark:bg-zinc-800 h-full">
+                    <h3 className="mb-3 text-xs font-semibold text-zinc-700 dark:text-zinc-300 uppercase">
                       Categories
                     </h3>
                     {isLoadingMenu && (
@@ -805,7 +807,7 @@ const MealDetailsModal: React.FC<MealDetailsModalProps> = ({
                       </div>
                     )}
                     {categories.length === 0 && !isLoadingMenu && (
-                      <p className="text-gray-500 dark:text-gray-400 text-xs">No categories</p>
+                      <p className="text-zinc-500 dark:text-zinc-400 text-xs">No categories</p>
                     )}
                     <ul className="space-y-1">
                       {categories.map((category) => (
@@ -813,19 +815,19 @@ const MealDetailsModal: React.FC<MealDetailsModalProps> = ({
                           <button
                             className={`block w-full rounded-lg p-2 text-left transition-colors duration-200 ${
                               selectedCategory === category.id
-                                ? "bg-green-200 text-green-800 dark:bg-green-900 dark:text-green-300"
-                                : "hover:bg-green-100 dark:hover:bg-green-900/30"
+                                ? "bg-emerald-200 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-300"
+                                : "hover:bg-emerald-100 dark:hover:bg-emerald-900/30"
                             }`}
                             onClick={() => setSelectedCategory(category.id)}
                           >
                             <div className="flex justify-between items-center">
                               <span className="font-medium text-sm">{category.name}</span>
-                              <span className="rounded-full bg-gray-300 px-1.5 py-0.5 text-xs font-semibold text-gray-700 dark:bg-gray-600 dark:text-gray-300">
+                              <span className="rounded-full bg-zinc-300 px-1.5 py-0.5 text-xs font-semibold text-zinc-700 dark:bg-zinc-600 dark:text-zinc-300">
                                 {category.menu_count}
                               </span>
                             </div>
                             {category.description && (
-                              <p className="mt-1 text-xs text-gray-600 line-clamp-2 dark:text-gray-400">
+                              <p className="mt-1 text-xs text-zinc-600 line-clamp-2 dark:text-zinc-400">
                                 {category.description}
                               </p>
                             )}
@@ -840,13 +842,13 @@ const MealDetailsModal: React.FC<MealDetailsModalProps> = ({
                 <section className="flex-1 overflow-auto p-3 sm:p-4">
                   {/* Mobile Category Selector */}
                   <div className="sm:hidden mb-4">
-                    <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2 uppercase">
+                    <label className="block text-xs font-semibold text-zinc-700 dark:text-zinc-300 mb-2 uppercase">
                       Select Category
                     </label>
                     <select
                       value={selectedCategory || ''}
                       onChange={(e) => setSelectedCategory(Number(e.target.value))}
-                      className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-sm"
+                      className="w-full p-2 border border-zinc-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-800 text-sm"
                     >
                       <option value="">Choose a category...</option>
                       {categories.map((category) => (
@@ -894,7 +896,7 @@ const MealDetailsModal: React.FC<MealDetailsModalProps> = ({
                   {isLoadingMenu && (
                     <div className="flex flex-col items-center justify-center py-8">
                       <Loader2 className="w-6 h-6 sm:w-8 sm:h-8 animate-spin text-blue-600 mb-3" />
-                      <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Loading menu items...</p>
+                      <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400">Loading menu items...</p>
                     </div>
                   )}
 
@@ -904,7 +906,7 @@ const MealDetailsModal: React.FC<MealDetailsModalProps> = ({
                       <p className="text-xs sm:text-sm text-center px-4">{menuError}</p>
                       <button
                         onClick={fetchAvailableMenuItems}
-                        className="mt-3 px-3 sm:px-4 py-1.5 sm:py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-xs sm:text-sm"
+                        className={cn(buttonVariants({ variant: "default", size: "sm" }), "mt-3")}
                       >
                         Retry
                       </button>
@@ -912,7 +914,7 @@ const MealDetailsModal: React.FC<MealDetailsModalProps> = ({
                   )}
 
                   {!isLoadingMenu && !menuError && categories.length === 0 && (
-                    <div className="flex flex-col items-center justify-center py-8 text-gray-500">
+                    <div className="flex flex-col items-center justify-center py-8 text-zinc-500">
                       <UtensilsCrossed className="w-6 h-6 sm:w-8 sm:h-8 mb-3 opacity-50" />
                       <p className="text-xs sm:text-sm">No menu items available</p>
                     </div>
@@ -931,10 +933,10 @@ const MealDetailsModal: React.FC<MealDetailsModalProps> = ({
                             <motion.div
                               key={item.id}
                               layout
-                              className={`min-w-0 rounded-lg border-2 bg-white shadow-sm dark:bg-gray-700 ${
+                              className={`min-w-0 rounded-lg border-2 bg-white shadow-sm dark:bg-zinc-700 ${
                                 quantity > 0
-                                  ? "border-green-500 shadow-green-200"
-                                  : "border-gray-200 dark:border-gray-600"
+                                  ? "border-emerald-500 shadow-emerald-200"
+                                  : "border-zinc-200 dark:border-zinc-600"
                               }`}
                               whileHover={{ y: -2 }}
                             >
@@ -947,12 +949,12 @@ const MealDetailsModal: React.FC<MealDetailsModalProps> = ({
                                     className="h-full w-full"
                                   />
                                 ) : (
-                                  <div className="flex h-full w-full items-center justify-center bg-green-50 dark:bg-green-900/20">
-                                    <ChefHat className="text-green-500 w-6 h-6 sm:w-8 sm:h-8" />
+                                  <div className="flex h-full w-full items-center justify-center bg-emerald-50 dark:bg-emerald-900/20">
+                                    <ChefHat className="text-emerald-500 w-6 h-6 sm:w-8 sm:h-8" />
                                   </div>
                                 )}
                                 {quantity > 0 && (
-                                  <div className="absolute right-1 sm:right-2 top-1 sm:top-2 rounded-lg bg-green-600 px-1.5 sm:px-2 py-0.5 sm:py-1 text-xs font-semibold text-white">
+                                  <div className="absolute right-1 sm:right-2 top-1 sm:top-2 rounded-lg bg-emerald-600 px-1.5 sm:px-2 py-0.5 sm:py-1 text-xs font-semibold text-white">
                                     {quantity}
                                   </div>
                                 )}
@@ -960,18 +962,18 @@ const MealDetailsModal: React.FC<MealDetailsModalProps> = ({
 
                               {/* Card Content - Responsive */}
                               <div className="p-2 sm:p-3">
-                                <h3 className="mb-1 truncate font-semibold text-[11px] text-gray-900 dark:text-gray-200 sm:text-sm sm:line-clamp-2">
+                                <h3 className="mb-1 truncate font-semibold text-[11px] text-zinc-900 dark:text-zinc-200 sm:text-sm sm:line-clamp-2">
                                   {item.name}
                                 </h3>
                                 {item.description && (
-                                  <p className="mb-2 hidden text-xs text-gray-600 line-clamp-2 dark:text-gray-400 sm:mb-3 sm:block">
+                                  <p className="mb-2 hidden text-xs text-zinc-600 line-clamp-2 dark:text-zinc-400 sm:mb-3 sm:block">
                                     {item.description}
                                   </p>
                                 )}
                                 
                                 {/* Price and Controls - Responsive */}
                                 <div className="flex items-center justify-between">
-                                  <div className="flex items-center space-x-1 text-green-600">
+                                  <div className="flex items-center space-x-1 text-emerald-600">
                                     <IndianRupee className="h-3 w-3 sm:h-4 sm:w-4" />
                                     <span className="text-xs font-bold sm:text-base">{item.price}</span>
                                   </div>
@@ -979,16 +981,16 @@ const MealDetailsModal: React.FC<MealDetailsModalProps> = ({
                                     <button
                                       onClick={() => updateMealQuantity(item, quantity - 1, categoryName)}
                                       disabled={quantity === 0}
-                                      className="flex h-6 w-6 items-center justify-center rounded-full bg-red-600 text-white transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50 sm:h-7 sm:w-7"
+                                      className={cn(buttonVariants({ variant: "destructive", size: "icon-sm" }), "disabled:cursor-not-allowed sm:w-7")}
                                     >
                                       <Minus className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
                                     </button>
-                                    <span className="min-w-[14px] text-center text-[11px] font-semibold text-gray-900 dark:text-gray-100 sm:min-w-[20px] sm:text-sm">
+                                    <span className="min-w-[14px] text-center text-[11px] font-semibold text-zinc-900 dark:text-zinc-100 sm:min-w-[20px] sm:text-sm">
                                       {quantity}
                                     </span>
                                     <button
                                       onClick={() => updateMealQuantity(item, quantity + 1, categoryName)}
-                                      className="flex h-6 w-6 items-center justify-center rounded-full bg-green-600 text-white transition-colors hover:bg-green-700 sm:h-7 sm:w-7"
+                                      className={cn(buttonVariants({ variant: "success", size: "icon-sm" }), "sm:w-7")}
                                     >
                                       <Plus className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
                                     </button>
@@ -999,7 +1001,7 @@ const MealDetailsModal: React.FC<MealDetailsModalProps> = ({
                                 {quantity > 0 && (
                                   <motion.p
                                     layout
-                                    className="mt-1 text-right text-[11px] font-semibold text-green-700 sm:mt-2 sm:text-sm"
+                                    className="mt-1 text-right text-[11px] font-semibold text-emerald-700 sm:mt-2 sm:text-sm"
                                   >
                                     Subtotal: ₹{(quantity * item.price).toFixed(2)}
                                   </motion.p>
@@ -1017,13 +1019,13 @@ const MealDetailsModal: React.FC<MealDetailsModalProps> = ({
 
           {/* Footer - Submit button for add mode - Responsive */}
           {mode === 'add' && selectedMeals.length > 0 && (
-            <div className="p-3 sm:p-4 border-t border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-800/50 flex-shrink-0">
+            <div className="p-3 sm:p-4 border-t border-zinc-200 dark:border-zinc-600 bg-zinc-50 dark:bg-zinc-800/50 flex-shrink-0">
               <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-3 gap-2">
                 <div>
-                  <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
+                  <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400">
                     Adding {totalNewItems} item{totalNewItems !== 1 ? 's' : ''} to booking
                   </p>
-                  <p className="font-semibold text-gray-800 dark:text-white text-sm sm:text-base">
+                  <p className="font-semibold text-zinc-800 dark:text-white text-sm sm:text-base">
                     Additional Cost: ₹{totalNewMealsPrice}
                   </p>
                 </div>
@@ -1041,7 +1043,7 @@ const MealDetailsModal: React.FC<MealDetailsModalProps> = ({
                 disabled={isSubmitting}
                 className={`w-full py-2.5 sm:py-3 rounded-lg font-medium transition-all flex items-center justify-center gap-2 text-sm sm:text-base ${
                   isSubmitting
-                    ? 'bg-gray-400 cursor-not-allowed'
+                    ? 'bg-zinc-400 cursor-not-allowed'
                     : 'bg-emerald-600 hover:bg-emerald-700 text-white'
                 }`}
               >

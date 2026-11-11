@@ -19,7 +19,7 @@ export default function ResponsiveSearchFilter({
       <div className="dashboard-toolbar">
         {/* Search Input */}
         <div className="relative flex-1 min-w-0">
-          <Search data-search-icon="" aria-hidden="true" className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400 sm:h-4 sm:w-4" />
+          <Search data-search-icon="" aria-hidden="true" className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-zinc-400 sm:h-4 sm:w-4" />
           <input data-search-input=""
             type="text"
             placeholder="Search by name or console..."
@@ -57,7 +57,7 @@ export default function ResponsiveSearchFilter({
               onClick={(e) => e.stopPropagation()}
             >
               {/* Header */}
-              <div className="mb-4 flex items-center justify-between border-b border-slate-700/70 pb-3">
+              <div className="mb-4 flex items-center justify-between border-b border-zinc-700/70 pb-3">
                 <h3 className="text-base font-medium text-foreground">Filters</h3>
                 <button onClick={() => setShowOverlay(false)}>
                   <X className="w-5 h-5 text-muted-foreground" />

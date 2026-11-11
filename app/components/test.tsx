@@ -506,43 +506,43 @@ function SlotBookingForm({
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="max-w-md w-full bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8 text-center"
+          className="max-w-md w-full bg-white dark:bg-zinc-800 rounded-2xl shadow-2xl p-8 text-center"
         >
           <motion.div
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             transition={{ type: 'spring', stiffness: 200, damping: 20 }}
-            className="w-16 h-16 mx-auto mb-6 rounded-full bg-gradient-to-r from-emerald-500 to-green-500 flex items-center justify-center shadow-lg"
+            className="w-16 h-16 mx-auto mb-6 rounded-full bg-gradient-to-r from-emerald-500 to-emerald-500 flex items-center justify-center shadow-lg"
           >
             <CheckCircle className="w-8 h-8 text-white" />
           </motion.div>
 
-          <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-3">
+          <h2 className="text-2xl font-bold text-zinc-800 dark:text-white mb-3">
             Booking Confirmed!
           </h2>
-          <p className="text-gray-600 dark:text-gray-300 mb-6">
+          <p className="text-zinc-600 dark:text-zinc-300 mb-6">
             Your slot booking has been successfully created.
           </p>
 
           <div className="bg-emerald-50 dark:bg-emerald-900/20 rounded-lg p-4 mb-6 text-left">
             <div className="flex justify-between items-center py-2">
-              <span className="text-gray-600 dark:text-gray-400">Console Type:</span>
-              <span className="font-medium text-gray-800 dark:text-white">{selectedSlots[0]?.console_name}</span>
+              <span className="text-zinc-600 dark:text-zinc-400">Console Type:</span>
+              <span className="font-medium text-zinc-800 dark:text-white">{selectedSlots[0]?.console_name}</span>
             </div>
             <div className="flex justify-between items-center py-2">
-              <span className="text-gray-600 dark:text-gray-400">Slots:</span>
-              <span className="font-medium text-gray-800 dark:text-white">{selectedSlots.length}</span>
+              <span className="text-zinc-600 dark:text-zinc-400">Slots:</span>
+              <span className="font-medium text-zinc-800 dark:text-white">{selectedSlots.length}</span>
             </div>
             <div className="flex justify-between items-center py-2">
-              <span className="text-gray-600 dark:text-gray-400">Meals & Extras:</span>
-              <span className="font-medium text-gray-800 dark:text-white">
+              <span className="text-zinc-600 dark:text-zinc-400">Meals & Extras:</span>
+              <span className="font-medium text-zinc-800 dark:text-white">
                 {selectedMeals.length === 0
                   ? 'None'
                   : selectedMeals.map(meal => `${meal.name} (${meal.quantity})`).join(', ')}
               </span>
             </div>
             <div className="flex justify-between items-center py-2 border-t border-emerald-200 dark:border-emerald-700">
-              <span className="text-gray-600 dark:text-gray-400">Total Amount:</span>
+              <span className="text-zinc-600 dark:text-zinc-400">Total Amount:</span>
               <span className="font-bold text-emerald-600 text-xl">₹{totalAmount}</span>
             </div>
           </div>
@@ -553,7 +553,7 @@ function SlotBookingForm({
               onClose()
               setIsSubmitted(false)
             }}
-            className="w-full bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700"
+            className="w-full bg-gradient-to-r from-emerald-600 to-emerald-600 hover:from-emerald-700 hover:to-emerald-700"
           >
             Create Another Booking
           </Button>
@@ -576,14 +576,14 @@ function SlotBookingForm({
           initial={{ scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0.9, opacity: 0 }}
-          className="w-full max-w-6xl max-h-[95vh] overflow-y-auto bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-2xl"
+          className="w-full max-w-6xl max-h-[95vh] overflow-y-auto bg-white dark:bg-zinc-800 rounded-2xl border border-zinc-200 dark:border-zinc-700 shadow-2xl"
         >
           {/* Header */}
-          <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
-            <h2 className="text-2xl font-bold text-gray-800 dark:text-white">New Slot Booking</h2>
+          <div className="flex items-center justify-between p-6 border-b border-zinc-200 dark:border-zinc-700">
+            <h2 className="text-2xl font-bold text-zinc-800 dark:text-white">New Slot Booking</h2>
             <button
               onClick={onClose}
-              className="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white transition-colors"
+              className="p-2 rounded-lg bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-700 dark:hover:bg-zinc-600 text-zinc-600 dark:text-zinc-300 hover:text-zinc-800 dark:hover:text-white transition-colors"
             >
               <X className="w-5 h-5" />
             </button>
@@ -599,8 +599,8 @@ function SlotBookingForm({
                     <h3 className="text-lg font-semibold text-emerald-800 dark:text-emerald-200 mb-3">Selected Time Slots</h3>
                     <div className="space-y-2">
                       {selectedSlots.map((slot, index) => (
-                        <div key={index} className="flex items-center justify-between text-sm bg-white dark:bg-gray-800 rounded-lg p-3">
-                          <span className="text-gray-700 dark:text-gray-300">
+                        <div key={index} className="flex items-center justify-between text-sm bg-white dark:bg-zinc-800 rounded-lg p-3">
+                          <span className="text-zinc-700 dark:text-zinc-300">
                             <strong>{new Date(slot.date).toLocaleDateString('en-GB')}</strong> • {slot.start_time.slice(0, 5)}-{slot.end_time.slice(0, 5)} • {slot.console_name}
                           </span>
                           <span className="text-emerald-600 dark:text-emerald-400 font-semibold">
@@ -617,12 +617,12 @@ function SlotBookingForm({
                   </Card>
 
                   {/* Customer Details */}
-                  <Card className="p-6 bg-gray-50 dark:bg-gray-700/30">
+                  <Card className="p-6 bg-zinc-50 dark:bg-zinc-700/30">
                     <div className="flex items-center gap-2 mb-4">
                       <div className="p-1 bg-emerald-100 dark:bg-emerald-900/30 rounded">
                         <Users className="w-4 h-4 text-emerald-600" />
                       </div>
-                      <h3 className="text-lg font-semibold text-gray-800 dark:text-white">Customer Information</h3>
+                      <h3 className="text-lg font-semibold text-zinc-800 dark:text-white">Customer Information</h3>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -637,29 +637,29 @@ function SlotBookingForm({
                           autoComplete="off"
                           placeholder="Email"
                           className={cn(
-                            "w-full pl-10 pr-4 py-3 bg-white dark:bg-gray-800 border rounded-lg transition-all duration-200",
+                            "w-full pl-10 pr-4 py-3 bg-white dark:bg-zinc-800 border rounded-lg transition-all duration-200",
                             errors.email
                               ? "border-red-500 focus:border-red-500"
                               : focusedInput === "email"
                               ? "border-emerald-500 focus:border-emerald-500"
-                              : "border-gray-300 dark:border-gray-600 focus:border-emerald-500",
+                              : "border-zinc-300 dark:border-zinc-600 focus:border-emerald-500",
                             "focus:outline-none focus:ring-1 focus:ring-emerald-500/20"
                           )}
                         />
-                        <Mail className="w-4 h-4 text-gray-400 absolute left-3 top-3.5" />
+                        <Mail className="w-4 h-4 text-zinc-400 absolute left-3 top-3.5" />
                         <AnimatePresence>
                           {focusedInput === "email" && emailSuggestions.length > 0 && (
                             <motion.ul
                               initial={{ opacity: 0, y: -5 }}
                               animate={{ opacity: 1, y: 0 }}
                               exit={{ opacity: 0, y: -5 }}
-                              className="absolute z-20 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg w-full mt-1 max-h-40 overflow-y-auto"
+                              className="absolute z-20 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg shadow-lg w-full mt-1 max-h-40 overflow-y-auto"
                             >
                               {emailSuggestions.slice(0, 5).map((user, idx) => (
                                 <motion.li
                                   key={idx}
                                   whileHover={{ backgroundColor: "rgba(16, 185, 129, 0.1)" }}
-                                  className="px-3 py-2 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 cursor-pointer border-b border-gray-100 dark:border-gray-700 last:border-b-0"
+                                  className="px-3 py-2 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 cursor-pointer border-b border-zinc-100 dark:border-zinc-700 last:border-b-0"
                                   onMouseDown={() => handleSuggestionClick(user)}
                                 >
                                   <div className="flex items-center gap-2">
@@ -667,8 +667,8 @@ function SlotBookingForm({
                                       <User className="w-3 h-3 text-emerald-600" />
                                     </div>
                                     <div>
-                                      <p className="font-medium text-gray-800 dark:text-white text-sm">{user.name}</p>
-                                      <p className="text-gray-600 dark:text-gray-400 text-xs">{user.email}</p>
+                                      <p className="font-medium text-zinc-800 dark:text-white text-sm">{user.name}</p>
+                                      <p className="text-zinc-600 dark:text-zinc-400 text-xs">{user.email}</p>
                                     </div>
                                   </div>
                                 </motion.li>
@@ -690,29 +690,29 @@ function SlotBookingForm({
                           autoComplete="off"
                           placeholder="Phone"
                           className={cn(
-                            "w-full pl-10 pr-4 py-3 bg-white dark:bg-gray-800 border rounded-lg transition-all duration-200",
+                            "w-full pl-10 pr-4 py-3 bg-white dark:bg-zinc-800 border rounded-lg transition-all duration-200",
                             errors.phone
                               ? "border-red-500 focus:border-red-500"
                               : focusedInput === "phone"
                               ? "border-emerald-500 focus:border-emerald-500"
-                              : "border-gray-300 dark:border-gray-600 focus:border-emerald-500",
+                              : "border-zinc-300 dark:border-zinc-600 focus:border-emerald-500",
                             "focus:outline-none focus:ring-1 focus:ring-emerald-500/20"
                           )}
                         />
-                        <Phone className="w-4 h-4 text-gray-400 absolute left-3 top-3.5" />
+                        <Phone className="w-4 h-4 text-zinc-400 absolute left-3 top-3.5" />
                         <AnimatePresence>
                           {focusedInput === "phone" && phoneSuggestions.length > 0 && (
                             <motion.ul
                               initial={{ opacity: 0, y: -5 }}
                               animate={{ opacity: 1, y: 0 }}
                               exit={{ opacity: 0, y: -5 }}
-                              className="absolute z-20 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg w-full mt-1 max-h-40 overflow-y-auto"
+                              className="absolute z-20 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg shadow-lg w-full mt-1 max-h-40 overflow-y-auto"
                             >
                               {phoneSuggestions.slice(0, 5).map((user, idx) => (
                                 <motion.li
                                   key={idx}
                                   whileHover={{ backgroundColor: "rgba(16, 185, 129, 0.1)" }}
-                                  className="px-3 py-2 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 cursor-pointer border-b border-gray-100 dark:border-gray-700 last:border-b-0"
+                                  className="px-3 py-2 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 cursor-pointer border-b border-zinc-100 dark:border-zinc-700 last:border-b-0"
                                   onMouseDown={() => handleSuggestionClick(user)}
                                 >
                                   <div className="flex items-center gap-2">
@@ -720,8 +720,8 @@ function SlotBookingForm({
                                       <User className="w-3 h-3 text-emerald-600" />
                                     </div>
                                     <div>
-                                      <p className="font-medium text-gray-800 dark:text-white text-sm">{user.name}</p>
-                                      <p className="text-gray-600 dark:text-gray-400 text-xs">{user.phone}</p>
+                                      <p className="font-medium text-zinc-800 dark:text-white text-sm">{user.name}</p>
+                                      <p className="text-zinc-600 dark:text-zinc-400 text-xs">{user.phone}</p>
                                     </div>
                                   </div>
                                 </motion.li>
@@ -742,29 +742,29 @@ function SlotBookingForm({
                           onBlur={handleBlur}
                           placeholder="Full name"
                           className={cn(
-                            "w-full pl-10 pr-4 py-3 bg-white dark:bg-gray-800 border rounded-lg transition-all duration-200",
+                            "w-full pl-10 pr-4 py-3 bg-white dark:bg-zinc-800 border rounded-lg transition-all duration-200",
                             errors.name
                               ? "border-red-500 focus:border-red-500"
                               : focusedInput === "name"
                               ? "border-emerald-500 focus:border-emerald-500"
-                              : "border-gray-300 dark:border-gray-600 focus:border-emerald-500",
+                              : "border-zinc-300 dark:border-zinc-600 focus:border-emerald-500",
                             "focus:outline-none focus:ring-1 focus:ring-emerald-500/20"
                           )}
                         />
-                        <User className="w-4 h-4 text-gray-400 absolute left-3 top-3.5" />
+                        <User className="w-4 h-4 text-zinc-400 absolute left-3 top-3.5" />
                         <AnimatePresence>
                           {focusedInput === "name" && nameSuggestions.length > 0 && (
                             <motion.ul
                               initial={{ opacity: 0, y: -5 }}
                               animate={{ opacity: 1, y: 0 }}
                               exit={{ opacity: 0, y: -5 }}
-                              className="absolute z-20 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg w-full mt-1 max-h-40 overflow-y-auto"
+                              className="absolute z-20 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg shadow-lg w-full mt-1 max-h-40 overflow-y-auto"
                             >
                               {nameSuggestions.slice(0, 5).map((user, idx) => (
                                 <motion.li
                                   key={idx}
                                   whileHover={{ backgroundColor: "rgba(16, 185, 129, 0.1)" }}
-                                  className="px-3 py-2 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 cursor-pointer border-b border-gray-100 dark:border-gray-700 last:border-b-0"
+                                  className="px-3 py-2 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 cursor-pointer border-b border-zinc-100 dark:border-zinc-700 last:border-b-0"
                                   onMouseDown={() => handleSuggestionClick(user)}
                                 >
                                   <div className="flex items-center gap-2">
@@ -772,8 +772,8 @@ function SlotBookingForm({
                                       <User className="w-3 h-3 text-emerald-600" />
                                     </div>
                                     <div>
-                                      <p className="font-medium text-gray-800 dark:text-white text-sm">{user.name}</p>
-                                      <p className="text-gray-600 dark:text-gray-400 text-xs">{user.email}</p>
+                                      <p className="font-medium text-zinc-800 dark:text-white text-sm">{user.name}</p>
+                                      <p className="text-zinc-600 dark:text-zinc-400 text-xs">{user.email}</p>
                                     </div>
                                   </div>
                                 </motion.li>
@@ -787,12 +787,12 @@ function SlotBookingForm({
                   </Card>
 
                   {/* Payment Method */}
-                  <Card className="p-6 bg-gray-50 dark:bg-gray-700/30">
+                  <Card className="p-6 bg-zinc-50 dark:bg-zinc-700/30">
                     <div className="flex items-center gap-2 mb-4">
-                      <div className="p-1 bg-yellow-100 dark:bg-yellow-900/30 rounded">
-                        <CreditCard className="w-4 h-4 text-yellow-600" />
+                      <div className="p-1 bg-amber-100 dark:bg-amber-900/30 rounded">
+                        <CreditCard className="w-4 h-4 text-amber-600" />
                       </div>
-                      <h3 className="text-lg font-semibold text-gray-800 dark:text-white">Payment Method</h3>
+                      <h3 className="text-lg font-semibold text-zinc-800 dark:text-white">Payment Method</h3>
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
@@ -810,7 +810,7 @@ function SlotBookingForm({
                             "p-4 rounded-lg border transition-all duration-200",
                             paymentType === type
                               ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300'
-                              : 'border-gray-300 dark:border-gray-600 hover:border-emerald-300 hover:bg-emerald-50/50 dark:hover:bg-emerald-900/20'
+                              : 'border-zinc-300 dark:border-zinc-600 hover:border-emerald-300 hover:bg-emerald-50/50 dark:hover:bg-emerald-900/20'
                           )}
                         >
                           <div className="flex items-center justify-center gap-2">
@@ -827,64 +827,64 @@ function SlotBookingForm({
                 {/* Right Column - Summary & Pricing */}
                 <div className="space-y-6">
                   {/* Booking Summary & Pricing */}
-                  <Card className="p-6 bg-gray-50 dark:bg-gray-700/30">
+                  <Card className="p-6 bg-zinc-50 dark:bg-zinc-700/30">
                     <div className="flex items-center gap-2 mb-4">
-                      <div className="p-1 bg-indigo-100 dark:bg-indigo-900/30 rounded">
-                        <Sparkles className="w-4 h-4 text-indigo-600" />
+                      <div className="p-1 bg-blue-100 dark:bg-blue-900/30 rounded">
+                        <Sparkles className="w-4 h-4 text-blue-600" />
                       </div>
-                      <h3 className="text-lg font-semibold text-gray-800 dark:text-white">Pricing Summary</h3>
+                      <h3 className="text-lg font-semibold text-zinc-800 dark:text-white">Pricing Summary</h3>
                     </div>
 
                     <div className="space-y-3">
-                      <div className="flex justify-between items-center py-2 border-b border-gray-200 dark:border-gray-600">
-                        <span className="text-gray-600 dark:text-gray-400">Console Total:</span>
-                        <span className="font-medium text-gray-800 dark:text-white">₹{consoleTotal}</span>
+                      <div className="flex justify-between items-center py-2 border-b border-zinc-200 dark:border-zinc-600">
+                        <span className="text-zinc-600 dark:text-zinc-400">Console Total:</span>
+                        <span className="font-medium text-zinc-800 dark:text-white">₹{consoleTotal}</span>
                       </div>
 
-                      <div className="flex justify-between items-center py-2 border-b border-gray-200 dark:border-gray-600">
-                        <span className="text-gray-600 dark:text-gray-400">Manual Waive Off:</span>
+                      <div className="flex justify-between items-center py-2 border-b border-zinc-200 dark:border-zinc-600">
+                        <span className="text-zinc-600 dark:text-zinc-400">Manual Waive Off:</span>
                         <input
                           type="number"
                           value={waiveOffAmount}
                           onChange={(e) => setWaiveOffAmount(Number(e.target.value) || 0)}
                           placeholder="₹0"
-                          className="w-20 text-right px-2 py-1 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-800 dark:text-white focus:border-emerald-500 focus:outline-none transition-colors"
+                          className="w-20 text-right px-2 py-1 rounded border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 text-zinc-800 dark:text-white focus:border-emerald-500 focus:outline-none transition-colors"
                           min={0}
                         />
                       </div>
 
                       {/* Auto Waive Off Display */}
                       {autoWaiveOffAmount > 0 && (
-                        <div className="flex justify-between items-center py-2 border-b border-gray-200 dark:border-gray-600 bg-orange-50 dark:bg-orange-900/20 rounded-lg px-3">
-                          <span className="text-orange-600 dark:text-orange-400 font-medium">⏰ Auto Waive Off:</span>
+                        <div className="flex justify-between items-center py-2 border-b border-zinc-200 dark:border-zinc-600 bg-amber-50 dark:bg-amber-900/20 rounded-lg px-3">
+                          <span className="text-amber-600 dark:text-amber-400 font-medium">⏰ Auto Waive Off:</span>
                           <div className="text-right">
-                            <span className="font-bold text-orange-600 dark:text-orange-400">₹{Math.round(autoWaiveOffAmount)}</span>
-                            <div className="text-xs text-orange-500 dark:text-orange-300">
+                            <span className="font-bold text-amber-600 dark:text-amber-400">₹{Math.round(autoWaiveOffAmount)}</span>
+                            <div className="text-xs text-amber-500 dark:text-amber-300">
                               (Time-based discount)
                             </div>
                           </div>
                         </div>
                       )}
 
-                      <div className="flex justify-between items-center py-2 border-b border-gray-200 dark:border-gray-600">
-                        <span className="text-gray-600 dark:text-gray-400">Extra Controller:</span>
+                      <div className="flex justify-between items-center py-2 border-b border-zinc-200 dark:border-zinc-600">
+                        <span className="text-zinc-600 dark:text-zinc-400">Extra Controller:</span>
                         <input
                           type="number"
                           value={extraControllerFare}
                           onChange={(e) => setExtraControllerFare(Number(e.target.value) || 0)}
                           placeholder="₹0"
-                          className="w-20 text-right px-2 py-1 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-800 dark:text-white focus:border-emerald-500 focus:outline-none transition-colors"
+                          className="w-20 text-right px-2 py-1 rounded border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 text-zinc-800 dark:text-white focus:border-emerald-500 focus:outline-none transition-colors"
                           min={0}
                         />
                       </div>
 
                       {/* Meals Section */}
-                      <div className="flex justify-between items-center py-2 border-b border-gray-200 dark:border-gray-600">
-                        <span className="text-gray-600 dark:text-gray-400">Meals & Extras:</span>
+                      <div className="flex justify-between items-center py-2 border-b border-zinc-200 dark:border-zinc-600">
+                        <span className="text-zinc-600 dark:text-zinc-400">Meals & Extras:</span>
                         <button
                           type="button"
                           onClick={() => setIsMealSelectorOpen(true)}
-                          className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-emerald-100 to-green-100 dark:from-emerald-900/30 dark:to-green-900/30 text-emerald-700 dark:text-emerald-300 rounded-lg text-sm hover:from-emerald-200 hover:to-green-200 dark:hover:from-emerald-900/50 dark:hover:to-green-900/50 transition-all duration-200 border border-emerald-200 dark:border-emerald-700"
+                          className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-emerald-100 to-emerald-100 dark:from-emerald-900/30 dark:to-emerald-900/30 text-emerald-700 dark:text-emerald-300 rounded-lg text-sm hover:from-emerald-200 hover:to-emerald-200 dark:hover:from-emerald-900/50 dark:hover:to-emerald-900/50 transition-all duration-200 border border-emerald-200 dark:border-emerald-700"
                         >
                           <Plus className="w-3 h-3" />
                           {selectedMeals.length === 0 ? 'Add Meals' : `${selectedMeals.length} Selected`}
@@ -893,7 +893,7 @@ function SlotBookingForm({
 
                       {/* Display selected meals */}
                       {selectedMeals.length > 0 && (
-                        <div className="py-2 border-b border-gray-200 dark:border-gray-600">
+                        <div className="py-2 border-b border-zinc-200 dark:border-zinc-600">
                           <div className="space-y-2">
                             {selectedMeals.map(meal => (
                               <div key={meal.menu_item_id} className="bg-emerald-50 dark:bg-emerald-900/20 rounded-lg p-3">
@@ -922,7 +922,7 @@ function SlotBookingForm({
                       )}
 
                       <div className="flex justify-between items-center py-3 bg-emerald-50 dark:bg-emerald-900/30 rounded-lg px-3">
-                        <span className="font-bold text-gray-800 dark:text-white text-lg">Final Total:</span>
+                        <span className="font-bold text-zinc-800 dark:text-white text-lg">Final Total:</span>
                         <span className="font-bold text-2xl text-emerald-600">₹{totalAmount}</span>
                       </div>
                     </div>
@@ -931,19 +931,19 @@ function SlotBookingForm({
               </div>
 
               {/* Submit Button */}
-              <div className="flex gap-4 pt-6 border-t border-gray-200 dark:border-gray-700">
+              <div className="flex gap-4 pt-6 border-t border-zinc-200 dark:border-zinc-700">
                 <Button
                   type="button"
                   onClick={onClose}
                   variant="outline"
-                  className="flex-1 bg-white hover:bg-gray-50 border-gray-300 text-gray-700 hover:text-gray-900 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-600 dark:hover:text-white"
+                  className="flex-1 bg-white hover:bg-zinc-50 border-zinc-300 text-zinc-700 hover:text-zinc-900 dark:bg-zinc-700 dark:border-zinc-600 dark:text-zinc-300 dark:hover:bg-zinc-600 dark:hover:text-white"
                 >
                   Cancel
                 </Button>
                 <Button
                   type="submit"
                   disabled={isSubmitting}
-                  className="flex-1 bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white disabled:opacity-50"
+                  className="flex-1 bg-gradient-to-r from-emerald-600 to-emerald-600 hover:from-emerald-700 hover:to-emerald-700 text-white disabled:opacity-50"
                 >
                   {isSubmitting ? (
                     <div className="flex items-center gap-2">
@@ -999,8 +999,8 @@ function SlotPill({
       ? "bg-blue-600 text-white ring-2 ring-blue-500 ring-offset-2 shadow-lg transform scale-105"
       : "bg-blue-500/90 text-white ring-1 ring-blue-400/20 shadow-sm shadow-blue-500/25 hover:bg-blue-600", 
     purple: selected 
-      ? "bg-violet-600 text-white ring-2 ring-violet-500 ring-offset-2 shadow-lg transform scale-105"
-      : "bg-violet-500/90 text-white ring-1 ring-violet-400/20 shadow-sm shadow-violet-500/25 hover:bg-violet-600",
+      ? "bg-purple-600 text-white ring-2 ring-purple-500 ring-offset-2 shadow-lg transform scale-105"
+      : "bg-purple-500/90 text-white ring-1 ring-purple-400/20 shadow-sm shadow-purple-500/25 hover:bg-purple-600",
     yellow: selected 
       ? "bg-amber-600 text-white ring-2 ring-amber-500 ring-offset-2 shadow-lg transform scale-105"
       : "bg-amber-500/90 text-white ring-1 ring-amber-400/20 shadow-sm shadow-amber-500/25 hover:bg-amber-600",
@@ -1045,7 +1045,7 @@ function SegmentedButton({
         "transition-all duration-200 hover:scale-105",
         active
           ? "bg-emerald-600 text-white shadow-lg shadow-emerald-500/25"
-          : "bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 hover:text-gray-900 dark:hover:text-white border border-gray-300 dark:border-gray-600",
+          : "bg-white dark:bg-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-600 hover:text-zinc-900 dark:hover:text-white border border-zinc-300 dark:border-zinc-600",
       )}
     >
       {Icon ? <Icon className="h-4 w-4" /> : null}
@@ -1067,8 +1067,8 @@ function TopBar({
   return (
     <div className="flex flex-wrap items-center justify-between gap-3">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white">Slot Management</h1>
-        <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+        <h1 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-white">Slot Management</h1>
+        <p className="text-sm text-zinc-600 dark:text-zinc-400 mt-1">
           Manage and create future console bookings for current day + next 2 days.
         </p>
       </div>
@@ -1082,7 +1082,7 @@ function TopBar({
             "px-6 py-2.5 font-semibold",
             selectedSlots.length > 0 
               ? "bg-emerald-600 hover:bg-emerald-700 shadow-emerald-500/25"
-              : "bg-gray-400 cursor-not-allowed"
+              : "bg-zinc-400 cursor-not-allowed"
           )}
         >
           <Plus className="mr-2 h-4 w-4" />
@@ -1091,9 +1091,9 @@ function TopBar({
         <Button 
           variant="outline"
           size="icon" 
-          className="rounded-lg border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600"
+          className="rounded-lg border-zinc-300 dark:border-zinc-600 hover:bg-zinc-50 dark:hover:bg-zinc-600"
         >
-          <MoreVertical className="h-4 w-4 text-gray-600 dark:text-gray-300" />
+          <MoreVertical className="h-4 w-4 text-zinc-600 dark:text-zinc-300" />
         </Button>
       </div>
     </div>
@@ -1119,9 +1119,9 @@ function ConsoleFilter({
   }
 
   return (
-    <Card className="mt-6 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/50 backdrop-blur-sm p-6">
+    <Card className="mt-6 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/50 backdrop-blur-sm p-6">
       <div className="flex flex-col gap-4">
-        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Select Console Type</span>
+        <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Select Console Type</span>
         <div className="flex flex-wrap items-center gap-3">
           {Object.entries(consoleIcons).map(([key, Icon]) => (
             <SegmentedButton 
@@ -1294,11 +1294,11 @@ function ScheduleGrid({
 
   if (isLoading) {
     return (
-      <Card className="mt-6 rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/30 backdrop-blur-sm overflow-hidden">
+      <Card className="mt-6 rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/30 backdrop-blur-sm overflow-hidden">
         <div className="flex items-center justify-center py-12">
           <div className="text-center">
             <Loader2 className="w-8 h-8 animate-spin text-emerald-500 mx-auto mb-3" />
-            <p className="text-gray-600 dark:text-gray-300">Loading available slots...</p>
+            <p className="text-zinc-600 dark:text-zinc-300">Loading available slots...</p>
           </div>
         </div>
       </Card>
@@ -1381,12 +1381,12 @@ function ScheduleGrid({
 
   if (uniqueTimes.length === 0) {
     return (
-      <Card className="mt-6 rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/30 backdrop-blur-sm overflow-hidden">
+      <Card className="mt-6 rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/30 backdrop-blur-sm overflow-hidden">
         <div className="flex items-center justify-center py-12">
           <div className="text-center">
-            <CalendarDays className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-            <p className="text-gray-600 dark:text-gray-300">No slots available</p>
-            <p className="text-sm text-gray-500 dark:text-gray-400">Check back later or select different consoles</p>
+            <CalendarDays className="w-12 h-12 text-zinc-400 mx-auto mb-3" />
+            <p className="text-zinc-600 dark:text-zinc-300">No slots available</p>
+            <p className="text-sm text-zinc-500 dark:text-zinc-400">Check back later or select different consoles</p>
           </div>
         </div>
       </Card>
@@ -1394,30 +1394,30 @@ function ScheduleGrid({
   }
 
   return (
-    <Card className="mt-6 rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/30 backdrop-blur-sm overflow-hidden">
+    <Card className="mt-6 rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/30 backdrop-blur-sm overflow-hidden">
       <div className="overflow-x-auto">
         {/* FIXED: Proper horizontal grid layout */}
         <div className="min-w-max">
           {/* Header row with time columns */}  
           <div className="grid gap-2 p-6 pb-4" style={{ gridTemplateColumns: `120px repeat(${uniqueTimes.length}, minmax(100px, 1fr))` }}>
-            <div className="text-sm font-medium text-gray-500 dark:text-gray-400">Date</div>
+            <div className="text-sm font-medium text-zinc-500 dark:text-zinc-400">Date</div>
             {uniqueTimes.map((time) => (
-              <div key={time} className="text-sm font-semibold text-gray-800 dark:text-gray-200 text-center">
+              <div key={time} className="text-sm font-semibold text-zinc-800 dark:text-zinc-200 text-center">
                 {time}
               </div>
             ))}
           </div>
 
           {/* Data rows for each date */}
-          <div className="border-t border-gray-200 dark:border-gray-700">
+          <div className="border-t border-zinc-200 dark:border-zinc-700">
             {rows.map((row) => (
               <div 
                 key={row.date} 
-                className="grid gap-2 p-6 py-4 border-b border-gray-100 dark:border-gray-700/50 last:border-b-0" 
+                className="grid gap-2 p-6 py-4 border-b border-zinc-100 dark:border-zinc-700/50 last:border-b-0" 
                 style={{ gridTemplateColumns: `120px repeat(${uniqueTimes.length}, minmax(100px, 1fr))` }}
               >
                 {/* Date column */}
-                <div className="flex items-center text-sm font-semibold text-gray-800 dark:text-gray-200 bg-gray-100 dark:bg-gray-800/50 rounded-lg px-3 py-2">
+                <div className="flex items-center text-sm font-semibold text-zinc-800 dark:text-zinc-200 bg-zinc-100 dark:bg-zinc-800/50 rounded-lg px-3 py-2">
                   {row.date}
                 </div>
                 
@@ -1425,7 +1425,7 @@ function ScheduleGrid({
                 {row.cells.map((content, idx) => (
                   <div
                     key={idx}
-                    className="min-h-16 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/30 backdrop-blur-sm flex items-center justify-center px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-200"
+                    className="min-h-16 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/30 backdrop-blur-sm flex items-center justify-center px-3 py-2 hover:bg-zinc-50 dark:hover:bg-zinc-700/50 transition-colors duration-200"
                   >
                     {content}
                   </div>
@@ -1443,13 +1443,13 @@ function ScheduleGrid({
 function RecentBookings({ bookings }: { bookings: any[] }) {
   return (
     <section className="mt-12">
-      <h2 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">Recent Slot Bookings</h2>
+      <h2 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-white">Recent Slot Bookings</h2>
 
       <Card className="dashboard-table-shell mt-6 overflow-hidden rounded-2xl backdrop-blur-sm">
         <div className="dashboard-table-wrap">
           <table className="dashboard-table text-sm">
             <thead>
-              <tr className="bg-gray-50 dark:bg-gray-700/50 text-gray-800 dark:text-gray-200">
+              <tr className="bg-zinc-50 dark:bg-zinc-700/50 text-zinc-800 dark:text-zinc-200">
                 <th className="px-6 py-4 text-left font-semibold">Booking ID</th>
                 <th className="px-6 py-4 text-left font-semibold">Name</th>
                 <th className="px-6 py-4 text-left font-semibold">Contact</th>
@@ -1462,21 +1462,21 @@ function RecentBookings({ bookings }: { bookings: any[] }) {
             <tbody>
               {bookings.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
+                  <td colSpan={7} className="px-6 py-8 text-center text-zinc-500 dark:text-zinc-400">
                     No recent bookings found
                   </td>
                 </tr>
               ) : (
                 bookings.map((booking, index) => (
-                  <tr key={booking.id || index} className="border-t border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
+                  <tr key={booking.id || index} className="border-t border-zinc-200 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-700/30 transition-colors">
                     <td className="px-6 py-4 font-semibold text-emerald-600 dark:text-emerald-400">#{booking.id}</td>
-                    <td className="px-6 py-4 text-gray-900 dark:text-gray-200">{booking.name}</td>
-                    <td className="px-6 py-4 text-gray-700 dark:text-gray-300">{booking.phone}</td>
-                    <td className="px-6 py-4 text-gray-700 dark:text-gray-300">{booking.date} {booking.time}</td>
-                    <td className="px-6 py-4 text-gray-700 dark:text-gray-300">{booking.console_name}</td>
-                    <td className="px-6 py-4 text-gray-700 dark:text-gray-300">₹{booking.total_amount}</td>
+                    <td className="px-6 py-4 text-zinc-900 dark:text-zinc-200">{booking.name}</td>
+                    <td className="px-6 py-4 text-zinc-700 dark:text-zinc-300">{booking.phone}</td>
+                    <td className="px-6 py-4 text-zinc-700 dark:text-zinc-300">{booking.date} {booking.time}</td>
+                    <td className="px-6 py-4 text-zinc-700 dark:text-zinc-300">{booking.console_name}</td>
+                    <td className="px-6 py-4 text-zinc-700 dark:text-zinc-300">₹{booking.total_amount}</td>
                     <td className="px-6 py-4">
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400">
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-400">
                         Confirmed
                       </span>
                     </td>
@@ -1567,7 +1567,7 @@ export default function SlotManagement() {
           { type: "PC", name: "PC Gaming", icon: Monitor, iconColor: "#7c3aed" },
           { type: "PS5", name: "PlayStation 5", icon: Tv, iconColor: "#2563eb" },
           { type: "Xbox", name: "Xbox Series", icon: Gamepad, iconColor: "#059669" },
-          { type: "VR", name: "VR Gaming", icon: Headset, iconColor: "#ea580c" },
+          { type: "VR", name: "VR Gaming", icon: Headset, iconColor: "#d97706" },
         ]
         
         const availableConsoles = consoleTemplate.map(template => {
@@ -1812,18 +1812,18 @@ export default function SlotManagement() {
 
   if (isLoading) {
     return (
-      <main className="min-h-screen bg-gray-50 dark:bg-gradient-to-br dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 flex items-center justify-center">
+      <main className="min-h-screen bg-zinc-50 dark:bg-gradient-to-br dark:from-zinc-900 dark:via-zinc-800 dark:to-zinc-900 flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="w-12 h-12 animate-spin text-emerald-500 mx-auto mb-4" />
-          <p className="text-gray-600 dark:text-slate-300">Loading slot data...</p>
-          <p className="text-sm text-gray-500 dark:text-slate-400 mt-2">Fetching consoles and available slots...</p>
+          <p className="text-zinc-600 dark:text-zinc-300">Loading slot data...</p>
+          <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-2">Fetching consoles and available slots...</p>
         </div>
       </main>
     )
   }
 
   return (
-    <main className="min-h-screen bg-gray-50 dark:bg-gradient-to-br dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
+    <main className="min-h-screen bg-zinc-50 dark:bg-gradient-to-br dark:from-zinc-900 dark:via-zinc-800 dark:to-zinc-900">
       <div className="mx-auto w-full max-w-[1400px] p-6 md:p-8">
         <TopBar selectedSlots={selectedSlots} onNewBooking={handleNewBooking} />
         <ConsoleFilter selectedConsole={selectedConsole} onConsoleChange={setSelectedConsole} />

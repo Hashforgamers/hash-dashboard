@@ -1,3 +1,5 @@
+import { buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 // components/SlotManagement/index.tsx
 'use client'
 
@@ -79,7 +81,7 @@ export default function SlotManagement() {
       <main className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="w-12 h-12 animate-spin text-blue-500 mx-auto mb-4" />
-          <p className="text-slate-300">Loading slot data...</p>
+          <p className="text-zinc-300">Loading slot data...</p>
         </div>
       </main>
     )
@@ -90,7 +92,7 @@ export default function SlotManagement() {
       <main className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
           <p className="text-red-400">Error loading data: {error.message}</p>
-          <button onClick={refetch} className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg">
+          <button onClick={refetch} className={cn(buttonVariants({ variant: "default" }), "mt-4")}>
             Retry
           </button>
         </div>

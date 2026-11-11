@@ -409,7 +409,7 @@ export function NotificationPanel({
   const showToast = (message: string, type: 'success' | 'error' = 'success') => {
     const toast = document.createElement('div')
     toast.className = `fixed top-4 right-4 px-6 py-3 rounded-lg shadow-xl z-[10000] text-white font-medium transform transition-all duration-300 ${
-      type === 'success' ? 'bg-green-500' : 'bg-red-500'
+      type === 'success' ? 'bg-emerald-500' : 'bg-red-500'
     }`
     toast.innerHTML = `
       <div class="flex items-center gap-2">
@@ -522,10 +522,10 @@ export function NotificationPanel({
   }> = [
     { key: "requested", label: "Requested", value: Number(queueSummary?.requested || 0), valueClass: "text-foreground" },
     { key: "accepted", label: "Accepted", value: Number(queueSummary?.accepted || 0), valueClass: "text-emerald-300" },
-    { key: "rejected", label: "Rejected", value: Number(queueSummary?.rejected || 0), valueClass: "text-rose-300" },
+    { key: "rejected", label: "Rejected", value: Number(queueSummary?.rejected || 0), valueClass: "text-red-300" },
     { key: "pending", label: "Pending", value: Number(queueSummary?.pending || 0), valueClass: "text-amber-300" },
     { key: "auto_accepted", label: "Auto Accepted", value: Number(queueSummary?.auto_accepted || 0), valueClass: "text-emerald-300" },
-    { key: "auto_rejected", label: "Auto Rejected", value: Number(queueSummary?.auto_rejected || 0), valueClass: "text-rose-300" },
+    { key: "auto_rejected", label: "Auto Rejected", value: Number(queueSummary?.auto_rejected || 0), valueClass: "text-red-300" },
   ]
 
 
@@ -567,7 +567,7 @@ export function NotificationPanel({
                 size="sm"
                 onClick={onClose}
                 aria-label="Close notifications"
-                className="h-8 w-8 rounded-full p-0 text-slate-300 hover:bg-cyan-500/15 hover:text-cyan-200"
+                className="h-8 w-8 rounded-full p-0 text-zinc-300 hover:bg-blue-500/15 hover:text-blue-200"
               >
                 <X className="w-4 h-4" />
               </Button>
@@ -618,19 +618,19 @@ export function NotificationPanel({
                 </div>
 
                 {queueError && (
-                  <p className="mt-1 text-[11px] text-rose-300">{queueError}</p>
+                  <p className="mt-1 text-[11px] text-red-300">{queueError}</p>
                 )}
                 {(isQueueSummaryLoading || isQueueListLoading) && (
-                  <p className="mt-1 text-[11px] text-cyan-200">Loading...</p>
+                  <p className="mt-1 text-[11px] text-blue-200">Loading...</p>
                 )}
               </div>
 
               {notifications.length === 0 ? (
-                <div className="dashboard-module-card rounded-xl border border-slate-600/45 bg-slate-900/65 px-3 py-5 text-center">
-                  <div className="mx-auto mb-2 flex h-8 w-8 items-center justify-center rounded-full border border-slate-500/60 bg-slate-800/70">
+                <div className="dashboard-module-card rounded-xl border border-zinc-600/45 bg-zinc-900/65 px-3 py-5 text-center">
+                  <div className="mx-auto mb-2 flex h-8 w-8 items-center justify-center rounded-full border border-zinc-500/60 bg-zinc-800/70">
                     <Bell className="h-4 w-4 text-muted-foreground opacity-70" />
                   </div>
-                  <h4 className="text-xs font-medium text-slate-400">No account alerts</h4>
+                  <h4 className="text-xs font-medium text-zinc-400">No account alerts</h4>
                 </div>
               ) : (
                 <div className="space-y-2">
@@ -662,36 +662,35 @@ export function NotificationPanel({
                           <div className="space-y-2">
                             <div className="flex items-center justify-between">
                               <div>
-                                <p className="text-sm font-semibold text-slate-100">Meals Added</p>
+                                <p className="text-sm font-semibold text-zinc-100">Meals Added</p>
                                 {mealNotice.emitted_at && (
-                                  <p className="text-xs text-slate-400">
+                                  <p className="text-xs text-zinc-400">
                                     {formatRelativeTime(mealNotice.emitted_at)}
                                   </p>
                                 )}
                               </div>
                               <Badge
                                 variant="outline"
-                                className="flex items-center gap-1 border-cyan-400/50 bg-cyan-500/10 text-xs text-cyan-200"
+                                className="flex items-center gap-1 border-blue-400/50 bg-blue-500/10 text-xs text-blue-200"
                               >
                                 <Wallet className="w-3 h-3" />
                                 Pending
                               </Badge>
                             </div>
-                            <div className="flex items-center gap-2 text-sm text-slate-200">
-                              <User className="w-4 h-4 text-slate-400" />
-                              <span className="font-medium text-slate-100">{mealNotice.username || "Customer"}</span>
-                              <span className="text-xs text-slate-400">added meals</span>
+                            <div className="flex items-center gap-2 text-sm text-zinc-200">
+                              <User className="w-4 h-4 text-zinc-400" />
+                              <span className="font-medium text-zinc-100">{mealNotice.username || "Customer"}</span>
+                              <span className="text-xs text-zinc-400">added meals</span>
                             </div>
-                            <div className="rounded-lg border border-cyan-400/40 bg-cyan-500/10 p-3 text-center">
-                              <span className="text-xs text-cyan-200">Amount to collect</span>
-                              <div className="text-base font-semibold tabular-nums text-cyan-200">
+                            <div className="rounded-lg border border-blue-400/40 bg-blue-500/10 p-3 text-center">
+                              <span className="text-xs text-blue-200">Amount to collect</span>
+                              <div className="text-base font-semibold tabular-nums text-blue-200">
                                 ₹{Number(mealNotice.amount_added || 0).toFixed(0)}
                               </div>
                             </div>
                             <div className="flex justify-end">
-                              <Button
-                                variant="outline"
-                                className="h-8 border-cyan-400/40 bg-cyan-500/10 text-xs text-cyan-200 hover:bg-cyan-500/20"
+                              <Button variant="soft-info" size="sm"
+                                
                                 onClick={() => onRemoveNotification(mealNotice.notification_id)}
                               >
                                 Dismiss
@@ -716,23 +715,19 @@ export function NotificationPanel({
                           className={`${styles.alertCard} dashboard-module-card rounded-lg p-3 transition-all duration-200 ${
                             isVerified
                               ? "border border-emerald-400/35 bg-emerald-500/10"
-                              : "border border-rose-400/35 bg-rose-500/10"
+                              : "border border-red-400/35 bg-red-500/10"
                           }`}
                         >
                           <div className="space-y-2">
                             <div className="flex items-center gap-2">
-                              <FileWarning className={`h-4 w-4 ${isVerified ? "text-emerald-300" : "text-rose-300"}`} />
-                              <p className={`text-sm font-semibold ${isVerified ? "text-emerald-100" : "text-rose-100"}`}>{docNotice.title}</p>
+                              <FileWarning className={`h-4 w-4 ${isVerified ? "text-emerald-300" : "text-red-300"}`} />
+                              <p className={`text-sm font-semibold ${isVerified ? "text-emerald-100" : "text-red-100"}`}>{docNotice.title}</p>
                             </div>
-                            <p className={`text-xs ${isVerified ? "text-emerald-100/90" : "text-rose-100/90"}`}>{docNotice.message}</p>
+                            <p className={`text-xs ${isVerified ? "text-emerald-100/90" : "text-red-100/90"}`}>{docNotice.message}</p>
                             <div className="flex justify-end">
                               <Button
-                                variant="outline"
-                                className={`h-8 text-xs ${
-                                  isVerified
-                                    ? "border-emerald-400/45 bg-emerald-500/10 text-emerald-100 hover:bg-emerald-500/20"
-                                    : "border-rose-400/45 bg-rose-500/10 text-rose-100 hover:bg-rose-500/20"
-                                }`}
+                                variant={isVerified ? "soft-success" : "soft-danger"} size="sm"
+                                
                                 onClick={() => {
                                   onClose()
                                   if (typeof window !== "undefined") {
@@ -761,29 +756,25 @@ export function NotificationPanel({
                           transition={{ delay: index * 0.05 }}
                           className={`${styles.alertCard} dashboard-module-card rounded-lg p-3 transition-all duration-200 ${
                             isCritical
-                              ? "border border-rose-400/35 bg-rose-500/10"
+                              ? "border border-red-400/35 bg-red-500/10"
                               : "border border-amber-400/35 bg-amber-500/10"
                           }`}
                         >
                           <div className="space-y-2">
                             <div className="flex items-center gap-2">
-                              <AlertTriangle className={`h-4 w-4 ${isCritical ? "text-rose-300" : "text-amber-300"}`} />
-                              <p className={`text-sm font-semibold ${isCritical ? "text-rose-100" : "text-amber-100"}`}>Low Stock Alert</p>
+                              <AlertTriangle className={`h-4 w-4 ${isCritical ? "text-red-300" : "text-amber-300"}`} />
+                              <p className={`text-sm font-semibold ${isCritical ? "text-red-100" : "text-amber-100"}`}>Low Stock Alert</p>
                             </div>
-                            <p className={`text-xs ${isCritical ? "text-rose-100/90" : "text-amber-100/90"}`}>
+                            <p className={`text-xs ${isCritical ? "text-red-100/90" : "text-amber-100/90"}`}>
                               {lowStockNotice.menuName} ({lowStockNotice.categoryName || "Category"})
                             </p>
-                            <p className={`text-xs ${isCritical ? "text-rose-100/90" : "text-amber-100/90"}`}>
+                            <p className={`text-xs ${isCritical ? "text-red-100/90" : "text-amber-100/90"}`}>
                               Stock: {lowStockNotice.stockQuantity} {lowStockNotice.stockUnit} | Threshold: {lowStockNotice.lowStockThreshold}
                             </p>
                             <div className="flex justify-end gap-2">
                               <Button
-                                variant="outline"
-                                className={`h-8 text-xs ${
-                                  isCritical
-                                    ? "border-rose-400/45 bg-rose-500/10 text-rose-100 hover:bg-rose-500/20"
-                                    : "border-amber-400/45 bg-amber-500/10 text-amber-100 hover:bg-amber-500/20"
-                                }`}
+                                variant={isCritical ? "soft-danger" : "soft-warning"} size="sm"
+                                
                                 onClick={() => {
                                   onClose()
                                   if (typeof window !== "undefined") {
@@ -795,7 +786,7 @@ export function NotificationPanel({
                               </Button>
                               <Button
                                 variant="outline"
-                                className="h-8 border-slate-500/50 bg-slate-700/30 text-xs text-slate-200 hover:bg-slate-700/50"
+                                className="h-8 border-zinc-500/50 bg-zinc-700/30 text-xs text-zinc-200 hover:bg-zinc-700/50"
                                 onClick={() => onRemoveNotification(lowStockNotice.notification_id)}
                               >
                                 Dismiss
@@ -823,15 +814,15 @@ export function NotificationPanel({
                           {/* Header Row */}
                           <div className="flex items-center justify-between">
                             <div>
-                              <p className="text-sm font-semibold text-slate-100">Pay at Cafe Request</p>
-                              <p className="text-xs text-slate-400">
+                              <p className="text-sm font-semibold text-zinc-100">Pay at Cafe Request</p>
+                              <p className="text-xs text-zinc-400">
                                 {formatRelativeTime(payNotice.emitted_at)}
                               </p>
                             </div>
                             {/* ✅ CHANGED: "To Be Paid" badge instead of plain dot */}
                             <Badge
                               variant="outline"
-                              className="flex items-center gap-1 border-orange-400/50 bg-orange-500/10 text-xs text-orange-300"
+                              className="flex items-center gap-1 border-amber-400/50 bg-amber-500/10 text-xs text-amber-300"
                             >
                               <Wallet className="w-3 h-3" />
                               To Be Paid
@@ -840,9 +831,9 @@ export function NotificationPanel({
 
                           {/* Customer Name */}
                           <div className="flex items-center gap-2">
-                            <User className="w-4 h-4 text-slate-400" />
-                            <span className="font-medium text-slate-100">{payNotice.username}</span>
-                            <span className="text-xs text-slate-400">wants to book</span>
+                            <User className="w-4 h-4 text-zinc-400" />
+                            <span className="font-medium text-zinc-100">{payNotice.username}</span>
+                            <span className="text-xs text-zinc-400">wants to book</span>
                             {payNotice.slot_count && payNotice.slot_count > 1 && (
                               <span className="rounded-full border border-amber-400/40 bg-amber-500/10 px-2 py-0.5 text-[11px] font-semibold text-amber-200">
                                 {payNotice.slot_count} slots
@@ -852,39 +843,39 @@ export function NotificationPanel({
 
                           {/* Game + Console */}
                           <div className="flex flex-wrap items-center gap-2 text-xs">
-                            <span className="rounded-full border border-cyan-400/35 bg-cyan-500/10 px-2 py-0.5 text-cyan-200">
+                            <span className="rounded-full border border-blue-400/35 bg-blue-500/10 px-2 py-0.5 text-blue-200">
                               {payNotice.game?.game_name || "Gaming Session"}
                             </span>
-                            <span className="flex items-center gap-1 rounded-full border border-slate-600/70 bg-slate-800/80 px-2 py-0.5 text-slate-300">
-                              <Gamepad2 className="h-3 w-3 text-rose-400" />
+                            <span className="flex items-center gap-1 rounded-full border border-zinc-600/70 bg-zinc-800/80 px-2 py-0.5 text-zinc-300">
+                              <Gamepad2 className="h-3 w-3 text-red-400" />
                               {payNotice.consoleType || "Console"}
                             </span>
                           </div>
 
                           {/* Time and Date */}
-                          <div className="flex items-center gap-3 text-xs text-slate-200">
+                          <div className="flex items-center gap-3 text-xs text-zinc-200">
                             <div className="flex items-center gap-1">
-                              <Clock className="w-3 h-3 text-slate-400" />
+                              <Clock className="w-3 h-3 text-zinc-400" />
                               <span>{payNotice.time}</span>
                             </div>
                             <div className="flex items-center gap-1">
-                              <Calendar className="w-3 h-3 text-slate-400" />
+                              <Calendar className="w-3 h-3 text-zinc-400" />
                               <span>{formatDisplayDate(payNotice.date)}</span>
                             </div>
                           </div>
 
                           {/* ✅ CHANGED: Orange box clearly showing "To Be Paid", not green "Paid" */}
-                          <div className="flex flex-wrap items-center justify-between gap-1 rounded-md border border-orange-400/25 bg-orange-500/5 px-2.5 py-2">
-                            <p className="mb-1 text-center text-xs font-medium text-orange-300">
+                          <div className="flex flex-wrap items-center justify-between gap-1 rounded-md border border-amber-400/25 bg-amber-500/5 px-2.5 py-2">
+                            <p className="mb-1 text-center text-xs font-medium text-amber-300">
                               To collect
                             </p>
                             <div className="text-center">
-                              <span className="text-base font-semibold tabular-nums text-orange-300">
+                              <span className="text-base font-semibold tabular-nums text-amber-300">
                                 ₹{payNotice.total_amount ?? payNotice.game.single_slot_price}
                               </span>
                             </div>
                             {/* ✅ NEW: Subtle reminder so vendor knows what to do */}
-                            <p className="w-full text-xs text-slate-400">
+                            <p className="w-full text-xs text-zinc-400">
                               Collect after session completion
                             </p>
                           </div>
@@ -903,14 +894,11 @@ export function NotificationPanel({
                               )}
                               {isAcceptProcessing ? 'Accepting...' : 'Accept'}
                             </Button>
-                            <Button
+                            <Button variant="soft-danger"
                               onClick={() => handleReject(payNotice)}
-                              disabled={isThisBookingProcessing}
-                              variant="outline"
-                              className="h-9 flex-1 border-rose-400/45 bg-rose-500/10 text-sm text-rose-200 hover:bg-rose-500/20"
-                            >
+                              disabled={isThisBookingProcessing} className="flex-1">
                               {isRejectProcessing ? (
-                                <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-rose-200 border-t-transparent" />
+                                <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-red-200 border-t-transparent" />
                               ) : (
                                 <X className="mr-2 h-4 w-4" />
                               )}
@@ -947,13 +935,13 @@ export function NotificationPanel({
                 >
                   <div
                     ref={queueRef}
-                    className="dashboard-module-panel w-[min(42rem,calc(100vw-2rem))] max-h-[78vh] overflow-hidden rounded-lg border border-cyan-400/30 bg-background"
+                    className="dashboard-module-panel w-[min(42rem,calc(100vw-2rem))] max-h-[78vh] overflow-hidden rounded-lg border border-blue-400/30 bg-background"
                     onClick={(e) => e.stopPropagation()}
                   >
                     <div className="flex items-center justify-between border-b border-border bg-muted/30 px-4 py-3">
                       <div className="flex items-center gap-2">
                         <h4 className="dash-title !text-sm">Payment queue</h4>
-                        <Badge className="border border-cyan-400/35 bg-cyan-500/10 text-cyan-200 text-[10px]">
+                        <Badge className="border border-blue-400/35 bg-blue-500/10 text-blue-200 text-[10px]">
                           {queueFilterMode === "single" ? singleDate : `${startDate} to ${endDate}`}
                         </Badge>
                       </div>
@@ -962,7 +950,7 @@ export function NotificationPanel({
                         size="sm"
                         onClick={() => setIsQueueOverlayOpen(false)}
                         aria-label="Close payment queue"
-                        className="h-7 w-7 rounded-full p-0 text-slate-300 hover:bg-cyan-500/10"
+                        className="h-7 w-7 rounded-full p-0 text-zinc-300 hover:bg-blue-500/10"
                       >
                         <X className="h-4 w-4" />
                       </Button>
@@ -1047,8 +1035,8 @@ export function NotificationPanel({
                             key={card.key}
                             className={`rounded-md border px-2 py-1 text-left transition ${
                               isActive
-                                ? "border-cyan-400/45 bg-cyan-500/15"
-                                : "border-border bg-muted/40 hover:border-cyan-400/30"
+                                ? "border-blue-400/45 bg-blue-500/15"
+                                : "border-border bg-muted/40 hover:border-blue-400/30"
                             }`}
                             onClick={async () => {
                               setSelectedQueueStatus(card.key)
@@ -1064,14 +1052,14 @@ export function NotificationPanel({
                       })}
                     </div>
 
-                    {queueError && <p className="text-xs text-rose-300">{queueError}</p>}
+                    {queueError && <p className="text-xs text-red-300">{queueError}</p>}
 
                     <div className="rounded-lg border border-border bg-muted/20 p-3">
                       <div className="mb-2 flex items-center justify-between">
-                        <p className="text-xs font-medium text-cyan-200">
+                        <p className="text-xs font-medium text-blue-200">
                           {queueStatusCards.find((c) => c.key === selectedQueueStatus)?.label} List
                         </p>
-                        <Badge className="border border-cyan-400/40 bg-cyan-500/15 text-cyan-200 text-[10px]">
+                        <Badge className="border border-blue-400/40 bg-blue-500/15 text-blue-200 text-[10px]">
                           {queueItems.length}
                         </Badge>
                       </div>
@@ -1106,13 +1094,10 @@ export function NotificationPanel({
                                         {isItemProcessing && queueActionProcessing.action === "accept" ? "Accepting..." : "Accept"}
                                       </Button>
                                     )}
-                                    <Button
+                                    <Button variant="soft-danger" size="sm"
                                       type="button"
                                       onClick={() => handleQueueBookingAction(item, "reject")}
-                                      disabled={isItemProcessing}
-                                      variant="outline"
-                                      className="h-7 border-rose-400/45 bg-rose-500/10 px-2 text-[11px] text-rose-200 hover:bg-rose-500/20"
-                                    >
+                                      disabled={isItemProcessing}>
                                       {isItemProcessing && queueActionProcessing.action === "reject" ? "Rejecting..." : "Reject"}
                                     </Button>
                                     {isPastPending && (

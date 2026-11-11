@@ -1,4 +1,5 @@
 "use client";
+import { toast } from "sonner";
 import OwnerSecuritySettings from "./owner-security-settings";
 
 import { normalizeOperatingHours, validateOperatingDay, type OperatingDay } from "@/lib/operating-hours";
@@ -25,7 +26,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
+import { Badge, badgeVariants } from "@/components/ui/badge";
 import { User, MapPin, Calendar, Clock, Mail, Phone, Lock,  FileCheck, FileText, Camera, Building2, Sparkles, Shield, BellRing, Wallet, Settings, Globe, Coffee, ImageIcon, Save , Edit,  Ghost, X, Loader2, CreditCard , DollarSign, Download } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import { jwtDecode } from "jwt-decode";
@@ -463,7 +464,7 @@ const savePayAtCafeAutomation = async (next: any) => {
     }
   } catch (error) {
     console.error("Error saving pay-at-cafe automation settings:", error);
-    alert("Failed to update pay-at-cafe auto settings");
+    toast.error("Failed to update pay-at-cafe auto settings");
   } finally {
     setSavingPayAtCafeAutomation(false);
   }
@@ -487,7 +488,7 @@ const saveNotificationPreferences = async (nextPrefs: any) => {
     }
   } catch (error) {
     console.error("Error saving notification preferences:", error);
-    alert("Failed to update notification preferences");
+    toast.error("Failed to update notification preferences");
   } finally {
     setSavingNotificationPrefs(false);
   }
@@ -552,25 +553,25 @@ const handleSaveBankDetails = async () => {
     const hasUpi = Boolean(bankForm.upiId?.trim());
 
     if (!hasAnyBankField && !hasUpi) {
-      alert("Please add at least bank account details or UPI ID.");
+      toast.error("Please add at least bank account details or UPI ID.");
       return;
     }
 
     if (hasAnyBankField) {
       if (!bankForm.accountHolderName?.trim()) {
-        alert("Account holder name is required.");
+        toast.error("Account holder name is required.");
         return;
       }
       if (!bankForm.bankName?.trim()) {
-        alert("Bank name is required.");
+        toast.error("Bank name is required.");
         return;
       }
       if (!bankForm.accountNumber?.trim()) {
-        alert("Account number is required.");
+        toast.error("Account number is required.");
         return;
       }
       if (!bankForm.ifscCode?.trim() || bankForm.ifscCode.trim().length !== 11) {
-        alert("Valid IFSC code (11 characters) is required.");
+        toast.error("Valid IFSC code (11 characters) is required.");
         return;
       }
     }
@@ -596,19 +597,19 @@ const handleSaveBankDetails = async () => {
     );
     
     if (response.success) {
-      alert('Bank details saved successfully!');
+      toast.success('Bank details saved successfully!');
       setEditingBank(false);
       fetchBankDetails();
       fetchBankDetailsHistory();
     } else {
-      alert(response.message || 'Failed to save bank details');
+      toast.error(response.message || 'Failed to save bank details');
     }
   } catch (error: any) {
     console.error('Error saving bank details:', error);
     const errorMessage = error?.details?.error || 
                         error?.details?.message || 
                         'Failed to save bank details. Please try again.';
-    alert(errorMessage);
+    toast.error(errorMessage);
   } finally {
     setSavingBank(false);
   }
@@ -690,7 +691,7 @@ const handleSaveBusinessField = async (field: string) => {
       const savedValue = field === "displayName"
         ? (response.data?.displayName ?? businessFormData[field])
         : businessFormData[field];
-      alert(`${field === "displayName" ? "Display name" : field} updated successfully!`);
+      toast.success(`${field === "displayName" ? "Display name" : field} updated successfully!`);
       
       // Update local data to reflect the change
       setData(prevData => ({
@@ -726,7 +727,7 @@ const handleSaveBusinessField = async (field: string) => {
                         error.message || 
                         'Error saving changes. Please try again.';
     
-    alert(`Error updating ${field}: ${errorMessage}`);
+    toast.error(`Error updating ${field}: ${errorMessage}`);
   } finally {
     setSavingBusinessField(null);
   }
@@ -963,7 +964,7 @@ const UpdatingOverlay = ({ visible }: { visible: boolean }) => {
           {/* Description */}
           <div className="space-y-2 text-sm text-muted-foreground">
             <p>Please wait while we update your slot configurations.</p>
-            <p className="font-medium text-yellow-400">
+            <p className="font-medium text-amber-400">
               This process may take 2-3 minutes.
             </p>
             <p>Please do not close this window or navigate away.</p>
@@ -1000,21 +1001,6 @@ const handleCancelEdit = () => {
   setHoursMessage("");
 };
 
-// Add toast functionality (you can use react-hot-toast or any toast library)
-const toast = {
-  success: (message) => {
-    // Replace with your actual toast implementation
-    console.log('Success:', message);
-    // For now, you can use browser alert or implement proper toast
-    alert('Success: ' + message);
-  },
-  error: (message) => {
-    // Replace with your actual toast implementation  
-    console.log('Error:', message);
-    // For now, you can use browser alert or implement proper toast
-    alert('Error: ' + message);
-  }
-};
 
 
 
@@ -1515,7 +1501,7 @@ const ToggleSwitch = ({
         sizeClasses[size],
         enabled 
           ? "bg-primary" 
-          : "bg-gray-200 dark:bg-gray-700",
+          : "bg-zinc-200 dark:bg-zinc-700",
         disabled && "opacity-50 cursor-not-allowed"
       )}
       role="switch"
@@ -1534,7 +1520,7 @@ const ToggleSwitch = ({
         {loading && (
           <div className="absolute inset-0 flex items-center justify-center">
             <Loader2 className={cn(
-              "animate-spin text-gray-400",
+              "animate-spin text-zinc-400",
               size === "sm" ? "w-2 h-2" : size === "lg" ? "w-4 h-4" : "w-3 h-3"
             )} />
           </div>
@@ -1598,7 +1584,7 @@ const ToggleSwitch = ({
                   <div className="flex flex-col items-center space-y-3">
                    
                     <div className="relative transition-transform duration-300 ease-in-out hover:scale-105">
-                      <div className="h-32 w-32 rounded-full p-[4px] bg-gradient-to-r from-emerald-500 via-cyan-500 to-blue-500 animate-spin-slow">
+                      <div className="h-32 w-32 rounded-full p-[4px] bg-gradient-to-r from-emerald-500 via-blue-500 to-blue-500 animate-spin-slow">
                         <div className="h-full w-full rounded-full bg-background flex items-center justify-center overflow-hidden">
                           <img
                             src={HFG_DEFAULT_LOGO}
@@ -1645,7 +1631,7 @@ const ToggleSwitch = ({
           "rounded-lg border px-3 py-2 text-center text-xs font-medium",
           profileUploadMessage.includes("successfully") 
             ? "border-emerald-400/40 bg-emerald-500/15 text-emerald-700 dark:text-emerald-200" 
-            : "border-rose-400/40 bg-rose-500/15 text-rose-700 dark:text-rose-200"
+            : "border-red-400/40 bg-red-500/15 text-red-700 dark:text-red-200"
         )}>
           {profileUploadMessage}
         </div>
@@ -1674,7 +1660,7 @@ const ToggleSwitch = ({
           {/* Edit Button */}
           <label 
             htmlFor="profile-image-upload"
-            className="absolute -bottom-1 -right-1 flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border-2 border-background bg-cyan-500 text-slate-950 shadow-lg transition-all duration-200 hover:scale-110 hover:bg-cyan-400"
+            className="absolute -bottom-1 -right-1 flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border-2 border-background bg-blue-500 text-zinc-950 shadow-lg transition-all duration-200 hover:scale-110 hover:bg-blue-400"
           >
             <input
               id="profile-image-upload"
@@ -1689,12 +1675,12 @@ const ToggleSwitch = ({
         </div>
         
         <div className="space-y-2">
-          <h3 className="text-base font-semibold text-slate-100">{cafeProfile.name || "Cafe Name"}</h3>
+          <h3 className="text-base font-semibold text-zinc-100">{cafeProfile.name || "Cafe Name"}</h3>
           <div className="flex flex-wrap items-center justify-center gap-2">
-            <span className="rounded-full border border-emerald-400/30 bg-emerald-500/15 px-2.5 py-1 text-xs font-medium text-emerald-700 dark:text-emerald-200">
+            <span className={badgeVariants({ variant: "success" })}>
               Gaming Cafe - Live
             </span>
-            <span className="rounded-full border border-cyan-400/30 bg-cyan-500/15 px-2.5 py-1 text-xs font-medium text-cyan-100">
+            <span className={badgeVariants({ variant: "info" })}>
               {cafeProfile.membershipStatus || "Standard Member"}
             </span>
           </div>
@@ -1702,12 +1688,12 @@ const ToggleSwitch = ({
       </div>
       
       <div className="space-y-2">
-        <div className="flex items-center gap-2 rounded-lg border border-cyan-500/20 bg-slate-900/35 px-3 py-2 text-xs text-slate-200">
-          <Globe className="h-4 w-4 text-cyan-300" />
+        <div className="flex items-center gap-2 rounded-lg border border-blue-500/20 bg-zinc-900/35 px-3 py-2 text-xs text-zinc-200">
+          <Globe className="h-4 w-4 text-blue-300" />
           <span className="truncate">{cafeProfile.website || "Not Available"}</span>
         </div>
-        <div className="flex items-center gap-2 rounded-lg border border-cyan-500/20 bg-slate-900/35 px-3 py-2 text-xs text-slate-200">
-          <Mail className="h-4 w-4 text-cyan-300" />
+        <div className="flex items-center gap-2 rounded-lg border border-blue-500/20 bg-zinc-900/35 px-3 py-2 text-xs text-zinc-200">
+          <Mail className="h-4 w-4 text-blue-300" />
           <span className="truncate">{cafeProfile.email || "No Email Provided"}</span>
         </div>
       </div>
@@ -1745,16 +1731,16 @@ const ToggleSwitch = ({
                       <Button
                         variant="ghost"
                         className={cn(
-                          "account-nav-item w-full justify-start rounded-md border border-transparent text-slate-300 hover:bg-white/5 hover:text-white",
+                          "account-nav-item w-full justify-start rounded-md border border-transparent text-zinc-300 hover:bg-white/5 hover:text-white",
                           page === item.label
-                            ? "border-cyan-400/50 bg-cyan-500/15 text-cyan-100 shadow-[inset_0_0_0_1px_rgba(34,211,238,0.25)]"
+                            ? "border-blue-400/50 bg-blue-500/15 text-blue-100 shadow-[inset_0_0_0_1px_rgba(34,211,238,0.25)]"
                             : ""
                         )}
                         aria-current={page === item.label ? "page" : undefined}
                         onClick={handleViewInpage}
                         data-label={item.label}
                       >
-                        <item.icon className="mr-2 h-4 w-4 text-cyan-300" />
+                        <item.icon className="mr-2 h-4 w-4 text-blue-300" />
                         {item.label}
                       </Button>
                     </motion.div>
@@ -1788,7 +1774,7 @@ const ToggleSwitch = ({
           <div className={cn(
             "p-3 rounded-md text-sm font-medium",
             uploadMessage.includes("successfully") || uploadMessage.includes("deleted") 
-              ? "bg-green-500/20 text-green-400" 
+              ? "bg-emerald-500/20 text-emerald-400" 
               : uploadMessage.includes("Uploading") || uploadMessage.includes("Deleting")
               ? "bg-blue-500/20 text-blue-400"
               : "bg-red-500/20 text-red-400"
@@ -2018,14 +2004,11 @@ const ToggleSwitch = ({
             <div className="flex items-center space-x-2 shrink-0">
               {editingBusinessField === field.key ? (
                 <>
-                  <Button
+                  <Button variant="soft-success"
                     type="button"
-                    variant="outline"
                     size="sm"
                     onClick={() => handleSaveBusinessField(field.key)}
-                    disabled={savingBusinessField === field.key}
-                    className="border-green-500/50 text-green-600 hover:bg-green-500/10 hover:border-green-500 disabled:opacity-50"
-                  >
+                    disabled={savingBusinessField === field.key}>
                     {savingBusinessField === field.key ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
                     ) : (
@@ -2041,7 +2024,7 @@ const ToggleSwitch = ({
                     size="sm"
                     onClick={handleCancelBusinessEdit}
                     disabled={savingBusinessField === field.key}
-                    className="border-gray-500/50 text-gray-600 hover:bg-gray-500/10 hover:border-gray-500"
+                    className="border-zinc-500/50 text-zinc-600 hover:bg-zinc-500/10 hover:border-zinc-500"
                   >
                     <X className="h-4 w-4" />
                   </Button>
@@ -2088,7 +2071,7 @@ const ToggleSwitch = ({
   <Card className="account-panel overflow-hidden">
     <CardHeader className="pb-4">
       <CardTitle className="account-section-title flex items-center gap-2">
-        <Clock className="h-5 w-5 text-cyan-300" />
+        <Clock className="h-5 w-5 text-blue-300" />
         Operating Hours
       </CardTitle>
       <CardDescription className="account-description">
@@ -2101,7 +2084,7 @@ const ToggleSwitch = ({
         {hoursMessage && <p role="status" className="text-sm">{hoursMessage}</p>}
         {!isOwnerSession && <p className="text-sm text-muted-foreground">Sign in as the cafe owner to change operating hours.</p>}
         <p className="text-sm text-muted-foreground">Closing before opening means overnight. Equal times mean 24 hours. Changes apply to new bookings immediately. Existing bookings and held sessions are kept, even outside the new hours.</p>
-        <p className="text-xs text-slate-300">Set `open` and `close` to same time (or use `24H`) for 24-hour operation.</p>
+        <p className="text-xs text-zinc-300">Set `open` and `close` to same time (or use `24H`) for 24-hour operation.</p>
         
         <div className="space-y-3">
           {hoursData.map((entry, index) => (
@@ -2175,14 +2158,11 @@ const ToggleSwitch = ({
               <div className="flex items-center space-x-2 shrink-0">
                 {editingSlot === entry.day ? (
                   <>
-                    <Button
+                    <Button variant="soft-success"
                       type="button"
-                      variant="outline"
                       size="sm"
                       onClick={() => handleSaveSlot(entry.day)}
-                      disabled={savingSlot === entry.day}
-                      className="border-green-500/50 text-green-600 hover:bg-green-500/10 hover:border-green-500 disabled:opacity-50"
-                    >
+                      disabled={savingSlot === entry.day}>
                       {savingSlot === entry.day ? (
                         <Loader2 className="h-4 w-4 animate-spin" />
                       ) : (
@@ -2198,7 +2178,7 @@ const ToggleSwitch = ({
                       size="sm"
                       onClick={handleCancelEdit}
                       disabled={savingSlot === entry.day}
-                      className="border-gray-500/50 text-gray-600 hover:bg-gray-500/10 hover:border-gray-500"
+                      className="border-zinc-500/50 text-zinc-600 hover:bg-zinc-500/10 hover:border-zinc-500"
                     >
                       <X className="h-4 w-4" />
                     </Button>
@@ -2234,19 +2214,19 @@ const ToggleSwitch = ({
     </CardHeader>
     <CardContent className="space-y-4">
       {gstMessage && (
-        <div className="rounded-md border border-cyan-500/30 bg-cyan-500/10 px-3 py-2 text-xs text-cyan-200">
+        <div className="rounded-md border border-blue-500/30 bg-blue-500/10 px-3 py-2 text-xs text-blue-200">
           {gstMessage}
         </div>
       )}
 
       {loadingGst ? (
         <div className="flex items-center justify-center py-8">
-          <Loader2 className="h-6 w-6 animate-spin text-cyan-300" />
+          <Loader2 className="h-6 w-6 animate-spin text-blue-300" />
         </div>
       ) : (
         <>
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-            <label className="flex items-center gap-2 text-sm text-slate-200">
+            <label className="flex items-center gap-2 text-sm text-zinc-200">
               <input
                 type="checkbox"
                 checked={gstProfile.gst_registered}
@@ -2254,7 +2234,7 @@ const ToggleSwitch = ({
               />
               GST Registered
             </label>
-            <label className="flex items-center gap-2 text-sm text-slate-200">
+            <label className="flex items-center gap-2 text-sm text-zinc-200">
               <input
                 type="checkbox"
                 checked={gstProfile.gst_enabled}
@@ -2268,13 +2248,13 @@ const ToggleSwitch = ({
             <Input
               value={gstProfile.gstin}
               onChange={(e) => setGstProfile((p) => ({ ...p, gstin: e.target.value.toUpperCase() }))}
-              className="border-cyan-400/25 bg-slate-900/70 text-slate-100"
+              className="border-blue-400/25 bg-zinc-900/70 text-zinc-100"
               placeholder="GSTIN"
             />
             <Input
               value={gstProfile.legal_name}
               onChange={(e) => setGstProfile((p) => ({ ...p, legal_name: e.target.value }))}
-              className="border-cyan-400/25 bg-slate-900/70 text-slate-100"
+              className="border-blue-400/25 bg-zinc-900/70 text-zinc-100"
               placeholder="Legal Name"
             />
           </div>
@@ -2286,7 +2266,7 @@ const ToggleSwitch = ({
               max={28}
               value={gstProfile.gst_rate}
               onChange={(e) => setGstProfile((p) => ({ ...p, gst_rate: Number(e.target.value || 0) }))}
-              className="border-cyan-400/25 bg-slate-900/70 text-slate-100"
+              className="border-blue-400/25 bg-zinc-900/70 text-zinc-100"
               placeholder="GST %"
             />
             <Input
@@ -2294,7 +2274,7 @@ const ToggleSwitch = ({
               onChange={(e) =>
                 setGstProfile((p) => ({ ...p, state_code: e.target.value.replace(/\D/g, "").slice(0, 2) }))
               }
-              className="border-cyan-400/25 bg-slate-900/70 text-slate-100"
+              className="border-blue-400/25 bg-zinc-900/70 text-zinc-100"
               placeholder="Cafe State Code"
             />
             <Input
@@ -2305,12 +2285,12 @@ const ToggleSwitch = ({
                   place_of_supply_state_code: e.target.value.replace(/\D/g, "").slice(0, 2),
                 }))
               }
-              className="border-cyan-400/25 bg-slate-900/70 text-slate-100"
+              className="border-blue-400/25 bg-zinc-900/70 text-zinc-100"
               placeholder="Place of Supply"
             />
           </div>
 
-          <label className="flex items-center gap-2 text-sm text-slate-200">
+          <label className="flex items-center gap-2 text-sm text-zinc-200">
             <input
               type="checkbox"
               checked={gstProfile.tax_inclusive}
@@ -2319,12 +2299,10 @@ const ToggleSwitch = ({
             Tax Inclusive Pricing
           </label>
 
-          <Button
+          <Button variant="soft-info"
             type="button"
             onClick={saveGstProfile}
-            disabled={savingGst}
-            className="inline-flex items-center gap-2 rounded-lg border border-cyan-400/40 bg-cyan-500/20 text-cyan-100 hover:bg-cyan-500/30"
-          >
+            disabled={savingGst}>
             {savingGst ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
             Save GST Setup
           </Button>
@@ -2353,7 +2331,7 @@ const ToggleSwitch = ({
                             $49/month, billed annually
                           </p>
                         </div>
-                        <Badge className="bg-green-500/20 text-green-400">Active</Badge>
+                        <Badge className="bg-emerald-500/20 text-emerald-400">Active</Badge>
                       </div>
                       <div className="mt-4 space-y-4">
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -2436,7 +2414,7 @@ const ToggleSwitch = ({
                                   "rounded-lg border p-3 text-sm",
                                   isVerified
                                     ? "border-emerald-400/40 bg-emerald-500/10 text-emerald-100"
-                                    : "border-rose-400/40 bg-rose-500/10 text-rose-100"
+                                    : "border-red-400/40 bg-red-500/10 text-red-100"
                                 )}
                               >
                                 {alert?.message || "Document status updated."}
@@ -2446,7 +2424,7 @@ const ToggleSwitch = ({
                         </div>
                       )}
                       {documentActionMessage && (
-                        <div className="rounded-lg border border-cyan-400/40 bg-cyan-500/10 p-3 text-sm text-cyan-100">
+                        <div className="rounded-lg border border-blue-400/40 bg-blue-500/10 p-3 text-sm text-blue-100">
                           {documentActionMessage}
                         </div>
                       )}
@@ -2461,12 +2439,12 @@ const ToggleSwitch = ({
                                 className={cn(
                                   "h-5 w-5",
                                   doc.status === "verified"
-                                    ? "text-green-500"
+                                    ? "text-emerald-500"
                                     : doc.status === "rejected"
                                     ? "text-red-500"
                                     : doc.status === "missing"
-                                    ? "text-slate-500"
-                                    : "text-yellow-500"
+                                    ? "text-zinc-500"
+                                    : "text-amber-500"
                                 )}
                               />
                               <div>
@@ -2481,10 +2459,10 @@ const ToggleSwitch = ({
                                 <div className="text-sm text-muted-foreground">
                                   <p>Status: <span className={cn(
                                     "font-medium",
-                                    doc.status === "verified" ? "text-green-600" :
-                                    doc.status === "rejected" ? "text-red-600" : "text-yellow-600"
+                                    doc.status === "verified" ? "text-emerald-600" :
+                                    doc.status === "rejected" ? "text-red-600" : "text-amber-600"
                                     ,
-                                    doc.status === "missing" && "text-slate-500"
+                                    doc.status === "missing" && "text-zinc-500"
                                   )}>{doc.status === "missing" ? "Missing" : doc.status}</span></p>
                                   {doc.uploadedAt && (
                                     <p>Uploaded: {new Date(doc.uploadedAt).toLocaleDateString()}</p>
@@ -2503,10 +2481,10 @@ const ToggleSwitch = ({
                                     : "secondary"
                                 }
                                 className={cn(
-                                  doc.status === "verified" && "bg-green-500/20 text-green-400",
+                                  doc.status === "verified" && "bg-emerald-500/20 text-emerald-400",
                                   doc.status === "rejected" && "bg-red-500/20 text-red-400",
-                                  doc.status === "pending" && "bg-yellow-500/20 text-yellow-400",
-                                  doc.status === "missing" && "bg-slate-500/20 text-slate-300"
+                                  doc.status === "pending" && "bg-amber-500/20 text-amber-400",
+                                  doc.status === "missing" && "bg-zinc-500/20 text-zinc-300"
                                 )}
                               >
                                 {doc.status === "missing" ? "missing" : doc.status}
@@ -2633,7 +2611,7 @@ const ToggleSwitch = ({
     <Card className="content-card account-panel mb-6 overflow-hidden">
       <CardHeader className="pb-4">
         <CardTitle className="account-section-title flex items-center gap-2">
-          <CreditCard className="icon-lg text-cyan-300" />
+          <CreditCard className="icon-lg text-blue-300" />
           Bank Details
         </CardTitle>
         <CardDescription className="account-description">
@@ -2762,10 +2740,10 @@ const ToggleSwitch = ({
               </Badge>
               <Badge className={`badge-text ${
                 bankDetails.verificationStatus === 'VERIFIED' 
-                  ? 'bg-green-500/20 text-green-400' 
+                  ? 'bg-emerald-500/20 text-emerald-400' 
                   : bankDetails.verificationStatus === 'REJECTED'
                   ? 'bg-red-500/20 text-red-400'
-                  : 'bg-yellow-500/20 text-yellow-400'
+                  : 'bg-amber-500/20 text-amber-400'
               }`}>
                 {bankDetails.verificationStatus || 'PENDING'}
               </Badge>
@@ -2820,12 +2798,10 @@ const ToggleSwitch = ({
                 Edit Bank Details
               </Button>
               {bankDetails.verificationStatus === 'PENDING' && (
-                <Button 
+                <Button variant="soft-warning" 
                   type="button"
-                  variant="outline"
-                  className="border-amber-200 text-amber-600 hover:bg-amber-50"
-                  disabled
-                >
+                  
+                  disabled>
                   <Clock className="icon-md mr-2" />
                   Verification Pending
                 </Button>
@@ -2855,7 +2831,7 @@ const ToggleSwitch = ({
     <Card className="content-card account-panel mb-6 overflow-hidden">
       <CardHeader className="pb-4">
         <CardTitle className="account-section-title flex items-center gap-2">
-          <Calendar className="icon-lg text-cyan-300" />
+          <Calendar className="icon-lg text-blue-300" />
           Bank Details History
         </CardTitle>
         <CardDescription className="account-description">
@@ -2942,15 +2918,15 @@ const ToggleSwitch = ({
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="flex items-center gap-2 p-3 rounded-md bg-green-500/20 text-green-400 border border-green-500/30 mb-4"
+            className="flex items-center gap-2 p-3 rounded-md bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 mb-4"
           >
-            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+            <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
             <span className="body-text-small font-medium flex-1 break-words">{paymentMethodSuccess}</span>
             <Button
               variant="ghost"
               size="sm"
               onClick={clearPaymentMethodMessages}
-              className="ml-auto h-6 w-6 p-0 text-green-400 hover:text-green-300 flex-shrink-0"
+              className="ml-auto h-6 w-6 p-0 text-emerald-400 hover:text-emerald-300 flex-shrink-0"
             >
               <X className="icon-xs" />
             </Button>
@@ -3072,7 +3048,7 @@ const ToggleSwitch = ({
                               {method.is_enabled && (
                                 <Badge 
                                   variant="default"
-                                  className="bg-green-500/20 text-green-500 border-green-500/30 badge-text"
+                                  className="bg-emerald-500/20 text-emerald-500 border-emerald-500/30 badge-text"
                                 >
                                   Active
                                 </Badge>
@@ -3086,10 +3062,10 @@ const ToggleSwitch = ({
                             <div className="mt-2 flex items-center gap-1 body-text-small flex-wrap">
                               <div className={cn(
                                 "w-1 h-1 rounded-full flex-shrink-0",
-                                method.is_enabled ? "bg-green-500" : "bg-gray-400"
+                                method.is_enabled ? "bg-emerald-500" : "bg-zinc-400"
                               )}></div>
                               <span className={cn(
-                                method.is_enabled ? "text-green-600" : "text-gray-500"
+                                method.is_enabled ? "text-emerald-600" : "text-zinc-500"
                               )}>
                                 {isAutoManaged
                                   ? (method.is_enabled ? "Auto-enabled (active cafe pass found)" : "Auto-disabled (no active cafe pass)")
@@ -3104,7 +3080,7 @@ const ToggleSwitch = ({
                           {/* Status Text */}
                           <div className="text-left sm:text-right min-w-[88px] flex-1 sm:flex-initial">
                             {isAutoManaged ? (
-                              <span className="body-text-small text-gray-400 font-semibold tracking-[0.06em]">AUTO</span>
+                              <span className="body-text-small text-zinc-400 font-semibold tracking-[0.06em]">AUTO</span>
                             ) : togglingMethod === method.pay_method_id ? (
                               <span className="body-text-small text-primary font-medium">
                                 {method.is_enabled ? 'Removing...' : 'Adding...'}
@@ -3112,7 +3088,7 @@ const ToggleSwitch = ({
                             ) : (
                               <span className={cn(
                                 "body-text-small font-semibold",
-                                method.is_enabled ? "text-green-500" : "text-gray-400"
+                                method.is_enabled ? "text-emerald-500" : "text-zinc-400"
                               )}>
                                 {method.is_enabled ? 'ACTIVE' : 'INACTIVE'}
                               </span>
@@ -3150,7 +3126,7 @@ const ToggleSwitch = ({
                           className={cn(
                             "badge-text",
                             paymentMethods.filter(m => m.is_enabled).length > 0 
-                              ? "bg-green-500/20 text-green-500 border-green-500/30" 
+                              ? "bg-emerald-500/20 text-emerald-500 border-emerald-500/30" 
                               : "bg-amber-500/20 text-amber-600 border-amber-500/30"
                           )}
                         >
@@ -3162,7 +3138,7 @@ const ToggleSwitch = ({
                           <span className="text-amber-600">⚠️ Register at least one payment method to accept payments.</span>
                         ) : (
                           <>
-                            <span className="text-green-600">✅ Registered methods: </span>
+                            <span className="text-emerald-600">✅ Registered methods: </span>
                             <span className="font-medium">
                               {paymentMethods.filter(m => m.is_enabled).map(m => m.display_name).join(', ')}
                             </span>
@@ -3213,7 +3189,7 @@ const ToggleSwitch = ({
   <Card className="content-card account-panel overflow-hidden">
     <CardHeader className="pb-4">
       <CardTitle className="account-section-title flex items-center gap-2">
-        <DollarSign className="icon-lg text-cyan-300" />
+        <DollarSign className="icon-lg text-blue-300" />
         Payout History
       </CardTitle>
       <CardDescription className="account-description">
@@ -3269,10 +3245,10 @@ const ToggleSwitch = ({
                         className={cn(
                           "badge-text",
                           payout?.status === "SUCCESS"
-                            ? "bg-green-500/20 text-green-400"
+                            ? "bg-emerald-500/20 text-emerald-400"
                             : payout?.status === "FAILED"
                             ? "bg-red-500/20 text-red-400"
-                            : "bg-yellow-500/20 text-yellow-400"
+                            : "bg-amber-500/20 text-amber-400"
                         )}
                       >
                         {payout?.status || "PENDING"}
@@ -3335,7 +3311,7 @@ const ToggleSwitch = ({
   <Card className="content-card account-panel overflow-hidden">
     <CardHeader className="pb-4">
       <CardTitle className="account-section-title flex items-center gap-2">
-        <BellRing className="icon-lg text-cyan-300" />
+        <BellRing className="icon-lg text-blue-300" />
         Booking Notifications
       </CardTitle>
       <CardDescription className="account-description">
@@ -3344,7 +3320,7 @@ const ToggleSwitch = ({
     </CardHeader>
     <CardContent className="space-y-4">
       {loadingNotificationPrefs ? (
-        <div className="flex items-center gap-2 text-sm text-slate-300">
+        <div className="flex items-center gap-2 text-sm text-zinc-300">
           <Loader2 className="h-4 w-4 animate-spin" /> Loading notification settings...
         </div>
       ) : (
@@ -3385,7 +3361,7 @@ const ToggleSwitch = ({
               </p>
             </div>
             {loadingPayAtCafeAutomation ? (
-              <div className="flex items-center gap-2 text-sm text-slate-300">
+              <div className="flex items-center gap-2 text-sm text-zinc-300">
                 <Loader2 className="h-4 w-4 animate-spin" /> Loading auto settings...
               </div>
             ) : (
@@ -3456,7 +3432,7 @@ const ToggleSwitch = ({
   <Card className="content-card account-panel overflow-hidden">
     <CardHeader className="pb-4">
       <CardTitle className="account-section-title flex items-center gap-2">
-        <Wallet className="icon-lg text-cyan-300" />
+        <Wallet className="icon-lg text-blue-300" />
         Subscription Details
       </CardTitle>
       <CardDescription className="account-description">
@@ -3464,9 +3440,9 @@ const ToggleSwitch = ({
       </CardDescription>
     </CardHeader>
     <CardContent>
-      <a href="/subscription" className="mb-4 inline-flex rounded-lg bg-cyan-600 px-4 py-2 font-medium text-white">Manage subscription</a>
+      <a href="/subscription" className="mb-4 inline-flex rounded-lg bg-blue-600 px-4 py-2 font-medium text-white">Manage subscription</a>
       {loadingSubscriptionHistory ? (
-        <div className="flex items-center gap-2 text-sm text-slate-300">
+        <div className="flex items-center gap-2 text-sm text-zinc-300">
           <Loader2 className="h-4 w-4 animate-spin" /> Loading subscriptions...
         </div>
       ) : subscriptionHistory.length ? (
@@ -3502,7 +3478,7 @@ const ToggleSwitch = ({
                           href={`${DASHBOARD_URL}${item.invoice_url}`}
                           target="_blank"
                           rel="noreferrer"
-                          className="inline-flex items-center gap-1 rounded-md border border-cyan-500/40 px-2 py-1 text-xs text-cyan-300 hover:bg-cyan-500/10"
+                          className="inline-flex items-center gap-1 rounded-md border border-blue-500/40 px-2 py-1 text-xs text-blue-300 hover:bg-blue-500/10"
                         >
                           <Download className="h-3.5 w-3.5" />
                           {item.invoice_number || "Invoice"}
@@ -3528,7 +3504,7 @@ const ToggleSwitch = ({
   <Card className="content-card account-panel overflow-hidden">
     <CardHeader className="pb-4">
       <CardTitle className="account-section-title flex items-center gap-2">
-        <Calendar className="icon-lg text-cyan-300" />
+        <Calendar className="icon-lg text-blue-300" />
         Date-wise Settlement
       </CardTitle>
       <CardDescription className="account-description">
@@ -3553,7 +3529,7 @@ const ToggleSwitch = ({
         </div>
       )}
       {loadingSettlementSummary ? (
-        <div className="flex items-center gap-2 text-sm text-slate-300">
+        <div className="flex items-center gap-2 text-sm text-zinc-300">
           <Loader2 className="h-4 w-4 animate-spin" /> Loading settlement report...
         </div>
       ) : (

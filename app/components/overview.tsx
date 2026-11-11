@@ -43,7 +43,7 @@ export function Overview() {
                 <Line
                   type="monotone"
                   dataKey="revenue"
-                  stroke="#098637"
+                  stroke="#10b981"
                   strokeWidth={2}
                   dot={false}
                 />

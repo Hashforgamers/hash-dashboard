@@ -1,8 +1,8 @@
 /* Shared premium surface and motion system for core dashboard routes */
 
 :root {
-  --brand-accent: 211 100% 50%;
-  --brand-accent-strong: 211 100% 44%;
+  --brand-accent: 217 91% 60%;
+  --brand-accent-strong: 221 83% 53%;
   --brand-focus: 211 100% 50%;
   --brand-highlight: 38 92% 52%;
   --surface-0: 240 6% 6%;
@@ -70,8 +70,8 @@
   --booking-text-subtle: hsl(var(--text-muted));
   --booking-link: hsl(var(--brand-accent-strong));
   --booking-link-hover: hsl(var(--brand-accent));
-  --action-primary-bg: #0a84ff;
-  --action-primary-hover: #0071e3;
+  --action-primary-bg: #3b82f6;
+  --action-primary-hover: #2563eb;
   --action-primary-disabled: hsl(215 16% 68%);
   --action-primary-text: #ffffff;
   --toolbar-menu-bg: hsl(var(--surface-1) / 0.96);
@@ -479,27 +479,26 @@ h6 {
 }
 
 .dashboard-btn-primary {
-  border: 1px solid hsl(var(--brand-accent) / 0.6);
-  background: hsl(var(--brand-accent));
-  color: hsl(222 47% 5%);
-  font-weight: 600;
-  border-radius: 0.5rem;
-  padding: 0.55rem 1rem;
-  transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+  border: 1px solid transparent;
+  background: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+  padding: 0 1rem;
+  transition: background 0.15s ease;
 }
 
-.dashboard-btn-primary:hover {
-  background: hsl(var(--brand-accent-strong));
-  border-color: hsl(var(--brand-accent-strong));
+.dashboard-btn-primary:hover:not(:disabled) {
+  background: hsl(var(--primary) / 0.9);
 }
 
 .dashboard-btn-secondary {
-  border: 1px solid var(--dash-module-input-border);
-  background: var(--dash-module-surface-bg);
-  color: var(--premium-title-text);
-  font-weight: 600;
-  border-radius: 0.5rem;
-  padding: 0.55rem 1rem;
+  border: 1px solid hsl(var(--input));
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
+  padding: 0 1rem;
+}
+
+.dashboard-btn-secondary:hover:not(:disabled) {
+  background: hsl(var(--accent));
 }
 
 .dashboard-badge {
@@ -612,7 +611,7 @@ h6 {
 }
 
 .dark .dashboard-module-tab-active {
-  color: hsl(152 69% 78%);
+  color: hsl(156 72% 78%);
 }
 
 .dashboard-module-table {
@@ -796,7 +795,7 @@ h6 {
   border-radius: 999px;
   border: 1px solid rgba(22, 255, 0, 0.28);
   background: rgba(22, 255, 0, 0.12);
-  color: #16ff00;
+  color: #10b981;
   font-size: 0.74rem;
   font-weight: 700;
   line-height: 1;
@@ -847,93 +846,24 @@ h6 {
   box-shadow: inset 0 1px 0 hsl(0 0% 100% / 0.06);
 }
 
-.dashboard-module .text-slate-100,
-.dashboard-module .text-slate-200 {
+.dashboard-module .text-zinc-100,
+.dashboard-module .text-zinc-200 {
   color: var(--premium-title-text);
 }
 
-.dashboard-module .text-slate-300,
-.dashboard-module .text-slate-400,
-.dashboard-module .text-slate-500,
-.dashboard-module .text-gray-500 {
+.dashboard-module .text-zinc-300,
+.dashboard-module .text-zinc-400,
+.dashboard-module .text-zinc-500,
+.dashboard-module .text-zinc-500 {
   color: var(--dash-module-muted);
 }
 
-.dashboard-module .text-cyan-200,
-.dashboard-module .text-cyan-300,
-.dashboard-module .text-cyan-400,
-.dashboard-module .text-sky-200,
-.dashboard-module .text-sky-300,
-.dashboard-module .text-emerald-200,
-.dashboard-module .text-emerald-300,
-.dashboard-module .text-emerald-400,
-.dashboard-module .text-red-300,
-.dashboard-module .text-amber-200 {
+.dashboard-module .text-zinc-600,
+.dashboard-module .text-zinc-700,
+.dashboard-module .text-zinc-600,
+.dashboard-module .text-zinc-700,
+.dashboard-module .text-zinc-800 {
   color: var(--premium-title-text);
-}
-
-.dashboard-module .text-slate-600,
-.dashboard-module .text-slate-700,
-.dashboard-module .text-gray-600,
-.dashboard-module .text-gray-700,
-.dashboard-module .text-gray-800 {
-  color: var(--premium-title-text);
-}
-
-.dashboard-module .bg-emerald-500\/10,
-.dashboard-module .bg-emerald-500\/15,
-.dashboard-module .bg-sky-500\/10,
-.dashboard-module .bg-sky-500\/15,
-.dashboard-module .bg-cyan-500\/10,
-.dashboard-module .bg-red-500\/15,
-.dashboard-module .bg-amber-500\/15 {
-  background: hsl(0 0% 100% / 0.78);
-}
-
-.dashboard-module .border-emerald-400\/20,
-.dashboard-module .border-emerald-400\/30,
-.dashboard-module .border-emerald-400\/40,
-.dashboard-module .border-sky-400\/25,
-.dashboard-module .border-sky-400\/40,
-.dashboard-module .border-cyan-400\/60,
-.dashboard-module .border-red-400\/40,
-.dashboard-module .border-amber-400\/40 {
-  border-color: var(--dash-module-input-border);
-}
-
-.dark .dashboard-module .text-cyan-200,
-.dark .dashboard-module .text-cyan-300,
-.dark .dashboard-module .text-cyan-400,
-.dark .dashboard-module .text-sky-200,
-.dark .dashboard-module .text-sky-300,
-.dark .dashboard-module .text-emerald-200,
-.dark .dashboard-module .text-emerald-300,
-.dark .dashboard-module .text-emerald-400,
-.dark .dashboard-module .text-red-300,
-.dark .dashboard-module .text-amber-200,
-.dark .dashboard-module .text-slate-600,
-.dark .dashboard-module .text-slate-700,
-.dark .dashboard-module .text-gray-600,
-.dark .dashboard-module .text-gray-700,
-.dark .dashboard-module .text-gray-800,
-.dark .dashboard-module .bg-emerald-500\/10,
-.dark .dashboard-module .bg-emerald-500\/15,
-.dark .dashboard-module .bg-sky-500\/10,
-.dark .dashboard-module .bg-sky-500\/15,
-.dark .dashboard-module .bg-cyan-500\/10,
-.dark .dashboard-module .bg-red-500\/15,
-.dark .dashboard-module .bg-amber-500\/15,
-.dark .dashboard-module .border-emerald-400\/20,
-.dark .dashboard-module .border-emerald-400\/30,
-.dark .dashboard-module .border-emerald-400\/40,
-.dark .dashboard-module .border-sky-400\/25,
-.dark .dashboard-module .border-sky-400\/40,
-.dark .dashboard-module .border-cyan-400\/60,
-.dark .dashboard-module .border-red-400\/40,
-.dark .dashboard-module .border-amber-400\/40 {
-  color: revert;
-  background: revert;
-  border-color: revert;
 }
 
 .booking-contrast-card {
@@ -966,18 +896,16 @@ h6 {
 
 .ui-action-primary {
   border: 1px solid transparent;
-  background: var(--action-primary-bg);
-  color: var(--action-primary-text);
+  background: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
 }
 
 .ui-action-primary:hover:not(:disabled) {
-  background: var(--action-primary-hover);
-  color: var(--action-primary-text);
+  background: hsl(var(--primary) / 0.9);
 }
 
 .ui-action-primary:disabled {
-  background: var(--action-primary-disabled);
-  color: var(--action-primary-text);
+  opacity: 0.5;
   box-shadow: none;
 }
 
@@ -993,14 +921,13 @@ h6 {
 }
 
 .ui-action-secondary {
-  border: 1px solid var(--toolbar-menu-border);
-  background: var(--toolbar-menu-bg);
-  color: var(--toolbar-menu-text);
+  border: 1px solid hsl(var(--input));
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
 }
 
 .ui-action-secondary:hover:not(:disabled) {
-  background: var(--toolbar-menu-hover);
-  color: var(--toolbar-menu-text);
+  background: hsl(var(--accent));
 }
 
 .ui-dialog-surface {
@@ -1158,7 +1085,7 @@ h6 {
   flex: 1 1 auto;
   flex-direction: column;
   gap: 0.9rem;
-  color: #f5f5f7;
+  color: #fafafa;
 }
 
 .dashboard-page-shell > .gaming-panel:first-child,
@@ -1170,20 +1097,20 @@ h6 {
 
 .dashboard-page-shell h1.premium-heading,
 .dashboard-page-shell .premium-heading {
-  color: #f5f5f7;
+  color: #fafafa;
   font-size: 1.25rem;
   font-weight: 650;
   line-height: 1.15;
 }
 
 .dashboard-page-shell .premium-subtle {
-  color: #a1a1a6;
+  color: #a1a1aa;
   font-size: 0.86rem;
 }
 
 .dashboard-page-shell .premium-heading svg,
 .dashboard-page-shell > .gaming-panel:first-child svg {
-  color: #8e8e93 !important;
+  color: #a1a1aa !important;
 }
 
 .feature-page-header {
@@ -1203,11 +1130,11 @@ h6 {
 }
 
 .feature-page-header-row svg {
-  color: #8e8e93 !important;
+  color: #a1a1aa !important;
 }
 
 .feature-page-header .premium-heading {
-  color: #f5f5f7;
+  color: #fafafa;
   font-size: 1.25rem;
   font-weight: 650;
   line-height: 1.15;
@@ -1216,7 +1143,7 @@ h6 {
 .feature-page-subtitle {
   margin-top: 0.25rem;
   max-width: 60ch;
-  color: #a1a1a6;
+  color: #a1a1aa;
   font-size: 0.86rem;
   line-height: 1.45;
 }
@@ -1323,7 +1250,7 @@ h6 {
 .dashboard-module [class*="text-blue-"],
 .dashboard-module [class*="text-purple-"],
 .dashboard-module [class*="text-fuchsia-"] {
-  color: #64d2ff !important;
+  color: #60a5fa !important;
 }
 
 .feature-page-shell [class*="shadow-cyan-"],
@@ -1368,7 +1295,7 @@ h6 {
 }
 
 .booking-command-header svg {
-  color: #8e8e93 !important;
+  color: #a1a1aa !important;
 }
 
 .booking-command-panel {
@@ -1399,7 +1326,7 @@ h6 {
 }
 
 .booking-console-label {
-  color: #a1a1a6 !important;
+  color: #a1a1aa !important;
   white-space: nowrap;
 }
 
@@ -1407,24 +1334,24 @@ h6 {
   min-height: 2.2rem;
   border: 1px solid rgba(255, 255, 255, 0.11) !important;
   background: rgba(58, 58, 60, 0.58) !important;
-  color: #d1d1d6 !important;
+  color: #d4d4d8 !important;
   letter-spacing: 0;
   box-shadow: none !important;
 }
 
 .booking-console-tab:hover {
   background: rgba(72, 72, 74, 0.72) !important;
-  color: #f5f5f7 !important;
+  color: #fafafa !important;
 }
 
 .booking-console-tab-active {
   border-color: rgba(10, 132, 255, 0.7) !important;
   background: rgba(10, 132, 255, 0.18) !important;
-  color: #f5f5f7 !important;
+  color: #fafafa !important;
 }
 
 .booking-console-tab-idle {
-  color: #d1d1d6 !important;
+  color: #d4d4d8 !important;
 }
 
 .booking-new-button {
@@ -1435,14 +1362,14 @@ h6 {
 .booking-new-button-disabled {
   border: 1px solid rgba(255, 255, 255, 0.08) !important;
   background: rgba(72, 72, 74, 0.36) !important;
-  color: #8e8e93 !important;
+  color: #a1a1aa !important;
 }
 
 .booking-schedule-card,
 .booking-detail-card {
   border-color: rgba(255, 255, 255, 0.1) !important;
   background: rgba(28, 28, 30, 0.54) !important;
-  color: #f5f5f7;
+  color: #fafafa;
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.045),
     0 16px 42px rgba(0, 0, 0, 0.18);
@@ -1465,11 +1392,11 @@ h6 {
 .booking-date-heading,
 .booking-date-cell {
   background: rgba(28, 28, 30, 0.96) !important;
-  color: #f5f5f7 !important;
+  color: #fafafa !important;
 }
 
 .booking-time-label {
-  color: #d1d1d6 !important;
+  color: #d4d4d8 !important;
   letter-spacing: 0;
 }
 
@@ -1504,12 +1431,12 @@ h6 {
 }
 
 .booking-date-cell-idle {
-  color: #d1d1d6 !important;
+  color: #d4d4d8 !important;
 }
 
 .booking-today-badge {
   background: rgba(10, 132, 255, 0.18) !important;
-  color: #64d2ff !important;
+  color: #60a5fa !important;
 }
 
 .booking-slot-cell {
@@ -1537,13 +1464,13 @@ h6 {
 .booking-slot-pill-open:hover {
   border-color: rgba(48, 209, 88, 0.44) !important;
   background: rgba(48, 209, 88, 0.2) !important;
-  color: #f5f5f7 !important;
+  color: #fafafa !important;
 }
 
 .booking-slot-pill-selected {
   border-color: rgba(10, 132, 255, 0.72) !important;
   background: rgba(10, 132, 255, 0.22) !important;
-  color: #f5f5f7 !important;
+  color: #fafafa !important;
   box-shadow: inset 0 0 0 1px rgba(10, 132, 255, 0.2) !important;
 }
 
@@ -1557,12 +1484,12 @@ h6 {
 .booking-slot-past {
   border: 1px solid rgba(142, 142, 147, 0.22);
   background: rgba(99, 99, 102, 0.22) !important;
-  color: #c7c7cc !important;
+  color: #d4d4d8 !important;
 }
 
 .booking-slot-past:hover {
   background: rgba(99, 99, 102, 0.32) !important;
-  color: #f5f5f7 !important;
+  color: #fafafa !important;
 }
 
 .booking-slot-continuation {
@@ -1653,7 +1580,7 @@ h6 {
 .dashboard-quick-booking .dashboard-console-card-active {
   background: #253448;
   border-color: #426b9c;
-  color: #92c5ff;
+  color: #93c5fd;
 }
 .dashboard-console-icon { display: inline-flex; }
 .dashboard-quick-booking .dashboard-quick-context {
@@ -1736,7 +1663,7 @@ h6 {
 .dashboard-quick-book-button:disabled { opacity: 0.5; }
 .dashboard-quick-booking button:focus-visible,
 .dashboard-quick-center:focus-visible {
-  outline: 2px solid #92c5ff;
+  outline: 2px solid #93c5fd;
   outline-offset: 2px;
 }
 .dashboard-slot-empty {
@@ -1798,72 +1725,50 @@ h6 {
   color: var(--dash-module-input-text);
 }
 
-.account-scope .text-slate-100,
-.account-scope .text-slate-200,
-.access-scope .text-slate-100,
-.access-scope .text-slate-200 {
+.account-scope .text-zinc-100,
+.account-scope .text-zinc-200,
+.access-scope .text-zinc-100,
+.access-scope .text-zinc-200 {
   color: var(--dash-module-input-text) !important;
 }
 
-.account-scope .text-slate-300,
-.access-scope .text-slate-300 {
+.account-scope .text-zinc-300,
+.access-scope .text-zinc-300 {
   color: var(--dash-module-muted) !important;
 }
 
-.account-scope .text-slate-400,
-.access-scope .text-slate-400 {
+.account-scope .text-zinc-400,
+.access-scope .text-zinc-400 {
   color: var(--dash-module-empty) !important;
 }
 
-.account-scope .text-cyan-100,
-.account-scope .text-cyan-200,
-.account-scope .text-cyan-300,
-.access-scope .text-cyan-100,
-.access-scope .text-cyan-200,
-.access-scope .text-cyan-300 {
-  color: hsl(var(--brand-accent-strong)) !important;
-}
-
-.account-scope .bg-slate-900\/35,
-.account-scope .bg-slate-900\/40,
-.account-scope .bg-slate-900\/50,
-.account-scope .bg-slate-900\/70,
-.access-scope .bg-slate-900\/35,
-.access-scope .bg-slate-900\/40,
-.access-scope .bg-slate-900\/50,
-.access-scope .bg-slate-900\/70 {
+.account-scope .bg-zinc-900\/35,
+.account-scope .bg-zinc-900\/40,
+.account-scope .bg-zinc-900\/50,
+.account-scope .bg-zinc-900\/70,
+.access-scope .bg-zinc-900\/35,
+.access-scope .bg-zinc-900\/40,
+.access-scope .bg-zinc-900\/50,
+.access-scope .bg-zinc-900\/70 {
   background: var(--dash-module-surface-bg) !important;
 }
 
-.account-scope .bg-slate-950\/40,
-.account-scope .bg-slate-950\/50,
-.access-scope .bg-slate-950\/40,
-.access-scope .bg-slate-950\/50 {
+.account-scope .bg-zinc-950\/40,
+.account-scope .bg-zinc-950\/50,
+.access-scope .bg-zinc-950\/40,
+.access-scope .bg-zinc-950\/50 {
   background: var(--dash-module-panel-bg) !important;
 }
 
-.account-scope .border-cyan-400\/25,
-.account-scope .border-cyan-400\/35,
-.account-scope .border-cyan-500\/20,
-.account-scope .border-cyan-500\/25,
-.account-scope .border-slate-700,
-.account-scope .border-slate-700\/80,
-.account-scope .border-slate-700\/60,
-.account-scope .border-slate-800\/60,
-.access-scope .border-cyan-400\/25,
-.access-scope .border-cyan-400\/35,
-.access-scope .border-cyan-500\/20,
-.access-scope .border-cyan-500\/25,
-.access-scope .border-slate-700,
-.access-scope .border-slate-700\/80,
-.access-scope .border-slate-700\/60,
-.access-scope .border-slate-800\/60 {
+.account-scope .border-zinc-700,
+.account-scope .border-zinc-700\/80,
+.account-scope .border-zinc-700\/60,
+.account-scope .border-zinc-800\/60,
+.access-scope .border-zinc-700,
+.access-scope .border-zinc-700\/80,
+.access-scope .border-zinc-700\/60,
+.access-scope .border-zinc-800\/60 {
   border-color: var(--dash-module-surface-border) !important;
-}
-
-.account-scope .bg-cyan-500\/10,
-.access-scope .bg-cyan-500\/10 {
-  background: hsl(var(--brand-accent) / 0.12) !important;
 }
 
 .account-scope input,
@@ -1970,21 +1875,21 @@ h6 {
 }
 
 .add-console-form .dash-subtitle,
-.add-console-form .text-slate-300,
-.add-console-form .text-slate-400,
-.add-console-form .text-slate-500,
-.add-console-form .text-gray-500,
-.add-console-form .text-gray-600,
-.add-console-form .text-gray-700 {
+.add-console-form .text-zinc-300,
+.add-console-form .text-zinc-400,
+.add-console-form .text-zinc-500,
+.add-console-form .text-zinc-500,
+.add-console-form .text-zinc-600,
+.add-console-form .text-zinc-700 {
   color: var(--dash-module-muted);
 }
 
 .add-console-form .dash-title,
-.add-console-form .text-slate-100,
-.add-console-form .text-slate-200,
-.add-console-form .text-slate-700,
-.add-console-form .text-slate-800,
-.add-console-form .text-gray-800 {
+.add-console-form .text-zinc-100,
+.add-console-form .text-zinc-200,
+.add-console-form .text-zinc-700,
+.add-console-form .text-zinc-800,
+.add-console-form .text-zinc-800 {
   color: var(--premium-title-text);
 }
 
@@ -2035,12 +1940,12 @@ h6 {
   border-radius: 0.58rem;
   border: 1px solid hsl(0 0% 100% / 0.1);
   background: hsl(210 100% 55% / 0.13);
-  color: hsl(199 100% 70%);
+  color: hsl(217 91% 70%);
 }
 
 .slot-booking-total-line {
   border-top: 1px solid hsl(0 0% 100% / 0.09);
-  color: hsl(151 72% 62%);
+  color: hsl(156 72% 62%);
 }
 
 .slot-booking-modal input,
@@ -2061,23 +1966,23 @@ h6 {
 .slot-booking-modal input:focus,
 .slot-booking-modal textarea:focus,
 .slot-booking-modal button[role="combobox"]:focus {
-  border-color: hsl(211 100% 58% / 0.82);
-  box-shadow: 0 0 0 3px hsl(211 100% 58% / 0.16);
+  border-color: hsl(217 91% 58% / 0.82);
+  box-shadow: 0 0 0 3px hsl(217 91% 58% / 0.16);
 }
 
-.slot-booking-modal .text-gray-800,
-.slot-booking-modal .text-gray-500,
-.slot-booking-modal .text-gray-400,
-.slot-booking-modal .text-slate-500,
-.slot-booking-modal .text-slate-400,
+.slot-booking-modal .text-zinc-800,
+.slot-booking-modal .text-zinc-500,
+.slot-booking-modal .text-zinc-400,
+.slot-booking-modal .text-zinc-500,
+.slot-booking-modal .text-zinc-400,
 .slot-booking-modal .dark\:text-white {
   color: var(--slot-modal-text);
 }
 
-.slot-booking-modal .text-gray-700,
-.slot-booking-modal .dark\:text-gray-300,
-.slot-booking-modal .text-gray-600,
-.slot-booking-modal .dark\:text-gray-400 {
+.slot-booking-modal .text-zinc-700,
+.slot-booking-modal .dark\:text-zinc-300,
+.slot-booking-modal .text-zinc-600,
+.slot-booking-modal .dark\:text-zinc-400 {
   color: var(--slot-modal-muted);
 }
 
@@ -2109,15 +2014,15 @@ h6 {
 }
 
 .slot-booking-modal-accent {
-  border: 1px solid hsl(211 100% 58% / 0.28);
-  background: hsl(211 100% 58% / 0.1);
-  color: hsl(211 100% 74%);
+  border: 1px solid hsl(217 91% 58% / 0.28);
+  background: hsl(217 91% 58% / 0.1);
+  color: hsl(217 91% 74%);
   border-radius: 0.55rem;
 }
 
 .slot-booking-modal-accent:hover:not(:disabled) {
-  background: hsl(211 100% 58% / 0.16);
-  color: hsl(211 100% 82%);
+  background: hsl(217 91% 58% / 0.16);
+  color: hsl(217 91% 82%);
 }
 
 .slot-booking-modal-soft {
@@ -2125,10 +2030,10 @@ h6 {
   background: hsl(240 3% 25% / 0.55);
 }
 
-.slot-booking-modal .border-gray-200,
-.slot-booking-modal .dark\:border-gray-600,
-.slot-booking-modal .border-slate-200,
-.slot-booking-modal .dark\:border-slate-700,
+.slot-booking-modal .border-zinc-200,
+.slot-booking-modal .dark\:border-zinc-600,
+.slot-booking-modal .border-zinc-200,
+.slot-booking-modal .dark\:border-zinc-700,
 .slot-booking-modal .border-emerald-200,
 .slot-booking-modal .dark\:border-emerald-700 {
   border-color: hsl(0 0% 100% / 0.09);
@@ -2137,38 +2042,38 @@ h6 {
 .slot-booking-modal .bg-emerald-50,
 .slot-booking-modal .dark\:bg-emerald-900\/20,
 .slot-booking-modal .dark\:bg-emerald-900\/30 {
-  background: hsl(142 70% 45% / 0.13);
+  background: hsl(160 84% 39% / 0.13);
 }
 
-.slot-booking-modal .bg-orange-50,
-.slot-booking-modal .dark\:bg-orange-900\/20 {
-  background: hsl(36 100% 50% / 0.13);
+.slot-booking-modal .bg-amber-50,
+.slot-booking-modal .dark\:bg-amber-900\/20 {
+  background: hsl(38 92% 50% / 0.13);
 }
 
 .slot-booking-modal .text-emerald-600,
 .slot-booking-modal .text-emerald-700,
 .slot-booking-modal .dark\:text-emerald-300,
 .slot-booking-modal .dark\:text-emerald-400 {
-  color: hsl(151 72% 62%);
+  color: hsl(156 72% 62%);
 }
 
-.slot-booking-modal .text-orange-500,
-.slot-booking-modal .text-orange-600,
-.slot-booking-modal .dark\:text-orange-300,
-.slot-booking-modal .dark\:text-orange-400 {
-  color: hsl(39 100% 62%);
+.slot-booking-modal .text-amber-500,
+.slot-booking-modal .text-amber-600,
+.slot-booking-modal .dark\:text-amber-300,
+.slot-booking-modal .dark\:text-amber-400 {
+  color: hsl(46 97% 65%);
 }
 
 .slot-booking-modal .ui-action-primary {
-  border: 1px solid hsl(211 100% 64% / 0.34);
-  background: hsl(211 100% 50%);
+  border: 1px solid hsl(217 91% 64% / 0.34);
+  background: hsl(217 91% 50%);
   color: white;
   border-radius: 0.55rem;
   box-shadow: none;
 }
 
 .slot-booking-modal .ui-action-primary:hover:not(:disabled) {
-  background: hsl(211 100% 56%);
+  background: hsl(217 91% 56%);
   box-shadow: none;
 }
 
@@ -2247,16 +2152,16 @@ h6 {
   background: var(--slot-modal-footer-bg);
 }
 
-.credit-account-modal .text-slate-100,
-.credit-account-modal .text-slate-400,
-.credit-account-modal .text-slate-300,
-.credit-account-modal .text-slate-200 {
+.credit-account-modal .text-zinc-100,
+.credit-account-modal .text-zinc-400,
+.credit-account-modal .text-zinc-300,
+.credit-account-modal .text-zinc-200 {
   color: var(--slot-modal-text);
 }
 
-.dark .credit-account-modal .text-slate-400,
-.dark .credit-account-modal .text-slate-300,
-.dark .credit-account-modal .text-slate-200 {
+.dark .credit-account-modal .text-zinc-400,
+.dark .credit-account-modal .text-zinc-300,
+.dark .credit-account-modal .text-zinc-200 {
   color: var(--slot-modal-muted);
 }
 
@@ -2284,14 +2189,14 @@ h6 {
 }
 
 .payment-option-card:hover {
-  border-color: hsl(211 100% 58% / 0.34);
+  border-color: hsl(217 91% 58% / 0.34);
   background: hsl(240 3% 27% / 0.56);
 }
 
 .payment-option-card-active {
-  border-color: hsl(211 100% 58% / 0.76);
-  background: hsl(211 100% 58% / 0.16);
-  box-shadow: 0 0 0 1px hsl(211 100% 58% / 0.18);
+  border-color: hsl(217 91% 58% / 0.76);
+  background: hsl(217 91% 58% / 0.16);
+  box-shadow: 0 0 0 1px hsl(217 91% 58% / 0.18);
 }
 
 .payment-option-icon {
@@ -2300,8 +2205,8 @@ h6 {
 }
 
 .payment-option-icon-active {
-  background: hsl(211 100% 58% / 0.18);
-  color: hsl(199 100% 75%);
+  background: hsl(217 91% 58% / 0.18);
+  color: hsl(217 91% 75%);
 }
 
 .payment-option-dot {
@@ -2310,33 +2215,33 @@ h6 {
 }
 
 .payment-option-dot-active {
-  border-color: hsl(211 100% 70%);
-  background: hsl(211 100% 62%);
+  border-color: hsl(217 91% 70%);
+  background: hsl(217 91% 62%);
 }
 
-.meal-selector-modal .text-gray-800,
-.meal-selector-modal .text-gray-700,
-.meal-selector-modal .text-gray-600,
-.meal-selector-modal .text-gray-500,
-.meal-selector-modal .text-gray-400,
-.meal-selector-modal .text-slate-500,
-.meal-selector-modal .text-slate-400,
-.meal-selector-modal .text-slate-300 {
+.meal-selector-modal .text-zinc-800,
+.meal-selector-modal .text-zinc-700,
+.meal-selector-modal .text-zinc-600,
+.meal-selector-modal .text-zinc-500,
+.meal-selector-modal .text-zinc-400,
+.meal-selector-modal .text-zinc-500,
+.meal-selector-modal .text-zinc-400,
+.meal-selector-modal .text-zinc-300 {
   color: var(--slot-modal-text);
 }
 
 .meal-selector-modal .dark\:text-white,
-.meal-selector-modal .dark\:text-gray-300,
-.meal-selector-modal .dark\:text-gray-400 {
+.meal-selector-modal .dark\:text-zinc-300,
+.meal-selector-modal .dark\:text-zinc-400 {
   color: var(--slot-modal-text);
 }
 
-.dark .meal-selector-modal .text-gray-600,
-.dark .meal-selector-modal .text-gray-500,
-.dark .meal-selector-modal .text-gray-400,
-.dark .meal-selector-modal .text-slate-500,
-.dark .meal-selector-modal .text-slate-400,
-.dark .meal-selector-modal .text-slate-300 {
+.dark .meal-selector-modal .text-zinc-600,
+.dark .meal-selector-modal .text-zinc-500,
+.dark .meal-selector-modal .text-zinc-400,
+.dark .meal-selector-modal .text-zinc-500,
+.dark .meal-selector-modal .text-zinc-400,
+.dark .meal-selector-modal .text-zinc-300 {
   color: var(--slot-modal-muted);
 }
 
@@ -2399,14 +2304,14 @@ h6 {
 }
 
 .gaming-nav-active {
-  color: #f5f5f7;
+  color: #fafafa;
   background: rgba(48, 209, 88, 0.14);
   border-color: rgba(48, 209, 88, 0.24);
-  box-shadow: inset 3px 0 0 #30d158;
+  box-shadow: inset 3px 0 0 #10b981;
 }
 
 .dashboard-nav-icon-active {
-  color: #30d158;
+  color: #10b981;
 }
 
 .dashboard-module-panel,
@@ -2433,7 +2338,7 @@ h6 {
 
 .dash-title,
 .live-session-title {
-  color: #f5f5f7;
+  color: #fafafa;
   font-size: 1rem;
   font-weight: 650;
 }
@@ -2451,7 +2356,7 @@ h6 {
 
 .dashboard-module-table-header,
 .dashboard-table th {
-  color: #a1a1a6;
+  color: #a1a1aa;
   font-size: 0.7rem;
   font-weight: 650;
   text-transform: none;
@@ -2459,7 +2364,7 @@ h6 {
 
 .dashboard-module-table td,
 .dashboard-table td {
-  color: #f5f5f7;
+  color: #fafafa;
   font-size: 0.86rem;
 }
 
@@ -2472,11 +2377,11 @@ h6 {
   min-height: 2.5rem;
   background: rgba(58, 58, 60, 0.36);
   border-color: rgba(255, 255, 255, 0.12);
-  color: #f5f5f7;
+  color: #fafafa;
 }
 
 .dashboard-module-input::placeholder {
-  color: #8e8e93;
+  color: #a1a1aa;
 }
 
 .dashboard-module-input:focus {
@@ -2486,13 +2391,13 @@ h6 {
 
 .dashboard-action-button {
   min-height: 2.25rem;
-  border-color: rgba(255, 255, 255, 0.12);
-  background: rgba(58, 58, 60, 0.38);
-  color: #f5f5f7;
+  border-color: hsl(var(--input));
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
 }
 
 .dashboard-action-button:hover {
-  background: rgba(72, 72, 74, 0.58);
+  background: hsl(var(--accent));
 }
 
 .tab-container,
@@ -2504,12 +2409,12 @@ h6 {
 .tab-active,
 .dashboard-module-tab-active {
   background: rgba(255, 255, 255, 0.14);
-  color: #f5f5f7;
+  color: #fafafa;
 }
 
 .tab-inactive,
 .dashboard-module-tab {
-  color: #a1a1a6;
+  color: #a1a1aa;
 }
 
 .live-session-count {
@@ -2517,11 +2422,11 @@ h6 {
   height: 1.55rem;
   border-color: rgba(48, 209, 88, 0.3);
   background: rgba(48, 209, 88, 0.13);
-  color: #30d158;
+  color: #10b981;
 }
 
 .dashboard-module-empty {
-  color: #8e8e93;
+  color: #a1a1aa;
 }
 
 .premium-shell [class*="tracking-"],
@@ -2566,14 +2471,14 @@ h6 {
 .dashboard-page-shell :is(input, select, textarea) {
   border-color: rgba(255, 255, 255, 0.12);
   background: rgba(58, 58, 60, 0.36);
-  color: #f5f5f7;
+  color: #fafafa;
 }
 
 .premium-shell :is(input, select, textarea)::placeholder,
 .dashboard-module :is(input, select, textarea)::placeholder,
 .feature-page-shell :is(input, select, textarea)::placeholder,
 .dashboard-page-shell :is(input, select, textarea)::placeholder {
-  color: #8e8e93;
+  color: #a1a1aa;
 }
 
 /* Dashboard operations: consistent density and visible session actions. */
@@ -2712,7 +2617,7 @@ h6 {
 }
 .operations-empty-action:hover { background: #253448; }
 .operations-dashboard button:focus-visible,
-.operations-empty-action:focus-visible { outline: 2px solid #92c5ff; outline-offset: 2px; }
+.operations-empty-action:focus-visible { outline: 2px solid #93c5fd; outline-offset: 2px; }
 @media (min-width: 1280px) {
   .operations-dashboard .operations-booking-row,
   .operations-dashboard .operations-workspace {
@@ -2792,7 +2697,7 @@ h6 {
 .slot-booking-footer-total { display: flex; flex-direction: column; gap: 1px; margin-right: auto; }
 .slot-booking-footer-total span { font-size: 10px; color: hsl(240 5% 65%); }
 .slot-booking-footer-total strong { font-size: 18px; font-weight: 650; color: hsl(0 0% 97%); line-height: 1.25; }
-.slot-booking-modal button:focus-visible { outline: 2px solid hsl(199 90% 65%); outline-offset: 2px; }
+.slot-booking-modal button:focus-visible { outline: 2px solid hsl(217 91% 65%); outline-offset: 2px; }
 @media (min-width: 768px) {
   .slot-booking-layout { grid-template-columns: minmax(0, 1fr) 280px; align-items: start; }
   .slot-booking-sidebar { position: sticky; top: 0; }
@@ -2933,10 +2838,10 @@ h6 {
 }
 .session-settlement-modal h2 { font-size: 20px; font-weight: 600; }
 .session-settlement-modal :is(p, span, label, input, button) { font-family: var(--font-ui); }
-.session-settlement-modal [class*="bg-slate-800"],
-.session-settlement-modal [class*="bg-slate-700"],
+.session-settlement-modal [class*="bg-zinc-800"],
+.session-settlement-modal [class*="bg-zinc-700"],
 .session-settlement-modal [class*="bg-red-500/10"],
-.session-settlement-modal [class*="bg-cyan-500/10"],
+.session-settlement-modal [class*="bg-blue-500/10"],
 .session-settlement-modal [class*="bg-emerald-500/10"],
 .session-settlement-modal [class*="bg-amber-500/10"] {
   background: #202024;
@@ -3000,7 +2905,7 @@ h6 {
 }
 .payment-settings-panel input[role="switch"]:checked { background: #059669; }
 .payment-settings-panel input[role="switch"]:checked::after { transform: translateX(16px); }
-.payment-settings-panel input:focus-visible { outline: 2px solid #38bdf8; outline-offset: 3px; }
+.payment-settings-panel input:focus-visible { outline: 2px solid #60a5fa; outline-offset: 3px; }
 .payment-method-choice { display: flex; align-items: center; gap: 10px; padding: 10px; border: 1px solid #343439; border-radius: 6px; font-size: 13px; cursor: pointer; }
 .payment-method-choice:has(input:checked) { border-color: #059669; background: #15352d; }
 .payment-methods-panel .body-text { font-size: 14px; line-height: 1.5; }

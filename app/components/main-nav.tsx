@@ -44,7 +44,7 @@ interface NavItem {
   section: string;
 }
 
-const navItems: NavItem[] = [
+export const navItems: NavItem[] = [
   {href:"/dashboard",icon:LayoutDashboard,label:"Dashboard",permission:"dashboard.view",section:"Overview"},
   {href:"/gaming",icon:Laptop,label:"Gaming Stations",permission:"gaming.manage",section:"Café Operations"},
   {href:"/dashboard?tab=booking",icon:Gamepad2,label:"Bookings & Sessions",permission:"booking.manage",section:"Café Operations"},

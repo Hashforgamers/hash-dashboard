@@ -1,4 +1,6 @@
 'use client';
+import { buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 import { useCallback, useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
@@ -25,9 +27,9 @@ import { useDashboardData } from '@/app/context/DashboardDataContext';
 
 // ─── Badge maps ───────────────────────────────────────────────────────────────
 const EVENT_STATUS_BADGE: Record<EventStatus, string> = {
-  draft:     'bg-gray-500/20 text-gray-300 border border-gray-500/30',
+  draft:     'bg-zinc-500/20 text-zinc-300 border border-zinc-500/30',
   published: 'bg-blue-500/20 text-blue-300 border border-blue-500/30',
-  ongoing:   'bg-green-500/20 text-green-300 border border-green-500/30',
+  ongoing:   'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30',
   completed: 'bg-purple-500/20 text-purple-300 border border-purple-500/30',
   canceled:  'bg-red-500/20 text-red-300 border border-red-500/30',
 };
@@ -51,15 +53,15 @@ const EVENT_STATUS_HELP: Record<EventStatus, string> = {
 const EVENT_STATUS_FLOW: EventStatus[] = ['draft', 'published', 'ongoing', 'completed', 'canceled'];
 
 const REG_BADGE: Record<RegistrationStatus, string> = {
-  confirmed: 'bg-green-500/20 text-green-400',
-  pending:   'bg-yellow-500/20 text-yellow-400',
+  confirmed: 'bg-emerald-500/20 text-emerald-400',
+  pending:   'bg-amber-500/20 text-amber-400',
   rejected:  'bg-red-500/20 text-red-400',
-  canceled:  'bg-gray-500/20 text-gray-400',
+  canceled:  'bg-zinc-500/20 text-zinc-400',
 };
 
 const PAY_BADGE: Record<PaymentStatus, string> = {
-  paid:     'bg-green-500/20 text-green-400',
-  pending:  'bg-yellow-500/20 text-yellow-400',
+  paid:     'bg-emerald-500/20 text-emerald-400',
+  pending:  'bg-amber-500/20 text-amber-400',
   failed:   'bg-red-500/20 text-red-400',
   refunded: 'bg-purple-500/20 text-purple-400',
 };
@@ -322,28 +324,28 @@ export default function TournamentDetailPage() {
             {event.title}
           </h1>
         </div>
-          <button className="inline-flex items-center justify-center gap-2 rounded-lg border border-cyan-300/25 bg-slate-900/70 px-3 py-2 text-xs font-semibold text-slate-200 transition-all duration-200 hover:border-cyan-300/45 hover:bg-slate-800/80 hover:text-cyan-100 sm:px-4 sm:text-sm" onClick={exportCSV}>
+          <button className={buttonVariants({ variant: "outline", size: "sm" })} onClick={exportCSV}>
             <Download className="icon-sm" /> Export CSV
           </button>
         </div>
       </div>
 
       {/* ── Breadcrumb ────────────────────────────────── */}
-      <nav className="flex flex-wrap items-center gap-2 text-xs text-slate-400">
+      <nav className="flex flex-wrap items-center gap-2 text-xs text-zinc-400">
         <button
           onClick={() => router.push('/')}
           className="hover:text-foreground transition-colors inline-flex items-center gap-1"
         >
           <Home className="icon-xs" /> Home
         </button>
-        <span className="text-slate-500">|</span>
+        <span className="text-zinc-500">|</span>
         <button
           onClick={() => router.push('/tournaments')}
           className="hover:text-foreground transition-colors"
         >
           Tournaments
         </button>
-        <span className="text-slate-500">|</span>
+        <span className="text-zinc-500">|</span>
         <span className="text-foreground truncate max-w-[260px]">{event.title}</span>
       </nav>
 
@@ -420,7 +422,7 @@ export default function TournamentDetailPage() {
                 className={`rounded-lg border px-3 py-2 text-left transition-all disabled:cursor-not-allowed ${
                   active
                     ? 'border-emerald-400/35 bg-emerald-500/10 text-emerald-100'
-                    : 'border-cyan-400/15 bg-slate-900/60 text-slate-300 hover:border-cyan-300/45 hover:bg-slate-800/80 hover:text-cyan-100 disabled:opacity-55'
+                    : 'border-blue-400/15 bg-zinc-900/60 text-zinc-300 hover:border-blue-300/45 hover:bg-zinc-800/80 hover:text-blue-100 disabled:opacity-55'
                 }`}
               >
                 <span className="block text-xs font-bold uppercase tracking-wider">
@@ -432,7 +434,7 @@ export default function TournamentDetailPage() {
         </div>
 
         {statusError && (
-          <div className="mt-3 rounded-lg border border-rose-400/30 bg-rose-500/10 px-3 py-2 text-sm text-rose-200">
+          <div className="mt-3 rounded-lg border border-red-400/30 bg-red-500/10 px-3 py-2 text-sm text-red-200">
             {statusError}
           </div>
         )}
@@ -442,14 +444,14 @@ export default function TournamentDetailPage() {
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 flex-shrink-0">
         {[
           { label: 'Total',     value: registrations.length, color: 'icon-blue',    icon: <Users        className="icon-md text-blue-400"    /> },
-          { label: 'Confirmed', value: confirmed,            color: 'icon-green',   icon: <CheckCircle2 className="icon-md text-green-400"   /> },
-          { label: 'Pending',   value: pending,              color: 'icon-yellow',  icon: <Clock        className="icon-md text-yellow-400"  /> },
+          { label: 'Confirmed', value: confirmed,            color: 'icon-green',   icon: <CheckCircle2 className="icon-md text-emerald-400"   /> },
+          { label: 'Pending',   value: pending,              color: 'icon-yellow',  icon: <Clock        className="icon-md text-amber-400"  /> },
           { label: 'Checked In',value: checkedIn,            color: 'icon-emerald', icon: <CreditCard   className="icon-md text-emerald-400" /> },
         ].map(({ label, value, color, icon }) => (
           <div key={label} className="rounded-lg border border-border bg-muted/20 px-3 py-2">
             <div className="flex items-center justify-between">
               <div className="min-w-0">
-                <p className="text-xs uppercase tracking-wide text-slate-300/70">{label}</p>
+                <p className="text-xs uppercase tracking-wide text-zinc-300/70">{label}</p>
                 <p className="text-base font-semibold tabular-nums">{value}</p>
               </div>
               <div className={`inline-flex h-7 w-7 items-center justify-center rounded-md ${color}`}>{icon}</div>
@@ -483,20 +485,20 @@ export default function TournamentDetailPage() {
           </div>
         </div>
 
-        <div className="mt-4 rounded-lg border border-cyan-400/15 bg-slate-900/55 p-3">
+        <div className="mt-4 rounded-lg border border-blue-400/15 bg-zinc-900/55 p-3">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
-              <p className="text-sm font-semibold text-cyan-100">Bracket source</p>
-              <p className="mt-1 text-xs text-slate-400">
+              <p className="text-sm font-semibold text-blue-100">Bracket source</p>
+              <p className="mt-1 text-xs text-zinc-400">
                 Include confirmed registrations, or only checked-in teams.
               </p>
             </div>
-            <label className="flex cursor-pointer select-none items-center gap-2 rounded-lg border border-cyan-400/15 bg-slate-950/50 px-3 py-2 text-xs font-semibold text-slate-200">
+            <label className="flex cursor-pointer select-none items-center gap-2 rounded-lg border border-blue-400/15 bg-zinc-950/50 px-3 py-2 text-xs font-semibold text-zinc-200">
               <input
                 type="checkbox"
                 checked={requireCheckInForBracket}
                 onChange={(e) => setRequireCheckInForBracket(e.target.checked)}
-                className="h-4 w-4 rounded border-cyan-400/30 bg-slate-900/70 accent-cyan-400"
+                className="h-4 w-4 rounded border-blue-400/30 bg-zinc-900/70 accent-blue-400"
               />
               Require check-in
             </label>
@@ -517,7 +519,7 @@ export default function TournamentDetailPage() {
               >
                 {engineBusy === 'close-check-in' ? 'Closing...' : 'Close Check-in'}
               </button>
-              <span className="inline-flex items-center rounded-lg border border-cyan-400/10 px-3 py-2 text-xs text-slate-400">
+              <span className="inline-flex items-center rounded-lg border border-blue-400/10 px-3 py-2 text-xs text-zinc-400">
                 {checkedIn} checked-in teams
               </span>
             </div>
@@ -525,26 +527,26 @@ export default function TournamentDetailPage() {
         </div>
 
         {engineError && (
-          <div className="mt-3 rounded-lg border border-rose-400/30 bg-rose-500/10 px-3 py-2 text-sm text-rose-200">
+          <div className="mt-3 rounded-lg border border-red-400/30 bg-red-500/10 px-3 py-2 text-sm text-red-200">
             {engineError}
           </div>
         )}
 
         {event.match_rules && (
-          <div className="mt-4 rounded-lg border border-cyan-400/15 bg-slate-900/60 p-3">
-            <p className="text-xs font-bold uppercase tracking-wider text-cyan-100/80">Match Rules</p>
-            <p className="mt-1 whitespace-pre-wrap text-sm text-slate-200">{event.match_rules}</p>
+          <div className="mt-4 rounded-lg border border-blue-400/15 bg-zinc-900/60 p-3">
+            <p className="text-xs font-bold uppercase tracking-wider text-blue-100/80">Match Rules</p>
+            <p className="mt-1 whitespace-pre-wrap text-sm text-zinc-200">{event.match_rules}</p>
           </div>
         )}
 
         <div className="mt-4">
           <div className="mb-3 flex items-center justify-between gap-3">
-            <h4 className="text-sm font-semibold text-cyan-100">Bracket & Matches</h4>
-            <span className="text-xs text-slate-400">{loadingMatches ? 'Loading matches...' : `${matches.length} matches`}</span>
+            <h4 className="text-sm font-semibold text-blue-100">Bracket & Matches</h4>
+            <span className="text-xs text-zinc-400">{loadingMatches ? 'Loading matches...' : `${matches.length} matches`}</span>
           </div>
 
           {matches.length === 0 ? (
-            <div className="rounded-lg border border-cyan-400/15 bg-slate-900/45 p-3 text-center text-sm text-slate-400">
+            <div className="rounded-lg border border-blue-400/15 bg-zinc-900/45 p-3 text-center text-sm text-zinc-400">
               Generate a bracket from confirmed registrations to create live match cards.
             </div>
           ) : (
@@ -553,22 +555,22 @@ export default function TournamentDetailPage() {
                 const roundNumber = Number(roundKey);
                 return (
                   <div key={roundKey} className="min-w-[290px] flex-1 space-y-3">
-                    <div className="rounded-lg border border-cyan-400/20 bg-slate-900/70 px-3 py-2 text-sm font-semibold text-cyan-100">
+                    <div className="rounded-lg border border-blue-400/20 bg-zinc-900/70 px-3 py-2 text-sm font-semibold text-blue-100">
                       Round {roundNumber}
                     </div>
                     {rounds[roundNumber].map((match) => {
                       const winnerValue = selectedWinners[match.id] || match.winner_team_id || '';
                       return (
-                        <div key={match.id} className="rounded-lg border border-cyan-400/15 bg-slate-900/60 p-3">
+                        <div key={match.id} className="rounded-lg border border-blue-400/15 bg-zinc-900/60 p-3">
                           <div className="mb-2 flex items-center justify-between gap-2">
-                            <span className="text-xs font-bold uppercase tracking-wider text-cyan-100/80">
+                            <span className="text-xs font-bold uppercase tracking-wider text-blue-100/80">
                               Match {match.match_number}
                             </span>
                             <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${
-                              match.status === 'completed' ? 'bg-green-500/20 text-green-300' :
-                              match.status === 'disputed' ? 'bg-rose-500/20 text-rose-300' :
+                              match.status === 'completed' ? 'bg-emerald-500/20 text-emerald-300' :
+                              match.status === 'disputed' ? 'bg-red-500/20 text-red-300' :
                               match.status === 'in_progress' ? 'bg-blue-500/20 text-blue-300' :
-                              'bg-slate-700/80 text-slate-200'
+                              'bg-zinc-700/80 text-zinc-200'
                             }`}>
                               {match.status.replaceAll('_', ' ')}
                             </span>
@@ -579,15 +581,15 @@ export default function TournamentDetailPage() {
                                 key={`${match.id}-${idx}`}
                                 className={`rounded-md border px-3 py-2 text-sm ${
                                   team.id && team.id === match.winner_team_id
-                                    ? 'border-green-400/40 bg-green-500/10 text-green-100'
-                                    : 'border-cyan-400/10 bg-slate-950/50 text-slate-200'
+                                    ? 'border-emerald-400/40 bg-emerald-500/10 text-emerald-100'
+                                    : 'border-blue-400/10 bg-zinc-950/50 text-zinc-200'
                                 }`}
                               >
                                 {team.name}
                               </div>
                             ))}
                           </div>
-                          <div className="mt-3 space-y-2 text-xs text-slate-400">
+                          <div className="mt-3 space-y-2 text-xs text-zinc-400">
                             <p>Map: {match.map_name || 'Pending veto/admin'}</p>
                             <p>Server: {match.server_region || event.server || event.region || 'TBD'}</p>
                             {match.lobby_instructions && <p className="line-clamp-3">{match.lobby_instructions}</p>}
@@ -621,7 +623,7 @@ export default function TournamentDetailPage() {
                             </div>
                             {match.status === 'disputed' && (
                               <button
-                                className="w-full rounded-lg border border-rose-300/30 bg-rose-500/10 px-3 py-2 text-xs font-semibold text-rose-200 hover:bg-rose-500/20"
+                                className={cn(buttonVariants({ variant: "soft-danger", size: "sm" }), "w-full")}
                                 disabled={!!engineBusy || !winnerValue}
                                 onClick={() => runEngineAction(`resolve-${match.id}`, () => resolveMatchDispute(token!, eventId, match.id, { winner_team_id: winnerValue, resolution: 'Resolved by cafe admin from dashboard.' }))}
                               >
@@ -642,9 +644,9 @@ export default function TournamentDetailPage() {
       </details>
 
       {/* ── Registrations Table ───────────────────────── */}
-      <div className="gaming-panel flex flex-col overflow-hidden rounded-xl border border-cyan-400/20 bg-slate-950/45">
+      <div className="gaming-panel flex flex-col overflow-hidden rounded-xl border border-blue-400/20 bg-zinc-950/45">
         {/* Table toolbar */}
-        <div className="dashboard-toolbar justify-between gap-3 p-3 border-b border-cyan-500/20 flex-shrink-0">
+        <div className="dashboard-toolbar justify-between gap-3 p-3 border-b border-blue-500/20 flex-shrink-0">
           <div className="flex items-center gap-2">
             <Users className="icon-md text-muted-foreground" />
             <h3 className="section-title">Registrations</h3>
@@ -682,14 +684,14 @@ export default function TournamentDetailPage() {
         <div className="dashboard-table-shell flex-1">
           <div className="dashboard-table-wrap">
             <table className="dashboard-table">
-            <thead className="sticky top-0 bg-slate-900/70">
+            <thead className="sticky top-0 bg-zinc-900/70">
               <tr>
-                <th className="table-cell text-left text-[11px] font-bold uppercase tracking-wider text-cyan-100/80 sm:text-xs">Team / Player</th>
-                <th className="table-cell text-left text-[11px] font-bold uppercase tracking-wider text-cyan-100/80 sm:text-xs">Contact</th>
-                <th className="table-cell text-left text-[11px] font-bold uppercase tracking-wider text-cyan-100/80 sm:text-xs">Registered</th>
-                <th className="table-cell text-left text-[11px] font-bold uppercase tracking-wider text-cyan-100/80 sm:text-xs">Status</th>
-                <th className="table-cell text-left text-[11px] font-bold uppercase tracking-wider text-cyan-100/80 sm:text-xs">Payment</th>
-                <th className="table-cell text-center text-[11px] font-bold uppercase tracking-wider text-cyan-100/80 sm:text-xs">Waiver</th>
+                <th className="table-cell text-left text-[11px] font-bold uppercase tracking-wider text-blue-100/80 sm:text-xs">Team / Player</th>
+                <th className="table-cell text-left text-[11px] font-bold uppercase tracking-wider text-blue-100/80 sm:text-xs">Contact</th>
+                <th className="table-cell text-left text-[11px] font-bold uppercase tracking-wider text-blue-100/80 sm:text-xs">Registered</th>
+                <th className="table-cell text-left text-[11px] font-bold uppercase tracking-wider text-blue-100/80 sm:text-xs">Status</th>
+                <th className="table-cell text-left text-[11px] font-bold uppercase tracking-wider text-blue-100/80 sm:text-xs">Payment</th>
+                <th className="table-cell text-center text-[11px] font-bold uppercase tracking-wider text-blue-100/80 sm:text-xs">Waiver</th>
               </tr>
             </thead>
             <tbody>
@@ -698,7 +700,7 @@ export default function TournamentDetailPage() {
                   <tr key={i} className="table-row animate-pulse">
                     {[...Array(6)].map((_, j) => (
                       <td key={j} className="table-cell">
-                        <div className="h-4 w-full max-w-[120px] rounded bg-slate-800/80" />
+                        <div className="h-4 w-full max-w-[120px] rounded bg-zinc-800/80" />
                       </td>
                     ))}
                   </tr>
@@ -718,7 +720,7 @@ export default function TournamentDetailPage() {
                 </tr>
               ) : (
                 filteredRegs.map((reg) => (
-                  <tr key={reg.id} className="table-row border-b border-cyan-500/10 last:border-0 hover:bg-cyan-500/5">
+                  <tr key={reg.id} className="table-row border-b border-blue-500/10 last:border-0 hover:bg-blue-500/5">
                     {/* Team / Player */}
                     <td className="table-cell">
                       <p className="table-cell-text font-medium">
@@ -769,7 +771,7 @@ export default function TournamentDetailPage() {
                     {/* Waiver */}
                     <td className="table-cell text-center">
                       {reg.waiver_signed
-                        ? <CheckCircle2 className="w-4 h-4 text-green-400 mx-auto" />
+                        ? <CheckCircle2 className="w-4 h-4 text-emerald-400 mx-auto" />
                         : <XCircle      className="w-4 h-4 text-red-400/50 mx-auto"  />
                       }
                     </td>
@@ -783,8 +785,8 @@ export default function TournamentDetailPage() {
       </div>
 
       {/* ── Teams ─────────────────────────────────────── */}
-      <div className="gaming-panel flex flex-col overflow-hidden rounded-xl border border-cyan-400/20 bg-slate-950/45">
-        <div className="flex items-center justify-between gap-3 p-3 border-b border-cyan-500/20">
+      <div className="gaming-panel flex flex-col overflow-hidden rounded-xl border border-blue-400/20 bg-zinc-950/45">
+        <div className="flex items-center justify-between gap-3 p-3 border-b border-blue-500/20">
           <div className="flex items-center gap-2">
             <Trophy className="icon-md text-muted-foreground" />
             <h3 className="section-title">Teams</h3>
@@ -797,12 +799,12 @@ export default function TournamentDetailPage() {
         </div>
         <div className="dashboard-table-wrap flex-1">
           <table className="dashboard-table">
-            <thead className="sticky top-0 bg-slate-900/70">
+            <thead className="sticky top-0 bg-zinc-900/70">
               <tr>
-                <th className="table-cell text-left text-[11px] font-bold uppercase tracking-wider text-cyan-100/80 sm:text-xs">Team</th>
-                <th className="table-cell text-left text-[11px] font-bold uppercase tracking-wider text-cyan-100/80 sm:text-xs">Type</th>
-                <th className="table-cell text-left text-[11px] font-bold uppercase tracking-wider text-cyan-100/80 sm:text-xs">Members</th>
-                <th className="table-cell text-left text-[11px] font-bold uppercase tracking-wider text-cyan-100/80 sm:text-xs">Created</th>
+                <th className="table-cell text-left text-[11px] font-bold uppercase tracking-wider text-blue-100/80 sm:text-xs">Team</th>
+                <th className="table-cell text-left text-[11px] font-bold uppercase tracking-wider text-blue-100/80 sm:text-xs">Type</th>
+                <th className="table-cell text-left text-[11px] font-bold uppercase tracking-wider text-blue-100/80 sm:text-xs">Members</th>
+                <th className="table-cell text-left text-[11px] font-bold uppercase tracking-wider text-blue-100/80 sm:text-xs">Created</th>
               </tr>
             </thead>
             <tbody>
@@ -811,7 +813,7 @@ export default function TournamentDetailPage() {
                   <tr key={i} className="table-row animate-pulse">
                     {[...Array(4)].map((_, j) => (
                       <td key={j} className="table-cell">
-                        <div className="h-4 w-full max-w-[140px] rounded bg-slate-800/80" />
+                        <div className="h-4 w-full max-w-[140px] rounded bg-zinc-800/80" />
                       </td>
                     ))}
                   </tr>
@@ -827,7 +829,7 @@ export default function TournamentDetailPage() {
                 </tr>
               ) : (
                 teams.map((team) => (
-                  <tr key={team.id} className="table-row border-b border-cyan-500/10 last:border-0 hover:bg-cyan-500/5">
+                  <tr key={team.id} className="table-row border-b border-blue-500/10 last:border-0 hover:bg-blue-500/5">
                     <td className="table-cell">
                       <p className="table-cell-text font-medium">{team.name}</p>
                     </td>
@@ -862,15 +864,15 @@ export default function TournamentDetailPage() {
 
         <div className="space-y-3">
           {winners.map((winner, idx) => (
-            <div key={winner.rank} className="grid grid-cols-1 gap-3 rounded-lg border border-cyan-400/15 bg-slate-900/60 p-3 md:grid-cols-3">
+            <div key={winner.rank} className="grid grid-cols-1 gap-3 rounded-lg border border-blue-400/15 bg-zinc-900/60 p-3 md:grid-cols-3">
               <div className="flex items-center gap-2">
-                <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-cyan-500/20 text-sm font-bold text-cyan-100">
+                <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-blue-500/20 text-sm font-bold text-blue-100">
                   #{winner.rank}
                 </span>
-                <span className="text-sm text-slate-200">Rank {winner.rank}</span>
+                <span className="text-sm text-zinc-200">Rank {winner.rank}</span>
               </div>
               <select
-                className="h-10 w-full rounded-lg border border-cyan-400/25 bg-slate-900/70 px-3 text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-cyan-400/60"
+                className="h-10 w-full rounded-lg border border-blue-400/25 bg-zinc-900/70 px-3 text-sm text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-400/60"
                 value={winner.team_id}
                 onChange={(e) => handleWinnerChange(idx, { team_id: e.target.value })}
               >
@@ -880,7 +882,7 @@ export default function TournamentDetailPage() {
                 ))}
               </select>
               <input
-                className="h-10 w-full rounded-lg border border-cyan-400/25 bg-slate-900/70 px-3 text-sm text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-400/60"
+                className="h-10 w-full rounded-lg border border-blue-400/25 bg-zinc-900/70 px-3 text-sm text-zinc-100 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-blue-400/60"
                 placeholder="Result image URL (optional)"
                 value={winner.verified_snapshot || ''}
                 onChange={(e) => handleWinnerChange(idx, { verified_snapshot: e.target.value })}
@@ -890,7 +892,7 @@ export default function TournamentDetailPage() {
         </div>
 
         {publishError && (
-          <div className="mt-3 rounded-lg border border-rose-400/30 bg-rose-500/10 px-3 py-2 text-sm text-rose-200">
+          <div className="mt-3 rounded-lg border border-red-400/30 bg-red-500/10 px-3 py-2 text-sm text-red-200">
             {publishError}
           </div>
         )}
