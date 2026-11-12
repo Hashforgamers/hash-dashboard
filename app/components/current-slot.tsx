@@ -1061,7 +1061,7 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
             className="dashboard-table-shell live-session-table-shell flex-1 min-h-0 backdrop-blur-sm"
           >
             <div className="lg:hidden h-full overflow-y-auto p-2">
-              {!qrTableLayout && <QrLiveSessions search={searchQuery} onCount={setQrSessionCount} onLoadState={setQrLoadState} />}
+              {!qrTableLayout && <QrLiveSessions search={searchQuery} showInitialLoading={filteredSlots.length === 0} onCount={setQrSessionCount} onLoadState={setQrLoadState} />}
               {Array.isArray(filteredSlots) && filteredSlots.length > 0 ? (
                 <div className="space-y-2">
                   {prioritizedSlots.map((booking) => {
@@ -1227,7 +1227,7 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                   </tr>
                 </thead>
                 <tbody className="dashboard-module-table-body divide-y">
-                  {qrTableLayout && <QrLiveSessions layout="rows" search={searchQuery} onCount={setQrSessionCount} onLoadState={setQrLoadState} />}
+                  {qrTableLayout && <QrLiveSessions layout="rows" search={searchQuery} showInitialLoading={filteredSlots.length === 0} onCount={setQrSessionCount} onLoadState={setQrLoadState} />}
                   {Array.isArray(filteredSlots) && filteredSlots.length > 0 ? (
                     <AnimatePresence mode="popLayout">
                       {prioritizedSlots.map((booking, index) => {

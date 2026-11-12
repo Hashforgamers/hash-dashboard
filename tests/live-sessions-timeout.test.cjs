@@ -34,6 +34,10 @@ test('live session timeout stays unknown, retries, and retains confirmed session
  try{
   await act(async()=>root.render(React.createElement(View,{onLoadState:state=>states.push(state)})));
   assert.equal(requests.length,1);assert.match(document.body.textContent,/Loading live sessions/);
+  await act(async()=>root.render(React.createElement(View,{layout:'rows',showInitialLoading:false,onLoadState:state=>states.push(state)})));
+  assert.equal(document.querySelector('#root').childElementCount,0,'loading must not insert a row above visible sessions');
+  await act(async()=>root.render(React.createElement(View,{onLoadState:state=>states.push(state)})));
+
   await act(async()=>{callbacks.get('connect')();callbacks.get('session.updated')({vendor_id:41});});
   assert.equal(requests.length,1,'overlapping socket refreshes must share one request');
   await act(async()=>requests[0].reject(new Error('signal timed out')));
