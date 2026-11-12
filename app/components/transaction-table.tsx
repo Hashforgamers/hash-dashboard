@@ -1100,7 +1100,7 @@ export function TransactionTable() {
                                 if (col.key === "bookingType") {
                                   return (
                                     <TableCell key={`${slotDate}_${userId}_${col.key}_count`} className="px-4 py-3 text-zinc-700 dark:text-zinc-300">
-                                      {userGroup.bookings.length} bookings
+                                      {userGroup.bookings.length} {userGroup.bookings.length === 1 ? "transaction" : "transactions"}
                                     </TableCell>
                                   );
                                 }
