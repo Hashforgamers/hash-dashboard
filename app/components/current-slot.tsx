@@ -2,6 +2,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { badgeVariants } from "@/components/ui/badge";
 import { LiveSessionTiming } from "./live-session-timing";
+import { httpJson } from "@/lib/http-client";
 import { creditAuthHeaders } from "@/lib/credit-auth";
 import { useState, useEffect, useMemo, useRef } from "react";
 import { createPortal } from "react-dom";
@@ -485,6 +486,19 @@ const releaseSlot = async (consoleType: string, gameId: string, consoleId: strin
   }
 };
 
+function PaymentCheckAction({ failed, onRetry }: { failed: boolean; onRetry: () => void }) {
+  return failed ? (
+    <button type="button" className={buttonVariants({ variant: "outline", size: "sm" })}
+      aria-label="Retry payment check" onClick={onRetry}>
+      Retry check
+    </button>
+  ) : (
+    <span role="status" className="inline-flex h-8 items-center px-2 text-xs text-muted-foreground">
+      Checking payment…
+    </span>
+  );
+}
+
 interface CurrentSlotsProps {
   currentSlots: any[];
   historyBookings?: any[];
@@ -538,7 +552,9 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
 
   // ✅ NEW: Track which bookings have meals locally for instant UI updates
   const [bookingMealStatus, setBookingMealStatus] = useState<Record<string, boolean>>({});
-  const [bookingOutstandingDue, setBookingOutstandingDue] = useState<Record<string, number>>({});
+  const [bookingOutstandingDue, setBookingOutstandingDue] = useState<Partial<Record<string, number | null>>>({});
+  const [paymentCheckRetry, setPaymentCheckRetry] = useState(0);
+  const retryPaymentCheck = () => setPaymentCheckRetry(value => value + 1);
   const [expandedLiveRows, setExpandedLiveRows] = useState<Record<string, boolean>>({});
   const [mealPickerBookingId, setMealPickerBookingId] = useState<string | null>(null);
   const [mealPickerMemberPosByBooking, setMealPickerMemberPosByBooking] = useState<Record<string, number>>({});
@@ -789,71 +805,39 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
     });
   }, [historyRows, searchQuery]);
 
-  // Track outstanding dues per booking so under-time sessions with meal dues still require settlement.
+  const paymentBookingIds = [...new Set(currentSlots.map(getBookingIdString)
+    .filter(id => /^\d+$/.test(id) && Number(id) > 0))].sort().join(",");
+
   useEffect(() => {
-    if (!Array.isArray(filteredSlots) || filteredSlots.length === 0) {
-      setBookingOutstandingDue({});
-      return;
-    }
-
-    const bookingIds = Array.from(
-      new Set(
-        filteredSlots
-          .map((slot) => Number(getBookingIdString(slot)))
-          .filter((id) => Number.isFinite(id) && id > 0)
-      )
-    );
-
-    if (bookingIds.length === 0) {
-      setBookingOutstandingDue({});
-      return;
-    }
-
-    let isMounted = true;
     const controller = new AbortController();
-    const token = localStorage.getItem("jwtToken");
-
-    const fetchOutstanding = async () => {
-      setBookingOutstandingDue({});
-      try {
-        const results = await Promise.all(
-          bookingIds.map(async (bookingId) => {
-            try {
-              const response = await fetch(`${BOOKING_URL}/api/booking/${bookingId}/payment-summary`, {
-                method: "GET",
-                cache: "no-store",
-                headers: {
-                  "Content-Type": "application/json",
-                  ...creditAuthHeaders(),
-                },
-                signal: controller.signal,
-              });
-              if (!response.ok) return [String(bookingId), 0] as const;
-              const data = await response.json();
-              const due = Number(data?.payment_status?.amount_due ?? data?.financial_summary?.amount_due ?? 0);
-              return [String(bookingId), Number.isFinite(due) ? due : 0] as const;
-            } catch {
-              return [String(bookingId), 0] as const;
-            }
-          })
-        );
-
-        if (isMounted) {
-          setBookingOutstandingDue(Object.fromEntries(results));
-        }
-      } catch {
-        if (isMounted) {
-          setBookingOutstandingDue({});
-        }
+    setBookingOutstandingDue({});
+    if (paymentBookingIds) {
+      for (const bookingId of paymentBookingIds.split(",")) {
+        void httpJson<{
+          payment_status?: { amount_due?: number };
+          financial_summary?: { amount_due?: number };
+        }>(`${BOOKING_URL}/api/booking/${bookingId}/payment-summary`, {
+          cache: "no-store",
+          headers: creditAuthHeaders(),
+          signal: controller.signal,
+          dedupe: false,
+        }).then(data => {
+          const due = data?.payment_status?.amount_due ?? data?.financial_summary?.amount_due;
+          if (typeof due !== "number" || !Number.isFinite(due) || due < 0) {
+            throw new Error("Invalid payment balance");
+          }
+          if (!controller.signal.aborted) {
+            setBookingOutstandingDue(previous => ({ ...previous, [bookingId]: due }));
+          }
+        }).catch(() => {
+          if (!controller.signal.aborted) {
+            setBookingOutstandingDue(previous => ({ ...previous, [bookingId]: null }));
+          }
+        });
       }
-    };
-
-    fetchOutstanding();
-    return () => {
-      isMounted = false;
-      controller.abort();
-    };
-  }, [filteredSlots, refreshSlots]);
+    }
+    return () => controller.abort();
+  }, [paymentBookingIds, refreshSlots, paymentCheckRetry]);
 
   // Debug logging (unchanged)
   useEffect(() => {
@@ -1075,7 +1059,8 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                     const progress = Math.min(100, (timer.elapsedTime / timer.duration) * 100);
                     const hasExtraTime = timer.extraTime > 0;
                     const bookingIdToCheck = getBookingIdString(booking);
-                    const outstandingDue = Number(bookingOutstandingDue[bookingIdToCheck] || 0)+Number(booking.runtime?.billing?.amount_due_paise||0)/100;
+                    const checkedDue = bookingOutstandingDue[bookingIdToCheck];
+                    const outstandingDue = (checkedDue ?? 0)+Number(booking.runtime?.billing?.amount_due_paise||0)/100;
                     const hasOutstandingDue = outstandingDue > 0.01;
                     const needsSettlement = hasExtraTime || hasOutstandingDue;
                     const remainingTime = Math.max((timer.duration || 0) - (timer.elapsedTime || 0), 0);
@@ -1175,6 +1160,8 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                             >
                               Settle
                             </button>
+                          ) : typeof checkedDue !== "number" ? (
+                            <PaymentCheckAction failed={checkedDue === null || !bookingIdToCheck} onRetry={retryPaymentCheck} />
                           ) : (
                             <button
                               onClick={() => handleRelease(
@@ -1242,7 +1229,8 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                         const progress = Math.min(100, (timer.elapsedTime / timer.duration) * 100);
                         const hasExtraTime = timer.extraTime > 0;
                         const bookingIdForDue = getBookingIdString(booking);
-                        const outstandingDue = Number(bookingOutstandingDue[bookingIdForDue] || 0)+Number(booking.runtime?.billing?.amount_due_paise||0)/100;
+                        const checkedDue = bookingOutstandingDue[bookingIdForDue];
+                        const outstandingDue = (checkedDue ?? 0)+Number(booking.runtime?.billing?.amount_due_paise||0)/100;
                         const hasOutstandingDue = outstandingDue > 0.01;
                         const needsSettlement = hasExtraTime || hasOutstandingDue;
                         const remainingTime = Math.max((timer.duration || 0) - (timer.elapsedTime || 0), 0);
@@ -1615,7 +1603,9 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
 
                             {/* Action cell - unchanged */}
                             <td className="px-3 py-3 md:px-4">
-                              {isPcSquad ? (
+                              {!needsSettlement && typeof checkedDue !== "number" ? (
+                                <PaymentCheckAction failed={checkedDue === null || !bookingIdForDue} onRetry={retryPaymentCheck} />
+                              ) : isPcSquad ? (
                                 <div className="flex flex-col gap-1">
                                   {needsSettlement && (
                                     <button

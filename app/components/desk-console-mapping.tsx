@@ -7,9 +7,18 @@ export type PhysicalConsole = { id: number; name: string; screen_size_inches: nu
 export function ConsoleLinks({ vendor, game, screen, value, onChange }: {vendor:number|null;game:number;screen:number|null;value:number[];onChange:(ids:number[])=>void}) {
   const [rows,setRows]=useState<PhysicalConsole[]>([]),[error,setError]=useState("")
   useEffect(()=>{const abort=new AbortController();setRows([]);setError("");if(vendor&&game)fetch(`${BOOKING_URL}/api/vendor/${vendor}/desk-consoles/${game}`,{headers:creditAuthHeaders(),signal:abort.signal}).then(async r=>{const d=await r.json();if(!r.ok)throw Error(d.error||"Unable to load consoles");if(!abort.signal.aborted)setRows(d)}).catch(e=>{if(!abort.signal.aborted)setError(e.message)});return()=>abort.abort()},[vendor,game])
+  const eligibleIds = rows.filter(row => !screen || row.screen_size_inches === screen).map(row => row.id)
+  const allSelected = eligibleIds.every(id => value.includes(id))
+
   return <fieldset className="rounded-md border p-3"><legend className="px-1 text-sm font-medium">Compatible consoles</legend>
     <p className="mb-2 text-xs text-muted-foreground">Link consoles that support this game and player configuration. TV size must match.</p>
     {error&&<p role="alert" className="text-xs text-red-500">{error}</p>}
+    {eligibleIds.length > 0 && (
+      <button type="button" className="mb-3 rounded-md border px-3 py-1.5 text-xs hover:bg-muted"
+        onClick={() => onChange(allSelected ? [] : [...new Set([...value, ...eligibleIds])])}>
+        {allSelected ? "Clear selection" : "Select all compatible consoles"}
+      </button>
+    )}
     <div className="grid gap-2 sm:grid-cols-2">{rows.map(row=>{const mismatch=!!screen&&row.screen_size_inches!==screen;return <label key={row.id} className="flex items-center gap-2 text-sm"><input type="checkbox" checked={value.includes(row.id)} disabled={mismatch&&!value.includes(row.id)} onChange={e=>onChange(e.target.checked?[...value,row.id]:value.filter(id=>id!==row.id))}/>{row.name}{row.screen_size_inches?` · ${row.screen_size_inches}″`:""}{mismatch&&<span className="text-xs text-amber-500">TV size differs</span>}</label>})}</div>
     {!error&&!rows.length&&<p className="text-xs text-muted-foreground">Add physical consoles in Console Management first.</p>}
   </fieldset>
