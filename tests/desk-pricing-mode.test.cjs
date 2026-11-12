@@ -5,7 +5,7 @@ const fs=require('node:fs'),vm=require('node:vm'),path=require('node:path'),ts=r
 function editor(cards){
  const state=[],calls=[];let index=0
  const module={exports:{}}
- const deps={'./desk-console-mapping':{ConsoleLinks:()=>null},react:{...React,useEffect(){},useState(initial){const i=index++;if(!(i in state))state[i]=i===1?cards:i===3?false:initial;return [state[i],v=>{state[i]=typeof v==='function'?v(state[i]):v}]}},'@/src/config/env':{BOOKING_URL:''},'@/lib/credit-auth':{creditAuthHeaders:()=>({})}}
+ const deps={'./desk-console-mapping':{ConsoleLinks:()=>null},'@/components/ui/button':{buttonVariants:()=>''},sonner:{toast:{success(){},error(){}}},react:{...React,useEffect(){},useRef(v){return {current:v}},useState(initial){const i=index++;if(!(i in state))state[i]=i===1?cards:i===3?false:initial;return [state[i],v=>{state[i]=typeof v==='function'?v(state[i]):v}]}},'@/src/config/env':{BOOKING_URL:''},'@/lib/credit-auth':{creditAuthHeaders:()=>({})}}
  const code=ts.transpileModule(fs.readFileSync(path.join(__dirname,'../app/components/desk-rate-card.tsx'),'utf8'),{compilerOptions:{jsx:ts.JsxEmit.ReactJSX,module:ts.ModuleKind.CommonJS}}).outputText
  vm.runInNewContext(code,{module,exports:module.exports,require:n=>deps[n]||require(n),crypto:require("node:crypto").webcrypto,fetch:async(url,options)=>{calls.push({url,body:JSON.parse(options.body)});return {ok:true,json:async()=>({success:true})}}})
  function render(){index=0;const nodes=[];function visit(n){if(Array.isArray(n))n.forEach(visit);else if(React.isValidElement(n)){nodes.push(n);visit(n.props.children)}}visit(module.exports.default({vendor:7,games:[{id:11,game_name:'PlayStation'}],baseRate:React.createElement('input',{'aria-label':'Base slot rate'})}));return nodes}

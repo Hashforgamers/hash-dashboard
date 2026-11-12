@@ -70,7 +70,7 @@ export function OffersTable({ offers, onEdit, onDelete, deletingOfferId, getCons
                   </td>
                   <td className="table-cell">
                     <div className="flex items-center gap-1">
-                      <button
+                      <button aria-label="Edit"
                         onClick={() => onEdit(offer)}
                         className={buttonVariants({ variant: "soft-success", size: "icon-sm" })}
                         title="Edit"

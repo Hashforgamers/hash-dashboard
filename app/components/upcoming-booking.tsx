@@ -438,7 +438,6 @@ export function UpcomingBookings({
   // Update bookings when props change
   useEffect(() => {
     if (Array.isArray(initialBookings)) {
-      console.log('📅 UpcomingBookings: Updating from props with', initialBookings.length, 'bookings')
       setUpcomingBookings(initialBookings)
     }
   }, [initialBookings])
@@ -447,14 +446,12 @@ export function UpcomingBookings({
   useEffect(() => {
     if (!socket || !vendorId || !isConnected) return
 
-    console.log('📅 UpcomingBookings: Setting up socket listeners...')
     const parsedVendorId = Number(vendorId)
     if (!Number.isFinite(parsedVendorId)) return
     
     joinVendor(parsedVendorId)
 
     function handleUpcomingBooking(data: any) {
-      console.log('📅 Real-time upcoming booking:', data)
       
       const eventVendorId = Number(data?.vendorId ?? data?.vendor_id);
       const incomingBookingId = Number(data?.bookingId ?? data?.booking_id ?? data?.bookId ?? data?.book_id);
@@ -470,7 +467,6 @@ export function UpcomingBookings({
           
           const exists = prev.some(booking => Number(booking?.bookingId) === incomingBookingId)
           if (!exists) {
-            console.log('➕ Adding new booking immediately')
             return [{ ...normalizedIncoming, bookingId: incomingBookingId }, ...prev]
           }
           return prev
@@ -479,7 +475,6 @@ export function UpcomingBookings({
     }
 
     function handleBookingUpdate(data: any) {
-      console.log('🔄 Booking update:', data)
       
       const eventVendorId = Number(data?.vendorId ?? data?.vendor_id);
       const incomingBookingId = Number(data?.bookingId ?? data?.booking_id ?? data?.bookId ?? data?.book_id);
@@ -517,7 +512,6 @@ export function UpcomingBookings({
     }
 
     function handleBookingAccepted(data: any) {
-      console.log('✅ Booking accepted from notification panel:', data)
       
       const eventVendorId = Number(data?.vendorId ?? data?.vendor_id);
       if (eventVendorId === parsedVendorId) {
@@ -527,7 +521,6 @@ export function UpcomingBookings({
           
           const exists = prev.some(booking => booking?.bookingId === data.bookingId)
           if (!exists) {
-            console.log('📅 ✅ Adding accepted booking to upcoming bookings immediately')
             return [normalizedIncoming, ...prev]
           }
           return prev
@@ -593,7 +586,6 @@ export function UpcomingBookings({
     socket.on('booking_payment_update', handleBookingPaymentUpdate)
 
     return () => {
-      console.log('🧹 Cleaning up UpcomingBookings listeners')
       socket.off('upcoming_booking', handleUpcomingBooking)
       socket.off('booking', handleBookingUpdate)
       socket.off('booking_accepted', handleBookingAccepted)
@@ -648,13 +640,6 @@ export function UpcomingBookings({
   // 🔧 MOVED: Add debugging to see booking data structure AFTER mergedBookings is defined
   useEffect(() => {
     if (mergedBookings.length > 0) {
-      console.log('📊 Sample booking structure:', mergedBookings[0]);
-      console.log('📊 All booking game_ids:', mergedBookings.map(b => ({
-        bookingId: b.bookingId,
-        game_id: b.game_id,
-        consoleType: b.consoleType,
-        hasMeals: b.hasMeals
-      })));
     }
   }, [mergedBookings]);
 
@@ -681,13 +666,6 @@ export function UpcomingBookings({
     ).trim();
     const resolvedVendorId = String(vendorId || "").trim();
 
-    console.log('🚀 Start clicked with params:', {
-      booking,
-      resolvedSystem,
-      resolvedGameId,
-      resolvedBookingId,
-      resolvedVendorId
-    });
     
     if (!resolvedGameId || !resolvedBookingId) {
       console.error('❌ Missing required parameters:', { resolvedGameId, resolvedBookingId, booking });
@@ -849,7 +827,6 @@ export function UpcomingBookings({
 
   // ✅ ENHANCED: Enhanced meal/food icon click handlers
   const handleFoodIconClick = (bookingId: string, customerName: string, hasMeals: boolean) => {
-    console.log('🍽️ Food icon clicked:', { bookingId, customerName, hasMeals });
     
     setMealDetailsModal({
       isOpen: true,
@@ -861,7 +838,6 @@ export function UpcomingBookings({
   };
 
   const handleAddFoodClick = (bookingId: string, customerName: string) => {
-    console.log('➕ Add food clicked:', { bookingId, customerName });
     
     setMealDetailsModal({
       isOpen: true,
@@ -1163,7 +1139,7 @@ export function UpcomingBookings({
                             )}
 
                             {squadEnabled && (
-                              <button
+                              <button aria-label={expanded ? "Collapse squad details" : "Expand squad details"}
                                 type="button"
                                 onClick={() =>
                                   setExpandedBookingRows((prev) => ({
@@ -1369,7 +1345,7 @@ export function UpcomingBookings({
           <div className="w-full max-w-md rounded-2xl border border-zinc-700/60 bg-zinc-900/95 p-5 shadow-2xl">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-semibold text-zinc-100">Cancel Booking</h3>
-              <button
+              <button aria-label="Close"
                 type="button"
                 onClick={closeCancelDialog}
                 className="rounded-full border border-zinc-600/60 p-1 text-zinc-300 hover:bg-zinc-800"
@@ -1441,7 +1417,7 @@ export function UpcomingBookings({
           <div className="w-full max-w-md rounded-2xl border border-zinc-700/60 bg-zinc-900/95 p-5 shadow-2xl">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-semibold text-zinc-100">Mark Booking As No Show</h3>
-              <button
+              <button aria-label="Close"
                 type="button"
                 onClick={closeNoShowDialog}
                 className="rounded-full border border-zinc-600/60 p-1 text-zinc-300 hover:bg-zinc-800"

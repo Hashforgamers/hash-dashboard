@@ -5,7 +5,7 @@ const fs = require('node:fs');
 const vm = require('node:vm');
 
 function fixture() {
-  const source = fs.readFileSync('app/components/newSlot.tsx', 'utf8');
+  const source = fs.readFileSync('app/components/slot-management/booking-form.tsx', 'utf8');
   const tree = ts.createSourceFile('newSlot.tsx', source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
   const names = ['cancelSuggestionFetch', 'showCachedSuggestions', 'fetchUserSuggestions', 'scheduleSuggestionFetch'];
   const declarations = [];

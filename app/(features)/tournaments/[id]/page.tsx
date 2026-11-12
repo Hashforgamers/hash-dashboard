@@ -116,7 +116,6 @@ export default function TournamentDetailPage() {
       if (token) {
         try {
           const decoded_token = jwtDecode<{ sub: { id: number } }>(token)
-          console.log('🔑 Decoded vendor ID:', decoded_token.sub.id)
           setVendorId(decoded_token.sub.id)
         } catch (error) {
           console.error('❌ Error decoding JWT token:', error)

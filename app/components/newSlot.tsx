@@ -172,7 +172,6 @@ const [isLoadingBookings, setIsLoadingBookings] = useState(false)
     try {
       console.time("⏱️ Total fetch time")
 
-      console.log("📡 Fetching consoles...")
       const cacheBust = forceFresh ? `?t=${Date.now()}` : ""
       const consolesUrl = `${BOOKING_URL}/api/getAllConsole/vendor/${resolvedVendorId}${cacheBust}`
       const consoleTypesUrl = `${BOOKING_URL}/api/console-types/vendor/${resolvedVendorId}${cacheBust}`
@@ -246,7 +245,6 @@ const [isLoadingBookings, setIsLoadingBookings] = useState(false)
         : Array.from(resolvedByType.values())
 
       if (consolesResolved.length === 0) {
-        console.log("⚠️ No consoles available")
         return { availableConsoles: [], allSlots: {}, selectedConsole, dates: [] }
       }
 
@@ -254,9 +252,7 @@ const [isLoadingBookings, setIsLoadingBookings] = useState(false)
       for (let i = 0; i < 3; i++) {
         dates.push(getISTDateString(i))
       }
-      console.log("📅 Dates to fetch:", dates)
 
-      console.log("📡 Fetching slots with BATCH API...")
       const nowTs = Date.now()
 
       let slotsData: { [key: string]: any[] } = {}
@@ -272,10 +268,8 @@ const [isLoadingBookings, setIsLoadingBookings] = useState(false)
           : allGameIds
         const batchDates = dates.map(d => d.replace(/-/g, ""))
 
-        console.log("🚀 Batch request:", { vendorId: resolvedVendorId, gameIds, dates: batchDates })
 
         const batchData = await fetchSlotsBatch(resolvedVendorId, gameIds, batchDates, forceFresh)
-        console.log("✅ Batch data received:", batchData)
 
         for (const [dateKey, slots] of Object.entries(batchData)) {
           const dateString = `${dateKey.slice(0, 4)}-${dateKey.slice(4, 6)}-${dateKey.slice(6, 8)}`
@@ -393,7 +387,6 @@ const fetchSlotBookings = async (slotIds: number[], date: string) => {
   
   setIsLoadingBookings(true)
   const normalizedDate = normalizeBookedDate(date)
-  console.log('🔍 Fetching bookings for slots:', slotIds, 'date:', normalizedDate)
   
   // ✅ Check if querying past slots
   const todayIST = getISTDateString(0)
@@ -407,7 +400,6 @@ const fetchSlotBookings = async (slotIds: number[], date: string) => {
     const url = `${BOOKING_URL}/api/vendor/${vendorId}/slot-bookings?slot_ids=${slotIdsParam}&date=${normalizedDate}${statusParam}`
     const data = await fetchWithDedup(url)
     if (requestId !== bookingsRequest.current) return
-    console.log('📥 Slot bookings response:', data)
 
     if (data?.success && data?.bookings) {
       const rawBookings = Array.isArray(data.bookings) ? data.bookings : []
@@ -443,12 +435,8 @@ const fetchSlotBookings = async (slotIds: number[], date: string) => {
       })
 
       setSlotBookings(dedupedBookings)
-      console.log(
-        `✅ Loaded ${dedupedBookings.length} unique ${isPastDate ? 'past' : 'active'} bookings (raw: ${rawBookings.length})`
-      )
     } else {
       setSlotBookings([])
-      console.log('📭 No bookings found')
     }
   } catch (error) {
     console.error('❌ Error fetching slot bookings:', error)
@@ -527,7 +515,6 @@ const fetchSlotBookings = async (slotIds: number[], date: string) => {
         if (!cachedBooking) {
           setIsLoading(false)
         }
-        console.log("✅ Booking data load complete")
       })
 
     return () => {

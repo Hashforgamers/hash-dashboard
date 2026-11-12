@@ -852,7 +852,7 @@ export default function ManageExtraServices() {
                                               )}>
                                                 {(item.stock_quantity ?? 0)} {item.stock_unit || "units"}
                                               </span>
-                                              <button
+                                              <button aria-label="Update inventory"
                                                 onClick={() => openInventoryDialog(cat.id, item)}
                                                 className={iconButtonClass}
                                                 title="Update inventory"

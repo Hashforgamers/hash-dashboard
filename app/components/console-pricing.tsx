@@ -408,7 +408,6 @@ export default function ConsolePricing() {
     const enabled = new URLSearchParams(window.location.search).get("debugPricing") === "1";
     setDebugEnabled(enabled);
     if (enabled) {
-      console.info("[console-pricing-debug] enabled (via ?debugPricing=1)");
     }
   }, []);
 
@@ -424,17 +423,12 @@ export default function ConsolePricing() {
       vendorId,
     };
     (window as any).__consolePricingDebug = snapshot;
-    console.debug("[console-pricing-debug] render", snapshot);
   });
 
   useEffect(() => {
     if (!vendorId) return;
     cacheSyncRunsRef.current += 1;
     if (debugEnabled) {
-      console.debug("[console-pricing-debug] base-pricing sync start", {
-        run: cacheSyncRunsRef.current,
-        hasCached: Boolean(cachedBasePricing && Object.keys(cachedBasePricing).length > 0),
-      });
     }
     if (cachedBasePricing) {
       const normalizedCached = normalizePricingState(cachedBasePricing);
@@ -445,10 +439,6 @@ export default function ConsolePricing() {
           priceStateSetCountRef.current += 1;
           lastPriceSetAtRef.current = new Date().toISOString();
           if (debugEnabled) {
-            console.debug("[console-pricing-debug] setPrices from cache", {
-              count: priceStateSetCountRef.current,
-              at: lastPriceSetAtRef.current,
-            });
           }
         }
         return changed ? next : prev;
@@ -1573,7 +1563,7 @@ export default function ConsolePricing() {
                                   className={inputSurfaceClass}
                                 />
                               </div>
-                              <button
+                              <button aria-label="Remove tier"
                                 onClick={() => removeControllerTier(console.type, tier.id)}
                                 className={`${destructiveIconButtonClass} self-end`}
                                 title="Remove tier"
@@ -1818,7 +1808,7 @@ export default function ConsolePricing() {
                                       </span>
                                     </div>
 
-                                    <button
+                                    <button aria-label="Remove discount for this player count"
                                       onClick={() => removeSquadRule(group, rule.players)}
                                       className={destructiveIconButtonClass}
                                       title="Remove discount for this player count"

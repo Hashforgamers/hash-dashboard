@@ -103,11 +103,6 @@ export function SlotBookingForm({
   const [squadPolicyState, setSquadPolicyState] = useState<"loading" | "ready" | "error">("loading")
   const [squadPolicyVendor, setSquadPolicyVendor] = useState<number | null>(null)
   const api = useApiClient()
-  console.log('🎯 SlotBookingForm rendered with:', { 
-    isOpen, 
-    selectedSlotsCount: selectedSlots.length,
-    selectedSlots 
-  })
 
   const [timeMode, setTimeMode] = useState("range")
   const [pickerDate, setPickerDate] = useState("")
@@ -444,10 +439,8 @@ export function SlotBookingForm({
 
 
   const calculateAutoWaiveOff = (slots: SelectedSlot[]) => {
-    console.log('💰 Calculating auto waive-off for slots:', slots)
     
     const nowTs = Date.now()
-    console.log('🕐 Current IST time:', new Date().toLocaleTimeString('en-IN', { timeZone: IST_TIMEZONE }))
     
     let totalAutoWaiveOff = 0
     
@@ -459,13 +452,6 @@ export function SlotBookingForm({
       const slotDurationMs = slotEndTime.getTime() - slotDateTime.getTime()
       const slotDurationMinutes = slotDurationMs / (1000 * 60)
       
-      console.log(`🕐 Slot Analysis for ${slot.start_time}-${slot.end_time}:`, {
-        slotId: slot.slot_id,
-        slotDurationMinutes,
-        currentTime: new Date(nowTs).toLocaleTimeString('en-IN', { timeZone: IST_TIMEZONE }),
-        slotStart: slotDateTime.toLocaleTimeString('en-IN'),
-        slotEnd: slotEndTime.toLocaleTimeString('en-IN')
-      })
       
       if (nowTs >= slotDateTime.getTime() && nowTs < slotEndTime.getTime()) {
         const elapsedMs = nowTs - slotDateTime.getTime()
@@ -474,27 +460,17 @@ export function SlotBookingForm({
         const elapsedPercentage = elapsedMinutes / slotDurationMinutes
         const waveOffAmount = slot.console_price * elapsedPercentage
         
-        console.log(`💰 Wave-off Calculation:`, {
-          elapsedMinutes: Math.round(elapsedMinutes * 10) / 10,
-          totalSlotMinutes: slotDurationMinutes,
-          elapsedPercentage: Math.round(elapsedPercentage * 100) + '%',
-          waveOffAmount: Math.round(waveOffAmount),
-          consolePrice: slot.console_price
-        })
         
         totalAutoWaiveOff += waveOffAmount
       }
       else if (nowTs < slotDateTime.getTime()) {
-        console.log(`⏰ Booking made in advance for ${slot.start_time} - no wave-off needed`)
       }
       else if (nowTs >= slotEndTime.getTime()) {
-        console.log(`⚠️ Slot ${slot.start_time} already ended - full wave-off applied`)
         totalAutoWaiveOff += slot.console_price
       }
     })
     
     const finalWaveOff = Math.round(totalAutoWaiveOff)
-    console.log('💰 Total auto waive-off calculated:', finalWaveOff)
     return finalWaveOff
   }
 
@@ -716,7 +692,6 @@ useEffect(() => {
       const data = await getBookingSettings<any>(`${DASHBOARD_URL}/api/vendor/${vendorId}/active-pricing`, settingsVersion)
       if (cancelled) return
       if (data.success) {
-        console.log('🏷️ Active pricing loaded:', data.pricing)
         setActivePricing(data.pricing)
       }
     } catch (err) {
@@ -883,10 +858,27 @@ useEffect(() => {
     }, 150)
   }
 
+  // Returning-gamer context (tier, visits, last visit) from the gamer list, loaded once when first needed.
+  const [gamerDirectory, setGamerDirectory] = useState<any[] | null>(null)
+  const loadGamerDirectory = () => {
+    const vendorId = getVendorIdFromToken()
+    if (gamerDirectory !== null || !vendorId) return
+    setGamerDirectory([])
+    fetch(`${DASHBOARD_URL}/api/vendor/${vendorId}/knowYourGamer`)
+      .then((r) => (r.ok ? r.json() : []))
+      .then((rows) => setGamerDirectory(Array.isArray(rows) ? rows : []))
+      .catch(() => undefined)
+  }
+  const returningGamer = useMemo(() => {
+    const digits = phone.replace(/\D/g, "").slice(-10)
+    if (!gamerDirectory?.length || digits.length < 10) return null
+    return gamerDirectory.find((g: any) => String(g?.contact ?? "").replace(/\D/g, "").slice(-10) === digits) ?? null
+  }, [gamerDirectory, phone])
+
   const handleSuggestionClick = (user: UserSuggestion) => {
+    loadGamerDirectory()
     cancelSuggestionFetch()
     setSuggestionError('')
-    console.log('👤 User suggestion clicked:', user)
     if (blurTimeoutRef.current) {
       clearTimeout(blurTimeoutRef.current)
       blurTimeoutRef.current = null
@@ -969,7 +961,6 @@ useEffect(() => {
   }, [isOpen, paymentType, matchedPrimaryUser?.id])
 
   const handleMealSelectorConfirm = (meals: SelectedMeal[]) => {
-    console.log('🍽️ Meals confirmed:', meals)
     setSelectedMeals(meals)
     setIsMealSelectorOpen(false)
   }
@@ -986,7 +977,6 @@ const getEffectivePrice = (slot: SelectedSlot): number => {
   return slot.console_price
 }
   const handleMealSelectorClose = () => {
-    console.log('🍽️ Meal selector closed')
     setIsMealSelectorOpen(false)
   }
 
@@ -1497,17 +1487,8 @@ const getEffectivePrice = (slot: SelectedSlot): number => {
     </Card>
   )
 
-  console.log('💰 Pricing calculation:', {
-    consoleTotal,
-    mealsTotal,
-    waiveOffAmount,
-    autoWaiveOffAmount,
-    extraControllerFare,
-    totalAmount
-  })
 
   const validateForm = () => {
-    console.log('✅ Validating form...')
     const newErrors: Record<string, string> = {}
 
     if (!name.trim()) newErrors.name = 'Name is required'
@@ -1594,7 +1575,6 @@ const getEffectivePrice = (slot: SelectedSlot): number => {
     }
 
     setErrors(newErrors)
-    console.log('✅ Form validation result:', { isValid: Object.keys(newErrors).length === 0, errors: newErrors })
     return Object.keys(newErrors).length === 0
   }
 
@@ -1602,23 +1582,19 @@ const getEffectivePrice = (slot: SelectedSlot): number => {
     e.preventDefault()
     if (submittingRef.current || submissionUncertain) return
     setSubmitError("")
-    console.log('🚀 Form submission started')
     
     if (!validateForm()) {
-      console.log('❌ Form validation failed')
       return
     }
 
     const vendorId = getVendorIdFromToken()
     if (!vendorId) {
-      console.log('❌ No vendor ID, cannot submit')
       setSubmitError('Your session is unavailable. Sign in again before booking.')
       return
     }
 
     submittingRef.current = true
     setIsSubmitting(true)
-    console.log('📝 Preparing booking data...')
 
     try {
 
@@ -1664,7 +1640,6 @@ const getEffectivePrice = (slot: SelectedSlot): number => {
         }
       }
 
-      console.log('📤 Submitting booking data:', bookingData)
 
       const bookingHeaders: Record<string, string> = {
         'Content-Type': 'application/json',
@@ -1685,18 +1660,14 @@ const getEffectivePrice = (slot: SelectedSlot): number => {
         }
       )
 
-console.log('📥 API response status: success')
 
-console.log('📥 API response data:', result)
 
 if (result?.success === true || result?.success === 'true' || result?.booking || result?.id) {
-  console.log('✅ Booking created successfully!')
   // Return staff directly to the schedule after a confirmed server response.
   onClose()
   onBookingComplete(result)
 
   if (typeof window !== 'undefined') {
-    console.log('📡 Dispatching refresh-dashboard event')
     window.dispatchEvent(new CustomEvent('refresh-dashboard'))
   }
 
@@ -1705,7 +1676,6 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
   try { localStorage.removeItem(`userList:${vendorId}`) } catch { /* Booking is already saved. */ }
 } else {
   // Only show error if response was not ok
-  console.log('❌ Unexpected response format:', result)
   setSubmissionUncertain(true)
   setSubmitError('The server returned an unrecognized confirmation. Close this form and check Booking Records before creating another booking.')
 }
@@ -1722,8 +1692,23 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
     } finally {
       submittingRef.current = false
       setIsSubmitting(false)
-      console.log('🏁 Form submission completed')
     }
+  }
+
+  // Phones: drag the sheet's handle down to dismiss it; a short drag springs back.
+  const [sheetDrag, setSheetDrag] = useState(0)
+  const dragStartY = useRef<number | null>(null)
+  const sheetHandlers = {
+    onTouchStart: (e: React.TouchEvent) => { dragStartY.current = e.touches[0].clientY },
+    onTouchMove: (e: React.TouchEvent) => {
+      if (dragStartY.current !== null) setSheetDrag(Math.max(0, e.touches[0].clientY - dragStartY.current))
+    },
+    onTouchEnd: () => {
+      const dismiss = sheetDrag > 120
+      dragStartY.current = null
+      setSheetDrag(0)
+      if (dismiss) onClose()
+    },
   }
 
   if (!isOpen) return null
@@ -1742,9 +1727,13 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
           role="dialog"
           aria-modal="true"
           aria-label="New Gaming Session"
+          style={sheetDrag ? { transform: `translateY(${sheetDrag}px)`, transition: "none" } : { transition: "transform 0.2s ease" }}
           className="slot-booking-modal flex max-h-[92dvh] w-full max-w-[960px] flex-col overflow-hidden rounded-t-2xl border pb-[env(safe-area-inset-bottom)] shadow-2xl animate-in slide-in-from-bottom duration-300 motion-reduce:animate-none sm:rounded-2xl sm:pb-0 sm:slide-in-from-bottom-4 sm:fade-in-0"
         >
-          <div className="slot-booking-modal-header relative flex items-center justify-between border-b px-4 py-3">
+          <div {...sheetHandlers} className="flex shrink-0 touch-none justify-center pb-1 pt-2 sm:hidden" aria-hidden="true">
+            <span className="h-1.5 w-10 rounded-full bg-white/25" />
+          </div>
+          <div {...sheetHandlers} className="slot-booking-modal-header relative flex items-center justify-between border-b px-4 py-3 max-sm:touch-pan-x">
             <div className="min-w-0">
               <h2 className="slot-booking-title">New Gaming Session</h2>
               {selectedSlots.length > 0 && <p className="slot-booking-context">
@@ -2076,6 +2065,13 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                           )}
                         </AnimatePresence>
                         {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name}</p>}
+                        {returningGamer && (
+                          <p className="mt-1.5 text-xs text-muted-foreground" role="status">
+                            Returning gamer{returningGamer.membershipTier ? ` · ${returningGamer.membershipTier}` : ""}
+                            {Number(returningGamer.totalSlots) > 0 ? ` · ${returningGamer.totalSlots} visits` : ""}
+                            {returningGamer.lastVisit ? ` · last here ${new Date(returningGamer.lastVisit).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}` : ""}
+                          </p>
+                        )}
                       </div>
 
                       {bookingFieldConfig.phone.visible && (

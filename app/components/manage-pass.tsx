@@ -919,7 +919,7 @@ function EditPassDialog({ passObj, passTypes, onSave }: any) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <button className={buttonVariants({ variant: "soft-success", size: "icon-sm" })} title="Edit">
+        <button aria-label="Edit" className={buttonVariants({ variant: "soft-success", size: "icon-sm" })} title="Edit">
           <Pencil className="icon-md text-emerald-600 dark:text-emerald-400" />
         </button>
       </DialogTrigger>

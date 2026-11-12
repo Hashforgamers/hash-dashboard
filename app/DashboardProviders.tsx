@@ -10,10 +10,11 @@ import { TableDragScroll } from "./components/TableDragScroll";
 import { MobileInstallBanner } from "./components/MobileInstallBanner";
 import { Toaster } from "@/components/ui/sonner";
 import { ConfirmDialogHost } from "./components/confirm-dialog";
+import { ServerWakeBanner } from "./components/server-wake-banner";
 export default function DashboardProviders({children}:{children:React.ReactNode}) {
   return <AuthProvider><ThemeProvider attribute="class" forcedTheme="dark" enableSystem={false}>
     <SocketProvider><SubscriptionProvider><AccessProvider><DashboardDataProvider>
-      <DashboardDataBus/><TableDragScroll/><MobileInstallBanner/>{children}<ConfirmDialogHost/><Toaster theme="dark" position="top-right" richColors closeButton/>
+      <DashboardDataBus/><TableDragScroll/><MobileInstallBanner/>{children}<ServerWakeBanner/><ConfirmDialogHost/><Toaster theme="dark" position="top-right" richColors closeButton/>
     </DashboardDataProvider></AccessProvider></SubscriptionProvider></SocketProvider>
   </ThemeProvider></AuthProvider>;
 }

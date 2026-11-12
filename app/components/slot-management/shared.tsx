@@ -361,12 +361,10 @@ export const pendingRequests = new Map<string, Promise<any>>()
 export async function fetchWithDedup(url: string): Promise<any> {
   const cached = getCachedData(url)
   if (cached) {
-    console.log(`✅ Cache hit: ${url}`)
     return cached
   }
 
   if (pendingRequests.has(url)) {
-    console.log(`⏳ Deduped request: ${url}`)
     return pendingRequests.get(url)
   }
 
@@ -397,7 +395,6 @@ export async function fetchSlotsBatch(vendorId: number, gameIds: number[], dates
   const cacheKey = `batch:${vendorId}:${gameIds.join(',')}:${dates.join(',')}`
   const cached = forceFresh ? null : getCachedData(cacheKey)
   if (!forceFresh && cached) {
-    console.log(`✅ Batch cache hit`)
     return cached
   }
   
@@ -413,7 +410,6 @@ export async function fetchSlotsBatch(vendorId: number, gameIds: number[], dates
       retries: 0,
     })
 
-    console.log('✅ Batch fetch successful:', data)
     setCachedData(cacheKey, data)
     return data
   } catch (error) {

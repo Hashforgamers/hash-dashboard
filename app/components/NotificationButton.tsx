@@ -142,7 +142,6 @@ export function NotificationButton({
     if (!vendorId) return
 
     try {
-      console.log(`🔍 NotificationButton: Fetching pending bookings for vendor ${vendorId}...`)
       let docNotifications: DocumentStatusNotification[] = []
       let lowStockNotifications: LowStockNotification[] = []
       try {
@@ -200,7 +199,6 @@ export function NotificationButton({
       const data = await response.json()
 
       if (data.success && data.notifications) {
-        console.log(`📋 NotificationButton: Loaded ${data.notifications.length} pending bookings from API`)
         const deduped = new Map<string, any>()
         data.notifications.forEach((n: any) => {
           const key = getPayAtCafeGroupKey(n) || `pay:${n.event_id || n.bookingId || Date.now()}`
@@ -219,7 +217,6 @@ export function NotificationButton({
           return merged
         })
       } else {
-        console.log('📋 NotificationButton: No pending bookings found')
         setNotifications((prev) => {
           const mealNotices = prev.filter((n: any) => n.kind === "meals_added")
           const merged = [...mealNotices, ...docNotifications, ...lowStockNotifications]
@@ -240,10 +237,8 @@ export function NotificationButton({
 
   // Stable callback for when NotificationPanel accepts a booking
   const handleBookingAcceptedFromPanel = useCallback((bookingData: any) => {
-    console.log('🎯 NotificationButton: Booking accepted from NotificationPanel:', bookingData)
 
     if (onBookingAccepted) {
-      console.log('📅 NotificationButton: Triggering upstream callback for booking acceptance')
       onBookingAccepted(bookingData)
     }
   }, [onBookingAccepted])
@@ -252,12 +247,10 @@ export function NotificationButton({
   useEffect(() => {
     if (!latestBookingEvent) return
 
-    console.log('🔔 NotificationButton: Received booking event from Dashboard:', latestBookingEvent)
 
     // Check if this is a pay-at-cafe notification for our vendor
     const eventBatchId = latestBookingEvent.batch_id || latestBookingEvent?.squad_details?.batch_id
     if (isPendingPayAtCafeEvent(latestBookingEvent)) {
-      console.log('🔔 NotificationButton: Processing pay at cafe notification for vendor:', vendorId)
       // Always refetch pending list so batch totals + amount are accurate.
       void fetchPendingBookings()
 
@@ -282,16 +275,9 @@ export function NotificationButton({
         })
           setTimeout(() => notification.close(), 10000)
         } catch (notifError) {
-          console.log('NotificationButton: Browser notification failed:', notifError)
         }
       }
     } else {
-      console.log('🚫 NotificationButton: Ignoring event - not a pay-at-cafe notification:', {
-        eventVendorId: latestBookingEvent.vendorId ?? latestBookingEvent.vendor_id,
-        ourVendorId: vendorId,
-        status: latestBookingEvent.status ?? latestBookingEvent.booking_status,
-        expectedStatus: 'pending_acceptance'
-      })
     }
   }, [latestBookingEvent, vendorId, fetchPendingBookings, isPendingPayAtCafeEvent])
 
@@ -301,7 +287,6 @@ export function NotificationButton({
 
     const handleIncomingBooking = (payload: any) => {
       if (!isPendingPayAtCafeEvent(payload)) return
-      console.log('🔔 NotificationButton: Received direct booking socket event; refreshing pending list')
       void fetchPendingBookings()
     }
 
@@ -318,7 +303,6 @@ export function NotificationButton({
       return
     }
 
-    console.log(`🔌 NotificationButton: Setting up notification removal events for vendor ${vendorId}...`)
 
     setConnectionStatus('connected')
     joinVendor(vendorId)
@@ -326,7 +310,6 @@ export function NotificationButton({
 
     // Handle acceptance/rejection events (for removing notifications)
     const handlePayAtCafeAccepted = (data: any) => {
-      console.log('✅ NotificationButton: Booking accepted via socket event:', data)
       setNotifications(prev => {
         const acceptedBatchId = normalizeId(data?.batch_id)
         const acceptedBookingId = normalizeId(data?.bookingId || data?.booking_id)
@@ -337,7 +320,6 @@ export function NotificationButton({
           if (acceptedBatchId && nBatchId) return nBatchId !== acceptedBatchId
           return nBookingId !== acceptedBookingId
         })
-        console.log('📉 NotificationButton: Removed accepted booking. Count:', prev.length, '->', filtered.length)
         setUnreadCount(filtered.length)
         return filtered
       })
@@ -345,7 +327,6 @@ export function NotificationButton({
     }
 
     const handlePayAtCafeRejected = (data: any) => {
-      console.log('❌ NotificationButton: Booking rejected via socket event:', data)
       setNotifications(prev => {
         const rejectedBatchId = normalizeId(data?.batch_id)
         const rejectedBookingId = normalizeId(data?.bookingId || data?.booking_id)
@@ -356,7 +337,6 @@ export function NotificationButton({
           if (rejectedBatchId && nBatchId) return nBatchId !== rejectedBatchId
           return nBookingId !== rejectedBookingId
         })
-        console.log('📉 NotificationButton: Removed rejected booking. Count:', prev.length, '->', filtered.length)
         setUnreadCount(filtered.length)
         return filtered
       })
@@ -404,12 +384,10 @@ export function NotificationButton({
     // Request notification permission
     if ('Notification' in window && Notification.permission === 'default') {
       Notification.requestPermission().then(permission => {
-        console.log('NotificationButton: Notification permission:', permission)
       })
     }
 
     return () => {
-      console.log('🧹 NotificationButton: Cleaning up socket event listeners')
       socket.off('pay_at_cafe_accepted', handlePayAtCafeAccepted)
       socket.off('pay_at_cafe_rejected', handlePayAtCafeRejected)
       socket.off('booking_payment_update', handleBookingPaymentUpdate)
@@ -460,7 +438,6 @@ export function NotificationButton({
 
   // Handle notification removal
   const handleRemoveNotification = (bookingId: number | string) => {
-    console.log('🗑️ NotificationButton: Manually removing notification:', bookingId)
     const target = normalizeId(bookingId)
     setNotifications(prev => {
       const filtered = prev.filter((n: any) => {
@@ -469,7 +446,6 @@ export function NotificationButton({
         const batchMatch = normalizeId(n?.batch_id || n?.squad_details?.batch_id)
         return bookingMatch !== target && notifMatch !== target && batchMatch !== target
       })
-      console.log('📉 NotificationButton: Manual removal. Count:', prev.length, '->', filtered.length)
       setUnreadCount(filtered.length)
       return filtered
     })

@@ -149,7 +149,6 @@ const MealSelector: React.FC<MealSelectorProps> = ({
         `${DASHBOARD_URL}/api/vendor/${vendorId}/extra-services`
       );
       const data = await response.json();
-      console.log(data);
       if (data.success) {
         setCategories(data.categories || []);
         if (data.categories && data.categories.length > 0) {
@@ -157,7 +156,6 @@ const MealSelector: React.FC<MealSelectorProps> = ({
         }
       } else {
         setError("failed to load meals");
-        console.log(error);
       }
     } catch (err) {
       console.error(err);

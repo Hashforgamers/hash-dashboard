@@ -270,7 +270,7 @@ export function TopBar({
         {/* Dropdown Menu for Manage Bookings */}
         <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
           <DropdownMenuTrigger asChild>
-            <Button 
+            <Button aria-label="More actions" 
               variant="outline"
               size="icon" 
               className={cn("ui-toolbar-menu rounded-lg", slab && "dashboard-booking-menu-button")}
@@ -585,7 +585,6 @@ export function ScheduleGrid({
 
   // ✅ NEW: For past slots, just fetch bookings (don't add to selection for new booking)
   if (isPastTime) {
-    console.log('🕒 Past slot clicked, fetching past bookings...')
     fetchSlotBookings([matchingSlot.slot_id], dayData.fullDate)
     return // Don't add to selected slots
   }

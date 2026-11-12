@@ -1,4 +1,5 @@
 "use client";
+import { ToggleSwitch, UpdatingOverlay } from "./account/account-ui";
 import { SettingsSkeleton } from "@/app/components/ui/page-skeleton";
 import { toast } from "sonner";
 import OwnerSecuritySettings from "./owner-security-settings";
@@ -674,7 +675,6 @@ const handleSaveBusinessField = async (field: string) => {
       [field]: businessFormData[field]
     };
 
-    console.log(`Saving ${field}:`, updateData);
 
     // Call your new API endpoint
     const response = await api.patch<any, string>(
@@ -873,7 +873,6 @@ const handleSaveSlot = async (day: string) => {
     if (validationError) throw new Error(validationError);
 
     // Show initial feedback
-    console.log('Starting slot update process...');
     
     const result = await updateOperatingHours(currentVendorId, dayData);
     
@@ -938,49 +937,6 @@ const handleSlotToggle = (day: string, isEnabled: boolean) => {
 
 
 // Loading Overlay Component
-const UpdatingOverlay = ({ visible }: { visible: boolean }) => {
-  if (!visible) return null;
-  
-  return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex flex-col items-center justify-center"
-    >
-      <div className="bg-card border border-border rounded-lg p-8 shadow-2xl max-w-md mx-4">
-        <div className="flex flex-col items-center space-y-4 text-center">
-          {/* Animated Spinner */}
-          <div className="relative">
-            <div className="w-16 h-16 border-4 border-muted rounded-full animate-spin border-t-primary"></div>
-            <div className="absolute inset-0 w-16 h-16 border-4 border-transparent rounded-full animate-ping border-t-primary/30"></div>
-          </div>
-          
-          {/* Title */}
-          <h3 className="text-xl font-semibold text-foreground">
-            Updating Operating Hours
-          </h3>
-          
-          {/* Description */}
-          <div className="space-y-2 text-sm text-muted-foreground">
-            <p>Please wait while we update your slot configurations.</p>
-            <p className="font-medium text-amber-400">
-              This process may take 2-3 minutes.
-            </p>
-            <p>Please do not close this window or navigate away.</p>
-          </div>
-          
-          {/* Progress Dots */}
-          <div className="flex space-x-1">
-            <div className="w-2 h-2 bg-primary rounded-full animate-bounce"></div>
-            <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-            <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-          </div>
-        </div>
-      </div>
-    </motion.div>
-  );
-};
 
 
 // Keep the last confirmed schedule separate from editable values.
@@ -1012,14 +968,12 @@ const handleCancelEdit = () => {
       try {
         const decoded_token = jwtDecode<{ sub: { id: number } }>(token);
         setVendorId(decoded_token.sub.id);
-        console.log("Vendor ID from token:", decoded_token.sub.id);
          
       } catch (error) {
         console.error('Error decoding token:', error);
         // Handle invalid token, e.g., redirect to login
       }
     } else {
-      console.log("No JWT token found in localStorage.");
       // Handle no token, e.g., redirect to login
     }
   }, []);
@@ -1230,7 +1184,7 @@ const handleCancelEdit = () => {
         >
           <div className="flex justify-between items-center mb-4 border-b border-border pb-3">
             <h3 className="text-lg md:text-xl font-semibold text-foreground">Preview: {previewDocumentName}</h3>
-            <Button
+            <Button aria-label="Close"
               variant="ghost"
               size="sm"
               onClick={closePreview}
@@ -1271,18 +1225,15 @@ const handleCancelEdit = () => {
  useEffect(() => {
   async function fetchVendorDashboard() {
     if (!vendorId) {
-      console.log("No vendorId available");
       return;
     }
     setLoading(true);
     try {
-      console.log("Fetching dashboard for vendor:", vendorId);
       const res = await api.get<any>(
         `${DASHBOARD_URL}/api/vendor/${vendorId}/dashboard`
       ,
         { timeoutMs: 10_000, retries: 1, cache: "no-store", dedupe: false }
       );
-      console.log("API Response:", res);
 
       // Set profile image
       const profileImg = res.cafeProfile.profileImage || HFG_DEFAULT_LOGO;
@@ -1292,18 +1243,16 @@ const handleCancelEdit = () => {
         setData(res);
         
         const imagesData = res.cafeGallery?.images || [];
-        console.log("Images data:", imagesData); // Debug log
+// Debug log
         
         // Check if images are objects with IDs or just URLs
         if (imagesData.length > 0 && typeof imagesData[0] === 'object' && imagesData.id) {
           // New format: objects with IDs
-          console.log("Using image objects format");
           setCafeImageObjects(imagesData);
           const imageUrls = imagesData.map((img: any) => img.url || "").filter(Boolean);
           setCafeImages(imageUrls);
         } else {
           // Old format: just URLs or mixed format - handle safely
-          console.log("Using URL format");
           setCafeImageObjects([]);
           
           const images = imagesData
@@ -1355,10 +1304,8 @@ const handleCancelEdit = () => {
 
 
 const handleDeleteImageByUrl = async (imageIndex: number) => {
-  console.log('handleDeleteImageByUrl called with index:', imageIndex);
   
   if (!vendorId) {
-    console.log('No vendorId available');
     return;
   }
 
@@ -1366,7 +1313,6 @@ const handleDeleteImageByUrl = async (imageIndex: number) => {
 
   try {
     const imageUrl = cafeImages[imageIndex];
-    console.log('Attempting to delete image URL:', imageUrl);
     
     if (!imageUrl) {
       throw new Error("Image URL not found");
@@ -1378,7 +1324,6 @@ const handleDeleteImageByUrl = async (imageIndex: number) => {
       { headers: { "Content-Type": "application/json" }, timeoutMs: 10_000, retries: 0 }
     );
 
-    console.log('Delete response:', response);
 
     if (response.success) {
       setCafeImages((prevImages) =>
@@ -1463,7 +1408,6 @@ const handleDeleteImage = async (imageIndex: number) => {
 
   useEffect(() => {
     if (prevPageRef.current !== page) {
-      console.log("Page updated:", page);
     }
     prevPageRef.current = page;
   }, [page]);
@@ -1472,63 +1416,6 @@ const handleDeleteImage = async (imageIndex: number) => {
   if (!data) return <div className="text-center text-destructive p-8">Failed to load data. Please try again later.</div>;
 
   // Add this Toggle Switch component before your main component
-const ToggleSwitch = ({ 
-  enabled, 
-  onToggle, 
-  disabled = false, 
-  loading = false,
-  size = "default" 
-}: any) => {
-  const sizeClasses = {
-    sm: "w-8 h-4",
-    default: "w-11 h-6",
-    lg: "w-14 h-7"
-  };
-
-  const thumbSizeClasses = {
-    sm: "w-3 h-3",
-    default: "w-5 h-5", 
-    lg: "w-6 h-6"
-  };
-
-  return (
-    <button
-      type="button"
-      onClick={onToggle}
-      disabled={disabled || loading}
-      className={cn(
-        "relative inline-flex shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2",
-        sizeClasses[size as keyof typeof sizeClasses],
-        enabled 
-          ? "bg-primary" 
-          : "bg-zinc-200 dark:bg-zinc-700",
-        disabled && "opacity-50 cursor-not-allowed"
-      )}
-      role="switch"
-      aria-checked={enabled}
-    >
-      <span className="sr-only">Toggle setting</span>
-      <span
-        className={cn(
-          "pointer-events-none relative inline-block rounded-full bg-white shadow transform ring-0 transition duration-200 ease-in-out",
-          thumbSizeClasses[size as keyof typeof thumbSizeClasses],
-          enabled 
-            ? size === "sm" ? "translate-x-4" : size === "lg" ? "translate-x-7" : "translate-x-5"
-            : "translate-x-0"
-        )}
-      >
-        {loading && (
-          <div className="absolute inset-0 flex items-center justify-center">
-            <Loader2 className={cn(
-              "animate-spin text-zinc-400",
-              size === "sm" ? "w-2 h-2" : size === "lg" ? "w-4 h-4" : "w-3 h-3"
-            )} />
-          </div>
-        )}
-      </span>
-    </button>
-  );
-};
 
 
   const { navigation, cafeProfile, businessDetails, operatingHours, billingDetails, verifiedDocuments } = data;
@@ -1809,7 +1696,7 @@ const ToggleSwitch = ({
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    console.log('Delete button clicked for index:', index); // Debug log
+// Debug log
                     
                     // Use appropriate delete function
                     if (cafeImageObjects.length > 0 && cafeImageObjects[index]?.id) {
@@ -1956,7 +1843,7 @@ const ToggleSwitch = ({
     <CardHeader className="pb-4">
       <CardTitle className="account-section-title flex items-center gap-2">Business Details</CardTitle>
       <CardDescription className="account-description">
-        Update your cafe's basic information
+        Update your cafe&apos;s basic information
       </CardDescription>
     </CardHeader>
     <CardContent className="space-y-3">
@@ -2023,7 +1910,7 @@ const ToggleSwitch = ({
                       </>
                     )}
                   </Button>
-                  <Button
+                  <Button aria-label="Close"
                     type="button"
                     variant="outline"
                     size="sm"
@@ -2035,7 +1922,7 @@ const ToggleSwitch = ({
                   </Button>
                 </>
               ) : (
-                <Button
+                <Button aria-label="Edit"
                   type="button"
                   variant="ghost"
                   size="sm"
@@ -2080,7 +1967,7 @@ const ToggleSwitch = ({
         Operating Hours
       </CardTitle>
       <CardDescription className="account-description">
-        Manage your cafe's working hours and slot durations
+        Manage your cafe&apos;s working hours and slot durations
       </CardDescription>
     </CardHeader>
     <CardContent className="space-y-3">
@@ -2177,7 +2064,7 @@ const ToggleSwitch = ({
                         </>
                       )}
                     </Button>
-                    <Button
+                    <Button aria-label="Close"
                       type="button"
                       variant="outline"
                       size="sm"
@@ -2189,7 +2076,7 @@ const ToggleSwitch = ({
                     </Button>
                   </>
                 ) : (
-                  <Button
+                  <Button aria-label="Edit"
                     type="button"
                     variant="ghost"
                     size="sm"
@@ -2927,7 +2814,7 @@ const ToggleSwitch = ({
           >
             <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
             <span className="body-text-small font-medium flex-1 break-words">{paymentMethodSuccess}</span>
-            <Button
+            <Button aria-label="Close"
               variant="ghost"
               size="sm"
               onClick={clearPaymentMethodMessages}
@@ -2946,7 +2833,7 @@ const ToggleSwitch = ({
           >
             <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
             <span className="body-text-small font-medium flex-1 break-words">{paymentMethodError}</span>
-            <Button
+            <Button aria-label="Close"
               variant="ghost"
               size="sm"
               onClick={clearPaymentMethodMessages}

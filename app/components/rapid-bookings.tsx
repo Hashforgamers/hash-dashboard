@@ -152,11 +152,9 @@ function RapidBookings() {
   const validateForm = (selectedName: any, selectedSlots: string[]) => {
     const errors: { contactNumber?: string; time?: string } = {};
 
-    console.log(selectedName);
 
     const phoneToValidate = selectedName?.phone || phone;
 
-    console.log("Phone alla", phoneToValidate);
 
     if (!/^\d{10}$/.test(phoneToValidate)) {
       errors.contactNumber = "Please enter a valid 10-digit phone number";
@@ -368,7 +366,6 @@ function RapidBookings() {
         }
       );
       const data = response.data;
-      console.log("Fetched devices:", data);
       setrapidbooking(data);
     } catch (error) {
       console.error("Error fetching vendor devices", error);
@@ -381,7 +378,6 @@ function RapidBookings() {
     try {
       const response = await fetch(`${BOOKING_URL}/api/vendor/${vendorIdFromToken}/users`);
       const data = await response.json();
-      console.log("Fetched users from API:", data);
 
       if (Array.isArray(data)) {
         setUserList(data);
@@ -399,22 +395,16 @@ function RapidBookings() {
   const handleBooking = async (e: any) => {
     // e.preventDefault();
     setLoading(true);
-    console.log("Form submission started");
 
     if (!validateForm(selectedName, selectedSlots)) {
-      console.log("Form validation failed", formErrors);
       return;
     }
 
     try {
-      console.log("Making API request...");
-      console.log("Selected slots:", selectedSlots);
-      console.log("Available time slots:", timeSlots);
 
 
       // Find the slot objects matching the selected slot times
       const selectedSlotObjects = timeSlots.filter(slot => selectedSlots.includes(slot.time));
-      console.log("Selected slot objects:", selectedSlotObjects);
 
       if (selectedSlotObjects.length === 0) {
         throw new Error("No slot selected");
@@ -446,10 +436,8 @@ function RapidBookings() {
         }
       );
 
-      console.log("API Response:", response.data);
 
       if (response.data) {
-        console.log("Booking successful:", response.data);
         setShowBookingForm(false);
 
         // Re-fetch updated lists
@@ -640,7 +628,7 @@ function RapidBookings() {
                               className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-emerald-500/10 text-emerald-500"
                             >
                               Type: {filters.type}
-                              <button
+                              <button aria-label="Close"
                                 onClick={() =>
                                   setFilters({ ...filters, type: "all" })
                                 }
@@ -658,7 +646,7 @@ function RapidBookings() {
                               className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-emerald-500/10 text-emerald-500"
                             >
                               Status: {filters.status}
-                              <button
+                              <button aria-label="Close"
                                 onClick={() =>
                                   setFilters({ ...filters, status: "all" })
                                 }
@@ -679,7 +667,7 @@ function RapidBookings() {
                               {filters.price === "low"
                                 ? "Under ₹60/hr"
                                 : "₹60/hr and above"}
-                              <button
+                              <button aria-label="Close"
                                 onClick={() =>
                                   setFilters({ ...filters, price: "all" })
                                 }
@@ -771,7 +759,7 @@ function RapidBookings() {
                 <h2 className="text-2xl font-semibold text-zinc-800 dark:text-white">
                   Book {selectedSystem?.name} #{selectedSystem?.consoleModelNumber}
                 </h2>
-                <Button
+                <Button aria-label="Close"
                   variant="ghost"
                   size="icon"
                   onClick={() => setShowBookingForm(false)}

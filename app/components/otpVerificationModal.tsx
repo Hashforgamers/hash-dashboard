@@ -105,7 +105,7 @@ export function OTPVerificationModal({
                 <p className="text-xs text-zinc-300">Payout access protection</p>
               </div>
             </div>
-            <Button variant="soft-info" size="icon-sm"
+            <Button aria-label="Close" variant="soft-info" size="icon-sm"
               onClick={onClose}>
               <X className="w-4 h-4" />
             </Button>
@@ -173,7 +173,7 @@ export function OTPVerificationModal({
 
             <div className="space-y-1 rounded-lg border border-blue-500/20 bg-zinc-900/35 px-3 py-2 text-center text-[11px] text-zinc-300 md:text-xs">
               <p>• OTP is valid for 5 minutes</p>
-              <p>• Check your spam folder if you don't see the email</p>
+              <p>• Check your spam folder if you don&apos;t see the email</p>
               <p>• Never share your OTP with anyone</p>
             </div>
           </div>

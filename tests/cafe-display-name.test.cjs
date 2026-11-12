@@ -11,7 +11,7 @@ function fixture(success=true){
  const calls=[];
  const scope={vendorId:1,DASHBOARD_URL:'https://test',businessFormData:{displayName:'  Neon   Arena '},
   businessDetails:{businessName:'Legal Pvt Ltd',displayName:''},data:{businessDetails:{businessName:'Legal Pvt Ltd',displayName:''},cafeProfile:{name:'Legal Pvt Ltd'}},
-  console:{log(){},error(){}},alert(){},setSavingBusinessField(){},setEditingBusinessField(){},
+  console:{log(){},error(){}},alert(){},toast:{success(){},error(){}},setSavingBusinessField(){},setEditingBusinessField(){},
   setBusinessFormData:value=>scope.businessFormData=value,setData:fn=>scope.data=fn(scope.data),
   api:{patch:async(url,body)=>{calls.push(JSON.parse(body));return success?{success:true,data:{displayName:'Neon Arena',publicName:'Neon Arena',businessName:'Legal Pvt Ltd'}}:{success:false,message:'Failed'};}},module:{exports:{}}};
  vm.runInNewContext(ts.transpileModule(snippets.join('\n')+'\nmodule.exports={handleSaveBusinessField,handleEditBusinessField};',{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2020}}).outputText,scope);

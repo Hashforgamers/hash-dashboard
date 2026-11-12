@@ -322,12 +322,9 @@ const SettlementOverlay: React.FC<ExtraBookingOverlayProps> = ({
     };
 
     try {
-      console.log('💰 Starting settle process...');
       if (amount > 0) {
         await createExtraBooking(extraBookingPayload);
-        console.log('💰 Extra booking created successfully');
       } else {
-        console.log('💰 No overtime charge - skipping extra booking creation');
       }
       const pendingTypes = (paymentSummary?.line_items || [])
         .filter((item) => isPendingStatus(item.settlement_status))
@@ -345,7 +342,6 @@ const SettlementOverlay: React.FC<ExtraBookingOverlayProps> = ({
         : ["extra", "additional_meals"];
 
       await settlePendingBookingCharges(bookingId, paymentMode === "credit" ? "monthly_credit" : paymentMode, parsedWaiveOff, bookingTypesPayload);
-      console.log('💰 Pending charges settled successfully');
 
       const squadDetails = (selectedSlot?.squadDetails && typeof selectedSlot.squadDetails === "object")
         ? selectedSlot.squadDetails
@@ -375,11 +371,9 @@ const SettlementOverlay: React.FC<ExtraBookingOverlayProps> = ({
         );
         success = success && released.ok;
       }
-      console.log('💰 Release slot result:', success);
 
       if (success) {
         // ✅ CRITICAL: On SUCCESS - Update UI immediately (exactly like release button)
-        console.log('💰 Settle successful - updating UI immediately');
         
         // ✅ Trigger refresh to update both CurrentSlots and BookingStats
         setRefreshSlots((prev) => !prev);
@@ -396,11 +390,9 @@ const SettlementOverlay: React.FC<ExtraBookingOverlayProps> = ({
         setSettlementError("");
         setLoading(false);
         
-        console.log('💰 UI updated immediately - settle complete');
         
       } else {
         // ✅ Release failed - show error, don't close overlay
-        console.log('💰 Release slot failed');
         setSettlementError("Failed to release slot. Please try again.");
         setLoading(false);
       }

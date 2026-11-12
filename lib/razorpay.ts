@@ -40,19 +40,16 @@ export function loadRazorpayScript(): Promise<boolean> {
   return new Promise((resolve) => {
     // Check if already loaded
     if (window.Razorpay) {
-      console.log('✅ Razorpay SDK already loaded')
       resolve(true)
       return
     }
 
-    console.log('📥 Loading Razorpay SDK...')
 
     const script = document.createElement("script")
     script.src = "https://checkout.razorpay.com/v1/checkout.js"
     script.async = true
     
     script.onload = () => {
-      console.log('✅ Razorpay SDK loaded successfully')
       resolve(true)
     }
     
@@ -85,23 +82,16 @@ export async function openRazorpay(options: RazorpayOptions): Promise<void> {
 
   // Log payment details (only in development)
   if (process.env.NODE_ENV === 'development') {
-    console.log('🔑 Razorpay Key:', options.key)
-    console.log('🧪 Mode:', options.key.startsWith('rzp_test_') ? 'TEST' : 'LIVE')
-    console.log('📦 Order ID:', options.order_id)
-    console.log('💰 Amount:', options.amount / 100, 'INR')
-    console.log('📝 Description:', options.description)
   }
 
   try {
     // Initialize Razorpay
     const razorpay = new window.Razorpay(options)
     
-    console.log('🚀 Opening Razorpay checkout...')
     
     // Open checkout
     razorpay.open()
     
-    console.log('✅ Razorpay checkout opened')
   } catch (error: any) {
     console.error('❌ Error opening Razorpay:', error)
     throw new Error(`Failed to open payment window: ${error.message}`)
@@ -123,13 +113,8 @@ export function createRazorpayOptions(
     throw new Error("Razorpay key not configured. Please check environment variables.")
   }
 
-  console.log('🔧 Creating Razorpay options...')
   
   if (process.env.NODE_ENV === 'development') {
-    console.log('📦 Order ID:', orderId)
-    console.log('💰 Amount:', amount, 'INR')
-    console.log('📦 Package:', packageName)
-    console.log('🔑 Using key:', key.slice(0, 15) + '...')
   }
 
   return {
@@ -149,12 +134,6 @@ export function createRazorpayOptions(
     },
     // ✅ Wrap handler to ensure execution and catch errors
     handler: function(response: RazorpayResponse) {
-      console.log('🎉 Razorpay Payment Handler Triggered!')
-      console.log('📦 Payment Response:', {
-        order_id: response.razorpay_order_id,
-        payment_id: response.razorpay_payment_id,
-        signature: response.razorpay_signature ? '✓ Present' : '✗ Missing'
-      })
       
       // Validate response
       if (!response.razorpay_order_id || !response.razorpay_payment_id || !response.razorpay_signature) {
@@ -164,12 +143,10 @@ export function createRazorpayOptions(
       }
 
       try {
-        console.log('🔄 Calling success handler...')
         
         // Call the actual success handler
         onSuccess(response)
         
-        console.log('✅ Success handler called')
       } catch (error: any) {
         console.error('❌ Error in payment success handler:', error)
         alert(`Payment succeeded but processing failed: ${error.message}. Payment ID: ${response.razorpay_payment_id}. Please contact support.`)
@@ -178,7 +155,6 @@ export function createRazorpayOptions(
     modal: {
       // ✅ Handle modal dismissal
       ondismiss: function() {
-        console.log('🚪 Razorpay modal dismissed')
         
         if (onDismiss) {
           try {

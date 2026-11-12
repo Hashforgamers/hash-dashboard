@@ -212,15 +212,12 @@ export function ConsoleList({ onEdit, onAdd, refreshKey = 0 }: ConsoleListProps)
         `${DASHBOARD_URL}/api/console/${vendorId}/${id}`
       );
       if (!response) {
-        console.log("something went wrong while deleting the data");
       } else {
-        console.log(response.data.message);
         setdata((prevData) => prevData.filter((item: any) => item.id !== id));
         setCachedConsoles(data.filter((item: any) => item.id !== id));
         toast.success("Console deleted");
       }
     } catch (error) {
-      console.log("something while wrong to delete the data", error);
       toast.error("Couldn't delete the console. Please try again.");
     } finally {
       setDeletingConsoleId(null);
@@ -570,7 +567,7 @@ export function ConsoleList({ onEdit, onAdd, refreshKey = 0 }: ConsoleListProps)
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Delete {deleteTarget?.name}?</AlertDialogTitle>
-            <AlertDialogDescription>This removes the console from your café. This can't be undone.</AlertDialogDescription>
+            <AlertDialogDescription>This removes the console from your café. This can&apos;t be undone.</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>

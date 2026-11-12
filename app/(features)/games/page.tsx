@@ -611,7 +611,7 @@ export default function GamesManagementPage() {
                           "Step 2: Choose platform & consoles"}
                       </p>
                     </div>
-                    <button className={secondaryButtonClass} onClick={resetModal}>
+                    <button aria-label="Close" className={secondaryButtonClass} onClick={resetModal}>
                       <XCircle className="w-5 h-5" />
                     </button>
                   </div>

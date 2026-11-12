@@ -75,7 +75,7 @@ export default function PlayPage() {
           if(!result.duration)throw new Error(result.reason||'No affordable duration is available');
           setBudgetQuote(result.duration);setMinutes(result.duration.minutes);
         })}>Choose time using my available balance</Button>
-        {budgetQuote&&<p>{budgetQuote.minutes} minutes for {rupees(budgetQuote.amount)}, within this cafe's duration limit. Any unused balance stays in your wallet.</p>}
+        {budgetQuote&&<p>{budgetQuote.minutes} minutes for {rupees(budgetQuote.amount)}, within this cafe&apos;s duration limit. Any unused balance stays in your wallet.</p>}
         <p>Payment method: Cafe wallet</p><Button className="w-full" disabled={busy||!selected||selected.amount==null||quote.available_balance<(selected.amount ?? Infinity)} onClick={()=>run(async()=>{
           const requestKey=sessionStorage.getItem(`cafe_request:${qr}:wallet:${minutes}:${selected?.amount}`)||crypto.randomUUID();sessionStorage.setItem(`cafe_request:${qr}:wallet:${minutes}:${selected?.amount}`,requestKey);
           const s=await cafeCall<Session>('/checkout',{qr,minutes,use_available_balance:Boolean(budgetQuote&&budgetQuote.minutes===minutes),expected_amount:selected?.amount,payment_method:'cafe_wallet',idempotency_key:requestKey},'POST',token);

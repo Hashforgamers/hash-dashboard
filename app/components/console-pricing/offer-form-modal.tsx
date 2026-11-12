@@ -48,7 +48,7 @@ export function OfferFormModal({
       >
             <div className="flex items-center justify-between border-b border-blue-500/20 px-5 py-4">
               <h2 className="card-title">{editingOffer ? "Edit Promotion" : "Create New Promotion"}</h2>
-              <button
+              <button aria-label="Close"
                 onClick={() => {
                   setShowOfferForm(false);
                   onResetOfferForm();

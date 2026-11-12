@@ -1400,7 +1400,7 @@ const [isPrivateMode, setIsPrivateMode] = useState<boolean>(false);
                                 className={cn(badgeVariants({ variant: "success" }), "gap-1")}
                               >
                                 {slot?.start_time.slice(0, 5)}
-                                <button
+                                <button aria-label="Close"
                                   type="button"
                                   onClick={() => handleSlotClick(slotId)}
                                   className="ml-0.5 text-emerald-600 hover:text-emerald-800 dark:text-emerald-400 dark:hover:text-emerald-200"

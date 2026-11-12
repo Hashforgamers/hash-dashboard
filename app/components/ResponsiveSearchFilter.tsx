@@ -30,7 +30,7 @@ export default function ResponsiveSearchFilter({
         </div>
 
         {/* Filter Icon */}
-        <button
+        <button aria-label="Filter"
           onClick={() => setShowOverlay(true)}
           className="dashboard-btn-secondary rounded-lg p-2"
         >
@@ -59,7 +59,7 @@ export default function ResponsiveSearchFilter({
               {/* Header */}
               <div className="mb-4 flex items-center justify-between border-b border-zinc-700/70 pb-3">
                 <h3 className="text-base font-medium text-foreground">Filters</h3>
-                <button onClick={() => setShowOverlay(false)}>
+                <button aria-label="Close" onClick={() => setShowOverlay(false)}>
                   <X className="w-5 h-5 text-muted-foreground" />
                 </button>
               </div>

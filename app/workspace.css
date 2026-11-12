@@ -429,3 +429,7 @@ svg[data-search-icon],
 /* The install banner never covers an open popup or sheet. */
 body:has([aria-modal="true"], [role="dialog"][data-state="open"]) .install-banner { display: none; }
 .ui-segmented.grid { display: grid; }
+/* Accessibility: every control shows where keyboard focus is. */
+:where(a, button, [role="button"], [role="tab"], summary, select, input, textarea):focus-visible { outline: 2px solid hsl(var(--primary)); outline-offset: 2px; }
+/* Readable secondary text: these greys fell below 4.5:1 on the dark cards, so they use the muted text colour instead. */
+.workspace-ui :is(.text-zinc-500, .text-zinc-600, .text-muted-foreground\/60, .text-muted-foreground\/70) { color: hsl(var(--muted-foreground)); }

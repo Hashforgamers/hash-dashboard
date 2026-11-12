@@ -30,7 +30,6 @@ const CustomTooltip = ({ active, payload }: any) => {
 export function SettlementChart() {
 
   const handleDownload = () => {
-    console.log("Downloading report...");
   };
 
   const totalAmount = data.reduce((acc, item) => {

@@ -41,7 +41,7 @@ export function ConsoleGrid() {
       <CardHeader >
         <CardTitle >Console Availability</CardTitle>
         <div className="flex space-x-2  items-center ">
-          <Button
+          <Button aria-label="Previous"
             variant="outline"
             size="sm"
             onClick={handlePrevious}
@@ -49,7 +49,7 @@ export function ConsoleGrid() {
           >
             <ChevronLeft className="w-4 h-4" />
           </Button>
-          <Button
+          <Button aria-label="Next"
             variant="outline"
             size="sm"
             onClick={handleNext}

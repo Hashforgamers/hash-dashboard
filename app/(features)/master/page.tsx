@@ -71,7 +71,7 @@ export default function MasterAnalyticsPage() {
     <div className="p-6 h-screen overflow-hidden bg-background text-foreground">
       <div className="flex justify-between items-center mb-6">
         <div className="flex items-center gap-3">
-          <button
+          <button aria-label="Go Back"
             onClick={() => router.push("/select-cafe")}
             className="hover:text-blue-400 transition"
             title="Go Back"

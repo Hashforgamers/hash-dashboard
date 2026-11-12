@@ -1039,7 +1039,7 @@ export default function SelectCafePage() {
                     />
                   </div>
                   <div className="flex gap-2">
-                    <Button variant="soft-danger"
+                    <Button aria-label="Close" variant="soft-danger"
                       type="button"
                       onClick={() => {
                         const games = formData.available_games.filter((_, i) => i !== index)
