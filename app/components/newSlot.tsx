@@ -1928,7 +1928,7 @@ const getEffectivePrice = (slot: SelectedSlot): number => {
     }
     if (deskCard && !deskConsoleIds) { setSubmitError("Choose available consoles before confirming."); return false }
     if (deskRatesLoading || deskRateError || (variantPricingRequired && !effectiveDeskChoice)) {
-      setSubmitError(deskRateError || (deskRatesLoading ? "Loading booking rates. Please wait." : "Choose a pricing variant before confirming."))
+      setSubmitError(deskRateError || (deskRatesLoading ? "Loading booking rates. Please wait." : "No rate covers this duration and player count."))
       return false
     }
     if (effectiveDeskChoice && effectiveDeskChoice !== "standard" && (!deskCard || deskPrice === null)) {
@@ -2320,10 +2320,9 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                     {deviceCards.length > 0 && <div className="mb-2 flex flex-wrap items-center gap-2 text-xs">
                       <span>Session rate</span>
                       {matchingDeskCards.length > 1 ? <select aria-label="Session rate variant" className="rounded border bg-background p-1" value={effectiveDeskChoice} onChange={e => setDeskChoice(e.target.value)}>
-                        <option value="" disabled>Choose variant</option>
                         {matchingDeskCards.map(card => <option key={card.profile} value={card.profile}>{rateLabel(card)}</option>)}
                       </select> : deskCard ? <span className="font-medium">{rateLabel(deskCard)}</span> : null}
-                      {deskCard && <span className="text-emerald-500">₹{deskPrice} · Applied automatically</span>}
+                      {deskCard && <span className="text-emerald-500">₹{deskPrice}</span>}
                       {!matchingDeskCards.length && <span role="alert" className="text-amber-500">No rate covers this duration and player count.</span>}
                     </div>}
                     {deskCard && selectedSlots.length > 0 && <DeskConsolePicker key={`${activePickerConsole}-${deskCard.profile}`} vendor={settingsVendorId} game={Number(activePickerConsole)} profile={deskCard.profile} date={normalizeBookedDate(selectedSlots[0].date)} slotIds={selectedSlots.map(slot=>slot.slot_id)} quantity={isSquadMode && squadConsoleGroup === "pc" ? squadPlayerCount : 1} onChange={setDeskConsoleIds} />}

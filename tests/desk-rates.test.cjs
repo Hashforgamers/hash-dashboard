@@ -34,11 +34,11 @@ test('Session duration selects matching cards and switches at tier boundaries',(
   assert.equal(result.card.profile,profile);assert.equal(mod.exports.deskSubtotal(result.card,minutes,1),total)
  }
 })
-test('Player changes resolve rates while ambiguous variants require a choice',()=>{
+test('Player changes resolve rates and overlapping variants default to the lowest subtotal',()=>{
  const solo=card('solo',[rule({max_players:1})]),squad=card('squad',[rule({min_players:2})])
  assert.equal(mod.exports.resolveSessionRate([solo,squad],60,3,'solo').card.profile,'squad')
  const variants=[card('55',[rule()]),card('65',[rule({amount:'150'})])]
- assert.equal(mod.exports.resolveSessionRate(variants,60,1).card,undefined)
+ assert.equal(mod.exports.resolveSessionRate([...variants].reverse(),60,1).card.profile,'55')
  assert.equal(mod.exports.resolveSessionRate(variants,60,1,'65').card.profile,'65')
  assert.equal(mod.exports.resolveSessionRate([card('disabled',[rule()],{is_active:false}),card('archived',[rule()],{archived:true})],60,1).eligible.length,0)
  assert.equal(mod.exports.resolveSessionRate([solo],60,3).card,undefined)

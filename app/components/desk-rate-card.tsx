@@ -48,11 +48,24 @@ export function deskSubtotal(card: DeskCard, minutes: number, players: number) {
   return Number.isSafeInteger(total) ? total / 100 : null
 }
 
-// Duration/player tiers are automatic; only genuinely ambiguous cards need a choice.
 export function resolveSessionRate(cards: DeskCard[], minutes: number, players: number, choice = "") {
-  const eligible = cards.filter(card => card.is_active !== false && !card.archived && card.pricing_mode !== "slot" && deskSubtotal(card, minutes, players) !== null)
-  const selected = eligible.find(card => card.profile === choice)
-  return { eligible, card: selected ?? (eligible.length === 1 ? eligible[0] : undefined) }
+  const eligible: DeskCard[] = []
+  let defaultCard: DeskCard | undefined
+  let lowestSubtotal = Infinity
+
+  for (const card of cards) {
+    if (card.is_active === false || card.archived || card.pricing_mode === "slot") continue
+    const subtotal = deskSubtotal(card, minutes, players)
+    if (subtotal === null) continue
+
+    eligible.push(card)
+    if (subtotal < lowestSubtotal) {
+      defaultCard = card
+      lowestSubtotal = subtotal
+    }
+  }
+
+  return { eligible, card: eligible.find(card => card.profile === choice) ?? defaultCard }
 }
 
 export default function DeskRateEditor({ vendor, games, baseRate, title }: { vendor: number | null; games: { id: number; game_name: string }[]; baseRate?: ReactNode; title?: string }) {
