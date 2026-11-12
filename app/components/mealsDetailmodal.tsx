@@ -237,7 +237,6 @@ const MealDetailsModal: React.FC<MealDetailsModalProps> = ({
     setLoading(true);
     setError('');
     try {
-      console.log(`🔍 Fetching meal details for booking ${bookingId}`);
       
       let response;
       
@@ -260,7 +259,6 @@ const MealDetailsModal: React.FC<MealDetailsModalProps> = ({
       }
       
       const data = await response.json();
-      console.log('📋 Booking details response:', data);
 
       if (data.success && data.booking) {
         setSquadDetails((data.booking.squad_details || null) as SquadDetails | null);
@@ -272,9 +270,7 @@ const MealDetailsModal: React.FC<MealDetailsModalProps> = ({
       
       if (data.success && data.booking && Array.isArray(data.booking.extra_services)) {
         setMealDetails(data.booking.extra_services);
-        console.log(`✅ Found ${data.booking.extra_services.length} existing meals`);
       } else {
-        console.log('ℹ️ No existing meals found for this booking');
         setMealDetails([]);
       }
     } catch (err) {
@@ -296,7 +292,6 @@ const MealDetailsModal: React.FC<MealDetailsModalProps> = ({
     setMenuError('');
     
     try {
-      console.log(`🍽️ Fetching menu for vendor ${vendorId}...`);
       
       const response = await fetch(`${DASHBOARD_URL}/api/vendor/${vendorId}/extra-services`);
       
@@ -305,10 +300,9 @@ const MealDetailsModal: React.FC<MealDetailsModalProps> = ({
       }
       
       const data = await response.json();
-      console.log('📋 Menu API Response:', data);
       
       if (data.success && Array.isArray(data.categories)) {
-        const activeCategories = data.categories.filter(cat => cat.is_active && cat.menus?.length > 0);
+        const activeCategories = data.categories.filter((cat: any) => cat.is_active && cat.menus?.length > 0);
         setCategories(activeCategories);
         
         // Set first category as selected
@@ -367,7 +361,6 @@ const MealDetailsModal: React.FC<MealDetailsModalProps> = ({
 
     setIsSubmitting(true);
     try {
-      console.log(`🍽️ Adding meals to booking ${bookingId}:`, selectedMeals);
       
       const response = await fetch(`${BOOKING_URL}/api/booking/${bookingId}/add-meals`, {
         method: 'POST',
@@ -394,7 +387,6 @@ const MealDetailsModal: React.FC<MealDetailsModalProps> = ({
       }
 
       const result = await response.json();
-      console.log('✅ Add meals response:', result);
       
       if (result.success) {
         // Success - refresh existing meals and switch back to view mode
@@ -408,7 +400,6 @@ const MealDetailsModal: React.FC<MealDetailsModalProps> = ({
           window.dispatchEvent(new CustomEvent('refresh-dashboard'));
         }
         
-        console.log(`✅ Successfully added ${result.added_meals?.length || 0} meals`);
       } else {
         throw new Error(result.message || 'Failed to add meals');
       }
@@ -593,7 +584,7 @@ const MealDetailsModal: React.FC<MealDetailsModalProps> = ({
                 </motion.button>
               )}
               
-              <button
+              <button aria-label="Close"
                 onClick={onClose}
                 className="p-1 sm:p-1.5 hover:bg-zinc-100 dark:hover:bg-zinc-700 rounded-full transition-colors"
               >
@@ -711,7 +702,7 @@ const MealDetailsModal: React.FC<MealDetailsModalProps> = ({
                   <div className="flex flex-col items-center justify-center py-8 text-zinc-500">
                     <UtensilsCrossed className="w-10 h-10 sm:w-12 sm:h-12 mb-3 opacity-50" />
                     <p className="text-base sm:text-lg font-medium mb-2">No meals ordered yet</p>
-                    <p className="text-xs sm:text-sm mb-4 text-center px-4">This customer hasn't added any meals to their booking.</p>
+                    <p className="text-xs sm:text-sm mb-4 text-center px-4">This customer hasn&apos;t added any meals to their booking.</p>
                     <motion.button
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
@@ -978,7 +969,7 @@ const MealDetailsModal: React.FC<MealDetailsModalProps> = ({
                                     <span className="text-xs font-bold sm:text-base">{item.price}</span>
                                   </div>
                                   <div className="flex items-center space-x-1 sm:space-x-2">
-                                    <button
+                                    <button aria-label="Decrease"
                                       onClick={() => updateMealQuantity(item, quantity - 1, categoryName)}
                                       disabled={quantity === 0}
                                       className={cn(buttonVariants({ variant: "destructive", size: "icon-sm" }), "disabled:cursor-not-allowed sm:w-7")}
@@ -988,7 +979,7 @@ const MealDetailsModal: React.FC<MealDetailsModalProps> = ({
                                     <span className="min-w-[14px] text-center text-[11px] font-semibold text-zinc-900 dark:text-zinc-100 sm:min-w-[20px] sm:text-sm">
                                       {quantity}
                                     </span>
-                                    <button
+                                    <button aria-label="Add"
                                       onClick={() => updateMealQuantity(item, quantity + 1, categoryName)}
                                       className={cn(buttonVariants({ variant: "success", size: "icon-sm" }), "sm:w-7")}
                                     >

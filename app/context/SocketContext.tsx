@@ -5,6 +5,7 @@ import { getPreferredAuthToken } from "@/lib/auth-session";
 import { SOCKET_URL } from '@/src/config/env'
 import React, { createContext, useContext, useEffect, useState, useCallback, useMemo, ReactNode } from 'react'
 import { io, Socket } from 'socket.io-client'
+import { usePathname } from 'next/navigation'
 
 interface SocketContextValue {
   socket: Socket | null;
@@ -27,13 +28,15 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
   const [isConnected, setIsConnected] = useState(false);
   const joinedVendorsRef = React.useRef<Set<number>>(new Set());
   const lastPongRef = React.useRef<number>(Date.now());
+  // The server rejects anonymous sockets, so connect only once signed in (re-checked on every navigation, e.g. after login/logout).
+  const pathname = usePathname();
+  const [hasToken, setHasToken] = useState(false);
+  useEffect(() => { setHasToken(Boolean(getPreferredAuthToken())); }, [pathname]);
   const heartbeatRef = React.useRef<number | null>(null);
   const lastForcedReconnectRef = React.useRef<number>(0);
 
   useEffect(() => {
-    console.log('🔌 Creating single socket connection...')
-    
-    console.log(`Trying to connect ${SOCKET_URL}`)
+    if (!hasToken) return;
     const newSocket = io(`${SOCKET_URL}`, {
       transports: ['websocket', 'polling'],
       auth: (callback) => callback({ token: getPreferredAuthToken() }),
@@ -95,7 +98,6 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
     };
 
     newSocket.on("connect", () => {
-      console.log("✅ Socket connected:", newSocket.id);
       setIsConnected(true);
       markPong();
       startHeartbeat();
@@ -108,7 +110,6 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
     });
 
     newSocket.on("disconnect", (reason) => {
-      console.log("❌ Socket disconnected:", reason);
       setIsConnected(false);
     });
 
@@ -133,7 +134,6 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
 
     const handleOnline = () => {
       if (!newSocket.connected) {
-        console.log("🌐 Back online, reconnecting socket...");
         try {
           newSocket.connect();
         } catch (err) {
@@ -152,7 +152,6 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
     setSocket(newSocket);
 
     return () => {
-      console.log("🧹 Cleaning up socket...");
       if (heartbeatRef.current) {
         window.clearInterval(heartbeatRef.current);
       }
@@ -162,8 +161,10 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
         document.removeEventListener("visibilitychange", handleVisible);
       }
       newSocket.close();
+      setSocket(null);
+      setIsConnected(false);
     };
-  }, []);
+  }, [hasToken]);
 
   const joinVendor = useCallback((vendorId: number) => {
     if (joinedVendorsRef.current.has(vendorId)) return;
@@ -173,7 +174,6 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
     joinedVendorsRef.current.clear();
     joinedVendorsRef.current.add(vendorId);
     if (socket?.connected) {
-      console.log(`🏪 Joining vendor room: ${vendorId}`);
       socket.emit("dashboard_join_vendor", { vendor_id: vendorId });
     } else {
       console.warn("⚠️ Cannot join vendor, socket not connected");

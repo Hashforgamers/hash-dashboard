@@ -673,7 +673,7 @@ function AddPassDialog({ passTypes, onSave, buttonClassName }: any) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <button className={buttonClassName || "btn-primary"}>
+        <button className={buttonClassName || buttonVariants()}>
           <PlusCircle className="icon-md" />
           New Pass
         </button>
@@ -919,7 +919,7 @@ function EditPassDialog({ passObj, passTypes, onSave }: any) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <button className={buttonVariants({ variant: "soft-success", size: "icon-sm" })} title="Edit">
+        <button aria-label="Edit" className={buttonVariants({ variant: "soft-success", size: "icon-sm" })} title="Edit">
           <Pencil className="icon-md text-emerald-600 dark:text-emerald-400" />
         </button>
       </DialogTrigger>
@@ -1024,7 +1024,7 @@ function EditPassDialog({ passObj, passTypes, onSave }: any) {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="btn-primary flex-1 justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+              className={`${buttonVariants()} flex-1 disabled:cursor-not-allowed`}
             >
               {isSubmitting ? (
                 <>

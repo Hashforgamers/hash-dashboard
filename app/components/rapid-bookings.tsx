@@ -1,4 +1,5 @@
 "use client";
+import { toast } from "sonner";
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -17,7 +18,6 @@ import {
   Wallet,
   GamepadIcon,
   AlertCircle,
-  Cash,
   DollarSign,
   Loader2
 } from "lucide-react";
@@ -57,6 +57,8 @@ interface System {
   price: string;
   status: SystemStatus;
   number: string;
+  consoleModelNumber?: string;
+  consoleTypeName?: string;
 }
 
 interface Filters {
@@ -88,7 +90,8 @@ function RapidBookings() {
   const [selectedSlot, setSelectedSlot] = useState<any>(null);
 
   const [selectedSlots, setSelectedSlots] = React.useState<string[]>([]);
-  const [userList, setUserList] = useState<{ name: string; email: string; phone: string }[]>([]);
+  type UserType = { id?: number; name: string; email: string; phone: string };
+  const [userList, setUserList] = useState<UserType[]>([]);
   const [nameSuggestions, setNameSuggestions] = useState<UserType[]>([]);
   const [phoneSuggestions, setPhoneSuggestions] = useState<UserType[]>([]);
   const [phone, setPhone] = useState("");
@@ -97,7 +100,7 @@ function RapidBookings() {
 
 
   const [time, setTime] = useState("");
-  const [vendorId, setVendorId] = useState(null);
+  const [vendorId, setVendorId] = useState<any>(null);
   const [filters, setFilters] = useState<Filters>({
     type: "all",
     status: "all",
@@ -149,11 +152,9 @@ function RapidBookings() {
   const validateForm = (selectedName: any, selectedSlots: string[]) => {
     const errors: { contactNumber?: string; time?: string } = {};
 
-    console.log(selectedName);
 
     const phoneToValidate = selectedName?.phone || phone;
 
-    console.log("Phone alla", phoneToValidate);
 
     if (!/^\d{10}$/.test(phoneToValidate)) {
       errors.contactNumber = "Please enter a valid 10-digit phone number";
@@ -365,7 +366,6 @@ function RapidBookings() {
         }
       );
       const data = response.data;
-      console.log("Fetched devices:", data);
       setrapidbooking(data);
     } catch (error) {
       console.error("Error fetching vendor devices", error);
@@ -378,7 +378,6 @@ function RapidBookings() {
     try {
       const response = await fetch(`${BOOKING_URL}/api/vendor/${vendorIdFromToken}/users`);
       const data = await response.json();
-      console.log("Fetched users from API:", data);
 
       if (Array.isArray(data)) {
         setUserList(data);
@@ -393,25 +392,19 @@ function RapidBookings() {
   };
 
 
-  const handleBooking = async (e) => {
+  const handleBooking = async (e: any) => {
     // e.preventDefault();
     setLoading(true);
-    console.log("Form submission started");
 
     if (!validateForm(selectedName, selectedSlots)) {
-      console.log("Form validation failed", formErrors);
       return;
     }
 
     try {
-      console.log("Making API request...");
-      console.log("Selected slots:", selectedSlots);
-      console.log("Available time slots:", timeSlots);
 
 
       // Find the slot objects matching the selected slot times
       const selectedSlotObjects = timeSlots.filter(slot => selectedSlots.includes(slot.time));
-      console.log("Selected slot objects:", selectedSlotObjects);
 
       if (selectedSlotObjects.length === 0) {
         throw new Error("No slot selected");
@@ -443,10 +436,8 @@ function RapidBookings() {
         }
       );
 
-      console.log("API Response:", response.data);
 
       if (response.data) {
-        console.log("Booking successful:", response.data);
         setShowBookingForm(false);
 
         // Re-fetch updated lists
@@ -458,6 +449,7 @@ function RapidBookings() {
     } catch (error: any) {
       console.error("Error creating booking:", error);
       console.error("Error details:", error.response?.data || error.message);
+      toast.error(error?.response?.data?.message || "Couldn't create the booking. Please try again.");
     } finally {
       setShowBookingForm(false);
       setLoading(false);
@@ -636,7 +628,7 @@ function RapidBookings() {
                               className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-emerald-500/10 text-emerald-500"
                             >
                               Type: {filters.type}
-                              <button
+                              <button aria-label="Close"
                                 onClick={() =>
                                   setFilters({ ...filters, type: "all" })
                                 }
@@ -654,7 +646,7 @@ function RapidBookings() {
                               className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-emerald-500/10 text-emerald-500"
                             >
                               Status: {filters.status}
-                              <button
+                              <button aria-label="Close"
                                 onClick={() =>
                                   setFilters({ ...filters, status: "all" })
                                 }
@@ -675,7 +667,7 @@ function RapidBookings() {
                               {filters.price === "low"
                                 ? "Under ₹60/hr"
                                 : "₹60/hr and above"}
-                              <button
+                              <button aria-label="Close"
                                 onClick={() =>
                                   setFilters({ ...filters, price: "all" })
                                 }
@@ -767,7 +759,7 @@ function RapidBookings() {
                 <h2 className="text-2xl font-semibold text-zinc-800 dark:text-white">
                   Book {selectedSystem?.name} #{selectedSystem?.consoleModelNumber}
                 </h2>
-                <Button
+                <Button aria-label="Close"
                   variant="ghost"
                   size="icon"
                   onClick={() => setShowBookingForm(false)}
@@ -810,7 +802,7 @@ function RapidBookings() {
                                 setPhoneSuggestions([]);
                                 setNameSuggestions([]);
                                 setContactNumber(user.phone);
-                                setUserId(user.id);
+                                setUserId((user.id ?? "") as any); // keeps sending the numeric id, as before
                               }}
                             >
                               {user.phone} ({user.name})
@@ -849,7 +841,7 @@ function RapidBookings() {
                                 setSelectedName(user);
                                 setNameSuggestions([]);
                                 setPhoneSuggestions([]);
-                                setUserId(user.id);
+                                setUserId((user.id ?? "") as any); // keeps sending the numeric id, as before
                               }}
                             >
                               {user.name} ({user.phone})
@@ -1005,7 +997,7 @@ function RapidBookings() {
                   </div>
                   <div className="flex justify-between pt-2 border-t font-bold">
                     <span>Total:</span>
-                    <span className="text-emerald-600">₹{selectedSlots.length * selectedSystem?.price}</span>
+                    <span className="text-emerald-600">₹{selectedSlots.length * Number(selectedSystem?.price ?? 0)}</span>
                   </div>
                 </div>
               </div>

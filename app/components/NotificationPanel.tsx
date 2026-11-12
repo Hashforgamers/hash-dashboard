@@ -283,7 +283,6 @@ export function NotificationPanel({
     try {
       setProcessingAction({ bookingId: notification.bookingId, action: 'accept' })
 
-      console.log(`🔄 Processing accept for booking ${notification.bookingId}`)
 
       const response = await fetch(`${BOOKING_URL}/api/pay-at-cafe/accept`, {
         method: 'POST',
@@ -301,7 +300,6 @@ export function NotificationPanel({
         onRemoveNotification(notification.bookingId)
 
         if (socket) {
-          console.log('📡 Emitting booking_accepted event for real-time update')
           socket.emit('booking_accepted', {
             bookingId:      notification.bookingId,
             vendorId:       vendorId,
@@ -330,7 +328,6 @@ export function NotificationPanel({
             status:      'Confirmed',
             statusLabel: 'Confirmed'
           }
-          console.log('📅 Triggering upcoming bookings update with:', bookingData)
           onBookingAccepted(bookingData)
         }
 
@@ -341,7 +338,6 @@ export function NotificationPanel({
         // ✅ UPDATED: Toast correctly says payment is NOT done yet
         const collectAmount = notification.total_amount || notification.game.single_slot_price
         showToast('✅ Booking accepted! Collect ₹' + collectAmount + ' after session completion.', 'success')
-        console.log(`✅ Booking ${notification.bookingId} confirmed — payment to be collected after session`)
       } else {
         throw new Error(result.message || 'Failed to accept booking')
       }
@@ -360,7 +356,6 @@ export function NotificationPanel({
     try {
       setProcessingAction({ bookingId: notification.bookingId, action: 'reject' })
 
-      console.log(`🔄 Processing reject for booking ${notification.bookingId}`)
 
       const response = await fetch(`${BOOKING_URL}/api/pay-at-cafe/reject`, {
         method: 'POST',
@@ -381,7 +376,6 @@ export function NotificationPanel({
           window.dispatchEvent(new CustomEvent("refresh-dashboard"))
         }
         showToast('✅ Booking rejected and cancelled successfully!', 'success')
-        console.log(`❌ Booking ${notification.bookingId} cancelled successfully`)
       } else {
         throw new Error(result.message || 'Failed to reject booking')
       }

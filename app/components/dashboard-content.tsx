@@ -1,11 +1,15 @@
 "use client"
+import { DashboardSkeleton } from "@/app/components/ui/page-skeleton";
 import NumberFlow from "@number-flow/react"
+import { cn } from "@/lib/utils"
+import { buttonVariants } from "@/components/ui/button"
 
 import React, { useCallback, useEffect, useRef, useState } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { UpcomingBookings } from "./upcoming-booking"
 import { CurrentSlots } from "./current-slot"
 import SlotManagement from "./newSlot"
+import { DashboardInsights } from "./dashboard-insights"
 import PayAtCafeRequests from "./pay-at-cafe-requests"
 import dynamic from "next/dynamic"
 import { motion } from "framer-motion"
@@ -15,7 +19,6 @@ import {
 } from 'lucide-react'
 import { useDashboardData } from "@/app/context/DashboardDataContext"
 import { useAccess } from "@/app/context/AccessContext"
-import HashLoader from "./ui/HashLoader"
 import { useSocket } from "../context/SocketContext"
 import { useSubscription } from "@/hooks/useSubscription"
 import { useRouter, useSearchParams } from "next/navigation"
@@ -26,7 +29,7 @@ const DashboardWallet = dynamic(
 )
 
 const TERMINAL_BOOKING_STATUSES = ["cancelled", "canceled", "rejected", "completed", "discarded", "no_show"];
-const DASHBOARD_TABS = ["live", "booking", "wallet"] as const
+const DASHBOARD_TABS = ["live", "booking", "wallet", "insights"] as const
 type DashboardTab = (typeof DASHBOARD_TABS)[number]
 
 // ✅ Locked overlay component
@@ -55,12 +58,25 @@ function LockedOverlay() {
   )
 }
 
+// Remembers a show/hide choice per browser; storage can be unavailable (private mode), so failures fall back to the default.
+function usePersistentFlag(key: string, initial: boolean) {
+  const [value, setValue] = useState(initial)
+  useEffect(() => {
+    try { const saved = localStorage.getItem(key); if (saved !== null) setValue(saved === "1") } catch {}
+  }, [key])
+  const update = useCallback((next: boolean) => {
+    setValue(next)
+    try { localStorage.setItem(key, next ? "1" : "0") } catch {}
+  }, [key])
+  return [value, update] as const
+}
+
 export function DashboardContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const [showAnalytics, setShowAnalytics] = useState(false)
-  const [showEarnings, setShowEarnings] = useState(false)
-  const [showPending, setShowPending] = useState(false)
+  const [showAnalytics, setShowAnalytics] = usePersistentFlag("dashboard_show_analytics_v1", true)
+  const [showEarnings, setShowEarnings] = usePersistentFlag("dashboard_show_earnings_v1", true)
+  const [showPending, setShowPending] = usePersistentFlag("dashboard_show_pending_v1", true)
   const [refreshSlots, setRefreshSlots] = useState(false)
   const [activeDashboardTab, setActiveDashboardTab] = useState<DashboardTab>("live")
   const { vendorId, landingData, refreshLanding, refreshConsoles } = useDashboardData()
@@ -85,7 +101,7 @@ export function DashboardContent() {
 
   useEffect(() => {
     const requestedTab = searchParams.get("tab")
-    setActiveDashboardTab(requestedTab === "booking" ? "booking" : requestedTab === "wallet" && can("wallet.topup") ? "wallet" : "live")
+    setActiveDashboardTab(requestedTab === "booking" ? "booking" : requestedTab === "wallet" && can("wallet.topup") ? "wallet" : requestedTab === "insights" && isOwnerSession ? "insights" : "live")
   }, [searchParams, activeStaff])
 
   const openDashboardTab = useCallback((tab: DashboardTab) => {
@@ -153,18 +169,15 @@ export function DashboardContent() {
   useEffect(() => {
     if (!socket || !vendorId || !isConnected) return
 
-    console.log('📊 Dashboard: Setting up booking event listener for real-time stats updates')
     const activeVendorId = vendorId
     joinVendor(activeVendorId)
 
     function handleBookingEvent(data: any) {
-      console.log('📅 Booking event received:', data)
       const eventVendorId = Number(data?.vendorId ?? data?.vendor_id)
       if (eventVendorId === activeVendorId) {
         const status = (data.status || '').toLowerCase()
         const bookingStatus = String(data?.booking_status || '').toLowerCase()
         if (status === 'pending_acceptance' || bookingStatus === 'pending_acceptance') {
-          console.log('🔔 Dashboard: Pay-at-cafe pending event received')
         }
         if (TERMINAL_BOOKING_STATUSES.includes(status)) {
           if (typeof window !== 'undefined') {
@@ -175,7 +188,6 @@ export function DashboardContent() {
     }
 
     function handleUpcomingBookingEvent(data: any) {
-      console.log('📅 Upcoming booking event received:', data)
       const eventVendorId = Number(data?.vendorId ?? data?.vendor_id)
       if (eventVendorId === activeVendorId && (data.status === 'Confirmed' || data.status === 'confirmed')) {
         setRealTimeStats(prev => ({
@@ -234,7 +246,6 @@ export function DashboardContent() {
     socket.on('booking_payment_update', handleBookingPaymentUpdate)
 
     return () => {
-      console.log('🧹 Cleaning up dashboard booking listeners')
       socket.off('booking', handleBookingEvent)
       socket.off('upcoming_booking', handleUpcomingBookingEvent)
       socket.off('console_availability', handleConsoleAvailabilityEvent)
@@ -389,13 +400,13 @@ export function DashboardContent() {
   )
 
   if (!dashboardData) {
-    return <HashLoader className="py-[42vh]" />
+    return <DashboardSkeleton />
   }
 
   return (
     <>
       {dashboardData?.available ? (
-        <HashLoader className="py-[50vh]" />
+        <DashboardSkeleton />
       ) : (
         <div className="operations-dashboard relative flex h-full min-h-0 flex-col gap-2 overflow-hidden text-foreground max-md:gap-1.5 sm:gap-3">
           {isLocked && <LockedOverlay />}
@@ -471,17 +482,23 @@ export function DashboardContent() {
                       className={activeDashboardTab==="wallet"?"tab-active":"tab-inactive"}>
                       <WalletCards className="h-4 w-4"/><span>Wallet top-up</span>
                     </button>}
+                    {isOwnerSession && <button type="button" onClick={()=>openDashboardTab("insights")}
+                      className={activeDashboardTab==="insights"?"tab-active":"tab-inactive"}>
+                      <TrendingUp className="h-4 w-4"/><span>Insights</span>
+                    </button>}
                   </div>
                 </div>
               </div>
 
-              {isOwnerSession && activeDashboardTab === "live" && <button type="button" aria-expanded={showAnalytics} className="justify-self-end rounded border px-3 py-1.5 text-xs" onClick={()=>setShowAnalytics(!showAnalytics)}>{showAnalytics ? "Hide analytics" : "Show analytics"}</button>}
+              {isOwnerSession && activeDashboardTab === "live" && <button type="button" aria-expanded={showAnalytics} className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "justify-self-end text-muted-foreground")} onClick={()=>setShowAnalytics(!showAnalytics)}>{showAnalytics ? "Hide analytics" : "Show analytics"}</button>}
             </div>
           </motion.div>
 
           {isOwnerSession && activeDashboardTab === "live" && showAnalytics && <div className="shrink-0">{topMetricsStrip}</div>}
 
-          {activeDashboardTab === "wallet" && can("wallet.topup") ? (
+          {activeDashboardTab === "insights" && isOwnerSession ? (
+            <div className="mt-2 flex min-h-0 flex-1 flex-col"><DashboardInsights vendorId={vendorId ?? null} /></div>
+          ) : activeDashboardTab === "wallet" && can("wallet.topup") ? (
             <div className="mt-2 min-h-0 flex-1 overflow-y-auto rounded-lg"><DashboardWallet embedded /></div>
           ) : activeDashboardTab === "booking" ? (
             <motion.div

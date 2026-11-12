@@ -142,7 +142,7 @@ export function EditConsoleForm({ console, onClose }: EditConsoleFormProps) {
         <DialogHeader>
           <DialogTitle>Edit Console</DialogTitle>
           <p className="text-sm text-zinc-400">
-            Console type: <span className="font-semibold uppercase text-blue-200">{consoleType}</span> | Console #{String(console?.number || "N/A")}
+            Console type: <span className="font-semibold uppercase keep-case text-blue-200">{consoleType}</span> | Console #{String(console?.number || "N/A")}
           </p>
         </DialogHeader>
 

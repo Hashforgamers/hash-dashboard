@@ -8,10 +8,10 @@ try {
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   eslint: {
-    ignoreDuringBuilds: true,
+    ignoreDuringBuilds: false, // lint errors fail the build; warnings are reported only
   },
   typescript: {
-    ignoreBuildErrors: true,
+    ignoreBuildErrors: false, // the codebase type-checks cleanly; keep it that way
   },
   images: {
     unoptimized: true,

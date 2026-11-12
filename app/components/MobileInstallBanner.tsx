@@ -93,7 +93,7 @@ export function MobileInstallBanner() {
   };
 
   return (
-    <div className="fixed inset-x-2 bottom-2 z-[90] rounded-xl border border-white/15 bg-zinc-950/95 p-3 text-white shadow-2xl backdrop-blur md:hidden">
+    <div className="install-banner fixed inset-x-2 bottom-2 z-[90] rounded-xl border border-white/15 bg-zinc-950/95 p-3 text-white shadow-2xl backdrop-blur md:hidden">
       <div className="flex items-start justify-between gap-3">
         <div className="flex min-w-0 items-start gap-2">
           <div className="rounded-lg border border-white/15 bg-white/10 p-1.5">

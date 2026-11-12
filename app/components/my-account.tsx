@@ -1,4 +1,6 @@
 "use client";
+import { ToggleSwitch, UpdatingOverlay } from "./account/account-ui";
+import { SettingsSkeleton } from "@/app/components/ui/page-skeleton";
 import { toast } from "sonner";
 import OwnerSecuritySettings from "./owner-security-settings";
 
@@ -6,7 +8,7 @@ import { normalizeOperatingHours, validateOperatingDay, type OperatingDay } from
 import { CafeRequests } from './cafe-requests';
 import { CafeWalletWorkspace } from './cafe-wallet-workspace';
 import { useState, useEffect, useRef } from "react";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -33,7 +35,6 @@ import { jwtDecode } from "jwt-decode";
 import { DASHBOARD_URL } from "@/src/config/env";
 import { VENDOR_ONBOARD_URL } from "@/src/config/env"
 import { BOOKING_URL } from "@/src/config/env"
-import HashLoader from "./ui/HashLoader";
 import { motion } from "framer-motion";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faIndianRupeeSign } from '@fortawesome/free-solid-svg-icons'
@@ -58,7 +59,7 @@ export function MyAccount() {
   const prevPageRef = useRef<string | null>(null);
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState<boolean>(true);
-  const [vendorId, setVendorId] = useState(null);
+  const [vendorId, setVendorId] = useState<any>(null);
   const [uploadMessage, setUploadMessage] = useState<string | null>(null);
   const [previewDocument, setPreviewDocument] = useState<string | null>(null);
   const [previewDocumentName, setPreviewDocumentName] = useState<string>("");
@@ -86,7 +87,7 @@ const [businessFormData, setBusinessFormData] = useState<any>({});
 const [savingBusinessField, setSavingBusinessField] = useState<string | null>(null);
 
 // Bank Transfer Details state
-const [bankDetails, setBankDetails] = useState(null);
+const [bankDetails, setBankDetails] = useState<any>(null);
 const [loadingBank, setLoadingBank] = useState(false);
 const [bankForm, setBankForm] = useState({
   accountHolderName: '',
@@ -99,7 +100,7 @@ const [editingBank, setEditingBank] = useState(false);
 const [savingBank, setSavingBank] = useState(false);
 
 // Payout state
-const [payouts, setPayouts] = useState([]);
+const [payouts, setPayouts] = useState<any[]>([]);
 const [loadingPayouts, setLoadingPayouts] = useState(false);
 const [payoutPage, setPayoutPage] = useState(1);
 const [payoutTotalPages, setPayoutTotalPages] = useState(1);
@@ -159,11 +160,11 @@ const [savingGst, setSavingGst] = useState(false);
 const [gstMessage, setGstMessage] = useState<string | null>(null);
 
 // Add these state variables after your existing bank states
-const [paymentMethods, setPaymentMethods] = useState([]);
+const [paymentMethods, setPaymentMethods] = useState<any[]>([]);
 const [loadingPaymentMethods, setLoadingPaymentMethods] = useState(false);
-const [togglingMethod, setTogglingMethod] = useState(null);
-const [paymentMethodError, setPaymentMethodError] = useState(null);
-const [paymentMethodSuccess, setPaymentMethodSuccess] = useState(null);
+const [togglingMethod, setTogglingMethod] = useState<any>(null);
+const [paymentMethodError, setPaymentMethodError] = useState<any>(null);
+const [paymentMethodSuccess, setPaymentMethodSuccess] = useState<any>(null);
 const [otpLoading, setOtpLoading] = useState(false);
 const [bankDetailsHistory, setBankDetailsHistory] = useState<any[]>([]);
 const [loadingBankHistory, setLoadingBankHistory] = useState(false);
@@ -202,7 +203,7 @@ const fetchPaymentMethods = async () => {
 };
 
 // Toggle payment method
-const handleTogglePaymentMethod = async (payMethodId, currentState) => {
+const handleTogglePaymentMethod = async (payMethodId: any, currentState: any) => {
   if (!vendorId) return;
   
   setTogglingMethod(payMethodId);
@@ -272,7 +273,7 @@ const normalizePaymentMethodName = (methodName: string) => {
 
 
 // Add OTP verification functions
-const checkPageVerification = async (pageType) => {
+const checkPageVerification = async (pageType: any) => {
   try {
     const response = await api.get<any>(`${VENDOR_ONBOARD_URL}/api/vendor/${vendorId}/check-verification?page_type=${pageType}`, {
       timeoutMs: 10_000,
@@ -536,7 +537,7 @@ const fetchSettlementSummary = async () => {
 };
 
 // Handle bank form changes
-const handleBankFormChange = (field, value) => {
+const handleBankFormChange = (field: any, value: any) => {
   setBankForm(prev => ({ ...prev, [field]: value }));
 };
 
@@ -655,7 +656,7 @@ const handleEditBusinessField = (field: string) => {
 };
 
 const handleBusinessFieldChange = (field: string, value: string) => {
-  setBusinessFormData(prev => ({
+  setBusinessFormData((prev: any) => ({
     ...prev,
     [field]: value
   }));
@@ -674,7 +675,6 @@ const handleSaveBusinessField = async (field: string) => {
       [field]: businessFormData[field]
     };
 
-    console.log(`Saving ${field}:`, updateData);
 
     // Call your new API endpoint
     const response = await api.patch<any, string>(
@@ -694,7 +694,7 @@ const handleSaveBusinessField = async (field: string) => {
       toast.success(`${field === "displayName" ? "Display name" : field} updated successfully!`);
       
       // Update local data to reflect the change
-      setData(prevData => ({
+      setData((prevData: any) => ({
         ...prevData,
         businessDetails: {
           ...prevData.businessDetails,
@@ -873,7 +873,6 @@ const handleSaveSlot = async (day: string) => {
     if (validationError) throw new Error(validationError);
 
     // Show initial feedback
-    console.log('Starting slot update process...');
     
     const result = await updateOperatingHours(currentVendorId, dayData);
     
@@ -938,49 +937,6 @@ const handleSlotToggle = (day: string, isEnabled: boolean) => {
 
 
 // Loading Overlay Component
-const UpdatingOverlay = ({ visible }: { visible: boolean }) => {
-  if (!visible) return null;
-  
-  return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex flex-col items-center justify-center"
-    >
-      <div className="bg-card border border-border rounded-lg p-8 shadow-2xl max-w-md mx-4">
-        <div className="flex flex-col items-center space-y-4 text-center">
-          {/* Animated Spinner */}
-          <div className="relative">
-            <div className="w-16 h-16 border-4 border-muted rounded-full animate-spin border-t-primary"></div>
-            <div className="absolute inset-0 w-16 h-16 border-4 border-transparent rounded-full animate-ping border-t-primary/30"></div>
-          </div>
-          
-          {/* Title */}
-          <h3 className="text-xl font-semibold text-foreground">
-            Updating Operating Hours
-          </h3>
-          
-          {/* Description */}
-          <div className="space-y-2 text-sm text-muted-foreground">
-            <p>Please wait while we update your slot configurations.</p>
-            <p className="font-medium text-amber-400">
-              This process may take 2-3 minutes.
-            </p>
-            <p>Please do not close this window or navigate away.</p>
-          </div>
-          
-          {/* Progress Dots */}
-          <div className="flex space-x-1">
-            <div className="w-2 h-2 bg-primary rounded-full animate-bounce"></div>
-            <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-            <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-          </div>
-        </div>
-      </div>
-    </motion.div>
-  );
-};
 
 
 // Keep the last confirmed schedule separate from editable values.
@@ -1012,14 +968,12 @@ const handleCancelEdit = () => {
       try {
         const decoded_token = jwtDecode<{ sub: { id: number } }>(token);
         setVendorId(decoded_token.sub.id);
-        console.log("Vendor ID from token:", decoded_token.sub.id);
          
       } catch (error) {
         console.error('Error decoding token:', error);
         // Handle invalid token, e.g., redirect to login
       }
     } else {
-      console.log("No JWT token found in localStorage.");
       // Handle no token, e.g., redirect to login
     }
   }, []);
@@ -1138,7 +1092,7 @@ const handleCancelEdit = () => {
     if (label === "Bank Details" || label === "Payout History") {
     await handleRestrictedPageClick(label);
   } else {
-    setPage(label);
+    setPage(label ?? null);
   }
   };
 
@@ -1230,7 +1184,7 @@ const handleCancelEdit = () => {
         >
           <div className="flex justify-between items-center mb-4 border-b border-border pb-3">
             <h3 className="text-lg md:text-xl font-semibold text-foreground">Preview: {previewDocumentName}</h3>
-            <Button
+            <Button aria-label="Close"
               variant="ghost"
               size="sm"
               onClick={closePreview}
@@ -1271,18 +1225,15 @@ const handleCancelEdit = () => {
  useEffect(() => {
   async function fetchVendorDashboard() {
     if (!vendorId) {
-      console.log("No vendorId available");
       return;
     }
     setLoading(true);
     try {
-      console.log("Fetching dashboard for vendor:", vendorId);
       const res = await api.get<any>(
         `${DASHBOARD_URL}/api/vendor/${vendorId}/dashboard`
       ,
         { timeoutMs: 10_000, retries: 1, cache: "no-store", dedupe: false }
       );
-      console.log("API Response:", res);
 
       // Set profile image
       const profileImg = res.cafeProfile.profileImage || HFG_DEFAULT_LOGO;
@@ -1292,18 +1243,16 @@ const handleCancelEdit = () => {
         setData(res);
         
         const imagesData = res.cafeGallery?.images || [];
-        console.log("Images data:", imagesData); // Debug log
+// Debug log
         
         // Check if images are objects with IDs or just URLs
         if (imagesData.length > 0 && typeof imagesData[0] === 'object' && imagesData.id) {
           // New format: objects with IDs
-          console.log("Using image objects format");
           setCafeImageObjects(imagesData);
           const imageUrls = imagesData.map((img: any) => img.url || "").filter(Boolean);
           setCafeImages(imageUrls);
         } else {
           // Old format: just URLs or mixed format - handle safely
-          console.log("Using URL format");
           setCafeImageObjects([]);
           
           const images = imagesData
@@ -1355,10 +1304,8 @@ const handleCancelEdit = () => {
 
 
 const handleDeleteImageByUrl = async (imageIndex: number) => {
-  console.log('handleDeleteImageByUrl called with index:', imageIndex);
   
   if (!vendorId) {
-    console.log('No vendorId available');
     return;
   }
 
@@ -1366,7 +1313,6 @@ const handleDeleteImageByUrl = async (imageIndex: number) => {
 
   try {
     const imageUrl = cafeImages[imageIndex];
-    console.log('Attempting to delete image URL:', imageUrl);
     
     if (!imageUrl) {
       throw new Error("Image URL not found");
@@ -1378,7 +1324,6 @@ const handleDeleteImageByUrl = async (imageIndex: number) => {
       { headers: { "Content-Type": "application/json" }, timeoutMs: 10_000, retries: 0 }
     );
 
-    console.log('Delete response:', response);
 
     if (response.success) {
       setCafeImages((prevImages) =>
@@ -1463,72 +1408,14 @@ const handleDeleteImage = async (imageIndex: number) => {
 
   useEffect(() => {
     if (prevPageRef.current !== page) {
-      console.log("Page updated:", page);
     }
     prevPageRef.current = page;
   }, [page]);
 
-  if (loading) return <HashLoader className="min-h-[500px]" />;
+  if (loading) return <SettingsSkeleton />;
   if (!data) return <div className="text-center text-destructive p-8">Failed to load data. Please try again later.</div>;
 
   // Add this Toggle Switch component before your main component
-const ToggleSwitch = ({ 
-  enabled, 
-  onToggle, 
-  disabled = false, 
-  loading = false,
-  size = "default" 
-}) => {
-  const sizeClasses = {
-    sm: "w-8 h-4",
-    default: "w-11 h-6",
-    lg: "w-14 h-7"
-  };
-
-  const thumbSizeClasses = {
-    sm: "w-3 h-3",
-    default: "w-5 h-5", 
-    lg: "w-6 h-6"
-  };
-
-  return (
-    <button
-      type="button"
-      onClick={onToggle}
-      disabled={disabled || loading}
-      className={cn(
-        "relative inline-flex shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2",
-        sizeClasses[size],
-        enabled 
-          ? "bg-primary" 
-          : "bg-zinc-200 dark:bg-zinc-700",
-        disabled && "opacity-50 cursor-not-allowed"
-      )}
-      role="switch"
-      aria-checked={enabled}
-    >
-      <span className="sr-only">Toggle setting</span>
-      <span
-        className={cn(
-          "pointer-events-none relative inline-block rounded-full bg-white shadow transform ring-0 transition duration-200 ease-in-out",
-          thumbSizeClasses[size],
-          enabled 
-            ? size === "sm" ? "translate-x-4" : size === "lg" ? "translate-x-7" : "translate-x-5"
-            : "translate-x-0"
-        )}
-      >
-        {loading && (
-          <div className="absolute inset-0 flex items-center justify-center">
-            <Loader2 className={cn(
-              "animate-spin text-zinc-400",
-              size === "sm" ? "w-2 h-2" : size === "lg" ? "w-4 h-4" : "w-3 h-3"
-            )} />
-          </div>
-        )}
-      </span>
-    </button>
-  );
-};
 
 
   const { navigation, cafeProfile, businessDetails, operatingHours, billingDetails, verifiedDocuments } = data;
@@ -1705,45 +1592,50 @@ const ToggleSwitch = ({
             {/* Navigation Menu */}
             <Card className="account-panel overflow-hidden">
               <CardContent className="p-4">
-                <nav className="space-y-2">
+                <nav className="flex flex-col gap-4" aria-label="Settings sections">
                   {[
-                    { icon: ImageIcon, label: "Cafe Gallery" },
-                    { icon: Building2, label: "Business Details" },
-                    { icon: Clock, label: "Operating Hours" },  
-                    { icon: DollarSign, label: "GST Setup" },
-                    { icon: Settings, label: "Payment Methods" },
-                    ...(activeStaff?.role === "owner" ? [{ icon: Settings, label: "Owner Security" }] : []),
-                    ...(can("transactions.view") ? [{ icon: Clock, label: "Staff Activity" }] : []),
-                    { icon: FileCheck, label: "Verified Documents" },
-                    { icon: CreditCard, label: "Bank Details" },  
-                    { icon: DollarSign, label: "Payout History" },
-                    { icon: BellRing, label: "Notification Preferences" },
-                    { icon: Wallet, label: "Subscription Details" },
-                    { icon: Calendar, label: "Settlement Report" },
-                    { icon: BellRing, label: "Report an issue" },
-                  ].map((item, index) => (
-                    <motion.div
-                      key={item.label}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.05 * index }}
-                    >
-                      <Button
-                        variant="ghost"
-                        className={cn(
-                          "account-nav-item w-full justify-start rounded-md border border-transparent text-zinc-300 hover:bg-white/5 hover:text-white",
-                          page === item.label
-                            ? "border-blue-400/50 bg-blue-500/15 text-blue-100 shadow-[inset_0_0_0_1px_rgba(34,211,238,0.25)]"
-                            : ""
-                        )}
-                        aria-current={page === item.label ? "page" : undefined}
-                        onClick={handleViewInpage}
-                        data-label={item.label}
-                      >
-                        <item.icon className="mr-2 h-4 w-4 text-blue-300" />
-                        {item.label}
-                      </Button>
-                    </motion.div>
+                    { heading: "Café", items: [
+                      { icon: ImageIcon, label: "Cafe Gallery" },
+                      { icon: Building2, label: "Business Details" },
+                      { icon: Clock, label: "Operating Hours" },
+                    ] },
+                    { heading: "Payments", items: [
+                      { icon: Settings, label: "Payment Methods" },
+                      { icon: DollarSign, label: "GST Setup" },
+                      { icon: CreditCard, label: "Bank Details" },
+                      { icon: DollarSign, label: "Payout History" },
+                      { icon: Calendar, label: "Settlement Report" },
+                      { icon: Wallet, label: "Subscription Details" },
+                    ] },
+                    { heading: "Team & security", items: [
+                      ...(activeStaff?.role === "owner" ? [{ icon: Settings, label: "Owner Security" }] : []),
+                      ...(can("transactions.view") ? [{ icon: Clock, label: "Staff Activity" }] : []),
+                    ] },
+                    { heading: "Account", items: [
+                      { icon: FileCheck, label: "Verified Documents" },
+                      { icon: BellRing, label: "Notification Preferences" },
+                      { icon: BellRing, label: "Report an issue" },
+                    ] },
+                  ].filter((group) => group.items.length > 0).map((group) => (
+                    <div key={group.heading} className="flex flex-col gap-0.5">
+                      <p className="px-2 pb-1 text-xs font-medium text-muted-foreground">{group.heading}</p>
+                      {group.items.map((item) => (
+                        <Button
+                          key={item.label}
+                          variant="ghost"
+                          className={cn(
+                            "account-nav-item w-full justify-start rounded-lg text-zinc-300 hover:text-white",
+                            page === item.label ? "bg-white/10 text-foreground hover:bg-white/10" : ""
+                          )}
+                          aria-current={page === item.label ? "page" : undefined}
+                          onClick={handleViewInpage}
+                          data-label={item.label}
+                        >
+                          <item.icon className={cn("mr-2 h-4 w-4", page === item.label ? "text-primary" : "text-muted-foreground")} />
+                          {item.label}
+                        </Button>
+                      ))}
+                    </div>
                   ))}
                 </nav>
               </CardContent>
@@ -1804,7 +1696,7 @@ const ToggleSwitch = ({
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    console.log('Delete button clicked for index:', index); // Debug log
+// Debug log
                     
                     // Use appropriate delete function
                     if (cafeImageObjects.length > 0 && cafeImageObjects[index]?.id) {
@@ -1951,7 +1843,7 @@ const ToggleSwitch = ({
     <CardHeader className="pb-4">
       <CardTitle className="account-section-title flex items-center gap-2">Business Details</CardTitle>
       <CardDescription className="account-description">
-        Update your cafe's basic information
+        Update your cafe&apos;s basic information
       </CardDescription>
     </CardHeader>
     <CardContent className="space-y-3">
@@ -2018,7 +1910,7 @@ const ToggleSwitch = ({
                       </>
                     )}
                   </Button>
-                  <Button
+                  <Button aria-label="Close"
                     type="button"
                     variant="outline"
                     size="sm"
@@ -2030,7 +1922,7 @@ const ToggleSwitch = ({
                   </Button>
                 </>
               ) : (
-                <Button
+                <Button aria-label="Edit"
                   type="button"
                   variant="ghost"
                   size="sm"
@@ -2075,7 +1967,7 @@ const ToggleSwitch = ({
         Operating Hours
       </CardTitle>
       <CardDescription className="account-description">
-        Manage your cafe's working hours and slot durations
+        Manage your cafe&apos;s working hours and slot durations
       </CardDescription>
     </CardHeader>
     <CardContent className="space-y-3">
@@ -2172,7 +2064,7 @@ const ToggleSwitch = ({
                         </>
                       )}
                     </Button>
-                    <Button
+                    <Button aria-label="Close"
                       type="button"
                       variant="outline"
                       size="sm"
@@ -2184,7 +2076,7 @@ const ToggleSwitch = ({
                     </Button>
                   </>
                 ) : (
-                  <Button
+                  <Button aria-label="Edit"
                     type="button"
                     variant="ghost"
                     size="sm"
@@ -2698,7 +2590,7 @@ const ToggleSwitch = ({
                 type="button"
                 onClick={handleSaveBankDetails} 
                 disabled={savingBank}
-                className="btn-primary"
+                className={buttonVariants()}
               >
                 {savingBank ? (
                   <>
@@ -2792,7 +2684,7 @@ const ToggleSwitch = ({
               <Button 
                 type="button"
                 onClick={() => setEditingBank(true)}
-                className="btn-primary"
+                className={buttonVariants()}
               >
                 <Edit className="icon-md mr-2" />
                 Edit Bank Details
@@ -2817,7 +2709,7 @@ const ToggleSwitch = ({
             <Button 
               type="button"
               onClick={() => setEditingBank(true)}
-              className="btn-primary"
+              className={buttonVariants()}
             >
               <CreditCard className="icon-md mr-2" />
               Add Bank Details
@@ -2868,7 +2760,7 @@ const ToggleSwitch = ({
                       <td className="table-cell table-cell-text whitespace-nowrap">
                         {row.changed_by_name || row.changed_by_staff_id || "System"}
                       </td>
-                      <td className="table-cell table-cell-text whitespace-nowrap uppercase">
+                      <td className="table-cell table-cell-text whitespace-nowrap uppercase keep-case">
                         {row.payment_mode || "-"}
                       </td>
                       <td className="table-cell table-cell-text">
@@ -2922,7 +2814,7 @@ const ToggleSwitch = ({
           >
             <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
             <span className="body-text-small font-medium flex-1 break-words">{paymentMethodSuccess}</span>
-            <Button
+            <Button aria-label="Close"
               variant="ghost"
               size="sm"
               onClick={clearPaymentMethodMessages}
@@ -2941,7 +2833,7 @@ const ToggleSwitch = ({
           >
             <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
             <span className="body-text-small font-medium flex-1 break-words">{paymentMethodError}</span>
-            <Button
+            <Button aria-label="Close"
               variant="ghost"
               size="sm"
               onClick={clearPaymentMethodMessages}
@@ -3162,7 +3054,7 @@ const ToggleSwitch = ({
                   type="button"
                   onClick={fetchPaymentMethods}
                   disabled={loadingPaymentMethods}
-                  className="btn-primary"
+                  className={buttonVariants()}
                 >
                   {loadingPaymentMethods ? (
                     <>

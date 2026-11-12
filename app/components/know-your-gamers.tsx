@@ -72,7 +72,6 @@ export function KnowYourGamers() {
           setGamerData(gamerParsed.data)
           setStats(statsParsed.data)
           setLoading(false)
-          console.log("Loaded gamer data from cache")
           return
         }
 

@@ -1891,19 +1891,15 @@ h6 {
 }
 
 .slot-booking-modal {
-  border-color: hsl(0 0% 100% / 0.13);
-  background:
-    linear-gradient(180deg, hsl(240 4% 15% / 0.98), hsl(240 5% 10% / 0.98));
+  border-color: hsl(var(--border));
+  background: hsl(var(--popover));
   color: var(--slot-modal-text);
-  border-radius: 0.85rem;
-  box-shadow:
-    0 28px 90px hsl(0 0% 0% / 0.55),
-    inset 0 1px 0 hsl(0 0% 100% / 0.08);
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.5);
 }
 
 .slot-booking-modal-header {
-  border-color: hsl(0 0% 100% / 0.09);
-  background: hsl(240 4% 15% / 0.82);
+  border-color: hsl(var(--border));
+  background: transparent;
 }
 
 .slot-booking-popover {
@@ -1914,10 +1910,10 @@ h6 {
 }
 
 .slot-booking-modal .sb-card {
-  border: 1px solid hsl(0 0% 100% / 0.1);
-  background: hsl(240 3% 19% / 0.58);
-  border-radius: 0.7rem;
-  box-shadow: inset 0 1px 0 hsl(0 0% 100% / 0.045);
+  border: 1px solid hsl(var(--border));
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 12px;
+  box-shadow: none;
 }
 
 .slot-booking-modal .slot-section-title {
@@ -1945,14 +1941,15 @@ h6 {
   color: hsl(156 72% 62%);
 }
 
-.slot-booking-modal input,
+.slot-booking-modal input:not([type="checkbox"]):not([type="radio"]),
+.slot-booking-modal select,
 .slot-booking-modal textarea,
 .slot-booking-modal button[role="combobox"] {
-  min-height: 2.75rem;
-  border-color: hsl(0 0% 100% / 0.12);
-  background: hsl(240 3% 24% / 0.62);
-  color: hsl(0 0% 96%);
-  border-radius: 0.55rem;
+  min-height: 2.5rem;
+  border-color: transparent;
+  background-color: rgba(118, 118, 128, 0.18);
+  color: hsl(var(--foreground));
+  border-radius: 8px;
 }
 
 .slot-booking-modal input::placeholder,
@@ -1961,10 +1958,12 @@ h6 {
 }
 
 .slot-booking-modal input:focus,
+.slot-booking-modal select:focus,
 .slot-booking-modal textarea:focus,
 .slot-booking-modal button[role="combobox"]:focus {
-  border-color: hsl(217 91% 58% / 0.82);
-  box-shadow: 0 0 0 3px hsl(217 91% 58% / 0.16);
+  outline: none;
+  border-color: transparent;
+  box-shadow: 0 0 0 3px hsl(var(--primary) / 0.35);
 }
 
 .slot-booking-modal .text-zinc-800,

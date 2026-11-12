@@ -71,7 +71,7 @@ const FilterComponent: React.FC<FilterProps> = ({
             onClick={(e) => e.stopPropagation()}
           >
             <CardHeader className="top-0">
-              <button
+              <button aria-label="Close"
                 className="absolute right-2 rounded-md p-2 transition-all hover:scale-110 hover:bg-red-50 dark:hover:bg-red-500/20"
                 onClick={() => setShowFilter(false)}
               >

@@ -153,9 +153,7 @@ function maskToken(token: string | null): string {
 function accessDebug(message: string, meta?: Record<string, unknown>) {
   if (!isAccessDebugEnabled()) return;
   if (meta) {
-    console.info(`[AccessDebug] ${message}`, meta);
   } else {
-    console.info(`[AccessDebug] ${message}`);
   }
 }
 

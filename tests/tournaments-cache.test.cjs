@@ -25,6 +25,7 @@ function harness() {
     'react/jsx-runtime': { jsx: (type, props) => ({ type, props }), jsxs: (type, props) => ({ type, props }) },
     'next/navigation': { useRouter: () => ({ push() {} }) },
     'lucide-react': new Proxy({}, { get: (_, name) => name }),
+    '@/components/ui/button': { buttonVariants: () => '' },
     'jwt-decode': { jwtDecode: () => ({ sub: { id: 1 } }) },
     '@/app/context/DashboardDataContext': { useDashboardData: () => context },
     '@/hooks/useEventsToken': { useEventsToken: () => ({ token, loading: !token, error: null, refresh() {} }) },

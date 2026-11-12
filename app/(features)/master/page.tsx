@@ -33,7 +33,7 @@ export default function MasterAnalyticsPage() {
   const router = useRouter();
   const [selectedCafe, setSelectedCafe] = useState("Master Analytics");
   const [reportType, setReportType] = useState("Monthly");
-  const [analyticsData, setAnalyticsData] = useState(null);
+  const [analyticsData, setAnalyticsData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -71,7 +71,7 @@ export default function MasterAnalyticsPage() {
     <div className="p-6 h-screen overflow-hidden bg-background text-foreground">
       <div className="flex justify-between items-center mb-6">
         <div className="flex items-center gap-3">
-          <button
+          <button aria-label="Go Back"
             onClick={() => router.push("/select-cafe")}
             className="hover:text-blue-400 transition"
             title="Go Back"
@@ -169,7 +169,7 @@ export default function MasterAnalyticsPage() {
                   outerRadius={80}
                   label
                 >
-                  {data.paymentModes[selectedCafe].map((entry, idx) => (
+                  {data.paymentModes[selectedCafe].map((entry: any, idx: any) => (
                     <Cell key={idx} fill={COLORS[idx % COLORS.length]} />
                   ))}
                 </Pie>

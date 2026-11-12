@@ -61,7 +61,7 @@ export function OffersSection({
           <h2 className="section-title">Offers</h2>
 
           <div className="dashboard-module-tab-group flex items-center gap-1 rounded-lg p-1">
-            <button
+            <button aria-label="Grid View"
               onClick={() => setViewMode("grid")}
               className={`p-1.5 rounded-md transition-all ${
                 viewMode === "grid"
@@ -72,7 +72,7 @@ export function OffersSection({
             >
               <LayoutGrid className="icon-md" />
             </button>
-            <button
+            <button aria-label="Table View"
               onClick={() => setViewMode("table")}
               className={`p-1.5 rounded-md transition-all ${
                 viewMode === "table"
@@ -131,7 +131,7 @@ export function OffersSection({
                     </div>
                   </div>
                   <div className="flex gap-1 shrink-0">
-                    <button onClick={() => onEditOffer(offer)} className={iconButtonClass} title="Edit">
+                    <button aria-label="Edit" onClick={() => onEditOffer(offer)} className={iconButtonClass} title="Edit">
                       <Pencil className="w-3.5 h-3.5 text-emerald-400" />
                     </button>
                     <button

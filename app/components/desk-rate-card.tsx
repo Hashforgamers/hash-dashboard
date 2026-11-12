@@ -1,6 +1,7 @@
 "use client"
 import { buttonVariants } from "@/components/ui/button";
-import { useEffect, useState, type ReactNode } from "react"
+import { useEffect, useRef, useState, type ReactNode } from "react"
+import { toast } from "sonner"
 import { ConsoleLinks } from "./desk-console-mapping"
 import { BOOKING_URL } from "@/src/config/env"
 import { creditAuthHeaders } from "@/lib/credit-auth"
@@ -58,6 +59,8 @@ export function resolveSessionRate(cards: DeskCard[], minutes: number, players: 
 export default function DeskRateEditor({ vendor, games, baseRate, title }: { vendor: number | null; games: { id: number; game_name: string }[]; baseRate?: ReactNode; title?: string }) {
   const [revision, refresh] = useState(0)
   const { cards, error, loading } = useDeskCards(vendor, revision)
+  const cardsRef = useRef(cards)
+  cardsRef.current = cards
   const [game, setGame] = useState(String(games[0]?.id || ""))
   const [modeDraft, setModeDraft] = useState<"slot" | "variants" | null>(null)
   const [draft, setDraft] = useState<RateDefinition | null>(null)
@@ -80,12 +83,23 @@ export default function DeskRateEditor({ vendor, games, baseRate, title }: { ven
     if (!response.ok) throw Error(result.error || "Could not save pricing.")
     return result
   }
-  async function maintain(card: DeskCard, changes: { archived?: boolean; is_active?: boolean }) {
+  async function maintain(card: DeskCard, changes: { archived?: boolean; is_active?: boolean }, isUndo = false) {
     setSaving(true); setStatus("")
     try {
       await write(endpoint, "PATCH", { game_id: card.game_id, profile: card.profile, revision: card.revision, ...changes })
       if (editing?.profile === card.profile) { setEditing(null); setDraft(null) }
       setModeDraft(null); refresh(n => n + 1); setStatus("Rate updated.")
+      if (!isUndo) {
+        const verb = changes.archived === true ? "archived" : changes.archived === false ? "restored" : changes.is_active ? "enabled" : "disabled"
+        const reverse = Object.fromEntries(Object.entries(changes).map(([key, value]) => [key, !value]))
+        // Undo uses the card's latest revision, so it never overwrites a newer change.
+        toast.success(`"${rateLabel(card)}" ${verb}`, {
+          action: { label: "Undo", onClick: () => {
+            const latest = cardsRef.current.find(c => c.game_id === card.game_id && c.profile === card.profile)
+            void maintain(latest ?? { ...card, revision: card.revision + 1 }, reverse, true)
+          } },
+        })
+      }
     } catch (e) { setStatus(e instanceof Error ? e.message : "Could not update rate.") }
     finally { setSaving(false) }
   }

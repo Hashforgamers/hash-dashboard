@@ -231,9 +231,10 @@ const VendorOrderPage: React.FC = () => {
             <p className="body-text-muted mt-2">Loading products...</p>
           </div>
         ) : products.length === 0 && productError ? null : products.length === 0 ? (
-          <div className="rounded-lg border border-zinc-200 py-6 text-center dark:border-zinc-800">
-            <Package className="mx-auto mb-2 h-5 w-5 text-muted-foreground" />
-            <p className="text-sm text-muted-foreground">No products available</p>
+          <div className="dashboard-empty-state">
+            <Package aria-hidden="true" />
+            <p>No products available</p>
+            <span>Products from Hash for Gamers will show up here.</span>
             <button className={`${secondaryButtonClass} mt-3`} onClick={fetchProducts}>
               Refresh
             </button>

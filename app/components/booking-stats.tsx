@@ -2,7 +2,7 @@ import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Monitor, Gamepad2, Gamepad, Headphones } from 'lucide-react';
 
-export function BookingStats({ bookingStats }) {
+export function BookingStats({ bookingStats }: any) {
   const platforms = [
     {
       name: "PC",

@@ -167,7 +167,7 @@ export function ManageGamingConsole() {
           exit={{ opacity: 0, y: -20 }}
           className="h-full min-h-0 w-full"
         >
-          <ConsoleList onEdit={handleEditConsole} refreshKey={listRefreshKey} />
+          <ConsoleList onEdit={handleEditConsole} onAdd={() => handleActionClick("add")} refreshKey={listRefreshKey} />
         </motion.div>
       );
     }

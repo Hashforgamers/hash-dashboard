@@ -193,7 +193,7 @@ export default function CreditAccountModal({ open, vendorId, customer, onClose, 
                   <p className="text-sm text-zinc-400">Verify customer details and enable monthly credit.</p>
                 </div>
               </div>
-              <button onClick={onClose} className="slot-booking-modal-close rounded-md p-1">
+              <button aria-label="Close" onClick={onClose} className="slot-booking-modal-close rounded-md p-1">
                 <X className="h-4 w-4" />
               </button>
             </div>
