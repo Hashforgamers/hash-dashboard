@@ -36,7 +36,7 @@ export default function QrLiveSessions({onCount,onLoadState,layout="cards",searc
     const promise=(async()=>{
       try{
         const token=localStorage.getItem('rbac_access_token_v1')||'';
-        const result=await cafeCall<Snapshot>(`/${selectedCafeId}/sessions/live`,undefined,'GET',token);
+        const result=await cafeCall<Snapshot>(`/${selectedCafeId}/sessions/live?exclude_existing_bookings=1`,undefined,'GET',token);
         if(currentContext.current===key){setData(result);setError('');setHasSnapshot(true);setLoadState('ready');}
       }catch(e){
         if(currentContext.current===key){setLoadState('error');setError(e instanceof CafeApiError&&e.status===401?'Unlock your staff session again to refresh live sessions.':e instanceof CafeApiError&&e.status===403?'You do not have permission to view this cafe’s live sessions.':e instanceof Error&&/timeout|timed out|abort/i.test(e.message)?'The server took too long to respond.':'Live sessions could not be refreshed. Please retry.');}
@@ -68,11 +68,11 @@ export default function QrLiveSessions({onCount,onLoadState,layout="cards",searc
   const sessions=data.items.filter(s=>s.kind!=='existing_booking'&&`${s.gamer_name} PC ${s.console_number}`.toLowerCase().includes(search.trim().toLowerCase()));
   if(!sessions.length&&!error&&loadState==='ready')return null;
   const showLoading = showInitialLoading && loadState === 'loading' && !hasSnapshot;
-  const notice=<>{showLoading&&<p role="status" className="text-sm text-muted-foreground">Loading live sessions…</p>}{error&&<div role="alert" className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-amber-500/30 bg-amber-500/5 p-3"><div><p className="text-sm font-medium">{error}</p><p className="mt-1 text-xs text-muted-foreground">{hasSnapshot?'Showing the last received sessions. Live status may have changed.':'Session availability is unknown until the connection recovers.'}</p></div><button type="button" className="rounded-md border px-3 py-2 text-xs" onClick={()=>void refresh().catch(()=>{})}>Retry</button></div>}
+  const notice=<>{showLoading&&<p role="status" className="text-sm text-muted-foreground">Loading live sessions…</p>}{error&&<div role="alert" className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-amber-500/30 bg-amber-500/5 p-3"><div className="min-w-0 flex-1 basis-64"><p className="text-sm font-medium">{error}</p><p className="mt-1 text-xs text-muted-foreground">{hasSnapshot?'Showing the last received sessions. Live status may have changed.':'Session availability is unknown until the connection recovers.'}</p></div><button type="button" className="shrink-0 rounded-md border px-3 py-2 text-xs" onClick={()=>void refresh().catch(()=>{})}>Retry</button></div>}
     {data.requests.length>0&&<p className="text-xs text-amber-300">{data.requests.length} continuation request(s) awaiting owner approval.</p>}
     {activeStaff.role==='owner'&&data.requests.some(r=>r.email_delivery?.error)&&<p className="text-xs text-amber-300">Owner email delivery is pending. Review requests here.</p>}</>;
   return <>
-    {(error||data.requests.length>0||showLoading)&&(layout==='rows'?<tr><td colSpan={6} className="px-4 py-2">{notice}</td></tr>:<div>{notice}</div>)}
+    {(error||data.requests.length>0||showLoading)&&(layout==='rows'?<tr><td colSpan={6} className="live-session-notice px-4 py-2">{notice}</td></tr>:<div>{notice}</div>)}
 
       {sessions.map(s=>{
         const remaining=s.ends_at?Math.max(0,Math.ceil((Date.parse(s.ends_at)-now)/1000)):0;

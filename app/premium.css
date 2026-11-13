@@ -2818,10 +2818,10 @@ h6 {
   font-size: 12px;
   line-height: 1.5;
 }
-.operations-dashboard .live-session-data-table td:first-child > div {
+.operations-dashboard .live-session-data-table .live-session-row td:first-child > div {
   gap: 8px;
 }
-.operations-dashboard .live-session-data-table td:first-child > div > div:first-child {
+.operations-dashboard .live-session-data-table .live-session-row td:first-child > div > div:first-child {
   width: 32px;
   height: 32px;
   flex-shrink: 0;
@@ -2935,3 +2935,11 @@ h6 {
 .dashboard-quick-slots-row { display: grid; grid-template-columns: minmax(0,1fr) auto; }
 .dashboard-slot-slider { scroll-snap-type: x proximity; scroll-padding-inline: 4px; padding-inline-end: 12px; overscroll-behavior-x: contain; }
 .dashboard-slot-slider .dashboard-slot-chip { scroll-snap-align: start; }
+
+/* Full-width notices are not customer or sticky action cells. */
+.operations-dashboard .live-session-data-table td.live-session-notice {
+  position: static;
+  border-left: 0;
+  box-shadow: none;
+  white-space: normal;
+}

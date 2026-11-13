@@ -17,7 +17,7 @@ test('live session timeout stays unknown, retries, and retains confirmed session
  Module._load=function(name,parent,isMain){
   if(name==='@/app/context/AccessContext')return {useAccess:()=>({activeStaff:{id:'owner-41',role:'owner'},selectedCafeId:41,can:()=>false})};
   if(name==='@/app/context/SocketContext')return {useSocket:()=>({socket,isConnected:true})};
-  if(name==='@/lib/cafe-api')return {CafeApiError:class CafeApiError extends Error{},cafeCall:()=>new Promise((resolve,reject)=>requests.push({resolve,reject})),rupees:()=> '₹0.00'};
+  if(name==='@/lib/cafe-api')return {CafeApiError:class CafeApiError extends Error{},cafeCall:(url)=>new Promise((resolve,reject)=>requests.push({resolve,reject,url})),rupees:()=> '₹0.00'};
   if(name.startsWith('@/')){const base=path.join(sourceRoot,name.slice(2));const file=['.tsx','.ts'].map(ext=>base+ext).find(fs.existsSync);if(file)return loadTs(file);}
   return originalLoad.call(this,name,parent,isMain);
  };
@@ -34,6 +34,7 @@ test('live session timeout stays unknown, retries, and retains confirmed session
  try{
   await act(async()=>root.render(React.createElement(View,{onLoadState:state=>states.push(state)})));
   assert.equal(requests.length,1);assert.match(document.body.textContent,/Loading live sessions/);
+  assert.equal(requests[0].url,'/41/sessions/live?exclude_existing_bookings=1');
   await act(async()=>root.render(React.createElement(View,{layout:'rows',showInitialLoading:false,onLoadState:state=>states.push(state)})));
   assert.equal(document.querySelector('#root').childElementCount,0,'loading must not insert a row above visible sessions');
   await act(async()=>root.render(React.createElement(View,{onLoadState:state=>states.push(state)})));
@@ -50,6 +51,15 @@ test('live session timeout stays unknown, retries, and retains confirmed session
   assert.match(document.body.textContent,/Test Guest/,'reconnect must not clear confirmed sessions');
   await act(async()=>requests[2].reject(new Error('signal timed out')));
   assert.match(document.body.textContent,/Test Guest/);assert.match(document.body.textContent,/Showing the last received sessions/);
+  await act(async()=>root.render(React.createElement('table',null,React.createElement('tbody',null,React.createElement(View,{layout:'rows'})))));
+  await act(async()=>requests.at(-1).reject(new Error('signal timed out')));
+  const notice=document.querySelector('td.live-session-notice');
+  assert.equal(notice.colSpan,6);
+  assert.ok(notice.querySelector('[role="alert"] > div').classList.contains('min-w-0'));
+  assert.equal(notice.closest('tr').classList.contains('live-session-row'),false);
+  const css=fs.readFileSync(path.join(sourceRoot,'app/premium.css'),'utf8');
+  assert.ok(css.includes('.live-session-data-table .live-session-row td:first-child > div > div:first-child'));
+  assert.ok(!css.includes('.live-session-data-table td:first-child > div > div:first-child'));
   const parent=fs.readFileSync(path.join(sourceRoot,'app/components/current-slot.tsx'),'utf8');
   assert.ok(parent.includes("qrSessionCount > 0 || qrLoadState!=='ready' ? null"));
  }finally{await act(async()=>root.unmount());Module._load=originalLoad;if(prior)Module._extensions['.tsx']=prior;else delete Module._extensions['.tsx'];dom.window.close();}

@@ -86,7 +86,7 @@ export function NotificationButton({
     let alive=true
     const refresh=async()=>{
       try {
-        const data=await cafeCall<{requests:{id:string;user_id:number;minutes:number;amount:number;expires_at:string}[]}>(`/${selectedCafeId}/sessions/live`)
+        const data=await cafeCall<{requests:{id:string;user_id:number;minutes:number;amount:number;expires_at:string}[]}>(`/${selectedCafeId}/sessions/live?requests_only=1`)
         if(!alive)return
         const notices=data.requests.map(r=>({kind:'cafe_continuation',notification_id:`continuation-${r.id}`,vendorId:Number(selectedCafeId),
           userId:r.user_id,minutes:r.minutes,amount:r.amount,expiresAt:r.expires_at}))
