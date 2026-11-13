@@ -21,6 +21,7 @@ import {
   IndianRupee,
 } from "lucide-react";
 import { jwtDecode } from "jwt-decode";
+import { compatiblePlatforms, getConsoleInfo } from "./platforms";
 import { DASHBOARD_URL } from "@/src/config/env";
 
 // Types
@@ -40,6 +41,7 @@ interface Game {
   description?: string;
   genre?: string;
   platform?: string;
+  supported_platforms?: string[];
   image_url?: string;
   rawg_rating?: number;
   metacritic?: number;
@@ -74,14 +76,6 @@ interface PlatformType {
   consoles: Console[];
 }
 
-// Console type configs
-const CONSOLE_TYPES = [
-  { value: "pc", label: "PC", icon: "💻", color: "bg-blue-500" },
-  { value: "ps5", label: "PlayStation 5", icon: "🎮", color: "bg-blue-500" },
-  { value: "xbox", label: "Xbox", icon: "🎯", color: "bg-emerald-500" },
-  { value: "vr", label: "VR", icon: "🥽", color: "bg-purple-500" },
-];
-
 export default function GamesManagementPage() {
   const [vendorId, setVendorId] = useState<number | null>(null);
   const [vendorGames, setVendorGames] = useState<VendorGame[]>([]);
@@ -94,6 +88,7 @@ export default function GamesManagementPage() {
   // Modal state
   const [selectedGame, setSelectedGame] = useState<Game | null>(null);
   const [selectedPlatform, setSelectedPlatform] = useState<string>("");
+  const [selectedPlatformId, setSelectedPlatformId] = useState<number | null>(null);
   const [selectedPlatformPrice, setSelectedPlatformPrice] = useState<number>(0); // ✅ auto price
   const [availableConsoles, setAvailableConsoles] = useState<Console[]>([]);
   const [selectedConsoleIds, setSelectedConsoleIds] = useState<number[]>([]);
@@ -154,23 +149,6 @@ export default function GamesManagementPage() {
     }
   };
 
-  // Fetch consoles for selected platform
-  const fetchConsolesForPlatform = async (platformType: string) => {
-    if (!vendorId) return;
-    try {
-      const response = await fetch(
-        `${DASHBOARD_URL}/vendor/${vendorId}/platforms/${platformType}/consoles`
-      );
-      if (!response.ok) throw new Error("Failed to fetch consoles");
-      const data = await response.json();
-      setAvailableConsoles(data);
-    } catch (err) {
-      console.error("Error fetching consoles:", err);
-      setError("Failed to load consoles for this platform");
-      setAvailableConsoles([]);
-    }
-  };
-
   // Fetch all games with search
   const fetchGames = async (search = "") => {
     try {
@@ -208,18 +186,14 @@ export default function GamesManagementPage() {
     }
   }, [vendorId]);
 
-  // Handle platform selection — ✅ also sets price from platformTypes
-  const handlePlatformSelect = async (platformType: string) => {
-    setSelectedPlatform(platformType);
+  const eligiblePlatforms = compatiblePlatforms(platformTypes, selectedGame?.supported_platforms);
+
+  const handlePlatformSelect = (platform: PlatformType) => {
+    setSelectedPlatformId(platform.id);
+    setSelectedPlatform(platform.consoles[0]?.console_type || platform.platform_type);
     setSelectedConsoleIds([]);
-
-    // ✅ Auto-set price from the selected platform's single_slot_price
-    const platform = platformTypes.find(
-      (p) => p.platform_type === platformType
-    );
-    setSelectedPlatformPrice(platform?.single_slot_price ?? 0);
-
-    await fetchConsolesForPlatform(platformType.toLowerCase());
+    setSelectedPlatformPrice(platform.single_slot_price ?? 0);
+    setAvailableConsoles(platform.consoles);
   };
 
   // Toggle console selection
@@ -235,6 +209,12 @@ export default function GamesManagementPage() {
   const handleAddGame = async () => {
     if (!selectedGame || !vendorId || selectedConsoleIds.length === 0) {
       setError("Please select at least one console");
+      return;
+    }
+
+    const platform = eligiblePlatforms.find((item) => item.id === selectedPlatformId);
+    if (!platform || selectedConsoleIds.some((id) => !platform.consoles.some((console) => console.id === id))) {
+      setError("Choose consoles from a supported platform.");
       return;
     }
 
@@ -302,6 +282,7 @@ export default function GamesManagementPage() {
     setModalStep(1);
     setSelectedGame(null);
     setSelectedPlatform("");
+    setSelectedPlatformId(null);
     setSelectedPlatformPrice(0);
     setAvailableConsoles([]);
     setSelectedConsoleIds([]);
@@ -309,13 +290,6 @@ export default function GamesManagementPage() {
     setError(null);
   };
 
-  // Get console info
-  const getConsoleInfo = (consoleType: string) => {
-    return (
-      CONSOLE_TYPES.find((c) => c.value === consoleType.toLowerCase()) ||
-      CONSOLE_TYPES[0]
-    );
-  };
   const primaryButtonClass =
     buttonVariants();
   const secondaryButtonClass =
@@ -729,6 +703,7 @@ export default function GamesManagementPage() {
                           setModalStep(1);
                           setSelectedGame(null);
                           setSelectedPlatform("");
+                          setSelectedPlatformId(null);
                           setSelectedPlatformPrice(0);
                           setAvailableConsoles([]);
                           setSelectedConsoleIds([]);
@@ -783,29 +758,28 @@ export default function GamesManagementPage() {
                         <label className="table-header-text mb-3 block">
                           1. Select Platform
                         </label>
-                        {platformTypes.length === 0 ? (
+                        {eligiblePlatforms.length === 0 ? (
                           <div className="text-center py-8 bg-muted/30 rounded-lg">
                             <Monitor className="w-10 h-10 mx-auto text-muted-foreground/50 mb-2" />
                             <p className="text-sm text-muted-foreground">
-                              No platforms configured. Please add consoles
-                              first.
+                              No compatible consoles are available for this game. Check its catalog platforms and your café’s console setup.
                             </p>
                           </div>
                         ) : (
                           <div className="flex gap-3 flex-wrap">
-                            {platformTypes.map((platform) => {
+                            {eligiblePlatforms.map((platform) => {
                               const info = getConsoleInfo(
-                                platform.platform_type
+                                platform.consoles[0]?.console_type || platform.platform_type
                               );
                               const isSelected =
-                                selectedPlatform === platform.platform_type;
+                                selectedPlatformId === platform.id;
                               return (
                                 <motion.button
                                   key={platform.id}
                                   whileHover={{ scale: 1.05 }}
                                   whileTap={{ scale: 0.95 }}
                                   onClick={() =>
-                                    handlePlatformSelect(platform.platform_type)
+                                    handlePlatformSelect(platform)
                                   }
                                   className={`flex items-center gap-2 px-4 py-3 rounded-lg border-2 transition-all ${
                                     isSelected
