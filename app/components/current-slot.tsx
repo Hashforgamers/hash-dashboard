@@ -1115,7 +1115,7 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
 
                         <div className="mt-3 flex items-center justify-between gap-3">
                           <div><p className="mb-1 text-xs text-muted-foreground">Duration</p><LiveSessionTiming elapsed={timer.elapsedTime || 0} /></div>
-                          <LiveSessionDue overtime={timer.extraTime || 0} amountDue={hasOutstandingDue ? outstandingDue : 0} paymentStatus={booking.runtime?.billing?.payment_status} />
+                          <LiveSessionDue overtime={timer.extraTime || 0} />
                         </div>
 
                         <div className="mt-3 grid grid-cols-2 gap-1.5 sm:gap-2">
@@ -1158,7 +1158,7 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                               }}
                               className={buttonVariants({ variant: "warning", size: "sm" })}
                             >
-                              Settle
+                              End &amp; pay
                             </button>
                           ) : typeof checkedDue !== "number" ? (
                             <PaymentCheckAction failed={checkedDue === null || !bookingIdToCheck} onRetry={retryPaymentCheck} />
@@ -1598,7 +1598,7 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
 
                             {/* Extra Time cell - unchanged */}
                             <td className="px-3 py-3 md:px-4">
-                              <LiveSessionDue overtime={timer.extraTime || 0} amountDue={hasOutstandingDue ? outstandingDue : 0} paymentStatus={booking.runtime?.billing?.payment_status} />
+                              <LiveSessionDue overtime={timer.extraTime || 0} />
                             </td>
 
                             {/* Action cell - unchanged */}
@@ -1618,8 +1618,8 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                                     >
                                       <div className="flex items-center justify-center gap-1">
                                         <FaCheck className="w-2 h-2 sm:w-3 sm:h-3" />
-                                        <span className="hidden sm:inline">Settle All</span>
-                                        <span className="sm:hidden">Settle</span>
+                                        <span className="hidden sm:inline">End &amp; pay</span>
+                                        <span className="sm:hidden">End &amp; pay</span>
                                       </div>
                                     </button>
                                   )}
@@ -1635,8 +1635,8 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                                 >
                                   <div className="flex items-center justify-center gap-1">
                                     <FaCheck className="w-2 h-2 sm:w-3 sm:h-3" />
-                                    <span className="hidden sm:inline">Settle</span>
-                                    <span className="sm:hidden">Set</span>
+                                    <span className="hidden sm:inline">End &amp; pay</span>
+                                    <span className="sm:hidden">Pay</span>
                                   </div>
                                 </button>
                               ) : (

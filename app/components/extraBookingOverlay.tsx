@@ -409,7 +409,7 @@ const SettlementOverlay: React.FC<ExtraBookingOverlayProps> = ({
       console.error('💰 Settle process failed:', err);
       
       // ✅ On ERROR - Show error, don't close overlay (let user retry)
-      setSettlementError(err instanceof Error ? err.message : "Unable to settle this session. Please retry.");
+      setSettlementError(err instanceof Error ? err.message : "Could not end the session. Try again.");
       setLoading(false);
       
       // ✅ Don't close overlay on error - let user try again
@@ -439,10 +439,10 @@ const SettlementOverlay: React.FC<ExtraBookingOverlayProps> = ({
         .reduce((sum, item) => sum + Number(item.line_total || 0), 0);
       const maxWaiveOff = dueBeforeWaive;
       if (parsedValue < 0) {
-        setWaiveOffError("Waive-off amount cannot be negative");
+        setWaiveOffError("Discount cannot be negative");
         setWaiveOffAmount("");
       } else if (parsedValue > maxWaiveOff) {
-        setWaiveOffError(`Waive-off amount cannot exceed ₹${maxWaiveOff.toFixed(2)}`);
+        setWaiveOffError(`Discount cannot exceed ₹${maxWaiveOff.toFixed(2)}`);
         setWaiveOffAmount(maxWaiveOff.toString());
       } else {
         setWaiveOffError("");
@@ -523,10 +523,10 @@ const SettlementOverlay: React.FC<ExtraBookingOverlayProps> = ({
             <div className="relative mb-3 flex flex-col justify-between gap-2 sm:mb-5 sm:flex-row sm:items-start sm:gap-3">
               <div>
                 <h2 id="extra-payment-title" className="text-xl font-bold text-zinc-100 sm:text-2xl">
-                  Session settlement
+                  End session
                 </h2>
                 <p className="mt-1 text-xs text-zinc-300 sm:text-sm">
-                  Review charges and record payment to release the console.
+                  Check the bill before freeing up the console.
                 </p>
                 {settlementPausedAt ? (
                   <p className="mt-1 text-xs text-blue-300">Timer paused at {settlementPausedAt}</p>
@@ -538,7 +538,7 @@ const SettlementOverlay: React.FC<ExtraBookingOverlayProps> = ({
             </div>
 
             {summaryLoading || !paymentSummary || summaryBookingId !== resolveBookingId(selectedSlot) ? <div className="rounded-xl border border-zinc-700 p-8 text-center" aria-live="polite" aria-busy={summaryLoading}>
-              {summaryError ? <><p role="alert" className="text-sm text-red-300">{summaryError}</p><button type="button" className="mt-4 rounded-md border px-4 py-2 text-sm" onClick={()=>{setSummaryLoading(true);setSummaryVersion(v=>v+1);}}>Retry</button></> : <><Loader2 className="mx-auto mb-3 h-5 w-5 animate-spin text-zinc-400"/><p className="text-sm">Verifying settlement amounts…</p><p className="mt-1 text-xs text-zinc-400">Loading current payments and outstanding charges.</p></>}
+              {summaryError ? <><p role="alert" className="text-sm text-red-300">{summaryError}</p><button type="button" className="mt-4 rounded-md border px-4 py-2 text-sm" onClick={()=>{setSummaryLoading(true);setSummaryVersion(v=>v+1);}}>Retry</button></> : <><Loader2 className="mx-auto mb-3 h-5 w-5 animate-spin text-zinc-400"/><p className="text-sm">Checking the bill…</p></>}
               <button type="button" className="mt-4 ml-2 rounded-md border px-4 py-2 text-sm" onClick={()=>setShowOverlay(false)}>Cancel</button>
             </div> : <div className="grid grid-cols-1 gap-3 sm:gap-4 lg:grid-cols-[minmax(0,1fr)_330px]">
               <div>
@@ -556,33 +556,18 @@ const SettlementOverlay: React.FC<ExtraBookingOverlayProps> = ({
                   <p className="mt-2 text-xs text-zinc-300 sm:text-sm">
                     Session for <span className="font-semibold text-zinc-100">{selectedSlot.username}</span>
                     {computedExtraSeconds > 0
-                      ? " has crossed allotted time."
-                      : " has pending charges to settle."}
+                      ? " has played past the booked end time."
+                      : ""}
                   </p>
                 </div>
 
                 <div className="mb-3 grid grid-cols-1 gap-2 sm:mb-4 sm:grid-cols-2 sm:gap-3">
                   <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-2.5 sm:p-3">
-                    <p className="text-xs font-medium text-red-200">Overtime</p>
+                    <p className="text-xs font-medium text-red-200">Extra time</p>
                     <p className="mt-1 inline-flex items-center gap-1 text-base font-bold text-red-300 sm:text-lg">
                       <Timer className="h-4 w-4" />
                       {formatTime(computedExtraSeconds)}
                     </p>
-                  </div>
-                  <div className="rounded-xl border border-blue-500/30 bg-blue-500/10 p-2.5 sm:p-3">
-                    <p className="text-xs font-medium text-blue-200">Overtime charge</p>
-                    <p className="mt-1 text-base font-bold text-blue-300 sm:text-lg">₹{computedExtraAmount.toFixed(2)}</p>
-                  </div>
-                  <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-2.5 sm:p-3">
-                    <p className="text-xs font-medium text-emerald-200">Already paid</p>
-                    <p className="mt-1 inline-flex items-center gap-1 text-base font-bold text-emerald-300 sm:text-lg">
-                      <Wallet className="h-4 w-4" />
-                      ₹{totalPaidAmount.toFixed(2)}
-                    </p>
-                  </div>
-                  <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-2.5 sm:p-3">
-                    <p className="text-xs font-medium text-amber-200">Amount due</p>
-                    <p className="mt-1 text-base font-bold text-amber-300 sm:text-lg">₹{payableAmount.toFixed(2)}</p>
                   </div>
                 </div>
                 {(summaryLoading || summaryError) && (
@@ -601,7 +586,7 @@ const SettlementOverlay: React.FC<ExtraBookingOverlayProps> = ({
                     <p className="mb-2 text-sm font-semibold text-zinc-100">Charges to collect</p>
                     <div className="space-y-1.5 text-xs text-zinc-300">
                       <div className="flex items-center justify-between">
-                        <span>Overtime</span>
+                        <span>Extra time</span>
                         <span className="font-semibold text-zinc-100">₹{computedExtraAmount.toFixed(2)}</span>
                       </div>
                       <div className="flex items-center justify-between">
@@ -610,23 +595,17 @@ const SettlementOverlay: React.FC<ExtraBookingOverlayProps> = ({
                       </div>
                       {historicalPendingExtraAmount > 0 ? (
                         <div className="flex items-center justify-between">
-                          <span>Previous overtime</span>
+                          <span>Earlier extra time</span>
                           <span className="font-semibold text-zinc-100">₹{historicalPendingExtraAmount.toFixed(2)}</span>
                         </div>
                       ) : null}
                       {pendingBaseAmount > 0 && <div className="flex items-center justify-between"><span>Unpaid booking</span><span className="font-semibold text-zinc-100">₹{pendingBaseAmount.toFixed(2)}</span></div>}
-                      <div className="flex items-center justify-between border-t border-zinc-700/70 pt-1.5">
-                        <span>Subtotal</span>
-                        <span className="font-semibold text-zinc-100">₹{dueBeforeWaive.toFixed(2)}</span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span>Waiver</span>
-                        <span className="font-semibold text-amber-300">- ₹{parsedWaiveOff.toFixed(2)}</span>
-                      </div>
-                      <div className="flex items-center justify-between border-t border-zinc-700/70 pt-1.5 text-sm">
-                        <span className="font-semibold text-zinc-100">Amount due</span>
-                        <span className="font-bold text-emerald-300">₹{payableAmount.toFixed(2)}</span>
-                      </div>
+                      {parsedWaiveOff > 0 && (
+                        <div className="flex items-center justify-between">
+                          <span>Discount</span>
+                          <span className="font-semibold text-amber-300">− ₹{parsedWaiveOff.toFixed(2)}</span>
+                        </div>
+                      )}
                     </div>
                   </div>
 
@@ -657,7 +636,7 @@ const SettlementOverlay: React.FC<ExtraBookingOverlayProps> = ({
               <div className="rounded-xl border border-zinc-700/70 bg-zinc-800/55 p-2.5 sm:p-3 lg:sticky lg:top-2 lg:h-fit">
                 <div className="mb-3 sm:mb-4">
                   <label htmlFor="waive-off-amount" className="mb-2 block text-sm font-medium text-zinc-200">
-                    Waiver (₹)
+                    Discount (optional, ₹)
                   </label>
                   <motion.input
                     id="waive-off-amount"
@@ -768,15 +747,15 @@ const SettlementOverlay: React.FC<ExtraBookingOverlayProps> = ({
 
                 {settlementError && <div role="alert" className="mb-3 rounded-lg border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-300">{settlementError}</div>}
                 <div className="settlement-actions flex flex-col gap-2">
-                  <div className="mb-2 flex items-center justify-between border-t border-white/10 pt-3 text-sm"><span className="text-zinc-400">Amount due</span><strong className="text-lg tabular-nums text-zinc-100">₹{payableAmount.toFixed(2)}</strong></div>
-                  <p className="mb-2 text-xs text-zinc-400">{paymentMode === "credit" ? "This amount will be added to the customer’s credit account." : "Confirm only after receiving payment."}</p>
+                  <div className="mb-2 flex items-center justify-between border-t border-white/10 pt-3 text-sm"><span className="text-zinc-400">Collect now</span><strong className="text-lg tabular-nums text-zinc-100">₹{payableAmount.toFixed(2)}</strong></div>
+                  {payableAmount > 0 && <p className="mb-2 text-xs text-zinc-400">{paymentMode === "credit" ? "This amount will be added to the customer’s credit account." : "Confirm only after receiving payment."}</p>}
                   <motion.button
                     onClick={handleSettle}
                     className="dashboard-btn-primary w-full rounded-md px-4 py-2.5 text-sm font-medium disabled:opacity-50 sm:px-6 sm:py-2"
                     disabled={loading || summaryLoading || !!summaryError || !!waiveOffError || !vendorId || (paymentMode === "credit" && (!creditAccount?.is_active || availableCreditAmount < payableAmount))}
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
-                    aria-label="Confirm settlement and release console"
+                    aria-label="End session"
                   >
                     <span className="flex items-center justify-center gap-2">
                       {loading ? (
@@ -787,7 +766,7 @@ const SettlementOverlay: React.FC<ExtraBookingOverlayProps> = ({
                       ) : (
                         <>
                           <CheckCircle className="w-4 h-4" />
-                          {paymentMode === "credit" ? "Record credit & release" : "Confirm payment & release"}
+                          {payableAmount === 0 ? "End session" : paymentMode === "credit" ? "Add to credit & end session" : "Payment received & end session"}
                         </>
                       )}
                     </span>
