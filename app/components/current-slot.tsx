@@ -1156,9 +1156,9 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                                 setShowOverlay(true);
                                 setError("");
                               }}
-                              className={buttonVariants({ variant: "warning", size: "sm" })}
+                              className={cn(buttonVariants({ variant: "warning", size: "sm" }), "whitespace-nowrap text-xs")}
                             >
-                              End &amp; pay
+                              Checkout
                             </button>
                           ) : typeof checkedDue !== "number" ? (
                             <PaymentCheckAction failed={checkedDue === null || !bookingIdToCheck} onRetry={retryPaymentCheck} />
@@ -1614,12 +1614,11 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                                         setShowOverlay(true);
                                         setError("");
                                       }}
-                                      className={cn(buttonVariants({ variant: "warning", size: "sm" }), "w-20 sm:w-24")}
+                                      className={cn(buttonVariants({ variant: "warning", size: "sm" }), "w-20 whitespace-nowrap px-2 text-xs sm:w-24")}
                                     >
                                       <div className="flex items-center justify-center gap-1">
                                         <FaCheck className="w-2 h-2 sm:w-3 sm:h-3" />
-                                        <span className="hidden sm:inline">End &amp; pay</span>
-                                        <span className="sm:hidden">End &amp; pay</span>
+                                        <span>Checkout</span>
                                       </div>
                                     </button>
                                   )}
@@ -1631,12 +1630,11 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                                     setShowOverlay(true);
                                     setError("");
                                   }}
-                                  className={cn(buttonVariants({ variant: "warning", size: "sm" }), "w-20 sm:w-24")}
+                                  className={cn(buttonVariants({ variant: "warning", size: "sm" }), "w-20 whitespace-nowrap px-2 text-xs sm:w-24")}
                                 >
                                   <div className="flex items-center justify-center gap-1">
                                     <FaCheck className="w-2 h-2 sm:w-3 sm:h-3" />
-                                    <span className="hidden sm:inline">End &amp; pay</span>
-                                    <span className="sm:hidden">Pay</span>
+                                    <span>Checkout</span>
                                   </div>
                                 </button>
                               ) : (
