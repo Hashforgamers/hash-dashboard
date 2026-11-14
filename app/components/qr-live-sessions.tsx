@@ -1,5 +1,6 @@
-import { releaseButtonClass } from "./live-session-actions";
 'use client';
+
+import { releaseButtonClass } from "./live-session-actions";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { confirmDialog } from "@/app/components/confirm-dialog";
