@@ -8,9 +8,9 @@ import { useState, useEffect, useMemo, useRef } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { LiveSessionDue } from "./live-session-due";
-import { Search, Gamepad2, Monitor, Headset, Loader2, RefreshCw, UtensilsCrossed, Plus, ChevronDown, ChevronUp, Phone, Mail } from "lucide-react";
+import { Search, Gamepad2, Monitor, Headset, Loader2, RefreshCw, UtensilsCrossed, Plus, ChevronDown, ChevronUp, Phone, Mail, ReceiptText } from "lucide-react";
 import { jwtDecode } from "jwt-decode";
-import { FaCheck, FaPowerOff } from 'react-icons/fa';
+import { FaPowerOff } from 'react-icons/fa';
 import { BOOKING_URL, DASHBOARD_URL } from "@/src/config/env";
 import { mergeConsecutiveBookings } from "@/app/utils/slot-utils";
 import QrLiveSessions from "./qr-live-sessions";
@@ -19,6 +19,11 @@ import HashLoader from './ui/HashLoader';
 import ExtraBookingOverlay from "./extraBookingOverlay";
 import MealDetailsModal from "./mealsDetailmodal";
 import { useSocket } from "../context/SocketContext";
+
+const checkoutButtonClass = cn(
+  buttonVariants({ variant: "soft-warning", size: "sm" }),
+  "h-9 min-w-[112px] gap-2 px-3 text-[13px] font-medium leading-none tracking-normal text-amber-800 dark:text-amber-200"
+);
 
 // Keep all your existing helper functions unchanged
 const formatTime = (seconds: number) => {
@@ -1156,9 +1161,10 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                                 setShowOverlay(true);
                                 setError("");
                               }}
-                              className={cn(buttonVariants({ variant: "warning", size: "sm" }), "whitespace-nowrap text-xs")}
+                              className={checkoutButtonClass}
                             >
-                              Checkout
+                              <ReceiptText aria-hidden="true" />
+                              <span>Check out</span>
                             </button>
                           ) : typeof checkedDue !== "number" ? (
                             <PaymentCheckAction failed={checkedDue === null || !bookingIdToCheck} onRetry={retryPaymentCheck} />
@@ -1614,12 +1620,10 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                                         setShowOverlay(true);
                                         setError("");
                                       }}
-                                      className={cn(buttonVariants({ variant: "warning", size: "sm" }), "w-20 whitespace-nowrap px-2 text-xs sm:w-24")}
+                                      className={checkoutButtonClass}
                                     >
-                                      <div className="flex items-center justify-center gap-1">
-                                        <FaCheck className="w-2 h-2 sm:w-3 sm:h-3" />
-                                        <span>Checkout</span>
-                                      </div>
+                                      <ReceiptText aria-hidden="true" />
+                                      <span>Check out</span>
                                     </button>
                                   )}
                                 </div>
@@ -1630,12 +1634,10 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                                     setShowOverlay(true);
                                     setError("");
                                   }}
-                                  className={cn(buttonVariants({ variant: "warning", size: "sm" }), "w-20 whitespace-nowrap px-2 text-xs sm:w-24")}
+                                  className={checkoutButtonClass}
                                 >
-                                  <div className="flex items-center justify-center gap-1">
-                                    <FaCheck className="w-2 h-2 sm:w-3 sm:h-3" />
-                                    <span>Checkout</span>
-                                  </div>
+                                  <ReceiptText aria-hidden="true" />
+                                      <span>Check out</span>
                                 </button>
                               ) : (
                                 <button
