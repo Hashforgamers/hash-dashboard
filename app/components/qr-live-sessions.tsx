@@ -1,3 +1,4 @@
+import { releaseButtonClass } from "./live-session-actions";
 'use client';
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -97,7 +98,7 @@ export default function QrLiveSessions({onCount,onLoadState,layout="cards",searc
                 onClick={()=>action(`${prefix}/continuations/${request.id}/decision`,{decision:'reject'})}>Reject</button>
             </div>:<p>Owner approval required</p>}</div>}
           {['active','reserved'].includes(s.state)&&(activeStaff.role==='owner'||can('booking.manage'))&&<button
-            className={cn(buttonVariants({ variant: "success", size: "sm" }), "w-24")} disabled={busy}
+            className={releaseButtonClass} disabled={busy}
             onClick={()=>action(`${prefix}/sessions/${s.id}/end`,{},'Release this session? Accrued overtime remains payable.')}><Power className="h-3 w-3"/>Release</button>}
           {s.state==='completed'&&s.payment_due>0&&can('wallet.topup')&&<div className="mt-2 flex gap-2">{['cash','cafe_upi'].map(method=><button key={method}
             className="rounded border px-2 py-1 disabled:opacity-40" disabled={busy}

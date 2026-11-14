@@ -1,3 +1,4 @@
+import { checkoutButtonClass, releaseButtonClass, retryButtonClass } from "./live-session-actions";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { badgeVariants } from "@/components/ui/badge";
@@ -8,9 +9,8 @@ import { useState, useEffect, useMemo, useRef } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { LiveSessionDue } from "./live-session-due";
-import { Search, Gamepad2, Monitor, Headset, Loader2, RefreshCw, UtensilsCrossed, Plus, ChevronDown, ChevronUp, Phone, Mail, ReceiptText } from "lucide-react";
+import { Search, Gamepad2, Monitor, Headset, Loader2, RefreshCw, UtensilsCrossed, Plus, ChevronDown, ChevronUp, Phone, Mail, ReceiptText, Power } from "lucide-react";
 import { jwtDecode } from "jwt-decode";
-import { FaPowerOff } from 'react-icons/fa';
 import { BOOKING_URL, DASHBOARD_URL } from "@/src/config/env";
 import { mergeConsecutiveBookings } from "@/app/utils/slot-utils";
 import QrLiveSessions from "./qr-live-sessions";
@@ -19,11 +19,6 @@ import HashLoader from './ui/HashLoader';
 import ExtraBookingOverlay from "./extraBookingOverlay";
 import MealDetailsModal from "./mealsDetailmodal";
 import { useSocket } from "../context/SocketContext";
-
-const checkoutButtonClass = cn(
-  buttonVariants({ variant: "soft-warning", size: "sm" }),
-  "h-9 min-w-[112px] gap-2 px-3 text-[13px] font-medium leading-none tracking-normal text-amber-800 dark:text-amber-200"
-);
 
 // Keep all your existing helper functions unchanged
 const formatTime = (seconds: number) => {
@@ -493,13 +488,13 @@ const releaseSlot = async (consoleType: string, gameId: string, consoleId: strin
 
 function PaymentCheckAction({ failed, onRetry }: { failed: boolean; onRetry: () => void }) {
   return failed ? (
-    <button type="button" className={buttonVariants({ variant: "outline", size: "sm" })}
+    <button type="button" className={retryButtonClass}
       aria-label="Retry payment check" onClick={onRetry}>
-      Retry check
+      <RefreshCw aria-hidden="true" /> Retry check
     </button>
   ) : (
-    <span role="status" className="inline-flex h-8 items-center px-2 text-xs text-muted-foreground">
-      Checking payment…
+    <span role="status" className="live-session-action inline-flex h-9 w-28 items-center justify-center gap-2 text-xs text-muted-foreground">
+      <Loader2 aria-hidden="true" className="h-4 w-4 animate-spin" /> Checking…
     </span>
   );
 }
@@ -1180,9 +1175,10 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                                 uniqueKey
                               )}
                               disabled={isReleasing || !vendorId}
-                              className={buttonVariants({ variant: "success", size: "sm" })}
+                              className={releaseButtonClass}
                             >
-                              {isReleasing ? "Releasing..." : "Release"}
+                              {isReleasing ? <Loader2 aria-hidden="true" className="animate-spin" /> : <Power aria-hidden="true" />}
+                              <span>{isReleasing ? "Releasing…" : "Release"}</span>
                             </button>
                           )}
                         </div>
@@ -1204,7 +1200,7 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
               <table ref={tableRef} className="dashboard-module-table live-session-data-table w-full divide-y">
                 <colgroup>
                   <col style={{width:"23%"}}/><col style={{width:"20%"}}/><col style={{width:"21%"}}/>
-                  <col style={{width:"12%"}}/><col style={{width:"13%"}}/><col style={{width:"11%"}}/>
+                  <col style={{width:"12%"}}/><col style={{width:116}}/><col style={{width:136}}/>
                 </colgroup>
                 <thead className="dashboard-module-table-head sticky top-0 z-10">
                   <tr>
@@ -1651,17 +1647,10 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                                     uniqueKey
                                   )}
                                   disabled={isReleasing || !vendorId}
-                                  className={cn(buttonVariants({ variant: "success", size: "sm" }), "w-20 sm:w-24")}
+                                  className={releaseButtonClass}
                                 >
-                                  <div className="flex items-center justify-center gap-1">
-                                    {isReleasing ? (
-                                      <Loader2 className="animate-spin w-2 h-2 sm:w-3 sm:h-3" />
-                                    ) : (
-                                      <FaPowerOff className="w-2 h-2 sm:w-3 sm:h-3" />
-                                    )}
-                                    <span className="hidden sm:inline">{isReleasing ? "..." : "Release"}</span>
-                                    <span className="sm:hidden">{isReleasing ? "..." : "Rel"}</span>
-                                  </div>
+                                  {isReleasing ? <Loader2 aria-hidden="true" className="animate-spin" /> : <Power aria-hidden="true" />}
+                                  <span>{isReleasing ? "Releasing…" : "Release"}</span>
                                 </button>
                               )}
                             </td>
