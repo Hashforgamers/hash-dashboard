@@ -43,3 +43,21 @@ test('Player changes resolve rates and overlapping variants default to the lowes
  assert.equal(mod.exports.resolveSessionRate([card('disabled',[rule()],{is_active:false}),card('archived',[rule()],{archived:true})],60,1).eligible.length,0)
  assert.equal(mod.exports.resolveSessionRate([solo],60,3).card,undefined)
 })
+
+test('Selective game pricing keeps default games on their normal card',()=>{
+ const standard=card('standard',[rule()]);
+ const gta=card('gta',[rule({amount:'250'})]);gta.definition.game_variant='GTA 6';
+ assert.equal(mod.exports.resolveSessionRate([gta,standard],60,1).card.profile,'standard');
+ assert.equal(mod.exports.resolveSessionRate([gta,standard],60,1,'standard','gta6').card.profile,'gta');
+ assert.equal(mod.exports.resolveSessionRate([gta,standard],60,1,'gta','Other game').card.profile,'standard');
+ assert.equal(mod.exports.deskSubtotal(mod.exports.resolveSessionRate([gta,standard],60,2,'','GTA 6').card,60,2),500);
+});
+test('Special game gaps do not fall back to cheaper rates and slot pricing remains available',()=>{
+ const standard=card('standard',[rule()]);
+ const gta=card('gta',[rule({max_players:1})],{pricing_mode:'slot'});gta.definition.game_variant='GTA 6';
+ assert.equal(mod.exports.resolveSessionRate([gta,standard],60,2,'','GTA6').card,undefined);
+ assert.equal(mod.exports.resolveSessionRate([gta],60,1).card,undefined);
+ assert.equal(mod.exports.resolveSessionRate([gta],60,1,'','GTA6').card.profile,'gta');
+ gta.is_active=false;
+ assert.equal(mod.exports.resolveSessionRate([gta,standard],60,1,'','GTA6').card.profile,'standard');
+});

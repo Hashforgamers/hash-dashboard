@@ -1407,15 +1407,16 @@ const getEffectivePrice = (slot: SelectedSlot): number => {
   const { cards: deskCards, error: deskRateError, loading: deskRatesLoading } = useDeskCards(isOpen ? settingsVendorId : null)
   const [deskConsoleIds, setDeskConsoleIds] = useState<number[] | null>(null)
   const [deskChoice, setDeskChoice] = useState("")
-  const deviceCards = deskCards.filter(card => card.game_id === Number(activePickerConsole) && card.is_active !== false && !card.archived && card.pricing_mode !== "slot")
-  useEffect(() => { setDeskChoice("") }, [activePickerConsole, settingsVendorId, isOpen])
-  const variantPricingRequired = deskCards.some(card => card.game_id === Number(activePickerConsole) && card.pricing_mode === "variants") || deviceCards.length > 0
+  const [pricingGame, setPricingGame] = useState("")
+  const deviceCards = deskCards.filter(card => card.game_id === Number(activePickerConsole) && card.is_active !== false && !card.archived && (card.pricing_mode !== "slot" || !!card.definition.game_variant?.trim()))
+  useEffect(() => { setDeskChoice(""); setPricingGame("") }, [activePickerConsole, settingsVendorId, isOpen])
+  const variantPricingRequired = deskCards.some(card => card.game_id === Number(activePickerConsole) && card.pricing_mode === "variants") || (!!pricingGame && deviceCards.some(card => card.definition.game_variant === pricingGame))
   const slotMinutes = (slot: SelectedSlot) => {
     const start = new Date(slot.date + "T" + slot.start_time + "+05:30").getTime()
     return (getSlotEndTimestampIST(slot.date, slot.start_time, slot.end_time) - start) / 60000
   }
   const sessionMinutes = selectedSlots.reduce((n, slot) => n + slotMinutes(slot), 0)
-  const { eligible: matchingDeskCards, card: deskCard } = resolveSessionRate(deviceCards, sessionMinutes, isSquadMode ? squadPlayerCount : 1, deskChoice)
+  const { eligible: matchingDeskCards, card: deskCard } = resolveSessionRate(deviceCards, sessionMinutes, isSquadMode ? squadPlayerCount : 1, deskChoice, pricingGame)
   const effectiveDeskChoice = deskCard?.profile || ""
   const controllersIncluded = !!deskCard?.definition.controllers_included
   const supportsExtraController = !controllersIncluded && selectedControllerType !== null && hasControllerPricingConfigured
@@ -2027,6 +2028,7 @@ const getEffectivePrice = (slot: SelectedSlot): number => {
         })),
         requireFullRange: true,
         deskPricingMode: variantPricingRequired ? "variants" : "slot",
+        pricingGame,
         deskProfile: deskCard?.profile,
         deskConsoleIds: deskCard ? deskConsoleIds : undefined,
         deskRevision: deskCard?.revision,
@@ -2317,7 +2319,13 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                     </div>
                     {deskRateError && <p role="status" className="text-xs">{deskRateError} Reopen this booking to retry.</p>}
                     {variantPricingRequired && !deviceCards.length && <p role="alert" className="text-xs text-amber-500">No enabled rate cards. Enable a card in Console Pricing before booking.</p>}
-                    {deviceCards.length > 0 && <div className="mb-2 flex flex-wrap items-center gap-2 text-xs">
+                    {deviceCards.some(card => card.definition.game_variant?.trim()) && <label className="mb-3 block text-xs">Game pricing
+                      <select aria-label="Game pricing" className="ml-2 rounded border bg-background p-2" value={pricingGame} onChange={e => { setPricingGame(e.target.value); setDeskChoice(""); setDeskConsoleIds(null) }}>
+                        <option value="">Other games · standard rate card</option>
+                        {[...new Set(deviceCards.map(card => card.definition.game_variant?.trim()).filter(Boolean))].map(title => <option key={title} value={title}>{title} · special rate</option>)}
+                      </select>
+                    </label>}
+                    {(variantPricingRequired || deskCard) && <div className="mb-2 flex flex-wrap items-center gap-2 text-xs">
                       <span>Session rate</span>
                       {matchingDeskCards.length > 1 ? <select aria-label="Session rate variant" className="rounded border bg-background p-1" value={effectiveDeskChoice} onChange={e => setDeskChoice(e.target.value)}>
                         {matchingDeskCards.map(card => <option key={card.profile} value={card.profile}>{rateLabel(card)}</option>)}
