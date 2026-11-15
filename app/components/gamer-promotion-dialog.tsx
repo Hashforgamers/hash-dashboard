@@ -9,7 +9,8 @@ import {Dialog,DialogContent,DialogDescription,DialogFooter,DialogHeader,DialogT
 
 type Gamer={id:number;name:string;contact:string};
 type Template={name:string;language:string;fields:string[]};
-type Sender={configured:boolean;credits:number;templates:Template[]};
+type QueuedMessage={id:string;recipient:string;template:string;purpose:string;status:string;error?:string|null};
+type Sender={configured:boolean;credits:number;templates:Template[];messages:QueuedMessage[]};
 type ConsentStatus={marketing_consent:boolean;opted_out:boolean};
 
 function normalizeRecipient(value:string){
@@ -79,7 +80,7 @@ export default function GamerPromotionDialog({vendorId,gamer,onOpenChange}:{vend
   <DialogContent className="w-[95vw] max-h-[90vh] overflow-y-auto sm:max-w-xl">
    <DialogHeader>
     <DialogTitle>Send a promotion</DialogTitle>
-    <DialogDescription>{gamer?`To ${gamer.name} · ${recipient||gamer.contact}`:'Choose a gamer to continue.'} One credit is used if the message is queued.</DialogDescription>
+   <DialogDescription>{gamer?`To ${gamer.name} · ${recipient||gamer.contact}`:'Choose a gamer to continue.'} One credit is reserved when queued. Delivery status appears below.</DialogDescription>
    </DialogHeader>
    {loading?<p role="status" className="text-sm text-muted-foreground">Checking sender, credits and consent…</p>:<div className="space-y-4">
     {notice&&<p role="status" className="rounded-md border p-3 text-sm">{notice}</p>}
@@ -91,6 +92,10 @@ export default function GamerPromotionDialog({vendorId,gamer,onOpenChange}:{vend
     {template?.fields.map((field,index)=><label className="block text-sm" key={index}>{field}<Input className="mt-1" value={values[index]||''} maxLength={500} onChange={event=>{setValues(current=>{const next=[...current];next[index]=event.target.value;return next});sendKey.current=null}}/></label>)}
     <label className="flex items-start gap-2 text-sm"><input className="mt-1" type="checkbox" checked={consent} onChange={event=>setConsent(event.target.checked)}/>I confirm the gamer has agreed to receive this promotion from Hash for Gamers.</label>
     <label className="block text-sm">Consent record<Input className="mt-1" maxLength={500} value={consentNote} onChange={event=>{setConsentNote(event.target.value);sendKey.current=null}} placeholder="How and when the gamer opted in"/></label>
+    <section aria-label="Promotion delivery history" className="space-y-2 border-t pt-3">
+     <div className="flex items-center justify-between"><h3 className="text-sm font-medium">Delivery status</h3><Button type="button" size="sm" variant="outline" onClick={()=>void whatsappCall(vendorId!,'').then(setSender).catch(error=>setNotice(error instanceof Error?error.message:'Could not refresh delivery status.'))}>Refresh</Button></div>
+     {sender?.messages?.length?<ul className="space-y-2">{sender.messages.filter(message=>message.purpose==='promotions').slice(0,5).map(message=><li key={message.id} className="rounded-md border p-2 text-xs"><div className="flex justify-between gap-3"><span>{message.recipient} · {message.template}</span><strong className="capitalize">{message.status}</strong></div>{message.error&&<p className="mt-1 text-muted-foreground">{message.error}</p>}</li>)}</ul>:<p className="text-xs text-muted-foreground">No promotions queued for this café yet.</p>}
+    </section>
    </div>}
    <DialogFooter>
     <Button variant="outline" disabled={busy} onClick={()=>onOpenChange(false)}>Close</Button>
