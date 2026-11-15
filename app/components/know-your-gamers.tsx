@@ -2,10 +2,13 @@
 
 import { useEffect, useState } from "react"
 import { format } from "date-fns"
-import { Users, TrendingUp, Award, Clock, Search, Filter } from "lucide-react"
+import { Users, TrendingUp, Award, Clock, Search, Filter, Megaphone } from "lucide-react"
 import { DASHBOARD_URL } from "@/src/config/env"
 import { jwtDecode } from "jwt-decode"
 import { MobileCompactCard } from "@/components/ui/mobile-compact-card"
+import { Button } from "@/components/ui/button"
+import { useAccess } from "@/app/context/AccessContext"
+import GamerPromotionDialog from "@/app/components/gamer-promotion-dialog"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { readEnumParam, readStringParam, updateSearchParams } from "@/lib/deeplink"
 
@@ -19,6 +22,7 @@ const iconMap = {
 
 // Replace mock data with dynamic API call
 export function KnowYourGamers() {
+  const { can } = useAccess()
   const pathname = usePathname()
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -28,6 +32,7 @@ export function KnowYourGamers() {
   const [stats, setStats] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [vendorId, setVendorId] = useState<number | null>(null)
+  const [promotionGamer, setPromotionGamer] = useState<any | null>(null)
   const [deepLinkReady, setDeepLinkReady] = useState(false)
 
   const GAMER_CACHE_KEY = "gamerDataCache"
@@ -267,6 +272,7 @@ export function KnowYourGamers() {
                 Last Visit: {gamer.lastVisit ? format(new Date(gamer.lastVisit), "dd MMM yyyy") : "-"}
               </p>
               {gamer.notes ? <p className="mt-1 line-clamp-2 text-[11px] text-zinc-400">{gamer.notes}</p> : null}
+              {can("account.manage") && <Button size="sm" variant="outline" className="mt-3" onClick={() => setPromotionGamer(gamer)}><Megaphone className="mr-2 h-4 w-4" />Send promotion</Button>}
             </MobileCompactCard>
           ))
         )}
@@ -290,6 +296,7 @@ export function KnowYourGamers() {
                   "Last Visit",
                   "Tier",
                   "Notes",
+                  "Action",
                 ].map((header) => (
                   <th
                     key={header}
@@ -303,13 +310,13 @@ export function KnowYourGamers() {
             <tbody className="dashboard-module-table-body divide-y divide-blue-500/10">
               {loading ? (
                 <tr>
-                  <td className="px-4 py-8 text-center text-sm text-zinc-500" colSpan={12}>
+                  <td className="px-4 py-8 text-center text-sm text-zinc-500" colSpan={13}>
                     Loading gamers...
                   </td>
                 </tr>
               ) : filteredData.length === 0 ? (
                 <tr>
-                  <td className="px-4 py-8 text-center text-sm text-zinc-500" colSpan={12}>
+                  <td className="px-4 py-8 text-center text-sm text-zinc-500" colSpan={13}>
                     No gamers found for this filter.
                   </td>
                 </tr>
@@ -334,6 +341,7 @@ export function KnowYourGamers() {
                     </span>
                   </td>
                   <td className="max-w-[200px] truncate px-4 py-3 text-sm text-zinc-500">{gamer.notes}</td>
+                  <td className="whitespace-nowrap px-4 py-3 text-sm">{can("account.manage") && <Button size="sm" variant="outline" onClick={() => setPromotionGamer(gamer)}><Megaphone className="mr-2 h-4 w-4" />Promote</Button>}</td>
                 </tr>
               )))}
             </tbody>
@@ -345,6 +353,8 @@ export function KnowYourGamers() {
           Scroll horizontally to view all columns
         </div>
       </div>
+
+      {can("account.manage") && <GamerPromotionDialog vendorId={vendorId} gamer={promotionGamer} onOpenChange={open => { if (!open) setPromotionGamer(null) }} />}
     </div>
   )
 }
