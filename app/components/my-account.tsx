@@ -1,5 +1,6 @@
 "use client";
 import { toast } from "sonner";
+import WhatsAppSettings from "./whatsapp-settings";
 import OwnerSecuritySettings from "./owner-security-settings";
 
 import { normalizeOperatingHours, validateOperatingDay, type OperatingDay } from "@/lib/operating-hours";
@@ -3307,6 +3308,7 @@ const ToggleSwitch = ({
   </Card>
 )}
 
+{page === "Notification Preferences" && <WhatsAppSettings />}
 {page === "Notification Preferences" && (
   <Card className="content-card account-panel overflow-hidden">
     <CardHeader className="pb-4">

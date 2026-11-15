@@ -1,0 +1,24 @@
+'use client';
+import {useEffect,useState} from 'react';
+import {BOOKING_URL} from '@/src/config/env';
+import {creditAuthHeaders} from '@/lib/credit-auth';
+import {Button} from '@/components/ui/button';
+import {Input} from '@/components/ui/input';
+type Policy={confirmations:boolean;reminders:boolean;updates:boolean;promotions:boolean;booking_link:boolean;reminder_minutes:number;confirmation_template:string;reminder_template:string;booking_template:string;booking_url:string};
+export default function WhatsAppPreferences({vendorId,templates}:{vendorId:number;templates:{name:string;language:string;fields:string[]}[]}){
+ const [policy,setPolicy]=useState<Policy|null>(null),[notice,setNotice]=useState(''),[busy,setBusy]=useState(false);
+ const [recipient,setRecipient]=useState(''),[service,setService]=useState(false),[marketing,setMarketing]=useState(false),[note,setNote]=useState('');
+ async function call(path:string,body?:unknown){const r=await fetch(`${BOOKING_URL}/api/vendor/${vendorId}/whatsapp/${path}`,{method:body?'PUT':'GET',cache:'no-store',headers:creditAuthHeaders(),body:body?JSON.stringify(body):undefined});const d=await r.json();if(!r.ok)throw new Error(d.error||'Request failed');return d}
+ useEffect(()=>{let alive=true;setPolicy(null);call('preferences').then(d=>{if(alive)setPolicy(d)}).catch(e=>{if(alive)setNotice(e.message)});return()=>{alive=false}},[vendorId]);
+ async function save(path:string,body:unknown){setBusy(true);setNotice('');try{await call(path,body);setNotice('Settings saved.');}catch(e){setNotice(e instanceof Error?e.message:'Save failed')}finally{setBusy(false)}}
+ const switches=[['confirmations','Booking confirmations'],['reminders','Upcoming booking reminders'],['updates','Manual customer updates'],['promotions','Promotional messages'],['booking_link','Reply to booking-link requests']] as const;
+ return <div className="rounded-lg border p-4 space-y-3"><h4 className="font-semibold">How your café uses WhatsApp</h4>{notice&&<p role="status">{notice}</p>}{policy&&<fieldset disabled={busy} className="space-y-3">
+ {switches.map(([key,label])=><label className="flex gap-2 text-sm" key={key}><input type="checkbox" checked={policy[key]} onChange={e=>setPolicy({...policy,[key]:e.target.checked})}/>{label}</label>)}
+ <label className="block text-sm">Reminder lead time (minutes)<Input type="number" min={5} max={1440} value={policy.reminder_minutes} onChange={e=>setPolicy({...policy,reminder_minutes:Number(e.target.value)})}/></label>
+ {(['confirmation_template','reminder_template','booking_template'] as const).map(key=><label className="block text-sm" key={key}>{key==='confirmation_template'?'Confirmation template':key==='reminder_template'?'Reminder template':'Booking link template'}<select className="block w-full rounded border bg-background p-2" value={policy[key]} onChange={e=>setPolicy({...policy,[key]:e.target.value})}><option value="">Choose approved template</option>{templates.map(t=><option key={`${t.name}:${t.language}`} value={`${t.name}:${t.language}`}>{t.name} ({t.language})</option>)}</select></label>)}
+ <label className="block text-sm">Your café booking link<Input type="url" placeholder="https://…" value={policy.booking_url} onChange={e=>setPolicy({...policy,booking_url:e.target.value})}/></label>
+ <p className="text-xs text-muted-foreground">Customers send BOOK {vendorId} to the HFG number to request your link. They complete booking and payment on the booking page. Confirmations and reminders require service consent and available message credits. Promotions require separate marketing consent.</p>
+ <Button onClick={()=>void save('preferences',policy)}>Save café preferences</Button></fieldset>}
+ <details className="border-t pt-3"><summary className="cursor-pointer font-medium">Record or update customer consent</summary><div className="mt-3 space-y-3"><label className="block text-sm">Phone with country code<Input value={recipient} onChange={e=>{setRecipient(e.target.value);setService(false);setMarketing(false);setNote('')}} placeholder="+919876543210"/></label><label className="flex gap-2 text-sm"><input type="checkbox" checked={service} onChange={e=>setService(e.target.checked)}/>Agreed to booking and service messages</label><label className="flex gap-2 text-sm"><input type="checkbox" checked={marketing} onChange={e=>setMarketing(e.target.checked)}/>Agreed to promotions</label><label className="block text-sm">How and when consent was given<Input maxLength={500} value={note} onChange={e=>setNote(e.target.value)}/></label><Button disabled={busy||!recipient||note.trim().length<3} onClick={()=>void save('contacts',{recipient,service_consent:service,marketing_consent:marketing,consent_note:note})}>Save consent choices</Button><p className="text-xs text-muted-foreground">Uncheck a choice to revoke it. A customer’s STOP request always takes priority.</p></div></details>
+ </div>
+}
