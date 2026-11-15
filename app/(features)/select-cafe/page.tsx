@@ -472,9 +472,11 @@ export default function SelectCafePage() {
         const expiresInSec = Number(data?.data?.expires_in || 24 * 60 * 60)
         localStorage.setItem("tokenExpiration", String(Date.now() + expiresInSec * 1000))
 
-        // Bootstrap RBAC token with the same cafe PIN (owner/staff unlock path)
+        // Owner PIN validation returns a login token; /access/unlock only accepts staff PINs.
+        // Clear any previous session so a failed bootstrap cannot retain another user's access.
+        localStorage.removeItem("rbac_access_token_v1")
         try {
-          const accessSession = await accessApi.unlockByPin(selectedCafeData.id, pin)
+          const accessSession = await accessApi.getOwnerSession(selectedCafeData.id, data.data.token)
           localStorage.setItem("rbac_access_token_v1", accessSession.token)
         } catch (rbacError) {
           console.warn("RBAC unlock bootstrap failed:", rbacError)

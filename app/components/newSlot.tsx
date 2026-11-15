@@ -2253,9 +2253,9 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                       </select>}
                     </div>
                     <div id="booking-slot-picker">
-                        {!selectedSlots.length && <div className="mb-2 grid grid-cols-2 gap-2">
+                        {<div className="mb-2 grid grid-cols-2 gap-2">
                           <label className="text-xs">Date
-                            <select disabled={selectedSlots.length > 0} title="One booking uses one date" value={activePickerDate} onChange={(event) => setPickerDate(event.target.value)}
+                            <select disabled={!onReplaceSlots && selectedSlots.length > 0} title="Changing date clears selected times" value={activePickerDate} onChange={(event) => { setPickerConsole(activePickerConsole); setPickerDate(event.target.value); onReplaceSlots?.([]) }}
                               className="mt-1 h-9 w-full rounded-md border border-zinc-500/30 bg-background px-2 text-sm">
                               {slotDates.map((date) => <option key={date} value={date}>{date}</option>)}
                             </select>
@@ -4791,6 +4791,7 @@ function DashboardQuickBookingSlab({
   onNewBooking,
   onQuickBooking,
   allSlots,
+  onDateChange,
 }: {
   availableConsoles: ConsoleType[]
   selectedConsole: ConsoleFilter
@@ -4800,8 +4801,12 @@ function DashboardQuickBookingSlab({
   onNewBooking: () => void
   onQuickBooking: (slot: SelectedSlot) => void
   allSlots: { [key: string]: any[] }
+  onDateChange: () => void
 }) {
-  const today = getISTDateString(0)
+  const calendarToday = getISTDateString(0)
+  const [chosenDate, setChosenDate] = useState("")
+  const dates = Object.keys(allSlots).filter(date => date >= calendarToday).sort()
+  const today = dates.includes(chosenDate) ? chosenDate : calendarToday
   const [quickConsole, setQuickConsole] = useState<ConsoleFilter | null>(null)
   const activeConsoles = [...availableConsoles].sort((a, b) =>
     String(a?.name || a?.type || "").localeCompare(String(b?.name || b?.type || ""))
@@ -4858,6 +4863,13 @@ function DashboardQuickBookingSlab({
     <div className="dashboard-quick-booking">
       <div className="dashboard-quick-toolbar">
       <h2 className="dashboard-slab-title">Quick Booking</h2>
+      <select aria-label="Quick booking date" value={today}
+        onChange={event => { setChosenDate(event.target.value); onDateChange() }}
+        className="h-9 rounded-md border border-zinc-500/30 bg-background px-2 text-sm">
+        {(dates.length ? dates : [calendarToday]).map(date => <option key={date} value={date}>
+          {date === calendarToday ? "Today" : date === getISTDateString(1) ? "Tomorrow" : date} · {date}
+        </option>)}
+      </select>
       <div className="dashboard-quick-console-strip" aria-label="Choose console for quick booking">
         {activeConsoles.map((consoleItem) => {
           const Icon = resolveSafeConsoleIcon(consoleItem.icon, consoleItem.type)
@@ -4873,8 +4885,8 @@ function DashboardQuickBookingSlab({
             <button
               key={`${consoleItem.type}-${consoleItem.id}`}
               type="button"
-              title={`${consoleItem.name || consoleItem.type}: ${openSlotCount} open today`}
-              aria-label={`${consoleItem.name || consoleItem.type}, ${openSlotCount} open today`}
+              title={`${consoleItem.name || consoleItem.type}: ${openSlotCount} open on ${today}`}
+              aria-label={`${consoleItem.name || consoleItem.type}, ${openSlotCount} open on ${today}`}
               aria-pressed={active}
               onClick={() => {
                 setQuickConsole(consoleItem.type)
@@ -4892,11 +4904,11 @@ function DashboardQuickBookingSlab({
       <span className="dashboard-quick-context">{selectedConsoleItem?.name || selectedConsoleItem?.type}</span>
       </div>
       <div className="dashboard-quick-slots-row">
-      <div className="dashboard-slot-slider" aria-label="Available slots today">
+      <div className="dashboard-slot-slider" aria-label={`Available slots on ${today}`}>
         {!selectedConsoleItem ? (
           <div className="dashboard-slot-empty">Select console</div>
         ) : todaySlots.length === 0 ? (
-          <div className="dashboard-slot-empty">No slots left today</div>
+          <div className="dashboard-slot-empty">No available slots on this date</div>
         ) : (
           todaySlots.map((slot: any) => {
             const isSelected = selectedSlots.some(
@@ -4957,6 +4969,16 @@ export default function SlotManagement({ embedded = false, slab = false }: SlotM
   const [allSlots, setAllSlots] = useState<{ [key: string]: any[] }>({})
   const [recentBookings, setRecentBookings] = useState<any[]>([])
   const [recordsRevision, setRecordsRevision] = useState(0)
+  const [bookingDay, setBookingDay] = useState(() => getISTDateString(0))
+  useEffect(() => {
+    setSelectedSlots(slots => slots.filter(slot => !isPastSlotInIST(slot.date, slot.end_time, slot.start_time)))
+  }, [bookingDay])
+  useEffect(() => {
+    const checkDay = () => setBookingDay(getISTDateString(0))
+    const timer = window.setInterval(checkDay, 1000)
+    window.addEventListener("focus", checkDay)
+    return () => { window.clearInterval(timer); window.removeEventListener("focus", checkDay) }
+  }, [])
   const [isLoading, setIsLoading] = useState(false)
     const [slotBookings, setSlotBookings] = useState<any[]>([])
 const [isLoadingBookings, setIsLoadingBookings] = useState(false)
@@ -5348,7 +5370,8 @@ const fetchSlotBookings = async (slotIds: number[], date: string) => {
       }
     }
 
-    const shouldRefresh = !cachedBooking || bookingVersion > 0
+    const dayChanged = cachedBooking?.dates?.[0] !== bookingDay
+    const shouldRefresh = !cachedBooking || bookingVersion > 0 || dayChanged
     if (!shouldRefresh) return
 
     if (!cachedBooking && !hasLocalSnapshot) {
@@ -5358,7 +5381,7 @@ const fetchSlotBookings = async (slotIds: number[], date: string) => {
     const shouldUseFastPath = !cachedBooking && !hasLocalSnapshot && bookingVersion <= 0
 
     loadBookingData(vendorId, {
-      forceFresh: bookingVersion > 0,
+      forceFresh: bookingVersion > 0 || dayChanged,
       slotsOnly: bookingVersion > 0,
       initialOnly: shouldUseFastPath,
     })
@@ -5397,7 +5420,7 @@ const fetchSlotBookings = async (slotIds: number[], date: string) => {
     return () => {
       cancelled = true
     }
-  }, [vendorId, bookingVersion])
+  }, [vendorId, bookingVersion, bookingDay])
 
   // Fetch bookings when slots are selected
 useEffect(() => {
@@ -5519,6 +5542,7 @@ useEffect(() => {
                 onNewBooking={handleNewBooking}
                 onQuickBooking={handleQuickBooking}
                 allSlots={allSlots}
+                onDateChange={() => setSelectedSlots([])}
               />
             ) : (
               <div className="shrink-0 space-y-3">
