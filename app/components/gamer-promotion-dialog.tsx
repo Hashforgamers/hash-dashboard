@@ -65,11 +65,11 @@ export default function GamerPromotionDialog({vendorId,gamer,onOpenChange}:{vend
   setBusy(true);setNotice('');
   try{
    sendKey.current ||= crypto.randomUUID();
-   await whatsappCall(vendorId,'/messages',{
+   const result=await whatsappCall(vendorId,'/messages',{
     idempotency_key:sendKey.current,purpose:'promotions',recipient,template:template.name,language:template.language,
     parameters:values,consent,consent_note:consentNote,
    });
-   sendKey.current=null;setNotice(`Promotion queued for ${gamer.name}. One credit was reserved.`);
+   sendKey.current=null;setNotice(result.status==='sent'?`Meta accepted the promotion for ${gamer.name}. Waiting for delivery confirmation.`:result.status==='failed'?`Meta rejected the promotion: ${result.error||'check the template and sender configuration.'}`:result.status==='unknown'?`Delivery outcome is unknown. Check Meta before retrying. ${result.error||''}`:`Promotion status: ${result.status||'queued'}. ${result.error||'One credit was reserved.'}`);
    setConsent(false);setConsentNote('');
    try{const refreshed=await whatsappCall(vendorId,'');setSender(refreshed);}catch{/* The queued message is confirmed; keep that result visible if balance refresh fails. */}
   }catch(error){setNotice(error instanceof Error?error.message:'Could not queue the promotion.');}
