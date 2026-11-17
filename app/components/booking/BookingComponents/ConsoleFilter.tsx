@@ -1,6 +1,6 @@
 // components/SlotManagement/ConsoleFilter.tsx
 import React from 'react'
-import { Monitor, MonitorPlay, Gamepad, Headset } from 'lucide-react'
+import { Monitor, MonitorPlay, Gamepad, Headset, PanelsTopLeft } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
 import type { ConsoleFilter as ConsoleFilterType } from '../types/booking.types'
@@ -11,6 +11,7 @@ interface ConsoleFilterProps {
 }
 
 const CONSOLE_OPTIONS = [
+  { type: 'All' as ConsoleFilterType, icon: PanelsTopLeft, label: 'All consoles' },
   { type: 'PC' as ConsoleFilterType, icon: Monitor, label: 'PC Gaming' },
   { type: 'PS5' as ConsoleFilterType, icon: MonitorPlay, label: 'PlayStation 5' },
   { type: 'Xbox' as ConsoleFilterType, icon: Gamepad, label: 'Xbox Series' },

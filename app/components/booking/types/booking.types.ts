@@ -1,5 +1,5 @@
 // types/booking.types.ts
-export type ConsoleFilter = "PC" | "PS5" | "Xbox" | "VR"
+export type ConsoleFilter = "All" | "PC" | "PS5" | "Xbox" | "VR"
 export type PaymentType = 'Cash' | 'UPI' | 'Pass'
 
 export interface SquadMemberPayload {

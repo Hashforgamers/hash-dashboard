@@ -41,6 +41,7 @@ import { faIndianRupeeSign } from '@fortawesome/free-solid-svg-icons'
 import { OTPVerificationModal } from "./otpVerificationModal";
 import { useAccess } from "@/app/context/AccessContext";
 import { useApiClient } from "@/app/hooks/useApiClient";
+import { CafeKeyboardShortcuts } from "@/app/components/cafe-keyboard-shortcuts";
 
 export function MyAccount() {
   const api = useApiClient();
@@ -1713,6 +1714,7 @@ const ToggleSwitch = ({
                     { icon: Clock, label: "Operating Hours" },  
                     { icon: DollarSign, label: "GST Setup" },
                     { icon: Settings, label: "Payment Methods" },
+                    { icon: Settings, label: "Keyboard Shortcuts" },
                     ...(activeStaff?.role === "owner" ? [{ icon: Settings, label: "Owner Security" }] : []),
                     ...(can("transactions.view") ? [{ icon: Clock, label: "Staff Activity" }] : []),
                     { icon: FileCheck, label: "Verified Documents" },
@@ -1760,6 +1762,8 @@ const ToggleSwitch = ({
           >
             {page === "Report an issue" && <CafeRequests vendorId={vendorId} onDocuments={()=>setPage("Verified Documents")} />}
             <div className="space-y-3">
+
+{page === "Keyboard Shortcuts" && <CafeKeyboardShortcuts />}
 
  {page === "Cafe Gallery" && (
   <div>

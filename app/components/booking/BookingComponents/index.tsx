@@ -13,6 +13,8 @@ import { ConsoleFilter } from './ConsoleFilter'
 import { ScheduleGrid } from './ScheduleGrid'
 import { SlotBookingForm } from './SlotManagement/index'
 import { cacheService } from '../services/api/cacheService'
+import { useAccess } from '@/app/context/AccessContext'
+import { readCafeShortcuts, type CafeShortcutPlatform } from '@/app/lib/cafe-shortcuts'
 
 import type { ConsoleFilter as ConsoleFilterType, SelectedSlot } from '../types/booking.types'
 
@@ -21,6 +23,7 @@ export default function SlotManagement() {
   const [selectedConsole, setSelectedConsole] = useState<ConsoleFilterType>('PC')
   const [selectedSlots, setSelectedSlots] = useState<SelectedSlot[]>([])
   const [showBookingForm, setShowBookingForm] = useState(false)
+  const { selectedCafeId } = useAccess()
 
   // Get vendor ID from JWT
   useEffect(() => {
@@ -37,6 +40,27 @@ export default function SlotManagement() {
 
   // Fetch slot data
   const { consoles, slots, isLoading, error, refetch, dates } = useSlotData(vendorId)
+
+  useEffect(() => {
+    if (!selectedCafeId) return
+    const handleShortcut = (event: KeyboardEvent) => {
+      if (event.repeat || event.altKey || event.shiftKey || event.metaKey || !event.ctrlKey) return
+      const target = event.target as HTMLElement | null
+      if (target?.isContentEditable || target?.closest('input, textarea, select, [role="dialog"]')) return
+      const shortcuts = readCafeShortcuts(selectedCafeId)
+      const platform = (Object.keys(shortcuts) as CafeShortcutPlatform[]).find(
+        (key) => shortcuts[key] === event.key.toLowerCase()
+      )
+      if (!platform || (platform !== 'All' && !consoles.some((item) => item.type === platform))) return
+      event.preventDefault()
+      setSelectedConsole(platform)
+      setSelectedSlots([])
+      setShowBookingForm(false)
+      document.querySelector('[data-booking-schedule]')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
+    window.addEventListener('keydown', handleShortcut)
+    return () => window.removeEventListener('keydown', handleShortcut)
+  }, [selectedCafeId, consoles])
 
   // Handle dashboard refresh event
   useEffect(() => {
@@ -102,7 +126,7 @@ export default function SlotManagement() {
 
   return (
     <main className="min-h-screen bg-background">
-      <div className="mx-auto w-full max-w-[1600px] p-6 md:p-8">
+      <div data-booking-schedule className="mx-auto w-full max-w-[1600px] p-6 md:p-8">
         <TopBar 
           selectedSlots={selectedSlots} 
           onNewBooking={handleNewBooking}

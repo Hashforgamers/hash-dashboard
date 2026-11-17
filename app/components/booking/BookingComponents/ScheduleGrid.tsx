@@ -48,7 +48,7 @@ export const ScheduleGrid = ({
 
   // Filter consoles by selected type
   const filteredConsoles = availableConsoles.filter(
-    (gameConsole) => gameConsole.type === selectedConsole
+    (gameConsole) => selectedConsole === 'All' || gameConsole.type === selectedConsole
   )
 
   const isSlotSelected = (slotId: number, date: string) => {
