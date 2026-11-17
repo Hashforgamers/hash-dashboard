@@ -76,6 +76,24 @@ export function NotificationButton({
   const [connectionStatus, setConnectionStatus] = useState<'disconnected' | 'connected' | 'joined_room'>('disconnected')
   const [notifications, setNotifications] = useState<any[]>([])
   const [payAtCafeSummary, setPayAtCafeSummary] = useState<PayAtCafeQueueSummary | null>(null)
+  const [openPaymentQueueOnShow, setOpenPaymentQueueOnShow] = useState(false)
+
+  useEffect(() => {
+    const openNotifications = () => setIsOpen(true)
+    const openQueue = () => { setOpenPaymentQueueOnShow(true); setIsOpen(true) }
+    window.addEventListener("hash:open-notifications", openNotifications)
+    window.addEventListener("hash:open-payment-queue", openQueue)
+    return () => {
+      window.removeEventListener("hash:open-notifications", openNotifications)
+      window.removeEventListener("hash:open-payment-queue", openQueue)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!isOpen || !openPaymentQueueOnShow) return
+    setOpenPaymentQueueOnShow(false)
+    window.dispatchEvent(new Event("hash:show-payment-queue"))
+  }, [isOpen, openPaymentQueueOnShow])
 
   const { socket, isConnected, joinVendor } = useSocket()
 

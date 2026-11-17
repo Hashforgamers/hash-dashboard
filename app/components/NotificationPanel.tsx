@@ -171,6 +171,14 @@ export function NotificationPanel({
   const panelRef = useRef<HTMLDivElement>(null)
   const queueRef = useRef<HTMLDivElement>(null)
   useEffect(() => {
+    const openQueue = () => {
+      setSelectedQueueStatus("pending")
+      setIsQueueOverlayOpen(true)
+    }
+    window.addEventListener("hash:show-payment-queue", openQueue)
+    return () => window.removeEventListener("hash:show-payment-queue", openQueue)
+  }, [])
+  useEffect(() => {
     if (!isOpen) return
     const previous = document.activeElement as HTMLElement | null
     const frame = requestAnimationFrame(() => (isQueueOverlayOpen ? queueRef : panelRef).current?.querySelector<HTMLButtonElement>('button')?.focus())

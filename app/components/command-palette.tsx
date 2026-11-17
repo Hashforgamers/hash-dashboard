@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import { KeyRound, RefreshCw, Search, Settings, Shield, Store } from "lucide-react"
+import { Bell, Gamepad2, KeyRound, RefreshCw, Search, Settings, Shield, Store, Wallet } from "lucide-react"
 import { DialogTitle } from "@/components/ui/dialog"
 import { CommandDialog, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
 import { useAccess } from "@/app/context/AccessContext"
@@ -63,6 +63,9 @@ export function CommandPalette({ onRefresh }: { onRefresh: () => void }) {
             <CommandItem onSelect={go("/select-cafe")}><Store className="mr-2" />Switch café</CommandItem>
           </CommandGroup>
           <CommandGroup heading="Actions">
+            {(!activeStaff || can("booking.manage")) && <CommandItem value="new booking bookings sessions" onSelect={go("/dashboard?tab=booking")}><Gamepad2 className="mr-2" />Open bookings &amp; sessions</CommandItem>}
+            <CommandItem value="notifications alerts" onSelect={run(() => window.dispatchEvent(new Event("hash:open-notifications")))}><Bell className="mr-2" />Open notifications</CommandItem>
+            <CommandItem value="payment queue pay at cafe requests" onSelect={run(() => window.dispatchEvent(new Event("hash:open-payment-queue")))}><Wallet className="mr-2" />Open payment queue</CommandItem>
             <CommandItem onSelect={run(onRefresh)}><RefreshCw className="mr-2" />Refresh dashboard data</CommandItem>
           </CommandGroup>
         </CommandList>
