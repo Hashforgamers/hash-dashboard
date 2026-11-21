@@ -2,10 +2,11 @@ import { buttonVariants } from "@/components/ui/button";
 import ExtensionSettlement from './session-extension-settlement';
 import { creditAuthHeaders } from "@/lib/credit-auth";
 import { AnimatePresence, motion } from "framer-motion";
-import { IndianRupee, CreditCard, Smartphone, X, CheckCircle, Loader2, Gamepad2, Timer, Wallet, Receipt } from "lucide-react";
+import { IndianRupee, CreditCard, Smartphone, X, CheckCircle, Loader2, Gamepad2, Timer, Wallet, Receipt, QrCode } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { BOOKING_URL } from "@/src/config/env";
 import CreditAccountModal, { type MonthlyCreditAccountSummary } from "./credit-account-modal";
+import { UpiQrPanel, cancelUpiQr, createUpiQr, useUpiQrPolling, type UpiQrState } from "./upi-qr-collect";
 
 interface ExtraBookingOverlayProps {
   showOverlay: boolean;
@@ -83,6 +84,8 @@ const SettlementOverlay: React.FC<ExtraBookingOverlayProps> = ({
   const [selectedUserProfile, setSelectedUserProfile] = useState<VendorUserSummary | null>(null);
   const [showCreditAccountModal, setShowCreditAccountModal] = useState(false);
   const overlayRef = useRef<HTMLDivElement>(null);
+  const [upiQr, setUpiQr] = useState<UpiQrState | null>(null);
+  const qrReleaseStarted = useRef(false);
 
   // Focus management for accessibility
   useEffect(() => {
@@ -286,6 +289,103 @@ const SettlementOverlay: React.FC<ExtraBookingOverlayProps> = ({
     return data;
   };
 
+  const qrNow = useUpiQrPolling(vendorId, upiQr, setUpiQr);
+
+  // The server prices the QR from the booking's pending rows; the customer pays HFG's Razorpay account.
+  const startUpiQr = async (bookingId: number, waiveOff: number, bookingTypes: string[]) => {
+    if (!vendorId) return;
+    qrReleaseStarted.current = false;
+    setUpiQr(await createUpiQr(vendorId, bookingId, { booking_types: bookingTypes, waive_off_amount: waiveOff }));
+  };
+
+  const handleCancelUpiQr = async () => {
+    if (!vendorId) return;
+    try {
+      // A payment can land just before cancelling; keep showing it so the session still ends.
+      setUpiQr(await cancelUpiQr(vendorId, upiQr));
+    } catch (err) {
+      setSettlementError(err instanceof Error ? err.message : "Could not cancel the QR.");
+    }
+  };
+
+  // Paid: the bill is already marked paid server-side, so free the console automatically.
+  useEffect(() => {
+    if (upiQr?.status !== "paid" || qrReleaseStarted.current) return;
+    qrReleaseStarted.current = true;
+    setLoading(true);
+    setSettlementError("");
+    releaseAndClose()
+      .then((released) => { if (released) setUpiQr(null); })
+      .catch((err) => {
+        setSettlementError(err instanceof Error ? err.message : "Payment received, but the console could not be released. Use Release.");
+        setLoading(false);
+      });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [upiQr?.status]);
+
+  // Frees the console(s) once the bill is settled, by any payment method.
+  const releaseAndClose = async (): Promise<boolean> => {
+    if (!selectedSlot || !vendorId) return false;
+    const squadDetails = (selectedSlot?.squadDetails && typeof selectedSlot.squadDetails === "object")
+      ? selectedSlot.squadDetails
+      : {};
+    const isPcSquad = String(squadDetails?.console_group || "").toLowerCase() === "pc"
+      && Number(squadDetails?.player_count || selectedSlot?.squadPlayerCount || 1) > 1;
+
+    const requestedConsoleIds = isPcSquad && Array.isArray(squadDetails?.assigned_console_ids)
+      ? squadDetails.assigned_console_ids
+      : [selectedSlot.consoleId || selectedSlot.consoleNumber];
+    const releaseConsoleIds = Array.from(
+      new Set(
+        requestedConsoleIds
+          .map((id: any) => Number(id))
+          .filter((id: number) => Number.isFinite(id) && id > 0)
+      )
+    );
+
+    let success = true;
+    for (const consoleId of releaseConsoleIds) {
+      const released = await releaseSlot(
+        selectedSlot.consoleType,
+        selectedSlot.game_id,
+        String(consoleId),
+        vendorId,
+        setRefreshSlots
+      );
+      success = success && released.ok;
+    }
+    console.log('💰 Release slot result:', success);
+
+    if (success) {
+      // ✅ CRITICAL: On SUCCESS - Update UI immediately (exactly like release button)
+      console.log('💰 Settle successful - updating UI immediately');
+      
+      // ✅ Trigger refresh to update both CurrentSlots and BookingStats
+      setRefreshSlots((prev) => !prev);
+      
+      // ✅ Dispatch global refresh event
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("refresh-dashboard"));
+      }
+      
+      // ✅ Close overlay and reset state IMMEDIATELY (like release button)
+      setShowOverlay(false);
+      setSelectedSlot(null);
+      setWaiveOffAmount("");
+      setSettlementError("");
+      setLoading(false);
+      
+      console.log('💰 UI updated immediately - settle complete');
+      return true;
+    } else {
+      // ✅ Release failed - show error, don't close overlay
+      console.log('💰 Release slot failed');
+      setSettlementError("Failed to release slot. Please try again.");
+      setLoading(false);
+      return false;
+    }
+  };
+
   // ✅ FIXED: Handle settle function with IMMEDIATE UI updates (exactly like release button)
   const handleSettle = async () => {
     if (!selectedSlot || !vendorId) {
@@ -344,66 +444,15 @@ const SettlementOverlay: React.FC<ExtraBookingOverlayProps> = ({
         ? Array.from(bookingTypesSet)
         : ["extra", "additional_meals"];
 
-      await settlePendingBookingCharges(bookingId, paymentMode === "credit" ? "monthly_credit" : paymentMode, parsedWaiveOff, bookingTypesPayload);
+      if (paymentMode === "upi_qr" && payableAmount > 0) {
+        await startUpiQr(bookingId, parsedWaiveOff, bookingTypesPayload);
+        setLoading(false);
+        return;
+      }
+      await settlePendingBookingCharges(bookingId, paymentMode === "credit" ? "monthly_credit" : paymentMode === "upi_qr" ? "upi" : paymentMode, parsedWaiveOff, bookingTypesPayload);
       console.log('💰 Pending charges settled successfully');
 
-      const squadDetails = (selectedSlot?.squadDetails && typeof selectedSlot.squadDetails === "object")
-        ? selectedSlot.squadDetails
-        : {};
-      const isPcSquad = String(squadDetails?.console_group || "").toLowerCase() === "pc"
-        && Number(squadDetails?.player_count || selectedSlot?.squadPlayerCount || 1) > 1;
-
-      const requestedConsoleIds = isPcSquad && Array.isArray(squadDetails?.assigned_console_ids)
-        ? squadDetails.assigned_console_ids
-        : [selectedSlot.consoleId || selectedSlot.consoleNumber];
-      const releaseConsoleIds = Array.from(
-        new Set(
-          requestedConsoleIds
-            .map((id: any) => Number(id))
-            .filter((id: number) => Number.isFinite(id) && id > 0)
-        )
-      );
-
-      let success = true;
-      for (const consoleId of releaseConsoleIds) {
-        const released = await releaseSlot(
-          selectedSlot.consoleType,
-          selectedSlot.game_id,
-          String(consoleId),
-          vendorId,
-          setRefreshSlots
-        );
-        success = success && released.ok;
-      }
-      console.log('💰 Release slot result:', success);
-
-      if (success) {
-        // ✅ CRITICAL: On SUCCESS - Update UI immediately (exactly like release button)
-        console.log('💰 Settle successful - updating UI immediately');
-        
-        // ✅ Trigger refresh to update both CurrentSlots and BookingStats
-        setRefreshSlots((prev) => !prev);
-        
-        // ✅ Dispatch global refresh event
-        if (typeof window !== "undefined") {
-          window.dispatchEvent(new CustomEvent("refresh-dashboard"));
-        }
-        
-        // ✅ Close overlay and reset state IMMEDIATELY (like release button)
-        setShowOverlay(false);
-        setSelectedSlot(null);
-        setWaiveOffAmount("");
-        setSettlementError("");
-        setLoading(false);
-        
-        console.log('💰 UI updated immediately - settle complete');
-        
-      } else {
-        // ✅ Release failed - show error, don't close overlay
-        console.log('💰 Release slot failed');
-        setSettlementError("Failed to release slot. Please try again.");
-        setLoading(false);
-      }
+      await releaseAndClose();
 
     } catch (err) {
       console.error('💰 Settle process failed:', err);
@@ -504,7 +553,7 @@ const SettlementOverlay: React.FC<ExtraBookingOverlayProps> = ({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            onClick={() => setShowOverlay(false)}
+            onClick={() => { if (!upiQr) setShowOverlay(false); }}
           >
             <motion.div
             ref={overlayRef}
@@ -668,11 +717,13 @@ const SettlementOverlay: React.FC<ExtraBookingOverlayProps> = ({
                     {[
                       { key: "cash", label: "Cash", Icon: IndianRupee },
                       { key: "card", label: "Card", Icon: CreditCard },
-                      { key: "upi", label: "UPI", Icon: Smartphone },
+                      { key: "upi_qr", label: "UPI QR (auto)", Icon: QrCode },
+                      { key: "upi", label: "Café UPI", Icon: Smartphone },
                       { key: "credit", label: "Credit", Icon: Wallet },
                     ].map(({ key, label, Icon }) => (
                       <motion.button
                         key={key}
+                        disabled={!!upiQr}
                         onClick={() => setPaymentMode(key)}
                         onKeyDown={(e) => handlePaymentModeKeyDown(e, key)}
                         className={`flex min-h-16 flex-col items-center justify-center rounded-lg border p-2 sm:min-h-0 sm:p-3 transition-all duration-200
@@ -746,9 +797,21 @@ const SettlementOverlay: React.FC<ExtraBookingOverlayProps> = ({
                 )}
 
                 {settlementError && <div role="alert" className="mb-3 rounded-lg border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-300">{settlementError}</div>}
+                {upiQr ? (
+                  <UpiQrPanel
+                    qr={upiQr}
+                    now={qrNow}
+                    busy={loading}
+                    paidLabel="Ending session…"
+                    paidActionLabel="Release console"
+                    onCancel={handleCancelUpiQr}
+                    onNewQr={() => { setUpiQr(null); void handleSettle(); }}
+                    onPaidAction={() => { setLoading(true); void releaseAndClose(); }}
+                  />
+                ) : (
                 <div className="settlement-actions flex flex-col gap-2">
                   <div className="mb-2 flex items-center justify-between border-t border-white/10 pt-3 text-sm"><span className="text-zinc-400">Collect now</span><strong className="text-lg tabular-nums text-zinc-100">₹{payableAmount.toFixed(2)}</strong></div>
-                  {payableAmount > 0 && <p className="mb-2 text-xs text-zinc-400">{paymentMode === "credit" ? "This amount will be added to the customer’s credit account." : "Confirm only after receiving payment."}</p>}
+                  {payableAmount > 0 && <p className="mb-2 text-xs text-zinc-400">{paymentMode === "credit" ? "This amount will be added to the customer’s credit account." : paymentMode === "upi_qr" ? "The customer scans a QR. The bill is marked paid and the session ends automatically once the payment arrives." : "Confirm only after receiving payment."}</p>}
                   <motion.button
                     onClick={handleSettle}
                     className="dashboard-btn-primary w-full rounded-md px-4 py-2.5 text-sm font-medium disabled:opacity-50 sm:px-6 sm:py-2"
@@ -766,7 +829,7 @@ const SettlementOverlay: React.FC<ExtraBookingOverlayProps> = ({
                       ) : (
                         <>
                           <CheckCircle className="w-4 h-4" />
-                          {payableAmount === 0 ? "End session" : paymentMode === "credit" ? "Add to credit & end session" : "Payment received & end session"}
+                          {payableAmount === 0 ? "End session" : paymentMode === "credit" ? "Add to credit & end session" : paymentMode === "upi_qr" ? "Show payment QR" : "Payment received & end session"}
                         </>
                       )}
                     </span>
@@ -791,6 +854,7 @@ const SettlementOverlay: React.FC<ExtraBookingOverlayProps> = ({
                     </span>
                   </motion.button>
                 </div>
+                )}
               </div>
             </div>}
             </motion.div>
@@ -821,6 +885,7 @@ const SettlementOverlay: React.FC<ExtraBookingOverlayProps> = ({
     </AnimatePresence>
   );
 };
+
 
 export default function ExtraBookingOverlay(props:ExtraBookingOverlayProps) {
   if(props.showOverlay&&props.selectedSlot?.runtime?.runtime_id&&props.vendorId)return <ExtensionSettlement runtimeId={props.selectedSlot.runtime.runtime_id} vendorId={props.vendorId} onClose={()=>props.setShowOverlay(false)} onUpdated={()=>props.setRefreshSlots(prev=>!prev)}/>;

@@ -39,8 +39,10 @@ import {
   Ticket,
   AlertCircle,
   Clock,
-  SlidersHorizontal
+  SlidersHorizontal,
+  QrCode
 } from "lucide-react"
+import { UpiQrBookingDialog } from "./upi-qr-collect"
 import { BOOKING_URL, DASHBOARD_URL } from '@/src/config/env'
 import { ConsoleType } from './types'
 import MealSelector from './mealSelector'
@@ -427,7 +429,7 @@ async function fetchSlotsBatch(vendorId: number, gameIds: number[], dates: strin
 }
 
 // Update this constant
-const PAYMENT_TYPES = ['Cash', 'UPI', 'pay_at_cafe', 'Pass', 'Monthly Credit'] as const
+const PAYMENT_TYPES = ['Cash', 'UPI', 'UPI QR', 'pay_at_cafe', 'Pass', 'Monthly Credit'] as const
 const DEFAULT_SQUAD_PRICING_POLICY_FALLBACK: Record<string, Record<string, number>> = {
   pc: { "2": 0, "3": 3, "4": 5, "5": 8 },
 }
@@ -574,6 +576,7 @@ export function SlotBookingForm({
   const [isMealSelectorOpen, setIsMealSelectorOpen] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false)
   const submittingRef = useRef(false)
+  const [upiQrBooking, setUpiQrBooking] = useState<{ vendorId: number; bookingIds: number[]; result: any } | null>(null)
   const [submitError, setSubmitError] = useState("")
   const [submissionUncertain, setSubmissionUncertain] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
@@ -1654,6 +1657,12 @@ const getEffectivePrice = (slot: SelectedSlot): number => {
       hint: "Validate and redeem hours",
       accent: "violet",
     },
+    "UPI QR": {
+      label: "UPI QR (auto-paid)",
+      icon: QrCode,
+      hint: "Customer scans a QR; marked paid automatically",
+      accent: "sky",
+    },
     pay_at_cafe: {
       label: "Pay After Session",
       icon: Clock,
@@ -1682,6 +1691,7 @@ const getEffectivePrice = (slot: SelectedSlot): number => {
         </select>
       </label>
       {paymentType === "pay_at_cafe" && <p className="mt-1 text-xs text-muted-foreground">Collect when play ends.</p>}
+      {paymentType === "UPI QR" && <p className="mt-1 text-xs text-muted-foreground">After saving, a QR appears. The booking is marked paid once the customer pays.</p>}
       {paymentType === 'Monthly Credit' && (
         <div className="mt-2 space-y-2">
           <p className="rounded-md border border-amber-200 bg-amber-50 px-2.5 py-1.5 text-xs text-amber-700 dark:border-amber-700 dark:bg-amber-900/25 dark:text-amber-300">
@@ -2015,7 +2025,8 @@ const getEffectivePrice = (slot: SelectedSlot): number => {
         userId: matchedPrimaryUser?.id ?? null,
         bookedDate: normalizeBookedDate(selectedSlots[0]?.date || ''),
         slotId: selectedSlots.map(slot => slot.slot_id),
-        paymentType: paymentType === 'Monthly Credit' ? 'monthly_credit' : paymentType,
+        // UPI QR bookings start as pay-after-session; the QR payment then marks them paid.
+        paymentType: paymentType === 'Monthly Credit' ? 'monthly_credit' : paymentType === 'UPI QR' ? 'pay_at_cafe' : paymentType,
         pass_uid: paymentType === 'Pass' ? validatedPass?.pass_uid : undefined,
         pass_verification_token: paymentType === 'Pass' ? passVerificationToken : undefined,
         bookingType: isSquadMode ? 'squad' : 'direct',
@@ -2077,6 +2088,13 @@ console.log('📥 API response data:', result)
 
 if (result?.success === true || result?.success === 'true' || result?.booking || result?.id) {
   console.log('✅ Booking created successfully!')
+  const createdIds = Array.isArray(result?.booking_ids) ? result.booking_ids.map(Number).filter((id: number) => id > 0) : []
+  if (paymentType === 'UPI QR' && createdIds.length > 0) {
+    // Keep the form mounted behind the QR; it closes once paid or left for later.
+    setUpiQrBooking({ vendorId, bookingIds: createdIds, result })
+    if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('refresh-dashboard'))
+    return
+  }
   // Return staff directly to the schedule after a confirmed server response.
   onClose()
   onBookingComplete(result)
@@ -2978,6 +2996,20 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
           />
         </motion.div>
       </motion.div>
+      {upiQrBooking && (
+        <UpiQrBookingDialog
+          key="upi-qr-booking"
+          vendorId={upiQrBooking.vendorId}
+          bookingIds={upiQrBooking.bookingIds}
+          onDone={() => {
+            const done = upiQrBooking.result
+            setUpiQrBooking(null)
+            onClose()
+            onBookingComplete(done)
+            if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('refresh-dashboard'))
+          }}
+        />
+      )}
     </AnimatePresence>
     ,
     document.body
