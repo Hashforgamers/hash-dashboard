@@ -13,6 +13,7 @@ import { useSocket } from "../context/SocketContext"
 import { useDashboardData } from "../context/DashboardDataContext"
 import { NotificationButton } from "../components/NotificationButton"
 import { CommandPalette } from "../components/command-palette"
+import { BookingShortcuts } from "../components/booking-shortcuts"
 import { normalizeConsoleSlug, resolveConsoleColor, resolveConsoleIcon } from "../components/console-catalog"
 
 interface DashboardLayoutProps {
@@ -321,6 +322,7 @@ export function DashboardLayout({ children, contentScroll = "page" }: DashboardL
                 </div>
                 <div className="ml-1 flex shrink-0 items-center gap-1.5">
                   <CommandPalette onRefresh={() => void handleManualRefresh()} />
+                  <BookingShortcuts />
                   <NotificationButton vendorId={vendorId} />
                   <button
                     type="button"
