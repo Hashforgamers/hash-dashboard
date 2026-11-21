@@ -16,6 +16,10 @@ export interface UpiQrState {
   image_url: string | null;
   close_by: string | null;
   cafe_settlement_status: string;
+  /** Masked number a payment link was sent to, if any. */
+  link_sent_to?: string | null;
+  /** Masked mobile number on the customer's profile, when the bill is open. */
+  customer_phone?: string | null;
 }
 
 export const UPI_QR_POLL_MS = 3000;
@@ -58,6 +62,63 @@ export function useUpiQrPolling(vendorId: number | null, qr: UpiQrState | null, 
   return now;
 }
 
+export function sendUpiPaymentLink(vendorId: number, qr: UpiQrState, phone?: string) {
+  return upiQrRequest(vendorId, `upi-qr/${qr.collection_id}/send-link`, "POST", phone ? { phone } : {});
+}
+
+/** Sends the same bill as a Razorpay payment link by SMS; paying it marks the bill paid like the QR. */
+function SendToPhone({ vendorId, qr, onUpdate }: { vendorId: number; qr: UpiQrState; onUpdate: (state: UpiQrState) => void }) {
+  const [editing, setEditing] = useState(!qr.customer_phone);
+  const [phone, setPhone] = useState("");
+  const [sending, setSending] = useState(false);
+  const [note, setNote] = useState("");
+  const send = async (number?: string) => {
+    setSending(true);
+    setNote("");
+    try {
+      const state = await sendUpiPaymentLink(vendorId, qr, number);
+      onUpdate(state);
+      setEditing(false);
+      setNote(`Payment link sent by SMS to ${state.link_sent_to}`);
+    } catch (err) {
+      setNote(err instanceof Error ? err.message : "Could not send the link.");
+    } finally {
+      setSending(false);
+    }
+  };
+  const valid = /^[6-9]\d{9}$/.test(phone.replace(/\D/g, "").slice(-10));
+  return (
+    <div className="w-full rounded-lg border border-zinc-700/70 bg-zinc-900/60 p-3 text-left">
+      <p className="text-xs font-medium text-zinc-200">Or send a payment link to the customer’s phone</p>
+      {editing ? (
+        <form className="mt-2 flex gap-2" onSubmit={(e) => { e.preventDefault(); if (valid) void send(phone); }}>
+          <input
+            type="tel"
+            inputMode="numeric"
+            autoComplete="tel"
+            aria-label="Customer mobile number"
+            placeholder="10-digit mobile number"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+            className="min-w-0 flex-1 rounded-md border border-zinc-600 bg-zinc-950 px-2.5 py-1.5 text-sm text-zinc-100"
+          />
+          <button type="submit" disabled={!valid || sending} className="rounded-md border border-blue-500/50 bg-blue-500/15 px-3 text-sm text-blue-200 disabled:opacity-50">
+            {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Send"}
+          </button>
+        </form>
+      ) : (
+        <div className="mt-2 flex items-center gap-2">
+          <button type="button" disabled={sending} onClick={() => void send()} className="flex-1 rounded-md border border-blue-500/50 bg-blue-500/15 px-3 py-1.5 text-sm text-blue-200 disabled:opacity-50">
+            {sending ? "Sending…" : qr.link_sent_to ? `Resend to ${qr.link_sent_to}` : `Send to ${qr.customer_phone}`}
+          </button>
+          <button type="button" onClick={() => setEditing(true)} className="text-xs text-zinc-400 underline">Other number</button>
+        </div>
+      )}
+      {note && <p role="status" className="mt-2 text-xs text-zinc-400">{note}</p>}
+    </div>
+  );
+}
+
 /** Cancels an open QR. Returns the final state when a payment landed first, otherwise null. */
 export async function cancelUpiQr(vendorId: number, qr: UpiQrState | null): Promise<UpiQrState | null> {
   if (!qr || qr.status !== "open") return null;
@@ -65,7 +126,25 @@ export async function cancelUpiQr(vendorId: number, qr: UpiQrState | null): Prom
   return state.status === "paid" || state.status === "paid_unapplied" ? state : null;
 }
 
-export function UpiQrPanel({ qr, now, busy, paidLabel, onCancel, onNewQr, onPaidAction, paidActionLabel }: {
+/**
+ * Razorpay returns a tall branded poster; show only its scannable QR card so the
+ * code stays large without scrolling. Offsets are fractions of the poster layout.
+ */
+function RazorpayQrImage({ src, alt }: { src: string; alt: string }) {
+  return (
+    <div className="w-full max-w-[240px] rounded-2xl bg-white p-3 shadow-lg">
+      <div className="w-full overflow-hidden" style={{ aspectRatio: "0.743" }}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={src} alt={alt} className="block max-w-none" style={{ width: "152.4%", marginLeft: "-25.9%", marginTop: "-122.9%" }} />
+      </div>
+      <a href={src} target="_blank" rel="noreferrer" className="mt-2 block text-[11px] text-zinc-500 underline">Open full QR</a>
+    </div>
+  );
+}
+
+export function UpiQrPanel({ vendorId, qr, now, busy, paidLabel, onCancel, onNewQr, onPaidAction, paidActionLabel, onUpdate }: {
+  vendorId: number;
+  onUpdate: (state: UpiQrState) => void;
   qr: UpiQrState;
   now: number;
   busy: boolean;
@@ -106,20 +185,19 @@ export function UpiQrPanel({ qr, now, busy, paidLabel, onCancel, onNewQr, onPaid
         </>
       ) : (
         <>
-          <p className="text-sm text-zinc-300">Ask the customer to scan with any UPI app</p>
+          <p className="text-3xl font-bold tabular-nums text-zinc-100">{amount}</p>
+          <p className="-mt-2 text-xs text-zinc-400">Scan with any UPI app · paid to Hash for Gamers</p>
           {qr.image_url ? (
-            // Razorpay-hosted image for this single-use, fixed-amount QR.
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={qr.image_url} alt={`UPI QR for ${amount}`} className="w-full max-w-[260px] rounded-lg bg-white p-2" />
+            <RazorpayQrImage src={qr.image_url} alt={`UPI QR for ${amount}`} />
           ) : (
             <Loader2 className="h-8 w-8 animate-spin text-zinc-400" aria-hidden="true" />
           )}
-          <p className="text-2xl font-bold tabular-nums text-zinc-100">{amount}</p>
           <p className="inline-flex items-center gap-2 text-xs text-zinc-400">
             <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
-            Waiting for payment · expires in {Math.floor(secondsLeft / 60)}:{String(secondsLeft % 60).padStart(2, "0")}
+            Waiting for payment · {Math.floor(secondsLeft / 60)}:{String(secondsLeft % 60).padStart(2, "0")} left
           </p>
-          <button type="button" onClick={onCancel} disabled={busy} className={secondary}>Cancel QR</button>
+          <SendToPhone vendorId={vendorId} qr={qr} onUpdate={onUpdate} />
+          <button type="button" onClick={onCancel} disabled={busy} className={secondary}>Cancel payment request</button>
         </>
       )}
     </div>
@@ -185,6 +263,8 @@ export function UpiQrBookingDialog({ vendorId, bookingIds, onDone }: {
         {error && <p role="alert" className="mb-3 text-sm text-red-300">{error}</p>}
         {qr ? (
           <UpiQrPanel
+            vendorId={vendorId}
+            onUpdate={setQr}
             qr={qr}
             now={now}
             busy={busy}
