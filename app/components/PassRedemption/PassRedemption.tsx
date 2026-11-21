@@ -1,3 +1,5 @@
+import { buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 // frontend/src/pages/PassRedemption.tsx
 import { approvePassBooking } from "@/lib/pass-booking-approval"
 import { creditAuthHeaders } from "@/lib/credit-auth"
@@ -167,7 +169,7 @@ const PassRedemption: React.FC<{ vendorId: number }> = ({ vendorId }) => {
                 <button
                   onClick={validatePass}
                   disabled={loading || !passUid.trim()}
-                  className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2"
+                  className={buttonVariants({ variant: "default" })}
                 >
                   <Search className="w-4 h-4" />
                   Validate
@@ -175,7 +177,7 @@ const PassRedemption: React.FC<{ vendorId: number }> = ({ vendorId }) => {
               ) : (
                 <button
                   onClick={resetForm}
-                  className="px-6 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
+                  className="px-6 py-2 bg-zinc-600 text-white rounded-lg hover:bg-zinc-700"
                 >
                   Reset
                 </button>
@@ -193,9 +195,9 @@ const PassRedemption: React.FC<{ vendorId: number }> = ({ vendorId }) => {
 
           {/* Success Message */}
           {success && (
-            <div className="p-4 bg-green-50 border border-green-200 rounded-lg flex items-start gap-2">
-              <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
-              <span className="text-green-800">{success}</span>
+            <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-lg flex items-start gap-2">
+              <CheckCircle className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5" />
+              <span className="text-emerald-800">{success}</span>
             </div>
           )}
         </div>
@@ -206,10 +208,10 @@ const PassRedemption: React.FC<{ vendorId: number }> = ({ vendorId }) => {
         <div className="bg-blue-50/70 dark:bg-blue-900/20 rounded-lg shadow-md p-6 space-y-6">
           <div className="flex items-start justify-between">
             <div>
-              <h3 className="text-xl font-bold text-gray-900">
+              <h3 className="text-xl font-bold text-zinc-900">
                 {passDetails.pass_name}
               </h3>
-              <p className="text-sm text-gray-600 mt-1">
+              <p className="text-sm text-zinc-600 mt-1">
                 {passDetails.is_global ? '🌍 Global Pass' : '📍 Vendor-Specific Pass'}
               </p>
             </div>
@@ -217,31 +219,31 @@ const PassRedemption: React.FC<{ vendorId: number }> = ({ vendorId }) => {
               <div className="text-3xl font-bold text-blue-600">
                 {passDetails.remaining_hours.toFixed(2)}
               </div>
-              <div className="text-sm text-gray-600">hours remaining</div>
+              <div className="text-sm text-zinc-600">hours remaining</div>
             </div>
           </div>
 
           {/* Pass Info Grid */}
           <div className="grid grid-cols-2 gap-4">
             <div className="bg-white rounded-lg p-4">
-              <div className="text-sm text-gray-600">Total Hours</div>
+              <div className="text-sm text-zinc-600">Total Hours</div>
               <div className="text-lg font-semibold">{passDetails.total_hours.toFixed(2)} hrs</div>
             </div>
             <div className="bg-white rounded-lg p-4">
-              <div className="text-sm text-gray-600">User ID</div>
+              <div className="text-sm text-zinc-600">User ID</div>
               <div className="text-lg font-semibold flex items-center gap-2">
                 <User className="w-4 h-4" />
                 #{passDetails.user_id}
               </div>
             </div>
             <div className="bg-white rounded-lg p-4">
-              <div className="text-sm text-gray-600">Valid From</div>
+              <div className="text-sm text-zinc-600">Valid From</div>
               <div className="text-lg font-semibold">
                 {new Date(passDetails.valid_from).toLocaleDateString()}
               </div>
             </div>
             <div className="bg-white rounded-lg p-4">
-              <div className="text-sm text-gray-600">Valid Until</div>
+              <div className="text-sm text-zinc-600">Valid Until</div>
               <div className="text-lg font-semibold">
                 {passDetails.valid_to 
                   ? new Date(passDetails.valid_to).toLocaleDateString()
@@ -312,7 +314,7 @@ const PassRedemption: React.FC<{ vendorId: number }> = ({ vendorId }) => {
             <button
               onClick={redeemPass}
               disabled={loading || !hoursToDeduct}
-              className="w-full px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 font-semibold flex items-center justify-center gap-2"
+              className={cn(buttonVariants({ variant: "success", size: "lg" }), "w-full")}
             >
               {loading ? (
                 <>Processing...</>

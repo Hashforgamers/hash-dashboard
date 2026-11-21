@@ -1,4 +1,5 @@
 "use client";
+import { buttonVariants } from "@/components/ui/button";
 
 import { useEffect, useMemo, useState } from "react";
 import { Download, Smartphone, X } from "lucide-react";
@@ -92,7 +93,7 @@ export function MobileInstallBanner() {
   };
 
   return (
-    <div className="fixed inset-x-2 bottom-2 z-[90] rounded-xl border border-white/15 bg-slate-950/95 p-3 text-white shadow-2xl backdrop-blur md:hidden">
+    <div className="fixed inset-x-2 bottom-2 z-[90] rounded-xl border border-white/15 bg-zinc-950/95 p-3 text-white shadow-2xl backdrop-blur md:hidden">
       <div className="flex items-start justify-between gap-3">
         <div className="flex min-w-0 items-start gap-2">
           <div className="rounded-lg border border-white/15 bg-white/10 p-1.5">
@@ -100,7 +101,7 @@ export function MobileInstallBanner() {
           </div>
           <div className="min-w-0">
             <p className="text-sm font-semibold">Install Hash Dashboard</p>
-            <p className="text-xs text-slate-300">
+            <p className="text-xs text-zinc-300">
               {platform === "android"
                 ? "Get faster access from your home screen."
                 : "Install this web app on iPhone for app-like access."}
@@ -110,7 +111,7 @@ export function MobileInstallBanner() {
         <button
           type="button"
           onClick={dismiss}
-          className="rounded-md p-1 text-slate-300 hover:bg-white/10 hover:text-white"
+          className="rounded-md p-1 text-zinc-300 hover:bg-white/10 hover:text-white"
           aria-label="Close install banner"
         >
           <X className="h-4 w-4" />
@@ -123,11 +124,11 @@ export function MobileInstallBanner() {
             <button
               type="button"
               onClick={installWebApp}
-              className="inline-flex items-center gap-1 rounded-lg border border-cyan-400/40 bg-cyan-500/20 px-3 py-1.5 text-xs font-semibold text-cyan-200 hover:bg-cyan-500/30"
+              className={buttonVariants({ variant: "soft-info", size: "sm" })}
             >
               Install Web App
             </button>
-            {canDownloadApk ? (
+            {canDownloadApk && (
               <a
                 href={ANDROID_APK_URL}
                 className="inline-flex items-center gap-1 rounded-lg border border-emerald-400/40 bg-emerald-500/20 px-3 py-1.5 text-xs font-semibold text-emerald-200 hover:bg-emerald-500/30"
@@ -135,17 +136,13 @@ export function MobileInstallBanner() {
                 <Download className="h-3.5 w-3.5" />
                 Download APK
               </a>
-            ) : (
-              <span className="rounded-lg border border-amber-400/40 bg-amber-500/20 px-3 py-1.5 text-xs font-semibold text-amber-200">
-                APK link not configured
-              </span>
             )}
           </>
         ) : (
           <button
             type="button"
             onClick={installWebApp}
-            className="inline-flex items-center gap-1 rounded-lg border border-cyan-400/40 bg-cyan-500/20 px-3 py-1.5 text-xs font-semibold text-cyan-200 hover:bg-cyan-500/30"
+            className={buttonVariants({ variant: "soft-info", size: "sm" })}
           >
             Install Web App
           </button>
@@ -153,12 +150,12 @@ export function MobileInstallBanner() {
       </div>
 
       {platform === "ios" && showIosHelp && (
-        <div className="mt-2 rounded-lg border border-white/15 bg-white/5 p-2 text-xs text-slate-200">
+        <div className="mt-2 rounded-lg border border-white/15 bg-white/5 p-2 text-xs text-zinc-200">
           In Safari tap <strong>Share</strong>, then <strong>Add to Home Screen</strong>.
         </div>
       )}
       {platform === "android" && showAndroidPwaHelp && (
-        <div className="mt-2 rounded-lg border border-white/15 bg-white/5 p-2 text-xs text-slate-200">
+        <div className="mt-2 rounded-lg border border-white/15 bg-white/5 p-2 text-xs text-zinc-200">
           In Chrome tap <strong>menu</strong> then <strong>Add to Home screen</strong> or <strong>Install app</strong>.
         </div>
       )}

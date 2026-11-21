@@ -1,6 +1,7 @@
 // components/SlotManagement/SlotBookingForm/index.tsx
 'use client'
 
+import { toast } from "sonner";
 import { approvePassBooking } from "@/lib/pass-booking-approval"
 import React, { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -349,7 +350,7 @@ const handleSubmit = async (e: React.FormEvent) => {
       const failedSlots = result.failed_slots ? ` (Failed slots: ${result.failed_slots.join(', ')})` : ''
       
       console.error('❌ Booking failed:', result)
-      alert(`Booking Error: ${errorMsg}${failedSlots}\n\nPlease refresh the page and try again.`)
+      toast.error(`Booking Error: ${errorMsg}${failedSlots}\n\nPlease refresh the page and try again.`)
       
       // ✅ Auto-refresh on failed slots (they might be booked by someone else)
       if (result.failed_slots && result.failed_slots.length > 0) {
@@ -363,7 +364,7 @@ const handleSubmit = async (e: React.FormEvent) => {
     
     // ✅ Show more detailed error
     const errorMsg = error?.message || error?.toString() || 'Unknown error'
-    alert(`Failed to create booking: ${errorMsg}`)
+    toast.error(`Failed to create booking: ${errorMsg}`)
   } finally {
     setIsSubmitting(false)
   }
@@ -420,14 +421,14 @@ const handleSubmit = async (e: React.FormEvent) => {
           initial={{ scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0.9, opacity: 0 }}
-          className="w-full max-w-6xl max-h-[95vh] overflow-y-auto bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-2xl"
+          className="w-full max-w-6xl max-h-[95vh] overflow-y-auto bg-white dark:bg-zinc-800 rounded-2xl border border-zinc-200 dark:border-zinc-700 shadow-2xl"
         >
           {/* Header */}
-          <div className="flex items-center justify-between p-3 border-b border-gray-200 dark:border-gray-700 sticky top-0 bg-white dark:bg-gray-800 z-10">
-            <h2 className="text-2xl font-bold text-gray-800 dark:text-white">New Slot Booking</h2>
+          <div className="flex items-center justify-between p-3 border-b border-zinc-200 dark:border-zinc-700 sticky top-0 bg-white dark:bg-zinc-800 z-10">
+            <h2 className="text-2xl font-bold text-zinc-800 dark:text-white">New Slot Booking</h2>
             <button
               onClick={handleClose}
-              className="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 transition-colors"
+              className="p-2 rounded-lg bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-700 dark:hover:bg-zinc-600 transition-colors"
             >
               <X className="w-5 h-5" />
             </button>
@@ -449,9 +450,9 @@ const handleSubmit = async (e: React.FormEvent) => {
                     return (
                       <div
                         key={index}
-                        className="flex items-center justify-between text-sm bg-white dark:bg-gray-800 rounded-lg p-3"
+                        className="flex items-center justify-between text-sm bg-white dark:bg-zinc-800 rounded-lg p-3"
                       >
-                        <span className="text-gray-700 dark:text-gray-300">
+                        <span className="text-zinc-700 dark:text-zinc-300">
                           <strong>{formatDateForDisplay(slot.date)}</strong> •{' '}
                           {slot.start_time?.slice(0, 5) || 'N/A'}-{slot.end_time?.slice(0, 5) || 'N/A'} • {slot.console_name || 'Unknown'}
                         </span>

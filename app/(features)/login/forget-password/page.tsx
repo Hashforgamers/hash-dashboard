@@ -318,7 +318,7 @@ export default function ForgotPasswordPage() {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel className="text-foreground font-medium flex items-center gap-2">
-                          <Mail className="w-4 h-4 text-green-400" />
+                          <Mail className="w-4 h-4 text-emerald-400" />
                           Email Address
                         </FormLabel>
                         <FormControl>
@@ -326,7 +326,7 @@ export default function ForgotPasswordPage() {
                             placeholder="Enter your registered email"
                             type="email"
                             autoComplete="email"
-                            className="h-12 bg-input border-input text-foreground placeholder:text-muted-foreground focus:border-cyan-400 focus:ring-cyan-400/20"
+                            className="h-12 bg-input border-input text-foreground placeholder:text-muted-foreground focus:border-blue-400 focus:ring-blue-400/20"
                             {...field}
                           />
                         </FormControl>
@@ -372,7 +372,7 @@ export default function ForgotPasswordPage() {
                     render={({ field }) => (
                       <FormItem className="space-y-4">
                         <FormLabel className="text-foreground font-medium flex items-center gap-2 justify-center">
-                          <KeyRound className="w-4 h-4 text-green-400" />
+                          <KeyRound className="w-4 h-4 text-emerald-400" />
                           6-Digit Reset Code
                         </FormLabel>
                         <FormControl>
@@ -383,7 +383,7 @@ export default function ForgotPasswordPage() {
                                   <InputOTPSlot
                                     key={i}
                                     index={i}
-                                    className="w-12 h-12 text-lg font-bold bg-input border border-input text-foreground rounded-md focus:border-cyan-400 focus:ring-cyan-400/30 transition-all duration-200"
+                                    className="w-12 h-12 text-lg font-bold bg-input border border-input text-foreground rounded-md focus:border-blue-400 focus:ring-blue-400/30 transition-all duration-200"
                                   />
                                 ))}
                               </InputOTPGroup>
@@ -395,7 +395,7 @@ export default function ForgotPasswordPage() {
                                   <InputOTPSlot
                                     key={i}
                                     index={i}
-                                    className="w-12 h-12 text-lg font-bold bg-input border border-input text-foreground rounded-md focus:border-cyan-400 focus:ring-cyan-400/30 transition-all duration-200"
+                                    className="w-12 h-12 text-lg font-bold bg-input border border-input text-foreground rounded-md focus:border-blue-400 focus:ring-blue-400/30 transition-all duration-200"
                                   />
                                 ))}
                               </InputOTPGroup>
@@ -411,12 +411,12 @@ export default function ForgotPasswordPage() {
                   <div className="rounded-lg p-4 border border-border bg-muted/30">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2 text-foreground">
-                        <Clock className="w-4 h-4 text-green-400" />
+                        <Clock className="w-4 h-4 text-emerald-400" />
                         <span className="text-sm">
                           {timer > 0 ? (
                             <>
                               Expires in{" "}
-                              <span className="font-bold text-green-400">
+                              <span className="font-bold text-emerald-400">
                                 {formatTime(timer)}
                               </span>
                             </>
@@ -480,14 +480,14 @@ export default function ForgotPasswordPage() {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel className="text-foreground font-medium flex items-center gap-2">
-                          <Lock className="w-4 h-4 text-green-400" />
+                          <Lock className="w-4 h-4 text-emerald-400" />
                           New Password
                         </FormLabel>
                         <FormControl>
                           <PasswordInput
                             placeholder="Enter new password (min 8 chars)"
                             autoComplete="new-password"
-                            className="h-12 bg-input border-input text-foreground placeholder:text-muted-foreground focus:border-cyan-400 focus:ring-cyan-400/20"
+                            className="h-12 bg-input border-input text-foreground placeholder:text-muted-foreground focus:border-blue-400 focus:ring-blue-400/20"
                             {...field}
                           />
                         </FormControl>
@@ -502,14 +502,14 @@ export default function ForgotPasswordPage() {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel className="text-foreground font-medium flex items-center gap-2">
-                          <Lock className="w-4 h-4 text-green-400" />
+                          <Lock className="w-4 h-4 text-emerald-400" />
                           Confirm Password
                         </FormLabel>
                         <FormControl>
                           <PasswordInput
                             placeholder="Re-enter your new password"
                             autoComplete="new-password"
-                            className="h-12 bg-input border-input text-foreground placeholder:text-muted-foreground focus:border-cyan-400 focus:ring-cyan-400/20"
+                            className="h-12 bg-input border-input text-foreground placeholder:text-muted-foreground focus:border-blue-400 focus:ring-blue-400/20"
                             {...field}
                           />
                         </FormControl>
@@ -543,7 +543,7 @@ export default function ForgotPasswordPage() {
                   </p>
                 </div>
                 <Link href="/login" className="block">
-                  <Button className="w-full h-12 bg-emerald-600 hover:bg-emerald-500 text-white">
+                  <Button variant="success" size="lg" className="w-full">
                     Continue To Login
                   </Button>
                 </Link>

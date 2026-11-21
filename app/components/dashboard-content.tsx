@@ -1,4 +1,5 @@
 "use client"
+import NumberFlow from "@number-flow/react"
 
 import React, { useCallback, useEffect, useRef, useState } from "react"
 import { Card, CardContent } from "@/components/ui/card"
@@ -102,7 +103,7 @@ export function DashboardContent() {
   const showDashboardToast = useCallback((message: string, type: 'success' | 'error' | 'info' = 'info') => {
     const toast = document.createElement('div')
     const bgClass =
-      type === 'success' ? 'bg-emerald-500' : type === 'error' ? 'bg-rose-500' : 'bg-cyan-500'
+      type === 'success' ? 'bg-emerald-500' : type === 'error' ? 'bg-red-500' : 'bg-blue-500'
     toast.className = `fixed top-4 right-4 px-5 py-3 rounded-lg shadow-xl z-[10000] text-white font-medium transform transition-all duration-300 ${bgClass}`
     toast.innerHTML = `
       <div class="flex items-center gap-2">
@@ -262,6 +263,7 @@ export function DashboardContent() {
     todayBookingsChange: realTimeStats.todayBookingsChange ?? dashboardData?.stats?.todayBookingsChange ?? 0
   }
 
+  const moneyFormat = { style: "currency", currency: "INR", minimumFractionDigits: 2 } as const
   const formatMoney = (value?: number) => `₹${Number(value || 0).toFixed(2)}`
 
   const topMetricsStrip = (
@@ -280,26 +282,22 @@ export function DashboardContent() {
           <CardContent className="p-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-1 sm:gap-2">
-                <div className="rounded-md bg-[#30d158]/12 p-1.5">
-                  <IndianRupee className="h-3.5 w-3.5 text-[#30d158]" />
+                <div className="rounded-md bg-emerald-500/12 p-1.5">
+                  <IndianRupee className="h-3.5 w-3.5 text-emerald-500" />
                 </div>
                 <span className="dash-kpi-label">Earnings (Net)</span>
               </div>
-              <button aria-label={showEarnings ? 'Hide earnings' : 'Show earnings'} onClick={() => setShowEarnings(!showEarnings)} className="text-[#8e8e93] transition-colors hover:text-[#f5f5f7]">
+              <button aria-label={showEarnings ? 'Hide earnings' : 'Show earnings'} onClick={() => setShowEarnings(!showEarnings)} className="text-zinc-400 transition-colors hover:text-zinc-50">
                 {showEarnings ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
               </button>
             </div>
             <div className="mt-1 flex items-center justify-between">
-              <motion.p
-                key={currentStats.netEarnings}
-                initial={{ scale: 0.8, opacity: 0.5 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={{ duration: 0.3 }}
+              <p
                 className="text-sm font-semibold text-foreground sm:text-base"
               >
-                {showEarnings ? formatMoney(currentStats.netEarnings) : "₹•••••"}
-              </motion.p>
-              <span className="text-[10px] font-medium text-[#8e8e93]">Today</span>
+                {showEarnings ? <NumberFlow value={Number(currentStats.netEarnings || 0)} locales="en-IN" format={moneyFormat} /> : "₹•••••"}
+              </p>
+              <span className="text-[10px] font-medium text-zinc-400">Today</span>
             </div>
           </CardContent>
         </Card>
@@ -314,29 +312,25 @@ export function DashboardContent() {
           <CardContent className="p-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-1 sm:gap-2">
-                <div className="rounded-md bg-[#0a84ff]/12 p-1.5">
-                  <CalendarCheck className="h-3.5 w-3.5 text-[#0a84ff]" />
+                <div className="rounded-md bg-blue-500/12 p-1.5">
+                  <CalendarCheck className="h-3.5 w-3.5 text-blue-500" />
                 </div>
                 <span className="dash-kpi-label">Bookings</span>
               </div>
               <span
-                className={`text-[10px] font-medium ${isConnected ? "text-[#30d158]" : "text-[#ff9f0a]"}`}
+                className={`text-[10px] font-medium ${isConnected ? "text-emerald-500" : "text-amber-500"}`}
                 title={isConnected ? "Realtime updates connected" : "Realtime reconnecting"}
               >
                 {isConnected ? "Live" : "Syncing"}
               </span>
             </div>
             <div className="mt-1 flex items-center justify-between">
-              <motion.p
-                key={currentStats.todayBookings}
-                initial={{ scale: 0.8, opacity: 0.5 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={{ duration: 0.3 }}
+              <p
                 className="text-sm font-semibold text-foreground sm:text-base"
               >
-                {currentStats.todayBookings}
-              </motion.p>
-              <div className="flex items-center gap-1 text-[10px] text-[#8e8e93]">
+                <NumberFlow value={Number(currentStats.todayBookings || 0)} />
+              </p>
+              <div className="flex items-center gap-1 text-[10px] text-zinc-400">
                 <TrendingUp className="h-3 w-3" />
                 <span>Today</span>
               </div>
@@ -354,27 +348,23 @@ export function DashboardContent() {
           <CardContent className="p-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-1 sm:gap-2">
-                <div className="rounded-md bg-[#ff9f0a]/12 p-1.5">
-                  <WalletCards className="h-3.5 w-3.5 text-[#ff9f0a]" />
+                <div className="rounded-md bg-amber-500/12 p-1.5">
+                  <WalletCards className="h-3.5 w-3.5 text-amber-500" />
                 </div>
                 <span className="dash-kpi-label">Pending (Net)</span>
               </div>
-              <button aria-label={showPending ? 'Hide pending amount' : 'Show pending amount'} onClick={() => setShowPending(!showPending)} className="text-[#8e8e93] transition-colors hover:text-[#f5f5f7]">
+              <button aria-label={showPending ? 'Hide pending amount' : 'Show pending amount'} onClick={() => setShowPending(!showPending)} className="text-zinc-400 transition-colors hover:text-zinc-50">
                 {showPending ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
               </button>
             </div>
             <div className="mt-1 flex items-center justify-between">
-              <motion.p
-                key={currentStats.netPendingAmount}
-                initial={{ scale: 0.8, opacity: 0.5 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={{ duration: 0.3 }}
+              <p
                 className="text-sm font-semibold text-foreground sm:text-base"
               >
-                {showPending ? formatMoney(currentStats.netPendingAmount) : "₹•••••"}
-              </motion.p>
-              <div className="flex items-center gap-1 text-[10px] text-[#8e8e93]">
-                <div className="h-1.5 w-1.5 rounded-full bg-[#ff9f0a]" />
+                {showPending ? <NumberFlow value={Number(currentStats.netPendingAmount || 0)} locales="en-IN" format={moneyFormat} /> : "₹•••••"}
+              </p>
+              <div className="flex items-center gap-1 text-[10px] text-zinc-400">
+                <div className="h-1.5 w-1.5 rounded-full bg-amber-500" />
                 <span>Today</span>
               </div>
             </div>
@@ -386,13 +376,13 @@ export function DashboardContent() {
 
   const mobileMetricsStrip = (
     <div className="dashboard-module-card flex w-full items-center justify-between gap-1 rounded-lg border border-white/10 bg-white/[0.05] px-1.5 py-1 md:hidden">
-      <div className="min-w-0 rounded-md border border-[#0a84ff]/20 bg-[#0a84ff]/10 px-1.5 py-1 text-[10px] font-medium text-[#9dccff]">
+      <div className="min-w-0 rounded-md border border-blue-500/20 bg-blue-500/10 px-1.5 py-1 text-[10px] font-medium text-[#9dccff]">
         Bookings {currentStats.todayBookings}
       </div>
-      <div className="min-w-0 rounded-md border border-[#ff9f0a]/20 bg-[#ff9f0a]/10 px-1.5 py-1 text-[10px] font-medium text-[#ffd60a]">
+      <div className="min-w-0 rounded-md border border-amber-500/20 bg-amber-500/10 px-1.5 py-1 text-[10px] font-medium text-amber-400">
         Pending {showPending ? formatMoney(currentStats.netPendingAmount) : '••••'}
       </div>
-      <div className="min-w-0 rounded-md border border-[#30d158]/20 bg-[#30d158]/10 px-1.5 py-1 text-[10px] font-medium text-[#30d158]">
+      <div className="min-w-0 rounded-md border border-emerald-500/20 bg-emerald-500/10 px-1.5 py-1 text-[10px] font-medium text-emerald-500">
         Earnings {showEarnings ? formatMoney(currentStats.netEarnings) : '••••'}
       </div>
     </div>
@@ -547,7 +537,7 @@ export function DashboardContent() {
                   transition={{ duration: 0.15 }}
                   className="flex flex-col min-h-0 xl:col-span-4 2xl:col-span-3 xl:h-full max-md:h-full max-md:min-h-0"
                 >
-                  <div className={`relative overflow-hidden rounded-lg ${(dashboardData.upcomingBookings || []).length ? "flex-1 min-h-[280px] xl:h-full xl:min-h-0" : "h-auto flex-none"}`}>
+                  <div className="relative flex-1 min-h-[280px] overflow-hidden rounded-[14px] xl:h-full xl:min-h-0">
                     <UpcomingBookings
                       upcomingBookings={dashboardData.upcomingBookings || []}
                       vendorId={vendorId?.toString()}

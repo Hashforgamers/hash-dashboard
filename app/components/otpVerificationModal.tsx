@@ -1,3 +1,4 @@
+import { toast } from "sonner";
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -30,7 +31,7 @@ export function OTPVerificationModal({
       });
       
       if (response.data.success) {
-        alert('OTP sent to your registered email address');
+        toast.success('OTP sent to your registered email address');
       } else {
         setError(response.data.message);
       }
@@ -96,20 +97,16 @@ export function OTPVerificationModal({
           {/* Header */}
           <div className="flex items-start justify-between gap-3">
             <div className="flex items-center gap-2.5">
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg border border-cyan-400/35 bg-cyan-500/15">
-                <Shield className="h-5 w-5 text-cyan-300" />
+              <div className="flex h-9 w-9 items-center justify-center rounded-lg border border-blue-400/35 bg-blue-500/15">
+                <Shield className="h-5 w-5 text-blue-300" />
               </div>
               <div>
-                <h3 className="text-base font-semibold uppercase tracking-[0.12em] text-cyan-100 md:text-lg">Security Verification</h3>
-                <p className="text-xs text-slate-300">Payout access protection</p>
+                <h3 className="text-base font-semibold uppercase tracking-[0.12em] text-blue-100 md:text-lg">Security Verification</h3>
+                <p className="text-xs text-zinc-300">Payout access protection</p>
               </div>
             </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onClose}
-              className="h-8 w-8 rounded-md border border-cyan-500/30 p-0 text-slate-300 hover:bg-cyan-500/15 hover:text-cyan-100"
-            >
+            <Button variant="soft-info" size="icon-sm"
+              onClick={onClose}>
               <X className="w-4 h-4" />
             </Button>
           </div>
@@ -117,29 +114,29 @@ export function OTPVerificationModal({
           {/* Content */}
           <div className="space-y-4">
             <div className="space-y-2 text-center">
-              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl border border-cyan-500/35 bg-cyan-500/15">
-                <Mail className="h-6 w-6 text-cyan-300" />
+              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl border border-blue-500/35 bg-blue-500/15">
+                <Mail className="h-6 w-6 text-blue-300" />
               </div>
-              <p className="text-xs text-slate-300 md:text-sm">
+              <p className="text-xs text-zinc-300 md:text-sm">
                 To access <strong>{pageName}</strong>, please verify your identity using the OTP sent to your registered email address.
               </p>
             </div>
 
             {error && (
-              <div className="rounded-lg border border-rose-400/45 bg-rose-500/15 p-3 text-xs text-rose-200 md:text-sm">
+              <div className="rounded-lg border border-red-400/45 bg-red-500/15 p-3 text-xs text-red-200 md:text-sm">
                 {error}
               </div>
             )}
 
             <div className="space-y-3">
               <div>
-                <Label className="text-xs font-semibold uppercase tracking-[0.11em] text-cyan-100 md:text-sm">Enter 6-Digit OTP</Label>
+                <Label className="text-xs font-semibold uppercase tracking-[0.11em] text-blue-100 md:text-sm">Enter 6-Digit OTP</Label>
                 <Input
                   type="text"
                   value={otp}
                   onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
                   placeholder="000000"
-                  className="mt-2 h-11 rounded-lg border-cyan-500/30 bg-slate-900/60 text-center text-base tracking-[0.3em] text-cyan-50 placeholder:text-slate-500 focus-visible:ring-cyan-400 md:h-12 md:text-lg"
+                  className="mt-2 h-11 rounded-lg border-blue-500/30 bg-zinc-900/60 text-center text-base tracking-[0.3em] text-blue-50 placeholder:text-zinc-500 focus-visible:ring-blue-400 md:h-12 md:text-lg"
                   maxLength={6}
                 />
               </div>
@@ -159,13 +156,10 @@ export function OTPVerificationModal({
                 )}
               </Button>
 
-              <Button
+              <Button variant="soft-info" size="sm"
                 onClick={handleResendOTP}
-                variant="ghost"
-                size="sm"
-                className="h-9 w-full rounded-lg border border-cyan-500/25 text-xs text-slate-300 hover:bg-cyan-500/10 hover:text-cyan-100"
-                disabled={sendingOtp}
-              >
+                
+                disabled={sendingOtp} className="w-full">
                 {sendingOtp ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin mr-2" />
@@ -177,7 +171,7 @@ export function OTPVerificationModal({
               </Button>
             </div>
 
-            <div className="space-y-1 rounded-lg border border-cyan-500/20 bg-slate-900/35 px-3 py-2 text-center text-[11px] text-slate-300 md:text-xs">
+            <div className="space-y-1 rounded-lg border border-blue-500/20 bg-zinc-900/35 px-3 py-2 text-center text-[11px] text-zinc-300 md:text-xs">
               <p>• OTP is valid for 5 minutes</p>
               <p>• Check your spam folder if you don't see the email</p>
               <p>• Never share your OTP with anyone</p>

@@ -42,7 +42,7 @@ export function Forget() {
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit(onSubmit)}
-        className="space-y-6 max-w-5xl mx-auto py-6 px-12 border border-gray-300 rounded-md shadow-lg"
+        className="space-y-6 max-w-5xl mx-auto py-6 px-12 border border-zinc-300 rounded-md shadow-lg"
       >
        
         <div className="text-center">

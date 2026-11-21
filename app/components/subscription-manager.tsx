@@ -104,7 +104,7 @@ export function SubscriptionManager(){
     <Button disabled={busy||!!pendingPurchase} onClick={()=>void review(plan)}>Review plan</Button>
    </article>)}</div>{!plans.length&&<p>No packages are currently available. Contact Hash.</p>}
   </section>}
-  {preview&&<section role="dialog" aria-label="Invoice preview" className="space-y-2 rounded-lg border border-cyan-500 p-3">
+  {preview&&<section role="dialog" aria-label="Invoice preview" className="space-y-2 rounded-lg border border-blue-500 p-3">
    <h2 className="!text-lg font-semibold">Invoice preview — unpaid</h2><p>{preview.terms.package_name} · {preview.terms.pc_limit} PCs / kiosks</p>
    <p>{preview.description}</p><p>{date(preview.period_start)} – {date(preview.period_end)}</p><p className="text-2xl font-semibold">Total payable {money(preview.amount_paise)}</p>
    <p className="text-sm">{preview.tax_note} Preview valid for 15 minutes.</p>

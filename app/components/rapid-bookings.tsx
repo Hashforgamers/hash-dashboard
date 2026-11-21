@@ -346,7 +346,7 @@ function RapidBookings() {
   });
 
   const getStatusColor = (status: SystemStatus) => {
-    return status === "available" ? "text-[#098637]" : "text-red-500";
+    return status === "available" ? "text-emerald-500" : "text-red-500";
   };
 
   const inputVariants = {
@@ -477,13 +477,13 @@ function RapidBookings() {
             {/* Search and Filter Toggle */}
             <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
               <div className="relative w-full md:w-96">
-                <Search data-search-icon="" aria-hidden="true" className="absolute left-3 top-3 h-4 w-4 text-gray-500" />
+                <Search data-search-icon="" aria-hidden="true" className="absolute left-3 top-3 h-4 w-4 text-zinc-500" />
                 <Input data-search-input=""
                   type="text"
                   placeholder="Search systems..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 w-full border-gray-200 focus:border-[#098637] focus:ring-[#098637]"
+                  className="pl-10 w-full border-zinc-200 focus:border-emerald-500 focus:ring-emerald-500"
                 />
               </div>
               <div className="flex items-center gap-2">
@@ -502,8 +502,8 @@ function RapidBookings() {
                   variant="outline"
                   className={`flex items-center gap-2 transition-all duration-300 ${
                     filterOpen
-                      ? "bg-[#098637] text-white hover:bg-[#076d2a]"
-                      : "hover:border-[#098637] hover:text-[#098637]"
+                      ? "bg-emerald-500 text-white hover:bg-emerald-700"
+                      : "hover:border-emerald-500 hover:text-emerald-500"
                   }`}
                 >
                   <Filter className="w-4 h-4" />
@@ -512,7 +512,7 @@ function RapidBookings() {
                     <motion.span
                       initial={{ scale: 0 }}
                       animate={{ scale: 1 }}
-                      className="ml-1 px-2 py-0.5 text-xs rounded-full bg-[#098637] text-white"
+                      className="ml-1 px-2 py-0.5 text-xs rounded-full bg-emerald-500 text-white"
                     >
                       {activeFilters}
                     </motion.span>
@@ -539,7 +539,7 @@ function RapidBookings() {
                   <div className="pt-4 border-t">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                       <div className="space-y-2">
-                        <Label className="text-sm font-medium text-gray-700">
+                        <Label className="text-sm font-medium text-zinc-700">
                           System Type
                         </Label>
                         <Select
@@ -548,7 +548,7 @@ function RapidBookings() {
                             setFilters({ ...filters, type: value })
                           }
                         >
-                          <SelectTrigger className="w-full border-gray-200 focus:border-[#098637] focus:ring-[#098637]">
+                          <SelectTrigger className="w-full border-zinc-200 focus:border-emerald-500 focus:ring-emerald-500">
                             <SelectValue placeholder="All Systems" />
                           </SelectTrigger>
                           <SelectContent>
@@ -562,7 +562,7 @@ function RapidBookings() {
                       </div>
 
                       <div className="space-y-2">
-                        <Label className="text-sm font-medium text-gray-700">
+                        <Label className="text-sm font-medium text-zinc-700">
                           Status
                         </Label>
                         <Select
@@ -574,14 +574,14 @@ function RapidBookings() {
                             })
                           }
                         >
-                          <SelectTrigger className="w-full border-gray-200 focus:border-[#098637] focus:ring-[#098637]">
+                          <SelectTrigger className="w-full border-zinc-200 focus:border-emerald-500 focus:ring-emerald-500">
                             <SelectValue placeholder="All Status" />
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="all">All Status</SelectItem>
                             <SelectItem value="available">
                               <div className="flex items-center gap-2">
-                                <span className="w-2 h-2 rounded-full bg-[#098637]" />
+                                <span className="w-2 h-2 rounded-full bg-emerald-500" />
                                 Available
                               </div>
                             </SelectItem>
@@ -596,7 +596,7 @@ function RapidBookings() {
                       </div>
 
                       <div className="space-y-2">
-                        <Label className="text-sm font-medium text-gray-700">
+                        <Label className="text-sm font-medium text-zinc-700">
                           Price Range
                         </Label>
                         <Select
@@ -605,7 +605,7 @@ function RapidBookings() {
                             setFilters({ ...filters, price: value })
                           }
                         >
-                          <SelectTrigger className="w-full border-gray-200 focus:border-[#098637] focus:ring-[#098637]">
+                          <SelectTrigger className="w-full border-zinc-200 focus:border-emerald-500 focus:ring-emerald-500">
                             <SelectValue placeholder="All Prices" />
                           </SelectTrigger>
                           <SelectContent>
@@ -633,14 +633,14 @@ function RapidBookings() {
                               initial={{ scale: 0 }}
                               animate={{ scale: 1 }}
                               exit={{ scale: 0 }}
-                              className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-[#098637]/10 text-[#098637]"
+                              className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-emerald-500/10 text-emerald-500"
                             >
                               Type: {filters.type}
                               <button
                                 onClick={() =>
                                   setFilters({ ...filters, type: "all" })
                                 }
-                                className="ml-2 hover:text-[#076d2a]"
+                                className="ml-2 hover:text-emerald-700"
                               >
                                 <X className="w-3 h-3" />
                               </button>
@@ -651,14 +651,14 @@ function RapidBookings() {
                               initial={{ scale: 0 }}
                               animate={{ scale: 1 }}
                               exit={{ scale: 0 }}
-                              className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-[#098637]/10 text-[#098637]"
+                              className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-emerald-500/10 text-emerald-500"
                             >
                               Status: {filters.status}
                               <button
                                 onClick={() =>
                                   setFilters({ ...filters, status: "all" })
                                 }
-                                className="ml-2 hover:text-[#076d2a]"
+                                className="ml-2 hover:text-emerald-700"
                               >
                                 <X className="w-3 h-3" />
                               </button>
@@ -669,7 +669,7 @@ function RapidBookings() {
                               initial={{ scale: 0 }}
                               animate={{ scale: 1 }}
                               exit={{ scale: 0 }}
-                              className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-[#098637]/10 text-[#098637]"
+                              className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-emerald-500/10 text-emerald-500"
                             >
                               Price:{" "}
                               {filters.price === "low"
@@ -679,7 +679,7 @@ function RapidBookings() {
                                 onClick={() =>
                                   setFilters({ ...filters, price: "all" })
                                 }
-                                className="ml-2 hover:text-[#076d2a]"
+                                className="ml-2 hover:text-emerald-700"
                               >
                                 <X className="w-3 h-3" />
                               </button>
@@ -732,7 +732,7 @@ function RapidBookings() {
                   <span
                     className={`w-2 h-2 rounded-full ${
                       system.status === "available"
-                        ? "bg-green-600"
+                        ? "bg-emerald-600"
                         : "bg-red-500"
                     }`}
                   />
@@ -745,7 +745,7 @@ function RapidBookings() {
                   className={`w-full transition-all duration-300 ${
                     system.status === "available"
                       ? "bg-blue-600 hover:bg-blue-600 hover:scale-105"
-                      : "bg-gray-300 cursor-not-allowed"
+                      : "bg-zinc-300 cursor-not-allowed"
                   }`}
                 >
                   {system.status === "available" ? "Book Now" : "Unavailable"}
@@ -760,11 +760,11 @@ function RapidBookings() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
-              className="md:w-2/3 border rounded-2xl p-6 space-y-6 bg-white dark:bg-gray-900 shadow-xl"
+              className="md:w-2/3 border rounded-2xl p-6 space-y-6 bg-white dark:bg-zinc-900 shadow-xl"
             >
               {/* Header */}
               <div className="flex justify-between items-center border-b pb-4">
-                <h2 className="text-2xl font-semibold text-gray-800 dark:text-white">
+                <h2 className="text-2xl font-semibold text-zinc-800 dark:text-white">
                   Book {selectedSystem?.name} #{selectedSystem?.consoleModelNumber}
                 </h2>
                 <Button
@@ -788,7 +788,7 @@ function RapidBookings() {
                   <div className="space-y-1.5">
                     <Label className="text-sm font-medium">Phone Number</Label>
                     <div className="relative">
-                      <Phone className="absolute left-3 top-3 text-gray-400 w-4 h-4" />
+                      <Phone className="absolute left-3 top-3 text-zinc-400 w-4 h-4" />
                       <Input
                         className="pl-10"
                         placeholder="Enter phone number"
@@ -797,7 +797,7 @@ function RapidBookings() {
                         onBlur={() => setTimeout(() => setPhoneSuggestions([]), 150)}
                       />
                       {phoneSuggestions.length > 0 && (
-                        <ul className="absolute z-10 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg w-full mt-1 text-sm max-h-48 overflow-y-auto">
+                        <ul className="absolute z-10 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-md shadow-lg w-full mt-1 text-sm max-h-48 overflow-y-auto">
                           {phoneSuggestions.map((user, idx) => (
                             <li
                               key={idx}
@@ -828,7 +828,7 @@ function RapidBookings() {
                   <div className="space-y-1.5">
                     <Label className="text-sm font-medium">Name</Label>
                     <div className="relative">
-                      <User className="absolute left-3 top-3 text-gray-400 w-4 h-4" />
+                      <User className="absolute left-3 top-3 text-zinc-400 w-4 h-4" />
                       <Input
                         className="pl-10"
                         placeholder="Enter your name"
@@ -837,7 +837,7 @@ function RapidBookings() {
                         onBlur={() => setTimeout(() => setNameSuggestions([]), 150)}
                       />
                       {nameSuggestions.length > 0 && (
-                        <ul className="absolute z-10 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg w-full mt-1 text-sm max-h-48 overflow-y-auto">
+                        <ul className="absolute z-10 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-md shadow-lg w-full mt-1 text-sm max-h-48 overflow-y-auto">
                           {nameSuggestions.map((user, idx) => (
                             <li
                               key={idx}
@@ -882,7 +882,7 @@ function RapidBookings() {
                     <Label className="text-sm font-medium">Select Time Slots</Label>
                     <div className="grid grid-cols-3 gap-3">
                       {isLoadingSlots ? (
-                        <div className="col-span-3 text-center py-4 text-gray-500">Loading time slots...</div>
+                        <div className="col-span-3 text-center py-4 text-zinc-500">Loading time slots...</div>
                       ) : (
                         timeSlots.map((slot, index) => (
                           <motion.button
@@ -902,10 +902,10 @@ function RapidBookings() {
                             className={`p-2 rounded-lg text-sm font-medium transition-colors text-center
                               ${
                                 selectedSlots.includes(slot.time)
-                                  ? "bg-gray-400 text-white"
+                                  ? "bg-zinc-400 text-white"
                                   : slot.available
-                                  ? "bg-[#098637] text-white hover:bg-[#076d2a]"
-                                  : "bg-gray-200 text-gray-500 cursor-not-allowed"
+                                  ? "bg-emerald-500 text-white hover:bg-emerald-700"
+                                  : "bg-zinc-200 text-zinc-500 cursor-not-allowed"
                               }`}
                           >
                             {slot.time}
@@ -932,10 +932,10 @@ function RapidBookings() {
                           type="button"
                           onClick={() => setPaymentType(key)}
                           className={`flex flex-col items-center justify-center p-3 rounded-xl border transition-all w-full
-                            ${paymentType === key ? "border-[#098637] bg-[#e6f4ea]" : "border-gray-300 hover:border-[#098637]"}`}
+                            ${paymentType === key ? "border-emerald-500 bg-[#e6f4ea]" : "border-zinc-300 hover:border-emerald-500"}`}
                           aria-label={label}
                         >
-                          <span className="text-[#098637]">{icon}</span>
+                          <span className="text-emerald-500">{icon}</span>
                           <span className="text-xs mt-1">{label}</span>
                         </button>
                       ))}
@@ -953,12 +953,11 @@ function RapidBookings() {
                     >
                       Cancel
                     </Button>
-                    <Button
+                    <Button variant="success"
                       type="button"
                       onClick={handleBooking}
-                      className="w-1/2 bg-[#098637] hover:bg-[#076d2a]"
-                      disabled={loading}
-                    >
+                      
+                      disabled={loading} className="w-1/2">
                       {loading ? (
                         <span className="flex items-center gap-2 justify-center">
                           <Loader2 className="w-4 h-4 animate-spin" />
@@ -975,7 +974,7 @@ function RapidBookings() {
 
             {/* Booking Summary */}
             <div className="md:w-1/3 sticky top-24 space-y-4">
-              <div className="p-4 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm bg-white dark:bg-gray-900">
+              <div className="p-4 rounded-lg border border-zinc-200 dark:border-zinc-700 shadow-sm bg-white dark:bg-zinc-900">
                 <h3 className="text-base font-semibold mb-3 text-emerald-600">Booking Summary</h3>
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">

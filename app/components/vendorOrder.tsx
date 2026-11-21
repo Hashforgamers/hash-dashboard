@@ -1,4 +1,6 @@
 'use client';
+import { buttonVariants } from "@/components/ui/button";
+import { badgeVariants } from "@/components/ui/badge";
 
 import React, { useState, useEffect } from 'react';
 import {
@@ -155,9 +157,9 @@ const VendorOrderPage: React.FC = () => {
     })
     .filter(Boolean) as (Product & { qty: number })[];
   const primaryButtonClass =
-    "dashboard-btn-primary inline-flex items-center justify-center gap-2 px-3 py-2 text-xs sm:px-4 sm:text-sm";
+    buttonVariants();
   const secondaryButtonClass =
-    "dashboard-btn-secondary inline-flex items-center justify-center gap-2 px-3 py-2 text-xs sm:px-4 sm:text-sm";
+    buttonVariants({ variant: "outline" });
   const quantityInputClass =
     "dashboard-module-input mt-1 h-8 text-xs";
 
@@ -187,7 +189,7 @@ const VendorOrderPage: React.FC = () => {
               <ShoppingCart className="icon-md" />
               <span>Review order ({Object.keys(orderItems).length})</span>
             </button>
-            <div className="dashboard-badge sm:text-sm">
+            <div className={badgeVariants({ variant: "neutral" })}>
               ₹{totalAmount.toFixed(2)}
             </div>
           </div>
@@ -200,7 +202,7 @@ const VendorOrderPage: React.FC = () => {
           <div role="alert" className="mb-3 rounded-lg border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm text-destructive">{error}</div>
         )}
         {productError && !loading && (
-          <div role="alert" className="mb-3 flex flex-wrap items-center gap-3 rounded-lg border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-900">
+          <div role="alert" className="mb-3 flex flex-wrap items-center gap-3 rounded-lg border border-zinc-200 bg-white p-3 dark:border-zinc-800 dark:bg-zinc-900">
             <AlertCircle className="h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
             <p className="flex-1 text-sm text-foreground">{productError}</p>
             <button className={secondaryButtonClass} onClick={fetchProducts} disabled={fetchingProducts}>
@@ -213,7 +215,7 @@ const VendorOrderPage: React.FC = () => {
           <motion.div
             initial={{ opacity: 0, scale: 0.98 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="rounded-lg border border-green-500/20 bg-green-500/10 p-2 text-green-400 sm:p-3"
+            className="rounded-lg border border-emerald-500/20 bg-emerald-500/10 p-2 text-emerald-400 sm:p-3"
           >
             <div className="flex items-center gap-2">
               <CheckCircle className="icon-lg" />
@@ -224,12 +226,12 @@ const VendorOrderPage: React.FC = () => {
 
         {/* ---------- PRODUCT LIST (SHORT CARDS) ---------- */}
         {loading ? (
-          <div className="rounded-lg border border-slate-200 py-6 text-center dark:border-slate-800">
+          <div className="rounded-lg border border-zinc-200 py-6 text-center dark:border-zinc-800">
             <div className="inline-block animate-spin rounded-full h-6 w-6 sm:h-8 sm:w-8 border-b-2 border-primary"></div>
             <p className="body-text-muted mt-2">Loading products...</p>
           </div>
         ) : products.length === 0 && productError ? null : products.length === 0 ? (
-          <div className="rounded-lg border border-slate-200 py-6 text-center dark:border-slate-800">
+          <div className="rounded-lg border border-zinc-200 py-6 text-center dark:border-zinc-800">
             <Package className="mx-auto mb-2 h-5 w-5 text-muted-foreground" />
             <p className="text-sm text-muted-foreground">No products available</p>
             <button className={`${secondaryButtonClass} mt-3`} onClick={fetchProducts}>
@@ -256,7 +258,7 @@ const VendorOrderPage: React.FC = () => {
                         className="object-cover rounded-t-lg"
                       />
                       <div className="absolute top-1 right-1 sm:top-2 sm:right-2">
-                        <span className="dashboard-badge">
+                        <span className={badgeVariants({ variant: "neutral" })}>
                           {product.category}
                         </span>
                       </div>
@@ -265,7 +267,7 @@ const VendorOrderPage: React.FC = () => {
                       <h3 className="truncate text-sm font-semibold text-foreground">{product.name}</h3>
                       <div className="flex items-center justify-between pt-0.5">
                         <span className="text-xs font-semibold text-foreground">₹{product.price}</span>
-                        <span className="dashboard-badge" data-variant="success">
+                        <span className={badgeVariants({ variant: "success" })}>
                           Stock: {product.stock}
                         </span>
                       </div>
@@ -312,8 +314,8 @@ const VendorOrderPage: React.FC = () => {
               <div className="text-center body-text-muted my-8">No items selected.</div>
             ) : (
               orderProducts.map((prod) => (
-                <div key={prod.product_id} className="flex items-center gap-3 border-b border-cyan-500/10 pb-2 last:border-b-0">
-                  <div className="relative h-10 w-10 flex-shrink-0 overflow-hidden rounded bg-slate-900/50">
+                <div key={prod.product_id} className="flex items-center gap-3 border-b border-blue-500/10 pb-2 last:border-b-0">
+                  <div className="relative h-10 w-10 flex-shrink-0 overflow-hidden rounded bg-zinc-900/50">
                     <Image src={prod.image_url || "/placeholder.svg?height=40&width=40&query=prod"} alt={prod.name} fill className="object-cover" />
                   </div>
                   <div className="flex-1 min-w-0">

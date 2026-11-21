@@ -14,8 +14,13 @@ const badgeVariants = cva(
         destructive:
           "border-transparent bg-destructive text-destructive-foreground hover:bg-destructive/80",
         outline: "text-foreground",
-        success: "border-transparent bg-green-500 text-white hover:bg-green-600",
-        warning: "border-transparent bg-yellow-500 text-white hover:bg-yellow-600",
+        // soft status pills: the one look for statuses across the dashboard
+        success: "border-emerald-400/40 bg-emerald-500/10 text-emerald-200",
+        warning: "border-amber-400/40 bg-amber-500/10 text-amber-200",
+        danger: "border-red-400/40 bg-red-500/10 text-red-200",
+        info: "border-blue-400/40 bg-blue-500/10 text-blue-200",
+        premium: "border-purple-400/40 bg-purple-500/10 text-purple-200",
+        neutral: "border-border bg-muted text-muted-foreground",
       },
     },
     defaultVariants: {

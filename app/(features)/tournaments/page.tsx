@@ -1,4 +1,5 @@
 'use client';
+import { buttonVariants } from "@/components/ui/button";
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -19,9 +20,9 @@ import { useDashboardData } from '@/app/context/DashboardDataContext';
 const PER_PAGE  = 5;
 
 const STATUS_BADGE: Record<EventStatus, string> = {
-  draft:     'bg-gray-500/20 text-gray-400',
+  draft:     'bg-zinc-500/20 text-zinc-400',
   published: 'bg-blue-500/20 text-blue-400',
-  ongoing:   'bg-green-500/20 text-green-400',
+  ongoing:   'bg-emerald-500/20 text-emerald-400',
   completed: 'bg-purple-500/20 text-purple-400',
   canceled:  'bg-red-500/20 text-red-400',
 };
@@ -157,7 +158,7 @@ export default function TournamentsPage() {
             ))}
           </select>
           <button
-            className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-cyan-300/25 bg-slate-900/70 px-3 text-xs font-semibold text-slate-200 transition-all hover:border-cyan-300/45 hover:bg-slate-800/80 hover:text-cyan-100 disabled:opacity-50"
+            className={buttonVariants({ variant: "outline", size: "lg" })}
             onClick={handleRefreshEvents}
             disabled={loadingData}
           >
@@ -167,7 +168,7 @@ export default function TournamentsPage() {
         </div>
 
         {dataError && (
-          <div className="rounded-lg border border-rose-400/30 bg-rose-500/10 px-3 py-2 text-sm text-rose-200">
+          <div className="rounded-lg border border-red-400/30 bg-red-500/10 px-3 py-2 text-sm text-red-200">
             {dataError}
           </div>
         )}
@@ -176,13 +177,13 @@ export default function TournamentsPage() {
         <div className="dashboard-table-shell">
           <div className="dashboard-table-wrap">
             <table className="dashboard-table">
-            <thead className="bg-slate-900/70">
+            <thead className="bg-zinc-900/70">
               <tr>
-                <th className="table-cell text-left text-[11px] font-bold uppercase tracking-wider text-cyan-100/80 sm:text-xs">Tournament</th>
-                <th className="table-cell text-left text-[11px] font-bold uppercase tracking-wider text-cyan-100/80 sm:text-xs">Start Date</th>
-                <th className="table-cell text-left text-[11px] font-bold uppercase tracking-wider text-cyan-100/80 sm:text-xs">End Date</th>
-                <th className="table-cell text-left text-[11px] font-bold uppercase tracking-wider text-cyan-100/80 sm:text-xs">Status</th>
-                <th className="table-cell text-right text-[11px] font-bold uppercase tracking-wider text-cyan-100/80 sm:text-xs">Actions</th>
+                <th className="table-cell text-left text-[11px] font-bold uppercase tracking-wider text-blue-100/80 sm:text-xs">Tournament</th>
+                <th className="table-cell text-left text-[11px] font-bold uppercase tracking-wider text-blue-100/80 sm:text-xs">Start Date</th>
+                <th className="table-cell text-left text-[11px] font-bold uppercase tracking-wider text-blue-100/80 sm:text-xs">End Date</th>
+                <th className="table-cell text-left text-[11px] font-bold uppercase tracking-wider text-blue-100/80 sm:text-xs">Status</th>
+                <th className="table-cell text-right text-[11px] font-bold uppercase tracking-wider text-blue-100/80 sm:text-xs">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -191,7 +192,7 @@ export default function TournamentsPage() {
                   <tr key={i} className="table-row animate-pulse">
                     {[...Array(5)].map((_, j) => (
                       <td key={j} className="table-cell">
-                        <div className="h-4 w-full max-w-[180px] rounded bg-slate-800/80" />
+                        <div className="h-4 w-full max-w-[180px] rounded bg-zinc-800/80" />
                       </td>
                     ))}
                   </tr>
@@ -209,7 +210,7 @@ export default function TournamentsPage() {
                             : 'No tournaments returned for this cafe.'}
                       </p>
                       {!search && !statusFilter && !loadingData && (
-                        <p className="max-w-md text-xs text-slate-400">
+                        <p className="max-w-md text-xs text-zinc-400">
                           If you just created one, use Refresh. If it still does not appear, the tournament may belong to another selected cafe/vendor.
                         </p>
                       )}
@@ -238,7 +239,7 @@ export default function TournamentsPage() {
                           <img
                             src={ev.banner_image_url}
                             alt={ev.title}
-                            className="h-10 w-10 flex-shrink-0 rounded-lg border border-cyan-400/20 object-cover"
+                            className="h-10 w-10 flex-shrink-0 rounded-lg border border-blue-400/20 object-cover"
                           />
                         ) : (
                           <div className="icon-blue flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg">
@@ -279,17 +280,17 @@ export default function TournamentsPage() {
                       </button>
                       {openMenuId === ev.id && (
                         <div
-                          className="absolute right-4 top-10 z-20 w-44 rounded-lg border border-cyan-400/20 bg-slate-900/95 py-1 shadow-xl"
+                          className="absolute right-4 top-10 z-20 w-44 rounded-lg border border-blue-400/20 bg-zinc-900/95 py-1 shadow-xl"
                           onClick={(e) => e.stopPropagation()}
                         >
                           <button
-                            className="w-full px-4 py-2 text-left text-sm text-slate-100 transition-colors hover:bg-slate-800"
+                            className="w-full px-4 py-2 text-left text-sm text-zinc-100 transition-colors hover:bg-zinc-800"
                             onClick={() => router.push(`/tournaments/${ev.id}`)}
                           >
                             View Details
                           </button>
                           <button
-                            className="w-full px-4 py-2 text-left text-sm text-slate-100 transition-colors hover:bg-slate-800"
+                            className="w-full px-4 py-2 text-left text-sm text-zinc-100 transition-colors hover:bg-zinc-800"
                             onClick={() => router.push(`/tournaments/${ev.id}?tab=registrations`)}
                           >
                             View Registrations
@@ -326,8 +327,8 @@ export default function TournamentsPage() {
                   onClick={() => setPage(n)}
                   className={`w-8 h-8 rounded-lg text-sm font-medium transition-colors ${
                     page === n
-                      ? 'bg-cyan-500 text-white'
-                      : 'border border-cyan-400/20 bg-slate-900/70 text-slate-200 hover:border-cyan-300/45 hover:bg-slate-800/80'
+                      ? 'bg-blue-500 text-white'
+                      : 'border border-blue-400/20 bg-zinc-900/70 text-zinc-200 hover:border-blue-300/45 hover:bg-zinc-800/80'
                   }`}
                 >
                   {n}

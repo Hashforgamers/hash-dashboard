@@ -1,12 +1,16 @@
+import { checkoutButtonClass, releaseButtonClass, retryButtonClass } from "./live-session-actions";
+import { buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+import { badgeVariants } from "@/components/ui/badge";
 import { LiveSessionTiming } from "./live-session-timing";
+import { httpJson } from "@/lib/http-client";
 import { creditAuthHeaders } from "@/lib/credit-auth";
 import { useState, useEffect, useMemo, useRef } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { LiveSessionDue } from "./live-session-due";
-import { Search, Gamepad2, Monitor, Headset, Loader2, RefreshCw, UtensilsCrossed, Plus, ChevronDown, ChevronUp, Phone, Mail } from "lucide-react";
+import { Search, Gamepad2, Monitor, Headset, Loader2, RefreshCw, UtensilsCrossed, Plus, ChevronDown, ChevronUp, Phone, Mail, ReceiptText, Power } from "lucide-react";
 import { jwtDecode } from "jwt-decode";
-import { FaCheck, FaPowerOff } from 'react-icons/fa';
 import { BOOKING_URL, DASHBOARD_URL } from "@/src/config/env";
 import { mergeConsecutiveBookings } from "@/app/utils/slot-utils";
 import QrLiveSessions from "./qr-live-sessions";
@@ -202,7 +206,7 @@ const historyStatusChipClass = (status: string) => {
   const outcome = getHistoryOutcome(status);
   if (outcome === "not_played") return "border-red-400/40 bg-red-500/15 text-red-200";
   if (outcome === "no_show") {
-    return "border-orange-400/40 bg-orange-500/15 text-orange-200";
+    return "border-amber-400/40 bg-amber-500/15 text-amber-200";
   }
   return "border-emerald-400/40 bg-emerald-500/15 text-emerald-200";
 };
@@ -234,15 +238,15 @@ const getConsoleVisual = (consoleType: string) => {
     return { icon: Gamepad2, className: "text-blue-500" };
   }
   if (value.includes("xbox") || value.includes("microsoft")) {
-    return { icon: Gamepad2, className: "text-green-500" };
+    return { icon: Gamepad2, className: "text-emerald-500" };
   }
   if (value.includes("vr") || value.includes("virtual")) {
-    return { icon: Headset, className: "text-fuchsia-400" };
+    return { icon: Headset, className: "text-purple-400" };
   }
   if (value.includes("pc") || value.includes("computer") || value.includes("desktop")) {
-    return { icon: Monitor, className: "text-cyan-400" };
+    return { icon: Monitor, className: "text-blue-400" };
   }
-  return { icon: Monitor, className: "text-slate-300" };
+  return { icon: Monitor, className: "text-zinc-300" };
 };
 
 const getBookingPhone = (booking: any): string => {
@@ -482,6 +486,19 @@ const releaseSlot = async (consoleType: string, gameId: string, consoleId: strin
   }
 };
 
+function PaymentCheckAction({ failed, onRetry }: { failed: boolean; onRetry: () => void }) {
+  return failed ? (
+    <button type="button" className={retryButtonClass}
+      aria-label="Retry payment check" onClick={onRetry}>
+      <RefreshCw aria-hidden="true" /> Retry check
+    </button>
+  ) : (
+    <span role="status" className="live-session-action inline-flex h-9 w-28 items-center justify-center gap-2 text-xs text-muted-foreground">
+      <Loader2 aria-hidden="true" className="h-4 w-4 animate-spin" /> Checking…
+    </span>
+  );
+}
+
 interface CurrentSlotsProps {
   currentSlots: any[];
   historyBookings?: any[];
@@ -535,7 +552,9 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
 
   // ✅ NEW: Track which bookings have meals locally for instant UI updates
   const [bookingMealStatus, setBookingMealStatus] = useState<Record<string, boolean>>({});
-  const [bookingOutstandingDue, setBookingOutstandingDue] = useState<Record<string, number>>({});
+  const [bookingOutstandingDue, setBookingOutstandingDue] = useState<Partial<Record<string, number | null>>>({});
+  const [paymentCheckRetry, setPaymentCheckRetry] = useState(0);
+  const retryPaymentCheck = () => setPaymentCheckRetry(value => value + 1);
   const [expandedLiveRows, setExpandedLiveRows] = useState<Record<string, boolean>>({});
   const [mealPickerBookingId, setMealPickerBookingId] = useState<string | null>(null);
   const [mealPickerMemberPosByBooking, setMealPickerMemberPosByBooking] = useState<Record<string, number>>({});
@@ -786,71 +805,39 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
     });
   }, [historyRows, searchQuery]);
 
-  // Track outstanding dues per booking so under-time sessions with meal dues still require settlement.
+  const paymentBookingIds = [...new Set(currentSlots.map(getBookingIdString)
+    .filter(id => /^\d+$/.test(id) && Number(id) > 0))].sort().join(",");
+
   useEffect(() => {
-    if (!Array.isArray(filteredSlots) || filteredSlots.length === 0) {
-      setBookingOutstandingDue({});
-      return;
-    }
-
-    const bookingIds = Array.from(
-      new Set(
-        filteredSlots
-          .map((slot) => Number(getBookingIdString(slot)))
-          .filter((id) => Number.isFinite(id) && id > 0)
-      )
-    );
-
-    if (bookingIds.length === 0) {
-      setBookingOutstandingDue({});
-      return;
-    }
-
-    let isMounted = true;
     const controller = new AbortController();
-    const token = localStorage.getItem("jwtToken");
-
-    const fetchOutstanding = async () => {
-      setBookingOutstandingDue({});
-      try {
-        const results = await Promise.all(
-          bookingIds.map(async (bookingId) => {
-            try {
-              const response = await fetch(`${BOOKING_URL}/api/booking/${bookingId}/payment-summary`, {
-                method: "GET",
-                cache: "no-store",
-                headers: {
-                  "Content-Type": "application/json",
-                  ...creditAuthHeaders(),
-                },
-                signal: controller.signal,
-              });
-              if (!response.ok) return [String(bookingId), 0] as const;
-              const data = await response.json();
-              const due = Number(data?.payment_status?.amount_due ?? data?.financial_summary?.amount_due ?? 0);
-              return [String(bookingId), Number.isFinite(due) ? due : 0] as const;
-            } catch {
-              return [String(bookingId), 0] as const;
-            }
-          })
-        );
-
-        if (isMounted) {
-          setBookingOutstandingDue(Object.fromEntries(results));
-        }
-      } catch {
-        if (isMounted) {
-          setBookingOutstandingDue({});
-        }
+    setBookingOutstandingDue({});
+    if (paymentBookingIds) {
+      for (const bookingId of paymentBookingIds.split(",")) {
+        void httpJson<{
+          payment_status?: { amount_due?: number };
+          financial_summary?: { amount_due?: number };
+        }>(`${BOOKING_URL}/api/booking/${bookingId}/payment-summary`, {
+          cache: "no-store",
+          headers: creditAuthHeaders(),
+          signal: controller.signal,
+          dedupe: false,
+        }).then(data => {
+          const due = data?.payment_status?.amount_due ?? data?.financial_summary?.amount_due;
+          if (typeof due !== "number" || !Number.isFinite(due) || due < 0) {
+            throw new Error("Invalid payment balance");
+          }
+          if (!controller.signal.aborted) {
+            setBookingOutstandingDue(previous => ({ ...previous, [bookingId]: due }));
+          }
+        }).catch(() => {
+          if (!controller.signal.aborted) {
+            setBookingOutstandingDue(previous => ({ ...previous, [bookingId]: null }));
+          }
+        });
       }
-    };
-
-    fetchOutstanding();
-    return () => {
-      isMounted = false;
-      controller.abort();
-    };
-  }, [filteredSlots, refreshSlots]);
+    }
+    return () => controller.abort();
+  }, [paymentBookingIds, refreshSlots, paymentCheckRetry]);
 
   // Debug logging (unchanged)
   useEffect(() => {
@@ -1027,7 +1014,7 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                 }`}
               />
               <div className="relative flex-1 sm:flex-none">
-                <Search data-search-icon="" aria-hidden="true" className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400 sm:h-4 sm:w-4" />
+                <Search data-search-icon="" aria-hidden="true" className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-zinc-400 sm:h-4 sm:w-4" />
                 <input data-search-input=""
                   type="text"
                   value={searchQuery}
@@ -1058,7 +1045,7 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
             className="dashboard-table-shell live-session-table-shell flex-1 min-h-0 backdrop-blur-sm"
           >
             <div className="lg:hidden h-full overflow-y-auto p-2">
-              {!qrTableLayout && <QrLiveSessions search={searchQuery} onCount={setQrSessionCount} onLoadState={setQrLoadState} />}
+              {!qrTableLayout && <QrLiveSessions search={searchQuery} showInitialLoading={filteredSlots.length === 0} onCount={setQrSessionCount} onLoadState={setQrLoadState} />}
               {Array.isArray(filteredSlots) && filteredSlots.length > 0 ? (
                 <div className="space-y-2">
                   {prioritizedSlots.map((booking) => {
@@ -1072,7 +1059,8 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                     const progress = Math.min(100, (timer.elapsedTime / timer.duration) * 100);
                     const hasExtraTime = timer.extraTime > 0;
                     const bookingIdToCheck = getBookingIdString(booking);
-                    const outstandingDue = Number(bookingOutstandingDue[bookingIdToCheck] || 0)+Number(booking.runtime?.billing?.amount_due_paise||0)/100;
+                    const checkedDue = bookingOutstandingDue[bookingIdToCheck];
+                    const outstandingDue = (checkedDue ?? 0)+Number(booking.runtime?.billing?.amount_due_paise||0)/100;
                     const hasOutstandingDue = outstandingDue > 0.01;
                     const needsSettlement = hasExtraTime || hasOutstandingDue;
                     const remainingTime = Math.max((timer.duration || 0) - (timer.elapsedTime || 0), 0);
@@ -1098,22 +1086,22 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                             <button
                               type="button"
                               onClick={() => setContactOverlay({ open: true, booking })}
-                              className="truncate text-sm font-semibold text-slate-100 underline decoration-dotted underline-offset-2 hover:text-cyan-200 transition-colors"
+                              className="truncate text-sm font-semibold text-zinc-100 underline decoration-dotted underline-offset-2 hover:text-blue-200 transition-colors"
                               title="View customer contact details"
                             >
                               {booking.username || "Guest"}
                             </button>
                             {bookingPhone && (
-                              <p className="truncate text-xs text-slate-400">{bookingPhone}</p>
+                              <p className="truncate text-xs text-zinc-400">{bookingPhone}</p>
                             )}
-                            <p className="truncate text-xs text-slate-400">
+                            <p className="truncate text-xs text-zinc-400">
                               {booking.consoleType || "Gaming Console"} · {booking.startTime || "N/A"} - {booking.endTime || "N/A"}
                             </p>
                             <PcConfirmation status={pcConfirmations.get(bookingIdToCheck)} />
                           </div>
                           <div className="flex max-w-[48%] flex-wrap items-center justify-end gap-1 sm:max-w-none">
                             {squadEnabled && (
-                              <span className="rounded-full border border-sky-400/40 bg-sky-500/15 px-2 py-0.5 text-[10px] font-semibold text-sky-200 sm:text-[11px]">
+                              <span className="rounded-full border border-blue-400/40 bg-blue-500/15 px-2 py-0.5 text-[10px] font-semibold text-blue-200 sm:text-[11px]">
                                 Squad x{squadPlayerCount}
                               </span>
                             )}
@@ -1127,7 +1115,7 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
 
                         <div className="mt-3 flex items-center justify-between gap-3">
                           <div><p className="mb-1 text-xs text-muted-foreground">Duration</p><LiveSessionTiming elapsed={timer.elapsedTime || 0} /></div>
-                          <LiveSessionDue overtime={timer.extraTime || 0} amountDue={hasOutstandingDue ? outstandingDue : 0} paymentStatus={booking.runtime?.billing?.payment_status} />
+                          <LiveSessionDue overtime={timer.extraTime || 0} />
                         </div>
 
                         <div className="mt-3 grid grid-cols-2 gap-1.5 sm:gap-2">
@@ -1141,7 +1129,7 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                                   name: captainMember?.name || captainMember?.name_snapshot || undefined,
                                 } : null)
                               }
-                              className="min-h-9 rounded-md border border-emerald-400/35 bg-emerald-500/10 px-2 py-2 text-[11px] font-semibold text-emerald-200 sm:px-2.5 sm:text-xs"
+                              className={buttonVariants({ variant: "soft-success", size: "sm" })}
                             >
                               Meals
                             </button>
@@ -1155,7 +1143,7 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                                   name: captainMember?.name || captainMember?.name_snapshot || undefined,
                                 } : null)
                               }
-                              className="min-h-9 rounded-md border border-cyan-400/50 bg-cyan-500/10 px-2 py-2 text-[11px] font-semibold text-cyan-200 sm:px-2.5 sm:text-xs"
+                              className={buttonVariants({ variant: "soft-info", size: "sm" })}
                             >
                               Add Meals
                             </button>
@@ -1168,14 +1156,13 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                                 setShowOverlay(true);
                                 setError("");
                               }}
-                              className={`min-h-9 rounded-md px-2 py-2 text-[11px] font-semibold text-white sm:px-2.5 sm:text-xs ${
-                                hasOutstandingDue && !hasExtraTime
-                                  ? "bg-orange-500 hover:bg-orange-600"
-                                  : "bg-yellow-500 hover:bg-yellow-600"
-                              }`}
+                              className={checkoutButtonClass}
                             >
-                              Settle
+                              <ReceiptText aria-hidden="true" />
+                              <span>Check out</span>
                             </button>
+                          ) : typeof checkedDue !== "number" ? (
+                            <PaymentCheckAction failed={checkedDue === null || !bookingIdToCheck} onRetry={retryPaymentCheck} />
                           ) : (
                             <button
                               onClick={() => handleRelease(
@@ -1188,9 +1175,10 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                                 uniqueKey
                               )}
                               disabled={isReleasing || !vendorId}
-                              className="min-h-9 rounded-md bg-emerald-500 px-2 py-2 text-[11px] font-semibold text-white hover:bg-emerald-400 disabled:opacity-50 sm:px-2.5 sm:text-xs"
+                              className={releaseButtonClass}
                             >
-                              {isReleasing ? "Releasing..." : "Release"}
+                              {isReleasing ? <Loader2 aria-hidden="true" className="animate-spin" /> : <Power aria-hidden="true" />}
+                              <span>{isReleasing ? "Releasing…" : "Release"}</span>
                             </button>
                           )}
                         </div>
@@ -1200,7 +1188,7 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                 </div>
               ) : qrSessionCount > 0 || qrLoadState!=='ready' ? null : (
                 <div className="dashboard-module-empty flex h-full flex-col items-center justify-center py-8">
-                  <Search className="h-8 w-8 text-slate-600" />
+                  <Search className="h-8 w-8 text-zinc-600" />
                   <p className="text-sm font-medium">No active sessions</p>
                   {!isConnected && <p className="text-xs">Check connection</p>}
                 </div>
@@ -1212,7 +1200,7 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
               <table ref={tableRef} className="dashboard-module-table live-session-data-table w-full divide-y">
                 <colgroup>
                   <col style={{width:"23%"}}/><col style={{width:"20%"}}/><col style={{width:"21%"}}/>
-                  <col style={{width:"12%"}}/><col style={{width:"13%"}}/><col style={{width:"11%"}}/>
+                  <col style={{width:"12%"}}/><col style={{width:116}}/><col style={{width:136}}/>
                 </colgroup>
                 <thead className="dashboard-module-table-head sticky top-0 z-10">
                   <tr>
@@ -1228,7 +1216,7 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                   </tr>
                 </thead>
                 <tbody className="dashboard-module-table-body divide-y">
-                  {qrTableLayout && <QrLiveSessions layout="rows" search={searchQuery} onCount={setQrSessionCount} onLoadState={setQrLoadState} />}
+                  {qrTableLayout && <QrLiveSessions layout="rows" search={searchQuery} showInitialLoading={filteredSlots.length === 0} onCount={setQrSessionCount} onLoadState={setQrLoadState} />}
                   {Array.isArray(filteredSlots) && filteredSlots.length > 0 ? (
                     <AnimatePresence mode="popLayout">
                       {prioritizedSlots.map((booking, index) => {
@@ -1243,7 +1231,8 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                         const progress = Math.min(100, (timer.elapsedTime / timer.duration) * 100);
                         const hasExtraTime = timer.extraTime > 0;
                         const bookingIdForDue = getBookingIdString(booking);
-                        const outstandingDue = Number(bookingOutstandingDue[bookingIdForDue] || 0)+Number(booking.runtime?.billing?.amount_due_paise||0)/100;
+                        const checkedDue = bookingOutstandingDue[bookingIdForDue];
+                        const outstandingDue = (checkedDue ?? 0)+Number(booking.runtime?.billing?.amount_due_paise||0)/100;
                         const hasOutstandingDue = outstandingDue > 0.01;
                         const needsSettlement = hasExtraTime || hasOutstandingDue;
                         const remainingTime = Math.max((timer.duration || 0) - (timer.elapsedTime || 0), 0);
@@ -1348,37 +1337,37 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                                       <button
                                         type="button"
                                         onClick={() => setContactOverlay({ open: true, booking })}
-                                        className="live-session-customer-name truncate text-left font-semibold text-cyan-300 hover:text-cyan-200 transition-colors"
+                                        className="live-session-customer-name truncate text-left font-semibold text-blue-300 hover:text-blue-200 transition-colors"
                                         title="View customer contact details"
                                       >
                                         {booking.username || 'Guest'}
                                       </button>
                                     </div>
                                     {squadEnabled && (
-                                      <span className="rounded-full border border-emerald-400/40 bg-emerald-500/10 px-2 py-0.5 text-xs font-semibold text-emerald-200">
+                                      <span className={badgeVariants({ variant: "success" })}>
                                         Captain
                                       </span>
                                     )}
                                     {squadEnabled && (
-                                      <span className="rounded-full border border-sky-400/40 bg-sky-500/15 px-2 py-0.5 text-xs font-semibold text-sky-200">
+                                      <span className={badgeVariants({ variant: "info" })}>
                                         Squad x{squadPlayerCount}
                                       </span>
                                     )}
                                     {hasMeals && (
-                                      <span className="rounded-full border border-emerald-400/40 bg-emerald-500/10 px-2 py-0.5 text-xs font-semibold text-emerald-200">
+                                      <span className={badgeVariants({ variant: "success" })}>
                                         Meals Added
                                       </span>
                                     )}
                                   </div>
                                   {squadEnabled && squadMemberNames.length > 0 && (
-                                    <div className="text-xs text-slate-400">
+                                    <div className="text-xs text-zinc-400">
                                       {squadMemberNames.join(", ")}
                                       {squadPlayerCount - squadMemberNames.length > 0
                                         ? ` +${squadPlayerCount - squadMemberNames.length}`
                                         : ""}
                                     </div>
                                   )}
-                                  <div className="live-session-customer-meta text-xs text-slate-400">Regular booking</div>
+                                  <div className="live-session-customer-meta text-xs text-zinc-400">Regular booking</div>
                                 </div>
                                 
                                 {/* ✅ ENHANCED: Conditional rendering of meal/add food buttons */}
@@ -1411,15 +1400,15 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                                       </span>
                                     </motion.button>
                                     {isPcSquad && sortedSquadMembers.length > 0 && mealPickerBookingId === bookingIdToCheck && (
-                                      <div className="absolute right-0 top-full z-20 mt-1 w-48 rounded-md border border-cyan-500/30 bg-slate-900/95 p-2 shadow-xl">
-                                        <div className="text-xs font-semibold uppercase tracking-wide text-cyan-300">Add/View Meal For</div>
+                                      <div className="absolute right-0 top-full z-20 mt-1 w-48 rounded-md border border-blue-500/30 bg-zinc-900/95 p-2 shadow-xl">
+                                        <div className="text-xs font-semibold uppercase tracking-wide text-blue-300">Add/View Meal For</div>
                                         <select
                                           value={String(selectedMealMemberPos || "")}
                                           onChange={(e) => {
                                             const value = Number(e.target.value || 0);
                                             setMealPickerMemberPosByBooking((prev) => ({ ...prev, [bookingIdToCheck]: value }));
                                           }}
-                                          className="mt-1 w-full rounded border border-slate-600 bg-slate-800 px-2 py-1 text-xs text-slate-100"
+                                          className="mt-1 w-full rounded border border-zinc-600 bg-zinc-800 px-2 py-1 text-xs text-zinc-100"
                                         >
                                           {sortedSquadMembers.map((member: any, idx: number) => {
                                             const name = String(member?.name || `Player ${member?.member_position || idx + 1}`);
@@ -1443,7 +1432,7 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                                               });
                                               setMealPickerBookingId(null);
                                             }}
-                                            className="flex-1 rounded border border-emerald-400/40 bg-emerald-500/15 px-2 py-1 text-xs text-emerald-200"
+                                            className={cn(buttonVariants({ variant: "soft-success", size: "sm" }), "flex-1")}
                                           >
                                             View
                                           </button>
@@ -1458,7 +1447,7 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                                               });
                                               setMealPickerBookingId(null);
                                             }}
-                                            className="flex-1 rounded border border-cyan-400/40 bg-cyan-500/15 px-2 py-1 text-xs text-cyan-200"
+                                            className={cn(buttonVariants({ variant: "soft-info", size: "sm" }), "flex-1")}
                                           >
                                             Add
                                           </button>
@@ -1486,25 +1475,25 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                                         }
                                         handleAddFoodClick(bookingIdToCheck, booking.username || 'Guest User');
                                       }}
-                                      className="group flex flex-shrink-0 items-center gap-1 rounded-full border border-dashed border-cyan-400/60 bg-cyan-500/10 p-1 transition-all duration-200 hover:bg-cyan-500/20 sm:p-1.5"
+                                      className="group flex flex-shrink-0 items-center gap-1 rounded-full border border-dashed border-blue-400/60 bg-blue-500/10 p-1 transition-all duration-200 hover:bg-blue-500/20 sm:p-1.5"
                                       title="Add meals to this booking"
                                     >
-                                      <Plus className="h-2.5 w-2.5 text-cyan-300 transition-colors group-hover:text-cyan-200 sm:h-3 sm:w-3" />
-                                      <UtensilsCrossed className="h-2.5 w-2.5 text-cyan-300 transition-colors group-hover:text-cyan-200 sm:h-3 sm:w-3" />
-                                      <span className="hidden text-xs font-medium text-cyan-200 sm:inline">
+                                      <Plus className="h-2.5 w-2.5 text-blue-300 transition-colors group-hover:text-blue-200 sm:h-3 sm:w-3" />
+                                      <UtensilsCrossed className="h-2.5 w-2.5 text-blue-300 transition-colors group-hover:text-blue-200 sm:h-3 sm:w-3" />
+                                      <span className="hidden text-xs font-medium text-blue-200 sm:inline">
                                         Add
                                       </span>
                                     </motion.button>
                                     {isPcSquad && sortedSquadMembers.length > 0 && mealPickerBookingId === bookingIdToCheck && (
-                                      <div className="absolute right-0 top-full z-20 mt-1 w-48 rounded-md border border-cyan-500/30 bg-slate-900/95 p-2 shadow-xl">
-                                        <div className="text-xs font-semibold uppercase tracking-wide text-cyan-300">Add Meal For</div>
+                                      <div className="absolute right-0 top-full z-20 mt-1 w-48 rounded-md border border-blue-500/30 bg-zinc-900/95 p-2 shadow-xl">
+                                        <div className="text-xs font-semibold uppercase tracking-wide text-blue-300">Add Meal For</div>
                                         <select
                                           value={String(selectedMealMemberPos || "")}
                                           onChange={(e) => {
                                             const value = Number(e.target.value || 0);
                                             setMealPickerMemberPosByBooking((prev) => ({ ...prev, [bookingIdToCheck]: value }));
                                           }}
-                                          className="mt-1 w-full rounded border border-slate-600 bg-slate-800 px-2 py-1 text-xs text-slate-100"
+                                          className="mt-1 w-full rounded border border-zinc-600 bg-zinc-800 px-2 py-1 text-xs text-zinc-100"
                                         >
                                           {sortedSquadMembers.map((member: any, idx: number) => {
                                             const name = String(member?.name || `Player ${member?.member_position || idx + 1}`);
@@ -1527,7 +1516,7 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                                             });
                                             setMealPickerBookingId(null);
                                           }}
-                                          className="mt-2 w-full rounded border border-cyan-400/40 bg-cyan-500/15 px-2 py-1 text-xs text-cyan-200"
+                                          className={cn(buttonVariants({ variant: "soft-info", size: "sm" }), "mt-2 w-full")}
                                         >
                                           Continue
                                         </button>
@@ -1548,7 +1537,7 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                                           key={`${bookingIdToCheck}-sys-member-${entry.idx}`}
                                           className="flex items-center justify-between gap-2 text-xs sm:text-sm"
                                         >
-                                          <div className={`truncate inline-flex items-center ${idx === 0 ? "text-slate-100" : "text-slate-300"}`}>
+                                          <div className={`truncate inline-flex items-center ${idx === 0 ? "text-zinc-100" : "text-zinc-300"}`}>
                                             {idx === 0 && (() => {
                                               const visual = getConsoleVisual(booking.consoleType || "");
                                               const Icon = visual.icon;
@@ -1570,7 +1559,7 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                                                   [bookingIdToCheck]: !rowExpanded,
                                                 }));
                                               }}
-                                              className="px-1 py-0.5 text-cyan-200 hover:text-cyan-100"
+                                              className="px-1 py-0.5 text-blue-200 hover:text-blue-100"
                                               title={rowExpanded ? "Show less" : "Show all"}
                                             >
                                               {rowExpanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
@@ -1580,7 +1569,7 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                                       ))}
                                   </div>
                                 ) : squadEnabled ? (
-                                  <div className="text-xs text-sky-200">Extra Controllers: {appliedControllerQty}</div>
+                                  <div className="text-xs text-blue-200">Extra Controllers: {appliedControllerQty}</div>
                                 ) : (
                                   <div className="flex items-center space-x-1 sm:space-x-2">
                                     {(() => {
@@ -1590,7 +1579,7 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                                         <Icon className={`w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0 ${visual.className}`} />
                                       );
                                     })()}
-                                    <span className="truncate text-xs text-slate-100 sm:text-sm">
+                                    <span className="truncate text-xs text-zinc-100 sm:text-sm">
                                       {booking.consoleType || 'Gaming Console'}
                                     </span>
                                   </div>
@@ -1611,12 +1600,14 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
 
                             {/* Extra Time cell - unchanged */}
                             <td className="px-3 py-3 md:px-4">
-                              <LiveSessionDue overtime={timer.extraTime || 0} amountDue={hasOutstandingDue ? outstandingDue : 0} paymentStatus={booking.runtime?.billing?.payment_status} />
+                              <LiveSessionDue overtime={timer.extraTime || 0} />
                             </td>
 
                             {/* Action cell - unchanged */}
                             <td className="px-3 py-3 md:px-4">
-                              {isPcSquad ? (
+                              {!needsSettlement && typeof checkedDue !== "number" ? (
+                                <PaymentCheckAction failed={checkedDue === null || !bookingIdForDue} onRetry={retryPaymentCheck} />
+                              ) : isPcSquad ? (
                                 <div className="flex flex-col gap-1">
                                   {needsSettlement && (
                                     <button
@@ -1625,17 +1616,10 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                                         setShowOverlay(true);
                                         setError("");
                                       }}
-                                      className={`w-20 rounded-md px-2 py-1 text-xs text-white transition-colors sm:w-24 ${
-                                        hasOutstandingDue && !hasExtraTime
-                                          ? "bg-orange-500 hover:bg-orange-600"
-                                          : "bg-yellow-500 hover:bg-yellow-600"
-                                      }`}
+                                      className={checkoutButtonClass}
                                     >
-                                      <div className="flex items-center justify-center gap-1">
-                                        <FaCheck className="w-2 h-2 sm:w-3 sm:h-3" />
-                                        <span className="hidden sm:inline">Settle All</span>
-                                        <span className="sm:hidden">Settle</span>
-                                      </div>
+                                      <ReceiptText aria-hidden="true" />
+                                      <span>Check out</span>
                                     </button>
                                   )}
                                 </div>
@@ -1646,17 +1630,10 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                                     setShowOverlay(true);
                                     setError("");
                                   }}
-                                  className={`w-20 rounded-md px-2 py-1 text-xs text-white transition-colors sm:w-24 ${
-                                    hasOutstandingDue && !hasExtraTime
-                                      ? "bg-orange-500 hover:bg-orange-600"
-                                      : "bg-yellow-500 hover:bg-yellow-600"
-                                  }`}
+                                  className={checkoutButtonClass}
                                 >
-                                  <div className="flex items-center justify-center gap-1">
-                                    <FaCheck className="w-2 h-2 sm:w-3 sm:h-3" />
-                                    <span className="hidden sm:inline">Settle</span>
-                                    <span className="sm:hidden">Set</span>
-                                  </div>
+                                  <ReceiptText aria-hidden="true" />
+                                      <span>Check out</span>
                                 </button>
                               ) : (
                                 <button
@@ -1670,17 +1647,10 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                                     uniqueKey
                                   )}
                                   disabled={isReleasing || !vendorId}
-                                  className="w-20 rounded-md bg-emerald-500 px-2 py-1 text-xs text-white transition-colors hover:bg-emerald-400 disabled:opacity-50 sm:w-24"
+                                  className={releaseButtonClass}
                                 >
-                                  <div className="flex items-center justify-center gap-1">
-                                    {isReleasing ? (
-                                      <Loader2 className="animate-spin w-2 h-2 sm:w-3 sm:h-3" />
-                                    ) : (
-                                      <FaPowerOff className="w-2 h-2 sm:w-3 sm:h-3" />
-                                    )}
-                                    <span className="hidden sm:inline">{isReleasing ? "..." : "Release"}</span>
-                                    <span className="sm:hidden">{isReleasing ? "..." : "Rel"}</span>
-                                  </div>
+                                  {isReleasing ? <Loader2 aria-hidden="true" className="animate-spin" /> : <Power aria-hidden="true" />}
+                                  <span>{isReleasing ? "Releasing…" : "Release"}</span>
                                 </button>
                               )}
                             </td>
@@ -1690,13 +1660,13 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                     </AnimatePresence>
                   ) : qrSessionCount > 0 || qrLoadState!=='ready' ? null : (
                     <tr>
-                      <td colSpan={6} className="px-4 py-10 text-center text-slate-400">
+                      <td colSpan={6} className="px-4 py-10 text-center text-zinc-400">
                         <motion.div
                           initial={{ opacity: 0 }}
                           animate={{ opacity: 1 }}
                           className="flex flex-col items-center space-y-2"
                         >
-                          <Search className="h-7 w-7 text-slate-600 sm:h-8 sm:w-8" />
+                          <Search className="h-7 w-7 text-zinc-600 sm:h-8 sm:w-8" />
                           <p className="text-xs sm:text-sm font-medium">No active sessions</p>
                           {!isConnected && <p className="text-xs">Check connection</p>}
                         </motion.div>
@@ -1734,17 +1704,17 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                         >
                           <div className="flex items-center justify-between gap-2">
                             <div className="min-w-0">
-                              <p className="truncate text-sm font-semibold text-slate-100">{b.username || "Guest"}</p>
+                              <p className="truncate text-sm font-semibold text-zinc-100">{b.username || "Guest"}</p>
                               {bookingPhone && (
-                                <p className="truncate text-xs text-slate-400">{bookingPhone}</p>
+                                <p className="truncate text-xs text-zinc-400">{bookingPhone}</p>
                               )}
-                              <p className="truncate text-xs text-slate-300">{systemText}</p>
+                              <p className="truncate text-xs text-zinc-300">{systemText}</p>
                             </div>
                             <span className={`rounded-full border px-2 py-0.5 text-[11px] capitalize ${historyStatusChipClass(normalizedStatus)}`}>
                               {statusLabel}
                             </span>
                           </div>
-                          <div className="mt-2 space-y-1 text-xs text-slate-400">
+                          <div className="mt-2 space-y-1 text-xs text-zinc-400">
                             <p>Time: {b.time || "Time not available"}</p>
                             <p>Date: {formatHistoryDateLabel(b.date)}</p>
                             <p>Booking: {b.bookingId ? `#${b.bookingId}` : "-"}</p>
@@ -1780,19 +1750,19 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                         return (
                           <tr key={`${b.bookingId || i}-${b.date}`} className="dashboard-module-row transition-colors">
                             <td className="px-3 py-3 md:px-4">
-                              <div className="text-sm font-semibold text-slate-100">{b.username || "Guest"}</div>
+                              <div className="text-sm font-semibold text-zinc-100">{b.username || "Guest"}</div>
                               {bookingPhone && (
-                                <div className="text-xs text-slate-400 inline-flex items-center gap-1">
+                                <div className="text-xs text-zinc-400 inline-flex items-center gap-1">
                                   <Phone className="h-3 w-3" />
                                   <span>{bookingPhone}</span>
                                 </div>
                               )}
-                              <div className="text-xs text-slate-400">{b.bookingId ? `#${b.bookingId}` : "-"}</div>
+                              <div className="text-xs text-zinc-400">{b.bookingId ? `#${b.bookingId}` : "-"}</div>
                             </td>
-                            <td className="px-3 py-3 md:px-4 text-xs text-slate-100">{systemText}</td>
-                            <td className="px-3 py-3 md:px-4 text-xs text-slate-300">{b.time || "Time not available"}</td>
-                            <td className="px-3 py-3 md:px-4 text-xs text-slate-300">Ended</td>
-                            <td className="px-3 py-3 md:px-4 text-xs text-slate-300">{formatHistoryDateLabel(b.date)}</td>
+                            <td className="px-3 py-3 md:px-4 text-xs text-zinc-100">{systemText}</td>
+                            <td className="px-3 py-3 md:px-4 text-xs text-zinc-300">{b.time || "Time not available"}</td>
+                            <td className="px-3 py-3 md:px-4 text-xs text-zinc-300">Ended</td>
+                            <td className="px-3 py-3 md:px-4 text-xs text-zinc-300">{formatHistoryDateLabel(b.date)}</td>
                             <td className="px-3 py-3 md:px-4">
                               <span className={`rounded-full border px-2 py-0.5 text-xs capitalize ${historyStatusChipClass(normalizedStatus)}`}>
                                 {statusLabel}
@@ -1832,57 +1802,57 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
               onClick={() => setContactOverlay({ open: false, booking: null })}
             >
               <div
-                className="w-full max-w-md rounded-xl border border-cyan-500/30 bg-slate-950 shadow-2xl"
+                className="w-full max-w-md rounded-xl border border-blue-500/30 bg-zinc-950 shadow-2xl"
                 onClick={(e) => e.stopPropagation()}
               >
-                <div className="flex items-center justify-between border-b border-cyan-500/20 px-4 py-3">
-                  <h3 className="text-sm font-semibold uppercase tracking-[0.08em] text-cyan-200">Customer Contact</h3>
+                <div className="flex items-center justify-between border-b border-blue-500/20 px-4 py-3">
+                  <h3 className="text-sm font-semibold uppercase tracking-[0.08em] text-blue-200">Customer Contact</h3>
                   <button
                     type="button"
                     onClick={() => setContactOverlay({ open: false, booking: null })}
-                    className="rounded-md border border-slate-600 px-2 py-1 text-xs text-slate-300 hover:bg-slate-800"
+                    className="rounded-md border border-zinc-600 px-2 py-1 text-xs text-zinc-300 hover:bg-zinc-800"
                   >
                     Close
                   </button>
                 </div>
                 <div className="space-y-3 px-4 py-4 text-sm">
-                  <div className="rounded-lg border border-slate-700/80 bg-slate-900/70 p-3">
-                    <p className="text-xs uppercase tracking-wide text-slate-400">Name</p>
-                    <p className="mt-1 font-semibold text-slate-100">
+                  <div className="rounded-lg border border-zinc-700/80 bg-zinc-900/70 p-3">
+                    <p className="text-xs uppercase tracking-wide text-zinc-400">Name</p>
+                    <p className="mt-1 font-semibold text-zinc-100">
                       {contactOverlay.booking?.username || "Guest User"}
                     </p>
                   </div>
                   <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                    <div className="min-w-0 rounded-lg border border-slate-700/80 bg-slate-900/70 p-3">
-                      <p className="text-xs uppercase tracking-wide text-slate-400">Phone</p>
-                      <p className="mt-1 inline-flex items-center gap-1 text-slate-100">
+                    <div className="min-w-0 rounded-lg border border-zinc-700/80 bg-zinc-900/70 p-3">
+                      <p className="text-xs uppercase tracking-wide text-zinc-400">Phone</p>
+                      <p className="mt-1 inline-flex items-center gap-1 text-zinc-100">
                         <Phone className="h-3 w-3" />
                         <span>{getBookingPhone(contactOverlay.booking) || "-"}</span>
                       </p>
                     </div>
-                    <div className="min-w-0 rounded-lg border border-slate-700/80 bg-slate-900/70 p-3">
-                      <p className="text-xs uppercase tracking-wide text-slate-400">Email</p>
-                      <p className="mt-1 flex min-w-0 items-start gap-1 text-slate-100">
+                    <div className="min-w-0 rounded-lg border border-zinc-700/80 bg-zinc-900/70 p-3">
+                      <p className="text-xs uppercase tracking-wide text-zinc-400">Email</p>
+                      <p className="mt-1 flex min-w-0 items-start gap-1 text-zinc-100">
                         <Mail className="mt-0.5 h-3 w-3 shrink-0" />
                         <span className="break-all">{getBookingEmail(contactOverlay.booking) || "-"}</span>
                       </p>
                     </div>
-                    <div className="min-w-0 rounded-lg border border-slate-700/80 bg-slate-900/70 p-3">
-                      <p className="text-xs uppercase tracking-wide text-slate-400">User ID</p>
-                      <p className="mt-1 text-slate-100">
+                    <div className="min-w-0 rounded-lg border border-zinc-700/80 bg-zinc-900/70 p-3">
+                      <p className="text-xs uppercase tracking-wide text-zinc-400">User ID</p>
+                      <p className="mt-1 text-zinc-100">
                         {contactOverlay.booking?.userId || contactOverlay.booking?.user_id || "-"}
                       </p>
                     </div>
-                    <div className="min-w-0 rounded-lg border border-slate-700/80 bg-slate-900/70 p-3">
-                      <p className="text-xs uppercase tracking-wide text-slate-400">Booking ID</p>
-                      <p className="mt-1 text-slate-100">
+                    <div className="min-w-0 rounded-lg border border-zinc-700/80 bg-zinc-900/70 p-3">
+                      <p className="text-xs uppercase tracking-wide text-zinc-400">Booking ID</p>
+                      <p className="mt-1 text-zinc-100">
                         {contactOverlay.booking?.bookingId || contactOverlay.booking?.bookId || "-"}
                       </p>
                     </div>
                   </div>
-                  <div className="rounded-lg border border-slate-700/80 bg-slate-900/70 p-3">
-                    <p className="text-xs uppercase tracking-wide text-slate-400">Session</p>
-                    <p className="mt-1 text-slate-100">
+                  <div className="rounded-lg border border-zinc-700/80 bg-zinc-900/70 p-3">
+                    <p className="text-xs uppercase tracking-wide text-zinc-400">Session</p>
+                    <p className="mt-1 text-zinc-100">
                       {contactOverlay.booking?.consoleType || "Console"} • {contactOverlay.booking?.startTime || "N/A"} - {contactOverlay.booking?.endTime || "N/A"}
                     </p>
                   </div>

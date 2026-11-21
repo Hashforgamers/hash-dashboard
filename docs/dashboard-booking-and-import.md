@@ -44,7 +44,7 @@ Each sheet supports up to 10,000 rows and 150 columns in a workbook under 8 MB. 
 
 ## Release
 
-Apply hfg-booking/sql/20261103_desk_rates_and_history.sql followed by hfg-booking/sql/20261103_imported_transactions.sql to the booking database, deploy the booking and dashboard services, then deploy hash-dashboard with its updated dependencies. Configure cards per café before using them. Verify one dashboard booking against the app schedule and a connected test kiosk.
+For historical imports, apply `hfg-booking/sql/20261103_desk_rates_and_history.sql`, `hfg-booking/sql/20261103_imported_transactions.sql`, `hfg-booking/sql/20261113_imported_history_gamers.sql`, and `hfg-booking/sql/20261121_imported_history_reference_length.sql` to the booking database, in that order. The last migration widens `transactions.reference_id` to the 100 characters already allowed by the application model; import row keys contain a workbook fingerprint and row position and can exceed 50 characters. Deploy the booking service with these migrations applied, then deploy the dashboard. A failed batch is rolled back; retry the same unchanged workbook after deployment. For unrelated booking features, apply their migrations separately as listed below. Configure cards per café before using them. Verify one dashboard booking against the app schedule and a connected test kiosk.
 
 ### November 8 repair
 

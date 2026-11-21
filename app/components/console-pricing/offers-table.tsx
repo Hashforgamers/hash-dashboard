@@ -1,3 +1,5 @@
+import { buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import type { ComponentType } from "react";
 import { Calendar, Clock, Loader2, Pencil, Trash2 } from "lucide-react";
 import { PricingOffer } from "./types";
@@ -29,7 +31,7 @@ export function OffersTable({ offers, onEdit, onDelete, deletingOfferId, getCons
               const Icon = getConsoleIcon(offer.console_type);
               const isDeleting = deletingOfferId === offer.id;
               return (
-                <tr key={offer.id} className="table-row border-b border-cyan-500/10 last:border-0">
+                <tr key={offer.id} className="table-row border-b border-blue-500/10 last:border-0">
                   <td className="table-cell">
                     <p className="body-text font-semibold">{offer.offer_name}</p>
                     {offer.is_currently_active && (
@@ -47,7 +49,7 @@ export function OffersTable({ offers, onEdit, onDelete, deletingOfferId, getCons
                   </td>
                   <td className="table-cell">
                     <div className="flex items-center gap-2">
-                      <span className="stat-value text-sky-700 dark:text-blue-400">₹{offer.offered_price}</span>
+                      <span className="stat-value text-blue-700 dark:text-blue-400">₹{offer.offered_price}</span>
                       <span className="body-text-muted line-through">₹{offer.default_price}</span>
                       <span className="rounded bg-emerald-50 px-1.5 py-0.5 text-[10px] font-bold text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300">
                         {offer.discount_percentage}%
@@ -70,7 +72,7 @@ export function OffersTable({ offers, onEdit, onDelete, deletingOfferId, getCons
                     <div className="flex items-center gap-1">
                       <button
                         onClick={() => onEdit(offer)}
-                        className="inline-flex items-center justify-center rounded-lg border border-emerald-300/50 bg-emerald-50 p-2 text-emerald-700 transition-all duration-200 hover:bg-emerald-100 dark:border-emerald-400/30 dark:bg-emerald-500/10 dark:text-emerald-300 dark:hover:bg-emerald-500/20"
+                        className={buttonVariants({ variant: "soft-success", size: "icon-sm" })}
                         title="Edit"
                       >
                         <Pencil className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
@@ -78,7 +80,7 @@ export function OffersTable({ offers, onEdit, onDelete, deletingOfferId, getCons
                       <button
                         onClick={() => onDelete(offer.id)}
                         disabled={isDeleting}
-                        className="inline-flex items-center justify-center rounded-lg border border-rose-300/50 bg-rose-50 p-2 text-rose-600 transition-all duration-200 hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-rose-400/30 dark:bg-rose-500/10 dark:text-rose-300 dark:hover:bg-rose-500/20"
+                        className={cn(buttonVariants({ variant: "soft-danger", size: "icon-sm" }), "disabled:cursor-not-allowed")}
                         title="Delete"
                       >
                         {isDeleting ? (

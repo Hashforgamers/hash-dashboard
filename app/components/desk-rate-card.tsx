@@ -1,4 +1,5 @@
 "use client"
+import { buttonVariants } from "@/components/ui/button";
 import { useEffect, useState, type ReactNode } from "react"
 import { ConsoleLinks } from "./desk-console-mapping"
 import { BOOKING_URL } from "@/src/config/env"
@@ -47,14 +48,33 @@ export function deskSubtotal(card: DeskCard, minutes: number, players: number) {
   return Number.isSafeInteger(total) ? total / 100 : null
 }
 
-// Duration/player tiers are automatic; only genuinely ambiguous cards need a choice.
-export function resolveSessionRate(cards: DeskCard[], minutes: number, players: number, choice = "") {
-  const eligible = cards.filter(card => card.is_active !== false && !card.archived && card.pricing_mode !== "slot" && deskSubtotal(card, minutes, players) !== null)
-  const selected = eligible.find(card => card.profile === choice)
-  return { eligible, card: selected ?? (eligible.length === 1 ? eligible[0] : undefined) }
+export const gameRateKey = (value = "") => value.trim().toLowerCase().replace(/[^a-z0-9]+/g, "")
+
+export function resolveSessionRate(cards: DeskCard[], minutes: number, players: number, choice = "", selectedGame = "") {
+  const eligible: DeskCard[] = []
+  let defaultCard: DeskCard | undefined
+  let lowestSubtotal = Infinity
+
+  const active = cards.filter(card => card.is_active !== false && !card.archived && (card.pricing_mode !== "slot" || !!gameRateKey(card.definition.game_variant)))
+  const gameKey = gameRateKey(selectedGame)
+  const special = gameKey ? active.filter(card => gameRateKey(card.definition.game_variant) === gameKey) : []
+  // Scope before duration/player matching: never replace a missing premium rule with a cheaper standard rate.
+  const scoped = special.length ? special : active.filter(card => !gameRateKey(card.definition.game_variant))
+  for (const card of scoped) {
+    const subtotal = deskSubtotal(card, minutes, players)
+    if (subtotal === null) continue
+
+    eligible.push(card)
+    if (subtotal < lowestSubtotal) {
+      defaultCard = card
+      lowestSubtotal = subtotal
+    }
+  }
+
+  return { eligible, card: eligible.find(card => card.profile === choice) ?? defaultCard }
 }
 
-export default function DeskRateEditor({ vendor, games, baseRate }: { vendor: number | null; games: { id: number; game_name: string }[]; baseRate?: ReactNode }) {
+export default function DeskRateEditor({ vendor, games, baseRate, title }: { vendor: number | null; games: { id: number; game_name: string }[]; baseRate?: ReactNode; title?: string }) {
   const [revision, refresh] = useState(0)
   const { cards, error, loading } = useDeskCards(vendor, revision)
   const [game, setGame] = useState(String(games[0]?.id || ""))
@@ -67,10 +87,10 @@ export default function DeskRateEditor({ vendor, games, baseRate }: { vendor: nu
   const [previewMinutes, setPreviewMinutes] = useState(60)
   const [previewPlayers, setPreviewPlayers] = useState(1)
   const gameCards = cards.filter(card => card.game_id === Number(game))
-  const savedMode = gameCards[0]?.pricing_mode ?? (gameCards.some(card => card.is_active && !card.archived) ? "variants" : "slot")
+  const savedMode = gameCards[0]?.pricing_mode ?? (gameCards.some(card => card.is_active && !card.archived && !card.definition.game_variant) ? "variants" : "slot")
   const mode = modeDraft ?? savedMode
   const input = "h-9 w-full rounded-md border bg-background px-2 text-sm"
-  const button = "rounded-md border px-3 py-1.5 text-xs disabled:opacity-50"
+  const button = buttonVariants({ variant: "outline", size: "sm" })
   const busy = loading || saving || !!error
   const endpoint = `${BOOKING_URL}/api/vendor/${vendor}/desk-rates`
   async function write(url: string, method: string, body: unknown) {
@@ -101,7 +121,7 @@ export default function DeskRateEditor({ vendor, games, baseRate }: { vendor: nu
   const variants = [...new Set(gameCards.map(card => card.definition.game_variant).filter(Boolean))]
   const sizes = [...new Set(gameCards.map(card => card.definition.screen_size_inches).filter(Boolean))]
   return <section className="space-y-4 rounded-xl border bg-card p-4">
-    <div className="flex flex-wrap items-center justify-between gap-3"><h2 className="font-semibold">{games.find(item => String(item.id) === game)?.game_name || "Device pricing"}</h2><span className="text-xs text-muted-foreground">{error ? "Pricing unavailable" : loading ? "Loading…" : savedMode === "variants" ? "Custom dashboard rates" : "Slot pricing"}</span></div>
+    <div className="flex flex-wrap items-center justify-between gap-3"><h2 className="font-semibold">{title || games.find(item => String(item.id) === game)?.game_name || "Device pricing"}</h2><span className="text-xs text-muted-foreground">{error ? "Pricing unavailable" : loading ? "Loading…" : savedMode === "variants" ? "Custom dashboard rates" : "Slot pricing"}</span></div>
     {games.length > 1 && <label className="block text-sm">Device<select className={input} value={game} onChange={e => { setGame(e.target.value); setDraft(null); setEditing(null); setModeDraft(null) }}>{games.map(item => <option key={item.id} value={item.id}>{item.game_name}</option>)}</select></label>}
     <label className="block text-sm">Dashboard pricing<select aria-label="Dashboard pricing rule" disabled={busy} className={`${input} mt-1 max-w-sm`} value={mode} onChange={async e => {
       const next = e.target.value as "slot" | "variants"
@@ -114,9 +134,9 @@ export default function DeskRateEditor({ vendor, games, baseRate }: { vendor: nu
     {mode === "slot" && baseRate}
     <>
       {mode === "variants" && baseRate && <details className="rounded border p-3"><summary className="cursor-pointer text-xs">Customer app default slot rate</summary><div className="mt-3">{baseRate}</div></details>}
-      <div className="flex flex-wrap items-center justify-between gap-2"><span className="text-sm font-medium">Rate cards</span><div className="flex gap-2"><button className={button} disabled={busy} onClick={() => setShowArchived(!showArchived)}>{showArchived ? "Hide archived" : "Show archived"}</button><button className={button} disabled={busy || !game} onClick={() => { setEditing(null); setDraft(blankDefinition()); setStatus("") }}>+ New rate card</button></div></div>
+      <div className="flex flex-wrap items-center justify-between gap-2"><span className="text-sm font-medium">Rate cards · standard and game-specific</span><div className="flex gap-2"><button className={button} disabled={busy} onClick={() => setShowArchived(!showArchived)}>{showArchived ? "Hide archived" : "Show archived"}</button><button className={button} disabled={busy || !game} onClick={() => { setEditing(null); setDraft(blankDefinition()); setStatus("") }}>+ New rate card</button></div></div>
       <div className="space-y-2">{gameCards.filter(card => showArchived || !card.archived).map(card => <div key={card.profile} className="flex flex-wrap items-center justify-between gap-2 rounded-lg border p-3">
-        <div><p className="text-sm font-medium">{rateLabel(card)}</p><p className="text-xs text-muted-foreground">{card.definition.model_name} · {card.definition.rules.length} rules · {card.archived ? "Archived" : card.is_active ? "Enabled" : "Disabled"}</p></div>
+        <div><p className="text-sm font-medium">{rateLabel(card)}</p><p className="text-xs text-muted-foreground">{card.definition.game_variant ? `Only ${card.definition.game_variant}` : "Standard games"} · {card.definition.model_name} · {card.definition.rules.length} rules · {card.archived ? "Archived" : card.is_active ? "Enabled" : "Disabled"}</p></div>
         <div className="flex flex-wrap gap-2">{!card.archived && <><button className={button} disabled={busy} onClick={() => edit(card)}>Edit</button><button className={button} disabled={busy} onClick={() => edit(card, true)}>Duplicate</button><button className={button} disabled={busy} onClick={() => maintain(card, { is_active: !card.is_active })}>{card.is_active ? "Disable" : "Enable"}</button></>}
           <button className={button} disabled={busy} onClick={() => maintain(card, { archived: !card.archived })}>{card.archived ? "Restore" : "Archive"}</button></div>
       </div>)}{!gameCards.length && !draft && <p className="text-sm text-muted-foreground">Create a rate card to start custom pricing.</p>}</div>
@@ -125,7 +145,7 @@ export default function DeskRateEditor({ vendor, games, baseRate }: { vendor: nu
         try {
           const profile = editing?.profile || "custom_" + crypto.randomUUID().replaceAll("-", "")
           await write(endpoint, "PUT", { game_id: Number(game), profile, revision: editing?.revision, definition: draft })
-          setDraft(null); setEditing(null); setModeDraft(null); refresh(n => n + 1); setStatus(editing ? "Rate saved. Existing bookings keep their price." : "Rate created and enabled.")
+          setDraft(null); setEditing(null); setModeDraft(null); refresh(n => n + 1); setStatus(editing ? "Rate saved. Existing bookings keep their price." : draft.game_variant ? "Special game rate enabled. Standard pricing is unchanged." : "Rate created and enabled.")
         } catch (e) { setStatus(e instanceof Error ? e.message : "Could not save rate.") }
         finally { setSaving(false) }
       }}>
@@ -134,8 +154,9 @@ export default function DeskRateEditor({ vendor, games, baseRate }: { vendor: nu
           <label className="text-xs">Rate name<input required maxLength={120} className={input} value={draft.name} onChange={e => setDraft({ ...draft, name: e.target.value })} placeholder="Name shown when booking" /></label>
           <label className="text-xs">Pricing model name<input required maxLength={120} list={`models-${game}`} className={input} value={draft.model_name} onChange={e => setDraft({ ...draft, model_name: e.target.value })} placeholder="Create or reuse a model name" /><datalist id={`models-${game}`}>{models.map(name => <option key={name} value={name} />)}</datalist></label>
           <label className="text-xs">TV size · inches (optional)<input type="number" min={1} max={1000} step={1} list={`screens-${game}`} className={input} value={draft.screen_size_inches ?? ""} onChange={e => setDraft({ ...draft, screen_size_inches: e.target.value ? Number(e.target.value) : null })} placeholder="Any size" /><datalist id={`screens-${game}`}>{sizes.map(size => <option key={size} value={size!} />)}</datalist></label>
-          <label className="text-xs">Game variant (optional)<input maxLength={120} list={`variants-${game}`} className={input} value={draft.game_variant} onChange={e => setDraft({ ...draft, game_variant: e.target.value })} placeholder="Any title or edition" /><datalist id={`variants-${game}`}>{variants.map(name => <option key={name} value={name} />)}</datalist></label>
+          <label className="text-xs">Special game (leave empty for standard rates)<input maxLength={120} list={`variants-${game}`} className={input} value={draft.game_variant} onChange={e => setDraft({ ...draft, game_variant: e.target.value })} placeholder="e.g. GTA 6" /><datalist id={`variants-${game}`}>{variants.map(name => <option key={name} value={name} />)}</datalist></label>
         </div>
+        <p className="text-xs text-muted-foreground">Leave Special game empty for your normal rate card. Enter a title such as GTA 6 to charge this rate only when staff select that game. Flutter app bookings continue to use the standard app slot price.</p>
         <ConsoleLinks vendor={vendor} game={Number(game)} screen={draft.screen_size_inches} value={draft.console_ids || []} onChange={ids => setDraft({ ...draft, console_ids: ids })} />
         <label className="flex items-center gap-2 text-xs"><input type="checkbox" checked={draft.controllers_included} onChange={e => setDraft({ ...draft, controllers_included: e.target.checked })} />Controllers included in these rates</label>
         <div className="flex items-center justify-between"><h4 className="text-sm font-medium">Price rules</h4><button type="button" disabled={draft.rules.length >= 100 || busy} className={button} onClick={() => setDraft({ ...draft, rules: [...draft.rules, blankRule()] })}>+ Add rule</button></div>

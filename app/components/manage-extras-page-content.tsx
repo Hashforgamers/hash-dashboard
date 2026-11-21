@@ -1,4 +1,5 @@
 "use client";
+import { confirmDialog } from "@/app/components/confirm-dialog";
 
 import { useEffect, useState } from "react";
 import axios from "axios";
@@ -101,7 +102,7 @@ export default function ManageExtrasPageContent() {
 
   const handleDeleteCategory = async (id: number) => {
     if (
-      !window.confirm(
+      !await confirmDialog(
         "Are you sure you want to delete this category? All associated menus will also be deleted."
       )
     )
@@ -150,7 +151,7 @@ export default function ManageExtrasPageContent() {
   };
 
   const handleDeleteMenu = async (categoryId: number, menuId: number) => {
-    if (!window.confirm("Are you sure you want to delete this menu item?")) return;
+    if (!await confirmDialog("Are you sure you want to delete this menu item?")) return;
     setDeletingMenuId(menuId);
     try {
       await axios.delete(
@@ -176,20 +177,20 @@ export default function ManageExtrasPageContent() {
           <Loader />
         </div>
       ) : categories.length === 0 ? (
-        <div className="p-6 rounded-lg border border-dashed border-gray-300 bg-gray-50 text-gray-400 text-center">
+        <div className="p-6 rounded-lg border border-dashed border-zinc-300 bg-zinc-50 text-zinc-400 text-center">
           No categories found. Add one to get started.
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {categories.map((category) => (
-            <Card key={category.id} className="bg-white dark:bg-gray-900 shadow-md border">
-              <CardHeader className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700">
+            <Card key={category.id} className="bg-white dark:bg-zinc-900 shadow-md border">
+              <CardHeader className="flex items-center justify-between px-4 py-3 border-b border-zinc-200 dark:border-zinc-700">
                 <div className="flex items-center gap-3">
-                  <Pizza className="w-6 h-6 text-orange-500" />
+                  <Pizza className="w-6 h-6 text-amber-500" />
                   <div>
                     <h2 className="font-semibold text-lg">{category.name}</h2>
                     {category.description && (
-                      <div className="text-xs text-gray-400 mt-0.5">{category.description}</div>
+                      <div className="text-xs text-zinc-400 mt-0.5">{category.description}</div>
                     )}
                   </div>
                 </div>
@@ -197,7 +198,7 @@ export default function ManageExtrasPageContent() {
                   <EditCategoryDialog category={category} onSave={handleEditCategory} />
                   <button
                     onClick={() => handleDeleteCategory(category.id)}
-                    className="p-2 hover:text-rose-600"
+                    className="p-2 hover:text-red-600"
                     aria-label={`Delete category ${category.name}`}
                     type="button"
                     disabled={deletingCategoryId === category.id}
@@ -211,7 +212,7 @@ export default function ManageExtrasPageContent() {
                   <AddMenuDialog categoryId={category.id} onSave={handleAddMenu} />
                 </div>
                 {category.menus.length === 0 ? (
-                  <div className="italic text-gray-400 text-sm text-center py-6">No menu items in this category.</div>
+                  <div className="italic text-zinc-400 text-sm text-center py-6">No menu items in this category.</div>
                 ) : (
                   <ul className="space-y-1">
                     {category.menus.map((menu) => (
@@ -222,7 +223,7 @@ export default function ManageExtrasPageContent() {
                         <div>
                           <span className="font-medium">{menu.name}</span>
                           {menu.description && (
-                            <span className="ml-2 text-xs text-gray-500 dark:text-gray-400">
+                            <span className="ml-2 text-xs text-zinc-500 dark:text-zinc-400">
                               {menu.description}
                             </span>
                           )}
@@ -238,7 +239,7 @@ export default function ManageExtrasPageContent() {
                           />
                           <button
                             onClick={() => handleDeleteMenu(category.id, menu.id)}
-                            className="p-2 hover:text-rose-600"
+                            className="p-2 hover:text-red-600"
                             aria-label={`Delete menu ${menu.name}`}
                             type="button"
                             disabled={deletingMenuId === menu.id}

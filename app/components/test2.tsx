@@ -186,7 +186,7 @@ export default function BookingSystem({ setSelectedAction, game }) {
 
   if (showManageBooking) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900 p-4">
+      <div className="min-h-screen bg-gradient-to-br from-zinc-900 via-purple-900 to-zinc-900 p-4">
         <div className="max-w-6xl mx-auto">
           <div className="flex items-center justify-between mb-6">
             <Button
@@ -207,7 +207,7 @@ export default function BookingSystem({ setSelectedAction, game }) {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900 p-4">
+    <div className="min-h-screen bg-gradient-to-br from-zinc-900 via-purple-900 to-zinc-900 p-4">
       <div className="max-w-6xl mx-auto">
         {/* Header with Menu */}
         <div className="flex items-center justify-between mb-8">
@@ -215,7 +215,7 @@ export default function BookingSystem({ setSelectedAction, game }) {
             <h1 className="text-4xl font-bold text-white mb-2">
               Gaming Cafe Booking
             </h1>
-            <p className="text-gray-300">Reserve your gaming session</p>
+            <p className="text-zinc-300">Reserve your gaming session</p>
           </div>
 
           {/* Menu Dropdown */}
@@ -257,14 +257,14 @@ export default function BookingSystem({ setSelectedAction, game }) {
                   isActive
                     ? "bg-purple-600 text-white shadow-lg scale-105"
                     : isComplete
-                    ? "bg-green-600/20 text-green-300 hover:bg-green-600/30"
-                    : "bg-gray-800 text-gray-400 hover:bg-gray-700"
+                    ? "bg-emerald-600/20 text-emerald-300 hover:bg-emerald-600/30"
+                    : "bg-zinc-800 text-zinc-400 hover:bg-zinc-700"
                 }`}
               >
                 <Icon className="w-5 h-5" />
                 <span className="font-medium">{tab.label}</span>
                 {isComplete && !isActive && (
-                  <span className="text-green-400">✓</span>
+                  <span className="text-emerald-400">✓</span>
                 )}
               </button>
             );
@@ -279,7 +279,7 @@ export default function BookingSystem({ setSelectedAction, game }) {
             exit={{ opacity: 0, x: -20 }}
             transition={{ duration: 0.3 }}
           >
-            <Card className="bg-gray-800/50 backdrop-blur border-gray-700">
+            <Card className="bg-zinc-800/50 backdrop-blur border-zinc-700">
               <CardContent className="p-6">
                 {activeTab === "console" && (
                   <div className="space-y-4">
@@ -296,7 +296,7 @@ export default function BookingSystem({ setSelectedAction, game }) {
                           className={`p-6 rounded-xl border-2 transition-all ${
                             selectedConsole?.id === console.id
                               ? "border-purple-500 bg-purple-600/20"
-                              : "border-gray-600 bg-gray-700/50 hover:border-gray-500"
+                              : "border-zinc-600 bg-zinc-700/50 hover:border-zinc-500"
                           }`}
                         >
                           <div className="text-5xl mb-3">{console.icon}</div>
@@ -324,7 +324,7 @@ export default function BookingSystem({ setSelectedAction, game }) {
                           mode="single"
                           selected={selectedDate}
                           onSelect={setSelectedDate}
-                          className="bg-gray-700 rounded-lg p-3"
+                          className="bg-zinc-700 rounded-lg p-3"
                           disabled={(date) => date < new Date()}
                         />
                       </div>
@@ -332,7 +332,7 @@ export default function BookingSystem({ setSelectedAction, game }) {
                         <Label className="text-white mb-2">
                           Select Time Slot
                         </Label>
-                        <ScrollArea className="h-[300px] rounded-lg bg-gray-700 p-4">
+                        <ScrollArea className="h-[300px] rounded-lg bg-zinc-700 p-4">
                           <div className="grid grid-cols-3 gap-2">
                             {timeSlots.map((time) => (
                               <button
@@ -341,7 +341,7 @@ export default function BookingSystem({ setSelectedAction, game }) {
                                 className={`p-2 rounded-lg text-sm transition-all ${
                                   selectedTime === time
                                     ? "bg-purple-600 text-white"
-                                    : "bg-gray-600 text-gray-300 hover:bg-gray-500"
+                                    : "bg-zinc-600 text-zinc-300 hover:bg-zinc-500"
                                 }`}
                               >
                                 {time}
@@ -370,14 +370,14 @@ export default function BookingSystem({ setSelectedAction, game }) {
                         className={`p-6 rounded-xl border-2 transition-all ${
                           gamingMode === "solo"
                             ? "border-purple-500 bg-purple-600/20"
-                            : "border-gray-600 bg-gray-700/50"
+                            : "border-zinc-600 bg-zinc-700/50"
                         }`}
                       >
                         <User className="w-12 h-12 text-white mb-3 mx-auto" />
                         <h3 className="text-xl font-bold text-white">
                           Solo Play
                         </h3>
-                        <p className="text-gray-400 text-sm mt-2">
+                        <p className="text-zinc-400 text-sm mt-2">
                           Just you and the game
                         </p>
                       </motion.button>
@@ -389,14 +389,14 @@ export default function BookingSystem({ setSelectedAction, game }) {
                         className={`p-6 rounded-xl border-2 transition-all ${
                           gamingMode === "multiplayer"
                             ? "border-purple-500 bg-purple-600/20"
-                            : "border-gray-600 bg-gray-700/50"
+                            : "border-zinc-600 bg-zinc-700/50"
                         }`}
                       >
                         <Users className="w-12 h-12 text-white mb-3 mx-auto" />
                         <h3 className="text-xl font-bold text-white">
                           Multiplayer
                         </h3>
-                        <p className="text-gray-400 text-sm mt-2">
+                        <p className="text-zinc-400 text-sm mt-2">
                           Play with friends
                         </p>
                       </motion.button>
@@ -456,7 +456,7 @@ export default function BookingSystem({ setSelectedAction, game }) {
                         return (
                           <div
                             key={addon.id}
-                            className="p-4 bg-gray-700/50 rounded-lg border border-gray-600"
+                            className="p-4 bg-zinc-700/50 rounded-lg border border-zinc-600"
                           >
                             <div className="flex items-center justify-between mb-3">
                               <div className="flex items-center gap-3">
@@ -512,7 +512,7 @@ export default function BookingSystem({ setSelectedAction, game }) {
                           onChange={(e) =>
                             setUserDetails({ ...userDetails, name: e.target.value })
                           }
-                          className="bg-gray-700 border-gray-600 text-white"
+                          className="bg-zinc-700 border-zinc-600 text-white"
                           placeholder="Enter your name"
                         />
                       </div>
@@ -524,7 +524,7 @@ export default function BookingSystem({ setSelectedAction, game }) {
                           onChange={(e) =>
                             setUserDetails({ ...userDetails, email: e.target.value })
                           }
-                          className="bg-gray-700 border-gray-600 text-white"
+                          className="bg-zinc-700 border-zinc-600 text-white"
                           placeholder="Enter your email"
                         />
                       </div>
@@ -536,22 +536,22 @@ export default function BookingSystem({ setSelectedAction, game }) {
                           onChange={(e) =>
                             setUserDetails({ ...userDetails, phone: e.target.value })
                           }
-                          className="bg-gray-700 border-gray-600 text-white"
+                          className="bg-zinc-700 border-zinc-600 text-white"
                           placeholder="Enter your phone number"
                         />
                       </div>
                     </div>
 
-                    <div className="mt-6 p-4 bg-gray-700/50 rounded-lg border border-gray-600">
+                    <div className="mt-6 p-4 bg-zinc-700/50 rounded-lg border border-zinc-600">
                       <h3 className="font-bold text-white mb-3">
                         Booking Summary
                       </h3>
                       <div className="space-y-2 text-sm">
-                        <div className="flex justify-between text-gray-300">
+                        <div className="flex justify-between text-zinc-300">
                           <span>Console:</span>
                           <span>{selectedConsole?.name}</span>
                         </div>
-                        <div className="flex justify-between text-gray-300">
+                        <div className="flex justify-between text-zinc-300">
                           <span>Date:</span>
                           <span>
                             {selectedDate
@@ -559,11 +559,11 @@ export default function BookingSystem({ setSelectedAction, game }) {
                               : "Not selected"}
                           </span>
                         </div>
-                        <div className="flex justify-between text-gray-300">
+                        <div className="flex justify-between text-zinc-300">
                           <span>Time:</span>
                           <span>{selectedTime || "Not selected"}</span>
                         </div>
-                        <div className="flex justify-between text-gray-300">
+                        <div className="flex justify-between text-zinc-300">
                           <span>Mode:</span>
                           <span className="capitalize">
                             {gamingMode}
@@ -572,11 +572,11 @@ export default function BookingSystem({ setSelectedAction, game }) {
                           </span>
                         </div>
                         {addons.length > 0 && (
-                          <div className="pt-2 border-t border-gray-600">
+                          <div className="pt-2 border-t border-zinc-600">
                             {addons.map((addon) => (
                               <div
                                 key={addon.id}
-                                className="flex justify-between text-gray-300"
+                                className="flex justify-between text-zinc-300"
                               >
                                 <span>
                                   {addon.name} x{addon.quantity}
@@ -586,7 +586,7 @@ export default function BookingSystem({ setSelectedAction, game }) {
                             ))}
                           </div>
                         )}
-                        <div className="flex justify-between text-xl font-bold text-white pt-2 border-t border-gray-600">
+                        <div className="flex justify-between text-xl font-bold text-white pt-2 border-t border-zinc-600">
                           <span>Total:</span>
                           <span className="text-purple-400">
                             ${calculateTotal()}
@@ -744,7 +744,7 @@ function ChangeBookingForm() {
   };
 
   return (
-    <Card className="bg-gray-800/50 backdrop-blur border-gray-700">
+    <Card className="bg-zinc-800/50 backdrop-blur border-zinc-700">
       <CardContent className="p-6">
         <form className="space-y-8">
           <div className="space-y-4">
@@ -755,7 +755,7 @@ function ChangeBookingForm() {
                 placeholder="Enter Booking ID"
                 value={bookingId}
                 onChange={(e) => setBookingId(e.target.value)}
-                className="bg-gray-700 border-gray-600 text-white"
+                className="bg-zinc-700 border-zinc-600 text-white"
               />
 
               <Button
@@ -792,7 +792,7 @@ function ChangeBookingForm() {
                         customer: { ...prev.customer, name: e.target.value },
                       }))
                     }
-                    className="bg-gray-700 border-gray-600 text-white"
+                    className="bg-zinc-700 border-zinc-600 text-white"
                   />
                 </div>
                 <div className="space-y-2">
@@ -806,7 +806,7 @@ function ChangeBookingForm() {
                         customer: { ...prev.customer, email: e.target.value },
                       }))
                     }
-                    className="bg-gray-700 border-gray-600 text-white"
+                    className="bg-zinc-700 border-zinc-600 text-white"
                   />
                 </div>
                 <div className="space-y-2">
@@ -820,7 +820,7 @@ function ChangeBookingForm() {
                         customer: { ...prev.customer, phone: e.target.value },
                       }))
                     }
-                    className="bg-gray-700 border-gray-600 text-white"
+                    className="bg-zinc-700 border-zinc-600 text-white"
                   />
                 </div>
               </div>
@@ -840,7 +840,7 @@ function ChangeBookingForm() {
                         booking_date: e.target.value,
                       }))
                     }
-                    className="bg-gray-700 border-gray-600 text-white"
+                    className="bg-zinc-700 border-zinc-600 text-white"
                   />
                 </div>
 
@@ -886,8 +886,8 @@ function ChangeBookingForm() {
           ) : null}
 
           {isSubmitted && (
-            <Alert className="bg-green-600/20 border-green-600">
-              <AlertDescription className="text-green-300">
+            <Alert className="bg-emerald-600/20 border-emerald-600">
+              <AlertDescription className="text-emerald-300">
                 Booking has been successfully updated.
               </AlertDescription>
             </Alert>
@@ -995,7 +995,7 @@ function RejectBookingForm() {
   };
 
   return (
-    <Card className="bg-gray-800/50 backdrop-blur border-gray-700">
+    <Card className="bg-zinc-800/50 backdrop-blur border-zinc-700">
       <CardContent className="p-6">
         <form className="space-y-8" onSubmit={handleSubmit}>
           <div className="space-y-4">
@@ -1005,7 +1005,7 @@ function RejectBookingForm() {
                 placeholder="Enter Booking ID"
                 value={bookingId}
                 onChange={(e) => setBookingId(e.target.value)}
-                className="bg-gray-700 border-gray-600 text-white"
+                className="bg-zinc-700 border-zinc-600 text-white"
               />
               <Button
                 type="button"
@@ -1026,8 +1026,8 @@ function RejectBookingForm() {
           </div>
 
           {isSubmitted ? (
-            <Alert className="bg-green-600/20 border-green-600">
-              <AlertDescription className="text-green-300">
+            <Alert className="bg-emerald-600/20 border-emerald-600">
+              <AlertDescription className="text-emerald-300">
                 Booking has been successfully rejected.
               </AlertDescription>
             </Alert>
@@ -1045,30 +1045,30 @@ function RejectBookingForm() {
                       Booking Information
                     </h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <Card className="bg-gray-700/50 border-gray-600">
+                      <Card className="bg-zinc-700/50 border-zinc-600">
                         <CardContent className="pt-6">
                           <div className="space-y-4">
                             <div className="flex justify-between">
-                              <span className="text-gray-400">Booking ID</span>
+                              <span className="text-zinc-400">Booking ID</span>
                               <span className="font-medium text-white">
                                 {bookingData.booking_id || ""}
                               </span>
                             </div>
                             <div className="flex justify-between">
-                              <span className="text-gray-400">Date</span>
+                              <span className="text-zinc-400">Date</span>
                               <span className="font-medium text-white">
                                 {bookingData.booking_date || ""}
                               </span>
                             </div>
                             <div className="flex justify-between">
-                              <span className="text-gray-400">Time Slot</span>
+                              <span className="text-zinc-400">Time Slot</span>
                               <span className="font-medium text-white">
                                 {bookingData.start_time || ""} -{" "}
                                 {bookingData.end_time || ""}
                               </span>
                             </div>
                             <div className="flex justify-between">
-                              <span className="text-gray-400">System</span>
+                              <span className="text-zinc-400">System</span>
                               <span className="font-medium text-white">
                                 {bookingData.system || ""}
                               </span>
@@ -1077,29 +1077,29 @@ function RejectBookingForm() {
                         </CardContent>
                       </Card>
 
-                      <Card className="bg-gray-700/50 border-gray-600">
+                      <Card className="bg-zinc-700/50 border-zinc-600">
                         <CardContent className="pt-6">
                           <div className="space-y-4">
                             <div className="flex justify-between">
-                              <span className="text-gray-400">Customer</span>
+                              <span className="text-zinc-400">Customer</span>
                               <span className="font-medium text-white">
                                 {bookingData.customer?.name || ""}
                               </span>
                             </div>
                             <div className="flex justify-between">
-                              <span className="text-gray-400">Email</span>
+                              <span className="text-zinc-400">Email</span>
                               <span className="font-medium text-white">
                                 {bookingData.customer?.email || ""}
                               </span>
                             </div>
                             <div className="flex justify-between">
-                              <span className="text-gray-400">Phone</span>
+                              <span className="text-zinc-400">Phone</span>
                               <span className="font-medium text-white">
                                 {bookingData.customer?.phone || ""}
                               </span>
                             </div>
                             <div className="flex justify-between">
-                              <span className="text-gray-400">Amount Paid</span>
+                              <span className="text-zinc-400">Amount Paid</span>
                               <span className="font-medium text-white">
                                 ${bookingData.amount_paid || ""}
                               </span>
@@ -1121,14 +1121,14 @@ function RejectBookingForm() {
                           value={rejectionReason}
                           onChange={(e) => setRejectionReason(e.target.value)}
                           placeholder="Please provide a detailed reason for rejecting this booking..."
-                          className="min-h-[100px] bg-gray-700 border-gray-600 text-white"
+                          className="min-h-[100px] bg-zinc-700 border-zinc-600 text-white"
                         />
                       </div>
 
                       <div className="space-y-2">
                         <Label className="text-white">Repayment Method</Label>
                         <Select value={repaymentType} onValueChange={setRepaymentType}>
-                          <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
+                          <SelectTrigger className="bg-zinc-700 border-zinc-600 text-white">
                             <SelectValue placeholder="Select repayment method" />
                           </SelectTrigger>
                           <SelectContent>
@@ -1202,10 +1202,10 @@ function RejectBookingForm() {
 // List Booking Component (Placeholder - implement based on your needs)
 function ListBooking() {
   return (
-    <Card className="bg-gray-800/50 backdrop-blur border-gray-700">
+    <Card className="bg-zinc-800/50 backdrop-blur border-zinc-700">
       <CardContent className="p-6">
         <h3 className="text-lg font-semibold text-white mb-4">All Bookings</h3>
-        <p className="text-gray-400">Booking list implementation goes here...</p>
+        <p className="text-zinc-400">Booking list implementation goes here...</p>
       </CardContent>
     </Card>
   );

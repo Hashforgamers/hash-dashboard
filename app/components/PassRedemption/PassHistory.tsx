@@ -46,20 +46,20 @@ const PassHistory: React.FC<{ userPassId: number }> = ({ userPassId }) => {
       </h3>
 
       {history.length === 0 ? (
-        <p className="text-gray-500 text-center py-8">No redemptions yet</p>
+        <p className="text-zinc-500 text-center py-8">No redemptions yet</p>
       ) : (
         <div className="space-y-3">
           {history.map((log) => (
             <div
               key={log.id}
               className={`border rounded-lg p-4 ${
-                log.is_cancelled ? 'bg-red-50 border-red-200' : 'bg-gray-50'
+                log.is_cancelled ? 'bg-red-50 border-red-200' : 'bg-zinc-50'
               }`}
             >
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-2">
-                    <Clock className="w-4 h-4 text-gray-600" />
+                    <Clock className="w-4 h-4 text-zinc-600" />
                     <span className="font-semibold">
                       {log.hours_deducted} hours
                     </span>
@@ -71,22 +71,22 @@ const PassHistory: React.FC<{ userPassId: number }> = ({ userPassId }) => {
                   </div>
 
                   {log.session_start_time && log.session_end_time && (
-                    <div className="text-sm text-gray-600 mb-1">
+                    <div className="text-sm text-zinc-600 mb-1">
                       Session: {log.session_start_time} - {log.session_end_time}
                     </div>
                   )}
 
-                  <div className="text-sm text-gray-600">
+                  <div className="text-sm text-zinc-600">
                     <Calendar className="w-3 h-3 inline mr-1" />
                     {new Date(log.redeemed_at).toLocaleString()}
                   </div>
 
-                  <div className="text-xs text-gray-500 mt-1">
+                  <div className="text-xs text-zinc-500 mt-1">
                     Method: {log.redemption_method === 'dashboard_manual' ? '🖥️ Dashboard' : '📱 App'}
                   </div>
 
                   {log.notes && (
-                    <div className="mt-2 text-sm text-gray-700 bg-white p-2 rounded">
+                    <div className="mt-2 text-sm text-zinc-700 bg-white p-2 rounded">
                       {log.notes}
                     </div>
                   )}

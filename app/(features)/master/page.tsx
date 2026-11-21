@@ -25,7 +25,7 @@ import { useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { DASHBOARD_URL } from '@/src/config/env';
 
-const COLORS = ["#4CAF50", "#FFC107", "#03A9F4"];
+const COLORS = ["#10b981", "#f59e0b", "#3b82f6"];
 const allCafeOptions = ["Master Analytics", "Cafe A", "Cafe B", "Cafe C"];
 const reportTypes = ["Yearly", "Monthly", "Weekly"];
 
@@ -85,10 +85,10 @@ export default function MasterAnalyticsPage() {
 
         <div className="flex gap-4">
           <Select value={selectedCafe} onValueChange={setSelectedCafe}>
-            <SelectTrigger className="w-48 bg-gray-800 border-gray-700 text-white">
+            <SelectTrigger className="w-48 bg-zinc-800 border-zinc-700 text-white">
               <SelectValue placeholder="Select Cafe" />
             </SelectTrigger>
-            <SelectContent className="bg-gray-800 text-white">
+            <SelectContent className="bg-zinc-800 text-white">
               {allCafeOptions.map((cafe) => (
                 <SelectItem key={cafe} value={cafe}>
                   {cafe}
@@ -98,10 +98,10 @@ export default function MasterAnalyticsPage() {
           </Select>
 
           <Select value={reportType} onValueChange={setReportType}>
-            <SelectTrigger className="w-40 bg-gray-800 border-gray-700 text-white">
+            <SelectTrigger className="w-40 bg-zinc-800 border-zinc-700 text-white">
               <SelectValue placeholder="Select Report" />
             </SelectTrigger>
-            <SelectContent className="bg-gray-800 text-white">
+            <SelectContent className="bg-zinc-800 text-white">
               {reportTypes.map((type) => (
                 <SelectItem key={type} value={type}>
                   {type}
@@ -113,7 +113,7 @@ export default function MasterAnalyticsPage() {
       </div>
 
       <div className="grid grid-cols-4 gap-6">
-        <Card className="bg-gray-900 text-white col-span-2">
+        <Card className="bg-zinc-900 text-white col-span-2">
           <CardContent className="p-4">
             <h2 className="text-lg font-semibold mb-2">🏦 Revenue by Cafe</h2>
             <ResponsiveContainer width="100%" height={200}>
@@ -121,13 +121,13 @@ export default function MasterAnalyticsPage() {
                 <XAxis dataKey="cafe" />
                 <YAxis />
                 <Tooltip />
-                <Bar dataKey="revenue" fill="#4CAF50" />
+                <Bar dataKey="revenue" fill="#10b981" />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
 
-        <Card className="bg-gray-900 text-white col-span-2">
+        <Card className="bg-zinc-900 text-white col-span-2">
           <CardContent className="p-4">
             <h2 className="text-lg font-semibold mb-2">🎟️ Bookings per Cafe</h2>
             <ResponsiveContainer width="100%" height={200}>
@@ -135,13 +135,13 @@ export default function MasterAnalyticsPage() {
                 <XAxis dataKey="cafe" />
                 <YAxis />
                 <Tooltip />
-                <Bar dataKey="bookings" fill="#03A9F4" />
+                <Bar dataKey="bookings" fill="#3b82f6" />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
 
-        <Card className="bg-gray-900 text-white col-span-2">
+        <Card className="bg-zinc-900 text-white col-span-2">
           <CardContent className="p-4">
             <h2 className="text-lg font-semibold mb-2">🎮 Top Games - {selectedCafe}</h2>
             <ResponsiveContainer width="100%" height={200}>
@@ -149,13 +149,13 @@ export default function MasterAnalyticsPage() {
                 <XAxis dataKey="game" />
                 <YAxis />
                 <Tooltip />
-                <Bar dataKey="plays" fill="#FFC107" />
+                <Bar dataKey="plays" fill="#f59e0b" />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
 
-        <Card className="bg-gray-900 text-white col-span-2">
+        <Card className="bg-zinc-900 text-white col-span-2">
           <CardContent className="p-4">
             <h2 className="text-lg font-semibold mb-2">💳 Payment Mode Distribution</h2>
             <ResponsiveContainer width="100%" height={200}>

@@ -23,7 +23,7 @@ export const SuccessModal = ({
       <motion.div
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="max-w-md w-full bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8 text-center"
+        className="max-w-md w-full bg-white dark:bg-zinc-800 rounded-2xl shadow-2xl p-8 text-center"
       >
         <motion.div
           initial={{ scale: 0 }}
@@ -34,34 +34,34 @@ export const SuccessModal = ({
           <CheckCircle className="w-8 h-8 text-emerald-600 dark:text-emerald-300" />
         </motion.div>
 
-        <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-3">
+        <h2 className="text-2xl font-bold text-zinc-800 dark:text-white mb-3">
           Booking Confirmed!
         </h2>
-        <p className="text-gray-600 dark:text-gray-300 mb-6">
+        <p className="text-zinc-600 dark:text-zinc-300 mb-6">
           Your slot booking has been successfully created.
         </p>
 
         <div className="bg-emerald-50 dark:bg-emerald-900/20 rounded-lg p-4 mb-6 text-left">
           <div className="flex justify-between items-center py-2">
-            <span className="text-gray-600 dark:text-gray-400">Console Type:</span>
-            <span className="font-medium text-gray-800 dark:text-white">
+            <span className="text-zinc-600 dark:text-zinc-400">Console Type:</span>
+            <span className="font-medium text-zinc-800 dark:text-white">
               {selectedSlots[0]?.console_name}
             </span>
           </div>
           <div className="flex justify-between items-center py-2">
-            <span className="text-gray-600 dark:text-gray-400">Slots:</span>
-            <span className="font-medium text-gray-800 dark:text-white">{selectedSlots.length}</span>
+            <span className="text-zinc-600 dark:text-zinc-400">Slots:</span>
+            <span className="font-medium text-zinc-800 dark:text-white">{selectedSlots.length}</span>
           </div>
           <div className="flex justify-between items-center py-2">
-            <span className="text-gray-600 dark:text-gray-400">Meals & Extras:</span>
-            <span className="font-medium text-gray-800 dark:text-white">
+            <span className="text-zinc-600 dark:text-zinc-400">Meals & Extras:</span>
+            <span className="font-medium text-zinc-800 dark:text-white">
               {selectedMeals.length === 0
                 ? 'None'
                 : selectedMeals.map(meal => `${meal.name} (${meal.quantity})`).join(', ')}
             </span>
           </div>
           <div className="flex justify-between items-center py-2 border-t border-emerald-200 dark:border-emerald-700">
-            <span className="text-gray-600 dark:text-gray-400">Total Amount:</span>
+            <span className="text-zinc-600 dark:text-zinc-400">Total Amount:</span>
             <span className="font-bold text-emerald-600 text-xl">₹{totalAmount}</span>
           </div>
         </div>
