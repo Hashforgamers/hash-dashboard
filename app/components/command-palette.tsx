@@ -1,17 +1,26 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
 import { Bell, Gamepad2, KeyRound, RefreshCw, Search, Settings, Shield, Store, Wallet } from "lucide-react"
 import { DialogTitle } from "@/components/ui/dialog"
 import { CommandDialog, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
 import { useAccess } from "@/app/context/AccessContext"
 import { navItems } from "./main-nav"
+import { useDashboardData } from "@/app/context/DashboardDataContext"
+import { consoleTypesFromConsoles, formatShortcut, readCafeShortcuts, type CafeShortcutMap } from "@/app/lib/cafe-shortcuts"
+import { requestConsoleBooking } from "./booking-shortcuts"
 
 export function CommandPalette({ onRefresh }: { onRefresh: () => void }) {
   const [open, setOpen] = useState(false)
   const router = useRouter()
-  const { can, activeStaff } = useAccess()
+  const { can, activeStaff, selectedCafeId } = useAccess()
+  const { consoles } = useDashboardData()
+  const consoleTypes = useMemo(() => consoleTypesFromConsoles(consoles), [consoles])
+  const [bookingKeys, setBookingKeys] = useState<CafeShortcutMap>({})
+  useEffect(() => {
+    if (open) setBookingKeys(readCafeShortcuts(selectedCafeId, consoleTypes))
+  }, [open, selectedCafeId, consoleTypes])
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -64,6 +73,12 @@ export function CommandPalette({ onRefresh }: { onRefresh: () => void }) {
           </CommandGroup>
           <CommandGroup heading="Actions">
             {(!activeStaff || can("booking.manage")) && <CommandItem value="new booking bookings sessions" onSelect={go("/dashboard?tab=booking")}><Gamepad2 className="mr-2" />Open bookings &amp; sessions</CommandItem>}
+            {(!activeStaff || can("booking.manage")) && consoleTypes.map(({ type, name }) => (
+              <CommandItem key={`book-${type}`} value={`book new booking ${name} ${type}`} onSelect={run(() => requestConsoleBooking(type, router.push))}>
+                <Gamepad2 className="mr-2" />Book {name}
+                {bookingKeys[type] && <kbd className="ml-auto font-sans text-[10px] text-muted-foreground">{formatShortcut(bookingKeys[type]!)}</kbd>}
+              </CommandItem>
+            ))}
             <CommandItem value="notifications alerts" onSelect={run(() => window.dispatchEvent(new Event("hash:open-notifications")))}><Bell className="mr-2" />Open notifications</CommandItem>
             <CommandItem value="payment queue pay at cafe requests" onSelect={run(() => window.dispatchEvent(new Event("hash:open-payment-queue")))}><Wallet className="mr-2" />Open payment queue</CommandItem>
             <CommandItem onSelect={run(onRefresh)}><RefreshCw className="mr-2" />Refresh dashboard data</CommandItem>

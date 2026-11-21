@@ -46,6 +46,7 @@ import { UpiQrBookingDialog } from "./upi-qr-collect"
 import { BOOKING_URL, DASHBOARD_URL } from '@/src/config/env'
 import { ConsoleType } from './types'
 import MealSelector from './mealSelector'
+import { BOOK_CONSOLE_EVENT, takePendingConsoleBooking, type BookConsoleEventDetail } from "@/app/lib/cafe-shortcuts"
 import BookingRecords from "./booking-records"
 import scheduleStyles from "./schedule-workspace.module.css"
 import CreditAccountModal, { type MonthlyCreditAccountSummary } from './credit-account-modal'
@@ -504,6 +505,8 @@ export function SlotBookingForm({
   const [timeMode, setTimeMode] = useState("range")
   const [pickerDate, setPickerDate] = useState("")
   const [pickerConsole, setPickerConsole] = useState("")
+  // A booking shortcut or console switch changes the default; let it win over an earlier pick.
+  useEffect(() => { setPickerConsole("") }, [defaultConsoleId])
   const slotDates = Object.keys(allSlots).sort()
   const activePickerDate = selectedSlots[0]?.date || pickerDate || slotDates[0] || ""
   const activePickerConsole = String(selectedSlots[0]?.console_id || pickerConsole || defaultConsoleId || availableConsoles[0]?.id || "")
@@ -2144,6 +2147,7 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
         <motion.div
           initial={false}
           role="dialog"
+          data-booking-form
           aria-modal="true"
           aria-label="New Gaming Session"
           className="slot-booking-modal flex max-h-[92vh] w-full max-w-[960px] flex-col overflow-hidden rounded-xl border shadow-2xl"
@@ -4859,6 +4863,14 @@ function DashboardQuickBookingSlab({
     }
   }, [activeConsoles, onConsoleChange, quickConsole, selectedConsole])
 
+  // Follow console changes made outside the strip, such as a booking shortcut.
+  useEffect(() => {
+    if (selectedConsole && selectedConsole !== quickConsole && activeConsoles.some((item) => item.type === selectedConsole)) {
+      setQuickConsole(selectedConsole)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedConsole])
+
   const selectedConsoleItem =
     quickConsole
       ? activeConsoles.find((consoleItem) => consoleItem.type === quickConsole) || null
@@ -5528,6 +5540,45 @@ useEffect(() => {
     setSlotBookings([])
     setShowBookingForm(false)
   }
+
+  // Booking shortcuts (Alt+Shift+key, set in Account Settings → Keyboard Shortcuts)
+  // open the booking form with that console type preselected.
+  const shortcutState = useRef({ availableConsoles, showBookingForm, selectedSlots })
+  shortcutState.current = { availableConsoles, showBookingForm, selectedSlots }
+  const openConsoleBooking = (type: string) => {
+    const { availableConsoles, showBookingForm, selectedSlots } = shortcutState.current
+    const consoleItem = availableConsoles.find((item) => item.type === type)
+    if (!consoleItem) {
+      toast.error("That console type has no bookable consoles right now.")
+      return
+    }
+    if (showBookingForm && selectedSlots.length > 0) {
+      toast.info("Finish or close the current booking before switching console.")
+      return
+    }
+    handleConsoleChange(type)
+    setShowBookingForm(true)
+  }
+  const openConsoleBookingRef = useRef(openConsoleBooking)
+  openConsoleBookingRef.current = openConsoleBooking
+
+  useEffect(() => {
+    const onBookConsole = (event: Event) => {
+      if (event.defaultPrevented) return // another booking workspace took it
+      const type = (event as CustomEvent<BookConsoleEventDetail>).detail?.type
+      if (!type) return
+      event.preventDefault()
+      openConsoleBookingRef.current(type)
+    }
+    window.addEventListener(BOOK_CONSOLE_EVENT, onBookConsole)
+    return () => window.removeEventListener(BOOK_CONSOLE_EVENT, onBookConsole)
+  }, [])
+
+  useEffect(() => {
+    if (availableConsoles.length === 0) return
+    const pending = takePendingConsoleBooking()
+    if (pending) openConsoleBookingRef.current(pending)
+  }, [availableConsoles])
 
   const handleBookingComplete = () => {
     setRecordsRevision(value => value + 1)
