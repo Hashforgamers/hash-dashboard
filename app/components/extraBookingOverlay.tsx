@@ -683,6 +683,7 @@ const SettlementOverlay: React.FC<ExtraBookingOverlayProps> = ({
               </div>
 
               <div className="rounded-xl border border-zinc-700/70 bg-zinc-800/55 p-2.5 sm:p-3 lg:sticky lg:top-2 lg:h-fit">
+                {!upiQr && (<>
                 <div className="mb-3 sm:mb-4">
                   <label htmlFor="waive-off-amount" className="mb-2 block text-sm font-medium text-zinc-200">
                     Discount (optional, ₹)
@@ -749,6 +750,7 @@ const SettlementOverlay: React.FC<ExtraBookingOverlayProps> = ({
                     ))}
                   </div>
                 </div>
+                </>)}
 
                 {paymentMode === "credit" && (
                   <div className="mb-4 rounded-xl border border-zinc-700/70 bg-zinc-900/60 p-2.5 sm:mb-5 sm:p-3">
@@ -799,6 +801,8 @@ const SettlementOverlay: React.FC<ExtraBookingOverlayProps> = ({
                 {settlementError && <div role="alert" className="mb-3 rounded-lg border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-300">{settlementError}</div>}
                 {upiQr ? (
                   <UpiQrPanel
+                    vendorId={vendorId as number}
+                    onUpdate={setUpiQr}
                     qr={upiQr}
                     now={qrNow}
                     busy={loading}
