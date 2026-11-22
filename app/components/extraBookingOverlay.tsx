@@ -107,10 +107,12 @@ const SettlementOverlay: React.FC<ExtraBookingOverlayProps> = ({
   // A closed session left only its bill: no running clock and no PC to free.
   const sessionClosed = Boolean(selectedSlot?.awaitingPayment);
   const noOvertime = meteredByKiosk || sessionClosed;
-  // One gamer's closed, unpaid sessions are settled as a single bill.
-  const groupBookingIds: number[] = sessionClosed && Array.isArray(selectedSlot?.awaitingBookingIds)
-    ? Array.from(new Set<number>(selectedSlot.awaitingBookingIds.map(Number).filter((n: number) => Number.isFinite(n) && n > 0)))
-    : [];
+  // One bill per gamer: every booking the row stands for (back-to-back slots
+  // and earlier unpaid sessions) is totalled and settled together.
+  const groupBookingIds: number[] = (() => {
+    const raw = [selectedSlot?.bookingId || selectedSlot?.bookId, ...(selectedSlot?.billBookingIds || selectedSlot?.awaitingBookingIds || [])];
+    return Array.from(new Set<number>(raw.map(Number).filter((n: number) => Number.isFinite(n) && n > 0)));
+  })();
   const isGroupBill = groupBookingIds.length > 1;
   const [overtimeQuote, setOvertimeQuote] = useState<OvertimeQuote | null>(null);
   const [quoteLoading, setQuoteLoading] = useState(false);
@@ -534,16 +536,20 @@ const SettlementOverlay: React.FC<ExtraBookingOverlayProps> = ({
         // Settle every unpaid session of this gamer; the discount is used up
         // booking by booking so no single bill goes below zero.
         let waiveLeft = parsedWaiveOff;
+        const primaryId = Number(bookingId);
         for (const id of groupBookingIds) {
           const items = (paymentSummary?.line_items || []).filter((item) =>
             item.booking_id === id && isPendingStatus(item.settlement_status)
             && normalizeBookingType(item.booking_type) !== "settlement_waive_off");
-          const due = items.reduce((sum, item) => sum + Number(item.line_total || 0), 0);
+          // Extra time just created is recorded on the booking being checked out.
+          const overtime = id === primaryId ? amount : 0;
+          const due = items.reduce((sum, item) => sum + Number(item.line_total || 0), 0) + overtime;
           if (due <= 0.009) continue;
           const waive = Math.min(waiveLeft, due);
           waiveLeft -= waive;
-          const types = Array.from(new Set(items.map((item) => normalizeBookingType(item.booking_type)).filter(Boolean)));
-          await settlePendingBookingCharges(id, settleMode, waive, types.length > 0 ? types : bookingTypesPayload);
+          const types = new Set(items.map((item) => normalizeBookingType(item.booking_type)).filter(Boolean));
+          if (overtime > 0) types.add("extra");
+          await settlePendingBookingCharges(id, settleMode, waive, types.size > 0 ? Array.from(types) : bookingTypesPayload);
         }
         await releaseAndClose();
         return;
@@ -713,7 +719,7 @@ const SettlementOverlay: React.FC<ExtraBookingOverlayProps> = ({
                     <p className="text-xs font-medium text-red-200">Extra time</p>
                     <p className="mt-1 inline-flex items-center gap-1 text-base font-bold text-red-300 sm:text-lg">
                       <Timer className="h-4 w-4" />
-                      {meteredByKiosk ? "Billed in the step before" : sessionClosed ? "Session already ended" : quoteLoading && !overtimeQuote ? "Pricing…" : formatTime(computedExtraSeconds)}
+                      {meteredByKiosk ? "None extra (kiosk bill)" : sessionClosed ? "None (session ended)" : quoteLoading && !overtimeQuote ? "Pricing…" : formatTime(computedExtraSeconds)}
                     </p>
                     {overtimeQuote && overtimeQuote.overtime_seconds > 0 && (
                       <p className="mt-1 text-[11px] text-red-200/80">

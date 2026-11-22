@@ -273,21 +273,23 @@ const mergeConsecutiveBookings = (bookings: any[]) => {
   };
 
   groups.forEach((items) => {
-    items.sort((a, b) => a.start - b.start);
-    let run = [items[0]];
-    let runEnd = items[0].end;
-    for (let i = 1; i < items.length; i++) {
-      const next = items[i];
-      if (next.start <= runEnd) {
-        run.push(next);
-        runEnd = Math.max(runEnd, next.end);
-      } else {
-        flush(run);
-        run = [next];
-        runEnd = next.end;
-      }
+    items.sort((a, b) => a.start - b.start || Number(a.booking?.bookingId) - Number(b.booking?.bookingId));
+    // The same gamer holding the same time twice is a duplicate, not a longer
+    // visit: keep each on its own card, flagged, so the extra can be cancelled.
+    const duplicates = new Set<any>();
+    items.forEach((item, i) => items.forEach((other, j) => {
+      if (i !== j && item.start < other.end && other.start < item.end) duplicates.add(item.booking);
+    }));
+    const runs: Array<typeof timed> = [];
+    for (const item of items) {
+      const run = runs.find((r) => r[r.length - 1].end === item.start
+        && !duplicates.has(item.booking) && !duplicates.has(r[r.length - 1].booking));
+      if (run) run.push(item); else runs.push([item]);
     }
-    flush(run);
+    for (const run of runs) {
+      flush(run);
+      if (duplicates.has(run[0].booking)) mergedResults[mergedResults.length - 1].duplicate_booking = true;
+    }
   });
 
   const startOf = (booking: any) => getBookingTimeRange(booking)?.start.getTime() ?? 0;
@@ -1103,6 +1105,11 @@ export function UpcomingBookings({
                               <Clock className="h-3 w-3 shrink-0 text-zinc-400" />
                               <span className="truncate">{booking.time || "No time set"}</span>
                             </div>
+                            {booking.duplicate_booking && (
+                              <p className="mt-1 text-[11px] font-medium text-amber-300" title="This gamer has another booking for the same time. Cancel the extra one so they are not billed twice.">
+                                Same gamer booked this time twice
+                              </p>
+                            )}
                           </div>
 
                           <div className="flex max-w-[48%] shrink-0 flex-wrap items-center justify-end gap-1 sm:max-w-none sm:flex-nowrap">
