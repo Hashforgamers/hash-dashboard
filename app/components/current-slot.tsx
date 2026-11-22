@@ -793,8 +793,9 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
       endTime: slot.endTime,
       date: slot.date,
       runtime: slot.runtime,
-      elapsedTime: slot.runtime ? Math.max(0,Math.floor((runtimeNow(slot.runtime)-Date.parse(slot.runtime.started_at))/1000)) : calculateElapsedTime(slot.startTime || '', slot.date || ''),
-      extraTime: slot.runtime ? Math.max(0,Math.floor((runtimeNow(slot.runtime)-Date.parse(slot.runtime.reserved_until))/1000)) : calculateExtraTime(slot.endTime || '', slot.date || ''),
+      closed: Boolean(slot.awaitingPayment),
+      elapsedTime: slot.awaitingPayment ? calculateDuration(slot.startTime || '', slot.endTime || '') : slot.runtime ? Math.max(0,Math.floor((runtimeNow(slot.runtime)-Date.parse(slot.runtime.started_at))/1000)) : calculateElapsedTime(slot.startTime || '', slot.date || ''),
+      extraTime: slot.awaitingPayment ? 0 : slot.runtime ? Math.max(0,Math.floor((runtimeNow(slot.runtime)-Date.parse(slot.runtime.reserved_until))/1000)) : calculateExtraTime(slot.endTime || '', slot.date || ''),
       duration: slot.runtime ? Math.max(1,Math.floor((Date.parse(slot.runtime.reserved_until)-Date.parse(slot.runtime.started_at))/1000)) : calculateDuration(slot.startTime || '', slot.endTime || ''),
     }));
     setTimers(initialTimers);
@@ -870,7 +871,7 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
   useEffect(() => {
     const intervalId = setInterval(() => {
       setTimers((prevTimers) =>
-        prevTimers.map((timer) => ({
+        prevTimers.map((timer) => timer.closed ? timer : ({
           ...timer,
           elapsedTime: timer.runtime ? Math.max(0,Math.floor((runtimeNow(timer.runtime)-Date.parse(timer.runtime.started_at))/1000)) : calculateElapsedTime(timer.startTime || '', timer.date || ''),
           extraTime: timer.runtime ? Math.max(0,Math.floor((runtimeNow(timer.runtime)-Date.parse(timer.runtime.reserved_until))/1000)) : calculateExtraTime(timer.endTime || '', timer.date || ''),
@@ -1075,7 +1076,7 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                     const checkedDue = bookingOutstandingDue[bookingIdToCheck];
                     const outstandingDue = (checkedDue ?? 0)+Number(booking.runtime?.billing?.amount_due_paise||0)/100;
                     const hasOutstandingDue = outstandingDue > 0.01;
-                    const needsSettlement = hasExtraTime || hasOutstandingDue;
+                    const needsSettlement = hasExtraTime || hasOutstandingDue || Boolean(booking.awaitingPayment);
                     const remainingTime = Math.max((timer.duration || 0) - (timer.elapsedTime || 0), 0);
                     const hasMeals = bookingMealStatus[bookingIdToCheck] ?? booking.hasMeals ?? false;
                     const squadMembers = Array.isArray(booking?.squadMembers) ? booking.squadMembers : [];
@@ -1247,7 +1248,7 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                         const checkedDue = bookingOutstandingDue[bookingIdForDue];
                         const outstandingDue = (checkedDue ?? 0)+Number(booking.runtime?.billing?.amount_due_paise||0)/100;
                         const hasOutstandingDue = outstandingDue > 0.01;
-                        const needsSettlement = hasExtraTime || hasOutstandingDue;
+                        const needsSettlement = hasExtraTime || hasOutstandingDue || Boolean(booking.awaitingPayment);
                         const remainingTime = Math.max((timer.duration || 0) - (timer.elapsedTime || 0), 0);
                         const progressPercent = Number.isFinite(progress) ? Math.max(0, Math.round(progress)) : 0;
                         const progressState = hasExtraTime
@@ -1614,6 +1615,9 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                             {/* Extra Time cell - unchanged */}
                             <td className="px-3 py-3 md:px-4">
                               <LiveSessionDue overtime={timer.extraTime || 0} />
+                              {booking.awaitingPayment && (
+                                <p className="mt-1 text-[11px] text-amber-300">Session ended · payment due</p>
+                              )}
                               {(timer.extraTime || 0) > STALE_OVERTIME_SECONDS && (
                                 <p className="mt-1 text-[11px] text-amber-300" title="Check out or release this session. You will be asked when play ended.">
                                   {Math.floor((timer.extraTime || 0) / 3600)}h past end. Still playing?
