@@ -126,7 +126,8 @@ export default function GamersCreditControl() {
   const { data: cachedCredit, refresh: refreshCredit } = useModuleCache<{ users: VendorUser[]; accounts: MonthlyCreditAccount[] }>(
     cacheKey,
     fetcher,
-    120000, undefined, Boolean(vendorId)
+    // The cache key is per staff member; live updates bump the per-vendor key.
+    120000, vendorId ? `gamers_credit:${vendorId}` : undefined, Boolean(vendorId)
   );
 
   useEffect(() => { setVendorId(selectedCafeId?Number(selectedCafeId):null);setAccounts([]);setStatementRows([]);setSettleUserId("");setDrawer(false);statementRequest.current++; },[selectedCafeId,activeStaff?.id]);
