@@ -46,6 +46,21 @@ interface PaymentSummary {
   line_items: PaymentSummaryLineItem[];
 }
 
+interface OvertimeQuote {
+  overtime_seconds: number;
+  rate_per_hour: number;
+  gross_amount: number;
+  already_recorded: number;
+  amount: number;
+  scheduled_end: string;
+  priced_until: string;
+  needs_end_time: boolean;
+}
+
+// "2026-11-22T04:28" in IST, for the datetime-local input.
+const istInputValue = (date: Date) =>
+  new Date(date.getTime() + 330 * 60 * 1000).toISOString().slice(0, 16);
+
 interface VendorUserSummary {
   id?: number;
   name: string;
@@ -86,6 +101,13 @@ const SettlementOverlay: React.FC<ExtraBookingOverlayProps> = ({
   const overlayRef = useRef<HTMLDivElement>(null);
   const [upiQr, setUpiQr] = useState<UpiQrState | null>(null);
   const qrReleaseStarted = useRef(false);
+  // Overtime is priced by the server; kiosk-metered time was billed in the step before.
+  const meteredByKiosk = Boolean(selectedSlot?.runtime?.runtime_id);
+  const [overtimeQuote, setOvertimeQuote] = useState<OvertimeQuote | null>(null);
+  const [quoteLoading, setQuoteLoading] = useState(false);
+  const [quoteError, setQuoteError] = useState("");
+  const [playedUntil, setPlayedUntil] = useState("");
+  const [chargeFullOvertime, setChargeFullOvertime] = useState(false);
 
   // Focus management for accessibility
   useEffect(() => {
@@ -176,15 +198,47 @@ const SettlementOverlay: React.FC<ExtraBookingOverlayProps> = ({
   }, [showOverlay, selectedSlot, summaryVersion]);
 
   useEffect(() => {
-    if (showOverlay && selectedSlot) {
-      const snapshotSeconds = calculateExtraTime(selectedSlot.endTime, selectedSlot.date);
-      setFrozenExtraSeconds(snapshotSeconds);
-      setSettlementPausedAt(new Date().toLocaleTimeString());
+    if (!showOverlay || !selectedSlot) {
+      setFrozenExtraSeconds(0);
+      setSettlementPausedAt("");
+      setOvertimeQuote(null);
       return;
     }
-    setFrozenExtraSeconds(0);
-    setSettlementPausedAt("");
-  }, [showOverlay, selectedSlot, calculateExtraTime]);
+    setSettlementPausedAt(new Date().toLocaleTimeString());
+    const bookingId = resolveBookingId(selectedSlot);
+    if (meteredByKiosk || !bookingId) {
+      setFrozenExtraSeconds(0);
+      setOvertimeQuote(null);
+      setQuoteError(bookingId ? "" : "Cannot price extra time: booking ID is missing.");
+      return;
+    }
+    const controller = new AbortController();
+    const params = new URLSearchParams();
+    const consoleId = selectedSlot.consoleId || selectedSlot.consoleNumber;
+    if (consoleId) params.set("console_id", String(consoleId));
+    if (playedUntil) params.set("played_until", playedUntil);
+    setQuoteLoading(true);
+    setQuoteError("");
+    fetch(`${BOOKING_URL}/api/booking/${bookingId}/overtime-quote?${params}`, {
+      cache: "no-store",
+      headers: { "Content-Type": "application/json", ...creditAuthHeaders() },
+      signal: controller.signal,
+    })
+      .then(async (response) => {
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok || !data?.quote) throw new Error(data?.message || "Could not price extra time");
+        setOvertimeQuote(data.quote as OvertimeQuote);
+        setFrozenExtraSeconds(Number(data.quote.overtime_seconds || 0));
+      })
+      .catch((error) => {
+        if (error?.name === "AbortError") return;
+        setOvertimeQuote(null);
+        setQuoteError(error instanceof Error ? error.message : "Could not price extra time");
+      })
+      .finally(() => setQuoteLoading(false));
+    return () => controller.abort();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showOverlay, selectedSlot, meteredByKiosk, playedUntil, summaryVersion]);
 
   useEffect(() => {
     if (!showOverlay || !selectedSlot || !vendorId || paymentMode !== "credit") return;
@@ -399,6 +453,14 @@ const SettlementOverlay: React.FC<ExtraBookingOverlayProps> = ({
     }
 
     if (loading) return;
+    if (!meteredByKiosk && (!overtimeQuote || quoteLoading)) {
+      setSettlementError(quoteError || "Extra time is still being priced. Try again in a moment.");
+      return;
+    }
+    if (overtimeQuote?.needs_end_time && !playedUntil && !chargeFullOvertime) {
+      setSettlementError("This session ran more than 3 hours over. Enter when play ended, or confirm the full time.");
+      return;
+    }
     setSettlementError("");
     setLoading(true);
     const extraTime = frozenExtraSeconds;
@@ -419,6 +481,8 @@ const SettlementOverlay: React.FC<ExtraBookingOverlayProps> = ({
       vendorId: vendorId,
       modeOfPayment: "pending",
       waiveOffAmount: 0,
+      played_until: playedUntil || undefined,
+      confirm_full_overtime: chargeFullOvertime,
     };
 
     try {
@@ -476,7 +540,6 @@ const SettlementOverlay: React.FC<ExtraBookingOverlayProps> = ({
     if (value === "" || /^[0-9]*\.?[0-9]*$/.test(value)) {
       setWaiveOffAmount(value);
       const parsedValue = parseFloat(value) || 0;
-      const localExtraAmount = calculateExtraAmount(frozenExtraSeconds, selectedSlot.slot_price || 100);
       const localPendingMeals = (paymentSummary?.line_items || [])
         .filter((item) => String(item.booking_type || "").toLowerCase() === "additional_meals" && isPendingStatus(item.settlement_status))
         .reduce((sum, item) => sum + Number(item.line_total || 0), 0);
@@ -500,9 +563,6 @@ const SettlementOverlay: React.FC<ExtraBookingOverlayProps> = ({
   };
 
   const computedExtraSeconds = frozenExtraSeconds;
-  const grossExtraAmount = selectedSlot
-    ? calculateExtraAmount(computedExtraSeconds, selectedSlot.slot_price || 100)
-    : 0;
   const pendingMealsAmount = (paymentSummary?.line_items || [])
     .filter((item) => String(item.booking_type || "").toLowerCase() === "additional_meals" && isPendingStatus(item.settlement_status))
     .reduce((sum, item) => sum + Number(item.line_total || 0), 0);
@@ -524,10 +584,8 @@ const SettlementOverlay: React.FC<ExtraBookingOverlayProps> = ({
     .filter((item) => String(item.booking_type || "").toLowerCase() === "extra" && isSettledStatus(item.settlement_status))
     .reduce((sum, item) => sum + Number(item.line_total || 0), 0);
   const totalPaidAmount = paidInitialAmount + paidMealsAmount + paidExtraAmount;
-  const recordedOvertime = (paymentSummary?.line_items || [])
-    .filter(item => String(item.booking_type || '').toLowerCase() === 'extra' && (isPendingStatus(item.settlement_status) || isSettledStatus(item.settlement_status)))
-    .reduce((sum,item) => sum + Number(item.components?.base_amount ?? item.line_total ?? 0),0);
-  const computedExtraAmount = Math.max(0, grossExtraAmount - recordedOvertime);
+  // The server subtracts overtime already recorded on this booking.
+  const computedExtraAmount = meteredByKiosk ? 0 : Number(overtimeQuote?.amount || 0);
   const parsedWaiveOff = parseFloat(waiveOffAmount) || 0;
   const dueBeforeWaive = computedExtraAmount + pendingMealsAmount + historicalPendingExtraAmount + pendingBaseAmount;
   const payableAmount = Math.max(dueBeforeWaive - parsedWaiveOff, 0);
@@ -615,9 +673,37 @@ const SettlementOverlay: React.FC<ExtraBookingOverlayProps> = ({
                     <p className="text-xs font-medium text-red-200">Extra time</p>
                     <p className="mt-1 inline-flex items-center gap-1 text-base font-bold text-red-300 sm:text-lg">
                       <Timer className="h-4 w-4" />
-                      {formatTime(computedExtraSeconds)}
+                      {meteredByKiosk ? "Billed in the step before" : quoteLoading && !overtimeQuote ? "Pricing…" : formatTime(computedExtraSeconds)}
                     </p>
+                    {overtimeQuote && overtimeQuote.overtime_seconds > 0 && (
+                      <p className="mt-1 text-[11px] text-red-200/80">
+                        ₹{overtimeQuote.rate_per_hour.toFixed(2)}/hour, priced by the server
+                        {overtimeQuote.already_recorded > 0 ? ` · ₹${overtimeQuote.already_recorded.toFixed(2)} already recorded` : ""}
+                      </p>
+                    )}
+                    {quoteError && <p role="alert" className="mt-1 text-[11px] text-amber-300">{quoteError}</p>}
                   </div>
+                  {!meteredByKiosk && (overtimeQuote?.needs_end_time || playedUntil) && (
+                    <div className="rounded-xl border border-amber-500/40 bg-amber-500/10 p-2.5 sm:p-3">
+                      <label htmlFor="played-until" className="text-xs font-medium text-amber-100">
+                        This session ran more than 3 hours over. When did play end?
+                      </label>
+                      <input
+                        id="played-until"
+                        type="datetime-local"
+                        className="mt-1 w-full rounded-md border border-amber-500/40 bg-zinc-900 px-2 py-1 text-sm text-zinc-100"
+                        max={istInputValue(new Date())}
+                        value={playedUntil}
+                        onChange={(e) => { setPlayedUntil(e.target.value); setChargeFullOvertime(false); }}
+                      />
+                      {!playedUntil && (
+                        <label className="mt-2 flex items-center gap-2 text-[11px] text-amber-100">
+                          <input type="checkbox" checked={chargeFullOvertime} onChange={(e) => setChargeFullOvertime(e.target.checked)} />
+                          They really played the whole time. Charge it all.
+                        </label>
+                      )}
+                    </div>
+                  )}
                 </div>
                 {(summaryLoading || summaryError) && (
                   <div className="mb-4 rounded-lg border border-zinc-700/70 bg-zinc-800/50 px-3 py-2">
@@ -892,6 +978,11 @@ const SettlementOverlay: React.FC<ExtraBookingOverlayProps> = ({
 
 
 export default function ExtraBookingOverlay(props:ExtraBookingOverlayProps) {
-  if(props.showOverlay&&props.selectedSlot?.runtime?.runtime_id&&props.vendorId)return <ExtensionSettlement runtimeId={props.selectedSlot.runtime.runtime_id} vendorId={props.vendorId} onClose={()=>props.setShowOverlay(false)} onUpdated={()=>props.setRefreshSlots(prev=>!prev)}/>;
+  // Kiosk sessions check out in two steps: first the metered extra time, then
+  // the normal bill (unpaid booking, meals, discount) and console release.
+  const runtimeId = props.selectedSlot?.runtime?.runtime_id as string | undefined;
+  const [extensionPaidFor, setExtensionPaidFor] = useState<string | null>(null);
+  useEffect(() => { if (!props.showOverlay) setExtensionPaidFor(null); }, [props.showOverlay]);
+  if(props.showOverlay&&runtimeId&&props.vendorId&&extensionPaidFor!==runtimeId)return <ExtensionSettlement runtimeId={runtimeId} vendorId={props.vendorId} onClose={()=>props.setShowOverlay(false)} onUpdated={()=>props.setRefreshSlots(prev=>!prev)} onContinue={()=>setExtensionPaidFor(runtimeId)}/>;
   return <SettlementOverlay key={`${props.vendorId}:${props.selectedSlot?.bookingId || props.selectedSlot?.bookId}:${props.showOverlay}`} {...props}/>;
 }
