@@ -87,6 +87,19 @@ const calculateExtraTime = (endTime: string, date: string) => {
   return Math.max(Math.floor((Date.now() - endUtcMs) / 1000), 0);
 };
 
+// A kiosk session's clock stops when it ends or reaches its stop time, so the
+// row cannot keep showing growing "Extra time" for play that was not billed.
+const runtimeNow = (runtime: { ended_at?: string | null; stop_at?: string | null } | null | undefined) => {
+  const now = Date.now();
+  const ended = runtime?.ended_at ? Date.parse(runtime.ended_at) : NaN;
+  if (Number.isFinite(ended)) return Math.min(now, ended);
+  const stop = runtime?.stop_at ? Date.parse(runtime.stop_at) : NaN;
+  return Number.isFinite(stop) ? Math.min(now, stop) : now;
+};
+
+// Matches the server: past this, check out asks when play really ended.
+const STALE_OVERTIME_SECONDS = 3 * 3600;
+
 const calculateDuration = (startTime: string, endTime: string) => {
   if (!startTime || !endTime) return 0;
   const parseTimeToMinutes = (timeStr: string) => {
@@ -780,8 +793,8 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
       endTime: slot.endTime,
       date: slot.date,
       runtime: slot.runtime,
-      elapsedTime: slot.runtime ? Math.max(0,Math.floor((Date.now()-Date.parse(slot.runtime.started_at))/1000)) : calculateElapsedTime(slot.startTime || '', slot.date || ''),
-      extraTime: slot.runtime ? Math.max(0,Math.floor((Date.now()-Date.parse(slot.runtime.reserved_until))/1000)) : calculateExtraTime(slot.endTime || '', slot.date || ''),
+      elapsedTime: slot.runtime ? Math.max(0,Math.floor((runtimeNow(slot.runtime)-Date.parse(slot.runtime.started_at))/1000)) : calculateElapsedTime(slot.startTime || '', slot.date || ''),
+      extraTime: slot.runtime ? Math.max(0,Math.floor((runtimeNow(slot.runtime)-Date.parse(slot.runtime.reserved_until))/1000)) : calculateExtraTime(slot.endTime || '', slot.date || ''),
       duration: slot.runtime ? Math.max(1,Math.floor((Date.parse(slot.runtime.reserved_until)-Date.parse(slot.runtime.started_at))/1000)) : calculateDuration(slot.startTime || '', slot.endTime || ''),
     }));
     setTimers(initialTimers);
@@ -859,8 +872,8 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
       setTimers((prevTimers) =>
         prevTimers.map((timer) => ({
           ...timer,
-          elapsedTime: timer.runtime ? Math.max(0,Math.floor((Date.now()-Date.parse(timer.runtime.started_at))/1000)) : calculateElapsedTime(timer.startTime || '', timer.date || ''),
-          extraTime: timer.runtime ? Math.max(0,Math.floor((Date.now()-Date.parse(timer.runtime.reserved_until))/1000)) : calculateExtraTime(timer.endTime || '', timer.date || ''),
+          elapsedTime: timer.runtime ? Math.max(0,Math.floor((runtimeNow(timer.runtime)-Date.parse(timer.runtime.started_at))/1000)) : calculateElapsedTime(timer.startTime || '', timer.date || ''),
+          extraTime: timer.runtime ? Math.max(0,Math.floor((runtimeNow(timer.runtime)-Date.parse(timer.runtime.reserved_until))/1000)) : calculateExtraTime(timer.endTime || '', timer.date || ''),
         }))
       );
     }, 1000);
@@ -1601,6 +1614,11 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                             {/* Extra Time cell - unchanged */}
                             <td className="px-3 py-3 md:px-4">
                               <LiveSessionDue overtime={timer.extraTime || 0} />
+                              {(timer.extraTime || 0) > STALE_OVERTIME_SECONDS && (
+                                <p className="mt-1 text-[11px] text-amber-300" title="Check out or release this session. You will be asked when play ended.">
+                                  {Math.floor((timer.extraTime || 0) / 3600)}h past end. Still playing?
+                                </p>
+                              )}
                             </td>
 
                             {/* Action cell - unchanged */}
