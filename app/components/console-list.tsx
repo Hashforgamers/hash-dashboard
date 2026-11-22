@@ -1,6 +1,7 @@
 "use client";
 import { cn } from "@/lib/utils";
 import CafeAuditPanel from "./cafe-audit-panel";
+import ConsoleLockPanel, { ConsoleLockBadge, useConsoleTvStations } from "./console-lock-panel";
 import {Dialog,DialogContent,DialogHeader,DialogTitle} from "@/components/ui/dialog";
 
 
@@ -37,6 +38,7 @@ import {
   HardDrive,
   Activity,
   RotateCcw,
+  Tv,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useSearchParams } from "next/navigation";
@@ -59,6 +61,7 @@ interface ConsoleListProps {
 
 export function ConsoleList({ onEdit, refreshKey = 0 }: ConsoleListProps) {
   const [historyConsole,setHistoryConsole]=useState<{id:number;name:string}|null>(null);
+  const [tvConsole,setTvConsole]=useState<{id:number;name:string}|null>(null);
   const [deleteTarget, setDeleteTarget] = useState<{ id: number; name: string } | null>(null);
   const [data, setdata] = useState<any[]>([]);
   const { vendorId: cachedVendorId, consoles: cachedConsoles, refreshConsoles, setConsoles: setCachedConsoles } = useDashboardData();
@@ -129,6 +132,9 @@ export function ConsoleList({ onEdit, refreshKey = 0 }: ConsoleListProps) {
     }
     loadConsoles(vendorId);
   }, [vendorId, refreshKey, cachedConsoles]); // rerun when vendor changes or caller asks refresh
+  // Console Lock TV status per station (empty until the server has the feature).
+  const { stations: tvStations, available: tvAvailable, refresh: refreshTv } = useConsoleTvStations(vendorId);
+  const tvByStation = useMemo(() => new Map(tvStations.map((s) => [s.stationId, s])), [tvStations]);
 
   useEffect(() => {
     const handleRefresh = () => {
@@ -383,6 +389,7 @@ export function ConsoleList({ onEdit, refreshKey = 0 }: ConsoleListProps) {
                             </p>
                           </div>
                         </div>
+                        {console.type !== "pc" && <ConsoleLockBadge station={tvByStation.get(console.id)} />}
                         {console.type === "pc" && console.kioskLinked && (
                           <TooltipProvider>
                             <Tooltip>
@@ -483,6 +490,11 @@ export function ConsoleList({ onEdit, refreshKey = 0 }: ConsoleListProps) {
                             <DropdownMenuItem onSelect={() => setHistoryConsole({ id: console.id, name: console.name })}>
                               <History className="mr-2 h-4 w-4" />Session history
                             </DropdownMenuItem>
+                            {console.type !== "pc" && tvAvailable && (
+                              <DropdownMenuItem onSelect={() => setTvConsole({ id: console.id, name: console.name })}>
+                                <Tv className="mr-2 h-4 w-4" />Console Lock TV
+                              </DropdownMenuItem>
+                            )}
                             {console.type === "pc" && console.kioskLinked && (
                               <DropdownMenuItem disabled={unlinkingConsoleId === console.id || deletingConsoleId !== null} onSelect={() => handleUnlink(console)}>
                                 <Power className="mr-2 h-4 w-4" />Unlink kiosk
@@ -592,6 +604,7 @@ export function ConsoleList({ onEdit, refreshKey = 0 }: ConsoleListProps) {
         </AlertDialogContent>
       </AlertDialog>
       <Dialog open={!!historyConsole} onOpenChange={open=>{if(!open)setHistoryConsole(null);}}><DialogContent className="max-h-[85vh] max-w-6xl overflow-y-auto"><DialogHeader><DialogTitle>{historyConsole?.name||'Console'} — session history</DialogTitle></DialogHeader>{historyConsole&&vendorId&&<CafeAuditPanel key={`${vendorId}:${historyConsole.id}`} vendorId={vendorId} consoleId={historyConsole.id}/>}</DialogContent></Dialog>
+      <Dialog open={!!tvConsole} onOpenChange={open=>{if(!open)setTvConsole(null);}}><DialogContent className="max-h-[85vh] max-w-3xl overflow-y-auto"><DialogHeader><DialogTitle>{tvConsole?.name||'Console'} — Console Lock TV</DialogTitle></DialogHeader>{tvConsole&&vendorId&&<ConsoleLockPanel key={`${vendorId}:${tvConsole.id}`} vendorId={vendorId} consoleId={tvConsole.id} onChanged={()=>{void refreshTv();}}/>}</DialogContent></Dialog>
     </div>
   );
 }
