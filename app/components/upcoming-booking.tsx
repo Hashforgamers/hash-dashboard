@@ -211,113 +211,92 @@ const getBookingEmail = (booking: any): string => {
 };
 
 
-// Helper function for merging consecutive bookings
+// Back-to-back bookings by the same gamer for the same game are one visit:
+// show them as one card (2:00 - 3:00), even when bought separately, with
+// different codes or payment states, or across midnight.
 const mergeConsecutiveBookings = (bookings: any[]) => {
   if (!bookings || !Array.isArray(bookings) || bookings.length === 0) {
     return [];
   }
 
-  const byDate = bookings.reduce((acc: any, booking) => {
-    const date = booking?.date || new Date().toISOString().split('T')[0];
-    if (!acc[date]) acc[date] = [];
-    acc[date].push(booking);
-    return acc;
-  }, {});
-
-  const parseTime = (time: string): Date => {
-    if (!time || typeof time !== 'string') {
-      console.warn('parseTime expected a string but received:', time);
-      return new Date(1970, 0, 1, 0, 0);
-    }
-
-    const [timePart, period] = time.trim().split(" ");
-    let [hours, minutes] = timePart.split(":").map(Number);
-    if (period === "PM" && hours < 12) hours += 12;
-    if (period === "AM" && hours === 12) hours = 0;
-    return new Date(1970, 0, 1, hours, minutes);
+  const to12Hour = (date: Date) => {
+    let hours = date.getHours();
+    const minutes = date.getMinutes().toString().padStart(2, "0");
+    const period = hours >= 12 ? "PM" : "AM";
+    hours = hours % 12 || 12;
+    return `${hours}:${minutes} ${period}`;
+  };
+  const awaitingAcceptance = (booking: any) =>
+    String(booking?.bookingRecordStatus || booking?.status || "").toLowerCase() === "pending_acceptance";
+  const groupKey = (booking: any) => {
+    const userId = booking?.userId || booking?.user_id;
+    const owner = userId ? `u${userId}` : `b${booking?.bookingId}`;
+    const gameId = booking?.game_id || booking?.gameId || "unknown";
+    const reservation = [...(booking?.squadDetails?.desk_console_ids || [])].sort((a: number, b: number) => a - b).join(",");
+    // A slot still waiting for the cafe to accept it needs its own Accept/Reject.
+    return `${owner}_${gameId}_${awaitingAcceptance(booking) ? "await" : "ok"}_${reservation}`;
   };
 
-  const formatTimeRange = (start: Date, end: Date): string => {
-    const to12Hour = (date: Date) => {
-      let hours = date.getHours();
-      const minutes = date.getMinutes().toString().padStart(2, "0");
-      const period = hours >= 12 ? "PM" : "AM";
-      hours = hours % 12 || 12;
-      return `${hours}:${minutes} ${period}`;
-    };
-    return `${to12Hour(start)} - ${to12Hour(end)}`;
-  };
+  const timed: Array<{ booking: any; start: number; end: number }> = [];
+  const untimed: any[] = [];
+  for (const booking of bookings) {
+    const range = getBookingTimeRange(booking);
+    if (range) timed.push({ booking, start: range.start.getTime(), end: range.end.getTime() });
+    else untimed.push({ ...booking, merged_booking_ids: [booking?.bookingId], duration: 1 });
+  }
 
-  const mergedResults: any[] = [];
+  const groups = new Map<string, typeof timed>();
+  for (const item of timed) {
+    const key = groupKey(item.booking);
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key)!.push(item);
+  }
 
-  Object.entries(byDate).forEach(([date, dateBookings]) => {
-    const grouped = (dateBookings as any[]).reduce((acc: any, booking) => {
-      const userId = booking?.userId || 'unknown';
-      const gameId = booking?.game_id || 'unknown';
-      // Separate codes represent separate kiosk redemptions; keep their cards separate.
-      const accessCode = booking?.access_code || booking?.accessCode || booking?.bookingId;
-      const reservation = [...(booking?.squadDetails?.desk_console_ids || [])].sort((a:number,b:number)=>a-b).join(",");
-      const key = `${userId}_${gameId}_${accessCode}_${paymentBadge(booking)}_${reservation}`;
-      if (!acc[key]) acc[key] = [];
-      acc[key].push(booking);
-      return acc;
-    }, {});
-
-    Object.values(grouped).forEach((group: any) => {
-      const sorted = (group as any[]).sort((a, b) => {
-        const [aStartRaw] = splitBookingTimeRange(a);
-        const [bStartRaw] = splitBookingTimeRange(b);
-        const aStart = parseTime(aStartRaw);
-        const bStart = parseTime(bStartRaw);
-        return aStart.getTime() - bStart.getTime();
-      });
-
-      let current = { ...sorted[0] };
-      const [currentStartRaw, currentEndRaw] = splitBookingTimeRange(current);
-      let currentStart = parseTime(currentStartRaw);
-      let currentEnd = parseTime(currentEndRaw);
-      let mergedIds = [current.bookingId];
-      let totalPrice = current.slot_price || 0;
-
-      for (let i = 1; i < sorted.length; i++) {
-        const next = sorted[i];
-        const [nextStartRaw, nextEndRaw] = splitBookingTimeRange(next);
-        const nextStart = parseTime(nextStartRaw);
-        const nextEnd = parseTime(nextEndRaw);
-
-        if (nextStart.getTime() <= currentEnd.getTime()) {
-          currentEnd = new Date(Math.max(currentEnd.getTime(), nextEnd.getTime()));
-          mergedIds.push(next.bookingId);
-          totalPrice += next.slot_price || 0;
-        } else {
-          current.time = formatTimeRange(currentStart, currentEnd);
-          current.merged_booking_ids = mergedIds;
-          current.total_price = totalPrice;
-          current.duration = mergedIds.length;
-          mergedResults.push(current);
-
-          current = { ...next };
-          currentStart = nextStart;
-          currentEnd = nextEnd;
-          mergedIds = [next.bookingId];
-          totalPrice = next.slot_price || 0;
-        }
-      }
-
-      current.time = formatTimeRange(currentStart, currentEnd);
-      current.merged_booking_ids = mergedIds;
-      current.total_price = totalPrice;
-      current.duration = mergedIds.length;
-      mergedResults.push(current);
+  const mergedResults: any[] = [...untimed];
+  const flush = (run: typeof timed) => {
+    const first = run[0].booking;
+    const start = run[0].start;
+    const end = Math.max(...run.map((r) => r.end));
+    const members = run.map((r) => r.booking);
+    const codes = Array.from(new Set(members.map((b) => b?.access_code || b?.accessCode).filter(Boolean)));
+    const badges = Array.from(new Set(members.map((b) => paymentBadge(b))));
+    mergedResults.push({
+      ...first,
+      time: `${to12Hour(new Date(start))} - ${to12Hour(new Date(end))}`,
+      merged_booking_ids: members.map((b) => b.bookingId),
+      merged_bookings: members,
+      merged_access_codes: codes,
+      merged_payment_badge: badges.length > 1 ? (badges.includes("Paid") ? "Part paid" : "Payment due") : badges[0],
+      total_price: members.reduce((sum, b) => sum + (Number(b?.slot_price) || 0), 0),
+      duration: members.length,
     });
+  };
+
+  groups.forEach((items) => {
+    items.sort((a, b) => a.start - b.start);
+    let run = [items[0]];
+    let runEnd = items[0].end;
+    for (let i = 1; i < items.length; i++) {
+      const next = items[i];
+      if (next.start <= runEnd) {
+        run.push(next);
+        runEnd = Math.max(runEnd, next.end);
+      } else {
+        flush(run);
+        run = [next];
+        runEnd = next.end;
+      }
+    }
+    flush(run);
   });
 
+  const startOf = (booking: any) => getBookingTimeRange(booking)?.start.getTime() ?? 0;
   return mergedResults.sort((a, b) => {
     const da = parseBookingDateLocal(a.date);
     const db = parseBookingDateLocal(b.date);
     const ta = da ? da.getTime() : 0;
     const tb = db ? db.getTime() : 0;
-    return ta - tb;
+    return ta - tb || startOf(a) - startOf(b);
   });
 };
 
@@ -1071,7 +1050,7 @@ export function UpcomingBookings({
                       0
                     );
                     const hasMeals = Boolean(booking?.hasMeals);
-                    const paymentBadgeLabel = paymentBadge(booking);
+                    const paymentBadgeLabel = booking?.merged_payment_badge || paymentBadge(booking);
                     const isPaidBooking = paymentBadgeLabel === "Paid";
                     const bookingRecordStatus = String(
                       booking?.bookingRecordStatus || booking?.status || ""
@@ -1185,7 +1164,7 @@ export function UpcomingBookings({
                             <KeyRound className="h-3.5 w-3.5 shrink-0 text-blue-300" />
                             <span className="text-[11px] text-zinc-300">Access code</span>
                             <span className="select-all font-mono text-sm font-semibold tracking-widest text-blue-100">
-                              {booking.access_code || booking.accessCode || "Unavailable"}
+                              {(booking.merged_access_codes?.length ? booking.merged_access_codes.join(" · ") : null) || booking.access_code || booking.accessCode || "Unavailable"}
                             </span>
                           </div>
                           {(booking.access_code || booking.accessCode) && (
@@ -1268,7 +1247,7 @@ export function UpcomingBookings({
                               type="button"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                openCancelDialog(booking, isPaidBooking);
+                                openCancelDialog(booking, isPaidBooking || paymentBadgeLabel === "Part paid");
                               }}
                               className={cn(buttonVariants({ variant: "soft-danger", size: "sm" }), "min-w-[86px] sm:min-w-[92px]")}
                             >
