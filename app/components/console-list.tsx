@@ -242,6 +242,7 @@ export function ConsoleList({ onEdit, refreshKey = 0 }: ConsoleListProps) {
       window.dispatchEvent(new Event("refresh-dashboard"));
     } catch (error) {
       console.error("Failed to release console:", error);
+      toast.error("Couldn't release the PC. Please try again.");
     } finally {
       setReleasingConsoleId(null);
     }
@@ -428,7 +429,7 @@ export function ConsoleList({ onEdit, refreshKey = 0 }: ConsoleListProps) {
                                   </button>
                                 </TooltipTrigger>
                                 <TooltipContent side="top" className="max-w-xs text-xs leading-relaxed">
-                                  <p>Gamer: {console.currentUsername || "Session details unavailable"}</p>
+                                  <p>Gamer: {console.currentUsername || (console.currentBookingId || console.currentQrSessionId ? "Walk-in gamer" : "No active session. Release to free this PC.")}</p>
                                   <p>Session: {console.currentStartTime || "--"} - {console.currentEndTime || "--"}</p>
                                   <p>Collectible: Rs {console.collectibleAmount.toFixed(2)}</p>
                                 </TooltipContent>
