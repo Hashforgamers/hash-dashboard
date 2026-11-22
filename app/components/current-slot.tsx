@@ -366,6 +366,33 @@ const getBookingIdString = (slot: any): string => {
   return bookingId === null || bookingId === undefined ? "" : String(bookingId).trim();
 };
 
+// Closed, unpaid sessions of one gamer are paid together: one row, one bill.
+const groupAwaitingPayment = (slots: any[]) => {
+  const out: any[] = [];
+  const byGamer = new Map<string, any>();
+  for (const slot of slots) {
+    if (!slot?.awaitingPayment) { out.push(slot); continue; }
+    const ids = [slot, ...(Array.isArray(slot.bookings) ? slot.bookings : [])]
+      .map((b: any) => Number(b?.bookingId || b?.bookId || b?.booking_id))
+      .filter((n: number) => Number.isFinite(n) && n > 0);
+    const key = String(slot.userId ?? slot.user_id ?? slot.username ?? ids[0]);
+    const group = byGamer.get(key);
+    if (!group) {
+      const row = { ...slot, awaitingBookingIds: Array.from(new Set(ids)) };
+      byGamer.set(key, row);
+      out.push(row);
+      continue;
+    }
+    for (const id of ids) if (!group.awaitingBookingIds.includes(id)) group.awaitingBookingIds.push(id);
+    const consoles = new Set(String(group.consoleType || "").split(", ").filter(Boolean));
+    if (slot.consoleType) consoles.add(String(slot.consoleType));
+    group.consoleType = Array.from(consoles).join(", ");
+    group.endTime = slot.endTime || group.endTime;
+    group.hasMeals = Boolean(group.hasMeals || slot.hasMeals);
+  }
+  return out;
+};
+
 const normalizeLiveSlot = (slot: any) => {
   const entries = Array.isArray(slot?.bookings) ? slot.bookings : [];
   const firstEntry = entries[0] || null;
@@ -776,7 +803,7 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
 
   // Update filtered slots and timers
   useEffect(() => {
-    const mergedSlots = mergeConsecutiveBookings(currentSlots);
+    const mergedSlots = groupAwaitingPayment(mergeConsecutiveBookings(currentSlots));
     const filtered = searchQuery
       ? mergedSlots.filter(
           (slot) =>
@@ -1129,7 +1156,7 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
 
                         <div className="mt-3 flex items-center justify-between gap-3">
                           <div><p className="mb-1 text-xs text-muted-foreground">Duration</p><LiveSessionTiming elapsed={timer.elapsedTime || 0} /></div>
-                          <LiveSessionDue overtime={timer.extraTime || 0} />
+                          <LiveSessionDue overtime={timer.extraTime || 0} paymentDue={Boolean(booking.awaitingPayment)} />
                         </div>
 
                         <div className="mt-3 grid grid-cols-2 gap-1.5 sm:gap-2">
@@ -1614,9 +1641,11 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
 
                             {/* Extra Time cell - unchanged */}
                             <td className="px-3 py-3 md:px-4">
-                              <LiveSessionDue overtime={timer.extraTime || 0} />
+                              <LiveSessionDue overtime={timer.extraTime || 0} paymentDue={Boolean(booking.awaitingPayment)} />
                               {booking.awaitingPayment && (
-                                <p className="mt-1 text-[11px] text-amber-300">Session ended · payment due</p>
+                                <p className="mt-1 text-[11px] text-amber-300">
+                                  {(booking.awaitingBookingIds?.length || 1) > 1 ? `${booking.awaitingBookingIds.length} sessions · one bill` : "Session ended"}
+                                </p>
                               )}
                               {(timer.extraTime || 0) > STALE_OVERTIME_SECONDS && (
                                 <p className="mt-1 text-[11px] text-amber-300" title="Check out or release this session. You will be asked when play ended.">
