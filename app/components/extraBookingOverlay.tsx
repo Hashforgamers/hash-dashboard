@@ -23,6 +23,7 @@ interface ExtraBookingOverlayProps {
 
 interface PaymentSummaryLineItem {
   transaction_id: number;
+  booking_id?: number;
   payment_use_case?: string;
   booking_type?: string;
   mode_of_payment?: string;
@@ -106,6 +107,11 @@ const SettlementOverlay: React.FC<ExtraBookingOverlayProps> = ({
   // A closed session left only its bill: no running clock and no PC to free.
   const sessionClosed = Boolean(selectedSlot?.awaitingPayment);
   const noOvertime = meteredByKiosk || sessionClosed;
+  // One gamer's closed, unpaid sessions are settled as a single bill.
+  const groupBookingIds: number[] = sessionClosed && Array.isArray(selectedSlot?.awaitingBookingIds)
+    ? Array.from(new Set<number>(selectedSlot.awaitingBookingIds.map(Number).filter((n: number) => Number.isFinite(n) && n > 0)))
+    : [];
+  const isGroupBill = groupBookingIds.length > 1;
   const [overtimeQuote, setOvertimeQuote] = useState<OvertimeQuote | null>(null);
   const [quoteLoading, setQuoteLoading] = useState(false);
   const [quoteError, setQuoteError] = useState("");
@@ -159,26 +165,35 @@ const SettlementOverlay: React.FC<ExtraBookingOverlayProps> = ({
       try {
         setSummaryLoading(true);
         setSummaryError("");
-        const response = await fetch(`${BOOKING_URL}/api/booking/${bookingId}/payment-summary`, {
-          method: "GET",
-          cache: "no-store",
-          headers: {
-            "Content-Type": "application/json",
-            ...creditAuthHeaders(),
-          },
-          signal: controller.signal,
-        });
-
-        if (!response.ok) {
-          throw new Error(`Failed to fetch payment summary (${response.status})`);
-        }
-
-        const result = await response.json();
-        if (isMounted && result?.success && result?.financial_summary) {
-          setPaymentSummary(result.financial_summary as PaymentSummary);
+        const ids = isGroupBill ? groupBookingIds : [bookingId];
+        const summaries = await Promise.all(ids.map(async (id) => {
+          const response = await fetch(`${BOOKING_URL}/api/booking/${id}/payment-summary`, {
+            method: "GET",
+            cache: "no-store",
+            headers: {
+              "Content-Type": "application/json",
+              ...creditAuthHeaders(),
+            },
+            signal: controller.signal,
+          });
+          if (!response.ok) {
+            throw new Error(`Failed to fetch payment summary (${response.status})`);
+          }
+          const result = await response.json();
+          if (!result?.success || !result?.financial_summary) {
+            throw new Error("The server did not return a valid payment summary.");
+          }
+          const summary = result.financial_summary as PaymentSummary;
+          return { ...summary, line_items: (summary.line_items || []).map((item) => ({ ...item, booking_id: id })) };
+        }));
+        if (isMounted) {
+          setPaymentSummary({
+            total_charged: summaries.reduce((sum, x) => sum + Number(x.total_charged || 0), 0),
+            amount_paid: summaries.reduce((sum, x) => sum + Number(x.amount_paid || 0), 0),
+            amount_due: summaries.reduce((sum, x) => sum + Number(x.amount_due || 0), 0),
+            line_items: summaries.flatMap((x) => x.line_items),
+          });
           setSummaryBookingId(bookingId);
-        } else if (isMounted) {
-          throw new Error("The server did not return a valid payment summary.");
         }
       } catch (error: any) {
         if (error?.name === "AbortError") return;
@@ -198,6 +213,7 @@ const SettlementOverlay: React.FC<ExtraBookingOverlayProps> = ({
       isMounted = false;
       controller.abort();
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showOverlay, selectedSlot, summaryVersion]);
 
   useEffect(() => {
@@ -513,12 +529,31 @@ const SettlementOverlay: React.FC<ExtraBookingOverlayProps> = ({
         ? Array.from(bookingTypesSet)
         : ["extra", "additional_meals"];
 
+      const settleMode = paymentMode === "credit" ? "monthly_credit" : paymentMode === "upi_qr" ? "upi" : paymentMode;
+      if (isGroupBill) {
+        // Settle every unpaid session of this gamer; the discount is used up
+        // booking by booking so no single bill goes below zero.
+        let waiveLeft = parsedWaiveOff;
+        for (const id of groupBookingIds) {
+          const items = (paymentSummary?.line_items || []).filter((item) =>
+            item.booking_id === id && isPendingStatus(item.settlement_status)
+            && normalizeBookingType(item.booking_type) !== "settlement_waive_off");
+          const due = items.reduce((sum, item) => sum + Number(item.line_total || 0), 0);
+          if (due <= 0.009) continue;
+          const waive = Math.min(waiveLeft, due);
+          waiveLeft -= waive;
+          const types = Array.from(new Set(items.map((item) => normalizeBookingType(item.booking_type)).filter(Boolean)));
+          await settlePendingBookingCharges(id, settleMode, waive, types.length > 0 ? types : bookingTypesPayload);
+        }
+        await releaseAndClose();
+        return;
+      }
       if (paymentMode === "upi_qr" && payableAmount > 0) {
         await startUpiQr(bookingId, parsedWaiveOff, bookingTypesPayload);
         setLoading(false);
         return;
       }
-      await settlePendingBookingCharges(bookingId, paymentMode === "credit" ? "monthly_credit" : paymentMode === "upi_qr" ? "upi" : paymentMode, parsedWaiveOff, bookingTypesPayload);
+      await settlePendingBookingCharges(bookingId, settleMode, parsedWaiveOff, bookingTypesPayload);
       console.log('💰 Pending charges settled successfully');
 
       await releaseAndClose();
@@ -662,7 +697,7 @@ const SettlementOverlay: React.FC<ExtraBookingOverlayProps> = ({
                     </span>
                     <span className="inline-flex items-center gap-1.5 rounded-md bg-zinc-700/70 px-2.5 py-1">
                       <Receipt className="h-4 w-4 text-emerald-300" />
-                      Booking #{resolveBookingId(selectedSlot) || "N/A"}
+                      {isGroupBill ? `Bookings ${groupBookingIds.map((id) => `#${id}`).join(", ")}` : `Booking #${resolveBookingId(selectedSlot) || "N/A"}`}
                     </span>
                   </div>
                   <p className="mt-2 text-xs text-zinc-300 sm:text-sm">
@@ -812,7 +847,7 @@ const SettlementOverlay: React.FC<ExtraBookingOverlayProps> = ({
                       { key: "upi_qr", label: "UPI QR (auto)", Icon: QrCode },
                       { key: "upi", label: "Café UPI", Icon: Smartphone },
                       { key: "credit", label: "Credit", Icon: Wallet },
-                    ].map(({ key, label, Icon }) => (
+                    ].filter(({ key }) => !(isGroupBill && key === "upi_qr")).map(({ key, label, Icon }) => (
                       <motion.button
                         key={key}
                         disabled={!!upiQr}
