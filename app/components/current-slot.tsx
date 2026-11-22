@@ -100,6 +100,48 @@ const runtimeNow = (runtime: { ended_at?: string | null; stop_at?: string | null
 // Matches the server: past this, check out asks when play really ended.
 const STALE_OVERTIME_SECONDS = 3 * 3600;
 
+// The status cell's one muted line under the pill: what the desk should know,
+// in a few words, never cut off.
+const liveStatusDetail = (booking: any, extraSeconds: number): string => {
+  const bills = booking?.billBookingIds?.length || 1;
+  const parts: string[] = [];
+  if (booking?.consoleConflict) parts.push("Another session is on this PC");
+  if (booking?.awaitingPayment) parts.push(bills > 1 ? `${bills} bookings, one bill` : "Session ended");
+  else if (booking?.paymentDue) parts.push(`${bills} bookings, one bill`);
+  if (extraSeconds > STALE_OVERTIME_SECONDS) parts.push(`Ended ${Math.floor(extraSeconds / 3600)}h ago`);
+  return parts.join(" · ");
+};
+
+// Two stations can share a model name (both "HASHPC01"), which made two
+// different PCs look like one PC with two gamers. Add the station number or
+// id when a label is not unique, and flag two live rows on the same console.
+const labelLiveConsoles = (rows: any[]) => {
+  const live = rows.filter((row) => !row.awaitingPayment);
+  const idsByLabel = new Map<string, Set<string>>();
+  const rowsByConsole = new Map<string, number>();
+  for (const row of live) {
+    const label = String(row.consoleType || "");
+    const id = row.consoleId == null ? "" : String(row.consoleId);
+    if (!label || !id) continue;
+    if (!idsByLabel.has(label)) idsByLabel.set(label, new Set());
+    idsByLabel.get(label)!.add(id);
+    rowsByConsole.set(id, (rowsByConsole.get(id) || 0) + 1);
+  }
+  return rows.map((row) => {
+    if (row.awaitingPayment) return row;
+    const label = String(row.consoleType || "");
+    const id = row.consoleId == null ? "" : String(row.consoleId);
+    if (!label || !id) return row;
+    const next = { ...row };
+    if ((idsByLabel.get(label)?.size || 0) > 1) {
+      const code = String(row.consoleCode || row.consoleNumber || "").trim();
+      next.consoleType = `${label} (${code && code !== label && code !== id ? code : `ID ${id}`})`;
+    }
+    if ((rowsByConsole.get(id) || 0) > 1) next.consoleConflict = true;
+    return next;
+  });
+};
+
 const calculateDuration = (startTime: string, endTime: string) => {
   if (!startTime || !endTime) return 0;
   const parseTimeToMinutes = (timeStr: string) => {
@@ -824,7 +866,7 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
 
   // Update filtered slots and timers
   useEffect(() => {
-    const mergedSlots = groupAwaitingPayment(mergeConsecutiveBookings(currentSlots));
+    const mergedSlots = labelLiveConsoles(groupAwaitingPayment(mergeConsecutiveBookings(currentSlots)));
     const filtered = searchQuery
       ? mergedSlots.filter(
           (slot) =>
@@ -1191,7 +1233,12 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
 
                         <div className="mt-3 flex items-center justify-between gap-3">
                           <div><p className="mb-1 text-xs text-muted-foreground">Duration</p><LiveSessionTiming elapsed={timer.elapsedTime || 0} /></div>
-                          <LiveSessionDue overtime={timer.extraTime || 0} paymentDue={Boolean(booking.awaitingPayment || booking.paymentDue)} />
+                          <LiveSessionDue
+                            overtime={timer.extraTime || 0}
+                            paymentDue={Boolean(booking.awaitingPayment || booking.paymentDue)}
+                            stale={(timer.extraTime || 0) > STALE_OVERTIME_SECONDS}
+                            detail={liveStatusDetail(booking, timer.extraTime || 0)}
+                          />
                         </div>
 
                         <div className="mt-3 grid grid-cols-2 gap-1.5 sm:gap-2">
@@ -1413,7 +1460,7 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                                       <button
                                         type="button"
                                         onClick={() => setContactOverlay({ open: true, booking })}
-                                        className="live-session-customer-name truncate text-left font-semibold text-blue-300 hover:text-blue-200 transition-colors"
+                                        className="live-session-customer-name truncate text-left font-semibold text-foreground underline-offset-2 hover:underline"
                                         title="View customer contact details"
                                       >
                                         {booking.username || 'Guest'}
@@ -1443,7 +1490,6 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                                         : ""}
                                     </div>
                                   )}
-                                  <div className="live-session-customer-meta text-xs text-zinc-400">Regular booking</div>
                                 </div>
                                 
                                 {/* ✅ ENHANCED: Conditional rendering of meal/add food buttons */}
@@ -1467,11 +1513,11 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                                         }
                                         handleMealIconClick(bookingIdToCheck, booking.username || 'Guest User');
                                       }}
-                                      className="group flex flex-shrink-0 items-center gap-1 rounded-full border border-emerald-400/30 bg-emerald-500/10 p-1.5 transition-all duration-200 hover:bg-emerald-500/20"
+                                      className="group flex flex-shrink-0 items-center gap-1 rounded-md border border-border px-1.5 py-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                                       title="View meals & add more"
                                     >
-                                      <UtensilsCrossed className="h-3 w-3 text-emerald-300 transition-colors group-hover:text-emerald-200 sm:h-4 sm:w-4" />
-                                      <span className="hidden text-xs font-medium text-emerald-200 sm:inline">
+                                      <UtensilsCrossed className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+                                      <span className="hidden text-xs font-medium sm:inline">
                                         Meals
                                       </span>
                                     </motion.button>
@@ -1551,13 +1597,12 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                                         }
                                         handleAddFoodClick(bookingIdToCheck, booking.username || 'Guest User');
                                       }}
-                                      className="group flex flex-shrink-0 items-center gap-1 rounded-full border border-dashed border-blue-400/60 bg-blue-500/10 p-1 transition-all duration-200 hover:bg-blue-500/20 sm:p-1.5"
+                                      className="group flex flex-shrink-0 items-center gap-1 rounded-md px-1.5 py-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                                       title="Add meals to this booking"
                                     >
-                                      <Plus className="h-2.5 w-2.5 text-blue-300 transition-colors group-hover:text-blue-200 sm:h-3 sm:w-3" />
-                                      <UtensilsCrossed className="h-2.5 w-2.5 text-blue-300 transition-colors group-hover:text-blue-200 sm:h-3 sm:w-3" />
-                                      <span className="hidden text-xs font-medium text-blue-200 sm:inline">
-                                        Add
+                                      <Plus className="h-3 w-3" />
+                                      <span className="hidden text-xs font-medium sm:inline">
+                                        Meal
                                       </span>
                                     </motion.button>
                                     {isPcSquad && sortedSquadMembers.length > 0 && mealPickerBookingId === bookingIdToCheck && (
@@ -1676,21 +1721,13 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
 
                             {/* Extra Time cell - unchanged */}
                             <td className="px-3 py-3 md:px-4">
-                              <LiveSessionDue overtime={timer.extraTime || 0} paymentDue={Boolean(booking.awaitingPayment || booking.paymentDue)} />
-                              {booking.awaitingPayment ? (
-                                <p className="mt-1 text-[11px] text-amber-300">
-                                  {(booking.billBookingIds?.length || 1) > 1 ? `${booking.billBookingIds.length} bookings · one bill` : "Session ended"}
-                                </p>
-                              ) : booking.paymentDue ? (
-                                <p className="mt-1 text-[11px] text-amber-300" title="Earlier unpaid bookings of this gamer are added to this bill">
-                                  + earlier unpaid · {booking.billBookingIds.length} bookings · one bill
-                                </p>
-                              ) : null}
-                              {(timer.extraTime || 0) > STALE_OVERTIME_SECONDS && (
-                                <p className="mt-1 text-[11px] text-amber-300" title="Check out or release this session. You will be asked when play ended.">
-                                  {Math.floor((timer.extraTime || 0) / 3600)}h past end. Still playing?
-                                </p>
-                              )}
+                              <LiveSessionDue
+                                overtime={timer.extraTime || 0}
+                                paymentDue={Boolean(booking.awaitingPayment || booking.paymentDue)}
+                                stale={(timer.extraTime || 0) > STALE_OVERTIME_SECONDS}
+                                detail={liveStatusDetail(booking, timer.extraTime || 0)}
+                                detailTitle={(timer.extraTime || 0) > STALE_OVERTIME_SECONDS ? "Check out or release this session. You will be asked when play ended." : (booking.billBookingIds?.length || 1) > 1 ? "This gamer's unpaid bookings are settled together on one bill" : undefined}
+                              />
                             </td>
 
                             {/* Action cell - unchanged */}
