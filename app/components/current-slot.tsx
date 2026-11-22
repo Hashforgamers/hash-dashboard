@@ -367,28 +367,49 @@ const getBookingIdString = (slot: any): string => {
 };
 
 // Closed, unpaid sessions of one gamer are paid together: one row, one bill.
+const slotBookingIds = (slot: any): number[] => Array.from(new Set(
+  [slot, ...(Array.isArray(slot?.bookings) ? slot.bookings : [])]
+    .map((b: any) => Number(b?.bookingId || b?.bookId || b?.booking_id))
+    .filter((n: number) => Number.isFinite(n) && n > 0)
+));
+
+// One row and one bill per gamer: a gamer's closed, unpaid sessions join the
+// session they are still playing (or each other when nothing is live), so the
+// desk never sees the same gamer twice or collects only part of the total.
+// Live sessions on different PCs stay separate rows; each frees its own PC.
 const groupAwaitingPayment = (slots: any[]) => {
+  const gamerKey = (slot: any) => {
+    const key = slot?.userId ?? slot?.user_id ?? slot?.username;
+    return key == null || key === "" ? "" : String(key);
+  };
+  const rows = slots.map((slot) => {
+    const ids = slotBookingIds(slot);
+    return slot?.awaitingPayment
+      ? { ...slot, billBookingIds: ids, awaitingBookingIds: ids }
+      : { ...slot, billBookingIds: ids };
+  });
+  const owner = new Map<string, any>();
+  for (const row of rows) {
+    const key = gamerKey(row);
+    if (key && !row.awaitingPayment && !owner.has(key)) owner.set(key, row);
+  }
   const out: any[] = [];
-  const byGamer = new Map<string, any>();
-  for (const slot of slots) {
-    if (!slot?.awaitingPayment) { out.push(slot); continue; }
-    const ids = [slot, ...(Array.isArray(slot.bookings) ? slot.bookings : [])]
-      .map((b: any) => Number(b?.bookingId || b?.bookId || b?.booking_id))
-      .filter((n: number) => Number.isFinite(n) && n > 0);
-    const key = String(slot.userId ?? slot.user_id ?? slot.username ?? ids[0]);
-    const group = byGamer.get(key);
-    if (!group) {
-      const row = { ...slot, awaitingBookingIds: Array.from(new Set(ids)) };
-      byGamer.set(key, row);
-      out.push(row);
-      continue;
+  for (const row of rows) {
+    const key = gamerKey(row);
+    if (!row.awaitingPayment || !key) { out.push(row); continue; }
+    const target = owner.get(key);
+    if (!target) { owner.set(key, row); out.push(row); continue; }
+    for (const id of row.billBookingIds) if (!target.billBookingIds.includes(id)) target.billBookingIds.push(id);
+    target.awaitingBookingIds = Array.from(new Set([...(target.awaitingBookingIds || []), ...row.awaitingBookingIds]));
+    target.hasMeals = Boolean(target.hasMeals || row.hasMeals);
+    if (target.awaitingPayment) {
+      const consoles = new Set(String(target.consoleType || "").split(", ").filter(Boolean));
+      if (row.consoleType) consoles.add(String(row.consoleType));
+      target.consoleType = Array.from(consoles).join(", ");
+      target.endTime = row.endTime || target.endTime;
+    } else {
+      target.paymentDue = true;
     }
-    for (const id of ids) if (!group.awaitingBookingIds.includes(id)) group.awaitingBookingIds.push(id);
-    const consoles = new Set(String(group.consoleType || "").split(", ").filter(Boolean));
-    if (slot.consoleType) consoles.add(String(slot.consoleType));
-    group.consoleType = Array.from(consoles).join(", ");
-    group.endTime = slot.endTime || group.endTime;
-    group.hasMeals = Boolean(group.hasMeals || slot.hasMeals);
   }
   return out;
 };
@@ -880,6 +901,20 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
     return () => controller.abort();
   }, [paymentBookingIds, refreshSlots, paymentCheckRetry]);
 
+  // A row's balance is the sum over every booking it bills (chain + earlier unpaid).
+  const rowOutstandingDue = (booking: any, fallbackId: string): number | null | undefined => {
+    const ids: string[] = Array.isArray(booking?.billBookingIds) && booking.billBookingIds.length > 0
+      ? booking.billBookingIds.map(String) : [fallbackId];
+    let total = 0;
+    for (const id of ids) {
+      const due = bookingOutstandingDue[id];
+      if (due === undefined) return undefined;
+      if (due === null) return null;
+      total += due;
+    }
+    return total;
+  };
+
   // Debug logging (unchanged)
   useEffect(() => {
     if (filteredSlots.length > 0) {
@@ -1100,10 +1135,10 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                     const progress = Math.min(100, (timer.elapsedTime / timer.duration) * 100);
                     const hasExtraTime = timer.extraTime > 0;
                     const bookingIdToCheck = getBookingIdString(booking);
-                    const checkedDue = bookingOutstandingDue[bookingIdToCheck];
+                    const checkedDue = rowOutstandingDue(booking, bookingIdToCheck);
                     const outstandingDue = (checkedDue ?? 0)+Number(booking.runtime?.billing?.amount_due_paise||0)/100;
                     const hasOutstandingDue = outstandingDue > 0.01;
-                    const needsSettlement = hasExtraTime || hasOutstandingDue || Boolean(booking.awaitingPayment);
+                    const needsSettlement = hasExtraTime || hasOutstandingDue || Boolean(booking.awaitingPayment || booking.paymentDue);
                     const remainingTime = Math.max((timer.duration || 0) - (timer.elapsedTime || 0), 0);
                     const hasMeals = bookingMealStatus[bookingIdToCheck] ?? booking.hasMeals ?? false;
                     const squadMembers = Array.isArray(booking?.squadMembers) ? booking.squadMembers : [];
@@ -1156,7 +1191,7 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
 
                         <div className="mt-3 flex items-center justify-between gap-3">
                           <div><p className="mb-1 text-xs text-muted-foreground">Duration</p><LiveSessionTiming elapsed={timer.elapsedTime || 0} /></div>
-                          <LiveSessionDue overtime={timer.extraTime || 0} paymentDue={Boolean(booking.awaitingPayment)} />
+                          <LiveSessionDue overtime={timer.extraTime || 0} paymentDue={Boolean(booking.awaitingPayment || booking.paymentDue)} />
                         </div>
 
                         <div className="mt-3 grid grid-cols-2 gap-1.5 sm:gap-2">
@@ -1272,10 +1307,10 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                         const progress = Math.min(100, (timer.elapsedTime / timer.duration) * 100);
                         const hasExtraTime = timer.extraTime > 0;
                         const bookingIdForDue = getBookingIdString(booking);
-                        const checkedDue = bookingOutstandingDue[bookingIdForDue];
+                        const checkedDue = rowOutstandingDue(booking, bookingIdForDue);
                         const outstandingDue = (checkedDue ?? 0)+Number(booking.runtime?.billing?.amount_due_paise||0)/100;
                         const hasOutstandingDue = outstandingDue > 0.01;
-                        const needsSettlement = hasExtraTime || hasOutstandingDue || Boolean(booking.awaitingPayment);
+                        const needsSettlement = hasExtraTime || hasOutstandingDue || Boolean(booking.awaitingPayment || booking.paymentDue);
                         const remainingTime = Math.max((timer.duration || 0) - (timer.elapsedTime || 0), 0);
                         const progressPercent = Number.isFinite(progress) ? Math.max(0, Math.round(progress)) : 0;
                         const progressState = hasExtraTime
@@ -1641,12 +1676,16 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
 
                             {/* Extra Time cell - unchanged */}
                             <td className="px-3 py-3 md:px-4">
-                              <LiveSessionDue overtime={timer.extraTime || 0} paymentDue={Boolean(booking.awaitingPayment)} />
-                              {booking.awaitingPayment && (
+                              <LiveSessionDue overtime={timer.extraTime || 0} paymentDue={Boolean(booking.awaitingPayment || booking.paymentDue)} />
+                              {booking.awaitingPayment ? (
                                 <p className="mt-1 text-[11px] text-amber-300">
-                                  {(booking.awaitingBookingIds?.length || 1) > 1 ? `${booking.awaitingBookingIds.length} sessions · one bill` : "Session ended"}
+                                  {(booking.billBookingIds?.length || 1) > 1 ? `${booking.billBookingIds.length} bookings · one bill` : "Session ended"}
                                 </p>
-                              )}
+                              ) : booking.paymentDue ? (
+                                <p className="mt-1 text-[11px] text-amber-300" title="Earlier unpaid bookings of this gamer are added to this bill">
+                                  + earlier unpaid · {booking.billBookingIds.length} bookings · one bill
+                                </p>
+                              ) : null}
                               {(timer.extraTime || 0) > STALE_OVERTIME_SECONDS && (
                                 <p className="mt-1 text-[11px] text-amber-300" title="Check out or release this session. You will be asked when play ended.">
                                   {Math.floor((timer.extraTime || 0) / 3600)}h past end. Still playing?
