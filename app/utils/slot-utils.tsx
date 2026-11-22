@@ -82,7 +82,8 @@ export const mergeConsecutiveBookings = (bookings: Booking[]): Booking[] => {
   const groupedBookings: Record<string, Booking[]> = {};
   
   for (const booking of bookingsCopy) {
-    const key = `${booking.username}_${booking.consoleType}_${booking.consoleNumber}_${booking.date}`;
+    // A closed, unpaid session must not merge into the same gamer's live one.
+    const key = `${booking.username}_${booking.consoleType}_${booking.consoleNumber}_${booking.date}${(booking as any).awaitingPayment ? "_due" : ""}`;
     if (!groupedBookings[key]) {
       groupedBookings[key] = [];
     }
