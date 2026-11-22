@@ -32,6 +32,10 @@ const MODULE_EVENT_MAP: Record<string, string> = {
   booking_admin: "booking",
   pay_at_cafe_accepted: "booking",
   pay_at_cafe_rejected: "booking",
+  // Kiosk continuations and cross-tab accepts change the schedule too.
+  kiosk_session_extended: "booking",
+  extend_confirm: "booking",
+  booking_accepted: "booking",
   extras_updated: "extras",
   pricing_updated: "pricing",
   passes_updated: "passes",
