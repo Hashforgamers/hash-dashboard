@@ -26,9 +26,16 @@ import HashLoader from "./ui/HashLoader";
 import { MobileCompactCard } from "@/components/ui/mobile-compact-card";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { readStringParam, updateSearchParams } from "@/lib/deeplink";
+import { useSocket } from "@/app/context/SocketContext";
+
+// Socket events after which the money on this page may have changed.
+const MONEY_EVENTS = ["booking_payment_update", "booking_updated", "booking", "session.updated",
+  "cafe_session_updated", "pay_at_cafe_accepted", "current_slot"];
 
 interface Transaction {
-  id: number;
+  id: number | string;
+  source?: "cafe_wallet";
+  label?: string;
   bookingId?: number | null;
   userName: string;
   userId: number;
@@ -150,6 +157,7 @@ export function TransactionTable() {
   const [boolTrans, setBoolTrans] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [token, setToken] = useState<string | null>(null);
+  const { socket } = useSocket();
   const [vendorId, setVendorId] = useState<number | null>(null);
   const [fromDate, setFromDate] = useState<string>(getMonthStartISODate());
   const [toDate, setToDate] = useState<string>(getTodayISODate());
@@ -338,13 +346,26 @@ export function TransactionTable() {
     void loadData(true);
     const reloadImported = () => void loadData();
     window.addEventListener("desk-transactions-imported", reloadImported);
+    // Refresh soon after any payment or session change instead of waiting for the poll.
+    let liveTimer: ReturnType<typeof setTimeout> | undefined;
+    const reloadLive = () => {
+      clearTimeout(liveTimer);
+      liveTimer = setTimeout(() => void loadData(), 800);
+    };
+    MONEY_EVENTS.forEach((event) => socket?.on(event, reloadLive));
 
     pollingInterval = setInterval(() => {
       loadData();
     }, POLL_INTERVAL);
 
-    return () => { window.removeEventListener("desk-transactions-imported", reloadImported); controller.abort(); clearInterval(pollingInterval); };
-  }, [vendorId, token, appliedFromDate, appliedToDate]);
+    return () => {
+      window.removeEventListener("desk-transactions-imported", reloadImported);
+      MONEY_EVENTS.forEach((event) => socket?.off(event, reloadLive));
+      clearTimeout(liveTimer);
+      controller.abort();
+      clearInterval(pollingInterval);
+    };
+  }, [vendorId, token, appliedFromDate, appliedToDate, socket]);
 
   useEffect(() => {
     if (!deepLinkReady) return;
@@ -607,7 +628,7 @@ export function TransactionTable() {
       case "bookingType":
         return (
           <TableCell className="px-4 py-3">
-            <Badge variant="outline" className="border-zinc-300 text-zinc-700 dark:border-zinc-500/70 dark:text-zinc-300">{transaction.bookingType}</Badge>
+            <Badge variant="outline" className="border-zinc-300 text-zinc-700 dark:border-zinc-500/70 dark:text-zinc-300">{transaction.label || transaction.bookingType}</Badge>
           </TableCell>
         );
       case "settlementStatus":
@@ -971,7 +992,7 @@ export function TransactionTable() {
                 </div>
                 <div className="rounded-md border border-blue-500/10 bg-zinc-950/40 p-2">
                   <p className="text-zinc-500">Type</p>
-                  <p className="font-semibold text-zinc-100">{transaction.bookingType || "-"}</p>
+                  <p className="font-semibold text-zinc-100">{transaction.label || transaction.bookingType || "-"}</p>
                 </div>
               </div>
             </MobileCompactCard>
