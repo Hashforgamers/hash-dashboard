@@ -395,5 +395,6 @@ svg[data-search-icon],
 /* Keep status and action columns aligned across every live session state. */
 .workspace-ui .operations-dashboard .live-session-data-table :is(th, td):nth-child(5),
 .workspace-ui .operations-dashboard .live-session-data-table :is(th, td):last-child { text-align: center; vertical-align: middle; }
-.workspace-ui .operations-dashboard .live-session-data-table .live-session-due { align-items: center; }
+.workspace-ui .operations-dashboard .live-session-data-table .live-session-due { align-items: center; margin-inline: auto; }
+.workspace-ui .operations-dashboard .live-session-data-table .live-session-due p { text-align: center; }
 .workspace-ui .operations-dashboard .live-session-data-table td:last-child > div { align-items: center; }

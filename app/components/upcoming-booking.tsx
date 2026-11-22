@@ -1,5 +1,6 @@
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { StatusPill } from "./live-session-due";
 
 import { creditAuthHeaders } from "@/lib/credit-auth"
 import { SessionConsoleDialog, type SessionConsole } from "./session-console-dialog";
@@ -1061,9 +1062,6 @@ export function UpcomingBookings({
                     const canCancel = !["current", "completed"].includes(lifecycleStatus) &&
                       !TERMINAL_BOOKING_STATUSES.includes(bookingRecordStatus);
                     const canNoShow = canCancel && canMarkNoShowNow(booking);
-                    const paymentBadgeClass = !isPaidBooking
-                      ? "border-amber-400/40 bg-amber-500/15 text-amber-200"
-                      : "border-emerald-400/40 bg-emerald-500/15 text-emerald-200";
                     return (
                     <motion.div
                       key={booking.bookingId}
@@ -1075,79 +1073,29 @@ export function UpcomingBookings({
                         duration: 0.3, 
                         delay: index * 0.02 
                       }}
-                      className="dashboard-module-card rounded-xl p-3 transition-colors duration-200 hover:border-white/20"
+                      className="dashboard-module-card rounded-lg p-3 transition-colors duration-200"
                     >
                       <div className="space-y-3">
-                        {/* Contacts are available in booking details. */}
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="min-w-0 flex-1">
-                            <div className="flex min-w-0 items-center gap-1.5">
-                              <User className="h-3.5 w-3.5 shrink-0 text-zinc-300" />
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setContactOverlay({ open: true, booking });
-                                }}
-                                className="truncate text-left text-sm font-semibold text-zinc-100 transition-colors hover:text-blue-300 focus-visible:rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-300"
-                                aria-label={`View contact and booking details for ${booking.username || 'Guest User'}`}
-                                title="View phone, email and booking details"
-                              >
-                                {booking.username || "Guest User"}
-                              </button>
-                              {squadEnabled && (
-                                <span className="shrink-0 rounded-full border border-blue-400/40 bg-blue-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-blue-200">
-                                  x{squadPlayerCount}
-                                </span>
-                              )}
-                            </div>
-                            <div className="mt-1.5 flex items-center gap-1.5 text-xs text-zinc-400">
-                              <Clock className="h-3 w-3 shrink-0 text-zinc-400" />
-                              <span className="truncate">{booking.time || "No time set"}</span>
-                            </div>
-                            {booking.duplicate_booking && (
-                              <p className="mt-1 text-[11px] font-medium text-amber-300" title="This gamer has another booking for the same time. Cancel the extra one so they are not billed twice.">
-                                Same gamer booked this time twice
-                              </p>
+                        {/* Name and payment on one line; time on its own line so it never truncates. */}
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex min-w-0 items-center gap-1.5">
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setContactOverlay({ open: true, booking });
+                              }}
+                              className="truncate text-left text-sm font-semibold text-foreground underline-offset-2 hover:underline focus-visible:rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring"
+                              aria-label={`View contact and booking details for ${booking.username || 'Guest User'}`}
+                              title="View phone, email and booking details"
+                            >
+                              {booking.username || "Guest User"}
+                            </button>
+                            {squadEnabled && (
+                              <span className="shrink-0 rounded border border-border px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+                                x{squadPlayerCount}
+                              </span>
                             )}
-                          </div>
-
-                          <div className="flex max-w-[48%] shrink-0 flex-wrap items-center justify-end gap-1 sm:max-w-none sm:flex-nowrap">
-                            <span className={`inline-flex h-6 items-center rounded-full border px-2 text-[10px] font-medium capitalize sm:h-7 sm:text-[11px] ${paymentBadgeClass}`}>
-                              {paymentBadgeLabel}
-                            </span>
-
-                            {booking.hasMeals ? (
-                              <motion.button
-                                whileHover={{ scale: 1.05 }}
-                                whileTap={{ scale: 0.95 }}
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleFoodIconClick(booking.bookingId, booking.username || 'Guest User', true);
-                                }}
-                                className="group inline-flex h-6 items-center gap-1 rounded-full border border-emerald-400/35 bg-emerald-500/10 px-2 transition-all duration-200 hover:bg-emerald-500/20 sm:h-7"
-                                title="View meals & add more"
-                              >
-                                <UtensilsCrossed className="h-3 w-3 text-emerald-300 transition-colors group-hover:text-emerald-200" />
-                                <span className="text-[10px] font-semibold text-emerald-200">Meals</span>
-                              </motion.button>
-                            ) : (
-                              <motion.button
-                                whileHover={{ scale: 1.05 }}
-                                whileTap={{ scale: 0.95 }}
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleAddFoodClick(booking.bookingId, booking.username || 'Guest User');
-                                }}
-                                className="group inline-flex h-6 items-center gap-1 rounded-full border border-dashed border-blue-400/60 bg-blue-500/10 px-2 transition-all duration-200 hover:bg-blue-500/20 sm:h-7"
-                                title="Add meals to this booking"
-                              >
-                                <Plus className="h-3 w-3 text-blue-300 transition-colors group-hover:text-blue-200" />
-                                <UtensilsCrossed className="h-3 w-3 text-blue-300 transition-colors group-hover:text-blue-200" />
-                                <span className="text-[10px] font-semibold text-blue-200">Add</span>
-                              </motion.button>
-                            )}
-
                             {squadEnabled && (
                               <button
                                 type="button"
@@ -1157,20 +1105,39 @@ export function UpcomingBookings({
                                     [bookingKey]: !expanded,
                                   }))
                                 }
-                                className="rounded border border-zinc-500/50 p-1 text-zinc-200 transition-colors hover:bg-zinc-700/30"
+                                className="shrink-0 rounded p-0.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                                 title={expanded ? "Collapse squad details" : "Expand squad details"}
                               >
                                 <ChevronDown className={`h-3.5 w-3.5 transition-transform ${expanded ? "rotate-180" : ""}`} />
                               </button>
                             )}
                           </div>
+                          <StatusPill
+                            tone={isPaidBooking ? "ok" : "attention"}
+                            label={paymentBadgeLabel}
+                            className="shrink-0"
+                          />
                         </div>
 
-                        <div className="flex items-center justify-between gap-2 rounded-md border border-blue-400/25 bg-blue-500/5 px-2 py-1.5">
+                        <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
+                          <span className="inline-flex items-center gap-1.5 whitespace-nowrap tabular-nums">
+                            <Clock className="h-3 w-3 shrink-0" />
+                            {booking.time || "No time set"}
+                          </span>
+                          {booking.duplicate_booking && (
+                            <StatusPill
+                              tone="alert"
+                              label="Duplicate"
+                              className="h-5 text-[11px]"
+                              title="This gamer has another booking for the same time. Cancel the extra one so they are not billed twice."
+                            />
+                          )}
+                        </div>
+
+                        <div className="flex items-center justify-between gap-2 rounded-md border border-border px-2 py-1.5">
                           <div className="flex min-w-0 items-center gap-2">
-                            <KeyRound className="h-3.5 w-3.5 shrink-0 text-blue-300" />
-                            <span className="text-[11px] text-zinc-300">Access code</span>
-                            <span className="select-all font-mono text-sm font-semibold tracking-widest text-blue-100">
+                            <span className="text-[11px] text-muted-foreground">Access code</span>
+                            <span className="select-all font-mono text-sm font-semibold tracking-widest text-foreground">
                               {(booking.merged_access_codes?.length ? booking.merged_access_codes.join(" · ") : null) || booking.access_code || booking.accessCode || "Unavailable"}
                             </span>
                           </div>
@@ -1179,7 +1146,7 @@ export function UpcomingBookings({
                               type="button"
                               aria-label="Copy gamer access code"
                               title="Copy code to share with the gamer"
-                              className="rounded p-1 text-blue-300 hover:bg-blue-500/15 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-300"
+                              className="rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring"
                               onClick={async (event) => {
                                 event.stopPropagation();
                                 try {
@@ -1221,7 +1188,20 @@ export function UpcomingBookings({
                           </div>
                         )}
 
-                        <div className="flex flex-wrap items-center justify-end gap-2 border-t border-white/5 pt-2">
+                        <div className="flex flex-wrap items-center justify-end gap-2 border-t border-border pt-2">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (hasMeals) handleFoodIconClick(booking.bookingId, booking.username || 'Guest User', true);
+                              else handleAddFoodClick(booking.bookingId, booking.username || 'Guest User');
+                            }}
+                            className="mr-auto inline-flex h-8 items-center gap-1 rounded-md px-2 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                            title={hasMeals ? "View meals & add more" : "Add meals to this booking"}
+                          >
+                            {hasMeals ? <UtensilsCrossed className="h-3.5 w-3.5" /> : <Plus className="h-3.5 w-3.5" />}
+                            {hasMeals ? "Meals" : "Meal"}
+                          </button>
                           <motion.button
                             type="button"
                             whileHover={{ scale: 1.02 }}
@@ -1230,7 +1210,7 @@ export function UpcomingBookings({
                             className={`inline-flex h-8 min-w-[96px] items-center justify-center gap-1 rounded-md !px-2.5 !py-0 text-[11px] font-semibold transition-all sm:min-w-[104px] sm:text-xs ${
                               canStartNow
                                 ? "dashboard-btn-primary"
-                                : "bg-zinc-700/70 text-zinc-300"
+                                : "border border-border bg-transparent text-muted-foreground"
                             }`}
                             title={canStartNow ? "Start session" : "Start available 5 minutes before scheduled time"}
                           >
@@ -1244,7 +1224,7 @@ export function UpcomingBookings({
                                 e.stopPropagation();
                                 openNoShowDialog(booking);
                               }}
-                              className={cn(buttonVariants({ variant: "soft-warning", size: "sm" }), "min-w-[86px] sm:min-w-[92px]")}
+                              className={cn(buttonVariants({ variant: "outline", size: "sm" }), "min-w-[86px] sm:min-w-[92px]")}
                             >
                               No Show
                             </button>
@@ -1256,7 +1236,7 @@ export function UpcomingBookings({
                                 e.stopPropagation();
                                 openCancelDialog(booking, isPaidBooking || paymentBadgeLabel === "Part paid");
                               }}
-                              className={cn(buttonVariants({ variant: "soft-danger", size: "sm" }), "min-w-[86px] sm:min-w-[92px]")}
+                              className={cn(buttonVariants({ variant: "outline", size: "sm" }), "min-w-[86px] text-red-400 hover:text-red-300 sm:min-w-[92px]")}
                             >
                               Cancel
                             </button>
