@@ -8,6 +8,7 @@ import { useAccess } from "@/app/context/AccessContext";
 import { useDashboardData } from "@/app/context/DashboardDataContext";
 import { encodeQr, qrSvgPath } from "@/lib/qr-code";
 import {
+  type PosterStyle,
   QR_SOURCE,
   SHARE_SOURCE,
   cafeBookingUrl,
@@ -38,6 +39,7 @@ export function CafeBookingLink() {
   const cafeId = vendorId ?? selectedCafeId ?? null;
   const [cafeName, setCafeName] = useState("");
   const [busy, setBusy] = useState<string | null>(null);
+  const [posterStyle, setPosterStyle] = useState<PosterStyle>("gaming");
 
   useEffect(() => setCafeName(readCafeName(cafeId)), [cafeId]);
 
@@ -64,7 +66,7 @@ export function CafeBookingLink() {
     }
   };
 
-  const poster = () => renderPosterCanvas({ cafeName: displayName, qrUrl: qrLink, displayUrl: link.replace(/^https?:\/\//, "") });
+  const poster = () => renderPosterCanvas({ cafeName: displayName, qrUrl: qrLink, displayUrl: link.replace(/^https?:\/\//, "") }, posterStyle);
 
   const copyLink = run("copy", async () => {
     await navigator.clipboard.writeText(shareLink);
@@ -120,13 +122,27 @@ export function CafeBookingLink() {
 
         <div className="space-y-2">
           <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Print and download</p>
+          <div role="radiogroup" aria-label="Poster style" className="inline-flex rounded-md border p-0.5 text-sm">
+            {([["gaming", "Gaming (dark)"], ["ink-saver", "Ink saver (white)"]] as [PosterStyle, string][]).map(([value, label]) => (
+              <button
+                key={value}
+                type="button"
+                role="radio"
+                aria-checked={posterStyle === value}
+                onClick={() => setPosterStyle(value)}
+                className={`rounded px-3 py-1 ${posterStyle === value ? "bg-foreground text-background" : "text-muted-foreground"}`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
           <div className="flex flex-wrap gap-2">
             <Button type="button" onClick={printPoster} disabled={!!busy}><Printer className="mr-2 h-4 w-4" />{busy === "print" ? "Preparing…" : "Print poster"}</Button>
             <Button type="button" variant="outline" onClick={downloadPosterPdf} disabled={!!busy}><FileText className="mr-2 h-4 w-4" />Poster PDF</Button>
             <Button type="button" variant="outline" onClick={downloadPosterPng} disabled={!!busy}><Download className="mr-2 h-4 w-4" />Poster PNG</Button>
             <Button type="button" variant="outline" onClick={downloadQrPng} disabled={!!busy}><QrCode className="mr-2 h-4 w-4" />QR only PNG</Button>
           </div>
-          <p className="text-xs text-muted-foreground">The poster is A4 with your café name and Hash branding. Stick it on the desk, the door or each station.</p>
+          <p className="text-xs text-muted-foreground">The poster is A4 with your café name, in the Hash website's style. Use Ink saver for everyday office printers.</p>
         </div>
       </section>
 
