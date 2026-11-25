@@ -469,7 +469,8 @@ const resolveControllerPricingKey = (rawSlugOrGroup: string | undefined | null):
 
 const DEFAULT_BOOKING_FIELD_CONFIG: BookingFieldConfig = {
   name: { visible: true, required: true },
-  phone: { visible: true, required: true },
+  // Walk-ins (e.g. kids) may have no phone or email: name alone is enough.
+  phone: { visible: true, required: false },
   email: { visible: true, required: false },
 }
 
@@ -634,7 +635,7 @@ export function SlotBookingForm({
       name: { visible: true, required: true },
       phone: {
         visible: Boolean(candidate?.phone?.visible ?? true),
-        required: Boolean(candidate?.phone?.required ?? true),
+        required: Boolean(candidate?.phone?.required ?? false),
       },
       email: {
         visible: Boolean(candidate?.email?.visible ?? true),
@@ -652,16 +653,10 @@ export function SlotBookingForm({
 
     if (!next.phone.visible && !next.email.visible) {
       next.phone.visible = true
-      next.phone.required = true
     }
 
     if (!next.phone.visible) next.phone.required = false
     if (!next.email.visible) next.email.required = false
-
-    if (!next.phone.required && !next.email.required) {
-      if (next.phone.visible) next.phone.required = true
-      else next.email.required = true
-    }
 
     return next
   }
@@ -1909,8 +1904,6 @@ const getEffectivePrice = (slot: SelectedSlot): number => {
     const newErrors: Record<string, string> = {}
 
     if (!name.trim()) newErrors.name = 'Name is required'
-    const phoneVisible = bookingFieldConfig.phone.visible
-    const emailVisible = bookingFieldConfig.email.visible
     const phoneRequired = bookingFieldConfig.phone.required
     const emailRequired = bookingFieldConfig.email.required
     const hasPhone = Boolean(phone.trim())
@@ -1919,18 +1912,6 @@ const getEffectivePrice = (slot: SelectedSlot): number => {
     if (phoneRequired && !hasPhone) newErrors.phone = 'Phone number is required'
     if (emailRequired && !hasEmail) newErrors.email = 'Email is required'
     if (hasEmail && !/\S+@\S+\.\S+/.test(email)) newErrors.email = 'Email is invalid'
-    if (!hasPhone && !hasEmail) {
-      if (phoneVisible && emailVisible) {
-        newErrors.phone = newErrors.phone || 'Enter phone or email'
-        newErrors.email = newErrors.email || 'Enter phone or email'
-      } else if (phoneVisible) {
-        newErrors.phone = newErrors.phone || 'Phone number is required'
-      } else if (emailVisible) {
-        newErrors.email = newErrors.email || 'Email is required'
-      } else {
-        newErrors.phone = 'At least one contact field is required'
-      }
-    }
     if (selectedSlots.length === 0) newErrors.slots = 'Please select at least one time slot'
     if (waiveOffAmount > gamingNet) {
       setSubmitError("Additional Discount exceeds the gaming charges.")
