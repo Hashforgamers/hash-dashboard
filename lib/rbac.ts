@@ -84,6 +84,7 @@ export const NAV_PERMISSION_MAP: NavItemPermission[] = [
   { href: "/dashboard", permission: "dashboard.view" },
   { href: "/gaming", permission: "gaming.manage" },
   { href: "/booking", permission: "booking.manage" },
+  { href: "/booking-link", permission: "booking.manage" },
   { href: "/transaction", permission: "transactions.view" },
   { href: "/manage-extraservice", permission: "extras.manage" },
   { href: "/know-your-gamers", permission: "gamers.view" },
