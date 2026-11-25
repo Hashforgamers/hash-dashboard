@@ -1,5 +1,5 @@
 import { buttonVariants } from "@/components/ui/button";
-import ExtensionSettlement from './session-extension-settlement';
+import { cafeCall, rupees } from "@/lib/cafe-api";
 import { creditAuthHeaders } from "@/lib/credit-auth";
 import { AnimatePresence, motion } from "framer-motion";
 import { IndianRupee, CreditCard, Smartphone, X, CheckCircle, Loader2, Gamepad2, Timer, Wallet, Receipt, QrCode } from "lucide-react";
@@ -58,6 +58,23 @@ interface OvertimeQuote {
   needs_end_time: boolean;
 }
 
+// Kiosk-metered play past the booking, billed by the dashboard session engine.
+interface RuntimeBill {
+  revision: number;
+  ended_at: string | null;
+  billing: {
+    total_paise: number;
+    wallet_funded_paise: number;
+    amount_due_paise: number;
+    requires_reconciliation?: boolean;
+    cafe_policy_credit_paise?: number;
+    pricing_error?: string;
+  };
+}
+
+// Desk payment modes the session engine can record for kiosk extra time.
+const KIOSK_METHODS: Record<string, string> = { cash: "cash", card: "card", upi: "cafe_upi" };
+
 // "2026-11-22T04:28" in IST, for the datetime-local input.
 const istInputValue = (date: Date) =>
   new Date(date.getTime() + 330 * 60 * 1000).toISOString().slice(0, 16);
@@ -102,8 +119,12 @@ const SettlementOverlay: React.FC<ExtraBookingOverlayProps> = ({
   const overlayRef = useRef<HTMLDivElement>(null);
   const [upiQr, setUpiQr] = useState<UpiQrState | null>(null);
   const qrReleaseStarted = useRef(false);
-  // Overtime is priced by the server; kiosk-metered time was billed in the step before.
-  const meteredByKiosk = Boolean(selectedSlot?.runtime?.runtime_id);
+  // Kiosk sessions meter their own extra time; it is billed on this same screen.
+  const runtimeId = selectedSlot?.runtime?.runtime_id as string | undefined;
+  const meteredByKiosk = Boolean(runtimeId);
+  const [runtimeBill, setRuntimeBill] = useState<RuntimeBill | null>(null);
+  const [runtimeError, setRuntimeError] = useState("");
+  const runtimeLock = useRef(false);
   // A closed session left only its bill: no running clock and no PC to free.
   const sessionClosed = Boolean(selectedSlot?.awaitingPayment);
   const noOvertime = meteredByKiosk || sessionClosed;
@@ -260,6 +281,59 @@ const SettlementOverlay: React.FC<ExtraBookingOverlayProps> = ({
     return () => controller.abort();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showOverlay, selectedSlot, noOvertime, playedUntil, summaryVersion]);
+
+  useEffect(() => {
+    if (!showOverlay || !runtimeId || !vendorId) {
+      setRuntimeBill(null);
+      setRuntimeError("");
+      return;
+    }
+    let alive = true;
+    const refresh = async () => {
+      if (runtimeLock.current) return;
+      try {
+        const bill = await cafeCall<RuntimeBill>(`/${vendorId}/extensions/${runtimeId}`);
+        if (alive && !runtimeLock.current) { setRuntimeBill(bill); setRuntimeError(""); }
+      } catch (error) {
+        if (alive) setRuntimeError(error instanceof Error ? error.message : "Could not load PC extra time");
+      }
+    };
+    void refresh();
+    const timer = setInterval(() => void refresh(), 10000);
+    return () => { alive = false; clearInterval(timer); };
+  }, [showOverlay, runtimeId, vendorId, summaryVersion]);
+
+  // Stops the PC, then records its extra time with the same payment method.
+  // Returns false when the final figure moved and staff should look again.
+  const settleKioskTime = async (shownDuePaise: number): Promise<boolean> => {
+    if (!runtimeId || !vendorId) return true;
+    const prefix = `/${vendorId}/extensions/${runtimeId}`;
+    runtimeLock.current = true;
+    try {
+      let bill = await cafeCall<RuntimeBill>(prefix);
+      if (!bill.ended_at) {
+        bill = await cafeCall<RuntimeBill>(`${prefix}/end`, { mode: "now", revision: bill.revision, idempotency_key: `checkout-${runtimeId}-${bill.revision}-end` });
+      }
+      setRuntimeBill(bill);
+      if (bill.billing.requires_reconciliation) {
+        throw new Error(bill.billing.pricing_error || "PC extra time could not be priced. Refresh and try again.");
+      }
+      const due = bill.billing.amount_due_paise;
+      if (due > shownDuePaise + 100) {
+        setSettlementError(`The PC is now stopped and its extra time came to ${rupees(due)}. Check the new total and confirm again.`);
+        return false;
+      }
+      if (due > 0) {
+        const method = KIOSK_METHODS[paymentMode];
+        if (!method) throw new Error("Collect PC extra time by cash, card or café UPI.");
+        bill = await cafeCall<RuntimeBill>(`${prefix}/settle`, { method, amount_paise: due, revision: bill.revision, idempotency_key: `checkout-${runtimeId}-${bill.revision}-settle-${method}` });
+        setRuntimeBill(bill);
+      }
+      return true;
+    } finally {
+      runtimeLock.current = false;
+    }
+  };
 
   useEffect(() => {
     if (!showOverlay || !selectedSlot || !vendorId || paymentMode !== "credit") return;
@@ -484,6 +558,10 @@ const SettlementOverlay: React.FC<ExtraBookingOverlayProps> = ({
       setSettlementError("This session ran more than 3 hours over. Enter when play ended, or confirm the full time.");
       return;
     }
+    if (kioskBlocker) {
+      setSettlementError(kioskBlocker);
+      return;
+    }
     setSettlementError("");
     setLoading(true);
     const extraTime = frozenExtraSeconds;
@@ -509,7 +587,10 @@ const SettlementOverlay: React.FC<ExtraBookingOverlayProps> = ({
     };
 
     try {
-      console.log('💰 Starting settle process...');
+      if (meteredByKiosk && !(await settleKioskTime(kioskDuePaise))) {
+        setLoading(false);
+        return;
+      }
       if (amount > 0) {
         await createExtraBooking(extraBookingPayload);
         console.log('💰 Extra booking created successfully');
@@ -554,7 +635,7 @@ const SettlementOverlay: React.FC<ExtraBookingOverlayProps> = ({
         await releaseAndClose();
         return;
       }
-      if (paymentMode === "upi_qr" && payableAmount > 0) {
+      if (paymentMode === "upi_qr" && bookingPayable > 0) {
         await startUpiQr(bookingId, parsedWaiveOff, bookingTypesPayload);
         setLoading(false);
         return;
@@ -634,7 +715,20 @@ const SettlementOverlay: React.FC<ExtraBookingOverlayProps> = ({
   const computedExtraAmount = noOvertime ? 0 : Number(overtimeQuote?.amount || 0);
   const parsedWaiveOff = parseFloat(waiveOffAmount) || 0;
   const dueBeforeWaive = computedExtraAmount + pendingMealsAmount + historicalPendingExtraAmount + pendingBaseAmount;
-  const payableAmount = Math.max(dueBeforeWaive - parsedWaiveOff, 0);
+  const bookingPayable = Math.max(dueBeforeWaive - parsedWaiveOff, 0);
+  const kioskDuePaise = meteredByKiosk ? Number(runtimeBill?.billing.amount_due_paise || 0) : 0;
+  const kioskDue = kioskDuePaise / 100;
+  const payableAmount = bookingPayable + kioskDue;
+  // Confirm needs a known PC figure, and a desk method the session engine records.
+  const kioskBlocker = !meteredByKiosk ? ""
+    : runtimeBill?.billing.requires_reconciliation ? (runtimeBill.billing.pricing_error || "PC extra time could not be priced yet.")
+    : !runtimeBill ? (runtimeError || "PC extra time is still loading.")
+    : kioskDuePaise > 0 && !KIOSK_METHODS[paymentMode] ? "PC extra time is collected at the desk. Choose cash, card or café UPI."
+    : "";
+  // UPI QR and credit cannot carry PC extra time; fall back to cash when it is due.
+  useEffect(() => {
+    if (kioskDuePaise > 0 && !KIOSK_METHODS[paymentMode]) setPaymentMode("cash");
+  }, [kioskDuePaise, paymentMode]);
 
   // Handle keyboard navigation for payment mode buttons
   const handlePaymentModeKeyDown = (e: React.KeyboardEvent, key: string) => {
@@ -719,7 +813,7 @@ const SettlementOverlay: React.FC<ExtraBookingOverlayProps> = ({
                     <p className="text-xs font-medium text-red-200">Extra time</p>
                     <p className="mt-1 inline-flex items-center gap-1 text-base font-bold text-red-300 sm:text-lg">
                       <Timer className="h-4 w-4" />
-                      {meteredByKiosk ? "None extra (kiosk bill)" : sessionClosed ? "None (session ended)" : quoteLoading && !overtimeQuote ? "Pricing…" : formatTime(computedExtraSeconds)}
+                      {meteredByKiosk ? (runtimeBill ? rupees(kioskDuePaise) : runtimeError ? "Unavailable" : "Pricing…") : sessionClosed ? "None (session ended)" : quoteLoading && !overtimeQuote ? "Pricing…" : formatTime(computedExtraSeconds)}
                     </p>
                     {overtimeQuote && overtimeQuote.overtime_seconds > 0 && (
                       <p className="mt-1 text-[11px] text-red-200/80">
@@ -728,6 +822,19 @@ const SettlementOverlay: React.FC<ExtraBookingOverlayProps> = ({
                       </p>
                     )}
                     {quoteError && <p role="alert" className="mt-1 text-[11px] text-amber-300">{quoteError}</p>}
+                    {meteredByKiosk && runtimeBill && (
+                      <p className="mt-1 text-[11px] text-red-200/80">
+                        Metered by the PC{runtimeBill.ended_at ? "" : ", still running until you confirm"}
+                        {runtimeBill.billing.wallet_funded_paise > 0 ? ` · ${rupees(runtimeBill.billing.wallet_funded_paise)} paid from wallet` : ""}
+                        {runtimeBill.billing.cafe_policy_credit_paise ? ` · ${rupees(runtimeBill.billing.cafe_policy_credit_paise)} from PC auto-extend` : ""}
+                      </p>
+                    )}
+                    {meteredByKiosk && (runtimeBill?.billing.requires_reconciliation || (!runtimeBill && runtimeError)) && (
+                      <p role="alert" className="mt-1 text-[11px] text-amber-300">
+                        {runtimeBill?.billing.pricing_error || runtimeError || "PC extra time could not be priced yet."}{" "}
+                        <button type="button" className="underline" onClick={() => setSummaryVersion((v) => v + 1)}>Retry</button>
+                      </p>
+                    )}
                   </div>
                   {!noOvertime && (overtimeQuote?.needs_end_time || playedUntil) && (
                     <div className="rounded-xl border border-amber-500/40 bg-amber-500/10 p-2.5 sm:p-3">
@@ -768,7 +875,7 @@ const SettlementOverlay: React.FC<ExtraBookingOverlayProps> = ({
                     <div className="space-y-1.5 text-xs text-zinc-300">
                       <div className="flex items-center justify-between">
                         <span>Extra time</span>
-                        <span className="font-semibold text-zinc-100">₹{computedExtraAmount.toFixed(2)}</span>
+                        <span className="font-semibold text-zinc-100">₹{(computedExtraAmount + kioskDue).toFixed(2)}</span>
                       </div>
                       <div className="flex items-center justify-between">
                         <span>Unpaid meals</span>
@@ -853,7 +960,8 @@ const SettlementOverlay: React.FC<ExtraBookingOverlayProps> = ({
                       { key: "upi_qr", label: "UPI QR (auto)", Icon: QrCode },
                       { key: "upi", label: "Café UPI", Icon: Smartphone },
                       { key: "credit", label: "Credit", Icon: Wallet },
-                    ].filter(({ key }) => !(isGroupBill && key === "upi_qr")).map(({ key, label, Icon }) => (
+                    ].filter(({ key }) => !(isGroupBill && key === "upi_qr"))
+                     .filter(({ key }) => !(kioskDuePaise > 0 && !KIOSK_METHODS[key])).map(({ key, label, Icon }) => (
                       <motion.button
                         key={key}
                         disabled={!!upiQr}
@@ -947,11 +1055,12 @@ const SettlementOverlay: React.FC<ExtraBookingOverlayProps> = ({
                 ) : (
                 <div className="settlement-actions flex flex-col gap-2">
                   <div className="mb-2 flex items-center justify-between border-t border-white/10 pt-3 text-sm"><span className="text-zinc-400">Collect now</span><strong className="text-lg tabular-nums text-zinc-100">₹{payableAmount.toFixed(2)}</strong></div>
+                  {meteredByKiosk && runtimeBill && !runtimeBill.ended_at && <p className="mb-2 text-xs text-zinc-400">Confirming stops the PC and finalises its extra time.</p>}
                   {payableAmount > 0 && <p className="mb-2 text-xs text-zinc-400">{paymentMode === "credit" ? "This amount will be added to the customer’s credit account." : paymentMode === "upi_qr" ? "The customer scans a QR. The bill is marked paid and the session ends automatically once the payment arrives." : "Confirm only after receiving payment."}</p>}
                   <motion.button
                     onClick={handleSettle}
                     className="dashboard-btn-primary w-full rounded-md px-4 py-2.5 text-sm font-medium disabled:opacity-50 sm:px-6 sm:py-2"
-                    disabled={loading || summaryLoading || !!summaryError || !!waiveOffError || !vendorId || (paymentMode === "credit" && (!creditAccount?.is_active || availableCreditAmount < payableAmount))}
+                    disabled={loading || summaryLoading || !!summaryError || !!waiveOffError || !vendorId || !!kioskBlocker || (paymentMode === "credit" && (!creditAccount?.is_active || availableCreditAmount < bookingPayable))}
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     aria-label="End session"
@@ -1024,11 +1133,6 @@ const SettlementOverlay: React.FC<ExtraBookingOverlayProps> = ({
 
 
 export default function ExtraBookingOverlay(props:ExtraBookingOverlayProps) {
-  // Kiosk sessions check out in two steps: first the metered extra time, then
-  // the normal bill (unpaid booking, meals, discount) and console release.
-  const runtimeId = props.selectedSlot?.runtime?.runtime_id as string | undefined;
-  const [extensionPaidFor, setExtensionPaidFor] = useState<string | null>(null);
-  useEffect(() => { if (!props.showOverlay) setExtensionPaidFor(null); }, [props.showOverlay]);
-  if(props.showOverlay&&runtimeId&&props.vendorId&&extensionPaidFor!==runtimeId)return <ExtensionSettlement runtimeId={runtimeId} vendorId={props.vendorId} onClose={()=>props.setShowOverlay(false)} onUpdated={()=>props.setRefreshSlots(prev=>!prev)} onContinue={()=>setExtensionPaidFor(runtimeId)}/>;
+  // One screen for every checkout: booking, meals, discount and any PC-metered extra time.
   return <SettlementOverlay key={`${props.vendorId}:${props.selectedSlot?.bookingId || props.selectedSlot?.bookId}:${props.showOverlay}`} {...props}/>;
 }
