@@ -22,6 +22,7 @@ import {
   Settings,
   Wallet,
   Star,
+  QrCode,
 } from "lucide-react";
 import { ButtonDestructive } from "./log-out";
 import { useAccess } from "@/app/context/AccessContext";
@@ -48,6 +49,7 @@ export const navItems: NavItem[] = [
   {href:"/dashboard",icon:LayoutDashboard,label:"Dashboard",permission:"dashboard.view",section:"Overview"},
   {href:"/gaming",icon:Laptop,label:"Gaming Stations",permission:"gaming.manage",section:"Café Operations"},
   {href:"/dashboard?tab=booking",icon:Gamepad2,label:"Bookings & Sessions",permission:"booking.manage",section:"Café Operations"},
+  {href:"/booking-link",icon:QrCode,label:"Booking Link & QR",permission:"booking.manage",section:"Café Operations"},
   {href:"/manage-extraservice",icon:UtensilsCrossed,label:"Food & Extras",permission:"extras.manage",section:"Café Operations"},
   {href:"/transaction",icon:Receipt,label:"Transactions",permission:"transactions.view",section:"Café Operations"},
   {href:"/know-your-gamers",icon:Users,label:"Gamers",permission:"gamers.view",section:"Gamers"},
