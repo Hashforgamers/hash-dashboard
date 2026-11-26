@@ -28,8 +28,9 @@ import {
 } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge, badgeVariants } from "@/components/ui/badge";
-import { User, MapPin, Calendar, Clock, Mail, Phone, Lock,  FileCheck, FileText, Camera, Building2, Sparkles, Shield, BellRing, Wallet, Settings, Globe, Coffee, ImageIcon, Save , Edit,  Ghost, X, Loader2, CreditCard , DollarSign, Download } from 'lucide-react';
+import { User, MapPin, Calendar, Clock, Mail, Phone, Lock,  FileCheck, FileText, Camera, Building2, Sparkles, Shield, BellRing, Wallet, Settings, Globe, Coffee, ImageIcon, Save , Edit,  Ghost, X, Loader2, CreditCard , DollarSign, Download, Keyboard, Activity, Receipt, LifeBuoy } from 'lucide-react';
 import { cn } from "@/lib/utils";
+import Link from "next/link";
 import { jwtDecode } from "jwt-decode";
 import { DASHBOARD_URL } from "@/src/config/env";
 import { VENDOR_ONBOARD_URL } from "@/src/config/env"
@@ -42,6 +43,32 @@ import { OTPVerificationModal } from "./otpVerificationModal";
 import { useAccess } from "@/app/context/AccessContext";
 import { useApiClient } from "@/app/hooks/useApiClient";
 import { CafeKeyboardShortcuts } from "@/app/components/cafe-keyboard-shortcuts";
+
+const ACCOUNT_NAV_GROUPS = [
+  { title: "Cafe", items: [
+    { icon: ImageIcon, label: "Cafe Gallery" },
+    { icon: Building2, label: "Business Details" },
+    { icon: Clock, label: "Operating Hours" },
+    { icon: FileCheck, label: "Verified Documents" },
+  ] },
+  { title: "Payments", items: [
+    { icon: Settings, label: "Payment Methods" },
+    { icon: DollarSign, label: "GST Setup" },
+    { icon: CreditCard, label: "Bank Details" },
+    { icon: Wallet, label: "Payout History" },
+    { icon: Receipt, label: "Settlement Report" },
+    { icon: Calendar, label: "Subscription Details" },
+  ] },
+  { title: "Team & alerts", items: [
+    { icon: Shield, label: "Owner Security" },
+    { icon: Activity, label: "Staff Activity" },
+    { icon: BellRing, label: "Notification Preferences" },
+    { icon: Keyboard, label: "Keyboard Shortcuts" },
+    { icon: LifeBuoy, label: "Report an issue" },
+  ] },
+];
+const ACCOUNT_SECTIONS = ACCOUNT_NAV_GROUPS.flatMap(group => group.items.map(item => item.label));
+const sectionSlug = (label: string) => label.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
 
 export function MyAccount() {
   const api = useApiClient();
@@ -56,7 +83,23 @@ export function MyAccount() {
   const isOwnerSession = (activeStaff?.role || "owner") === "owner";
   const [cafeImages, setCafeImages] = useState<string[]>([]);
   const [page, setPage] = useState<string | null>("Cafe Gallery");
-  useEffect(() => { if (window.location.hash === "#subscription") setPage("Subscription Details"); }, []);
+  const linkedSectionRef = useRef<string | null>(null);
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const linked = params.get("section");
+    const match = linked ? ACCOUNT_SECTIONS.find(label => sectionSlug(label) === linked) : null;
+    if (match) linkedSectionRef.current = match;
+    else if (window.location.hash === "#subscription") linkedSectionRef.current = "Subscription Details";
+  }, []);
+  useEffect(() => {
+    if (!page) return;
+    const url = new URL(window.location.href);
+    const slug = sectionSlug(page);
+    if (url.searchParams.get("section") === slug) return;
+    url.searchParams.set("section", slug);
+    url.hash = "";
+    window.history.replaceState(window.history.state, "", url.toString());
+  }, [page]);
   const prevPageRef = useRef<string | null>(null);
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -312,6 +355,18 @@ const handleRestrictedPageClick = async (pageName: string) => {
     setOtpModalOpen(true);
   }
 };
+
+// Open a deep-linked section once, through the same OTP gate as a click.
+useEffect(() => {
+  const linked = linkedSectionRef.current;
+  if (!linked) return;
+  const restricted = linked === "Bank Details" || linked === "Payout History";
+  // Wait for the staff identity so a restricted link never skips the OTP check.
+  if (restricted && !activeStaff) return;
+  linkedSectionRef.current = null;
+  if (restricted) void handleRestrictedPageClick(linked);
+  else setPage(linked);
+});
 
 const handleOTPVerifySuccess = () => {
   if (!pendingPage) return;
@@ -1522,7 +1577,7 @@ const ToggleSwitch = ({
         {loading && (
           <div className="absolute inset-0 flex items-center justify-center">
             <Loader2 className={cn(
-              "animate-spin text-zinc-400",
+              "animate-spin text-muted-foreground",
               size === "sm" ? "w-2 h-2" : size === "lg" ? "w-4 h-4" : "w-3 h-3"
             )} />
           </div>
@@ -1677,7 +1732,7 @@ const ToggleSwitch = ({
         </div>
         
         <div className="space-y-2">
-          <h3 className="text-base font-semibold text-zinc-100">{cafeProfile.name || "Cafe Name"}</h3>
+          <h3 className="text-base font-semibold text-foreground">{cafeProfile.name || "Cafe Name"}</h3>
           <div className="flex flex-wrap items-center justify-center gap-2">
             <span className={badgeVariants({ variant: "success" })}>
               Gaming Cafe - Live
@@ -1690,11 +1745,11 @@ const ToggleSwitch = ({
       </div>
       
       <div className="space-y-2">
-        <div className="flex items-center gap-2 rounded-lg border border-blue-500/20 bg-zinc-900/35 px-3 py-2 text-xs text-zinc-200">
+        <div className="flex items-center gap-2 rounded-lg border border-border bg-muted/40 px-3 py-2 text-xs text-foreground">
           <Globe className="h-4 w-4 text-blue-300" />
           <span className="truncate">{cafeProfile.website || "Not Available"}</span>
         </div>
-        <div className="flex items-center gap-2 rounded-lg border border-blue-500/20 bg-zinc-900/35 px-3 py-2 text-xs text-zinc-200">
+        <div className="flex items-center gap-2 rounded-lg border border-border bg-muted/40 px-3 py-2 text-xs text-foreground">
           <Mail className="h-4 w-4 text-blue-300" />
           <span className="truncate">{cafeProfile.email || "No Email Provided"}</span>
         </div>
@@ -1707,47 +1762,34 @@ const ToggleSwitch = ({
             {/* Navigation Menu */}
             <Card className="account-panel overflow-hidden">
               <CardContent className="p-4">
-                <nav className="space-y-2">
-                  {[
-                    { icon: ImageIcon, label: "Cafe Gallery" },
-                    { icon: Building2, label: "Business Details" },
-                    { icon: Clock, label: "Operating Hours" },  
-                    { icon: DollarSign, label: "GST Setup" },
-                    { icon: Settings, label: "Payment Methods" },
-                    { icon: Settings, label: "Keyboard Shortcuts" },
-                    ...(activeStaff?.role === "owner" ? [{ icon: Settings, label: "Owner Security" }] : []),
-                    ...(can("transactions.view") ? [{ icon: Clock, label: "Staff Activity" }] : []),
-                    { icon: FileCheck, label: "Verified Documents" },
-                    { icon: CreditCard, label: "Bank Details" },  
-                    { icon: DollarSign, label: "Payout History" },
-                    { icon: BellRing, label: "Notification Preferences" },
-                    { icon: Wallet, label: "Subscription Details" },
-                    { icon: Calendar, label: "Settlement Report" },
-                    { icon: BellRing, label: "Report an issue" },
-                  ].map((item, index) => (
-                    <motion.div
-                      key={item.label}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.05 * index }}
-                    >
-                      <Button
-                        variant="ghost"
-                        className={cn(
-                          "account-nav-item w-full justify-start rounded-md border border-transparent text-zinc-300 hover:bg-white/5 hover:text-white",
-                          page === item.label
-                            ? "border-blue-400/50 bg-blue-500/15 text-blue-100 shadow-[inset_0_0_0_1px_rgba(34,211,238,0.25)]"
-                            : ""
-                        )}
-                        aria-current={page === item.label ? "page" : undefined}
-                        onClick={handleViewInpage}
-                        data-label={item.label}
-                      >
-                        <item.icon className="mr-2 h-4 w-4 text-blue-300" />
-                        {item.label}
-                      </Button>
-                    </motion.div>
-                  ))}
+                <nav className="space-y-2" aria-label="Account sections">
+                  {ACCOUNT_NAV_GROUPS.map(group => {
+                    const items = group.items.filter(item =>
+                      (item.label !== "Owner Security" || activeStaff?.role === "owner") &&
+                      (item.label !== "Staff Activity" || can("transactions.view")));
+                    if (!items.length) return null;
+                    return (
+                      <div key={group.title} className="space-y-1">
+                        <p className="px-2 pt-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">{group.title}</p>
+                        {items.map(item => (
+                          <Button
+                            key={item.label}
+                            variant="ghost"
+                            className={cn(
+                              "account-nav-item h-9 w-full justify-start rounded-md text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground",
+                              page === item.label && "bg-muted text-foreground"
+                            )}
+                            aria-current={page === item.label ? "page" : undefined}
+                            onClick={handleViewInpage}
+                            data-label={item.label}
+                          >
+                            <item.icon className={cn("mr-2 h-4 w-4", page === item.label ? "text-primary" : "text-muted-foreground")} />
+                            {item.label}
+                          </Button>
+                        ))}
+                      </div>
+                    );
+                  })}
                 </nav>
               </CardContent>
             </Card>
@@ -1895,62 +1937,7 @@ const ToggleSwitch = ({
 
 
 
-              {/**  {page === "Business Details" && businessDetails && (
-                <Card className="bg-card border border-border shadow-lg">
-                  <CardHeader>
-                    <CardTitle className="account-section-title flex items-center gap-2">Business Details</CardTitle>
-                    <CardDescription className="account-description">
-                      Update your cafe's basic information
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      <div className="space-y-2">
-                        <Label className="text-foreground">Business Name</Label>
-                        <Input
-                          defaultValue={businessDetails.businessName || "John's Cafe"}
-                          className="bg-input border-input text-foreground placeholder:text-muted-foreground"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label className="text-foreground">Business Type</Label>
-                        <Select
-                          defaultValue={businessDetails.businessType || "cafe"}
-                        >
-                          <SelectTrigger className="bg-input border-input text-foreground">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent className="bg-popover text-popover-foreground">
-                            <SelectItem value="cafe">Cafe</SelectItem>
-                            <SelectItem value="restaurant">Restaurant</SelectItem>
-                            <SelectItem value="bakery">Bakery</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="space-y-2">
-                        <Label className="text-foreground">Phone</Label>
-                        <Input
-                          type="tel"
-                          defaultValue={businessDetails.phone || "+1 (555) 000-0000"}
-                          className="bg-input border-input text-foreground placeholder:text-muted-foreground"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label className="text-foreground">Website</Label>
-                        <Input
-                          type="url"
-                          defaultValue={businessDetails.website || "https://cafe.example.com"}
-                          className="bg-input border-input text-foreground placeholder:text-muted-foreground"
-                        />
-                      </div>
-                      <div className="space-y-2 md:col-span-2">
-                        <Label className="text-foreground">Address</Label>
-                        <Textarea
-                          defaultValue={businessDetails.address || "123 Cafe Street, Food District, City, 12345"}
-                          className="bg-input border-input text-foreground placeholder:text-muted-foreground"
-                        />
-                      </div>
-                    </div> **/}
+              
                     {page === "Business Details" && businessDetails && (
   <Card className="account-panel overflow-hidden">
     <CardHeader className="pb-4">
@@ -2029,7 +2016,7 @@ const ToggleSwitch = ({
                     size="sm"
                     onClick={handleCancelBusinessEdit}
                     disabled={savingBusinessField === field.key}
-                    className="border-zinc-500/50 text-zinc-600 hover:bg-zinc-500/10 hover:border-zinc-500"
+                    className="border-zinc-500/50 text-muted-foreground hover:bg-zinc-500/10 hover:border-zinc-500"
                   >
                     <X className="h-4 w-4" />
                   </Button>
@@ -2089,7 +2076,7 @@ const ToggleSwitch = ({
         {hoursMessage && <p role="status" className="text-sm">{hoursMessage}</p>}
         {!isOwnerSession && <p className="text-sm text-muted-foreground">Sign in as the cafe owner to change operating hours.</p>}
         <p className="text-sm text-muted-foreground">Closing before opening means overnight. Equal times mean 24 hours. Changes apply to new bookings immediately. Existing bookings and held sessions are kept, even outside the new hours.</p>
-        <p className="text-xs text-zinc-300">Set `open` and `close` to same time (or use `24H`) for 24-hour operation.</p>
+        <p className="text-xs text-muted-foreground">Set `open` and `close` to same time (or use `24H`) for 24-hour operation.</p>
         
         <div className="space-y-3">
           {hoursData.map((entry, index) => (
@@ -2183,7 +2170,7 @@ const ToggleSwitch = ({
                       size="sm"
                       onClick={handleCancelEdit}
                       disabled={savingSlot === entry.day}
-                      className="border-zinc-500/50 text-zinc-600 hover:bg-zinc-500/10 hover:border-zinc-500"
+                      className="border-zinc-500/50 text-muted-foreground hover:bg-zinc-500/10 hover:border-zinc-500"
                     >
                       <X className="h-4 w-4" />
                     </Button>
@@ -2231,7 +2218,7 @@ const ToggleSwitch = ({
       ) : (
         <>
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-            <label className="flex items-center gap-2 text-sm text-zinc-200">
+            <label className="flex items-center gap-2 text-sm text-foreground">
               <input
                 type="checkbox"
                 checked={gstProfile.gst_registered}
@@ -2239,7 +2226,7 @@ const ToggleSwitch = ({
               />
               GST Registered
             </label>
-            <label className="flex items-center gap-2 text-sm text-zinc-200">
+            <label className="flex items-center gap-2 text-sm text-foreground">
               <input
                 type="checkbox"
                 checked={gstProfile.gst_enabled}
@@ -2253,13 +2240,13 @@ const ToggleSwitch = ({
             <Input
               value={gstProfile.gstin}
               onChange={(e) => setGstProfile((p) => ({ ...p, gstin: e.target.value.toUpperCase() }))}
-              className="border-blue-400/25 bg-zinc-900/70 text-zinc-100"
+              className="border-border bg-card text-foreground"
               placeholder="GSTIN"
             />
             <Input
               value={gstProfile.legal_name}
               onChange={(e) => setGstProfile((p) => ({ ...p, legal_name: e.target.value }))}
-              className="border-blue-400/25 bg-zinc-900/70 text-zinc-100"
+              className="border-border bg-card text-foreground"
               placeholder="Legal Name"
             />
           </div>
@@ -2271,7 +2258,7 @@ const ToggleSwitch = ({
               max={28}
               value={gstProfile.gst_rate}
               onChange={(e) => setGstProfile((p) => ({ ...p, gst_rate: Number(e.target.value || 0) }))}
-              className="border-blue-400/25 bg-zinc-900/70 text-zinc-100"
+              className="border-border bg-card text-foreground"
               placeholder="GST %"
             />
             <Input
@@ -2279,7 +2266,7 @@ const ToggleSwitch = ({
               onChange={(e) =>
                 setGstProfile((p) => ({ ...p, state_code: e.target.value.replace(/\D/g, "").slice(0, 2) }))
               }
-              className="border-blue-400/25 bg-zinc-900/70 text-zinc-100"
+              className="border-border bg-card text-foreground"
               placeholder="Cafe State Code"
             />
             <Input
@@ -2290,12 +2277,12 @@ const ToggleSwitch = ({
                   place_of_supply_state_code: e.target.value.replace(/\D/g, "").slice(0, 2),
                 }))
               }
-              className="border-blue-400/25 bg-zinc-900/70 text-zinc-100"
+              className="border-border bg-card text-foreground"
               placeholder="Place of Supply"
             />
           </div>
 
-          <label className="flex items-center gap-2 text-sm text-zinc-200">
+          <label className="flex items-center gap-2 text-sm text-foreground">
             <input
               type="checkbox"
               checked={gstProfile.tax_inclusive}
@@ -2319,84 +2306,7 @@ const ToggleSwitch = ({
 
                 
 
-            {/**   {page === "Billing" && billingDetails && (
-                <Card className="bg-card border border-border shadow-lg">
-                  <CardHeader>
-                    <CardTitle className="account-section-title flex items-center gap-2">Subscription & Billing</CardTitle>
-                    <CardDescription className="account-description">
-                      Manage your subscription and payment details
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    <div className="rounded-lg border border-border p-4 bg-muted/20">
-                      <div className="flex items-center justify-between">
-                        <div className="space-y-1">
-                          <h4 className="font-medium text-foreground">Premium Plan</h4>
-                          <p className="text-sm text-muted-foreground">
-                            $49/month, billed annually
-                          </p>
-                        </div>
-                        <Badge className="bg-emerald-500/20 text-emerald-400">Active</Badge>
-                      </div>
-                      <div className="mt-4 space-y-4">
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                          <Card className="bg-secondary border border-border shadow-sm">
-                            <CardContent className="pt-4">
-                              <div className="text-center">
-                                <h3 className="text-2xl font-bold text-foreground">150k</h3>
-                                <p className="text-sm text-muted-foreground">
-                                  Monthly Views
-                                </p>
-                              </div>
-                            </CardContent>
-                          </Card>
-                          <Card className="bg-secondary border border-border shadow-sm">
-                            <CardContent className="pt-4">
-                              <div className="text-center">
-                                <h3 className="text-2xl font-bold text-foreground">2.5k</h3>
-                                <p className="text-sm text-muted-foreground">
-                                  Orders/Month
-                                </p>
-                              </div>
-                            </CardContent>
-                          </Card>
-                          <Card className="bg-secondary border border-border shadow-sm">
-                            <CardContent className="pt-4">
-                              <div className="text-center">
-                                <h3 className="text-2xl font-bold text-foreground">99.9%</h3>
-                                <p className="text-sm text-muted-foreground">
-                                  Uptime
-                                </p>
-                              </div>
-                            </CardContent>
-                          </Card>
-                        </div>
-                        <div className="flex justify-end space-x-4">
-                          <Button variant="outline" className="border-border text-foreground hover:bg-muted hover:text-foreground">
-                            View Invoice History
-                          </Button>
-                          <Button className="bg-primary hover:bg-primary/90 text-primary-foreground">Upgrade Plan</Button>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="space-y-4">
-                      <h4 className="font-medium text-foreground">Payment Method</h4>
-                      <div className="flex items-center space-x-4 rounded-lg border border-border p-4 bg-muted/20">
-                        <CreditCard className="h-6 w-6 text-muted-foreground" />
-                        <div>
-                          <p className="font-medium text-foreground">•••• •••• •••• 4242</p>
-                          <p className="text-sm text-muted-foreground">
-                            Expires 12/24
-                          </p>
-                        </div>
-                        <Button variant="ghost" size="sm" className="ml-auto text-muted-foreground hover:text-foreground hover:bg-muted">
-                          Update
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-            )} **/}
+            
 
               {page === "Verified Documents" && (
                 <Card className="account-panel overflow-hidden">
@@ -2448,7 +2358,7 @@ const ToggleSwitch = ({
                                     : doc.status === "rejected"
                                     ? "text-red-500"
                                     : doc.status === "missing"
-                                    ? "text-zinc-500"
+                                    ? "text-muted-foreground"
                                     : "text-amber-500"
                                 )}
                               />
@@ -2467,7 +2377,7 @@ const ToggleSwitch = ({
                                     doc.status === "verified" ? "text-emerald-600" :
                                     doc.status === "rejected" ? "text-red-600" : "text-amber-600"
                                     ,
-                                    doc.status === "missing" && "text-zinc-500"
+                                    doc.status === "missing" && "text-muted-foreground"
                                   )}>{doc.status === "missing" ? "Missing" : doc.status}</span></p>
                                   {doc.uploadedAt && (
                                     <p>Uploaded: {new Date(doc.uploadedAt).toLocaleDateString()}</p>
@@ -2489,7 +2399,7 @@ const ToggleSwitch = ({
                                   doc.status === "verified" && "bg-emerald-500/20 text-emerald-400",
                                   doc.status === "rejected" && "bg-red-500/20 text-red-400",
                                   doc.status === "pending" && "bg-amber-500/20 text-amber-400",
-                                  doc.status === "missing" && "bg-zinc-500/20 text-zinc-300"
+                                  doc.status === "missing" && "bg-zinc-500/20 text-muted-foreground"
                                 )}
                               >
                                 {doc.status === "missing" ? "missing" : doc.status}
@@ -2616,7 +2526,7 @@ const ToggleSwitch = ({
     <Card className="content-card account-panel mb-6 overflow-hidden">
       <CardHeader className="pb-4">
         <CardTitle className="account-section-title flex items-center gap-2">
-          <CreditCard className="icon-lg text-blue-300" />
+          <CreditCard className="icon-lg text-muted-foreground" />
           Bank Details
         </CardTitle>
         <CardDescription className="account-description">
@@ -2836,7 +2746,7 @@ const ToggleSwitch = ({
     <Card className="content-card account-panel mb-6 overflow-hidden">
       <CardHeader className="pb-4">
         <CardTitle className="account-section-title flex items-center gap-2">
-          <Calendar className="icon-lg text-blue-300" />
+          <Calendar className="icon-lg text-muted-foreground" />
           Bank Details History
         </CardTitle>
         <CardDescription className="account-description">
@@ -3011,7 +2921,7 @@ const ToggleSwitch = ({
                                 "w-12 h-12 rounded-xl flex items-center justify-center border transition-colors",
                                 method.is_enabled 
                                   ? "bg-blue-500/30 border-blue-500/50" 
-                                  : "bg-blue-500/10 border-blue-500/20"
+                                  : "bg-blue-500/10 border-border"
                               )}>
                                 <Coffee className={cn(
                                   "icon-lg transition-colors",
@@ -3070,7 +2980,7 @@ const ToggleSwitch = ({
                                 method.is_enabled ? "bg-emerald-500" : "bg-zinc-400"
                               )}></div>
                               <span className={cn(
-                                method.is_enabled ? "text-emerald-600" : "text-zinc-500"
+                                method.is_enabled ? "text-emerald-600" : "text-muted-foreground"
                               )}>
                                 {isAutoManaged
                                   ? (method.is_enabled ? "Auto-enabled (active cafe pass found)" : "Auto-disabled (no active cafe pass)")
@@ -3085,7 +2995,7 @@ const ToggleSwitch = ({
                           {/* Status Text */}
                           <div className="text-left sm:text-right min-w-[88px] flex-1 sm:flex-initial">
                             {isAutoManaged ? (
-                              <span className="body-text-small text-zinc-400 font-semibold tracking-[0.06em]">AUTO</span>
+                              <span className="body-text-small text-muted-foreground font-semibold tracking-[0.06em]">AUTO</span>
                             ) : togglingMethod === method.pay_method_id ? (
                               <span className="body-text-small text-primary font-medium">
                                 {method.is_enabled ? 'Removing...' : 'Adding...'}
@@ -3093,7 +3003,7 @@ const ToggleSwitch = ({
                             ) : (
                               <span className={cn(
                                 "body-text-small font-semibold",
-                                method.is_enabled ? "text-emerald-500" : "text-zinc-400"
+                                method.is_enabled ? "text-emerald-500" : "text-muted-foreground"
                               )}>
                                 {method.is_enabled ? 'ACTIVE' : 'INACTIVE'}
                               </span>
@@ -3194,7 +3104,7 @@ const ToggleSwitch = ({
   <Card className="content-card account-panel overflow-hidden">
     <CardHeader className="pb-4">
       <CardTitle className="account-section-title flex items-center gap-2">
-        <DollarSign className="icon-lg text-blue-300" />
+        <DollarSign className="icon-lg text-muted-foreground" />
         Payout History
       </CardTitle>
       <CardDescription className="account-description">
@@ -3317,7 +3227,7 @@ const ToggleSwitch = ({
   <Card className="content-card account-panel overflow-hidden">
     <CardHeader className="pb-4">
       <CardTitle className="account-section-title flex items-center gap-2">
-        <BellRing className="icon-lg text-blue-300" />
+        <BellRing className="icon-lg text-muted-foreground" />
         Booking Notifications
       </CardTitle>
       <CardDescription className="account-description">
@@ -3326,7 +3236,7 @@ const ToggleSwitch = ({
     </CardHeader>
     <CardContent className="space-y-4">
       {loadingNotificationPrefs ? (
-        <div className="flex items-center gap-2 text-sm text-zinc-300">
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <Loader2 className="h-4 w-4 animate-spin" /> Loading notification settings...
         </div>
       ) : (
@@ -3367,7 +3277,7 @@ const ToggleSwitch = ({
               </p>
             </div>
             {loadingPayAtCafeAutomation ? (
-              <div className="flex items-center gap-2 text-sm text-zinc-300">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Loader2 className="h-4 w-4 animate-spin" /> Loading auto settings...
               </div>
             ) : (
@@ -3438,7 +3348,7 @@ const ToggleSwitch = ({
   <Card className="content-card account-panel overflow-hidden">
     <CardHeader className="pb-4">
       <CardTitle className="account-section-title flex items-center gap-2">
-        <Wallet className="icon-lg text-blue-300" />
+        <Wallet className="icon-lg text-muted-foreground" />
         Subscription Details
       </CardTitle>
       <CardDescription className="account-description">
@@ -3446,9 +3356,9 @@ const ToggleSwitch = ({
       </CardDescription>
     </CardHeader>
     <CardContent>
-      <a href="/subscription" className="mb-4 inline-flex rounded-lg bg-blue-600 px-4 py-2 font-medium text-white">Manage subscription</a>
+      <Button asChild className="mb-4"><Link href="/subscription">Manage subscription</Link></Button>
       {loadingSubscriptionHistory ? (
-        <div className="flex items-center gap-2 text-sm text-zinc-300">
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <Loader2 className="h-4 w-4 animate-spin" /> Loading subscriptions...
         </div>
       ) : subscriptionHistory.length ? (
@@ -3510,7 +3420,7 @@ const ToggleSwitch = ({
   <Card className="content-card account-panel overflow-hidden">
     <CardHeader className="pb-4">
       <CardTitle className="account-section-title flex items-center gap-2">
-        <Calendar className="icon-lg text-blue-300" />
+        <Calendar className="icon-lg text-muted-foreground" />
         Date-wise Settlement
       </CardTitle>
       <CardDescription className="account-description">
@@ -3535,7 +3445,7 @@ const ToggleSwitch = ({
         </div>
       )}
       {loadingSettlementSummary ? (
-        <div className="flex items-center gap-2 text-sm text-zinc-300">
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <Loader2 className="h-4 w-4 animate-spin" /> Loading settlement report...
         </div>
       ) : (
