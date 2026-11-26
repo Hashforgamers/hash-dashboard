@@ -545,7 +545,7 @@ export default function ManageExtraServices() {
               <p className="body-text-muted">Loading categories...</p>
             </div>
           ) : !Array.isArray(categories) || categories.length === 0 ? (
-            <div className="gaming-panel flex flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed border-border py-8">
+            <div className="gaming-panel flex flex-col items-center justify-center gap-3 rounded-lg border-2 border-dashed border-border py-8">
               <UtensilsCrossed className="w-12 h-12 text-muted-foreground/30" />
               <h3 className="section-title text-muted-foreground/60">No categories yet</h3>
               <p className="body-text-muted">Create your first category to get started</p>
@@ -720,12 +720,12 @@ export default function ManageExtraServices() {
                                           </p>
                                         )}
                                         <div className="flex items-center justify-between gap-1 pt-0.5">
-                                          <div className="flex items-center gap-0.5 text-primary font-bold text-sm">
+                                          <div className="flex items-center gap-0.5 text-primary font-semibold text-sm">
                                             <IndianRupee className="w-3 h-3" />
                                             <span>{item.price}</span>
                                           </div>
                                           <span className={clsx(
-                                            "rounded-full border px-1.5 py-0.5 text-[10px] font-semibold",
+                                            "rounded-full border px-1.5 py-0.5 text-xs font-semibold",
                                             item.is_low_stock
                                               ? "border-amber-400/40 bg-amber-500/15 text-amber-300"
                                               : "border-border bg-muted text-foreground"
@@ -733,7 +733,7 @@ export default function ManageExtraServices() {
                                             {item.stock_quantity ?? 0} {item.stock_unit || "units"}
                                           </span>
                                           <span className={clsx(
-                                            "px-1.5 py-0.5 rounded-full text-[10px] font-bold",
+                                            "px-1.5 py-0.5 rounded-full text-xs font-semibold",
                                             item.is_active
                                               ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
                                               : "bg-muted/20 text-muted-foreground"
@@ -861,7 +861,7 @@ export default function ManageExtraServices() {
                                               onClick={() => toggleMenuItemStatus(cat.id, item)}
                                               disabled={togglingItemId === item.id}
                                               className={clsx(
-                                                "px-2 py-0.5 rounded-full text-xs font-bold border transition-all disabled:cursor-not-allowed disabled:opacity-50",
+                                                "px-2 py-0.5 rounded-full text-xs font-semibold border transition-all disabled:cursor-not-allowed disabled:opacity-50",
                                                 item.is_active
                                                   ? "hover:bg-emerald-100 border-emerald-500/20 bg-emerald-500/10 text-emerald-400"
                                                   : "border-border bg-muted/20 text-muted-foreground hover:bg-muted/40 dark:text-muted-foreground"
@@ -912,10 +912,10 @@ export default function ManageExtraServices() {
 
       {/* ✅ Category Dialog */}
       <Dialog open={showCategoryDlg} onOpenChange={setShowCategoryDlg}>
-        <DialogContent className="ui-dialog-surface w-[95vw] rounded-xl shadow-2xl sm:max-w-[425px]">
+        <DialogContent className="ui-dialog-surface w-[95vw] rounded-lg shadow-2xl sm:max-w-[425px]">
           {actionError && <p role="alert" className="text-sm text-red-300">{actionError}</p>}
           <DialogHeader>
-            <DialogTitle className="ui-dialog-title flex items-center gap-2 text-lg font-bold tracking-wide">
+            <DialogTitle className="ui-dialog-title flex items-center gap-2 text-lg font-semibold tracking-wide">
               <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-primary/35 bg-primary/10">
                 <FolderPlus className="h-4 w-4 text-primary" />
               </span>
@@ -927,7 +927,7 @@ export default function ManageExtraServices() {
           </DialogHeader>
           <div className="space-y-4 py-2">
             <div className="space-y-1.5">
-              <label className="text-xs font-bold uppercase tracking-wider text-foreground">Name *</label>
+              <label className="text-xs font-semibold uppercase tracking-wider text-foreground">Name *</label>
               <Input
                 value={categoryForm.name}
                 onChange={e => setCategoryForm({ ...categoryForm, name: e.target.value })}
@@ -937,7 +937,7 @@ export default function ManageExtraServices() {
               />
             </div>
             <div className="space-y-1.5">
-              <label className="text-xs font-bold uppercase tracking-wider text-foreground">Description</label>
+              <label className="text-xs font-semibold uppercase tracking-wider text-foreground">Description</label>
               <Input
                 value={categoryForm.description}
                 onChange={e => setCategoryForm({ ...categoryForm, description: e.target.value })}
@@ -964,10 +964,10 @@ export default function ManageExtraServices() {
 
       {/* ✅ Menu Item Dialog */}
       <Dialog open={showMenuDlg} onOpenChange={setShowMenuDlg}>
-        <DialogContent className="ui-dialog-surface w-[95vw] rounded-xl shadow-2xl sm:max-w-[500px]">
+        <DialogContent className="ui-dialog-surface w-[95vw] rounded-lg shadow-2xl sm:max-w-[500px]">
           {actionError && <p role="alert" className="text-sm text-red-300">{actionError}</p>}
           <DialogHeader>
-            <DialogTitle className="ui-dialog-title flex items-center gap-2 text-lg font-bold tracking-wide">
+            <DialogTitle className="ui-dialog-title flex items-center gap-2 text-lg font-semibold tracking-wide">
               <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-emerald-400/35 bg-emerald-500/10">
                 <Sparkles className="h-4 w-4 text-emerald-300" />
               </span>
@@ -979,7 +979,7 @@ export default function ManageExtraServices() {
           </DialogHeader>
           <div className="space-y-4 py-2 max-h-[60vh] overflow-y-auto pr-1">
             <div className="space-y-1.5">
-              <label className="text-xs font-bold uppercase tracking-wider text-foreground">Name *</label>
+              <label className="text-xs font-semibold uppercase tracking-wider text-foreground">Name *</label>
               <Input
                 value={menuForm.name}
                 onChange={e => setMenuForm({ ...menuForm, name: e.target.value })}
@@ -989,7 +989,7 @@ export default function ManageExtraServices() {
               />
             </div>
             <div className="space-y-1.5">
-              <label className="text-xs font-bold uppercase tracking-wider text-foreground">Description</label>
+              <label className="text-xs font-semibold uppercase tracking-wider text-foreground">Description</label>
               <Textarea
                 value={menuForm.description}
                 onChange={e => setMenuForm({ ...menuForm, description: e.target.value })}
@@ -1000,7 +1000,7 @@ export default function ManageExtraServices() {
               />
             </div>
             <div className="space-y-1.5">
-              <label className="text-xs font-bold uppercase tracking-wider text-foreground">Price (₹) *</label>
+              <label className="text-xs font-semibold uppercase tracking-wider text-foreground">Price (₹) *</label>
               <div className="relative">
                 <IndianRupee className="absolute left-3 top-1/2 -translate-y-1/2 icon-md text-muted-foreground" />
                 <Input
@@ -1017,7 +1017,7 @@ export default function ManageExtraServices() {
             </div>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
               <div className="space-y-1.5">
-                <label className="text-xs font-bold uppercase tracking-wider text-foreground">Opening Stock</label>
+                <label className="text-xs font-semibold uppercase tracking-wider text-foreground">Opening Stock</label>
                 <Input
                   type="number"
                   value={menuForm.stock_quantity}
@@ -1030,7 +1030,7 @@ export default function ManageExtraServices() {
                 />
               </div>
               <div className="space-y-1.5">
-                <label className="text-xs font-bold uppercase tracking-wider text-foreground">Unit</label>
+                <label className="text-xs font-semibold uppercase tracking-wider text-foreground">Unit</label>
                 <Input
                   value={menuForm.stock_unit}
                   onChange={e => setMenuForm({ ...menuForm, stock_unit: e.target.value })}
@@ -1041,7 +1041,7 @@ export default function ManageExtraServices() {
                 />
               </div>
               <div className="space-y-1.5">
-                <label className="text-xs font-bold uppercase tracking-wider text-foreground">Low Stock Alert</label>
+                <label className="text-xs font-semibold uppercase tracking-wider text-foreground">Low Stock Alert</label>
                 <Input
                   type="number"
                   value={menuForm.low_stock_threshold}
@@ -1055,7 +1055,7 @@ export default function ManageExtraServices() {
               </div>
             </div>
             <div className="space-y-1.5">
-              <label className="text-xs font-bold uppercase tracking-wider text-foreground">Image (optional)</label>
+              <label className="text-xs font-semibold uppercase tracking-wider text-foreground">Image (optional)</label>
               <Input
                 type="file"
                 accept="image/*"
@@ -1086,17 +1086,17 @@ export default function ManageExtraServices() {
       </Dialog>
 
       <Dialog open={showInventoryDlg} onOpenChange={setShowInventoryDlg}>
-        <DialogContent className="ui-dialog-surface w-[95vw] rounded-xl shadow-2xl sm:max-w-[430px]">
+        <DialogContent className="ui-dialog-surface w-[95vw] rounded-lg shadow-2xl sm:max-w-[430px]">
           {actionError && <p role="alert" className="text-sm text-red-300">{actionError}</p>}
           <DialogHeader>
-            <DialogTitle className="ui-dialog-title text-lg font-bold tracking-wide">Update Inventory</DialogTitle>
+            <DialogTitle className="ui-dialog-title text-lg font-semibold tracking-wide">Update Inventory</DialogTitle>
             <DialogDescription className="ui-dialog-subtle text-sm">
               {inventoryItemName || "Menu item"}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3 py-1">
             <div className="space-y-1.5">
-              <label className="text-xs font-bold uppercase tracking-wider text-foreground">Mode</label>
+              <label className="text-xs font-semibold uppercase tracking-wider text-foreground">Mode</label>
               <Select value={inventoryMode} onValueChange={(value: "set" | "increment" | "decrement") => setInventoryMode(value)}>
                 <SelectTrigger className="ui-input-surface focus-visible:ring-primary/60">
                   <SelectValue />
@@ -1110,7 +1110,7 @@ export default function ManageExtraServices() {
             </div>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div className="space-y-1.5">
-                <label className="text-xs font-bold uppercase tracking-wider text-foreground">Quantity</label>
+                <label className="text-xs font-semibold uppercase tracking-wider text-foreground">Quantity</label>
                 <Input
                   type="number"
                   min="0"
@@ -1122,7 +1122,7 @@ export default function ManageExtraServices() {
                 />
               </div>
               <div className="space-y-1.5">
-                <label className="text-xs font-bold uppercase tracking-wider text-foreground">Unit</label>
+                <label className="text-xs font-semibold uppercase tracking-wider text-foreground">Unit</label>
                 <Input
                   value={inventoryUnit}
                   maxLength={32}
@@ -1132,7 +1132,7 @@ export default function ManageExtraServices() {
               </div>
             </div>
             <div className="space-y-1.5">
-              <label className="text-xs font-bold uppercase tracking-wider text-foreground">Low Stock Alert</label>
+              <label className="text-xs font-semibold uppercase tracking-wider text-foreground">Low Stock Alert</label>
               <Input
                 type="number"
                 min="0"

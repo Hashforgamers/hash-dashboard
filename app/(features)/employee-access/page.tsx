@@ -231,7 +231,7 @@ export default function EmployeeAccessPage() {
     return (
       <DashboardLayout>
         <div className="flex h-full min-h-[220px] items-center justify-center">
-          <div className="w-full max-w-xl rounded-2xl border border-red-500/30 bg-red-500/10 p-6 text-center">
+          <div className="w-full max-w-xl rounded-lg border border-red-500/30 bg-red-500/10 p-6 text-center">
             <h2 className="text-xl font-semibold text-red-200">Owner Access Required</h2>
             <p className="mt-2 text-sm text-red-100/80">
               Only owner role can manage employee onboarding and permissions.
@@ -361,7 +361,7 @@ export default function EmployeeAccessPage() {
                         </div>
 
                         <div className="md:col-span-2">
-                          <p className="mb-1 text-[11px] uppercase tracking-[0.08em] text-muted-foreground md:hidden">Role</p>
+                          <p className="mb-1 text-xs uppercase tracking-wide text-muted-foreground md:hidden">Role</p>
                           <Select
                             value={staff.role}
                             onValueChange={(value: StaffRole) => void handleSetRole(staff.id, value)}
@@ -378,7 +378,7 @@ export default function EmployeeAccessPage() {
                         </div>
 
                         <div className="md:col-span-2">
-                          <p className="mb-1 text-[11px] uppercase tracking-[0.08em] text-muted-foreground md:hidden">Status</p>
+                          <p className="mb-1 text-xs uppercase tracking-wide text-muted-foreground md:hidden">Status</p>
                           <Badge
                             className={staff.isActive ? "border-emerald-400/30 bg-emerald-500/10 text-emerald-200" : "border-red-400/30 bg-red-500/10 text-red-200"}
                           >
@@ -387,7 +387,7 @@ export default function EmployeeAccessPage() {
                         </div>
 
                         <div className="md:col-span-2">
-                          <p className="mb-1 text-[11px] uppercase tracking-[0.08em] text-muted-foreground md:hidden">PIN</p>
+                          <p className="mb-1 text-xs uppercase tracking-wide text-muted-foreground md:hidden">PIN</p>
                           <div className="flex items-center gap-2 tracking-wider text-foreground">
                             {staff.pinCode ? <PrivatePin key={`${staff.id}:${staff.pinCode}`} value={staff.pinCode}/> : "Not set"}
                             {staff.pinCode && (
@@ -406,7 +406,7 @@ export default function EmployeeAccessPage() {
 
                         <div className="md:col-span-2">
                           {pendingStaffAction[staff.id] && (
-                            <span className="mb-2 inline-block text-[11px] text-primary">{STAFF_ACTION_LABELS[pendingStaffAction[staff.id]]}</span>
+                            <span className="mb-2 inline-block text-xs text-primary">{STAFF_ACTION_LABELS[pendingStaffAction[staff.id]]}</span>
                           )}
                           <div className="grid grid-cols-2 gap-2 md:flex md:items-center md:justify-end">
                             <Button
@@ -453,7 +453,7 @@ export default function EmployeeAccessPage() {
 
           <TabsContent
             value="service-mapping"
-            className="mt-4 min-h-0 flex-1 overflow-hidden rounded-xl border border-border bg-muted/40 data-[state=inactive]:hidden data-[state=active]:flex data-[state=active]:flex-col"
+            className="mt-4 min-h-0 flex-1 overflow-hidden rounded-lg border border-border bg-muted/40 data-[state=inactive]:hidden data-[state=active]:flex data-[state=active]:flex-col"
           >
             <div className="flex items-center justify-between border-b border-border px-3 py-2">
               <h2 className="dash-title !text-sm">Role to Service Mapping</h2>
@@ -474,11 +474,11 @@ export default function EmployeeAccessPage() {
             <div className="min-h-0 flex-1 overflow-y-auto p-3">
               {Object.entries(serviceSections).map(([section, items]) => (
                 <div key={section} className="mb-4 rounded-lg border border-border bg-card">
-                  <div className="border-b border-border px-3 py-2 text-xs font-semibold uppercase tracking-[0.08em] text-primary">
+                  <div className="border-b border-border px-3 py-2 text-xs font-semibold uppercase tracking-wide text-primary">
                     {section}
                   </div>
 
-                  <div className="hidden grid-cols-12 border-b border-border px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground md:grid">
+                  <div className="hidden grid-cols-12 border-b border-border px-3 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground md:grid">
                     <div className="col-span-6">Service</div>
                     <div className="col-span-2 text-center">Owner</div>
                     <div className="col-span-2 text-center">Manager</div>
@@ -496,7 +496,7 @@ export default function EmployeeAccessPage() {
 
                         return (
                           <div key={`${item.permission}-${roleKey}`} className="flex flex-col items-center gap-1 md:col-span-2 md:flex-row md:justify-center">
-                            <span className="text-[10px] uppercase tracking-[0.08em] text-muted-foreground md:hidden">{roleKey}</span>
+                            <span className="text-xs uppercase tracking-wide text-muted-foreground md:hidden">{roleKey}</span>
                             <Switch
                               checked={checked}
                               disabled={isOwner || isResettingPermissions || pendingPermissionKey !== null}

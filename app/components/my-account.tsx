@@ -1777,7 +1777,7 @@ const ToggleSwitch = ({
                     if (!items.length) return null;
                     return (
                       <div key={group.title} className="space-y-1">
-                        <p className="px-2 pt-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">{group.title}</p>
+                        <p className="px-2 pt-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">{group.title}</p>
                         {items.map(item => (
                           <Button
                             key={item.label}
@@ -2915,7 +2915,7 @@ const ToggleSwitch = ({
                       className="group"
                     >
                       <div className={cn(
-                        "grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_180px] items-center p-4 rounded-xl border transition-all duration-200 hover:shadow-md gap-3 sm:gap-4",
+                        "grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_180px] items-center p-4 rounded-lg border transition-all duration-200 hover:shadow-md gap-3 sm:gap-4",
                         method.is_enabled 
                           ? "border-primary/50 bg-primary/5" 
                           : "border-border bg-muted/20 hover:border-primary/30"
@@ -2925,7 +2925,7 @@ const ToggleSwitch = ({
                           <div className="flex-shrink-0">
                             {normalizedName === 'pay_at_cafe' ? (
                               <div className={cn(
-                                "w-12 h-12 rounded-xl flex items-center justify-center border transition-colors",
+                                "w-12 h-12 rounded-lg flex items-center justify-center border transition-colors",
                                 method.is_enabled 
                                   ? "bg-primary/30 border-primary/50" 
                                   : "bg-primary/10 border-border"
@@ -2937,7 +2937,7 @@ const ToggleSwitch = ({
                               </div>
                             ) : normalizedName === "cafe_specific_pass" ? (
                               <div className={cn(
-                                "w-12 h-12 rounded-xl flex items-center justify-center border transition-colors",
+                                "w-12 h-12 rounded-lg flex items-center justify-center border transition-colors",
                                 method.is_enabled 
                                   ? "bg-emerald-500/30 border-emerald-500/50" 
                                   : "bg-emerald-500/10 border-emerald-500/20"
@@ -2949,7 +2949,7 @@ const ToggleSwitch = ({
                               </div>
                             ) : (
                               <div className={cn(
-                                "w-12 h-12 rounded-xl flex items-center justify-center border transition-colors",
+                                "w-12 h-12 rounded-lg flex items-center justify-center border transition-colors",
                                 method.is_enabled 
                                   ? "bg-purple-500/30 border-purple-500/50" 
                                   : "bg-purple-500/10 border-purple-500/20"
@@ -3002,7 +3002,7 @@ const ToggleSwitch = ({
                           {/* Status Text */}
                           <div className="text-left sm:text-right min-w-[88px] flex-1 sm:flex-initial">
                             {isAutoManaged ? (
-                              <span className="body-text-small text-muted-foreground font-semibold tracking-[0.06em]">AUTO</span>
+                              <span className="body-text-small text-muted-foreground font-semibold tracking-wide">AUTO</span>
                             ) : togglingMethod === method.pay_method_id ? (
                               <span className="body-text-small text-primary font-medium">
                                 {method.is_enabled ? 'Removing...' : 'Adding...'}

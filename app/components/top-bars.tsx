@@ -25,11 +25,11 @@ export function TopBar() {
               <input data-search-input=""
                 type="text"
                 placeholder="Search..."
-                className="border rounded-full pl-10 pr-4 py-1.5 text-sm bg-muted/50 text-foreground border-border focus:outline-none focus:ring-2 focus:ring-emerald-500/50 w-64 placeholder-muted-foreground transition-all duration-200 ease-in-out"
+                className="border rounded-full pl-10 pr-4 py-1.5 text-sm bg-muted/50 text-foreground border-border focus:outline-none focus:ring-2 focus:ring-ring/40 w-64 placeholder-muted-foreground transition-all duration-200 ease-in-out"
               />
             </div>
 
-            <select className="bg-muted rounded-full px-4 py-1.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-emerald-500/50">
+            <select className="bg-muted rounded-full px-4 py-1.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring/40">
               <option value="en">English</option>
               <option value="es">Español</option>
               <option value="fr">Français</option>

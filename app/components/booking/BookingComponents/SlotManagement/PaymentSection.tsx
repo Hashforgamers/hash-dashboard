@@ -60,7 +60,7 @@ export const PaymentSection = memo(({
             </div>
             
             <div>
-              <h3 className="text-sm font-bold text-white flex items-center gap-2">
+              <h3 className="text-sm font-semibold text-white flex items-center gap-2">
                 {isPrivateMode ? (
                   <>
                     <span className="text-purple-400">Private Booking</span>
@@ -93,7 +93,7 @@ export const PaymentSection = memo(({
               'relative inline-flex h-8 w-14 items-center rounded-full transition-all duration-300',
               'focus:outline-none focus:ring-2 focus:ring-offset-2',
               isPrivateMode 
-                ? 'bg-purple-600 focus:ring-purple-500' 
+                ? 'bg-purple-600 focus:ring-ring/40' 
                 : 'bg-muted focus:ring-border'
             )}
           >
@@ -197,9 +197,9 @@ export const PaymentSection = memo(({
                     className={cn(
                       'w-full px-4 py-3 bg-muted border rounded-lg',
                       errors.pass || passError
-                        ? 'border-red-500 focus:border-red-500'
-                        : 'border-border focus:border-purple-500',
-                      'focus:outline-none focus:ring-1 focus:ring-purple-500/20'
+                        ? 'border-red-500 focus:border-ring'
+                        : 'border-border focus:border-ring',
+                      'focus:outline-none focus:ring-1 focus:ring-ring/40'
                     )}
                   />
                 </div>

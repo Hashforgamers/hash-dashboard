@@ -39,7 +39,7 @@ function LockedOverlay() {
           <Lock className="w-8 h-8 text-destructive" />
         </div>
         <div>
-          <h3 className="font-bold text-base text-foreground">Dashboard Locked</h3>
+          <h3 className="font-semibold text-base text-foreground">Dashboard Locked</h3>
           <p className="text-xs text-muted-foreground mt-1">
             Your subscription is inactive. All dashboard widgets are locked.
           </p>
@@ -297,7 +297,7 @@ export function DashboardContent() {
               >
                 {showEarnings ? <NumberFlow value={Number(currentStats.netEarnings || 0)} locales="en-IN" format={moneyFormat} /> : "₹•••••"}
               </p>
-              <span className="text-[10px] font-medium text-muted-foreground">Today</span>
+              <span className="text-xs font-medium text-muted-foreground">Today</span>
             </div>
           </CardContent>
         </Card>
@@ -318,7 +318,7 @@ export function DashboardContent() {
                 <span className="dash-kpi-label">Bookings</span>
               </div>
               <span
-                className={`text-[10px] font-medium ${isConnected ? "text-emerald-500" : "text-amber-500"}`}
+                className={`text-xs font-medium ${isConnected ? "text-emerald-500" : "text-amber-500"}`}
                 title={isConnected ? "Realtime updates connected" : "Realtime reconnecting"}
               >
                 {isConnected ? "Live" : "Syncing"}
@@ -330,7 +330,7 @@ export function DashboardContent() {
               >
                 <NumberFlow value={Number(currentStats.todayBookings || 0)} />
               </p>
-              <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
+              <div className="flex items-center gap-1 text-xs text-muted-foreground">
                 <TrendingUp className="h-3 w-3" />
                 <span>Today</span>
               </div>
@@ -363,7 +363,7 @@ export function DashboardContent() {
               >
                 {showPending ? <NumberFlow value={Number(currentStats.netPendingAmount || 0)} locales="en-IN" format={moneyFormat} /> : "₹•••••"}
               </p>
-              <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
+              <div className="flex items-center gap-1 text-xs text-muted-foreground">
                 <div className="h-1.5 w-1.5 rounded-full bg-amber-500" />
                 <span>Today</span>
               </div>
@@ -376,13 +376,13 @@ export function DashboardContent() {
 
   const mobileMetricsStrip = (
     <div className="dashboard-module-card flex w-full items-center justify-between gap-1 rounded-lg border border-white/10 bg-white/[0.05] px-1.5 py-1 md:hidden">
-      <div className="min-w-0 rounded-md border border-border bg-primary/10 px-1.5 py-1 text-[10px] font-medium text-[#9dccff]">
+      <div className="min-w-0 rounded-md border border-border bg-primary/10 px-1.5 py-1 text-xs font-medium text-[#9dccff]">
         Bookings {currentStats.todayBookings}
       </div>
-      <div className="min-w-0 rounded-md border border-amber-500/20 bg-amber-500/10 px-1.5 py-1 text-[10px] font-medium text-amber-400">
+      <div className="min-w-0 rounded-md border border-amber-500/20 bg-amber-500/10 px-1.5 py-1 text-xs font-medium text-amber-400">
         Pending {showPending ? formatMoney(currentStats.netPendingAmount) : '••••'}
       </div>
-      <div className="min-w-0 rounded-md border border-emerald-500/20 bg-emerald-500/10 px-1.5 py-1 text-[10px] font-medium text-emerald-500">
+      <div className="min-w-0 rounded-md border border-emerald-500/20 bg-emerald-500/10 px-1.5 py-1 text-xs font-medium text-emerald-500">
         Earnings {showEarnings ? formatMoney(currentStats.netEarnings) : '••••'}
       </div>
     </div>
@@ -420,7 +420,7 @@ export function DashboardContent() {
               </div>
               <button
                 onClick={() => router.push("/subscription")}
-                className="shrink-0 text-xs font-bold text-destructive underline underline-offset-2 hover:text-destructive/80 transition-colors whitespace-nowrap"
+                className="shrink-0 text-xs font-semibold text-destructive underline underline-offset-2 hover:text-destructive/80 transition-colors whitespace-nowrap"
               >
                 Renew Now →
               </button>

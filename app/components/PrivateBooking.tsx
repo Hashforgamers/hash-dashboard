@@ -302,7 +302,7 @@ const PrivateBookingForm: React.FC<PrivateBookingFormProps> = ({ onBack }) => {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="max-w-sm w-full bg-muted rounded-xl shadow-lg p-6 text-center"
+          className="max-w-sm w-full bg-muted rounded-lg shadow-lg p-6 text-center"
         >
           <motion.div
             initial={{ scale: 0 }}
@@ -313,7 +313,7 @@ const PrivateBookingForm: React.FC<PrivateBookingFormProps> = ({ onBack }) => {
             <CheckCircle className="w-8 h-8 text-emerald-300" />
           </motion.div>
 
-          <h2 className="text-xl font-bold text-white mb-2">
+          <h2 className="text-xl font-semibold text-white mb-2">
             Private Booking Created!
           </h2>
           <p className="text-muted-foreground mb-4 text-sm">
@@ -343,7 +343,7 @@ const PrivateBookingForm: React.FC<PrivateBookingFormProps> = ({ onBack }) => {
             </div>
             <div className="flex justify-between items-center py-1">
               <span className="text-muted-foreground">Total Amount</span>
-              <span className="font-bold text-emerald-600 text-lg">₹{totalAmount}</span>
+              <span className="font-semibold text-emerald-600 text-lg">₹{totalAmount}</span>
             </div>
           </div>
 
@@ -378,7 +378,7 @@ const PrivateBookingForm: React.FC<PrivateBookingFormProps> = ({ onBack }) => {
             <ChevronLeft className="w-5 h-5 text-muted-foreground" />
           </motion.button>
           <div>
-            <h1 className="text-lg font-bold text-foreground">
+            <h1 className="text-lg font-semibold text-foreground">
               Private Booking
             </h1>
             <p className="text-xs text-muted-foreground">Manual booking without slot restrictions</p>
@@ -421,7 +421,7 @@ const PrivateBookingForm: React.FC<PrivateBookingFormProps> = ({ onBack }) => {
                       placeholder="Email"
                       className={`w-full pl-8 pr-2 py-2 bg-card rounded border transition-all duration-200 text-sm ${
                         errors.email
-                          ? 'border-red-500 focus:border-red-500'
+                          ? 'border-red-500 focus:border-ring'
                           : focusedInput === 'email'
                           ? 'border-primary focus:border-primary'
                           : 'border-border focus:border-primary'
@@ -464,7 +464,7 @@ const PrivateBookingForm: React.FC<PrivateBookingFormProps> = ({ onBack }) => {
                       placeholder="Phone"
                       className={`w-full pl-8 pr-2 py-2 bg-card rounded border transition-all duration-200 text-sm ${
                         errors.phone
-                          ? 'border-red-500 focus:border-red-500'
+                          ? 'border-red-500 focus:border-ring'
                           : focusedInput === 'phone'
                           ? 'border-primary focus:border-primary'
                           : 'border-border focus:border-primary'
@@ -507,7 +507,7 @@ const PrivateBookingForm: React.FC<PrivateBookingFormProps> = ({ onBack }) => {
                       placeholder="Full Name"
                       className={`w-full pl-8 pr-2 py-2 bg-card rounded border transition-all duration-200 text-sm ${
                         errors.name
-                          ? 'border-red-500 focus:border-red-500'
+                          ? 'border-red-500 focus:border-ring'
                           : focusedInput === 'name'
                           ? 'border-primary focus:border-primary'
                           : 'border-border focus:border-primary'
@@ -614,7 +614,7 @@ const PrivateBookingForm: React.FC<PrivateBookingFormProps> = ({ onBack }) => {
                       value={bookingDate}
                       min={new Date().toISOString().split('T')[0]}
                       onChange={(e) => setBookingDate(e.target.value)}
-                      className="w-full px-2 py-2 bg-card rounded border border-border focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500/20 transition-all duration-200 text-sm"
+                      className="w-full px-2 py-2 bg-card rounded border border-border focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring/40 transition-all duration-200 text-sm"
                     />
                   </div>
 
@@ -624,7 +624,7 @@ const PrivateBookingForm: React.FC<PrivateBookingFormProps> = ({ onBack }) => {
                       type="time"
                       value={startTime}
                       onChange={(e) => setStartTime(e.target.value)}
-                      className="w-full px-2 py-2 bg-card rounded border border-border focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500/20 transition-all duration-200 text-sm"
+                      className="w-full px-2 py-2 bg-card rounded border border-border focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring/40 transition-all duration-200 text-sm"
                     />
                   </div>
 
@@ -634,7 +634,7 @@ const PrivateBookingForm: React.FC<PrivateBookingFormProps> = ({ onBack }) => {
                       type="time"
                       value={endTime}
                       onChange={(e) => setEndTime(e.target.value)}
-                      className="w-full px-2 py-2 bg-card rounded border border-border focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500/20 transition-all duration-200 text-sm"
+                      className="w-full px-2 py-2 bg-card rounded border border-border focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring/40 transition-all duration-200 text-sm"
                     />
                   </div>
 
@@ -646,7 +646,7 @@ const PrivateBookingForm: React.FC<PrivateBookingFormProps> = ({ onBack }) => {
                       min="0.5"
                       value={durationHours}
                       onChange={(e) => setDurationHours(parseFloat(e.target.value))}
-                      className="w-full px-2 py-2 bg-card rounded border border-border focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500/20 transition-all duration-200 text-sm"
+                      className="w-full px-2 py-2 bg-card rounded border border-border focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring/40 transition-all duration-200 text-sm"
                     />
                   </div>
                 </div>
@@ -685,7 +685,7 @@ const PrivateBookingForm: React.FC<PrivateBookingFormProps> = ({ onBack }) => {
                           <div key={meal.menu_item_id} className="bg-amber-900/20 rounded p-2 text-xs">
                             <div className="flex justify-between">
                               <span className="font-medium">{meal.name}</span>
-                              <span className="font-bold text-amber-600">₹{meal.total}</span>
+                              <span className="font-semibold text-amber-600">₹{meal.total}</span>
                             </div>
                             <div className="text-muted-foreground">
                               {meal.quantity} × ₹{meal.price}
@@ -704,7 +704,7 @@ const PrivateBookingForm: React.FC<PrivateBookingFormProps> = ({ onBack }) => {
                       onChange={(e) => setNotes(e.target.value)}
                       placeholder="Add any special instructions..."
                       rows={2}
-                      className="w-full px-2 py-2 bg-card rounded border border-border focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500/20 transition-all duration-200 text-sm resize-none"
+                      className="w-full px-2 py-2 bg-card rounded border border-border focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring/40 transition-all duration-200 text-sm resize-none"
                     />
                   </div>
                 </div>
@@ -783,8 +783,8 @@ const PrivateBookingForm: React.FC<PrivateBookingFormProps> = ({ onBack }) => {
                   </div>
 
                   <div className="flex justify-between py-2 bg-purple-900/30 rounded px-2">
-                    <span className="font-bold text-white text-sm">Total</span>
-                    <span className="font-bold text-lg text-purple-600">₹{totalAmount}</span>
+                    <span className="font-semibold text-white text-sm">Total</span>
+                    <span className="font-semibold text-lg text-purple-600">₹{totalAmount}</span>
                   </div>
                 </div>
               </motion.div>
@@ -829,7 +829,7 @@ const PrivateBookingForm: React.FC<PrivateBookingFormProps> = ({ onBack }) => {
             whileHover={{ scale: isSubmitting ? 1 : 1.02 }}
             whileTap={{ scale: isSubmitting ? 1 : 0.98 }}
             disabled={isSubmitting}
-            className={`w-full py-2.5 rounded-lg font-bold text-white transition-all duration-200 shadow-md ${
+            className={`w-full py-2.5 rounded-lg font-semibold text-white transition-all duration-200 shadow-md ${
               isSubmitting
                 ? 'bg-muted cursor-not-allowed'
                 : 'bg-purple-600 hover:bg-purple-700'

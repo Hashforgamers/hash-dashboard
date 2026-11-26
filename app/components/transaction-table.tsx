@@ -724,7 +724,7 @@ export function TransactionTable() {
               <div className="dash-kpi-value !text-base sm:!text-2xl">
                 ₹{metrics.total.toFixed(2)}
               </div>
-              <p className="text-[10px] text-emerald-400 sm:text-xs">
+              <p className="text-xs text-emerald-400 sm:text-xs">
                 App Fee: ₹{metrics.appFeeTotal.toFixed(2)} · Net: ₹{metrics.netTotal.toFixed(2)}
               </p>
             </CardContent>
@@ -792,7 +792,7 @@ export function TransactionTable() {
               <div className="dash-kpi-value !text-base sm:!text-2xl">
                 {metrics.cashTransactions}
               </div>
-              <p className="text-[10px] text-muted-foreground sm:text-xs">
+              <p className="text-xs text-muted-foreground sm:text-xs">
                 {metrics.cashPct.toFixed(1)}
                 % of total
               </p>
@@ -970,11 +970,11 @@ export function TransactionTable() {
               <div className="flex items-start justify-between gap-2">
                 <div>
                   <p className="text-sm font-semibold text-foreground">{transaction.userName || "Unknown"}</p>
-                  <p className="text-[11px] text-muted-foreground">
+                  <p className="text-xs text-muted-foreground">
                     Booking #{transaction.bookingId ?? "-"} · {transaction.slotDate} {transaction.slotTime}
                   </p>
                 </div>
-                <Badge variant="outline" className={`text-[10px] ${getSettlementBadgeClass(transaction.settlementStatus)}`}>
+                <Badge variant="outline" className={`text-xs ${getSettlementBadgeClass(transaction.settlementStatus)}`}>
                   {transaction.settlementStatus || "-"}
                 </Badge>
               </div>
@@ -1007,7 +1007,7 @@ export function TransactionTable() {
         initial="hidden"
         animate="visible"
         transition={{ duration: 0.3, delay: 0.5 }}
-        className="dashboard-module-surface relative hidden min-h-0 min-w-0 flex-1 overflow-hidden rounded-xl border md:flex"
+        className="dashboard-module-surface relative hidden min-h-0 min-w-0 flex-1 overflow-hidden rounded-lg border md:flex"
       >
         <div className="h-full min-h-0 w-full overflow-auto overscroll-contain [scrollbar-gutter:stable_both-edges]">
           <Table className="min-w-[1950px]">
@@ -1020,10 +1020,10 @@ export function TransactionTable() {
                       {col.key === "breakup" ? (
                         <span className="group relative inline-flex items-center gap-1">
                           <span>{col.label}</span>
-                          <span className="inline-flex h-4 w-4 cursor-help items-center justify-center rounded-full border text-[10px] border-border text-muted-foreground">
+                          <span className="inline-flex h-4 w-4 cursor-help items-center justify-center rounded-full border text-xs border-border text-muted-foreground">
                             i
                           </span>
-                          <span className="pointer-events-none absolute left-0 top-6 z-50 hidden w-60 rounded-md border px-2 py-1 text-[11px] font-normal shadow-lg group-hover:block border-border bg-card text-muted-foreground">
+                          <span className="pointer-events-none absolute left-0 top-6 z-50 hidden w-60 rounded-md border px-2 py-1 text-xs font-normal shadow-lg group-hover:block border-border bg-card text-muted-foreground">
                             B = Base, M = Meals, C = Controller, W = Waive-off
                           </span>
                         </span>

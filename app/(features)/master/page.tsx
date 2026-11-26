@@ -78,7 +78,7 @@ export default function MasterAnalyticsPage() {
           >
             <ArrowLeft className="h-6 w-6" />
           </button>
-          <h1 className="text-2xl font-bold tracking-wide">
+          <h1 className="text-2xl font-semibold tracking-wide">
             📊 {selectedCafe} - {reportType} Report
           </h1>
         </div>

@@ -109,13 +109,13 @@ export function MainNav({ className, onItemClick, isNavPinned = false, ...props 
         )}
         {...props}
       >
-        <Link href="/select-cafe" title={`Switch café: ${cafeName}`} onClick={()=>onItemClick?.()} className={cn("mb-2 flex shrink-0 items-center gap-2 rounded-lg border p-2",collapsedAlignClass)}><Store className="h-5 w-5 shrink-0"/><span className={responsiveLabelClass}><span className="block text-[10px] text-muted-foreground">Café Management</span><span className="block max-w-44 truncate text-sm font-medium">{cafeName} ▾</span></span></Link>
+        <Link href="/select-cafe" title={`Switch café: ${cafeName}`} onClick={()=>onItemClick?.()} className={cn("mb-2 flex shrink-0 items-center gap-2 rounded-lg border p-2",collapsedAlignClass)}><Store className="h-5 w-5 shrink-0"/><span className={responsiveLabelClass}><span className="block text-xs text-muted-foreground">Café Management</span><span className="block max-w-44 truncate text-sm font-medium">{cafeName} ▾</span></span></Link>
         <div className="min-h-0 flex-1 overflow-y-auto pr-1">
           <div className="flex flex-col space-y-[clamp(0.08rem,0.25vh,0.2rem)]">
             {navItems
               .filter((item) => canShowItem(item.permission))
               .map(({ href, icon: Icon, label, section },index,items) => (
-                <Fragment key={href}>{(index===0||items[index-1].section!==section)&&<p className={cn("px-3 pb-1 pt-3 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground",responsiveLabelClass)}>{section}</p>}
+                <Fragment key={href}>{(index===0||items[index-1].section!==section)&&<p className={cn("px-3 pb-1 pt-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground",responsiveLabelClass)}>{section}</p>}
                 <Link
                   key={href}
                   href={href}
@@ -141,7 +141,7 @@ export function MainNav({ className, onItemClick, isNavPinned = false, ...props 
         </div>
 
         <div className="dashboard-nav-divider shrink-0 space-y-[clamp(0.06rem,0.2vh,0.14rem)] border-t pt-2">
-          <p className={cn("px-3 pb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground",responsiveLabelClass)}>Administration</p>
+          <p className={cn("px-3 pb-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground",responsiveLabelClass)}>Administration</p>
           {can("staff.manage") && (
             <Link
               href="/employee-access"

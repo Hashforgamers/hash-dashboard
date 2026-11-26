@@ -58,7 +58,7 @@ function StepIndicator({ step }: { step: number }) {
         <div key={i} className="flex items-center gap-2">
           <div className="flex flex-col items-center gap-1">
             <div
-              className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300 ${
+              className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold transition-all duration-300 ${
                 i + 1 < step
                   ? "bg-emerald-600 text-white"
                   : i + 1 === step
@@ -261,7 +261,7 @@ export default function ForgotPasswordPage() {
   return (
     <div className="premium-shell flex min-h-screen items-center justify-center overflow-hidden p-3 sm:p-4">
       <div className="relative z-10 w-full max-w-md">
-        <Card className="premium-card rounded-2xl border shadow-2xl">
+        <Card className="premium-card rounded-lg border shadow-2xl">
           <CardHeader className="text-center pb-4">
             {/* Logo */}
             <div className="flex justify-center mb-4 relative">
@@ -286,7 +286,7 @@ export default function ForgotPasswordPage() {
             {/* Step indicator */}
             <StepIndicator step={step} />
 
-            <CardTitle className="premium-heading mb-1 text-2xl font-bold tracking-tight text-foreground">
+            <CardTitle className="premium-heading mb-1 text-2xl font-semibold tracking-tight text-foreground">
               {step === 1 && "Forgot Password"}
               {step === 2 && "Verify OTP"}
               {step === 3 && "Reset Password"}
@@ -383,7 +383,7 @@ export default function ForgotPasswordPage() {
                                   <InputOTPSlot
                                     key={i}
                                     index={i}
-                                    className="w-12 h-12 text-lg font-bold bg-input border border-input text-foreground rounded-md focus:border-primary focus:ring-primary/30 transition-all duration-200"
+                                    className="w-12 h-12 text-lg font-semibold bg-input border border-input text-foreground rounded-md focus:border-primary focus:ring-primary/30 transition-all duration-200"
                                   />
                                 ))}
                               </InputOTPGroup>
@@ -395,7 +395,7 @@ export default function ForgotPasswordPage() {
                                   <InputOTPSlot
                                     key={i}
                                     index={i}
-                                    className="w-12 h-12 text-lg font-bold bg-input border border-input text-foreground rounded-md focus:border-primary focus:ring-primary/30 transition-all duration-200"
+                                    className="w-12 h-12 text-lg font-semibold bg-input border border-input text-foreground rounded-md focus:border-primary focus:ring-primary/30 transition-all duration-200"
                                   />
                                 ))}
                               </InputOTPGroup>
@@ -416,7 +416,7 @@ export default function ForgotPasswordPage() {
                           {timer > 0 ? (
                             <>
                               Expires in{" "}
-                              <span className="font-bold text-emerald-400">
+                              <span className="font-semibold text-emerald-400">
                                 {formatTime(timer)}
                               </span>
                             </>

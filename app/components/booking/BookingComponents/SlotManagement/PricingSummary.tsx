@@ -154,7 +154,7 @@ export const PricingSummary = memo(({
                   {controllerTiers.map((tier) => (
                     <span
                       key={tier.quantity}
-                      className="rounded-full border border-emerald-700 px-2 py-0.5 text-[11px] text-emerald-300"
+                      className="rounded-full border border-emerald-700 px-2 py-0.5 text-xs text-emerald-300"
                     >
                       {tier.quantity} = ₹{tier.total_price}
                     </span>
@@ -172,8 +172,8 @@ export const PricingSummary = memo(({
         {/* Total */}
         <div className="pt-3 border-t-2 border-emerald-700">
           <div className="flex justify-between items-center">
-            <span className="text-lg font-bold text-white">Total Amount</span>
-            <span className="text-2xl font-bold text-emerald-400">
+            <span className="text-lg font-semibold text-white">Total Amount</span>
+            <span className="text-2xl font-semibold text-emerald-400">
               ₹{totalAmount}
             </span>
           </div>

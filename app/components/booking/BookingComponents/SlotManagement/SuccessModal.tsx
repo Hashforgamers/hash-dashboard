@@ -23,7 +23,7 @@ export const SuccessModal = ({
       <motion.div
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="max-w-md w-full bg-muted rounded-2xl shadow-2xl p-8 text-center"
+        className="max-w-md w-full bg-muted rounded-lg shadow-2xl p-8 text-center"
       >
         <motion.div
           initial={{ scale: 0 }}
@@ -34,7 +34,7 @@ export const SuccessModal = ({
           <CheckCircle className="w-8 h-8 text-emerald-300" />
         </motion.div>
 
-        <h2 className="text-2xl font-bold text-white mb-3">
+        <h2 className="text-2xl font-semibold text-white mb-3">
           Booking Confirmed!
         </h2>
         <p className="text-muted-foreground mb-6">
@@ -62,7 +62,7 @@ export const SuccessModal = ({
           </div>
           <div className="flex justify-between items-center py-2 border-t border-emerald-700">
             <span className="text-muted-foreground">Total Amount:</span>
-            <span className="font-bold text-emerald-600 text-xl">₹{totalAmount}</span>
+            <span className="font-semibold text-emerald-600 text-xl">₹{totalAmount}</span>
           </div>
         </div>
 

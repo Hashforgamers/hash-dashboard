@@ -226,7 +226,7 @@ const MealSelector: React.FC<MealSelectorProps> = ({
         initial={{ opacity: 0, scale: 0.95, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 20 }}
-        className="meal-selector-modal relative w-full max-w-3xl overflow-hidden rounded-xl border shadow-2xl"
+        className="meal-selector-modal relative w-full max-w-3xl overflow-hidden rounded-lg border shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         {/* ✅ Compact Header */}

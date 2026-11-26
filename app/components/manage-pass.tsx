@@ -332,7 +332,7 @@ export default function ManagePassesPage() {
             <p className="body-text-muted">Loading passes...</p>
           </div>
         ) : passes.length === 0 ? (
-          <div className="gaming-panel dashboard-module-panel flex flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed border-border py-8">
+          <div className="gaming-panel dashboard-module-panel flex flex-col items-center justify-center gap-3 rounded-lg border-2 border-dashed border-border py-8">
             <BadgeCheck className="w-12 h-12 text-muted-foreground/30" />
             <h3 className="section-title text-muted-foreground/60">No passes found</h3>
             <p className="body-text-muted">Create your first pass to get started</p>
@@ -423,7 +423,7 @@ function PassesTable({ passes, passTypes, onEdit, onDelete, deletingId }: any) {
           <thead className="dashboard-module-table-head">
             <tr>
               {["Pass Name", "Mode", "Price", "Validity", "Hours", "Actions"].map((h) => (
-                <th key={h} className="table-cell dashboard-module-table-header text-[11px] font-bold uppercase tracking-wider sm:text-xs">{h}</th>
+                <th key={h} className="table-cell dashboard-module-table-header text-xs font-semibold uppercase tracking-wider sm:text-xs">{h}</th>
               ))}
             </tr>
           </thead>
@@ -444,7 +444,7 @@ function PassesTable({ passes, passTypes, onEdit, onDelete, deletingId }: any) {
                 {/* Mode badge */}
                 <td className="table-cell">
                   <span
-                    className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold border ${
+                    className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold border ${
                       pass.pass_mode === "hour_based"
                         ? "border-border bg-primary/10 text-primary"
                         : "border-emerald-500/20 bg-emerald-500/10 text-emerald-400"
@@ -461,7 +461,7 @@ function PassesTable({ passes, passTypes, onEdit, onDelete, deletingId }: any) {
 
                 {/* Price */}
                 <td className="table-cell">
-                  <div className="flex items-center gap-0.5 font-bold text-primary">
+                  <div className="flex items-center gap-0.5 font-semibold text-primary">
                     <IndianRupee className="icon-md" />
                     <span>{pass.price}</span>
                   </div>
@@ -563,7 +563,7 @@ function PassCard({ pass, passTypes, onEdit, onDelete, deletingId }: any) {
         {/* Price + Validity row */}
         <div className="flex items-center justify-between">
           <div>
-            <div className="flex items-center gap-0.5 text-xl font-bold text-primary">
+            <div className="flex items-center gap-0.5 text-xl font-semibold text-primary">
               <IndianRupee className="w-4 h-4" />
               <span>{pass.price}</span>
             </div>
@@ -582,7 +582,7 @@ function PassCard({ pass, passTypes, onEdit, onDelete, deletingId }: any) {
         {/* Mode badge */}
         <div className="pt-2 border-t border-dashed border-border">
           <span
-            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold border ${
+            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold border ${
               isHourBased
                 ? "border-border bg-primary/10 text-primary"
                 : "border-emerald-500/20 bg-emerald-500/10 text-emerald-400"
@@ -679,10 +679,10 @@ function AddPassDialog({ passTypes, onSave, buttonClassName }: any) {
         </button>
       </DialogTrigger>
 
-      <DialogContent className="ui-dialog-surface w-[95vw] rounded-xl shadow-2xl sm:max-w-[520px]">
+      <DialogContent className="ui-dialog-surface w-[95vw] rounded-lg shadow-2xl sm:max-w-[520px]">
         {/* Modal Header */}
         <div className="border-b border-border px-1 pb-2">
-          <DialogTitle className="ui-dialog-title flex items-center gap-2 text-base font-bold tracking-wide sm:text-lg">
+          <DialogTitle className="ui-dialog-title flex items-center gap-2 text-base font-semibold tracking-wide sm:text-lg">
             <span className="feature-action-icon inline-flex h-8 w-8 items-center justify-center rounded-lg">
               <PlusCircle className="h-4 w-4 text-primary" />
             </span>
@@ -924,7 +924,7 @@ function EditPassDialog({ passObj, passTypes, onSave }: any) {
         </button>
       </DialogTrigger>
 
-      <DialogContent className="ui-dialog-surface w-[95vw] rounded-xl shadow-2xl sm:max-w-[480px]">
+      <DialogContent className="ui-dialog-surface w-[95vw] rounded-lg shadow-2xl sm:max-w-[480px]">
         {/* Modal Header */}
         <div className="border-b border-border px-1 pb-2">
           <DialogTitle className="section-title">Edit Pass</DialogTitle>

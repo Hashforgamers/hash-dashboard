@@ -193,7 +193,7 @@ function Stat({ icon: Icon, label, value, hint }: { icon: typeof Timer; label: s
     <div className="gaming-kpi-card rounded-lg border p-3">
       <div className="flex items-center justify-between text-xs text-muted-foreground"><span>{label}</span><Icon className="h-3.5 w-3.5" /></div>
       <p className="mt-1 truncate text-lg font-semibold text-foreground">{value}</p>
-      {hint && <p className="truncate text-[11px] text-muted-foreground">{hint}</p>}
+      {hint && <p className="truncate text-xs text-muted-foreground">{hint}</p>}
     </div>
   )
 }

@@ -1046,7 +1046,7 @@ function ListBooking() {
             {Object.entries(groupedBookings).map(([bookedDate, bookings]) => (
               <React.Fragment key={bookedDate}>
                 <TableRow className="bg-muted/50 cursor-pointer" onClick={() => toggleDate(bookedDate)}>
-                  <TableCell colSpan={10} className="font-bold">
+                  <TableCell colSpan={10} className="font-semibold">
                     {expandedDates[bookedDate] ? "▼" : "▶"} {new Date(bookedDate).toDateString()} ({bookings.length})
                   </TableCell>
                 </TableRow>

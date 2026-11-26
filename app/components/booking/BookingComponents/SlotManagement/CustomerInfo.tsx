@@ -58,11 +58,11 @@ export const CustomerInfo = memo(({
             className={cn(
               'w-full pl-10 pr-4 py-3 bg-muted border rounded-lg transition-all duration-200',
               errors.email
-                ? 'border-red-500 focus:border-red-500'
+                ? 'border-red-500 focus:border-ring'
                 : focusedField === 'email'
-                ? 'border-emerald-500 focus:border-emerald-500'
-                : 'border-border focus:border-emerald-500',
-              'focus:outline-none focus:ring-1 focus:ring-emerald-500/20'
+                ? 'border-emerald-500 focus:border-ring'
+                : 'border-border focus:border-ring',
+              'focus:outline-none focus:ring-1 focus:ring-ring/40'
             )}
           />
           <Mail className="w-4 h-4 text-muted-foreground absolute left-3 top-3.5" />
@@ -92,11 +92,11 @@ export const CustomerInfo = memo(({
             className={cn(
               'w-full pl-10 pr-4 py-3 bg-muted border rounded-lg transition-all duration-200',
               errors.phone
-                ? 'border-red-500 focus:border-red-500'
+                ? 'border-red-500 focus:border-ring'
                 : focusedField === 'phone'
-                ? 'border-emerald-500 focus:border-emerald-500'
-                : 'border-border focus:border-emerald-500',
-              'focus:outline-none focus:ring-1 focus:ring-emerald-500/20'
+                ? 'border-emerald-500 focus:border-ring'
+                : 'border-border focus:border-ring',
+              'focus:outline-none focus:ring-1 focus:ring-ring/40'
             )}
           />
           <Phone className="w-4 h-4 text-muted-foreground absolute left-3 top-3.5" />
@@ -125,11 +125,11 @@ export const CustomerInfo = memo(({
             className={cn(
               'w-full pl-10 pr-4 py-3 bg-muted border rounded-lg transition-all duration-200',
               errors.name
-                ? 'border-red-500 focus:border-red-500'
+                ? 'border-red-500 focus:border-ring'
                 : focusedField === 'name'
-                ? 'border-emerald-500 focus:border-emerald-500'
-                : 'border-border focus:border-emerald-500',
-              'focus:outline-none focus:ring-1 focus:ring-emerald-500/20'
+                ? 'border-emerald-500 focus:border-ring'
+                : 'border-border focus:border-ring',
+              'focus:outline-none focus:ring-1 focus:ring-ring/40'
             )}
           />
           <User className="w-4 h-4 text-muted-foreground absolute left-3 top-3.5" />
