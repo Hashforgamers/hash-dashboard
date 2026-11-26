@@ -1,6 +1,7 @@
 "use client"
 
 import SessionExtensionWorkspace from './session-extension-workspace'
+import { GamerName } from "@/app/components/gamer-profile-host"
 import styles from './notification-panel.module.css'
 import { creditAuthHeaders } from "@/lib/credit-auth"
 
@@ -293,7 +294,6 @@ export function NotificationPanel({
     try {
       setProcessingAction({ bookingId: notification.bookingId, action: 'accept' })
 
-      console.log(`🔄 Processing accept for booking ${notification.bookingId}`)
 
       const response = await fetch(`${BOOKING_URL}/api/pay-at-cafe/accept`, {
         method: 'POST',
@@ -311,7 +311,6 @@ export function NotificationPanel({
         onRemoveNotification(notification.bookingId)
 
         if (socket) {
-          console.log('📡 Emitting booking_accepted event for real-time update')
           socket.emit('booking_accepted', {
             bookingId:      notification.bookingId,
             vendorId:       vendorId,
@@ -340,7 +339,6 @@ export function NotificationPanel({
             status:      'Confirmed',
             statusLabel: 'Confirmed'
           }
-          console.log('📅 Triggering upcoming bookings update with:', bookingData)
           onBookingAccepted(bookingData)
         }
 
@@ -350,14 +348,13 @@ export function NotificationPanel({
 
         // ✅ UPDATED: Toast correctly says payment is NOT done yet
         const collectAmount = notification.total_amount || notification.game.single_slot_price
-        showToast('✅ Booking accepted! Collect ₹' + collectAmount + ' after session completion.', 'success')
-        console.log(`✅ Booking ${notification.bookingId} confirmed — payment to be collected after session`)
+        showToast('Booking accepted! Collect ₹' + collectAmount + ' after session completion.', 'success')
       } else {
         throw new Error(result.message || 'Failed to accept booking')
       }
     } catch (error) {
       console.error('Error accepting booking:', error)
-      showToast('❌ Error accepting booking. Please try again.', 'error')
+      showToast('Error accepting booking. Please try again.', 'error')
     } finally {
       setProcessingAction({ bookingId: null, action: null })
     }
@@ -370,7 +367,6 @@ export function NotificationPanel({
     try {
       setProcessingAction({ bookingId: notification.bookingId, action: 'reject' })
 
-      console.log(`🔄 Processing reject for booking ${notification.bookingId}`)
 
       const response = await fetch(`${BOOKING_URL}/api/pay-at-cafe/reject`, {
         method: 'POST',
@@ -390,14 +386,13 @@ export function NotificationPanel({
         if (result?.booking_ids?.length > 1 && typeof window !== "undefined") {
           window.dispatchEvent(new CustomEvent("refresh-dashboard"))
         }
-        showToast('✅ Booking rejected and cancelled successfully!', 'success')
-        console.log(`❌ Booking ${notification.bookingId} cancelled successfully`)
+        showToast('Booking rejected and cancelled successfully!', 'success')
       } else {
         throw new Error(result.message || 'Failed to reject booking')
       }
     } catch (error) {
       console.error('Error rejecting booking:', error)
-      showToast('❌ Error rejecting booking. Please try again.', 'error')
+      showToast('Error rejecting booking. Please try again.', 'error')
     } finally {
       setProcessingAction({ bookingId: null, action: null })
     }
@@ -507,7 +502,7 @@ export function NotificationPanel({
       if (!response.ok || !result?.success) {
         throw new Error(result?.message || `Failed to ${action} booking`)
       }
-      showToast(`✅ Booking ${action === "accept" ? "accepted" : "rejected"} successfully`, "success")
+      showToast(`Booking ${action === "accept" ? "accepted" : "rejected"} successfully`, "success")
       onRemoveNotification(item.booking_id)
       if (typeof window !== "undefined") {
         window.dispatchEvent(new CustomEvent("refresh-dashboard"))
@@ -516,7 +511,7 @@ export function NotificationPanel({
       await fetchQueueList(selectedQueueStatus)
     } catch (error) {
       console.error(`Error performing ${action} from queue overlay:`, error)
-      showToast(`❌ Unable to ${action} booking`, "error")
+      showToast(`Unable to ${action} booking`, "error")
     } finally {
       setQueueActionProcessing({ bookingId: null, action: null })
     }
@@ -549,7 +544,7 @@ export function NotificationPanel({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 z-[30000] bg-black/30 backdrop-blur-sm"
+            className="fixed inset-0 z-[30000] bg-black/60 backdrop-blur-sm"
           />
 
           {/* Notification Panel */}
@@ -577,7 +572,7 @@ export function NotificationPanel({
                 size="sm"
                 onClick={onClose}
                 aria-label="Close notifications"
-                className="h-8 w-8 rounded-full p-0 text-zinc-300 hover:bg-blue-500/15 hover:text-blue-200"
+                className="h-8 w-8 rounded-full p-0 text-muted-foreground hover:bg-primary/15 hover:text-primary"
               >
                 <X className="w-4 h-4" />
               </Button>
@@ -628,19 +623,19 @@ export function NotificationPanel({
                 </div>
 
                 {queueError && (
-                  <p className="mt-1 text-[11px] text-red-300">{queueError}</p>
+                  <p className="mt-1 text-xs text-red-300">{queueError}</p>
                 )}
                 {(isQueueSummaryLoading || isQueueListLoading) && (
-                  <p className="mt-1 text-[11px] text-blue-200">Loading...</p>
+                  <p className="mt-1 text-xs text-primary">Loading…</p>
                 )}
               </div>
 
               {notifications.length === 0 ? (
-                <div className="dashboard-module-card rounded-xl border border-zinc-600/45 bg-zinc-900/65 px-3 py-5 text-center">
-                  <div className="mx-auto mb-2 flex h-8 w-8 items-center justify-center rounded-full border border-zinc-500/60 bg-zinc-800/70">
+                <div className="dashboard-module-card rounded-lg border border-border bg-card px-3 py-5 text-center">
+                  <div className="mx-auto mb-2 flex h-8 w-8 items-center justify-center rounded-full border border-border bg-muted/70">
                     <Bell className="h-4 w-4 text-muted-foreground opacity-70" />
                   </div>
-                  <h4 className="text-xs font-medium text-zinc-400">No account alerts</h4>
+                  <h4 className="text-xs font-medium text-muted-foreground">No account alerts</h4>
                 </div>
               ) : (
                 <div className="space-y-2">
@@ -672,29 +667,29 @@ export function NotificationPanel({
                           <div className="space-y-2">
                             <div className="flex items-center justify-between">
                               <div>
-                                <p className="text-sm font-semibold text-zinc-100">Meals Added</p>
+                                <p className="text-sm font-semibold text-foreground">Meals Added</p>
                                 {mealNotice.emitted_at && (
-                                  <p className="text-xs text-zinc-400">
+                                  <p className="text-xs text-muted-foreground">
                                     {formatRelativeTime(mealNotice.emitted_at)}
                                   </p>
                                 )}
                               </div>
                               <Badge
                                 variant="outline"
-                                className="flex items-center gap-1 border-blue-400/50 bg-blue-500/10 text-xs text-blue-200"
+                                className="flex items-center gap-1 border-primary/50 bg-primary/10 text-xs text-primary"
                               >
                                 <Wallet className="w-3 h-3" />
                                 Pending
                               </Badge>
                             </div>
-                            <div className="flex items-center gap-2 text-sm text-zinc-200">
-                              <User className="w-4 h-4 text-zinc-400" />
-                              <span className="font-medium text-zinc-100">{mealNotice.username || "Customer"}</span>
-                              <span className="text-xs text-zinc-400">added meals</span>
+                            <div className="flex items-center gap-2 text-sm text-foreground">
+                              <User className="w-4 h-4 text-muted-foreground" />
+                              <span className="font-medium text-foreground">{mealNotice.username || "Customer"}</span>
+                              <span className="text-xs text-muted-foreground">added meals</span>
                             </div>
-                            <div className="rounded-lg border border-blue-400/40 bg-blue-500/10 p-3 text-center">
-                              <span className="text-xs text-blue-200">Amount to collect</span>
-                              <div className="text-base font-semibold tabular-nums text-blue-200">
+                            <div className="rounded-lg border border-primary/40 bg-primary/10 p-3 text-center">
+                              <span className="text-xs text-primary">Amount to collect</span>
+                              <div className="text-base font-semibold tabular-nums text-primary">
                                 ₹{Number(mealNotice.amount_added || 0).toFixed(0)}
                               </div>
                             </div>
@@ -796,7 +791,7 @@ export function NotificationPanel({
                               </Button>
                               <Button
                                 variant="outline"
-                                className="h-8 border-zinc-500/50 bg-zinc-700/30 text-xs text-zinc-200 hover:bg-zinc-700/50"
+                                className="h-8 border-border bg-muted/30 text-xs text-foreground hover:bg-muted/50"
                                 onClick={() => onRemoveNotification(lowStockNotice.notification_id)}
                               >
                                 Dismiss
@@ -824,8 +819,8 @@ export function NotificationPanel({
                           {/* Header Row */}
                           <div className="flex items-center justify-between">
                             <div>
-                              <p className="text-sm font-semibold text-zinc-100">Pay at Cafe Request</p>
-                              <p className="text-xs text-zinc-400">
+                              <p className="text-sm font-semibold text-foreground">Pay at Cafe Request</p>
+                              <p className="text-xs text-muted-foreground">
                                 {formatRelativeTime(payNotice.emitted_at)}
                               </p>
                             </div>
@@ -841,11 +836,11 @@ export function NotificationPanel({
 
                           {/* Customer Name */}
                           <div className="flex items-center gap-2">
-                            <User className="w-4 h-4 text-zinc-400" />
-                            <span className="font-medium text-zinc-100">{payNotice.username}</span>
-                            <span className="text-xs text-zinc-400">wants to book</span>
+                            <User className="w-4 h-4 text-muted-foreground" />
+                            <GamerName userId={payNotice.userId} name={payNotice.username} booking={{ bookingId: payNotice.bookingId }} className="font-medium text-foreground" />
+                            <span className="text-xs text-muted-foreground">wants to book</span>
                             {payNotice.slot_count && payNotice.slot_count > 1 && (
-                              <span className="rounded-full border border-amber-400/40 bg-amber-500/10 px-2 py-0.5 text-[11px] font-semibold text-amber-200">
+                              <span className="rounded-full border border-amber-400/40 bg-amber-500/10 px-2 py-0.5 text-xs font-semibold text-amber-200">
                                 {payNotice.slot_count} slots
                               </span>
                             )}
@@ -853,23 +848,23 @@ export function NotificationPanel({
 
                           {/* Game + Console */}
                           <div className="flex flex-wrap items-center gap-2 text-xs">
-                            <span className="rounded-full border border-blue-400/35 bg-blue-500/10 px-2 py-0.5 text-blue-200">
+                            <span className="rounded-full border border-primary/35 bg-primary/10 px-2 py-0.5 text-primary">
                               {payNotice.game?.game_name || "Gaming Session"}
                             </span>
-                            <span className="flex items-center gap-1 rounded-full border border-zinc-600/70 bg-zinc-800/80 px-2 py-0.5 text-zinc-300">
+                            <span className="flex items-center gap-1 rounded-full border border-border bg-muted/80 px-2 py-0.5 text-muted-foreground">
                               <Gamepad2 className="h-3 w-3 text-red-400" />
                               {payNotice.consoleType || "Console"}
                             </span>
                           </div>
 
                           {/* Time and Date */}
-                          <div className="flex items-center gap-3 text-xs text-zinc-200">
+                          <div className="flex items-center gap-3 text-xs text-foreground">
                             <div className="flex items-center gap-1">
-                              <Clock className="w-3 h-3 text-zinc-400" />
+                              <Clock className="w-3 h-3 text-muted-foreground" />
                               <span>{showRange(payNotice.time)}</span>
                             </div>
                             <div className="flex items-center gap-1">
-                              <Calendar className="w-3 h-3 text-zinc-400" />
+                              <Calendar className="w-3 h-3 text-muted-foreground" />
                               <span>{formatDisplayDate(payNotice.date)}</span>
                             </div>
                           </div>
@@ -885,7 +880,7 @@ export function NotificationPanel({
                               </span>
                             </div>
                             {/* ✅ NEW: Subtle reminder so vendor knows what to do */}
-                            <p className="w-full text-xs text-zinc-400">
+                            <p className="w-full text-xs text-muted-foreground">
                               Collect after session completion
                             </p>
                           </div>
@@ -934,7 +929,7 @@ export function NotificationPanel({
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
                   onClick={() => setIsQueueOverlayOpen(false)}
-                  className="fixed inset-0 z-[30020] bg-black/45 backdrop-blur-sm"
+                  className="fixed inset-0 z-[30020] bg-black/60 backdrop-blur-sm"
                 />
                 <motion.div
                   initial={{ opacity: 0, y: 12, scale: 0.98 }}
@@ -945,13 +940,13 @@ export function NotificationPanel({
                 >
                   <div
                     ref={queueRef}
-                    className="dashboard-module-panel w-[min(42rem,calc(100vw-2rem))] max-h-[78vh] overflow-hidden rounded-lg border border-blue-400/30 bg-background"
+                    className="dashboard-module-panel w-[min(42rem,calc(100vw-2rem))] max-h-[78vh] overflow-hidden rounded-lg border border-border bg-background"
                     onClick={(e) => e.stopPropagation()}
                   >
                     <div className="flex items-center justify-between border-b border-border bg-muted/30 px-4 py-3">
                       <div className="flex items-center gap-2">
                         <h4 className="dash-title !text-sm">Payment queue</h4>
-                        <Badge className="border border-blue-400/35 bg-blue-500/10 text-blue-200 text-[10px]">
+                        <Badge className="border border-primary/35 bg-primary/10 text-primary text-xs">
                           {queueFilterMode === "single" ? singleDate : `${startDate} to ${endDate}`}
                         </Badge>
                       </div>
@@ -960,7 +955,7 @@ export function NotificationPanel({
                         size="sm"
                         onClick={() => setIsQueueOverlayOpen(false)}
                         aria-label="Close payment queue"
-                        className="h-7 w-7 rounded-full p-0 text-zinc-300 hover:bg-blue-500/10"
+                        className="h-7 w-7 rounded-full p-0 text-muted-foreground hover:bg-primary/10"
                       >
                         <X className="h-4 w-4" />
                       </Button>
@@ -974,7 +969,7 @@ export function NotificationPanel({
                             size="sm"
                             variant={queueFilterMode === "single" ? "default" : "outline"}
                             onClick={() => setQueueFilterMode("single")}
-                            className={`h-7 px-2 text-[11px] ${queueFilterMode === "single" ? "dashboard-btn-primary" : "border-border bg-muted/40 text-muted-foreground"}`}
+                            className={`h-7 px-2 text-xs ${queueFilterMode === "single" ? "dashboard-btn-primary" : "border-border bg-muted/40 text-muted-foreground"}`}
                           >
                             Single Date
                           </Button>
@@ -983,14 +978,14 @@ export function NotificationPanel({
                             size="sm"
                             variant={queueFilterMode === "range" ? "default" : "outline"}
                             onClick={() => setQueueFilterMode("range")}
-                            className={`h-7 px-2 text-[11px] ${queueFilterMode === "range" ? "dashboard-btn-primary" : "border-border bg-muted/40 text-muted-foreground"}`}
+                            className={`h-7 px-2 text-xs ${queueFilterMode === "range" ? "dashboard-btn-primary" : "border-border bg-muted/40 text-muted-foreground"}`}
                           >
                             Date Range
                           </Button>
                         </div>
                         <div className="flex flex-wrap items-end gap-2">
                           {queueFilterMode === "single" ? (
-                            <label className="flex flex-col gap-1 text-[11px] text-muted-foreground">
+                            <label className="flex flex-col gap-1 text-xs text-muted-foreground">
                               Date
                               <input
                                 type="date"
@@ -1001,7 +996,7 @@ export function NotificationPanel({
                             </label>
                           ) : (
                             <>
-                              <label className="flex flex-col gap-1 text-[11px] text-muted-foreground">
+                              <label className="flex flex-col gap-1 text-xs text-muted-foreground">
                                 Start
                                 <input
                                   type="date"
@@ -1010,7 +1005,7 @@ export function NotificationPanel({
                                   className="h-8 rounded-md border border-border bg-background px-2 text-xs text-foreground"
                                 />
                               </label>
-                              <label className="flex flex-col gap-1 text-[11px] text-muted-foreground">
+                              <label className="flex flex-col gap-1 text-xs text-muted-foreground">
                                 End
                                 <input
                                   type="date"
@@ -1045,8 +1040,8 @@ export function NotificationPanel({
                             key={card.key}
                             className={`rounded-md border px-2 py-1 text-left transition ${
                               isActive
-                                ? "border-blue-400/45 bg-blue-500/15"
-                                : "border-border bg-muted/40 hover:border-blue-400/30"
+                                ? "border-primary/45 bg-primary/15"
+                                : "border-border bg-muted/40 hover:border-border"
                             }`}
                             onClick={async () => {
                               setSelectedQueueStatus(card.key)
@@ -1066,10 +1061,10 @@ export function NotificationPanel({
 
                     <div className="rounded-lg border border-border bg-muted/20 p-3">
                       <div className="mb-2 flex items-center justify-between">
-                        <p className="text-xs font-medium text-blue-200">
+                        <p className="text-xs font-medium text-primary">
                           {queueStatusCards.find((c) => c.key === selectedQueueStatus)?.label} List
                         </p>
-                        <Badge className="border border-blue-400/40 bg-blue-500/15 text-blue-200 text-[10px]">
+                        <Badge className="border border-primary/40 bg-primary/15 text-primary text-xs">
                           {queueItems.length}
                         </Badge>
                       </div>
@@ -1083,7 +1078,7 @@ export function NotificationPanel({
                             return (
                               <div key={`${selectedQueueStatus}-${item.booking_id}`} className="rounded-md border border-border bg-muted/30 p-2 text-xs">
                                 <div className="flex items-center justify-between gap-2">
-                                  <p className="font-semibold text-foreground">{item.username}</p>
+                                  <GamerName userId={item.user_id} name={item.username} booking={{ bookingId: item.booking_id, console: item.game_name, when: `${formatDisplayDate(item.date)} · ${showRange(item.time)}`, phone: item.phone || null, email: item.email || null, amount: Number(item.amount || 0) }} className="font-semibold text-foreground" />
                                   <span className="font-semibold text-amber-300">₹{Number(item.amount || 0).toFixed(0)}</span>
                                 </div>
                                 <p className="text-muted-foreground">{item.game_name}</p>
@@ -1099,7 +1094,7 @@ export function NotificationPanel({
                                         type="button"
                                         onClick={() => handleQueueBookingAction(item, "accept")}
                                         disabled={isItemProcessing}
-                                        className="h-7 dashboard-btn-primary px-2 text-[11px]"
+                                        className="h-7 dashboard-btn-primary px-2 text-xs"
                                       >
                                         {isItemProcessing && queueActionProcessing.action === "accept" ? "Accepting..." : "Accept"}
                                       </Button>
@@ -1111,7 +1106,7 @@ export function NotificationPanel({
                                       {isItemProcessing && queueActionProcessing.action === "reject" ? "Rejecting..." : "Reject"}
                                     </Button>
                                     {isPastPending && (
-                                      <span className="self-center text-[10px] text-amber-300">
+                                      <span className="self-center text-xs text-amber-300">
                                         Past session (IST): reject only
                                       </span>
                                     )}

@@ -27,8 +27,8 @@ import { useDashboardData } from '@/app/context/DashboardDataContext';
 
 // ─── Badge maps ───────────────────────────────────────────────────────────────
 const EVENT_STATUS_BADGE: Record<EventStatus, string> = {
-  draft:     'bg-zinc-500/20 text-zinc-300 border border-zinc-500/30',
-  published: 'bg-blue-500/20 text-blue-300 border border-blue-500/30',
+  draft:     'bg-muted/20 text-muted-foreground border border-border',
+  published: 'bg-primary/20 text-primary border border-border',
   ongoing:   'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30',
   completed: 'bg-purple-500/20 text-purple-300 border border-purple-500/30',
   canceled:  'bg-red-500/20 text-red-300 border border-red-500/30',
@@ -56,7 +56,7 @@ const REG_BADGE: Record<RegistrationStatus, string> = {
   confirmed: 'bg-emerald-500/20 text-emerald-400',
   pending:   'bg-amber-500/20 text-amber-400',
   rejected:  'bg-red-500/20 text-red-400',
-  canceled:  'bg-zinc-500/20 text-zinc-400',
+  canceled:  'bg-muted/20 text-muted-foreground',
 };
 
 const PAY_BADGE: Record<PaymentStatus, string> = {
@@ -116,7 +116,6 @@ export default function TournamentDetailPage() {
       if (token) {
         try {
           const decoded_token = jwtDecode<{ sub: { id: number } }>(token)
-          console.log('🔑 Decoded vendor ID:', decoded_token.sub.id)
           setVendorId(decoded_token.sub.id)
         } catch (error) {
           console.error('❌ Error decoding JWT token:', error)
@@ -292,7 +291,7 @@ export default function TournamentDetailPage() {
     <div className="page-container items-center justify-center">
       <div className="flex flex-col items-center gap-3">
         <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-        <p className="body-text-muted">Loading tournament...</p>
+        <p className="body-text-muted">Loading tournament…</p>
       </div>
     </div>
   );
@@ -331,21 +330,21 @@ export default function TournamentDetailPage() {
       </div>
 
       {/* ── Breadcrumb ────────────────────────────────── */}
-      <nav className="flex flex-wrap items-center gap-2 text-xs text-zinc-400">
+      <nav className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
         <button
           onClick={() => router.push('/')}
           className="hover:text-foreground transition-colors inline-flex items-center gap-1"
         >
           <Home className="icon-xs" /> Home
         </button>
-        <span className="text-zinc-500">|</span>
+        <span className="text-muted-foreground">|</span>
         <button
           onClick={() => router.push('/tournaments')}
           className="hover:text-foreground transition-colors"
         >
           Tournaments
         </button>
-        <span className="text-zinc-500">|</span>
+        <span className="text-muted-foreground">|</span>
         <span className="text-foreground truncate max-w-[260px]">{event.title}</span>
       </nav>
 
@@ -422,11 +421,11 @@ export default function TournamentDetailPage() {
                 className={`rounded-lg border px-3 py-2 text-left transition-all disabled:cursor-not-allowed ${
                   active
                     ? 'border-emerald-400/35 bg-emerald-500/10 text-emerald-100'
-                    : 'border-blue-400/15 bg-zinc-900/60 text-zinc-300 hover:border-blue-300/45 hover:bg-zinc-800/80 hover:text-blue-100 disabled:opacity-55'
+                    : 'border-border bg-card text-muted-foreground hover:border-primary/45 hover:bg-muted/80 hover:text-foreground disabled:opacity-55'
                 }`}
               >
-                <span className="block text-xs font-bold uppercase tracking-wider">
-                  {busy ? 'Updating...' : EVENT_STATUS_LABEL[status]}
+                <span className="block text-xs font-semibold uppercase tracking-wider">
+                  {busy ? 'Updating…' : EVENT_STATUS_LABEL[status]}
                 </span>
               </button>
             );
@@ -443,7 +442,7 @@ export default function TournamentDetailPage() {
       {/* ── Stat Pills ────────────────────────────────── */}
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 flex-shrink-0">
         {[
-          { label: 'Total',     value: registrations.length, color: 'icon-blue',    icon: <Users        className="icon-md text-blue-400"    /> },
+          { label: 'Total',     value: registrations.length, color: 'icon-blue',    icon: <Users        className="icon-md text-primary"    /> },
           { label: 'Confirmed', value: confirmed,            color: 'icon-green',   icon: <CheckCircle2 className="icon-md text-emerald-400"   /> },
           { label: 'Pending',   value: pending,              color: 'icon-yellow',  icon: <Clock        className="icon-md text-amber-400"  /> },
           { label: 'Checked In',value: checkedIn,            color: 'icon-emerald', icon: <CreditCard   className="icon-md text-emerald-400" /> },
@@ -451,7 +450,7 @@ export default function TournamentDetailPage() {
           <div key={label} className="rounded-lg border border-border bg-muted/20 px-3 py-2">
             <div className="flex items-center justify-between">
               <div className="min-w-0">
-                <p className="text-xs uppercase tracking-wide text-zinc-300/70">{label}</p>
+                <p className="text-xs uppercase tracking-wide text-muted-foreground">{label}</p>
                 <p className="text-base font-semibold tabular-nums">{value}</p>
               </div>
               <div className={`inline-flex h-7 w-7 items-center justify-center rounded-md ${color}`}>{icon}</div>
@@ -480,25 +479,25 @@ export default function TournamentDetailPage() {
               disabled={!!engineBusy}
               onClick={() => runEngineAction('generate-bracket', () => generateBracket(token!, eventId, { require_check_in: requireCheckInForBracket, force: matches.length > 0 }))}
             >
-              {engineBusy === 'generate-bracket' ? 'Generating...' : matches.length ? 'Regenerate Bracket' : 'Generate Bracket'}
+              {engineBusy === 'generate-bracket' ? 'Generating…' : matches.length ? 'Regenerate Bracket' : 'Generate Bracket'}
             </button>
           </div>
         </div>
 
-        <div className="mt-4 rounded-lg border border-blue-400/15 bg-zinc-900/55 p-3">
+        <div className="mt-4 rounded-lg border border-border bg-card p-3">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
-              <p className="text-sm font-semibold text-blue-100">Bracket source</p>
-              <p className="mt-1 text-xs text-zinc-400">
+              <p className="text-sm font-semibold text-foreground">Bracket source</p>
+              <p className="mt-1 text-xs text-muted-foreground">
                 Include confirmed registrations, or only checked-in teams.
               </p>
             </div>
-            <label className="flex cursor-pointer select-none items-center gap-2 rounded-lg border border-blue-400/15 bg-zinc-950/50 px-3 py-2 text-xs font-semibold text-zinc-200">
+            <label className="flex cursor-pointer select-none items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 text-xs font-semibold text-foreground">
               <input
                 type="checkbox"
                 checked={requireCheckInForBracket}
                 onChange={(e) => setRequireCheckInForBracket(e.target.checked)}
-                className="h-4 w-4 rounded border-blue-400/30 bg-zinc-900/70 accent-blue-400"
+                className="h-4 w-4 rounded border-border bg-card accent-primary"
               />
               Require check-in
             </label>
@@ -510,16 +509,16 @@ export default function TournamentDetailPage() {
                 disabled={!!engineBusy}
                 onClick={() => runEngineAction('open-check-in', () => openCheckIn(token!, eventId))}
               >
-                {engineBusy === 'open-check-in' ? 'Opening...' : 'Open Check-in'}
+                {engineBusy === 'open-check-in' ? 'Opening…' : 'Open Check-in'}
               </button>
               <button
                 className="dashboard-btn-secondary inline-flex items-center justify-center gap-2 px-3 py-2 text-xs"
                 disabled={!!engineBusy}
                 onClick={() => runEngineAction('close-check-in', () => closeCheckIn(token!, eventId))}
               >
-                {engineBusy === 'close-check-in' ? 'Closing...' : 'Close Check-in'}
+                {engineBusy === 'close-check-in' ? 'Closing…' : 'Close Check-in'}
               </button>
-              <span className="inline-flex items-center rounded-lg border border-blue-400/10 px-3 py-2 text-xs text-zinc-400">
+              <span className="inline-flex items-center rounded-lg border border-border px-3 py-2 text-xs text-muted-foreground">
                 {checkedIn} checked-in teams
               </span>
             </div>
@@ -533,20 +532,20 @@ export default function TournamentDetailPage() {
         )}
 
         {event.match_rules && (
-          <div className="mt-4 rounded-lg border border-blue-400/15 bg-zinc-900/60 p-3">
-            <p className="text-xs font-bold uppercase tracking-wider text-blue-100/80">Match Rules</p>
-            <p className="mt-1 whitespace-pre-wrap text-sm text-zinc-200">{event.match_rules}</p>
+          <div className="mt-4 rounded-lg border border-border bg-card p-3">
+            <p className="text-xs font-semibold uppercase tracking-wider text-foreground">Match Rules</p>
+            <p className="mt-1 whitespace-pre-wrap text-sm text-foreground">{event.match_rules}</p>
           </div>
         )}
 
         <div className="mt-4">
           <div className="mb-3 flex items-center justify-between gap-3">
-            <h4 className="text-sm font-semibold text-blue-100">Bracket & Matches</h4>
-            <span className="text-xs text-zinc-400">{loadingMatches ? 'Loading matches...' : `${matches.length} matches`}</span>
+            <h4 className="text-sm font-semibold text-foreground">Bracket & Matches</h4>
+            <span className="text-xs text-muted-foreground">{loadingMatches ? 'Loading matches…' : `${matches.length} matches`}</span>
           </div>
 
           {matches.length === 0 ? (
-            <div className="rounded-lg border border-blue-400/15 bg-zinc-900/45 p-3 text-center text-sm text-zinc-400">
+            <div className="rounded-lg border border-border bg-muted/45 p-3 text-center text-sm text-muted-foreground">
               Generate a bracket from confirmed registrations to create live match cards.
             </div>
           ) : (
@@ -555,22 +554,22 @@ export default function TournamentDetailPage() {
                 const roundNumber = Number(roundKey);
                 return (
                   <div key={roundKey} className="min-w-[290px] flex-1 space-y-3">
-                    <div className="rounded-lg border border-blue-400/20 bg-zinc-900/70 px-3 py-2 text-sm font-semibold text-blue-100">
+                    <div className="rounded-lg border border-border bg-card px-3 py-2 text-sm font-semibold text-foreground">
                       Round {roundNumber}
                     </div>
                     {rounds[roundNumber].map((match) => {
                       const winnerValue = selectedWinners[match.id] || match.winner_team_id || '';
                       return (
-                        <div key={match.id} className="rounded-lg border border-blue-400/15 bg-zinc-900/60 p-3">
+                        <div key={match.id} className="rounded-lg border border-border bg-card p-3">
                           <div className="mb-2 flex items-center justify-between gap-2">
-                            <span className="text-xs font-bold uppercase tracking-wider text-blue-100/80">
+                            <span className="text-xs font-semibold uppercase tracking-wider text-foreground">
                               Match {match.match_number}
                             </span>
-                            <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${
+                            <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
                               match.status === 'completed' ? 'bg-emerald-500/20 text-emerald-300' :
                               match.status === 'disputed' ? 'bg-red-500/20 text-red-300' :
-                              match.status === 'in_progress' ? 'bg-blue-500/20 text-blue-300' :
-                              'bg-zinc-700/80 text-zinc-200'
+                              match.status === 'in_progress' ? 'bg-primary/20 text-primary' :
+                              'bg-muted/80 text-foreground'
                             }`}>
                               {match.status.replaceAll('_', ' ')}
                             </span>
@@ -582,14 +581,14 @@ export default function TournamentDetailPage() {
                                 className={`rounded-md border px-3 py-2 text-sm ${
                                   team.id && team.id === match.winner_team_id
                                     ? 'border-emerald-400/40 bg-emerald-500/10 text-emerald-100'
-                                    : 'border-blue-400/10 bg-zinc-950/50 text-zinc-200'
+                                    : 'border-border bg-card text-foreground'
                                 }`}
                               >
                                 {team.name}
                               </div>
                             ))}
                           </div>
-                          <div className="mt-3 space-y-2 text-xs text-zinc-400">
+                          <div className="mt-3 space-y-2 text-xs text-muted-foreground">
                             <p>Map: {match.map_name || 'Pending veto/admin'}</p>
                             <p>Server: {match.server_region || event.server || event.region || 'TBD'}</p>
                             {match.lobby_instructions && <p className="line-clamp-3">{match.lobby_instructions}</p>}
@@ -611,14 +610,14 @@ export default function TournamentDetailPage() {
                                 disabled={!!engineBusy || !match.team_a_id || !match.team_b_id || match.status === 'completed'}
                                 onClick={() => runEngineAction(`start-${match.id}`, () => startMatch(token!, eventId, match.id))}
                               >
-                                {engineBusy === `start-${match.id}` ? 'Starting...' : 'Start'}
+                                {engineBusy === `start-${match.id}` ? 'Starting…' : 'Start'}
                               </button>
                               <button
                                 className="dashboard-btn-primary inline-flex items-center justify-center px-3 py-2 text-xs"
                                 disabled={!!engineBusy || !winnerValue || match.status === 'completed'}
                                 onClick={() => runEngineAction(`result-${match.id}`, () => submitAdminMatchResult(token!, eventId, match.id, { winner_team_id: winnerValue }))}
                               >
-                                {engineBusy === `result-${match.id}` ? 'Saving...' : 'Admin Result'}
+                                {engineBusy === `result-${match.id}` ? 'Saving…' : 'Admin Result'}
                               </button>
                             </div>
                             {match.status === 'disputed' && (
@@ -644,9 +643,9 @@ export default function TournamentDetailPage() {
       </details>
 
       {/* ── Registrations Table ───────────────────────── */}
-      <div className="gaming-panel flex flex-col overflow-hidden rounded-xl border border-blue-400/20 bg-zinc-950/45">
+      <div className="gaming-panel flex flex-col overflow-hidden rounded-lg border border-border bg-muted/45">
         {/* Table toolbar */}
-        <div className="dashboard-toolbar justify-between gap-3 p-3 border-b border-blue-500/20 flex-shrink-0">
+        <div className="dashboard-toolbar justify-between gap-3 p-3 border-b border-border flex-shrink-0">
           <div className="flex items-center gap-2">
             <Users className="icon-md text-muted-foreground" />
             <h3 className="section-title">Registrations</h3>
@@ -684,14 +683,14 @@ export default function TournamentDetailPage() {
         <div className="dashboard-table-shell flex-1">
           <div className="dashboard-table-wrap">
             <table className="dashboard-table">
-            <thead className="sticky top-0 bg-zinc-900/70">
+            <thead className="sticky top-0 bg-card">
               <tr>
-                <th className="table-cell text-left text-[11px] font-bold uppercase tracking-wider text-blue-100/80 sm:text-xs">Team / Player</th>
-                <th className="table-cell text-left text-[11px] font-bold uppercase tracking-wider text-blue-100/80 sm:text-xs">Contact</th>
-                <th className="table-cell text-left text-[11px] font-bold uppercase tracking-wider text-blue-100/80 sm:text-xs">Registered</th>
-                <th className="table-cell text-left text-[11px] font-bold uppercase tracking-wider text-blue-100/80 sm:text-xs">Status</th>
-                <th className="table-cell text-left text-[11px] font-bold uppercase tracking-wider text-blue-100/80 sm:text-xs">Payment</th>
-                <th className="table-cell text-center text-[11px] font-bold uppercase tracking-wider text-blue-100/80 sm:text-xs">Waiver</th>
+                <th className="table-cell text-left text-xs font-semibold uppercase tracking-wider text-foreground sm:text-xs">Team / Player</th>
+                <th className="table-cell text-left text-xs font-semibold uppercase tracking-wider text-foreground sm:text-xs">Contact</th>
+                <th className="table-cell text-left text-xs font-semibold uppercase tracking-wider text-foreground sm:text-xs">Registered</th>
+                <th className="table-cell text-left text-xs font-semibold uppercase tracking-wider text-foreground sm:text-xs">Status</th>
+                <th className="table-cell text-left text-xs font-semibold uppercase tracking-wider text-foreground sm:text-xs">Payment</th>
+                <th className="table-cell text-center text-xs font-semibold uppercase tracking-wider text-foreground sm:text-xs">Waiver</th>
               </tr>
             </thead>
             <tbody>
@@ -700,7 +699,7 @@ export default function TournamentDetailPage() {
                   <tr key={i} className="table-row animate-pulse">
                     {[...Array(6)].map((_, j) => (
                       <td key={j} className="table-cell">
-                        <div className="h-4 w-full max-w-[120px] rounded bg-zinc-800/80" />
+                        <div className="h-4 w-full max-w-[120px] rounded bg-muted/80" />
                       </td>
                     ))}
                   </tr>
@@ -720,7 +719,7 @@ export default function TournamentDetailPage() {
                 </tr>
               ) : (
                 filteredRegs.map((reg) => (
-                  <tr key={reg.id} className="table-row border-b border-blue-500/10 last:border-0 hover:bg-blue-500/5">
+                  <tr key={reg.id} className="table-row border-b border-border last:border-0 hover:bg-primary/5">
                     {/* Team / Player */}
                     <td className="table-cell">
                       <p className="table-cell-text font-medium">
@@ -785,8 +784,8 @@ export default function TournamentDetailPage() {
       </div>
 
       {/* ── Teams ─────────────────────────────────────── */}
-      <div className="gaming-panel flex flex-col overflow-hidden rounded-xl border border-blue-400/20 bg-zinc-950/45">
-        <div className="flex items-center justify-between gap-3 p-3 border-b border-blue-500/20">
+      <div className="gaming-panel flex flex-col overflow-hidden rounded-lg border border-border bg-muted/45">
+        <div className="flex items-center justify-between gap-3 p-3 border-b border-border">
           <div className="flex items-center gap-2">
             <Trophy className="icon-md text-muted-foreground" />
             <h3 className="section-title">Teams</h3>
@@ -799,12 +798,12 @@ export default function TournamentDetailPage() {
         </div>
         <div className="dashboard-table-wrap flex-1">
           <table className="dashboard-table">
-            <thead className="sticky top-0 bg-zinc-900/70">
+            <thead className="sticky top-0 bg-card">
               <tr>
-                <th className="table-cell text-left text-[11px] font-bold uppercase tracking-wider text-blue-100/80 sm:text-xs">Team</th>
-                <th className="table-cell text-left text-[11px] font-bold uppercase tracking-wider text-blue-100/80 sm:text-xs">Type</th>
-                <th className="table-cell text-left text-[11px] font-bold uppercase tracking-wider text-blue-100/80 sm:text-xs">Members</th>
-                <th className="table-cell text-left text-[11px] font-bold uppercase tracking-wider text-blue-100/80 sm:text-xs">Created</th>
+                <th className="table-cell text-left text-xs font-semibold uppercase tracking-wider text-foreground sm:text-xs">Team</th>
+                <th className="table-cell text-left text-xs font-semibold uppercase tracking-wider text-foreground sm:text-xs">Type</th>
+                <th className="table-cell text-left text-xs font-semibold uppercase tracking-wider text-foreground sm:text-xs">Members</th>
+                <th className="table-cell text-left text-xs font-semibold uppercase tracking-wider text-foreground sm:text-xs">Created</th>
               </tr>
             </thead>
             <tbody>
@@ -813,7 +812,7 @@ export default function TournamentDetailPage() {
                   <tr key={i} className="table-row animate-pulse">
                     {[...Array(4)].map((_, j) => (
                       <td key={j} className="table-cell">
-                        <div className="h-4 w-full max-w-[140px] rounded bg-zinc-800/80" />
+                        <div className="h-4 w-full max-w-[140px] rounded bg-muted/80" />
                       </td>
                     ))}
                   </tr>
@@ -829,7 +828,7 @@ export default function TournamentDetailPage() {
                 </tr>
               ) : (
                 teams.map((team) => (
-                  <tr key={team.id} className="table-row border-b border-blue-500/10 last:border-0 hover:bg-blue-500/5">
+                  <tr key={team.id} className="table-row border-b border-border last:border-0 hover:bg-primary/5">
                     <td className="table-cell">
                       <p className="table-cell-text font-medium">{team.name}</p>
                     </td>
@@ -864,15 +863,15 @@ export default function TournamentDetailPage() {
 
         <div className="space-y-3">
           {winners.map((winner, idx) => (
-            <div key={winner.rank} className="grid grid-cols-1 gap-3 rounded-lg border border-blue-400/15 bg-zinc-900/60 p-3 md:grid-cols-3">
+            <div key={winner.rank} className="grid grid-cols-1 gap-3 rounded-lg border border-border bg-card p-3 md:grid-cols-3">
               <div className="flex items-center gap-2">
-                <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-blue-500/20 text-sm font-bold text-blue-100">
+                <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-primary/20 text-sm font-semibold text-foreground">
                   #{winner.rank}
                 </span>
-                <span className="text-sm text-zinc-200">Rank {winner.rank}</span>
+                <span className="text-sm text-foreground">Rank {winner.rank}</span>
               </div>
               <select
-                className="h-10 w-full rounded-lg border border-blue-400/25 bg-zinc-900/70 px-3 text-sm text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-400/60"
+                className="h-10 w-full rounded-lg border border-border bg-card px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/60"
                 value={winner.team_id}
                 onChange={(e) => handleWinnerChange(idx, { team_id: e.target.value })}
               >
@@ -882,7 +881,7 @@ export default function TournamentDetailPage() {
                 ))}
               </select>
               <input
-                className="h-10 w-full rounded-lg border border-blue-400/25 bg-zinc-900/70 px-3 text-sm text-zinc-100 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-blue-400/60"
+                className="h-10 w-full rounded-lg border border-border bg-card px-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/60"
                 placeholder="Result image URL (optional)"
                 value={winner.verified_snapshot || ''}
                 onChange={(e) => handleWinnerChange(idx, { verified_snapshot: e.target.value })}

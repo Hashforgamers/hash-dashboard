@@ -9,25 +9,25 @@ export function BookingStats({ bookingStats }) {
       icon: Monitor,
       total: 50,
       booked: bookingStats.pcBookings || 0, // Assuming `pcBookings` will be available in the bookingStats
-      colorClass: "bg-blue-100 dark:bg-blue-900/20",
-      iconColorClass: "text-blue-500",
-      progressColorClass: "bg-blue-500",
+      colorClass: "bg-primary/20",
+      iconColorClass: "text-primary",
+      progressColorClass: "bg-primary",
     },
     {
       name: "PS5",
       icon: Gamepad2,
       total: 30,
       booked: bookingStats.ps5Bookings || 0, // Similar assumptions for other platforms
-      colorClass: "bg-blue-100 dark:bg-blue-900/20",
-      iconColorClass: "text-blue-500",
-      progressColorClass: "bg-blue-500",
+      colorClass: "bg-primary/20",
+      iconColorClass: "text-primary",
+      progressColorClass: "bg-primary",
     },
     {
       name: "Xbox",
       icon: Gamepad,
       total: 25,
       booked: bookingStats.xboxBookings || 0, // Adjust based on your actual data structure
-      colorClass: "bg-emerald-100 dark:bg-emerald-900/20",
+      colorClass: "bg-emerald-900/20",
       iconColorClass: "text-emerald-500",
       progressColorClass: "bg-emerald-500",
     },
@@ -36,7 +36,7 @@ export function BookingStats({ bookingStats }) {
       icon: Headphones,
       total: 20,
       booked: bookingStats.vrBookings || 0, // Adjust for VR as well
-      colorClass: "bg-amber-100 dark:bg-amber-900/20",
+      colorClass: "bg-amber-900/20",
       iconColorClass: "text-amber-500",
       progressColorClass: "bg-amber-500",
     },

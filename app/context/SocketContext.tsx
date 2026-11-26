@@ -31,9 +31,7 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
   const lastForcedReconnectRef = React.useRef<number>(0);
 
   useEffect(() => {
-    console.log('🔌 Creating single socket connection...')
     
-    console.log(`Trying to connect ${SOCKET_URL}`)
     const newSocket = io(`${SOCKET_URL}`, {
       transports: ['websocket', 'polling'],
       auth: (callback) => callback({ token: getPreferredAuthToken() }),
@@ -95,7 +93,6 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
     };
 
     newSocket.on("connect", () => {
-      console.log("✅ Socket connected:", newSocket.id);
       setIsConnected(true);
       markPong();
       startHeartbeat();
@@ -108,7 +105,6 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
     });
 
     newSocket.on("disconnect", (reason) => {
-      console.log("❌ Socket disconnected:", reason);
       setIsConnected(false);
     });
 
@@ -133,7 +129,6 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
 
     const handleOnline = () => {
       if (!newSocket.connected) {
-        console.log("🌐 Back online, reconnecting socket...");
         try {
           newSocket.connect();
         } catch (err) {
@@ -152,7 +147,6 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
     setSocket(newSocket);
 
     return () => {
-      console.log("🧹 Cleaning up socket...");
       if (heartbeatRef.current) {
         window.clearInterval(heartbeatRef.current);
       }
@@ -173,7 +167,6 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
     joinedVendorsRef.current.clear();
     joinedVendorsRef.current.add(vendorId);
     if (socket?.connected) {
-      console.log(`🏪 Joining vendor room: ${vendorId}`);
       socket.emit("dashboard_join_vendor", { vendor_id: vendorId });
     } else {
       console.warn("⚠️ Cannot join vendor, socket not connected");

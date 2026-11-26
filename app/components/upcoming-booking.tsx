@@ -1,10 +1,12 @@
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { isFlexBooking } from "@/lib/flex-booking";
 import { StatusPill } from "./live-session-due";
 
 import { creditAuthHeaders } from "@/lib/credit-auth"
 import { SessionConsoleDialog, type SessionConsole } from "./session-console-dialog";
 import UpcomingSlotManager from "./upcoming-slot-manager";
+import { BookingQuickView } from "./booking-quick-view";
 import { Card } from "@/components/ui/card";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
@@ -29,7 +31,7 @@ import { useTimeFormat } from "@/app/hooks/useTimeFormat";
 export function getIcon(system?: string | null): JSX.Element {
   const sys = (system || "").toLowerCase();
   
-  if (sys.includes("ps5")) return <Gamepad2 className="w-4 h-4 text-blue-500" />;
+  if (sys.includes("ps5")) return <Gamepad2 className="w-4 h-4 text-primary" />;
   if (sys.includes("xbox")) return <Gamepad2 className="w-4 h-4 text-emerald-500" />;
   return <Monitor className="w-4 h-4 text-purple-500" />;
 }
@@ -422,7 +424,6 @@ export function UpcomingBookings({
   // Update bookings when props change
   useEffect(() => {
     if (Array.isArray(initialBookings)) {
-      console.log('📅 UpcomingBookings: Updating from props with', initialBookings.length, 'bookings')
       setUpcomingBookings(initialBookings)
     }
   }, [initialBookings])
@@ -431,14 +432,12 @@ export function UpcomingBookings({
   useEffect(() => {
     if (!socket || !vendorId || !isConnected) return
 
-    console.log('📅 UpcomingBookings: Setting up socket listeners...')
     const parsedVendorId = Number(vendorId)
     if (!Number.isFinite(parsedVendorId)) return
     
     joinVendor(parsedVendorId)
 
     function handleUpcomingBooking(data: any) {
-      console.log('📅 Real-time upcoming booking:', data)
       
       const eventVendorId = Number(data?.vendorId ?? data?.vendor_id);
       const incomingBookingId = Number(data?.bookingId ?? data?.booking_id ?? data?.bookId ?? data?.book_id);
@@ -454,7 +453,6 @@ export function UpcomingBookings({
           
           const exists = prev.some(booking => Number(booking?.bookingId) === incomingBookingId)
           if (!exists) {
-            console.log('➕ Adding new booking immediately')
             return [{ ...normalizedIncoming, bookingId: incomingBookingId }, ...prev]
           }
           return prev
@@ -463,7 +461,6 @@ export function UpcomingBookings({
     }
 
     function handleBookingUpdate(data: any) {
-      console.log('🔄 Booking update:', data)
       
       const eventVendorId = Number(data?.vendorId ?? data?.vendor_id);
       const incomingBookingId = Number(data?.bookingId ?? data?.booking_id ?? data?.bookId ?? data?.book_id);
@@ -501,7 +498,6 @@ export function UpcomingBookings({
     }
 
     function handleBookingAccepted(data: any) {
-      console.log('✅ Booking accepted from notification panel:', data)
       
       const eventVendorId = Number(data?.vendorId ?? data?.vendor_id);
       if (eventVendorId === parsedVendorId) {
@@ -511,7 +507,6 @@ export function UpcomingBookings({
           
           const exists = prev.some(booking => booking?.bookingId === data.bookingId)
           if (!exists) {
-            console.log('📅 ✅ Adding accepted booking to upcoming bookings immediately')
             return [normalizedIncoming, ...prev]
           }
           return prev
@@ -577,7 +572,6 @@ export function UpcomingBookings({
     socket.on('booking_payment_update', handleBookingPaymentUpdate)
 
     return () => {
-      console.log('🧹 Cleaning up UpcomingBookings listeners')
       socket.off('upcoming_booking', handleUpcomingBooking)
       socket.off('booking', handleBookingUpdate)
       socket.off('booking_accepted', handleBookingAccepted)
@@ -632,7 +626,6 @@ export function UpcomingBookings({
   // 🔧 MOVED: Add debugging to see booking data structure AFTER mergedBookings is defined
   useEffect(() => {
     if (mergedBookings.length > 0) {
-      console.log('📊 Sample booking structure:', mergedBookings[0]);
       console.log('📊 All booking game_ids:', mergedBookings.map(b => ({
         bookingId: b.bookingId,
         game_id: b.game_id,
@@ -833,7 +826,6 @@ export function UpcomingBookings({
 
   // ✅ ENHANCED: Enhanced meal/food icon click handlers
   const handleFoodIconClick = (bookingId: string, customerName: string, hasMeals: boolean) => {
-    console.log('🍽️ Food icon clicked:', { bookingId, customerName, hasMeals });
     
     setMealDetailsModal({
       isOpen: true,
@@ -845,7 +837,6 @@ export function UpcomingBookings({
   };
 
   const handleAddFoodClick = (bookingId: string, customerName: string) => {
-    console.log('➕ Add food clicked:', { bookingId, customerName });
     
     setMealDetailsModal({
       isOpen: true,
@@ -1089,12 +1080,12 @@ export function UpcomingBookings({
                               }}
                               className="truncate text-left text-sm font-semibold text-foreground underline-offset-2 hover:underline focus-visible:rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring"
                               aria-label={`View contact and booking details for ${booking.username || 'Guest User'}`}
-                              title="View phone, email and booking details"
+                              title="View booking and gamer details"
                             >
                               {booking.username || "Guest User"}
                             </button>
                             {squadEnabled && (
-                              <span className="shrink-0 rounded border border-border px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+                              <span className="shrink-0 rounded border border-border px-1.5 py-0.5 text-xs font-medium text-muted-foreground">
                                 x{squadPlayerCount}
                               </span>
                             )}
@@ -1125,12 +1116,13 @@ export function UpcomingBookings({
                           <span className="inline-flex items-center gap-1.5 whitespace-nowrap tabular-nums">
                             <Clock className="h-3 w-3 shrink-0" />
                             {booking.time ? showRange(booking.time) : "No time set"}
+                            {isFlexBooking(booking) && <span className="ml-1.5 rounded border border-border px-1 text-[10px] font-medium uppercase text-muted-foreground" title="Custom start time: exact minutes, not slot times">Custom</span>}
                           </span>
                           {booking.duplicate_booking && (
                             <StatusPill
                               tone="alert"
                               label="Duplicate"
-                              className="h-5 text-[11px]"
+                              className="h-5 text-xs"
                               title="This gamer has another booking for the same time. Cancel the extra one so they are not billed twice."
                             />
                           )}
@@ -1138,7 +1130,7 @@ export function UpcomingBookings({
 
                         <div className="flex items-center justify-between gap-2 rounded-md border border-border px-2 py-1.5">
                           <div className="flex min-w-0 items-center gap-2">
-                            <span className="text-[11px] text-muted-foreground">Access code</span>
+                            <span className="text-xs text-muted-foreground">Access code</span>
                             <span className="select-all font-mono text-sm font-semibold tracking-widest text-foreground">
                               {(booking.merged_access_codes?.length ? booking.merged_access_codes.join(" · ") : null) || booking.access_code || booking.accessCode || "Unavailable"}
                             </span>
@@ -1165,7 +1157,7 @@ export function UpcomingBookings({
                         </div>
 
                         {squadEnabled && squadMemberNames.length > 0 && !expanded && (
-                          <p className="truncate text-[11px] text-zinc-300">
+                          <p className="truncate text-xs text-muted-foreground">
                             Members: {squadMemberNames.join(", ")}
                             {squadPlayerCount - squadMemberNames.length > 0
                               ? ` +${squadPlayerCount - squadMemberNames.length} more`
@@ -1173,7 +1165,7 @@ export function UpcomingBookings({
                           </p>
                         )}
                         {squadEnabled && expanded && (
-                          <div className="rounded-md border border-blue-400/25 bg-blue-500/10 p-1.5 text-[11px] text-blue-100">
+                          <div className="rounded-md border border-border bg-primary/10 p-1.5 text-xs text-foreground">
                             <p className="font-semibold">Squad Details</p>
                             <p>Members: {squadMembers.map((m: any) => m?.name).filter(Boolean).join(", ") || "Not available"}</p>
                             {String(booking?.squadDetails?.console_group || "").toLowerCase() === "pc" ? (
@@ -1209,7 +1201,7 @@ export function UpcomingBookings({
                             whileHover={{ scale: 1.02 }}
                             whileTap={{ scale: 0.98 }}
                             onClick={() => start(booking)}
-                            className={`inline-flex h-8 min-w-[96px] items-center justify-center gap-1 rounded-md !px-2.5 !py-0 text-[11px] font-semibold transition-all sm:min-w-[104px] sm:text-xs ${
+                            className={`inline-flex h-8 min-w-[96px] items-center justify-center gap-1 rounded-md !px-2.5 !py-0 text-xs font-semibold transition-all sm:min-w-[104px] sm:text-xs ${
                               canStartNow
                                 ? "dashboard-btn-primary"
                                 : "border border-border bg-transparent text-muted-foreground"
@@ -1255,67 +1247,29 @@ export function UpcomingBookings({
         </div>
       </div>
 
-      {isMounted && contactOverlay.open && createPortal(
-        <div
-          className="fixed inset-0 z-[1100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
-          onClick={() => setContactOverlay({ open: false, booking: null })}
+      {contactOverlay.open && contactOverlay.booking && (
+        <BookingQuickView
+          open
+          onClose={() => setContactOverlay({ open: false, booking: null })}
+          userId={contactOverlay.booking.userId || contactOverlay.booking.user_id}
+          booking={{
+            bookingId: contactOverlay.booking.bookingId,
+            name: contactOverlay.booking.username || "Guest User",
+            phone: getBookingPhone(contactOverlay.booking) || null,
+            email: getBookingEmail(contactOverlay.booking) || null,
+            console: contactOverlay.booking.consoleType || null,
+            when: [contactOverlay.booking.date, contactOverlay.booking.time ? showRange(contactOverlay.booking.time) : null].filter(Boolean).join(" · ") || null,
+            status: contactOverlay.booking.status || null,
+          }}
         >
-          <div
-            className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-xl border border-blue-500/30 bg-zinc-950 shadow-2xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between border-b border-blue-500/20 px-4 py-3">
-              <h3 className="text-sm font-semibold uppercase tracking-[0.08em] text-blue-200">Booking details</h3>
-              <button
-                type="button"
-                onClick={() => setContactOverlay({ open: false, booking: null })}
-                className="rounded-md border border-zinc-600 px-2 py-1 text-xs text-zinc-300 hover:bg-zinc-800"
-              >
-                Close
-              </button>
-            </div>
-            <div className="space-y-3 px-4 py-4 text-sm">
-              <div className="rounded-lg border border-zinc-700/80 bg-zinc-900/70 p-3">
-                <p className="text-xs uppercase tracking-wide text-zinc-400">Name</p>
-                <p className="mt-1 font-semibold text-zinc-100">
-                  {contactOverlay.booking?.username || "Guest User"}
-                </p>
-              </div>
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                <div className="min-w-0 rounded-lg border border-zinc-700/80 bg-zinc-900/70 p-3">
-                  <p className="text-xs uppercase tracking-wide text-zinc-400">Phone</p>
-                  <p className="mt-1 text-zinc-100">{getBookingPhone(contactOverlay.booking) || "-"}</p>
-                </div>
-                <div className="min-w-0 rounded-lg border border-zinc-700/80 bg-zinc-900/70 p-3">
-                  <p className="text-xs uppercase tracking-wide text-zinc-400">Email</p>
-                  <p className="mt-1 break-all text-zinc-100">{getBookingEmail(contactOverlay.booking) || "-"}</p>
-                </div>
-                <div className="min-w-0 rounded-lg border border-zinc-700/80 bg-zinc-900/70 p-3">
-                  <p className="text-xs uppercase tracking-wide text-zinc-400">User ID</p>
-                  <p className="mt-1 text-zinc-100">{contactOverlay.booking?.userId || contactOverlay.booking?.user_id || "-"}</p>
-                </div>
-                <div className="min-w-0 rounded-lg border border-zinc-700/80 bg-zinc-900/70 p-3">
-                  <p className="text-xs uppercase tracking-wide text-zinc-400">Booking ID</p>
-                  <p className="mt-1 text-zinc-100">{contactOverlay.booking?.bookingId || "-"}</p>
-                </div>
-              </div>
-              <div className="rounded-lg border border-zinc-700/80 bg-zinc-900/70 p-3">
-                <p className="text-xs uppercase tracking-wide text-zinc-400">Session</p>
-                <p className="mt-1 text-zinc-100">
-                  {contactOverlay.booking?.consoleType || "Console"} • {contactOverlay.booking?.time ? showRange(contactOverlay.booking.time) : "Time not set"}
-                </p>
-              </div>
-              <UpcomingSlotManager booking={contactOverlay.booking} vendorId={String(vendorId)} onChanged={() => {
-                setRefreshSlots(prev => !prev)
-                window.dispatchEvent(new CustomEvent('refresh-dashboard'))
-              }} onRemove={(slotBooking) => {
-                setContactOverlay({ open: false, booking: null })
-                openCancelDialog(slotBooking, paymentBadge(slotBooking) === "Paid")
-              }} />
-            </div>
-          </div>
-        </div>,
-        document.body
+          <UpcomingSlotManager booking={contactOverlay.booking} vendorId={String(vendorId)} onChanged={() => {
+            setRefreshSlots(prev => !prev)
+            window.dispatchEvent(new CustomEvent('refresh-dashboard'))
+          }} onRemove={(slotBooking) => {
+            setContactOverlay({ open: false, booking: null })
+            openCancelDialog(slotBooking, paymentBadge(slotBooking) === "Paid")
+          }} />
+        </BookingQuickView>
       )}
       
       {/* ✅ FIXED: Render modal using Portal at document root level */}
@@ -1333,19 +1287,19 @@ export function UpcomingBookings({
       )}
 
       {isMounted && cancelDialog.open && createPortal(
-        <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/40 p-4">
-          <div className="w-full max-w-md rounded-2xl border border-zinc-700/60 bg-zinc-900/95 p-5 shadow-2xl">
+        <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-lg border border-border bg-card p-4 shadow-xl">
             <div className="flex items-center justify-between">
-              <h3 className="text-sm font-semibold text-zinc-100">Cancel Booking</h3>
+              <h3 className="text-sm font-semibold text-foreground">Cancel Booking</h3>
               <button
                 type="button"
                 onClick={closeCancelDialog}
-                className="rounded-full border border-zinc-600/60 p-1 text-zinc-300 hover:bg-zinc-800"
+                className="rounded-full border border-border p-1 text-muted-foreground hover:bg-muted"
               >
                 <X className="h-4 w-4" />
               </button>
             </div>
-            <p className="mt-2 text-xs text-zinc-400">
+            <p className="mt-2 text-xs text-muted-foreground">
               {cancelDialog.isPaid
                 ? "This booking is paid. Choose how you will repay the user."
                 : "This booking is unpaid. The slot will be released immediately."}
@@ -1353,7 +1307,7 @@ export function UpcomingBookings({
 
             {cancelDialog.isPaid && (
               <div className="mt-4 space-y-2">
-                <label className="text-xs font-medium text-zinc-300">Repayment Method</label>
+                <label className="text-xs font-medium text-muted-foreground">Repayment Method</label>
                 <select
                   value={cancelDialog.repaymentType}
                   onChange={(e) =>
@@ -1362,7 +1316,7 @@ export function UpcomingBookings({
                       repaymentType: e.target.value as any
                     }))
                   }
-                  className="w-full rounded-md border border-zinc-600/60 bg-zinc-800/70 px-3 py-2 text-xs text-zinc-100"
+                  className="w-full rounded-md border border-border bg-muted/70 px-3 py-2 text-xs text-foreground"
                 >
                   <option value="refund">Refund to original payment</option>
                   <option value="credit">Credit to wallet/pass</option>
@@ -1372,12 +1326,12 @@ export function UpcomingBookings({
             )}
 
             <div className="mt-4 space-y-2">
-              <label className="text-xs font-medium text-zinc-300">Reason (optional)</label>
+              <label className="text-xs font-medium text-muted-foreground">Reason (optional)</label>
               <textarea
                 rows={2}
                 value={cancelDialog.reason}
                 onChange={(e) => setCancelDialog(prev => ({ ...prev, reason: e.target.value }))}
-                className="w-full rounded-md border border-zinc-600/60 bg-zinc-800/70 px-3 py-2 text-xs text-zinc-100"
+                className="w-full rounded-md border border-border bg-muted/70 px-3 py-2 text-xs text-foreground"
                 placeholder="Add a short reason..."
               />
             </div>
@@ -1386,7 +1340,7 @@ export function UpcomingBookings({
               <button
                 type="button"
                 onClick={closeCancelDialog}
-                className="rounded-md border border-zinc-600/60 px-3 py-2 text-xs text-zinc-300 hover:bg-zinc-800"
+                className="rounded-md border border-border px-3 py-2 text-xs text-muted-foreground hover:bg-muted"
               >
                 Keep Booking
               </button>
@@ -1396,7 +1350,7 @@ export function UpcomingBookings({
                 disabled={cancelLoading}
                 className={cn(buttonVariants({ variant: "soft-danger", size: "sm" }), "disabled:cursor-not-allowed")}
               >
-                {cancelLoading ? "Cancelling..." : "Confirm Cancel"}
+                {cancelLoading ? "Cancelling…" : "Confirm Cancel"}
               </button>
             </div>
           </div>
@@ -1405,29 +1359,29 @@ export function UpcomingBookings({
       )}
 
       {isMounted && noShowDialog.open && createPortal(
-        <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/40 p-4">
-          <div className="w-full max-w-md rounded-2xl border border-zinc-700/60 bg-zinc-900/95 p-5 shadow-2xl">
+        <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-lg border border-border bg-card p-4 shadow-xl">
             <div className="flex items-center justify-between">
-              <h3 className="text-sm font-semibold text-zinc-100">Mark Booking As No Show</h3>
+              <h3 className="text-sm font-semibold text-foreground">Mark Booking As No Show</h3>
               <button
                 type="button"
                 onClick={closeNoShowDialog}
-                className="rounded-full border border-zinc-600/60 p-1 text-zinc-300 hover:bg-zinc-800"
+                className="rounded-full border border-border p-1 text-muted-foreground hover:bg-muted"
               >
                 <X className="h-4 w-4" />
               </button>
             </div>
-            <p className="mt-2 text-xs text-zinc-400">
+            <p className="mt-2 text-xs text-muted-foreground">
               This marks the booking as no-show, releases the slot, and updates settlement in real time.
             </p>
 
             <div className="mt-4 space-y-2">
-              <label className="text-xs font-medium text-zinc-300">Reason (optional)</label>
+              <label className="text-xs font-medium text-muted-foreground">Reason (optional)</label>
               <textarea
                 rows={2}
                 value={noShowDialog.reason}
                 onChange={(e) => setNoShowDialog(prev => ({ ...prev, reason: e.target.value }))}
-                className="w-full rounded-md border border-zinc-600/60 bg-zinc-800/70 px-3 py-2 text-xs text-zinc-100"
+                className="w-full rounded-md border border-border bg-muted/70 px-3 py-2 text-xs text-foreground"
                 placeholder="User did not arrive..."
               />
             </div>
@@ -1436,7 +1390,7 @@ export function UpcomingBookings({
               <button
                 type="button"
                 onClick={closeNoShowDialog}
-                className="rounded-md border border-zinc-600/60 px-3 py-2 text-xs text-zinc-300 hover:bg-zinc-800"
+                className="rounded-md border border-border px-3 py-2 text-xs text-muted-foreground hover:bg-muted"
               >
                 Back
               </button>
@@ -1446,7 +1400,7 @@ export function UpcomingBookings({
                 disabled={noShowLoading}
                 className={cn(buttonVariants({ variant: "soft-warning", size: "sm" }), "disabled:cursor-not-allowed")}
               >
-                {noShowLoading ? "Updating..." : "Confirm No Show"}
+                {noShowLoading ? "Updating…" : "Confirm No Show"}
               </button>
             </div>
           </div>

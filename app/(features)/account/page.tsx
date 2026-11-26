@@ -6,7 +6,7 @@ export default function MyAccountPage() {
   return (
     <DashboardLayout contentScroll="page">
       <div className="feature-page-shell account-scope">
-        <PageHeader title="Account Settings" />
+        <PageHeader title="Settings" />
 
         <div className="feature-page-content feature-page-content-scroll gaming-panel">
           <MyAccount />

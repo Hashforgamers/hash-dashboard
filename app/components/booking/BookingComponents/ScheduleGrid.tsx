@@ -83,11 +83,11 @@ export const ScheduleGrid = ({
 
   if (uniqueTimes.length === 0) {
     return (
-      <Card className="rounded-2xl border border-zinc-700 bg-zinc-800/30 backdrop-blur-sm overflow-hidden">
+      <Card className="rounded-lg border border-border bg-muted/30 backdrop-blur-sm overflow-hidden">
         <div className="flex items-center justify-center py-12">
           <div className="text-center">
-            <CalendarDays className="w-12 h-12 text-zinc-500 mx-auto mb-3" />
-            <p className="text-zinc-300">No slots available</p>
+            <CalendarDays className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
+            <p className="text-muted-foreground">No slots available</p>
           </div>
         </div>
       </Card>
@@ -95,39 +95,39 @@ export const ScheduleGrid = ({
   }
 
   return (
-    <Card className="rounded-2xl border border-zinc-700 bg-zinc-800/30 backdrop-blur-sm overflow-hidden">
+    <Card className="rounded-lg border border-border bg-muted/30 backdrop-blur-sm overflow-hidden">
       <div className="overflow-x-auto">
         <div className="min-w-max">
           {/* Header */}
           <div
-            className="grid gap-2 p-4 pb-3 bg-zinc-800/50"
+            className="grid gap-2 p-4 pb-3 bg-muted/50"
             style={{
               gridTemplateColumns: `80px repeat(${uniqueTimes.length}, minmax(110px, 1fr))`
             }}
           >
-            <div className="text-xs font-semibold text-zinc-400 uppercase">Date</div>
+            <div className="text-xs font-semibold text-muted-foreground uppercase">Date</div>
             {uniqueTimes.map((time) => (
-              <div key={time} className="text-sm font-bold text-zinc-200 text-center">
+              <div key={time} className="text-sm font-semibold text-foreground text-center">
                 {time}
               </div>
             ))}
           </div>
 
           {/* Rows */}
-          <div className="border-t border-zinc-700">
+          <div className="border-t border-border">
             {dates.map((dateKey) => {
               const dateSlots = allSlots[dateKey] || []
               
               return (
                 <div
                   key={dateKey}
-                  className="grid gap-2 p-4 py-3 border-b border-zinc-700/50 last:border-b-0 hover:bg-zinc-700/20 transition-colors"
+                  className="grid gap-2 p-4 py-3 border-b border-border last:border-b-0 hover:bg-muted/20 transition-colors"
                   style={{
                     gridTemplateColumns: `80px repeat(${uniqueTimes.length}, minmax(110px, 1fr))`
                   }}
                 >
                   {/* Date Label */}
-                  <div className="flex items-center text-sm font-bold text-white bg-zinc-700/50 rounded-lg px-2 py-2 justify-center">
+                  <div className="flex items-center text-sm font-semibold text-white bg-muted/50 rounded-lg px-2 py-2 justify-center">
                     {formatDateDisplay(dateKey)}
                   </div>
 
@@ -164,11 +164,11 @@ export const ScheduleGrid = ({
                             key={`${dateKey}-${slotId}`}
                             onClick={() => handleSlotClick(dateKey, time, gameConsole)}
                             className={cn(
-                              'w-full h-full min-h-[40px] flex items-center justify-center rounded-md text-[10px] font-bold uppercase tracking-wide',
+                              'w-full h-full min-h-[40px] flex items-center justify-center rounded-md text-xs font-semibold uppercase tracking-wide',
                               'transition-all duration-200 cursor-pointer',
                               isSelected
                                 ? 'bg-emerald-600 text-white ring-2 ring-emerald-400 shadow-lg'
-                                : 'bg-blue-600 text-white hover:bg-blue-700'
+                                : 'bg-primary text-white hover:bg-primary'
                             )}
                           >
                             <span className="truncate">{gameConsole.name}</span>
@@ -191,10 +191,10 @@ export const ScheduleGrid = ({
                     return (
                       <div
                         key={`${dateKey}-${time}`}
-                        className="flex flex-col gap-1 items-stretch h-full p-1 min-h-[44px] rounded-lg border border-zinc-700 bg-zinc-800/50 backdrop-blur-sm"
+                        className="flex flex-col gap-1 items-stretch h-full p-1 min-h-[44px] rounded-lg border border-border bg-muted/50 backdrop-blur-sm"
                       >
                         {timeSlots.length > 0 ? timeSlots : (
-                          <div className="text-xs text-zinc-500 text-center py-2">-</div>
+                          <div className="text-xs text-muted-foreground text-center py-2">-</div>
                         )}
                       </div>
                     )

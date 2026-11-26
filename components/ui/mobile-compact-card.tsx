@@ -8,7 +8,7 @@ export function MobileCompactCard({ className, ...props }: MobileCompactCardProp
   return (
     <div
       className={cn(
-        "rounded-xl border border-blue-400/15 bg-zinc-900/55 p-3",
+        "rounded-lg border border-border bg-card p-3",
         className
       )}
       {...props}

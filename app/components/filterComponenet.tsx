@@ -63,7 +63,7 @@ const FilterComponent: React.FC<FilterProps> = ({
           initial={{ opacity: 0, scale: 1 }}
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 1 }}
-          className="fixed inset-0 z-50 bg-black/20 backdrop-blur-[1px]"
+          className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm"
           onClick={() => setShowFilter(false)}
         >
           <Card
@@ -72,19 +72,19 @@ const FilterComponent: React.FC<FilterProps> = ({
           >
             <CardHeader className="top-0">
               <button
-                className="absolute right-2 rounded-md p-2 transition-all hover:scale-110 hover:bg-red-50 dark:hover:bg-red-500/20"
+                className="absolute right-2 rounded-md p-2 transition-all hover:scale-110 hover:bg-red-500/20"
                 onClick={() => setShowFilter(false)}
               >
-                <X className="h-5 w-5 text-zinc-700 dark:text-zinc-300" />
+                <X className="h-5 w-5 text-muted-foreground" />
               </button>
 
-              <CardTitle className="text-center text-lg font-semibold text-zinc-900 dark:text-white">
+              <CardTitle className="text-center text-lg font-semibold text-white">
                 Filters
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <h3 className="text-sm font-medium text-zinc-900 dark:text-white">Mode of Payment</h3>
+                <h3 className="text-sm font-medium text-white">Mode of Payment</h3>
                 <div className="flex flex-wrap gap-2 mt-2 ">
                   {["Cash", "PayPal", null].map((option) => (
                     <Badge
@@ -96,8 +96,8 @@ const FilterComponent: React.FC<FilterProps> = ({
                       }
                       className={`cursor-pointer px-3 py-1 text-sm ${
                         selectedFilters.modeOfPayment === option
-                          ? "border border-blue-300 bg-blue-50 text-zinc-900 dark:border-blue-500/40 dark:bg-blue-500/20 dark:text-blue-200"
-                          : "border border-zinc-300 text-zinc-700 dark:border-zinc-500/70 dark:text-zinc-300"
+                          ? "border border-primary/40 bg-primary/20 text-primary"
+                          : "border border-border text-muted-foreground"
                       }`}
                       onClick={() => toggleFilter("modeOfPayment", option)}
                     >
@@ -109,7 +109,7 @@ const FilterComponent: React.FC<FilterProps> = ({
 
               {/* Booking Type */}
               <div>
-                <h3 className="text-sm font-medium text-zinc-900 dark:text-white">Booking Type</h3>
+                <h3 className="text-sm font-medium text-white">Booking Type</h3>
                 <div className="flex flex-wrap gap-2 mt-2">
                   {["Hash", "Direct", null].map((option) => (
                     <Badge
@@ -121,8 +121,8 @@ const FilterComponent: React.FC<FilterProps> = ({
                       }
                       className={`cursor-pointer px-3 py-1 text-sm ${
                         selectedFilters.bookingType === option
-                          ? "border border-blue-300 bg-blue-50 text-zinc-900 dark:border-blue-500/40 dark:bg-blue-500/20 dark:text-blue-200"
-                          : "border border-zinc-300 text-zinc-700 dark:border-zinc-500/70 dark:text-zinc-300"
+                          ? "border border-primary/40 bg-primary/20 text-primary"
+                          : "border border-border text-muted-foreground"
                       }`}
                       onClick={() => toggleFilter("bookingType", option)}
                     >
@@ -134,7 +134,7 @@ const FilterComponent: React.FC<FilterProps> = ({
 
               {/* Settlement Status */}
               <div>
-                <h3 className="text-sm font-medium text-zinc-900 dark:text-white">Settlement Status</h3>
+                <h3 className="text-sm font-medium text-white">Settlement Status</h3>
                 <div className="flex flex-wrap gap-2 mt-2">
                   {["Pending", "Done", null].map((option) => (
                     <Badge
@@ -146,8 +146,8 @@ const FilterComponent: React.FC<FilterProps> = ({
                       }
                       className={`cursor-pointer px-3 py-1 text-sm ${
                         selectedFilters.settlementStatus === option
-                          ? "border border-blue-300 bg-blue-50 text-zinc-900 dark:border-blue-500/40 dark:bg-blue-500/20 dark:text-blue-200"
-                          : "border border-zinc-300 text-zinc-700 dark:border-zinc-500/70 dark:text-zinc-300"
+                          ? "border border-primary/40 bg-primary/20 text-primary"
+                          : "border border-border text-muted-foreground"
                       }`}
                       onClick={() => toggleFilter("settlementStatus", option)}
                     >
@@ -162,7 +162,7 @@ const FilterComponent: React.FC<FilterProps> = ({
                 <Button
                   onClick={clearFilters}
                   variant="outline"
-                  className="mx-0 my-2 px-4 py-2 text-sm text-zinc-900 hover:bg-red-50 sm:mx-2 sm:my-4 dark:text-white dark:hover:bg-red-500/20"
+                  className="mx-0 my-2 px-4 py-2 text-sm sm:mx-2 sm:my-4 text-white hover:bg-red-500/20"
                 >
                   Clear Filters
                 </Button>

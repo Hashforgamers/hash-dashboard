@@ -29,6 +29,8 @@ function harness() {
     '@/app/context/DashboardDataContext': { useDashboardData: () => context },
     '@/hooks/useEventsToken': { useEventsToken: () => ({ token, loading: !token, error: null, refresh() {} }) },
     '@/app/(layout)/dashboard-layout': { DashboardLayout: 'layout' },
+    '@/components/ui/button': { Button: 'button', buttonVariants: () => '' },
+    '@/app/components/page-header': { PageHeader: 'header' },
     '@/lib/event-api': { withEffectiveEventStatus: e => e, listEvents: async () => {
       requests++; if (fail) throw Error('Offline'); return [{ id: '1', title: 'Cup', status: 'draft', starts_at: '2026-10-01', ends_at: '2026-10-02' }];
     } },

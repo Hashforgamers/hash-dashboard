@@ -10,6 +10,8 @@ import { cn } from "@/lib/utils"
 import { contiguousDeskSlots, coveringDeskSlots } from "@/lib/desk-time-range"
 import { DeskConsolePicker } from "./desk-console-picker"
 import { deskSubtotal, rateLabel, resolveSessionRate, useDeskCards } from "./desk-rate-card"
+import { FlexStartPicker, useFlexSettings } from "./booking/flex-start-picker"
+import type { FlexQuote } from "@/lib/flex-booking"
 import { creditAuthHeaders } from "@/lib/credit-auth"
 import { useAccess } from "@/app/context/AccessContext"
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -46,6 +48,7 @@ import { UpiQrBookingDialog } from "./upi-qr-collect"
 import { BOOKING_URL, DASHBOARD_URL } from '@/src/config/env'
 import { ConsoleType } from './types'
 import MealSelector from './mealSelector'
+import { BOOK_CONSOLE_EVENT, takePendingConsoleBooking, type BookConsoleEventDetail } from "@/app/lib/cafe-shortcuts"
 import BookingRecords from "./booking-records"
 import scheduleStyles from "./schedule-workspace.module.css"
 import CreditAccountModal, { type MonthlyCreditAccountSummary } from './credit-account-modal'
@@ -370,12 +373,10 @@ const pendingRequests = new Map<string, Promise<any>>()
 async function fetchWithDedup(url: string): Promise<any> {
   const cached = getCachedData(url)
   if (cached) {
-    console.log(`✅ Cache hit: ${url}`)
     return cached
   }
 
   if (pendingRequests.has(url)) {
-    console.log(`⏳ Deduped request: ${url}`)
     return pendingRequests.get(url)
   }
 
@@ -406,7 +407,6 @@ async function fetchSlotsBatch(vendorId: number, gameIds: number[], dates: strin
   const cacheKey = `batch:${vendorId}:${gameIds.join(',')}:${dates.join(',')}`
   const cached = forceFresh ? null : getCachedData(cacheKey)
   if (!forceFresh && cached) {
-    console.log(`✅ Batch cache hit`)
     return cached
   }
   
@@ -422,7 +422,6 @@ async function fetchSlotsBatch(vendorId: number, gameIds: number[], dates: strin
       retries: 0,
     })
 
-    console.log('✅ Batch fetch successful:', data)
     setCachedData(cacheKey, data)
     return data
   } catch (error) {
@@ -471,7 +470,8 @@ const resolveControllerPricingKey = (rawSlugOrGroup: string | undefined | null):
 
 const DEFAULT_BOOKING_FIELD_CONFIG: BookingFieldConfig = {
   name: { visible: true, required: true },
-  phone: { visible: true, required: true },
+  // Walk-ins (e.g. kids) may have no phone or email: name alone is enough.
+  phone: { visible: true, required: false },
   email: { visible: true, required: false },
 }
 
@@ -507,6 +507,8 @@ export function SlotBookingForm({
   const [timeMode, setTimeMode] = useState("range")
   const [pickerDate, setPickerDate] = useState("")
   const [pickerConsole, setPickerConsole] = useState("")
+  // A booking shortcut or console switch changes the default; let it win over an earlier pick.
+  useEffect(() => { setPickerConsole("") }, [defaultConsoleId])
   const slotDates = Object.keys(allSlots).sort()
   const activePickerDate = selectedSlots[0]?.date || pickerDate || slotDates[0] || ""
   const activePickerConsole = String(selectedSlots[0]?.console_id || pickerConsole || defaultConsoleId || availableConsoles[0]?.id || "")
@@ -635,7 +637,7 @@ export function SlotBookingForm({
       name: { visible: true, required: true },
       phone: {
         visible: Boolean(candidate?.phone?.visible ?? true),
-        required: Boolean(candidate?.phone?.required ?? true),
+        required: Boolean(candidate?.phone?.required ?? false),
       },
       email: {
         visible: Boolean(candidate?.email?.visible ?? true),
@@ -653,16 +655,10 @@ export function SlotBookingForm({
 
     if (!next.phone.visible && !next.email.visible) {
       next.phone.visible = true
-      next.phone.required = true
     }
 
     if (!next.phone.visible) next.phone.required = false
     if (!next.email.visible) next.email.required = false
-
-    if (!next.phone.required && !next.email.required) {
-      if (next.phone.visible) next.phone.required = true
-      else next.email.required = true
-    }
 
     return next
   }
@@ -835,10 +831,8 @@ export function SlotBookingForm({
 
 
   const calculateAutoWaiveOff = (slots: SelectedSlot[]) => {
-    console.log('💰 Calculating auto waive-off for slots:', slots)
     
     const nowTs = Date.now()
-    console.log('🕐 Current IST time:', new Date().toLocaleTimeString('en-IN', { timeZone: IST_TIMEZONE }))
     
     let totalAutoWaiveOff = 0
     
@@ -876,16 +870,13 @@ export function SlotBookingForm({
         totalAutoWaiveOff += waveOffAmount
       }
       else if (nowTs < slotDateTime.getTime()) {
-        console.log(`⏰ Booking made in advance for ${slot.start_time} - no wave-off needed`)
       }
       else if (nowTs >= slotEndTime.getTime()) {
-        console.log(`⚠️ Slot ${slot.start_time} already ended - full wave-off applied`)
         totalAutoWaiveOff += slot.console_price
       }
     })
     
     const finalWaveOff = Math.round(totalAutoWaiveOff)
-    console.log('💰 Total auto waive-off calculated:', finalWaveOff)
     return finalWaveOff
   }
 
@@ -1107,7 +1098,6 @@ useEffect(() => {
       const data = await getBookingSettings<any>(`${DASHBOARD_URL}/api/vendor/${vendorId}/active-pricing`, settingsVersion)
       if (cancelled) return
       if (data.success) {
-        console.log('🏷️ Active pricing loaded:', data.pricing)
         setActivePricing(data.pricing)
       }
     } catch (err) {
@@ -1276,7 +1266,6 @@ useEffect(() => {
   const handleSuggestionClick = (user: UserSuggestion) => {
     cancelSuggestionFetch()
     setSuggestionError('')
-    console.log('👤 User suggestion clicked:', user)
     if (blurTimeoutRef.current) {
       clearTimeout(blurTimeoutRef.current)
       blurTimeoutRef.current = null
@@ -1359,7 +1348,6 @@ useEffect(() => {
   }, [isOpen, paymentType, matchedPrimaryUser?.id])
 
   const handleMealSelectorConfirm = (meals: SelectedMeal[]) => {
-    console.log('🍽️ Meals confirmed:', meals)
     setSelectedMeals(meals)
     setIsMealSelectorOpen(false)
   }
@@ -1378,7 +1366,6 @@ const getEffectivePrice = (slot: SelectedSlot): number => {
 
 
   const handleMealSelectorClose = () => {
-    console.log('🍽️ Meal selector closed')
     setIsMealSelectorOpen(false)
   }
 
@@ -1415,6 +1402,13 @@ const getEffectivePrice = (slot: SelectedSlot): number => {
   const [deskConsoleIds, setDeskConsoleIds] = useState<number[] | null>(null)
   const [deskChoice, setDeskChoice] = useState("")
   const [pricingGame, setPricingGame] = useState("")
+  // Custom start ("any minute"): only offered once the cafe turns it on in Settings > Session Timing.
+  const flexSettings = useFlexSettings(isOpen ? settingsVendorId : null)
+  const [flexQuote, setFlexQuote] = useState<FlexQuote | null>(null)
+  const [flexConsoleIds, setFlexConsoleIds] = useState<number[] | null>(null)
+  const flexMode = timeMode === "flex" && flexSettings.flex_enabled
+  const flexActive = flexMode && !!flexQuote && !!flexConsoleIds
+  useEffect(() => { if (!flexMode) { setFlexQuote(null); setFlexConsoleIds(null) } }, [flexMode])
   const deviceCards = deskCards.filter(card => card.game_id === Number(activePickerConsole) && card.is_active !== false && !card.archived && (card.pricing_mode !== "slot" || !!card.definition.game_variant?.trim()))
   useEffect(() => { setDeskChoice(""); setPricingGame("") }, [activePickerConsole, settingsVendorId, isOpen])
   const variantPricingRequired = deskCards.some(card => card.game_id === Number(activePickerConsole) && card.pricing_mode === "variants") || (!!pricingGame && deviceCards.some(card => card.definition.game_variant === pricingGame))
@@ -1422,7 +1416,7 @@ const getEffectivePrice = (slot: SelectedSlot): number => {
     const start = new Date(slot.date + "T" + slot.start_time + "+05:30").getTime()
     return (getSlotEndTimestampIST(slot.date, slot.start_time, slot.end_time) - start) / 60000
   }
-  const sessionMinutes = selectedSlots.reduce((n, slot) => n + slotMinutes(slot), 0)
+  const sessionMinutes = flexMode && flexQuote ? flexQuote.window.duration_minutes : selectedSlots.reduce((n, slot) => n + slotMinutes(slot), 0)
   const { eligible: matchingDeskCards, card: deskCard } = resolveSessionRate(deviceCards, sessionMinutes, isSquadMode ? squadPlayerCount : 1, deskChoice, pricingGame)
   const effectiveDeskChoice = deskCard?.profile || ""
   const controllersIncluded = !!deskCard?.definition.controllers_included
@@ -1613,8 +1607,14 @@ const getEffectivePrice = (slot: SelectedSlot): number => {
   const mealsTotal = selectedMeals.reduce((sum, meal) => sum + meal.total, 0)
   const consoleUnitTotal = selectedSlots.reduce((sum, slot) => sum + getEffectivePrice(slot), 0)
   const squadConsoleMultiplier = isSquadMode && squadUsesDiscountEngine ? squadPlayerCount : 1
-  const deskPrice = deskCard ? deskSubtotal(deskCard, sessionMinutes, isSquadMode ? squadPlayerCount : 1) : null
-  const consoleTotal = deskPrice ?? (isSquadMode ? Number((consoleUnitTotal * squadConsoleMultiplier).toFixed(2)) : consoleUnitTotal)
+  const deskPrice = deskCard
+    ? (flexMode
+      ? (flexActive && flexQuote?.price.basis === "rate_card" ? flexQuote.price.base_amount : null)
+      : deskSubtotal(deskCard, sessionMinutes, isSquadMode ? squadPlayerCount : 1))
+    : null
+  const consoleTotal = deskPrice ?? (flexActive && flexQuote
+    ? flexQuote.price.base_amount
+    : (isSquadMode ? Number((consoleUnitTotal * squadConsoleMultiplier).toFixed(2)) : consoleUnitTotal))
   const squadDiscountPercent = (() => {
     if (deskCard || !isSquadMode || !squadUsesDiscountEngine) return 0
     const keys = Object.keys(squadPolicyForConsole).map((k) => Number(k)).filter((v) => !Number.isNaN(v)).sort((a, b) => a - b)
@@ -1698,14 +1698,14 @@ const getEffectivePrice = (slot: SelectedSlot): number => {
       {paymentType === "UPI QR" && <p className="mt-1 text-xs text-muted-foreground">After saving, a QR appears. The booking is marked paid once the customer pays.</p>}
       {paymentType === 'Monthly Credit' && (
         <div className="mt-2 space-y-2">
-          <p className="rounded-md border border-amber-200 bg-amber-50 px-2.5 py-1.5 text-xs text-amber-700 dark:border-amber-700 dark:bg-amber-900/25 dark:text-amber-300">
+          <p className="rounded-md border px-2.5 py-1.5 text-xs border-amber-700 bg-amber-900/25 text-amber-300">
             Monthly credit works only for users with an active Gamers Credit account.
           </p>
-          <div className="rounded-xl border border-zinc-300 bg-zinc-50/60 p-3 dark:border-zinc-700 dark:bg-zinc-900/60">
+          <div className="rounded-lg border p-3 border-border bg-card">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div className="min-w-0">
-                <p className="text-sm font-semibold text-zinc-800 dark:text-white">Credit Account Status</p>
-                <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                <p className="text-sm font-semibold text-white">Credit Account Status</p>
+                <p className="text-xs text-muted-foreground">
                   {matchedPrimaryUser?.id
                     ? `Matched customer: ${matchedPrimaryUser.name}`
                     : 'No known customer matched yet. Create credit on the fly if needed.'}
@@ -1724,24 +1724,24 @@ const getEffectivePrice = (slot: SelectedSlot): number => {
               )}
             </div>
             {creditAccountLoading ? (
-              <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">Loading credit account...</p>
+              <p className="mt-2 text-xs text-muted-foreground">Loading credit account…</p>
             ) : creditAccount?.is_active ? (
               <div className="mt-2 grid grid-cols-1 gap-2 min-[480px]:grid-cols-2 xl:grid-cols-3">
                 <div className="min-w-0 rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-3 py-2">
-                  <p className="text-xs uppercase tracking-wide text-emerald-700 dark:text-emerald-300">Limit</p>
-                  <p className="break-words text-base font-semibold text-emerald-900 dark:text-emerald-100">₹{Number(creditAccount.credit_limit || 0).toFixed(2)}</p>
+                  <p className="text-xs uppercase tracking-wide text-emerald-300">Limit</p>
+                  <p className="break-words text-base font-semibold text-emerald-100">₹{Number(creditAccount.credit_limit || 0).toFixed(2)}</p>
                 </div>
                 <div className="min-w-0 rounded-lg border border-amber-500/20 bg-amber-500/10 px-3 py-2">
-                  <p className="text-xs uppercase tracking-wide text-amber-700 dark:text-amber-300">Outstanding</p>
-                  <p className="break-words text-base font-semibold text-amber-900 dark:text-amber-100">₹{Number(creditAccount.outstanding_amount || 0).toFixed(2)}</p>
+                  <p className="text-xs uppercase tracking-wide text-amber-300">Outstanding</p>
+                  <p className="break-words text-base font-semibold text-amber-100">₹{Number(creditAccount.outstanding_amount || 0).toFixed(2)}</p>
                 </div>
-                <div className="min-w-0 rounded-lg border border-blue-500/20 bg-blue-500/10 px-3 py-2 min-[480px]:col-span-2 xl:col-span-1">
-                  <p className="text-xs uppercase tracking-wide text-blue-700 dark:text-blue-300">Available</p>
-                  <p className="break-words text-base font-semibold text-blue-900 dark:text-blue-100">₹{availableCreditAmount.toFixed(2)}</p>
+                <div className="min-w-0 rounded-lg border border-border bg-primary/10 px-3 py-2 min-[480px]:col-span-2 xl:col-span-1">
+                  <p className="text-xs uppercase tracking-wide text-primary">Available</p>
+                  <p className="break-words text-base font-semibold text-foreground">₹{availableCreditAmount.toFixed(2)}</p>
                 </div>
               </div>
             ) : (
-              <div className="mt-2 rounded-lg border border-red-500/20 bg-red-500/10 px-3 py-2 text-xs text-red-600 dark:text-red-300">
+              <div className="mt-2 rounded-lg border border-red-500/20 bg-red-500/10 px-3 py-2 text-xs text-red-300">
                 {creditAccountError || 'No credit account configured for this customer.'}
               </div>
             )}
@@ -1758,9 +1758,9 @@ const getEffectivePrice = (slot: SelectedSlot): number => {
             exit={{ opacity: 0, height: 0 }}
             className="mt-4 space-y-2"
           >
-            <div className="rounded-lg border border-zinc-300 bg-white/70 p-3 dark:border-zinc-700 dark:bg-zinc-900/60">
+            <div className="rounded-lg border p-3 border-border bg-card">
               <div className="flex items-center justify-between gap-2">
-                <p className="text-xs font-semibold uppercase tracking-wide text-zinc-600 dark:text-zinc-300">
+                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                   Valid Passes
                 </p>
                 {isLoadingPassOptions ? (
@@ -1771,7 +1771,7 @@ const getEffectivePrice = (slot: SelectedSlot): number => {
                 <select
                   value={passUid}
                   onChange={(e) => handlePassSelectionChange(e.target.value)}
-                  className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800"
+                  className="w-full rounded-md border px-3 py-2 text-sm border-border bg-muted"
                   disabled={isLoadingPassOptions || !passOptions.length}
                 >
                   <option value="">{passOptions.length ? "Select pass" : "No valid pass found"}</option>
@@ -1791,25 +1791,25 @@ const getEffectivePrice = (slot: SelectedSlot): number => {
                 className={cn(
                   "rounded-lg border p-2",
                   validatedPass.can_cover_hours
-                    ? "bg-emerald-50 border-emerald-200 dark:bg-emerald-900/20 dark:border-emerald-700"
-                    : "bg-amber-50 border-amber-200 dark:bg-amber-900/20 dark:border-amber-700"
+                    ? "bg-emerald-900/20 border-emerald-700"
+                    : "bg-amber-900/20 border-amber-700"
                 )}
               >
                 <div className="flex items-start gap-2">
                   <CheckCircle className="w-4 h-4 text-emerald-600 flex-shrink-0 mt-0.5" />
                   <div className="flex-1 text-xs space-y-1">
-                    <p className="font-semibold text-emerald-800 dark:text-emerald-200">
+                    <p className="font-semibold text-emerald-200">
                       {validatedPass.pass_name}
                     </p>
-                    <div className="flex justify-between text-emerald-700 dark:text-emerald-300">
+                    <div className="flex justify-between text-emerald-300">
                       <span>Hours Available</span>
-                      <span className="font-bold">
+                      <span className="font-semibold">
                         {validatedPass.remaining_hours}/{validatedPass.total_hours}
                       </span>
                     </div>
-                    <div className="flex justify-between text-emerald-600 dark:text-emerald-400">
+                    <div className="flex justify-between text-emerald-400">
                       <span>Hours Needed</span>
-                      <span className="font-bold">{Number(validatedPass?.required_hours || 0).toFixed(2)} hrs</span>
+                      <span className="font-semibold">{Number(validatedPass?.required_hours || 0).toFixed(2)} hrs</span>
                     </div>
                   </div>
                 </div>
@@ -1817,7 +1817,7 @@ const getEffectivePrice = (slot: SelectedSlot): number => {
             )}
 
             {validatedPass?.can_cover_hours && (
-              <div className="rounded-lg border border-zinc-300 bg-white/70 p-3 dark:border-zinc-700 dark:bg-zinc-900/60">
+              <div className="rounded-lg border p-3 border-border bg-card">
                 <div className="flex flex-wrap items-center gap-2">
                   <Button
                     type="button"
@@ -1838,7 +1838,7 @@ const getEffectivePrice = (slot: SelectedSlot): number => {
                     value={passOtpCode}
                     onChange={(e) => setPassOtpCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
                     placeholder="6 digit OTP"
-                    className="h-8 w-28 rounded-md border border-zinc-300 bg-white px-2.5 text-xs dark:border-zinc-600 dark:bg-zinc-800"
+                    className="h-8 w-28 rounded-md border px-2.5 text-xs border-border bg-muted"
                   />
                   <Button
                     type="button"
@@ -1858,10 +1858,10 @@ const getEffectivePrice = (slot: SelectedSlot): number => {
                   </Button>
                 </div>
                 {passOtpMessage ? (
-                  <p className="mt-2 text-xs text-emerald-600 dark:text-emerald-300">{passOtpMessage}</p>
+                  <p className="mt-2 text-xs text-emerald-300">{passOtpMessage}</p>
                 ) : null}
                 {passVerificationToken ? (
-                  <p className="mt-1 text-xs font-semibold text-emerald-700 dark:text-emerald-300">
+                  <p className="mt-1 text-xs font-semibold text-emerald-300">
                     OTP verified. You can confirm booking now.
                   </p>
                 ) : null}
@@ -1906,12 +1906,9 @@ const getEffectivePrice = (slot: SelectedSlot): number => {
   })
 
   const validateForm = () => {
-    console.log('✅ Validating form...')
     const newErrors: Record<string, string> = {}
 
     if (!name.trim()) newErrors.name = 'Name is required'
-    const phoneVisible = bookingFieldConfig.phone.visible
-    const emailVisible = bookingFieldConfig.email.visible
     const phoneRequired = bookingFieldConfig.phone.required
     const emailRequired = bookingFieldConfig.email.required
     const hasPhone = Boolean(phone.trim())
@@ -1920,18 +1917,6 @@ const getEffectivePrice = (slot: SelectedSlot): number => {
     if (phoneRequired && !hasPhone) newErrors.phone = 'Phone number is required'
     if (emailRequired && !hasEmail) newErrors.email = 'Email is required'
     if (hasEmail && !/\S+@\S+\.\S+/.test(email)) newErrors.email = 'Email is invalid'
-    if (!hasPhone && !hasEmail) {
-      if (phoneVisible && emailVisible) {
-        newErrors.phone = newErrors.phone || 'Enter phone or email'
-        newErrors.email = newErrors.email || 'Enter phone or email'
-      } else if (phoneVisible) {
-        newErrors.phone = newErrors.phone || 'Phone number is required'
-      } else if (emailVisible) {
-        newErrors.email = newErrors.email || 'Email is required'
-      } else {
-        newErrors.phone = 'At least one contact field is required'
-      }
-    }
     if (selectedSlots.length === 0) newErrors.slots = 'Please select at least one time slot'
     if (waiveOffAmount > gamingNet) {
       setSubmitError("Additional Discount exceeds the gaming charges.")
@@ -1993,7 +1978,6 @@ const getEffectivePrice = (slot: SelectedSlot): number => {
     }
 
     setErrors(newErrors)
-    console.log('✅ Form validation result:', { isValid: Object.keys(newErrors).length === 0, errors: newErrors })
     return Object.keys(newErrors).length === 0
   }
 
@@ -2001,23 +1985,19 @@ const getEffectivePrice = (slot: SelectedSlot): number => {
     e.preventDefault()
     if (submittingRef.current || submissionUncertain) return
     setSubmitError("")
-    console.log('🚀 Form submission started')
     
     if (!validateForm()) {
-      console.log('❌ Form validation failed')
       return
     }
 
     const vendorId = getVendorIdFromToken()
     if (!vendorId) {
-      console.log('❌ No vendor ID, cannot submit')
       setSubmitError('Your session is unavailable. Sign in again before booking.')
       return
     }
 
     submittingRef.current = true
     setIsSubmitting(true)
-    console.log('📝 Preparing booking data...')
 
     try {
 
@@ -2045,7 +2025,14 @@ const getEffectivePrice = (slot: SelectedSlot): number => {
         deskPricingMode: variantPricingRequired ? "variants" : "slot",
         pricingGame,
         deskProfile: deskCard?.profile,
-        deskConsoleIds: deskCard ? deskConsoleIds : undefined,
+        deskConsoleIds: deskCard ? (flexMode ? flexConsoleIds : deskConsoleIds) : undefined,
+        ...(flexActive && flexQuote ? {
+          timingMode: 'flex',
+          gameId: flexQuote.game_id,
+          startAt: flexQuote.window.start_at,
+          durationMinutes: flexQuote.window.duration_minutes,
+          flexConsoleIds,
+        } : {}),
         deskRevision: deskCard?.revision,
         deskSubtotal: deskPrice ?? undefined,
         bookingMode: 'regular',
@@ -2065,7 +2052,6 @@ const getEffectivePrice = (slot: SelectedSlot): number => {
         }
       }
 
-      console.log('📤 Submitting booking data:', bookingData)
 
       const bookingHeaders: Record<string, string> = {
         'Content-Type': 'application/json',
@@ -2086,12 +2072,9 @@ const getEffectivePrice = (slot: SelectedSlot): number => {
         }
       )
 
-console.log('📥 API response status: success')
 
-console.log('📥 API response data:', result)
 
 if (result?.success === true || result?.success === 'true' || result?.booking || result?.id) {
-  console.log('✅ Booking created successfully!')
   const createdIds = Array.isArray(result?.booking_ids) ? result.booking_ids.map(Number).filter((id: number) => id > 0) : []
   if (paymentType === 'UPI QR' && createdIds.length > 0) {
     // Keep the form mounted behind the QR; it closes once paid or left for later.
@@ -2104,7 +2087,6 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
   onBookingComplete(result)
 
   if (typeof window !== 'undefined') {
-    console.log('📡 Dispatching refresh-dashboard event')
     window.dispatchEvent(new CustomEvent('refresh-dashboard'))
   }
 
@@ -2113,7 +2095,6 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
   try { localStorage.removeItem(`userList:${vendorId}`) } catch { /* Booking is already saved. */ }
 } else {
   // Only show error if response was not ok
-  console.log('❌ Unexpected response format:', result)
   setSubmissionUncertain(true)
   setSubmitError('The server returned an unrecognized confirmation. Close this form and check Booking Records before creating another booking.')
 }
@@ -2130,7 +2111,6 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
     } finally {
       submittingRef.current = false
       setIsSubmitting(false)
-      console.log('🏁 Form submission completed')
     }
   }
 
@@ -2143,21 +2123,22 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
       <motion.div
         initial={false}
         style={{ zIndex: overlayZIndex }}
-        className="fixed inset-0 flex items-center justify-center bg-black/45 p-3 sm:p-5"
+        className="fixed inset-0 flex items-center justify-center p-3 bg-black/60 backdrop-blur-sm"
       >
         <motion.div
           initial={false}
           role="dialog"
+          data-booking-form
           aria-modal="true"
           aria-label="New Gaming Session"
-          className="slot-booking-modal flex max-h-[92vh] w-full max-w-[960px] flex-col overflow-hidden rounded-xl border shadow-2xl"
+          className="slot-booking-modal flex max-h-[92vh] w-full max-w-[960px] flex-col overflow-hidden rounded-lg border shadow-xl"
         >
           <div className="slot-booking-modal-header relative flex items-center justify-between border-b px-4 py-3">
             <div className="min-w-0">
               <h2 className="slot-booking-title">New Gaming Session</h2>
               {selectedSlots.length > 0 && <p className="slot-booking-context">
                 {selectedSlots[0].console_name?.trim().toUpperCase() === "PC" ? "PC Gaming" : selectedSlots[0].console_name}
-                {" · "}{selectedSlots.every((slot, i) => !i || selectedSlots[i-1].end_time === slot.start_time)
+                {" · "}{flexActive && flexQuote ? <strong>{flexQuote.window.label}</strong> : selectedSlots.every((slot, i) => !i || selectedSlots[i-1].end_time === slot.start_time)
                   ? <strong>{showClock(selectedSlots[0].start_time)}–{showClock(selectedSlots[selectedSlots.length-1].end_time)}</strong>
                   : selectedSlots.length + " selected slots"}
                 {" · "}{new Date(selectedSlots[0].date + "T12:00:00").toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
@@ -2185,17 +2166,17 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
               </button>
             </div>
             {isFieldConfigOpen && (
-              <div className="slot-booking-popover absolute right-4 top-[calc(100%-2px)] z-30 w-[310px] rounded-xl border p-3 shadow-xl">
-                <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Player Details</p>
-                <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+              <div className="slot-booking-popover absolute right-4 top-[calc(100%-2px)] z-30 w-[310px] rounded-lg border p-3 shadow-xl">
+                <p className="text-sm font-semibold text-foreground">Player Details</p>
+                <p className="mt-1 text-xs text-muted-foreground">
                   Player Name and one contact field are required.
                 </p>
 
                 <div className="mt-3 space-y-2 text-xs">
-                  <div className="rounded-lg border border-zinc-200 p-2 dark:border-zinc-700">
-                    <p className="font-semibold text-zinc-700 dark:text-zinc-200">Mobile Number</p>
+                  <div className="rounded-lg border p-2 border-border">
+                    <p className="font-semibold text-foreground">Mobile Number</p>
                     <div className="mt-2 flex items-center justify-between">
-                      <label className="text-zinc-600 dark:text-zinc-300">Show field</label>
+                      <label className="text-muted-foreground">Show field</label>
                       <input
                         type="checkbox"
                         checked={bookingFieldDraft.phone.visible}
@@ -2203,7 +2184,7 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                       />
                     </div>
                     <div className="mt-2 flex items-center justify-between">
-                      <label className="text-zinc-600 dark:text-zinc-300">Required</label>
+                      <label className="text-muted-foreground">Required</label>
                       <input
                         type="checkbox"
                         checked={bookingFieldDraft.phone.required}
@@ -2212,13 +2193,13 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                     </div>
                   </div>
 
-                  <div className="rounded-lg border border-zinc-200 p-2 dark:border-zinc-700">
-                    <p className="font-semibold text-zinc-700 dark:text-zinc-200">Email</p>
-                    <p className="mt-2 text-[11px] text-zinc-500 dark:text-zinc-400">
+                  <div className="rounded-lg border p-2 border-border">
+                    <p className="font-semibold text-foreground">Email</p>
+                    <p className="mt-2 text-xs text-muted-foreground">
                       Optional email stays hidden in form for faster desk booking.
                     </p>
                     <div className="mt-2 flex items-center justify-between">
-                      <label className="text-zinc-600 dark:text-zinc-300">Required</label>
+                      <label className="text-muted-foreground">Required</label>
                       <input
                         type="checkbox"
                         checked={bookingFieldDraft.email.required}
@@ -2235,7 +2216,7 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                 <div className="mt-3 flex justify-end gap-2">
                   <button
                     type="button"
-                    className="rounded-lg border border-zinc-300 px-2.5 py-1.5 text-xs text-zinc-600 dark:border-zinc-700 dark:text-zinc-300"
+                    className="rounded-lg border px-2.5 py-1.5 text-xs border-border text-muted-foreground"
                     onClick={() => {
                       setBookingFieldDraft(bookingFieldConfig)
                       setIsFieldConfigOpen(false)
@@ -2249,7 +2230,7 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                     onClick={saveVendorFieldConfig}
                     disabled={isFieldConfigSaving}
                   >
-                    {isFieldConfigSaving ? "Saving..." : "Save"}
+                    {isFieldConfigSaving ? "Saving…" : "Save"}
                   </button>
                 </div>
               </div>
@@ -2272,19 +2253,20 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                         <option value="range">Available times</option>
                         <option value="manual">Enter times manually</option>
                         <option value="slots">Individual slots</option>
+                        {flexSettings.flex_enabled && <option value="flex">Custom start (any minute)</option>}
                       </select>}
                     </div>
                     <div id="booking-slot-picker">
                         {<div className="mb-2 grid grid-cols-2 gap-2">
                           <label className="text-xs">Date
                             <select disabled={!onReplaceSlots && selectedSlots.length > 0} title="Changing date clears selected times" value={activePickerDate} onChange={(event) => { setPickerConsole(activePickerConsole); setPickerDate(event.target.value); onReplaceSlots?.([]) }}
-                              className="mt-1 h-9 w-full rounded-md border border-zinc-500/30 bg-background px-2 text-sm">
+                              className="mt-1 h-9 w-full rounded-md border border-border bg-background px-2 text-sm">
                               {slotDates.map((date) => <option key={date} value={date}>{date}</option>)}
                             </select>
                           </label>
                           <label className="text-xs">Console
                             <select disabled={selectedSlots.length > 0} title="One booking uses one console type" value={activePickerConsole} onChange={(event) => setPickerConsole(event.target.value)}
-                              className="mt-1 h-9 w-full rounded-md border border-zinc-500/30 bg-background px-2 text-sm">
+                              className="mt-1 h-9 w-full rounded-md border border-border bg-background px-2 text-sm">
                               {availableConsoles.map((item) => <option key={item.id} value={String(item.id)}>{item.name}</option>)}
                             </select>
                           </label>
@@ -2316,6 +2298,31 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                           </div>
                           {typedStart && typedEnd && !coveringRange.length && <p role="status">No continuous availability for those times.</p>}
                         </div>}
+                        {onReplaceSlots && flexMode && <div className="mb-2">
+                          <FlexStartPicker
+                            vendor={settingsVendorId}
+                            gameId={Number(activePickerConsole)}
+                            date={activePickerDate}
+                            players={isSquadMode ? squadPlayerCount : 1}
+                            squad={isSquadMode && squadSupported}
+                            settings={flexSettings}
+                            deskProfile={deskCard?.profile}
+                            deskRevision={deskCard?.revision}
+                            pricingGame={pricingGame}
+                            disabled={isSubmitting}
+                            onChange={(quote, ids) => {
+                              setFlexQuote(quote); setFlexConsoleIds(ids)
+                              if (quote) onReplaceSlots(quote.blocked_slots.map(slot => ({
+                                slot_id: slot.slot_id, date: slot.date, start_time: `${slot.start_time}:00`,
+                                end_time: `${slot.end_time}:00`, console_id: Number(activePickerConsole),
+                                console_name: pickerConsoleItem?.name || pickerConsoleItem?.type || "",
+                                console_price: pickerConsoleItem?.price ?? 0,
+                                available_count: Number(slot.available_slot),
+                              })))
+                            }}
+                          />
+                          {paymentType === 'Pass' && <p role="alert" className="mt-1 text-xs text-amber-600 dark:text-amber-300">Pass customers use slot times. Choose “Available times” for a pass.</p>}
+                        </div>}
                         {(!onReplaceSlots || timeMode === "slots") && (
                         <div className="mt-2 flex max-h-40 flex-wrap gap-1.5 overflow-y-auto">
                           {pickerSlots.map((slot: any) => {
@@ -2332,11 +2339,11 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                                 available_count: Number(slot.available_slot),
                               })}
                               className={cn("rounded-md border px-2 py-1.5 text-xs tabular-nums transition-colors",
-                                selected ? "border-blue-400 bg-blue-500/15 text-blue-600 dark:text-blue-200" : "border-zinc-500/30 hover:bg-zinc-500/10")}>
+                                selected ? "border-primary bg-primary/15 text-primary" : "border-border hover:bg-muted/10")}>
                               {showClock(slot.start_time)}–{showClock(slot.end_time)}
                             </button>
                           })}
-                          {pickerSlots.length === 0 && <p className="py-2 text-xs text-zinc-500">No available slots.</p>}
+                          {pickerSlots.length === 0 && <p className="py-2 text-xs text-muted-foreground">No available slots.</p>}
                         </div>)}
                     </div>
                     {deskRateError && <p role="status" className="text-xs">{deskRateError} Reopen this booking to retry.</p>}
@@ -2355,11 +2362,11 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                       {deskCard && <span className="text-emerald-500">₹{deskPrice}</span>}
                       {!matchingDeskCards.length && <span role="alert" className="text-amber-500">No rate covers this duration and player count.</span>}
                     </div>}
-                    {deskCard && selectedSlots.length > 0 && <DeskConsolePicker key={`${activePickerConsole}-${deskCard.profile}`} vendor={settingsVendorId} game={Number(activePickerConsole)} profile={deskCard.profile} date={normalizeBookedDate(selectedSlots[0].date)} slotIds={selectedSlots.map(slot=>slot.slot_id)} quantity={isSquadMode && squadConsoleGroup === "pc" ? squadPlayerCount : 1} onChange={setDeskConsoleIds} />}
+                    {deskCard && selectedSlots.length > 0 && !flexMode && <DeskConsolePicker key={`${activePickerConsole}-${deskCard.profile}`} vendor={settingsVendorId} game={Number(activePickerConsole)} profile={deskCard.profile} date={normalizeBookedDate(selectedSlots[0].date)} slotIds={selectedSlots.map(slot=>slot.slot_id)} quantity={isSquadMode && squadConsoleGroup === "pc" ? squadPlayerCount : 1} onChange={setDeskConsoleIds} />}
                     {(timeMode === "slots" || !onReplaceSlots) && <div className="slot-booking-slot-list">
                       {selectedSlots.map((slot) => (
                         <div key={`${slot.date}-${slot.console_id}-${slot.slot_id}`} className="slot-booking-modal-soft flex items-center justify-between gap-3 rounded-md px-2.5 py-2 text-xs">
-                          <span className="text-zinc-700 dark:text-zinc-300">
+                          <span className="text-muted-foreground">
                             <strong>{new Date(slot.date).toLocaleDateString('en-GB')}</strong> • {showClock(slot.start_time)}–{showClock(slot.end_time)} • {slot.console_name}
                           </span>
                           <div className="flex items-center gap-2">
@@ -2374,7 +2381,7 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                                 return (
                                   <>
                                     {isOffer && (
-                                      <span className="text-xs text-zinc-400 line-through">
+                                      <span className="text-xs text-muted-foreground line-through">
                                         ₹{slot.console_price}
                                       </span>
                                     )}
@@ -2423,7 +2430,7 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                           </p>
                         )}
                         {isSquadMode && (
-                          <p className="text-xs text-zinc-500 dark:text-zinc-400">Primary contact for squad booking</p>
+                          <p className="text-xs text-muted-foreground">Primary contact for squad booking</p>
                         )}
                       </div>
                     </div>
@@ -2446,41 +2453,41 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                           autoComplete="off"
                           placeholder={isSquadMode ? "Captain Name" : "Player Name"}
                           className={cn(
-                            "w-full pl-10 pr-4 py-3 bg-white dark:bg-zinc-800 border rounded-lg transition-all duration-200",
+                            "w-full pl-10 pr-4 py-3 bg-muted border rounded-lg transition-all duration-200",
                             errors.name
-                              ? "border-red-500 focus:border-red-500"
+                              ? "border-red-500 focus:border-ring"
                               : focusedInput === "name"
-                              ? "border-emerald-500 focus:border-emerald-500"
-                              : "border-zinc-300 dark:border-zinc-600 focus:border-emerald-500",
-                            "focus:outline-none focus:ring-1 focus:ring-emerald-500/20"
+                              ? "border-emerald-500 focus:border-ring"
+                              : "border-border focus:border-ring",
+                            "focus:outline-none focus:ring-1 focus:ring-ring/40"
                           )}
                         />
-                        <User className="w-4 h-4 text-zinc-400 absolute left-3 top-3.5" />
+                        <User className="w-4 h-4 text-muted-foreground absolute left-3 top-3.5" />
                         <AnimatePresence>
                           {focusedInput === "name" && (nameSuggestions.length > 0 || isSuggestionLoading.name) && (
                             <motion.ul
                               initial={{ opacity: 0, y: -5 }}
                               animate={{ opacity: 1, y: 0 }}
                               exit={{ opacity: 0, y: -5 }}
-                              className="absolute z-20 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg shadow-lg w-full mt-1 max-h-40 overflow-y-auto"
+                              className="absolute z-20 bg-muted border border-border rounded-lg shadow-lg w-full mt-1 max-h-40 overflow-y-auto"
                             >
                               {isSuggestionLoading.name && nameSuggestions.length === 0 && (
-                                <li className="px-3 py-2 text-sm text-zinc-500">Searching customers…</li>
+                                <li className="px-3 py-2 text-sm text-muted-foreground">Searching customers…</li>
                               )}
                               {nameSuggestions.slice(0, 5).map((user, idx) => (
                                 <motion.li
                                   key={idx}
                                   whileHover={{ backgroundColor: "rgba(16, 185, 129, 0.1)" }}
-                                  className="px-3 py-2 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 cursor-pointer border-b border-zinc-100 dark:border-zinc-700 last:border-b-0"
+                                  className="px-3 py-2 hover:bg-emerald-900/30 cursor-pointer border-b border-border last:border-b-0"
                                   onMouseDown={() => handleSuggestionClick(user)}
                                 >
                                   <div className="flex items-center gap-2">
-                                    <div className="p-1 bg-emerald-100 dark:bg-emerald-900/30 rounded-full">
+                                    <div className="p-1 bg-emerald-900/30 rounded-full">
                                       <User className="w-3 h-3 text-emerald-600" />
                                     </div>
                                     <div>
-                                      <p className="font-medium text-zinc-800 dark:text-white text-sm">{user.name}</p>
-                                      <p className="text-zinc-600 dark:text-zinc-400 text-xs">{user.phone || user.email}</p>
+                                      <p className="font-medium text-white text-sm">{user.name}</p>
+                                      <p className="text-muted-foreground text-xs">{user.phone || user.email}</p>
                                     </div>
                                   </div>
                                 </motion.li>
@@ -2502,41 +2509,41 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                             autoComplete="off"
                             placeholder={isSquadMode ? "Captain Mobile Number" : "Mobile Number"}
                             className={cn(
-                              "w-full pl-10 pr-4 py-3 bg-white dark:bg-zinc-800 border rounded-lg transition-all duration-200",
+                              "w-full pl-10 pr-4 py-3 bg-muted border rounded-lg transition-all duration-200",
                               errors.phone
-                                ? "border-red-500 focus:border-red-500"
+                                ? "border-red-500 focus:border-ring"
                                 : focusedInput === "phone"
-                                ? "border-emerald-500 focus:border-emerald-500"
-                                : "border-zinc-300 dark:border-zinc-600 focus:border-emerald-500",
-                              "focus:outline-none focus:ring-1 focus:ring-emerald-500/20"
+                                ? "border-emerald-500 focus:border-ring"
+                                : "border-border focus:border-ring",
+                              "focus:outline-none focus:ring-1 focus:ring-ring/40"
                             )}
                           />
-                          <Phone className="w-4 h-4 text-zinc-400 absolute left-3 top-3.5" />
+                          <Phone className="w-4 h-4 text-muted-foreground absolute left-3 top-3.5" />
                           <AnimatePresence>
                             {focusedInput === "phone" && (phoneSuggestions.length > 0 || isSuggestionLoading.phone) && (
                               <motion.ul
                                 initial={{ opacity: 0, y: -5 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 exit={{ opacity: 0, y: -5 }}
-                                className="absolute z-20 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg shadow-lg w-full mt-1 max-h-40 overflow-y-auto"
+                                className="absolute z-20 bg-muted border border-border rounded-lg shadow-lg w-full mt-1 max-h-40 overflow-y-auto"
                               >
                                 {isSuggestionLoading.phone && phoneSuggestions.length === 0 && (
-                                  <li className="px-3 py-2 text-xs text-zinc-500 dark:text-zinc-400">Searching...</li>
+                                  <li className="px-3 py-2 text-xs text-muted-foreground">Searching…</li>
                                 )}
                                 {phoneSuggestions.slice(0, 5).map((user, idx) => (
                                   <motion.li
                                     key={idx}
                                     whileHover={{ backgroundColor: "rgba(16, 185, 129, 0.1)" }}
-                                    className="px-3 py-2 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 cursor-pointer border-b border-zinc-100 dark:border-zinc-700 last:border-b-0"
+                                    className="px-3 py-2 hover:bg-emerald-900/30 cursor-pointer border-b border-border last:border-b-0"
                                     onMouseDown={() => handleSuggestionClick(user)}
                                   >
                                     <div className="flex items-center gap-2">
-                                      <div className="p-1 bg-emerald-100 dark:bg-emerald-900/30 rounded-full">
+                                      <div className="p-1 bg-emerald-900/30 rounded-full">
                                         <User className="w-3 h-3 text-emerald-600" />
                                       </div>
                                       <div>
-                                        <p className="font-medium text-zinc-800 dark:text-white text-sm">{user.name}</p>
-                                        <p className="text-zinc-600 dark:text-zinc-400 text-xs">{user.phone}</p>
+                                        <p className="font-medium text-white text-sm">{user.name}</p>
+                                        <p className="text-muted-foreground text-xs">{user.phone}</p>
                                       </div>
                                     </div>
                                   </motion.li>
@@ -2559,41 +2566,41 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                             autoComplete="off"
                             placeholder={isSquadMode ? "Captain email" : "Email"}
                             className={cn(
-                              "w-full pl-10 pr-4 py-3 bg-white dark:bg-zinc-800 border rounded-lg transition-all duration-200",
+                              "w-full pl-10 pr-4 py-3 bg-muted border rounded-lg transition-all duration-200",
                               errors.email
-                                ? "border-red-500 focus:border-red-500"
+                                ? "border-red-500 focus:border-ring"
                                 : focusedInput === "email"
-                                ? "border-emerald-500 focus:border-emerald-500"
-                                : "border-zinc-300 dark:border-zinc-600 focus:border-emerald-500",
-                              "focus:outline-none focus:ring-1 focus:ring-emerald-500/20"
+                                ? "border-emerald-500 focus:border-ring"
+                                : "border-border focus:border-ring",
+                              "focus:outline-none focus:ring-1 focus:ring-ring/40"
                             )}
                           />
-                          <Mail className="w-4 h-4 text-zinc-400 absolute left-3 top-3.5" />
+                          <Mail className="w-4 h-4 text-muted-foreground absolute left-3 top-3.5" />
                           <AnimatePresence>
                             {focusedInput === "email" && (emailSuggestions.length > 0 || isSuggestionLoading.email) && (
                               <motion.ul
                                 initial={{ opacity: 0, y: -5 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 exit={{ opacity: 0, y: -5 }}
-                                className="absolute z-20 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg shadow-lg w-full mt-1 max-h-40 overflow-y-auto"
+                                className="absolute z-20 bg-muted border border-border rounded-lg shadow-lg w-full mt-1 max-h-40 overflow-y-auto"
                               >
                                 {isSuggestionLoading.email && emailSuggestions.length === 0 && (
-                                  <li className="px-3 py-2 text-xs text-zinc-500 dark:text-zinc-400">Searching...</li>
+                                  <li className="px-3 py-2 text-xs text-muted-foreground">Searching…</li>
                                 )}
                                 {emailSuggestions.slice(0, 5).map((user, idx) => (
                                   <motion.li
                                     key={idx}
                                     whileHover={{ backgroundColor: "rgba(16, 185, 129, 0.1)" }}
-                                    className="px-3 py-2 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 cursor-pointer border-b border-zinc-100 dark:border-zinc-700 last:border-b-0"
+                                    className="px-3 py-2 hover:bg-emerald-900/30 cursor-pointer border-b border-border last:border-b-0"
                                     onMouseDown={() => handleSuggestionClick(user)}
                                   >
                                     <div className="flex items-center gap-2">
-                                      <div className="p-1 bg-emerald-100 dark:bg-emerald-900/30 rounded-full">
+                                      <div className="p-1 bg-emerald-900/30 rounded-full">
                                         <User className="w-3 h-3 text-emerald-600" />
                                       </div>
                                       <div>
-                                        <p className="font-medium text-zinc-800 dark:text-white text-sm">{user.name}</p>
-                                        <p className="text-zinc-600 dark:text-zinc-400 text-xs">{user.email}</p>
+                                        <p className="font-medium text-white text-sm">{user.name}</p>
+                                        <p className="text-muted-foreground text-xs">{user.email}</p>
                                       </div>
                                     </div>
                                   </motion.li>
@@ -2612,24 +2619,24 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                           initial={{ opacity: 0, height: 0 }}
                           animate={{ opacity: 1, height: 'auto' }}
                           exit={{ opacity: 0, height: 0 }}
-                          className="mt-4 rounded-lg border border-zinc-200 p-3 dark:border-zinc-700"
+                          className="mt-4 rounded-lg border p-3 border-border"
                         >
                           <div className="mb-2 flex items-center justify-between">
-                            <p className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">
+                            <p className="text-xs font-semibold text-muted-foreground">
                               Squad Player Details (Optional)
                             </p>
                             <button
                               type="button"
                               onClick={addSquadMemberRow}
                               disabled={squadMembers.length >= maxQuickMembers}
-                              className="rounded border border-zinc-300 px-2 py-1 text-xs text-zinc-700 disabled:opacity-50 dark:border-zinc-600 dark:text-zinc-300"
+                              className="rounded border px-2 py-1 text-xs disabled:opacity-50 border-border text-muted-foreground"
                             >
                               Add Player
                             </button>
                           </div>
                             <div className="space-y-2">
                               {squadMembers.map((member, idx) => (
-                                <div key={member.id} className="rounded-md border border-zinc-200 p-2 dark:border-zinc-700">
+                                <div key={member.id} className="rounded-md border p-2 border-border">
                                   <div className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_1fr_auto]">
                                     <input
                                       type="text"
@@ -2638,7 +2645,7 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                                       onFocus={() => handleSquadMemberFocus(member.id, member.name)}
                                       onBlur={() => handleSquadMemberBlur(member.id)}
                                       onChange={(e) => updateSquadMemberRow(member.id, "name", e.target.value)}
-                                      className="rounded border border-zinc-300 bg-white px-3 py-2 text-xs dark:border-zinc-600 dark:bg-zinc-800"
+                                      className="rounded border px-3 py-2 text-xs border-border bg-muted"
                                     />
                                     <input
                                       type="tel"
@@ -2647,7 +2654,7 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                                       onFocus={() => handleSquadMemberFocus(member.id, member.phone)}
                                       onBlur={() => handleSquadMemberBlur(member.id)}
                                       onChange={(e) => updateSquadMemberRow(member.id, "phone", e.target.value)}
-                                      className="rounded border border-zinc-300 bg-white px-3 py-2 text-xs dark:border-zinc-600 dark:bg-zinc-800"
+                                      className="rounded border px-3 py-2 text-xs border-border bg-muted"
                                     />
                                     <button
                                       type="button"
@@ -2660,18 +2667,18 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                                   {focusedSquadMemberId === member.id &&
                                     Array.isArray(squadMemberSuggestions[member.id]) &&
                                     squadMemberSuggestions[member.id].length > 0 && (
-                                      <div className="mt-2 max-h-36 overflow-auto rounded border border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-900">
+                                      <div className="mt-2 max-h-36 overflow-auto rounded border border-border bg-card">
                                         {squadMemberSuggestions[member.id].map((suggested, suggestionIdx) => (
                                           <button
                                             key={`${member.id}-sg-${suggestionIdx}`}
                                             type="button"
                                             onMouseDown={() => handleSquadMemberSuggestionPick(member.id, suggested)}
-                                            className="flex w-full items-center justify-between border-b border-zinc-100 px-2 py-1.5 text-left text-xs last:border-b-0 hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-800"
+                                            className="flex w-full items-center justify-between border-b px-2 py-1.5 text-left text-xs last:border-b-0 border-border hover:bg-muted"
                                           >
-                                            <span className="font-medium text-zinc-700 dark:text-zinc-200">
+                                            <span className="font-medium text-foreground">
                                               {suggested.name}
                                             </span>
-                                            <span className="text-zinc-500 dark:text-zinc-400">
+                                            <span className="text-muted-foreground">
                                               {suggested.phone}
                                             </span>
                                           </button>
@@ -2704,8 +2711,8 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                         className={cn(
                           "rounded-lg border px-3 py-2 text-xs font-semibold transition-colors",
                           bookingFlowMode === "solo"
-                            ? "border-blue-400/70 bg-blue-500/15 text-blue-100"
-                            : "border-zinc-300 text-zinc-700 dark:border-zinc-600 dark:text-zinc-300"
+                            ? "border-primary/70 bg-primary/15 text-foreground"
+                            : "border-border text-muted-foreground"
                         )}
                       >
                         Solo Play
@@ -2719,8 +2726,8 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                           "rounded-lg border px-3 py-2 text-xs font-semibold transition-colors",
                           !squadSupported && "cursor-not-allowed opacity-50",
                           bookingFlowMode === "squad"
-                            ? "border-blue-400/70 bg-blue-500/15 text-blue-100"
-                            : "border-zinc-300 text-zinc-700 dark:border-zinc-600 dark:text-zinc-300"
+                            ? "border-primary/70 bg-primary/15 text-foreground"
+                            : "border-border text-muted-foreground"
                         )}
                       >
                         Squad Play
@@ -2738,8 +2745,8 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                           exit={{ opacity: 0, height: 0 }}
                           className="mt-3 space-y-2"
                         >
-                          <div className="flex items-center justify-between rounded-lg border border-blue-200 bg-blue-50 px-3 py-2.5 dark:border-blue-700 dark:bg-blue-900/20">
-                            <span className="text-xs text-blue-800 dark:text-blue-200 font-medium">Players in Squad</span>
+                          <div className="flex items-center justify-between rounded-lg border px-3 py-2.5 border-primary bg-primary/20">
+                            <span className="text-xs text-primary font-medium">Players in Squad</span>
                             <div className="flex items-center gap-2">
                               <button
                                 type="button"
@@ -2748,7 +2755,7 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                               >
                                 -
                               </button>
-                              <span className="w-16 text-center text-sm font-semibold text-blue-900 dark:text-blue-100">
+                              <span className="w-16 text-center text-sm font-semibold text-foreground">
                                 {squadPlayerCount}
                               </span>
                               <button
@@ -2760,7 +2767,7 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                               </button>
                             </div>
                           </div>
-                          <div className="text-xs text-zinc-600 dark:text-zinc-300">
+                          <div className="text-xs text-muted-foreground">
                             Max players: <span className="font-semibold">{squadMaxPlayers}</span>
                             <span className="ml-2">
                               Mode: <span className="font-semibold">
@@ -2805,44 +2812,44 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                     </div>
 
                     <div className="space-y-2">
-                      <div className="flex justify-between items-center py-2 border-b border-zinc-200 dark:border-zinc-600">
-                        <span className="text-zinc-600 dark:text-zinc-400">
+                      <div className="flex justify-between items-center py-2 border-b border-border">
+                        <span className="text-muted-foreground">
                           Gaming Charges{!deskCard && isSquadMode && squadUsesDiscountEngine ? ` (₹${consoleUnitTotal} x ${squadPlayerCount})` : ""}:
                         </span>
-                        <span className="font-medium text-zinc-800 dark:text-white">₹{consoleTotal}</span>
+                        <span className="font-medium text-white">₹{consoleTotal}</span>
                       </div>
 
                       {isSquadMode && (
-                        <div className="flex justify-between items-center py-2 border-b border-zinc-200 dark:border-zinc-600">
-                          <span className="text-zinc-600 dark:text-zinc-400">Players:</span>
-                          <span className="font-medium text-zinc-800 dark:text-white">{squadPlayerCount}</span>
+                        <div className="flex justify-between items-center py-2 border-b border-border">
+                          <span className="text-muted-foreground">Players:</span>
+                          <span className="font-medium text-white">{squadPlayerCount}</span>
                         </div>
                       )}
 
                       {isSquadMode && squadDiscountPercent > 0 && (
-                        <div className="flex justify-between items-center py-2 border-b border-zinc-200 dark:border-zinc-600 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg px-3">
-                          <span className="text-emerald-700 dark:text-emerald-300 font-medium">
+                        <div className="flex justify-between items-center py-2 border-b border-border bg-emerald-900/20 rounded-lg px-3">
+                          <span className="text-emerald-300 font-medium">
                             Squad Discount ({squadDiscountPercent}%):
                           </span>
-                          <span className="font-bold text-emerald-600 dark:text-emerald-300">-₹{squadDiscountAmount}</span>
+                          <span className="font-semibold text-emerald-300">-₹{squadDiscountAmount}</span>
                         </div>
                       )}
 
-                      <div className="flex justify-between items-center py-2 border-b border-zinc-200 dark:border-zinc-600">
-                        <span className="text-zinc-600 dark:text-zinc-400">Additional Discount:</span>
+                      <div className="flex justify-between items-center py-2 border-b border-border">
+                        <span className="text-muted-foreground">Additional Discount:</span>
                         <input
                           type="number"
                           value={waiveOffAmount}
                           onChange={(e) => setWaiveOffAmount(Math.max(0, Math.min(gamingNet, Number(e.target.value) || 0)))}
                           placeholder="₹0"
-                          className="w-20 text-right px-2 py-1 rounded border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 text-zinc-800 dark:text-white focus:border-emerald-500 focus:outline-none transition-colors"
+                          className="w-20 text-right px-2 py-1 rounded border border-border bg-muted text-white focus:border-ring focus:outline-none transition-colors"
                           min={0}
                         />
                       </div>
 
                       {suggestedDiscount > 0 && (
-                        <div className="flex justify-between items-center py-2 border-b border-zinc-200 dark:border-zinc-600">
-                          <span className="text-amber-600 dark:text-amber-400 font-medium">Auto Discount:</span>
+                        <div className="flex justify-between items-center py-2 border-b border-border">
+                          <span className="text-amber-400 font-medium">Auto Discount:</span>
                           <div className="text-right">
                             <input aria-label="Auto Discount" type="number" min={0} max={Math.max(0, consoleTotal - squadDiscountAmount - waiveOffAmount)} step="0.01"
                               className="w-20 rounded border bg-background px-2 py-1 text-right"
@@ -2854,37 +2861,37 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                       )}
 
                       {supportsExtraController && (
-                        <div className="flex justify-between items-center py-2 border-b border-zinc-200 dark:border-zinc-600">
-                          <span className="text-zinc-600 dark:text-zinc-400">Extra Controller:</span>
+                        <div className="flex justify-between items-center py-2 border-b border-border">
+                          <span className="text-muted-foreground">Extra Controller:</span>
                           <div className="flex items-center gap-2">
                             <button
                               type="button"
                               onClick={() => applyExtraControllerQty(extraControllerQty - 1)}
-                              className="inline-flex h-7 w-7 items-center justify-center rounded border border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300"
+                              className="inline-flex h-7 w-7 items-center justify-center rounded border border-border text-muted-foreground"
                               disabled={isControllerPricingLoading}
                             >
                               -
                             </button>
-                            <span className="w-14 text-center text-sm text-zinc-800 dark:text-white">
+                            <span className="w-14 text-center text-sm text-white">
                               {extraControllerQty} qty
                             </span>
                             <button
                               type="button"
                               onClick={() => applyExtraControllerQty(extraControllerQty + 1)}
-                              className="inline-flex h-7 w-7 items-center justify-center rounded border border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300"
+                              className="inline-flex h-7 w-7 items-center justify-center rounded border border-border text-muted-foreground"
                               disabled={isControllerPricingLoading}
                             >
                               +
                             </button>
-                            <span className="w-16 text-right text-sm font-medium text-zinc-800 dark:text-white">
+                            <span className="w-16 text-right text-sm font-medium text-white">
                               ₹{extraControllerFare}
                             </span>
                           </div>
                         </div>
                       )}
 
-                      <div className="flex justify-between items-center py-2 border-b border-zinc-200 dark:border-zinc-600">
-                        <span className="text-zinc-600 dark:text-zinc-400">Snacks & Add-ons:</span>
+                      <div className="flex justify-between items-center py-2 border-b border-border">
+                        <span className="text-muted-foreground">Snacks & Add-ons:</span>
                         <button
                           type="button"
                           onClick={() => setIsMealSelectorOpen(true)}
@@ -2896,27 +2903,27 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                       </div>
 
                       {selectedMeals.length > 0 && (
-                        <div className="py-2 border-b border-zinc-200 dark:border-zinc-600">
+                        <div className="py-2 border-b border-border">
                           <div className="space-y-2">
                             {selectedMeals.map(meal => (
                               <div key={meal.menu_item_id} className="slot-booking-modal-soft rounded-lg p-3">
                                 <div className="flex justify-between items-start">
                                   <div className="flex-1">
-                                    <span className="text-sm font-medium text-zinc-800 dark:text-white">
+                                    <span className="text-sm font-medium text-white">
                                       {meal.name}
                                     </span>
-                                    <div className="mt-1 text-xs text-zinc-600 dark:text-zinc-400">
+                                    <div className="mt-1 text-xs text-muted-foreground">
                                       {meal.category} • ₹{meal.price} × {meal.quantity}
                                     </div>
                                   </div>
-                                  <span className="text-sm font-bold text-zinc-800 dark:text-white">
+                                  <span className="text-sm font-semibold text-white">
                                     ₹{meal.total}
                                   </span>
                                 </div>
                               </div>
                             ))}
-                            <div className="border-t border-zinc-200 pt-2 text-right dark:border-zinc-600">
-                              <span className="text-sm font-bold text-zinc-800 dark:text-white">
+                            <div className="border-t pt-2 text-right border-border">
+                              <span className="text-sm font-semibold text-white">
                                 Meals Total: ₹{mealsTotal}
                               </span>
                             </div>
@@ -2950,7 +2957,7 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
               <Button
                 type="submit"
                 form="slot-booking-form"
-                disabled={(!!deskCard && !deskConsoleIds) || deskRatesLoading || !!deskRateError || (variantPricingRequired && !effectiveDeskChoice) || !!typedStart || !!typedEnd || (!!deskCard && deskPrice === null) || selectedSlots.length === 0 || isSubmitting || submissionUncertain || (paymentType === 'Monthly Credit' && (!creditAccount?.is_active || availableCreditAmount < totalAmount))}
+                disabled={(!!deskCard && !(flexMode ? flexConsoleIds : deskConsoleIds)) || (flexMode && (!flexActive || paymentType === 'Pass')) || deskRatesLoading || !!deskRateError || (variantPricingRequired && !effectiveDeskChoice) || !!typedStart || !!typedEnd || (!!deskCard && deskPrice === null) || selectedSlots.length === 0 || isSubmitting || submissionUncertain || (paymentType === 'Monthly Credit' && (!creditAccount?.is_active || availableCreditAmount < totalAmount))}
                 className="ui-action-primary h-9 px-4 disabled:opacity-50"
               >
                 {isSubmitting ? (
@@ -3064,7 +3071,7 @@ function SlotPill({
       title="Click to select; double-click to book"
       disabled={disabled}
       className={cn(
-        "booking-slot-pill select-none w-full h-full flex items-center justify-center rounded-md text-[10px] font-bold uppercase",
+        "booking-slot-pill select-none w-full h-full flex items-center justify-center rounded-md text-xs font-semibold uppercase",
         compact ? "min-h-[32px]" : "min-h-[38px]",
         "transition-all duration-200 cursor-pointer",
         disabled && "cursor-not-allowed opacity-60",
@@ -3132,10 +3139,10 @@ function TopBar({
   // Conditional rendering for management views
   if (showManageView) {
     return (
-      <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm p-4">
+      <div className="fixed inset-0 z-50 p-4 bg-black/60 backdrop-blur-sm">
         <div className="max-w-6xl mx-auto mt-8">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold text-white">
+            <h2 className="text-2xl font-semibold text-white">
               {showManageView === 'change' && 'Change Booking'}
               {showManageView === 'reject' && 'Reject Booking'}
               {showManageView === 'list' && 'List Bookings'}
@@ -3150,7 +3157,7 @@ function TopBar({
             </Button>
           </div>
 
-          <Card className="bg-white dark:bg-zinc-800 shadow-2xl">
+          <Card className="bg-muted shadow-xl">
             {showManageView === 'change' && <ChangeBookingForm />}
             {showManageView === 'reject' && <RejectBookingForm />}
             {showManageView === 'list' && <ListBooking />}
@@ -3163,7 +3170,7 @@ function TopBar({
   // Main TopBar return
   return (
     <div className={cn("booking-topbar mb-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between", compact && "mb-2 gap-2", slab && "dashboard-booking-topbar")}>
-      <Card className={cn("booking-console-filter rounded-xl border p-2.5 shadow-sm backdrop-blur-sm", compact && "p-2")}>
+      <Card className={cn("booking-console-filter rounded-lg border p-3 shadow-sm backdrop-blur-sm", compact && "p-2")}>
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
           <span className="booking-console-label text-xs font-medium uppercase tracking-wide">Select Console</span>
           <select aria-label="Select console" value={selectedConsole} onChange={event => onConsoleChange(event.target.value)} className={scheduleStyles.consoleSelect}>
@@ -3216,7 +3223,7 @@ function TopBar({
               <MoreVertical className="w-5 h-5" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56 border-zinc-200 bg-white text-zinc-900 shadow-lg dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100">
+          <DropdownMenuContent align="end" className="w-56 shadow-lg border-border bg-card text-foreground">
             <DropdownMenuItem onClick={() => {
               setShowManageView('change');
               setMenuOpen(false);
@@ -3261,9 +3268,9 @@ function ConsoleFilter({
   }
 
   return (
-    <Card className="mb-6 rounded-xl border border-zinc-300 bg-white/90 p-4 shadow-sm backdrop-blur-sm dark:border-zinc-700 dark:bg-zinc-800/50">
+    <Card className="mb-6 rounded-lg border p-4 shadow-sm backdrop-blur-sm border-border bg-muted/50">
       <div className="flex items-center gap-3">
-        <span className="text-xs font-medium uppercase text-zinc-500 dark:text-zinc-400">Select Console</span>
+        <span className="text-xs font-medium uppercase text-muted-foreground">Select Console</span>
         <div className="flex flex-wrap items-center gap-2">
           {Object.entries(consoleIcons).map(([key, Icon]) => (
             <SegmentedButton 
@@ -3440,13 +3447,13 @@ function ScheduleGrid({
 
   if (filteredConsoles.length === 0) {
     return (
-      <Card className="overflow-hidden rounded-2xl border border-amber-300 bg-amber-50/90 backdrop-blur-sm dark:border-amber-500/35 dark:bg-amber-500/10">
+      <Card className="overflow-hidden rounded-lg border backdrop-blur-sm border-amber-500/35 bg-amber-500/10">
         <div className="flex flex-col items-center justify-center px-6 py-10 text-center">
           <AlertCircle className="mb-3 h-8 w-8 text-amber-300" />
-          <p className="text-sm font-semibold text-amber-900 dark:text-amber-100">
+          <p className="text-sm font-semibold text-amber-100">
             No {selectedConsole} consoles available in this cafe
           </p>
-          <p className="mt-1 text-xs text-amber-700 dark:text-amber-200/90">
+          <p className="mt-1 text-xs text-amber-200/90">
             Add or map {selectedConsole} devices from `Manage Gaming Console` to enable booking.
           </p>
         </div>
@@ -3527,7 +3534,6 @@ function ScheduleGrid({
 
   // ✅ NEW: For past slots, just fetch bookings (don't add to selection for new booking)
   if (isPastTime) {
-    console.log('🕒 Past slot clicked, fetching past bookings...')
     fetchSlotBookings([matchingSlot.slot_id], dayData.fullDate)
     return // Don't add to selected slots
   }
@@ -3542,11 +3548,11 @@ function ScheduleGrid({
 
   if (isLoading) {
     return (
-      <Card className="booking-schedule-card overflow-hidden rounded-xl border">
+      <Card className="booking-schedule-card overflow-hidden rounded-lg border">
         <div className="flex items-center justify-center py-12">
           <div className="text-center">
-            <Loader2 className="w-8 h-8 animate-spin text-blue-500 mx-auto mb-3" />
-            <p className="text-zinc-300">Loading available slots...</p>
+            <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto mb-3" />
+            <p className="text-muted-foreground">Loading available slots…</p>
           </div>
         </div>
       </Card>
@@ -3679,11 +3685,11 @@ if (isPastTime) {
 
   if (uniqueTimes.length === 0) {
     return (
-      <Card className="booking-schedule-card overflow-hidden rounded-xl border">
+      <Card className="booking-schedule-card overflow-hidden rounded-lg border">
         <div className="flex items-center justify-center py-12">
           <div className="text-center">
-            <CalendarDays className="w-12 h-12 text-zinc-500 mx-auto mb-3" />
-            <p className="text-zinc-300">No slots available</p>
+            <CalendarDays className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
+            <p className="text-muted-foreground">No slots available</p>
           </div>
         </div>
       </Card>
@@ -3691,7 +3697,7 @@ if (isPastTime) {
   }
 
   return (
-      <Card className="booking-schedule-card overflow-hidden rounded-xl border">
+      <Card className="booking-schedule-card overflow-hidden rounded-lg border">
         {detectedDurations.length > 1 && (
         <div className="booking-schedule-notice border-b px-4 py-2 text-xs">
           Mixed slot durations detected ({detectedDurations.join("m, ")}m). Cells now show available slot count.
@@ -3717,7 +3723,7 @@ if (isPastTime) {
               Date
             </div>
             {uniqueTimes.map((time) => (
-              <div key={time} className="booking-time-label text-center text-sm font-bold">
+              <div key={time} className="booking-time-label text-center text-sm font-semibold">
                 {showClock(time)}
               </div>
             ))}
@@ -3740,7 +3746,7 @@ if (isPastTime) {
                 >
                   <div
                     className={cn(
-                      "booking-date-cell sticky left-0 z-20 flex items-center justify-center rounded-lg px-2 py-2 text-sm font-bold backdrop-blur-sm",
+                      "booking-date-cell sticky left-0 z-20 flex items-center justify-center rounded-lg px-2 py-2 text-sm font-semibold backdrop-blur-sm",
                       isTodayRow
                         ? "booking-date-cell-today"
                         : "booking-date-cell-idle"
@@ -3748,7 +3754,7 @@ if (isPastTime) {
                   >
                     <span>{row.date}</span>
                     {isTodayRow && (
-                      <span className="booking-today-badge ml-1.5 rounded-full px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide">
+                      <span className="booking-today-badge ml-1.5 rounded-full px-1.5 py-0.5 text-xs font-semibold uppercase tracking-wide">
                         Today
                       </span>
                     )}
@@ -3798,7 +3804,7 @@ function RecentBookings({
       <Card className={cn("booking-detail-card mt-2 p-3", fixedCard && "h-full min-h-0")}>
         <div className="flex items-center justify-center py-8">
           <Loader2 className="w-6 h-6 animate-spin text-emerald-500" />
-          <span className="booking-contrast-muted ml-2">Loading bookings...</span>
+          <span className="booking-contrast-muted ml-2">Loading bookings…</span>
         </div>
       </Card>
     )
@@ -3847,7 +3853,7 @@ function RecentBookings({
         
         {/* ✅ Show badge for past bookings */}
         {hasPastBookings && (
-          <span className="booking-contrast-muted rounded-full bg-zinc-200 px-3 py-1 text-xs font-medium dark:bg-zinc-700">
+          <span className="booking-contrast-muted rounded-full px-3 py-1 text-xs font-medium bg-muted">
             History
           </span>
         )}
@@ -3857,12 +3863,12 @@ function RecentBookings({
         <Table>
           <TableHeader className="sticky top-0 z-20">
             <TableRow>
-              <TableHead className="booking-contrast-header sticky top-0 z-20 bg-zinc-100 dark:bg-zinc-800">Booking ID</TableHead>
-              <TableHead className="booking-contrast-header sticky top-0 z-20 bg-zinc-100 dark:bg-zinc-800">Customer Details</TableHead>
-              <TableHead className="booking-contrast-header sticky top-0 z-20 bg-zinc-100 dark:bg-zinc-800">Time</TableHead>
-              <TableHead className="booking-contrast-header sticky top-0 z-20 bg-zinc-100 dark:bg-zinc-800">Status</TableHead>
-              <TableHead className="booking-contrast-header sticky top-0 z-20 bg-zinc-100 dark:bg-zinc-800">Meal Selection</TableHead>
-              <TableHead className="booking-contrast-header sticky top-0 z-20 bg-zinc-100 dark:bg-zinc-800">Actions</TableHead>
+              <TableHead className="booking-contrast-header sticky top-0 z-20 bg-muted">Booking ID</TableHead>
+              <TableHead className="booking-contrast-header sticky top-0 z-20 bg-muted">Customer Details</TableHead>
+              <TableHead className="booking-contrast-header sticky top-0 z-20 bg-muted">Time</TableHead>
+              <TableHead className="booking-contrast-header sticky top-0 z-20 bg-muted">Status</TableHead>
+              <TableHead className="booking-contrast-header sticky top-0 z-20 bg-muted">Meal Selection</TableHead>
+              <TableHead className="booking-contrast-header sticky top-0 z-20 bg-muted">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -3870,7 +3876,7 @@ function RecentBookings({
               <TableRow 
                 key={booking.booking_id} 
                 className={cn(
-                  "hover:bg-zinc-100 dark:hover:bg-zinc-600/30",
+                  "hover:bg-muted/30",
                   hasPastBookings && "opacity-80" // Slightly fade past bookings
                 )}
               >
@@ -3879,7 +3885,7 @@ function RecentBookings({
                   <div className="flex flex-col gap-1">
                     <span>{booking.booking_fid || `#BK-${booking.booking_id}`}</span>
                     {(booking.squad_enabled || Number(booking.squad_player_count || 1) > 1) && (
-                      <span className="w-fit rounded-full border border-blue-400/40 bg-blue-500/15 px-2 py-0.5 text-[10px] font-semibold text-black dark:text-blue-200">
+                      <span className="w-fit rounded-full border border-primary/40 bg-primary/15 px-2 py-0.5 text-xs font-semibold text-primary">
                         Squad x{Math.max(1, Number(booking.squad_player_count || 1))}
                       </span>
                     )}
@@ -3902,7 +3908,7 @@ function RecentBookings({
                       {booking.customer_phone}
                     </span>
                     {(booking.squad_enabled || Number(booking.squad_player_count || 1) > 1) && (
-                      <span className="booking-contrast-muted text-[11px]">
+                      <span className="booking-contrast-muted text-xs">
                         Squad: {Array.isArray(booking.squad_members) && booking.squad_members.length > 0
                           ? booking.squad_members.map((m: any) => m?.name).filter(Boolean).join(", ")
                           : `${Math.max(1, Number(booking.squad_player_count || 1))} players`}
@@ -3930,12 +3936,12 @@ function RecentBookings({
                   <span className={cn(
                     "px-2 py-1 rounded-full text-xs font-medium",
                     // ✅ Enhanced status colors
-                    booking.status === 'confirmed' && "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
-                    booking.status === 'checked_in' && "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
-                    booking.status === 'pending_verified' && "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
-                    booking.status === 'completed' && "bg-zinc-100 text-black dark:bg-zinc-700 dark:text-zinc-300",
-                    booking.status === 'cancelled' && "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
-                    booking.status === 'rejected' && "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                    booking.status === 'confirmed' && "bg-emerald-900/30 text-emerald-400",
+                    booking.status === 'checked_in' && "bg-amber-900/30 text-amber-400",
+                    booking.status === 'pending_verified' && "bg-primary/30 text-primary",
+                    booking.status === 'completed' && "bg-muted text-muted-foreground",
+                    booking.status === 'cancelled' && "bg-red-900/30 text-red-400",
+                    booking.status === 'rejected' && "bg-red-900/30 text-red-400"
                   )}>
                     {booking.status === 'checked_in' ? 'Checked-In' : 
                      booking.status === 'pending_verified' ? 'Pending' :
@@ -3948,7 +3954,7 @@ function RecentBookings({
                   <div className="booking-contrast-muted flex items-center gap-1 text-sm">
                     {booking.meals && booking.meals.length > 0 ? (
                       <div className="flex items-center gap-1">
-                        <Sparkles className="w-4 h-4 text-emerald-600 dark:text-emerald-300" />
+                        <Sparkles className="w-4 h-4 text-emerald-300" />
                         <span className="text-xs">{booking.meal_selection}</span>
                       </div>
                     ) : (
@@ -3965,8 +3971,8 @@ function RecentBookings({
                     className={cn(
                       "booking-contrast-heading text-xs",
                       hasPastBookings 
-                        ? "hover:bg-zinc-100 dark:hover:bg-zinc-700" 
-                        : "hover:bg-emerald-50 dark:hover:bg-emerald-900/30"
+                        ? "hover:bg-muted" 
+                        : "hover:bg-emerald-900/30"
                     )}
                   >
                     {hasPastBookings ? 'View History' : 'View Details'}
@@ -3979,7 +3985,7 @@ function RecentBookings({
       </div>
       
       {/* ✅ NEW: Summary Footer */}
-      <div className="mt-4 flex items-center justify-between border-t border-zinc-200 pt-4 dark:border-zinc-600">
+      <div className="mt-4 flex items-center justify-between border-t pt-4 border-border">
         <div className="booking-contrast-muted text-sm">
           {hasPastBookings ? (
             <span className="flex items-center gap-2">
@@ -4006,8 +4012,8 @@ function RecentBookings({
                   "w-2 h-2 rounded-full",
                   status === 'confirmed' && "bg-emerald-500",
                   status === 'checked_in' && "bg-amber-500",
-                  status === 'pending_verified' && "bg-blue-500",
-                  status === 'completed' && "bg-zinc-500",
+                  status === 'pending_verified' && "bg-primary",
+                  status === 'completed' && "bg-muted",
                   status === 'cancelled' && "bg-red-500"
                 )} />
                 <span className="booking-contrast-muted">
@@ -4127,14 +4133,14 @@ function ChangeBookingForm() {
       <form className="space-y-3">
         {/* Search Section */}
         <div className="space-y-4">
-          <h3 className="text-lg font-semibold text-zinc-800 dark:text-white">Search Booking</h3>
+          <h3 className="text-lg font-semibold text-white">Search Booking</h3>
           <div className="flex space-x-2">
             <input
               id="bookingId"
               placeholder="Enter Booking ID"
               value={bookingId}
               onChange={(e) => setBookingId(e.target.value)}
-              className="flex-1 px-4 py-3 bg-white dark:bg-zinc-700 border border-zinc-300 dark:border-zinc-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 text-zinc-800 dark:text-white"
+              className="flex-1 px-4 py-3 bg-muted border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/40 text-white"
             />
 
             <Button variant="success"
@@ -4156,12 +4162,12 @@ function ChangeBookingForm() {
         {/* Booking Details */}
         {bookingFound && bookingData && !isSubmitted ? (
           <div className="space-y-3">
-            <h3 className="text-lg font-semibold text-zinc-800 dark:text-white">
+            <h3 className="text-lg font-semibold text-white">
               Gamer's Information
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-2">
-                <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Name</label>
+                <label className="text-sm font-medium text-muted-foreground">Name</label>
                 <input
                   value={bookingData.customer?.name || ""}
                   onChange={(e) =>
@@ -4170,11 +4176,11 @@ function ChangeBookingForm() {
                       customer: { ...prev.customer, name: e.target.value },
                     }))
                   }
-                  className="w-full px-4 py-3 bg-white dark:bg-zinc-700 border border-zinc-300 dark:border-zinc-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 text-zinc-800 dark:text-white"
+                  className="w-full px-4 py-3 bg-muted border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/40 text-white"
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Email</label>
+                <label className="text-sm font-medium text-muted-foreground">Email</label>
                 <input
                   type="email"
                   value={bookingData.customer?.email || ""}
@@ -4184,11 +4190,11 @@ function ChangeBookingForm() {
                       customer: { ...prev.customer, email: e.target.value },
                     }))
                   }
-                  className="w-full px-4 py-3 bg-white dark:bg-zinc-700 border border-zinc-300 dark:border-zinc-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 text-zinc-800 dark:text-white"
+                  className="w-full px-4 py-3 bg-muted border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/40 text-white"
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Phone Number</label>
+                <label className="text-sm font-medium text-muted-foreground">Phone Number</label>
                 <input
                   type="tel"
                   value={bookingData.customer?.phone || ""}
@@ -4198,17 +4204,17 @@ function ChangeBookingForm() {
                       customer: { ...prev.customer, phone: e.target.value },
                     }))
                   }
-                  className="w-full px-4 py-3 bg-white dark:bg-zinc-700 border border-zinc-300 dark:border-zinc-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 text-zinc-800 dark:text-white"
+                  className="w-full px-4 py-3 bg-muted border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/40 text-white"
                 />
               </div>
             </div>
 
-            <h3 className="text-lg font-semibold text-zinc-800 dark:text-white">
+            <h3 className="text-lg font-semibold text-white">
               Booking Details
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Booking Date</label>
+                <label className="text-sm font-medium text-muted-foreground">Booking Date</label>
                 <input
                   type="date"
                   value={bookingData.booking_date || ""}
@@ -4218,12 +4224,12 @@ function ChangeBookingForm() {
                       booking_date: e.target.value,
                     }))
                   }
-                  className="w-full px-4 py-3 bg-white dark:bg-zinc-700 border border-zinc-300 dark:border-zinc-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 text-zinc-800 dark:text-white"
+                  className="w-full px-4 py-3 bg-muted border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/40 text-white"
                 />
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Slot Time</label>
+                <label className="text-sm font-medium text-muted-foreground">Slot Time</label>
                 <div className="grid grid-cols-6 gap-2">
                   {availableSlots.map((slot) => (
                     <Button
@@ -4256,7 +4262,7 @@ function ChangeBookingForm() {
               {isUpdating ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Updating...
+                  Updating…
                 </>
               ) : (
                 "Update Booking"
@@ -4267,9 +4273,9 @@ function ChangeBookingForm() {
 
         {/* Success Message */}
         {isSubmitted && (
-          <Alert className="bg-emerald-50 dark:bg-emerald-900/20 border-emerald-500">
+          <Alert className="bg-emerald-900/20 border-emerald-500">
             <CheckCircle className="h-4 w-4 text-emerald-600" />
-            <AlertDescription className="text-emerald-700 dark:text-emerald-300">
+            <AlertDescription className="text-emerald-300">
               Booking has been successfully updated.
             </AlertDescription>
           </Alert>
@@ -4381,13 +4387,13 @@ function RejectBookingForm() {
     <div className="p-3">
       <form className="space-y-3" onSubmit={handleSubmit}>
         <div className="space-y-4">
-          <h3 className="text-lg font-semibold text-zinc-800 dark:text-white">Search Booking</h3>
+          <h3 className="text-lg font-semibold text-white">Search Booking</h3>
           <div className="flex space-x-2">
             <input
               placeholder="Enter Booking ID"
               value={bookingId}
               onChange={(e) => setBookingId(e.target.value)}
-              className="flex-1 px-4 py-3 bg-white dark:bg-zinc-700 border border-zinc-300 dark:border-zinc-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 text-zinc-800 dark:text-white"
+              className="flex-1 px-4 py-3 bg-muted border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/40 text-white"
             />
             <Button variant="success"
               type="button"
@@ -4406,9 +4412,9 @@ function RejectBookingForm() {
         </div>
 
         {isSubmitted ? (
-          <Alert className="bg-emerald-50 dark:bg-emerald-900/20 border-emerald-500">
+          <Alert className="bg-emerald-900/20 border-emerald-500">
             <CheckCircle className="h-4 w-4 text-emerald-600" />
-            <AlertDescription className="text-emerald-700 dark:text-emerald-300">
+            <AlertDescription className="text-emerald-300">
               Booking has been successfully rejected.
             </AlertDescription>
           </Alert>
@@ -4422,62 +4428,62 @@ function RejectBookingForm() {
                 className="space-y-3"
               >
                 <div className="space-y-3">
-                  <h3 className="text-lg font-semibold text-zinc-800 dark:text-white">
+                  <h3 className="text-lg font-semibold text-white">
                     Booking Information
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <Card className="bg-zinc-50 dark:bg-zinc-700/30 p-3">
+                    <Card className="bg-muted/30 p-3">
                       <div className="space-y-4">
                         <div className="flex justify-between">
-                          <span className="text-zinc-600 dark:text-zinc-400">Booking ID</span>
-                          <span className="font-medium text-zinc-800 dark:text-white">
+                          <span className="text-muted-foreground">Booking ID</span>
+                          <span className="font-medium text-white">
                             {bookingData.booking_id || ""}
                           </span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-zinc-600 dark:text-zinc-400">Date</span>
-                          <span className="font-medium text-zinc-800 dark:text-white">
+                          <span className="text-muted-foreground">Date</span>
+                          <span className="font-medium text-white">
                             {bookingData.booking_date || ""}
                           </span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-zinc-600 dark:text-zinc-400">Time Slot</span>
-                          <span className="font-medium text-zinc-800 dark:text-white">
+                          <span className="text-muted-foreground">Time Slot</span>
+                          <span className="font-medium text-white">
                             {showClock(bookingData.start_time)} – {showClock(bookingData.end_time)}
                           </span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-zinc-600 dark:text-zinc-400">System</span>
-                          <span className="font-medium text-zinc-800 dark:text-white">
+                          <span className="text-muted-foreground">System</span>
+                          <span className="font-medium text-white">
                             {bookingData.system || ""}
                           </span>
                         </div>
                       </div>
                     </Card>
 
-                    <Card className="bg-zinc-50 dark:bg-zinc-700/30 p-3">
+                    <Card className="bg-muted/30 p-3">
                       <div className="space-y-4">
                         <div className="flex justify-between">
-                          <span className="text-zinc-600 dark:text-zinc-400">Customer</span>
-                          <span className="font-medium text-zinc-800 dark:text-white">
+                          <span className="text-muted-foreground">Customer</span>
+                          <span className="font-medium text-white">
                             {bookingData.customer?.name || ""}
                           </span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-zinc-600 dark:text-zinc-400">Email</span>
-                          <span className="font-medium text-zinc-800 dark:text-white">
+                          <span className="text-muted-foreground">Email</span>
+                          <span className="font-medium text-white">
                             {bookingData.customer?.email || ""}
                           </span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-zinc-600 dark:text-zinc-400">Phone</span>
-                          <span className="font-medium text-zinc-800 dark:text-white">
+                          <span className="text-muted-foreground">Phone</span>
+                          <span className="font-medium text-white">
                             {bookingData.customer?.phone || ""}
                           </span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-zinc-600 dark:text-zinc-400">Amount Paid</span>
-                          <span className="font-medium text-zinc-800 dark:text-white">
+                          <span className="text-muted-foreground">Amount Paid</span>
+                          <span className="font-medium text-white">
                             ₹{bookingData.amount_paid || ""}
                           </span>
                         </div>
@@ -4487,28 +4493,28 @@ function RejectBookingForm() {
                 </div>
 
                 <div className="space-y-3">
-                  <h3 className="text-lg font-semibold text-zinc-800 dark:text-white">
+                  <h3 className="text-lg font-semibold text-white">
                     Rejection Details
                   </h3>
                   <div className="space-y-4">
                     <div className="space-y-2">
-                      <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                      <label className="text-sm font-medium text-muted-foreground">
                         Reason for Rejection
                       </label>
                       <textarea
                         value={rejectionReason}
                         onChange={(e) => setRejectionReason(e.target.value)}
                         placeholder="Please provide a detailed reason for rejecting this booking..."
-                        className="w-full min-h-[100px] px-4 py-3 bg-white dark:bg-zinc-700 border border-zinc-300 dark:border-zinc-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 text-zinc-800 dark:text-white resize-none"
+                        className="w-full min-h-[100px] px-4 py-3 bg-muted border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/40 text-white resize-none"
                       />
                     </div>
 
                     <div className="space-y-2">
-                      <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                      <label className="text-sm font-medium text-muted-foreground">
                         Repayment Method
                       </label>
                       <Select value={repaymentType} onValueChange={setRepaymentType}>
-                        <SelectTrigger className="bg-white dark:bg-zinc-700 border-zinc-300 dark:border-zinc-600">
+                        <SelectTrigger className="bg-muted border-border">
                           <SelectValue placeholder="Select repayment method" />
                         </SelectTrigger>
                         <SelectContent>
@@ -4705,7 +4711,7 @@ function ListBooking() {
     return (
       <span
         className={`rounded-full px-3 py-1 text-xs font-medium ${
-          variants[status] || "border border-zinc-500/50 bg-zinc-700/60 text-zinc-200"
+          variants[status] || "border border-border bg-muted/60 text-foreground"
         }`}
       >
         {status}
@@ -4728,7 +4734,7 @@ function ListBooking() {
           placeholder="Search bookings..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full flex-1 rounded-lg border border-zinc-600/70 bg-zinc-800/70 px-4 py-2.5 text-sm text-zinc-100 placeholder:text-zinc-400 focus:border-blue-400/60 focus:outline-none"
+          className="w-full flex-1 rounded-lg border border-border bg-muted/70 px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary/60 focus:outline-none"
         />
         <Button onClick={handleSearch} className="ui-action-primary">
           <Search className="w-4 h-4 mr-2" />
@@ -4736,11 +4742,11 @@ function ListBooking() {
         </Button>
       </div>
 
-      <div className="overflow-hidden rounded-xl border border-zinc-700 bg-zinc-900/60">
+      <div className="overflow-hidden rounded-lg border border-border bg-card">
         <div className="overflow-x-auto">
         <Table className="min-w-[980px]">
           <TableHeader>
-            <TableRow className="bg-zinc-800/80">
+            <TableRow className="bg-muted/80">
               {[
                 { label: "Booked Date", key: "bookedDate" },
                 { label: "Username", key: "username" },
@@ -4755,7 +4761,7 @@ function ListBooking() {
               ].map(({ label, key }) => (
                 <TableHead
                   key={key}
-                  className="cursor-pointer font-semibold text-zinc-200 hover:bg-zinc-700/70 transition-colors"
+                  className="cursor-pointer font-semibold text-foreground hover:bg-muted/70 transition-colors"
                   onClick={() => handleSort(key)}
                 >
                   {label}{" "}
@@ -4768,10 +4774,10 @@ function ListBooking() {
             {Object.entries(groupedBookings).map(([bookedDate, bookings]) => (
               <React.Fragment key={bookedDate}>
                 <TableRow
-                  className="cursor-pointer bg-zinc-800/60 hover:bg-zinc-700/70"
+                  className="cursor-pointer bg-muted/60 hover:bg-muted/70"
                   onClick={() => toggleDate(bookedDate)}
                 >
-                  <TableCell colSpan={10} className="font-bold text-zinc-100">
+                  <TableCell colSpan={10} className="font-semibold text-foreground">
                     {expandedDates[bookedDate] ? "▼" : "▶"}{" "}
                     {new Date(bookedDate).toDateString()} ({bookings.length})
                   </TableCell>
@@ -4785,22 +4791,22 @@ function ListBooking() {
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -20 }}
                       transition={{ delay: idx * 0.05 }}
-                      className="hover:bg-zinc-800/60"
+                      className="hover:bg-muted/60"
                     >
-                      <TableCell className="text-zinc-200">{booking.bookedDate}</TableCell>
-                      <TableCell className="text-zinc-200">{booking.username}</TableCell>
+                      <TableCell className="text-foreground">{booking.bookedDate}</TableCell>
+                      <TableCell className="text-foreground">{booking.username}</TableCell>
                       <TableCell>{getStatusBadge(booking.status)}</TableCell>
-                      <TableCell className="text-zinc-300">{booking.id}</TableCell>
-                      <TableCell className="text-zinc-300">{booking.bookingDate}</TableCell>
-                      <TableCell className="text-zinc-300">{booking.bookingTime}</TableCell>
-                      <TableCell className="text-zinc-300">{booking.consoleType}</TableCell>
-                      <TableCell className="text-zinc-300">
+                      <TableCell className="text-muted-foreground">{booking.id}</TableCell>
+                      <TableCell className="text-muted-foreground">{booking.bookingDate}</TableCell>
+                      <TableCell className="text-muted-foreground">{booking.bookingTime}</TableCell>
+                      <TableCell className="text-muted-foreground">{booking.consoleType}</TableCell>
+                      <TableCell className="text-muted-foreground">
                         {booking.startTime ? formatTime(booking.startTime) : "Not started"}
                       </TableCell>
-                      <TableCell className="text-zinc-300">
+                      <TableCell className="text-muted-foreground">
                         {booking.endTime ? formatTime(booking.endTime) : "Not ended"}
                       </TableCell>
-                      <TableCell className="text-zinc-300">{booking.type}</TableCell>
+                      <TableCell className="text-muted-foreground">{booking.type}</TableCell>
                     </motion.tr>
                   ))}
               </React.Fragment>
@@ -4865,6 +4871,14 @@ function DashboardQuickBookingSlab({
     }
   }, [activeConsoles, onConsoleChange, quickConsole, selectedConsole])
 
+  // Follow console changes made outside the strip, such as a booking shortcut.
+  useEffect(() => {
+    if (selectedConsole && selectedConsole !== quickConsole && activeConsoles.some((item) => item.type === selectedConsole)) {
+      setQuickConsole(selectedConsole)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedConsole])
+
   const selectedConsoleItem =
     quickConsole
       ? activeConsoles.find((consoleItem) => consoleItem.type === quickConsole) || null
@@ -4903,7 +4917,7 @@ function DashboardQuickBookingSlab({
       <h2 className="dashboard-slab-title">Quick Booking</h2>
       <select aria-label="Quick booking date" value={today}
         onChange={event => { setChosenDate(event.target.value); onDateChange() }}
-        className="h-9 rounded-md border border-zinc-500/30 bg-background px-2 text-sm">
+        className="h-9 rounded-md border border-border bg-background px-2 text-sm">
         {(dates.length ? dates : [calendarToday]).map(date => <option key={date} value={date}>
           {date === calendarToday ? "Today" : date === getISTDateString(1) ? "Tomorrow" : date} · {date}
         </option>)}
@@ -5094,7 +5108,6 @@ const [isLoadingBookings, setIsLoadingBookings] = useState(false)
     try {
       console.time("⏱️ Total fetch time")
 
-      console.log("📡 Fetching consoles...")
       const cacheBust = forceFresh ? `?t=${Date.now()}` : ""
       const consolesUrl = `${BOOKING_URL}/api/getAllConsole/vendor/${resolvedVendorId}${cacheBust}`
       const consoleTypesUrl = `${BOOKING_URL}/api/console-types/vendor/${resolvedVendorId}${cacheBust}`
@@ -5168,7 +5181,6 @@ const [isLoadingBookings, setIsLoadingBookings] = useState(false)
         : Array.from(resolvedByType.values())
 
       if (consolesResolved.length === 0) {
-        console.log("⚠️ No consoles available")
         return { availableConsoles: [], allSlots: {}, selectedConsole, dates: [] }
       }
 
@@ -5176,9 +5188,7 @@ const [isLoadingBookings, setIsLoadingBookings] = useState(false)
       for (let i = 0; i < 3; i++) {
         dates.push(getISTDateString(i))
       }
-      console.log("📅 Dates to fetch:", dates)
 
-      console.log("📡 Fetching slots with BATCH API...")
       const nowTs = Date.now()
 
       let slotsData: { [key: string]: any[] } = {}
@@ -5194,10 +5204,8 @@ const [isLoadingBookings, setIsLoadingBookings] = useState(false)
           : allGameIds
         const batchDates = dates.map(d => d.replace(/-/g, ""))
 
-        console.log("🚀 Batch request:", { vendorId: resolvedVendorId, gameIds, dates: batchDates })
 
         const batchData = await fetchSlotsBatch(resolvedVendorId, gameIds, batchDates, forceFresh)
-        console.log("✅ Batch data received:", batchData)
 
         for (const [dateKey, slots] of Object.entries(batchData)) {
           const dateString = `${dateKey.slice(0, 4)}-${dateKey.slice(4, 6)}-${dateKey.slice(6, 8)}`
@@ -5315,7 +5323,6 @@ const fetchSlotBookings = async (slotIds: number[], date: string) => {
   
   setIsLoadingBookings(true)
   const normalizedDate = normalizeBookedDate(date)
-  console.log('🔍 Fetching bookings for slots:', slotIds, 'date:', normalizedDate)
   
   // ✅ Check if querying past slots
   const todayIST = getISTDateString(0)
@@ -5329,7 +5336,6 @@ const fetchSlotBookings = async (slotIds: number[], date: string) => {
     const url = `${BOOKING_URL}/api/vendor/${vendorId}/slot-bookings?slot_ids=${slotIdsParam}&date=${normalizedDate}${statusParam}`
     const data = await fetchWithDedup(url)
     if (requestId !== bookingsRequest.current) return
-    console.log('📥 Slot bookings response:', data)
 
     if (data?.success && data?.bookings) {
       const rawBookings = Array.isArray(data.bookings) ? data.bookings : []
@@ -5366,11 +5372,10 @@ const fetchSlotBookings = async (slotIds: number[], date: string) => {
 
       setSlotBookings(dedupedBookings)
       console.log(
-        `✅ Loaded ${dedupedBookings.length} unique ${isPastDate ? 'past' : 'active'} bookings (raw: ${rawBookings.length})`
+        `Loaded ${dedupedBookings.length} unique ${isPastDate ? 'past' : 'active'} bookings (raw: ${rawBookings.length})`
       )
     } else {
       setSlotBookings([])
-      console.log('📭 No bookings found')
     }
   } catch (error) {
     console.error('❌ Error fetching slot bookings:', error)
@@ -5452,7 +5457,6 @@ const fetchSlotBookings = async (slotIds: number[], date: string) => {
         if (!cachedBooking) {
           setIsLoading(false)
         }
-        console.log("✅ Booking data load complete")
       })
 
     return () => {
@@ -5535,6 +5539,45 @@ useEffect(() => {
     setShowBookingForm(false)
   }
 
+  // Booking shortcuts (Alt+Shift+key, set in Account Settings → Keyboard Shortcuts)
+  // open the booking form with that console type preselected.
+  const shortcutState = useRef({ availableConsoles, showBookingForm, selectedSlots })
+  shortcutState.current = { availableConsoles, showBookingForm, selectedSlots }
+  const openConsoleBooking = (type: string) => {
+    const { availableConsoles, showBookingForm, selectedSlots } = shortcutState.current
+    const consoleItem = availableConsoles.find((item) => item.type === type)
+    if (!consoleItem) {
+      toast.error("That console type has no bookable consoles right now.")
+      return
+    }
+    if (showBookingForm && selectedSlots.length > 0) {
+      toast.info("Finish or close the current booking before switching console.")
+      return
+    }
+    handleConsoleChange(type)
+    setShowBookingForm(true)
+  }
+  const openConsoleBookingRef = useRef(openConsoleBooking)
+  openConsoleBookingRef.current = openConsoleBooking
+
+  useEffect(() => {
+    const onBookConsole = (event: Event) => {
+      if (event.defaultPrevented) return // another booking workspace took it
+      const type = (event as CustomEvent<BookConsoleEventDetail>).detail?.type
+      if (!type) return
+      event.preventDefault()
+      openConsoleBookingRef.current(type)
+    }
+    window.addEventListener(BOOK_CONSOLE_EVENT, onBookConsole)
+    return () => window.removeEventListener(BOOK_CONSOLE_EVENT, onBookConsole)
+  }, [])
+
+  useEffect(() => {
+    if (availableConsoles.length === 0) return
+    const pending = takePendingConsoleBooking()
+    if (pending) openConsoleBookingRef.current(pending)
+  }, [availableConsoles])
+
   const handleBookingComplete = () => {
     setRecordsRevision(value => value + 1)
     setSelectedSlots([])
@@ -5548,8 +5591,8 @@ useEffect(() => {
     return (
       <main className={embedded ? "h-full min-h-0 bg-background flex items-center justify-center" : "min-h-screen bg-background flex items-center justify-center"}>
         <div className="text-center">
-          <Loader2 className="w-12 h-12 animate-spin text-blue-500 mx-auto mb-4" />
-          <p className="text-black dark:text-zinc-200">Loading slot data...</p>
+          <Loader2 className="w-12 h-12 animate-spin text-primary mx-auto mb-4" />
+          <p className="text-foreground">Loading slot data…</p>
         </div>
       </main>
     )
@@ -5563,8 +5606,8 @@ useEffect(() => {
         }`}
       >
         {isLoading && hasRenderableSnapshot && (
-          <div className="mb-2 flex items-center gap-2 rounded-md border border-zinc-700/60 bg-zinc-900/40 px-3 py-1.5 text-xs text-zinc-300">
-            <Loader2 className="h-3.5 w-3.5 animate-spin text-blue-400" />
+          <div className="mb-2 flex items-center gap-2 rounded-md border border-border bg-muted/40 px-3 py-1.5 text-xs text-muted-foreground">
+            <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />
             Syncing latest slots...
           </div>
         )}

@@ -268,7 +268,7 @@ export default function ManagePassesPage() {
     return (
       <div className="page-container">
         <div className="flex items-center justify-center py-8">
-          <Loader2 className="icon-lg animate-spin text-blue-400" />
+          <Loader2 className="icon-lg animate-spin text-primary" />
         </div>
       </div>
     );
@@ -287,8 +287,8 @@ export default function ManagePassesPage() {
                 onClick={() => setViewMode("grid")}
                 className={`inline-flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-semibold transition-all sm:text-sm ${
                   viewMode === "grid"
-                    ? "dashboard-module-tab-active bg-blue-500/12 text-zinc-900 shadow-sm dark:text-blue-100"
-                    : "text-zinc-600 hover:text-zinc-900 dark:text-zinc-300 dark:hover:text-blue-100"
+                    ? "dashboard-module-tab-active bg-primary/12 shadow-sm text-foreground"
+                    : "text-muted-foreground hover:text-foreground"
                 }`}
               >
                 <LayoutGrid className="icon-md" />
@@ -298,8 +298,8 @@ export default function ManagePassesPage() {
                 onClick={() => setViewMode("table")}
                 className={`inline-flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-semibold transition-all sm:text-sm ${
                   viewMode === "table"
-                    ? "dashboard-module-tab-active bg-blue-500/12 text-zinc-900 shadow-sm dark:text-blue-100"
-                    : "text-zinc-600 hover:text-zinc-900 dark:text-zinc-300 dark:hover:text-blue-100"
+                    ? "dashboard-module-tab-active bg-primary/12 shadow-sm text-foreground"
+                    : "text-muted-foreground hover:text-foreground"
                 }`}
               >
                 <TableIcon className="icon-md" />
@@ -328,11 +328,11 @@ export default function ManagePassesPage() {
         {/* ✅ Content */}
         {loading ? (
           <div className="flex items-center justify-center gap-3 py-8 text-muted-foreground">
-            <Loader2 className="w-8 h-8 animate-spin text-blue-400" />
-            <p className="body-text-muted">Loading passes...</p>
+            <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            <p className="body-text-muted">Loading passes…</p>
           </div>
         ) : passes.length === 0 ? (
-          <div className="gaming-panel dashboard-module-panel flex flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed border-blue-400/20 py-8">
+          <div className="gaming-panel dashboard-module-panel flex flex-col items-center justify-center gap-3 rounded-lg border-2 border-dashed border-border py-8">
             <BadgeCheck className="w-12 h-12 text-muted-foreground/30" />
             <h3 className="section-title text-muted-foreground/60">No passes found</h3>
             <p className="body-text-muted">Create your first pass to get started</p>
@@ -348,7 +348,7 @@ export default function ManagePassesPage() {
             <div>
               <div className="flex items-center gap-2 mb-4">
                 <div className="icon-blue p-1.5 rounded-lg">
-                  <Clock className="icon-md text-blue-400" />
+                  <Clock className="icon-md text-primary" />
                 </div>
                 <h2 className="section-title">Hour-Based Passes</h2>
                 <span className={badgeVariants({ variant: "info" })}>
@@ -423,13 +423,13 @@ function PassesTable({ passes, passTypes, onEdit, onDelete, deletingId }: any) {
           <thead className="dashboard-module-table-head">
             <tr>
               {["Pass Name", "Mode", "Price", "Validity", "Hours", "Actions"].map((h) => (
-                <th key={h} className="table-cell dashboard-module-table-header text-[11px] font-bold uppercase tracking-wider sm:text-xs">{h}</th>
+                <th key={h} className="table-cell dashboard-module-table-header text-xs font-semibold uppercase tracking-wider sm:text-xs">{h}</th>
               ))}
             </tr>
           </thead>
           <tbody>
             {passes.map((pass: CafePass) => (
-              <tr key={pass.id} className="table-row border-b border-blue-500/10 last:border-0">
+              <tr key={pass.id} className="table-row border-b border-border last:border-0">
 
                 {/* Name */}
                 <td className="table-cell">
@@ -444,10 +444,10 @@ function PassesTable({ passes, passTypes, onEdit, onDelete, deletingId }: any) {
                 {/* Mode badge */}
                 <td className="table-cell">
                   <span
-                    className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold border ${
+                    className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold border ${
                       pass.pass_mode === "hour_based"
-                        ? "border-blue-300/40 bg-blue-50 text-blue-700 dark:border-blue-500/20 dark:bg-blue-500/10 dark:text-blue-400"
-                        : "border-emerald-300/40 bg-emerald-50 text-emerald-700 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-400"
+                        ? "border-border bg-primary/10 text-primary"
+                        : "border-emerald-500/20 bg-emerald-500/10 text-emerald-400"
                     }`}
                   >
                     {pass.pass_mode === "hour_based" ? (
@@ -461,7 +461,7 @@ function PassesTable({ passes, passTypes, onEdit, onDelete, deletingId }: any) {
 
                 {/* Price */}
                 <td className="table-cell">
-                  <div className="flex items-center gap-0.5 font-bold text-blue-700 dark:text-blue-400">
+                  <div className="flex items-center gap-0.5 font-semibold text-primary">
                     <IndianRupee className="icon-md" />
                     <span>{pass.price}</span>
                   </div>
@@ -526,12 +526,12 @@ function PassCard({ pass, passTypes, onEdit, onDelete, deletingId }: any) {
 
   return (
     <Card className="dashboard-module-surface transition-all duration-200 hover:shadow-lg hover:shadow-blue-500/10">
-      <CardHeader className="flex flex-row items-start justify-between border-b border-blue-500/15 p-4">
+      <CardHeader className="flex flex-row items-start justify-between border-b border-border p-4">
         <div className="min-w-0 flex-1">
           <h2 className="card-title truncate">{pass.name}</h2>
           <div className="flex items-center gap-1.5 mt-1">
             {isHourBased ? (
-              <Clock className="w-3 h-3 text-blue-400 shrink-0" />
+              <Clock className="w-3 h-3 text-primary shrink-0" />
             ) : (
               <Calendar className="w-3 h-3 text-emerald-400 shrink-0" />
             )}
@@ -563,7 +563,7 @@ function PassCard({ pass, passTypes, onEdit, onDelete, deletingId }: any) {
         {/* Price + Validity row */}
         <div className="flex items-center justify-between">
           <div>
-            <div className="flex items-center gap-0.5 text-xl font-bold text-blue-700 dark:text-blue-400">
+            <div className="flex items-center gap-0.5 text-xl font-semibold text-primary">
               <IndianRupee className="w-4 h-4" />
               <span>{pass.price}</span>
             </div>
@@ -582,10 +582,10 @@ function PassCard({ pass, passTypes, onEdit, onDelete, deletingId }: any) {
         {/* Mode badge */}
         <div className="pt-2 border-t border-dashed border-border">
           <span
-            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold border ${
+            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold border ${
               isHourBased
-                ? "border-blue-300/40 bg-blue-50 text-blue-700 dark:border-blue-500/20 dark:bg-blue-500/10 dark:text-blue-400"
-                : "border-emerald-300/40 bg-emerald-50 text-emerald-700 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-400"
+                ? "border-border bg-primary/10 text-primary"
+                : "border-emerald-500/20 bg-emerald-500/10 text-emerald-400"
             }`}
           >
             {isHourBased ? (
@@ -679,12 +679,12 @@ function AddPassDialog({ passTypes, onSave, buttonClassName }: any) {
         </button>
       </DialogTrigger>
 
-      <DialogContent className="ui-dialog-surface w-[95vw] rounded-xl shadow-2xl sm:max-w-[520px]">
+      <DialogContent className="ui-dialog-surface w-[95vw] rounded-lg shadow-xl sm:max-w-[520px]">
         {/* Modal Header */}
-        <div className="border-b border-blue-500/20 px-1 pb-2">
-          <DialogTitle className="ui-dialog-title flex items-center gap-2 text-base font-bold tracking-wide sm:text-lg">
+        <div className="border-b border-border px-1 pb-2">
+          <DialogTitle className="ui-dialog-title flex items-center gap-2 text-base font-semibold tracking-wide sm:text-lg">
             <span className="feature-action-icon inline-flex h-8 w-8 items-center justify-center rounded-lg">
-              <PlusCircle className="h-4 w-4 text-blue-500 dark:text-blue-300" />
+              <PlusCircle className="h-4 w-4 text-primary" />
             </span>
             Add New Pass
           </DialogTitle>
@@ -722,8 +722,8 @@ function AddPassDialog({ passTypes, onSave, buttonClassName }: any) {
                 onClick={() => setPassMode("date_based")}
                 className={`flex flex-1 items-center justify-center gap-2 rounded-md px-3 py-2 text-xs font-semibold transition-all sm:text-sm ${
                   passMode === "date_based"
-                    ? "dashboard-module-tab-active bg-blue-500/12 text-zinc-900 shadow-sm dark:text-blue-100"
-                    : "text-zinc-600 hover:text-zinc-900 dark:text-zinc-300 dark:hover:text-blue-100"
+                    ? "dashboard-module-tab-active bg-primary/12 shadow-sm text-foreground"
+                    : "text-muted-foreground hover:text-foreground"
                 }`}
               >
                 <Calendar className="icon-md" />
@@ -734,8 +734,8 @@ function AddPassDialog({ passTypes, onSave, buttonClassName }: any) {
                 onClick={() => setPassMode("hour_based")}
                 className={`flex flex-1 items-center justify-center gap-2 rounded-md px-3 py-2 text-xs font-semibold transition-all sm:text-sm ${
                   passMode === "hour_based"
-                    ? "dashboard-module-tab-active bg-blue-500/12 text-zinc-900 shadow-sm dark:text-blue-100"
-                    : "text-zinc-600 hover:text-zinc-900 dark:text-zinc-300 dark:hover:text-blue-100"
+                    ? "dashboard-module-tab-active bg-primary/12 shadow-sm text-foreground"
+                    : "text-muted-foreground hover:text-foreground"
                 }`}
               >
                 <Clock className="icon-md" />
@@ -825,7 +825,7 @@ function AddPassDialog({ passTypes, onSave, buttonClassName }: any) {
           </div>
 
           {/* Footer Buttons */}
-          <div className="flex gap-3 border-t border-blue-500/20 pt-2">
+          <div className="flex gap-3 border-t border-border pt-2">
             <button
               type="button"
               onClick={() => setOpen(false)}
@@ -842,7 +842,7 @@ function AddPassDialog({ passTypes, onSave, buttonClassName }: any) {
               {isSubmitting ? (
                 <>
                   <Loader2 className="icon-md animate-spin" />
-                  Creating...
+                  Creating…
                 </>
               ) : (
                 <>
@@ -920,13 +920,13 @@ function EditPassDialog({ passObj, passTypes, onSave }: any) {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <button className={buttonVariants({ variant: "soft-success", size: "icon-sm" })} title="Edit">
-          <Pencil className="icon-md text-emerald-600 dark:text-emerald-400" />
+          <Pencil className="icon-md text-emerald-400" />
         </button>
       </DialogTrigger>
 
-      <DialogContent className="ui-dialog-surface w-[95vw] rounded-xl shadow-2xl sm:max-w-[480px]">
+      <DialogContent className="ui-dialog-surface w-[95vw] rounded-lg shadow-xl sm:max-w-[480px]">
         {/* Modal Header */}
-        <div className="border-b border-blue-500/20 px-1 pb-2">
+        <div className="border-b border-border px-1 pb-2">
           <DialogTitle className="section-title">Edit Pass</DialogTitle>
           <p className="body-text-muted mt-0.5">Update pass details</p>
         </div>
@@ -1012,7 +1012,7 @@ function EditPassDialog({ passObj, passTypes, onSave }: any) {
           </div>
 
           {/* Footer */}
-          <div className="flex gap-3 border-t border-blue-500/20 pt-2">
+          <div className="flex gap-3 border-t border-border pt-2">
             <button
               type="button"
               onClick={() => setOpen(false)}
@@ -1029,7 +1029,7 @@ function EditPassDialog({ passObj, passTypes, onSave }: any) {
               {isSubmitting ? (
                 <>
                   <Loader2 className="icon-md animate-spin" />
-                  Saving...
+                  Saving…
                 </>
               ) : (
                 "Save Changes"

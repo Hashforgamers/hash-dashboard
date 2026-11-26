@@ -174,7 +174,6 @@ export function ManageBooking() {
         retries: 2,
         dedupe: true,
       });
-      console.log(games);
       return games;
     } catch (error) {
       console.error("Error fetching games:", error);
@@ -267,7 +266,7 @@ export function ManageBooking() {
             initial="hidden"
             animate="visible"
             exit="exit"
-            className="relative bg-card rounded-lg shadow-lg p-6 border dark:border-zinc-800"
+            className="relative bg-card rounded-lg shadow-lg p-4 border border-border"
           >
             <div className="absolute inset-0 bg-background/60 rounded-lg " />
             <div className="relative">{renderForm()}</div>
@@ -311,7 +310,6 @@ function ChangeBookingForm() {
         timeoutMs: 10_000,
         retries: 1,
       });
-      console.log("Fetched Booking Data:", data);
 
       if (data.success && data.booking) {
         setIsSubmitted(false);
@@ -346,7 +344,6 @@ function ChangeBookingForm() {
         `${BOOKING_URL}/api/getSlots/vendor/${vendorId}/game/${consoleTypeId}/${date.replaceAll("-", "")}`,
         { timeoutMs: 10_000, retries: 1 }
       );
-      console.log("Fetched Slots Data:", data);
 
       if (data.slots) {
         setAvailableSlots(data.slots);
@@ -371,7 +368,6 @@ function ChangeBookingForm() {
           retries: 0,
         }
       );
-      console.log("Update Response:", result);
       if (result?.success !== false) {
         setIsSubmitted(true); // Mark as submitted
       } else {
@@ -517,7 +513,7 @@ function ChangeBookingForm() {
             {isUpdating ? (
               <>
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Updating...
+                Updating…
               </>
             ) : (
               "Update Booking"
@@ -570,7 +566,6 @@ function RejectBookingForm() {
         timeoutMs: 10_000,
         retries: 1,
       });
-      console.log("Fetched Booking Data:", data);
 
       if (data.success && data.booking) {
         setIsSubmitted(false);
@@ -634,7 +629,6 @@ function RejectBookingForm() {
       if (response?.success !== false) {
         // Handle successful rejection here
         setIsSubmitted(true); // Mark as submitted
-        console.log('Booking rejected');
       } else {
         // Handle error in rejection
         console.error('Error rejecting booking');
@@ -980,11 +974,11 @@ function ListBooking() {
 
   const getStatusBadge = (status: string) => {
     const variants = {
-      rejected: "bg-red-100 dark:bg-red-950",
-      confirmed: "bg-emerald-100 dark:bg-emerald-950",
+      rejected: "bg-red-950",
+      confirmed: "bg-emerald-950",
     };
     return (
-      <span className={`px-3 py-1 rounded-full ${variants[status] || 'bg-zinc-300 text-black dark:bg-zinc-700 dark:text-white'}`}>
+      <span className={`px-3 py-1 rounded-full ${variants[status] || 'bg-muted text-white'}`}>
         {status}
       </span>
     );
@@ -1046,7 +1040,7 @@ function ListBooking() {
             {Object.entries(groupedBookings).map(([bookedDate, bookings]) => (
               <React.Fragment key={bookedDate}>
                 <TableRow className="bg-muted/50 cursor-pointer" onClick={() => toggleDate(bookedDate)}>
-                  <TableCell colSpan={10} className="font-bold">
+                  <TableCell colSpan={10} className="font-semibold">
                     {expandedDates[bookedDate] ? "▼" : "▶"} {new Date(bookedDate).toDateString()} ({bookings.length})
                   </TableCell>
                 </TableRow>

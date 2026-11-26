@@ -120,7 +120,7 @@ export default function DeskRateEditor({ vendor, games, baseRate, title }: { ven
   const models = [...new Set(gameCards.map(card => card.definition.model_name))]
   const variants = [...new Set(gameCards.map(card => card.definition.game_variant).filter(Boolean))]
   const sizes = [...new Set(gameCards.map(card => card.definition.screen_size_inches).filter(Boolean))]
-  return <section className="space-y-4 rounded-xl border bg-card p-4">
+  return <section className="space-y-4 rounded-lg border bg-card p-4">
     <div className="flex flex-wrap items-center justify-between gap-3"><h2 className="font-semibold">{title || games.find(item => String(item.id) === game)?.game_name || "Device pricing"}</h2><span className="text-xs text-muted-foreground">{error ? "Pricing unavailable" : loading ? "Loading…" : savedMode === "variants" ? "Custom dashboard rates" : "Slot pricing"}</span></div>
     {games.length > 1 && <label className="block text-sm">Device<select className={input} value={game} onChange={e => { setGame(e.target.value); setDraft(null); setEditing(null); setModeDraft(null) }}>{games.map(item => <option key={item.id} value={item.id}>{item.game_name}</option>)}</select></label>}
     <label className="block text-sm">Dashboard pricing<select aria-label="Dashboard pricing rule" disabled={busy} className={`${input} mt-1 max-w-sm`} value={mode} onChange={async e => {

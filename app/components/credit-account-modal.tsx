@@ -177,7 +177,7 @@ export default function CreditAccountModal({ open, vendorId, customer, onClose, 
           onClick={onClose}
         >
           <motion.div
-            className="credit-account-modal w-full max-w-lg rounded-2xl border shadow-2xl"
+            className="credit-account-modal w-full max-w-lg rounded-lg border shadow-xl"
             initial={{ opacity: 0, y: 24, scale: 0.96 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 24, scale: 0.96 }}
@@ -185,12 +185,12 @@ export default function CreditAccountModal({ open, vendorId, customer, onClose, 
           >
             <div className="credit-account-modal-header flex items-start justify-between px-5 py-4">
               <div className="flex items-start gap-3">
-                <div className="slot-booking-modal-accent rounded-xl p-2">
+                <div className="slot-booking-modal-accent rounded-lg p-2">
                   <Wallet className="h-5 w-5" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold text-zinc-100">Create Credit Account</h3>
-                  <p className="text-sm text-zinc-400">Verify customer details and enable monthly credit.</p>
+                  <h3 className="text-lg font-semibold text-foreground">Create Credit Account</h3>
+                  <p className="text-sm text-muted-foreground">Verify customer details and enable monthly credit.</p>
                 </div>
               </div>
               <button onClick={onClose} className="slot-booking-modal-close rounded-md p-1">
@@ -200,28 +200,28 @@ export default function CreditAccountModal({ open, vendorId, customer, onClose, 
             <div className="space-y-4 px-5 py-4">
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div className="sm:col-span-2">
-                  <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-zinc-400">Customer Name</label>
-                  <input value={form.name} onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))} className="w-full rounded-lg border px-3 py-2 text-sm focus:border-blue-500 focus:outline-none" />
+                  <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-muted-foreground">Customer Name</label>
+                  <input value={form.name} onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))} className="w-full rounded-lg border px-3 py-2 text-sm focus:border-primary focus:outline-none" />
                 </div>
                 <div>
-                  <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-zinc-400">Phone</label>
-                  <input value={form.phone} onChange={(e) => setForm((p) => ({ ...p, phone: e.target.value }))} className="w-full rounded-lg border px-3 py-2 text-sm focus:border-blue-500 focus:outline-none" />
+                  <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-muted-foreground">Phone</label>
+                  <input value={form.phone} onChange={(e) => setForm((p) => ({ ...p, phone: e.target.value }))} className="w-full rounded-lg border px-3 py-2 text-sm focus:border-primary focus:outline-none" />
                 </div>
                 <div>
-                  <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-zinc-400">Email</label>
-                  <input value={form.email} onChange={(e) => setForm((p) => ({ ...p, email: e.target.value }))} className="w-full rounded-lg border px-3 py-2 text-sm focus:border-blue-500 focus:outline-none" />
+                  <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-muted-foreground">Email</label>
+                  <input value={form.email} onChange={(e) => setForm((p) => ({ ...p, email: e.target.value }))} className="w-full rounded-lg border px-3 py-2 text-sm focus:border-primary focus:outline-none" />
                 </div>
                 <div>
-                  <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-zinc-400">Credit Limit (₹)</label>
-                  <input type="number" min={0} value={form.credit_limit} onChange={(e) => setForm((p) => ({ ...p, credit_limit: e.target.value }))} className="w-full rounded-lg border px-3 py-2 text-sm focus:border-blue-500 focus:outline-none" />
+                  <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-muted-foreground">Credit Limit (₹)</label>
+                  <input type="number" min={0} value={form.credit_limit} onChange={(e) => setForm((p) => ({ ...p, credit_limit: e.target.value }))} className="w-full rounded-lg border px-3 py-2 text-sm focus:border-primary focus:outline-none" />
                 </div>
                 <div>
-                  <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-zinc-400">Billing Cycle Day</label>
-                  <input type="number" min={1} max={MAX_BILLING_CYCLE_DAY} value={form.billing_cycle_day} onChange={(e) => setForm((p) => ({ ...p, billing_cycle_day: e.target.value }))} className="w-full rounded-lg border px-3 py-2 text-sm focus:border-blue-500 focus:outline-none" />
+                  <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-muted-foreground">Billing Cycle Day</label>
+                  <input type="number" min={1} max={MAX_BILLING_CYCLE_DAY} value={form.billing_cycle_day} onChange={(e) => setForm((p) => ({ ...p, billing_cycle_day: e.target.value }))} className="w-full rounded-lg border px-3 py-2 text-sm focus:border-primary focus:outline-none" />
                 </div>
                 <div className="sm:col-span-2">
-                  <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-zinc-400">Notes</label>
-                  <textarea value={form.notes} onChange={(e) => setForm((p) => ({ ...p, notes: e.target.value }))} rows={3} className="w-full rounded-lg border px-3 py-2 text-sm focus:border-blue-500 focus:outline-none" placeholder="Optional notes" />
+                  <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-muted-foreground">Notes</label>
+                  <textarea value={form.notes} onChange={(e) => setForm((p) => ({ ...p, notes: e.target.value }))} rows={3} className="w-full rounded-lg border px-3 py-2 text-sm focus:border-primary focus:outline-none" placeholder="Optional notes" />
                 </div>
               </div>
               {error ? <div className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-300">{error}</div> : null}

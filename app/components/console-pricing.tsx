@@ -363,7 +363,7 @@ export default function ConsolePricing() {
             type: slug,
             name: displayName,
             icon: resolveConsoleIcon(typeof rawIcon === "string" ? rawIcon : undefined, slug),
-            color: "bg-blue-500/10",
+            color: "bg-primary/10",
             iconColor: resolveConsoleColor(slug),
             description: `${displayName} systems`,
           });
@@ -1272,17 +1272,17 @@ export default function ConsolePricing() {
   const iconButtonClass =
     buttonVariants({ variant: "soft-success", size: "icon-sm" });
   const tabButtonBaseClass =
-    "inline-flex shrink-0 items-center gap-2 rounded-md px-3 py-2 text-xs font-medium transition-colors focus-visible:ring-2 focus-visible:ring-blue-500";
+    "inline-flex shrink-0 items-center gap-2 rounded-md px-3 py-2 text-xs font-medium transition-colors focus-visible:ring-2 focus-visible:ring-primary";
   const activeTabButtonClass =
-    "bg-white text-blue-700 shadow-sm dark:bg-zinc-800 dark:text-blue-300";
+    "shadow-sm bg-muted text-primary";
   const inactiveTabButtonClass =
-    "text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100";
+    "text-muted-foreground hover:text-foreground";
   const pricingCardClass =
     "grid grid-cols-[minmax(0,1fr)_140px] items-center gap-x-4 gap-y-1 px-4 py-3 sm:grid-cols-[minmax(0,1fr)_180px]";
   const inputSurfaceClass =
-    "dashboard-module-input text-zinc-900 placeholder:text-zinc-400 focus-visible:ring-blue-400/60 dark:text-zinc-100 dark:placeholder:text-zinc-400";
+    "dashboard-module-input focus-visible:ring-primary/60 text-foreground placeholder:text-muted-foreground";
   const selectSurfaceClass =
-    "dashboard-module-input h-10 w-full rounded-md px-3 text-sm text-zinc-900 outline-none focus:ring-2 focus:ring-blue-400/60 dark:text-zinc-100";
+    "dashboard-module-input h-10 w-full rounded-md px-3 text-sm outline-none focus:ring-2 focus:ring-primary/60 text-foreground";
   const summaryCardClass = "dashboard-module-surface rounded-lg p-3";
   const squadOverview = (() => {
     const groups = Object.keys(squadPricing || {});
@@ -1311,7 +1311,7 @@ export default function ConsolePricing() {
         type: normalizedType,
         name: displayName,
         icon: resolveConsoleIcon(undefined, normalizedType),
-        color: "bg-blue-500/10",
+        color: "bg-primary/10",
         iconColor: resolveConsoleColor(normalizedType),
         description: `${displayName} systems`,
       } as ConsoleType;
@@ -1326,7 +1326,7 @@ export default function ConsolePricing() {
     <div className="console-pricing-page dashboard-module dashboard-typography relative flex h-full min-h-0 flex-col gap-3 overflow-y-auto overflow-x-hidden px-1 pb-2 sm:px-2">
       {feedback}
       {debugEnabled && (
-        <div className="pointer-events-none fixed left-20 top-3 z-[30060] rounded-md border border-blue-400/40 bg-zinc-950/90 px-2 py-1 text-[10px] text-blue-100">
+        <div className="pointer-events-none fixed left-20 top-3 z-[30060] rounded-md border border-primary/40 bg-card px-2 py-1 text-xs text-foreground">
           r:{renderCountRef.current} sync:{cacheSyncRunsRef.current} set:{priceStateSetCountRef.current}
         </div>
       )}
@@ -1363,7 +1363,7 @@ export default function ConsolePricing() {
           className="min-h-0 flex-1 overflow-y-auto pr-1"
         >
           {catalogError || basePricingError ? (
-            <div role="alert" className="flex items-center gap-3 rounded-lg border border-zinc-200 px-3 py-3 text-sm dark:border-zinc-800">
+            <div role="alert" className="flex items-center gap-3 rounded-lg border px-3 py-3 text-sm border-border">
               <span>Unable to load console pricing.</span>
               <button className={secondaryButtonClass} onClick={() => {
                 setCatalogAttempt((attempt) => attempt + 1);
@@ -1371,11 +1371,11 @@ export default function ConsolePricing() {
               }}>Retry</button>
             </div>
           ) : !vendorId || vendorId !== contextVendorId || catalogVendorId !== vendorId || pricesVendorId !== vendorId ? (
-            <div role="status" className="flex items-center gap-2 px-3 py-4 text-sm text-zinc-500 dark:text-zinc-400">
+            <div role="status" className="flex items-center gap-2 px-3 py-4 text-sm text-muted-foreground">
               <Loader2 className="h-4 w-4 animate-spin" /> Loading pricing…
             </div>
           ) : consoleTypes.length === 0 ? (
-            <p className="px-3 py-4 text-sm text-zinc-500">No consoles configured.</p>
+            <p className="px-3 py-4 text-sm text-muted-foreground">No consoles configured.</p>
           ) : (<>
           <div className="mb-3 flex flex-wrap gap-2" aria-label="Choose device pricing">
             {consoleTypes.map(console=><button key={console.type} type="button" aria-pressed={(pricingDevice || consoleTypes[0]?.type) === console.type} onClick={()=>setPricingDevice(console.type)} className={`rounded-lg border px-4 py-2 text-sm ${(pricingDevice || consoleTypes[0]?.type) === console.type ? "border-primary bg-primary/10 text-primary" : "text-muted-foreground"}`}>{console.name}</button>)}
@@ -1395,8 +1395,8 @@ export default function ConsolePricing() {
           </div>
 
           <div className="sticky bottom-2 z-10">
-            <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-zinc-200 bg-white px-3 py-2 dark:border-zinc-800 dark:bg-zinc-900">
-              <p className="text-xs text-zinc-600 dark:text-zinc-300">
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border px-3 py-2 border-border bg-card">
+              <p className="text-xs text-muted-foreground">
                 {editedConsoleCount > 0
                   ? `${editedConsoleCount} console${editedConsoleCount > 1 ? "s" : ""} edited`
                   : "No unsaved changes"}
@@ -1417,7 +1417,7 @@ export default function ConsolePricing() {
                   {isLoading ? (
                     <>
                       <Loader2 className="icon-md animate-spin" />
-                      Saving...
+                      Saving…
                     </>
                   ) : (
                     <>
@@ -1467,13 +1467,13 @@ export default function ConsolePricing() {
 
           {isLoadingControllerPricing ? (
             <div className="flex-1 flex flex-col items-center justify-center gap-3 text-muted-foreground">
-              <Loader2 className="w-10 h-10 animate-spin text-blue-400" />
-              <p className="body-text-muted">Loading controller pricing...</p>
+              <Loader2 className="w-10 h-10 animate-spin text-primary" />
+              <p className="body-text-muted">Loading controller pricing…</p>
             </div>
           ) : (
           <div className="min-h-0 flex-1 overflow-y-auto pr-1 space-y-3">
             {controllerConsoleTabs.length === 0 ? (
-              <div className="dashboard-module-surface rounded-lg border border-dashed border-blue-500/25 p-4 text-sm text-zinc-600 dark:text-zinc-300">
+              <div className="dashboard-module-surface rounded-lg border border-dashed border-border p-4 text-sm text-muted-foreground">
                 No controller-enabled console type found yet. Set controller policy in console catalog/inventory and refresh.
               </div>
             ) : null}
@@ -1488,8 +1488,8 @@ export default function ConsolePricing() {
                     onClick={() => setActiveControllerConsole(console.type)}
                     className={`inline-flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
                       isActive
-                        ? "dashboard-module-tab-active bg-blue-500/12 text-zinc-900 dark:text-blue-100"
-                        : "text-zinc-500 hover:text-zinc-900 dark:text-zinc-300 dark:hover:text-blue-100"
+                        ? "dashboard-module-tab-active bg-primary/12 text-foreground"
+                        : "text-muted-foreground hover:text-foreground"
                     }`}
                   >
                     <Icon className="h-4 w-4" />
@@ -1506,10 +1506,10 @@ export default function ConsolePricing() {
               const config = controllerPricing[console.type] || { base_price: 0, tiers: [] };
               const sortedTiers = [...config.tiers].sort((a, b) => a.quantity - b.quantity);
               return (
-                <Card key={console.type} className="dashboard-module-surface rounded-xl">
-                  <CardHeader className="border-b border-blue-500/15 pb-3">
+                <Card key={console.type} className="dashboard-module-surface rounded-lg">
+                  <CardHeader className="border-b border-border pb-3">
                     <div className="flex items-center gap-2">
-                      <Icon className="icon-md text-blue-300" />
+                      <Icon className="icon-md text-primary" />
                       <span className="card-title">{console.name}</span>
                     </div>
                   </CardHeader>
@@ -1592,7 +1592,7 @@ export default function ConsolePricing() {
                         {controllerPreviewQuantities.map((qty) => (
                           <div key={`${console.type}-${qty}`} className="dashboard-module-card rounded-md p-2">
                             <p className="body-text-muted">{qty} controller{qty > 1 ? "s" : ""}</p>
-                            <p className="stat-value text-zinc-900 dark:text-blue-100">₹{calculateControllerTotal(console.type, qty)}</p>
+                            <p className="stat-value text-foreground">₹{calculateControllerTotal(console.type, qty)}</p>
                           </div>
                         ))}
                       </div>
@@ -1614,7 +1614,7 @@ export default function ConsolePricing() {
               {isSavingControllerPricing ? (
                 <>
                   <Loader2 className="icon-md animate-spin" />
-                  Saving...
+                  Saving…
                 </>
               ) : (
                 <>
@@ -1638,7 +1638,7 @@ export default function ConsolePricing() {
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <h2 className="flex items-center gap-2 text-sm font-semibold text-foreground sm:text-base">
-                  <Users className="icon-md text-blue-300" />
+                  <Users className="icon-md text-primary" />
                   Squad pricing
                 </h2>
               </div>
@@ -1651,28 +1651,28 @@ export default function ConsolePricing() {
 
           <div className="grid shrink-0 grid-cols-2 gap-3 sm:grid-cols-4">
             <div className={summaryCardClass}>
-              <p className="text-[11px] uppercase tracking-[0.08em] text-zinc-500 dark:text-zinc-400">Consoles</p>
-              <p className="text-lg font-semibold text-zinc-900 dark:text-blue-100">{squadOverview.consoleCount}</p>
+              <p className="text-xs uppercase tracking-wide text-muted-foreground">Consoles</p>
+              <p className="text-lg font-semibold text-foreground">{squadOverview.consoleCount}</p>
             </div>
             <div className={summaryCardClass}>
-              <p className="text-[11px] uppercase tracking-[0.08em] text-zinc-500 dark:text-zinc-400">Slabs</p>
-              <p className="text-lg font-semibold text-zinc-900 dark:text-blue-100">{squadOverview.slabCount}</p>
+              <p className="text-xs uppercase tracking-wide text-muted-foreground">Slabs</p>
+              <p className="text-lg font-semibold text-foreground">{squadOverview.slabCount}</p>
             </div>
             <div className={summaryCardClass}>
-              <p className="text-[11px] uppercase tracking-[0.08em] text-zinc-500 dark:text-zinc-400">Avg Discount</p>
-              <p className="text-lg font-semibold text-zinc-900 dark:text-blue-100">{squadOverview.avgDiscount}%</p>
+              <p className="text-xs uppercase tracking-wide text-muted-foreground">Avg Discount</p>
+              <p className="text-lg font-semibold text-foreground">{squadOverview.avgDiscount}%</p>
             </div>
             <div className={summaryCardClass}>
-              <p className="text-[11px] uppercase tracking-[0.08em] text-zinc-500 dark:text-zinc-400">Top Discount</p>
-              <p className="text-lg font-semibold text-zinc-900 dark:text-blue-100">{squadOverview.highestDiscount}%</p>
+              <p className="text-xs uppercase tracking-wide text-muted-foreground">Top Discount</p>
+              <p className="text-lg font-semibold text-foreground">{squadOverview.highestDiscount}%</p>
             </div>
           </div>
 
           <div className="min-h-0 flex-1 overflow-y-auto pr-1">
             {isLoadingSquadPricing ? (
-              <div className="dashboard-module-surface flex h-full items-center justify-center rounded-xl p-6 text-zinc-600 dark:text-zinc-300">
-                <Loader2 className="mr-2 h-5 w-5 animate-spin text-blue-300" />
-                Loading squad rules...
+              <div className="dashboard-module-surface flex h-full items-center justify-center rounded-lg p-4 text-muted-foreground">
+                <Loader2 className="mr-2 h-5 w-5 animate-spin text-primary" />
+                Loading squad rules…
               </div>
             ) : (
               <div className="grid grid-cols-1 gap-3">
@@ -1690,16 +1690,16 @@ export default function ConsolePricing() {
                   const Icon = console.icon;
 
                   return (
-                    <Card key={`squad-${console.type}`} className="dashboard-module-surface overflow-hidden rounded-xl">
-                      <CardHeader className="border-b border-blue-500/15 bg-zinc-50 pb-3 dark:bg-zinc-900/55">
+                    <Card key={`squad-${console.type}`} className="dashboard-module-surface overflow-hidden rounded-lg">
+                      <CardHeader className="border-b border-border pb-3 bg-card">
                         <div className="flex items-center justify-between gap-2">
                           <div className="flex items-center gap-2">
-                            <div className="rounded-md bg-zinc-100 p-2 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400">
-                              <Icon className="icon-md text-blue-300" />
+                            <div className="rounded-md p-2 bg-muted text-muted-foreground">
+                              <Icon className="icon-md text-primary" />
                             </div>
                             <div>
                               <p className="card-title">{console.name}</p>
-                              <p className="text-xs text-zinc-600 dark:text-zinc-300">Base ₹{basePrice} per player</p>
+                              <p className="text-xs text-muted-foreground">Base ₹{basePrice} per player</p>
                             </div>
                           </div>
                           <button
@@ -1711,14 +1711,14 @@ export default function ConsolePricing() {
                             Add Slab
                           </button>
                         </div>
-                        <div className="mt-2 flex flex-wrap gap-2 text-[11px]">
-                          <span className="rounded-full border border-blue-300/40 bg-blue-50 px-2 py-1 text-blue-700 dark:border-blue-400/20 dark:bg-blue-500/10 dark:text-blue-200">
+                        <div className="mt-2 flex flex-wrap gap-2 text-xs">
+                          <span className="rounded-full border px-2 py-1 border-border bg-primary/10 text-primary">
                             {rules.length} slabs
                           </span>
-                          <span className="rounded-full border border-emerald-300/40 bg-emerald-50 px-2 py-1 text-emerald-700 dark:border-emerald-400/20 dark:bg-emerald-500/10 dark:text-emerald-200">
+                          <span className="rounded-full border px-2 py-1 border-emerald-400/20 bg-emerald-500/10 text-emerald-200">
                             max {maxPlayers} players
                           </span>
-                          <span className="rounded-full border border-purple-300/40 bg-purple-50 px-2 py-1 text-purple-700 dark:border-purple-400/20 dark:bg-purple-500/10 dark:text-purple-200">
+                          <span className="rounded-full border px-2 py-1 border-purple-400/20 bg-purple-500/10 text-purple-200">
                             top {round2(topDiscount)}%
                           </span>
                         </div>
@@ -1726,7 +1726,7 @@ export default function ConsolePricing() {
 
                       <CardContent className="space-y-3 p-4">
                         {rules.length === 0 ? (
-                          <div className="dashboard-module-card rounded-lg border border-dashed p-4 text-center text-sm text-zinc-600 dark:text-zinc-300">
+                          <div className="dashboard-module-card rounded-lg border border-dashed p-4 text-center text-sm text-muted-foreground">
                             No squad slabs configured for {console.name}.
                           </div>
                         ) : (
@@ -1761,7 +1761,7 @@ export default function ConsolePricing() {
                               return (
                                 <div
                                   key={`${group}-${rule.players}`}
-                                  className="dashboard-module-card rounded-lg p-2.5"
+                                  className="dashboard-module-card rounded-lg p-3"
                                 >
                                   <div className="grid grid-cols-1 gap-2 md:grid-cols-[110px_120px_180px_1fr_auto]">
                                     <div className="flex items-center gap-2">
@@ -1784,7 +1784,7 @@ export default function ConsolePricing() {
                                         onChange={(e) => updateSquadRule(group, rule.players, e.target.value)}
                                         className={`${inputSurfaceClass} h-8`}
                                       />
-                                      <span className="text-xs text-zinc-600 dark:text-zinc-300">%</span>
+                                      <span className="text-xs text-muted-foreground">%</span>
                                     </div>
 
                                     <div className="flex items-center gap-2">
@@ -1807,13 +1807,13 @@ export default function ConsolePricing() {
 
                                     <div className="dashboard-module-surface flex items-center justify-between rounded-md px-2 py-1.5 text-xs">
                                       <span
-                                        className={`text-zinc-600 dark:text-zinc-300 ${warningText ? "inline-flex items-center gap-1 text-amber-600 dark:text-amber-300" : ""}`}
+                                        className={`text-muted-foreground ${warningText ? "inline-flex items-center gap-1 text-amber-300" : ""}`}
                                         title={warningText || undefined}
                                       >
                                         {warningText ? <AlertTriangle className="h-3.5 w-3.5" /> : null}
                                         {warningText ? "Review" : "OK"}
                                       </span>
-                                      <span className="text-zinc-900 dark:text-blue-100">
+                                      <span className="text-foreground">
                                         Unit ₹{finalUnitAmount} x {rule.players} = ₹{finalTotalAmount}
                                       </span>
                                     </div>
@@ -1827,7 +1827,7 @@ export default function ConsolePricing() {
                                     </button>
                                   </div>
                                   {warningText && (
-                                    <p className="mt-1.5 text-[11px] text-amber-600 dark:text-amber-300">{warningText}</p>
+                                    <p className="mt-1.5 text-xs text-amber-300">{warningText}</p>
                                   )}
                                 </div>
                               );
@@ -1851,7 +1851,7 @@ export default function ConsolePricing() {
               {isSavingSquadPricing ? (
                 <>
                   <Loader2 className="icon-md animate-spin" />
-                  Saving Squad Rules...
+                  Saving Squad Rules…
                 </>
               ) : (
                 <>
@@ -1881,13 +1881,13 @@ export default function ConsolePricing() {
 
           {isLoadingTaxProfile ? (
             <div className="flex-1 flex items-center justify-center">
-              <Loader2 className="w-8 h-8 animate-spin text-blue-400" />
+              <Loader2 className="w-8 h-8 animate-spin text-primary" />
             </div>
           ) : (
             <div className="min-h-0 flex-1 overflow-y-auto pr-1">
-              <Card className="dashboard-module-surface rounded-xl">
+              <Card className="dashboard-module-surface rounded-lg">
                 <CardContent className="grid grid-cols-1 gap-3 p-4 sm:grid-cols-2">
-                  <label className="flex items-center gap-2 text-sm text-zinc-700 dark:text-zinc-200">
+                  <label className="flex items-center gap-2 text-sm text-foreground">
                     <input
                       type="checkbox"
                       checked={taxProfile.gst_registered}
@@ -1895,7 +1895,7 @@ export default function ConsolePricing() {
                     />
                     GST Registered
                   </label>
-                  <label className="flex items-center gap-2 text-sm text-zinc-700 dark:text-zinc-200">
+                  <label className="flex items-center gap-2 text-sm text-foreground">
                     <input
                       type="checkbox"
                       checked={taxProfile.gst_enabled}
@@ -1965,7 +1965,7 @@ export default function ConsolePricing() {
                     />
                   </div>
 
-                  <label className="flex items-center gap-2 text-sm text-zinc-700 dark:text-zinc-200 sm:col-span-2">
+                  <label className="flex items-center gap-2 text-sm text-foreground sm:col-span-2">
                     <input
                       type="checkbox"
                       checked={taxProfile.tax_inclusive}
@@ -1981,7 +1981,7 @@ export default function ConsolePricing() {
                   {isSavingTaxProfile ? (
                     <>
                       <Loader2 className="icon-md animate-spin" />
-                      Saving GST...
+                      Saving GST…
                     </>
                   ) : (
                     <>
@@ -2012,8 +2012,8 @@ export default function ConsolePricing() {
           </div>
 
           <div className="grid min-h-0 flex-1 grid-cols-1 gap-3 overflow-hidden xl:grid-cols-2">
-            <Card className="dashboard-module-surface min-h-0 rounded-xl">
-              <CardHeader className="border-b border-blue-500/15 pb-3">
+            <Card className="dashboard-module-surface min-h-0 rounded-lg">
+              <CardHeader className="border-b border-border pb-3">
                 <h3 className="card-title">Create / Update Credit Account</h3>
               </CardHeader>
               <CardContent className="space-y-3 p-4">
@@ -2068,7 +2068,7 @@ export default function ConsolePricing() {
                       className={inputSurfaceClass}
                     />
                   </div>
-                  <label className="flex items-center gap-2 text-sm text-zinc-700 dark:text-zinc-200">
+                  <label className="flex items-center gap-2 text-sm text-foreground">
                     <input
                       type="checkbox"
                       checked={creditForm.is_active}
@@ -2092,7 +2092,7 @@ export default function ConsolePricing() {
                   {isSavingCredit ? (
                     <>
                       <Loader2 className="icon-md animate-spin" />
-                      Saving...
+                      Saving…
                     </>
                   ) : (
                     <>
@@ -2104,14 +2104,14 @@ export default function ConsolePricing() {
               </CardContent>
             </Card>
 
-            <Card className="dashboard-module-surface min-h-0 rounded-xl">
-              <CardHeader className="border-b border-blue-500/15 pb-3">
+            <Card className="dashboard-module-surface min-h-0 rounded-lg">
+              <CardHeader className="border-b border-border pb-3">
                 <h3 className="card-title">Configured Accounts</h3>
               </CardHeader>
               <CardContent className="min-h-0 space-y-3 overflow-y-auto p-4">
                 {isLoadingCredit ? (
                   <div className="flex items-center justify-center py-8">
-                    <Loader2 className="w-6 h-6 animate-spin text-blue-400" />
+                    <Loader2 className="w-6 h-6 animate-spin text-primary" />
                   </div>
                 ) : monthlyCreditAccounts.length === 0 ? (
                   <p className="body-text-muted">No monthly credit account configured yet.</p>
@@ -2123,16 +2123,16 @@ export default function ConsolePricing() {
                         <div key={account.id} className="dashboard-module-card rounded-lg p-3">
                           <div className="flex items-center justify-between">
                             <div>
-                              <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">{user?.name || `User #${account.user_id}`}</p>
-                              <p className="text-xs text-zinc-600 dark:text-zinc-400">
+                              <p className="text-sm font-semibold text-foreground">{user?.name || `User #${account.user_id}`}</p>
+                              <p className="text-xs text-muted-foreground">
                                 Limit ₹{account.credit_limit} • Outstanding ₹{account.outstanding_amount}
                               </p>
-                              <p className="text-xs text-zinc-600 dark:text-zinc-400">
+                              <p className="text-xs text-muted-foreground">
                                 Cycle Day {account.billing_cycle_day} • Grace {account.grace_days} days
                               </p>
                             </div>
                             <div className="flex items-center gap-2">
-                              <span className={`text-[11px] font-semibold ${account.is_active ? "text-emerald-700 dark:text-emerald-300" : "text-red-700 dark:text-red-300"}`}>
+                              <span className={`text-xs font-semibold ${account.is_active ? "text-emerald-300" : "text-red-300"}`}>
                                 {account.is_active ? "Active" : "Inactive"}
                               </span>
                               <button
@@ -2151,10 +2151,10 @@ export default function ConsolePricing() {
 
                 {statementUserId && (
                   <div className="dashboard-module-surface rounded-lg p-3">
-                    <h4 className="text-sm font-semibold text-zinc-900 dark:text-blue-100">Statement for User #{statementUserId}</h4>
+                    <h4 className="text-sm font-semibold text-foreground">Statement for User #{statementUserId}</h4>
                     {isLoadingStatement ? (
                       <div className="py-4">
-                        <Loader2 className="w-5 h-5 animate-spin text-blue-400" />
+                        <Loader2 className="w-5 h-5 animate-spin text-primary" />
                       </div>
                     ) : statementRows.length === 0 ? (
                       <p className="body-text-muted mt-2">No ledger entries.</p>
@@ -2162,10 +2162,10 @@ export default function ConsolePricing() {
                       <div className="mt-2 max-h-56 overflow-y-auto space-y-1">
                         {statementRows.map((row) => (
                           <div key={row.id} className="dashboard-module-card flex items-center justify-between rounded px-2 py-1 text-xs">
-                            <span className="text-zinc-700 dark:text-zinc-300">{row.entry_type}</span>
-                            <span className="text-zinc-900 dark:text-zinc-200">₹{Number(row.amount || 0).toFixed(2)}</span>
-                            <span className="text-zinc-500 dark:text-zinc-400">{row.booked_date || "-"}</span>
-                            <span className="text-zinc-500 dark:text-zinc-400">Due: {row.due_date || "-"}</span>
+                            <span className="text-muted-foreground">{row.entry_type}</span>
+                            <span className="text-foreground">₹{Number(row.amount || 0).toFixed(2)}</span>
+                            <span className="text-muted-foreground">{row.booked_date || "-"}</span>
+                            <span className="text-muted-foreground">Due: {row.due_date || "-"}</span>
                           </div>
                         ))}
                       </div>

@@ -217,15 +217,12 @@ export function ConsoleList({ onEdit, refreshKey = 0 }: ConsoleListProps) {
         `${DASHBOARD_URL}/api/console/${vendorId}/${id}`
       );
       if (!response) {
-        console.log("something went wrong while deleting the data");
       } else {
-        console.log(response.data.message);
         setdata((prevData) => prevData.filter((item: any) => item.id !== id));
         setCachedConsoles(data.filter((item: any) => item.id !== id));
         toast.success("Console deleted");
       }
     } catch (error) {
-      console.log("something while wrong to delete the data", error);
       toast.error("Couldn't delete the console. Please try again.");
     } finally {
       setDeletingConsoleId(null);
@@ -297,7 +294,7 @@ export function ConsoleList({ onEdit, refreshKey = 0 }: ConsoleListProps) {
       <div className="flex min-h-[320px] items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <HashLoader size={60} />
-          <p className="text-xs text-muted-foreground">Loading consoles...</p>
+          <p className="text-xs text-muted-foreground">Loading consoles…</p>
         </div>
       </div>
     );
@@ -335,8 +332,8 @@ export function ConsoleList({ onEdit, refreshKey = 0 }: ConsoleListProps) {
                 aria-pressed={selectedGroup === group}
                 className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors sm:text-sm ${
                   selectedGroup === group
-                    ? "border-blue-400/55 bg-blue-500/10 text-zinc-900 dark:bg-blue-500/15 dark:text-blue-200"
-                    : "border-zinc-300 bg-white/80 text-zinc-700 hover:bg-zinc-100 dark:border-zinc-600/70 dark:bg-zinc-800/60 dark:text-zinc-300 dark:hover:bg-zinc-700/70"
+                    ? "border-primary/55 bg-primary/15 text-primary"
+                    : "border-border bg-muted/60 text-muted-foreground hover:bg-muted/70"
                 }`}
               >
                 <Icon className="h-3.5 w-3.5" />
@@ -355,7 +352,7 @@ export function ConsoleList({ onEdit, refreshKey = 0 }: ConsoleListProps) {
             return (
               <div key={group} className="space-y-2">
                 <div className="flex items-center gap-2 px-1">
-                  <GroupIcon className="h-4 w-4 text-zinc-700 dark:text-blue-300" />
+                  <GroupIcon className="h-4 w-4 text-primary" />
                   <h3 className="dash-title !text-sm">{typeMeta[group]?.label || group} Consoles</h3>
                   <span className={badgeVariants({ variant: "info" })}>
                     {consolesForGroup.length}
@@ -378,7 +375,7 @@ export function ConsoleList({ onEdit, refreshKey = 0 }: ConsoleListProps) {
                       <div className={styles.identity}>
                         <div className="flex min-w-0 flex-1 items-start gap-3">
                           <div className={styles.icon}>
-                            <console.icon className="h-7 w-7 text-zinc-700 dark:text-blue-300" />
+                            <console.icon className="h-7 w-7 text-primary" />
                           </div>
                           <div className="min-w-0 flex-1">
                             <h3 title={console.name} className="dash-title line-clamp-2 !text-base leading-tight">
@@ -421,8 +418,8 @@ export function ConsoleList({ onEdit, refreshKey = 0 }: ConsoleListProps) {
 
                         <div className={styles.status}>
                           <div className="flex items-center space-x-2">
-                            <Activity className="w-4 h-4 text-zinc-500 dark:text-zinc-400" />
-                            <span className="text-zinc-600 dark:text-zinc-400">Status</span>
+                            <Activity className="w-4 h-4 text-muted-foreground" />
+                            <span className="text-muted-foreground">Status</span>
                           </div>
                           {console.occupancyState === "occupied" ? (
                             <TooltipProvider>
@@ -524,52 +521,52 @@ export function ConsoleList({ onEdit, refreshKey = 0 }: ConsoleListProps) {
                       <div className={styles.specs}>
 <div className="grid grid-cols-[80px_minmax(0,1fr)] gap-x-4 gap-y-2 pt-3">
                           <div className="flex items-center space-x-2">
-                            <Building2 className="w-4 h-4 text-zinc-500 dark:text-zinc-400" />
-                            <span className="text-zinc-600 dark:text-zinc-400">Brand</span>
+                            <Building2 className="w-4 h-4 text-muted-foreground" />
+                            <span className="text-muted-foreground">Brand</span>
                           </div>
                           <span className="font-medium break-words text-foreground">{console.brand}</span>
 
                           {console.type === "pc" ? (
                             <>
                               <div className="flex items-center space-x-2">
-                                <Cpu className="w-4 h-4 text-zinc-500 dark:text-zinc-400" />
-                                <span className="text-zinc-600 dark:text-zinc-400">CPU</span>
+                                <Cpu className="w-4 h-4 text-muted-foreground" />
+                                <span className="text-muted-foreground">CPU</span>
                               </div>
                               <span className="font-medium break-words text-foreground">
                                 {console.processor || "N/A"}
                               </span>
 
                               <div className="flex items-center space-x-2">
-                                <Gpu className="w-4 h-4 text-zinc-500 dark:text-zinc-400" />
-                                <span className="text-zinc-600 dark:text-zinc-400">GPU</span>
+                                <Gpu className="w-4 h-4 text-muted-foreground" />
+                                <span className="text-muted-foreground">GPU</span>
                               </div>
                               <span className="font-medium break-words text-foreground">{console.gpu || "N/A"}</span>
 
                               <div className="flex items-center space-x-2">
-                                <Memory className="w-4 h-4 text-zinc-500 dark:text-zinc-400" />
-                                <span className="text-zinc-600 dark:text-zinc-400">RAM</span>
+                                <Memory className="w-4 h-4 text-muted-foreground" />
+                                <span className="text-muted-foreground">RAM</span>
                               </div>
-                              <span className="font-medium text-zinc-900 dark:text-zinc-100">{console.ram || "N/A"}</span>
+                              <span className="font-medium text-foreground">{console.ram || "N/A"}</span>
 
                               <div className="flex items-center space-x-2">
-                                <HardDrive className="w-4 h-4 text-zinc-500 dark:text-zinc-400" />
-                                <span className="text-zinc-600 dark:text-zinc-400">Storage</span>
+                                <HardDrive className="w-4 h-4 text-muted-foreground" />
+                                <span className="text-muted-foreground">Storage</span>
                               </div>
-                              <span className="font-medium text-zinc-900 dark:text-zinc-100">{console.storage || "N/A"}</span>
+                              <span className="font-medium text-foreground">{console.storage || "N/A"}</span>
                             </>
                           ) : (
                             <>
                               <div className="flex items-center space-x-2">
-                                <Gamepad className="w-4 h-4 text-zinc-500 dark:text-zinc-400" />
-                                <span className="text-zinc-600 dark:text-zinc-400">Variant</span>
+                                <Gamepad className="w-4 h-4 text-muted-foreground" />
+                                <span className="text-muted-foreground">Variant</span>
                               </div>
                               <span className="font-medium break-words text-foreground">{console.consoleModelType || "N/A"}{console.screenSizeInches ? ` · ${console.screenSizeInches}″ TV` : ""}</span>
 
                               <div className="flex items-center space-x-2">
-                                <HardDrive className="w-4 h-4 text-zinc-500 dark:text-zinc-400" />
-                                <span className="text-zinc-600 dark:text-zinc-400">Storage</span>
+                                <HardDrive className="w-4 h-4 text-muted-foreground" />
+                                <span className="text-muted-foreground">Storage</span>
                               </div>
-                              <span className="font-medium text-zinc-900 dark:text-zinc-100">{console.storage || "N/A"}</span>
+                              <span className="font-medium text-foreground">{console.storage || "N/A"}</span>
                             </>
                           )}
                         </div>

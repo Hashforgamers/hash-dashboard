@@ -14,6 +14,8 @@ import { useSocket } from "../context/SocketContext"
 import { useDashboardData } from "../context/DashboardDataContext"
 import { NotificationButton } from "../components/NotificationButton"
 import { CommandPalette } from "../components/command-palette"
+import { GamerProfileHost } from "../components/gamer-profile-host"
+import { BookingShortcuts } from "../components/booking-shortcuts"
 import { normalizeConsoleSlug, resolveConsoleColor, resolveConsoleIcon } from "../components/console-catalog"
 
 interface DashboardLayoutProps {
@@ -237,7 +239,7 @@ export function DashboardLayout({ children, contentScroll = "page" }: DashboardL
 
         {showSidebar && isNavOpen && (
           <div
-            className="fixed inset-0 z-[20020] bg-black/55 backdrop-blur-[1px] md:hidden"
+            className="fixed inset-0 z-[20020] md:hidden bg-black/60 backdrop-blur-sm"
             onClick={() => setIsNavOpen(false)}
           />
         )}
@@ -255,7 +257,7 @@ export function DashboardLayout({ children, contentScroll = "page" }: DashboardL
               children
             ) : !hasAccess ? (
               <div className="flex h-full min-h-[220px] items-center justify-center">
-                <div className="w-full max-w-xl rounded-lg border border-red-500/30 bg-red-500/10 p-6 text-center">
+                <div className="w-full max-w-xl rounded-lg border border-red-500/30 bg-red-500/10 p-4 text-center">
                   <h2 className="text-xl font-semibold text-red-200">Access Restricted</h2>
                   <p className="mt-2 text-sm text-red-100/80">
                     Your current role does not have permission to access this page.
@@ -264,7 +266,7 @@ export function DashboardLayout({ children, contentScroll = "page" }: DashboardL
               </div>
             ) : (
               <div className="flex h-full min-h-[220px] items-center justify-center">
-                <div className="w-full max-w-xl rounded-lg border border-amber-500/30 bg-amber-500/10 p-6 text-center">
+                <div className="w-full max-w-xl rounded-lg border border-amber-500/30 bg-amber-500/10 p-4 text-center">
                   <h2 className="text-xl font-semibold text-amber-200">{subscriptionUnavailable ? "Unable to verify subscription" : "Subscription access required"}</h2>
                   <p className="mt-2 text-sm text-amber-100/80">
                     {subscriptionUnavailable ? "Please retry the subscription check." : !hasPlanFeature ? "Upgrade to a plan that includes this feature." : subscriptionStatus?.message || "Renew your subscription to use this module."}
@@ -284,6 +286,7 @@ export function DashboardLayout({ children, contentScroll = "page" }: DashboardL
               </div>
             )}
           </main>
+          <GamerProfileHost />
 
           {showGlobalRibbon && (
             <div className="dashboard-nav-divider shrink-0 border-t px-3 py-1.5 sm:px-4 md:px-5">
@@ -323,6 +326,7 @@ export function DashboardLayout({ children, contentScroll = "page" }: DashboardL
                 </div>
                 <div className="ml-1 flex shrink-0 items-center gap-1.5">
                   <CommandPalette onRefresh={() => void handleManualRefresh()} />
+                  <BookingShortcuts />
                   <NotificationButton vendorId={vendorId} />
                   <button
                     type="button"

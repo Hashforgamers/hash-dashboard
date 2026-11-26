@@ -89,6 +89,23 @@ body {
     @apply border-border outline-ring/50;
   }
 
+  /* One focus treatment and control accent for every raw form control. */
+  input:not([type="checkbox"]):not([type="radio"]):focus-visible,
+  select:focus-visible,
+  textarea:focus-visible {
+    outline: 2px solid hsl(var(--ring) / 0.5);
+    outline-offset: 1px;
+  }
+  input[type="checkbox"],
+  input[type="radio"],
+  input[type="range"] {
+    accent-color: hsl(var(--primary));
+  }
+  ::placeholder {
+    color: hsl(var(--muted-foreground));
+    opacity: 1;
+  }
+
   h1,
   h2,
   h3,

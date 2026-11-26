@@ -8,28 +8,28 @@ export function TopBar() {
     <motion.div 
       initial={{ y: -20, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
-      className="border-b dark:border-zinc-700 shadow-sm"
+      className="border-b border-border shadow-sm"
     >
       <div className=" mx-auto px-4 py-3">
         <div className="flex items-center justify-between">
           <motion.h1 
             initial={{ x: -20, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
-            className="text-xl font-semibold  dark:text-zinc-100"
+            className="text-xl font-semibold text-foreground"
           >
             Welcome, John
           </motion.h1>
           <div className="flex items-center space-x-6">
             <div className="relative">
-              <Search data-search-icon="" aria-hidden="true" className="absolute left-3 top-1/2 transform -translate-y-1/2 text-zinc-500 dark:text-zinc-400 w-4 h-4" />
+              <Search data-search-icon="" aria-hidden="true" className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
               <input data-search-input=""
                 type="text"
                 placeholder="Search..."
-                className="bg-white/50 border border-zinc-300 rounded-full pl-10 pr-4 py-1.5 text-sm text-zinc-800 dark:bg-zinc-700/50 dark:text-zinc-100 dark:border-zinc-600 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 w-64 placeholder-zinc-500 dark:placeholder-zinc-400 transition-all duration-200 ease-in-out"
+                className="border rounded-full pl-10 pr-4 py-1.5 text-sm bg-muted/50 text-foreground border-border focus:outline-none focus:ring-2 focus:ring-ring/40 w-64 placeholder-muted-foreground transition-all duration-200 ease-in-out"
               />
             </div>
 
-            <select className="bg-zinc-100 dark:bg-zinc-700 rounded-full px-4 py-1.5 text-sm text-zinc-800 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-emerald-500/50">
+            <select className="bg-muted rounded-full px-4 py-1.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring/40">
               <option value="en">English</option>
               <option value="es">Español</option>
               <option value="fr">Français</option>
@@ -39,7 +39,7 @@ export function TopBar() {
               whileHover={{ scale: 1.1 }}
               className="relative cursor-pointer"
             >
-              <Bell className="w-5 h-5 text-zinc-500 dark:text-zinc-400" />
+              <Bell className="w-5 h-5 text-muted-foreground" />
               <span className="absolute -top-1 -right-1 w-4 h-4 bg-emerald-500 text-white rounded-full text-xs flex items-center justify-center">3</span>
             </motion.div>
 
@@ -47,7 +47,7 @@ export function TopBar() {
               whileHover={{ scale: 1.1 }}
               className="relative cursor-pointer"
             >
-              <MessageSquare className="w-5 h-5 text-zinc-500 dark:text-zinc-400" />
+              <MessageSquare className="w-5 h-5 text-muted-foreground" />
               <span className="absolute -top-1 -right-1 w-4 h-4 bg-emerald-500 text-white rounded-full text-xs flex items-center justify-center">2</span>
             </motion.div>
           </div>

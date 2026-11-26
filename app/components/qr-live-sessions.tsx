@@ -87,10 +87,10 @@ export default function QrLiveSessions({onCount,onLoadState,layout="cards",searc
         const progress = s.minutes>0 ? elapsed/(s.minutes*60)*100 : 0;
         const scheduleTime = (value:string|null) => value ? showClock(new Date(value)) : 'Starting…';
         const cells=<>
-          <td className="px-3 py-3 md:px-4"><div className="flex items-center gap-2"><div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-500/20 text-xs font-semibold text-emerald-300">{(s.gamer_name||'Guest').slice(0,2).toUpperCase()}</div><div><p className="live-session-customer-name text-sm font-semibold text-blue-300">{s.gamer_name}</p><span className="text-xs text-zinc-400">Self QR · {s.kind==='owner_credit'?'Owner-approved':'Cafe wallet'}</span></div></div></td>
-          <td className="px-3 py-3 md:px-4"><div className="flex items-center gap-2 text-sm"><Monitor className="h-4 w-4 text-blue-300"/>PC {s.console_number}</div></td>
+          <td className="px-3 py-3 md:px-4"><div className="flex items-center gap-2"><div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-500/20 text-xs font-semibold text-emerald-300">{(s.gamer_name||'Guest').slice(0,2).toUpperCase()}</div><div><p className="live-session-customer-name text-sm font-semibold text-primary">{s.gamer_name}</p><span className="text-xs text-muted-foreground">Self QR · {s.kind==='owner_credit'?'Owner-approved':'Cafe wallet'}</span></div></div></td>
+          <td className="px-3 py-3 md:px-4"><div className="flex items-center gap-2 text-sm"><Monitor className="h-4 w-4 text-primary"/>PC {s.console_number}</div></td>
           <td className="px-3 py-3 md:px-4"><span className="whitespace-nowrap text-sm">{scheduleTime(s.started_at)} – {scheduleTime(s.ends_at)}</span></td>
-          <td className="px-3 py-3 md:px-4">{s.state==='reserved'?<span className="text-xs text-zinc-400">—</span>:<LiveSessionTiming elapsed={elapsed} remaining={remaining} progress={progress} overtime={playing&&remaining===0}/>}</td>
+          <td className="px-3 py-3 md:px-4">{s.state==='reserved'?<span className="text-xs text-muted-foreground">—</span>:<LiveSessionTiming elapsed={elapsed} remaining={remaining} progress={progress} overtime={playing&&remaining===0}/>}</td>
           <td className="px-3 py-3 md:px-4"><LiveSessionDue starting={s.state==='reserved'} overtime={s.ends_at ? Math.max(0, Math.floor((now-Date.parse(s.ends_at))/1000)) : 0}/></td>
           <td className="px-3 py-3 md:px-4 text-xs">
           {request&&<div className="mt-2 border-t pt-2"><p>Request: {request.minutes} min · {rupees(request.amount)} payable after play</p><p>Expires {showClock(new Date(request.expires_at))}</p>

@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { GamerName } from "@/app/components/gamer-profile-host";
 import { CalendarDays, Loader2, RotateCw, SlidersHorizontal, ChevronDown } from "lucide-react"
 import { BOOKING_URL } from "@/src/config/env"
 import { Button } from "@/components/ui/button"
@@ -14,6 +15,7 @@ interface BookingRecord {
   booking_id: number | string
   device?: string
   booking_fid: string
+  user_id?: number | null
   customer_name: string
   customer_phone?: string
   booking_date: string | null
@@ -78,10 +80,10 @@ export default function BookingRecords({ vendorId, refreshKey = 0 }: { vendorId:
       <div className={styles.recordsHeader}>
         <div className="flex items-center justify-between gap-3">
           <div>
-            <h3 className="flex items-center gap-2 text-base font-semibold"><CalendarDays className="h-4 w-4 text-blue-400" />Booking records <span className="text-xs font-normal text-muted-foreground">({loading ? "…" : total.toLocaleString("en-IN")})</span></h3>
+            <h3 className="flex items-center gap-2 text-base font-semibold"><CalendarDays className="h-4 w-4 text-primary" />Booking records <span className="text-xs font-normal text-muted-foreground">({loading ? "…" : total.toLocaleString("en-IN")})</span></h3>
 
           </div>
-          <div className="flex items-center gap-2">{vendorId && <HistoryImport key={vendorId} vendor={vendorId} />}<Button variant="outline" size="sm" aria-expanded={filtersOpen} aria-controls="booking-record-filters" onClick={() => setFiltersOpen(value => !value)}><SlidersHorizontal className="mr-2 h-3.5 w-3.5" />Filters{Object.values(applied).some(Boolean) && <span className="ml-2 h-1.5 w-1.5 rounded-full bg-blue-400" />}<ChevronDown className={`ml-2 h-3.5 w-3.5 ${filtersOpen ? "rotate-180" : ""}`} /></Button><Button variant="ghost" size="icon" aria-label="Refresh booking records" disabled={loading || !vendorId} onClick={() => setRevision(value => value + 1)}><RotateCw className="h-4 w-4" /></Button></div>
+          <div className="flex items-center gap-2">{vendorId && <HistoryImport key={vendorId} vendor={vendorId} />}<Button variant="outline" size="sm" aria-expanded={filtersOpen} aria-controls="booking-record-filters" onClick={() => setFiltersOpen(value => !value)}><SlidersHorizontal className="mr-2 h-3.5 w-3.5" />Filters{Object.values(applied).some(Boolean) && <span className="ml-2 h-1.5 w-1.5 rounded-full bg-primary" />}<ChevronDown className={`ml-2 h-3.5 w-3.5 ${filtersOpen ? "rotate-180" : ""}`} /></Button><Button variant="ghost" size="icon" aria-label="Refresh booking records" disabled={loading || !vendorId} onClick={() => setRevision(value => value + 1)}><RotateCw className="h-4 w-4" /></Button></div>
         </div>
         <form id="booking-record-filters" hidden={!filtersOpen} className={filtersOpen ? styles.filters : "hidden"} onSubmit={event => { event.preventDefault(); if (!invalidDates) { setPage(1); setApplied({ ...filters }); setFiltersOpen(false) } }}>
           {([["date_from", "From date", "date"], ["date_to", "To date", "date"], ["time_from", "Starts after", "time"], ["time_to", "Starts before", "time"]] as const).map(([key, label, type]) => (
@@ -101,13 +103,13 @@ export default function BookingRecords({ vendorId, refreshKey = 0 }: { vendorId:
       <div className={styles.recordsBody} aria-busy={loading}>
         {loading ? <div role="status" className="flex items-center justify-center gap-2 p-10 text-sm text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" />Loading records…</div>
           : error ? <div role="alert" className="p-8 text-center text-sm"><p>{error}</p><Button variant="outline" className="mt-3" onClick={() => setRevision(value => value + 1)}>Retry</Button></div>
-          : rows.length === 0 ? <div className="p-10 text-center"><p className="text-sm font-medium">{vendorId ? "No booking records found" : "Select a cafe to view booking records"}</p><p className="text-[11px] leading-4 text-muted-foreground">{vendorId ? "Try a wider date or time range, or reset the filters to see all records." : "Booking history will appear here once a cafe is selected."}</p></div>
+          : rows.length === 0 ? <div className="p-10 text-center"><p className="text-sm font-medium">{vendorId ? "No booking records found" : "Select a cafe to view booking records"}</p><p className="text-xs leading-4 text-muted-foreground">{vendorId ? "Try a wider date or time range, or reset the filters to see all records." : "Booking history will appear here once a cafe is selected."}</p></div>
           : <table className={styles.recordsTable}>
             <thead className="text-xs text-muted-foreground"><tr>{["Booking", "Customer", "Date & time (IST)", "Status", "Extras", "Amount paid"].map(label => <th key={label} className="px-4 py-3 font-medium last:text-right">{label}</th>)}</tr></thead>
             <tbody>{rows.map(row => <tr key={row.booking_id} className="border-t border-border hover:bg-muted/30">
-              <td className="px-4 py-3 font-medium text-blue-300">{row.booking_fid || `#BK-${row.booking_id}`}</td>
-              <td className="px-4 py-3"><div className="font-medium">{row.customer_name}</div><div className="text-[11px] leading-4 text-muted-foreground">{row.customer_phone || row.device}</div></td>
-              <td className="whitespace-nowrap px-4 py-3"><div>{row.booking_date ? new Date(`${row.booking_date.slice(0, 10)}T12:00:00`).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : "Date unavailable"}</div><div className="text-[11px] leading-4 text-muted-foreground">{showClock(row.slot_start_time, "—")} – {showClock(row.slot_end_time, "—")}</div></td>
+              <td className="px-4 py-3 font-medium text-primary">{row.booking_fid || `#BK-${row.booking_id}`}</td>
+              <td className="px-4 py-3"><GamerName userId={row.user_id} name={row.customer_name} booking={{ bookingId: row.booking_id, phone: row.customer_phone || null, status: row.status }} className="font-medium" /><div className="text-xs leading-4 text-muted-foreground">{row.customer_phone || row.device}</div></td>
+              <td className="whitespace-nowrap px-4 py-3"><div>{row.booking_date ? new Date(`${row.booking_date.slice(0, 10)}T12:00:00`).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : "Date unavailable"}</div><div className="text-xs leading-4 text-muted-foreground">{showClock(row.slot_start_time, "—")} – {showClock(row.slot_end_time, "—")}</div></td>
               <td className="px-4 py-3"><span className={`inline-block whitespace-nowrap rounded-full px-2.5 py-1 text-xs capitalize ${["cancelled", "rejected"].includes(row.status) ? "bg-red-500/10 text-red-400" : ["confirmed", "checked_in"].includes(row.status) ? "bg-emerald-500/10 text-emerald-400" : "bg-muted text-muted-foreground"}`}>{(row.status || "Unknown").replaceAll("_", " ")}</span></td>
               <td className="max-w-[200px] px-4 py-3 text-xs text-muted-foreground">{row.meal_selection || "—"}</td>
               <td className="px-4 py-3 text-right font-medium tabular-nums">{Number(row.amount_paid || 0).toLocaleString("en-IN", { style: "currency", currency: "INR" })}</td>

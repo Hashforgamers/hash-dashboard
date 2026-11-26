@@ -1,6 +1,7 @@
 import { checkoutButtonClass, releaseButtonClass, retryButtonClass } from "./live-session-actions";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { isFlexBooking } from "@/lib/flex-booking";
 import { badgeVariants } from "@/components/ui/badge";
 import { LiveSessionTiming } from "./live-session-timing";
 import { httpJson } from "@/lib/http-client";
@@ -20,6 +21,7 @@ import ExtraBookingOverlay from "./extraBookingOverlay";
 import MealDetailsModal from "./mealsDetailmodal";
 import { useSocket } from "../context/SocketContext";
 import { useTimeFormat } from "@/app/hooks/useTimeFormat";
+import { BookingQuickView } from "./booking-quick-view";
 
 // Keep all your existing helper functions unchanged
 const formatTime = (seconds: number) => {
@@ -291,7 +293,7 @@ const historyStatusLabel = (status: string, booking?: any) => {
 const getConsoleVisual = (consoleType: string) => {
   const value = String(consoleType || "").toLowerCase();
   if (value.includes("ps") || value.includes("playstation") || value.includes("sony")) {
-    return { icon: Gamepad2, className: "text-blue-500" };
+    return { icon: Gamepad2, className: "text-primary" };
   }
   if (value.includes("xbox") || value.includes("microsoft")) {
     return { icon: Gamepad2, className: "text-emerald-500" };
@@ -300,9 +302,9 @@ const getConsoleVisual = (consoleType: string) => {
     return { icon: Headset, className: "text-purple-400" };
   }
   if (value.includes("pc") || value.includes("computer") || value.includes("desktop")) {
-    return { icon: Monitor, className: "text-blue-400" };
+    return { icon: Monitor, className: "text-primary" };
   }
-  return { icon: Monitor, className: "text-zinc-300" };
+  return { icon: Monitor, className: "text-muted-foreground" };
 };
 
 const getBookingPhone = (booking: any): string => {
@@ -564,7 +566,6 @@ const normalizeLiveSlot = (slot: any) => {
 
 const releaseSlot = async (consoleType: string, gameId: string, consoleId: string, vendorId: any, setRefreshSlots: any) => {
   try {
-    console.log('🔄 Client: Calling release API for console:', consoleId);
     const response = await fetch(`${DASHBOARD_URL}/api/releaseDevice/consoleTypeId/${gameId}/console/${consoleId}/vendor/${vendorId}`, {
       method: "POST",
       headers: creditAuthHeaders(),
@@ -572,7 +573,6 @@ const releaseSlot = async (consoleType: string, gameId: string, consoleId: strin
     });
     if (response.ok) {
       const payload = await response.json().catch(() => ({}));
-      console.log('✅ Client: Release API call successful');
       setRefreshSlots((prev: boolean) => !prev);
       if (typeof window !== "undefined") {
         window.dispatchEvent(new CustomEvent("refresh-dashboard"));
@@ -758,7 +758,6 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
     const handleMealAdded = (event: CustomEvent) => {
       const { bookingId } = event.detail || {};
       if (bookingId) {
-        console.log('🍽️ Meal added event received for booking:', bookingId);
         setBookingMealStatus(prev => ({
           ...prev,
           [String(bookingId)]: true
@@ -1134,7 +1133,7 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                 }`}
               />
               <div className="relative flex-1 sm:flex-none">
-                <Search data-search-icon="" aria-hidden="true" className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-zinc-400 sm:h-4 sm:w-4" />
+                <Search data-search-icon="" aria-hidden="true" className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground sm:h-4 sm:w-4" />
                 <input data-search-input=""
                   type="text"
                   value={searchQuery}
@@ -1199,34 +1198,34 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                         key={`live-mobile-${uniqueKey}`}
                         initial={{ opacity: 0, y: 8 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="dashboard-module-card rounded-xl p-3"
+                        className="dashboard-module-card rounded-lg p-3"
                       >
                         <div className="flex items-start justify-between gap-2">
                           <div className="min-w-0 flex-1">
                             <button
                               type="button"
                               onClick={() => setContactOverlay({ open: true, booking })}
-                              className="truncate text-sm font-semibold text-zinc-100 underline decoration-dotted underline-offset-2 hover:text-blue-200 transition-colors"
-                              title="View customer contact details"
+                              className="truncate text-sm font-semibold text-foreground underline decoration-dotted underline-offset-2 hover:text-primary transition-colors"
+                              title="View booking and gamer details"
                             >
                               {booking.username || "Guest"}
                             </button>
                             {bookingPhone && (
-                              <p className="truncate text-xs text-zinc-400">{bookingPhone}</p>
+                              <p className="truncate text-xs text-muted-foreground">{bookingPhone}</p>
                             )}
-                            <p className="truncate text-xs text-zinc-400">
+                            <p className="truncate text-xs text-muted-foreground">
                               {booking.consoleType || "Gaming Console"} · {showClock(booking.startTime, "N/A")} – {showClock(booking.endTime, "N/A")}
                             </p>
                             <PcConfirmation status={pcConfirmations.get(bookingIdToCheck)} />
                           </div>
                           <div className="flex max-w-[48%] flex-wrap items-center justify-end gap-1 sm:max-w-none">
                             {squadEnabled && (
-                              <span className="rounded-full border border-blue-400/40 bg-blue-500/15 px-2 py-0.5 text-[10px] font-semibold text-blue-200 sm:text-[11px]">
+                              <span className="rounded-full border border-primary/40 bg-primary/15 px-2 py-0.5 text-xs font-semibold text-primary sm:text-xs">
                                 Squad x{squadPlayerCount}
                               </span>
                             )}
                             {hasMeals && (
-                              <span className="rounded-full border border-emerald-400/40 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold text-emerald-200 sm:text-[11px]">
+                              <span className="rounded-full border border-emerald-400/40 bg-emerald-500/10 px-2 py-0.5 text-xs font-semibold text-emerald-200 sm:text-xs">
                                 Meals Added
                               </span>
                             )}
@@ -1313,7 +1312,7 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                 </div>
               ) : qrSessionCount > 0 || qrLoadState!=='ready' ? null : (
                 <div className="dashboard-module-empty flex h-full flex-col items-center justify-center py-8">
-                  <Search className="h-8 w-8 text-zinc-600" />
+                  <Search className="h-8 w-8 text-muted-foreground" />
                   <p className="text-sm font-medium">No active sessions</p>
                   {!isConnected && <p className="text-xs">Check connection</p>}
                 </div>
@@ -1463,7 +1462,7 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                                         type="button"
                                         onClick={() => setContactOverlay({ open: true, booking })}
                                         className="live-session-customer-name truncate text-left font-semibold text-foreground underline-offset-2 hover:underline"
-                                        title="View customer contact details"
+                                        title="View booking and gamer details"
                                       >
                                         {booking.username || 'Guest'}
                                       </button>
@@ -1485,7 +1484,7 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                                     )}
                                   </div>
                                   {squadEnabled && squadMemberNames.length > 0 && (
-                                    <div className="text-xs text-zinc-400">
+                                    <div className="text-xs text-muted-foreground">
                                       {squadMemberNames.join(", ")}
                                       {squadPlayerCount - squadMemberNames.length > 0
                                         ? ` +${squadPlayerCount - squadMemberNames.length}`
@@ -1524,15 +1523,15 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                                       </span>
                                     </motion.button>
                                     {isPcSquad && sortedSquadMembers.length > 0 && mealPickerBookingId === bookingIdToCheck && (
-                                      <div className="absolute right-0 top-full z-20 mt-1 w-48 rounded-md border border-blue-500/30 bg-zinc-900/95 p-2 shadow-xl">
-                                        <div className="text-xs font-semibold uppercase tracking-wide text-blue-300">Add/View Meal For</div>
+                                      <div className="absolute right-0 top-full z-20 mt-1 w-48 rounded-md border border-border bg-card p-2 shadow-xl">
+                                        <div className="text-xs font-semibold uppercase tracking-wide text-primary">Add/View Meal For</div>
                                         <select
                                           value={String(selectedMealMemberPos || "")}
                                           onChange={(e) => {
                                             const value = Number(e.target.value || 0);
                                             setMealPickerMemberPosByBooking((prev) => ({ ...prev, [bookingIdToCheck]: value }));
                                           }}
-                                          className="mt-1 w-full rounded border border-zinc-600 bg-zinc-800 px-2 py-1 text-xs text-zinc-100"
+                                          className="mt-1 w-full rounded border border-border bg-muted px-2 py-1 text-xs text-foreground"
                                         >
                                           {sortedSquadMembers.map((member: any, idx: number) => {
                                             const name = String(member?.name || `Player ${member?.member_position || idx + 1}`);
@@ -1608,15 +1607,15 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                                       </span>
                                     </motion.button>
                                     {isPcSquad && sortedSquadMembers.length > 0 && mealPickerBookingId === bookingIdToCheck && (
-                                      <div className="absolute right-0 top-full z-20 mt-1 w-48 rounded-md border border-blue-500/30 bg-zinc-900/95 p-2 shadow-xl">
-                                        <div className="text-xs font-semibold uppercase tracking-wide text-blue-300">Add Meal For</div>
+                                      <div className="absolute right-0 top-full z-20 mt-1 w-48 rounded-md border border-border bg-card p-2 shadow-xl">
+                                        <div className="text-xs font-semibold uppercase tracking-wide text-primary">Add Meal For</div>
                                         <select
                                           value={String(selectedMealMemberPos || "")}
                                           onChange={(e) => {
                                             const value = Number(e.target.value || 0);
                                             setMealPickerMemberPosByBooking((prev) => ({ ...prev, [bookingIdToCheck]: value }));
                                           }}
-                                          className="mt-1 w-full rounded border border-zinc-600 bg-zinc-800 px-2 py-1 text-xs text-zinc-100"
+                                          className="mt-1 w-full rounded border border-border bg-muted px-2 py-1 text-xs text-foreground"
                                         >
                                           {sortedSquadMembers.map((member: any, idx: number) => {
                                             const name = String(member?.name || `Player ${member?.member_position || idx + 1}`);
@@ -1660,7 +1659,7 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                                           key={`${bookingIdToCheck}-sys-member-${entry.idx}`}
                                           className="flex items-center justify-between gap-2 text-xs sm:text-sm"
                                         >
-                                          <div className={`truncate inline-flex items-center ${idx === 0 ? "text-zinc-100" : "text-zinc-300"}`}>
+                                          <div className={`truncate inline-flex items-center ${idx === 0 ? "text-foreground" : "text-muted-foreground"}`}>
                                             {idx === 0 && (() => {
                                               const visual = getConsoleVisual(booking.consoleType || "");
                                               const Icon = visual.icon;
@@ -1682,7 +1681,7 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                                                   [bookingIdToCheck]: !rowExpanded,
                                                 }));
                                               }}
-                                              className="px-1 py-0.5 text-blue-200 hover:text-blue-100"
+                                              className="px-1 py-0.5 text-primary hover:text-foreground"
                                               title={rowExpanded ? "Show less" : "Show all"}
                                             >
                                               {rowExpanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
@@ -1692,7 +1691,7 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                                       ))}
                                   </div>
                                 ) : squadEnabled ? (
-                                  <div className="text-xs text-blue-200">Extra Controllers: {appliedControllerQty}</div>
+                                  <div className="text-xs text-primary">Extra Controllers: {appliedControllerQty}</div>
                                 ) : (
                                   <div className="flex items-center space-x-1 sm:space-x-2">
                                     {(() => {
@@ -1702,7 +1701,7 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                                         <Icon className={`w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0 ${visual.className}`} />
                                       );
                                     })()}
-                                    <span className="truncate text-xs text-zinc-100 sm:text-sm">
+                                    <span className="truncate text-xs text-foreground sm:text-sm">
                                       {booking.consoleType || 'Gaming Console'}
                                     </span>
                                   </div>
@@ -1714,6 +1713,7 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                             {/* Time cell - unchanged */}
                             <td className="px-3 py-3 md:px-4">
                               <span className="whitespace-nowrap text-sm text-foreground">{showClock(booking.startTime, '—')} – {showClock(booking.endTime, '—')}</span>
+                              {isFlexBooking(booking) && <span className="ml-1.5 rounded border border-border px-1 text-[10px] font-medium uppercase text-muted-foreground" title="Custom start time: exact minutes, not slot times">Custom</span>}
                             </td>
 
                             {/* Progress cell - enhanced */}
@@ -1789,13 +1789,13 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                     </AnimatePresence>
                   ) : qrSessionCount > 0 || qrLoadState!=='ready' ? null : (
                     <tr>
-                      <td colSpan={6} className="px-4 py-10 text-center text-zinc-400">
+                      <td colSpan={6} className="px-4 py-10 text-center text-muted-foreground">
                         <motion.div
                           initial={{ opacity: 0 }}
                           animate={{ opacity: 1 }}
                           className="flex flex-col items-center space-y-2"
                         >
-                          <Search className="h-7 w-7 text-zinc-600 sm:h-8 sm:w-8" />
+                          <Search className="h-7 w-7 text-muted-foreground sm:h-8 sm:w-8" />
                           <p className="text-xs sm:text-sm font-medium">No active sessions</p>
                           {!isConnected && <p className="text-xs">Check connection</p>}
                         </motion.div>
@@ -1811,7 +1811,7 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
             <div className="dashboard-table-shell flex-1 min-h-0">
               {historyLoading ? (
                 <div className="dashboard-module-empty flex h-full flex-col items-center justify-center">
-                  <p className="text-sm font-medium">Loading history...</p>
+                  <p className="text-sm font-medium">Loading history…</p>
                 </div>
               ) : filteredHistoryBookings.length === 0 ? (
                 <div className="dashboard-module-empty flex h-full flex-col items-center justify-center">
@@ -1829,21 +1829,21 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                       return (
                         <div
                           key={`history-mobile-${b.bookingId || i}-${b.date}`}
-                          className="dashboard-module-card rounded-xl p-3"
+                          className="dashboard-module-card rounded-lg p-3"
                         >
                           <div className="flex items-center justify-between gap-2">
                             <div className="min-w-0">
-                              <p className="truncate text-sm font-semibold text-zinc-100">{b.username || "Guest"}</p>
+                              <button type="button" onClick={() => setContactOverlay({ open: true, booking: b })} className="truncate text-left text-sm font-semibold text-foreground underline-offset-2 hover:underline">{b.username || "Guest"}</button>
                               {bookingPhone && (
-                                <p className="truncate text-xs text-zinc-400">{bookingPhone}</p>
+                                <p className="truncate text-xs text-muted-foreground">{bookingPhone}</p>
                               )}
-                              <p className="truncate text-xs text-zinc-300">{systemText}</p>
+                              <p className="truncate text-xs text-muted-foreground">{systemText}</p>
                             </div>
-                            <span className={`rounded-full border px-2 py-0.5 text-[11px] capitalize ${historyStatusChipClass(normalizedStatus)}`}>
+                            <span className={`rounded-full border px-2 py-0.5 text-xs capitalize ${historyStatusChipClass(normalizedStatus)}`}>
                               {statusLabel}
                             </span>
                           </div>
-                          <div className="mt-2 space-y-1 text-xs text-zinc-400">
+                          <div className="mt-2 space-y-1 text-xs text-muted-foreground">
                             <p>Time: {b.time ? showRange(b.time) : "Time not available"}</p>
                             <p>Date: {formatHistoryDateLabel(b.date)}</p>
                             <p>Booking: {b.bookingId ? `#${b.bookingId}` : "-"}</p>
@@ -1863,7 +1863,7 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                           <th
                             key={heading}
                             scope="col"
-                            className="dashboard-module-table-header px-3 py-3 text-left text-[11px] font-semibold uppercase tracking-wider md:px-4"
+                            className="dashboard-module-table-header px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider md:px-4"
                           >
                             {heading}
                           </th>
@@ -1879,19 +1879,19 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                         return (
                           <tr key={`${b.bookingId || i}-${b.date}`} className="dashboard-module-row transition-colors">
                             <td className="px-3 py-3 md:px-4">
-                              <div className="text-sm font-semibold text-zinc-100">{b.username || "Guest"}</div>
+                              <button type="button" onClick={() => setContactOverlay({ open: true, booking: b })} className="text-left text-sm font-semibold text-foreground underline-offset-2 hover:underline">{b.username || "Guest"}</button>
                               {bookingPhone && (
-                                <div className="text-xs text-zinc-400 inline-flex items-center gap-1">
+                                <div className="text-xs text-muted-foreground inline-flex items-center gap-1">
                                   <Phone className="h-3 w-3" />
                                   <span>{bookingPhone}</span>
                                 </div>
                               )}
-                              <div className="text-xs text-zinc-400">{b.bookingId ? `#${b.bookingId}` : "-"}</div>
+                              <div className="text-xs text-muted-foreground">{b.bookingId ? `#${b.bookingId}` : "-"}</div>
                             </td>
-                            <td className="px-3 py-3 md:px-4 text-xs text-zinc-100">{systemText}</td>
-                            <td className="px-3 py-3 md:px-4 text-xs text-zinc-300">{b.time ? showRange(b.time) : "Time not available"}</td>
-                            <td className="px-3 py-3 md:px-4 text-xs text-zinc-300">Ended</td>
-                            <td className="px-3 py-3 md:px-4 text-xs text-zinc-300">{formatHistoryDateLabel(b.date)}</td>
+                            <td className="px-3 py-3 md:px-4 text-xs text-foreground">{systemText}</td>
+                            <td className="px-3 py-3 md:px-4 text-xs text-muted-foreground">{b.time ? showRange(b.time) : "Time not available"}</td>
+                            <td className="px-3 py-3 md:px-4 text-xs text-muted-foreground">Ended</td>
+                            <td className="px-3 py-3 md:px-4 text-xs text-muted-foreground">{formatHistoryDateLabel(b.date)}</td>
                             <td className="px-3 py-3 md:px-4">
                               <span className={`rounded-full border px-2 py-0.5 text-xs capitalize ${historyStatusChipClass(normalizedStatus)}`}>
                                 {statusLabel}
@@ -1925,71 +1925,23 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
             document.body
           )}
 
-          {contactOverlay.open && (
-            <div
-              className="fixed inset-0 z-[1100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
-              onClick={() => setContactOverlay({ open: false, booking: null })}
-            >
-              <div
-                className="w-full max-w-md rounded-xl border border-blue-500/30 bg-zinc-950 shadow-2xl"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <div className="flex items-center justify-between border-b border-blue-500/20 px-4 py-3">
-                  <h3 className="text-sm font-semibold uppercase tracking-[0.08em] text-blue-200">Customer Contact</h3>
-                  <button
-                    type="button"
-                    onClick={() => setContactOverlay({ open: false, booking: null })}
-                    className="rounded-md border border-zinc-600 px-2 py-1 text-xs text-zinc-300 hover:bg-zinc-800"
-                  >
-                    Close
-                  </button>
-                </div>
-                <div className="space-y-3 px-4 py-4 text-sm">
-                  <div className="rounded-lg border border-zinc-700/80 bg-zinc-900/70 p-3">
-                    <p className="text-xs uppercase tracking-wide text-zinc-400">Name</p>
-                    <p className="mt-1 font-semibold text-zinc-100">
-                      {contactOverlay.booking?.username || "Guest User"}
-                    </p>
-                  </div>
-                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                    <div className="min-w-0 rounded-lg border border-zinc-700/80 bg-zinc-900/70 p-3">
-                      <p className="text-xs uppercase tracking-wide text-zinc-400">Phone</p>
-                      <p className="mt-1 inline-flex items-center gap-1 text-zinc-100">
-                        <Phone className="h-3 w-3" />
-                        <span>{getBookingPhone(contactOverlay.booking) || "-"}</span>
-                      </p>
-                    </div>
-                    <div className="min-w-0 rounded-lg border border-zinc-700/80 bg-zinc-900/70 p-3">
-                      <p className="text-xs uppercase tracking-wide text-zinc-400">Email</p>
-                      <p className="mt-1 flex min-w-0 items-start gap-1 text-zinc-100">
-                        <Mail className="mt-0.5 h-3 w-3 shrink-0" />
-                        <span className="break-all">{getBookingEmail(contactOverlay.booking) || "-"}</span>
-                      </p>
-                    </div>
-                    <div className="min-w-0 rounded-lg border border-zinc-700/80 bg-zinc-900/70 p-3">
-                      <p className="text-xs uppercase tracking-wide text-zinc-400">User ID</p>
-                      <p className="mt-1 text-zinc-100">
-                        {contactOverlay.booking?.userId || contactOverlay.booking?.user_id || "-"}
-                      </p>
-                    </div>
-                    <div className="min-w-0 rounded-lg border border-zinc-700/80 bg-zinc-900/70 p-3">
-                      <p className="text-xs uppercase tracking-wide text-zinc-400">Booking ID</p>
-                      <p className="mt-1 text-zinc-100">
-                        {contactOverlay.booking?.bookingId || contactOverlay.booking?.bookId || "-"}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="rounded-lg border border-zinc-700/80 bg-zinc-900/70 p-3">
-                    <p className="text-xs uppercase tracking-wide text-zinc-400">Session</p>
-                    <p className="mt-1 text-zinc-100">
-                      {contactOverlay.booking?.consoleType || "Console"} • {showClock(contactOverlay.booking?.startTime, "N/A")} – {showClock(contactOverlay.booking?.endTime, "N/A")}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
+          {contactOverlay.open && contactOverlay.booking && (
+            <BookingQuickView
+              open
+              onClose={() => setContactOverlay({ open: false, booking: null })}
+              userId={contactOverlay.booking.userId || contactOverlay.booking.user_id}
+              booking={{
+                bookingId: contactOverlay.booking.bookingId || contactOverlay.booking.bookId,
+                name: contactOverlay.booking.username || "Guest User",
+                phone: getBookingPhone(contactOverlay.booking) || null,
+                email: getBookingEmail(contactOverlay.booking) || null,
+                console: contactOverlay.booking.consoleType || null,
+                when: contactOverlay.booking.startTime ? `${showClock(contactOverlay.booking.startTime)} – ${contactOverlay.booking.endTime ? showClock(contactOverlay.booking.endTime) : "open"}` : null,
+                status: contactOverlay.booking.status || null,
+              }}
+            />
           )}
-          
+
           {/* ✅ Ensure meal overlay is attached to document body (mobile-safe, no clipping) */}
           {isMounted &&
             createPortal(

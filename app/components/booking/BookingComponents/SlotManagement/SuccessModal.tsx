@@ -19,11 +19,11 @@ export const SuccessModal = ({
   onClose
 }: SuccessModalProps) => {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
       <motion.div
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="max-w-md w-full bg-white dark:bg-zinc-800 rounded-2xl shadow-2xl p-8 text-center"
+        className="max-w-md w-full bg-muted rounded-lg shadow-xl p-4 text-center"
       >
         <motion.div
           initial={{ scale: 0 }}
@@ -31,38 +31,38 @@ export const SuccessModal = ({
           transition={{ type: 'spring', stiffness: 200, damping: 20 }}
           className="w-16 h-16 mx-auto mb-6 rounded-full bg-emerald-500/15 flex items-center justify-center border border-emerald-400/30"
         >
-          <CheckCircle className="w-8 h-8 text-emerald-600 dark:text-emerald-300" />
+          <CheckCircle className="w-8 h-8 text-emerald-300" />
         </motion.div>
 
-        <h2 className="text-2xl font-bold text-zinc-800 dark:text-white mb-3">
+        <h2 className="text-2xl font-semibold text-white mb-3">
           Booking Confirmed!
         </h2>
-        <p className="text-zinc-600 dark:text-zinc-300 mb-6">
+        <p className="text-muted-foreground mb-6">
           Your slot booking has been successfully created.
         </p>
 
-        <div className="bg-emerald-50 dark:bg-emerald-900/20 rounded-lg p-4 mb-6 text-left">
+        <div className="bg-emerald-900/20 rounded-lg p-4 mb-6 text-left">
           <div className="flex justify-between items-center py-2">
-            <span className="text-zinc-600 dark:text-zinc-400">Console Type:</span>
-            <span className="font-medium text-zinc-800 dark:text-white">
+            <span className="text-muted-foreground">Console Type:</span>
+            <span className="font-medium text-white">
               {selectedSlots[0]?.console_name}
             </span>
           </div>
           <div className="flex justify-between items-center py-2">
-            <span className="text-zinc-600 dark:text-zinc-400">Slots:</span>
-            <span className="font-medium text-zinc-800 dark:text-white">{selectedSlots.length}</span>
+            <span className="text-muted-foreground">Slots:</span>
+            <span className="font-medium text-white">{selectedSlots.length}</span>
           </div>
           <div className="flex justify-between items-center py-2">
-            <span className="text-zinc-600 dark:text-zinc-400">Meals & Extras:</span>
-            <span className="font-medium text-zinc-800 dark:text-white">
+            <span className="text-muted-foreground">Meals & Extras:</span>
+            <span className="font-medium text-white">
               {selectedMeals.length === 0
                 ? 'None'
                 : selectedMeals.map(meal => `${meal.name} (${meal.quantity})`).join(', ')}
             </span>
           </div>
-          <div className="flex justify-between items-center py-2 border-t border-emerald-200 dark:border-emerald-700">
-            <span className="text-zinc-600 dark:text-zinc-400">Total Amount:</span>
-            <span className="font-bold text-emerald-600 text-xl">₹{totalAmount}</span>
+          <div className="flex justify-between items-center py-2 border-t border-emerald-700">
+            <span className="text-muted-foreground">Total Amount:</span>
+            <span className="font-semibold text-emerald-600 text-xl">₹{totalAmount}</span>
           </div>
         </div>
 

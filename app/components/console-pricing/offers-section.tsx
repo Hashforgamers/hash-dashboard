@@ -58,7 +58,7 @@ export function OffersSection({
       transition={{ duration: 0.2 }}
       className="flex flex-1 min-h-0 flex-col gap-3 overflow-hidden"
     >
-      <div className="gaming-panel shrink-0 flex flex-wrap items-center justify-between gap-3 rounded-xl p-3">
+      <div className="gaming-panel shrink-0 flex flex-wrap items-center justify-between gap-3 rounded-lg p-3">
         <div className="flex items-center gap-3">
           <h2 className="section-title">Offers</h2>
 
@@ -67,8 +67,8 @@ export function OffersSection({
               onClick={() => setViewMode("grid")}
               className={`p-1.5 rounded-md transition-all ${
                 viewMode === "grid"
-                  ? "dashboard-module-tab-active bg-blue-500/12 text-zinc-900 shadow-sm dark:text-blue-100"
-                  : "text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-blue-100"
+                  ? "dashboard-module-tab-active bg-primary/12 shadow-sm text-foreground"
+                  : "text-muted-foreground hover:text-foreground"
               }`}
               title="Grid View"
             >
@@ -78,8 +78,8 @@ export function OffersSection({
               onClick={() => setViewMode("table")}
               className={`p-1.5 rounded-md transition-all ${
                 viewMode === "table"
-                  ? "dashboard-module-tab-active bg-blue-500/12 text-zinc-900 shadow-sm dark:text-blue-100"
-                  : "text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-blue-100"
+                  ? "dashboard-module-tab-active bg-primary/12 shadow-sm text-foreground"
+                  : "text-muted-foreground hover:text-foreground"
               }`}
               title="Table View"
             >
@@ -96,11 +96,11 @@ export function OffersSection({
 
       {isLoadingOffers ? (
         <div className="flex-1 flex flex-col items-center justify-center gap-3 text-muted-foreground">
-          <Loader2 className="w-10 h-10 animate-spin text-blue-400" />
-          <p className="body-text-muted">Loading offers...</p>
+          <Loader2 className="w-10 h-10 animate-spin text-primary" />
+          <p className="body-text-muted">Loading offers…</p>
         </div>
       ) : offers.length === 0 ? (
-        <div className="flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-zinc-300 py-8 dark:border-zinc-700">
+        <div className="flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed py-8 border-border">
           <Sparkles className="w-6 h-6 text-muted-foreground" />
           <h3 className="section-title text-muted-foreground/60">No active offers yet</h3>
           <button onClick={() => setShowOfferForm(true)} className={`${secondaryButtonClass} mt-2`}>
@@ -118,14 +118,14 @@ export function OffersSection({
                 key={offer.id}
                 className="dashboard-module-surface flex flex-col transition-all duration-200 hover:shadow-lg hover:shadow-blue-500/10"
               >
-                <CardHeader className="flex flex-row items-start justify-between border-b border-blue-500/15 p-4">
+                <CardHeader className="flex flex-row items-start justify-between border-b border-border p-4">
                   <div className="min-w-0 flex-1 pr-2">
                     <h2 className="card-title truncate">{offer.offer_name}</h2>
                     <div className="flex items-center gap-1.5 mt-1">
-                      <Icon className="w-3 h-3 text-blue-400 shrink-0" />
-                      <span className="table-header-text text-zinc-700 dark:text-blue-100/80">{offer.console_type}</span>
+                      <Icon className="w-3 h-3 text-primary shrink-0" />
+                      <span className="table-header-text text-foreground">{offer.console_type}</span>
                       {offer.is_currently_active && (
-                        <span className="flex items-center gap-1 rounded border border-emerald-300/40 bg-emerald-50 px-1.5 py-0.5 text-[9px] font-bold text-emerald-700 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-300">
+                        <span className="flex items-center gap-1 rounded border px-1.5 py-0.5 text-xs font-semibold border-emerald-500/20 bg-emerald-500/10 text-emerald-300">
                           <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse" />
                           LIVE
                         </span>
@@ -154,11 +154,11 @@ export function OffersSection({
                 <CardContent className="p-4 space-y-3">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="stat-value-large text-blue-700 dark:text-blue-400">₹{offer.offered_price}</p>
+                      <p className="stat-value-large text-primary">₹{offer.offered_price}</p>
                       <p className="table-header-text mt-0.5">Offer Rate</p>
                     </div>
                     <div className="text-right">
-                      <p className="text-sm text-zinc-500 line-through dark:text-zinc-400">₹{offer.default_price}</p>
+                      <p className="text-sm line-through text-muted-foreground">₹{offer.default_price}</p>
                       <span className={cn(badgeVariants({ variant: "success" }), "mt-1")}>
                         {offer.discount_percentage}% OFF
                       </span>
@@ -167,13 +167,13 @@ export function OffersSection({
 
                   <div className="border-t border-dashed border-border pt-3 space-y-1.5">
                     <div className="flex items-center gap-2 body-text-muted">
-                      <Calendar className="icon-md text-blue-400/70 shrink-0" />
+                      <Calendar className="icon-md text-primary shrink-0" />
                       <span>
                         {offer.start_date} → {offer.end_date}
                       </span>
                     </div>
                     <div className="flex items-center gap-2 body-text-muted">
-                      <Clock className="icon-md text-blue-400/70 shrink-0" />
+                      <Clock className="icon-md text-primary shrink-0" />
                       <span>
                         {showClock(offer.start_time)} – {showClock(offer.end_time)}
                       </span>

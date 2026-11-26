@@ -26,7 +26,6 @@ export const useUserSuggestions = (vendorId: number | null, isOpen: boolean) => 
           
           if (Date.now() - timestamp < CACHE_DURATION) {
             setUserList(data)
-            console.log('✅ Using cached user data')
             return
           }
         } catch (err) {
@@ -44,7 +43,6 @@ export const useUserSuggestions = (vendorId: number | null, isOpen: boolean) => 
           timestamp: Date.now()
         }))
         
-        console.log('✅ User data fetched and cached')
       } catch (error) {
         console.error('❌ Error loading users:', error)
       }

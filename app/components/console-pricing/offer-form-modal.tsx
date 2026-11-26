@@ -40,14 +40,14 @@ export function OfferFormModal({
   if (!showOfferForm) return null;
 
   return (
-    <div className="fixed inset-0 z-[30050] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-[30050] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
       <motion.div
         initial={{ scale: 0.95, opacity: 0, y: 10 }}
         animate={{ scale: 1, opacity: 1, y: 0 }}
         transition={{ duration: 0.2 }}
-        className="ui-dialog-surface w-full max-w-md overflow-hidden rounded-xl shadow-2xl"
+        className="ui-dialog-surface w-full max-w-md overflow-hidden rounded-lg shadow-xl"
       >
-            <div className="flex items-center justify-between border-b border-blue-500/20 px-5 py-4">
+            <div className="flex items-center justify-between border-b border-border px-5 py-4">
               <h2 className="card-title">{editingOffer ? "Edit Promotion" : "Create New Promotion"}</h2>
               <button
                 onClick={() => {
@@ -152,7 +152,7 @@ export function OfferFormModal({
               </div>
             </div>
 
-            <div className="flex gap-3 border-t border-blue-500/20 px-5 py-4">
+            <div className="flex gap-3 border-t border-border px-5 py-4">
               <button
                 onClick={() => {
                   setShowOfferForm(false);
@@ -171,7 +171,7 @@ export function OfferFormModal({
                 {isCreatingOffer || isUpdatingOffer ? (
                   <>
                     <Loader2 className="icon-md animate-spin" />
-                    {editingOffer ? "Saving..." : "Creating..."}
+                    {editingOffer ? "Saving…" : "Creating…"}
                   </>
                 ) : (
                   <>

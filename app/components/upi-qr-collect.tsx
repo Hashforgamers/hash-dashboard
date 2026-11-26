@@ -88,8 +88,8 @@ function SendToPhone({ vendorId, qr, onUpdate }: { vendorId: number; qr: UpiQrSt
   };
   const valid = /^[6-9]\d{9}$/.test(phone.replace(/\D/g, "").slice(-10));
   return (
-    <div className="w-full rounded-lg border border-zinc-700/70 bg-zinc-900/60 p-3 text-left">
-      <p className="text-xs font-medium text-zinc-200">Or send a payment link to the customer’s phone</p>
+    <div className="w-full rounded-lg border border-border bg-card p-3 text-left">
+      <p className="text-xs font-medium text-foreground">Or send a payment link to the customer’s phone</p>
       {editing ? (
         <form className="mt-2 flex gap-2" onSubmit={(e) => { e.preventDefault(); if (valid) void send(phone); }}>
           <input
@@ -100,21 +100,21 @@ function SendToPhone({ vendorId, qr, onUpdate }: { vendorId: number; qr: UpiQrSt
             placeholder="10-digit mobile number"
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
-            className="min-w-0 flex-1 rounded-md border border-zinc-600 bg-zinc-950 px-2.5 py-1.5 text-sm text-zinc-100"
+            className="min-w-0 flex-1 rounded-md border border-border bg-card px-2.5 py-1.5 text-sm text-foreground"
           />
-          <button type="submit" disabled={!valid || sending} className="rounded-md border border-blue-500/50 bg-blue-500/15 px-3 text-sm text-blue-200 disabled:opacity-50">
+          <button type="submit" disabled={!valid || sending} className="rounded-md border border-primary/50 bg-primary/15 px-3 text-sm text-primary disabled:opacity-50">
             {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Send"}
           </button>
         </form>
       ) : (
         <div className="mt-2 flex items-center gap-2">
-          <button type="button" disabled={sending} onClick={() => void send()} className="flex-1 rounded-md border border-blue-500/50 bg-blue-500/15 px-3 py-1.5 text-sm text-blue-200 disabled:opacity-50">
+          <button type="button" disabled={sending} onClick={() => void send()} className="flex-1 rounded-md border border-primary/50 bg-primary/15 px-3 py-1.5 text-sm text-primary disabled:opacity-50">
             {sending ? "Sending…" : qr.link_sent_to ? `Resend to ${qr.link_sent_to}` : `Send to ${qr.customer_phone}`}
           </button>
-          <button type="button" onClick={() => setEditing(true)} className="text-xs text-zinc-400 underline">Other number</button>
+          <button type="button" onClick={() => setEditing(true)} className="text-xs text-muted-foreground underline">Other number</button>
         </div>
       )}
-      {note && <p role="status" className="mt-2 text-xs text-zinc-400">{note}</p>}
+      {note && <p role="status" className="mt-2 text-xs text-muted-foreground">{note}</p>}
     </div>
   );
 }
@@ -132,12 +132,12 @@ export async function cancelUpiQr(vendorId: number, qr: UpiQrState | null): Prom
  */
 function RazorpayQrImage({ src, alt }: { src: string; alt: string }) {
   return (
-    <div className="w-full max-w-[240px] rounded-2xl bg-white p-3 shadow-lg">
+    <div className="w-full max-w-[240px] rounded-lg bg-white p-3 shadow-lg">
       <div className="w-full overflow-hidden" style={{ aspectRatio: "0.743" }}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={src} alt={alt} className="block max-w-none" style={{ width: "152.4%", marginLeft: "-25.9%", marginTop: "-122.9%" }} />
       </div>
-      <a href={src} target="_blank" rel="noreferrer" className="mt-2 block text-[11px] text-zinc-500 underline">Open full QR</a>
+      <a href={src} target="_blank" rel="noreferrer" className="mt-2 block text-xs text-muted-foreground underline">Open full QR</a>
     </div>
   );
 }
@@ -158,16 +158,16 @@ export function UpiQrPanel({ vendorId, qr, now, busy, paidLabel, onCancel, onNew
   const secondsLeft = qr.close_by ? Math.max(0, Math.floor((Date.parse(qr.close_by) - now) / 1000)) : 0;
   const expired = qr.status === "expired" || qr.status === "closed" || (qr.status === "open" && secondsLeft === 0);
   const primary = "dashboard-btn-primary w-full rounded-md px-4 py-2.5 text-sm font-medium disabled:opacity-50";
-  const secondary = "w-full rounded-md border border-zinc-600 px-4 py-2 text-sm text-zinc-200 disabled:opacity-50";
+  const secondary = "w-full rounded-md border border-border px-4 py-2 text-sm text-foreground disabled:opacity-50";
   return (
     <div className="flex flex-col items-center gap-3 text-center" aria-live="polite">
       {qr.status === "paid" ? (
         <>
           <CheckCircle className="h-12 w-12 text-emerald-400" aria-hidden="true" />
           <p className="text-base font-semibold text-emerald-300">{amount} paid by UPI</p>
-          <p className="text-xs text-zinc-400">Collected by Hash. The café payout is pending settlement.</p>
+          <p className="text-xs text-muted-foreground">Collected by Hash. The café payout is pending settlement.</p>
           {busy ? (
-            <p className="inline-flex items-center gap-2 text-sm text-zinc-300"><Loader2 className="h-4 w-4 animate-spin" />{paidLabel}</p>
+            <p className="inline-flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" />{paidLabel}</p>
           ) : (
             <button type="button" onClick={onPaidAction} className={primary}>{paidActionLabel}</button>
           )}
@@ -185,14 +185,14 @@ export function UpiQrPanel({ vendorId, qr, now, busy, paidLabel, onCancel, onNew
         </>
       ) : (
         <>
-          <p className="text-3xl font-bold tabular-nums text-zinc-100">{amount}</p>
-          <p className="-mt-2 text-xs text-zinc-400">Scan with any UPI app · paid to Hash for Gamers</p>
+          <p className="text-3xl font-semibold tabular-nums text-foreground">{amount}</p>
+          <p className="-mt-2 text-xs text-muted-foreground">Scan with any UPI app · paid to Hash for Gamers</p>
           {qr.image_url ? (
             <RazorpayQrImage src={qr.image_url} alt={`UPI QR for ${amount}`} />
           ) : (
-            <Loader2 className="h-8 w-8 animate-spin text-zinc-400" aria-hidden="true" />
+            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" aria-hidden="true" />
           )}
-          <p className="inline-flex items-center gap-2 text-xs text-zinc-400">
+          <p className="inline-flex items-center gap-2 text-xs text-muted-foreground">
             <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
             Waiting for payment · {Math.floor(secondsLeft / 60)}:{String(secondsLeft % 60).padStart(2, "0")} left
           </p>
@@ -256,10 +256,10 @@ export function UpiQrBookingDialog({ vendorId, bookingIds, onDone }: {
   };
 
   return (
-    <div className="fixed inset-0 z-[1600] flex items-center justify-center bg-black/70 p-4" role="dialog" aria-modal="true" aria-label="UPI payment">
-      <section className="w-full max-w-sm rounded-xl border border-zinc-700 bg-zinc-900 p-5">
-        <h2 className="mb-1 text-lg font-semibold text-zinc-100">Collect booking payment</h2>
-        <p className="mb-4 text-xs text-zinc-400">The booking is saved. It is marked paid as soon as the UPI payment arrives.</p>
+    <div className="fixed inset-0 z-[1600] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label="UPI payment">
+      <section className="w-full max-w-sm rounded-lg border border-border bg-card p-4">
+        <h2 className="mb-1 text-lg font-semibold text-foreground">Collect booking payment</h2>
+        <p className="mb-4 text-xs text-muted-foreground">The booking is saved. It is marked paid as soon as the UPI payment arrives.</p>
         {error && <p role="alert" className="mb-3 text-sm text-red-300">{error}</p>}
         {qr ? (
           <UpiQrPanel
@@ -275,15 +275,15 @@ export function UpiQrBookingDialog({ vendorId, bookingIds, onDone }: {
             onNewQr={() => { setQr(null); void start(); }}
           />
         ) : busy ? (
-          <p className="inline-flex items-center gap-2 text-sm text-zinc-300"><Loader2 className="h-4 w-4 animate-spin" />Creating QR…</p>
+          <p className="inline-flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" />Creating QR…</p>
         ) : (
           <button type="button" onClick={() => void start()} className="dashboard-btn-primary w-full rounded-md px-4 py-2.5 text-sm font-medium">Try again</button>
         )}
         {!qr || qr.status === "open" || qr.status === "expired" || qr.status === "closed" || qr.status === "failed" ? (
-          <p className="mt-3 text-center text-xs text-zinc-500">If you leave, the booking stays as “Pay after session”.</p>
+          <p className="mt-3 text-center text-xs text-muted-foreground">If you leave, the booking stays as “Pay after session”.</p>
         ) : null}
         {!qr && !busy && (
-          <button type="button" onClick={() => onDone(false)} className="mt-2 w-full rounded-md border border-zinc-600 px-4 py-2 text-sm text-zinc-200">Collect later</button>
+          <button type="button" onClick={() => onDone(false)} className="mt-2 w-full rounded-md border border-border px-4 py-2 text-sm text-foreground">Collect later</button>
         )}
       </section>
     </div>

@@ -74,19 +74,19 @@ export default function UpcomingSlotManager({ booking, vendorId, onRemove, onCha
     } finally { setSaving(false) }
   }
 
-  return <section className="space-y-3 border-t border-zinc-700 pt-4" aria-label="Booking slots">
+  return <section className="space-y-3 border-t border-border pt-4" aria-label="Booking slots">
     <div className="flex items-center justify-between"><h3 className="font-semibold">Slots</h3><button type="button" disabled={loading || !slots.length || saving} onClick={() => open('add')} className={buttonVariants({ variant: "soft-info", size: "sm" })}>+ Add slot</button></div>
     {loading && <p role="status">Loading slots…</p>}
     {error && <p role="alert" className="text-red-300">{error}</p>}
-    {slots.map(slot => <div key={slot.booking_id} className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-zinc-900 p-3">
+    {slots.map(slot => <div key={slot.booking_id} className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-card p-3">
       <span>{slot.date} · {showClock(slot.start_time)}–{showClock(slot.end_time)}</span>
-      <div className="flex gap-3"><button type="button" disabled={saving || slot.status !== 'confirmed'} onClick={() => open('edit', slot)} className="text-blue-300 disabled:opacity-40">Edit</button><button type="button" disabled={saving || slot.status !== 'confirmed'} onClick={() => onRemove({ ...booking, bookingId: slot.booking_id, merged_booking_ids: [slot.booking_id] })} className="text-red-300 disabled:opacity-40">Remove</button></div>
+      <div className="flex gap-3"><button type="button" disabled={saving || slot.status !== 'confirmed'} onClick={() => open('edit', slot)} className="text-primary disabled:opacity-40">Edit</button><button type="button" disabled={saving || slot.status !== 'confirmed'} onClick={() => onRemove({ ...booking, bookingId: slot.booking_id, merged_booking_ids: [slot.booking_id] })} className="text-red-300 disabled:opacity-40">Remove</button></div>
     </div>)}
-    {mode && <div className="space-y-3 rounded-lg border border-zinc-600 p-3">
+    {mode && <div className="space-y-3 rounded-lg border border-border p-3">
       <h4 className="font-semibold">{mode === 'add' ? 'Add another slot' : 'Move slot'}</h4>
-      <p className="text-xs text-zinc-400">{mode === 'add' ? 'Review the price and payment method on the next screen.' : 'Choose the same duration. The original paid amount is retained.'}</p>
-      <label className="block">Date<input aria-label="Slot date" type="date" value={date} disabled={saving} onChange={e => setDate(e.target.value)} className="ml-3 rounded bg-zinc-800 p-2" /></label>
-      <label className="block">Time<select aria-label="Available slot" value={selected} disabled={saving || choiceLoading} onChange={e => setSelected(e.target.value)} className="ml-3 rounded bg-zinc-800 p-2"><option value="">{choiceLoading ? 'Loading…' : 'Choose a slot'}</option>{choices.map(slot => <option key={slot.slot_id} value={slot.slot_id}>{showClock(slot.start_time)}–{showClock(slot.end_time)}</option>)}</select></label>
+      <p className="text-xs text-muted-foreground">{mode === 'add' ? 'Review the price and payment method on the next screen.' : 'Choose the same duration. The original paid amount is retained.'}</p>
+      <label className="block">Date<input aria-label="Slot date" type="date" value={date} disabled={saving} onChange={e => setDate(e.target.value)} className="ml-3 rounded bg-muted p-2" /></label>
+      <label className="block">Time<select aria-label="Available slot" value={selected} disabled={saving || choiceLoading} onChange={e => setSelected(e.target.value)} className="ml-3 rounded bg-muted p-2"><option value="">{choiceLoading ? 'Loading…' : 'Choose a slot'}</option>{choices.map(slot => <option key={slot.slot_id} value={slot.slot_id}>{showClock(slot.start_time)}–{showClock(slot.end_time)}</option>)}</select></label>
       {!choiceLoading && !choices.length && <p>No available slots for this date.</p>}
       <div className="flex gap-3"><button type="button" disabled={saving || choiceLoading || !selected} onClick={save} className={buttonVariants({ variant: "default" })}>{saving ? 'Saving…' : mode === 'add' ? 'Continue to booking' : 'Save slot'}</button><button type="button" disabled={saving} onClick={() => setMode(null)}>Cancel</button></div>
     </div>}

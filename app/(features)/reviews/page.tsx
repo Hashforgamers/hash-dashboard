@@ -1,5 +1,6 @@
 "use client";
 import { buttonVariants } from "@/components/ui/button";
+import { PageHeader } from "@/app/components/page-header";
 
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
@@ -31,7 +32,7 @@ function RatingStars({ rating }: { rating: number }) {
       {[1, 2, 3, 4, 5].map((n) => (
         <Star
           key={n}
-          className={`h-4 w-4 ${n <= safe ? "text-amber-400 fill-amber-400" : "text-zinc-600"}`}
+          className={`h-4 w-4 ${n <= safe ? "text-amber-400 fill-amber-400" : "text-muted-foreground"}`}
         />
       ))}
     </div>
@@ -220,49 +221,42 @@ function ReviewsPageContent() {
   return (
     <DashboardLayout contentScroll="contained">
       <div className="dashboard-module dashboard-page-shell h-full">
-        <div className="gaming-panel">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <h1 className="premium-heading">Cafe Reviews</h1>
-
-            </div>
-          </div>
-        </div>
+        <PageHeader title="Reviews" />
 
         <div className="reviews-summary grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
-          <div className="gaming-panel rounded-xl border border-blue-400/20 bg-zinc-950/45 p-3">
-            <p className="text-xs uppercase tracking-wide text-zinc-400">Average Rating</p>
+          <div className="gaming-panel rounded-lg border border-border bg-muted/45 p-3">
+            <p className="text-xs uppercase tracking-wide text-muted-foreground">Average Rating</p>
             <div className="mt-2 flex items-center gap-3">
-              <span className="text-2xl font-bold text-blue-100 sm:text-3xl">
+              <span className="text-2xl font-semibold text-foreground sm:text-3xl">
                 {summary ? summary.average.toFixed(2) : "--"}
               </span>
               <RatingStars rating={summary?.average || 0} />
             </div>
-            <p className="mt-1 text-xs text-zinc-400">
-              {loadingSummary ? "Loading..." : `Based on ${summary?.total || 0} reviews`}
+            <p className="mt-1 text-xs text-muted-foreground">
+              {loadingSummary ? "Loading…" : `Based on ${summary?.total || 0} reviews`}
             </p>
           </div>
 
-          <div className="gaming-panel rounded-xl border border-blue-400/20 bg-zinc-950/45 p-3">
-            <p className="text-xs uppercase tracking-wide text-zinc-400">Ratings Breakdown</p>
+          <div className="gaming-panel rounded-lg border border-border bg-muted/45 p-3">
+            <p className="text-xs uppercase tracking-wide text-muted-foreground">Ratings Breakdown</p>
             <div className="mt-3 space-y-2">
               {breakdown.map((row) => (
                 <div key={row.rating} className="flex items-center gap-3">
-                  <span className="w-6 text-xs text-zinc-300">{row.rating}★</span>
-                  <div className="h-2 flex-1 rounded-full bg-zinc-800/70">
+                  <span className="w-6 text-xs text-muted-foreground">{row.rating}★</span>
+                  <div className="h-2 flex-1 rounded-full bg-muted/70">
                     <div
                       className="h-2 rounded-full bg-emerald-400/80"
                       style={{ width: `${row.pct}%` }}
                     />
                   </div>
-                  <span className="w-8 text-right text-xs text-zinc-400">{row.count}</span>
+                  <span className="w-8 text-right text-xs text-muted-foreground">{row.count}</span>
                 </div>
               ))}
             </div>
           </div>
 
-          <div className="gaming-panel rounded-xl border border-blue-400/20 bg-zinc-950/45 p-3">
-            <p className="text-xs uppercase tracking-wide text-zinc-400">Filters</p>
+          <div className="gaming-panel rounded-lg border border-border bg-muted/45 p-3">
+            <p className="text-xs uppercase tracking-wide text-muted-foreground">Filters</p>
             <div className="dashboard-filter-stack mt-3">
               <select
                 className="dashboard-module-input h-10 w-full"
@@ -284,7 +278,7 @@ function ReviewsPageContent() {
                 ))}
               </select>
               <div className="relative">
-                <Search data-search-icon="" aria-hidden="true" className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
+                <Search data-search-icon="" aria-hidden="true" className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <input data-search-input=""
                   className="dashboard-module-input h-9 w-full pl-10 pr-3 sm:h-10"
                   placeholder="Search reviews..."
@@ -297,58 +291,58 @@ function ReviewsPageContent() {
         </div>
 
         {summaryError ? (
-          <div className="rounded-xl border border-amber-500/35 bg-amber-500/10 p-3 text-xs text-amber-200">
+          <div className="rounded-lg border border-amber-500/35 bg-amber-500/10 p-3 text-xs text-amber-200">
             Summary sync issue: {summaryError}
           </div>
         ) : null}
         {reviewsError ? (
-          <div className="rounded-xl border border-red-500/35 bg-red-500/10 p-3 text-xs text-red-200">
+          <div className="rounded-lg border border-red-500/35 bg-red-500/10 p-3 text-xs text-red-200">
             Reviews sync issue: {reviewsError}
           </div>
         ) : null}
 
-        <div className="reviews-list gaming-panel rounded-xl border border-blue-400/20 bg-zinc-950/45">
-          <div className="flex items-center justify-between gap-3 border-b border-blue-500/20 px-3 py-2.5">
+        <div className="reviews-list gaming-panel rounded-lg border border-border bg-muted/45">
+          <div className="flex items-center justify-between gap-3 border-b border-border px-3 py-2.5">
             <h2 className="section-title">Recent Reviews</h2>
-            <span className="text-xs text-zinc-400">{reviews.length} items</span>
+            <span className="text-xs text-muted-foreground">{reviews.length} items</span>
           </div>
           <div className="reviews-list-content">
             {loading ? (
-              <div className="dashboard-loader text-sm">Loading reviews...</div>
+              <div className="dashboard-loader text-sm">Loading reviews…</div>
             ) : reviews.length === 0 ? (
               <div className="dashboard-empty-state text-sm">No reviews yet.</div>
             ) : (
               <div className="space-y-3">
                 {reviews.map((review) => (
-                  <MobileCompactCard key={review.id} className="bg-zinc-900/60 sm:p-4">
+                  <MobileCompactCard key={review.id} className="bg-card sm:p-4">
                     <div className="flex flex-wrap items-center justify-between gap-3">
                       <div>
-                        <p className="text-sm font-semibold text-zinc-100">
+                        <p className="text-sm font-semibold text-foreground">
                           {review.user?.name || "Anonymous"}
                         </p>
-                        <p className="text-xs text-zinc-400">
+                        <p className="text-xs text-muted-foreground">
                           {formatDate(review.created_at)}
                         </p>
                       </div>
                       <div className="flex items-center gap-2">
                         <RatingStars rating={review.rating} />
-                        <span className="text-xs text-zinc-400">{review.rating}/5</span>
+                        <span className="text-xs text-muted-foreground">{review.rating}/5</span>
                       </div>
                     </div>
 
                     {review.title && (
-                      <p className="mt-3 text-sm font-medium text-zinc-200">{review.title}</p>
+                      <p className="mt-3 text-sm font-medium text-foreground">{review.title}</p>
                     )}
                     {review.comment && (
-                      <p className="mt-1 text-sm text-zinc-300">{review.comment}</p>
+                      <p className="mt-1 text-sm text-muted-foreground">{review.comment}</p>
                     )}
 
-                    <div className="mt-4 flex flex-wrap items-center gap-2 text-xs text-zinc-400">
+                    <div className="mt-4 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                       <span className={`rounded-full px-2 py-1 ${review.status === "published" ? "bg-emerald-500/15 text-emerald-300" : "bg-red-500/15 text-red-300"}`}>
                         {review.status === "published" ? "Published" : "Hidden"}
                       </span>
                       {review.response_text && (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-blue-500/10 px-2 py-1 text-blue-200">
+                        <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-1 text-primary">
                           <MessageSquare className="h-3 w-3" />
                           Responded
                         </span>
@@ -357,7 +351,7 @@ function ReviewsPageContent() {
 
                     <div className="mt-3 space-y-2 sm:mt-4">
                       <textarea
-                        className="w-full rounded-lg border border-blue-400/20 bg-zinc-900/70 p-3 text-sm text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-blue-400/60"
+                        className="w-full rounded-lg border border-border bg-card p-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/60"
                         rows={3}
                         placeholder="Write a response to this review..."
                         value={responseDrafts[review.id] ?? review.response_text ?? ""}

@@ -719,7 +719,7 @@ const [isPrivateMode, setIsPrivateMode] = useState<boolean>(false);
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="max-w-sm w-full bg-transparent dark:bg-transparent rounded-xl shadow-lg p-6 text-center"
+          className="max-w-sm w-full bg-transparent rounded-lg shadow-lg p-4 text-center"
         >
           <motion.div
             initial={{ scale: 0 }}
@@ -727,35 +727,35 @@ const [isPrivateMode, setIsPrivateMode] = useState<boolean>(false);
             transition={{ type: 'spring', stiffness: 200, damping: 20 }}
             className="w-16 h-16 mx-auto mb-4 rounded-full bg-emerald-500/15 flex items-center justify-center border border-emerald-400/30"
           >
-            <CheckCircle className="w-8 h-8 text-emerald-600 dark:text-emerald-300" />
+            <CheckCircle className="w-8 h-8 text-emerald-300" />
           </motion.div>
 
-          <h2 className="text-xl font-bold text-zinc-800 dark:text-white mb-2">
+          <h2 className="text-xl font-semibold text-white mb-2">
             Booking Confirmed!
           </h2>
-          <p className="text-zinc-600 dark:text-zinc-300 mb-4 text-sm">
+          <p className="text-muted-foreground mb-4 text-sm">
             Your booking for <span className="font-semibold text-emerald-600">{selectedConsole.name}</span>{' '}
             has been successfully created.
           </p>
 
-          <div className="bg-emerald-50 dark:bg-emerald-900/20 rounded-lg p-3 mb-4 text-xs text-left">
+          <div className="bg-emerald-900/20 rounded-lg p-3 mb-4 text-xs text-left">
             <div className="flex justify-between items-center py-1">
-              <span className="text-zinc-600 dark:text-zinc-400">Console Type:</span>
-              <span className="font-medium text-zinc-800 dark:text-white">{selectedConsole.type}</span>
+              <span className="text-muted-foreground">Console Type:</span>
+              <span className="font-medium text-white">{selectedConsole.type}</span>
             </div>
             <div className="flex justify-between items-center py-1">
-              <span className="text-zinc-600 dark:text-zinc-400">Payment:</span>
-              <span className="font-medium text-zinc-800 dark:text-white">{paymentType}</span>
+              <span className="text-muted-foreground">Payment:</span>
+              <span className="font-medium text-white">{paymentType}</span>
             </div>
             {paymentType === "Pass" && validatedPass && (
               <div className="flex justify-between items-center py-1">
-                <span className="text-zinc-600 dark:text-zinc-400">Hours Deducted:</span>
+                <span className="text-muted-foreground">Hours Deducted:</span>
                 <span className="font-medium text-emerald-600">{calculateHoursForSlots()} hrs</span>
               </div>
             )}
 
             <div className="flex justify-between items-center py-1">
-  <span className="text-zinc-600 dark:text-zinc-400">Booking Type</span>
+  <span className="text-muted-foreground">Booking Type</span>
   <span className={`font-medium ${isPrivateMode ? 'text-purple-600' : 'text-emerald-600'}`}>
     {isPrivateMode ? 'Private' : 'Regular'}
   </span>
@@ -763,8 +763,8 @@ const [isPrivateMode, setIsPrivateMode] = useState<boolean>(false);
 
 
             <div className="flex justify-between items-center py-1">
-              <span className="text-zinc-600 dark:text-zinc-400">Meals & Extras:</span>
-              <span className="font-medium text-zinc-800 dark:text-white">
+              <span className="text-muted-foreground">Meals & Extras:</span>
+              <span className="font-medium text-white">
                 {selectedMeals.length === 0
                   ? 'None'
                   : selectedMeals.map(meal => `${meal.name} (${meal.quantity})`).join(', ')}
@@ -772,8 +772,8 @@ const [isPrivateMode, setIsPrivateMode] = useState<boolean>(false);
             </div>
             {paymentType !== "Pass" && (
               <div className="flex justify-between items-center py-1">
-                <span className="text-zinc-600 dark:text-zinc-400">Total Amount:</span>
-                <span className="font-bold text-emerald-600 text-lg">₹{totalAmount}</span>
+                <span className="text-muted-foreground">Total Amount:</span>
+                <span className="font-semibold text-emerald-600 text-lg">₹{totalAmount}</span>
               </div>
             )}
           </div>
@@ -797,27 +797,27 @@ const [isPrivateMode, setIsPrivateMode] = useState<boolean>(false);
       <motion.div
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="flex items-center justify-between p-3 bg-transparent border-b border-zinc-200 dark:border-zinc-700"
+        className="flex items-center justify-between p-3 bg-transparent border-b border-border"
       >
         <div className="flex items-center gap-3">
           <motion.button
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
             onClick={onBack}
-            className="p-1.5 hover:bg-zinc-100 dark:hover:bg-transparent rounded-full transition-all duration-200"
+            className="p-1.5 hover:bg-transparent rounded-full transition-all duration-200"
           >
-            <ChevronLeft className="w-5 h-5 text-zinc-600 dark:text-zinc-400" />
+            <ChevronLeft className="w-5 h-5 text-muted-foreground" />
           </motion.button>
           <div>
-            <h1 className="text-lg font-bold text-foreground">
+            <h1 className="text-lg font-semibold text-foreground">
               Book {selectedConsole.name}
             </h1>
-            <p className="text-xs text-zinc-500">Type: {selectedConsole.type} | ID: {selectedConsole.id}</p>
+            <p className="text-xs text-muted-foreground">Type: {selectedConsole.type} | ID: {selectedConsole.id}</p>
           </div>
         </div>
-        <div className="flex items-center gap-2 bg-emerald-100/50 dark:bg-emerald-900/30 px-3 py-1 rounded-full">
-          <GameController2 className="w-4 h-4 text-emerald-600 dark:text-emerald-300" />
-          <span className="text-emerald-700 dark:text-emerald-300 font-medium text-sm">
+        <div className="flex items-center gap-2 bg-emerald-900/30 px-3 py-1 rounded-full">
+          <GameController2 className="w-4 h-4 text-emerald-300" />
+          <span className="text-emerald-300 font-medium text-sm">
             ₹{consolePrice}/slot
           </span>
         </div>
@@ -831,7 +831,7 @@ const [isPrivateMode, setIsPrivateMode] = useState<boolean>(false);
 >
   <div className={`rounded-lg p-3 border transition-all duration-300 ${
     isPrivateMode
-      ? 'bg-purple-50/70 dark:bg-purple-900/20 border-purple-300/60 dark:border-purple-700/60'
+      ? 'bg-purple-900/20 border-purple-700/60'
       : 'bg-muted/40 border-border'
   }`}>
     <div className="flex items-center justify-between">
@@ -845,39 +845,39 @@ const [isPrivateMode, setIsPrivateMode] = useState<boolean>(false);
           className={`p-2 rounded-lg transition-all duration-300 ${
             isPrivateMode 
               ? 'bg-purple-500 text-white' 
-              : 'bg-zinc-300 dark:bg-zinc-600'
+              : 'bg-muted'
           }`}
         >
           {isPrivateMode ? (
             <Lock className="w-5 h-5 text-white" />
           ) : (
-            <Users className="w-5 h-5 text-zinc-600 dark:text-zinc-300" />
+            <Users className="w-5 h-5 text-muted-foreground" />
           )}
         </motion.div>
         
         <div>
-          <h3 className="text-sm font-bold text-zinc-800 dark:text-white flex items-center gap-2">
+          <h3 className="text-sm font-semibold text-white flex items-center gap-2">
             {isPrivateMode ? (
               <>
-                <span className="text-purple-600 dark:text-purple-400">Private Booking</span>
+                <span className="text-purple-400">Private Booking</span>
                 <motion.span
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
-                  className="text-xs bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 px-2 py-0.5 rounded-full font-medium"
+                  className="text-xs bg-purple-900/30 text-purple-300 px-2 py-0.5 rounded-full font-medium"
                 >
                   Manual Mode
                 </motion.span>
               </>
             ) : (
               <>
-                <span className="text-zinc-700 dark:text-zinc-300">Regular Booking</span>
-                <span className="text-xs bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 px-2 py-0.5 rounded-full font-medium">
+                <span className="text-muted-foreground">Regular Booking</span>
+                <span className="text-xs bg-emerald-900/30 text-emerald-300 px-2 py-0.5 rounded-full font-medium">
                   Standard Mode
                 </span>
               </>
             )}
           </h3>
-          <p className="text-xs text-zinc-600 dark:text-zinc-400 mt-0.5">
+          <p className="text-xs text-muted-foreground mt-0.5">
             {isPrivateMode 
               ? 'Walk-in or manual booking for internal tracking' 
               : 'Online booking with standard workflow'}
@@ -892,8 +892,8 @@ const [isPrivateMode, setIsPrivateMode] = useState<boolean>(false);
         whileTap={{ scale: 0.95 }}
         className={`relative inline-flex h-8 w-14 items-center rounded-full transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 ${
           isPrivateMode 
-            ? 'bg-purple-600 focus:ring-purple-500' 
-            : 'bg-zinc-300 dark:bg-zinc-600 focus:ring-zinc-400'
+            ? 'bg-purple-600 focus:ring-ring/40' 
+            : 'bg-muted focus:ring-border'
         }`}
       >
         <span className="sr-only">Toggle private mode</span>
@@ -915,7 +915,7 @@ const [isPrivateMode, setIsPrivateMode] = useState<boolean>(false);
             {isPrivateMode ? (
               <Lock className="w-3 h-3 text-purple-600" />
             ) : (
-              <Users className="w-3 h-3 text-zinc-600" />
+              <Users className="w-3 h-3 text-muted-foreground" />
             )}
           </div>
         </motion.span>
@@ -932,10 +932,10 @@ const [isPrivateMode, setIsPrivateMode] = useState<boolean>(false);
           transition={{ duration: 0.2 }}
           className="overflow-hidden"
         >
-          <div className="flex items-start gap-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg p-2.5 border border-purple-200 dark:border-purple-700">
-            <AlertCircle className="w-4 h-4 text-purple-600 dark:text-purple-400 flex-shrink-0 mt-0.5" />
+          <div className="flex items-start gap-2 bg-purple-900/30 rounded-lg p-3 border border-purple-700">
+            <AlertCircle className="w-4 h-4 text-purple-400 flex-shrink-0 mt-0.5" />
             <div className="flex-1">
-              <p className="text-xs text-purple-800 dark:text-purple-200">
+              <p className="text-xs text-purple-200">
                 <strong>Private Mode Active:</strong> This booking will be marked as a private/walk-in booking 
                 for internal tracking. All slot availability and payment rules apply normally.
               </p>
@@ -958,13 +958,13 @@ const [isPrivateMode, setIsPrivateMode] = useState<boolean>(false);
               <motion.div
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
-                className="bg-transparent rounded-lg p-3 shadow-sm border border-zinc-200 dark:border-zinc-700"
+                className="bg-transparent rounded-lg p-3 shadow-sm border border-border"
               >
                 <div className="flex items-center gap-2 mb-3">
-                  <div className="p-1 bg-emerald-100 dark:bg-emerald-900/30 rounded">
+                  <div className="p-1 bg-emerald-900/30 rounded">
                     <Users className="w-4 h-4 text-emerald-600" />
                   </div>
-                  <h3 className="text-sm font-semibold text-zinc-800 dark:text-white">
+                  <h3 className="text-sm font-semibold text-white">
                     Customer Information
                   </h3>
                 </div>
@@ -982,36 +982,36 @@ const [isPrivateMode, setIsPrivateMode] = useState<boolean>(false);
                       placeholder="Email"
                       className={`w-full pl-8 pr-2 py-2 bg-transparent rounded border transition-all duration-200 text-sm ${
                         errors.email
-                          ? "border-red-500 focus:border-red-500"
+                          ? "border-red-500 focus:border-ring"
                           : focusedInput === "email"
-                          ? "border-emerald-500 focus:border-emerald-500"
-                          : "border-zinc-200 dark:border-zinc-600 focus:border-emerald-500"
-                      } focus:outline-none focus:ring-1 focus:ring-emerald-500/20`}
+                          ? "border-emerald-500 focus:border-ring"
+                          : "border-border focus:border-ring"
+                      } focus:outline-none focus:ring-1 focus:ring-ring/40`}
                       style={{ boxSizing: "border-box" }}
                     />
-                    <Mail className="w-4 h-4 text-zinc-400 absolute left-2.5 top-2.5" />
+                    <Mail className="w-4 h-4 text-muted-foreground absolute left-2.5 top-2.5" />
                     <AnimatePresence>
                       {focusedInput === "email" && emailSuggestions.length > 0 && (
                         <motion.ul
                           initial={{ opacity: 0, y: -5 }}
                           animate={{ opacity: 1, y: 0 }}
                           exit={{ opacity: 0, y: -5 }}
-                          className="absolute z-20 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded shadow-lg w-full mt-1 max-h-32 overflow-y-auto"
+                          className="absolute z-20 bg-muted border border-border rounded shadow-lg w-full mt-1 max-h-32 overflow-y-auto"
                         >
                           {emailSuggestions.map((user, idx) => (
                             <motion.li
                               key={idx}
                               whileHover={{ backgroundColor: "rgba(16, 185, 129, 0.1)" }}
-                              className="px-2 py-1.5 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 cursor-pointer border-b border-zinc-100 dark:border-zinc-700 last:border-b-0 text-xs"
+                              className="px-2 py-1.5 hover:bg-emerald-900/30 cursor-pointer border-b border-border last:border-b-0 text-xs"
                               onMouseDown={() => handleSuggestionClick(user)}
                             >
                               <div className="flex items-center gap-2">
-                                <div className="p-0.5 bg-emerald-100 dark:bg-emerald-900/30 rounded-full">
+                                <div className="p-0.5 bg-emerald-900/30 rounded-full">
                                   <User className="w-2.5 h-2.5 text-emerald-600" />
                                 </div>
                                 <div>
-                                  <p className="font-medium text-zinc-800 dark:text-white">{user.name}</p>
-                                  <p className="text-zinc-600 dark:text-zinc-400">{user.email}</p>
+                                  <p className="font-medium text-white">{user.name}</p>
+                                  <p className="text-muted-foreground">{user.email}</p>
                                 </div>
                               </div>
                             </motion.li>
@@ -1033,35 +1033,35 @@ const [isPrivateMode, setIsPrivateMode] = useState<boolean>(false);
                       placeholder="Phone"
                       className={`w-full pl-8 pr-2 py-2 bg-transparent rounded border transition-all duration-200 text-sm ${
                         errors.phone
-                          ? "border-red-500 focus:border-red-500"
+                          ? "border-red-500 focus:border-ring"
                           : focusedInput === "phone"
-                          ? "border-emerald-500 focus:border-emerald-500"
-                          : "border-zinc-200 dark:border-zinc-600 focus:border-emerald-500"
-                      } focus:outline-none focus:ring-1 focus:ring-emerald-500/20`}
+                          ? "border-emerald-500 focus:border-ring"
+                          : "border-border focus:border-ring"
+                      } focus:outline-none focus:ring-1 focus:ring-ring/40`}
                     />
-                    <Phone className="w-4 h-4 text-zinc-400 absolute left-2.5 top-2.5" />
+                    <Phone className="w-4 h-4 text-muted-foreground absolute left-2.5 top-2.5" />
                     <AnimatePresence>
                       {focusedInput === "phone" && phoneSuggestions.length > 0 && (
                         <motion.ul
                           initial={{ opacity: 0, y: -5 }}
                           animate={{ opacity: 1, y: 0 }}
                           exit={{ opacity: 0, y: -5 }}
-                          className="absolute z-20 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded shadow-lg w-full mt-1 max-h-32 overflow-y-auto"
+                          className="absolute z-20 bg-muted border border-border rounded shadow-lg w-full mt-1 max-h-32 overflow-y-auto"
                         >
                           {phoneSuggestions.map((user, idx) => (
                             <motion.li
                               key={idx}
                               whileHover={{ backgroundColor: "rgba(16, 185, 129, 0.1)" }}
-                              className="px-2 py-1.5 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 cursor-pointer border-b border-zinc-100 dark:border-zinc-700 last:border-b-0 text-xs"
+                              className="px-2 py-1.5 hover:bg-emerald-900/30 cursor-pointer border-b border-border last:border-b-0 text-xs"
                               onMouseDown={() => handleSuggestionClick(user)}
                             >
                               <div className="flex items-center gap-2">
-                                <div className="p-0.5 bg-emerald-100 dark:bg-emerald-900/30 rounded-full">
+                                <div className="p-0.5 bg-emerald-900/30 rounded-full">
                                   <User className="w-2.5 h-2.5 text-emerald-600" />
                                 </div>
                                 <div>
-                                  <p className="font-medium text-zinc-800 dark:text-white">{user.name}</p>
-                                  <p className="text-zinc-600 dark:text-zinc-400">{user.phone}</p>
+                                  <p className="font-medium text-white">{user.name}</p>
+                                  <p className="text-muted-foreground">{user.phone}</p>
                                 </div>
                               </div>
                             </motion.li>
@@ -1088,35 +1088,35 @@ const [isPrivateMode, setIsPrivateMode] = useState<boolean>(false);
                           placeholder="Full name"
                           className={`w-full pl-8 pr-2 py-2 bg-transparent rounded border transition-all duration-200 text-sm ${
                             errors.name
-                              ? "border-red-500 focus:border-red-500"
+                              ? "border-red-500 focus:border-ring"
                               : focusedInput === "name"
-                              ? "border-emerald-500 focus:border-emerald-500"
-                              : "border-zinc-200 dark:border-zinc-600 focus:border-emerald-500"
-                          } focus:outline-none focus:ring-1 focus:ring-emerald-500/20`}
+                              ? "border-emerald-500 focus:border-ring"
+                              : "border-border focus:border-ring"
+                          } focus:outline-none focus:ring-1 focus:ring-ring/40`}
                         />
-                        <User className="w-4 h-4 text-zinc-400 absolute left-2.5 top-2.5" />
+                        <User className="w-4 h-4 text-muted-foreground absolute left-2.5 top-2.5" />
                         <AnimatePresence>
                           {focusedInput === "name" && nameSuggestions.length > 0 && (
                             <motion.ul
                               initial={{ opacity: 0, y: -5 }}
                               animate={{ opacity: 1, y: 0 }}
                               exit={{ opacity: 0, y: -5 }}
-                              className="absolute z-20 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded shadow-lg w-full mt-1 max-h-32 overflow-y-auto"
+                              className="absolute z-20 bg-muted border border-border rounded shadow-lg w-full mt-1 max-h-32 overflow-y-auto"
                             >
                               {nameSuggestions.map((user, idx) => (
                                 <motion.li
                                   key={idx}
                                   whileHover={{ backgroundColor: "rgba(16, 185, 129, 0.1)" }}
-                                  className="px-2 py-1.5 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 cursor-pointer border-b border-zinc-100 dark:border-zinc-700 last:border-b-0 text-xs"
+                                  className="px-2 py-1.5 hover:bg-emerald-900/30 cursor-pointer border-b border-border last:border-b-0 text-xs"
                                   onMouseDown={() => handleSuggestionClick(user)}
                                 >
                                   <div className="flex items-center gap-2">
-                                    <div className="p-0.5 bg-emerald-100 dark:bg-emerald-900/30 rounded-full">
+                                    <div className="p-0.5 bg-emerald-900/30 rounded-full">
                                       <User className="w-2.5 h-2.5 text-emerald-600" />
                                     </div>
                                     <div>
-                                      <p className="font-medium text-zinc-800 dark:text-white">{user.name}</p>
-                                      <p className="text-zinc-600 dark:text-zinc-400">{user.email}</p>
+                                      <p className="font-medium text-white">{user.name}</p>
+                                      <p className="text-muted-foreground">{user.email}</p>
                                     </div>
                                   </div>
                                 </motion.li>
@@ -1137,13 +1137,13 @@ const [isPrivateMode, setIsPrivateMode] = useState<boolean>(false);
                   initial={{ opacity: 0, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.1 }}
-                  className="bg-transparent rounded-lg p-3 shadow-sm border border-zinc-200 dark:border-zinc-700"
+                  className="bg-transparent rounded-lg p-3 shadow-sm border border-border"
                 >
                   <div className="flex items-center gap-2 mb-2">
-                    <div className="p-1 bg-blue-100 dark:bg-blue-900/30 rounded">
-                      <CalendarDays className="w-4 h-4 text-blue-600" />
+                    <div className="p-1 bg-primary/30 rounded">
+                      <CalendarDays className="w-4 h-4 text-primary" />
                     </div>
-                    <h3 className="text-sm font-semibold text-zinc-800 dark:text-white">Date</h3>
+                    <h3 className="text-sm font-semibold text-white">Date</h3>
                   </div>
 
                   <input
@@ -1151,7 +1151,7 @@ const [isPrivateMode, setIsPrivateMode] = useState<boolean>(false);
                     value={selectedDate}
                     min={new Date().toISOString().split('T')[0]}
                     onChange={(e) => setSelectedDate(e.target.value)}
-                    className="w-full px-2 py-2 bg-transparent dark:bg-transparent rounded border border-zinc-200 dark:border-zinc-600 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500/20 transition-all duration-200 text-sm"
+                    className="w-full px-2 py-2 bg-transparent rounded border border-border focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/20 transition-all duration-200 text-sm"
                   />
                 </motion.div>
 
@@ -1160,13 +1160,13 @@ const [isPrivateMode, setIsPrivateMode] = useState<boolean>(false);
                   initial={{ opacity: 0, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.2 }}
-                  className="bg-transparent dark:bg-transparent rounded-lg p-3 shadow-sm border border-zinc-200 dark:border-zinc-700"
+                  className="bg-transparent rounded-lg p-3 shadow-sm border border-border"
                 >
                   <div className="flex items-center gap-2 mb-2">
-                    <div className="p-1 bg-amber-100 dark:bg-amber-900/30 rounded">
+                    <div className="p-1 bg-amber-900/30 rounded">
                       <CreditCard className="w-4 h-4 text-amber-600" />
                     </div>
-                    <h3 className="text-sm font-semibold text-zinc-800 dark:text-white">Payment</h3>
+                    <h3 className="text-sm font-semibold text-white">Payment</h3>
                   </div>
 
                   <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
@@ -1189,8 +1189,8 @@ const [isPrivateMode, setIsPrivateMode] = useState<boolean>(false);
                         }}
                         className={`p-2 rounded border transition-all duration-200 text-xs ${
                           paymentType === type
-                            ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300'
-                            : 'border-zinc-200 dark:border-zinc-600 hover:border-emerald-300 hover:bg-emerald-50/50 dark:hover:bg-emerald-900/20'
+                            ? 'border-emerald-500 bg-emerald-900/30 text-emerald-300'
+                            : 'border-border hover:border-emerald-300 hover:bg-emerald-900/20'
                         }`}
                       >
                         <div className="flex items-center justify-center gap-1">
@@ -1209,7 +1209,7 @@ const [isPrivateMode, setIsPrivateMode] = useState<boolean>(false);
                     ))}
                   </div>
                   {paymentType === "Monthly Credit" && (
-                    <p className="mt-2 text-xs text-amber-600 dark:text-amber-300">
+                    <p className="mt-2 text-xs text-amber-300">
                       Monthly credit works only for users with an active Gamers Credit account.
                     </p>
                   )}
@@ -1234,7 +1234,7 @@ const [isPrivateMode, setIsPrivateMode] = useState<boolean>(false);
                               }
                             }}
                             placeholder="Enter Pass UID (HFG-XXXXXXXXXXXX)"
-                            className="w-full px-3 py-2 bg-white dark:bg-zinc-800 rounded border border-zinc-300 dark:border-zinc-600 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500/20 transition-all duration-200 text-sm"
+                            className="w-full px-3 py-2 bg-muted rounded border border-border focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring/40 transition-all duration-200 text-sm"
                           />
                           {isValidatingPass && (
                             <Loader2 className="w-4 h-4 animate-spin text-emerald-600 absolute right-3 top-2.5" />
@@ -1246,24 +1246,24 @@ const [isPrivateMode, setIsPrivateMode] = useState<boolean>(false);
                           <motion.div
                             initial={{ opacity: 0, scale: 0.95 }}
                             animate={{ opacity: 1, scale: 1 }}
-                            className="bg-emerald-50 dark:bg-emerald-900/20 rounded-lg p-2 border border-emerald-200 dark:border-emerald-700"
+                            className="bg-emerald-900/20 rounded-lg p-2 border border-emerald-700"
                           >
                             <div className="flex items-start gap-2">
                               <CheckCircle className="w-4 h-4 text-emerald-600 flex-shrink-0 mt-0.5" />
                               <div className="flex-1 text-xs space-y-1">
-                                <p className="font-semibold text-emerald-800 dark:text-emerald-200">
+                                <p className="font-semibold text-emerald-200">
                                   {validatedPass.pass_name}
                                 </p>
-                                <div className="flex justify-between text-emerald-700 dark:text-emerald-300">
+                                <div className="flex justify-between text-emerald-300">
                                   <span>Hours Available:</span>
-                                  <span className="font-bold">
+                                  <span className="font-semibold">
                                     {validatedPass.remaining_hours} / {validatedPass.total_hours}
                                   </span>
                                 </div>
                                 {selectedSlots.length > 0 && (
-                                  <div className="flex justify-between text-emerald-600 dark:text-emerald-400">
+                                  <div className="flex justify-between text-emerald-400">
                                     <span>Hours Needed:</span>
-                                    <span className="font-bold">{calculateHoursForSlots()} hrs</span>
+                                    <span className="font-semibold">{calculateHoursForSlots()} hrs</span>
                                   </div>
                                 )}
                               </div>
@@ -1303,40 +1303,40 @@ const [isPrivateMode, setIsPrivateMode] = useState<boolean>(false);
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.3 }}
-                className="bg-transparent dark:bg-transparent rounded-lg p-3 shadow-sm border border-zinc-200 dark:border-zinc-700"
+                className="bg-transparent rounded-lg p-3 shadow-sm border border-border"
               >
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
-                    <div className="p-1 bg-purple-100 dark:bg-purple-900/30 rounded">
+                    <div className="p-1 bg-purple-900/30 rounded">
                       <Clock className="w-4 h-4 text-purple-600" />
                     </div>
-                    <h3 className="text-sm font-semibold text-zinc-800 dark:text-white">Time Slots</h3>
+                    <h3 className="text-sm font-semibold text-white">Time Slots</h3>
                   </div>
 
                   <div className="flex items-center gap-3 text-xs">
                     <div className="flex items-center gap-1">
                       <div className="w-2 h-2 bg-emerald-500 rounded-full" />
-                      <span className="text-zinc-600 dark:text-zinc-400">Selected</span>
+                      <span className="text-muted-foreground">Selected</span>
                     </div>
                     <div className="flex items-center gap-1">
-                      <div className="w-2 h-2 bg-zinc-300 rounded-full" />
-                      <span className="text-zinc-600 dark:text-zinc-400">Available</span>
+                      <div className="w-2 h-2 bg-muted rounded-full" />
+                      <span className="text-muted-foreground">Available</span>
                     </div>
                     <div className="flex items-center gap-1">
                       <div className="w-2 h-2 bg-red-300 rounded-full" />
-                      <span className="text-zinc-600 dark:text-zinc-400">Booked</span>
+                      <span className="text-muted-foreground">Booked</span>
                     </div>
                   </div>
                 </div>
 
-                <div className="bg-transparent dark:bg-transparent rounded p-2">
+                <div className="bg-transparent rounded p-2">
                   {isLoadingSlots ? (
                     <div className="text-center py-6">
                       <Loader2 className="w-6 h-6 mx-auto mb-2 animate-spin text-emerald-600" />
-                      <p className="text-xs text-zinc-500 dark:text-zinc-400">Loading time slots...</p>
+                      <p className="text-xs text-muted-foreground">Loading time slots…</p>
                     </div>
                   ) : availableSlots.length === 0 ? (
-                    <div className="text-center py-3 text-zinc-500 dark:text-zinc-400">
+                    <div className="text-center py-3 text-muted-foreground">
                       <Clock className="w-5 h-5 mx-auto mb-1 opacity-50" />
                       <p className="text-xs">No available slots</p>
                       <p className="text-xs mt-1">Try a different date</p>
@@ -1357,8 +1357,8 @@ const [isPrivateMode, setIsPrivateMode] = useState<boolean>(false);
                             selectedSlots.includes(slot.slot_id)
                               ? 'bg-emerald-500 text-white shadow-sm transform scale-105'
                               : slot.is_available
-                              ? 'bg-transparent dark:bg-transparent border border-zinc-200 dark:border-zinc-600 hover:border-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/30'
-                              : 'bg-red-100 dark:bg-red-900/30 text-red-400 cursor-not-allowed opacity-60'
+                              ? 'bg-transparent border border-border hover:border-emerald-500 hover:bg-emerald-900/30'
+                              : 'bg-red-900/30 text-red-400 cursor-not-allowed opacity-60'
                           }`}
                         >
                           {slot.start_time.slice(0, 5)}
@@ -1386,9 +1386,9 @@ const [isPrivateMode, setIsPrivateMode] = useState<boolean>(false);
                         initial={{ opacity: 0, height: 0 }}
                         animate={{ opacity: 1, height: 'auto' }}
                         exit={{ opacity: 0, height: 0 }}
-                        className="mt-2 p-2 bg-emerald-50 dark:bg-emerald-900/30 rounded"
+                        className="mt-2 p-2 bg-emerald-900/30 rounded"
                       >
-                        <p className="text-xs font-medium text-emerald-800 dark:text-emerald-200 mb-1">Selected:</p>
+                        <p className="text-xs font-medium text-emerald-200 mb-1">Selected:</p>
                         <div className="flex flex-wrap gap-1">
                           {selectedSlots.map((slotId) => {
                             const slot = availableSlots.find((s) => s.slot_id === slotId);
@@ -1403,7 +1403,7 @@ const [isPrivateMode, setIsPrivateMode] = useState<boolean>(false);
                                 <button
                                   type="button"
                                   onClick={() => handleSlotClick(slotId)}
-                                  className="ml-0.5 text-emerald-600 hover:text-emerald-800 dark:text-emerald-400 dark:hover:text-emerald-200"
+                                  className="ml-0.5 text-emerald-400 hover:text-emerald-200"
                                 >
                                   <X size={10} />
                                 </button>
@@ -1425,29 +1425,29 @@ const [isPrivateMode, setIsPrivateMode] = useState<boolean>(false);
                 initial={{ opacity: 0, x: 10 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.4 }}
-                className="bg-transparent dark:bg-transparent rounded-lg p-3 shadow-sm border border-zinc-200 dark:border-zinc-700"
+                className="bg-transparent rounded-lg p-3 shadow-sm border border-border"
               >
                 <div className="flex items-center gap-2 mb-3">
-                  <div className="p-1 bg-blue-100 dark:bg-blue-900/30 rounded">
-                    <Sparkles className="w-4 h-4 text-blue-600" />
+                  <div className="p-1 bg-primary/30 rounded">
+                    <Sparkles className="w-4 h-4 text-primary" />
                   </div>
-                  <h3 className="text-sm font-semibold text-zinc-800 dark:text-white">Summary</h3>
+                  <h3 className="text-sm font-semibold text-white">Summary</h3>
                 </div>
 
                 <div className="space-y-2 text-xs">
-                  <div className="flex justify-between items-center py-1 border-b border-zinc-100 dark:border-zinc-700">
-                    <span className="text-zinc-600 dark:text-zinc-400">Console:</span>
-                    <span className="font-medium text-zinc-800 dark:text-white">{selectedConsole.name}</span>
+                  <div className="flex justify-between items-center py-1 border-b border-border">
+                    <span className="text-muted-foreground">Console:</span>
+                    <span className="font-medium text-white">{selectedConsole.name}</span>
                   </div>
 
-                  <div className="flex justify-between items-center py-1 border-b border-zinc-100 dark:border-zinc-700">
-                    <span className="text-zinc-600 dark:text-zinc-400">Type:</span>
-                    <span className="font-medium text-zinc-800 dark:text-white">{selectedConsole.type}</span>
+                  <div className="flex justify-between items-center py-1 border-b border-border">
+                    <span className="text-muted-foreground">Type:</span>
+                    <span className="font-medium text-white">{selectedConsole.type}</span>
                   </div>
 
-                  <div className="flex justify-between items-center py-1 border-b border-zinc-100 dark:border-zinc-700">
-                    <span className="text-zinc-600 dark:text-zinc-400">Date:</span>
-                    <span className="font-medium text-zinc-800 dark:text-white">
+                  <div className="flex justify-between items-center py-1 border-b border-border">
+                    <span className="text-muted-foreground">Date:</span>
+                    <span className="font-medium text-white">
                       {new Date(selectedDate).toLocaleDateString('en-US', {
                         month: 'short',
                         day: 'numeric',
@@ -1455,20 +1455,20 @@ const [isPrivateMode, setIsPrivateMode] = useState<boolean>(false);
                     </span>
                   </div>
 
-                  <div className="flex justify-between items-center py-1 border-b border-zinc-100 dark:border-zinc-700">
-                    <span className="text-zinc-600 dark:text-zinc-400">Slots:</span>
-                    <span className="font-medium text-zinc-800 dark:text-white">{selectedSlots.length}</span>
+                  <div className="flex justify-between items-center py-1 border-b border-border">
+                    <span className="text-muted-foreground">Slots:</span>
+                    <span className="font-medium text-white">{selectedSlots.length}</span>
                   </div>
 
-                  <div className="flex justify-between items-center py-1 border-b border-zinc-100 dark:border-zinc-700">
-                    <span className="text-zinc-600 dark:text-zinc-400">Rate:</span>
-                    <span className="font-medium text-zinc-800 dark:text-white">₹{consolePrice}/slot</span>
+                  <div className="flex justify-between items-center py-1 border-b border-border">
+                    <span className="text-muted-foreground">Rate:</span>
+                    <span className="font-medium text-white">₹{consolePrice}/slot</span>
                   </div>
 
                   {/* ✅ Payment Method in Summary */}
-                  <div className="flex justify-between items-center py-1 border-b border-zinc-100 dark:border-zinc-700">
-                    <span className="text-zinc-600 dark:text-zinc-400">Payment:</span>
-                    <span className="font-medium text-zinc-800 dark:text-white">
+                  <div className="flex justify-between items-center py-1 border-b border-border">
+                    <span className="text-muted-foreground">Payment:</span>
+                    <span className="font-medium text-white">
                       {paymentType}
                       {paymentType === "Pass" && validatedPass && (
                         <span className="text-xs text-emerald-600 ml-1">
@@ -1480,11 +1480,11 @@ const [isPrivateMode, setIsPrivateMode] = useState<boolean>(false);
 
                   {/* ✅ Show hours deduction for Pass payment */}
                   {paymentType === "Pass" && validatedPass && selectedSlots.length > 0 && (
-                    <div className="flex justify-between items-center py-1 border-b border-zinc-100 dark:border-zinc-700 bg-emerald-50 dark:bg-emerald-900/20 rounded px-2">
-                      <span className="text-emerald-600 dark:text-emerald-400 text-xs">
+                    <div className="flex justify-between items-center py-1 border-b border-border bg-emerald-900/20 rounded px-2">
+                      <span className="text-emerald-400 text-xs">
                         Hours to Deduct:
                       </span>
-                      <span className="font-bold text-emerald-600 dark:text-emerald-400 text-xs">
+                      <span className="font-semibold text-emerald-400 text-xs">
                         {calculateHoursForSlots()} hrs
                       </span>
                     </div>
@@ -1492,24 +1492,24 @@ const [isPrivateMode, setIsPrivateMode] = useState<boolean>(false);
 
                   {paymentType !== "Pass" && (
                     <>
-                      <div className="flex justify-between items-center py-1 border-b border-zinc-100 dark:border-zinc-700">
-                        <span className="text-zinc-600 dark:text-zinc-400">Manual Waive Off:</span>
+                      <div className="flex justify-between items-center py-1 border-b border-border">
+                        <span className="text-muted-foreground">Manual Waive Off:</span>
                         <input
                           type="number"
                           value={waiveOffAmount}
                           onChange={(e) => setWaiveOffAmount(Number(e.target.value))}
                           placeholder="₹0"
-                          className="w-16 text-right px-1 py-0.5 rounded border border-zinc-300 dark:border-zinc-600 bg-transparent dark:bg-transparent text-zinc-800 dark:text-white focus:border-emerald-500 focus:outline-none transition-colors text-xs"
+                          className="w-16 text-right px-1 py-0.5 rounded border border-border bg-transparent text-white focus:border-ring focus:outline-none transition-colors text-xs"
                           min={0}
                         />
                       </div>
 
                       {autoWaiveOffAmount > 0 && (
-                        <div className="flex justify-between items-center py-1 border-b border-zinc-100 dark:border-zinc-700 bg-amber-50 dark:bg-amber-900/20 rounded px-2">
-                          <span className="text-amber-600 dark:text-amber-400 font-medium">⏰ Auto Waive Off:</span>
+                        <div className="flex justify-between items-center py-1 border-b border-border bg-amber-900/20 rounded px-2">
+                          <span className="text-amber-400 font-medium">⏰ Auto Waive Off:</span>
                           <div className="text-right">
-                            <span className="font-bold text-amber-600 dark:text-amber-400">₹{Math.round(autoWaiveOffAmount)}</span>
-                            <div className="text-xs text-amber-500 dark:text-amber-300">
+                            <span className="font-semibold text-amber-400">₹{Math.round(autoWaiveOffAmount)}</span>
+                            <div className="text-xs text-amber-300">
                               (Time-based discount)
                             </div>
                           </div>
@@ -1517,29 +1517,29 @@ const [isPrivateMode, setIsPrivateMode] = useState<boolean>(false);
                       )}
 
                       {supportsExtraController && (
-                        <div className="flex justify-between items-center py-1 border-b border-zinc-100 dark:border-zinc-700">
-                          <span className="text-zinc-600 dark:text-zinc-400">Extra Controller:</span>
+                        <div className="flex justify-between items-center py-1 border-b border-border">
+                          <span className="text-muted-foreground">Extra Controller:</span>
                           <div className="flex items-center gap-2">
                             <button
                               type="button"
                               onClick={() => setExtraControllerQty((prev) => Math.max(0, prev - 1))}
-                              className="inline-flex h-6 w-6 items-center justify-center rounded border border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300 text-xs"
+                              className="inline-flex h-6 w-6 items-center justify-center rounded border border-border text-muted-foreground text-xs"
                               disabled={isControllerPricingLoading}
                             >
                               -
                             </button>
-                            <span className="w-12 text-center text-xs text-zinc-800 dark:text-white">
+                            <span className="w-12 text-center text-xs text-white">
                               {extraControllerQty} qty
                             </span>
                             <button
                               type="button"
                               onClick={() => setExtraControllerQty((prev) => Math.min(8, prev + 1))}
-                              className="inline-flex h-6 w-6 items-center justify-center rounded border border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300 text-xs"
+                              className="inline-flex h-6 w-6 items-center justify-center rounded border border-border text-muted-foreground text-xs"
                               disabled={isControllerPricingLoading}
                             >
                               +
                             </button>
-                            <span className="w-14 text-right text-xs text-zinc-800 dark:text-white">
+                            <span className="w-14 text-right text-xs text-white">
                               ₹{extraControllerFare}
                             </span>
                           </div>
@@ -1549,8 +1549,8 @@ const [isPrivateMode, setIsPrivateMode] = useState<boolean>(false);
                   )}
 
                   {/* Meals Selection */}
-                  <div className="flex justify-between items-center py-1 border-b border-zinc-100 dark:border-zinc-700">
-                    <span className="text-zinc-600 dark:text-zinc-400">Meals & Extras:</span>
+                  <div className="flex justify-between items-center py-1 border-b border-border">
+                    <span className="text-muted-foreground">Meals & Extras:</span>
                     <div className="flex items-center gap-2">
                       <button
                         type="button"
@@ -1565,27 +1565,27 @@ const [isPrivateMode, setIsPrivateMode] = useState<boolean>(false);
 
                   {/* Display selected meals */}
                   {selectedMeals.length > 0 && (
-                    <div className="py-2 border-b border-zinc-100 dark:border-zinc-700">
+                    <div className="py-2 border-b border-border">
                       <div className="space-y-2">
                         {selectedMeals.map(meal => (
-                          <div key={meal.menu_item_id} className="bg-emerald-50 dark:bg-emerald-900/20 rounded-lg p-2">
+                          <div key={meal.menu_item_id} className="bg-emerald-900/20 rounded-lg p-2">
                             <div className="flex justify-between items-start">
                               <div className="flex-1">
-                                <span className="font-medium text-emerald-800 dark:text-emerald-200 text-xs">
+                                <span className="font-medium text-emerald-200 text-xs">
                                   {meal.name}
                                 </span>
-                                <div className="text-xs text-emerald-600 dark:text-emerald-400 mt-1">
+                                <div className="text-xs text-emerald-400 mt-1">
                                   {meal.category} • ₹{meal.price} × {meal.quantity}
                                 </div>
                               </div>
-                              <span className="font-bold text-emerald-700 dark:text-emerald-300 text-xs">
+                              <span className="font-semibold text-emerald-300 text-xs">
                                 ₹{meal.total}
                               </span>
                             </div>
                           </div>
                         ))}
-                        <div className="text-right pt-1 border-t border-emerald-200 dark:border-emerald-700">
-                          <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">
+                        <div className="text-right pt-1 border-t border-emerald-700">
+                          <span className="text-xs font-semibold text-emerald-400">
                             Meals Total: ₹{mealsTotal}
                           </span>
                         </div>
@@ -1594,16 +1594,16 @@ const [isPrivateMode, setIsPrivateMode] = useState<boolean>(false);
                   )}
 
                   {paymentType !== "Pass" && (
-                    <div className="flex justify-between items-center py-2 bg-emerald-50 dark:bg-emerald-900/30 rounded px-2">
-                      <span className="font-bold text-zinc-800 dark:text-white text-sm">Total:</span>
-                      <span className="font-bold text-lg text-emerald-600">₹{totalAmount}</span>
+                    <div className="flex justify-between items-center py-2 bg-emerald-900/30 rounded px-2">
+                      <span className="font-semibold text-white text-sm">Total:</span>
+                      <span className="font-semibold text-lg text-emerald-600">₹{totalAmount}</span>
                     </div>
                   )}
 
                   {paymentType === "Pass" && (
-                    <div className="flex justify-between items-center py-2 bg-emerald-50 dark:bg-emerald-900/30 rounded px-2">
-                      <span className="font-bold text-zinc-800 dark:text-white text-sm">Payment:</span>
-                      <span className="font-bold text-lg text-emerald-600">Pass (No charge)</span>
+                    <div className="flex justify-between items-center py-2 bg-emerald-900/30 rounded px-2">
+                      <span className="font-semibold text-white text-sm">Payment:</span>
+                      <span className="font-semibold text-lg text-emerald-600">Pass (No charge)</span>
                     </div>
                   )}
                 </div>
@@ -1616,9 +1616,9 @@ const [isPrivateMode, setIsPrivateMode] = useState<boolean>(false);
             type="submit"
             whileHover={{ scale: isSubmitting ? 1 : 1.02 }}
             whileTap={{ scale: isSubmitting ? 1 : 0.98 }}
-            className={`w-full py-2.5 rounded-lg font-bold text-white transition-all duration-200 shadow-md ${
+            className={`w-full py-2.5 rounded-lg font-semibold text-white transition-all duration-200 shadow-md ${
               isSubmitting
-                ? 'bg-zinc-400 cursor-not-allowed'
+                ? 'bg-muted cursor-not-allowed'
                 : 'dashboard-btn-primary'
             }`}
             disabled={isSubmitting}
@@ -1626,7 +1626,7 @@ const [isPrivateMode, setIsPrivateMode] = useState<boolean>(false);
             {isSubmitting ? (
               <div className="flex items-center justify-center gap-2">
                 <Loader2 className="w-4 h-4 animate-spin" />
-                Processing...
+                Processing…
               </div>
             ) : (
               <div className="flex items-center justify-center gap-2">

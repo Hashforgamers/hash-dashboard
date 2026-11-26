@@ -24,21 +24,21 @@ export function RevenueChart() {
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              className="px-3 py-1 bg-zinc-800 text-white rounded-md text-sm"
+              className="px-3 py-1 bg-muted text-white rounded-md text-sm"
             >
               Week
             </motion.button>
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              className="px-3 py-1 hover:bg-zinc-800 text-zinc-400 rounded-md text-sm"
+              className="px-3 py-1 hover:bg-muted text-muted-foreground rounded-md text-sm"
             >
               Month
             </motion.button>
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              className="px-3 py-1 hover:bg-zinc-800 text-zinc-400 rounded-md text-sm"
+              className="px-3 py-1 hover:bg-muted text-muted-foreground rounded-md text-sm"
             >
               Year
             </motion.button>
@@ -77,9 +77,9 @@ export function RevenueChart() {
                 content={({ active, payload }) => {
                   if (active && payload && payload.length) {
                     return (
-                      <div className="bg-black p-3 rounded-lg border border-zinc-800">
-                        <p className="text-zinc-400">{payload[0].payload.name}</p>
-                        <p className="text-lg font-bold">
+                      <div className="bg-black p-3 rounded-lg border border-border">
+                        <p className="text-muted-foreground">{payload[0].payload.name}</p>
+                        <p className="text-lg font-semibold">
                           ₹{payload[0].value}
                         </p>
                       </div>
