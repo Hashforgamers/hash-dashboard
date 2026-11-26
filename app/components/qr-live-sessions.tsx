@@ -9,6 +9,7 @@ import { LiveSessionTiming } from './live-session-timing';
 import { Monitor, Power } from 'lucide-react';
 import {useCallback, useEffect, useRef, useState} from 'react';
 import {useAccess} from '@/app/context/AccessContext';
+import {useTimeFormat} from '@/app/hooks/useTimeFormat';
 import {useSocket} from '@/app/context/SocketContext';
 import {cafeCall, rupees, CafeApiError} from '@/lib/cafe-api';
 
@@ -19,6 +20,7 @@ type Snapshot = {items:Session[];requests:Request[]};
 
 export default function QrLiveSessions({onCount,onLoadState,layout="cards",search="",showInitialLoading=true}:{onCount?:(count:number)=>void;onLoadState?:(state:'loading'|'ready'|'error')=>void;layout?:"cards"|"rows";search?:string;showInitialLoading?:boolean}) {
   const {selectedCafeId,activeStaff,can}=useAccess();
+  const {time:showClock}=useTimeFormat();
   const {socket,isConnected}=useSocket();
   const [data,setData]=useState<Snapshot>({items:[],requests:[]});
   const [error,setError]=useState('');
@@ -83,7 +85,7 @@ export default function QrLiveSessions({onCount,onLoadState,layout="cards",searc
         const start = s.started_at ? Date.parse(s.started_at) : NaN;
         const elapsed = Number.isFinite(start) ? Math.max(0, Math.floor((now-start)/1000)) : 0;
         const progress = s.minutes>0 ? elapsed/(s.minutes*60)*100 : 0;
-        const scheduleTime = (value:string|null) => value ? new Date(value).toLocaleTimeString('en-US',{timeZone:'Asia/Kolkata',hour:'numeric',minute:'2-digit'}) : 'Starting…';
+        const scheduleTime = (value:string|null) => value ? showClock(new Date(value)) : 'Starting…';
         const cells=<>
           <td className="px-3 py-3 md:px-4"><div className="flex items-center gap-2"><div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-500/20 text-xs font-semibold text-emerald-300">{(s.gamer_name||'Guest').slice(0,2).toUpperCase()}</div><div><p className="live-session-customer-name text-sm font-semibold text-primary">{s.gamer_name}</p><span className="text-xs text-muted-foreground">Self QR · {s.kind==='owner_credit'?'Owner-approved':'Cafe wallet'}</span></div></div></td>
           <td className="px-3 py-3 md:px-4"><div className="flex items-center gap-2 text-sm"><Monitor className="h-4 w-4 text-primary"/>PC {s.console_number}</div></td>
@@ -91,7 +93,7 @@ export default function QrLiveSessions({onCount,onLoadState,layout="cards",searc
           <td className="px-3 py-3 md:px-4">{s.state==='reserved'?<span className="text-xs text-muted-foreground">—</span>:<LiveSessionTiming elapsed={elapsed} remaining={remaining} progress={progress} overtime={playing&&remaining===0}/>}</td>
           <td className="px-3 py-3 md:px-4"><LiveSessionDue starting={s.state==='reserved'} overtime={s.ends_at ? Math.max(0, Math.floor((now-Date.parse(s.ends_at))/1000)) : 0}/></td>
           <td className="px-3 py-3 md:px-4 text-xs">
-          {request&&<div className="mt-2 border-t pt-2"><p>Request: {request.minutes} min · {rupees(request.amount)} payable after play</p><p>Expires {new Date(request.expires_at).toLocaleTimeString()}</p>
+          {request&&<div className="mt-2 border-t pt-2"><p>Request: {request.minutes} min · {rupees(request.amount)} payable after play</p><p>Expires {showClock(new Date(request.expires_at))}</p>
             {activeStaff.role==='owner'?<div className="mt-1 flex gap-2">
               <button className="rounded border px-2 py-1 disabled:opacity-40" disabled={busy||remaining>0||Date.parse(request.expires_at)<=now}
                 onClick={()=>action(`${prefix}/continuations/${request.id}/decision`,{decision:'approve',expected_amount:request.amount},`Approve ${request.minutes} minutes for ${rupees(request.amount)}, payable after play?`)}>Approve {remaining>0?'after timer ends':''}</button>

@@ -24,6 +24,7 @@ import ResponsiveSearchFilter from "./ResponsiveSearchFilter";
 import MealDetailsModal from "./mealsDetailmodal";
 import { useSocket } from "../context/SocketContext";
 import { useApiClient } from "@/app/hooks/useApiClient";
+import { useTimeFormat } from "@/app/hooks/useTimeFormat";
 
 
 // Helper function for getting platform icons
@@ -328,6 +329,7 @@ export function UpcomingBookings({
   setRefreshSlots
 }: UpcomingBookingsProps): JSX.Element {
   const api = useApiClient();
+  const { range: showRange } = useTimeFormat();
   
   const { socket, isConnected, joinVendor } = useSocket()
   
@@ -1113,7 +1115,7 @@ export function UpcomingBookings({
                         <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
                           <span className="inline-flex items-center gap-1.5 whitespace-nowrap tabular-nums">
                             <Clock className="h-3 w-3 shrink-0" />
-                            {booking.time || "No time set"}
+                            {booking.time ? showRange(booking.time) : "No time set"}
                             {isFlexBooking(booking) && <span className="ml-1.5 rounded border border-border px-1 text-[10px] font-medium uppercase text-muted-foreground" title="Custom start time: exact minutes, not slot times">Custom</span>}
                           </span>
                           {booking.duplicate_booking && (
@@ -1256,7 +1258,7 @@ export function UpcomingBookings({
             phone: getBookingPhone(contactOverlay.booking) || null,
             email: getBookingEmail(contactOverlay.booking) || null,
             console: contactOverlay.booking.consoleType || null,
-            when: [contactOverlay.booking.date, contactOverlay.booking.time].filter(Boolean).join(" · ") || null,
+            when: [contactOverlay.booking.date, contactOverlay.booking.time ? showRange(contactOverlay.booking.time) : null].filter(Boolean).join(" · ") || null,
             status: contactOverlay.booking.status || null,
           }}
         >

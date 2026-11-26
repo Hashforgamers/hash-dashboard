@@ -3,6 +3,7 @@ import { cn } from "@/lib/utils";
 import type { ComponentType } from "react";
 import { Calendar, Clock, Loader2, Pencil, Trash2 } from "lucide-react";
 import { PricingOffer } from "./types";
+import { useTimeFormat } from "@/app/hooks/useTimeFormat";
 
 interface OffersTableProps {
   offers: PricingOffer[];
@@ -13,6 +14,7 @@ interface OffersTableProps {
 }
 
 export function OffersTable({ offers, onEdit, onDelete, deletingOfferId, getConsoleIcon }: OffersTableProps) {
+  const { time: showClock } = useTimeFormat();
   return (
     <div className="dashboard-table-shell">
       <div className="dashboard-table-wrap">
@@ -60,11 +62,11 @@ export function OffersTable({ offers, onEdit, onDelete, deletingOfferId, getCons
                     <div className="space-y-0.5 body-text-muted">
                       <div className="flex items-center gap-1.5">
                         <Calendar className="icon-md shrink-0" />
-                        <span>Valid From: {offer.start_date} {offer.start_time}</span>
+                        <span>Valid From: {offer.start_date} {showClock(offer.start_time)}</span>
                       </div>
                       <div className="flex items-center gap-1.5">
                         <Clock className="icon-md shrink-0" />
-                        <span>Valid To: {offer.end_date} {offer.end_time}</span>
+                        <span>Valid To: {offer.end_date} {showClock(offer.end_time)}</span>
                       </div>
                     </div>
                   </td>
