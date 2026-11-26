@@ -1,0 +1,1 @@
+Fonts used by the printable booking poster (lib/booking-poster.ts), matching hashforgamers.com: Anton (Vernon Adams) and Orbitron (Matt McInerney), both under the SIL Open Font License 1.1 (https://openfontlicense.org).
