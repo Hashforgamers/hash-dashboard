@@ -1,6 +1,7 @@
 import { checkoutButtonClass, releaseButtonClass, retryButtonClass } from "./live-session-actions";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { isFlexBooking } from "@/lib/flex-booking";
 import { badgeVariants } from "@/components/ui/badge";
 import { LiveSessionTiming } from "./live-session-timing";
 import { httpJson } from "@/lib/http-client";
@@ -1710,6 +1711,7 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                             {/* Time cell - unchanged */}
                             <td className="px-3 py-3 md:px-4">
                               <span className="whitespace-nowrap text-sm text-foreground">{booking.startTime || '—'} – {booking.endTime || '—'}</span>
+                              {isFlexBooking(booking) && <span className="ml-1.5 rounded border border-border px-1 text-[10px] font-medium uppercase text-muted-foreground" title="Custom start time: exact minutes, not slot times">Custom</span>}
                             </td>
 
                             {/* Progress cell - enhanced */}

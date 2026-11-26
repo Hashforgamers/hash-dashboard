@@ -10,6 +10,8 @@ import { cn } from "@/lib/utils"
 import { contiguousDeskSlots, coveringDeskSlots } from "@/lib/desk-time-range"
 import { DeskConsolePicker } from "./desk-console-picker"
 import { deskSubtotal, rateLabel, resolveSessionRate, useDeskCards } from "./desk-rate-card"
+import { FlexStartPicker, useFlexSettings } from "./booking/flex-start-picker"
+import type { FlexQuote } from "@/lib/flex-booking"
 import { creditAuthHeaders } from "@/lib/credit-auth"
 import { useAccess } from "@/app/context/AccessContext"
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -1396,6 +1398,13 @@ const getEffectivePrice = (slot: SelectedSlot): number => {
   const [deskConsoleIds, setDeskConsoleIds] = useState<number[] | null>(null)
   const [deskChoice, setDeskChoice] = useState("")
   const [pricingGame, setPricingGame] = useState("")
+  // Custom start ("any minute"): only offered once the cafe turns it on in Settings > Session Timing.
+  const flexSettings = useFlexSettings(isOpen ? settingsVendorId : null)
+  const [flexQuote, setFlexQuote] = useState<FlexQuote | null>(null)
+  const [flexConsoleIds, setFlexConsoleIds] = useState<number[] | null>(null)
+  const flexMode = timeMode === "flex" && flexSettings.flex_enabled
+  const flexActive = flexMode && !!flexQuote && !!flexConsoleIds
+  useEffect(() => { if (!flexMode) { setFlexQuote(null); setFlexConsoleIds(null) } }, [flexMode])
   const deviceCards = deskCards.filter(card => card.game_id === Number(activePickerConsole) && card.is_active !== false && !card.archived && (card.pricing_mode !== "slot" || !!card.definition.game_variant?.trim()))
   useEffect(() => { setDeskChoice(""); setPricingGame("") }, [activePickerConsole, settingsVendorId, isOpen])
   const variantPricingRequired = deskCards.some(card => card.game_id === Number(activePickerConsole) && card.pricing_mode === "variants") || (!!pricingGame && deviceCards.some(card => card.definition.game_variant === pricingGame))
@@ -1403,7 +1412,7 @@ const getEffectivePrice = (slot: SelectedSlot): number => {
     const start = new Date(slot.date + "T" + slot.start_time + "+05:30").getTime()
     return (getSlotEndTimestampIST(slot.date, slot.start_time, slot.end_time) - start) / 60000
   }
-  const sessionMinutes = selectedSlots.reduce((n, slot) => n + slotMinutes(slot), 0)
+  const sessionMinutes = flexMode && flexQuote ? flexQuote.window.duration_minutes : selectedSlots.reduce((n, slot) => n + slotMinutes(slot), 0)
   const { eligible: matchingDeskCards, card: deskCard } = resolveSessionRate(deviceCards, sessionMinutes, isSquadMode ? squadPlayerCount : 1, deskChoice, pricingGame)
   const effectiveDeskChoice = deskCard?.profile || ""
   const controllersIncluded = !!deskCard?.definition.controllers_included
@@ -1594,8 +1603,14 @@ const getEffectivePrice = (slot: SelectedSlot): number => {
   const mealsTotal = selectedMeals.reduce((sum, meal) => sum + meal.total, 0)
   const consoleUnitTotal = selectedSlots.reduce((sum, slot) => sum + getEffectivePrice(slot), 0)
   const squadConsoleMultiplier = isSquadMode && squadUsesDiscountEngine ? squadPlayerCount : 1
-  const deskPrice = deskCard ? deskSubtotal(deskCard, sessionMinutes, isSquadMode ? squadPlayerCount : 1) : null
-  const consoleTotal = deskPrice ?? (isSquadMode ? Number((consoleUnitTotal * squadConsoleMultiplier).toFixed(2)) : consoleUnitTotal)
+  const deskPrice = deskCard
+    ? (flexMode
+      ? (flexActive && flexQuote?.price.basis === "rate_card" ? flexQuote.price.base_amount : null)
+      : deskSubtotal(deskCard, sessionMinutes, isSquadMode ? squadPlayerCount : 1))
+    : null
+  const consoleTotal = deskPrice ?? (flexActive && flexQuote
+    ? flexQuote.price.base_amount
+    : (isSquadMode ? Number((consoleUnitTotal * squadConsoleMultiplier).toFixed(2)) : consoleUnitTotal))
   const squadDiscountPercent = (() => {
     if (deskCard || !isSquadMode || !squadUsesDiscountEngine) return 0
     const keys = Object.keys(squadPolicyForConsole).map((k) => Number(k)).filter((v) => !Number.isNaN(v)).sort((a, b) => a - b)
@@ -2006,7 +2021,14 @@ const getEffectivePrice = (slot: SelectedSlot): number => {
         deskPricingMode: variantPricingRequired ? "variants" : "slot",
         pricingGame,
         deskProfile: deskCard?.profile,
-        deskConsoleIds: deskCard ? deskConsoleIds : undefined,
+        deskConsoleIds: deskCard ? (flexMode ? flexConsoleIds : deskConsoleIds) : undefined,
+        ...(flexActive && flexQuote ? {
+          timingMode: 'flex',
+          gameId: flexQuote.game_id,
+          startAt: flexQuote.window.start_at,
+          durationMinutes: flexQuote.window.duration_minutes,
+          flexConsoleIds,
+        } : {}),
         deskRevision: deskCard?.revision,
         deskSubtotal: deskPrice ?? undefined,
         bookingMode: 'regular',
@@ -2112,7 +2134,7 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
               <h2 className="slot-booking-title">New Gaming Session</h2>
               {selectedSlots.length > 0 && <p className="slot-booking-context">
                 {selectedSlots[0].console_name?.trim().toUpperCase() === "PC" ? "PC Gaming" : selectedSlots[0].console_name}
-                {" · "}{selectedSlots.every((slot, i) => !i || selectedSlots[i-1].end_time === slot.start_time)
+                {" · "}{flexActive && flexQuote ? <strong>{flexQuote.window.label}</strong> : selectedSlots.every((slot, i) => !i || selectedSlots[i-1].end_time === slot.start_time)
                   ? <strong>{clock(selectedSlots[0].start_time)}–{clock(selectedSlots[selectedSlots.length-1].end_time)}</strong>
                   : selectedSlots.length + " selected slots"}
                 {" · "}{new Date(selectedSlots[0].date + "T12:00:00").toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
@@ -2227,6 +2249,7 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                         <option value="range">Available times</option>
                         <option value="manual">Enter times manually</option>
                         <option value="slots">Individual slots</option>
+                        {flexSettings.flex_enabled && <option value="flex">Custom start (any minute)</option>}
                       </select>}
                     </div>
                     <div id="booking-slot-picker">
@@ -2271,6 +2294,31 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                           </div>
                           {typedStart && typedEnd && !coveringRange.length && <p role="status">No continuous availability for those times.</p>}
                         </div>}
+                        {onReplaceSlots && flexMode && <div className="mb-2">
+                          <FlexStartPicker
+                            vendor={settingsVendorId}
+                            gameId={Number(activePickerConsole)}
+                            date={activePickerDate}
+                            players={isSquadMode ? squadPlayerCount : 1}
+                            squad={isSquadMode && squadSupported}
+                            settings={flexSettings}
+                            deskProfile={deskCard?.profile}
+                            deskRevision={deskCard?.revision}
+                            pricingGame={pricingGame}
+                            disabled={isSubmitting}
+                            onChange={(quote, ids) => {
+                              setFlexQuote(quote); setFlexConsoleIds(ids)
+                              if (quote) onReplaceSlots(quote.blocked_slots.map(slot => ({
+                                slot_id: slot.slot_id, date: slot.date, start_time: `${slot.start_time}:00`,
+                                end_time: `${slot.end_time}:00`, console_id: Number(activePickerConsole),
+                                console_name: pickerConsoleItem?.name || pickerConsoleItem?.type || "",
+                                console_price: pickerConsoleItem?.price ?? 0,
+                                available_count: Number(slot.available_slot),
+                              })))
+                            }}
+                          />
+                          {paymentType === 'Pass' && <p role="alert" className="mt-1 text-xs text-amber-600 dark:text-amber-300">Pass customers use slot times. Choose “Available times” for a pass.</p>}
+                        </div>}
                         {(!onReplaceSlots || timeMode === "slots") && (
                         <div className="mt-2 flex max-h-40 flex-wrap gap-1.5 overflow-y-auto">
                           {pickerSlots.map((slot: any) => {
@@ -2310,7 +2358,7 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                       {deskCard && <span className="text-emerald-500">₹{deskPrice}</span>}
                       {!matchingDeskCards.length && <span role="alert" className="text-amber-500">No rate covers this duration and player count.</span>}
                     </div>}
-                    {deskCard && selectedSlots.length > 0 && <DeskConsolePicker key={`${activePickerConsole}-${deskCard.profile}`} vendor={settingsVendorId} game={Number(activePickerConsole)} profile={deskCard.profile} date={normalizeBookedDate(selectedSlots[0].date)} slotIds={selectedSlots.map(slot=>slot.slot_id)} quantity={isSquadMode && squadConsoleGroup === "pc" ? squadPlayerCount : 1} onChange={setDeskConsoleIds} />}
+                    {deskCard && selectedSlots.length > 0 && !flexMode && <DeskConsolePicker key={`${activePickerConsole}-${deskCard.profile}`} vendor={settingsVendorId} game={Number(activePickerConsole)} profile={deskCard.profile} date={normalizeBookedDate(selectedSlots[0].date)} slotIds={selectedSlots.map(slot=>slot.slot_id)} quantity={isSquadMode && squadConsoleGroup === "pc" ? squadPlayerCount : 1} onChange={setDeskConsoleIds} />}
                     {(timeMode === "slots" || !onReplaceSlots) && <div className="slot-booking-slot-list">
                       {selectedSlots.map((slot) => (
                         <div key={`${slot.date}-${slot.console_id}-${slot.slot_id}`} className="slot-booking-modal-soft flex items-center justify-between gap-3 rounded-md px-2.5 py-2 text-xs">
@@ -2905,7 +2953,7 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
               <Button
                 type="submit"
                 form="slot-booking-form"
-                disabled={(!!deskCard && !deskConsoleIds) || deskRatesLoading || !!deskRateError || (variantPricingRequired && !effectiveDeskChoice) || !!typedStart || !!typedEnd || (!!deskCard && deskPrice === null) || selectedSlots.length === 0 || isSubmitting || submissionUncertain || (paymentType === 'Monthly Credit' && (!creditAccount?.is_active || availableCreditAmount < totalAmount))}
+                disabled={(!!deskCard && !(flexMode ? flexConsoleIds : deskConsoleIds)) || (flexMode && (!flexActive || paymentType === 'Pass')) || deskRatesLoading || !!deskRateError || (variantPricingRequired && !effectiveDeskChoice) || !!typedStart || !!typedEnd || (!!deskCard && deskPrice === null) || selectedSlots.length === 0 || isSubmitting || submissionUncertain || (paymentType === 'Monthly Credit' && (!creditAccount?.is_active || availableCreditAmount < totalAmount))}
                 className="ui-action-primary h-9 px-4 disabled:opacity-50"
               >
                 {isSubmitting ? (

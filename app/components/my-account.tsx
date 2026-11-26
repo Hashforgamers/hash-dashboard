@@ -44,12 +44,14 @@ import { useAccess } from "@/app/context/AccessContext";
 import { useApiClient } from "@/app/hooks/useApiClient";
 import { CafeKeyboardShortcuts } from "@/app/components/cafe-keyboard-shortcuts";
 import { CafeLocationEditor } from "@/app/components/cafe-location-editor";
+import { FlexBookingSettings } from "@/app/components/flex-booking-settings";
 
 const ACCOUNT_NAV_GROUPS = [
   { title: "Cafe", items: [
     { icon: ImageIcon, label: "Cafe Gallery" },
     { icon: Building2, label: "Business Details" },
     { icon: Clock, label: "Operating Hours" },
+    { icon: Clock, label: "Session Timing" },
     { icon: FileCheck, label: "Verified Documents" },
   ] },
   { title: "Payments", items: [
@@ -1762,7 +1764,8 @@ const ToggleSwitch = ({
                     const items = group.items.filter(item =>
                       (item.label !== "Owner Security" || activeStaff?.role === "owner") &&
                       (item.label !== "Staff Activity" || can("transactions.view")) &&
-                      (item.label !== "Self QR & Wallet" || can("account.manage")));
+                      (item.label !== "Self QR & Wallet" || can("account.manage")) &&
+                      (item.label !== "Session Timing" || can("booking.manage") || can("account.manage")));
                     if (!items.length) return null;
                     return (
                       <div key={group.title} className="space-y-1">
@@ -1802,6 +1805,7 @@ const ToggleSwitch = ({
             <div className="space-y-3">
 
 {page === "Keyboard Shortcuts" && <CafeKeyboardShortcuts />}
+{page === "Session Timing" && <FlexBookingSettings vendorId={vendorId ? Number(vendorId) : null} canEdit={can("account.manage")} />}
 
  {page === "Cafe Gallery" && (
   <div>
