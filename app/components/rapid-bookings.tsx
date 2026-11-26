@@ -130,7 +130,7 @@ function RapidBookings() {
       return;
     }
     const matches = userList.filter((user) =>
-      user.phone.includes(value)
+      (user.phone || "").includes(value)
     );
     setPhoneSuggestions(matches.slice(0, 5)); // limit suggestions
   };
