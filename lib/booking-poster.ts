@@ -3,14 +3,34 @@ import { drawQr, encodeQr } from "@/lib/qr-code";
 /** Public website that hosts each cafe's booking page. */
 export const WEBSITE_URL = (process.env.NEXT_PUBLIC_WEBSITE_URL || "https://www.hashforgamers.com").replace(/\/+$/, "");
 
+/** Same rules as the website's slugify (hfg-new-landing-page src/lib/verticals.js). */
+export function slugify(text: string): string {
+  return String(text || "")
+    .normalize("NFKD")
+    .replace(/[̀-ͯ]/g, "")
+    .toLowerCase()
+    .replace(/&/g, " and ")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 70)
+    .replace(/-+$/g, "");
+}
+
 /**
- * The stable per-cafe URL. The website permanently redirects /book/<vendor_id> to its
- * SEO URL /book/<cafe-name>-<locality>-<vendor_id>, keeping the query string.
+ * The per-cafe booking URL: /book/<cafe-name>-<vendor_id>. The website looks the cafe up by the
+ * trailing id and permanently redirects any other spelling to its canonical URL (keeping utm_*),
+ * so printed links and QRs keep working after the cafe is renamed.
  */
-export function cafeBookingUrl(vendorId: number | string, source?: { utm_source: string; utm_medium: string }): string {
-  const url = `${WEBSITE_URL}/book/${encodeURIComponent(String(vendorId))}`;
+export function cafeBookingUrl(vendorId: number | string, cafeName?: string, source?: { utm_source: string; utm_medium: string }): string {
+  const slug = slugify(cafeName || "");
+  const url = `${WEBSITE_URL}/book/${slug ? `${slug}-` : ""}${encodeURIComponent(String(vendorId))}`;
   if (!source) return url;
   return `${url}?${new URLSearchParams(source).toString()}`;
+}
+
+/** The link as printed: no scheme, no "www.". */
+export function printableUrl(url: string): string {
+  return url.replace(/^https?:\/\//, "").replace(/^www\./, "").replace(/\?.*$/, "");
 }
 
 export const QR_SOURCE = { utm_source: "dashboard_qr", utm_medium: "qr" };
@@ -59,6 +79,25 @@ function fitText(ctx: CanvasRenderingContext2D, text: string, maxWidth: number, 
   let clipped = text;
   while (clipped.length > 1 && ctx.measureText(`${clipped}…`).width > maxWidth) clipped = clipped.slice(0, -1);
   return { px: minPx, lines: [clipped === text ? text : `${clipped}…`] };
+}
+
+/**
+ * Fits a booking URL on one line. Long cafe names drop slug words from the end but keep the
+ * trailing "-<id>", so the shortened link still opens the right cafe.
+ */
+function fitUrl(ctx: CanvasRenderingContext2D, url: string, maxWidth: number, startPx: number, minPx: number) {
+  const m = /^(.*\/book\/)(.*?)(-?\d+)$/.exec(url);
+  let words = m ? m[2].split("-").filter(Boolean) : [];
+  for (;;) {
+    const text = m ? `${m[1]}${words.join("-")}${words.length ? m[3] : m[3].replace(/^-/, "")}` : url;
+    for (let px = startPx; px >= minPx; px -= 2) {
+      ctx.font = `700 ${px}px ${FONT}`;
+      if (ctx.measureText(text).width <= maxWidth) return { px, lines: [text] };
+    }
+    if (!m || !words.length) return fitText(ctx, text, maxWidth, minPx, minPx, 1, 700);
+    words = words.slice(0, -1);
+    while (words.length && /^(and|the|of|at|in|by|n)$/.test(words[words.length - 1])) words = words.slice(0, -1);
+  }
 }
 
 /** A plain QR image (with quiet zone) for sharing or using in the cafe's own designs. */
@@ -220,7 +259,7 @@ async function renderGamingPoster({ cafeName, qrUrl, displayUrl }: PosterInput):
   // URL pill
   const pillY = cardY + cardW + 80;
   ctx.font = `700 34px ${FONT}`;
-  const link = fitText(ctx, displayUrl, W - 2 * M - 80, 34, 22, 1, 700);
+  const link = fitUrl(ctx, displayUrl, W - 2 * M - 80, 34, 24);
   ctx.font = `700 ${link.px}px ${FONT}`;
   const pillW = ctx.measureText(link.lines[0]).width + 80;
   ctx.fillStyle = "#ffffff";
@@ -319,8 +358,8 @@ async function renderInkSaverPoster({ cafeName, qrUrl, displayUrl }: PosterInput
   // Link for people who can't scan
   ty += 64;
   ctx.fillStyle = INK;
-  const link = fitText(ctx, displayUrl, W - 240, 34, 22, 1, 600);
-  ctx.font = `600 ${link.px}px ${FONT}`;
+  const link = fitUrl(ctx, displayUrl, W - 240, 34, 22);
+  ctx.font = `700 ${link.px}px ${FONT}`;
   ctx.fillText(link.lines[0], W / 2, ty);
 
   // Footer
