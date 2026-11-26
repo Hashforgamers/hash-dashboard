@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { Check, Loader2, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { TimeField } from "@/app/components/time-field";
 import { AvailableGame, OfferFormState, PricingOffer } from "./types";
 
 interface OfferFormModalProps {
@@ -110,11 +111,11 @@ export function OfferFormModal({
                 </div>
                 <div className="space-y-1.5">
                   <label className="table-header-text">Start Time</label>
-                  <Input
-                    type="time"
+                  <TimeField
+                    aria-label="Start time"
                     value={offerForm.start_time}
-                    onChange={(e) => setOfferForm({ ...offerForm, start_time: e.target.value })}
-                    className={inputSurfaceClass}
+                    onValueChange={(start_time) => setOfferForm({ ...offerForm, start_time })}
+                    className="flex"
                   />
                 </div>
               </div>
@@ -131,11 +132,11 @@ export function OfferFormModal({
                 </div>
                 <div className="space-y-1.5">
                   <label className="table-header-text">End Time</label>
-                  <Input
-                    type="time"
+                  <TimeField
+                    aria-label="End time"
                     value={offerForm.end_time}
-                    onChange={(e) => setOfferForm({ ...offerForm, end_time: e.target.value })}
-                    className={inputSurfaceClass}
+                    onValueChange={(end_time) => setOfferForm({ ...offerForm, end_time })}
+                    className="flex"
                   />
                 </div>
               </div>

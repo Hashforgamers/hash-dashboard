@@ -157,6 +157,9 @@ import { useDashboardData } from "@/app/context/DashboardDataContext"
 import { useApiClient } from "@/app/hooks/useApiClient"
 import { httpJson, clearHttpClientCache } from "@/lib/http-client"
 import { getBookingSettings } from "@/lib/booking-settings"
+import { useTimeFormat } from "@/app/hooks/useTimeFormat"
+import { formatClock, formatMinutes } from "@/lib/time-format"
+import { TimeField } from "@/app/components/time-field"
 import {
   normalizeConsoleSlug as normalizeCatalogSlug,
   resolveConsoleColor as resolveCatalogColor,
@@ -515,6 +518,7 @@ export function SlotBookingForm({
   ).sort((a: any, b: any) => String(a.start_time).localeCompare(String(b.start_time)))
 
   const clock = (value: string) => value.slice(0, 5)
+  const { time: showClock } = useTimeFormat()
   const firstTime = selectedSlots[0]?.start_time || pickerSlots[0]?.start_time || ""
   const continuousSlots = (start: string) => contiguousDeskSlots(pickerSlots, start)
   const [typedStart, setTypedStart] = useState("")
@@ -2154,7 +2158,7 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
               {selectedSlots.length > 0 && <p className="slot-booking-context">
                 {selectedSlots[0].console_name?.trim().toUpperCase() === "PC" ? "PC Gaming" : selectedSlots[0].console_name}
                 {" · "}{selectedSlots.every((slot, i) => !i || selectedSlots[i-1].end_time === slot.start_time)
-                  ? <strong>{clock(selectedSlots[0].start_time)}–{clock(selectedSlots[selectedSlots.length-1].end_time)}</strong>
+                  ? <strong>{showClock(selectedSlots[0].start_time)}–{showClock(selectedSlots[selectedSlots.length-1].end_time)}</strong>
                   : selectedSlots.length + " selected slots"}
                 {" · "}{new Date(selectedSlots[0].date + "T12:00:00").toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
               </p>}
@@ -2290,23 +2294,23 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                             <label className="text-xs">From
                               <select className="block rounded border bg-background p-1" value={selectedSlots.length ? clock(firstTime) : ""} disabled={isSubmitting} onChange={e => selectRange(e.target.value, 1)}>
                                 <option value="" disabled>Start time</option>
-                                {pickerSlots.map(slot => <option key={slot.slot_id} value={clock(slot.start_time)}>{clock(slot.start_time)}</option>)}
+                                {pickerSlots.map(slot => <option key={slot.slot_id} value={clock(slot.start_time)}>{showClock(slot.start_time)}</option>)}
                               </select>
                             </label>
                             <label className="text-xs">To
                               <select className="block rounded border bg-background p-1" value={rangeOptions.slice(0, selectedSlots.length).every((slot, i) => slot.slot_id === selectedSlots[i]?.slot_id) && selectedSlots.length <= rangeOptions.length ? selectedSlots.length : 0} disabled={isSubmitting || !selectedSlots.length} onChange={e => selectRange(firstTime, Number(e.target.value))}>
                                 <option value={0} disabled>End time</option>
-                                {rangeOptions.map((slot, i) => <option key={slot.slot_id} value={i + 1}>{clock(slot.end_time)}</option>)}
+                                {rangeOptions.map((slot, i) => <option key={slot.slot_id} value={i + 1}>{showClock(slot.end_time)}</option>)}
                               </select>
                             </label>
                           </div>
                         )}
                         {onReplaceSlots && timeMode === "manual" && <div className="mb-2 text-xs">
                           <div className="mt-2 flex flex-wrap items-end gap-2">
-                            <label>Requested from<input type="time" className="block rounded border bg-background p-1" value={typedStart} onChange={e => setTypedStart(e.target.value)}/></label>
-                            <label>Requested to<input type="time" className="block rounded border bg-background p-1" value={typedEnd} onChange={e => setTypedEnd(e.target.value)}/></label>
+                            <label>Requested from<TimeField className="flex" aria-label="Requested from" value={typedStart} onValueChange={setTypedStart}/></label>
+                            <label>Requested to<TimeField className="flex" aria-label="Requested to" value={typedEnd} onValueChange={setTypedEnd}/></label>
                             {!!coveringRange.length && <button type="button" className="rounded border px-2 py-1" onClick={() => selectRange(coveringRange[0].start_time, coveringRange.length)}>
-                              Use {clock(coveringRange[0].start_time)}–{clock(coveringRange[coveringRange.length-1].end_time)}
+                              Use {showClock(coveringRange[0].start_time)}–{showClock(coveringRange[coveringRange.length-1].end_time)}
                             </button>}
                             {(typedStart || typedEnd) && <button type="button" onClick={clearTypedTimes}>Clear</button>}
                           </div>
@@ -2329,7 +2333,7 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                               })}
                               className={cn("rounded-md border px-2 py-1.5 text-xs tabular-nums transition-colors",
                                 selected ? "border-blue-400 bg-blue-500/15 text-blue-600 dark:text-blue-200" : "border-zinc-500/30 hover:bg-zinc-500/10")}>
-                              {String(slot.start_time).slice(0, 5)}–{String(slot.end_time).slice(0, 5)}
+                              {showClock(slot.start_time)}–{showClock(slot.end_time)}
                             </button>
                           })}
                           {pickerSlots.length === 0 && <p className="py-2 text-xs text-zinc-500">No available slots.</p>}
@@ -2356,7 +2360,7 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                       {selectedSlots.map((slot) => (
                         <div key={`${slot.date}-${slot.console_id}-${slot.slot_id}`} className="slot-booking-modal-soft flex items-center justify-between gap-3 rounded-md px-2.5 py-2 text-xs">
                           <span className="text-zinc-700 dark:text-zinc-300">
-                            <strong>{new Date(slot.date).toLocaleDateString('en-GB')}</strong> • {slot.start_time.slice(0, 5)}-{slot.end_time.slice(0, 5)} • {slot.console_name}
+                            <strong>{new Date(slot.date).toLocaleDateString('en-GB')}</strong> • {showClock(slot.start_time)}–{showClock(slot.end_time)} • {slot.console_name}
                           </span>
                           <div className="flex items-center gap-2">
                             <span className="flex items-center gap-2 font-semibold">
@@ -3300,6 +3304,7 @@ function ScheduleGrid({
   compact?: boolean
   slab?: boolean
 }) {
+  const { time: showClock } = useTimeFormat()
   const timelineRef = useRef<HTMLDivElement | null>(null)
   const isDraggingRef = useRef(false)
   const dragStartXRef = useRef(0)
@@ -3579,7 +3584,7 @@ function ScheduleGrid({
         "booking-slot-continuation select-none group relative h-full w-full cursor-pointer overflow-hidden rounded-md border transition-colors",
                     compact ? "min-h-[32px]" : "min-h-[40px]"
                   )}
-                  title={`${gameConsole.name} slot continues (${coveringSlot.start_time?.slice(0, 5)}-${coveringSlot.end_time?.slice(0, 5)})`}
+                  title={`${gameConsole.name} slot continues (${showClock(coveringSlot.start_time)}–${showClock(coveringSlot.end_time)})`}
                 >
                   <div className="booking-slot-continuation-line absolute inset-x-2 top-1/2 h-[2px] -translate-y-1/2 rounded-full" />
                   <div className="booking-slot-continuation-dot absolute right-2 top-1/2 h-1.5 w-1.5 -translate-y-1/2 rounded-full" />
@@ -3713,7 +3718,7 @@ if (isPastTime) {
             </div>
             {uniqueTimes.map((time) => (
               <div key={time} className="booking-time-label text-center text-sm font-bold">
-                {time}
+                {showClock(time)}
               </div>
             ))}
           </div>
@@ -3781,6 +3786,7 @@ function RecentBookings({
   isLoading: boolean 
   fixedCard?: boolean
 }) {
+  const { time: showClock } = useTimeFormat()
   // ✅ Determine if these are past bookings
   const hasPastBookings = bookings.some(b => 
     b.status === 'completed' || b.status === 'rejected' || b.status === 'cancelled'
@@ -3909,7 +3915,7 @@ function RecentBookings({
                 <TableCell>
                   <div className="flex flex-col gap-1">
                     <span className="booking-contrast-muted text-xs font-medium">
-                      {(booking.slot_start_time || booking.start_time || "N/A")} - {(booking.slot_end_time || booking.end_time || "N/A")}
+                      {showClock(booking.slot_start_time || booking.start_time, "N/A")} – {showClock(booking.slot_end_time || booking.end_time, "N/A")}
                     </span>
                     <span className="booking-contrast-subtle text-xs">
                       {booking.booking_date
@@ -4025,6 +4031,7 @@ function RecentBookings({
 // ==================== CHANGE BOOKING FORM ====================
 function ChangeBookingForm() {
   const api = useApiClient()
+  const { time: showClock } = useTimeFormat()
   const [bookingId, setBookingId] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [bookingFound, setBookingFound] = useState(false);
@@ -4236,7 +4243,7 @@ function ChangeBookingForm() {
                         }))
                       }
                     >
-                      {slot.start_time}
+                      {showClock(slot.start_time)}
                     </Button>
                   ))}
                 </div>
@@ -4275,6 +4282,7 @@ function ChangeBookingForm() {
 // ==================== REJECT BOOKING FORM ====================
 function RejectBookingForm() {
   const api = useApiClient()
+  const { time: showClock } = useTimeFormat()
   const [bookingId, setBookingId] = useState("");
   const [bookingFound, setBookingFound] = useState(false);
   const [rejectionReason, setRejectionReason] = useState("");
@@ -4435,7 +4443,7 @@ function RejectBookingForm() {
                         <div className="flex justify-between">
                           <span className="text-zinc-600 dark:text-zinc-400">Time Slot</span>
                           <span className="font-medium text-zinc-800 dark:text-white">
-                            {bookingData.start_time || ""} - {bookingData.end_time || ""}
+                            {showClock(bookingData.start_time)} – {showClock(bookingData.end_time)}
                           </span>
                         </div>
                         <div className="flex justify-between">
@@ -4572,6 +4580,7 @@ function RejectBookingForm() {
 // ==================== LIST BOOKING COMPONENT ====================
 function ListBooking() {
   const api = useApiClient()
+  const { format: clockFormat } = useTimeFormat()
   interface BookingType {
     id: string;
     bookingDate: string;
@@ -4707,13 +4716,9 @@ function ListBooking() {
   const formatTime = (time) => {
     if (typeof time === "number") {
       const date = new Date(time);
-      return `${date.getHours().toString().padStart(2, "0")}:${date
-        .getMinutes()
-        .toString()
-        .padStart(2, "0")}`;
+      return formatMinutes(date.getHours() * 60 + date.getMinutes(), clockFormat);
     }
-    const [hours, minutes] = time.split(":");
-    return `${hours}:${minutes}`;
+    return formatClock(time, clockFormat);
   };
 
   return (
@@ -4835,6 +4840,7 @@ function DashboardQuickBookingSlab({
   allSlots: { [key: string]: any[] }
   onDateChange: () => void
 }) {
+  const { time: showClock } = useTimeFormat()
   const calendarToday = getISTDateString(0)
   const [chosenDate, setChosenDate] = useState("")
   const dates = Object.keys(allSlots).filter(date => date >= calendarToday).sort()
@@ -4953,7 +4959,7 @@ function DashboardQuickBookingSlab({
               <button
                 key={`${today}-${selectedConsoleId}-${slot.slot_id}`}
                 type="button"
-                title={`${String(slot.start_time).slice(0, 5)} - ${slot.available_slot || 0} left. Click to select; double-click to book.`}
+                title={`${showClock(slot.start_time)} - ${slot.available_slot || 0} left. Click to select; double-click to book.`}
                 aria-pressed={isSelected}
                 onClick={(event) => {
                   if (event.detail < 2) handleSlotButtonClick(slot)
@@ -4965,7 +4971,7 @@ function DashboardQuickBookingSlab({
                 )}
               >
                 <span className="dashboard-slot-time">
-                  {String(slot.start_time).slice(0, 5)}
+                  {showClock(slot.start_time)}
                 </span>
                 <span className="dashboard-slot-capacity">
                   {slot.available_slot || 0} available

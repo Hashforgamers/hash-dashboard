@@ -7,6 +7,8 @@ import { useState, useEffect, useRef } from "react";
 import { BOOKING_URL } from "@/src/config/env";
 import CreditAccountModal, { type MonthlyCreditAccountSummary } from "./credit-account-modal";
 import { UpiQrPanel, cancelUpiQr, createUpiQr, useUpiQrPolling, type UpiQrState } from "./upi-qr-collect";
+import { useTimeFormat } from "@/app/hooks/useTimeFormat";
+import { TimeField } from "./time-field";
 
 interface ExtraBookingOverlayProps {
   showOverlay: boolean;
@@ -81,6 +83,7 @@ const SettlementOverlay: React.FC<ExtraBookingOverlayProps> = ({
   formatTime,
   releaseSlot,
 }) => {
+  const { time: showClock } = useTimeFormat();
   const [paymentMode, setPaymentMode] = useState("cash");
   const [loading, setLoading] = useState(false);
   const [waiveOffAmount, setWaiveOffAmount] = useState<string>("");
@@ -88,7 +91,7 @@ const SettlementOverlay: React.FC<ExtraBookingOverlayProps> = ({
   const [settlementError,setSettlementError] = useState("");
   const settlementKey = useRef("");
   const [frozenExtraSeconds, setFrozenExtraSeconds] = useState(0);
-  const [settlementPausedAt, setSettlementPausedAt] = useState<string>("");
+  const [settlementPausedAt, setSettlementPausedAt] = useState<Date | null>(null);
   const [paymentSummary, setPaymentSummary] = useState<PaymentSummary | null>(null);
   const [summaryLoading, setSummaryLoading] = useState(true);
   const [summaryVersion,setSummaryVersion] = useState(0);
@@ -221,11 +224,11 @@ const SettlementOverlay: React.FC<ExtraBookingOverlayProps> = ({
   useEffect(() => {
     if (!showOverlay || !selectedSlot) {
       setFrozenExtraSeconds(0);
-      setSettlementPausedAt("");
+      setSettlementPausedAt(null);
       setOvertimeQuote(null);
       return;
     }
-    setSettlementPausedAt(new Date().toLocaleTimeString());
+    setSettlementPausedAt(new Date());
     const bookingId = resolveBookingId(selectedSlot);
     if (noOvertime || !bookingId) {
       setFrozenExtraSeconds(0);
@@ -682,7 +685,7 @@ const SettlementOverlay: React.FC<ExtraBookingOverlayProps> = ({
                   Check the bill before freeing up the console.
                 </p>
                 {settlementPausedAt ? (
-                  <p className="mt-1 text-xs text-blue-300">Timer paused at {settlementPausedAt}</p>
+                  <p className="mt-1 text-xs text-blue-300">Timer paused at {showClock(settlementPausedAt)}</p>
                 ) : null}
               </div>
               <span className="w-fit rounded-full border border-amber-500/30 bg-amber-500/15 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-amber-300 sm:px-3 sm:text-[11px]">
@@ -734,14 +737,29 @@ const SettlementOverlay: React.FC<ExtraBookingOverlayProps> = ({
                       <label htmlFor="played-until" className="text-xs font-medium text-amber-100">
                         This session ran more than 3 hours over. When did play end?
                       </label>
-                      <input
-                        id="played-until"
-                        type="datetime-local"
-                        className="mt-1 w-full rounded-md border border-amber-500/40 bg-zinc-900 px-2 py-1 text-sm text-zinc-100"
-                        max={istInputValue(new Date())}
-                        value={playedUntil}
-                        onChange={(e) => { setPlayedUntil(e.target.value); setChargeFullOvertime(false); }}
-                      />
+                      <div className="mt-1 flex flex-wrap items-center gap-2">
+                        <input
+                          id="played-until"
+                          type="date"
+                          aria-label="Play ended on"
+                          className="rounded-md border border-amber-500/40 bg-zinc-900 px-2 py-1 text-sm text-zinc-100"
+                          max={istInputValue(new Date()).slice(0, 10)}
+                          value={playedUntil.slice(0, 10)}
+                          onChange={(e) => {
+                            setPlayedUntil(e.target.value ? `${e.target.value}T${playedUntil.slice(11, 16) || "00:00"}` : "");
+                            setChargeFullOvertime(false);
+                          }}
+                        />
+                        <TimeField
+                          aria-label="Play ended at"
+                          minuteStep={1}
+                          value={playedUntil.slice(11, 16)}
+                          onValueChange={(time) => {
+                            setPlayedUntil(`${playedUntil.slice(0, 10) || istInputValue(new Date()).slice(0, 10)}T${time}`);
+                            setChargeFullOvertime(false);
+                          }}
+                        />
+                      </div>
                       {!playedUntil && (
                         <label className="mt-2 flex items-center gap-2 text-[11px] text-amber-100">
                           <input type="checkbox" checked={chargeFullOvertime} onChange={(e) => setChargeFullOvertime(e.target.checked)} />

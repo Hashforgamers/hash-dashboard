@@ -19,6 +19,7 @@ import HashLoader from './ui/HashLoader';
 import ExtraBookingOverlay from "./extraBookingOverlay";
 import MealDetailsModal from "./mealsDetailmodal";
 import { useSocket } from "../context/SocketContext";
+import { useTimeFormat } from "@/app/hooks/useTimeFormat";
 
 // Keep all your existing helper functions unchanged
 const formatTime = (seconds: number) => {
@@ -610,6 +611,7 @@ interface CurrentSlotsProps {
 }
 
 export function CurrentSlots({ currentSlots: initialSlots, historyBookings: initialHistoryBookings = [], refreshSlots, setRefreshSlots }: CurrentSlotsProps) {
+  const { time: showClock, range: showRange } = useTimeFormat();
   const { socket, isConnected, joinVendor } = useSocket()
   
   const [currentSlots, setCurrentSlots] = useState(initialSlots || [])
@@ -1213,7 +1215,7 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                               <p className="truncate text-xs text-zinc-400">{bookingPhone}</p>
                             )}
                             <p className="truncate text-xs text-zinc-400">
-                              {booking.consoleType || "Gaming Console"} · {booking.startTime || "N/A"} - {booking.endTime || "N/A"}
+                              {booking.consoleType || "Gaming Console"} · {showClock(booking.startTime, "N/A")} – {showClock(booking.endTime, "N/A")}
                             </p>
                             <PcConfirmation status={pcConfirmations.get(bookingIdToCheck)} />
                           </div>
@@ -1711,7 +1713,7 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
 
                             {/* Time cell - unchanged */}
                             <td className="px-3 py-3 md:px-4">
-                              <span className="whitespace-nowrap text-sm text-foreground">{booking.startTime || '—'} – {booking.endTime || '—'}</span>
+                              <span className="whitespace-nowrap text-sm text-foreground">{showClock(booking.startTime, '—')} – {showClock(booking.endTime, '—')}</span>
                             </td>
 
                             {/* Progress cell - enhanced */}
@@ -1842,7 +1844,7 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                             </span>
                           </div>
                           <div className="mt-2 space-y-1 text-xs text-zinc-400">
-                            <p>Time: {b.time || "Time not available"}</p>
+                            <p>Time: {b.time ? showRange(b.time) : "Time not available"}</p>
                             <p>Date: {formatHistoryDateLabel(b.date)}</p>
                             <p>Booking: {b.bookingId ? `#${b.bookingId}` : "-"}</p>
                           </div>
@@ -1887,7 +1889,7 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                               <div className="text-xs text-zinc-400">{b.bookingId ? `#${b.bookingId}` : "-"}</div>
                             </td>
                             <td className="px-3 py-3 md:px-4 text-xs text-zinc-100">{systemText}</td>
-                            <td className="px-3 py-3 md:px-4 text-xs text-zinc-300">{b.time || "Time not available"}</td>
+                            <td className="px-3 py-3 md:px-4 text-xs text-zinc-300">{b.time ? showRange(b.time) : "Time not available"}</td>
                             <td className="px-3 py-3 md:px-4 text-xs text-zinc-300">Ended</td>
                             <td className="px-3 py-3 md:px-4 text-xs text-zinc-300">{formatHistoryDateLabel(b.date)}</td>
                             <td className="px-3 py-3 md:px-4">
@@ -1980,7 +1982,7 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                   <div className="rounded-lg border border-zinc-700/80 bg-zinc-900/70 p-3">
                     <p className="text-xs uppercase tracking-wide text-zinc-400">Session</p>
                     <p className="mt-1 text-zinc-100">
-                      {contactOverlay.booking?.consoleType || "Console"} • {contactOverlay.booking?.startTime || "N/A"} - {contactOverlay.booking?.endTime || "N/A"}
+                      {contactOverlay.booking?.consoleType || "Console"} • {showClock(contactOverlay.booking?.startTime, "N/A")} – {showClock(contactOverlay.booking?.endTime, "N/A")}
                     </p>
                   </div>
                 </div>

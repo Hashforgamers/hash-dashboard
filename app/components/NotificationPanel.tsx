@@ -11,6 +11,7 @@ import { Bell, X, Check, Clock, User, Calendar, Wallet, Gamepad2, FileWarning, A
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { BOOKING_URL } from '@/src/config/env'
+import { useTimeFormat } from '@/app/hooks/useTimeFormat'
 
 
 interface PayAtCafeNotification {
@@ -138,6 +139,7 @@ export function NotificationPanel({
   socket,
   onBookingAccepted
 }: NotificationPanelProps) {
+  const { time: showClock, range: showRange } = useTimeFormat()
   const [mounted, setMounted] = useState(false)
   const [processingAction, setProcessingAction] = useState<{
     bookingId: number | null
@@ -647,7 +649,7 @@ export function NotificationPanel({
                       return <div key={notification.notification_id} role="status" className="dashboard-module-card rounded-lg border border-amber-400/35 p-3">
                         <p className="text-sm font-semibold">Owner approval needed</p>
                         <p className="mt-1 text-xs">Gamer {notification.userId} requests {notification.minutes} more minutes for ₹{(notification.amount/100).toFixed(2)}, payable after play.</p>
-                        <p className="mt-1 text-xs">Review in Live Sessions. Expires {new Date(notification.expiresAt).toLocaleTimeString()}.</p>
+                        <p className="mt-1 text-xs">Review in Live Sessions. Expires {showClock(new Date(notification.expiresAt))}.</p>
                         <Button variant="outline" className="mt-2 h-8 text-xs" onClick={()=>{onClose();window.location.href='/';}}>Open live sessions</Button>
                       </div>
                     }
@@ -864,7 +866,7 @@ export function NotificationPanel({
                           <div className="flex items-center gap-3 text-xs text-zinc-200">
                             <div className="flex items-center gap-1">
                               <Clock className="w-3 h-3 text-zinc-400" />
-                              <span>{payNotice.time}</span>
+                              <span>{showRange(payNotice.time)}</span>
                             </div>
                             <div className="flex items-center gap-1">
                               <Calendar className="w-3 h-3 text-zinc-400" />
@@ -1085,7 +1087,7 @@ export function NotificationPanel({
                                   <span className="font-semibold text-amber-300">₹{Number(item.amount || 0).toFixed(0)}</span>
                                 </div>
                                 <p className="text-muted-foreground">{item.game_name}</p>
-                                <p className="text-muted-foreground">{formatDisplayDate(item.date)} • {item.time}</p>
+                                <p className="text-muted-foreground">{formatDisplayDate(item.date)} • {showRange(item.time)}</p>
                                 <div className="mt-1 flex flex-wrap gap-3 text-muted-foreground">
                                   <span>Phone: {item.phone || "-"}</span>
                                   <span className="min-w-0 break-all">Email: {item.email || "-"}</span>

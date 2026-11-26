@@ -22,6 +22,7 @@ import ResponsiveSearchFilter from "./ResponsiveSearchFilter";
 import MealDetailsModal from "./mealsDetailmodal";
 import { useSocket } from "../context/SocketContext";
 import { useApiClient } from "@/app/hooks/useApiClient";
+import { useTimeFormat } from "@/app/hooks/useTimeFormat";
 
 
 // Helper function for getting platform icons
@@ -326,6 +327,7 @@ export function UpcomingBookings({
   setRefreshSlots
 }: UpcomingBookingsProps): JSX.Element {
   const api = useApiClient();
+  const { range: showRange } = useTimeFormat();
   
   const { socket, isConnected, joinVendor } = useSocket()
   
@@ -1122,7 +1124,7 @@ export function UpcomingBookings({
                         <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
                           <span className="inline-flex items-center gap-1.5 whitespace-nowrap tabular-nums">
                             <Clock className="h-3 w-3 shrink-0" />
-                            {booking.time || "No time set"}
+                            {booking.time ? showRange(booking.time) : "No time set"}
                           </span>
                           {booking.duplicate_booking && (
                             <StatusPill
@@ -1300,7 +1302,7 @@ export function UpcomingBookings({
               <div className="rounded-lg border border-zinc-700/80 bg-zinc-900/70 p-3">
                 <p className="text-xs uppercase tracking-wide text-zinc-400">Session</p>
                 <p className="mt-1 text-zinc-100">
-                  {contactOverlay.booking?.consoleType || "Console"} • {contactOverlay.booking?.time || "Time not set"}
+                  {contactOverlay.booking?.consoleType || "Console"} • {contactOverlay.booking?.time ? showRange(contactOverlay.booking.time) : "Time not set"}
                 </p>
               </div>
               <UpcomingSlotManager booking={contactOverlay.booking} vendorId={String(vendorId)} onChanged={() => {

@@ -17,6 +17,7 @@ import {
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { OffersTable } from "./offers-table";
 import { PricingOffer } from "./types";
+import { useTimeFormat } from "@/app/hooks/useTimeFormat";
 
 interface OffersSectionProps {
   offers: PricingOffer[];
@@ -49,6 +50,7 @@ export function OffersSection({
   iconButtonClass,
   destructiveIconButtonClass,
 }: OffersSectionProps) {
+  const { time: showClock } = useTimeFormat();
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
@@ -173,7 +175,7 @@ export function OffersSection({
                     <div className="flex items-center gap-2 body-text-muted">
                       <Clock className="icon-md text-blue-400/70 shrink-0" />
                       <span>
-                        {offer.start_time} - {offer.end_time}
+                        {showClock(offer.start_time)} – {showClock(offer.end_time)}
                       </span>
                     </div>
                   </div>
