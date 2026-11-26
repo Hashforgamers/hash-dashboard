@@ -315,7 +315,7 @@ export default function GamesManagementPage() {
         >
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-2.5">
-              <h1 className="premium-heading">Games</h1>
+              <h1 className="premium-heading">Game Library</h1>
               <span className={styles.count} aria-label={`${vendorGames.length} games`}>
                 {vendorGames.length}
               </span>
@@ -478,7 +478,7 @@ export default function GamesManagementPage() {
                                 </p>
                                 {vg.game.rawg_rating && (
                                   <p className="text-xs text-muted-foreground">
-                                    ⭐ {vg.game.rawg_rating.toFixed(1)}
+                                    ★ {vg.game.rawg_rating.toFixed(1)}
                                   </p>
                                 )}
                               </div>
@@ -670,7 +670,7 @@ export default function GamesManagementPage() {
                                 )}
                                 {game.rawg_rating && (
                                   <div className="absolute top-2 right-2 rounded bg-black/70 px-2 py-1 text-xs font-semibold text-white">
-                                    ⭐ {game.rawg_rating.toFixed(1)}
+                                    ★ {game.rawg_rating.toFixed(1)}
                                   </div>
                                 )}
                               </div>
@@ -740,7 +740,7 @@ export default function GamesManagementPage() {
                               )}
                               {selectedGame.rawg_rating && (
                                 <span className="rounded border px-2 py-1 text-xs border-amber-400/25 bg-amber-500/10 text-amber-200">
-                                  ⭐ {selectedGame.rawg_rating.toFixed(1)}
+                                  ★ {selectedGame.rawg_rating.toFixed(1)}
                                 </span>
                               )}
                               {selectedGame.multiplayer && (
@@ -938,7 +938,7 @@ export default function GamesManagementPage() {
                         {submitting ? (
                           <>
                             <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                            Adding...
+                            Adding…
                           </>
                         ) : (
                           <>

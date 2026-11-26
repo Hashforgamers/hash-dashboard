@@ -533,7 +533,7 @@ export default function ManageExtraServices() {
         {!vendorId && !error && (
           <div className="flex items-center justify-center py-12 gap-3 text-muted-foreground">
             <Loader2 className="w-6 h-6 animate-spin" />
-            <p className="body-text-muted">Loading authentication...</p>
+            <p className="body-text-muted">Loading authentication…</p>
           </div>
         )}
 
@@ -542,7 +542,7 @@ export default function ManageExtraServices() {
           loading ? (
             <div className="flex items-center justify-center py-12 gap-3 text-muted-foreground">
               <Loader2 className="w-8 h-8 animate-spin text-primary" />
-              <p className="body-text-muted">Loading categories...</p>
+              <p className="body-text-muted">Loading categories…</p>
             </div>
           ) : !Array.isArray(categories) || categories.length === 0 ? (
             <div className="gaming-panel flex flex-col items-center justify-center gap-3 rounded-lg border-2 border-dashed border-border py-8">
@@ -956,7 +956,7 @@ export default function ManageExtraServices() {
               disabled={categoryLoading || !categoryForm.name.trim()}
               className={`${primaryButtonClass} flex-1`}
             >
-              {categoryLoading ? <><Loader2 className="icon-md animate-spin" /> Creating...</> : 'Create Category'}
+              {categoryLoading ? <><Loader2 className="icon-md animate-spin" /> Creating…</> : 'Create Category'}
             </button>
           </DialogFooter>
         </DialogContent>
@@ -1065,7 +1065,7 @@ export default function ManageExtraServices() {
               />
               {menuForm.imageFile && (
                 <p className="body-text-muted text-xs mt-1">
-                  📸 {menuForm.imageFile.name} ({(menuForm.imageFile.size / 1024).toFixed(1)} KB)
+                  {menuForm.imageFile.name} ({(menuForm.imageFile.size / 1024).toFixed(1)} KB)
                 </p>
               )}
             </div>
@@ -1079,7 +1079,7 @@ export default function ManageExtraServices() {
               disabled={menuLoading || !menuForm.name.trim() || !menuForm.price.trim()}
               className={`${primaryButtonClass} flex-1`}
             >
-              {menuLoading ? <><Loader2 className="icon-md animate-spin" /> Creating...</> : 'Create Item'}
+              {menuLoading ? <><Loader2 className="icon-md animate-spin" /> Creating…</> : 'Create Item'}
             </button>
           </DialogFooter>
         </DialogContent>
@@ -1149,7 +1149,7 @@ export default function ManageExtraServices() {
               Cancel
             </button>
             <button className={`${primaryButtonClass} flex-1`} onClick={updateInventory} disabled={inventoryLoading}>
-              {inventoryLoading ? <><Loader2 className="icon-md animate-spin" /> Saving...</> : "Save"}
+              {inventoryLoading ? <><Loader2 className="icon-md animate-spin" /> Saving…</> : "Save"}
             </button>
           </DialogFooter>
         </DialogContent>

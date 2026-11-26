@@ -149,7 +149,6 @@ const MealSelector: React.FC<MealSelectorProps> = ({
         `${DASHBOARD_URL}/api/vendor/${vendorId}/extra-services`
       );
       const data = await response.json();
-      console.log(data);
       if (data.success) {
         setCategories(data.categories || []);
         if (data.categories && data.categories.length > 0) {
@@ -157,7 +156,6 @@ const MealSelector: React.FC<MealSelectorProps> = ({
         }
       } else {
         setError("failed to load meals");
-        console.log(error);
       }
     } catch (err) {
       console.error(err);
@@ -231,9 +229,9 @@ const MealSelector: React.FC<MealSelectorProps> = ({
       >
         {/* ✅ Compact Header */}
         <div className="compact-dialog-header meal-selector-header flex items-center justify-between p-4">
-          <div className="flex items-center gap-3"> {/* ✅ gap-3 instead of gap-4 */}
+          <div className="flex items-center gap-3"> {/* gap-3 instead of gap-4 */}
             <div className="slot-booking-modal-accent rounded-lg p-2">
-              <ChefHat size={20} /> {/* ✅ size 20 instead of 28 */}
+              <ChefHat size={20} /> {/* size 20 instead of 28 */}
             </div>
             <div>
               <h2 className="text-sm font-semibold text-white">
@@ -249,13 +247,13 @@ const MealSelector: React.FC<MealSelectorProps> = ({
               onClick={onClose}
               aria-label="Close"
             >
-              <X size={20} /> {/* ✅ size 20 instead of 24 */}
+              <X size={20} /> {/* size 20 instead of 24 */}
             </button>
           </div>
         </div>
 
         {/* Body */}
-        <div className="compact-dialog-body"> {/* ✅ Adjusted height calculation */}
+        <div className="compact-dialog-body"> {/* Adjusted height calculation */}
           {/* ✅ Compact Sidebar */}
           <aside className="compact-meal-sidebar meal-selector-sidebar w-56 overflow-auto p-3">
             <h3 className="mb-3 text-xs font-semibold uppercase text-muted-foreground">
@@ -266,7 +264,7 @@ const MealSelector: React.FC<MealSelectorProps> = ({
             )}
             <ul>
               {categories.map((category) => (
-                <li key={category.id} className="mb-1.5"> {/* ✅ mb-1.5 instead of mb-2 */}
+                <li key={category.id} className="mb-1.5"> {/* mb-1.5 instead of mb-2 */}
                   <button
                     type="button"
                     className={`block w-full rounded-lg p-2 text-left transition-colors duration-200 ${
@@ -277,7 +275,7 @@ const MealSelector: React.FC<MealSelectorProps> = ({
                     onClick={() => setSelectedCategory(category.id)}
                   >
                     <div className="flex justify-between">
-                      <span className="text-sm font-medium">{category.name}</span> {/* ✅ text-sm */}
+                      <span className="text-sm font-medium">{category.name}</span> {/* text-sm */}
                       <span className="meal-selector-badge rounded-full px-1.5 py-0.5 text-xs font-semibold">
                         {category.menu_count}
                       </span>
@@ -291,15 +289,15 @@ const MealSelector: React.FC<MealSelectorProps> = ({
           {/* ✅ Compact Main content */}
           <section className="meal-selector-content min-w-0 flex-1 overflow-auto p-3">
             {loading && (
-              <div className="flex flex-col items-center justify-center space-y-3 h-32"> {/* ✅ h-32 for fixed height */}
-                <Loader2 size={36} className="animate-spin text-emerald-600" /> {/* ✅ size 36 instead of 48 */}
-                <p className="text-emerald-400 text-sm">Loading meals…</p> {/* ✅ text-sm */}
+              <div className="flex flex-col items-center justify-center space-y-3 h-32"> {/* h-32 for fixed height */}
+                <Loader2 size={36} className="animate-spin text-emerald-600" /> {/* size 36 instead of 48 */}
+                <p className="text-emerald-400 text-sm">Loading meals…</p> {/* text-sm */}
               </div>
             )}
             {error && !loading && (
               <div className="flex flex-col items-center justify-center gap-4 text-red-600 h-32">
-                <Package size={48} /> {/* ✅ size 48 instead of 64 */}
-                <p className="text-sm">{error}</p> {/* ✅ text-sm */}
+                <Package size={48} /> {/* size 48 instead of 64 */}
+                <p className="text-sm">{error}</p> {/* text-sm */}
                 <button
                   type="button"
                   onClick={fetchMeals}
@@ -311,8 +309,8 @@ const MealSelector: React.FC<MealSelectorProps> = ({
             )}
             {!loading && !error && categories.length === 0 && (
               <div className="flex flex-col items-center justify-center gap-4 text-muted-foreground h-32">
-                <ChefHat size={48} /> {/* ✅ size 48 instead of 64 */}
-                <p className="text-sm">No meals available</p> {/* ✅ text-sm */}
+                <ChefHat size={48} /> {/* size 48 instead of 64 */}
+                <p className="text-sm">No meals available</p> {/* text-sm */}
               </div>
             )}
 
@@ -321,7 +319,7 @@ const MealSelector: React.FC<MealSelectorProps> = ({
               !error &&
               categories.length > 0 &&
               selectedCategory && (
-                <div className="compact-meal-grid"> {/* ✅ Grid layout with gap-4 */}
+                <div className="compact-meal-grid"> {/* Grid layout with gap-4 */}
                   {categories
                     .find((c) => c.id === selectedCategory)
                     ?.menus?.map((item) => {
@@ -335,10 +333,10 @@ const MealSelector: React.FC<MealSelectorProps> = ({
                             quantity > 0
                               ? "meal-selector-item-active"
                               : ""
-                          }`} /* ✅ Removed max-w-md, removed mb-6 */
+                          }`} /* Removed max-w-md, removed mb-6 */
                         >
                           {/* ✅ Smaller Image Container */}
-                          <div className="compact-meal-image relative shrink-0 overflow-hidden rounded-md"> {/* ✅ h-32 instead of h-48 */}
+                          <div className="compact-meal-image relative shrink-0 overflow-hidden rounded-md"> {/* h-32 instead of h-48 */}
                             {item.images.length > 0 ? (
                               <CachedImage
                                 src={item.images[0].image_url}
@@ -347,7 +345,7 @@ const MealSelector: React.FC<MealSelectorProps> = ({
                               />
                             ) : (
                               <div className="slot-booking-modal-soft flex h-full w-full items-center justify-center">
-                                <ChefHat className="text-emerald-500" size={32} /> {/* ✅ size 32 instead of 64 */}
+                                <ChefHat className="text-emerald-500" size={32} /> {/* size 32 instead of 64 */}
                               </div>
                             )}
                           </div>
@@ -366,10 +364,10 @@ const MealSelector: React.FC<MealSelectorProps> = ({
                             {/* ✅ Compact Price and Controls */}
                             <div className="flex items-center justify-between">
                               <div className="flex items-center space-x-1 text-emerald-300">
-                                <IndianRupee size={16} /> {/* ✅ size 16 instead of 20 */}
-                                <span className="text-sm font-semibold">{item.price}</span> {/* ✅ text-lg instead of text-xl */}
+                                <IndianRupee size={16} /> {/* size 16 instead of 20 */}
+                                <span className="text-sm font-semibold">{item.price}</span> {/* text-lg instead of text-xl */}
                               </div>
-                              <div className="flex items-center space-x-2"> {/* ✅ space-x-2 instead of space-x-3 */}
+                              <div className="flex items-center space-x-2"> {/* space-x-2 instead of space-x-3 */}
                                 <button
                                   type="button"
                                   onClick={() =>
@@ -379,9 +377,9 @@ const MealSelector: React.FC<MealSelectorProps> = ({
                                   }
                                   aria-label={`Remove one ${item.name}`}
                                   disabled={quantity === 0}
-                                  className="slot-booking-modal-secondary flex h-8 w-8 items-center justify-center rounded-md disabled:opacity-40 disabled:cursor-not-allowed transition-colors" /* ✅ h-7 w-7 instead of h-8 w-8 */
+                                  className="slot-booking-modal-secondary flex h-8 w-8 items-center justify-center rounded-md disabled:opacity-40 disabled:cursor-not-allowed transition-colors" /* h-7 w-7 instead of h-8 w-8 */
                                 >
-                                  <Minus size={12} /> {/* ✅ size 12 instead of 16 */}
+                                  <Minus size={12} /> {/* size 12 instead of 16 */}
                                 </button>
                                 <span className="min-w-[20px] text-center text-sm font-semibold text-white">
                                   {quantity}
@@ -394,9 +392,9 @@ const MealSelector: React.FC<MealSelectorProps> = ({
                                       categories.find(c => c.id === selectedCategory)?.name || ""
                                     )
                                   }
-                                  className="slot-booking-modal-secondary flex h-8 w-8 items-center justify-center rounded-md transition-colors" /* ✅ h-7 w-7 */
+                                  className="slot-booking-modal-secondary flex h-8 w-8 items-center justify-center rounded-md transition-colors" /* h-7 w-7 */
                                 >
-                                  <Plus size={12} /> {/* ✅ size 12 */}
+                                  <Plus size={12} /> {/* size 12 */}
                                 </button>
                               </div>
                             </div>
@@ -437,7 +435,7 @@ const MealSelector: React.FC<MealSelectorProps> = ({
               )}
             </div>
 
-            <div className="flex gap-2"> {/* ✅ gap-2 instead of gap-3 */}
+            <div className="flex gap-2"> {/* gap-2 instead of gap-3 */}
               <button
                 type="button"
                 onClick={onClose}
@@ -450,9 +448,9 @@ const MealSelector: React.FC<MealSelectorProps> = ({
 
                 type="button"
                 onClick={handleConfirm}
-                className="ui-action-primary flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors" /* ✅ text-sm */
+                className="ui-action-primary flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors" /* text-sm */
               >
-                <ShoppingCart className="w-4 h-4" /> {/* ✅ w-4 h-4 */}
+                <ShoppingCart className="w-4 h-4" /> {/* w-4 h-4 */}
                 Apply
               </button>
             </div>

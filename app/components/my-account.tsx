@@ -732,7 +732,6 @@ const handleSaveBusinessField = async (field: string) => {
       [field]: businessFormData[field]
     };
 
-    console.log(`Saving ${field}:`, updateData);
 
     // Call your new API endpoint
     const response = await api.patch<any, string>(
@@ -803,7 +802,7 @@ const handleProfileImageUpload = async (event: React.ChangeEvent<HTMLInputElemen
   if (!file || !vendorId) return;
 
   setUploadingProfile(true);
-  setProfileUploadMessage("Uploading profile image...");
+  setProfileUploadMessage("Uploading profile image…");
 
   const formData = new FormData();
   formData.append("profileImage", file);
@@ -931,7 +930,6 @@ const handleSaveSlot = async (day: string) => {
     if (validationError) throw new Error(validationError);
 
     // Show initial feedback
-    console.log('Starting slot update process...');
     
     const result = await updateOperatingHours(currentVendorId, dayData);
     
@@ -1070,14 +1068,12 @@ const handleCancelEdit = () => {
       try {
         const decoded_token = jwtDecode<{ sub: { id: number } }>(token);
         setVendorId(decoded_token.sub.id);
-        console.log("Vendor ID from token:", decoded_token.sub.id);
          
       } catch (error) {
         console.error('Error decoding token:', error);
         // Handle invalid token, e.g., redirect to login
       }
     } else {
-      console.log("No JWT token found in localStorage.");
       // Handle no token, e.g., redirect to login
     }
   }, []);
@@ -1154,7 +1150,7 @@ const handleCancelEdit = () => {
     const file = event.target.files?.[0];
     if (!file || !vendorId) return;
 
-    setUploadMessage("Uploading image..."); // Show loading message
+    setUploadMessage("Uploading image…"); // Show loading message
 
     const formData = new FormData();
     formData.append("image", file);
@@ -1336,18 +1332,15 @@ const handleCancelEdit = () => {
  useEffect(() => {
   async function fetchVendorDashboard() {
     if (!vendorId) {
-      console.log("No vendorId available");
       return;
     }
     setLoading(true);
     try {
-      console.log("Fetching dashboard for vendor:", vendorId);
       const res = await api.get<any>(
         `${DASHBOARD_URL}/api/vendor/${vendorId}/dashboard`
       ,
         { timeoutMs: 10_000, retries: 1, cache: "no-store", dedupe: false }
       );
-      console.log("API Response:", res);
 
       // Set profile image
       const profileImg = res.cafeProfile.profileImage || HFG_DEFAULT_LOGO;
@@ -1362,13 +1355,11 @@ const handleCancelEdit = () => {
         // Check if images are objects with IDs or just URLs
         if (imagesData.length > 0 && typeof imagesData[0] === 'object' && imagesData[0]?.id) {
           // New format: objects with IDs
-          console.log("Using image objects format");
           setCafeImageObjects(imagesData);
           const imageUrls = imagesData.map((img: any) => img.url || "").filter(Boolean);
           setCafeImages(imageUrls);
         } else {
           // Old format: just URLs or mixed format - handle safely
-          console.log("Using URL format");
           setCafeImageObjects([]);
           
           const images = imagesData
@@ -1420,18 +1411,15 @@ const handleCancelEdit = () => {
 
 
 const handleDeleteImageByUrl = async (imageIndex: number) => {
-  console.log('handleDeleteImageByUrl called with index:', imageIndex);
   
   if (!vendorId) {
-    console.log('No vendorId available');
     return;
   }
 
-  setUploadMessage("Deleting image...");
+  setUploadMessage("Deleting image…");
 
   try {
     const imageUrl = cafeImages[imageIndex];
-    console.log('Attempting to delete image URL:', imageUrl);
     
     if (!imageUrl) {
       throw new Error("Image URL not found");
@@ -1443,7 +1431,6 @@ const handleDeleteImageByUrl = async (imageIndex: number) => {
       { headers: { "Content-Type": "application/json" }, timeoutMs: 10_000, retries: 0 }
     );
 
-    console.log('Delete response:', response);
 
     if (response.success) {
       setCafeImages((prevImages) =>
@@ -1472,7 +1459,7 @@ const handleDeleteImage = async (imageIndex: number) => {
   if (!vendorId || !cafeImageObjects[imageIndex]) return;
 
   // Show loading state
-  setUploadMessage("Deleting image...");
+  setUploadMessage("Deleting image…");
 
   try {
     const imageId = cafeImageObjects[imageIndex]?.id;
@@ -1528,7 +1515,6 @@ const handleDeleteImage = async (imageIndex: number) => {
 
   useEffect(() => {
     if (prevPageRef.current !== page) {
-      console.log("Page updated:", page);
     }
     prevPageRef.current = page;
   }, [page]);
@@ -1918,7 +1904,7 @@ const ToggleSwitch = ({
               {uploadMessage?.includes("Uploading") ? (
                 <>
                   <Loader2 className="w-8 h-8 mx-auto mb-2 animate-spin" />
-                  <span className="text-sm font-medium">Uploading...</span>
+                  <span className="text-sm font-medium">Uploading…</span>
                 </>
               ) : (
                 <>
@@ -2546,7 +2532,7 @@ const ToggleSwitch = ({
         {loadingBank ? (
           <div className="flex items-center justify-center py-8">
             <Loader2 className="icon-xl animate-spin text-primary" />
-            <span className="body-text-muted ml-2">Loading payment details...</span>
+            <span className="body-text-muted ml-2">Loading payment details…</span>
           </div>
         ) : editingBank ? (
           // EDIT FORM
@@ -2627,7 +2613,7 @@ const ToggleSwitch = ({
                 {savingBank ? (
                   <>
                     <Loader2 className="icon-md animate-spin mr-2" />
-                    Saving...
+                    Saving…
                   </>
                 ) : (
                   <>
@@ -2766,7 +2752,7 @@ const ToggleSwitch = ({
         {loadingBankHistory ? (
           <div className="flex items-center justify-center py-8">
             <Loader2 className="icon-xl animate-spin text-primary" />
-            <span className="body-text-muted ml-2">Loading history...</span>
+            <span className="body-text-muted ml-2">Loading history…</span>
           </div>
         ) : bankDetailsHistory.length ? (
           <div className="dashboard-table-shell">
@@ -2880,7 +2866,7 @@ const ToggleSwitch = ({
           <div className="flex items-center justify-center py-12">
             <div className="flex flex-col items-center gap-3">
               <Loader2 className="icon-xl animate-spin text-primary" />
-              <span className="body-text-small">Loading payment methods...</span>
+              <span className="body-text-small">Loading payment methods…</span>
             </div>
           </div>
         ) : (
@@ -3006,7 +2992,7 @@ const ToggleSwitch = ({
                               <span className="body-text-small text-muted-foreground font-semibold tracking-wide">AUTO</span>
                             ) : togglingMethod === method.pay_method_id ? (
                               <span className="body-text-small text-primary font-medium">
-                                {method.is_enabled ? 'Removing...' : 'Adding...'}
+                                {method.is_enabled ? 'Removing…' : 'Adding…'}
                               </span>
                             ) : (
                               <span className={cn(
@@ -3058,10 +3044,10 @@ const ToggleSwitch = ({
                       </div>
                       <div className="body-text-small break-words">
                         {paymentMethods.filter(m => m.is_enabled).length === 0 ? (
-                          <span className="text-amber-600">⚠️ Register at least one payment method to accept payments.</span>
+                          <span className="text-amber-600">Register at least one payment method to accept payments.</span>
                         ) : (
                           <>
-                            <span className="text-emerald-600">✅ Registered methods: </span>
+                            <span className="text-emerald-600">Registered methods: </span>
                             <span className="font-medium">
                               {paymentMethods.filter(m => m.is_enabled).map(m => m.display_name).join(', ')}
                             </span>
@@ -3090,7 +3076,7 @@ const ToggleSwitch = ({
                   {loadingPaymentMethods ? (
                     <>
                       <Loader2 className="icon-md mr-2 animate-spin" />
-                      Refreshing...
+                      Refreshing…
                     </>
                   ) : (
                     <>
@@ -3123,7 +3109,7 @@ const ToggleSwitch = ({
       {loadingPayouts ? (
         <div className="flex items-center justify-center py-8">
           <Loader2 className="icon-xl animate-spin text-primary" />
-          <span className="body-text-muted ml-2">Loading payout history...</span>
+          <span className="body-text-muted ml-2">Loading payout history…</span>
         </div>
       ) : Array.isArray(payouts) && payouts.length > 0 ? (
         <div className="space-y-4">
@@ -3245,7 +3231,7 @@ const ToggleSwitch = ({
     <CardContent className="space-y-4">
       {loadingNotificationPrefs ? (
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Loader2 className="h-4 w-4 animate-spin" /> Loading notification settings...
+          <Loader2 className="h-4 w-4 animate-spin" /> Loading notification settings…
         </div>
       ) : (
         <>
@@ -3286,7 +3272,7 @@ const ToggleSwitch = ({
             </div>
             {loadingPayAtCafeAutomation ? (
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Loader2 className="h-4 w-4 animate-spin" /> Loading auto settings...
+                <Loader2 className="h-4 w-4 animate-spin" /> Loading auto settings…
               </div>
             ) : (
               <>
@@ -3367,7 +3353,7 @@ const ToggleSwitch = ({
       <Button asChild className="mb-4"><Link href="/subscription">Manage subscription</Link></Button>
       {loadingSubscriptionHistory ? (
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Loader2 className="h-4 w-4 animate-spin" /> Loading subscriptions...
+          <Loader2 className="h-4 w-4 animate-spin" /> Loading subscriptions…
         </div>
       ) : subscriptionHistory.length ? (
         <div className="dashboard-table-shell">
@@ -3454,7 +3440,7 @@ const ToggleSwitch = ({
       )}
       {loadingSettlementSummary ? (
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Loader2 className="h-4 w-4 animate-spin" /> Loading settlement report...
+          <Loader2 className="h-4 w-4 animate-spin" /> Loading settlement report…
         </div>
       ) : (
         <div className="dashboard-table-shell">

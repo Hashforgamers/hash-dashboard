@@ -237,7 +237,6 @@ const MealDetailsModal: React.FC<MealDetailsModalProps> = ({
     setLoading(true);
     setError('');
     try {
-      console.log(`🔍 Fetching meal details for booking ${bookingId}`);
       
       let response;
       
@@ -260,7 +259,6 @@ const MealDetailsModal: React.FC<MealDetailsModalProps> = ({
       }
       
       const data = await response.json();
-      console.log('📋 Booking details response:', data);
 
       if (data.success && data.booking) {
         setSquadDetails((data.booking.squad_details || null) as SquadDetails | null);
@@ -272,9 +270,7 @@ const MealDetailsModal: React.FC<MealDetailsModalProps> = ({
       
       if (data.success && data.booking && Array.isArray(data.booking.extra_services)) {
         setMealDetails(data.booking.extra_services);
-        console.log(`✅ Found ${data.booking.extra_services.length} existing meals`);
       } else {
-        console.log('ℹ️ No existing meals found for this booking');
         setMealDetails([]);
       }
     } catch (err) {
@@ -296,7 +292,6 @@ const MealDetailsModal: React.FC<MealDetailsModalProps> = ({
     setMenuError('');
     
     try {
-      console.log(`🍽️ Fetching menu for vendor ${vendorId}...`);
       
       const response = await fetch(`${DASHBOARD_URL}/api/vendor/${vendorId}/extra-services`);
       
@@ -305,7 +300,6 @@ const MealDetailsModal: React.FC<MealDetailsModalProps> = ({
       }
       
       const data = await response.json();
-      console.log('📋 Menu API Response:', data);
       
       if (data.success && Array.isArray(data.categories)) {
         const activeCategories = data.categories.filter(cat => cat.is_active && cat.menus?.length > 0);
@@ -367,7 +361,6 @@ const MealDetailsModal: React.FC<MealDetailsModalProps> = ({
 
     setIsSubmitting(true);
     try {
-      console.log(`🍽️ Adding meals to booking ${bookingId}:`, selectedMeals);
       
       const response = await fetch(`${BOOKING_URL}/api/booking/${bookingId}/add-meals`, {
         method: 'POST',
@@ -394,7 +387,6 @@ const MealDetailsModal: React.FC<MealDetailsModalProps> = ({
       }
 
       const result = await response.json();
-      console.log('✅ Add meals response:', result);
       
       if (result.success) {
         // Success - refresh existing meals and switch back to view mode
@@ -408,7 +400,6 @@ const MealDetailsModal: React.FC<MealDetailsModalProps> = ({
           window.dispatchEvent(new CustomEvent('refresh-dashboard'));
         }
         
-        console.log(`✅ Successfully added ${result.added_meals?.length || 0} meals`);
       } else {
         throw new Error(result.message || 'Failed to add meals');
       }
@@ -690,7 +681,7 @@ const MealDetailsModal: React.FC<MealDetailsModalProps> = ({
                 {loading && (
                   <div className="flex flex-col items-center justify-center py-8">
                     <Loader2 className="w-6 h-6 sm:w-8 sm:h-8 animate-spin text-emerald-600 mb-3" />
-                    <p className="text-xs sm:text-sm text-muted-foreground">Loading meal details...</p>
+                    <p className="text-xs sm:text-sm text-muted-foreground">Loading meal details…</p>
                   </div>
                 )}
 
@@ -896,7 +887,7 @@ const MealDetailsModal: React.FC<MealDetailsModalProps> = ({
                   {isLoadingMenu && (
                     <div className="flex flex-col items-center justify-center py-8">
                       <Loader2 className="w-6 h-6 sm:w-8 sm:h-8 animate-spin text-primary mb-3" />
-                      <p className="text-xs sm:text-sm text-muted-foreground">Loading menu items...</p>
+                      <p className="text-xs sm:text-sm text-muted-foreground">Loading menu items…</p>
                     </div>
                   )}
 
@@ -1050,7 +1041,7 @@ const MealDetailsModal: React.FC<MealDetailsModalProps> = ({
                 {isSubmitting ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin" />
-                    Adding to Order...
+                    Adding to Order…
                   </>
                 ) : (
                   <>

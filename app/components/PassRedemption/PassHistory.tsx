@@ -35,7 +35,7 @@ const PassHistory: React.FC<{ userPassId: number }> = ({ userPassId }) => {
   };
 
   if (loading) {
-    return <div className="text-center py-8">Loading history...</div>;
+    return <div className="text-center py-8">Loading history…</div>;
   }
 
   return (
@@ -82,7 +82,7 @@ const PassHistory: React.FC<{ userPassId: number }> = ({ userPassId }) => {
                   </div>
 
                   <div className="text-xs text-muted-foreground mt-1">
-                    Method: {log.redemption_method === 'dashboard_manual' ? '🖥️ Dashboard' : '📱 App'}
+                    Method: {log.redemption_method === 'dashboard_manual' ? 'Dashboard' : 'App'}
                   </div>
 
                   {log.notes && (

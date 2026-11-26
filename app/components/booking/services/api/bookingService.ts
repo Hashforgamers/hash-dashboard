@@ -27,7 +27,6 @@ class BookingService {
       })
       
       if (result.success) {
-        console.log('✅ Booking created successfully')
         
         // Dispatch event for dashboard refresh
         if (typeof window !== 'undefined') {

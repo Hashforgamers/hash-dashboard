@@ -1417,7 +1417,7 @@ export default function ConsolePricing() {
                   {isLoading ? (
                     <>
                       <Loader2 className="icon-md animate-spin" />
-                      Saving...
+                      Saving…
                     </>
                   ) : (
                     <>
@@ -1468,7 +1468,7 @@ export default function ConsolePricing() {
           {isLoadingControllerPricing ? (
             <div className="flex-1 flex flex-col items-center justify-center gap-3 text-muted-foreground">
               <Loader2 className="w-10 h-10 animate-spin text-primary" />
-              <p className="body-text-muted">Loading controller pricing...</p>
+              <p className="body-text-muted">Loading controller pricing…</p>
             </div>
           ) : (
           <div className="min-h-0 flex-1 overflow-y-auto pr-1 space-y-3">
@@ -1614,7 +1614,7 @@ export default function ConsolePricing() {
               {isSavingControllerPricing ? (
                 <>
                   <Loader2 className="icon-md animate-spin" />
-                  Saving...
+                  Saving…
                 </>
               ) : (
                 <>
@@ -1672,7 +1672,7 @@ export default function ConsolePricing() {
             {isLoadingSquadPricing ? (
               <div className="dashboard-module-surface flex h-full items-center justify-center rounded-lg p-4 text-muted-foreground">
                 <Loader2 className="mr-2 h-5 w-5 animate-spin text-primary" />
-                Loading squad rules...
+                Loading squad rules…
               </div>
             ) : (
               <div className="grid grid-cols-1 gap-3">
@@ -1851,7 +1851,7 @@ export default function ConsolePricing() {
               {isSavingSquadPricing ? (
                 <>
                   <Loader2 className="icon-md animate-spin" />
-                  Saving Squad Rules...
+                  Saving Squad Rules…
                 </>
               ) : (
                 <>
@@ -1981,7 +1981,7 @@ export default function ConsolePricing() {
                   {isSavingTaxProfile ? (
                     <>
                       <Loader2 className="icon-md animate-spin" />
-                      Saving GST...
+                      Saving GST…
                     </>
                   ) : (
                     <>
@@ -2092,7 +2092,7 @@ export default function ConsolePricing() {
                   {isSavingCredit ? (
                     <>
                       <Loader2 className="icon-md animate-spin" />
-                      Saving...
+                      Saving…
                     </>
                   ) : (
                     <>

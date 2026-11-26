@@ -341,7 +341,7 @@ export default function ForgotPasswordPage() {
                     className="w-full h-12 bg-primary text-primary-foreground hover:bg-primary/90 font-semibold rounded-lg transition-all duration-200"
                   >
                     {loading ? (
-                      <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Sending Code...</>
+                      <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Sending Code…</>
                     ) : (
                       <><Mail className="mr-2 h-5 w-5" /> Send Reset Code</>
                     )}
@@ -434,7 +434,7 @@ export default function ForgotPasswordPage() {
                         className="text-primary hover:text-primary/80 hover:bg-primary/10 disabled:opacity-40 transition-all"
                       >
                         {isResending ? (
-                          <><RefreshCw className="w-4 h-4 mr-1 animate-spin" /> Sending...</>
+                          <><RefreshCw className="w-4 h-4 mr-1 animate-spin" /> Sending…</>
                         ) : (
                           <><RefreshCw className="w-4 h-4 mr-1" /> Resend</>
                         )}
@@ -448,7 +448,7 @@ export default function ForgotPasswordPage() {
                     className="w-full h-12 bg-primary text-primary-foreground hover:bg-primary/90 font-semibold rounded-lg transition-all duration-200 disabled:opacity-50"
                   >
                     {loading ? (
-                      <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Verifying...</>
+                      <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Verifying…</>
                     ) : otpValue?.length === 6 ? (
                       <><CheckCircle className="mr-2 h-5 w-5" /> Verify & Continue</>
                     ) : (

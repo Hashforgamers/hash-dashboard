@@ -421,7 +421,6 @@ export function UpcomingBookings({
   // Update bookings when props change
   useEffect(() => {
     if (Array.isArray(initialBookings)) {
-      console.log('📅 UpcomingBookings: Updating from props with', initialBookings.length, 'bookings')
       setUpcomingBookings(initialBookings)
     }
   }, [initialBookings])
@@ -430,14 +429,12 @@ export function UpcomingBookings({
   useEffect(() => {
     if (!socket || !vendorId || !isConnected) return
 
-    console.log('📅 UpcomingBookings: Setting up socket listeners...')
     const parsedVendorId = Number(vendorId)
     if (!Number.isFinite(parsedVendorId)) return
     
     joinVendor(parsedVendorId)
 
     function handleUpcomingBooking(data: any) {
-      console.log('📅 Real-time upcoming booking:', data)
       
       const eventVendorId = Number(data?.vendorId ?? data?.vendor_id);
       const incomingBookingId = Number(data?.bookingId ?? data?.booking_id ?? data?.bookId ?? data?.book_id);
@@ -453,7 +450,6 @@ export function UpcomingBookings({
           
           const exists = prev.some(booking => Number(booking?.bookingId) === incomingBookingId)
           if (!exists) {
-            console.log('➕ Adding new booking immediately')
             return [{ ...normalizedIncoming, bookingId: incomingBookingId }, ...prev]
           }
           return prev
@@ -462,7 +458,6 @@ export function UpcomingBookings({
     }
 
     function handleBookingUpdate(data: any) {
-      console.log('🔄 Booking update:', data)
       
       const eventVendorId = Number(data?.vendorId ?? data?.vendor_id);
       const incomingBookingId = Number(data?.bookingId ?? data?.booking_id ?? data?.bookId ?? data?.book_id);
@@ -500,7 +495,6 @@ export function UpcomingBookings({
     }
 
     function handleBookingAccepted(data: any) {
-      console.log('✅ Booking accepted from notification panel:', data)
       
       const eventVendorId = Number(data?.vendorId ?? data?.vendor_id);
       if (eventVendorId === parsedVendorId) {
@@ -510,7 +504,6 @@ export function UpcomingBookings({
           
           const exists = prev.some(booking => booking?.bookingId === data.bookingId)
           if (!exists) {
-            console.log('📅 ✅ Adding accepted booking to upcoming bookings immediately')
             return [normalizedIncoming, ...prev]
           }
           return prev
@@ -576,7 +569,6 @@ export function UpcomingBookings({
     socket.on('booking_payment_update', handleBookingPaymentUpdate)
 
     return () => {
-      console.log('🧹 Cleaning up UpcomingBookings listeners')
       socket.off('upcoming_booking', handleUpcomingBooking)
       socket.off('booking', handleBookingUpdate)
       socket.off('booking_accepted', handleBookingAccepted)
@@ -631,7 +623,6 @@ export function UpcomingBookings({
   // 🔧 MOVED: Add debugging to see booking data structure AFTER mergedBookings is defined
   useEffect(() => {
     if (mergedBookings.length > 0) {
-      console.log('📊 Sample booking structure:', mergedBookings[0]);
       console.log('📊 All booking game_ids:', mergedBookings.map(b => ({
         bookingId: b.bookingId,
         game_id: b.game_id,
@@ -832,7 +823,6 @@ export function UpcomingBookings({
 
   // ✅ ENHANCED: Enhanced meal/food icon click handlers
   const handleFoodIconClick = (bookingId: string, customerName: string, hasMeals: boolean) => {
-    console.log('🍽️ Food icon clicked:', { bookingId, customerName, hasMeals });
     
     setMealDetailsModal({
       isOpen: true,
@@ -844,7 +834,6 @@ export function UpcomingBookings({
   };
 
   const handleAddFoodClick = (bookingId: string, customerName: string) => {
-    console.log('➕ Add food clicked:', { bookingId, customerName });
     
     setMealDetailsModal({
       isOpen: true,
@@ -1357,7 +1346,7 @@ export function UpcomingBookings({
                 disabled={cancelLoading}
                 className={cn(buttonVariants({ variant: "soft-danger", size: "sm" }), "disabled:cursor-not-allowed")}
               >
-                {cancelLoading ? "Cancelling..." : "Confirm Cancel"}
+                {cancelLoading ? "Cancelling…" : "Confirm Cancel"}
               </button>
             </div>
           </div>
@@ -1407,7 +1396,7 @@ export function UpcomingBookings({
                 disabled={noShowLoading}
                 className={cn(buttonVariants({ variant: "soft-warning", size: "sm" }), "disabled:cursor-not-allowed")}
               >
-                {noShowLoading ? "Updating..." : "Confirm No Show"}
+                {noShowLoading ? "Updating…" : "Confirm No Show"}
               </button>
             </div>
           </div>

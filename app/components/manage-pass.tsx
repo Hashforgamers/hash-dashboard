@@ -329,7 +329,7 @@ export default function ManagePassesPage() {
         {loading ? (
           <div className="flex items-center justify-center gap-3 py-8 text-muted-foreground">
             <Loader2 className="w-8 h-8 animate-spin text-primary" />
-            <p className="body-text-muted">Loading passes...</p>
+            <p className="body-text-muted">Loading passes…</p>
           </div>
         ) : passes.length === 0 ? (
           <div className="gaming-panel dashboard-module-panel flex flex-col items-center justify-center gap-3 rounded-lg border-2 border-dashed border-border py-8">
@@ -842,7 +842,7 @@ function AddPassDialog({ passTypes, onSave, buttonClassName }: any) {
               {isSubmitting ? (
                 <>
                   <Loader2 className="icon-md animate-spin" />
-                  Creating...
+                  Creating…
                 </>
               ) : (
                 <>
@@ -1029,7 +1029,7 @@ function EditPassDialog({ passObj, passTypes, onSave }: any) {
               {isSubmitting ? (
                 <>
                   <Loader2 className="icon-md animate-spin" />
-                  Saving...
+                  Saving…
                 </>
               ) : (
                 "Save Changes"

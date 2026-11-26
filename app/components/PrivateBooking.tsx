@@ -838,7 +838,7 @@ const PrivateBookingForm: React.FC<PrivateBookingFormProps> = ({ onBack }) => {
             {isSubmitting ? (
               <div className="flex items-center justify-center gap-2">
                 <Loader2 className="w-4 h-4 animate-spin" />
-                Creating Private Booking...
+                Creating Private Booking…
               </div>
             ) : (
               <div className="flex items-center justify-center gap-2">

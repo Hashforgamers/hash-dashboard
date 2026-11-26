@@ -21,7 +21,6 @@ const initialState: BookingFormState = {
 function formReducer(state: BookingFormState, action: BookingFormAction): BookingFormState {
   switch (action.type) {
     case 'SET_FIELD':
-      console.log(`📝 Field updated: ${action.field} =`, action.value)
       return { 
         ...state, 
         [action.field]: action.value,
@@ -29,11 +28,9 @@ function formReducer(state: BookingFormState, action: BookingFormAction): Bookin
       }
     
     case 'SET_ERRORS':
-      console.log('❌ Validation errors:', action.errors)
       return { ...state, errors: action.errors }
     
     case 'SET_VALIDATED_PASS':
-      console.log('✅ Pass validated:', action.pass)
       return { 
         ...state, 
         validatedPass: action.pass,
@@ -41,15 +38,12 @@ function formReducer(state: BookingFormState, action: BookingFormAction): Bookin
       }
     
     case 'TOGGLE_PRIVATE_MODE':
-      console.log('🔄 Private mode toggled:', !state.isPrivateMode)
       return { ...state, isPrivateMode: !state.isPrivateMode }
     
     case 'SET_MEALS':
-      console.log('🍽️ Meals updated:', action.meals)
       return { ...state, selectedMeals: action.meals }
     
     case 'RESET_FORM':
-      console.log('🔄 Form reset')
       return initialState
     
     default:
@@ -95,7 +89,6 @@ export const useBookingForm = (selectedSlots: SelectedSlot[]) => {
       return false
     }
     
-    console.log('✅ Validation passed')
     return true
   }, [state, selectedSlots])
 

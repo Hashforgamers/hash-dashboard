@@ -564,7 +564,6 @@ const normalizeLiveSlot = (slot: any) => {
 
 const releaseSlot = async (consoleType: string, gameId: string, consoleId: string, vendorId: any, setRefreshSlots: any) => {
   try {
-    console.log('🔄 Client: Calling release API for console:', consoleId);
     const response = await fetch(`${DASHBOARD_URL}/api/releaseDevice/consoleTypeId/${gameId}/console/${consoleId}/vendor/${vendorId}`, {
       method: "POST",
       headers: creditAuthHeaders(),
@@ -572,7 +571,6 @@ const releaseSlot = async (consoleType: string, gameId: string, consoleId: strin
     });
     if (response.ok) {
       const payload = await response.json().catch(() => ({}));
-      console.log('✅ Client: Release API call successful');
       setRefreshSlots((prev: boolean) => !prev);
       if (typeof window !== "undefined") {
         window.dispatchEvent(new CustomEvent("refresh-dashboard"));
@@ -757,7 +755,6 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
     const handleMealAdded = (event: CustomEvent) => {
       const { bookingId } = event.detail || {};
       if (bookingId) {
-        console.log('🍽️ Meal added event received for booking:', bookingId);
         setBookingMealStatus(prev => ({
           ...prev,
           [String(bookingId)]: true
@@ -1810,7 +1807,7 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
             <div className="dashboard-table-shell flex-1 min-h-0">
               {historyLoading ? (
                 <div className="dashboard-module-empty flex h-full flex-col items-center justify-center">
-                  <p className="text-sm font-medium">Loading history...</p>
+                  <p className="text-sm font-medium">Loading history…</p>
                 </div>
               ) : filteredHistoryBookings.length === 0 ? (
                 <div className="dashboard-module-empty flex h-full flex-col items-center justify-center">

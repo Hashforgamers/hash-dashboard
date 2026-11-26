@@ -170,7 +170,7 @@ export function OfferFormModal({
                 {isCreatingOffer || isUpdatingOffer ? (
                   <>
                     <Loader2 className="icon-md animate-spin" />
-                    {editingOffer ? "Saving..." : "Creating..."}
+                    {editingOffer ? "Saving…" : "Creating…"}
                   </>
                 ) : (
                   <>

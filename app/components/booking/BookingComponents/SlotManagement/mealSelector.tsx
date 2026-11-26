@@ -149,7 +149,6 @@ const MealSelector: React.FC<MealSelectorProps> = ({
     try {
       const response = await fetch(`${DASHBOARD_URL}/api/vendor/${vendorId}/extra-services`)
       const data = await response.json()
-      console.log('📦 Fetched meals:', data)
       
       if (data.success) {
         setCategories(data.categories || [])

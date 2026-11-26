@@ -1333,7 +1333,7 @@ const [isPrivateMode, setIsPrivateMode] = useState<boolean>(false);
                   {isLoadingSlots ? (
                     <div className="text-center py-6">
                       <Loader2 className="w-6 h-6 mx-auto mb-2 animate-spin text-emerald-600" />
-                      <p className="text-xs text-muted-foreground">Loading time slots...</p>
+                      <p className="text-xs text-muted-foreground">Loading time slots…</p>
                     </div>
                   ) : availableSlots.length === 0 ? (
                     <div className="text-center py-3 text-muted-foreground">
@@ -1626,7 +1626,7 @@ const [isPrivateMode, setIsPrivateMode] = useState<boolean>(false);
             {isSubmitting ? (
               <div className="flex items-center justify-center gap-2">
                 <Loader2 className="w-4 h-4 animate-spin" />
-                Processing...
+                Processing…
               </div>
             ) : (
               <div className="flex items-center justify-center gap-2">

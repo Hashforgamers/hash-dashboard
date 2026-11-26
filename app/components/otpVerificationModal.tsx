@@ -149,7 +149,7 @@ export function OTPVerificationModal({
                 {loading ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                    Verifying...
+                    Verifying…
                   </>
                 ) : (
                   'Verify OTP'
@@ -163,7 +163,7 @@ export function OTPVerificationModal({
                 {sendingOtp ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                    Sending...
+                    Sending…
                   </>
                 ) : (
                   "Didn't receive OTP? Resend"

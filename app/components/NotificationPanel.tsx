@@ -292,7 +292,6 @@ export function NotificationPanel({
     try {
       setProcessingAction({ bookingId: notification.bookingId, action: 'accept' })
 
-      console.log(`🔄 Processing accept for booking ${notification.bookingId}`)
 
       const response = await fetch(`${BOOKING_URL}/api/pay-at-cafe/accept`, {
         method: 'POST',
@@ -310,7 +309,6 @@ export function NotificationPanel({
         onRemoveNotification(notification.bookingId)
 
         if (socket) {
-          console.log('📡 Emitting booking_accepted event for real-time update')
           socket.emit('booking_accepted', {
             bookingId:      notification.bookingId,
             vendorId:       vendorId,
@@ -339,7 +337,6 @@ export function NotificationPanel({
             status:      'Confirmed',
             statusLabel: 'Confirmed'
           }
-          console.log('📅 Triggering upcoming bookings update with:', bookingData)
           onBookingAccepted(bookingData)
         }
 
@@ -349,14 +346,13 @@ export function NotificationPanel({
 
         // ✅ UPDATED: Toast correctly says payment is NOT done yet
         const collectAmount = notification.total_amount || notification.game.single_slot_price
-        showToast('✅ Booking accepted! Collect ₹' + collectAmount + ' after session completion.', 'success')
-        console.log(`✅ Booking ${notification.bookingId} confirmed — payment to be collected after session`)
+        showToast('Booking accepted! Collect ₹' + collectAmount + ' after session completion.', 'success')
       } else {
         throw new Error(result.message || 'Failed to accept booking')
       }
     } catch (error) {
       console.error('Error accepting booking:', error)
-      showToast('❌ Error accepting booking. Please try again.', 'error')
+      showToast('Error accepting booking. Please try again.', 'error')
     } finally {
       setProcessingAction({ bookingId: null, action: null })
     }
@@ -369,7 +365,6 @@ export function NotificationPanel({
     try {
       setProcessingAction({ bookingId: notification.bookingId, action: 'reject' })
 
-      console.log(`🔄 Processing reject for booking ${notification.bookingId}`)
 
       const response = await fetch(`${BOOKING_URL}/api/pay-at-cafe/reject`, {
         method: 'POST',
@@ -389,14 +384,13 @@ export function NotificationPanel({
         if (result?.booking_ids?.length > 1 && typeof window !== "undefined") {
           window.dispatchEvent(new CustomEvent("refresh-dashboard"))
         }
-        showToast('✅ Booking rejected and cancelled successfully!', 'success')
-        console.log(`❌ Booking ${notification.bookingId} cancelled successfully`)
+        showToast('Booking rejected and cancelled successfully!', 'success')
       } else {
         throw new Error(result.message || 'Failed to reject booking')
       }
     } catch (error) {
       console.error('Error rejecting booking:', error)
-      showToast('❌ Error rejecting booking. Please try again.', 'error')
+      showToast('Error rejecting booking. Please try again.', 'error')
     } finally {
       setProcessingAction({ bookingId: null, action: null })
     }
@@ -506,7 +500,7 @@ export function NotificationPanel({
       if (!response.ok || !result?.success) {
         throw new Error(result?.message || `Failed to ${action} booking`)
       }
-      showToast(`✅ Booking ${action === "accept" ? "accepted" : "rejected"} successfully`, "success")
+      showToast(`Booking ${action === "accept" ? "accepted" : "rejected"} successfully`, "success")
       onRemoveNotification(item.booking_id)
       if (typeof window !== "undefined") {
         window.dispatchEvent(new CustomEvent("refresh-dashboard"))
@@ -515,7 +509,7 @@ export function NotificationPanel({
       await fetchQueueList(selectedQueueStatus)
     } catch (error) {
       console.error(`Error performing ${action} from queue overlay:`, error)
-      showToast(`❌ Unable to ${action} booking`, "error")
+      showToast(`Unable to ${action} booking`, "error")
     } finally {
       setQueueActionProcessing({ bookingId: null, action: null })
     }
@@ -630,7 +624,7 @@ export function NotificationPanel({
                   <p className="mt-1 text-xs text-red-300">{queueError}</p>
                 )}
                 {(isQueueSummaryLoading || isQueueListLoading) && (
-                  <p className="mt-1 text-xs text-primary">Loading...</p>
+                  <p className="mt-1 text-xs text-primary">Loading…</p>
                 )}
               </div>
 

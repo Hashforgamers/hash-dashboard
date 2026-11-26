@@ -524,11 +524,9 @@ const SettlementOverlay: React.FC<ExtraBookingOverlayProps> = ({
       );
       success = success && released.ok;
     }
-    console.log('💰 Release slot result:', success);
 
     if (success) {
       // ✅ CRITICAL: On SUCCESS - Update UI immediately (exactly like release button)
-      console.log('💰 Settle successful - updating UI immediately');
       
       // ✅ Trigger refresh to update both CurrentSlots and BookingStats
       setRefreshSlots((prev) => !prev);
@@ -545,11 +543,9 @@ const SettlementOverlay: React.FC<ExtraBookingOverlayProps> = ({
       setSettlementError("");
       setLoading(false);
       
-      console.log('💰 UI updated immediately - settle complete');
       return true;
     } else {
       // ✅ Release failed - show error, don't close overlay
-      console.log('💰 Release slot failed');
       setSettlementError("Failed to release slot. Please try again.");
       setLoading(false);
       return false;
@@ -612,9 +608,7 @@ const SettlementOverlay: React.FC<ExtraBookingOverlayProps> = ({
       }
       if (amount > 0) {
         await createExtraBooking(extraBookingPayload);
-        console.log('💰 Extra booking created successfully');
       } else {
-        console.log('💰 No overtime charge - skipping extra booking creation');
       }
       const pendingTypes = (paymentSummary?.line_items || [])
         .filter((item) => isPendingStatus(item.settlement_status))
@@ -660,7 +654,6 @@ const SettlementOverlay: React.FC<ExtraBookingOverlayProps> = ({
         return;
       }
       await settlePendingBookingCharges(bookingId, settleMode, parsedWaiveOff, bookingTypesPayload);
-      console.log('💰 Pending charges settled successfully');
 
       await releaseAndClose();
 
@@ -875,7 +868,7 @@ const SettlementOverlay: React.FC<ExtraBookingOverlayProps> = ({
                 {(summaryLoading || summaryError) && (
                   <div className="mb-4 rounded-lg border border-border bg-muted/50 px-3 py-2">
                     {summaryLoading && (
-                      <p className="text-xs text-muted-foreground">Loading full transaction history...</p>
+                      <p className="text-xs text-muted-foreground">Loading full transaction history…</p>
                     )}
                     {summaryError && (
                       <p className="text-xs text-amber-300">{summaryError}</p>
@@ -1027,7 +1020,7 @@ const SettlementOverlay: React.FC<ExtraBookingOverlayProps> = ({
                       )}
                     </div>
                     {creditAccountLoading ? (
-                      <p className="mt-2 text-xs text-muted-foreground">Loading credit account...</p>
+                      <p className="mt-2 text-xs text-muted-foreground">Loading credit account…</p>
                     ) : creditAccount?.is_active ? (
                       <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-3">
                         <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-3 py-2">
@@ -1082,7 +1075,7 @@ const SettlementOverlay: React.FC<ExtraBookingOverlayProps> = ({
                       {loading ? (
                         <>
                           <Loader2 className="w-4 h-4 animate-spin" />
-                          Processing...
+                          Processing…
                         </>
                       ) : (
                         <>
