@@ -43,6 +43,7 @@ import { OTPVerificationModal } from "./otpVerificationModal";
 import { useAccess } from "@/app/context/AccessContext";
 import { useApiClient } from "@/app/hooks/useApiClient";
 import { CafeKeyboardShortcuts } from "@/app/components/cafe-keyboard-shortcuts";
+import { CafeLocationEditor } from "@/app/components/cafe-location-editor";
 
 const ACCOUNT_NAV_GROUPS = [
   { title: "Cafe", items: [
@@ -704,7 +705,7 @@ const handleEditBusinessField = (field: string) => {
   // Initialize form data with current values from API data
   setBusinessFormData({
     displayName: businessDetails.displayName || "",
-    businessName: businessDetails.businessName || data?.cafeProfile?.name || "John's Cafe",
+    businessName: businessDetails.businessName || data?.cafeProfile?.name || "",
     businessType: businessDetails.businessType || "cafe", 
     phone: businessDetails.phone || "",
     website: businessDetails.website || "",
@@ -1947,8 +1948,8 @@ const ToggleSwitch = ({
       <div className="space-y-4">
         {[
           { key: 'displayName', label: 'Display name', type: 'text', value: businessDetails.displayName || businessDetails.businessName },
-          { key: 'phone', label: 'Phone', type: 'tel', value: businessDetails.phone || "+1 (555) 000-0000" },
-          { key: 'website', label: 'Website', type: 'url', value: businessDetails.website || "https://cafe.example.com" },
+          { key: 'phone', label: 'Phone', type: 'tel', value: businessDetails.phone || "" },
+          { key: 'website', label: 'Website', type: 'url', value: businessDetails.website || "" },
           { key: 'address', label: 'Address', type: 'textarea', value: businessDetails.address || "123 Cafe Street, Food District, City, 12345" }
         ].map((field) => (
           <div key={field.key} className="flex items-center space-x-3 p-3 rounded-lg border border-border hover:bg-muted/20 transition-colors">
@@ -2039,7 +2040,7 @@ const ToggleSwitch = ({
           <div className="p-3 rounded-lg border border-border bg-muted/10">
             <Label className="text-sm font-medium text-foreground">Business Name</Label>
             <p className="text-sm text-muted-foreground mt-1">
-              {businessDetails.businessName || "John's Cafe"}
+              {businessDetails.businessName || "-"}
             </p>
           </div>
           <div className="p-3 rounded-lg border border-border bg-muted/10">
@@ -2052,6 +2053,15 @@ const ToggleSwitch = ({
       </div>
     </CardContent>
   </Card>
+)}
+{page === "Business Details" && businessDetails && (
+  <CafeLocationEditor
+    vendorId={vendorId}
+    latitude={businessDetails.latitude}
+    longitude={businessDetails.longitude}
+    address={businessDetails.address}
+    onSaved={point => setData((prev: any) => ({ ...prev, businessDetails: { ...prev?.businessDetails, latitude: String(point.lat), longitude: String(point.lng) } }))}
+  />
 )}
 
 {page === "Operating Hours" && (
