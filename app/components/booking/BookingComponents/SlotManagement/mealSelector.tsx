@@ -218,7 +218,7 @@ const MealSelector: React.FC<MealSelectorProps> = ({
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-[60] flex items-center justify-center bg-black bg-opacity-60 backdrop-blur-sm p-4"
+        className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
         onClick={(e) => e.target === e.currentTarget && onClose()}
       >
         <motion.div
@@ -227,7 +227,7 @@ const MealSelector: React.FC<MealSelectorProps> = ({
           initial={{ opacity: 0, scale: 0.95, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 20 }}
-          className="relative w-full max-w-4xl h-[85vh] overflow-hidden rounded-lg shadow-2xl bg-card"
+          className="relative w-full max-w-4xl h-[85vh] overflow-hidden rounded-lg shadow-xl bg-card"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}

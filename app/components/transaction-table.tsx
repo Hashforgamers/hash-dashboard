@@ -886,7 +886,7 @@ export function TransactionTable() {
 
       {showColumnSelector && (
         <div
-          className="fixed inset-0 z-40 bg-black/40 md:static md:bg-transparent"
+          className="fixed inset-0 z-40 md:static md:bg-transparent bg-black/60 backdrop-blur-sm"
           onClick={() => setShowColumnSelector(false)}
         >
           <div

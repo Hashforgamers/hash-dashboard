@@ -502,14 +502,14 @@ const MealDetailsModal: React.FC<MealDetailsModalProps> = ({
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-[1200] flex items-end justify-center bg-black bg-opacity-50 backdrop-blur-sm p-0 sm:items-center sm:p-4"
+        className="fixed inset-0 z-[1200] flex items-end justify-center p-0 sm:items-center sm:p-4 bg-black/60 backdrop-blur-sm"
         onClick={(e) => e.target === e.currentTarget && onClose()}
       >
         <motion.div
           initial={{ opacity: 0, scale: 0.95, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 20 }}
-          className="relative flex h-[100dvh] max-h-[100dvh] w-full flex-col overflow-hidden rounded-none shadow-2xl bg-muted sm:h-auto sm:max-h-[95vh] sm:max-w-6xl sm:rounded-lg"
+          className="relative flex h-[100dvh] max-h-[100dvh] w-full flex-col overflow-hidden rounded-none shadow-xl bg-muted sm:h-auto sm:max-h-[95vh] sm:max-w-6xl sm:rounded-lg"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header - Responsive */}

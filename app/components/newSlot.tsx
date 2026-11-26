@@ -2123,7 +2123,7 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
       <motion.div
         initial={false}
         style={{ zIndex: overlayZIndex }}
-        className="fixed inset-0 flex items-center justify-center bg-black/45 p-3"
+        className="fixed inset-0 flex items-center justify-center p-3 bg-black/60 backdrop-blur-sm"
       >
         <motion.div
           initial={false}
@@ -2131,7 +2131,7 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
           data-booking-form
           aria-modal="true"
           aria-label="New Gaming Session"
-          className="slot-booking-modal flex max-h-[92vh] w-full max-w-[960px] flex-col overflow-hidden rounded-lg border shadow-2xl"
+          className="slot-booking-modal flex max-h-[92vh] w-full max-w-[960px] flex-col overflow-hidden rounded-lg border shadow-xl"
         >
           <div className="slot-booking-modal-header relative flex items-center justify-between border-b px-4 py-3">
             <div className="min-w-0">
@@ -3113,7 +3113,7 @@ function TopBar({
   // Conditional rendering for management views
   if (showManageView) {
     return (
-      <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm p-4">
+      <div className="fixed inset-0 z-50 p-4 bg-black/60 backdrop-blur-sm">
         <div className="max-w-6xl mx-auto mt-8">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-2xl font-semibold text-white">
@@ -3131,7 +3131,7 @@ function TopBar({
             </Button>
           </div>
 
-          <Card className="bg-muted shadow-2xl">
+          <Card className="bg-muted shadow-xl">
             {showManageView === 'change' && <ChangeBookingForm />}
             {showManageView === 'reject' && <RejectBookingForm />}
             {showManageView === 'list' && <ListBooking />}

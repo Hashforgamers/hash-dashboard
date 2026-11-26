@@ -2,7 +2,7 @@
 .workspace-ui .tournament-create .section-title { font-size: 14px; line-height: 20px; }
 .workspace-ui .tournament-create .form-label { display: block; margin-bottom: 6px; font-size: 12px; line-height: 18px; font-weight: 500; letter-spacing: 0; text-transform: none; }
 .workspace-ui .tournament-create :is(input, select, textarea) { font-size: 13px; }
-.workspace-ui .tournament-create .gaming-panel { border-radius: 14px; }
+.workspace-ui .tournament-create .gaming-panel { border-radius: 12px; }
 /* Account settings use one type scale across every section and breakpoint. */
 .workspace-ui .account-content { font-size: 13px; line-height: 20px; }
 .workspace-ui .account-layout { grid-template-columns: minmax(0, 1fr); }
@@ -72,7 +72,7 @@ svg[data-search-icon],
   --dash-module-panel-shadow: none;
   --ws-fill: rgba(118, 118, 128, 0.18);      /* Apple tertiary fill: inputs, segmented tracks */
   --ws-fill-strong: rgba(118, 118, 128, 0.28);
-  --ws-thumb: rgba(255, 255, 255, 0.14);     /* selected segment / nav item */
+  --ws-thumb: hsl(var(--muted) / 0.7);     /* selected segment / nav item */
   --ws-focus: 0 0 0 3px hsl(var(--primary) / 0.35);
   font-size: 14px;
   line-height: 1.5;
@@ -87,7 +87,7 @@ svg[data-search-icon],
 .workspace-ui :is(.section-title, .card-title, .dash-title) { font-size: 15px; line-height: 20px; font-weight: 600; letter-spacing: -0.01em; }
 .workspace-ui :is(.dashboard-empty-state, .dashboard-loader) { min-height: 100px; padding: 24px 12px; }
 .workspace-ui :is(.tab-container, .dashboard-module-tab-group, [role="tablist"]) { max-width: 100%; gap: 2px; padding: 2px; overflow-x: auto; }
-.workspace-ui :is(.tab-container button, .dashboard-module-tab-group button, [role="tab"]) { flex-shrink: 0; min-height: 28px; padding: 4px 12px; border-radius: 7px; font-size: 13px; font-weight: 500; white-space: nowrap; transition: background 0.15s ease, color 0.15s ease; }
+.workspace-ui :is(.tab-container button, .dashboard-module-tab-group button, [role="tab"]) { flex-shrink: 0; min-height: 28px; padding: 4px 12px; border-radius: 6px; font-size: 13px; font-weight: 500; white-space: nowrap; transition: background 0.15s ease, color 0.15s ease; }
 .workspace-ui :is(.dashboard-module-input, .dashboard-input) { height: 36px; }
 .workspace-ui textarea.dashboard-module-input { height: auto; min-height: 72px; }
 .workspace-ui :is(.ui-action-secondary, .dashboard-btn-secondary) { min-height: 36px; box-shadow: none; }
@@ -107,7 +107,7 @@ svg[data-search-icon],
 .workspace-ui .operations-summary .tab-container { margin-top: 0; }
 .workspace-ui .reviews-list { display: flex; min-height: 240px; flex: 1; flex-direction: column; overflow: hidden; }
 .workspace-ui .reviews-list-content { min-height: 0; flex: 1; overflow-y: auto; padding: 12px; }
-[data-compact-dialog] { display: flex; flex-direction: column; height: min(680px, 85dvh); max-height: calc(100dvh - 32px); border: 1px solid hsl(var(--border)); border-radius: 16px; background: hsl(var(--popover)); color: hsl(var(--foreground)); box-shadow: 0 24px 64px rgba(0, 0, 0, 0.5); }
+[data-compact-dialog] { display: flex; flex-direction: column; height: min(680px, 85dvh); max-height: calc(100dvh - 32px); border: 1px solid hsl(var(--border)); border-radius: 12px; background: hsl(var(--popover)); color: hsl(var(--foreground)); box-shadow: 0 24px 64px rgba(0, 0, 0, 0.5); }
 [data-compact-dialog] > .compact-dialog-header { flex-shrink: 0; padding: 16px 18px; border-bottom: 1px solid hsl(var(--border)); }
 [data-compact-dialog] > .compact-dialog-body { display: flex; flex: 1; min-height: 0; overflow: hidden; }
 [data-compact-dialog] > .compact-dialog-footer { flex-shrink: 0; margin: 0; padding: 12px 18px; border-top: 1px solid hsl(var(--border)); }
@@ -141,7 +141,7 @@ svg[data-search-icon],
 .workspace-ui h1.premium-heading {
   font-size: 26px !important;
   line-height: 32px !important;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: -0.025em;
 }
 .workspace-ui .page-header-actions { display: flex; flex-wrap: wrap; gap: 8px; }
@@ -157,7 +157,7 @@ svg[data-search-icon],
   border-color: hsl(var(--border));
   box-shadow: none;
   backdrop-filter: none;
-  border-radius: 14px;
+  border-radius: 12px;
 }
 .workspace-ui .feature-page-header,
 .workspace-ui .feature-page-content { background: transparent; border-radius: 0; }
@@ -170,13 +170,13 @@ svg[data-search-icon],
   background: hsl(var(--card));
   border-color: hsl(var(--border));
   box-shadow: none;
-  border-radius: 14px;
+  border-radius: 12px;
 }
 /* cards in a grid row fill their cell, so a row of cards is always one height */
 .workspace-ui :is(.dashboard-module-card, .gaming-kpi-card) { height: 100%; }
 .workspace-ui :is(.gaming-panel, .dashboard-module-panel) :is(.dashboard-module-card, .gaming-kpi-card) {
-  background: rgba(255, 255, 255, 0.04);   /* nested cards step up one level instead of repeating the panel */
-  border-radius: 10px;
+  background: hsl(var(--muted) / 0.35);   /* nested cards step up one level instead of repeating the panel */
+  border-radius: 8px;
 }
 .workspace-ui .dashboard-toolbar {
   display: flex;
@@ -202,14 +202,14 @@ svg[data-search-icon],
 }
 .workspace-ui :is(.dashboard-btn-primary, .dashboard-btn-secondary, .dashboard-action-button, .ui-action-primary, .ui-action-secondary) {
   min-height: 36px;
-  border-radius: 10px;
+  border-radius: 8px;
   font-size: 14px;
   line-height: 20px;
   font-weight: 500;
   box-shadow: none;
 }
 .workspace-ui :is(.tab-container, .dashboard-module-tab-group) {
-  border-radius: 9px;
+  border-radius: 8px;
   background: var(--ws-fill);
   border-color: transparent;
   box-shadow: none;
@@ -238,8 +238,8 @@ svg[data-search-icon],
   border-color: hsl(var(--border));
 }
 .workspace-ui :is(.dashboard-module-table tbody tr, .dashboard-table tbody tr) { transition: background 0.12s ease; }
-.workspace-ui :is(.dashboard-module-table tbody tr:hover, .dashboard-table tbody tr:hover) { background: rgba(255, 255, 255, 0.03); }
-.workspace-ui .dashboard-table-wrap { scrollbar-width: thin; scrollbar-color: rgba(255, 255, 255, 0.18) transparent; }
+.workspace-ui :is(.dashboard-module-table tbody tr:hover, .dashboard-table tbody tr:hover) { background: hsl(var(--muted) / 0.35); }
+.workspace-ui .dashboard-table-wrap { scrollbar-width: thin; scrollbar-color: hsl(var(--muted) / 0.7) transparent; }
 .workspace-ui .gaming-nav-active {
   background: var(--ws-thumb);
   border-color: transparent;
@@ -256,7 +256,7 @@ svg[data-search-icon],
   width: calc(100% - 32px);
   max-height: calc(100dvh - 48px);
   overflow-y: auto;
-  border-radius: 16px;
+  border-radius: 12px;
   border-color: hsl(var(--border));
   background: hsl(var(--popover));
   color: hsl(var(--foreground));
@@ -314,7 +314,7 @@ svg[data-search-icon],
 .operations-dashboard .dashboard-quick-context { font-size: 12px; }
 
 /* Account settings share one compact panel and control scale. */
-.workspace-ui .account-scope .account-panel { border-radius: 14px; box-shadow: none; }
+.workspace-ui .account-scope .account-panel { border-radius: 12px; box-shadow: none; }
 .workspace-ui .account-scope .account-panel > [data-ui-card-header] { padding: 14px 16px 10px; }
 .workspace-ui .account-scope .account-panel > [data-ui-card-content] { padding: 0 16px 14px; }
 .workspace-ui .account-scope .account-section-title { font-size: 15px; line-height: 1.4; font-weight: 600; }
@@ -358,7 +358,7 @@ svg[data-search-icon],
 .workspace-ui .operations-dashboard :is(.dashboard-module-panel, .dashboard-booking-slab) {
   background: hsl(var(--card));
   border-color: hsl(var(--border));
-  border-radius: 14px;
+  border-radius: 12px;
 }
 .workspace-ui .dashboard-quick-booking { padding: 12px; }
 .workspace-ui .dashboard-quick-toolbar { margin-bottom: 8px; }
@@ -366,17 +366,17 @@ svg[data-search-icon],
 .workspace-ui .dashboard-quick-booking .dashboard-slab-title { font-size: 13px !important; }
 .workspace-ui .dashboard-quick-booking .dashboard-slot-chip {
   flex-basis: 80px; width: 80px; min-width: 80px; height: 48px; gap: 2px;
-  border-radius: 10px; background: rgba(255, 255, 255, 0.04); border-color: hsl(var(--border));
+  border-radius: 8px; background: hsl(var(--muted) / 0.35); border-color: hsl(var(--border));
 }
 .workspace-ui .dashboard-quick-booking .dashboard-slot-chip-selected { background: hsl(var(--primary) / 0.18); border-color: hsl(var(--primary)); }
-.workspace-ui .dashboard-quick-booking .dashboard-slot-chip:hover { border-color: rgba(255, 255, 255, 0.24); }
+.workspace-ui .dashboard-quick-booking .dashboard-slot-chip:hover { border-color: hsl(var(--border)); }
 .workspace-ui .dashboard-quick-booking .dashboard-quick-book-button { min-width: 88px; }
 .workspace-ui .operations-dashboard .live-session-head { gap: 8px; margin-bottom: 12px; }
 .workspace-ui .operations-dashboard .live-session-data-table th { padding: 9px 10px; font-size: 11px !important; }
 .workspace-ui .operations-dashboard .live-session-data-table td { padding: 10px; }
 .workspace-ui .operations-dashboard .live-session-data-table td:last-child .live-session-action { width: 112px; min-width: 112px; height: 36px; }
 .workspace-ui .operations-dashboard .live-session-data-table .live-session-customer-name { font-size: 13px !important; }
-.workspace-ui .operations-dashboard .dashboard-module-row:hover { background: rgba(255, 255, 255, 0.03); }
+.workspace-ui .operations-dashboard .dashboard-module-row:hover { background: hsl(var(--muted) / 0.35); }
 .workspace-ui .operations-dashboard .live-session-data-table td:last-child { background: hsl(var(--card)); }
 .workspace-ui .operations-dashboard .dashboard-module-table-head,
 .workspace-ui .operations-dashboard .live-session-data-table th:last-child { background: hsl(var(--card)); }
@@ -398,3 +398,39 @@ svg[data-search-icon],
 .workspace-ui .operations-dashboard .live-session-data-table .live-session-due { align-items: center; margin-inline: auto; }
 .workspace-ui .operations-dashboard .live-session-data-table .live-session-due p { text-align: center; }
 .workspace-ui .operations-dashboard .live-session-data-table td:last-child > div { align-items: center; }
+
+/* ===== Unified overlay surfaces =====
+   Every dialog, sheet and bespoke modal shares one surface: card background,
+   hairline border, 12px radius, one shadow, foreground text. */
+.ui-dialog-surface,
+.slot-booking-modal,
+.credit-account-modal,
+.meal-selector-modal,
+.session-settlement-modal {
+  background: hsl(var(--card)) !important;
+  border: 1px solid hsl(var(--border)) !important;
+  box-shadow: 0 24px 64px rgb(0 0 0 / 0.5) !important;
+  color: hsl(var(--foreground));
+}
+@media (min-width: 640px) {
+  .ui-dialog-surface, .slot-booking-modal, .credit-account-modal, .meal-selector-modal, .session-settlement-modal { border-radius: 12px; }
+}
+.slot-booking-modal-header,
+.credit-account-modal-header {
+  background: transparent !important;
+  border-bottom: 1px solid hsl(var(--border)) !important;
+}
+.slot-booking-modal-footer,
+.credit-account-modal-footer {
+  background: hsl(var(--card)) !important;
+  border-top: 1px solid hsl(var(--border)) !important;
+}
+.slot-booking-modal .sb-card,
+.meal-selector-modal .sb-card {
+  background: hsl(var(--muted) / 0.35) !important;
+  border-color: hsl(var(--border)) !important;
+  border-radius: 8px;
+}
+.slot-booking-title { color: hsl(var(--foreground)); font-weight: 600; }
+.slot-booking-context { color: hsl(var(--muted-foreground)); }
+.slot-booking-modal .slot-section-title { font-weight: 600; }

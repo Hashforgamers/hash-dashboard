@@ -415,13 +415,13 @@ const handleSubmit = async (e: React.FormEvent) => {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
+        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
       >
         <motion.div
           initial={{ scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0.9, opacity: 0 }}
-          className="w-full max-w-6xl max-h-[95vh] overflow-y-auto bg-muted rounded-lg border border-border shadow-2xl"
+          className="w-full max-w-6xl max-h-[95vh] overflow-y-auto bg-muted rounded-lg border border-border shadow-xl"
         >
           {/* Header */}
           <div className="flex items-center justify-between p-3 border-b border-border sticky top-0 bg-muted z-10">

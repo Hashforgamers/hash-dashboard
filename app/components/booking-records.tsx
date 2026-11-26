@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { GamerName } from "@/app/components/gamer-profile-host";
 import { CalendarDays, Loader2, RotateCw, SlidersHorizontal, ChevronDown } from "lucide-react"
 import { BOOKING_URL } from "@/src/config/env"
 import { Button } from "@/components/ui/button"
@@ -13,6 +14,7 @@ interface BookingRecord {
   booking_id: number | string
   device?: string
   booking_fid: string
+  user_id?: number | null
   customer_name: string
   customer_phone?: string
   booking_date: string | null
@@ -104,7 +106,7 @@ export default function BookingRecords({ vendorId, refreshKey = 0 }: { vendorId:
             <thead className="text-xs text-muted-foreground"><tr>{["Booking", "Customer", "Date & time (IST)", "Status", "Extras", "Amount paid"].map(label => <th key={label} className="px-4 py-3 font-medium last:text-right">{label}</th>)}</tr></thead>
             <tbody>{rows.map(row => <tr key={row.booking_id} className="border-t border-border hover:bg-muted/30">
               <td className="px-4 py-3 font-medium text-primary">{row.booking_fid || `#BK-${row.booking_id}`}</td>
-              <td className="px-4 py-3"><div className="font-medium">{row.customer_name}</div><div className="text-xs leading-4 text-muted-foreground">{row.customer_phone || row.device}</div></td>
+              <td className="px-4 py-3"><GamerName userId={row.user_id} name={row.customer_name} booking={{ bookingId: row.booking_id, phone: row.customer_phone || null, status: row.status }} className="font-medium" /><div className="text-xs leading-4 text-muted-foreground">{row.customer_phone || row.device}</div></td>
               <td className="whitespace-nowrap px-4 py-3"><div>{row.booking_date ? new Date(`${row.booking_date.slice(0, 10)}T12:00:00`).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : "Date unavailable"}</div><div className="text-xs leading-4 text-muted-foreground">{row.slot_start_time || "—"} – {row.slot_end_time || "—"}</div></td>
               <td className="px-4 py-3"><span className={`inline-block whitespace-nowrap rounded-full px-2.5 py-1 text-xs capitalize ${["cancelled", "rejected"].includes(row.status) ? "bg-red-500/10 text-red-400" : ["confirmed", "checked_in"].includes(row.status) ? "bg-emerald-500/10 text-emerald-400" : "bg-muted text-muted-foreground"}`}>{(row.status || "Unknown").replaceAll("_", " ")}</span></td>
               <td className="max-w-[200px] px-4 py-3 text-xs text-muted-foreground">{row.meal_selection || "—"}</td>

@@ -261,7 +261,7 @@ export default function ForgotPasswordPage() {
   return (
     <div className="premium-shell flex min-h-screen items-center justify-center overflow-hidden p-3 sm:p-4">
       <div className="relative z-10 w-full max-w-md">
-        <Card className="premium-card rounded-lg border shadow-2xl">
+        <Card className="premium-card rounded-lg border shadow-xl">
           <CardHeader className="text-center pb-4">
             {/* Logo */}
             <div className="flex justify-center mb-4 relative">

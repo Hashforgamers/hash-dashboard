@@ -1,6 +1,7 @@
 "use client"
 
 import SessionExtensionWorkspace from './session-extension-workspace'
+import { GamerName } from "@/app/components/gamer-profile-host"
 import styles from './notification-panel.module.css'
 import { creditAuthHeaders } from "@/lib/credit-auth"
 
@@ -547,7 +548,7 @@ export function NotificationPanel({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 z-[30000] bg-black/30 backdrop-blur-sm"
+            className="fixed inset-0 z-[30000] bg-black/60 backdrop-blur-sm"
           />
 
           {/* Notification Panel */}
@@ -840,7 +841,7 @@ export function NotificationPanel({
                           {/* Customer Name */}
                           <div className="flex items-center gap-2">
                             <User className="w-4 h-4 text-muted-foreground" />
-                            <span className="font-medium text-foreground">{payNotice.username}</span>
+                            <GamerName userId={payNotice.userId} name={payNotice.username} booking={{ bookingId: payNotice.bookingId }} className="font-medium text-foreground" />
                             <span className="text-xs text-muted-foreground">wants to book</span>
                             {payNotice.slot_count && payNotice.slot_count > 1 && (
                               <span className="rounded-full border border-amber-400/40 bg-amber-500/10 px-2 py-0.5 text-xs font-semibold text-amber-200">
@@ -932,7 +933,7 @@ export function NotificationPanel({
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
                   onClick={() => setIsQueueOverlayOpen(false)}
-                  className="fixed inset-0 z-[30020] bg-black/45 backdrop-blur-sm"
+                  className="fixed inset-0 z-[30020] bg-black/60 backdrop-blur-sm"
                 />
                 <motion.div
                   initial={{ opacity: 0, y: 12, scale: 0.98 }}
@@ -1081,7 +1082,7 @@ export function NotificationPanel({
                             return (
                               <div key={`${selectedQueueStatus}-${item.booking_id}`} className="rounded-md border border-border bg-muted/30 p-2 text-xs">
                                 <div className="flex items-center justify-between gap-2">
-                                  <p className="font-semibold text-foreground">{item.username}</p>
+                                  <GamerName userId={item.user_id} name={item.username} booking={{ bookingId: item.booking_id, console: item.game_name, when: `${formatDisplayDate(item.date)} · ${item.time}`, phone: item.phone || null, email: item.email || null, amount: Number(item.amount || 0) }} className="font-semibold text-foreground" />
                                   <span className="font-semibold text-amber-300">₹{Number(item.amount || 0).toFixed(0)}</span>
                                 </div>
                                 <p className="text-muted-foreground">{item.game_name}</p>

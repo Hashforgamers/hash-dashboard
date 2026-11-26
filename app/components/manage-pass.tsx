@@ -679,7 +679,7 @@ function AddPassDialog({ passTypes, onSave, buttonClassName }: any) {
         </button>
       </DialogTrigger>
 
-      <DialogContent className="ui-dialog-surface w-[95vw] rounded-lg shadow-2xl sm:max-w-[520px]">
+      <DialogContent className="ui-dialog-surface w-[95vw] rounded-lg shadow-xl sm:max-w-[520px]">
         {/* Modal Header */}
         <div className="border-b border-border px-1 pb-2">
           <DialogTitle className="ui-dialog-title flex items-center gap-2 text-base font-semibold tracking-wide sm:text-lg">
@@ -924,7 +924,7 @@ function EditPassDialog({ passObj, passTypes, onSave }: any) {
         </button>
       </DialogTrigger>
 
-      <DialogContent className="ui-dialog-surface w-[95vw] rounded-lg shadow-2xl sm:max-w-[480px]">
+      <DialogContent className="ui-dialog-surface w-[95vw] rounded-lg shadow-xl sm:max-w-[480px]">
         {/* Modal Header */}
         <div className="border-b border-border px-1 pb-2">
           <DialogTitle className="section-title">Edit Pass</DialogTitle>

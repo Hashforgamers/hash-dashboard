@@ -747,7 +747,7 @@ const SettlementOverlay: React.FC<ExtraBookingOverlayProps> = ({
       {showOverlay && selectedSlot && (
         <>
           <motion.div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md max-sm:items-end"
+            className="fixed inset-0 z-50 flex items-center justify-center max-sm:items-end bg-black/60 backdrop-blur-sm"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -755,7 +755,7 @@ const SettlementOverlay: React.FC<ExtraBookingOverlayProps> = ({
           >
             <motion.div
             ref={overlayRef}
-            className="session-settlement-modal dashboard-module-panel relative w-full max-w-4xl mx-3 sm:mx-4 rounded-lg p-4 shadow-2xl max-h-[92vh] overflow-y-auto max-sm:mx-0 max-sm:h-[100dvh] max-sm:max-h-[100dvh] max-sm:rounded-none max-sm:p-3"
+            className="session-settlement-modal dashboard-module-panel relative w-full max-w-4xl mx-3 sm:mx-4 rounded-lg p-4 shadow-xl max-h-[92vh] overflow-y-auto max-sm:mx-0 max-sm:h-[100dvh] max-sm:max-h-[100dvh] max-sm:rounded-none max-sm:p-3"
             initial={{ scale: 0.95, y: 30, opacity: 0 }}
             animate={{ scale: 1, y: 0, opacity: 1 }}
             exit={{ scale: 0.95, y: 30, opacity: 0 }}

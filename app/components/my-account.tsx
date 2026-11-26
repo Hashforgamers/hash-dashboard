@@ -1003,9 +1003,9 @@ const UpdatingOverlay = ({ visible }: { visible: boolean }) => {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex flex-col items-center justify-center"
+      className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black/60 backdrop-blur-sm"
     >
-      <div className="bg-card border border-border rounded-lg p-4 shadow-2xl max-w-md mx-4">
+      <div className="bg-card border border-border rounded-lg p-4 shadow-xl max-w-md mx-4">
         <div className="flex flex-col items-center space-y-4 text-center">
           {/* Animated Spinner */}
           <div className="relative">
@@ -1285,12 +1285,12 @@ const handleCancelEdit = () => {
   const DocumentPreviewModal = () => {
     if (!previewDocument) return null;
     return (
-      <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+      <div className="fixed inset-0 flex items-center justify-center z-50 p-4 bg-black/60 backdrop-blur-sm">
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.9 }}
-          className="bg-card rounded-lg p-4 max-w-5xl max-h-[90vh] w-full mx-auto shadow-2xl border border-border"
+          className="bg-card rounded-lg p-4 max-w-5xl max-h-[90vh] w-full mx-auto shadow-xl border border-border"
         >
           <div className="flex justify-between items-center mb-4 border-b border-border pb-3">
             <h3 className="text-lg md:text-xl font-semibold text-foreground">Preview: {previewDocumentName}</h3>
@@ -3517,7 +3517,7 @@ const ToggleSwitch = ({
       <UpdatingOverlay visible={savingSlot !== null} />
 
  {otpLoading && (
-  <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+  <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/60 backdrop-blur-sm">
     <div className="w-20 h-20 border-4 border-t-transparent animate-spin rounded-full border-t-2 border-b-2 border-emerald-500"></div>
   </div>
 )}

@@ -19,6 +19,7 @@ import HashLoader from './ui/HashLoader';
 import ExtraBookingOverlay from "./extraBookingOverlay";
 import MealDetailsModal from "./mealsDetailmodal";
 import { useSocket } from "../context/SocketContext";
+import { BookingQuickView } from "./booking-quick-view";
 
 // Keep all your existing helper functions unchanged
 const formatTime = (seconds: number) => {
@@ -1205,7 +1206,7 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                               type="button"
                               onClick={() => setContactOverlay({ open: true, booking })}
                               className="truncate text-sm font-semibold text-foreground underline decoration-dotted underline-offset-2 hover:text-primary transition-colors"
-                              title="View customer contact details"
+                              title="View booking and gamer details"
                             >
                               {booking.username || "Guest"}
                             </button>
@@ -1461,7 +1462,7 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                                         type="button"
                                         onClick={() => setContactOverlay({ open: true, booking })}
                                         className="live-session-customer-name truncate text-left font-semibold text-foreground underline-offset-2 hover:underline"
-                                        title="View customer contact details"
+                                        title="View booking and gamer details"
                                       >
                                         {booking.username || 'Guest'}
                                       </button>
@@ -1831,7 +1832,7 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                         >
                           <div className="flex items-center justify-between gap-2">
                             <div className="min-w-0">
-                              <p className="truncate text-sm font-semibold text-foreground">{b.username || "Guest"}</p>
+                              <button type="button" onClick={() => setContactOverlay({ open: true, booking: b })} className="truncate text-left text-sm font-semibold text-foreground underline-offset-2 hover:underline">{b.username || "Guest"}</button>
                               {bookingPhone && (
                                 <p className="truncate text-xs text-muted-foreground">{bookingPhone}</p>
                               )}
@@ -1877,7 +1878,7 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                         return (
                           <tr key={`${b.bookingId || i}-${b.date}`} className="dashboard-module-row transition-colors">
                             <td className="px-3 py-3 md:px-4">
-                              <div className="text-sm font-semibold text-foreground">{b.username || "Guest"}</div>
+                              <button type="button" onClick={() => setContactOverlay({ open: true, booking: b })} className="text-left text-sm font-semibold text-foreground underline-offset-2 hover:underline">{b.username || "Guest"}</button>
                               {bookingPhone && (
                                 <div className="text-xs text-muted-foreground inline-flex items-center gap-1">
                                   <Phone className="h-3 w-3" />
@@ -1923,71 +1924,23 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
             document.body
           )}
 
-          {contactOverlay.open && (
-            <div
-              className="fixed inset-0 z-[1100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
-              onClick={() => setContactOverlay({ open: false, booking: null })}
-            >
-              <div
-                className="w-full max-w-md rounded-lg border border-border bg-card shadow-2xl"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <div className="flex items-center justify-between border-b border-border px-4 py-3">
-                  <h3 className="text-sm font-semibold uppercase tracking-wide text-primary">Customer Contact</h3>
-                  <button
-                    type="button"
-                    onClick={() => setContactOverlay({ open: false, booking: null })}
-                    className="rounded-md border border-border px-2 py-1 text-xs text-muted-foreground hover:bg-muted"
-                  >
-                    Close
-                  </button>
-                </div>
-                <div className="space-y-3 px-4 py-4 text-sm">
-                  <div className="rounded-lg border border-border bg-card p-3">
-                    <p className="text-xs uppercase tracking-wide text-muted-foreground">Name</p>
-                    <p className="mt-1 font-semibold text-foreground">
-                      {contactOverlay.booking?.username || "Guest User"}
-                    </p>
-                  </div>
-                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                    <div className="min-w-0 rounded-lg border border-border bg-card p-3">
-                      <p className="text-xs uppercase tracking-wide text-muted-foreground">Phone</p>
-                      <p className="mt-1 inline-flex items-center gap-1 text-foreground">
-                        <Phone className="h-3 w-3" />
-                        <span>{getBookingPhone(contactOverlay.booking) || "-"}</span>
-                      </p>
-                    </div>
-                    <div className="min-w-0 rounded-lg border border-border bg-card p-3">
-                      <p className="text-xs uppercase tracking-wide text-muted-foreground">Email</p>
-                      <p className="mt-1 flex min-w-0 items-start gap-1 text-foreground">
-                        <Mail className="mt-0.5 h-3 w-3 shrink-0" />
-                        <span className="break-all">{getBookingEmail(contactOverlay.booking) || "-"}</span>
-                      </p>
-                    </div>
-                    <div className="min-w-0 rounded-lg border border-border bg-card p-3">
-                      <p className="text-xs uppercase tracking-wide text-muted-foreground">User ID</p>
-                      <p className="mt-1 text-foreground">
-                        {contactOverlay.booking?.userId || contactOverlay.booking?.user_id || "-"}
-                      </p>
-                    </div>
-                    <div className="min-w-0 rounded-lg border border-border bg-card p-3">
-                      <p className="text-xs uppercase tracking-wide text-muted-foreground">Booking ID</p>
-                      <p className="mt-1 text-foreground">
-                        {contactOverlay.booking?.bookingId || contactOverlay.booking?.bookId || "-"}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="rounded-lg border border-border bg-card p-3">
-                    <p className="text-xs uppercase tracking-wide text-muted-foreground">Session</p>
-                    <p className="mt-1 text-foreground">
-                      {contactOverlay.booking?.consoleType || "Console"} • {contactOverlay.booking?.startTime || "N/A"} - {contactOverlay.booking?.endTime || "N/A"}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
+          {contactOverlay.open && contactOverlay.booking && (
+            <BookingQuickView
+              open
+              onClose={() => setContactOverlay({ open: false, booking: null })}
+              userId={contactOverlay.booking.userId || contactOverlay.booking.user_id}
+              booking={{
+                bookingId: contactOverlay.booking.bookingId || contactOverlay.booking.bookId,
+                name: contactOverlay.booking.username || "Guest User",
+                phone: getBookingPhone(contactOverlay.booking) || null,
+                email: getBookingEmail(contactOverlay.booking) || null,
+                console: contactOverlay.booking.consoleType || null,
+                when: contactOverlay.booking.startTime ? `${contactOverlay.booking.startTime} – ${contactOverlay.booking.endTime || "open"}` : null,
+                status: contactOverlay.booking.status || null,
+              }}
+            />
           )}
-          
+
           {/* ✅ Ensure meal overlay is attached to document body (mobile-safe, no clipping) */}
           {isMounted &&
             createPortal(

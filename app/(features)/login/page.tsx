@@ -363,8 +363,8 @@ export default function LoginPage() {
   return (
     <div className="premium-shell flex min-h-screen items-center justify-center overflow-hidden p-4 sm:p-6">
       {forceResetOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/65 p-4">
-          <div className="w-full max-w-md rounded-lg border border-white/10 bg-[#1c1c1e]/95 p-4 shadow-2xl backdrop-blur-xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-lg border border-border bg-card p-4 shadow-xl">
             <h3 className="text-lg font-semibold text-white">Set New Password</h3>
             <p className="mt-1 text-sm text-muted-foreground">
               Your temporary password is active. Set a new password to continue.
@@ -539,7 +539,7 @@ export default function LoginPage() {
                 <Shield className="w-3 h-3" />
                 <span>Secure Login</span>
               </div>
-              <div className="h-1 w-1 rounded-full bg-[#48484a]"></div>
+              <div className="h-1 w-1 rounded-full bg-muted-foreground"></div>
               <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
                 <span className="h-2 w-2 rounded-full bg-emerald-500/80" />
                 <span>Encrypted Session</span>

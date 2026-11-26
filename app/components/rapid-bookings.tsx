@@ -932,7 +932,7 @@ function RapidBookings() {
                           type="button"
                           onClick={() => setPaymentType(key)}
                           className={`flex flex-col items-center justify-center p-3 rounded-xl border transition-all w-full
-                            ${paymentType === key ? "border-emerald-500 bg-[#e6f4ea]" : "border-border hover:border-emerald-500"}`}
+                            ${paymentType === key ? "border-primary bg-primary/10" : "border-border hover:border-primary"}`}
                           aria-label={label}
                         >
                           <span className="text-emerald-500">{icon}</span>

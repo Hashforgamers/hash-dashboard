@@ -912,7 +912,7 @@ export default function ManageExtraServices() {
 
       {/* ✅ Category Dialog */}
       <Dialog open={showCategoryDlg} onOpenChange={setShowCategoryDlg}>
-        <DialogContent className="ui-dialog-surface w-[95vw] rounded-lg shadow-2xl sm:max-w-[425px]">
+        <DialogContent className="ui-dialog-surface w-[95vw] rounded-lg shadow-xl sm:max-w-[425px]">
           {actionError && <p role="alert" className="text-sm text-red-300">{actionError}</p>}
           <DialogHeader>
             <DialogTitle className="ui-dialog-title flex items-center gap-2 text-lg font-semibold tracking-wide">
@@ -964,7 +964,7 @@ export default function ManageExtraServices() {
 
       {/* ✅ Menu Item Dialog */}
       <Dialog open={showMenuDlg} onOpenChange={setShowMenuDlg}>
-        <DialogContent className="ui-dialog-surface w-[95vw] rounded-lg shadow-2xl sm:max-w-[500px]">
+        <DialogContent className="ui-dialog-surface w-[95vw] rounded-lg shadow-xl sm:max-w-[500px]">
           {actionError && <p role="alert" className="text-sm text-red-300">{actionError}</p>}
           <DialogHeader>
             <DialogTitle className="ui-dialog-title flex items-center gap-2 text-lg font-semibold tracking-wide">
@@ -1086,7 +1086,7 @@ export default function ManageExtraServices() {
       </Dialog>
 
       <Dialog open={showInventoryDlg} onOpenChange={setShowInventoryDlg}>
-        <DialogContent className="ui-dialog-surface w-[95vw] rounded-lg shadow-2xl sm:max-w-[430px]">
+        <DialogContent className="ui-dialog-surface w-[95vw] rounded-lg shadow-xl sm:max-w-[430px]">
           {actionError && <p role="alert" className="text-sm text-red-300">{actionError}</p>}
           <DialogHeader>
             <DialogTitle className="ui-dialog-title text-lg font-semibold tracking-wide">Update Inventory</DialogTitle>
