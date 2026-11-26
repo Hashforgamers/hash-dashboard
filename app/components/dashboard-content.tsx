@@ -153,18 +153,15 @@ export function DashboardContent() {
   useEffect(() => {
     if (!socket || !vendorId || !isConnected) return
 
-    console.log('📊 Dashboard: Setting up booking event listener for real-time stats updates')
     const activeVendorId = vendorId
     joinVendor(activeVendorId)
 
     function handleBookingEvent(data: any) {
-      console.log('📅 Booking event received:', data)
       const eventVendorId = Number(data?.vendorId ?? data?.vendor_id)
       if (eventVendorId === activeVendorId) {
         const status = (data.status || '').toLowerCase()
         const bookingStatus = String(data?.booking_status || '').toLowerCase()
         if (status === 'pending_acceptance' || bookingStatus === 'pending_acceptance') {
-          console.log('🔔 Dashboard: Pay-at-cafe pending event received')
         }
         if (TERMINAL_BOOKING_STATUSES.includes(status)) {
           if (typeof window !== 'undefined') {
@@ -175,7 +172,6 @@ export function DashboardContent() {
     }
 
     function handleUpcomingBookingEvent(data: any) {
-      console.log('📅 Upcoming booking event received:', data)
       const eventVendorId = Number(data?.vendorId ?? data?.vendor_id)
       if (eventVendorId === activeVendorId && (data.status === 'Confirmed' || data.status === 'confirmed')) {
         setRealTimeStats(prev => ({
@@ -234,7 +230,6 @@ export function DashboardContent() {
     socket.on('booking_payment_update', handleBookingPaymentUpdate)
 
     return () => {
-      console.log('🧹 Cleaning up dashboard booking listeners')
       socket.off('booking', handleBookingEvent)
       socket.off('upcoming_booking', handleUpcomingBookingEvent)
       socket.off('console_availability', handleConsoleAvailabilityEvent)
@@ -376,7 +371,7 @@ export function DashboardContent() {
 
   const mobileMetricsStrip = (
     <div className="dashboard-module-card flex w-full items-center justify-between gap-1 rounded-lg border border-white/10 bg-white/[0.05] px-1.5 py-1 md:hidden">
-      <div className="min-w-0 rounded-md border border-border bg-primary/10 px-1.5 py-1 text-xs font-medium text-[#9dccff]">
+      <div className="min-w-0 rounded-md border border-border bg-primary/10 px-1.5 py-1 text-xs font-medium text-primary">
         Bookings {currentStats.todayBookings}
       </div>
       <div className="min-w-0 rounded-md border border-amber-500/20 bg-amber-500/10 px-1.5 py-1 text-xs font-medium text-amber-400">

@@ -24,7 +24,7 @@
   --premium-title-text: hsl(var(--text-strong));
   --premium-kpi-text: hsl(var(--text-strong));
   --premium-pill-border: hsl(var(--border));
-  --premium-pill-bg: rgba(255, 255, 255, 0.06);
+  --premium-pill-bg: hsl(var(--muted) / 0.35);
   --premium-pill-text: hsl(var(--text-strong));
   --gaming-panel-border: hsl(var(--border));
   --gaming-panel-bg: hsl(var(--card));
@@ -34,12 +34,12 @@
   --gaming-kpi-shadow: none;
   --nav-shell-bg: rgba(22, 22, 24, 0.72);
   --nav-shell-border: hsl(var(--border));
-  --nav-panel-bg: rgba(255, 255, 255, 0.04);
+  --nav-panel-bg: hsl(var(--muted) / 0.35);
   --nav-panel-border: hsl(var(--border));
   --nav-divider: hsl(var(--border));
-  --nav-hover-bg: rgba(255, 255, 255, 0.06);
+  --nav-hover-bg: hsl(var(--muted) / 0.35);
   --nav-hover-border: transparent;
-  --nav-active-bg: rgba(255, 255, 255, 0.1);
+  --nav-active-bg: hsl(var(--muted) / 0.7);
   --nav-active-border: transparent;
   --nav-active-shadow: none;
   --nav-icon-active: hsl(var(--primary));
@@ -51,28 +51,28 @@
   --dash-module-panel-bg: hsl(var(--card));
   --dash-module-panel-border: hsl(var(--border));
   --dash-module-panel-shadow: none;
-  --dash-module-surface-bg: rgba(255, 255, 255, 0.04);
-  --dash-module-surface-strong: rgba(255, 255, 255, 0.08);
+  --dash-module-surface-bg: hsl(var(--muted) / 0.35);
+  --dash-module-surface-strong: hsl(var(--muted) / 0.7);
   --dash-module-surface-border: hsl(var(--border));
   --dash-module-line: hsl(var(--border));
-  --dash-module-hover: rgba(255, 255, 255, 0.05);
+  --dash-module-hover: hsl(var(--muted) / 0.35);
   --dash-module-input-bg: rgba(118, 118, 128, 0.18);
   --dash-module-input-border: transparent;
   --dash-module-input-text: hsl(var(--text-strong));
   --dash-module-input-placeholder: hsl(var(--text-muted));
   --dash-module-muted: hsl(var(--text-muted));
   --dash-module-empty: hsl(var(--text-muted));
-  --dash-module-card-bg: rgba(255, 255, 255, 0.04);
+  --dash-module-card-bg: hsl(var(--muted) / 0.35);
   --dash-module-card-border: hsl(var(--border));
   --booking-text-strong: hsl(var(--text-strong));
   --booking-text-muted: hsl(var(--text-muted));
   --booking-text-subtle: hsl(var(--text-muted));
   --booking-link: hsl(var(--primary));
   --booking-link-hover: hsl(var(--primary) / 0.85);
-  --action-primary-bg: #3b82f6;
-  --action-primary-hover: #2563eb;
+  --action-primary-bg: hsl(var(--primary));
+  --action-primary-hover: hsl(var(--primary));
   --action-primary-disabled: hsl(215 16% 68%);
-  --action-primary-text: #ffffff;
+  --action-primary-text: hsl(var(--muted) / 0.7);
   --toolbar-menu-bg: hsl(var(--surface-1) / 0.96);
   --toolbar-menu-hover: hsl(var(--surface-2));
   --toolbar-menu-border: hsl(var(--surface-border) / 0.85);
@@ -100,7 +100,7 @@
   --slot-modal-accent-border: hsl(var(--brand-focus) / 0.28);
   --slot-modal-accent-text: hsl(var(--brand-focus));
   --slot-modal-soft-bg: hsl(var(--surface-2));
-  --slot-modal-soft-border: rgba(255,255,255,0.08);
+  --slot-modal-soft-border: hsl(var(--muted) / 0.7);
 }
 
 html,
@@ -141,7 +141,7 @@ h4,
 h5,
 h6 {
   font-family: var(--font-display);
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: 0;
   line-height: 1.2;
 }
@@ -150,7 +150,7 @@ h6 {
   font-family: var(--font-display);
   letter-spacing: 0;
   text-transform: none;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .premium-shell {
@@ -228,7 +228,7 @@ h6 {
 .gaming-kpi-card {
   border: 1px solid var(--gaming-kpi-border);
   background: var(--gaming-kpi-bg);
-  border-radius: 14px;
+  border-radius: 12px;
   box-shadow: var(--gaming-kpi-shadow);
   backdrop-filter: blur(18px) saturate(1.16);
   -webkit-backdrop-filter: blur(18px) saturate(1.16);
@@ -296,13 +296,13 @@ h6 {
 .heading-1 {
   font-size: var(--dash-fs-3xl);
   line-height: var(--dash-lh-tight);
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .heading-2 {
   font-size: var(--dash-fs-2xl);
   line-height: var(--dash-lh-tight);
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .heading-3 {
@@ -405,7 +405,7 @@ h6 {
 .dashboard-module-panel {
   border: 1px solid var(--dash-module-panel-border);
   background: var(--dash-module-panel-bg);
-  border-radius: 14px;
+  border-radius: 12px;
   box-shadow: var(--dash-module-panel-shadow);
   backdrop-filter: blur(22px) saturate(1.18);
   -webkit-backdrop-filter: blur(22px) saturate(1.18);
@@ -466,7 +466,7 @@ h6 {
 
 .dashboard-toolbar-title {
   font-size: var(--dash-fs-xl);
-  font-weight: 700;
+  font-weight: 600;
   color: var(--premium-title-text);
 }
 
@@ -507,7 +507,7 @@ h6 {
   text-transform: uppercase;
   letter-spacing: 0;
   padding: 0.2rem 0.5rem;
-  border-radius: 999px;
+  border-radius: 12px;
 }
 
 .dashboard-badge[data-variant="success"] {
@@ -541,7 +541,7 @@ h6 {
 
 .dashboard-card {
   border: 1px solid var(--dash-module-surface-border);
-  background: linear-gradient(180deg, rgba(255,255,255,0.055) 0%, rgba(255,255,255,0.02) 100%);
+  background: linear-gradient(180deg, hsl(var(--muted) / 0.35) 0%, hsl(var(--muted) / 0.35) 100%);
   border-radius: 0.75rem;
   box-shadow: 0 12px 28px rgba(2, 6, 23, 0.2);
   backdrop-filter: blur(14px);
@@ -643,7 +643,7 @@ h6 {
 
 .dashboard-table-shell {
   border: 1px solid var(--dash-module-surface-border);
-  background: linear-gradient(180deg, rgba(255,255,255,0.055) 0%, rgba(255,255,255,0.02) 100%);
+  background: linear-gradient(180deg, hsl(var(--muted) / 0.35) 0%, hsl(var(--muted) / 0.35) 100%);
   border-radius: 0.75rem;
   box-shadow: 0 10px 24px hsl(220 20% 20% / 0.08);
   backdrop-filter: blur(14px);
@@ -686,7 +686,7 @@ h6 {
 .dashboard-table th {
   padding: 0.75rem 1rem;
   font-size: 0.7rem;
-  font-weight: 700;
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0;
   color: var(--dash-module-muted);
@@ -771,7 +771,7 @@ h6 {
 }
 
 .live-session-card {
-  border-color: rgba(255, 255, 255, 0.1);
+  border-color: hsl(var(--border));
 }
 
 .live-session-head {
@@ -789,28 +789,28 @@ h6 {
   justify-content: center;
   min-width: 1.6rem;
   height: 1.5rem;
-  border-radius: 999px;
+  border-radius: 12px;
   border: 1px solid rgba(22, 255, 0, 0.28);
   background: rgba(22, 255, 0, 0.12);
   color: #10b981;
   font-size: 0.74rem;
-  font-weight: 700;
+  font-weight: 600;
   line-height: 1;
 }
 
 .live-session-tabs {
-  border-color: rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.04);
+  border-color: hsl(var(--border));
+  background: hsl(var(--muted) / 0.35);
 }
 
 .live-session-tools .dashboard-module-input {
-  border-color: rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.04);
+  border-color: hsl(var(--border));
+  background: hsl(var(--muted) / 0.35);
 }
 
 .live-session-table-shell {
   border-radius: 1rem;
-  border-color: rgba(255, 255, 255, 0.1);
+  border-color: hsl(var(--border));
 }
 
 .live-session-row td {
@@ -818,7 +818,7 @@ h6 {
 }
 
 .live-session-row:hover {
-  background: rgba(255, 255, 255, 0.04);
+  background: hsl(var(--muted) / 0.35);
 }
 
 .feature-action-icon {
@@ -1011,7 +1011,7 @@ h6 {
 .dash-title {
   font-family: var(--font-display);
   font-size: 1.05rem;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: 0;
   color: var(--premium-title-text);
 }
@@ -1034,7 +1034,7 @@ h6 {
 .dash-kpi-value {
   font-family: var(--font-ui);
   font-size: 1.25rem;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: 0;
   color: var(--premium-kpi-text);
 }
@@ -1096,7 +1096,7 @@ h6 {
 .dashboard-page-shell .premium-heading {
   color: #fafafa;
   font-size: 1.25rem;
-  font-weight: 650;
+  font-weight: 600;
   line-height: 1.15;
 }
 
@@ -1115,7 +1115,7 @@ h6 {
   border-radius: 0.6rem;
   padding: 0.9rem 1rem;
   background: rgba(28, 28, 30, 0.68);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid hsl(var(--border));
 }
 
 .feature-page-header-row {
@@ -1133,7 +1133,7 @@ h6 {
 .feature-page-header .premium-heading {
   color: #fafafa;
   font-size: 1.25rem;
-  font-weight: 650;
+  font-weight: 600;
   line-height: 1.15;
 }
 
@@ -1152,7 +1152,7 @@ h6 {
   border-radius: 0.6rem;
   padding: 0.75rem;
   background: rgba(28, 28, 30, 0.54);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid hsl(var(--border));
 }
 
 .feature-page-content-scroll {
@@ -1234,7 +1234,7 @@ h6 {
 .dashboard-module [class*="dark:border-sky-"],
 .dashboard-module [class*="dark:border-purple-"],
 .dashboard-module [class*="dark:border-fuchsia-"] {
-  border-color: rgba(255,255,255,0.1) !important;
+  border-color: hsl(var(--border)) !important;
 }
 
 .feature-page-shell [class*="text-cyan-"],
@@ -1247,7 +1247,7 @@ h6 {
 .dashboard-module [class*="text-blue-"],
 .dashboard-module [class*="text-purple-"],
 .dashboard-module [class*="text-fuchsia-"] {
-  color: #60a5fa !important;
+  color: hsl(var(--primary)) !important;
 }
 
 .feature-page-shell [class*="shadow-cyan-"],
@@ -1284,11 +1284,11 @@ h6 {
 
 /* Booking command center */
 .booking-command-header {
-  border-color: rgba(255, 255, 255, 0.11);
+  border-color: hsl(var(--border));
   background:
     linear-gradient(180deg, rgba(28, 28, 30, 0.82), rgba(18, 18, 20, 0.76)),
     radial-gradient(circle at 96% 16%, rgba(10, 132, 255, 0.12), transparent 24rem);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.07);
+  box-shadow: inset 0 1px 0 hsl(var(--border));
 }
 
 .booking-command-header svg {
@@ -1297,9 +1297,9 @@ h6 {
 
 .booking-command-panel {
   padding: 0.9rem;
-  border-color: rgba(255, 255, 255, 0.08);
+  border-color: hsl(var(--border));
   background: rgba(10, 10, 12, 0.46);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  box-shadow: inset 0 1px 0 hsl(var(--border));
 }
 
 .booking-command-panel main {
@@ -1317,9 +1317,9 @@ h6 {
 .booking-console-filter {
   width: fit-content;
   max-width: 100%;
-  border-color: rgba(255, 255, 255, 0.1) !important;
+  border-color: hsl(var(--border)) !important;
   background: rgba(44, 44, 46, 0.54) !important;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  box-shadow: inset 0 1px 0 hsl(var(--border));
 }
 
 .booking-console-label {
@@ -1329,7 +1329,7 @@ h6 {
 
 .booking-console-tab {
   min-height: 2.2rem;
-  border: 1px solid rgba(255, 255, 255, 0.11) !important;
+  border: 1px solid hsl(var(--border)) !important;
   background: rgba(58, 58, 60, 0.58) !important;
   color: #d4d4d8 !important;
   letter-spacing: 0;
@@ -1357,18 +1357,18 @@ h6 {
 }
 
 .booking-new-button-disabled {
-  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border: 1px solid hsl(var(--border)) !important;
   background: rgba(72, 72, 74, 0.36) !important;
   color: #a1a1aa !important;
 }
 
 .booking-schedule-card,
 .booking-detail-card {
-  border-color: rgba(255, 255, 255, 0.1) !important;
+  border-color: hsl(var(--border)) !important;
   background: rgba(28, 28, 30, 0.54) !important;
   color: #fafafa;
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.045),
+    inset 0 1px 0 hsl(var(--border)),
     0 16px 42px rgba(0, 0, 0, 0.18);
 }
 
@@ -1398,11 +1398,11 @@ h6 {
 }
 
 .booking-grid-body {
-  border-color: rgba(255, 255, 255, 0.09) !important;
+  border-color: hsl(var(--border)) !important;
 }
 
 .booking-grid-row {
-  border-color: rgba(255, 255, 255, 0.08) !important;
+  border-color: hsl(var(--border)) !important;
 }
 
 .booking-grid-row-idle {
@@ -1419,7 +1419,7 @@ h6 {
 }
 
 .booking-date-cell {
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid hsl(var(--border));
 }
 
 .booking-date-cell-today {
@@ -1433,11 +1433,11 @@ h6 {
 
 .booking-today-badge {
   background: rgba(10, 132, 255, 0.18) !important;
-  color: #60a5fa !important;
+  color: hsl(var(--primary)) !important;
 }
 
 .booking-slot-cell {
-  border-color: rgba(255, 255, 255, 0.075) !important;
+  border-color: hsl(var(--border)) !important;
   background: rgba(44, 44, 46, 0.34) !important;
 }
 
@@ -1577,7 +1577,7 @@ h6 {
 .dashboard-quick-booking .dashboard-console-card-active {
   background: #253448;
   border-color: #426b9c;
-  color: #93c5fd;
+  color: hsl(var(--primary));
 }
 .dashboard-console-icon { display: inline-flex; }
 .dashboard-quick-booking .dashboard-quick-context {
@@ -1660,7 +1660,7 @@ h6 {
 .dashboard-quick-book-button:disabled { opacity: 0.5; }
 .dashboard-quick-booking button:focus-visible,
 .dashboard-quick-center:focus-visible {
-  outline: 2px solid #93c5fd;
+  outline: 2px solid hsl(var(--primary));
   outline-offset: 2px;
 }
 .dashboard-slot-empty {
@@ -1923,7 +1923,7 @@ h6 {
 .slot-booking-modal .slot-section-title {
   color: hsl(0 0% 96%);
   font-size: 0.875rem;
-  font-weight: 650;
+  font-weight: 600;
   line-height: 1.2;
   letter-spacing: 0;
 }
@@ -2338,13 +2338,13 @@ h6 {
 .live-session-title {
   color: #fafafa;
   font-size: 1rem;
-  font-weight: 650;
+  font-weight: 600;
 }
 
 .dashboard-table-shell,
 .live-session-table-shell {
   background: rgba(28, 28, 30, 0.44);
-  border-color: rgba(255, 255, 255, 0.1);
+  border-color: hsl(var(--border));
   border-radius: 0.65rem;
 }
 
@@ -2356,7 +2356,7 @@ h6 {
 .dashboard-table th {
   color: #a1a1aa;
   font-size: 0.7rem;
-  font-weight: 650;
+  font-weight: 600;
   text-transform: none;
 }
 
@@ -2368,13 +2368,13 @@ h6 {
 
 .dashboard-module-row:hover,
 .dashboard-table tbody tr:hover {
-  background: rgba(255, 255, 255, 0.045);
+  background: hsl(var(--muted) / 0.35);
 }
 
 .dashboard-module-input {
   min-height: 2.5rem;
   background: rgba(58, 58, 60, 0.36);
-  border-color: rgba(255, 255, 255, 0.12);
+  border-color: hsl(var(--border));
   color: #fafafa;
 }
 
@@ -2400,13 +2400,13 @@ h6 {
 
 .tab-container,
 .dashboard-module-tab-group {
-  border-color: rgba(255, 255, 255, 0.12);
+  border-color: hsl(var(--border));
   background: rgba(58, 58, 60, 0.34);
 }
 
 .tab-active,
 .dashboard-module-tab-active {
-  background: rgba(255, 255, 255, 0.14);
+  background: hsl(var(--muted) / 0.7);
   color: #fafafa;
 }
 
@@ -2467,7 +2467,7 @@ h6 {
 .dashboard-module :is(input, select, textarea),
 .feature-page-shell :is(input, select, textarea),
 .dashboard-page-shell :is(input, select, textarea) {
-  border-color: rgba(255, 255, 255, 0.12);
+  border-color: hsl(var(--border));
   background: rgba(58, 58, 60, 0.36);
   color: #fafafa;
 }
@@ -2615,7 +2615,7 @@ h6 {
 }
 .operations-empty-action:hover { background: #253448; }
 .operations-dashboard button:focus-visible,
-.operations-empty-action:focus-visible { outline: 2px solid #93c5fd; outline-offset: 2px; }
+.operations-empty-action:focus-visible { outline: 2px solid hsl(var(--primary)); outline-offset: 2px; }
 @media (min-width: 1280px) {
   .operations-dashboard .operations-booking-row,
   .operations-dashboard .operations-workspace {
@@ -2657,7 +2657,7 @@ h6 {
   margin: 0;
   color: hsl(0 0% 97%);
   font-size: 16px;
-  font-weight: 650;
+  font-weight: 600;
   letter-spacing: -0.025em;
   line-height: 1.4;
 }
@@ -2672,7 +2672,7 @@ h6 {
   background: hsl(240 4% 14%);
   box-shadow: none;
 }
-.slot-booking-modal .slot-section-title { font-size: 12px; font-weight: 650; line-height: 1.4; }
+.slot-booking-modal .slot-section-title { font-size: 12px; font-weight: 600; line-height: 1.4; }
 .slot-booking-modal .slot-section-icon { width: 26px; height: 26px; border-radius: 6px; }
 .slot-booking-modal input:not([type="checkbox"]):not([type="radio"]),
 .slot-booking-modal select,
@@ -2694,7 +2694,7 @@ h6 {
 .slot-booking-actions { display: flex; align-items: center; justify-content: flex-end; gap: 8px; }
 .slot-booking-footer-total { display: flex; flex-direction: column; gap: 1px; margin-right: auto; }
 .slot-booking-footer-total span { font-size: 10px; color: hsl(240 5% 65%); }
-.slot-booking-footer-total strong { font-size: 18px; font-weight: 650; color: hsl(0 0% 97%); line-height: 1.25; }
+.slot-booking-footer-total strong { font-size: 18px; font-weight: 600; color: hsl(0 0% 97%); line-height: 1.25; }
 .slot-booking-modal button:focus-visible { outline: 2px solid hsl(217 91% 65%); outline-offset: 2px; }
 @media (min-width: 768px) {
   .slot-booking-layout { grid-template-columns: minmax(0, 1fr) 280px; align-items: start; }
@@ -2733,7 +2733,7 @@ h6 {
   align-items: center;
   padding: 2px 6px;
   border: 1px solid hsl(0 0% 100% / 0.12);
-  border-radius: 4px;
+  border-radius: 6px;
   background: hsl(0 0% 100% / 0.04);
   color: hsl(0 0% 76%);
   font-size: 10px;
@@ -2808,7 +2808,7 @@ h6 {
   user-select: none;
 }
 .operations-dashboard .live-session-data-table .live-session-customer-name:hover {
-  color: #fff;
+  color: hsl(var(--muted-foreground));
   background: transparent;
 }
 .operations-dashboard .live-session-data-table td :is(p, span, div, button) {
@@ -2898,12 +2898,12 @@ h6 {
   width: 14px;
   height: 14px;
   border-radius: 50%;
-  background: #fff;
+  background: hsl(var(--muted) / 0.7);
   transition: transform 150ms;
 }
 .payment-settings-panel input[role="switch"]:checked { background: #059669; }
 .payment-settings-panel input[role="switch"]:checked::after { transform: translateX(16px); }
-.payment-settings-panel input:focus-visible { outline: 2px solid #60a5fa; outline-offset: 3px; }
+.payment-settings-panel input:focus-visible { outline: 2px solid hsl(var(--primary)); outline-offset: 3px; }
 .payment-method-choice { display: flex; align-items: center; gap: 10px; padding: 10px; border: 1px solid #343439; border-radius: 6px; font-size: 13px; cursor: pointer; }
 .payment-method-choice:has(input:checked) { border-color: #059669; background: #15352d; }
 .payment-methods-panel .body-text { font-size: 14px; line-height: 1.5; }

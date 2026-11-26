@@ -19,11 +19,11 @@ export const SuccessModal = ({
   onClose
 }: SuccessModalProps) => {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
       <motion.div
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="max-w-md w-full bg-muted rounded-lg shadow-2xl p-4 text-center"
+        className="max-w-md w-full bg-muted rounded-lg shadow-xl p-4 text-center"
       >
         <motion.div
           initial={{ scale: 0 }}

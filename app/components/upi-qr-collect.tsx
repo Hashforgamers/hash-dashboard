@@ -256,7 +256,7 @@ export function UpiQrBookingDialog({ vendorId, bookingIds, onDone }: {
   };
 
   return (
-    <div className="fixed inset-0 z-[1600] flex items-center justify-center bg-black/70 p-4" role="dialog" aria-modal="true" aria-label="UPI payment">
+    <div className="fixed inset-0 z-[1600] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label="UPI payment">
       <section className="w-full max-w-sm rounded-lg border border-border bg-card p-4">
         <h2 className="mb-1 text-lg font-semibold text-foreground">Collect booking payment</h2>
         <p className="mb-4 text-xs text-muted-foreground">The booking is saved. It is marked paid as soon as the UPI payment arrives.</p>

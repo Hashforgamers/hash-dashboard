@@ -60,7 +60,7 @@ export default function MasterAnalyticsPage() {
   if (loading || !analyticsData) {
     return (
       <div className="flex items-center justify-center h-screen text-white">
-        <p>Loading analytics...</p>
+        <p>Loading analytics…</p>
       </div>
     );
   }
@@ -79,7 +79,7 @@ export default function MasterAnalyticsPage() {
             <ArrowLeft className="h-6 w-6" />
           </button>
           <h1 className="text-2xl font-semibold tracking-wide">
-            📊 {selectedCafe} - {reportType} Report
+            {selectedCafe} - {reportType} Report
           </h1>
         </div>
 
@@ -115,7 +115,7 @@ export default function MasterAnalyticsPage() {
       <div className="grid grid-cols-4 gap-6">
         <Card className="bg-card text-white col-span-2">
           <CardContent className="p-4">
-            <h2 className="text-lg font-semibold mb-2">🏦 Revenue by Cafe</h2>
+            <h2 className="text-lg font-semibold mb-2">Revenue by Cafe</h2>
             <ResponsiveContainer width="100%" height={200}>
               <BarChart data={data.revenueByCafe}>
                 <XAxis dataKey="cafe" />
@@ -129,7 +129,7 @@ export default function MasterAnalyticsPage() {
 
         <Card className="bg-card text-white col-span-2">
           <CardContent className="p-4">
-            <h2 className="text-lg font-semibold mb-2">🎟️ Bookings per Cafe</h2>
+            <h2 className="text-lg font-semibold mb-2">Bookings per Cafe</h2>
             <ResponsiveContainer width="100%" height={200}>
               <BarChart data={data.bookingsByCafe}>
                 <XAxis dataKey="cafe" />
@@ -143,7 +143,7 @@ export default function MasterAnalyticsPage() {
 
         <Card className="bg-card text-white col-span-2">
           <CardContent className="p-4">
-            <h2 className="text-lg font-semibold mb-2">🎮 Top Games - {selectedCafe}</h2>
+            <h2 className="text-lg font-semibold mb-2">Top Games - {selectedCafe}</h2>
             <ResponsiveContainer width="100%" height={200}>
               <BarChart data={data.topGames[selectedCafe]}>
                 <XAxis dataKey="game" />
@@ -157,7 +157,7 @@ export default function MasterAnalyticsPage() {
 
         <Card className="bg-card text-white col-span-2">
           <CardContent className="p-4">
-            <h2 className="text-lg font-semibold mb-2">💳 Payment Mode Distribution</h2>
+            <h2 className="text-lg font-semibold mb-2">Payment Mode Distribution</h2>
             <ResponsiveContainer width="100%" height={200}>
               <PieChart>
                 <Pie

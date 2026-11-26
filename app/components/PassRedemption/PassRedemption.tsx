@@ -98,7 +98,7 @@ const PassRedemption: React.FC<{ vendorId: number }> = ({ vendorId }) => {
       const result: RedemptionResult = response.data;
       
       setSuccess(
-        `✅ Redeemed ${hours} hours successfully! ` +
+        `Redeemed ${hours} hours successfully! ` +
         `Remaining: ${result.remaining_hours.toFixed(2)} hours`
       );
 
@@ -212,7 +212,7 @@ const PassRedemption: React.FC<{ vendorId: number }> = ({ vendorId }) => {
                 {passDetails.pass_name}
               </h3>
               <p className="text-sm text-muted-foreground mt-1">
-                {passDetails.is_global ? '🌍 Global Pass' : '📍 Vendor-Specific Pass'}
+                {passDetails.is_global ? 'Global Pass' : 'Vendor-Specific Pass'}
               </p>
             </div>
             <div className="text-right">
@@ -317,7 +317,7 @@ const PassRedemption: React.FC<{ vendorId: number }> = ({ vendorId }) => {
               className={cn(buttonVariants({ variant: "success", size: "lg" }), "w-full")}
             >
               {loading ? (
-                <>Processing...</>
+                <>Processing…</>
               ) : (
                 <>
                   <CheckCircle className="w-5 h-5" />

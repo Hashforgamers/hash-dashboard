@@ -1,6 +1,6 @@
 "use client";
 import HistoryImport from "./history-import";
-import Link from "next/link";
+import { GamerName } from "./gamer-profile-host";
 import CafeAuditPanel from "./cafe-audit-panel";
 import {Button} from "@/components/ui/button";
 import { httpJson } from "@/lib/http-client";
@@ -117,6 +117,8 @@ function getToken() {
   }
   return null;
 }
+
+const formatSignedRupees = (value: number) => `${value < 0 ? "−" : ""}₹${Math.abs(value).toFixed(2)}`;
 
 function getVendorIdFromToken(decoded: any): number | null {
   if (!decoded) return null;
@@ -886,7 +888,7 @@ export function TransactionTable() {
 
       {showColumnSelector && (
         <div
-          className="fixed inset-0 z-40 bg-black/40 md:static md:bg-transparent"
+          className="fixed inset-0 z-40 md:static md:bg-transparent bg-black/60 backdrop-blur-sm"
           onClick={() => setShowColumnSelector(false)}
         >
           <div
@@ -1071,8 +1073,8 @@ export function TransactionTable() {
 
                         if (col.key === dayTotalTargetKey) {
                           return (
-                            <TableCell key={`${slotDate}_${col.key}_total`} className="px-4 py-3 text-right font-medium text-primary">
-                              ₹{dayTotalAmount.toFixed(2)}
+                            <TableCell key={`${slotDate}_${col.key}_total`} className={`whitespace-nowrap px-4 py-3 text-right font-semibold tabular-nums ${dayTotalAmount < 0 ? "text-red-400" : "text-foreground"}`}>
+                              {formatSignedRupees(dayTotalAmount)}
                             </TableCell>
                           );
                         }
@@ -1098,40 +1100,37 @@ export function TransactionTable() {
                               {visibleCols.map((col, idx) => {
                                 if (idx === 0) {
                                   return (
-                                    <TableCell key={`${slotDate}_${userId}_${col.key}_summary`} className="px-4 py-3 font-medium text-foreground">
-                                      <button
-                                        type="button"
-                                        onClick={() => toggleUserExpand(slotDate, userId)}
-                                        className="inline-flex items-center gap-2 text-left"
-                                        aria-expanded={userExpanded}
-                                        aria-label={`Toggle transactions for ${userGroup.userName}`}
-                                      >
-                                        <span className="text-xs">{userExpanded ? "▲" : "▼"}</span>
-                                        <span>{userGroup.userName}</span>
-                                      </button>
-                                      {userId > 0 && (
-                                        <Link href={`/know-your-gamers?gamer=${userId}`} className="ml-2 text-xs font-normal text-primary hover:underline">
-                                          History
-                                        </Link>
-                                      )}
+                                    <TableCell key={`${slotDate}_${userId}_${col.key}_summary`} className="whitespace-nowrap py-2.5 pl-8 pr-4 font-medium text-foreground">
+                                      <span className="inline-flex items-center gap-2">
+                                        <button
+                                          type="button"
+                                          onClick={() => toggleUserExpand(slotDate, userId)}
+                                          className="rounded p-0.5 text-muted-foreground hover:bg-muted hover:text-foreground"
+                                          aria-expanded={userExpanded}
+                                          aria-label={`Toggle transactions for ${userGroup.userName}`}
+                                        >
+                                          <ChevronRight aria-hidden="true" className={`h-4 w-4 transition-transform duration-200 ${userExpanded ? "rotate-90" : ""}`} />
+                                        </button>
+                                        <GamerName userId={userId} name={userGroup.userName} className="font-medium" />
+                                      </span>
                                     </TableCell>
                                   );
                                 }
                                 if (col.key === "amount" || col.key === "totalWithTax") {
                                   return (
-                                    <TableCell key={`${slotDate}_${userId}_${col.key}_sum`} className="px-4 py-3 text-right font-medium text-foreground">
-                                      ₹{userGroup.totalAmount.toFixed(2)}
+                                    <TableCell key={`${slotDate}_${userId}_${col.key}_sum`} className={`whitespace-nowrap px-4 py-2.5 text-right font-medium tabular-nums ${userGroup.totalAmount < 0 ? "text-red-400" : "text-foreground"}`}>
+                                      {formatSignedRupees(userGroup.totalAmount)}
                                     </TableCell>
                                   );
                                 }
                                 if (col.key === "bookingType") {
                                   return (
-                                    <TableCell key={`${slotDate}_${userId}_${col.key}_count`} className="px-4 py-3 text-muted-foreground">
-                                      {userGroup.bookings.length} {userGroup.bookings.length === 1 ? "transaction" : "transactions"}
+                                    <TableCell key={`${slotDate}_${userId}_${col.key}_count`} className="whitespace-nowrap px-4 py-2.5">
+                                      <Badge variant="neutral">{userGroup.bookings.length} txn{userGroup.bookings.length === 1 ? "" : "s"}</Badge>
                                     </TableCell>
                                   );
                                 }
-                                return <TableCell key={`${slotDate}_${userId}_${col.key}_blank`} className="px-4 py-3" />;
+                                return <TableCell key={`${slotDate}_${userId}_${col.key}_blank`} className="px-4 py-2.5" />;
                               })}
                             </motion.tr>
                           );

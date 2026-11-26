@@ -12,7 +12,6 @@ class SlotService {
     const cached = cacheService.get<ConsoleType[]>(cacheKey)
     
     if (cached) {
-      console.log('✅ Using cached consoles')
       return cached
     }
 
@@ -28,7 +27,6 @@ class SlotService {
       const consoles = this.transformConsoleData(data.games || [])
       
       cacheService.set(cacheKey, consoles, 300000)
-      console.log('✅ Consoles fetched and cached:', consoles)
       
       return consoles
     } catch (error) {
@@ -46,7 +44,6 @@ class SlotService {
     const cached = cacheService.get<SlotData>(cacheKey)
     
     if (cached) {
-      console.log('✅ Using cached slots')
       return cached
     }
 
@@ -64,7 +61,6 @@ class SlotService {
         retries: 0,
       })
       cacheService.set(cacheKey, data, 300000)
-      console.log('✅ Slots fetched and cached')
       
       return data
     } catch (error) {

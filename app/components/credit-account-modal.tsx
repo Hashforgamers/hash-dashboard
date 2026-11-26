@@ -177,7 +177,7 @@ export default function CreditAccountModal({ open, vendorId, customer, onClose, 
           onClick={onClose}
         >
           <motion.div
-            className="credit-account-modal w-full max-w-lg rounded-lg border shadow-2xl"
+            className="credit-account-modal w-full max-w-lg rounded-lg border shadow-xl"
             initial={{ opacity: 0, y: 24, scale: 0.96 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 24, scale: 0.96 }}

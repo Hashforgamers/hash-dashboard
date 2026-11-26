@@ -368,12 +368,10 @@ const pendingRequests = new Map<string, Promise<any>>()
 async function fetchWithDedup(url: string): Promise<any> {
   const cached = getCachedData(url)
   if (cached) {
-    console.log(`✅ Cache hit: ${url}`)
     return cached
   }
 
   if (pendingRequests.has(url)) {
-    console.log(`⏳ Deduped request: ${url}`)
     return pendingRequests.get(url)
   }
 
@@ -404,7 +402,6 @@ async function fetchSlotsBatch(vendorId: number, gameIds: number[], dates: strin
   const cacheKey = `batch:${vendorId}:${gameIds.join(',')}:${dates.join(',')}`
   const cached = forceFresh ? null : getCachedData(cacheKey)
   if (!forceFresh && cached) {
-    console.log(`✅ Batch cache hit`)
     return cached
   }
   
@@ -420,7 +417,6 @@ async function fetchSlotsBatch(vendorId: number, gameIds: number[], dates: strin
       retries: 0,
     })
 
-    console.log('✅ Batch fetch successful:', data)
     setCachedData(cacheKey, data)
     return data
   } catch (error) {
@@ -829,10 +825,8 @@ export function SlotBookingForm({
 
 
   const calculateAutoWaiveOff = (slots: SelectedSlot[]) => {
-    console.log('💰 Calculating auto waive-off for slots:', slots)
     
     const nowTs = Date.now()
-    console.log('🕐 Current IST time:', new Date().toLocaleTimeString('en-IN', { timeZone: IST_TIMEZONE }))
     
     let totalAutoWaiveOff = 0
     
@@ -870,16 +864,13 @@ export function SlotBookingForm({
         totalAutoWaiveOff += waveOffAmount
       }
       else if (nowTs < slotDateTime.getTime()) {
-        console.log(`⏰ Booking made in advance for ${slot.start_time} - no wave-off needed`)
       }
       else if (nowTs >= slotEndTime.getTime()) {
-        console.log(`⚠️ Slot ${slot.start_time} already ended - full wave-off applied`)
         totalAutoWaiveOff += slot.console_price
       }
     })
     
     const finalWaveOff = Math.round(totalAutoWaiveOff)
-    console.log('💰 Total auto waive-off calculated:', finalWaveOff)
     return finalWaveOff
   }
 
@@ -1101,7 +1092,6 @@ useEffect(() => {
       const data = await getBookingSettings<any>(`${DASHBOARD_URL}/api/vendor/${vendorId}/active-pricing`, settingsVersion)
       if (cancelled) return
       if (data.success) {
-        console.log('🏷️ Active pricing loaded:', data.pricing)
         setActivePricing(data.pricing)
       }
     } catch (err) {
@@ -1270,7 +1260,6 @@ useEffect(() => {
   const handleSuggestionClick = (user: UserSuggestion) => {
     cancelSuggestionFetch()
     setSuggestionError('')
-    console.log('👤 User suggestion clicked:', user)
     if (blurTimeoutRef.current) {
       clearTimeout(blurTimeoutRef.current)
       blurTimeoutRef.current = null
@@ -1353,7 +1342,6 @@ useEffect(() => {
   }, [isOpen, paymentType, matchedPrimaryUser?.id])
 
   const handleMealSelectorConfirm = (meals: SelectedMeal[]) => {
-    console.log('🍽️ Meals confirmed:', meals)
     setSelectedMeals(meals)
     setIsMealSelectorOpen(false)
   }
@@ -1372,7 +1360,6 @@ const getEffectivePrice = (slot: SelectedSlot): number => {
 
 
   const handleMealSelectorClose = () => {
-    console.log('🍽️ Meal selector closed')
     setIsMealSelectorOpen(false)
   }
 
@@ -1718,7 +1705,7 @@ const getEffectivePrice = (slot: SelectedSlot): number => {
               )}
             </div>
             {creditAccountLoading ? (
-              <p className="mt-2 text-xs text-muted-foreground">Loading credit account...</p>
+              <p className="mt-2 text-xs text-muted-foreground">Loading credit account…</p>
             ) : creditAccount?.is_active ? (
               <div className="mt-2 grid grid-cols-1 gap-2 min-[480px]:grid-cols-2 xl:grid-cols-3">
                 <div className="min-w-0 rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-3 py-2">
@@ -1900,7 +1887,6 @@ const getEffectivePrice = (slot: SelectedSlot): number => {
   })
 
   const validateForm = () => {
-    console.log('✅ Validating form...')
     const newErrors: Record<string, string> = {}
 
     if (!name.trim()) newErrors.name = 'Name is required'
@@ -1973,7 +1959,6 @@ const getEffectivePrice = (slot: SelectedSlot): number => {
     }
 
     setErrors(newErrors)
-    console.log('✅ Form validation result:', { isValid: Object.keys(newErrors).length === 0, errors: newErrors })
     return Object.keys(newErrors).length === 0
   }
 
@@ -1981,23 +1966,19 @@ const getEffectivePrice = (slot: SelectedSlot): number => {
     e.preventDefault()
     if (submittingRef.current || submissionUncertain) return
     setSubmitError("")
-    console.log('🚀 Form submission started')
     
     if (!validateForm()) {
-      console.log('❌ Form validation failed')
       return
     }
 
     const vendorId = getVendorIdFromToken()
     if (!vendorId) {
-      console.log('❌ No vendor ID, cannot submit')
       setSubmitError('Your session is unavailable. Sign in again before booking.')
       return
     }
 
     submittingRef.current = true
     setIsSubmitting(true)
-    console.log('📝 Preparing booking data...')
 
     try {
 
@@ -2045,7 +2026,6 @@ const getEffectivePrice = (slot: SelectedSlot): number => {
         }
       }
 
-      console.log('📤 Submitting booking data:', bookingData)
 
       const bookingHeaders: Record<string, string> = {
         'Content-Type': 'application/json',
@@ -2066,12 +2046,9 @@ const getEffectivePrice = (slot: SelectedSlot): number => {
         }
       )
 
-console.log('📥 API response status: success')
 
-console.log('📥 API response data:', result)
 
 if (result?.success === true || result?.success === 'true' || result?.booking || result?.id) {
-  console.log('✅ Booking created successfully!')
   const createdIds = Array.isArray(result?.booking_ids) ? result.booking_ids.map(Number).filter((id: number) => id > 0) : []
   if (paymentType === 'UPI QR' && createdIds.length > 0) {
     // Keep the form mounted behind the QR; it closes once paid or left for later.
@@ -2084,7 +2061,6 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
   onBookingComplete(result)
 
   if (typeof window !== 'undefined') {
-    console.log('📡 Dispatching refresh-dashboard event')
     window.dispatchEvent(new CustomEvent('refresh-dashboard'))
   }
 
@@ -2093,7 +2069,6 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
   try { localStorage.removeItem(`userList:${vendorId}`) } catch { /* Booking is already saved. */ }
 } else {
   // Only show error if response was not ok
-  console.log('❌ Unexpected response format:', result)
   setSubmissionUncertain(true)
   setSubmitError('The server returned an unrecognized confirmation. Close this form and check Booking Records before creating another booking.')
 }
@@ -2110,7 +2085,6 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
     } finally {
       submittingRef.current = false
       setIsSubmitting(false)
-      console.log('🏁 Form submission completed')
     }
   }
 
@@ -2123,7 +2097,7 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
       <motion.div
         initial={false}
         style={{ zIndex: overlayZIndex }}
-        className="fixed inset-0 flex items-center justify-center bg-black/45 p-3"
+        className="fixed inset-0 flex items-center justify-center p-3 bg-black/60 backdrop-blur-sm"
       >
         <motion.div
           initial={false}
@@ -2131,7 +2105,7 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
           data-booking-form
           aria-modal="true"
           aria-label="New Gaming Session"
-          className="slot-booking-modal flex max-h-[92vh] w-full max-w-[960px] flex-col overflow-hidden rounded-lg border shadow-2xl"
+          className="slot-booking-modal flex max-h-[92vh] w-full max-w-[960px] flex-col overflow-hidden rounded-lg border shadow-xl"
         >
           <div className="slot-booking-modal-header relative flex items-center justify-between border-b px-4 py-3">
             <div className="min-w-0">
@@ -2230,7 +2204,7 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                     onClick={saveVendorFieldConfig}
                     disabled={isFieldConfigSaving}
                   >
-                    {isFieldConfigSaving ? "Saving..." : "Save"}
+                    {isFieldConfigSaving ? "Saving…" : "Save"}
                   </button>
                 </div>
               </div>
@@ -2502,7 +2476,7 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                                 className="absolute z-20 bg-muted border border-border rounded-lg shadow-lg w-full mt-1 max-h-40 overflow-y-auto"
                               >
                                 {isSuggestionLoading.phone && phoneSuggestions.length === 0 && (
-                                  <li className="px-3 py-2 text-xs text-muted-foreground">Searching...</li>
+                                  <li className="px-3 py-2 text-xs text-muted-foreground">Searching…</li>
                                 )}
                                 {phoneSuggestions.slice(0, 5).map((user, idx) => (
                                   <motion.li
@@ -2559,7 +2533,7 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                                 className="absolute z-20 bg-muted border border-border rounded-lg shadow-lg w-full mt-1 max-h-40 overflow-y-auto"
                               >
                                 {isSuggestionLoading.email && emailSuggestions.length === 0 && (
-                                  <li className="px-3 py-2 text-xs text-muted-foreground">Searching...</li>
+                                  <li className="px-3 py-2 text-xs text-muted-foreground">Searching…</li>
                                 )}
                                 {emailSuggestions.slice(0, 5).map((user, idx) => (
                                   <motion.li
@@ -3113,7 +3087,7 @@ function TopBar({
   // Conditional rendering for management views
   if (showManageView) {
     return (
-      <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm p-4">
+      <div className="fixed inset-0 z-50 p-4 bg-black/60 backdrop-blur-sm">
         <div className="max-w-6xl mx-auto mt-8">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-2xl font-semibold text-white">
@@ -3131,7 +3105,7 @@ function TopBar({
             </Button>
           </div>
 
-          <Card className="bg-muted shadow-2xl">
+          <Card className="bg-muted shadow-xl">
             {showManageView === 'change' && <ChangeBookingForm />}
             {showManageView === 'reject' && <RejectBookingForm />}
             {showManageView === 'list' && <ListBooking />}
@@ -3507,7 +3481,6 @@ function ScheduleGrid({
 
   // ✅ NEW: For past slots, just fetch bookings (don't add to selection for new booking)
   if (isPastTime) {
-    console.log('🕒 Past slot clicked, fetching past bookings...')
     fetchSlotBookings([matchingSlot.slot_id], dayData.fullDate)
     return // Don't add to selected slots
   }
@@ -3526,7 +3499,7 @@ function ScheduleGrid({
         <div className="flex items-center justify-center py-12">
           <div className="text-center">
             <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto mb-3" />
-            <p className="text-muted-foreground">Loading available slots...</p>
+            <p className="text-muted-foreground">Loading available slots…</p>
           </div>
         </div>
       </Card>
@@ -3777,7 +3750,7 @@ function RecentBookings({
       <Card className={cn("booking-detail-card mt-2 p-3", fixedCard && "h-full min-h-0")}>
         <div className="flex items-center justify-center py-8">
           <Loader2 className="w-6 h-6 animate-spin text-emerald-500" />
-          <span className="booking-contrast-muted ml-2">Loading bookings...</span>
+          <span className="booking-contrast-muted ml-2">Loading bookings…</span>
         </div>
       </Card>
     )
@@ -4234,7 +4207,7 @@ function ChangeBookingForm() {
               {isUpdating ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Updating...
+                  Updating…
                 </>
               ) : (
                 "Update Booking"
@@ -5081,7 +5054,6 @@ const [isLoadingBookings, setIsLoadingBookings] = useState(false)
     try {
       console.time("⏱️ Total fetch time")
 
-      console.log("📡 Fetching consoles...")
       const cacheBust = forceFresh ? `?t=${Date.now()}` : ""
       const consolesUrl = `${BOOKING_URL}/api/getAllConsole/vendor/${resolvedVendorId}${cacheBust}`
       const consoleTypesUrl = `${BOOKING_URL}/api/console-types/vendor/${resolvedVendorId}${cacheBust}`
@@ -5155,7 +5127,6 @@ const [isLoadingBookings, setIsLoadingBookings] = useState(false)
         : Array.from(resolvedByType.values())
 
       if (consolesResolved.length === 0) {
-        console.log("⚠️ No consoles available")
         return { availableConsoles: [], allSlots: {}, selectedConsole, dates: [] }
       }
 
@@ -5163,9 +5134,7 @@ const [isLoadingBookings, setIsLoadingBookings] = useState(false)
       for (let i = 0; i < 3; i++) {
         dates.push(getISTDateString(i))
       }
-      console.log("📅 Dates to fetch:", dates)
 
-      console.log("📡 Fetching slots with BATCH API...")
       const nowTs = Date.now()
 
       let slotsData: { [key: string]: any[] } = {}
@@ -5181,10 +5150,8 @@ const [isLoadingBookings, setIsLoadingBookings] = useState(false)
           : allGameIds
         const batchDates = dates.map(d => d.replace(/-/g, ""))
 
-        console.log("🚀 Batch request:", { vendorId: resolvedVendorId, gameIds, dates: batchDates })
 
         const batchData = await fetchSlotsBatch(resolvedVendorId, gameIds, batchDates, forceFresh)
-        console.log("✅ Batch data received:", batchData)
 
         for (const [dateKey, slots] of Object.entries(batchData)) {
           const dateString = `${dateKey.slice(0, 4)}-${dateKey.slice(4, 6)}-${dateKey.slice(6, 8)}`
@@ -5302,7 +5269,6 @@ const fetchSlotBookings = async (slotIds: number[], date: string) => {
   
   setIsLoadingBookings(true)
   const normalizedDate = normalizeBookedDate(date)
-  console.log('🔍 Fetching bookings for slots:', slotIds, 'date:', normalizedDate)
   
   // ✅ Check if querying past slots
   const todayIST = getISTDateString(0)
@@ -5316,7 +5282,6 @@ const fetchSlotBookings = async (slotIds: number[], date: string) => {
     const url = `${BOOKING_URL}/api/vendor/${vendorId}/slot-bookings?slot_ids=${slotIdsParam}&date=${normalizedDate}${statusParam}`
     const data = await fetchWithDedup(url)
     if (requestId !== bookingsRequest.current) return
-    console.log('📥 Slot bookings response:', data)
 
     if (data?.success && data?.bookings) {
       const rawBookings = Array.isArray(data.bookings) ? data.bookings : []
@@ -5353,11 +5318,10 @@ const fetchSlotBookings = async (slotIds: number[], date: string) => {
 
       setSlotBookings(dedupedBookings)
       console.log(
-        `✅ Loaded ${dedupedBookings.length} unique ${isPastDate ? 'past' : 'active'} bookings (raw: ${rawBookings.length})`
+        `Loaded ${dedupedBookings.length} unique ${isPastDate ? 'past' : 'active'} bookings (raw: ${rawBookings.length})`
       )
     } else {
       setSlotBookings([])
-      console.log('📭 No bookings found')
     }
   } catch (error) {
     console.error('❌ Error fetching slot bookings:', error)
@@ -5439,7 +5403,6 @@ const fetchSlotBookings = async (slotIds: number[], date: string) => {
         if (!cachedBooking) {
           setIsLoading(false)
         }
-        console.log("✅ Booking data load complete")
       })
 
     return () => {
@@ -5575,7 +5538,7 @@ useEffect(() => {
       <main className={embedded ? "h-full min-h-0 bg-background flex items-center justify-center" : "min-h-screen bg-background flex items-center justify-center"}>
         <div className="text-center">
           <Loader2 className="w-12 h-12 animate-spin text-primary mx-auto mb-4" />
-          <p className="text-foreground">Loading slot data...</p>
+          <p className="text-foreground">Loading slot data…</p>
         </div>
       </main>
     )

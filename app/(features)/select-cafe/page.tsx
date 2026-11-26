@@ -544,7 +544,7 @@ export default function SelectCafePage() {
       <div className="premium-shell flex min-h-full flex-col items-center justify-center overflow-hidden px-4 py-8 sm:px-6 md:px-8">
       <div className="relative z-20 flex w-full max-w-6xl flex-col items-center gap-8 md:gap-10">
         <div className="space-y-4 text-center">
-          <h1 className="premium-heading select-none text-[2.1rem] font-semibold tracking-wide text-[#F7FAFC] md:text-[3rem] lg:text-[4.5rem]">
+          <h1 className="premium-heading select-none text-3xl font-semibold text-foreground md:text-4xl">
             Select Your Arena
           </h1>
           <p className="premium-subtle mx-auto max-w-2xl select-none text-sm leading-relaxed text-[rgba(255,255,255,0.68)] md:text-base">
@@ -571,7 +571,7 @@ export default function SelectCafePage() {
                     <p className="text-xs uppercase tracking-wide text-[rgba(255,255,255,0.45)]">
                       Cafe Access
                     </p>
-                    <h3 className="text-lg font-semibold leading-tight text-[#F7FAFC] transition-colors duration-300 md:text-[1.35rem]">
+                    <h3 className="text-lg font-semibold leading-tight text-foreground transition-colors duration-300 md:text-xl">
                       {cafe.name}
                     </h3>
                     <p className="text-sm text-[rgba(255,255,255,0.68)] md:text-base">
@@ -596,7 +596,7 @@ export default function SelectCafePage() {
                   <p className="text-xs uppercase tracking-wide text-[rgba(255,255,255,0.45)]">
                     New Setup
                   </p>
-                  <h3 className="text-lg font-semibold leading-tight text-[#F7FAFC] transition-colors duration-300 md:text-[1.35rem]">
+                  <h3 className="text-lg font-semibold leading-tight text-foreground transition-colors duration-300 md:text-xl">
                     Add New Cafe
                   </h3>
                   <p className="text-sm text-[rgba(255,255,255,0.68)] md:text-base">
@@ -611,10 +611,10 @@ export default function SelectCafePage() {
 
       {/* PIN Entry Dialog */}
       <Dialog open={showPinDialog} onOpenChange={setShowPinDialog}>
-        <DialogContent className="premium-card w-[calc(100vw-1.5rem)] rounded-lg border shadow-2xl shadow-black/50 sm:max-w-md">
+        <DialogContent className="premium-card w-[calc(100vw-1.5rem)] rounded-lg border shadow-xl shadow-black/50 sm:max-w-md">
           <DialogHeader className="text-center pb-2">
             <div className="relative mx-auto mb-6">
-              <div className="feature-action-icon h-20 w-20 rounded-lg shadow-2xl">
+              <div className="feature-action-icon h-20 w-20 rounded-lg shadow-xl">
                 {isUnlocking ? (
                   <Unlock className="h-10 w-10 animate-pulse text-white" />
                 ) : (

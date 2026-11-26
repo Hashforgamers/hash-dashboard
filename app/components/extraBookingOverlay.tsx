@@ -72,8 +72,9 @@ interface RuntimeBill {
   };
 }
 
-// Desk payment modes the session engine can record for kiosk extra time.
-const KIOSK_METHODS: Record<string, string> = { cash: "cash", card: "card", upi: "cafe_upi" };
+// Desk payment modes the session engine records for kiosk extra time. Credit and
+// Hash UPI QR move the PC time onto the booking bill and collect it there.
+const KIOSK_METHODS: Record<string, string> = { cash: "cash", card: "card", upi: "cafe_upi", credit: "booking_bill", upi_qr: "booking_bill" };
 
 // "2026-11-22T04:28" in IST, for the datetime-local input.
 const istInputValue = (date: Date) =>
@@ -305,7 +306,7 @@ const SettlementOverlay: React.FC<ExtraBookingOverlayProps> = ({
 
   // Stops the PC, then records its extra time with the same payment method.
   // Returns false when the final figure moved and staff should look again.
-  const settleKioskTime = async (shownDuePaise: number): Promise<boolean> => {
+  const settleKioskTime = async (shownDuePaise: number, bookingId: number | string): Promise<boolean> => {
     if (!runtimeId || !vendorId) return true;
     const prefix = `/${vendorId}/extensions/${runtimeId}`;
     runtimeLock.current = true;
@@ -324,10 +325,28 @@ const SettlementOverlay: React.FC<ExtraBookingOverlayProps> = ({
         return false;
       }
       if (due > 0) {
-        const method = KIOSK_METHODS[paymentMode];
-        if (!method) throw new Error("Collect PC extra time by cash, card or café UPI.");
+        const method = KIOSK_METHODS[paymentMode] || "cash";
         bill = await cafeCall<RuntimeBill>(`${prefix}/settle`, { method, amount_paise: due, revision: bill.revision, idempotency_key: `checkout-${runtimeId}-${bill.revision}-settle-${method}` });
         setRuntimeBill(bill);
+      }
+      if (KIOSK_METHODS[paymentMode] === "booking_bill" && (due > 0 || bill.billing.amount_due_paise === 0)) {
+        // Put the moved PC time on the booking bill so credit / UPI QR collects it.
+        await createExtraBooking({
+          consoleNumber: selectedSlot.consoleId || selectedSlot.consoleNumber,
+          consoleType: selectedSlot.consoleType,
+          date: String(selectedSlot.date || "").slice(0, 10),
+          booking_id: bookingId,
+          slotId: selectedSlot.slotId,
+          userId: selectedSlot.userId,
+          username: selectedSlot.username,
+          gameId: selectedSlot.game_id,
+          vendorId,
+          modeOfPayment: "pending",
+          kiosk_transfer: true,
+        }).catch((error: unknown) => {
+          // Nothing moved (no extra time) is fine; anything else must stop checkout.
+          if (!(error instanceof Error && /No PC extra time was moved/.test(error.message))) throw error;
+        });
       }
       return true;
     } finally {
@@ -505,11 +524,9 @@ const SettlementOverlay: React.FC<ExtraBookingOverlayProps> = ({
       );
       success = success && released.ok;
     }
-    console.log('💰 Release slot result:', success);
 
     if (success) {
       // ✅ CRITICAL: On SUCCESS - Update UI immediately (exactly like release button)
-      console.log('💰 Settle successful - updating UI immediately');
       
       // ✅ Trigger refresh to update both CurrentSlots and BookingStats
       setRefreshSlots((prev) => !prev);
@@ -526,11 +543,9 @@ const SettlementOverlay: React.FC<ExtraBookingOverlayProps> = ({
       setSettlementError("");
       setLoading(false);
       
-      console.log('💰 UI updated immediately - settle complete');
       return true;
     } else {
       // ✅ Release failed - show error, don't close overlay
-      console.log('💰 Release slot failed');
       setSettlementError("Failed to release slot. Please try again.");
       setLoading(false);
       return false;
@@ -587,22 +602,20 @@ const SettlementOverlay: React.FC<ExtraBookingOverlayProps> = ({
     };
 
     try {
-      if (meteredByKiosk && !(await settleKioskTime(kioskDuePaise))) {
+      if (meteredByKiosk && !(await settleKioskTime(kioskDuePaise, bookingId))) {
         setLoading(false);
         return;
       }
       if (amount > 0) {
         await createExtraBooking(extraBookingPayload);
-        console.log('💰 Extra booking created successfully');
       } else {
-        console.log('💰 No overtime charge - skipping extra booking creation');
       }
       const pendingTypes = (paymentSummary?.line_items || [])
         .filter((item) => isPendingStatus(item.settlement_status))
         .map((item) => normalizeBookingType(item.booking_type))
         .filter((type) => type && type !== "settlement_waive_off");
       const bookingTypesSet = new Set(pendingTypes);
-      if (amount > 0) {
+      if (amount > 0 || (kioskDuePaise > 0 && KIOSK_METHODS[paymentMode] === "booking_bill")) {
         bookingTypesSet.add("extra");
       }
       if (pendingMealsAmount > 0) {
@@ -635,13 +648,12 @@ const SettlementOverlay: React.FC<ExtraBookingOverlayProps> = ({
         await releaseAndClose();
         return;
       }
-      if (paymentMode === "upi_qr" && bookingPayable > 0) {
+      if (paymentMode === "upi_qr" && payableAmount > 0) {
         await startUpiQr(bookingId, parsedWaiveOff, bookingTypesPayload);
         setLoading(false);
         return;
       }
       await settlePendingBookingCharges(bookingId, settleMode, parsedWaiveOff, bookingTypesPayload);
-      console.log('💰 Pending charges settled successfully');
 
       await releaseAndClose();
 
@@ -723,12 +735,7 @@ const SettlementOverlay: React.FC<ExtraBookingOverlayProps> = ({
   const kioskBlocker = !meteredByKiosk ? ""
     : runtimeBill?.billing.requires_reconciliation ? (runtimeBill.billing.pricing_error || "PC extra time could not be priced yet.")
     : !runtimeBill ? (runtimeError || "PC extra time is still loading.")
-    : kioskDuePaise > 0 && !KIOSK_METHODS[paymentMode] ? "PC extra time is collected at the desk. Choose cash, card or café UPI."
     : "";
-  // UPI QR and credit cannot carry PC extra time; fall back to cash when it is due.
-  useEffect(() => {
-    if (kioskDuePaise > 0 && !KIOSK_METHODS[paymentMode]) setPaymentMode("cash");
-  }, [kioskDuePaise, paymentMode]);
 
   // Handle keyboard navigation for payment mode buttons
   const handlePaymentModeKeyDown = (e: React.KeyboardEvent, key: string) => {
@@ -747,7 +754,7 @@ const SettlementOverlay: React.FC<ExtraBookingOverlayProps> = ({
       {showOverlay && selectedSlot && (
         <>
           <motion.div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md max-sm:items-end"
+            className="fixed inset-0 z-50 flex items-center justify-center max-sm:items-end bg-black/60 backdrop-blur-sm"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -755,7 +762,7 @@ const SettlementOverlay: React.FC<ExtraBookingOverlayProps> = ({
           >
             <motion.div
             ref={overlayRef}
-            className="session-settlement-modal dashboard-module-panel relative w-full max-w-4xl mx-3 sm:mx-4 rounded-lg p-4 shadow-2xl max-h-[92vh] overflow-y-auto max-sm:mx-0 max-sm:h-[100dvh] max-sm:max-h-[100dvh] max-sm:rounded-none max-sm:p-3"
+            className="session-settlement-modal dashboard-module-panel relative w-full max-w-4xl mx-3 sm:mx-4 rounded-lg p-4 shadow-xl max-h-[92vh] overflow-y-auto max-sm:mx-0 max-sm:h-[100dvh] max-sm:max-h-[100dvh] max-sm:rounded-none max-sm:p-3"
             initial={{ scale: 0.95, y: 30, opacity: 0 }}
             animate={{ scale: 1, y: 0, opacity: 1 }}
             exit={{ scale: 0.95, y: 30, opacity: 0 }}
@@ -861,7 +868,7 @@ const SettlementOverlay: React.FC<ExtraBookingOverlayProps> = ({
                 {(summaryLoading || summaryError) && (
                   <div className="mb-4 rounded-lg border border-border bg-muted/50 px-3 py-2">
                     {summaryLoading && (
-                      <p className="text-xs text-muted-foreground">Loading full transaction history...</p>
+                      <p className="text-xs text-muted-foreground">Loading full transaction history…</p>
                     )}
                     {summaryError && (
                       <p className="text-xs text-amber-300">{summaryError}</p>
@@ -957,11 +964,10 @@ const SettlementOverlay: React.FC<ExtraBookingOverlayProps> = ({
                     {[
                       { key: "cash", label: "Cash", Icon: IndianRupee },
                       { key: "card", label: "Card", Icon: CreditCard },
-                      { key: "upi_qr", label: "UPI QR (auto)", Icon: QrCode },
+                      { key: "upi_qr", label: "Hash UPI QR", Icon: QrCode },
                       { key: "upi", label: "Café UPI", Icon: Smartphone },
-                      { key: "credit", label: "Credit", Icon: Wallet },
-                    ].filter(({ key }) => !(isGroupBill && key === "upi_qr"))
-                     .filter(({ key }) => !(kioskDuePaise > 0 && !KIOSK_METHODS[key])).map(({ key, label, Icon }) => (
+                      { key: "credit", label: "Gamer credit", Icon: Wallet },
+                    ].filter(({ key }) => !(isGroupBill && key === "upi_qr")).map(({ key, label, Icon }) => (
                       <motion.button
                         key={key}
                         disabled={!!upiQr}
@@ -1014,7 +1020,7 @@ const SettlementOverlay: React.FC<ExtraBookingOverlayProps> = ({
                       )}
                     </div>
                     {creditAccountLoading ? (
-                      <p className="mt-2 text-xs text-muted-foreground">Loading credit account...</p>
+                      <p className="mt-2 text-xs text-muted-foreground">Loading credit account…</p>
                     ) : creditAccount?.is_active ? (
                       <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-3">
                         <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-3 py-2">
@@ -1060,7 +1066,7 @@ const SettlementOverlay: React.FC<ExtraBookingOverlayProps> = ({
                   <motion.button
                     onClick={handleSettle}
                     className="dashboard-btn-primary w-full rounded-md px-4 py-2.5 text-sm font-medium disabled:opacity-50 sm:px-6 sm:py-2"
-                    disabled={loading || summaryLoading || !!summaryError || !!waiveOffError || !vendorId || !!kioskBlocker || (paymentMode === "credit" && (!creditAccount?.is_active || availableCreditAmount < bookingPayable))}
+                    disabled={loading || summaryLoading || !!summaryError || !!waiveOffError || !vendorId || !!kioskBlocker || (paymentMode === "credit" && (!creditAccount?.is_active || availableCreditAmount < payableAmount))}
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     aria-label="End session"
@@ -1069,7 +1075,7 @@ const SettlementOverlay: React.FC<ExtraBookingOverlayProps> = ({
                       {loading ? (
                         <>
                           <Loader2 className="w-4 h-4 animate-spin" />
-                          Processing...
+                          Processing…
                         </>
                       ) : (
                         <>

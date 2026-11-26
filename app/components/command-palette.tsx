@@ -69,7 +69,7 @@ export function CommandPalette({ onRefresh }: { onRefresh: () => void }) {
           <CommandGroup heading="Administration">
             {can("staff.manage") && <CommandItem onSelect={go("/employee-access")}><Shield className="mr-2" />Team Access</CommandItem>}
             {can("account.manage") && <CommandItem onSelect={go("/account")}><Settings className="mr-2" />Settings</CommandItem>}
-            {can("account.manage") && [["Payment methods", "payment-methods"], ["Notification preferences", "notification-preferences"], ["Operating hours", "operating-hours"], ["Subscription", "subscription-details"]].map(([label, slug]) => (
+            {can("account.manage") && [["Payment methods", "payment-methods"], ["Self QR, wallet & auto-extend", "self-qr-wallet"], ["Notification preferences", "notification-preferences"], ["Operating hours", "operating-hours"], ["Subscription", "subscription-details"]].map(([label, slug]) => (
               <CommandItem key={slug} value={`settings ${label}`} onSelect={go(`/account?section=${slug}`)}><Settings className="mr-2" />Settings · {label}</CommandItem>
             ))}
             <CommandItem onSelect={go("/select-cafe")}><Store className="mr-2" />Switch café</CommandItem>

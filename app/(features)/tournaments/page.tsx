@@ -1,5 +1,7 @@
 'use client';
 import { buttonVariants } from "@/components/ui/button";
+import { PageHeader } from "@/app/components/page-header";
+import { Button } from "@/components/ui/button";
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -59,7 +61,6 @@ export default function TournamentsPage() {
     if (token) {
       try {
         const decoded_token = jwtDecode<{ sub: { id: number } }>(token)
-        console.log('🔑 Decoded vendor ID:', decoded_token.sub.id)
         setVendorId(decoded_token.sub.id)
       } catch (error) {
         console.error('❌ Error decoding JWT token:', error)
@@ -99,7 +100,7 @@ export default function TournamentsPage() {
     <DashboardLayout contentScroll="contained"><div className="flex h-full items-center justify-center">
       <div className="flex flex-col items-center gap-3">
         <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-        <p className="body-text-muted">Initializing session...</p>
+        <p className="body-text-muted">Initializing session…</p>
       </div>
     </div></DashboardLayout>
   );
@@ -119,21 +120,11 @@ export default function TournamentsPage() {
     <DashboardLayout contentScroll="contained">
     <div className="dashboard-module dashboard-page-shell h-full" onClick={() => setOpenMenuId(null)}>
 
-      <div className="gaming-panel">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <h1 className="premium-heading flex items-center gap-2">
-              Tournaments
-            </h1>
-          </div>
-          <button
-            className="dashboard-btn-primary inline-flex items-center justify-center gap-2 px-3 py-2 text-xs sm:px-4 sm:text-sm"
-            onClick={() => router.push('/tournaments/create')}
-          >
-            <Plus className="icon-md" /> Create Tournament
-          </button>
-        </div>
-      </div>
+      <PageHeader title="Tournaments" actions={
+        <Button size="sm" onClick={() => router.push('/tournaments/create')}>
+          <Plus className="h-4 w-4" /> Create tournament
+        </Button>
+      } />
 
       <div className="min-h-0 flex-1 overflow-y-auto pr-1 space-y-3 sm:space-y-3">
         {/* ── Filters ──────────────────────────────────── */}
@@ -206,7 +197,7 @@ export default function TournamentsPage() {
                         {search || statusFilter
                           ? 'No tournaments match your filters.'
                           : loadingData
-                            ? 'Checking latest tournaments...'
+                            ? 'Checking latest tournaments…'
                             : 'No tournaments returned for this cafe.'}
                       </p>
                       {!search && !statusFilter && !loadingData && (

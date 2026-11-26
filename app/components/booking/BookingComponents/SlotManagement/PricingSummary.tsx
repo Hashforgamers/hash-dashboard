@@ -143,7 +143,7 @@ export const PricingSummary = memo(({
             Controller Rules
           </p>
           {controllerPricingLoading ? (
-            <p className="text-xs text-muted-foreground mt-1">Loading pricing rules...</p>
+            <p className="text-xs text-muted-foreground mt-1">Loading pricing rules…</p>
           ) : (
             <div className="mt-1 space-y-1">
               <p className="text-xs text-muted-foreground">

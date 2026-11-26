@@ -1,6 +1,7 @@
 "use client";
 
 import { PrivatePin } from "@/app/components/private-pin";
+import { PageHeader } from "@/app/components/page-header";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useMemo, useState } from "react";
 import { DashboardLayout } from "../../(layout)/dashboard-layout";
@@ -18,10 +19,10 @@ import { toast } from "sonner";
 
 const ROLE_ORDER: StaffRole[] = ["owner", "manager", "staff"];
 const STAFF_ACTION_LABELS: Record<"role" | "toggle" | "remove" | "pin", string> = {
-  role: "Updating role...",
-  toggle: "Updating...",
-  remove: "Removing...",
-  pin: "Saving PIN...",
+  role: "Updating role…",
+  toggle: "Updating…",
+  remove: "Removing…",
+  pin: "Saving PIN…",
 };
 
 const SERVICE_PERMISSION_MAP: Array<{
@@ -182,7 +183,7 @@ export default function EmployeeAccessPage() {
     }
 
     setPendingStaffAction((prev) => ({ ...prev, [staffId]: "pin" }));
-    const loadingToastId = toast.loading("Updating PIN...");
+    const loadingToastId = toast.loading("Updating PIN…");
     try {
       const result = await updateStaffPin(staffId, pin);
       if (!result.ok) {
@@ -245,20 +246,12 @@ export default function EmployeeAccessPage() {
   return (
     <DashboardLayout contentScroll="page">
       <div className="access-scope dashboard-module dashboard-page-shell">
-        <div className="gaming-panel">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="premium-heading">Team Access</h1>
-              </div>
-
-            </div>
-            <div className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/[0.06] px-3 py-1 text-xs text-muted-foreground">
-              <Shield className="h-3.5 w-3.5" />
-              Active session: {activeStaff?.name || "Owner"} ({activeStaff?.role || "owner"})
-            </div>
-          </div>
-        </div>
+        <PageHeader title="Team Access" actions={
+          <span className="inline-flex items-center gap-2 rounded-lg border border-border bg-muted/40 px-3 py-1 text-xs text-muted-foreground">
+            <Shield className="h-3.5 w-3.5" />
+            Signed in as {activeStaff?.name || "Owner"} · {activeStaff?.role || "owner"}
+          </span>
+        } />
 
         <Tabs defaultValue="add-employee" className="flex flex-col">
           <TabsList className="gaming-panel h-auto w-full shrink-0 gap-1 overflow-x-auto rounded-lg border border-white/10 bg-white/[0.06] p-1 sm:w-fit">
@@ -309,7 +302,7 @@ export default function EmployeeAccessPage() {
                 <div className="flex items-end md:col-span-1">
                   <Button className="w-full" onClick={() => void handleCreate()} disabled={!name.trim() || isCreating}>
                     {isCreating ? <RefreshCw className="mr-2 h-4 w-4 animate-spin" /> : <UserCog className="mr-2 h-4 w-4" />}
-                    {isCreating ? "Adding..." : "Add"}
+                    {isCreating ? "Adding…" : "Add"}
                   </Button>
                 </div>
               </div>
@@ -415,7 +408,7 @@ export default function EmployeeAccessPage() {
                               onClick={() => void handleToggleStaff(staff.id)}
                               disabled={Boolean(pendingStaffAction[staff.id])}
                             >
-                              {pendingStaffAction[staff.id] === "toggle" ? "Updating..." : staff.isActive ? "Disable" : "Enable"}
+                              {pendingStaffAction[staff.id] === "toggle" ? "Updating…" : staff.isActive ? "Disable" : "Enable"}
                             </Button>
                             <Button
                               variant="destructive"
@@ -423,7 +416,7 @@ export default function EmployeeAccessPage() {
                               onClick={() => void handleRemoveStaff(staff.id)}
                               disabled={Boolean(pendingStaffAction[staff.id])}
                             >
-                              {pendingStaffAction[staff.id] === "remove" ? "Removing..." : "Remove"}
+                              {pendingStaffAction[staff.id] === "remove" ? "Removing…" : "Remove"}
                             </Button>
                             <Button
                               variant="secondary"
@@ -435,7 +428,7 @@ export default function EmployeeAccessPage() {
                               {pendingStaffAction[staff.id] === "pin" ? (
                                 <>
                                   <RefreshCw className="mr-2 h-3.5 w-3.5 animate-spin" />
-                                  Saving...
+                                  Saving…
                                 </>
                               ) : (
                                 "Change PIN"
@@ -461,7 +454,7 @@ export default function EmployeeAccessPage() {
                 {pendingPermissionKey && !isResettingPermissions && (
                   <span className="inline-flex items-center text-xs text-primary">
                     <RefreshCw className="mr-1.5 h-3 w-3 animate-spin" />
-                    Saving permission changes...
+                    Saving permission changes…
                   </span>
                 )}
                 <Button size="sm" variant="outline" onClick={() => void handleResetPermissions()} disabled={isResettingPermissions}>
