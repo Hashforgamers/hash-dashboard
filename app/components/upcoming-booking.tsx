@@ -1332,7 +1332,7 @@ export function UpcomingBookings({
 
       {isMounted && cancelDialog.open && createPortal(
         <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/40 p-4">
-          <div className="w-full max-w-md rounded-lg border border-border bg-card p-5 shadow-2xl">
+          <div className="w-full max-w-md rounded-lg border border-border bg-card p-4 shadow-2xl">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-semibold text-foreground">Cancel Booking</h3>
               <button
@@ -1404,7 +1404,7 @@ export function UpcomingBookings({
 
       {isMounted && noShowDialog.open && createPortal(
         <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/40 p-4">
-          <div className="w-full max-w-md rounded-lg border border-border bg-card p-5 shadow-2xl">
+          <div className="w-full max-w-md rounded-lg border border-border bg-card p-4 shadow-2xl">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-semibold text-foreground">Mark Booking As No Show</h3>
               <button

@@ -40,7 +40,7 @@ export const PricingSummary = memo(({
   selectedMealsCount
 }: PricingSummaryProps) => {
   return (
-    <Card className="p-6 bg-emerald-900/20">
+    <Card className="p-4 bg-emerald-900/20">
       <div className="flex items-center gap-2 mb-4">
         <div className="p-1 bg-emerald-900/30 rounded">
           <Wallet className="w-4 h-4 text-emerald-600" />

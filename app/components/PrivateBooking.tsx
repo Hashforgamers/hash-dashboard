@@ -302,7 +302,7 @@ const PrivateBookingForm: React.FC<PrivateBookingFormProps> = ({ onBack }) => {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="max-w-sm w-full bg-muted rounded-lg shadow-lg p-6 text-center"
+          className="max-w-sm w-full bg-muted rounded-lg shadow-lg p-4 text-center"
         >
           <motion.div
             initial={{ scale: 0 }}

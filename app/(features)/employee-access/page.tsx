@@ -231,7 +231,7 @@ export default function EmployeeAccessPage() {
     return (
       <DashboardLayout>
         <div className="flex h-full min-h-[220px] items-center justify-center">
-          <div className="w-full max-w-xl rounded-lg border border-red-500/30 bg-red-500/10 p-6 text-center">
+          <div className="w-full max-w-xl rounded-lg border border-red-500/30 bg-red-500/10 p-4 text-center">
             <h2 className="text-xl font-semibold text-red-200">Owner Access Required</h2>
             <p className="mt-2 text-sm text-red-100/80">
               Only owner role can manage employee onboarding and permissions.

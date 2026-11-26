@@ -364,7 +364,7 @@ export default function LoginPage() {
     <div className="premium-shell flex min-h-screen items-center justify-center overflow-hidden p-4 sm:p-6">
       {forceResetOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/65 p-4">
-          <div className="w-full max-w-md rounded-lg border border-white/10 bg-[#1c1c1e]/95 p-5 shadow-2xl backdrop-blur-xl">
+          <div className="w-full max-w-md rounded-lg border border-white/10 bg-[#1c1c1e]/95 p-4 shadow-2xl backdrop-blur-xl">
             <h3 className="text-lg font-semibold text-white">Set New Password</h3>
             <p className="mt-1 text-sm text-muted-foreground">
               Your temporary password is active. Set a new password to continue.
