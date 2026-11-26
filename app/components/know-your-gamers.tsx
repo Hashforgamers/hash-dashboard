@@ -185,7 +185,7 @@ export function KnowYourGamers() {
                   <Icon className="h-4 w-4" />
                 </div>
               </div>
-              <p className="mt-1 text-[11px] text-muted-foreground">
+              <p className="mt-1 text-xs text-muted-foreground">
                 <span className={String(stat.change).startsWith("-") ? "text-red-400" : "text-emerald-400"}>{stat.change}</span> vs last month
               </p>
             </div>
@@ -260,7 +260,7 @@ export function KnowYourGamers() {
                   <p className="font-semibold text-foreground">₹{gamer.netRevenue.toLocaleString()}</p>
                 </div>
               </div>
-              <p className="mt-2 text-[11px] text-muted-foreground">
+              <p className="mt-2 text-xs text-muted-foreground">
                 Last Visit: {gamer.lastVisit ? format(new Date(gamer.lastVisit), "dd MMM yyyy") : "-"}
               </p>
               {can("account.manage") && <Button size="sm" variant="outline" className="mt-3" onClick={() => setPromotionGamer(gamer)}><Megaphone className="mr-2 h-4 w-4" />Send promotion</Button>}
@@ -290,7 +290,7 @@ export function KnowYourGamers() {
                 ].map((header) => (
                   <th
                     key={header}
-                    className="dashboard-module-table-header whitespace-nowrap px-4 py-3 text-left text-xs font-bold uppercase tracking-wider"
+                    className="dashboard-module-table-header whitespace-nowrap px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider"
                   >
                     {header}
                   </th>

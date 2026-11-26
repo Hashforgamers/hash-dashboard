@@ -719,7 +719,7 @@ const [isPrivateMode, setIsPrivateMode] = useState<boolean>(false);
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="max-w-sm w-full bg-transparent rounded-xl shadow-lg p-6 text-center"
+          className="max-w-sm w-full bg-transparent rounded-lg shadow-lg p-6 text-center"
         >
           <motion.div
             initial={{ scale: 0 }}
@@ -730,7 +730,7 @@ const [isPrivateMode, setIsPrivateMode] = useState<boolean>(false);
             <CheckCircle className="w-8 h-8 text-emerald-300" />
           </motion.div>
 
-          <h2 className="text-xl font-bold text-white mb-2">
+          <h2 className="text-xl font-semibold text-white mb-2">
             Booking Confirmed!
           </h2>
           <p className="text-muted-foreground mb-4 text-sm">
@@ -773,7 +773,7 @@ const [isPrivateMode, setIsPrivateMode] = useState<boolean>(false);
             {paymentType !== "Pass" && (
               <div className="flex justify-between items-center py-1">
                 <span className="text-muted-foreground">Total Amount:</span>
-                <span className="font-bold text-emerald-600 text-lg">₹{totalAmount}</span>
+                <span className="font-semibold text-emerald-600 text-lg">₹{totalAmount}</span>
               </div>
             )}
           </div>
@@ -809,7 +809,7 @@ const [isPrivateMode, setIsPrivateMode] = useState<boolean>(false);
             <ChevronLeft className="w-5 h-5 text-muted-foreground" />
           </motion.button>
           <div>
-            <h1 className="text-lg font-bold text-foreground">
+            <h1 className="text-lg font-semibold text-foreground">
               Book {selectedConsole.name}
             </h1>
             <p className="text-xs text-muted-foreground">Type: {selectedConsole.type} | ID: {selectedConsole.id}</p>
@@ -856,7 +856,7 @@ const [isPrivateMode, setIsPrivateMode] = useState<boolean>(false);
         </motion.div>
         
         <div>
-          <h3 className="text-sm font-bold text-white flex items-center gap-2">
+          <h3 className="text-sm font-semibold text-white flex items-center gap-2">
             {isPrivateMode ? (
               <>
                 <span className="text-purple-400">Private Booking</span>
@@ -892,7 +892,7 @@ const [isPrivateMode, setIsPrivateMode] = useState<boolean>(false);
         whileTap={{ scale: 0.95 }}
         className={`relative inline-flex h-8 w-14 items-center rounded-full transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 ${
           isPrivateMode 
-            ? 'bg-purple-600 focus:ring-purple-500' 
+            ? 'bg-purple-600 focus:ring-ring/40' 
             : 'bg-muted focus:ring-border'
         }`}
       >
@@ -982,11 +982,11 @@ const [isPrivateMode, setIsPrivateMode] = useState<boolean>(false);
                       placeholder="Email"
                       className={`w-full pl-8 pr-2 py-2 bg-transparent rounded border transition-all duration-200 text-sm ${
                         errors.email
-                          ? "border-red-500 focus:border-red-500"
+                          ? "border-red-500 focus:border-ring"
                           : focusedInput === "email"
-                          ? "border-emerald-500 focus:border-emerald-500"
-                          : "border-border focus:border-emerald-500"
-                      } focus:outline-none focus:ring-1 focus:ring-emerald-500/20`}
+                          ? "border-emerald-500 focus:border-ring"
+                          : "border-border focus:border-ring"
+                      } focus:outline-none focus:ring-1 focus:ring-ring/40`}
                       style={{ boxSizing: "border-box" }}
                     />
                     <Mail className="w-4 h-4 text-muted-foreground absolute left-2.5 top-2.5" />
@@ -1033,11 +1033,11 @@ const [isPrivateMode, setIsPrivateMode] = useState<boolean>(false);
                       placeholder="Phone"
                       className={`w-full pl-8 pr-2 py-2 bg-transparent rounded border transition-all duration-200 text-sm ${
                         errors.phone
-                          ? "border-red-500 focus:border-red-500"
+                          ? "border-red-500 focus:border-ring"
                           : focusedInput === "phone"
-                          ? "border-emerald-500 focus:border-emerald-500"
-                          : "border-border focus:border-emerald-500"
-                      } focus:outline-none focus:ring-1 focus:ring-emerald-500/20`}
+                          ? "border-emerald-500 focus:border-ring"
+                          : "border-border focus:border-ring"
+                      } focus:outline-none focus:ring-1 focus:ring-ring/40`}
                     />
                     <Phone className="w-4 h-4 text-muted-foreground absolute left-2.5 top-2.5" />
                     <AnimatePresence>
@@ -1088,11 +1088,11 @@ const [isPrivateMode, setIsPrivateMode] = useState<boolean>(false);
                           placeholder="Full name"
                           className={`w-full pl-8 pr-2 py-2 bg-transparent rounded border transition-all duration-200 text-sm ${
                             errors.name
-                              ? "border-red-500 focus:border-red-500"
+                              ? "border-red-500 focus:border-ring"
                               : focusedInput === "name"
-                              ? "border-emerald-500 focus:border-emerald-500"
-                              : "border-border focus:border-emerald-500"
-                          } focus:outline-none focus:ring-1 focus:ring-emerald-500/20`}
+                              ? "border-emerald-500 focus:border-ring"
+                              : "border-border focus:border-ring"
+                          } focus:outline-none focus:ring-1 focus:ring-ring/40`}
                         />
                         <User className="w-4 h-4 text-muted-foreground absolute left-2.5 top-2.5" />
                         <AnimatePresence>
@@ -1234,7 +1234,7 @@ const [isPrivateMode, setIsPrivateMode] = useState<boolean>(false);
                               }
                             }}
                             placeholder="Enter Pass UID (HFG-XXXXXXXXXXXX)"
-                            className="w-full px-3 py-2 bg-muted rounded border border-border focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500/20 transition-all duration-200 text-sm"
+                            className="w-full px-3 py-2 bg-muted rounded border border-border focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring/40 transition-all duration-200 text-sm"
                           />
                           {isValidatingPass && (
                             <Loader2 className="w-4 h-4 animate-spin text-emerald-600 absolute right-3 top-2.5" />
@@ -1256,14 +1256,14 @@ const [isPrivateMode, setIsPrivateMode] = useState<boolean>(false);
                                 </p>
                                 <div className="flex justify-between text-emerald-300">
                                   <span>Hours Available:</span>
-                                  <span className="font-bold">
+                                  <span className="font-semibold">
                                     {validatedPass.remaining_hours} / {validatedPass.total_hours}
                                   </span>
                                 </div>
                                 {selectedSlots.length > 0 && (
                                   <div className="flex justify-between text-emerald-400">
                                     <span>Hours Needed:</span>
-                                    <span className="font-bold">{calculateHoursForSlots()} hrs</span>
+                                    <span className="font-semibold">{calculateHoursForSlots()} hrs</span>
                                   </div>
                                 )}
                               </div>
@@ -1484,7 +1484,7 @@ const [isPrivateMode, setIsPrivateMode] = useState<boolean>(false);
                       <span className="text-emerald-400 text-xs">
                         Hours to Deduct:
                       </span>
-                      <span className="font-bold text-emerald-400 text-xs">
+                      <span className="font-semibold text-emerald-400 text-xs">
                         {calculateHoursForSlots()} hrs
                       </span>
                     </div>
@@ -1499,7 +1499,7 @@ const [isPrivateMode, setIsPrivateMode] = useState<boolean>(false);
                           value={waiveOffAmount}
                           onChange={(e) => setWaiveOffAmount(Number(e.target.value))}
                           placeholder="₹0"
-                          className="w-16 text-right px-1 py-0.5 rounded border border-border bg-transparent text-white focus:border-emerald-500 focus:outline-none transition-colors text-xs"
+                          className="w-16 text-right px-1 py-0.5 rounded border border-border bg-transparent text-white focus:border-ring focus:outline-none transition-colors text-xs"
                           min={0}
                         />
                       </div>
@@ -1508,7 +1508,7 @@ const [isPrivateMode, setIsPrivateMode] = useState<boolean>(false);
                         <div className="flex justify-between items-center py-1 border-b border-border bg-amber-900/20 rounded px-2">
                           <span className="text-amber-400 font-medium">⏰ Auto Waive Off:</span>
                           <div className="text-right">
-                            <span className="font-bold text-amber-400">₹{Math.round(autoWaiveOffAmount)}</span>
+                            <span className="font-semibold text-amber-400">₹{Math.round(autoWaiveOffAmount)}</span>
                             <div className="text-xs text-amber-300">
                               (Time-based discount)
                             </div>
@@ -1578,14 +1578,14 @@ const [isPrivateMode, setIsPrivateMode] = useState<boolean>(false);
                                   {meal.category} • ₹{meal.price} × {meal.quantity}
                                 </div>
                               </div>
-                              <span className="font-bold text-emerald-300 text-xs">
+                              <span className="font-semibold text-emerald-300 text-xs">
                                 ₹{meal.total}
                               </span>
                             </div>
                           </div>
                         ))}
                         <div className="text-right pt-1 border-t border-emerald-700">
-                          <span className="text-xs font-bold text-emerald-400">
+                          <span className="text-xs font-semibold text-emerald-400">
                             Meals Total: ₹{mealsTotal}
                           </span>
                         </div>
@@ -1595,15 +1595,15 @@ const [isPrivateMode, setIsPrivateMode] = useState<boolean>(false);
 
                   {paymentType !== "Pass" && (
                     <div className="flex justify-between items-center py-2 bg-emerald-900/30 rounded px-2">
-                      <span className="font-bold text-white text-sm">Total:</span>
-                      <span className="font-bold text-lg text-emerald-600">₹{totalAmount}</span>
+                      <span className="font-semibold text-white text-sm">Total:</span>
+                      <span className="font-semibold text-lg text-emerald-600">₹{totalAmount}</span>
                     </div>
                   )}
 
                   {paymentType === "Pass" && (
                     <div className="flex justify-between items-center py-2 bg-emerald-900/30 rounded px-2">
-                      <span className="font-bold text-white text-sm">Payment:</span>
-                      <span className="font-bold text-lg text-emerald-600">Pass (No charge)</span>
+                      <span className="font-semibold text-white text-sm">Payment:</span>
+                      <span className="font-semibold text-lg text-emerald-600">Pass (No charge)</span>
                     </div>
                   )}
                 </div>
@@ -1616,7 +1616,7 @@ const [isPrivateMode, setIsPrivateMode] = useState<boolean>(false);
             type="submit"
             whileHover={{ scale: isSubmitting ? 1 : 1.02 }}
             whileTap={{ scale: isSubmitting ? 1 : 0.98 }}
-            className={`w-full py-2.5 rounded-lg font-bold text-white transition-all duration-200 shadow-md ${
+            className={`w-full py-2.5 rounded-lg font-semibold text-white transition-all duration-200 shadow-md ${
               isSubmitting
                 ? 'bg-muted cursor-not-allowed'
                 : 'dashboard-btn-primary'

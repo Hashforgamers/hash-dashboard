@@ -1326,7 +1326,7 @@ export default function ConsolePricing() {
     <div className="console-pricing-page dashboard-module dashboard-typography relative flex h-full min-h-0 flex-col gap-3 overflow-y-auto overflow-x-hidden px-1 pb-2 sm:px-2">
       {feedback}
       {debugEnabled && (
-        <div className="pointer-events-none fixed left-20 top-3 z-[30060] rounded-md border border-primary/40 bg-card px-2 py-1 text-[10px] text-foreground">
+        <div className="pointer-events-none fixed left-20 top-3 z-[30060] rounded-md border border-primary/40 bg-card px-2 py-1 text-xs text-foreground">
           r:{renderCountRef.current} sync:{cacheSyncRunsRef.current} set:{priceStateSetCountRef.current}
         </div>
       )}
@@ -1506,7 +1506,7 @@ export default function ConsolePricing() {
               const config = controllerPricing[console.type] || { base_price: 0, tiers: [] };
               const sortedTiers = [...config.tiers].sort((a, b) => a.quantity - b.quantity);
               return (
-                <Card key={console.type} className="dashboard-module-surface rounded-xl">
+                <Card key={console.type} className="dashboard-module-surface rounded-lg">
                   <CardHeader className="border-b border-border pb-3">
                     <div className="flex items-center gap-2">
                       <Icon className="icon-md text-primary" />
@@ -1651,26 +1651,26 @@ export default function ConsolePricing() {
 
           <div className="grid shrink-0 grid-cols-2 gap-3 sm:grid-cols-4">
             <div className={summaryCardClass}>
-              <p className="text-[11px] uppercase tracking-[0.08em] text-muted-foreground">Consoles</p>
+              <p className="text-xs uppercase tracking-wide text-muted-foreground">Consoles</p>
               <p className="text-lg font-semibold text-foreground">{squadOverview.consoleCount}</p>
             </div>
             <div className={summaryCardClass}>
-              <p className="text-[11px] uppercase tracking-[0.08em] text-muted-foreground">Slabs</p>
+              <p className="text-xs uppercase tracking-wide text-muted-foreground">Slabs</p>
               <p className="text-lg font-semibold text-foreground">{squadOverview.slabCount}</p>
             </div>
             <div className={summaryCardClass}>
-              <p className="text-[11px] uppercase tracking-[0.08em] text-muted-foreground">Avg Discount</p>
+              <p className="text-xs uppercase tracking-wide text-muted-foreground">Avg Discount</p>
               <p className="text-lg font-semibold text-foreground">{squadOverview.avgDiscount}%</p>
             </div>
             <div className={summaryCardClass}>
-              <p className="text-[11px] uppercase tracking-[0.08em] text-muted-foreground">Top Discount</p>
+              <p className="text-xs uppercase tracking-wide text-muted-foreground">Top Discount</p>
               <p className="text-lg font-semibold text-foreground">{squadOverview.highestDiscount}%</p>
             </div>
           </div>
 
           <div className="min-h-0 flex-1 overflow-y-auto pr-1">
             {isLoadingSquadPricing ? (
-              <div className="dashboard-module-surface flex h-full items-center justify-center rounded-xl p-6 text-muted-foreground">
+              <div className="dashboard-module-surface flex h-full items-center justify-center rounded-lg p-6 text-muted-foreground">
                 <Loader2 className="mr-2 h-5 w-5 animate-spin text-primary" />
                 Loading squad rules...
               </div>
@@ -1690,7 +1690,7 @@ export default function ConsolePricing() {
                   const Icon = console.icon;
 
                   return (
-                    <Card key={`squad-${console.type}`} className="dashboard-module-surface overflow-hidden rounded-xl">
+                    <Card key={`squad-${console.type}`} className="dashboard-module-surface overflow-hidden rounded-lg">
                       <CardHeader className="border-b border-border pb-3 bg-card">
                         <div className="flex items-center justify-between gap-2">
                           <div className="flex items-center gap-2">
@@ -1711,7 +1711,7 @@ export default function ConsolePricing() {
                             Add Slab
                           </button>
                         </div>
-                        <div className="mt-2 flex flex-wrap gap-2 text-[11px]">
+                        <div className="mt-2 flex flex-wrap gap-2 text-xs">
                           <span className="rounded-full border px-2 py-1 border-border bg-primary/10 text-primary">
                             {rules.length} slabs
                           </span>
@@ -1827,7 +1827,7 @@ export default function ConsolePricing() {
                                     </button>
                                   </div>
                                   {warningText && (
-                                    <p className="mt-1.5 text-[11px] text-amber-300">{warningText}</p>
+                                    <p className="mt-1.5 text-xs text-amber-300">{warningText}</p>
                                   )}
                                 </div>
                               );
@@ -1885,7 +1885,7 @@ export default function ConsolePricing() {
             </div>
           ) : (
             <div className="min-h-0 flex-1 overflow-y-auto pr-1">
-              <Card className="dashboard-module-surface rounded-xl">
+              <Card className="dashboard-module-surface rounded-lg">
                 <CardContent className="grid grid-cols-1 gap-3 p-4 sm:grid-cols-2">
                   <label className="flex items-center gap-2 text-sm text-foreground">
                     <input
@@ -2012,7 +2012,7 @@ export default function ConsolePricing() {
           </div>
 
           <div className="grid min-h-0 flex-1 grid-cols-1 gap-3 overflow-hidden xl:grid-cols-2">
-            <Card className="dashboard-module-surface min-h-0 rounded-xl">
+            <Card className="dashboard-module-surface min-h-0 rounded-lg">
               <CardHeader className="border-b border-border pb-3">
                 <h3 className="card-title">Create / Update Credit Account</h3>
               </CardHeader>
@@ -2104,7 +2104,7 @@ export default function ConsolePricing() {
               </CardContent>
             </Card>
 
-            <Card className="dashboard-module-surface min-h-0 rounded-xl">
+            <Card className="dashboard-module-surface min-h-0 rounded-lg">
               <CardHeader className="border-b border-border pb-3">
                 <h3 className="card-title">Configured Accounts</h3>
               </CardHeader>
@@ -2132,7 +2132,7 @@ export default function ConsolePricing() {
                               </p>
                             </div>
                             <div className="flex items-center gap-2">
-                              <span className={`text-[11px] font-semibold ${account.is_active ? "text-emerald-300" : "text-red-300"}`}>
+                              <span className={`text-xs font-semibold ${account.is_active ? "text-emerald-300" : "text-red-300"}`}>
                                 {account.is_active ? "Active" : "Inactive"}
                               </span>
                               <button

@@ -12,7 +12,7 @@ export function Review() {
           <CardTitle className="text-sm font-medium">Total Rating</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">{totalRating.toFixed(1)}</div>
+          <div className="text-2xl font-semibold">{totalRating.toFixed(1)}</div>
           <p className="text-xs text-muted-foreground">Based on {totalReviews} reviews</p>
         </CardContent>
       </Card>

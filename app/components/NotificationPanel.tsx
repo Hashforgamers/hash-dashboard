@@ -626,15 +626,15 @@ export function NotificationPanel({
                 </div>
 
                 {queueError && (
-                  <p className="mt-1 text-[11px] text-red-300">{queueError}</p>
+                  <p className="mt-1 text-xs text-red-300">{queueError}</p>
                 )}
                 {(isQueueSummaryLoading || isQueueListLoading) && (
-                  <p className="mt-1 text-[11px] text-primary">Loading...</p>
+                  <p className="mt-1 text-xs text-primary">Loading...</p>
                 )}
               </div>
 
               {notifications.length === 0 ? (
-                <div className="dashboard-module-card rounded-xl border border-border bg-card px-3 py-5 text-center">
+                <div className="dashboard-module-card rounded-lg border border-border bg-card px-3 py-5 text-center">
                   <div className="mx-auto mb-2 flex h-8 w-8 items-center justify-center rounded-full border border-border bg-muted/70">
                     <Bell className="h-4 w-4 text-muted-foreground opacity-70" />
                   </div>
@@ -843,7 +843,7 @@ export function NotificationPanel({
                             <span className="font-medium text-foreground">{payNotice.username}</span>
                             <span className="text-xs text-muted-foreground">wants to book</span>
                             {payNotice.slot_count && payNotice.slot_count > 1 && (
-                              <span className="rounded-full border border-amber-400/40 bg-amber-500/10 px-2 py-0.5 text-[11px] font-semibold text-amber-200">
+                              <span className="rounded-full border border-amber-400/40 bg-amber-500/10 px-2 py-0.5 text-xs font-semibold text-amber-200">
                                 {payNotice.slot_count} slots
                               </span>
                             )}
@@ -949,7 +949,7 @@ export function NotificationPanel({
                     <div className="flex items-center justify-between border-b border-border bg-muted/30 px-4 py-3">
                       <div className="flex items-center gap-2">
                         <h4 className="dash-title !text-sm">Payment queue</h4>
-                        <Badge className="border border-primary/35 bg-primary/10 text-primary text-[10px]">
+                        <Badge className="border border-primary/35 bg-primary/10 text-primary text-xs">
                           {queueFilterMode === "single" ? singleDate : `${startDate} to ${endDate}`}
                         </Badge>
                       </div>
@@ -972,7 +972,7 @@ export function NotificationPanel({
                             size="sm"
                             variant={queueFilterMode === "single" ? "default" : "outline"}
                             onClick={() => setQueueFilterMode("single")}
-                            className={`h-7 px-2 text-[11px] ${queueFilterMode === "single" ? "dashboard-btn-primary" : "border-border bg-muted/40 text-muted-foreground"}`}
+                            className={`h-7 px-2 text-xs ${queueFilterMode === "single" ? "dashboard-btn-primary" : "border-border bg-muted/40 text-muted-foreground"}`}
                           >
                             Single Date
                           </Button>
@@ -981,14 +981,14 @@ export function NotificationPanel({
                             size="sm"
                             variant={queueFilterMode === "range" ? "default" : "outline"}
                             onClick={() => setQueueFilterMode("range")}
-                            className={`h-7 px-2 text-[11px] ${queueFilterMode === "range" ? "dashboard-btn-primary" : "border-border bg-muted/40 text-muted-foreground"}`}
+                            className={`h-7 px-2 text-xs ${queueFilterMode === "range" ? "dashboard-btn-primary" : "border-border bg-muted/40 text-muted-foreground"}`}
                           >
                             Date Range
                           </Button>
                         </div>
                         <div className="flex flex-wrap items-end gap-2">
                           {queueFilterMode === "single" ? (
-                            <label className="flex flex-col gap-1 text-[11px] text-muted-foreground">
+                            <label className="flex flex-col gap-1 text-xs text-muted-foreground">
                               Date
                               <input
                                 type="date"
@@ -999,7 +999,7 @@ export function NotificationPanel({
                             </label>
                           ) : (
                             <>
-                              <label className="flex flex-col gap-1 text-[11px] text-muted-foreground">
+                              <label className="flex flex-col gap-1 text-xs text-muted-foreground">
                                 Start
                                 <input
                                   type="date"
@@ -1008,7 +1008,7 @@ export function NotificationPanel({
                                   className="h-8 rounded-md border border-border bg-background px-2 text-xs text-foreground"
                                 />
                               </label>
-                              <label className="flex flex-col gap-1 text-[11px] text-muted-foreground">
+                              <label className="flex flex-col gap-1 text-xs text-muted-foreground">
                                 End
                                 <input
                                   type="date"
@@ -1067,7 +1067,7 @@ export function NotificationPanel({
                         <p className="text-xs font-medium text-primary">
                           {queueStatusCards.find((c) => c.key === selectedQueueStatus)?.label} List
                         </p>
-                        <Badge className="border border-primary/40 bg-primary/15 text-primary text-[10px]">
+                        <Badge className="border border-primary/40 bg-primary/15 text-primary text-xs">
                           {queueItems.length}
                         </Badge>
                       </div>
@@ -1097,7 +1097,7 @@ export function NotificationPanel({
                                         type="button"
                                         onClick={() => handleQueueBookingAction(item, "accept")}
                                         disabled={isItemProcessing}
-                                        className="h-7 dashboard-btn-primary px-2 text-[11px]"
+                                        className="h-7 dashboard-btn-primary px-2 text-xs"
                                       >
                                         {isItemProcessing && queueActionProcessing.action === "accept" ? "Accepting..." : "Accept"}
                                       </Button>
@@ -1109,7 +1109,7 @@ export function NotificationPanel({
                                       {isItemProcessing && queueActionProcessing.action === "reject" ? "Rejecting..." : "Reject"}
                                     </Button>
                                     {isPastPending && (
-                                      <span className="self-center text-[10px] text-amber-300">
+                                      <span className="self-center text-xs text-amber-300">
                                         Past session (IST): reject only
                                       </span>
                                     )}

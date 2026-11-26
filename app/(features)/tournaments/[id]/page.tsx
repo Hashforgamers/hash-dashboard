@@ -425,7 +425,7 @@ export default function TournamentDetailPage() {
                     : 'border-border bg-card text-muted-foreground hover:border-primary/45 hover:bg-muted/80 hover:text-foreground disabled:opacity-55'
                 }`}
               >
-                <span className="block text-xs font-bold uppercase tracking-wider">
+                <span className="block text-xs font-semibold uppercase tracking-wider">
                   {busy ? 'Updating...' : EVENT_STATUS_LABEL[status]}
                 </span>
               </button>
@@ -498,7 +498,7 @@ export default function TournamentDetailPage() {
                 type="checkbox"
                 checked={requireCheckInForBracket}
                 onChange={(e) => setRequireCheckInForBracket(e.target.checked)}
-                className="h-4 w-4 rounded border-border bg-card accent-blue-400"
+                className="h-4 w-4 rounded border-border bg-card accent-primary"
               />
               Require check-in
             </label>
@@ -534,7 +534,7 @@ export default function TournamentDetailPage() {
 
         {event.match_rules && (
           <div className="mt-4 rounded-lg border border-border bg-card p-3">
-            <p className="text-xs font-bold uppercase tracking-wider text-foreground">Match Rules</p>
+            <p className="text-xs font-semibold uppercase tracking-wider text-foreground">Match Rules</p>
             <p className="mt-1 whitespace-pre-wrap text-sm text-foreground">{event.match_rules}</p>
           </div>
         )}
@@ -563,10 +563,10 @@ export default function TournamentDetailPage() {
                       return (
                         <div key={match.id} className="rounded-lg border border-border bg-card p-3">
                           <div className="mb-2 flex items-center justify-between gap-2">
-                            <span className="text-xs font-bold uppercase tracking-wider text-foreground">
+                            <span className="text-xs font-semibold uppercase tracking-wider text-foreground">
                               Match {match.match_number}
                             </span>
-                            <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${
+                            <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
                               match.status === 'completed' ? 'bg-emerald-500/20 text-emerald-300' :
                               match.status === 'disputed' ? 'bg-red-500/20 text-red-300' :
                               match.status === 'in_progress' ? 'bg-primary/20 text-primary' :
@@ -644,7 +644,7 @@ export default function TournamentDetailPage() {
       </details>
 
       {/* ── Registrations Table ───────────────────────── */}
-      <div className="gaming-panel flex flex-col overflow-hidden rounded-xl border border-border bg-muted/45">
+      <div className="gaming-panel flex flex-col overflow-hidden rounded-lg border border-border bg-muted/45">
         {/* Table toolbar */}
         <div className="dashboard-toolbar justify-between gap-3 p-3 border-b border-border flex-shrink-0">
           <div className="flex items-center gap-2">
@@ -686,12 +686,12 @@ export default function TournamentDetailPage() {
             <table className="dashboard-table">
             <thead className="sticky top-0 bg-card">
               <tr>
-                <th className="table-cell text-left text-[11px] font-bold uppercase tracking-wider text-foreground sm:text-xs">Team / Player</th>
-                <th className="table-cell text-left text-[11px] font-bold uppercase tracking-wider text-foreground sm:text-xs">Contact</th>
-                <th className="table-cell text-left text-[11px] font-bold uppercase tracking-wider text-foreground sm:text-xs">Registered</th>
-                <th className="table-cell text-left text-[11px] font-bold uppercase tracking-wider text-foreground sm:text-xs">Status</th>
-                <th className="table-cell text-left text-[11px] font-bold uppercase tracking-wider text-foreground sm:text-xs">Payment</th>
-                <th className="table-cell text-center text-[11px] font-bold uppercase tracking-wider text-foreground sm:text-xs">Waiver</th>
+                <th className="table-cell text-left text-xs font-semibold uppercase tracking-wider text-foreground sm:text-xs">Team / Player</th>
+                <th className="table-cell text-left text-xs font-semibold uppercase tracking-wider text-foreground sm:text-xs">Contact</th>
+                <th className="table-cell text-left text-xs font-semibold uppercase tracking-wider text-foreground sm:text-xs">Registered</th>
+                <th className="table-cell text-left text-xs font-semibold uppercase tracking-wider text-foreground sm:text-xs">Status</th>
+                <th className="table-cell text-left text-xs font-semibold uppercase tracking-wider text-foreground sm:text-xs">Payment</th>
+                <th className="table-cell text-center text-xs font-semibold uppercase tracking-wider text-foreground sm:text-xs">Waiver</th>
               </tr>
             </thead>
             <tbody>
@@ -785,7 +785,7 @@ export default function TournamentDetailPage() {
       </div>
 
       {/* ── Teams ─────────────────────────────────────── */}
-      <div className="gaming-panel flex flex-col overflow-hidden rounded-xl border border-border bg-muted/45">
+      <div className="gaming-panel flex flex-col overflow-hidden rounded-lg border border-border bg-muted/45">
         <div className="flex items-center justify-between gap-3 p-3 border-b border-border">
           <div className="flex items-center gap-2">
             <Trophy className="icon-md text-muted-foreground" />
@@ -801,10 +801,10 @@ export default function TournamentDetailPage() {
           <table className="dashboard-table">
             <thead className="sticky top-0 bg-card">
               <tr>
-                <th className="table-cell text-left text-[11px] font-bold uppercase tracking-wider text-foreground sm:text-xs">Team</th>
-                <th className="table-cell text-left text-[11px] font-bold uppercase tracking-wider text-foreground sm:text-xs">Type</th>
-                <th className="table-cell text-left text-[11px] font-bold uppercase tracking-wider text-foreground sm:text-xs">Members</th>
-                <th className="table-cell text-left text-[11px] font-bold uppercase tracking-wider text-foreground sm:text-xs">Created</th>
+                <th className="table-cell text-left text-xs font-semibold uppercase tracking-wider text-foreground sm:text-xs">Team</th>
+                <th className="table-cell text-left text-xs font-semibold uppercase tracking-wider text-foreground sm:text-xs">Type</th>
+                <th className="table-cell text-left text-xs font-semibold uppercase tracking-wider text-foreground sm:text-xs">Members</th>
+                <th className="table-cell text-left text-xs font-semibold uppercase tracking-wider text-foreground sm:text-xs">Created</th>
               </tr>
             </thead>
             <tbody>
@@ -866,7 +866,7 @@ export default function TournamentDetailPage() {
           {winners.map((winner, idx) => (
             <div key={winner.rank} className="grid grid-cols-1 gap-3 rounded-lg border border-border bg-card p-3 md:grid-cols-3">
               <div className="flex items-center gap-2">
-                <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-primary/20 text-sm font-bold text-foreground">
+                <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-primary/20 text-sm font-semibold text-foreground">
                   #{winner.rank}
                 </span>
                 <span className="text-sm text-foreground">Rank {winner.rank}</span>

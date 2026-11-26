@@ -1695,7 +1695,7 @@ const getEffectivePrice = (slot: SelectedSlot): number => {
           <p className="rounded-md border px-2.5 py-1.5 text-xs border-amber-700 bg-amber-900/25 text-amber-300">
             Monthly credit works only for users with an active Gamers Credit account.
           </p>
-          <div className="rounded-xl border p-3 border-border bg-card">
+          <div className="rounded-lg border p-3 border-border bg-card">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div className="min-w-0">
                 <p className="text-sm font-semibold text-white">Credit Account Status</p>
@@ -1797,13 +1797,13 @@ const getEffectivePrice = (slot: SelectedSlot): number => {
                     </p>
                     <div className="flex justify-between text-emerald-300">
                       <span>Hours Available</span>
-                      <span className="font-bold">
+                      <span className="font-semibold">
                         {validatedPass.remaining_hours}/{validatedPass.total_hours}
                       </span>
                     </div>
                     <div className="flex justify-between text-emerald-400">
                       <span>Hours Needed</span>
-                      <span className="font-bold">{Number(validatedPass?.required_hours || 0).toFixed(2)} hrs</span>
+                      <span className="font-semibold">{Number(validatedPass?.required_hours || 0).toFixed(2)} hrs</span>
                     </div>
                   </div>
                 </div>
@@ -2131,7 +2131,7 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
           data-booking-form
           aria-modal="true"
           aria-label="New Gaming Session"
-          className="slot-booking-modal flex max-h-[92vh] w-full max-w-[960px] flex-col overflow-hidden rounded-xl border shadow-2xl"
+          className="slot-booking-modal flex max-h-[92vh] w-full max-w-[960px] flex-col overflow-hidden rounded-lg border shadow-2xl"
         >
           <div className="slot-booking-modal-header relative flex items-center justify-between border-b px-4 py-3">
             <div className="min-w-0">
@@ -2166,7 +2166,7 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
               </button>
             </div>
             {isFieldConfigOpen && (
-              <div className="slot-booking-popover absolute right-4 top-[calc(100%-2px)] z-30 w-[310px] rounded-xl border p-3 shadow-xl">
+              <div className="slot-booking-popover absolute right-4 top-[calc(100%-2px)] z-30 w-[310px] rounded-lg border p-3 shadow-xl">
                 <p className="text-sm font-semibold text-foreground">Player Details</p>
                 <p className="mt-1 text-xs text-muted-foreground">
                   Player Name and one contact field are required.
@@ -2195,7 +2195,7 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
 
                   <div className="rounded-lg border p-2 border-border">
                     <p className="font-semibold text-foreground">Email</p>
-                    <p className="mt-2 text-[11px] text-muted-foreground">
+                    <p className="mt-2 text-xs text-muted-foreground">
                       Optional email stays hidden in form for faster desk booking.
                     </p>
                     <div className="mt-2 flex items-center justify-between">
@@ -2429,11 +2429,11 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                           className={cn(
                             "w-full pl-10 pr-4 py-3 bg-muted border rounded-lg transition-all duration-200",
                             errors.name
-                              ? "border-red-500 focus:border-red-500"
+                              ? "border-red-500 focus:border-ring"
                               : focusedInput === "name"
-                              ? "border-emerald-500 focus:border-emerald-500"
-                              : "border-border focus:border-emerald-500",
-                            "focus:outline-none focus:ring-1 focus:ring-emerald-500/20"
+                              ? "border-emerald-500 focus:border-ring"
+                              : "border-border focus:border-ring",
+                            "focus:outline-none focus:ring-1 focus:ring-ring/40"
                           )}
                         />
                         <User className="w-4 h-4 text-muted-foreground absolute left-3 top-3.5" />
@@ -2485,11 +2485,11 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                             className={cn(
                               "w-full pl-10 pr-4 py-3 bg-muted border rounded-lg transition-all duration-200",
                               errors.phone
-                                ? "border-red-500 focus:border-red-500"
+                                ? "border-red-500 focus:border-ring"
                                 : focusedInput === "phone"
-                                ? "border-emerald-500 focus:border-emerald-500"
-                                : "border-border focus:border-emerald-500",
-                              "focus:outline-none focus:ring-1 focus:ring-emerald-500/20"
+                                ? "border-emerald-500 focus:border-ring"
+                                : "border-border focus:border-ring",
+                              "focus:outline-none focus:ring-1 focus:ring-ring/40"
                             )}
                           />
                           <Phone className="w-4 h-4 text-muted-foreground absolute left-3 top-3.5" />
@@ -2542,11 +2542,11 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                             className={cn(
                               "w-full pl-10 pr-4 py-3 bg-muted border rounded-lg transition-all duration-200",
                               errors.email
-                                ? "border-red-500 focus:border-red-500"
+                                ? "border-red-500 focus:border-ring"
                                 : focusedInput === "email"
-                                ? "border-emerald-500 focus:border-emerald-500"
-                                : "border-border focus:border-emerald-500",
-                              "focus:outline-none focus:ring-1 focus:ring-emerald-500/20"
+                                ? "border-emerald-500 focus:border-ring"
+                                : "border-border focus:border-ring",
+                              "focus:outline-none focus:ring-1 focus:ring-ring/40"
                             )}
                           />
                           <Mail className="w-4 h-4 text-muted-foreground absolute left-3 top-3.5" />
@@ -2805,7 +2805,7 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                           <span className="text-emerald-300 font-medium">
                             Squad Discount ({squadDiscountPercent}%):
                           </span>
-                          <span className="font-bold text-emerald-300">-₹{squadDiscountAmount}</span>
+                          <span className="font-semibold text-emerald-300">-₹{squadDiscountAmount}</span>
                         </div>
                       )}
 
@@ -2816,7 +2816,7 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                           value={waiveOffAmount}
                           onChange={(e) => setWaiveOffAmount(Math.max(0, Math.min(gamingNet, Number(e.target.value) || 0)))}
                           placeholder="₹0"
-                          className="w-20 text-right px-2 py-1 rounded border border-border bg-muted text-white focus:border-emerald-500 focus:outline-none transition-colors"
+                          className="w-20 text-right px-2 py-1 rounded border border-border bg-muted text-white focus:border-ring focus:outline-none transition-colors"
                           min={0}
                         />
                       </div>
@@ -2890,14 +2890,14 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                                       {meal.category} • ₹{meal.price} × {meal.quantity}
                                     </div>
                                   </div>
-                                  <span className="text-sm font-bold text-white">
+                                  <span className="text-sm font-semibold text-white">
                                     ₹{meal.total}
                                   </span>
                                 </div>
                               </div>
                             ))}
                             <div className="border-t pt-2 text-right border-border">
-                              <span className="text-sm font-bold text-white">
+                              <span className="text-sm font-semibold text-white">
                                 Meals Total: ₹{mealsTotal}
                               </span>
                             </div>
@@ -3045,7 +3045,7 @@ function SlotPill({
       title="Click to select; double-click to book"
       disabled={disabled}
       className={cn(
-        "booking-slot-pill select-none w-full h-full flex items-center justify-center rounded-md text-[10px] font-bold uppercase",
+        "booking-slot-pill select-none w-full h-full flex items-center justify-center rounded-md text-xs font-semibold uppercase",
         compact ? "min-h-[32px]" : "min-h-[38px]",
         "transition-all duration-200 cursor-pointer",
         disabled && "cursor-not-allowed opacity-60",
@@ -3116,7 +3116,7 @@ function TopBar({
       <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm p-4">
         <div className="max-w-6xl mx-auto mt-8">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold text-white">
+            <h2 className="text-2xl font-semibold text-white">
               {showManageView === 'change' && 'Change Booking'}
               {showManageView === 'reject' && 'Reject Booking'}
               {showManageView === 'list' && 'List Bookings'}
@@ -3144,7 +3144,7 @@ function TopBar({
   // Main TopBar return
   return (
     <div className={cn("booking-topbar mb-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between", compact && "mb-2 gap-2", slab && "dashboard-booking-topbar")}>
-      <Card className={cn("booking-console-filter rounded-xl border p-2.5 shadow-sm backdrop-blur-sm", compact && "p-2")}>
+      <Card className={cn("booking-console-filter rounded-lg border p-2.5 shadow-sm backdrop-blur-sm", compact && "p-2")}>
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
           <span className="booking-console-label text-xs font-medium uppercase tracking-wide">Select Console</span>
           <select aria-label="Select console" value={selectedConsole} onChange={event => onConsoleChange(event.target.value)} className={scheduleStyles.consoleSelect}>
@@ -3242,7 +3242,7 @@ function ConsoleFilter({
   }
 
   return (
-    <Card className="mb-6 rounded-xl border p-4 shadow-sm backdrop-blur-sm border-border bg-muted/50">
+    <Card className="mb-6 rounded-lg border p-4 shadow-sm backdrop-blur-sm border-border bg-muted/50">
       <div className="flex items-center gap-3">
         <span className="text-xs font-medium uppercase text-muted-foreground">Select Console</span>
         <div className="flex flex-wrap items-center gap-2">
@@ -3420,7 +3420,7 @@ function ScheduleGrid({
 
   if (filteredConsoles.length === 0) {
     return (
-      <Card className="overflow-hidden rounded-2xl border backdrop-blur-sm border-amber-500/35 bg-amber-500/10">
+      <Card className="overflow-hidden rounded-lg border backdrop-blur-sm border-amber-500/35 bg-amber-500/10">
         <div className="flex flex-col items-center justify-center px-6 py-10 text-center">
           <AlertCircle className="mb-3 h-8 w-8 text-amber-300" />
           <p className="text-sm font-semibold text-amber-100">
@@ -3522,7 +3522,7 @@ function ScheduleGrid({
 
   if (isLoading) {
     return (
-      <Card className="booking-schedule-card overflow-hidden rounded-xl border">
+      <Card className="booking-schedule-card overflow-hidden rounded-lg border">
         <div className="flex items-center justify-center py-12">
           <div className="text-center">
             <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto mb-3" />
@@ -3659,7 +3659,7 @@ if (isPastTime) {
 
   if (uniqueTimes.length === 0) {
     return (
-      <Card className="booking-schedule-card overflow-hidden rounded-xl border">
+      <Card className="booking-schedule-card overflow-hidden rounded-lg border">
         <div className="flex items-center justify-center py-12">
           <div className="text-center">
             <CalendarDays className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
@@ -3671,7 +3671,7 @@ if (isPastTime) {
   }
 
   return (
-      <Card className="booking-schedule-card overflow-hidden rounded-xl border">
+      <Card className="booking-schedule-card overflow-hidden rounded-lg border">
         {detectedDurations.length > 1 && (
         <div className="booking-schedule-notice border-b px-4 py-2 text-xs">
           Mixed slot durations detected ({detectedDurations.join("m, ")}m). Cells now show available slot count.
@@ -3697,7 +3697,7 @@ if (isPastTime) {
               Date
             </div>
             {uniqueTimes.map((time) => (
-              <div key={time} className="booking-time-label text-center text-sm font-bold">
+              <div key={time} className="booking-time-label text-center text-sm font-semibold">
                 {time}
               </div>
             ))}
@@ -3720,7 +3720,7 @@ if (isPastTime) {
                 >
                   <div
                     className={cn(
-                      "booking-date-cell sticky left-0 z-20 flex items-center justify-center rounded-lg px-2 py-2 text-sm font-bold backdrop-blur-sm",
+                      "booking-date-cell sticky left-0 z-20 flex items-center justify-center rounded-lg px-2 py-2 text-sm font-semibold backdrop-blur-sm",
                       isTodayRow
                         ? "booking-date-cell-today"
                         : "booking-date-cell-idle"
@@ -3728,7 +3728,7 @@ if (isPastTime) {
                   >
                     <span>{row.date}</span>
                     {isTodayRow && (
-                      <span className="booking-today-badge ml-1.5 rounded-full px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide">
+                      <span className="booking-today-badge ml-1.5 rounded-full px-1.5 py-0.5 text-xs font-semibold uppercase tracking-wide">
                         Today
                       </span>
                     )}
@@ -3858,7 +3858,7 @@ function RecentBookings({
                   <div className="flex flex-col gap-1">
                     <span>{booking.booking_fid || `#BK-${booking.booking_id}`}</span>
                     {(booking.squad_enabled || Number(booking.squad_player_count || 1) > 1) && (
-                      <span className="w-fit rounded-full border border-primary/40 bg-primary/15 px-2 py-0.5 text-[10px] font-semibold text-primary">
+                      <span className="w-fit rounded-full border border-primary/40 bg-primary/15 px-2 py-0.5 text-xs font-semibold text-primary">
                         Squad x{Math.max(1, Number(booking.squad_player_count || 1))}
                       </span>
                     )}
@@ -3881,7 +3881,7 @@ function RecentBookings({
                       {booking.customer_phone}
                     </span>
                     {(booking.squad_enabled || Number(booking.squad_player_count || 1) > 1) && (
-                      <span className="booking-contrast-muted text-[11px]">
+                      <span className="booking-contrast-muted text-xs">
                         Squad: {Array.isArray(booking.squad_members) && booking.squad_members.length > 0
                           ? booking.squad_members.map((m: any) => m?.name).filter(Boolean).join(", ")
                           : `${Math.max(1, Number(booking.squad_player_count || 1))} players`}
@@ -4112,7 +4112,7 @@ function ChangeBookingForm() {
               placeholder="Enter Booking ID"
               value={bookingId}
               onChange={(e) => setBookingId(e.target.value)}
-              className="flex-1 px-4 py-3 bg-muted border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 text-white"
+              className="flex-1 px-4 py-3 bg-muted border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/40 text-white"
             />
 
             <Button variant="success"
@@ -4148,7 +4148,7 @@ function ChangeBookingForm() {
                       customer: { ...prev.customer, name: e.target.value },
                     }))
                   }
-                  className="w-full px-4 py-3 bg-muted border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 text-white"
+                  className="w-full px-4 py-3 bg-muted border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/40 text-white"
                 />
               </div>
               <div className="space-y-2">
@@ -4162,7 +4162,7 @@ function ChangeBookingForm() {
                       customer: { ...prev.customer, email: e.target.value },
                     }))
                   }
-                  className="w-full px-4 py-3 bg-muted border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 text-white"
+                  className="w-full px-4 py-3 bg-muted border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/40 text-white"
                 />
               </div>
               <div className="space-y-2">
@@ -4176,7 +4176,7 @@ function ChangeBookingForm() {
                       customer: { ...prev.customer, phone: e.target.value },
                     }))
                   }
-                  className="w-full px-4 py-3 bg-muted border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 text-white"
+                  className="w-full px-4 py-3 bg-muted border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/40 text-white"
                 />
               </div>
             </div>
@@ -4196,7 +4196,7 @@ function ChangeBookingForm() {
                       booking_date: e.target.value,
                     }))
                   }
-                  className="w-full px-4 py-3 bg-muted border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 text-white"
+                  className="w-full px-4 py-3 bg-muted border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/40 text-white"
                 />
               </div>
 
@@ -4364,7 +4364,7 @@ function RejectBookingForm() {
               placeholder="Enter Booking ID"
               value={bookingId}
               onChange={(e) => setBookingId(e.target.value)}
-              className="flex-1 px-4 py-3 bg-muted border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 text-white"
+              className="flex-1 px-4 py-3 bg-muted border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/40 text-white"
             />
             <Button variant="success"
               type="button"
@@ -4476,7 +4476,7 @@ function RejectBookingForm() {
                         value={rejectionReason}
                         onChange={(e) => setRejectionReason(e.target.value)}
                         placeholder="Please provide a detailed reason for rejecting this booking..."
-                        className="w-full min-h-[100px] px-4 py-3 bg-muted border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 text-white resize-none"
+                        className="w-full min-h-[100px] px-4 py-3 bg-muted border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/40 text-white resize-none"
                       />
                     </div>
 
@@ -4716,7 +4716,7 @@ function ListBooking() {
         </Button>
       </div>
 
-      <div className="overflow-hidden rounded-xl border border-border bg-card">
+      <div className="overflow-hidden rounded-lg border border-border bg-card">
         <div className="overflow-x-auto">
         <Table className="min-w-[980px]">
           <TableHeader>
@@ -4751,7 +4751,7 @@ function ListBooking() {
                   className="cursor-pointer bg-muted/60 hover:bg-muted/70"
                   onClick={() => toggleDate(bookedDate)}
                 >
-                  <TableCell colSpan={10} className="font-bold text-foreground">
+                  <TableCell colSpan={10} className="font-semibold text-foreground">
                     {expandedDates[bookedDate] ? "▼" : "▶"}{" "}
                     {new Date(bookedDate).toDateString()} ({bookings.length})
                   </TableCell>

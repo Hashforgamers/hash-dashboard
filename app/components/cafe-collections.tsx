@@ -32,9 +32,9 @@ export function CafeCollections(){
   {error&&<p role="alert" className="text-xs text-destructive">{error}</p>}
   {loading&&<p role="status" className="text-xs text-muted-foreground">Loading collections…</p>}
   {summary&&<div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-   {[["Cash received",summary.methods.cash?.received||0],["UPI received",summary.methods.cafe_upi?.received||0],["Money returned",(summary.methods.cash?.returned||0)+(summary.methods.cafe_upi?.returned||0)],["Net collected",summary.net]].map(([label,value])=><div key={label} className="rounded-md bg-muted/30 px-2.5 py-1.5"><p className="text-[11px] text-muted-foreground">{label}</p><p className="text-sm font-semibold tabular-nums">{rupees(Number(value))}</p></div>)}
+   {[["Cash received",summary.methods.cash?.received||0],["UPI received",summary.methods.cafe_upi?.received||0],["Money returned",(summary.methods.cash?.returned||0)+(summary.methods.cafe_upi?.returned||0)],["Net collected",summary.net]].map(([label,value])=><div key={label} className="rounded-md bg-muted/30 px-2.5 py-1.5"><p className="text-xs text-muted-foreground">{label}</p><p className="text-sm font-semibold tabular-nums">{rupees(Number(value))}</p></div>)}
   </div>}
-  {summary&&<p className="text-[11px] text-muted-foreground">Wallet top-ups + cafe food payments, less money returned. Gaming wallet usage is not counted again.</p>}
+  {summary&&<p className="text-xs text-muted-foreground">Wallet top-ups + cafe food payments, less money returned. Gaming wallet usage is not counted again.</p>}
   <Dialog open={shiftOpen} onOpenChange={setShiftOpen}><DialogContent className="max-w-lg max-h-[85dvh] overflow-y-auto p-0"><DialogHeader className="sr-only"><DialogTitle>Manage your shift</DialogTitle></DialogHeader>{shiftOpen&&<CafeWalletWorkspace key={`${selectedCafeId}:${activeStaff?.id}`} embedded view="shift"/>}</DialogContent></Dialog>
  </section>;
 }

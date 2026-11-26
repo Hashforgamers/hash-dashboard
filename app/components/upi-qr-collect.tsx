@@ -132,12 +132,12 @@ export async function cancelUpiQr(vendorId: number, qr: UpiQrState | null): Prom
  */
 function RazorpayQrImage({ src, alt }: { src: string; alt: string }) {
   return (
-    <div className="w-full max-w-[240px] rounded-2xl bg-white p-3 shadow-lg">
+    <div className="w-full max-w-[240px] rounded-lg bg-white p-3 shadow-lg">
       <div className="w-full overflow-hidden" style={{ aspectRatio: "0.743" }}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={src} alt={alt} className="block max-w-none" style={{ width: "152.4%", marginLeft: "-25.9%", marginTop: "-122.9%" }} />
       </div>
-      <a href={src} target="_blank" rel="noreferrer" className="mt-2 block text-[11px] text-muted-foreground underline">Open full QR</a>
+      <a href={src} target="_blank" rel="noreferrer" className="mt-2 block text-xs text-muted-foreground underline">Open full QR</a>
     </div>
   );
 }
@@ -185,7 +185,7 @@ export function UpiQrPanel({ vendorId, qr, now, busy, paidLabel, onCancel, onNew
         </>
       ) : (
         <>
-          <p className="text-3xl font-bold tabular-nums text-foreground">{amount}</p>
+          <p className="text-3xl font-semibold tabular-nums text-foreground">{amount}</p>
           <p className="-mt-2 text-xs text-muted-foreground">Scan with any UPI app · paid to Hash for Gamers</p>
           {qr.image_url ? (
             <RazorpayQrImage src={qr.image_url} alt={`UPI QR for ${amount}`} />
@@ -257,7 +257,7 @@ export function UpiQrBookingDialog({ vendorId, bookingIds, onDone }: {
 
   return (
     <div className="fixed inset-0 z-[1600] flex items-center justify-center bg-black/70 p-4" role="dialog" aria-modal="true" aria-label="UPI payment">
-      <section className="w-full max-w-sm rounded-xl border border-border bg-card p-5">
+      <section className="w-full max-w-sm rounded-lg border border-border bg-card p-5">
         <h2 className="mb-1 text-lg font-semibold text-foreground">Collect booking payment</h2>
         <p className="mb-4 text-xs text-muted-foreground">The booking is saved. It is marked paid as soon as the UPI payment arrives.</p>
         {error && <p role="alert" className="mb-3 text-sm text-red-300">{error}</p>}

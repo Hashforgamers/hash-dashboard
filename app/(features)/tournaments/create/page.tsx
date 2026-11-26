@@ -105,7 +105,7 @@ function BannerUploader({
             </>
           ) : (
             <>
-              <div className="icon-blue p-4 rounded-2xl">
+              <div className="icon-blue p-4 rounded-lg">
                 <ImageIcon className="w-8 h-8 text-primary" />
               </div>
               <div className="text-center">
@@ -465,7 +465,7 @@ export default function CreateTournamentPage() {
             >
               <div className="flex items-center justify-between gap-3">
                 <span className="text-sm font-semibold text-foreground">{preset.label}</span>
-                <span className="rounded-md border border-border px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-primary group-hover:bg-primary/10">
+                <span className="rounded-md border border-border px-2 py-1 text-xs font-semibold uppercase tracking-wider text-primary group-hover:bg-primary/10">
                   {selectedPreset === preset.id ? "Selected" : "Use"}
                 </span>
               </div>

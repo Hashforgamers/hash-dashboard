@@ -119,7 +119,7 @@ export function BookingStats({ refreshSlots, setRefreshSlots }) {
                     {platform.name}
                   </span>
                 </div>
-                <span className="text-xs font-bold" style={{ color: platform.color }}>
+                <span className="text-xs font-semibold" style={{ color: platform.color }}>
                   {bookedPercentage}%
                 </span>
               </div>

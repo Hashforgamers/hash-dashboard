@@ -83,7 +83,7 @@ export const ScheduleGrid = ({
 
   if (uniqueTimes.length === 0) {
     return (
-      <Card className="rounded-2xl border border-border bg-muted/30 backdrop-blur-sm overflow-hidden">
+      <Card className="rounded-lg border border-border bg-muted/30 backdrop-blur-sm overflow-hidden">
         <div className="flex items-center justify-center py-12">
           <div className="text-center">
             <CalendarDays className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
@@ -95,7 +95,7 @@ export const ScheduleGrid = ({
   }
 
   return (
-    <Card className="rounded-2xl border border-border bg-muted/30 backdrop-blur-sm overflow-hidden">
+    <Card className="rounded-lg border border-border bg-muted/30 backdrop-blur-sm overflow-hidden">
       <div className="overflow-x-auto">
         <div className="min-w-max">
           {/* Header */}
@@ -107,7 +107,7 @@ export const ScheduleGrid = ({
           >
             <div className="text-xs font-semibold text-muted-foreground uppercase">Date</div>
             {uniqueTimes.map((time) => (
-              <div key={time} className="text-sm font-bold text-foreground text-center">
+              <div key={time} className="text-sm font-semibold text-foreground text-center">
                 {time}
               </div>
             ))}
@@ -127,7 +127,7 @@ export const ScheduleGrid = ({
                   }}
                 >
                   {/* Date Label */}
-                  <div className="flex items-center text-sm font-bold text-white bg-muted/50 rounded-lg px-2 py-2 justify-center">
+                  <div className="flex items-center text-sm font-semibold text-white bg-muted/50 rounded-lg px-2 py-2 justify-center">
                     {formatDateDisplay(dateKey)}
                   </div>
 
@@ -164,7 +164,7 @@ export const ScheduleGrid = ({
                             key={`${dateKey}-${slotId}`}
                             onClick={() => handleSlotClick(dateKey, time, gameConsole)}
                             className={cn(
-                              'w-full h-full min-h-[40px] flex items-center justify-center rounded-md text-[10px] font-bold uppercase tracking-wide',
+                              'w-full h-full min-h-[40px] flex items-center justify-center rounded-md text-xs font-semibold uppercase tracking-wide',
                               'transition-all duration-200 cursor-pointer',
                               isSelected
                                 ? 'bg-emerald-600 text-white ring-2 ring-emerald-400 shadow-lg'

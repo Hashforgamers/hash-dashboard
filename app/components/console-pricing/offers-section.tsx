@@ -56,7 +56,7 @@ export function OffersSection({
       transition={{ duration: 0.2 }}
       className="flex flex-1 min-h-0 flex-col gap-3 overflow-hidden"
     >
-      <div className="gaming-panel shrink-0 flex flex-wrap items-center justify-between gap-3 rounded-xl p-3">
+      <div className="gaming-panel shrink-0 flex flex-wrap items-center justify-between gap-3 rounded-lg p-3">
         <div className="flex items-center gap-3">
           <h2 className="section-title">Offers</h2>
 
@@ -123,7 +123,7 @@ export function OffersSection({
                       <Icon className="w-3 h-3 text-primary shrink-0" />
                       <span className="table-header-text text-foreground">{offer.console_type}</span>
                       {offer.is_currently_active && (
-                        <span className="flex items-center gap-1 rounded border px-1.5 py-0.5 text-[9px] font-bold border-emerald-500/20 bg-emerald-500/10 text-emerald-300">
+                        <span className="flex items-center gap-1 rounded border px-1.5 py-0.5 text-xs font-semibold border-emerald-500/20 bg-emerald-500/10 text-emerald-300">
                           <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse" />
                           LIVE
                         </span>

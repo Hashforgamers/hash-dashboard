@@ -19,7 +19,7 @@ const CustomTooltip = ({ active, payload }: any) => {
     return (
       <div className="bg-background border rounded-lg shadow-lg p-4">
         <p className="font-medium">{payload[0].name}</p>
-        <p className="text-lg font-bold">{payload[0].payload.amount}</p>
+        <p className="text-lg font-semibold">{payload[0].payload.amount}</p>
         <p className="text-sm text-muted-foreground">{payload[0].value}% of total</p>
       </div>
     );
@@ -42,7 +42,7 @@ export function SettlementChart() {
     <Card className="col-span-2">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-7">
         <div>
-          <CardTitle className="text-2xl font-bold">Settlement Overview</CardTitle>
+          <CardTitle className="text-2xl font-semibold">Settlement Overview</CardTitle>
           <p className="text-sm text-muted-foreground mt-1">
             Total amount: ₹ {new Intl.NumberFormat("en-IN").format(totalAmount)}
           </p>
@@ -57,7 +57,7 @@ export function SettlementChart() {
           {data.map((item) => (
             <div key={item.name} className="space-y-1">
               <p className="text-sm font-medium text-muted-foreground">{item.name}</p>
-              <p className="text-2xl font-bold">{item.amount}</p>
+              <p className="text-2xl font-semibold">{item.amount}</p>
               <div className="text-sm text-muted-foreground">
                 {item.value}% of total
               </div>

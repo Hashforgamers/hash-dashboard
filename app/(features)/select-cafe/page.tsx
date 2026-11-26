@@ -544,7 +544,7 @@ export default function SelectCafePage() {
       <div className="premium-shell flex min-h-full flex-col items-center justify-center overflow-hidden px-4 py-8 sm:px-6 md:px-8">
       <div className="relative z-20 flex w-full max-w-6xl flex-col items-center gap-8 md:gap-10">
         <div className="space-y-4 text-center">
-          <h1 className="premium-heading select-none text-[2.1rem] font-bold tracking-[0.08em] text-[#F7FAFC] md:text-[3rem] lg:text-[4.5rem]">
+          <h1 className="premium-heading select-none text-[2.1rem] font-semibold tracking-wide text-[#F7FAFC] md:text-[3rem] lg:text-[4.5rem]">
             Select Your Arena
           </h1>
           <p className="premium-subtle mx-auto max-w-2xl select-none text-sm leading-relaxed text-[rgba(255,255,255,0.68)] md:text-base">
@@ -568,13 +568,13 @@ export default function SelectCafePage() {
                     <Store className="h-8 w-8 text-emerald-500 md:h-9 md:w-9" />
                   </div>
                   <div className="flex-1 space-y-1">
-                    <p className="text-[9px] uppercase tracking-[0.22em] text-[rgba(255,255,255,0.45)]">
+                    <p className="text-xs uppercase tracking-wide text-[rgba(255,255,255,0.45)]">
                       Cafe Access
                     </p>
                     <h3 className="text-lg font-semibold leading-tight text-[#F7FAFC] transition-colors duration-300 md:text-[1.35rem]">
                       {cafe.name}
                     </h3>
-                    <p className="text-sm text-[rgba(255,255,255,0.68)] md:text-[15px]">
+                    <p className="text-sm text-[rgba(255,255,255,0.68)] md:text-base">
                       Operator access
                     </p>
                   </div>
@@ -593,13 +593,13 @@ export default function SelectCafePage() {
                   <Plus className="h-8 w-8 text-primary md:h-9 md:w-9" />
                 </div>
                 <div className="flex-1 space-y-1">
-                  <p className="text-[9px] uppercase tracking-[0.22em] text-[rgba(255,255,255,0.45)]">
+                  <p className="text-xs uppercase tracking-wide text-[rgba(255,255,255,0.45)]">
                     New Setup
                   </p>
                   <h3 className="text-lg font-semibold leading-tight text-[#F7FAFC] transition-colors duration-300 md:text-[1.35rem]">
                     Add New Cafe
                   </h3>
-                  <p className="text-sm text-[rgba(255,255,255,0.68)] md:text-[15px]">
+                  <p className="text-sm text-[rgba(255,255,255,0.68)] md:text-base">
                     Register a new gaming cafe
                   </p>
                 </div>
@@ -611,10 +611,10 @@ export default function SelectCafePage() {
 
       {/* PIN Entry Dialog */}
       <Dialog open={showPinDialog} onOpenChange={setShowPinDialog}>
-        <DialogContent className="premium-card w-[calc(100vw-1.5rem)] rounded-3xl border shadow-2xl shadow-black/50 sm:max-w-md">
+        <DialogContent className="premium-card w-[calc(100vw-1.5rem)] rounded-lg border shadow-2xl shadow-black/50 sm:max-w-md">
           <DialogHeader className="text-center pb-2">
             <div className="relative mx-auto mb-6">
-              <div className="feature-action-icon h-20 w-20 rounded-3xl shadow-2xl">
+              <div className="feature-action-icon h-20 w-20 rounded-lg shadow-2xl">
                 {isUnlocking ? (
                   <Unlock className="h-10 w-10 animate-pulse text-white" />
                 ) : (
@@ -622,7 +622,7 @@ export default function SelectCafePage() {
                 )}
               </div>
             </div>
-            <DialogTitle className="text-2xl font-bold md:text-3xl text-white">
+            <DialogTitle className="text-2xl font-semibold md:text-3xl text-white">
               Access {selectedCafeData?.name}
             </DialogTitle>
             <p className="mt-2 text-sm md:text-base text-muted-foreground">Enter your 4-digit PIN to continue</p>
@@ -640,7 +640,7 @@ export default function SelectCafePage() {
                   setError(null)
                 }}
                 placeholder="••••"
-                className="ui-input-surface h-16 rounded-2xl border-2 text-center text-3xl tracking-[0.8em] shadow-inner transition-all duration-300"
+                className="ui-input-surface h-16 rounded-lg border-2 text-center text-3xl tracking-wide shadow-inner transition-all duration-300"
                 onKeyDown={(e) => e.key === "Enter" && handleUnlock()}
                 disabled={isUnlocking}
               />
@@ -662,7 +662,7 @@ export default function SelectCafePage() {
             <Button
               onClick={handleUnlock}
               disabled={pin.length !== 4 || isUnlocking || isSubmitting}
-              className="ui-action-primary h-14 w-full rounded-2xl text-lg font-bold text-white shadow-xl transition-all duration-300 hover:scale-105 hover:shadow-2xl disabled:transform-none disabled:opacity-50"
+              className="ui-action-primary h-14 w-full rounded-lg text-lg font-semibold text-white shadow-xl transition-all duration-300 hover:scale-105 hover:shadow-2xl disabled:transform-none disabled:opacity-50"
             >
               {isUnlocking ? (
                 <div className="flex items-center justify-center space-x-3">
@@ -678,7 +678,7 @@ export default function SelectCafePage() {
             </Button>
 
             {error && (
-              <div className="text-center p-4 bg-red-500/10 border border-red-500/20 rounded-xl backdrop-blur-sm">
+              <div className="text-center p-4 bg-red-500/10 border border-red-500/20 rounded-lg backdrop-blur-sm">
                 <p className="text-sm font-medium text-red-400">{error}</p>
               </div>
             )}
@@ -688,9 +688,9 @@ export default function SelectCafePage() {
 
       {/* Onboarding Dialog */}
       <Dialog open={showOnboardDialog} onOpenChange={setShowOnboardDialog}>
-        <DialogContent className="premium-card max-h-[92vh] w-[calc(100vw-1.5rem)] max-w-4xl overflow-y-auto rounded-3xl border">
+        <DialogContent className="premium-card max-h-[92vh] w-[calc(100vw-1.5rem)] max-w-4xl overflow-y-auto rounded-lg border">
           <DialogHeader>
-            <DialogTitle className="text-3xl font-bold text-white">
+            <DialogTitle className="text-3xl font-semibold text-white">
               Onboard New Gaming Cafe
             </DialogTitle>
           </DialogHeader>
@@ -1103,7 +1103,7 @@ export default function SelectCafePage() {
               <Button
                 onClick={handleOnboardSubmit}
                 disabled={isSubmitting}
-                className="ui-action-primary flex-1 h-14 text-lg font-bold text-white"
+                className="ui-action-primary flex-1 h-14 text-lg font-semibold text-white"
               >
                 {isSubmitting ? (
                   <div className="flex items-center gap-2">
@@ -1124,7 +1124,7 @@ export default function SelectCafePage() {
             </div>
 
             {error && (
-              <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-xl">
+              <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-lg">
                 <p className="text-sm text-red-400">{error}</p>
               </div>
             )}

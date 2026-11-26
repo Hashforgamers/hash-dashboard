@@ -509,7 +509,7 @@ const MealDetailsModal: React.FC<MealDetailsModalProps> = ({
           initial={{ opacity: 0, scale: 0.95, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 20 }}
-          className="relative flex h-[100dvh] max-h-[100dvh] w-full flex-col overflow-hidden rounded-none shadow-2xl bg-muted sm:h-auto sm:max-h-[95vh] sm:max-w-6xl sm:rounded-xl"
+          className="relative flex h-[100dvh] max-h-[100dvh] w-full flex-col overflow-hidden rounded-none shadow-2xl bg-muted sm:h-auto sm:max-h-[95vh] sm:max-w-6xl sm:rounded-lg"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header - Responsive */}
@@ -519,14 +519,14 @@ const MealDetailsModal: React.FC<MealDetailsModalProps> = ({
                 <ChefHat className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
               </div>
               <div>
-                <h3 className="text-base sm:text-lg font-bold text-white">
+                <h3 className="text-base sm:text-lg font-semibold text-white">
                   {mode === 'view' ? 'Meal Details' : 'Add More Meals'}
                 </h3>
                 <p className="text-xs sm:text-sm text-muted-foreground">
                   {customerName}
                 </p>
                 {activeTargetMember && (
-                  <p className="text-[11px] sm:text-xs text-primary">
+                  <p className="text-xs sm:text-xs text-primary">
                     Target: {activeTargetMember.name || `Player ${activeTargetMember.member_position || ""}`}
                   </p>
                 )}
@@ -626,7 +626,7 @@ const MealDetailsModal: React.FC<MealDetailsModalProps> = ({
                                 <User className="h-3.5 w-3.5" />
                                 <span>{member.name_snapshot || `Player ${member.member_position || ''}`}</span>
                                 {member.is_captain && (
-                                  <span className="rounded px-1.5 py-0.5 text-[10px] bg-primary/40 text-primary">
+                                  <span className="rounded px-1.5 py-0.5 text-xs bg-primary/40 text-primary">
                                     Captain
                                   </span>
                                 )}
@@ -642,7 +642,7 @@ const MealDetailsModal: React.FC<MealDetailsModalProps> = ({
                                 const consoleLabel = String(mappedConsole?.console_label || "").trim();
                                 if (!consoleLabel) return null;
                                 return (
-                                  <div className="mt-1 text-[11px] text-primary">
+                                  <div className="mt-1 text-xs text-primary">
                                     PC: {consoleLabel}
                                   </div>
                                 );
@@ -666,7 +666,7 @@ const MealDetailsModal: React.FC<MealDetailsModalProps> = ({
                                 </span>
                                 <span className="text-primary">₹{Number(entry.total || 0).toFixed(2)}</span>
                               </div>
-                              <div className="mt-1 space-y-1 text-[11px] text-foreground">
+                              <div className="mt-1 space-y-1 text-xs text-foreground">
                                 {(entry.meals || []).map((meal, mealIdx) => (
                                   <div key={`ledger-summary-${idx}-meal-${mealIdx}`} className="flex items-center justify-between">
                                     <span>{meal.name || "Item"} x{Number(meal.quantity || 0)}</span>
@@ -678,7 +678,7 @@ const MealDetailsModal: React.FC<MealDetailsModalProps> = ({
                           ))}
                         </div>
                         {unattributedMealTotal > 0.01 && (
-                          <div className="mt-2 rounded border px-2 py-1.5 text-[11px] border-amber-700 bg-amber-950/30 text-amber-200">
+                          <div className="mt-2 rounded border px-2 py-1.5 text-xs border-amber-700 bg-amber-950/30 text-amber-200">
                             Unassigned meals: ₹{unattributedMealTotal.toFixed(2)} (added without selecting a squad member)
                           </div>
                         )}
@@ -745,7 +745,7 @@ const MealDetailsModal: React.FC<MealDetailsModalProps> = ({
                               <h4 className="font-medium text-emerald-200 text-sm sm:text-base line-clamp-2">
                                 {meal.menu_item_name}
                               </h4>
-                              <span className="font-bold text-emerald-600 text-sm sm:text-base ml-2">
+                              <span className="font-semibold text-emerald-600 text-sm sm:text-base ml-2">
                                 ₹{meal.total_price}
                               </span>
                             </div>
@@ -756,7 +756,7 @@ const MealDetailsModal: React.FC<MealDetailsModalProps> = ({
                               <span>₹{meal.unit_price} × {meal.quantity}</span>
                             </div>
                             {isSquadBooking && (
-                              <div className="text-[11px] text-emerald-200">
+                              <div className="text-xs text-emerald-200">
                                 <span className="font-medium">Served to:</span>{" "}
                                 {(mealToMemberLabels[String(meal.menu_item_name || "").trim().toLowerCase()] || []).join(", ") || "Not tagged"}
                               </div>
@@ -769,10 +769,10 @@ const MealDetailsModal: React.FC<MealDetailsModalProps> = ({
                     {/* Total */}
                     <div className="border-t border-emerald-600 pt-3 mt-4">
                       <div className="flex justify-between items-center">
-                        <span className="font-bold text-white text-sm sm:text-base">Total Meal Cost:</span>
+                        <span className="font-semibold text-white text-sm sm:text-base">Total Meal Cost:</span>
                         <div className="flex items-center gap-1">
                           <IndianRupee className="w-4 h-4 text-emerald-600" />
-                          <span className="font-bold text-lg sm:text-xl text-emerald-600">
+                          <span className="font-semibold text-lg sm:text-xl text-emerald-600">
                             {getTotalMealCost()}
                           </span>
                         </div>
@@ -887,7 +887,7 @@ const MealDetailsModal: React.FC<MealDetailsModalProps> = ({
                           <span className="font-semibold text-primary text-sm">
                             Additional Total:
                           </span>
-                          <span className="font-bold text-primary">₹{totalNewMealsPrice}</span>
+                          <span className="font-semibold text-primary">₹{totalNewMealsPrice}</span>
                         </div>
                       </div>
                     </motion.div>
@@ -962,7 +962,7 @@ const MealDetailsModal: React.FC<MealDetailsModalProps> = ({
 
                               {/* Card Content - Responsive */}
                               <div className="p-2 sm:p-3">
-                                <h3 className="mb-1 truncate font-semibold text-[11px] text-foreground sm:text-sm sm:line-clamp-2">
+                                <h3 className="mb-1 truncate font-semibold text-xs text-foreground sm:text-sm sm:line-clamp-2">
                                   {item.name}
                                 </h3>
                                 {item.description && (
@@ -975,7 +975,7 @@ const MealDetailsModal: React.FC<MealDetailsModalProps> = ({
                                 <div className="flex items-center justify-between">
                                   <div className="flex items-center space-x-1 text-emerald-600">
                                     <IndianRupee className="h-3 w-3 sm:h-4 sm:w-4" />
-                                    <span className="text-xs font-bold sm:text-base">{item.price}</span>
+                                    <span className="text-xs font-semibold sm:text-base">{item.price}</span>
                                   </div>
                                   <div className="flex items-center space-x-1 sm:space-x-2">
                                     <button
@@ -985,7 +985,7 @@ const MealDetailsModal: React.FC<MealDetailsModalProps> = ({
                                     >
                                       <Minus className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
                                     </button>
-                                    <span className="min-w-[14px] text-center text-[11px] font-semibold text-foreground sm:min-w-[20px] sm:text-sm">
+                                    <span className="min-w-[14px] text-center text-xs font-semibold text-foreground sm:min-w-[20px] sm:text-sm">
                                       {quantity}
                                     </span>
                                     <button
@@ -1001,7 +1001,7 @@ const MealDetailsModal: React.FC<MealDetailsModalProps> = ({
                                 {quantity > 0 && (
                                   <motion.p
                                     layout
-                                    className="mt-1 text-right text-[11px] font-semibold text-emerald-700 sm:mt-2 sm:text-sm"
+                                    className="mt-1 text-right text-xs font-semibold text-emerald-700 sm:mt-2 sm:text-sm"
                                   >
                                     Subtotal: ₹{(quantity * item.price).toFixed(2)}
                                   </motion.p>

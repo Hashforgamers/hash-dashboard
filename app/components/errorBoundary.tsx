@@ -29,7 +29,7 @@ class ErrorBoundary extends React.Component<
     if (this.state.hasError) {
       return (
         <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
-          <h2 className="text-red-800 font-bold">Something went wrong!</h2>
+          <h2 className="text-red-800 font-semibold">Something went wrong!</h2>
           <details className="mt-2">
             <summary className="cursor-pointer text-red-600">Error Details</summary>
             <pre className="mt-2 text-sm text-red-700 whitespace-pre-wrap">

@@ -137,7 +137,7 @@ export default function TournamentsPage() {
 
       <div className="min-h-0 flex-1 overflow-y-auto pr-1 space-y-3 sm:space-y-3">
         {/* ── Filters ──────────────────────────────────── */}
-        <div className="gaming-panel dashboard-toolbar mb-2 rounded-xl p-3">
+        <div className="gaming-panel dashboard-toolbar mb-2 rounded-lg p-3">
           <div className="relative flex-1 min-w-[220px]">
             <Search data-search-icon="" aria-hidden="true" className="absolute left-3 top-1/2 -translate-y-1/2 icon-md text-muted-foreground" />
             <input data-search-input=""
@@ -179,11 +179,11 @@ export default function TournamentsPage() {
             <table className="dashboard-table">
             <thead className="bg-card">
               <tr>
-                <th className="table-cell text-left text-[11px] font-bold uppercase tracking-wider text-foreground sm:text-xs">Tournament</th>
-                <th className="table-cell text-left text-[11px] font-bold uppercase tracking-wider text-foreground sm:text-xs">Start Date</th>
-                <th className="table-cell text-left text-[11px] font-bold uppercase tracking-wider text-foreground sm:text-xs">End Date</th>
-                <th className="table-cell text-left text-[11px] font-bold uppercase tracking-wider text-foreground sm:text-xs">Status</th>
-                <th className="table-cell text-right text-[11px] font-bold uppercase tracking-wider text-foreground sm:text-xs">Actions</th>
+                <th className="table-cell text-left text-xs font-semibold uppercase tracking-wider text-foreground sm:text-xs">Tournament</th>
+                <th className="table-cell text-left text-xs font-semibold uppercase tracking-wider text-foreground sm:text-xs">Start Date</th>
+                <th className="table-cell text-left text-xs font-semibold uppercase tracking-wider text-foreground sm:text-xs">End Date</th>
+                <th className="table-cell text-left text-xs font-semibold uppercase tracking-wider text-foreground sm:text-xs">Status</th>
+                <th className="table-cell text-right text-xs font-semibold uppercase tracking-wider text-foreground sm:text-xs">Actions</th>
               </tr>
             </thead>
             <tbody>

@@ -40,7 +40,7 @@ const PassHistory: React.FC<{ userPassId: number }> = ({ userPassId }) => {
 
   return (
     <div className="bg-white rounded-lg shadow-md p-6">
-      <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
+      <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
         <History className="w-5 h-5" />
         Redemption History
       </h3>

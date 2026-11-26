@@ -227,7 +227,7 @@ const MealSelector: React.FC<MealSelectorProps> = ({
           initial={{ opacity: 0, scale: 0.95, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 20 }}
-          className="relative w-full max-w-4xl h-[85vh] overflow-hidden rounded-xl shadow-2xl bg-card"
+          className="relative w-full max-w-4xl h-[85vh] overflow-hidden rounded-lg shadow-2xl bg-card"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
@@ -447,7 +447,7 @@ const MealSelector: React.FC<MealSelectorProps> = ({
 
               <button
                 onClick={handleConfirm}
-                className="dashboard-btn-primary px-6 py-2 font-bold flex items-center gap-2 text-sm"
+                className="dashboard-btn-primary px-6 py-2 font-semibold flex items-center gap-2 text-sm"
               >
                 <ShoppingCart className="w-4 h-4" />
                 Add to Order

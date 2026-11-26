@@ -190,7 +190,7 @@ export function CafeWalletWorkspace({embedded = false, view = "wallet"}: {embedd
     </section>}
     </div>
     {view==='settings' && <SessionExtensionSettings/>}
-    {view==='settings' && policy && can('account.manage') && <section className="payment-settings-panel rounded-xl border bg-card p-5">
+    {view==='settings' && policy && can('account.manage') && <section className="payment-settings-panel rounded-lg border bg-card p-5">
       <header className="mb-5"><h2 className="text-lg font-semibold">Payment settings</h2><p className="mt-1 text-sm text-muted-foreground">Manage QR self-service, wallet collections and food payments.</p></header>
       <div className="grid gap-5 md:grid-cols-2">
         <div className="space-y-4">
@@ -205,7 +205,7 @@ export function CafeWalletWorkspace({embedded = false, view = "wallet"}: {embedd
       <footer className="mt-5 flex flex-col gap-3 border-t pt-4 sm:flex-row sm:items-center sm:justify-between"><p className="max-w-lg text-xs text-muted-foreground">Session lengths, operating hours and prices follow Console Pricing.</p><Button disabled={busy || policy.desk_methods.length===0} onClick={()=>action(async()=>{setPolicy(await cafeCall(`${prefix}/policy`,policy,'PUT'));setMessage('Payment settings saved.');})}>{busy?'Saving…':'Save settings'}</Button></footer>
     </section>}
     {view==='wallet' && can('store.manage') && orders.length>0 && <details className="rounded-lg border bg-card p-3"><summary className="cursor-pointer text-xs font-medium">Food payments</summary>{orders.length===0 && <p className="text-xs text-muted-foreground">No orders.</p>}{orders.map(o=><div key={o.id} className="border-t py-2 text-sm"><p>Gamer #{o.user_id} · {o.items.map(i=>`${i.quantity} × ${i.name}`).join(', ')} · {rupees(o.amount)}</p><p>{o.collector==='vendor'?'Food store collects directly':o.state==='paid'?'Paid at cafe':'Awaiting cafe payment'}</p>{o.collector==='cafe'&&o.state!=='paid'&&<Button disabled={busy||!openShift} onClick={()=>action(async()=>{await cafeCall(`${prefix}/food/orders/${o.id}/collect`,{method});await syncAfterWrite('Food payment recorded.');})}>Record {method==='cash'?'cash':'cafe UPI'} payment</Button>}</div>)}</details>}
-    {view==='activity' && can('transactions.view') && <section className="staff-activity-panel space-y-4 rounded-xl border bg-card p-4">
+    {view==='activity' && can('transactions.view') && <section className="staff-activity-panel space-y-4 rounded-lg border bg-card p-4">
       <div className="flex flex-wrap items-center justify-between gap-3"><div><h3 className="text-base font-semibold">Activity history</h3><p className="mt-1 text-xs text-muted-foreground">Review staff actions and cafe payment records.</p></div><div className="flex gap-2"><Button variant="outline" disabled={busy||activityLoading} onClick={()=>action(loadActivity)}>Refresh</Button><Button variant="outline" disabled={activityLoading||!audit.length} onClick={()=>downloadActivityCsv([['Date & time (IST)','Staff member','Activity','Gamer ID','Details'],...audit.map(row=>[new Date(row.created_at).toLocaleString('en-IN',{timeZone:'Asia/Kolkata'}),row.actor_name,activityLabel(row.action),String((row.details as any)?.user_id||'—'),activityDetails(row.details)])])}>Export page</Button></div></div>
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
         <label className="text-xs text-muted-foreground">Search<Input className="mt-1" placeholder="Name, action or reason" value={activitySearch} onChange={e=>setActivitySearch(e.target.value)}/></label>

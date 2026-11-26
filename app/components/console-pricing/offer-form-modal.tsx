@@ -44,7 +44,7 @@ export function OfferFormModal({
         initial={{ scale: 0.95, opacity: 0, y: 10 }}
         animate={{ scale: 1, opacity: 1, y: 0 }}
         transition={{ duration: 0.2 }}
-        className="ui-dialog-surface w-full max-w-md overflow-hidden rounded-xl shadow-2xl"
+        className="ui-dialog-surface w-full max-w-md overflow-hidden rounded-lg shadow-2xl"
       >
             <div className="flex items-center justify-between border-b border-border px-5 py-4">
               <h2 className="card-title">{editingOffer ? "Edit Promotion" : "Create New Promotion"}</h2>
