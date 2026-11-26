@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { MainNav } from "../components/main-nav"
 import Image from "next/image"
 import { useAccess } from "../context/AccessContext"
+import { useTimeFormat } from "../hooks/useTimeFormat"
 import { canAccessPath } from "@/lib/rbac"
 import { useSubscription } from "@/hooks/useSubscription"
 import { useSocket } from "../context/SocketContext"
@@ -33,6 +34,7 @@ export function DashboardLayout({ children, contentScroll = "page" }: DashboardL
   const pathname = usePathname()
   const router = useRouter()
   const { activeStaff } = useAccess()
+  const { is24h } = useTimeFormat()
   const { isLocked, status: subscriptionStatus, loading: subscriptionLoading, refreshStatus } = useSubscription()
   const { isConnected } = useSocket()
   const { vendorId, consoles, consolesLoading, refreshLanding, refreshConsoles } = useDashboardData()
@@ -148,7 +150,7 @@ export function DashboardLayout({ children, contentScroll = "page" }: DashboardL
       timeZone: "Asia/Kolkata",
       hour: "2-digit",
       minute: "2-digit",
-      hour12: true,
+      hourCycle: is24h ? "h23" : "h12",
     })
     const tick = () => {
       const now = new Date()
@@ -158,7 +160,7 @@ export function DashboardLayout({ children, contentScroll = "page" }: DashboardL
     tick()
     const timer = setInterval(tick, 1000)
     return () => clearInterval(timer)
-  }, [])
+  }, [is24h])
 
   return (
     <div className="workspace-ui premium-shell dashboard-typography flex h-dvh overflow-hidden text-foreground">

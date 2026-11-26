@@ -11,6 +11,8 @@ import { cafeCall } from "@/lib/cafe-api";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { useTimeFormat } from "@/app/hooks/useTimeFormat";
+import { formatClock, type TimeFormat } from "@/lib/time-format";
 
 export type ConsoleTvSession = {
   sessionId: string; status: "IDLE" | "ACTIVE" | "EXPIRING" | "EXPIRED" | "ENDED"; startedAt: string | null;
@@ -49,8 +51,8 @@ function errorText(error: unknown) {
   return (data?.code && messages[data.code]) || data?.message || data?.error || "Request failed";
 }
 
-export function clock(value: string | null | undefined) {
-  return value ? new Date(value).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" }) : "--";
+export function clock(value: string | null | undefined, format: TimeFormat = "12h") {
+  return value ? formatClock(new Date(value), format, { fallback: "--" }) : "--";
 }
 
 export function useConsoleTvStations(vendorId: number | null, pollMs = 30000) {
@@ -83,6 +85,7 @@ export function ConsoleLockBadge({ station }: { station?: ConsoleTvStation }) {
 
 export default function ConsoleLockPanel({ vendorId, consoleId, onChanged }: { vendorId: number; consoleId: number; onChanged?: () => void }) {
   const { stations, available, refresh } = useConsoleTvStations(vendorId, 10000);
+  const { format: clockFormat } = useTimeFormat();
   const station = stations.find((s) => s.stationId === consoleId);
   const [busy, setBusy] = useState<string | null>(null);
   const [code, setCode] = useState("");
@@ -124,7 +127,7 @@ export default function ConsoleLockPanel({ vendorId, consoleId, onChanged }: { v
         <Fact label="Station type" value={station.consoleType} />
         <Fact label="HDMI source" value={station.hdmiInput || "Not set"} />
         <Fact label="Session" value={session ? session.status : "IDLE"} />
-        <Fact label="Ends" value={session ? clock(session.expiresAt) : "--"} />
+        <Fact label="Ends" value={session ? clock(session.expiresAt, clockFormat) : "--"} />
       </section>
 
       {!device ? (
@@ -167,7 +170,7 @@ export default function ConsoleLockPanel({ vendorId, consoleId, onChanged }: { v
             {display?.warning && <p className="text-xs text-amber-300">{display.warning}.</p>}
             <p className="text-xs text-muted-foreground">
               Last command: {display?.lastCommand ? `${display.lastCommand.commandType} ${display.lastCommand.commandStatus.toLowerCase()}${display.lastCommand.failureReason ? ` (${display.lastCommand.failureReason})` : ""}` : "none"}
-              {" · "}Last lock {clock(display?.lastSuccessfulLock?.completedAt)} · Last unlock {clock(display?.lastSuccessfulUnlock?.completedAt)}
+              {" · "}Last lock {clock(display?.lastSuccessfulLock?.completedAt, clockFormat)} · Last unlock {clock(display?.lastSuccessfulUnlock?.completedAt, clockFormat)}
             </p>
             <div className="flex flex-wrap gap-2">
               <Button size="sm" variant="outline" disabled={!!busy} onClick={() => command("LOCK", "Lock sent to the TV")}><Lock className="mr-1 h-4 w-4" />Lock</Button>

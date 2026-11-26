@@ -2,6 +2,8 @@
 import { toast } from "sonner";
 import WhatsAppSettings from "./whatsapp-settings";
 import OwnerSecuritySettings from "./owner-security-settings";
+import { TimeFormatSettings } from "./time-format-settings";
+import { TimeField } from "./time-field";
 
 import { normalizeOperatingHours, validateOperatingDay, type OperatingDay } from "@/lib/operating-hours";
 import { CafeRequests } from './cafe-requests';
@@ -68,6 +70,7 @@ const ACCOUNT_NAV_GROUPS = [
     { icon: Activity, label: "Staff Activity" },
     { icon: BellRing, label: "Notification Preferences" },
     { icon: Keyboard, label: "Keyboard Shortcuts" },
+    { icon: Clock, label: "Time Format" },
     { icon: LifeBuoy, label: "Report an issue" },
   ] },
 ];
@@ -1805,6 +1808,7 @@ const ToggleSwitch = ({
             <div className="space-y-3">
 
 {page === "Keyboard Shortcuts" && <CafeKeyboardShortcuts />}
+{page === "Time Format" && <TimeFormatSettings />}
 {page === "Session Timing" && <FlexBookingSettings vendorId={vendorId ? Number(vendorId) : null} canEdit={can("account.manage")} />}
 
  {page === "Cafe Gallery" && (
@@ -2106,18 +2110,18 @@ const ToggleSwitch = ({
               
               {/* Time Inputs */}
               <div className="flex-1 grid grid-cols-2 gap-3">
-                <Input 
-                  type="time" 
+                <TimeField
+                  aria-label={`${entry.day} opening time`}
                   value={entry.open}
-                  onChange={(e) => handleTimeChange(entry.day, 'open', e.target.value)}
-                  className={`bg-input border-input text-foreground ${!entry.isEnabled ? 'opacity-50' : ''}`}
+                  onValueChange={(value) => handleTimeChange(entry.day, 'open', value)}
+                  className={`flex ${!entry.isEnabled ? 'opacity-50' : ''}`}
                   disabled={editingSlot !== entry.day || !entry.isEnabled || savingSlot !== null}
                 />
-                <Input 
-                  type="time" 
+                <TimeField
+                  aria-label={`${entry.day} closing time`}
                   value={entry.close}
-                  onChange={(e) => handleTimeChange(entry.day, 'close', e.target.value)}
-                  className={`bg-input border-input text-foreground ${!entry.isEnabled ? 'opacity-50' : ''}`}
+                  onValueChange={(value) => handleTimeChange(entry.day, 'close', value)}
+                  className={`flex ${!entry.isEnabled ? 'opacity-50' : ''}`}
                   disabled={editingSlot !== entry.day || !entry.isEnabled || savingSlot !== null}
                 />
               </div>

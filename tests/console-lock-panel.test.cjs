@@ -3,7 +3,7 @@ const source=fs.readFileSync(require('node:path').join(__dirname,'../app/compone
 function load(){
  const Badge=props=>({badge:props.variant,text:props.children})
  const deps={react:React,axios:{get:async()=>({data:{stations:[]}}),post:async()=>({})},sonner:{toast:{success(){},error(){}}},'lucide-react':new Proxy({},{get:()=>()=>null}),
-  '@/src/config/env':{DASHBOARD_URL:''},'@/lib/cafe-api':{cafeCall:async()=>({})},'@/components/ui/button':{Button:()=>null},'@/components/ui/badge':{Badge},'@/components/ui/input':{Input:()=>null}}
+  '@/src/config/env':{DASHBOARD_URL:''},'@/lib/cafe-api':{cafeCall:async()=>({})},'@/components/ui/button':{Button:()=>null},'@/components/ui/badge':{Badge},'@/components/ui/input':{Input:()=>null},'@/app/hooks/useTimeFormat':{useTimeFormat:()=>({format:'12h'})},'@/lib/time-format':{formatClock:(v)=>String(v)}}
  const mod={exports:{}};vm.runInNewContext(ts.transpileModule(source,{compilerOptions:{module:ts.ModuleKind.CommonJS,jsx:ts.JsxEmit.ReactJSX}}).outputText,{module:mod,exports:mod.exports,require:n=>deps[n]||require(n),document:{visibilityState:'visible'}})
  return mod.exports
 }
