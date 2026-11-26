@@ -799,7 +799,7 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
             {loading ? (
               <>
                 <Loader2 className="w-5 h-5 mr-3 animate-spin" />
-                Adding Console...
+                Adding Console…
               </>
             ) : (
               <>

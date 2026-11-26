@@ -1,5 +1,6 @@
 "use client";
 import { buttonVariants } from "@/components/ui/button";
+import { PageHeader } from "@/app/components/page-header";
 
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
@@ -220,14 +221,7 @@ function ReviewsPageContent() {
   return (
     <DashboardLayout contentScroll="contained">
       <div className="dashboard-module dashboard-page-shell h-full">
-        <div className="gaming-panel">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <h1 className="premium-heading">Cafe Reviews</h1>
-
-            </div>
-          </div>
-        </div>
+        <PageHeader title="Reviews" />
 
         <div className="reviews-summary grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
           <div className="gaming-panel rounded-lg border border-border bg-muted/45 p-3">
@@ -239,7 +233,7 @@ function ReviewsPageContent() {
               <RatingStars rating={summary?.average || 0} />
             </div>
             <p className="mt-1 text-xs text-muted-foreground">
-              {loadingSummary ? "Loading..." : `Based on ${summary?.total || 0} reviews`}
+              {loadingSummary ? "Loading…" : `Based on ${summary?.total || 0} reviews`}
             </p>
           </div>
 
@@ -314,7 +308,7 @@ function ReviewsPageContent() {
           </div>
           <div className="reviews-list-content">
             {loading ? (
-              <div className="dashboard-loader text-sm">Loading reviews...</div>
+              <div className="dashboard-loader text-sm">Loading reviews…</div>
             ) : reviews.length === 0 ? (
               <div className="dashboard-empty-state text-sm">No reviews yet.</div>
             ) : (

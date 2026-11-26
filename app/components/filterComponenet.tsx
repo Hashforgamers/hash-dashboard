@@ -63,7 +63,7 @@ const FilterComponent: React.FC<FilterProps> = ({
           initial={{ opacity: 0, scale: 1 }}
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 1 }}
-          className="fixed inset-0 z-50 bg-black/20 backdrop-blur-[1px]"
+          className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm"
           onClick={() => setShowFilter(false)}
         >
           <Card

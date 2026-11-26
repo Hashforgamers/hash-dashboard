@@ -95,7 +95,7 @@ export function OffersSection({
       {isLoadingOffers ? (
         <div className="flex-1 flex flex-col items-center justify-center gap-3 text-muted-foreground">
           <Loader2 className="w-10 h-10 animate-spin text-primary" />
-          <p className="body-text-muted">Loading offers...</p>
+          <p className="body-text-muted">Loading offers…</p>
         </div>
       ) : offers.length === 0 ? (
         <div className="flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed py-8 border-border">

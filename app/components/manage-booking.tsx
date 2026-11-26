@@ -174,7 +174,6 @@ export function ManageBooking() {
         retries: 2,
         dedupe: true,
       });
-      console.log(games);
       return games;
     } catch (error) {
       console.error("Error fetching games:", error);
@@ -311,7 +310,6 @@ function ChangeBookingForm() {
         timeoutMs: 10_000,
         retries: 1,
       });
-      console.log("Fetched Booking Data:", data);
 
       if (data.success && data.booking) {
         setIsSubmitted(false);
@@ -346,7 +344,6 @@ function ChangeBookingForm() {
         `${BOOKING_URL}/api/getSlots/vendor/${vendorId}/game/${consoleTypeId}/${date.replaceAll("-", "")}`,
         { timeoutMs: 10_000, retries: 1 }
       );
-      console.log("Fetched Slots Data:", data);
 
       if (data.slots) {
         setAvailableSlots(data.slots);
@@ -371,7 +368,6 @@ function ChangeBookingForm() {
           retries: 0,
         }
       );
-      console.log("Update Response:", result);
       if (result?.success !== false) {
         setIsSubmitted(true); // Mark as submitted
       } else {
@@ -517,7 +513,7 @@ function ChangeBookingForm() {
             {isUpdating ? (
               <>
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Updating...
+                Updating…
               </>
             ) : (
               "Update Booking"
@@ -570,7 +566,6 @@ function RejectBookingForm() {
         timeoutMs: 10_000,
         retries: 1,
       });
-      console.log("Fetched Booking Data:", data);
 
       if (data.success && data.booking) {
         setIsSubmitted(false);
@@ -634,7 +629,6 @@ function RejectBookingForm() {
       if (response?.success !== false) {
         // Handle successful rejection here
         setIsSubmitted(true); // Mark as submitted
-        console.log('Booking rejected');
       } else {
         // Handle error in rejection
         console.error('Error rejecting booking');

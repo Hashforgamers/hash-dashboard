@@ -226,7 +226,7 @@ export function KnowYourGamers() {
       <div className="md:hidden space-y-3">
         {loading ? (
           <MobileCompactCard className="p-4 text-sm text-muted-foreground">
-            Loading gamers...
+            Loading gamers…
           </MobileCompactCard>
         ) : filteredData.length === 0 ? (
           <MobileCompactCard className="p-4 text-sm text-muted-foreground">
@@ -301,7 +301,7 @@ export function KnowYourGamers() {
               {loading ? (
                 <tr>
                   <td className="px-4 py-8 text-center text-sm text-muted-foreground" colSpan={12}>
-                    Loading gamers...
+                    Loading gamers…
                   </td>
                 </tr>
               ) : filteredData.length === 0 ? (

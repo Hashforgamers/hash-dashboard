@@ -81,7 +81,7 @@ function BannerUploader({
           {uploading && (
             <div className="absolute inset-0 bg-black/70 flex flex-col items-center justify-center gap-2">
               <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-              <p className="text-white text-xs font-medium">Uploading...</p>
+              <p className="text-white text-xs font-medium">Uploading…</p>
             </div>
           )}
         </div>
@@ -101,7 +101,7 @@ function BannerUploader({
           {uploading ? (
             <>
               <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-              <p className="body-text-muted text-sm">Uploading...</p>
+              <p className="body-text-muted text-sm">Uploading…</p>
             </>
           ) : (
             <>
@@ -840,12 +840,12 @@ export default function CreateTournamentPage() {
               {bannerUploading ? (
                 <>
                   <div className="h-4 w-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
-                  Uploading banner...
+                  Uploading banner…
                 </>
               ) : submitting ? (
                 <>
                   <div className="h-4 w-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
-                  Creating...
+                  Creating…
                 </>
               ) : form.status === 'published' ? (
                 'Publish Tournament'

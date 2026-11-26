@@ -45,7 +45,7 @@ export default function ResponsiveSearchFilter({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex justify-end bg-black/55 backdrop-blur-sm"
+            className="fixed inset-0 z-50 flex justify-end bg-black/60 backdrop-blur-sm"
             onClick={() => setShowOverlay(false)}
           >
             <motion.div
@@ -53,7 +53,7 @@ export default function ResponsiveSearchFilter({
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
               transition={{ type: "spring", bounce: 0.1, duration: 0.4 }}
-              className="dashboard-module-panel dashboard-module upcoming-filter-drawer h-full w-[85vw] border-l border-white/15 p-4 shadow-2xl backdrop-blur-xl sm:w-[400px]"
+              className="dashboard-module-panel dashboard-module upcoming-filter-drawer h-full w-[85vw] border-l border-white/15 p-4 shadow-xl backdrop-blur-xl sm:w-[400px]"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Header */}

@@ -34,7 +34,6 @@ const formatDateForDisplay = (dateStr: any): string => {
   }
 
   const str = String(dateStr).trim()
-  console.log('📅 Formatting date:', str)
 
   try {
     // Format 1: "20260108" (YYYYMMDD)
@@ -168,7 +167,6 @@ export const SlotBookingForm = ({
       try {
         const decoded = jwtDecode<{ sub: { id: number } }>(token)
         setVendorId(decoded.sub.id)
-        console.log('✅ Vendor ID:', decoded.sub.id)
       } catch (error) {
         console.error('❌ Error decoding token:', error)
       }
@@ -180,7 +178,6 @@ export const SlotBookingForm = ({
     if (selectedSlots.length > 0) {
       const autoWaiveOff = calculateAutoWaiveOff(selectedSlots)
       setAutoWaiveOffAmount(autoWaiveOff)
-      console.log('🧮 Auto waive-off:', autoWaiveOff)
     } else {
       setAutoWaiveOffAmount(0)
     }
@@ -254,13 +251,11 @@ export const SlotBookingForm = ({
   }
 
   const handleMealSelectorConfirm = (meals: SelectedMeal[]) => {
-    console.log('🍽️ Meals confirmed:', meals)
     setMeals(meals)
     setIsMealSelectorOpen(false)
   }
 
   const handleMealSelectorClose = () => {
-    console.log('🍽️ Meal selector closed')
     setIsMealSelectorOpen(false)
   }
 
@@ -269,12 +264,8 @@ export const SlotBookingForm = ({
 const handleSubmit = async (e: React.FormEvent) => {
   e.preventDefault()
 
-  console.log('📋 Form submission started')
-  console.log('📊 Current state:', state)
-  console.log('🎰 Selected slots:', selectedSlots)
 
   if (!validate() || !vendorId) {
-    console.log('❌ Validation failed or no vendor ID')
     return
   }
 
@@ -314,14 +305,11 @@ const handleSubmit = async (e: React.FormEvent) => {
       }
     }
 
-    console.log('📤 Booking payload:', JSON.stringify(bookingPayload, null, 2))
 
     const result = await bookingService.createBooking(vendorId, bookingPayload)
 
-    console.log('📥 API Response:', result)
 
     if (result.success) {
-      console.log('✅ Booking created successfully!')
       setIsSubmitted(true)
       
       // Dispatch refresh event
@@ -415,13 +403,13 @@ const handleSubmit = async (e: React.FormEvent) => {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
+        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
       >
         <motion.div
           initial={{ scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0.9, opacity: 0 }}
-          className="w-full max-w-6xl max-h-[95vh] overflow-y-auto bg-muted rounded-lg border border-border shadow-2xl"
+          className="w-full max-w-6xl max-h-[95vh] overflow-y-auto bg-muted rounded-lg border border-border shadow-xl"
         >
           {/* Header */}
           <div className="flex items-center justify-between p-3 border-b border-border sticky top-0 bg-muted z-10">
@@ -445,7 +433,6 @@ const handleSubmit = async (e: React.FormEvent) => {
                 <div className="space-y-2">
                   {selectedSlots.map((slot, index) => {
                     // ✅ Debug slot data
-                    console.log(`🎰 Slot ${index}:`, slot)
                     
                     return (
                       <div
@@ -532,11 +519,9 @@ const handleSubmit = async (e: React.FormEvent) => {
                 controllerBasePrice={controllerPricingConfig.base_price}
                 controllerTiers={controllerPricingConfig.tiers}
                 onWaiveOffChange={(val: number) => {
-                  console.log('💵 Wave off changed to:', val)
                   setField('waiveOffAmount', val)
                 }}
                 onExtraQtyChange={(qty: number) => {
-                  console.log('🎮 Extra controller qty changed to:', qty)
                   handleExtraControllerQtyChange(qty)
                 }}
                 onMealsClick={() => setIsMealSelectorOpen(true)}
@@ -549,7 +534,7 @@ const handleSubmit = async (e: React.FormEvent) => {
                 disabled={isSubmitting}
                 className="w-full dashboard-btn-primary h-12 text-sm font-semibold"
               >
-                {isSubmitting ? 'Creating Booking...' : 'Confirm Booking'}
+                {isSubmitting ? 'Creating Booking…' : 'Confirm Booking'}
               </Button>
             </form>
           </div>

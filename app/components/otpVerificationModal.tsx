@@ -86,7 +86,7 @@ export function OTPVerificationModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
       <motion.div
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
@@ -149,7 +149,7 @@ export function OTPVerificationModal({
                 {loading ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                    Verifying...
+                    Verifying…
                   </>
                 ) : (
                   'Verify OTP'
@@ -163,7 +163,7 @@ export function OTPVerificationModal({
                 {sendingOtp ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                    Sending...
+                    Sending…
                   </>
                 ) : (
                   "Didn't receive OTP? Resend"

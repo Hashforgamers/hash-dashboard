@@ -230,7 +230,7 @@ export function EditConsoleForm({ console, onClose }: EditConsoleFormProps) {
               Cancel
             </Button>
             <Button type="submit" disabled={!canSave}>
-              {isSaving ? "Saving..." : "Save Changes"}
+              {isSaving ? "Saving…" : "Save Changes"}
             </Button>
           </DialogFooter>
         </form>

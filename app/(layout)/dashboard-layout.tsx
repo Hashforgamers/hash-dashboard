@@ -13,6 +13,7 @@ import { useSocket } from "../context/SocketContext"
 import { useDashboardData } from "../context/DashboardDataContext"
 import { NotificationButton } from "../components/NotificationButton"
 import { CommandPalette } from "../components/command-palette"
+import { GamerProfileHost } from "../components/gamer-profile-host"
 import { BookingShortcuts } from "../components/booking-shortcuts"
 import { normalizeConsoleSlug, resolveConsoleColor, resolveConsoleIcon } from "../components/console-catalog"
 
@@ -236,7 +237,7 @@ export function DashboardLayout({ children, contentScroll = "page" }: DashboardL
 
         {showSidebar && isNavOpen && (
           <div
-            className="fixed inset-0 z-[20020] bg-black/55 backdrop-blur-[1px] md:hidden"
+            className="fixed inset-0 z-[20020] md:hidden bg-black/60 backdrop-blur-sm"
             onClick={() => setIsNavOpen(false)}
           />
         )}
@@ -283,6 +284,7 @@ export function DashboardLayout({ children, contentScroll = "page" }: DashboardL
               </div>
             )}
           </main>
+          <GamerProfileHost />
 
           {showGlobalRibbon && (
             <div className="dashboard-nav-divider shrink-0 border-t px-3 py-1.5 sm:px-4 md:px-5">

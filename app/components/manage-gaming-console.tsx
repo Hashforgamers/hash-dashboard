@@ -178,7 +178,7 @@ export function ManageGamingConsole() {
   return (
     <div className="console-manager flex h-full min-h-0 w-full flex-col text-foreground">
       <div className="console-manager-header">
-        <h1 className="premium-heading">Gaming Consoles</h1>
+        <h1 className="premium-heading">Gaming Stations</h1>
         <div className="flex flex-wrap items-center gap-3 text-xs">
           <KioskDownload />
           <a className="text-muted-foreground hover:underline" href="/subscription">PC licences</a>

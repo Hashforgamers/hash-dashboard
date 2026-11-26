@@ -67,6 +67,18 @@ const STATUS_VARIANT: Record<string, "success" | "warning" | "danger" | "info" |
   imported: "neutral",
 }
 
+/** The booking a click came from, shown above the gamer's full history. */
+export interface GamerBookingContext {
+  bookingId?: number | string | null
+  name?: string | null
+  phone?: string | null
+  email?: string | null
+  console?: string | null
+  when?: string | null
+  status?: string | null
+  amount?: number | null
+}
+
 export const tierBadgeVariant = (tier: string): "premium" | "warning" | "neutral" => {
   const normalized = (tier || "").toLowerCase()
   if (normalized === "platinum") return "premium"
@@ -74,9 +86,10 @@ export const tierBadgeVariant = (tier: string): "premium" | "warning" | "neutral
   return "neutral"
 }
 
-export function GamerProfileSheet({ vendorId, gamerId, onOpenChange }: {
+export function GamerProfileSheet({ vendorId, gamerId, booking, onOpenChange }: {
   vendorId: number | null
   gamerId: number | null
+  booking?: GamerBookingContext
   onOpenChange: (open: boolean) => void
 }) {
   const [profile, setProfile] = useState<GamerProfile | null>(null)
@@ -108,6 +121,9 @@ export function GamerProfileSheet({ vendorId, gamerId, onOpenChange }: {
   }, [vendorId, gamerId])
 
   const s = profile?.summary
+  const phone = profile?.phone || booking?.phone || null
+  const email = profile?.email || booking?.email || null
+  const linkedBookingId = booking?.bookingId != null ? String(booking.bookingId) : null
   const transactionsHref = profile
     ? `/transaction?${new URLSearchParams({ q: profile.name, ...(s?.first_visit ? { from: s.first_visit } : {}) }).toString()}`
     : "/transaction"
@@ -117,21 +133,34 @@ export function GamerProfileSheet({ vendorId, gamerId, onOpenChange }: {
       <SheetContent side="right" className="dashboard-module flex w-full flex-col gap-4 overflow-hidden sm:max-w-2xl">
         <SheetHeader className="shrink-0 text-left">
           <SheetTitle className="flex flex-wrap items-center gap-2">
-            {profile?.name || (loading ? "Loading…" : "Gamer")}
+            {profile?.name || booking?.name || (loading ? "Loading…" : "Gamer")}
             {profile && <Badge variant={tierBadgeVariant(profile.membershipTier)}>{profile.membershipTier}</Badge>}
           </SheetTitle>
           <SheetDescription asChild>
             <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
               {profile?.game_username && <span>@{profile.game_username}</span>}
               {gamerId && <span>ID #{gamerId}</span>}
-              {profile?.phone && <a className="inline-flex items-center gap-1 hover:text-foreground" href={`tel:${profile.phone}`}><Phone className="h-3 w-3" />{profile.phone}</a>}
-              {profile?.email && <a className="inline-flex items-center gap-1 hover:text-foreground" href={`mailto:${profile.email}`}><Mail className="h-3 w-3" />{profile.email}</a>}
+              {phone && <a className="inline-flex items-center gap-1 hover:text-foreground" href={`tel:${phone}`}><Phone className="h-3 w-3" />{phone}</a>}
+              {email && <a className="inline-flex items-center gap-1 hover:text-foreground" href={`mailto:${email}`}><Mail className="h-3 w-3" />{email}</a>}
             </div>
           </SheetDescription>
         </SheetHeader>
 
+        {booking && (booking.console || booking.when || booking.status) && (
+          <div className="shrink-0 rounded-lg border border-primary/40 bg-primary/10 p-3">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <p className="text-xs font-medium text-muted-foreground">This booking{linkedBookingId ? ` · #${linkedBookingId}` : ""}</p>
+              {booking.status && <Badge variant={STATUS_VARIANT[booking.status] || "neutral"}>{titleCase(booking.status)}</Badge>}
+            </div>
+            <p className="mt-1 text-sm font-semibold text-foreground">{[booking.console, booking.when].filter(Boolean).join(" · ")}</p>
+            {booking.amount != null && <p className="text-xs text-muted-foreground">{rupees(booking.amount)}</p>}
+          </div>
+        )}
+
         {loading && <div className="dashboard-empty-state"><Loader2 className="h-5 w-5 animate-spin" />Loading history…</div>}
-        {error && <div role="alert" className="dashboard-error-banner text-sm">{error}</div>}
+        {error && (booking
+          ? <p className="text-sm text-muted-foreground">No earlier visits recorded at this cafe.</p>
+          : <div role="alert" className="dashboard-error-banner text-sm">{error}</div>)}
 
         {profile && s && (
           <>
@@ -159,7 +188,7 @@ export function GamerProfileSheet({ vendorId, gamerId, onOpenChange }: {
                   </thead>
                   <tbody>
                     {profile.history.map(entry => (
-                      <tr key={entry.transaction_id}>
+                      <tr key={entry.transaction_id} className={linkedBookingId && String(entry.booking_id) === linkedBookingId ? "bg-primary/10" : undefined}>
                         <td className="whitespace-nowrap">{dateLabel(entry.date)}</td>
                         <td className="whitespace-nowrap">
                           {entry.start_time ? `${entry.start_time}–${entry.end_time}` : "-"}

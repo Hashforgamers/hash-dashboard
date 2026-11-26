@@ -149,11 +149,9 @@ function RapidBookings() {
   const validateForm = (selectedName: any, selectedSlots: string[]) => {
     const errors: { contactNumber?: string; time?: string } = {};
 
-    console.log(selectedName);
 
     const phoneToValidate = selectedName?.phone || phone;
 
-    console.log("Phone alla", phoneToValidate);
 
     if (!/^\d{10}$/.test(phoneToValidate)) {
       errors.contactNumber = "Please enter a valid 10-digit phone number";
@@ -365,7 +363,6 @@ function RapidBookings() {
         }
       );
       const data = response.data;
-      console.log("Fetched devices:", data);
       setrapidbooking(data);
     } catch (error) {
       console.error("Error fetching vendor devices", error);
@@ -378,7 +375,6 @@ function RapidBookings() {
     try {
       const response = await fetch(`${BOOKING_URL}/api/vendor/${vendorIdFromToken}/users`);
       const data = await response.json();
-      console.log("Fetched users from API:", data);
 
       if (Array.isArray(data)) {
         setUserList(data);
@@ -396,22 +392,16 @@ function RapidBookings() {
   const handleBooking = async (e) => {
     // e.preventDefault();
     setLoading(true);
-    console.log("Form submission started");
 
     if (!validateForm(selectedName, selectedSlots)) {
-      console.log("Form validation failed", formErrors);
       return;
     }
 
     try {
-      console.log("Making API request...");
-      console.log("Selected slots:", selectedSlots);
-      console.log("Available time slots:", timeSlots);
 
 
       // Find the slot objects matching the selected slot times
       const selectedSlotObjects = timeSlots.filter(slot => selectedSlots.includes(slot.time));
-      console.log("Selected slot objects:", selectedSlotObjects);
 
       if (selectedSlotObjects.length === 0) {
         throw new Error("No slot selected");
@@ -443,10 +433,8 @@ function RapidBookings() {
         }
       );
 
-      console.log("API Response:", response.data);
 
       if (response.data) {
-        console.log("Booking successful:", response.data);
         setShowBookingForm(false);
 
         // Re-fetch updated lists
@@ -882,7 +870,7 @@ function RapidBookings() {
                     <Label className="text-sm font-medium">Select Time Slots</Label>
                     <div className="grid grid-cols-3 gap-3">
                       {isLoadingSlots ? (
-                        <div className="col-span-3 text-center py-4 text-muted-foreground">Loading time slots...</div>
+                        <div className="col-span-3 text-center py-4 text-muted-foreground">Loading time slots…</div>
                       ) : (
                         timeSlots.map((slot, index) => (
                           <motion.button
@@ -932,7 +920,7 @@ function RapidBookings() {
                           type="button"
                           onClick={() => setPaymentType(key)}
                           className={`flex flex-col items-center justify-center p-3 rounded-xl border transition-all w-full
-                            ${paymentType === key ? "border-emerald-500 bg-[#e6f4ea]" : "border-border hover:border-emerald-500"}`}
+                            ${paymentType === key ? "border-primary bg-primary/10" : "border-border hover:border-primary"}`}
                           aria-label={label}
                         >
                           <span className="text-emerald-500">{icon}</span>

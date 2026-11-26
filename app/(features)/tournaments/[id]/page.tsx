@@ -116,7 +116,6 @@ export default function TournamentDetailPage() {
       if (token) {
         try {
           const decoded_token = jwtDecode<{ sub: { id: number } }>(token)
-          console.log('🔑 Decoded vendor ID:', decoded_token.sub.id)
           setVendorId(decoded_token.sub.id)
         } catch (error) {
           console.error('❌ Error decoding JWT token:', error)
@@ -292,7 +291,7 @@ export default function TournamentDetailPage() {
     <div className="page-container items-center justify-center">
       <div className="flex flex-col items-center gap-3">
         <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-        <p className="body-text-muted">Loading tournament...</p>
+        <p className="body-text-muted">Loading tournament…</p>
       </div>
     </div>
   );
@@ -426,7 +425,7 @@ export default function TournamentDetailPage() {
                 }`}
               >
                 <span className="block text-xs font-semibold uppercase tracking-wider">
-                  {busy ? 'Updating...' : EVENT_STATUS_LABEL[status]}
+                  {busy ? 'Updating…' : EVENT_STATUS_LABEL[status]}
                 </span>
               </button>
             );
@@ -480,7 +479,7 @@ export default function TournamentDetailPage() {
               disabled={!!engineBusy}
               onClick={() => runEngineAction('generate-bracket', () => generateBracket(token!, eventId, { require_check_in: requireCheckInForBracket, force: matches.length > 0 }))}
             >
-              {engineBusy === 'generate-bracket' ? 'Generating...' : matches.length ? 'Regenerate Bracket' : 'Generate Bracket'}
+              {engineBusy === 'generate-bracket' ? 'Generating…' : matches.length ? 'Regenerate Bracket' : 'Generate Bracket'}
             </button>
           </div>
         </div>
@@ -510,14 +509,14 @@ export default function TournamentDetailPage() {
                 disabled={!!engineBusy}
                 onClick={() => runEngineAction('open-check-in', () => openCheckIn(token!, eventId))}
               >
-                {engineBusy === 'open-check-in' ? 'Opening...' : 'Open Check-in'}
+                {engineBusy === 'open-check-in' ? 'Opening…' : 'Open Check-in'}
               </button>
               <button
                 className="dashboard-btn-secondary inline-flex items-center justify-center gap-2 px-3 py-2 text-xs"
                 disabled={!!engineBusy}
                 onClick={() => runEngineAction('close-check-in', () => closeCheckIn(token!, eventId))}
               >
-                {engineBusy === 'close-check-in' ? 'Closing...' : 'Close Check-in'}
+                {engineBusy === 'close-check-in' ? 'Closing…' : 'Close Check-in'}
               </button>
               <span className="inline-flex items-center rounded-lg border border-border px-3 py-2 text-xs text-muted-foreground">
                 {checkedIn} checked-in teams
@@ -542,7 +541,7 @@ export default function TournamentDetailPage() {
         <div className="mt-4">
           <div className="mb-3 flex items-center justify-between gap-3">
             <h4 className="text-sm font-semibold text-foreground">Bracket & Matches</h4>
-            <span className="text-xs text-muted-foreground">{loadingMatches ? 'Loading matches...' : `${matches.length} matches`}</span>
+            <span className="text-xs text-muted-foreground">{loadingMatches ? 'Loading matches…' : `${matches.length} matches`}</span>
           </div>
 
           {matches.length === 0 ? (
@@ -611,14 +610,14 @@ export default function TournamentDetailPage() {
                                 disabled={!!engineBusy || !match.team_a_id || !match.team_b_id || match.status === 'completed'}
                                 onClick={() => runEngineAction(`start-${match.id}`, () => startMatch(token!, eventId, match.id))}
                               >
-                                {engineBusy === `start-${match.id}` ? 'Starting...' : 'Start'}
+                                {engineBusy === `start-${match.id}` ? 'Starting…' : 'Start'}
                               </button>
                               <button
                                 className="dashboard-btn-primary inline-flex items-center justify-center px-3 py-2 text-xs"
                                 disabled={!!engineBusy || !winnerValue || match.status === 'completed'}
                                 onClick={() => runEngineAction(`result-${match.id}`, () => submitAdminMatchResult(token!, eventId, match.id, { winner_team_id: winnerValue }))}
                               >
-                                {engineBusy === `result-${match.id}` ? 'Saving...' : 'Admin Result'}
+                                {engineBusy === `result-${match.id}` ? 'Saving…' : 'Admin Result'}
                               </button>
                             </div>
                             {match.status === 'disputed' && (
