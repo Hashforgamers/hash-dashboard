@@ -325,12 +325,12 @@ const SettlementOverlay: React.FC<ExtraBookingOverlayProps> = ({
         return false;
       }
       if (due > 0) {
-        const method = KIOSK_METHODS[paymentMode] || "cash";
+        const method = kioskOnBill ? "booking_bill" : (KIOSK_METHODS[paymentMode] || "cash");
         bill = await cafeCall<RuntimeBill>(`${prefix}/settle`, { method, amount_paise: due, revision: bill.revision, idempotency_key: `checkout-${runtimeId}-${bill.revision}-settle-${method}` });
         setRuntimeBill(bill);
       }
-      if (KIOSK_METHODS[paymentMode] === "booking_bill" && (due > 0 || bill.billing.amount_due_paise === 0)) {
-        // Put the moved PC time on the booking bill so credit / UPI QR collects it.
+      if (kioskOnBill && (due > 0 || bill.billing.amount_due_paise === 0)) {
+        // Put the moved PC time on the booking bill so the discount, credit or UPI QR covers it.
         await createExtraBooking({
           consoleNumber: selectedSlot.consoleId || selectedSlot.consoleNumber,
           consoleType: selectedSlot.consoleType,
@@ -615,7 +615,7 @@ const SettlementOverlay: React.FC<ExtraBookingOverlayProps> = ({
         .map((item) => normalizeBookingType(item.booking_type))
         .filter((type) => type && type !== "settlement_waive_off");
       const bookingTypesSet = new Set(pendingTypes);
-      if (amount > 0 || (kioskDuePaise > 0 && KIOSK_METHODS[paymentMode] === "booking_bill")) {
+      if (amount > 0 || kioskOnBill) {
         bookingTypesSet.add("extra");
       }
       if (pendingMealsAmount > 0) {
@@ -636,7 +636,8 @@ const SettlementOverlay: React.FC<ExtraBookingOverlayProps> = ({
             item.booking_id === id && isPendingStatus(item.settlement_status)
             && normalizeBookingType(item.booking_type) !== "settlement_waive_off");
           // Extra time just created is recorded on the booking being checked out.
-          const overtime = id === primaryId ? amount : 0;
+          // PC time moved to the bill is also on the booking being checked out.
+          const overtime = id === primaryId ? amount + (kioskOnBill ? kioskDue : 0) : 0;
           const due = items.reduce((sum, item) => sum + Number(item.line_total || 0), 0) + overtime;
           if (due <= 0.009) continue;
           const waive = Math.min(waiveLeft, due);
@@ -648,7 +649,7 @@ const SettlementOverlay: React.FC<ExtraBookingOverlayProps> = ({
         await releaseAndClose();
         return;
       }
-      if (paymentMode === "upi_qr" && payableAmount > 0) {
+      if (paymentMode === "upi_qr" && bookingPayable > 0) {
         await startUpiQr(bookingId, parsedWaiveOff, bookingTypesPayload);
         setLoading(false);
         return;
@@ -688,7 +689,8 @@ const SettlementOverlay: React.FC<ExtraBookingOverlayProps> = ({
       const localPendingBase = (paymentSummary?.line_items || [])
         .filter((item) => !isExtraType(item.booking_type) && isPendingStatus(item.settlement_status))
         .reduce((sum, item) => sum + Number(item.line_total || 0), 0);
-      const maxWaiveOff = dueBeforeWaive;
+      // Extra PC time can be discounted too, so the cap is the whole bill.
+      const maxWaiveOff = dueBeforeWaive + kioskDue;
       if (parsedValue < 0) {
         setWaiveOffError("Discount cannot be negative");
         setWaiveOffAmount("");
@@ -727,10 +729,13 @@ const SettlementOverlay: React.FC<ExtraBookingOverlayProps> = ({
   const computedExtraAmount = noOvertime ? 0 : Number(overtimeQuote?.amount || 0);
   const parsedWaiveOff = parseFloat(waiveOffAmount) || 0;
   const dueBeforeWaive = computedExtraAmount + pendingMealsAmount + historicalPendingExtraAmount + pendingBaseAmount;
-  const bookingPayable = Math.max(dueBeforeWaive - parsedWaiveOff, 0);
   const kioskDuePaise = meteredByKiosk ? Number(runtimeBill?.billing.amount_due_paise || 0) : 0;
   const kioskDue = kioskDuePaise / 100;
-  const payableAmount = bookingPayable + kioskDue;
+  // PC time joins the booking bill when a discount is given (so it can cover the
+  // PC time too) or when credit / UPI QR collects it. Otherwise it is paid directly.
+  const kioskOnBill = kioskDuePaise > 0 && (parsedWaiveOff > 0 || KIOSK_METHODS[paymentMode] === "booking_bill");
+  const bookingPayable = Math.max(dueBeforeWaive + (kioskOnBill ? kioskDue : 0) - parsedWaiveOff, 0);
+  const payableAmount = bookingPayable + (kioskOnBill ? 0 : kioskDue);
   // Confirm needs a known PC figure, and a desk method the session engine records.
   const kioskBlocker = !meteredByKiosk ? ""
     : runtimeBill?.billing.requires_reconciliation ? (runtimeBill.billing.pricing_error || "PC extra time could not be priced yet.")
@@ -1066,7 +1071,7 @@ const SettlementOverlay: React.FC<ExtraBookingOverlayProps> = ({
                   <motion.button
                     onClick={handleSettle}
                     className="dashboard-btn-primary w-full rounded-md px-4 py-2.5 text-sm font-medium disabled:opacity-50 sm:px-6 sm:py-2"
-                    disabled={loading || summaryLoading || !!summaryError || !!waiveOffError || !vendorId || !!kioskBlocker || (paymentMode === "credit" && (!creditAccount?.is_active || availableCreditAmount < payableAmount))}
+                    disabled={loading || summaryLoading || !!summaryError || !!waiveOffError || !vendorId || !!kioskBlocker || (paymentMode === "credit" && (!creditAccount?.is_active || availableCreditAmount < bookingPayable))}
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     aria-label="End session"
