@@ -1112,7 +1112,14 @@ const handleCancelEdit = () => {
 
       if (response.success) {
         const uploadedImageUrl = response.image.url;
-        setCafeImages((prevImages) => [...prevImages, uploadedImageUrl]);
+        if (Array.isArray(response.all_images) && response.all_images.length > 0) {
+          // Keep URLs and ids aligned with the server so delete-by-id works right after upload.
+          setCafeImageObjects(response.all_images);
+          setCafeImages(response.all_images.map((img: any) => img.url).filter(Boolean));
+        } else {
+          setCafeImages((prevImages) => [...prevImages, uploadedImageUrl]);
+          setCafeImageObjects([]);
+        }
         setUploadMessage("Image uploaded successfully!");
         setTimeout(() => setUploadMessage(null), 3000);
       } else {
@@ -1297,7 +1304,7 @@ const handleCancelEdit = () => {
         console.log("Images data:", imagesData); // Debug log
         
         // Check if images are objects with IDs or just URLs
-        if (imagesData.length > 0 && typeof imagesData[0] === 'object' && imagesData.id) {
+        if (imagesData.length > 0 && typeof imagesData[0] === 'object' && imagesData[0]?.id) {
           // New format: objects with IDs
           console.log("Using image objects format");
           setCafeImageObjects(imagesData);
@@ -1791,7 +1798,7 @@ const ToggleSwitch = ({
         <div className="account-gallery-grid">
           {cafeImages.map((image, index) => (
             <div
-              key={index}
+              key={cafeImageObjects[index]?.id ?? `${index}-${image}`}
               className="relative group aspect-square flex items-center justify-center border border-border rounded-md overflow-hidden shadow-sm"
             >
               <img
