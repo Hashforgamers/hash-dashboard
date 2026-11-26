@@ -56,6 +56,11 @@ interface OvertimeQuote {
   scheduled_end: string;
   priced_until: string;
   needs_end_time: boolean;
+  // Added when the server priced extra play from the cafe's own rate card.
+  pricing_source?: "rate_card" | "slot_rate";
+  rate_card?: { name?: string | null; profile?: string | null; revision?: number | null } | null;
+  booked_minutes?: number;
+  players?: number;
 }
 
 // Kiosk-metered play past the booking, billed by the dashboard session engine.
@@ -831,6 +836,12 @@ const SettlementOverlay: React.FC<ExtraBookingOverlayProps> = ({
                       <p className="mt-1 text-xs text-red-200/80">
                         ₹{overtimeQuote.rate_per_hour.toFixed(2)}/hour, priced by the server
                         {overtimeQuote.already_recorded > 0 ? ` · ₹${overtimeQuote.already_recorded.toFixed(2)} already recorded` : ""}
+                      </p>
+                    )}
+                    {overtimeQuote && overtimeQuote.overtime_seconds > 0 && overtimeQuote.pricing_source === "rate_card" && (
+                      <p className="mt-0.5 text-xs text-red-200/80">
+                        Priced from rate card: {overtimeQuote.rate_card?.name || "cafe rates"}
+                        {(overtimeQuote.players || 1) > 1 ? ` · ${overtimeQuote.players} players` : ""}
                       </p>
                     )}
                     {quoteError && <p role="alert" className="mt-1 text-xs text-amber-300">{quoteError}</p>}
