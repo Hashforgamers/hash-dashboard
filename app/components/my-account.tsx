@@ -28,7 +28,7 @@ import {
 } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge, badgeVariants } from "@/components/ui/badge";
-import { User, MapPin, Calendar, Clock, Mail, Phone, Lock,  FileCheck, FileText, Camera, Building2, Sparkles, Shield, BellRing, Wallet, Settings, Globe, Coffee, ImageIcon, Save , Edit,  Ghost, X, Loader2, CreditCard , DollarSign, Download, Keyboard, Activity, Receipt, LifeBuoy } from 'lucide-react';
+import { User, MapPin, Calendar, Clock, Mail, Phone, Lock,  FileCheck, FileText, Camera, Building2, Sparkles, Shield, BellRing, Wallet, Settings, Globe, Coffee, ImageIcon, Save , Edit,  Ghost, X, Loader2, CreditCard , DollarSign, Download, Keyboard, Activity, Receipt, LifeBuoy, QrCode } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { jwtDecode } from "jwt-decode";
@@ -53,6 +53,7 @@ const ACCOUNT_NAV_GROUPS = [
   ] },
   { title: "Payments", items: [
     { icon: Settings, label: "Payment Methods" },
+    { icon: QrCode, label: "Self QR & Wallet" },
     { icon: DollarSign, label: "GST Setup" },
     { icon: CreditCard, label: "Bank Details" },
     { icon: Wallet, label: "Payout History" },
@@ -1773,7 +1774,8 @@ const ToggleSwitch = ({
                   {ACCOUNT_NAV_GROUPS.map(group => {
                     const items = group.items.filter(item =>
                       (item.label !== "Owner Security" || activeStaff?.role === "owner") &&
-                      (item.label !== "Staff Activity" || can("transactions.view")));
+                      (item.label !== "Staff Activity" || can("transactions.view")) &&
+                      (item.label !== "Self QR & Wallet" || can("account.manage")));
                     if (!items.length) return null;
                     return (
                       <div key={group.title} className="space-y-1">
@@ -2824,7 +2826,8 @@ const ToggleSwitch = ({
 
 {page === "Staff Activity" && can("transactions.view") && <CafeWalletWorkspace embedded view="activity" />}
 
-{page === "Payment Methods" && (<>{can("account.manage")&&<CafeWalletWorkspace embedded view="settings" />}<Card className="payment-methods-panel content-card shadow-lg">
+{page === "Self QR & Wallet" && can("account.manage") && <CafeWalletWorkspace embedded view="settings" />}
+{page === "Payment Methods" && (<><Card className="payment-methods-panel content-card shadow-lg">
       <CardHeader>
         <CardTitle className="account-section-title flex items-center gap-2">
           <Settings className="icon-lg" />
@@ -2840,9 +2843,8 @@ const ToggleSwitch = ({
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="flex items-center gap-2 p-3 rounded-md bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 mb-4"
+            className="mb-4 flex items-center gap-2 rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-3 text-emerald-300"
           >
-            <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
             <span className="body-text-small font-medium flex-1 break-words">{paymentMethodSuccess}</span>
             <Button
               variant="ghost"
@@ -2859,9 +2861,8 @@ const ToggleSwitch = ({
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="flex items-center gap-2 p-3 rounded-md bg-red-500/20 text-red-400 border border-red-500/30 mb-4"
+            className="dashboard-error-banner mb-4 flex items-center gap-2"
           >
-            <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
             <span className="body-text-small font-medium flex-1 break-words">{paymentMethodError}</span>
             <Button
               variant="ghost"

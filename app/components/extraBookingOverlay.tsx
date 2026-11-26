@@ -72,8 +72,9 @@ interface RuntimeBill {
   };
 }
 
-// Desk payment modes the session engine can record for kiosk extra time.
-const KIOSK_METHODS: Record<string, string> = { cash: "cash", card: "card", upi: "cafe_upi" };
+// Desk payment modes the session engine records for kiosk extra time. Credit and
+// Hash UPI QR move the PC time onto the booking bill and collect it there.
+const KIOSK_METHODS: Record<string, string> = { cash: "cash", card: "card", upi: "cafe_upi", credit: "booking_bill", upi_qr: "booking_bill" };
 
 // "2026-11-22T04:28" in IST, for the datetime-local input.
 const istInputValue = (date: Date) =>
@@ -305,7 +306,7 @@ const SettlementOverlay: React.FC<ExtraBookingOverlayProps> = ({
 
   // Stops the PC, then records its extra time with the same payment method.
   // Returns false when the final figure moved and staff should look again.
-  const settleKioskTime = async (shownDuePaise: number): Promise<boolean> => {
+  const settleKioskTime = async (shownDuePaise: number, bookingId: number | string): Promise<boolean> => {
     if (!runtimeId || !vendorId) return true;
     const prefix = `/${vendorId}/extensions/${runtimeId}`;
     runtimeLock.current = true;
@@ -324,10 +325,28 @@ const SettlementOverlay: React.FC<ExtraBookingOverlayProps> = ({
         return false;
       }
       if (due > 0) {
-        const method = KIOSK_METHODS[paymentMode];
-        if (!method) throw new Error("Collect PC extra time by cash, card or café UPI.");
+        const method = KIOSK_METHODS[paymentMode] || "cash";
         bill = await cafeCall<RuntimeBill>(`${prefix}/settle`, { method, amount_paise: due, revision: bill.revision, idempotency_key: `checkout-${runtimeId}-${bill.revision}-settle-${method}` });
         setRuntimeBill(bill);
+      }
+      if (KIOSK_METHODS[paymentMode] === "booking_bill" && (due > 0 || bill.billing.amount_due_paise === 0)) {
+        // Put the moved PC time on the booking bill so credit / UPI QR collects it.
+        await createExtraBooking({
+          consoleNumber: selectedSlot.consoleId || selectedSlot.consoleNumber,
+          consoleType: selectedSlot.consoleType,
+          date: String(selectedSlot.date || "").slice(0, 10),
+          booking_id: bookingId,
+          slotId: selectedSlot.slotId,
+          userId: selectedSlot.userId,
+          username: selectedSlot.username,
+          gameId: selectedSlot.game_id,
+          vendorId,
+          modeOfPayment: "pending",
+          kiosk_transfer: true,
+        }).catch((error: unknown) => {
+          // Nothing moved (no extra time) is fine; anything else must stop checkout.
+          if (!(error instanceof Error && /No PC extra time was moved/.test(error.message))) throw error;
+        });
       }
       return true;
     } finally {
@@ -587,7 +606,7 @@ const SettlementOverlay: React.FC<ExtraBookingOverlayProps> = ({
     };
 
     try {
-      if (meteredByKiosk && !(await settleKioskTime(kioskDuePaise))) {
+      if (meteredByKiosk && !(await settleKioskTime(kioskDuePaise, bookingId))) {
         setLoading(false);
         return;
       }
@@ -602,7 +621,7 @@ const SettlementOverlay: React.FC<ExtraBookingOverlayProps> = ({
         .map((item) => normalizeBookingType(item.booking_type))
         .filter((type) => type && type !== "settlement_waive_off");
       const bookingTypesSet = new Set(pendingTypes);
-      if (amount > 0) {
+      if (amount > 0 || (kioskDuePaise > 0 && KIOSK_METHODS[paymentMode] === "booking_bill")) {
         bookingTypesSet.add("extra");
       }
       if (pendingMealsAmount > 0) {
@@ -635,7 +654,7 @@ const SettlementOverlay: React.FC<ExtraBookingOverlayProps> = ({
         await releaseAndClose();
         return;
       }
-      if (paymentMode === "upi_qr" && bookingPayable > 0) {
+      if (paymentMode === "upi_qr" && payableAmount > 0) {
         await startUpiQr(bookingId, parsedWaiveOff, bookingTypesPayload);
         setLoading(false);
         return;
@@ -723,12 +742,7 @@ const SettlementOverlay: React.FC<ExtraBookingOverlayProps> = ({
   const kioskBlocker = !meteredByKiosk ? ""
     : runtimeBill?.billing.requires_reconciliation ? (runtimeBill.billing.pricing_error || "PC extra time could not be priced yet.")
     : !runtimeBill ? (runtimeError || "PC extra time is still loading.")
-    : kioskDuePaise > 0 && !KIOSK_METHODS[paymentMode] ? "PC extra time is collected at the desk. Choose cash, card or café UPI."
     : "";
-  // UPI QR and credit cannot carry PC extra time; fall back to cash when it is due.
-  useEffect(() => {
-    if (kioskDuePaise > 0 && !KIOSK_METHODS[paymentMode]) setPaymentMode("cash");
-  }, [kioskDuePaise, paymentMode]);
 
   // Handle keyboard navigation for payment mode buttons
   const handlePaymentModeKeyDown = (e: React.KeyboardEvent, key: string) => {
@@ -957,11 +971,10 @@ const SettlementOverlay: React.FC<ExtraBookingOverlayProps> = ({
                     {[
                       { key: "cash", label: "Cash", Icon: IndianRupee },
                       { key: "card", label: "Card", Icon: CreditCard },
-                      { key: "upi_qr", label: "UPI QR (auto)", Icon: QrCode },
+                      { key: "upi_qr", label: "Hash UPI QR", Icon: QrCode },
                       { key: "upi", label: "Café UPI", Icon: Smartphone },
-                      { key: "credit", label: "Credit", Icon: Wallet },
-                    ].filter(({ key }) => !(isGroupBill && key === "upi_qr"))
-                     .filter(({ key }) => !(kioskDuePaise > 0 && !KIOSK_METHODS[key])).map(({ key, label, Icon }) => (
+                      { key: "credit", label: "Gamer credit", Icon: Wallet },
+                    ].filter(({ key }) => !(isGroupBill && key === "upi_qr")).map(({ key, label, Icon }) => (
                       <motion.button
                         key={key}
                         disabled={!!upiQr}
@@ -1060,7 +1073,7 @@ const SettlementOverlay: React.FC<ExtraBookingOverlayProps> = ({
                   <motion.button
                     onClick={handleSettle}
                     className="dashboard-btn-primary w-full rounded-md px-4 py-2.5 text-sm font-medium disabled:opacity-50 sm:px-6 sm:py-2"
-                    disabled={loading || summaryLoading || !!summaryError || !!waiveOffError || !vendorId || !!kioskBlocker || (paymentMode === "credit" && (!creditAccount?.is_active || availableCreditAmount < bookingPayable))}
+                    disabled={loading || summaryLoading || !!summaryError || !!waiveOffError || !vendorId || !!kioskBlocker || (paymentMode === "credit" && (!creditAccount?.is_active || availableCreditAmount < payableAmount))}
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     aria-label="End session"
