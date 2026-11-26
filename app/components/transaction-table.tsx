@@ -1,5 +1,6 @@
 "use client";
 import HistoryImport from "./history-import";
+import Link from "next/link";
 import CafeAuditPanel from "./cafe-audit-panel";
 import {Button} from "@/components/ui/button";
 import { httpJson } from "@/lib/http-client";
@@ -1108,6 +1109,11 @@ export function TransactionTable() {
                                         <span className="text-xs">{userExpanded ? "▲" : "▼"}</span>
                                         <span>{userGroup.userName}</span>
                                       </button>
+                                      {userId > 0 && (
+                                        <Link href={`/know-your-gamers?gamer=${userId}`} className="ml-2 text-xs font-normal text-primary hover:underline">
+                                          History
+                                        </Link>
+                                      )}
                                     </TableCell>
                                   );
                                 }
