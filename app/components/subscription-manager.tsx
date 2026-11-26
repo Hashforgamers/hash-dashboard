@@ -81,7 +81,7 @@ export function SubscriptionManager(){
  const pendingPurchase=purchases.find(row=>row.state==='ordered'||row.state==='paid_unapplied');
  const currentPlan=plans.find(plan=>plan.code===(current?.commercial_terms?.package_code||current?.package?.code));
  return <div className="w-full min-w-0 space-y-4 p-4 text-sm subscription-workspace">
-  <header className="flex flex-wrap items-center justify-between gap-2"><div><Link href="/account#subscription" className="text-xs text-muted-foreground hover:underline">← Account settings</Link><h1 className="!!text-lg font-semibold">Subscription</h1></div><Link href="/gaming" className="text-xs underline">Gaming consoles</Link></header>
+  <header className="flex flex-wrap items-center justify-between gap-2"><div><Link href="/account?section=subscription-details" className="text-xs text-muted-foreground hover:underline">← Account settings</Link><h1 className="!text-lg font-semibold">Subscription</h1></div><Link href="/gaming" className="text-xs underline">Gaming consoles</Link></header>
   {error&&<div role="alert" className="rounded border border-red-400 p-3">{error}<Button variant="outline" className="ml-3" onClick={()=>void load()}>Reload</Button></div>}
   <section className="rounded-lg border p-3"><h2 className="!text-sm font-semibold mb-2">Current plan</h2>
    {current?<><p>{current.commercial_terms?.package_name||current.package?.name} · {current.active_links||0} linked / {current.pc_limit} PC licences</p><p>Valid until {date(current.period_end)}</p><details className="mt-2 text-xs text-muted-foreground"><summary className="cursor-pointer">Included features</summary><p className="mt-1">{features(current.commercial_terms?.entitlements||[])||'Core dashboard'}</p></details></>:<p>No active plan. Select a package below.</p>}
@@ -104,7 +104,7 @@ export function SubscriptionManager(){
     <Button disabled={busy||!!pendingPurchase} onClick={()=>void review(plan)}>Review plan</Button>
    </article>)}</div>{!plans.length&&<p>No packages are currently available. Contact Hash.</p>}
   </section>}
-  {preview&&<section role="dialog" aria-label="Invoice preview" className="space-y-2 rounded-lg border border-blue-500 p-3">
+  {preview&&<section role="dialog" aria-label="Invoice preview" className="space-y-2 rounded-lg border border-primary p-3">
    <h2 className="!text-lg font-semibold">Invoice preview — unpaid</h2><p>{preview.terms.package_name} · {preview.terms.pc_limit} PCs / kiosks</p>
    <p>{preview.description}</p><p>{date(preview.period_start)} – {date(preview.period_end)}</p><p className="text-2xl font-semibold">Total payable {money(preview.amount_paise)}</p>
    <p className="text-sm">{preview.tax_note} Preview valid for 15 minutes.</p>

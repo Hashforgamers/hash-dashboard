@@ -421,14 +421,14 @@ const handleSubmit = async (e: React.FormEvent) => {
           initial={{ scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0.9, opacity: 0 }}
-          className="w-full max-w-6xl max-h-[95vh] overflow-y-auto bg-white dark:bg-zinc-800 rounded-2xl border border-zinc-200 dark:border-zinc-700 shadow-2xl"
+          className="w-full max-w-6xl max-h-[95vh] overflow-y-auto bg-muted rounded-2xl border border-border shadow-2xl"
         >
           {/* Header */}
-          <div className="flex items-center justify-between p-3 border-b border-zinc-200 dark:border-zinc-700 sticky top-0 bg-white dark:bg-zinc-800 z-10">
-            <h2 className="text-2xl font-bold text-zinc-800 dark:text-white">New Slot Booking</h2>
+          <div className="flex items-center justify-between p-3 border-b border-border sticky top-0 bg-muted z-10">
+            <h2 className="text-2xl font-bold text-white">New Slot Booking</h2>
             <button
               onClick={handleClose}
-              className="p-2 rounded-lg bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-700 dark:hover:bg-zinc-600 transition-colors"
+              className="p-2 rounded-lg bg-muted hover:bg-muted transition-colors"
             >
               <X className="w-5 h-5" />
             </button>
@@ -438,8 +438,8 @@ const handleSubmit = async (e: React.FormEvent) => {
           <div className="p-3">
             <form onSubmit={handleSubmit} className="space-y-3">
               {/* Selected Slots Display */}
-              <Card className="p-4 bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-700">
-                <h3 className="text-sm font-semibold text-emerald-800 dark:text-emerald-200 mb-3">
+              <Card className="p-4 bg-emerald-900/20 border-emerald-700">
+                <h3 className="text-sm font-semibold text-emerald-200 mb-3">
                   Selected Time Slots
                 </h3>
                 <div className="space-y-2">
@@ -450,20 +450,20 @@ const handleSubmit = async (e: React.FormEvent) => {
                     return (
                       <div
                         key={index}
-                        className="flex items-center justify-between text-sm bg-white dark:bg-zinc-800 rounded-lg p-3"
+                        className="flex items-center justify-between text-sm bg-muted rounded-lg p-3"
                       >
-                        <span className="text-zinc-700 dark:text-zinc-300">
+                        <span className="text-muted-foreground">
                           <strong>{formatDateForDisplay(slot.date)}</strong> •{' '}
                           {slot.start_time?.slice(0, 5) || 'N/A'}-{slot.end_time?.slice(0, 5) || 'N/A'} • {slot.console_name || 'Unknown'}
                         </span>
-                        <span className="text-emerald-600 dark:text-emerald-400 font-semibold">
+                        <span className="text-emerald-400 font-semibold">
                           ₹{slot.console_price || 0}
                         </span>
                       </div>
                     )
                   })}
-                  <div className="text-right pt-2 border-t border-emerald-200 dark:border-emerald-700">
-                    <span className="text-emerald-700 dark:text-emerald-300 font-bold">
+                  <div className="text-right pt-2 border-t border-emerald-700">
+                    <span className="text-emerald-300 font-bold">
                       Slots Total: ₹{consoleTotal}
                     </span>
                   </div>

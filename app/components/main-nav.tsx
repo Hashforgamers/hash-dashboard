@@ -57,7 +57,7 @@ export const navItems: NavItem[] = [
   {href:"/pass",icon:Ticket,label:"Passes & Memberships",permission:"passes.manage",section:"Gamers"},
   {href:"/reviews",icon:Star,label:"Reviews",permission:"reviews.manage",section:"Gamers"},
   {href:"/console-pricing",icon:DollarSign,label:"Pricing & Offers",permission:"pricing.manage",section:"Management"},
-  {href:"/store",icon:ShoppingBag,label:"Store",permission:"store.manage",section:"Management"},
+  {href:"/store",icon:ShoppingBag,label:"Shop",permission:"store.manage",section:"Management"},
   {href:"/games",icon:Gamepad2,label:"Game Library",permission:"games.manage",section:"Management"},
   {href:"/tournaments",icon:Trophy,label:"Tournaments",permission:"tournaments.manage",section:"Management"},
 ];

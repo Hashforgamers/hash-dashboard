@@ -73,7 +73,7 @@ export default function MasterAnalyticsPage() {
         <div className="flex items-center gap-3">
           <button
             onClick={() => router.push("/select-cafe")}
-            className="hover:text-blue-400 transition"
+            className="hover:text-primary transition"
             title="Go Back"
           >
             <ArrowLeft className="h-6 w-6" />
@@ -85,10 +85,10 @@ export default function MasterAnalyticsPage() {
 
         <div className="flex gap-4">
           <Select value={selectedCafe} onValueChange={setSelectedCafe}>
-            <SelectTrigger className="w-48 bg-zinc-800 border-zinc-700 text-white">
+            <SelectTrigger className="w-48 bg-muted border-border text-white">
               <SelectValue placeholder="Select Cafe" />
             </SelectTrigger>
-            <SelectContent className="bg-zinc-800 text-white">
+            <SelectContent className="bg-muted text-white">
               {allCafeOptions.map((cafe) => (
                 <SelectItem key={cafe} value={cafe}>
                   {cafe}
@@ -98,10 +98,10 @@ export default function MasterAnalyticsPage() {
           </Select>
 
           <Select value={reportType} onValueChange={setReportType}>
-            <SelectTrigger className="w-40 bg-zinc-800 border-zinc-700 text-white">
+            <SelectTrigger className="w-40 bg-muted border-border text-white">
               <SelectValue placeholder="Select Report" />
             </SelectTrigger>
-            <SelectContent className="bg-zinc-800 text-white">
+            <SelectContent className="bg-muted text-white">
               {reportTypes.map((type) => (
                 <SelectItem key={type} value={type}>
                   {type}
@@ -113,7 +113,7 @@ export default function MasterAnalyticsPage() {
       </div>
 
       <div className="grid grid-cols-4 gap-6">
-        <Card className="bg-zinc-900 text-white col-span-2">
+        <Card className="bg-card text-white col-span-2">
           <CardContent className="p-4">
             <h2 className="text-lg font-semibold mb-2">🏦 Revenue by Cafe</h2>
             <ResponsiveContainer width="100%" height={200}>
@@ -127,7 +127,7 @@ export default function MasterAnalyticsPage() {
           </CardContent>
         </Card>
 
-        <Card className="bg-zinc-900 text-white col-span-2">
+        <Card className="bg-card text-white col-span-2">
           <CardContent className="p-4">
             <h2 className="text-lg font-semibold mb-2">🎟️ Bookings per Cafe</h2>
             <ResponsiveContainer width="100%" height={200}>
@@ -141,7 +141,7 @@ export default function MasterAnalyticsPage() {
           </CardContent>
         </Card>
 
-        <Card className="bg-zinc-900 text-white col-span-2">
+        <Card className="bg-card text-white col-span-2">
           <CardContent className="p-4">
             <h2 className="text-lg font-semibold mb-2">🎮 Top Games - {selectedCafe}</h2>
             <ResponsiveContainer width="100%" height={200}>
@@ -155,7 +155,7 @@ export default function MasterAnalyticsPage() {
           </CardContent>
         </Card>
 
-        <Card className="bg-zinc-900 text-white col-span-2">
+        <Card className="bg-card text-white col-span-2">
           <CardContent className="p-4">
             <h2 className="text-lg font-semibold mb-2">💳 Payment Mode Distribution</h2>
             <ResponsiveContainer width="100%" height={200}>

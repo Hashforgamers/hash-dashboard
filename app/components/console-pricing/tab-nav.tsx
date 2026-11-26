@@ -17,7 +17,7 @@ export function ConsolePricingTabNav({
   inactiveTabButtonClass,
 }: TabNavProps) {
   return (
-    <div className="dashboard-module-tab-group flex w-full shrink-0 items-center gap-1 overflow-x-auto rounded-lg bg-zinc-100 p-1 dark:bg-zinc-900">
+    <div className="dashboard-module-tab-group flex w-full shrink-0 items-center gap-1 overflow-x-auto rounded-lg p-1 bg-card">
       <button
         aria-pressed={activeTab === "default"}
         onClick={() => setActiveTab("default")}

@@ -377,9 +377,9 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
     <div className="add-console-form dashboard-module dashboard-typography w-full">
       {/* Success Message */}
       {showSuccess && (
-        <div className="mb-6 flex items-center gap-3 rounded-lg border border-emerald-300 bg-emerald-50 p-4 shadow-sm dark:border-emerald-400/35 dark:bg-emerald-500/12">
-          <CheckCircle2 className="h-5 w-5 text-emerald-700 dark:text-emerald-300" />
-          <span className="font-medium text-emerald-800 dark:text-emerald-200">Console added successfully!</span>
+        <div className="mb-6 flex items-center gap-3 rounded-lg border p-4 shadow-sm border-emerald-400/35 bg-emerald-500/12">
+          <CheckCircle2 className="h-5 w-5 text-emerald-300" />
+          <span className="font-medium text-emerald-200">Console added successfully!</span>
         </div>
       )}
 
@@ -399,7 +399,7 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
         <Card className="add-console-card">
           <CardHeader className="add-console-card-header">
             <CardTitle className="flex items-center gap-3 dash-title !text-lg">
-              <Copy className="h-5 w-5 text-zinc-700 dark:text-blue-300" />
+              <Copy className="h-5 w-5 text-primary" />
               Quick Setup
             </CardTitle>
           </CardHeader>
@@ -443,7 +443,7 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
         <Card className="add-console-card">
           <CardHeader className="add-console-card-header">
             <CardTitle className="flex items-center gap-3 dash-title !text-lg">
-              <Gamepad2 className="h-5 w-5 text-zinc-700 dark:text-emerald-300" />
+              <Gamepad2 className="h-5 w-5 text-emerald-300" />
               Console Details
             </CardTitle>
           </CardHeader>
@@ -562,7 +562,7 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
         <Card className="add-console-card">
           <CardHeader className="add-console-card-header">
             <CardTitle className="flex items-center gap-3 dash-title !text-lg">
-              <HardDrive className="h-5 w-5 text-zinc-700 dark:text-purple-300" />
+              <HardDrive className="h-5 w-5 text-purple-300" />
               Hardware Specifications
             </CardTitle>
           </CardHeader>
@@ -582,7 +582,7 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
         <Card className="add-console-card">
           <CardHeader className="add-console-card-header">
             <CardTitle className="flex items-center gap-3 dash-title !text-lg">
-              <Wrench className="h-5 w-5 text-zinc-700 dark:text-amber-300" />
+              <Wrench className="h-5 w-5 text-amber-300" />
               Maintenance & Status
             </CardTitle>
           </CardHeader>
@@ -690,7 +690,7 @@ export function AddConsoleForm({ consoleType }: AddConsoleFormProps) {
         <Card className="add-console-card">
           <CardHeader className="add-console-card-header">
             <CardTitle className="flex items-center gap-3 dash-title !text-lg">
-              <DollarSign className="h-5 w-5 text-zinc-700 dark:text-emerald-300" />
+              <DollarSign className="h-5 w-5 text-emerald-300" />
               Price & Cost Information
             </CardTitle>
           </CardHeader>

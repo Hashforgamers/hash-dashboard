@@ -31,27 +31,27 @@ export function OffersTable({ offers, onEdit, onDelete, deletingOfferId, getCons
               const Icon = getConsoleIcon(offer.console_type);
               const isDeleting = deletingOfferId === offer.id;
               return (
-                <tr key={offer.id} className="table-row border-b border-blue-500/10 last:border-0">
+                <tr key={offer.id} className="table-row border-b border-border last:border-0">
                   <td className="table-cell">
                     <p className="body-text font-semibold">{offer.offer_name}</p>
                     {offer.is_currently_active && (
-                      <span className="mt-0.5 flex items-center gap-1 text-[10px] font-bold text-emerald-700 dark:text-emerald-300">
-                        <span className="h-1 w-1 rounded-full bg-emerald-500 animate-pulse dark:bg-emerald-400" />
+                      <span className="mt-0.5 flex items-center gap-1 text-[10px] font-bold text-emerald-300">
+                        <span className="h-1 w-1 rounded-full animate-pulse bg-emerald-400" />
                         LIVE NOW
                       </span>
                     )}
                   </td>
                   <td className="table-cell">
                     <div className="flex items-center gap-2 body-text-muted">
-                      <Icon className="icon-md text-blue-400" />
+                      <Icon className="icon-md text-primary" />
                       <span>{offer.console_type}</span>
                     </div>
                   </td>
                   <td className="table-cell">
                     <div className="flex items-center gap-2">
-                      <span className="stat-value text-blue-700 dark:text-blue-400">₹{offer.offered_price}</span>
+                      <span className="stat-value text-primary">₹{offer.offered_price}</span>
                       <span className="body-text-muted line-through">₹{offer.default_price}</span>
-                      <span className="rounded bg-emerald-50 px-1.5 py-0.5 text-[10px] font-bold text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300">
+                      <span className="rounded px-1.5 py-0.5 text-[10px] font-bold bg-emerald-500/10 text-emerald-300">
                         {offer.discount_percentage}%
                       </span>
                     </div>
@@ -75,7 +75,7 @@ export function OffersTable({ offers, onEdit, onDelete, deletingOfferId, getCons
                         className={buttonVariants({ variant: "soft-success", size: "icon-sm" })}
                         title="Edit"
                       >
-                        <Pencil className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+                        <Pencil className="h-3.5 w-3.5 text-emerald-400" />
                       </button>
                       <button
                         onClick={() => onDelete(offer.id)}

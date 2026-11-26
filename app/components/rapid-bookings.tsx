@@ -477,13 +477,13 @@ function RapidBookings() {
             {/* Search and Filter Toggle */}
             <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
               <div className="relative w-full md:w-96">
-                <Search data-search-icon="" aria-hidden="true" className="absolute left-3 top-3 h-4 w-4 text-zinc-500" />
+                <Search data-search-icon="" aria-hidden="true" className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                 <Input data-search-input=""
                   type="text"
                   placeholder="Search systems..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 w-full border-zinc-200 focus:border-emerald-500 focus:ring-emerald-500"
+                  className="pl-10 w-full border-border focus:border-emerald-500 focus:ring-emerald-500"
                 />
               </div>
               <div className="flex items-center gap-2">
@@ -539,7 +539,7 @@ function RapidBookings() {
                   <div className="pt-4 border-t">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                       <div className="space-y-2">
-                        <Label className="text-sm font-medium text-zinc-700">
+                        <Label className="text-sm font-medium text-muted-foreground">
                           System Type
                         </Label>
                         <Select
@@ -548,7 +548,7 @@ function RapidBookings() {
                             setFilters({ ...filters, type: value })
                           }
                         >
-                          <SelectTrigger className="w-full border-zinc-200 focus:border-emerald-500 focus:ring-emerald-500">
+                          <SelectTrigger className="w-full border-border focus:border-emerald-500 focus:ring-emerald-500">
                             <SelectValue placeholder="All Systems" />
                           </SelectTrigger>
                           <SelectContent>
@@ -562,7 +562,7 @@ function RapidBookings() {
                       </div>
 
                       <div className="space-y-2">
-                        <Label className="text-sm font-medium text-zinc-700">
+                        <Label className="text-sm font-medium text-muted-foreground">
                           Status
                         </Label>
                         <Select
@@ -574,7 +574,7 @@ function RapidBookings() {
                             })
                           }
                         >
-                          <SelectTrigger className="w-full border-zinc-200 focus:border-emerald-500 focus:ring-emerald-500">
+                          <SelectTrigger className="w-full border-border focus:border-emerald-500 focus:ring-emerald-500">
                             <SelectValue placeholder="All Status" />
                           </SelectTrigger>
                           <SelectContent>
@@ -596,7 +596,7 @@ function RapidBookings() {
                       </div>
 
                       <div className="space-y-2">
-                        <Label className="text-sm font-medium text-zinc-700">
+                        <Label className="text-sm font-medium text-muted-foreground">
                           Price Range
                         </Label>
                         <Select
@@ -605,7 +605,7 @@ function RapidBookings() {
                             setFilters({ ...filters, price: value })
                           }
                         >
-                          <SelectTrigger className="w-full border-zinc-200 focus:border-emerald-500 focus:ring-emerald-500">
+                          <SelectTrigger className="w-full border-border focus:border-emerald-500 focus:ring-emerald-500">
                             <SelectValue placeholder="All Prices" />
                           </SelectTrigger>
                           <SelectContent>
@@ -714,10 +714,10 @@ function RapidBookings() {
                 className="border rounded-lg p-6 bg-card transition-all duration-300 hover:shadow-lg"
               >
                 <div className="flex justify-between items-start mb-4">
-                  <div className="text-blue-600 transform transition-transform hover:scale-110">
+                  <div className="text-primary transform transition-transform hover:scale-110">
                     {system.icon}
                   </div>
-                  <span className="font-semibold text-blue-600">
+                  <span className="font-semibold text-primary">
                     {system.price}/slot
                   </span>
                 </div>
@@ -744,8 +744,8 @@ function RapidBookings() {
                   disabled={system.status !== "available"}
                   className={`w-full transition-all duration-300 ${
                     system.status === "available"
-                      ? "bg-blue-600 hover:bg-blue-600 hover:scale-105"
-                      : "bg-zinc-300 cursor-not-allowed"
+                      ? "bg-primary hover:bg-primary hover:scale-105"
+                      : "bg-muted cursor-not-allowed"
                   }`}
                 >
                   {system.status === "available" ? "Book Now" : "Unavailable"}
@@ -760,11 +760,11 @@ function RapidBookings() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
-              className="md:w-2/3 border rounded-2xl p-6 space-y-6 bg-white dark:bg-zinc-900 shadow-xl"
+              className="md:w-2/3 border rounded-2xl p-6 space-y-6 bg-card shadow-xl"
             >
               {/* Header */}
               <div className="flex justify-between items-center border-b pb-4">
-                <h2 className="text-2xl font-semibold text-zinc-800 dark:text-white">
+                <h2 className="text-2xl font-semibold text-white">
                   Book {selectedSystem?.name} #{selectedSystem?.consoleModelNumber}
                 </h2>
                 <Button
@@ -788,7 +788,7 @@ function RapidBookings() {
                   <div className="space-y-1.5">
                     <Label className="text-sm font-medium">Phone Number</Label>
                     <div className="relative">
-                      <Phone className="absolute left-3 top-3 text-zinc-400 w-4 h-4" />
+                      <Phone className="absolute left-3 top-3 text-muted-foreground w-4 h-4" />
                       <Input
                         className="pl-10"
                         placeholder="Enter phone number"
@@ -797,11 +797,11 @@ function RapidBookings() {
                         onBlur={() => setTimeout(() => setPhoneSuggestions([]), 150)}
                       />
                       {phoneSuggestions.length > 0 && (
-                        <ul className="absolute z-10 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-md shadow-lg w-full mt-1 text-sm max-h-48 overflow-y-auto">
+                        <ul className="absolute z-10 bg-muted border border-border rounded-md shadow-lg w-full mt-1 text-sm max-h-48 overflow-y-auto">
                           {phoneSuggestions.map((user, idx) => (
                             <li
                               key={idx}
-                              className="px-3 py-2 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 cursor-pointer"
+                              className="px-3 py-2 hover:bg-emerald-900/30 cursor-pointer"
                               onMouseDown={() => {
                                 setPhone(user.phone);
                                 setName(user.name);
@@ -828,7 +828,7 @@ function RapidBookings() {
                   <div className="space-y-1.5">
                     <Label className="text-sm font-medium">Name</Label>
                     <div className="relative">
-                      <User className="absolute left-3 top-3 text-zinc-400 w-4 h-4" />
+                      <User className="absolute left-3 top-3 text-muted-foreground w-4 h-4" />
                       <Input
                         className="pl-10"
                         placeholder="Enter your name"
@@ -837,11 +837,11 @@ function RapidBookings() {
                         onBlur={() => setTimeout(() => setNameSuggestions([]), 150)}
                       />
                       {nameSuggestions.length > 0 && (
-                        <ul className="absolute z-10 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-md shadow-lg w-full mt-1 text-sm max-h-48 overflow-y-auto">
+                        <ul className="absolute z-10 bg-muted border border-border rounded-md shadow-lg w-full mt-1 text-sm max-h-48 overflow-y-auto">
                           {nameSuggestions.map((user, idx) => (
                             <li
                               key={idx}
-                              className="px-3 py-2 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 cursor-pointer"
+                              className="px-3 py-2 hover:bg-emerald-900/30 cursor-pointer"
                               onMouseDown={() => {
                                 setName(user.name);
                                 setPhone(user.phone);
@@ -882,7 +882,7 @@ function RapidBookings() {
                     <Label className="text-sm font-medium">Select Time Slots</Label>
                     <div className="grid grid-cols-3 gap-3">
                       {isLoadingSlots ? (
-                        <div className="col-span-3 text-center py-4 text-zinc-500">Loading time slots...</div>
+                        <div className="col-span-3 text-center py-4 text-muted-foreground">Loading time slots...</div>
                       ) : (
                         timeSlots.map((slot, index) => (
                           <motion.button
@@ -902,10 +902,10 @@ function RapidBookings() {
                             className={`p-2 rounded-lg text-sm font-medium transition-colors text-center
                               ${
                                 selectedSlots.includes(slot.time)
-                                  ? "bg-zinc-400 text-white"
+                                  ? "bg-muted text-white"
                                   : slot.available
                                   ? "bg-emerald-500 text-white hover:bg-emerald-700"
-                                  : "bg-zinc-200 text-zinc-500 cursor-not-allowed"
+                                  : "bg-muted text-muted-foreground cursor-not-allowed"
                               }`}
                           >
                             {slot.time}
@@ -932,7 +932,7 @@ function RapidBookings() {
                           type="button"
                           onClick={() => setPaymentType(key)}
                           className={`flex flex-col items-center justify-center p-3 rounded-xl border transition-all w-full
-                            ${paymentType === key ? "border-emerald-500 bg-[#e6f4ea]" : "border-zinc-300 hover:border-emerald-500"}`}
+                            ${paymentType === key ? "border-emerald-500 bg-[#e6f4ea]" : "border-border hover:border-emerald-500"}`}
                           aria-label={label}
                         >
                           <span className="text-emerald-500">{icon}</span>
@@ -974,7 +974,7 @@ function RapidBookings() {
 
             {/* Booking Summary */}
             <div className="md:w-1/3 sticky top-24 space-y-4">
-              <div className="p-4 rounded-lg border border-zinc-200 dark:border-zinc-700 shadow-sm bg-white dark:bg-zinc-900">
+              <div className="p-4 rounded-lg border border-border shadow-sm bg-card">
                 <h3 className="text-base font-semibold mb-3 text-emerald-600">Booking Summary</h3>
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">

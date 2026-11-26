@@ -91,8 +91,8 @@ function BannerUploader({
           className={`w-full rounded-xl border-2 border-dashed transition-all cursor-pointer
             flex flex-col items-center justify-center gap-3 py-10
             ${uploading
-              ? 'border-blue-400/40 bg-blue-500/5 cursor-not-allowed'
-              : 'border-blue-400/20 hover:border-blue-300/45 hover:bg-blue-500/5'
+              ? 'border-primary/40 bg-primary/5 cursor-not-allowed'
+              : 'border-border hover:border-primary/45 hover:bg-primary/5'
             }`}
           onClick={() => !uploading && inputRef.current?.click()}
           onDragOver={(e) => e.preventDefault()}
@@ -106,7 +106,7 @@ function BannerUploader({
           ) : (
             <>
               <div className="icon-blue p-4 rounded-2xl">
-                <ImageIcon className="w-8 h-8 text-blue-400" />
+                <ImageIcon className="w-8 h-8 text-primary" />
               </div>
               <div className="text-center">
                 <p className="body-text font-medium">Click to upload or drag & drop</p>
@@ -315,10 +315,10 @@ export default function CreateTournamentPage() {
   ];
   const completionCount = readyChecks.filter((item) => item.ready).length;
   const sectionPanelClass = "gaming-panel rounded-lg border border-border bg-muted/10 p-3";
-  const labelClass = "mb-1 block text-xs font-medium text-zinc-300";
-  const inputClass = "h-9 w-full rounded-lg border border-blue-400/25 bg-zinc-900/70 px-3 text-sm text-zinc-100 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-blue-400/60";
-  const textareaClass = "w-full rounded-lg border border-blue-400/25 bg-zinc-900/70 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-blue-400/60";
-  const selectClass = "h-9 w-full rounded-lg border border-blue-400/25 bg-zinc-900/70 px-3 text-sm text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-400/60";
+  const labelClass = "mb-1 block text-xs font-medium text-muted-foreground";
+  const inputClass = "h-9 w-full rounded-lg border border-border bg-card px-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/60";
+  const textareaClass = "w-full rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/60";
+  const selectClass = "h-9 w-full rounded-lg border border-border bg-card px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/60";
   const primaryButtonClass = buttonVariants();
   const secondaryButtonClass = buttonVariants({ variant: "outline" });
 
@@ -447,7 +447,7 @@ export default function CreateTournamentPage() {
         <div className="mb-3 flex items-center justify-between gap-3">
           <div>
             <h2 className="section-title flex items-center gap-2">
-              <Trophy className="h-4 w-4 text-blue-300" />
+              <Trophy className="h-4 w-4 text-primary" />
               Presets
             </h2>
 
@@ -461,11 +461,11 @@ export default function CreateTournamentPage() {
               onClick={() => applyPreset(preset)}
               aria-pressed={selectedPreset === preset.id}
               title={preset.description}
-              className="group rounded-lg border border-blue-400/15 bg-zinc-900/60 p-3 text-left transition-all hover:border-blue-300/45 hover:bg-zinc-800/70"
+              className="group rounded-lg border border-border bg-card p-3 text-left transition-all hover:border-primary/45 hover:bg-muted/70"
             >
               <div className="flex items-center justify-between gap-3">
-                <span className="text-sm font-semibold text-blue-100">{preset.label}</span>
-                <span className="rounded-md border border-blue-300/20 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-blue-200 group-hover:bg-blue-500/10">
+                <span className="text-sm font-semibold text-foreground">{preset.label}</span>
+                <span className="rounded-md border border-border px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-primary group-hover:bg-primary/10">
                   {selectedPreset === preset.id ? "Selected" : "Use"}
                 </span>
               </div>
@@ -480,11 +480,11 @@ export default function CreateTournamentPage() {
 
           <section className={`${sectionPanelClass} lg:col-span-6`}>
             <h2 className="section-title mb-1 flex items-center gap-2">
-              <ListChecks className="h-4 w-4 text-blue-300" />
+              <ListChecks className="h-4 w-4 text-primary" />
               Basics
             </h2>
 
-            <div className="h-px bg-blue-500/20 mb-3" />
+            <div className="h-px bg-primary/20 mb-3" />
             <div className="space-y-3">
               <div>
                 <label className={labelClass}>Tournament Name *</label>
@@ -514,7 +514,7 @@ export default function CreateTournamentPage() {
                     className={`flex h-9 w-full items-center justify-center gap-2 rounded-lg border px-3 text-sm font-semibold transition-all ${
                       form.visibility
                         ? 'border-emerald-400/35 bg-emerald-500/10 text-emerald-100'
-                        : 'border-zinc-600 bg-zinc-900/70 text-zinc-300'
+                        : 'border-border bg-card text-muted-foreground'
                     }`}
                   >
                     {form.visibility ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
@@ -552,11 +552,11 @@ export default function CreateTournamentPage() {
 
           <section className={`${sectionPanelClass} lg:col-span-6`}>
             <h2 className="section-title mb-1 flex items-center gap-2">
-              <Clock className="h-4 w-4 text-blue-300" />
+              <Clock className="h-4 w-4 text-primary" />
               Schedule
             </h2>
 
-            <div className="h-px bg-blue-500/20 mb-3" />
+            <div className="h-px bg-primary/20 mb-3" />
 
             <div className="mb-3 flex flex-wrap gap-2">
               {([['today', 'Today'], ['tomorrow', 'Tomorrow'], ['weekend', 'Saturday']] as const).map(([choice, label]) => (
@@ -577,16 +577,16 @@ export default function CreateTournamentPage() {
                   onChange={(e) => { deadlineEdited.current = true; setDeadline(e.target.value ? new Date(e.target.value) : null); }} />
               </label>
             </div>
-            <p className="mt-2 text-xs text-zinc-400">Auto: 5-hour event, registration closes 1 hour before. Times are editable ({timezone}).</p>
+            <p className="mt-2 text-xs text-muted-foreground">Auto: 5-hour event, registration closes 1 hour before. Times are editable ({timezone}).</p>
           </section>
 
           <section className={`${sectionPanelClass} lg:col-span-6`}>
             <h2 className="section-title mb-1 flex items-center gap-2">
-              <Gamepad2 className="h-4 w-4 text-blue-300" />
+              <Gamepad2 className="h-4 w-4 text-primary" />
               Game & rules
             </h2>
 
-            <div className="h-px bg-blue-500/20 mb-3" />
+            <div className="h-px bg-primary/20 mb-3" />
             <div className="space-y-3">
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div>
@@ -647,7 +647,7 @@ export default function CreateTournamentPage() {
                   value={form.map_pool}
                   onChange={(e) => set('map_pool', e.target.value)}
                 />
-                <p className="mt-1 text-xs text-zinc-400">{mapPoolCount} maps configured for veto/admin selection.</p>
+                <p className="mt-1 text-xs text-muted-foreground">{mapPoolCount} maps configured for veto/admin selection.</p>
               </div>
               <div>
                 <label className={labelClass}>Map Veto</label>
@@ -678,11 +678,11 @@ export default function CreateTournamentPage() {
 
           <section className={`${sectionPanelClass} lg:col-span-6`}>
             <h2 className="section-title mb-1 flex items-center gap-2">
-              <Users className="h-4 w-4 text-blue-300" />
+              <Users className="h-4 w-4 text-primary" />
               Capacity & Prize
             </h2>
 
-            <div className="h-px bg-blue-500/20 mb-3" />
+            <div className="h-px bg-primary/20 mb-3" />
             <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
               <div>
                 <label className={labelClass}>Max Teams</label>
@@ -698,7 +698,7 @@ export default function CreateTournamentPage() {
               <div>
                 <div className="mb-1 flex items-center justify-between gap-2">
                   <label className={labelClass} htmlFor="player-capacity">Max players</label>
-                  <label className="flex items-center gap-1.5 text-xs text-zinc-400"><input type="checkbox" checked={autoPlayers} onChange={(e) => {
+                  <label className="flex items-center gap-1.5 text-xs text-muted-foreground"><input type="checkbox" checked={autoPlayers} onChange={(e) => {
                     if (!e.target.checked) set('capacity_player', effectivePlayerCapacity);
                     setAutoPlayers(e.target.checked);
                   }} /> Auto</label>
@@ -795,7 +795,7 @@ export default function CreateTournamentPage() {
                       className={`flex items-center justify-between rounded-lg border px-3 py-2 text-left text-sm font-semibold transition-all ${
                         form[key]
                           ? 'border-emerald-400/35 bg-emerald-500/10 text-emerald-100'
-                          : 'border-blue-400/15 bg-zinc-900/60 text-zinc-300'
+                          : 'border-border bg-card text-muted-foreground'
                       }`}
                     >
                       {label}
@@ -810,7 +810,7 @@ export default function CreateTournamentPage() {
 
 
           <details className={`${sectionPanelClass} lg:col-span-12`}>
-            <summary className="cursor-pointer text-sm font-semibold">Banner <span className="font-normal text-zinc-400">· Optional</span></summary>
+            <summary className="cursor-pointer text-sm font-semibold">Banner <span className="font-normal text-muted-foreground">· Optional</span></summary>
             <div className="mt-3 max-w-md">
               <BannerUploader preview={bannerPreview} uploading={bannerUploading} onFileSelect={handleBannerSelect} onRemove={handleBannerRemove} />
             </div>

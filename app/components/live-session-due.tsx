@@ -7,7 +7,7 @@ const DOT: Record<StatusTone, string> = {
   ok: "bg-emerald-500",
   attention: "bg-amber-500",
   alert: "bg-red-500",
-  muted: "bg-zinc-400",
+  muted: "bg-muted",
 };
 
 export function StatusPill({ tone, label, title, className }: {

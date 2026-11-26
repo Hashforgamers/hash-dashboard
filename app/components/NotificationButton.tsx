@@ -503,7 +503,7 @@ export function NotificationButton({
       case 'disconnected':
         return { color: 'bg-red-500', title: 'Disconnected - Attempting to reconnect...' }
       default:
-        return { color: 'bg-zinc-500', title: 'Unknown status' }
+        return { color: 'bg-muted', title: 'Unknown status' }
     }
   }
 

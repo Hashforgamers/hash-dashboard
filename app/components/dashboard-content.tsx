@@ -103,7 +103,7 @@ export function DashboardContent() {
   const showDashboardToast = useCallback((message: string, type: 'success' | 'error' | 'info' = 'info') => {
     const toast = document.createElement('div')
     const bgClass =
-      type === 'success' ? 'bg-emerald-500' : type === 'error' ? 'bg-red-500' : 'bg-blue-500'
+      type === 'success' ? 'bg-emerald-500' : type === 'error' ? 'bg-red-500' : 'bg-primary'
     toast.className = `fixed top-4 right-4 px-5 py-3 rounded-lg shadow-xl z-[10000] text-white font-medium transform transition-all duration-300 ${bgClass}`
     toast.innerHTML = `
       <div class="flex items-center gap-2">
@@ -287,7 +287,7 @@ export function DashboardContent() {
                 </div>
                 <span className="dash-kpi-label">Earnings (Net)</span>
               </div>
-              <button aria-label={showEarnings ? 'Hide earnings' : 'Show earnings'} onClick={() => setShowEarnings(!showEarnings)} className="text-zinc-400 transition-colors hover:text-zinc-50">
+              <button aria-label={showEarnings ? 'Hide earnings' : 'Show earnings'} onClick={() => setShowEarnings(!showEarnings)} className="text-muted-foreground transition-colors hover:text-foreground">
                 {showEarnings ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
               </button>
             </div>
@@ -297,7 +297,7 @@ export function DashboardContent() {
               >
                 {showEarnings ? <NumberFlow value={Number(currentStats.netEarnings || 0)} locales="en-IN" format={moneyFormat} /> : "₹•••••"}
               </p>
-              <span className="text-[10px] font-medium text-zinc-400">Today</span>
+              <span className="text-[10px] font-medium text-muted-foreground">Today</span>
             </div>
           </CardContent>
         </Card>
@@ -312,8 +312,8 @@ export function DashboardContent() {
           <CardContent className="p-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-1 sm:gap-2">
-                <div className="rounded-md bg-blue-500/12 p-1.5">
-                  <CalendarCheck className="h-3.5 w-3.5 text-blue-500" />
+                <div className="rounded-md bg-primary/12 p-1.5">
+                  <CalendarCheck className="h-3.5 w-3.5 text-primary" />
                 </div>
                 <span className="dash-kpi-label">Bookings</span>
               </div>
@@ -330,7 +330,7 @@ export function DashboardContent() {
               >
                 <NumberFlow value={Number(currentStats.todayBookings || 0)} />
               </p>
-              <div className="flex items-center gap-1 text-[10px] text-zinc-400">
+              <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
                 <TrendingUp className="h-3 w-3" />
                 <span>Today</span>
               </div>
@@ -353,7 +353,7 @@ export function DashboardContent() {
                 </div>
                 <span className="dash-kpi-label">Pending (Net)</span>
               </div>
-              <button aria-label={showPending ? 'Hide pending amount' : 'Show pending amount'} onClick={() => setShowPending(!showPending)} className="text-zinc-400 transition-colors hover:text-zinc-50">
+              <button aria-label={showPending ? 'Hide pending amount' : 'Show pending amount'} onClick={() => setShowPending(!showPending)} className="text-muted-foreground transition-colors hover:text-foreground">
                 {showPending ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
               </button>
             </div>
@@ -363,7 +363,7 @@ export function DashboardContent() {
               >
                 {showPending ? <NumberFlow value={Number(currentStats.netPendingAmount || 0)} locales="en-IN" format={moneyFormat} /> : "₹•••••"}
               </p>
-              <div className="flex items-center gap-1 text-[10px] text-zinc-400">
+              <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
                 <div className="h-1.5 w-1.5 rounded-full bg-amber-500" />
                 <span>Today</span>
               </div>
@@ -376,7 +376,7 @@ export function DashboardContent() {
 
   const mobileMetricsStrip = (
     <div className="dashboard-module-card flex w-full items-center justify-between gap-1 rounded-lg border border-white/10 bg-white/[0.05] px-1.5 py-1 md:hidden">
-      <div className="min-w-0 rounded-md border border-blue-500/20 bg-blue-500/10 px-1.5 py-1 text-[10px] font-medium text-[#9dccff]">
+      <div className="min-w-0 rounded-md border border-border bg-primary/10 px-1.5 py-1 text-[10px] font-medium text-[#9dccff]">
         Bookings {currentStats.todayBookings}
       </div>
       <div className="min-w-0 rounded-md border border-amber-500/20 bg-amber-500/10 px-1.5 py-1 text-[10px] font-medium text-amber-400">
