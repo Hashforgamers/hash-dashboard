@@ -591,37 +591,37 @@ export function TransactionTable() {
   const renderTransactionCell = (transaction: Transaction, key: ColumnKey) => {
     switch (key) {
       case "bookingId":
-        return <TableCell className="px-4 py-3 text-zinc-700 dark:text-zinc-300">{transaction.bookingId ?? "-"}</TableCell>;
+        return <TableCell className="px-4 py-3 text-muted-foreground">{transaction.bookingId ?? "-"}</TableCell>;
       case "slotDate":
-        return <TableCell className="px-4 py-3 text-zinc-700 dark:text-zinc-300">{transaction.slotDate}</TableCell>;
+        return <TableCell className="px-4 py-3 text-muted-foreground">{transaction.slotDate}</TableCell>;
       case "slotTime":
-        return <TableCell className="px-4 py-3 text-zinc-700 dark:text-zinc-300">{transaction.slotTime}</TableCell>;
+        return <TableCell className="px-4 py-3 text-muted-foreground">{transaction.slotTime}</TableCell>;
       case "userName":
-        return <TableCell className="px-4 py-3 text-zinc-900 dark:text-zinc-100">{transaction.userName}</TableCell>;
+        return <TableCell className="px-4 py-3 text-foreground">{transaction.userName}</TableCell>;
       case "amount":
-        return <TableCell className="px-4 py-3 text-right font-medium text-zinc-900 dark:text-zinc-100">₹{transaction.amount.toFixed(2)}</TableCell>;
+        return <TableCell className="px-4 py-3 text-right font-medium text-foreground">₹{transaction.amount.toFixed(2)}</TableCell>;
       case "appFeeAmount":
   return (
-          <TableCell className="px-4 py-3 text-right text-zinc-700 dark:text-zinc-300">
+          <TableCell className="px-4 py-3 text-right text-muted-foreground">
             ₹{Number(transaction.appFeeAmount || 0).toFixed(2)}
           </TableCell>
         );
       case "netAmount":
         return (
-          <TableCell className="px-4 py-3 text-right font-medium text-zinc-900 dark:text-zinc-100">
+          <TableCell className="px-4 py-3 text-right font-medium text-foreground">
             ₹{Number(transaction.netAmount ?? (transaction.amount - (transaction.appFeeAmount || 0))).toFixed(2)}
           </TableCell>
         );
       case "modeOfPayment":
         return (
           <TableCell className="px-4 py-3">
-            <Badge variant="secondary" className="bg-zinc-200 text-zinc-900 dark:bg-zinc-700/80 dark:text-zinc-200">{transaction.modeOfPayment}</Badge>
+            <Badge variant="secondary" className="bg-muted/80 text-foreground">{transaction.modeOfPayment}</Badge>
           </TableCell>
         );
       case "paymentUseCase":
         return (
           <TableCell className="px-4 py-3">
-            <Badge variant="outline" className="border-zinc-300 text-zinc-700 dark:border-zinc-500/70 dark:text-zinc-300">
+            <Badge variant="outline" className="border-border text-muted-foreground">
               {transaction.paymentUseCase || "-"}
             </Badge>
           </TableCell>
@@ -629,7 +629,7 @@ export function TransactionTable() {
       case "bookingType":
         return (
           <TableCell className="px-4 py-3">
-            <Badge variant="outline" className="border-zinc-300 text-zinc-700 dark:border-zinc-500/70 dark:text-zinc-300">{transaction.label || transaction.bookingType}</Badge>
+            <Badge variant="outline" className="border-border text-muted-foreground">{transaction.label || transaction.bookingType}</Badge>
           </TableCell>
         );
       case "settlementStatus":
@@ -645,10 +645,10 @@ export function TransactionTable() {
               }
               className={
                 transaction.settlementStatus === "done"
-                  ? "border-emerald-300 bg-emerald-50 text-emerald-800 dark:border-emerald-500/30 dark:bg-emerald-500/20 dark:text-emerald-400"
+                  ? "border-emerald-500/30 bg-emerald-500/20 text-emerald-400"
                   : transaction.settlementStatus === "pending"
-                  ? "border-amber-300 bg-amber-50 text-amber-800 dark:border-amber-500/30 dark:bg-amber-500/20 dark:text-amber-400"
-                  : "border-zinc-300 text-zinc-700 dark:border-zinc-500/70 dark:text-zinc-300"
+                  ? "border-amber-500/30 bg-amber-500/20 text-amber-400"
+                  : "border-border text-muted-foreground"
               }
             >
               {transaction.settlementStatus}
@@ -656,18 +656,18 @@ export function TransactionTable() {
           </TableCell>
         );
       case "sourceChannel":
-        return <TableCell className="px-4 py-3 text-zinc-700 dark:text-zinc-300">{transaction.sourceChannel || "-"}</TableCell>;
+        return <TableCell className="px-4 py-3 text-muted-foreground">{transaction.sourceChannel || "-"}</TableCell>;
       case "staffName":
-        return <TableCell className="px-4 py-3 text-zinc-700 dark:text-zinc-300">{transaction.staffName || "-"}</TableCell>;
+        return <TableCell className="px-4 py-3 text-muted-foreground">{transaction.staffName || "-"}</TableCell>;
       case "breakup":
         return (
-          <TableCell className="px-4 py-3 text-xs text-zinc-700 dark:text-zinc-300">
+          <TableCell className="px-4 py-3 text-xs text-muted-foreground">
             B:{(transaction.baseAmount || 0).toFixed(0)} M:{(transaction.mealsAmount || 0).toFixed(0)} C:{(transaction.controllerAmount || 0).toFixed(0)} W:{(transaction.waiveOffAmount || 0).toFixed(0)}
           </TableCell>
         );
       case "gst":
         return (
-          <TableCell className="px-4 py-3 text-xs text-zinc-700 dark:text-zinc-300">
+          <TableCell className="px-4 py-3 text-xs text-muted-foreground">
             {transaction.gstRate ? `${transaction.gstRate}%` : "-"}
             {transaction.gstRate
               ? ` | C:${(transaction.cgstAmount || 0).toFixed(2)} S:${(transaction.sgstAmount || 0).toFixed(2)} I:${(transaction.igstAmount || 0).toFixed(2)}`
@@ -676,24 +676,24 @@ export function TransactionTable() {
         );
       case "totalWithTax":
         return (
-          <TableCell className="px-4 py-3 text-right font-medium text-zinc-900 dark:text-zinc-200">
+          <TableCell className="px-4 py-3 text-right font-medium text-foreground">
             ₹{getTransactionTotalWithTax(transaction).toFixed(2)}
           </TableCell>
         );
       default:
-        return <TableCell className="px-4 py-3 text-zinc-700 dark:text-zinc-300">-</TableCell>;
+        return <TableCell className="px-4 py-3 text-muted-foreground">-</TableCell>;
     }
   };
 
   const getSettlementBadgeClass = (status: string) => {
     const normalized = String(status || "").toLowerCase();
     if (normalized === "done") {
-      return "border-emerald-300 bg-emerald-50 text-emerald-800 dark:border-emerald-500/30 dark:bg-emerald-500/20 dark:text-emerald-400";
+      return "border-emerald-500/30 bg-emerald-500/20 text-emerald-400";
     }
     if (normalized === "pending") {
-      return "border-amber-300 bg-amber-50 text-amber-800 dark:border-amber-500/30 dark:bg-amber-500/20 dark:text-amber-400";
+      return "border-amber-500/30 bg-amber-500/20 text-amber-400";
     }
-    return "border-zinc-300 text-zinc-700 dark:border-zinc-500/70 dark:text-zinc-300";
+    return "border-border text-muted-foreground";
   };
 
   if (boolTrans) {
@@ -809,7 +809,7 @@ export function TransactionTable() {
         className="dashboard-toolbar shrink-0 flex-col items-stretch gap-2 md:flex-row md:items-center"
       >
         <div className="relative min-w-0 flex-1 md:min-w-[220px]">
-          <SearchIcon data-search-icon="" aria-hidden="true" className="absolute left-2.5 top-2.5 h-4 w-4 text-zinc-500 dark:text-zinc-400" />
+          <SearchIcon data-search-icon="" aria-hidden="true" className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input data-search-input=""
             placeholder="Search transactions..."
             className="dashboard-module-input h-10 w-full pl-10 text-sm"
@@ -894,11 +894,11 @@ export function TransactionTable() {
             onClick={(e) => e.stopPropagation()}
           >
           <div className="mb-2 flex items-center justify-between">
-            <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-200">Show/Hide Columns</p>
+            <p className="text-sm font-semibold text-foreground">Show/Hide Columns</p>
             <div className="flex flex-wrap justify-end gap-2">
               <button
                 type="button"
-                className="rounded border border-zinc-300 px-2 py-1 text-xs text-zinc-900 hover:bg-zinc-50 dark:border-zinc-600 dark:text-zinc-200 dark:hover:bg-zinc-800"
+                className="rounded border px-2 py-1 text-xs border-border text-foreground hover:bg-muted"
                 onClick={() => {
                   setVisibleColumns((prev) => {
                     const next = { ...prev };
@@ -911,7 +911,7 @@ export function TransactionTable() {
               </button>
               <button
                 type="button"
-                className="rounded border border-zinc-300 px-2 py-1 text-xs text-zinc-900 hover:bg-zinc-50 dark:border-zinc-600 dark:text-zinc-200 dark:hover:bg-zinc-800"
+                className="rounded border px-2 py-1 text-xs border-border text-foreground hover:bg-muted"
                 onClick={() => {
                   setVisibleColumns((prev) => {
                     const next = { ...prev };
@@ -924,7 +924,7 @@ export function TransactionTable() {
               </button>
               <button
                 type="button"
-                className="rounded border border-zinc-300 px-2 py-1 text-xs text-zinc-900 hover:bg-zinc-50 dark:border-zinc-600 dark:text-zinc-200 dark:hover:bg-zinc-800"
+                className="rounded border px-2 py-1 text-xs border-border text-foreground hover:bg-muted"
                 onClick={() => setShowColumnSelector(false)}
               >
                 Close
@@ -933,7 +933,7 @@ export function TransactionTable() {
           </div>
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 md:grid-cols-4">
             {transactionColumns.map((col) => (
-              <label key={col.key} className="flex items-center gap-2 text-xs text-zinc-900 dark:text-zinc-200">
+              <label key={col.key} className="flex items-center gap-2 text-xs text-foreground">
                 <input
                   type="checkbox"
                   checked={visibleColumns[col.key]}
@@ -961,7 +961,7 @@ export function TransactionTable() {
 
       <div className="md:hidden space-y-3 overflow-y-auto pr-1">
         {filteredTransactions.length === 0 ? (
-          <MobileCompactCard className="border-zinc-300/40 bg-zinc-50/70 p-4 text-sm text-zinc-600 dark:border-zinc-700 dark:bg-zinc-900/40 dark:text-zinc-400">
+          <MobileCompactCard className="p-4 text-sm border-border bg-muted/40 text-muted-foreground">
             No transactions found for selected filters.
           </MobileCompactCard>
         ) : (
@@ -969,8 +969,8 @@ export function TransactionTable() {
             <MobileCompactCard key={`mobile_txn_${transaction.id}`}>
               <div className="flex items-start justify-between gap-2">
                 <div>
-                  <p className="text-sm font-semibold text-zinc-100">{transaction.userName || "Unknown"}</p>
-                  <p className="text-[11px] text-zinc-400">
+                  <p className="text-sm font-semibold text-foreground">{transaction.userName || "Unknown"}</p>
+                  <p className="text-[11px] text-muted-foreground">
                     Booking #{transaction.bookingId ?? "-"} · {transaction.slotDate} {transaction.slotTime}
                   </p>
                 </div>
@@ -979,21 +979,21 @@ export function TransactionTable() {
                 </Badge>
               </div>
               <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
-                <div className="rounded-md border border-blue-500/10 bg-zinc-950/40 p-2">
-                  <p className="text-zinc-500">Total</p>
-                  <p className="font-semibold text-zinc-100">₹{getTransactionTotalWithTax(transaction).toFixed(2)}</p>
+                <div className="rounded-md border border-border bg-muted/40 p-2">
+                  <p className="text-muted-foreground">Total</p>
+                  <p className="font-semibold text-foreground">₹{getTransactionTotalWithTax(transaction).toFixed(2)}</p>
                 </div>
-                <div className="rounded-md border border-blue-500/10 bg-zinc-950/40 p-2">
-                  <p className="text-zinc-500">App Fee</p>
-                  <p className="font-semibold text-zinc-100">₹{Number(transaction.appFeeAmount || 0).toFixed(2)}</p>
+                <div className="rounded-md border border-border bg-muted/40 p-2">
+                  <p className="text-muted-foreground">App Fee</p>
+                  <p className="font-semibold text-foreground">₹{Number(transaction.appFeeAmount || 0).toFixed(2)}</p>
                 </div>
-                <div className="rounded-md border border-blue-500/10 bg-zinc-950/40 p-2">
-                  <p className="text-zinc-500">Payment</p>
-                  <p className="font-semibold text-zinc-100">{transaction.modeOfPayment || "-"}</p>
+                <div className="rounded-md border border-border bg-muted/40 p-2">
+                  <p className="text-muted-foreground">Payment</p>
+                  <p className="font-semibold text-foreground">{transaction.modeOfPayment || "-"}</p>
                 </div>
-                <div className="rounded-md border border-blue-500/10 bg-zinc-950/40 p-2">
-                  <p className="text-zinc-500">Type</p>
-                  <p className="font-semibold text-zinc-100">{transaction.label || transaction.bookingType || "-"}</p>
+                <div className="rounded-md border border-border bg-muted/40 p-2">
+                  <p className="text-muted-foreground">Type</p>
+                  <p className="font-semibold text-foreground">{transaction.label || transaction.bookingType || "-"}</p>
                 </div>
               </div>
             </MobileCompactCard>
@@ -1012,7 +1012,7 @@ export function TransactionTable() {
         <div className="h-full min-h-0 w-full overflow-auto overscroll-contain [scrollbar-gutter:stable_both-edges]">
           <Table className="min-w-[1950px]">
             <TableHeader className="dashboard-module-table-head sticky top-0 backdrop-blur-sm">
-              <TableRow className="border-zinc-200 hover:bg-transparent dark:border-zinc-700">
+              <TableRow className="hover:bg-transparent border-border">
                 {transactionColumns
                   .filter((col) => visibleColumns[col.key])
                   .map((col) => (
@@ -1020,10 +1020,10 @@ export function TransactionTable() {
                       {col.key === "breakup" ? (
                         <span className="group relative inline-flex items-center gap-1">
                           <span>{col.label}</span>
-                          <span className="inline-flex h-4 w-4 cursor-help items-center justify-center rounded-full border border-zinc-300 text-[10px] text-zinc-600 dark:border-zinc-500 dark:text-zinc-400">
+                          <span className="inline-flex h-4 w-4 cursor-help items-center justify-center rounded-full border text-[10px] border-border text-muted-foreground">
                             i
                           </span>
-                          <span className="pointer-events-none absolute left-0 top-6 z-50 hidden w-60 rounded-md border border-zinc-300 bg-white px-2 py-1 text-[11px] font-normal text-zinc-700 shadow-lg group-hover:block dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-300">
+                          <span className="pointer-events-none absolute left-0 top-6 z-50 hidden w-60 rounded-md border px-2 py-1 text-[11px] font-normal shadow-lg group-hover:block border-border bg-card text-muted-foreground">
                             B = Base, M = Meals, C = Controller, W = Waive-off
                           </span>
                         </span>
@@ -1049,7 +1049,7 @@ export function TransactionTable() {
                     <motion.tr
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
-                      className="border-zinc-200 transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800/70"
+                      className="transition-colors border-border hover:bg-muted/70"
                     >
                       {visibleCols.map((col, idx) => {
                         if (idx === 0) {
@@ -1071,7 +1071,7 @@ export function TransactionTable() {
 
                         if (col.key === dayTotalTargetKey) {
                           return (
-                            <TableCell key={`${slotDate}_${col.key}_total`} className="px-4 py-3 text-right font-medium text-blue-700 dark:text-blue-200">
+                            <TableCell key={`${slotDate}_${col.key}_total`} className="px-4 py-3 text-right font-medium text-primary">
                               ₹{dayTotalAmount.toFixed(2)}
                             </TableCell>
                           );
@@ -1093,12 +1093,12 @@ export function TransactionTable() {
                               initial={{ opacity: 0 }}
                               animate={{ opacity: 1 }}
                               exit={{ opacity: 0 }}
-                              className="border-zinc-200 bg-zinc-50/80 transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-900/60 dark:hover:bg-zinc-800/70"
+                              className="transition-colors border-border bg-card hover:bg-muted/70"
                             >
                               {visibleCols.map((col, idx) => {
                                 if (idx === 0) {
                                   return (
-                                    <TableCell key={`${slotDate}_${userId}_${col.key}_summary`} className="px-4 py-3 font-medium text-zinc-900 dark:text-zinc-100">
+                                    <TableCell key={`${slotDate}_${userId}_${col.key}_summary`} className="px-4 py-3 font-medium text-foreground">
                                       <button
                                         type="button"
                                         onClick={() => toggleUserExpand(slotDate, userId)}
@@ -1119,14 +1119,14 @@ export function TransactionTable() {
                                 }
                                 if (col.key === "amount" || col.key === "totalWithTax") {
                                   return (
-                                    <TableCell key={`${slotDate}_${userId}_${col.key}_sum`} className="px-4 py-3 text-right font-medium text-zinc-900 dark:text-zinc-100">
+                                    <TableCell key={`${slotDate}_${userId}_${col.key}_sum`} className="px-4 py-3 text-right font-medium text-foreground">
                                       ₹{userGroup.totalAmount.toFixed(2)}
                                     </TableCell>
                                   );
                                 }
                                 if (col.key === "bookingType") {
                                   return (
-                                    <TableCell key={`${slotDate}_${userId}_${col.key}_count`} className="px-4 py-3 text-zinc-700 dark:text-zinc-300">
+                                    <TableCell key={`${slotDate}_${userId}_${col.key}_count`} className="px-4 py-3 text-muted-foreground">
                                       {userGroup.bookings.length} {userGroup.bookings.length === 1 ? "transaction" : "transactions"}
                                     </TableCell>
                                   );
@@ -1144,7 +1144,7 @@ export function TransactionTable() {
                                   animate={{ opacity: 1, y: 0 }}
                                   exit={{ opacity: 0, y: -6 }}
                                   transition={{ duration: 0.15 }}
-                                  className="border-zinc-200 transition-colors hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-800/55"
+                                  className="transition-colors border-border hover:bg-muted/55"
                                 >
                                   {transactionColumns
                                     .filter((col) => visibleColumns[col.key])

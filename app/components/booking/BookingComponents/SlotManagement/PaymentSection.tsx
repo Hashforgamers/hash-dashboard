@@ -43,41 +43,41 @@ export const PaymentSection = memo(({
   return (
     <div className="space-y-4">
       {/* Private Mode Toggle */}
-      <Card className="p-4 bg-zinc-50 dark:bg-zinc-700/30">
+      <Card className="p-4 bg-muted/30">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className={cn(
               'p-2 rounded-lg transition-all duration-300',
               isPrivateMode 
                 ? 'bg-purple-500' 
-                : 'bg-zinc-300 dark:bg-zinc-600'
+                : 'bg-muted'
             )}>
               {isPrivateMode ? (
                 <Lock className="w-5 h-5 text-white" />
               ) : (
-                <Users className="w-5 h-5 text-zinc-600 dark:text-zinc-300" />
+                <Users className="w-5 h-5 text-muted-foreground" />
               )}
             </div>
             
             <div>
-              <h3 className="text-sm font-bold text-zinc-800 dark:text-white flex items-center gap-2">
+              <h3 className="text-sm font-bold text-white flex items-center gap-2">
                 {isPrivateMode ? (
                   <>
-                    <span className="text-purple-600 dark:text-purple-400">Private Booking</span>
-                    <span className="text-xs bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 px-2 py-0.5 rounded-full font-medium">
+                    <span className="text-purple-400">Private Booking</span>
+                    <span className="text-xs bg-purple-900/30 text-purple-300 px-2 py-0.5 rounded-full font-medium">
                       Manual Mode
                     </span>
                   </>
                 ) : (
                   <>
-                    <span className="text-zinc-700 dark:text-zinc-300">Regular Booking</span>
-                    <span className="text-xs bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 px-2 py-0.5 rounded-full font-medium">
+                    <span className="text-muted-foreground">Regular Booking</span>
+                    <span className="text-xs bg-emerald-900/30 text-emerald-300 px-2 py-0.5 rounded-full font-medium">
                       Standard Mode
                     </span>
                   </>
                 )}
               </h3>
-              <p className="text-xs text-zinc-600 dark:text-zinc-400 mt-0.5">
+              <p className="text-xs text-muted-foreground mt-0.5">
                 {isPrivateMode 
                   ? 'Walk-in or manual booking for internal tracking' 
                   : 'Online booking with standard workflow'}
@@ -94,7 +94,7 @@ export const PaymentSection = memo(({
               'focus:outline-none focus:ring-2 focus:ring-offset-2',
               isPrivateMode 
                 ? 'bg-purple-600 focus:ring-purple-500' 
-                : 'bg-zinc-300 dark:bg-zinc-600 focus:ring-zinc-400'
+                : 'bg-muted focus:ring-border'
             )}
           >
             <motion.span
@@ -111,10 +111,10 @@ export const PaymentSection = memo(({
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
-              className="mt-3 pt-3 border-t border-zinc-200 dark:border-zinc-600"
+              className="mt-3 pt-3 border-t border-border"
             >
-              <div className="bg-purple-50 dark:bg-purple-900/20 rounded-lg p-3">
-                <p className="text-xs text-purple-800 dark:text-purple-200 flex items-start gap-2">
+              <div className="bg-purple-900/20 rounded-lg p-3">
+                <p className="text-xs text-purple-200 flex items-start gap-2">
                   <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
                   <span>
                     Private bookings are used for walk-in customers or manual entries that don't go through the standard online workflow.
@@ -127,12 +127,12 @@ export const PaymentSection = memo(({
       </Card>
 
       {/* Payment Type Selection */}
-      <Card className="p-6 bg-zinc-50 dark:bg-zinc-700/30">
+      <Card className="p-6 bg-muted/30">
         <div className="flex items-center gap-2 mb-4">
-          <div className="p-1 bg-emerald-100 dark:bg-emerald-900/30 rounded">
+          <div className="p-1 bg-emerald-900/30 rounded">
             <CreditCard className="w-4 h-4 text-emerald-600" />
           </div>
-          <h3 className="text-lg font-semibold text-zinc-800 dark:text-white">Payment Method</h3>
+          <h3 className="text-lg font-semibold text-white">Payment Method</h3>
         </div>
 
         <div className="grid grid-cols-3 gap-3">
@@ -148,21 +148,21 @@ export const PaymentSection = memo(({
                 className={cn(
                   'p-4 rounded-lg border-2 transition-all duration-200 flex flex-col items-center gap-2',
                   paymentType === option.value
-                    ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20'
-                    : 'border-zinc-200 dark:border-zinc-600 bg-white dark:bg-zinc-800 hover:border-emerald-300'
+                    ? 'border-emerald-500 bg-emerald-900/20'
+                    : 'border-border bg-muted hover:border-emerald-300'
                 )}
               >
                 <Icon className={cn(
                   'w-6 h-6',
                   paymentType === option.value
-                    ? 'text-emerald-600 dark:text-emerald-400'
-                    : 'text-zinc-600 dark:text-zinc-400'
+                    ? 'text-emerald-400'
+                    : 'text-muted-foreground'
                 )} />
                 <span className={cn(
                   'text-sm font-medium',
                   paymentType === option.value
-                    ? 'text-emerald-700 dark:text-emerald-300'
-                    : 'text-zinc-700 dark:text-zinc-300'
+                    ? 'text-emerald-300'
+                    : 'text-muted-foreground'
                 )}>
                   {option.label}
                 </span>
@@ -182,8 +182,8 @@ export const PaymentSection = memo(({
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
           >
-            <Card className="p-6 bg-purple-50 dark:bg-purple-900/20 border-purple-200 dark:border-purple-700">
-              <h3 className="text-lg font-semibold text-purple-800 dark:text-purple-200 mb-4">
+            <Card className="p-6 bg-purple-900/20 border-purple-700">
+              <h3 className="text-lg font-semibold text-purple-200 mb-4">
                 Pass Validation
               </h3>
 
@@ -195,10 +195,10 @@ export const PaymentSection = memo(({
                     onChange={(e) => onPassUidChange(e.target.value)}
                     placeholder="Enter Pass UID"
                     className={cn(
-                      'w-full px-4 py-3 bg-white dark:bg-zinc-800 border rounded-lg',
+                      'w-full px-4 py-3 bg-muted border rounded-lg',
                       errors.pass || passError
                         ? 'border-red-500 focus:border-red-500'
-                        : 'border-zinc-300 dark:border-zinc-600 focus:border-purple-500',
+                        : 'border-border focus:border-purple-500',
                       'focus:outline-none focus:ring-1 focus:ring-purple-500/20'
                     )}
                   />
@@ -230,13 +230,13 @@ export const PaymentSection = memo(({
                 <motion.div
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="mt-4 p-4 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg border border-emerald-200 dark:border-emerald-700"
+                  className="mt-4 p-4 bg-emerald-900/20 rounded-lg border border-emerald-700"
                 >
                   <div className="flex items-center gap-2 mb-2">
                     <CheckCircle className="w-5 h-5 text-emerald-600" />
-                    <span className="font-semibold text-emerald-800 dark:text-emerald-200">Pass Validated</span>
+                    <span className="font-semibold text-emerald-200">Pass Validated</span>
                   </div>
-                  <div className="space-y-1 text-sm text-zinc-700 dark:text-zinc-300">
+                  <div className="space-y-1 text-sm text-muted-foreground">
                     <p><strong>User:</strong> {validatedPass.user_name}</p>
                     <p><strong>Remaining Hours:</strong> {validatedPass.remaining_hours} hrs</p>
                   </div>

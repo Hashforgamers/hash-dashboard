@@ -575,7 +575,7 @@ export function NotificationPanel({
                 size="sm"
                 onClick={onClose}
                 aria-label="Close notifications"
-                className="h-8 w-8 rounded-full p-0 text-zinc-300 hover:bg-blue-500/15 hover:text-blue-200"
+                className="h-8 w-8 rounded-full p-0 text-muted-foreground hover:bg-primary/15 hover:text-primary"
               >
                 <X className="w-4 h-4" />
               </Button>
@@ -629,16 +629,16 @@ export function NotificationPanel({
                   <p className="mt-1 text-[11px] text-red-300">{queueError}</p>
                 )}
                 {(isQueueSummaryLoading || isQueueListLoading) && (
-                  <p className="mt-1 text-[11px] text-blue-200">Loading...</p>
+                  <p className="mt-1 text-[11px] text-primary">Loading...</p>
                 )}
               </div>
 
               {notifications.length === 0 ? (
-                <div className="dashboard-module-card rounded-xl border border-zinc-600/45 bg-zinc-900/65 px-3 py-5 text-center">
-                  <div className="mx-auto mb-2 flex h-8 w-8 items-center justify-center rounded-full border border-zinc-500/60 bg-zinc-800/70">
+                <div className="dashboard-module-card rounded-xl border border-border bg-card px-3 py-5 text-center">
+                  <div className="mx-auto mb-2 flex h-8 w-8 items-center justify-center rounded-full border border-border bg-muted/70">
                     <Bell className="h-4 w-4 text-muted-foreground opacity-70" />
                   </div>
-                  <h4 className="text-xs font-medium text-zinc-400">No account alerts</h4>
+                  <h4 className="text-xs font-medium text-muted-foreground">No account alerts</h4>
                 </div>
               ) : (
                 <div className="space-y-2">
@@ -670,29 +670,29 @@ export function NotificationPanel({
                           <div className="space-y-2">
                             <div className="flex items-center justify-between">
                               <div>
-                                <p className="text-sm font-semibold text-zinc-100">Meals Added</p>
+                                <p className="text-sm font-semibold text-foreground">Meals Added</p>
                                 {mealNotice.emitted_at && (
-                                  <p className="text-xs text-zinc-400">
+                                  <p className="text-xs text-muted-foreground">
                                     {formatRelativeTime(mealNotice.emitted_at)}
                                   </p>
                                 )}
                               </div>
                               <Badge
                                 variant="outline"
-                                className="flex items-center gap-1 border-blue-400/50 bg-blue-500/10 text-xs text-blue-200"
+                                className="flex items-center gap-1 border-primary/50 bg-primary/10 text-xs text-primary"
                               >
                                 <Wallet className="w-3 h-3" />
                                 Pending
                               </Badge>
                             </div>
-                            <div className="flex items-center gap-2 text-sm text-zinc-200">
-                              <User className="w-4 h-4 text-zinc-400" />
-                              <span className="font-medium text-zinc-100">{mealNotice.username || "Customer"}</span>
-                              <span className="text-xs text-zinc-400">added meals</span>
+                            <div className="flex items-center gap-2 text-sm text-foreground">
+                              <User className="w-4 h-4 text-muted-foreground" />
+                              <span className="font-medium text-foreground">{mealNotice.username || "Customer"}</span>
+                              <span className="text-xs text-muted-foreground">added meals</span>
                             </div>
-                            <div className="rounded-lg border border-blue-400/40 bg-blue-500/10 p-3 text-center">
-                              <span className="text-xs text-blue-200">Amount to collect</span>
-                              <div className="text-base font-semibold tabular-nums text-blue-200">
+                            <div className="rounded-lg border border-primary/40 bg-primary/10 p-3 text-center">
+                              <span className="text-xs text-primary">Amount to collect</span>
+                              <div className="text-base font-semibold tabular-nums text-primary">
                                 ₹{Number(mealNotice.amount_added || 0).toFixed(0)}
                               </div>
                             </div>
@@ -794,7 +794,7 @@ export function NotificationPanel({
                               </Button>
                               <Button
                                 variant="outline"
-                                className="h-8 border-zinc-500/50 bg-zinc-700/30 text-xs text-zinc-200 hover:bg-zinc-700/50"
+                                className="h-8 border-border bg-muted/30 text-xs text-foreground hover:bg-muted/50"
                                 onClick={() => onRemoveNotification(lowStockNotice.notification_id)}
                               >
                                 Dismiss
@@ -822,8 +822,8 @@ export function NotificationPanel({
                           {/* Header Row */}
                           <div className="flex items-center justify-between">
                             <div>
-                              <p className="text-sm font-semibold text-zinc-100">Pay at Cafe Request</p>
-                              <p className="text-xs text-zinc-400">
+                              <p className="text-sm font-semibold text-foreground">Pay at Cafe Request</p>
+                              <p className="text-xs text-muted-foreground">
                                 {formatRelativeTime(payNotice.emitted_at)}
                               </p>
                             </div>
@@ -839,9 +839,9 @@ export function NotificationPanel({
 
                           {/* Customer Name */}
                           <div className="flex items-center gap-2">
-                            <User className="w-4 h-4 text-zinc-400" />
-                            <span className="font-medium text-zinc-100">{payNotice.username}</span>
-                            <span className="text-xs text-zinc-400">wants to book</span>
+                            <User className="w-4 h-4 text-muted-foreground" />
+                            <span className="font-medium text-foreground">{payNotice.username}</span>
+                            <span className="text-xs text-muted-foreground">wants to book</span>
                             {payNotice.slot_count && payNotice.slot_count > 1 && (
                               <span className="rounded-full border border-amber-400/40 bg-amber-500/10 px-2 py-0.5 text-[11px] font-semibold text-amber-200">
                                 {payNotice.slot_count} slots
@@ -851,23 +851,23 @@ export function NotificationPanel({
 
                           {/* Game + Console */}
                           <div className="flex flex-wrap items-center gap-2 text-xs">
-                            <span className="rounded-full border border-blue-400/35 bg-blue-500/10 px-2 py-0.5 text-blue-200">
+                            <span className="rounded-full border border-primary/35 bg-primary/10 px-2 py-0.5 text-primary">
                               {payNotice.game?.game_name || "Gaming Session"}
                             </span>
-                            <span className="flex items-center gap-1 rounded-full border border-zinc-600/70 bg-zinc-800/80 px-2 py-0.5 text-zinc-300">
+                            <span className="flex items-center gap-1 rounded-full border border-border bg-muted/80 px-2 py-0.5 text-muted-foreground">
                               <Gamepad2 className="h-3 w-3 text-red-400" />
                               {payNotice.consoleType || "Console"}
                             </span>
                           </div>
 
                           {/* Time and Date */}
-                          <div className="flex items-center gap-3 text-xs text-zinc-200">
+                          <div className="flex items-center gap-3 text-xs text-foreground">
                             <div className="flex items-center gap-1">
-                              <Clock className="w-3 h-3 text-zinc-400" />
+                              <Clock className="w-3 h-3 text-muted-foreground" />
                               <span>{payNotice.time}</span>
                             </div>
                             <div className="flex items-center gap-1">
-                              <Calendar className="w-3 h-3 text-zinc-400" />
+                              <Calendar className="w-3 h-3 text-muted-foreground" />
                               <span>{formatDisplayDate(payNotice.date)}</span>
                             </div>
                           </div>
@@ -883,7 +883,7 @@ export function NotificationPanel({
                               </span>
                             </div>
                             {/* ✅ NEW: Subtle reminder so vendor knows what to do */}
-                            <p className="w-full text-xs text-zinc-400">
+                            <p className="w-full text-xs text-muted-foreground">
                               Collect after session completion
                             </p>
                           </div>
@@ -943,13 +943,13 @@ export function NotificationPanel({
                 >
                   <div
                     ref={queueRef}
-                    className="dashboard-module-panel w-[min(42rem,calc(100vw-2rem))] max-h-[78vh] overflow-hidden rounded-lg border border-blue-400/30 bg-background"
+                    className="dashboard-module-panel w-[min(42rem,calc(100vw-2rem))] max-h-[78vh] overflow-hidden rounded-lg border border-border bg-background"
                     onClick={(e) => e.stopPropagation()}
                   >
                     <div className="flex items-center justify-between border-b border-border bg-muted/30 px-4 py-3">
                       <div className="flex items-center gap-2">
                         <h4 className="dash-title !text-sm">Payment queue</h4>
-                        <Badge className="border border-blue-400/35 bg-blue-500/10 text-blue-200 text-[10px]">
+                        <Badge className="border border-primary/35 bg-primary/10 text-primary text-[10px]">
                           {queueFilterMode === "single" ? singleDate : `${startDate} to ${endDate}`}
                         </Badge>
                       </div>
@@ -958,7 +958,7 @@ export function NotificationPanel({
                         size="sm"
                         onClick={() => setIsQueueOverlayOpen(false)}
                         aria-label="Close payment queue"
-                        className="h-7 w-7 rounded-full p-0 text-zinc-300 hover:bg-blue-500/10"
+                        className="h-7 w-7 rounded-full p-0 text-muted-foreground hover:bg-primary/10"
                       >
                         <X className="h-4 w-4" />
                       </Button>
@@ -1043,8 +1043,8 @@ export function NotificationPanel({
                             key={card.key}
                             className={`rounded-md border px-2 py-1 text-left transition ${
                               isActive
-                                ? "border-blue-400/45 bg-blue-500/15"
-                                : "border-border bg-muted/40 hover:border-blue-400/30"
+                                ? "border-primary/45 bg-primary/15"
+                                : "border-border bg-muted/40 hover:border-border"
                             }`}
                             onClick={async () => {
                               setSelectedQueueStatus(card.key)
@@ -1064,10 +1064,10 @@ export function NotificationPanel({
 
                     <div className="rounded-lg border border-border bg-muted/20 p-3">
                       <div className="mb-2 flex items-center justify-between">
-                        <p className="text-xs font-medium text-blue-200">
+                        <p className="text-xs font-medium text-primary">
                           {queueStatusCards.find((c) => c.key === selectedQueueStatus)?.label} List
                         </p>
-                        <Badge className="border border-blue-400/40 bg-blue-500/15 text-blue-200 text-[10px]">
+                        <Badge className="border border-primary/40 bg-primary/15 text-primary text-[10px]">
                           {queueItems.length}
                         </Badge>
                       </div>

@@ -177,20 +177,20 @@ export default function ManageExtrasPageContent() {
           <Loader />
         </div>
       ) : categories.length === 0 ? (
-        <div className="p-6 rounded-lg border border-dashed border-zinc-300 bg-zinc-50 text-zinc-400 text-center">
+        <div className="p-6 rounded-lg border border-dashed border-border bg-muted text-muted-foreground text-center">
           No categories found. Add one to get started.
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {categories.map((category) => (
-            <Card key={category.id} className="bg-white dark:bg-zinc-900 shadow-md border">
-              <CardHeader className="flex items-center justify-between px-4 py-3 border-b border-zinc-200 dark:border-zinc-700">
+            <Card key={category.id} className="bg-card shadow-md border">
+              <CardHeader className="flex items-center justify-between px-4 py-3 border-b border-border">
                 <div className="flex items-center gap-3">
                   <Pizza className="w-6 h-6 text-amber-500" />
                   <div>
                     <h2 className="font-semibold text-lg">{category.name}</h2>
                     {category.description && (
-                      <div className="text-xs text-zinc-400 mt-0.5">{category.description}</div>
+                      <div className="text-xs text-muted-foreground mt-0.5">{category.description}</div>
                     )}
                   </div>
                 </div>
@@ -212,24 +212,24 @@ export default function ManageExtrasPageContent() {
                   <AddMenuDialog categoryId={category.id} onSave={handleAddMenu} />
                 </div>
                 {category.menus.length === 0 ? (
-                  <div className="italic text-zinc-400 text-sm text-center py-6">No menu items in this category.</div>
+                  <div className="italic text-muted-foreground text-sm text-center py-6">No menu items in this category.</div>
                 ) : (
                   <ul className="space-y-1">
                     {category.menus.map((menu) => (
                       <li
                         key={menu.id}
-                        className="flex justify-between items-center p-2 rounded hover:bg-emerald-50 dark:hover:bg-emerald-900/30 transition"
+                        className="flex justify-between items-center p-2 rounded hover:bg-emerald-900/30 transition"
                       >
                         <div>
                           <span className="font-medium">{menu.name}</span>
                           {menu.description && (
-                            <span className="ml-2 text-xs text-zinc-500 dark:text-zinc-400">
+                            <span className="ml-2 text-xs text-muted-foreground">
                               {menu.description}
                             </span>
                           )}
                         </div>
                         <div className="flex items-center gap-3">
-                          <span className="text-emerald-700 dark:text-emerald-300 font-semibold">
+                          <span className="text-emerald-300 font-semibold">
                             ₹{menu.price}
                           </span>
                           <EditMenuDialog

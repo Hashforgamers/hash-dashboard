@@ -1558,7 +1558,7 @@ const ToggleSwitch = ({
         sizeClasses[size],
         enabled 
           ? "bg-primary" 
-          : "bg-zinc-200 dark:bg-zinc-700",
+          : "bg-muted",
         disabled && "opacity-50 cursor-not-allowed"
       )}
       role="switch"
@@ -1687,8 +1687,8 @@ const ToggleSwitch = ({
         <div className={cn(
           "rounded-lg border px-3 py-2 text-center text-xs font-medium",
           profileUploadMessage.includes("successfully") 
-            ? "border-emerald-400/40 bg-emerald-500/15 text-emerald-700 dark:text-emerald-200" 
-            : "border-red-400/40 bg-red-500/15 text-red-700 dark:text-red-200"
+            ? "border-emerald-400/40 bg-emerald-500/15 text-emerald-200" 
+            : "border-red-400/40 bg-red-500/15 text-red-200"
         )}>
           {profileUploadMessage}
         </div>
@@ -1717,7 +1717,7 @@ const ToggleSwitch = ({
           {/* Edit Button */}
           <label 
             htmlFor="profile-image-upload"
-            className="absolute -bottom-1 -right-1 flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border-2 border-background bg-blue-500 text-zinc-950 shadow-lg transition-all duration-200 hover:scale-110 hover:bg-blue-400"
+            className="absolute -bottom-1 -right-1 flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border-2 border-background bg-primary text-primary-foreground shadow-lg transition-all duration-200 hover:scale-110 hover:bg-primary"
           >
             <input
               id="profile-image-upload"
@@ -1746,11 +1746,11 @@ const ToggleSwitch = ({
       
       <div className="space-y-2">
         <div className="flex items-center gap-2 rounded-lg border border-border bg-muted/40 px-3 py-2 text-xs text-foreground">
-          <Globe className="h-4 w-4 text-blue-300" />
+          <Globe className="h-4 w-4 text-primary" />
           <span className="truncate">{cafeProfile.website || "Not Available"}</span>
         </div>
         <div className="flex items-center gap-2 rounded-lg border border-border bg-muted/40 px-3 py-2 text-xs text-foreground">
-          <Mail className="h-4 w-4 text-blue-300" />
+          <Mail className="h-4 w-4 text-primary" />
           <span className="truncate">{cafeProfile.email || "No Email Provided"}</span>
         </div>
       </div>
@@ -1823,7 +1823,7 @@ const ToggleSwitch = ({
             uploadMessage.includes("successfully") || uploadMessage.includes("deleted") 
               ? "bg-emerald-500/20 text-emerald-400" 
               : uploadMessage.includes("Uploading") || uploadMessage.includes("Deleting")
-              ? "bg-blue-500/20 text-blue-400"
+              ? "bg-primary/20 text-primary"
               : "bg-red-500/20 text-red-400"
           )}>
             {uploadMessage}
@@ -1876,7 +1876,7 @@ const ToggleSwitch = ({
                   type="button"
                   size="icon"
                   variant="ghost"
-                  className="absolute top-2 left-2 text-white hover:bg-blue-500/80 hover:text-white transition-colors opacity-0 group-hover:opacity-100"
+                  className="absolute top-2 left-2 text-white hover:bg-primary/80 hover:text-white transition-colors opacity-0 group-hover:opacity-100"
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
@@ -2016,7 +2016,7 @@ const ToggleSwitch = ({
                     size="sm"
                     onClick={handleCancelBusinessEdit}
                     disabled={savingBusinessField === field.key}
-                    className="border-zinc-500/50 text-muted-foreground hover:bg-zinc-500/10 hover:border-zinc-500"
+                    className="border-border text-muted-foreground hover:bg-muted/10 hover:border-border"
                   >
                     <X className="h-4 w-4" />
                   </Button>
@@ -2063,7 +2063,7 @@ const ToggleSwitch = ({
   <Card className="account-panel overflow-hidden">
     <CardHeader className="pb-4">
       <CardTitle className="account-section-title flex items-center gap-2">
-        <Clock className="h-5 w-5 text-blue-300" />
+        <Clock className="h-5 w-5 text-primary" />
         Operating Hours
       </CardTitle>
       <CardDescription className="account-description">
@@ -2170,7 +2170,7 @@ const ToggleSwitch = ({
                       size="sm"
                       onClick={handleCancelEdit}
                       disabled={savingSlot === entry.day}
-                      className="border-zinc-500/50 text-muted-foreground hover:bg-zinc-500/10 hover:border-zinc-500"
+                      className="border-border text-muted-foreground hover:bg-muted/10 hover:border-border"
                     >
                       <X className="h-4 w-4" />
                     </Button>
@@ -2206,14 +2206,14 @@ const ToggleSwitch = ({
     </CardHeader>
     <CardContent className="space-y-4">
       {gstMessage && (
-        <div className="rounded-md border border-blue-500/30 bg-blue-500/10 px-3 py-2 text-xs text-blue-200">
+        <div className="rounded-md border border-border bg-primary/10 px-3 py-2 text-xs text-primary">
           {gstMessage}
         </div>
       )}
 
       {loadingGst ? (
         <div className="flex items-center justify-center py-8">
-          <Loader2 className="h-6 w-6 animate-spin text-blue-300" />
+          <Loader2 className="h-6 w-6 animate-spin text-primary" />
         </div>
       ) : (
         <>
@@ -2339,7 +2339,7 @@ const ToggleSwitch = ({
                         </div>
                       )}
                       {documentActionMessage && (
-                        <div className="rounded-lg border border-blue-400/40 bg-blue-500/10 p-3 text-sm text-blue-100">
+                        <div className="rounded-lg border border-primary/40 bg-primary/10 p-3 text-sm text-foreground">
                           {documentActionMessage}
                         </div>
                       )}
@@ -2399,7 +2399,7 @@ const ToggleSwitch = ({
                                   doc.status === "verified" && "bg-emerald-500/20 text-emerald-400",
                                   doc.status === "rejected" && "bg-red-500/20 text-red-400",
                                   doc.status === "pending" && "bg-amber-500/20 text-amber-400",
-                                  doc.status === "missing" && "bg-zinc-500/20 text-muted-foreground"
+                                  doc.status === "missing" && "bg-muted/20 text-muted-foreground"
                                 )}
                               >
                                 {doc.status === "missing" ? "missing" : doc.status}
@@ -2884,7 +2884,7 @@ const ToggleSwitch = ({
                 {/* Header Info */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between p-3 bg-muted/30 rounded-lg border border-border gap-2">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0"></div>
+                    <div className="w-2 h-2 bg-primary rounded-full flex-shrink-0"></div>
                     <span className="body-text font-medium">
                       Booking payment methods ({paymentMethods.length})
                     </span>
@@ -2920,12 +2920,12 @@ const ToggleSwitch = ({
                               <div className={cn(
                                 "w-12 h-12 rounded-xl flex items-center justify-center border transition-colors",
                                 method.is_enabled 
-                                  ? "bg-blue-500/30 border-blue-500/50" 
-                                  : "bg-blue-500/10 border-border"
+                                  ? "bg-primary/30 border-primary/50" 
+                                  : "bg-primary/10 border-border"
                               )}>
                                 <Coffee className={cn(
                                   "icon-lg transition-colors",
-                                  method.is_enabled ? "text-blue-600" : "text-blue-400"
+                                  method.is_enabled ? "text-primary" : "text-primary"
                                 )} />
                               </div>
                             ) : normalizedName === "cafe_specific_pass" ? (
@@ -2977,7 +2977,7 @@ const ToggleSwitch = ({
                             <div className="mt-2 flex items-center gap-1 body-text-small flex-wrap">
                               <div className={cn(
                                 "w-1 h-1 rounded-full flex-shrink-0",
-                                method.is_enabled ? "bg-emerald-500" : "bg-zinc-400"
+                                method.is_enabled ? "bg-emerald-500" : "bg-muted"
                               )}></div>
                               <span className={cn(
                                 method.is_enabled ? "text-emerald-600" : "text-muted-foreground"
@@ -3030,8 +3030,8 @@ const ToggleSwitch = ({
                 {/* Summary Footer */}
                 <div className="mt-6 p-4 bg-muted/30 rounded-lg border border-border">
                   <div className="flex flex-col sm:flex-row items-start gap-3">
-                    <div className="w-5 h-5 bg-blue-500/20 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                    <div className="w-5 h-5 bg-primary/20 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <div className="w-2 h-2 bg-primary rounded-full"></div>
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1 flex-wrap">
@@ -3394,7 +3394,7 @@ const ToggleSwitch = ({
                           href={`${DASHBOARD_URL}${item.invoice_url}`}
                           target="_blank"
                           rel="noreferrer"
-                          className="inline-flex items-center gap-1 rounded-md border border-blue-500/40 px-2 py-1 text-xs text-blue-300 hover:bg-blue-500/10"
+                          className="inline-flex items-center gap-1 rounded-md border border-primary/40 px-2 py-1 text-xs text-primary hover:bg-primary/10"
                         >
                           <Download className="h-3.5 w-3.5" />
                           {item.invoice_number || "Invoice"}

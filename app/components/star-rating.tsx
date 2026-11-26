@@ -16,7 +16,7 @@ export function StarRating({ rating }: StarRatingProps) {
         } else if (i === fullStars && hasHalfStar) {
           return <StarHalf key={i} className="w-6 h-6 fill-amber-400 text-amber-400" />
         } else {
-          return <Star key={i} className="w-6 h-6 text-zinc-300" />
+          return <Star key={i} className="w-6 h-6 text-muted-foreground" />
         }
       })}
     </div>

@@ -142,7 +142,7 @@ export function CafeWalletWorkspace({embedded = false, view = "wallet"}: {embedd
     {!selectedCafeId ? <p>Select a cafe first.</p> : <fieldset disabled={busy} className="min-w-0 space-y-3">
     <div className="space-y-3">
     {view==='shift' && (
-    <section className="space-y-3 rounded-lg border bg-card p-3"><div className="flex items-center justify-between"><h2 className="text-sm font-semibold">Your shift</h2><span className={`rounded-md px-2 py-1 text-xs ${openShift ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-300" : "bg-muted text-muted-foreground"}`}>{openShift?"Open":"Closed"}</span></div>
+    <section className="space-y-3 rounded-lg border bg-card p-3"><div className="flex items-center justify-between"><h2 className="text-sm font-semibold">Your shift</h2><span className={`rounded-md px-2 py-1 text-xs ${openShift ? "bg-emerald-500/10 text-emerald-300" : "bg-muted text-muted-foreground"}`}>{openShift?"Open":"Closed"}</span></div>
       <p className="text-xs text-muted-foreground">{openShift ? `Opening cash ${rupees(openShift.opening_cash)}` : 'Open a shift to collect payments.'}</p>
       {openShift?.expected_cash != null && <p className="text-sm">Expected cash <strong className="tabular-nums">{rupees(openShift.expected_cash)}</strong></p>}
       <label className="block text-xs font-medium">{openShift?'Cash counted at shift end (₹)':'Cash in drawer at shift start (₹)'}<Input type="number" min="0" step="0.01" placeholder={openShift ? "Enter actual cash counted" : "0.00"} value={cash} onChange={e=>setCash(e.target.value)}/></label>

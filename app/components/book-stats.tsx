@@ -87,8 +87,8 @@ export function BookingStats({ refreshSlots, setRefreshSlots }) {
               onClick={() => setActiveTab(tab)}
               className={`text-xs px-2 py-1 rounded-md transition-colors ${
                 activeTab === tab
-                  ? 'bg-zinc-900 text-white dark:bg-zinc-100 dark:text-black'
-                  : 'text-zinc-500 hover:bg-zinc-200 dark:hover:bg-zinc-800'
+                  ? 'bg-muted text-black'
+                  : 'text-muted-foreground hover:bg-muted'
               }`}
             >
               {tab === 'all' ? 'All' : tab.charAt(0).toUpperCase() + tab.slice(1)}
@@ -106,7 +106,7 @@ export function BookingStats({ refreshSlots, setRefreshSlots }) {
           const Icon = platform.icon;
 
           return (
-            <div key={platform.name} className="bg-white dark:bg-zinc-900 rounded-lg p-3 shadow-md">
+            <div key={platform.name} className="bg-card rounded-lg p-3 shadow-md">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
                   <div
@@ -115,7 +115,7 @@ export function BookingStats({ refreshSlots, setRefreshSlots }) {
                   >
                     <Icon className="w-4 h-4" style={{ color: platform.color }} />
                   </div>
-                  <span className="text-sm font-medium text-zinc-700 dark:text-zinc-100">
+                  <span className="text-sm font-medium text-foreground">
                     {platform.name}
                   </span>
                 </div>
@@ -124,14 +124,14 @@ export function BookingStats({ refreshSlots, setRefreshSlots }) {
                 </span>
               </div>
 
-              <div className="w-full h-2 rounded-full bg-zinc-200 dark:bg-zinc-700">
+              <div className="w-full h-2 rounded-full bg-muted">
                 <div
                   className="h-2 rounded-full"
                   style={{ width: `${bookedPercentage}%`, backgroundColor: platform.color }}
                 />
               </div>
 
-              <div className="mt-2 text-xs flex justify-between text-zinc-600 dark:text-zinc-400">
+              <div className="mt-2 text-xs flex justify-between text-muted-foreground">
                 <span>Booked: {platform.booked}</span>
                 <span>Free: {available}</span>
               </div>
@@ -140,8 +140,8 @@ export function BookingStats({ refreshSlots, setRefreshSlots }) {
         })}
       </div>
 
-      <div className="border-t border-zinc-200 dark:border-zinc-800 pt-3 flex items-center justify-between text-sm text-zinc-600 dark:text-zinc-400">
-        <span>Total Available: <strong className="text-zinc-800 dark:text-zinc-100">{totalUnits - totalBooked}</strong> of {totalUnits}</span>
+      <div className="border-t border-border pt-3 flex items-center justify-between text-sm text-muted-foreground">
+        <span>Total Available: <strong className="text-foreground">{totalUnits - totalBooked}</strong> of {totalUnits}</span>
         <span className="font-medium">{totalBooked} / {totalUnits} booked</span>
       </div>
     </div>

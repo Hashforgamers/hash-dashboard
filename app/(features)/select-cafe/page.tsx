@@ -122,8 +122,8 @@ export default function SelectCafePage() {
 
   const formInputClass = "ui-input-surface"
   const formSelectClass = "ui-input-surface w-full rounded-md px-3 py-2 text-sm"
-  const sectionHeadingClass = "text-xl font-semibold text-zinc-900 dark:text-white"
-  const labelClass = "text-zinc-700 dark:text-zinc-300"
+  const sectionHeadingClass = "text-xl font-semibold text-white"
+  const labelClass = "text-muted-foreground"
 
   const refreshVendorList = () => {
     const storedVendors = localStorage.getItem("vendors")
@@ -586,11 +586,11 @@ export default function SelectCafePage() {
           <div className="group relative" style={{ animation: "fadeInUp 0.6s ease-out forwards" }}>
             <button
               onClick={() => handleCafeClick("add-new")}
-              className="premium-card relative min-h-[132px] w-full rounded-[24px] border border-dashed border-blue-400/35 bg-transparent p-6 text-left shadow-[0_24px_80px_rgba(0,0,0,0.32)] backdrop-blur-xl transition-all duration-300 hover:-translate-y-1 hover:border-emerald-500/35 hover:bg-white/[0.03] md:min-h-[144px]"
+              className="premium-card relative min-h-[132px] w-full rounded-[24px] border border-dashed border-primary/35 bg-transparent p-6 text-left shadow-[0_24px_80px_rgba(0,0,0,0.32)] backdrop-blur-xl transition-all duration-300 hover:-translate-y-1 hover:border-emerald-500/35 hover:bg-white/[0.03] md:min-h-[144px]"
             >
               <div className="relative flex h-full items-center gap-4 md:gap-5">
                 <div className="feature-action-icon h-16 w-16 flex-shrink-0 rounded-[20px] border border-white/10 bg-white/5 transition-all duration-300 group-hover:scale-105 md:h-[72px] md:w-[72px]">
-                  <Plus className="h-8 w-8 text-blue-400 md:h-9 md:w-9" />
+                  <Plus className="h-8 w-8 text-primary md:h-9 md:w-9" />
                 </div>
                 <div className="flex-1 space-y-1">
                   <p className="text-[9px] uppercase tracking-[0.22em] text-[rgba(255,255,255,0.45)]">
@@ -616,16 +616,16 @@ export default function SelectCafePage() {
             <div className="relative mx-auto mb-6">
               <div className="feature-action-icon h-20 w-20 rounded-3xl shadow-2xl">
                 {isUnlocking ? (
-                  <Unlock className="h-10 w-10 animate-pulse text-zinc-900 dark:text-white" />
+                  <Unlock className="h-10 w-10 animate-pulse text-white" />
                 ) : (
-                  <Lock className="h-10 w-10 text-zinc-900 dark:text-white" />
+                  <Lock className="h-10 w-10 text-white" />
                 )}
               </div>
             </div>
-            <DialogTitle className="text-2xl font-bold text-zinc-900 md:text-3xl dark:text-white">
+            <DialogTitle className="text-2xl font-bold md:text-3xl text-white">
               Access {selectedCafeData?.name}
             </DialogTitle>
-            <p className="mt-2 text-sm text-zinc-600 md:text-base dark:text-zinc-400">Enter your 4-digit PIN to continue</p>
+            <p className="mt-2 text-sm md:text-base text-muted-foreground">Enter your 4-digit PIN to continue</p>
           </DialogHeader>
 
           <div className="space-y-6 pt-4">
@@ -652,7 +652,7 @@ export default function SelectCafePage() {
                     className={`w-4 h-4 rounded-full transition-all duration-300 ${
                       i < pin.length
                         ? "bg-emerald-500 scale-125 shadow-lg shadow-emerald-400/50"
-                        : "bg-zinc-300 dark:bg-zinc-600/50"
+                        : "bg-muted/50"
                     }`}
                   />
                 ))}
@@ -679,7 +679,7 @@ export default function SelectCafePage() {
 
             {error && (
               <div className="text-center p-4 bg-red-500/10 border border-red-500/20 rounded-xl backdrop-blur-sm">
-                <p className="text-sm font-medium text-red-600 dark:text-red-400">{error}</p>
+                <p className="text-sm font-medium text-red-400">{error}</p>
               </div>
             )}
           </div>
@@ -690,7 +690,7 @@ export default function SelectCafePage() {
       <Dialog open={showOnboardDialog} onOpenChange={setShowOnboardDialog}>
         <DialogContent className="premium-card max-h-[92vh] w-[calc(100vw-1.5rem)] max-w-4xl overflow-y-auto rounded-3xl border">
           <DialogHeader>
-            <DialogTitle className="text-3xl font-bold text-zinc-900 dark:text-white">
+            <DialogTitle className="text-3xl font-bold text-white">
               Onboard New Gaming Cafe
             </DialogTitle>
           </DialogHeader>
@@ -924,7 +924,7 @@ export default function SelectCafePage() {
                 {DAYS_OF_WEEK.map((day) => (
                   <div key={day.key} className="flex items-center gap-4">
                     <div className="w-28">
-                      <span className="text-zinc-700 dark:text-zinc-300">{day.label}</span>
+                      <span className="text-muted-foreground">{day.label}</span>
                     </div>
                     <Checkbox
                       checked={formData.timing[day.key]?.closed || false}
@@ -937,9 +937,9 @@ export default function SelectCafePage() {
                           },
                         })
                       }
-                      className="border-zinc-600"
+                      className="border-border"
                     />
-                    <span className="text-sm text-zinc-600 dark:text-zinc-400">Closed</span>
+                    <span className="text-sm text-muted-foreground">Closed</span>
                     {!formData.timing[day.key]?.closed && (
                       <>
                         <Input
@@ -956,7 +956,7 @@ export default function SelectCafePage() {
                           }
                           className="ui-input-surface w-32"
                         />
-                        <span className="text-zinc-600 dark:text-zinc-400">to</span>
+                        <span className="text-muted-foreground">to</span>
                         <Input
                           type="time"
                           value={formData.timing[day.key]?.close || "22:00"}
@@ -981,8 +981,8 @@ export default function SelectCafePage() {
             {/* Available Consoles */}
             <div className="space-y-4">
               <h3 className={sectionHeadingClass}>Available Consoles</h3>
-              <div className="rounded p-3 border border-emerald-300 bg-emerald-50 dark:border-emerald-700/50 dark:bg-emerald-900/20">
-                <p className="text-xs text-emerald-800 dark:text-emerald-300">
+              <div className="rounded p-3 border border-emerald-700/50 bg-emerald-900/20">
+                <p className="text-xs text-emerald-300">
                   <strong>Console Auto-Creation:</strong> Individual console records will be automatically created based on
                   the number of slots. For example, 5 PC slots will create PC-1, PC-2, PC-3, PC-4, PC-5.
                 </p>
@@ -1089,9 +1089,9 @@ export default function SelectCafePage() {
                         type="file"
                         accept=".pdf,.jpg,.jpeg,.png"
                         onChange={(e) => handleFileChange(docType, e.target.files?.[0] || null)}
-                        className="ui-input-surface file:mr-4 file:rounded-lg file:border-0 file:bg-emerald-600 file:px-4 file:py-2 file:text-white dark:file:bg-emerald-600"
+                        className="ui-input-surface file:mr-4 file:rounded-lg file:border-0 file:px-4 file:py-2 file:text-white file:bg-emerald-600"
                       />
-                      {documents[docType] && <span className="text-sm text-emerald-700 dark:text-emerald-400">✓</span>}
+                      {documents[docType] && <span className="text-sm text-emerald-400">✓</span>}
                     </div>
                   </div>
                 ))}
@@ -1125,7 +1125,7 @@ export default function SelectCafePage() {
 
             {error && (
               <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-xl">
-                <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+                <p className="text-sm text-red-400">{error}</p>
               </div>
             )}
           </div>

@@ -366,12 +366,12 @@ export default function LoginPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/65 p-4">
           <div className="w-full max-w-md rounded-lg border border-white/10 bg-[#1c1c1e]/95 p-5 shadow-2xl backdrop-blur-xl">
             <h3 className="text-lg font-semibold text-white">Set New Password</h3>
-            <p className="mt-1 text-sm text-zinc-300">
+            <p className="mt-1 text-sm text-muted-foreground">
               Your temporary password is active. Set a new password to continue.
             </p>
             <div className="mt-4 space-y-3">
               <div>
-                <label className="mb-1 block text-xs text-zinc-300">New Password</label>
+                <label className="mb-1 block text-xs text-muted-foreground">New Password</label>
                 <PasswordInput
                   placeholder="Enter new password"
                   autoComplete="new-password"
@@ -380,7 +380,7 @@ export default function LoginPage() {
                 />
               </div>
               <div>
-                <label className="mb-1 block text-xs text-zinc-300">Confirm Password</label>
+                <label className="mb-1 block text-xs text-muted-foreground">Confirm Password</label>
                 <PasswordInput
                   placeholder="Re-enter password"
                   autoComplete="new-password"
@@ -436,10 +436,10 @@ export default function LoginPage() {
                 />
               </div>
             </div>
-            <CardTitle className="premium-heading mb-1 text-2xl font-semibold text-zinc-50">
+            <CardTitle className="premium-heading mb-1 text-2xl font-semibold text-foreground">
               Sign in to Hash
             </CardTitle>
-            <CardDescription className="mx-auto max-w-sm text-[15px] font-medium text-zinc-400">
+            <CardDescription className="mx-auto max-w-sm text-[15px] font-medium text-muted-foreground">
               Access your gaming cafe operations dashboard.
             </CardDescription>
           </CardHeader>
@@ -455,7 +455,7 @@ export default function LoginPage() {
                   name="email"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-xs font-medium text-zinc-300">
+                      <FormLabel className="text-xs font-medium text-muted-foreground">
                         Email Address
                       </FormLabel>
                       <FormControl>
@@ -463,7 +463,7 @@ export default function LoginPage() {
                           placeholder="Enter your email"
                           type="email"
                           autoComplete="email"
-                          className="h-11 rounded-lg border border-white/10 bg-white/[0.06] px-3 text-[15px] text-zinc-50 placeholder:text-zinc-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                          className="h-11 rounded-lg border border-white/10 bg-white/[0.06] px-3 text-[15px] text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/20"
                           {...field}
                           onChange={(e) => {
                             field.onChange(e);
@@ -482,12 +482,12 @@ export default function LoginPage() {
                   render={({ field }) => (
                     <FormItem>
                       <div className="flex justify-between items-center">
-                        <FormLabel className="text-xs font-medium text-zinc-300">
+                        <FormLabel className="text-xs font-medium text-muted-foreground">
                           Password
                         </FormLabel>
                         <Link
                           href="/login/forget-password"
-                          className="text-xs font-medium text-blue-500 transition-colors duration-200 hover:text-blue-400"
+                          className="text-xs font-medium text-primary transition-colors duration-200 hover:text-primary"
                         >
                           Forgot password?
                         </Link>
@@ -496,7 +496,7 @@ export default function LoginPage() {
                         <PasswordInput
                           placeholder="Enter your password"
                           autoComplete="current-password"
-                          className="h-11 rounded-lg border border-white/10 bg-white/[0.06] px-3 text-[15px] text-zinc-50 placeholder:text-zinc-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                          className="h-11 rounded-lg border border-white/10 bg-white/[0.06] px-3 text-[15px] text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/20"
                           {...field}
                           onChange={(e) => {
                             field.onChange(e);
@@ -535,12 +535,12 @@ export default function LoginPage() {
             </Form>
 
             <div className="flex items-center justify-center gap-4 border-t border-white/10 pt-4">
-              <div className="flex items-center gap-2 text-[12px] font-medium text-zinc-400">
+              <div className="flex items-center gap-2 text-[12px] font-medium text-muted-foreground">
                 <Shield className="w-3 h-3" />
                 <span>Secure Login</span>
               </div>
               <div className="h-1 w-1 rounded-full bg-[#48484a]"></div>
-              <div className="flex items-center gap-2 text-[12px] font-medium text-zinc-400">
+              <div className="flex items-center gap-2 text-[12px] font-medium text-muted-foreground">
                 <span className="h-2 w-2 rounded-full bg-emerald-500/80" />
                 <span>Encrypted Session</span>
               </div>
@@ -549,7 +549,7 @@ export default function LoginPage() {
         </Card>
 
         <div className="mt-6 text-center">
-          <p className="text-sm font-medium text-zinc-500">
+          <p className="text-sm font-medium text-muted-foreground">
             © {new Date().getFullYear()} Hash for Gamers. All rights reserved.
           </p>
         </div>
