@@ -33,7 +33,7 @@ const SERVICE_PERMISSION_MAP: Array<{
   { label: "Manage Gaming Console", permission: "gaming.manage", section: "Operations" },
   { label: "Manage Booking", permission: "booking.manage", section: "Operations" },
   { label: "Extra Services", permission: "extras.manage", section: "Operations" },
-  { label: "Store", permission: "store.manage", section: "Operations" },
+  { label: "Shop", permission: "store.manage", section: "Operations" },
   { label: "Passes", permission: "passes.manage", section: "Operations" },
   { label: "Games", permission: "games.manage", section: "Operations" },
   { label: "Tournaments", permission: "tournaments.manage", section: "Operations" },
