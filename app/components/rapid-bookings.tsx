@@ -711,7 +711,7 @@ function RapidBookings() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.1 }}
-                className="border rounded-lg p-6 bg-card transition-all duration-300 hover:shadow-lg"
+                className="border rounded-lg p-4 bg-card transition-all duration-300 hover:shadow-lg"
               >
                 <div className="flex justify-between items-start mb-4">
                   <div className="text-primary transform transition-transform hover:scale-110">
@@ -760,7 +760,7 @@ function RapidBookings() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
-              className="md:w-2/3 border rounded-lg p-6 space-y-6 bg-card shadow-xl"
+              className="md:w-2/3 border rounded-lg p-4 space-y-6 bg-card shadow-xl"
             >
               {/* Header */}
               <div className="flex justify-between items-center border-b pb-4">

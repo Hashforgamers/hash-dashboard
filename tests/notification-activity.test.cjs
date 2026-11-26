@@ -2,7 +2,7 @@ const {test}=require('node:test');const assert=require('node:assert/strict');con
 function setup(items=[]){
  const states=[items,'',false,false];let index=0;const updates=[],calls=[];
  const modules={react:{...React,useState:()=>{const i=index++;return [states[i],value=>updates.push({i,value})]},useEffect:()=>{},useCallback:fn=>fn,useRef:value=>({current:value})},
- './notification-panel.module.css':{__esModule:true,default:{}},'@/components/ui/button':{Button:'button'},
+ './notification-panel.module.css':{__esModule:true,default:{}},'@/components/ui/button':{Button:'button'},'@/app/components/confirm-dialog':{confirmDialog:async()=>true},
  '@/app/context/AccessContext':{useAccess:()=>({selectedCafeId:7,activeStaff:{id:1,role:'owner'},can:()=>true})},'@/app/context/SocketContext':{useSocket:()=>({socket:null})},
  '@/lib/cafe-api':{rupees:x=>String(x),cafeCall:async(path)=>{calls.push(path);return {items:[],notices:[]}}}};
  const module={exports:{}};

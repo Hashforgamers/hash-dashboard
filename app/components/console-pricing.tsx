@@ -1670,7 +1670,7 @@ export default function ConsolePricing() {
 
           <div className="min-h-0 flex-1 overflow-y-auto pr-1">
             {isLoadingSquadPricing ? (
-              <div className="dashboard-module-surface flex h-full items-center justify-center rounded-lg p-6 text-muted-foreground">
+              <div className="dashboard-module-surface flex h-full items-center justify-center rounded-lg p-4 text-muted-foreground">
                 <Loader2 className="mr-2 h-5 w-5 animate-spin text-primary" />
                 Loading squad rules...
               </div>
@@ -1761,7 +1761,7 @@ export default function ConsolePricing() {
                               return (
                                 <div
                                   key={`${group}-${rule.players}`}
-                                  className="dashboard-module-card rounded-lg p-2.5"
+                                  className="dashboard-module-card rounded-lg p-3"
                                 >
                                   <div className="grid grid-cols-1 gap-2 md:grid-cols-[110px_120px_180px_1fr_auto]">
                                     <div className="flex items-center gap-2">

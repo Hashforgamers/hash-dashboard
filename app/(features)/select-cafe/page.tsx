@@ -561,7 +561,7 @@ export default function SelectCafePage() {
             >
               <button
                 onClick={() => handleCafeClick(cafe.id)}
-                className="premium-card relative min-h-[132px] w-full rounded-[24px] border border-white/10 bg-transparent p-6 text-left shadow-[0_24px_80px_rgba(0,0,0,0.32)] backdrop-blur-xl transition-all duration-300 hover:-translate-y-1 hover:border-emerald-500/25 hover:bg-white/[0.03] md:min-h-[144px]"
+                className="premium-card relative min-h-[132px] w-full rounded-[24px] border border-white/10 bg-transparent p-4 text-left shadow-[0_24px_80px_rgba(0,0,0,0.32)] backdrop-blur-xl transition-all duration-300 hover:-translate-y-1 hover:border-emerald-500/25 hover:bg-white/[0.03] md:min-h-[144px]"
               >
                 <div className="relative flex h-full items-center gap-4 md:gap-5">
                   <div className="feature-action-icon h-16 w-16 flex-shrink-0 rounded-[20px] border border-white/10 bg-white/5 shadow-lg transition-all duration-300 group-hover:scale-105 md:h-[72px] md:w-[72px]">
@@ -586,7 +586,7 @@ export default function SelectCafePage() {
           <div className="group relative" style={{ animation: "fadeInUp 0.6s ease-out forwards" }}>
             <button
               onClick={() => handleCafeClick("add-new")}
-              className="premium-card relative min-h-[132px] w-full rounded-[24px] border border-dashed border-primary/35 bg-transparent p-6 text-left shadow-[0_24px_80px_rgba(0,0,0,0.32)] backdrop-blur-xl transition-all duration-300 hover:-translate-y-1 hover:border-emerald-500/35 hover:bg-white/[0.03] md:min-h-[144px]"
+              className="premium-card relative min-h-[132px] w-full rounded-[24px] border border-dashed border-primary/35 bg-transparent p-4 text-left shadow-[0_24px_80px_rgba(0,0,0,0.32)] backdrop-blur-xl transition-all duration-300 hover:-translate-y-1 hover:border-emerald-500/35 hover:bg-white/[0.03] md:min-h-[144px]"
             >
               <div className="relative flex h-full items-center gap-4 md:gap-5">
                 <div className="feature-action-icon h-16 w-16 flex-shrink-0 rounded-[20px] border border-white/10 bg-white/5 transition-all duration-300 group-hover:scale-105 md:h-[72px] md:w-[72px]">

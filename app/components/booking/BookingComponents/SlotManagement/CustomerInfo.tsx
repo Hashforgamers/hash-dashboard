@@ -36,7 +36,7 @@ export const CustomerInfo = memo(({
   errors
 }: CustomerInfoProps) => {
   return (
-    <Card className="p-6 bg-muted/30">
+    <Card className="p-4 bg-muted/30">
       <div className="flex items-center gap-2 mb-4">
         <div className="p-1 bg-emerald-900/30 rounded">
           <User className="w-4 h-4 text-emerald-600" />

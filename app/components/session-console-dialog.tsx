@@ -9,7 +9,7 @@ export function SessionConsoleDialog({ open, onClose, consoles, selectedIds, req
 }) {
   return <Dialog open={open} onOpenChange={(next) => { if (!next && !submitting) onClose(); }}>
     <DialogContent data-workspace-dialog={undefined} className="flex max-h-[90dvh] w-[calc(100%-2rem)] max-w-xl flex-col gap-0 overflow-hidden rounded-lg p-0 border-border bg-card text-foreground">
-      <div className="border-b p-6 border-border">
+      <div className="border-b p-4 border-border">
         <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-emerald-400">Session setup</p>
         <DialogTitle>Select {requiredCount > 1 ? `${requiredCount} consoles` : "a console"}</DialogTitle>
         <DialogDescription className="mt-2 text-sm text-muted-foreground">Choose {requiredCount > 1 ? "a station for each player" : "an available station"} to start your {system || "gaming"} session.</DialogDescription>
@@ -28,7 +28,7 @@ export function SessionConsoleDialog({ open, onClose, consoles, selectedIds, req
         </>}
         {error && <p role="alert" className="mt-4 rounded-lg border p-3 text-sm border-red-900 bg-red-950/30 text-red-300">{error}</p>}
       </div>
-      <div className="flex gap-3 border-t p-5 border-border bg-muted/30">
+      <div className="flex gap-3 border-t p-4 border-border bg-muted/30">
         <button type="button" onClick={onRetry} disabled={loading || submitting} className="rounded-lg border px-4 py-3 text-sm font-medium disabled:opacity-50 border-border hover:bg-muted">Refresh</button>
         <button type="button" onClick={onStart} disabled={selectedIds.length !== requiredCount || loading || submitting} className={cn(buttonVariants({ variant: "success", size: "lg" }), "flex-1 disabled:cursor-not-allowed")}>{submitting ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}{submitting ? "Starting session…" : "Start session"}</button>
       </div>

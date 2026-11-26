@@ -190,7 +190,7 @@ export function CafeWalletWorkspace({embedded = false, view = "wallet"}: {embedd
     </section>}
     </div>
     {view==='settings' && <SessionExtensionSettings/>}
-    {view==='settings' && policy && can('account.manage') && <section className="payment-settings-panel rounded-lg border bg-card p-5">
+    {view==='settings' && policy && can('account.manage') && <section className="payment-settings-panel rounded-lg border bg-card p-4">
       <header className="mb-5"><h2 className="text-lg font-semibold">Payment settings</h2><p className="mt-1 text-sm text-muted-foreground">Manage QR self-service, wallet collections and food payments.</p></header>
       <div className="grid gap-5 md:grid-cols-2">
         <div className="space-y-4">

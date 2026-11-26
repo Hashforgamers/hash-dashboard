@@ -719,7 +719,7 @@ const [isPrivateMode, setIsPrivateMode] = useState<boolean>(false);
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="max-w-sm w-full bg-transparent rounded-lg shadow-lg p-6 text-center"
+          className="max-w-sm w-full bg-transparent rounded-lg shadow-lg p-4 text-center"
         >
           <motion.div
             initial={{ scale: 0 }}
@@ -932,7 +932,7 @@ const [isPrivateMode, setIsPrivateMode] = useState<boolean>(false);
           transition={{ duration: 0.2 }}
           className="overflow-hidden"
         >
-          <div className="flex items-start gap-2 bg-purple-900/30 rounded-lg p-2.5 border border-purple-700">
+          <div className="flex items-start gap-2 bg-purple-900/30 rounded-lg p-3 border border-purple-700">
             <AlertCircle className="w-4 h-4 text-purple-400 flex-shrink-0 mt-0.5" />
             <div className="flex-1">
               <p className="text-xs text-purple-200">

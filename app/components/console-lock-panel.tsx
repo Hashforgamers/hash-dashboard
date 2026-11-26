@@ -130,7 +130,7 @@ export default function ConsoleLockPanel({ vendorId, consoleId, onChanged }: { v
       {!device ? (
         <section className="space-y-2 rounded-md border p-3">
           <h4 className="font-medium">Pair a TV</h4>
-          <p className="text-xs text-muted-foreground">Open Hash Console Lock on the TV. Enter the code it shows. The TV gets its credentials only after you approve here.</p>
+          <p className="text-xs text-muted-foreground">Enter the code shown by Hash Console Lock on the TV, then approve.</p>
           <div className="flex flex-wrap gap-2">
             <Input aria-label="Pairing code" placeholder="ABCD-2345" value={code} onChange={(e) => setCode(e.target.value.toUpperCase())} className="w-36 font-mono" maxLength={9} />
             <Input aria-label="HDMI input" placeholder="HDMI_1" value={input} onChange={(e) => setInput(e.target.value.toUpperCase())} className="w-28" maxLength={32} />
@@ -218,7 +218,7 @@ export default function ConsoleLockPanel({ vendorId, consoleId, onChanged }: { v
           </section>
         </>
       )}
-      <p className="text-xs text-muted-foreground">Start and extend sessions from the booking and Live session screens as usual. Lock results are what the TV reports; use the HDMI test to confirm the TV really switches.</p>
+      <p className="text-xs text-muted-foreground">Use the HDMI test to confirm the TV switches.</p>
     </div>
   );
 }

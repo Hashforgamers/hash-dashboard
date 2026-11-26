@@ -23,7 +23,7 @@ export const SuccessModal = ({
       <motion.div
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="max-w-md w-full bg-muted rounded-lg shadow-2xl p-8 text-center"
+        className="max-w-md w-full bg-muted rounded-lg shadow-2xl p-4 text-center"
       >
         <motion.div
           initial={{ scale: 0 }}
