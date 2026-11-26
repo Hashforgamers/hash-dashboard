@@ -20,7 +20,7 @@ const CONSOLE_OPTIONS = [
 
 export const ConsoleFilter = ({ selectedConsole, onConsoleChange }: ConsoleFilterProps) => {
   return (
-    <Card className="rounded-xl border border-border bg-muted/50 backdrop-blur-sm p-4 mb-6">
+    <Card className="rounded-lg border border-border bg-muted/50 backdrop-blur-sm p-4 mb-6">
       <div className="flex items-center gap-3">
         <span className="text-xs font-medium text-muted-foreground uppercase">Select Console</span>
         

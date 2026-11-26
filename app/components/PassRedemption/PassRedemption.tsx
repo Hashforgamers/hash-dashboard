@@ -144,7 +144,7 @@ const PassRedemption: React.FC<{ vendorId: number }> = ({ vendorId }) => {
   return (
     <div className="max-w-4xl mx-auto p-6 space-y-6">
       <div className="bg-white rounded-lg shadow-md p-6">
-        <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
+        <h2 className="text-2xl font-semibold mb-6 flex items-center gap-2">
           <Clock className="w-6 h-6" />
           Hour-Based Pass Redemption
         </h2>
@@ -208,7 +208,7 @@ const PassRedemption: React.FC<{ vendorId: number }> = ({ vendorId }) => {
         <div className="bg-primary/20 rounded-lg shadow-md p-6 space-y-6">
           <div className="flex items-start justify-between">
             <div>
-              <h3 className="text-xl font-bold text-foreground">
+              <h3 className="text-xl font-semibold text-foreground">
                 {passDetails.pass_name}
               </h3>
               <p className="text-sm text-muted-foreground mt-1">
@@ -216,7 +216,7 @@ const PassRedemption: React.FC<{ vendorId: number }> = ({ vendorId }) => {
               </p>
             </div>
             <div className="text-right">
-              <div className="text-3xl font-bold text-primary">
+              <div className="text-3xl font-semibold text-primary">
                 {passDetails.remaining_hours.toFixed(2)}
               </div>
               <div className="text-sm text-muted-foreground">hours remaining</div>

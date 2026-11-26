@@ -1197,7 +1197,7 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                         key={`live-mobile-${uniqueKey}`}
                         initial={{ opacity: 0, y: 8 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="dashboard-module-card rounded-xl p-3"
+                        className="dashboard-module-card rounded-lg p-3"
                       >
                         <div className="flex items-start justify-between gap-2">
                           <div className="min-w-0 flex-1">
@@ -1219,12 +1219,12 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                           </div>
                           <div className="flex max-w-[48%] flex-wrap items-center justify-end gap-1 sm:max-w-none">
                             {squadEnabled && (
-                              <span className="rounded-full border border-primary/40 bg-primary/15 px-2 py-0.5 text-[10px] font-semibold text-primary sm:text-[11px]">
+                              <span className="rounded-full border border-primary/40 bg-primary/15 px-2 py-0.5 text-xs font-semibold text-primary sm:text-xs">
                                 Squad x{squadPlayerCount}
                               </span>
                             )}
                             {hasMeals && (
-                              <span className="rounded-full border border-emerald-400/40 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold text-emerald-200 sm:text-[11px]">
+                              <span className="rounded-full border border-emerald-400/40 bg-emerald-500/10 px-2 py-0.5 text-xs font-semibold text-emerald-200 sm:text-xs">
                                 Meals Added
                               </span>
                             )}
@@ -1827,7 +1827,7 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                       return (
                         <div
                           key={`history-mobile-${b.bookingId || i}-${b.date}`}
-                          className="dashboard-module-card rounded-xl p-3"
+                          className="dashboard-module-card rounded-lg p-3"
                         >
                           <div className="flex items-center justify-between gap-2">
                             <div className="min-w-0">
@@ -1837,7 +1837,7 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                               )}
                               <p className="truncate text-xs text-muted-foreground">{systemText}</p>
                             </div>
-                            <span className={`rounded-full border px-2 py-0.5 text-[11px] capitalize ${historyStatusChipClass(normalizedStatus)}`}>
+                            <span className={`rounded-full border px-2 py-0.5 text-xs capitalize ${historyStatusChipClass(normalizedStatus)}`}>
                               {statusLabel}
                             </span>
                           </div>
@@ -1861,7 +1861,7 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
                           <th
                             key={heading}
                             scope="col"
-                            className="dashboard-module-table-header px-3 py-3 text-left text-[11px] font-semibold uppercase tracking-wider md:px-4"
+                            className="dashboard-module-table-header px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider md:px-4"
                           >
                             {heading}
                           </th>
@@ -1929,11 +1929,11 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
               onClick={() => setContactOverlay({ open: false, booking: null })}
             >
               <div
-                className="w-full max-w-md rounded-xl border border-border bg-card shadow-2xl"
+                className="w-full max-w-md rounded-lg border border-border bg-card shadow-2xl"
                 onClick={(e) => e.stopPropagation()}
               >
                 <div className="flex items-center justify-between border-b border-border px-4 py-3">
-                  <h3 className="text-sm font-semibold uppercase tracking-[0.08em] text-primary">Customer Contact</h3>
+                  <h3 className="text-sm font-semibold uppercase tracking-wide text-primary">Customer Contact</h3>
                   <button
                     type="button"
                     onClick={() => setContactOverlay({ open: false, booking: null })}

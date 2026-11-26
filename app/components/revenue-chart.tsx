@@ -79,7 +79,7 @@ export function RevenueChart() {
                     return (
                       <div className="bg-black p-3 rounded-lg border border-border">
                         <p className="text-muted-foreground">{payload[0].payload.name}</p>
-                        <p className="text-lg font-bold">
+                        <p className="text-lg font-semibold">
                           ₹{payload[0].value}
                         </p>
                       </div>

@@ -421,11 +421,11 @@ const handleSubmit = async (e: React.FormEvent) => {
           initial={{ scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0.9, opacity: 0 }}
-          className="w-full max-w-6xl max-h-[95vh] overflow-y-auto bg-muted rounded-2xl border border-border shadow-2xl"
+          className="w-full max-w-6xl max-h-[95vh] overflow-y-auto bg-muted rounded-lg border border-border shadow-2xl"
         >
           {/* Header */}
           <div className="flex items-center justify-between p-3 border-b border-border sticky top-0 bg-muted z-10">
-            <h2 className="text-2xl font-bold text-white">New Slot Booking</h2>
+            <h2 className="text-2xl font-semibold text-white">New Slot Booking</h2>
             <button
               onClick={handleClose}
               className="p-2 rounded-lg bg-muted hover:bg-muted transition-colors"
@@ -463,7 +463,7 @@ const handleSubmit = async (e: React.FormEvent) => {
                     )
                   })}
                   <div className="text-right pt-2 border-t border-emerald-700">
-                    <span className="text-emerald-300 font-bold">
+                    <span className="text-emerald-300 font-semibold">
                       Slots Total: ₹{consoleTotal}
                     </span>
                   </div>

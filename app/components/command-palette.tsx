@@ -49,7 +49,7 @@ export function CommandPalette({ onRefresh }: { onRefresh: () => void }) {
         className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 transition-colors hover:bg-white/[0.06] hover:text-foreground"
       >
         <Search className="h-3.5 w-3.5" />
-        <kbd className="hidden font-sans text-[10px] text-muted-foreground md:inline">⌘K</kbd>
+        <kbd className="hidden font-sans text-xs text-muted-foreground md:inline">⌘K</kbd>
       </button>
       <CommandDialog open={open} onOpenChange={setOpen}>
         <DialogTitle className="sr-only">Search pages and actions</DialogTitle>
@@ -79,7 +79,7 @@ export function CommandPalette({ onRefresh }: { onRefresh: () => void }) {
             {(!activeStaff || can("booking.manage")) && consoleTypes.map(({ type, name }) => (
               <CommandItem key={`book-${type}`} value={`book new booking ${name} ${type}`} onSelect={run(() => requestConsoleBooking(type, router.push))}>
                 <Gamepad2 className="mr-2" />Book {name}
-                {bookingKeys[type] && <kbd className="ml-auto font-sans text-[10px] text-muted-foreground">{formatShortcut(bookingKeys[type]!)}</kbd>}
+                {bookingKeys[type] && <kbd className="ml-auto font-sans text-xs text-muted-foreground">{formatShortcut(bookingKeys[type]!)}</kbd>}
               </CommandItem>
             ))}
             <CommandItem value="notifications alerts" onSelect={run(() => window.dispatchEvent(new Event("hash:open-notifications")))}><Bell className="mr-2" />Open notifications</CommandItem>

@@ -529,7 +529,7 @@ export function NotificationButton({
           {unreadCount > 0 && (
             <Badge
               variant="destructive"
-              className="absolute -top-2 -right-2 h-5 w-5 p-0 flex items-center justify-center text-xs font-bold animate-bounce"
+              className="absolute -top-2 -right-2 h-5 w-5 p-0 flex items-center justify-center text-xs font-semibold animate-bounce"
             >
               {unreadCount > 9 ? '9+' : unreadCount}
             </Badge>

@@ -165,7 +165,7 @@ export default function ManageExtrasPageContent() {
   return (
     <main className="max-w-6xl mx-auto p-4">
       <header className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold flex items-center gap-3">
+        <h1 className="text-3xl font-semibold flex items-center gap-3">
           <Utensils className="text-emerald-600 w-8 h-8" />
           Manage Extra Services
         </h1>

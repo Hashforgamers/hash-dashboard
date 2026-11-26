@@ -483,7 +483,7 @@ function RapidBookings() {
                   placeholder="Search systems..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 w-full border-border focus:border-emerald-500 focus:ring-emerald-500"
+                  className="pl-10 w-full border-border focus:border-ring focus:ring-ring/40"
                 />
               </div>
               <div className="flex items-center gap-2">
@@ -548,7 +548,7 @@ function RapidBookings() {
                             setFilters({ ...filters, type: value })
                           }
                         >
-                          <SelectTrigger className="w-full border-border focus:border-emerald-500 focus:ring-emerald-500">
+                          <SelectTrigger className="w-full border-border focus:border-ring focus:ring-ring/40">
                             <SelectValue placeholder="All Systems" />
                           </SelectTrigger>
                           <SelectContent>
@@ -574,7 +574,7 @@ function RapidBookings() {
                             })
                           }
                         >
-                          <SelectTrigger className="w-full border-border focus:border-emerald-500 focus:ring-emerald-500">
+                          <SelectTrigger className="w-full border-border focus:border-ring focus:ring-ring/40">
                             <SelectValue placeholder="All Status" />
                           </SelectTrigger>
                           <SelectContent>
@@ -605,7 +605,7 @@ function RapidBookings() {
                             setFilters({ ...filters, price: value })
                           }
                         >
-                          <SelectTrigger className="w-full border-border focus:border-emerald-500 focus:ring-emerald-500">
+                          <SelectTrigger className="w-full border-border focus:border-ring focus:ring-ring/40">
                             <SelectValue placeholder="All Prices" />
                           </SelectTrigger>
                           <SelectContent>
@@ -760,7 +760,7 @@ function RapidBookings() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
-              className="md:w-2/3 border rounded-2xl p-6 space-y-6 bg-card shadow-xl"
+              className="md:w-2/3 border rounded-lg p-6 space-y-6 bg-card shadow-xl"
             >
               {/* Header */}
               <div className="flex justify-between items-center border-b pb-4">
@@ -1003,7 +1003,7 @@ function RapidBookings() {
                     <span>Rate:</span>
                     <span className="font-medium">₹{selectedSystem?.price}/slot</span>
                   </div>
-                  <div className="flex justify-between pt-2 border-t font-bold">
+                  <div className="flex justify-between pt-2 border-t font-semibold">
                     <span>Total:</span>
                     <span className="text-emerald-600">₹{selectedSlots.length * selectedSystem?.price}</span>
                   </div>

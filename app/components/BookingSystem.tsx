@@ -13,7 +13,7 @@ const BookingSystem: React.FC = () => {
   };
 
   return (
-    <div className=" rounded-xl shadow-lg p-4">
+    <div className=" rounded-lg shadow-lg p-4">
       {!selectedConsole ? (
         <ConsoleSelector 
           onSelectConsole={setSelectedConsole} 

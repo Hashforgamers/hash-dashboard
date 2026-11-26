@@ -91,7 +91,7 @@ export function CafeBookingLink() {
 
   return (
     <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(280px,360px)]">
-      <section className="space-y-5 rounded-xl border p-5">
+      <section className="space-y-5 rounded-lg border p-5">
         <div>
           <h2 className="text-lg font-semibold">{displayName}</h2>
           <p className="mt-1 text-sm text-muted-foreground">
@@ -146,7 +146,7 @@ export function CafeBookingLink() {
         </div>
       </section>
 
-      <section className="flex flex-col items-center rounded-xl border p-5">
+      <section className="flex flex-col items-center rounded-lg border p-5">
         <div className="w-full max-w-[300px] rounded-lg bg-white p-3">
           {qr && (
             <svg viewBox={`-2 -2 ${qr.size + 4} ${qr.size + 4}`} role="img" aria-label={`QR code for ${link}`} className="block h-auto w-full" shapeRendering="crispEdges">

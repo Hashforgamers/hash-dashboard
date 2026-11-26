@@ -436,16 +436,16 @@ export default function GamesManagementPage() {
                   <table className={`dashboard-table ${styles.table}`}>
                     <thead>
                       <tr className="border-b border-border">
-                        <th className="dashboard-module-table-header text-left py-3 px-4 text-xs font-bold uppercase tracking-wider">
+                        <th className="dashboard-module-table-header text-left py-3 px-4 text-xs font-semibold uppercase tracking-wider">
                           Game
                         </th>
-                        <th className="dashboard-module-table-header text-left py-3 px-4 text-xs font-bold uppercase tracking-wider">
+                        <th className="dashboard-module-table-header text-left py-3 px-4 text-xs font-semibold uppercase tracking-wider">
                           Genre
                         </th>
-                        <th className="dashboard-module-table-header text-left py-3 px-4 text-xs font-bold uppercase tracking-wider">
+                        <th className="dashboard-module-table-header text-left py-3 px-4 text-xs font-semibold uppercase tracking-wider">
                           Available On
                         </th>
-                        <th className="dashboard-module-table-header text-center py-3 px-4 text-xs font-bold uppercase tracking-wider">
+                        <th className="dashboard-module-table-header text-center py-3 px-4 text-xs font-semibold uppercase tracking-wider">
                           Consoles
                         </th>
                       </tr>
@@ -568,14 +568,14 @@ export default function GamesManagementPage() {
                 initial={{ scale: 0.95, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 0.95, opacity: 0 }}
-                className="ui-dialog-surface w-full max-w-5xl max-h-[90vh] overflow-hidden rounded-xl shadow-2xl"
+                className="ui-dialog-surface w-full max-w-5xl max-h-[90vh] overflow-hidden rounded-lg shadow-2xl"
                 onClick={(e) => e.stopPropagation()}
               >
                 {/* Modal Header */}
                 <div className="border-b border-border p-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <h2 className="ui-dialog-title flex items-center gap-2 text-xl font-bold sm:text-2xl">
+                      <h2 className="ui-dialog-title flex items-center gap-2 text-xl font-semibold sm:text-2xl">
                         Add New Game
                         <Gamepad2 className="h-5 w-5 text-primary" />
                       </h2>
@@ -669,7 +669,7 @@ export default function GamesManagementPage() {
                                   </div>
                                 )}
                                 {game.rawg_rating && (
-                                  <div className="absolute top-2 right-2 rounded bg-black/70 px-2 py-1 text-xs font-bold text-white">
+                                  <div className="absolute top-2 right-2 rounded bg-black/70 px-2 py-1 text-xs font-semibold text-white">
                                     ⭐ {game.rawg_rating.toFixed(1)}
                                   </div>
                                 )}
@@ -729,7 +729,7 @@ export default function GamesManagementPage() {
                             )}
                           </div>
                           <div className="flex-1">
-                            <h3 className="text-xl font-bold text-foreground">
+                            <h3 className="text-xl font-semibold text-foreground">
                               {selectedGame.name}
                             </h3>
                             <div className="flex gap-2 mt-1 flex-wrap">
@@ -869,7 +869,7 @@ export default function GamesManagementPage() {
                                         <span className="text-xl">
                                           {info.icon}
                                         </span>
-                                        <span className="font-bold text-foreground">
+                                        <span className="font-semibold text-foreground">
                                           Console #{console.console_number}
                                         </span>
                                       </div>

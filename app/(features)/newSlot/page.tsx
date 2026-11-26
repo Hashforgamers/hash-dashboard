@@ -7,7 +7,7 @@ const page = () => {
   return (
      <DashboardLayout>
       <div className="flex-1">
-        {/* <h1 className="text-3xl font-bold">Manage Booking</h1> */}
+        {/* <h1 className="text-3xl font-semibold">Manage Booking</h1> */}
         <SlotManagement/>
       </div>
     </DashboardLayout>

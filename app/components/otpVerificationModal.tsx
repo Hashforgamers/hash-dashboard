@@ -91,7 +91,7 @@ export function OTPVerificationModal({
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.9 }}
-        className="dashboard-module-panel mx-auto w-full max-w-md rounded-2xl p-5 shadow-[0_30px_70px_-36px_rgba(2,6,23,0.4)] md:p-6"
+        className="dashboard-module-panel mx-auto w-full max-w-md rounded-lg p-5 shadow-[0_30px_70px_-36px_rgba(2,6,23,0.4)] md:p-6"
       >
         <div className="space-y-5">
           {/* Header */}
@@ -101,7 +101,7 @@ export function OTPVerificationModal({
                 <Shield className="h-5 w-5 text-primary" />
               </div>
               <div>
-                <h3 className="text-base font-semibold uppercase tracking-[0.12em] text-foreground md:text-lg">Security Verification</h3>
+                <h3 className="text-base font-semibold uppercase tracking-wide text-foreground md:text-lg">Security Verification</h3>
                 <p className="text-xs text-muted-foreground">Payout access protection</p>
               </div>
             </div>
@@ -114,7 +114,7 @@ export function OTPVerificationModal({
           {/* Content */}
           <div className="space-y-4">
             <div className="space-y-2 text-center">
-              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl border border-primary/35 bg-primary/15">
+              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-lg border border-primary/35 bg-primary/15">
                 <Mail className="h-6 w-6 text-primary" />
               </div>
               <p className="text-xs text-muted-foreground md:text-sm">
@@ -130,13 +130,13 @@ export function OTPVerificationModal({
 
             <div className="space-y-3">
               <div>
-                <Label className="text-xs font-semibold uppercase tracking-[0.11em] text-foreground md:text-sm">Enter 6-Digit OTP</Label>
+                <Label className="text-xs font-semibold uppercase tracking-wide text-foreground md:text-sm">Enter 6-Digit OTP</Label>
                 <Input
                   type="text"
                   value={otp}
                   onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
                   placeholder="000000"
-                  className="mt-2 h-11 rounded-lg border-border bg-card text-center text-base tracking-[0.3em] text-foreground placeholder:text-muted-foreground focus-visible:ring-primary md:h-12 md:text-lg"
+                  className="mt-2 h-11 rounded-lg border-border bg-card text-center text-base tracking-wide text-foreground placeholder:text-muted-foreground focus-visible:ring-primary md:h-12 md:text-lg"
                   maxLength={6}
                 />
               </div>
@@ -144,7 +144,7 @@ export function OTPVerificationModal({
               <Button
                 onClick={handleVerifyOTP}
                 disabled={loading || !otp.trim() || otp.length !== 6}
-                className="dashboard-btn-primary h-11 w-full rounded-lg text-sm font-semibold uppercase tracking-[0.09em] md:h-12"
+                className="dashboard-btn-primary h-11 w-full rounded-lg text-sm font-semibold uppercase tracking-wide md:h-12"
               >
                 {loading ? (
                   <>
@@ -171,7 +171,7 @@ export function OTPVerificationModal({
               </Button>
             </div>
 
-            <div className="space-y-1 rounded-lg border border-border bg-muted/35 px-3 py-2 text-center text-[11px] text-muted-foreground md:text-xs">
+            <div className="space-y-1 rounded-lg border border-border bg-muted/35 px-3 py-2 text-center text-xs text-muted-foreground md:text-xs">
               <p>• OTP is valid for 5 minutes</p>
               <p>• Check your spam folder if you don't see the email</p>
               <p>• Never share your OTP with anyone</p>

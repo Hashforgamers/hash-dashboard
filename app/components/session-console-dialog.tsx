@@ -8,7 +8,7 @@ export function SessionConsoleDialog({ open, onClose, consoles, selectedIds, req
   open: boolean; onClose: () => void; consoles: SessionConsole[]; selectedIds: number[]; requiredCount: number; system: string; loading: boolean; submitting: boolean; error: string; onSelect: (id: number) => void; onRetry: () => void; onStart: () => void;
 }) {
   return <Dialog open={open} onOpenChange={(next) => { if (!next && !submitting) onClose(); }}>
-    <DialogContent data-workspace-dialog={undefined} className="flex max-h-[90dvh] w-[calc(100%-2rem)] max-w-xl flex-col gap-0 overflow-hidden rounded-2xl p-0 border-border bg-card text-foreground">
+    <DialogContent data-workspace-dialog={undefined} className="flex max-h-[90dvh] w-[calc(100%-2rem)] max-w-xl flex-col gap-0 overflow-hidden rounded-lg p-0 border-border bg-card text-foreground">
       <div className="border-b p-6 border-border">
         <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-emerald-400">Session setup</p>
         <DialogTitle>Select {requiredCount > 1 ? `${requiredCount} consoles` : "a console"}</DialogTitle>
@@ -19,7 +19,7 @@ export function SessionConsoleDialog({ open, onClose, consoles, selectedIds, req
           <div className="mb-3 flex justify-between text-xs font-medium text-muted-foreground"><span>{consoles.length} available</span><span aria-live="polite">{selectedIds.length} of {requiredCount} selected</span></div>
           {consoles.length ? <div className="grid grid-cols-1 gap-3 sm:grid-cols-2" aria-label="Available consoles">{consoles.map((console) => {
             const selected = selectedIds.includes(console.consoleId);
-            return <button type="button" key={console.consoleId} aria-pressed={selected} disabled={submitting || (!selected && requiredCount > 1 && selectedIds.length >= requiredCount)} onClick={() => onSelect(console.consoleId)} className={`flex items-start gap-3 rounded-xl border p-4 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 disabled:cursor-not-allowed disabled:opacity-50 ${selected ? "border-emerald-500 bg-emerald-500/10" : "border-border hover:border-border"}`}>
+            return <button type="button" key={console.consoleId} aria-pressed={selected} disabled={submitting || (!selected && requiredCount > 1 && selectedIds.length >= requiredCount)} onClick={() => onSelect(console.consoleId)} className={`flex items-start gap-3 rounded-lg border p-4 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 disabled:cursor-not-allowed disabled:opacity-50 ${selected ? "border-emerald-500 bg-emerald-500/10" : "border-border hover:border-border"}`}>
               <Monitor className={`mt-1 h-5 w-5 shrink-0 ${selected ? "text-emerald-500" : "text-muted-foreground"}`} />
               <span className="min-w-0 flex-1"><span className="block break-words text-sm font-semibold">{console.consoleModelNumber || `Console ${console.consoleId}`}</span><span className="mt-1 block text-xs text-muted-foreground">{console.brand || system} · #{console.consoleId}</span></span>
               <span className={`mt-1 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border ${selected ? "border-emerald-500 bg-emerald-500 text-white" : "border-border"}`}>{selected && <Check className="h-3 w-3" />}</span>

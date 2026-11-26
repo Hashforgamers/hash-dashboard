@@ -26,7 +26,7 @@ export function Overview() {
           <CardTitle className="text-sm font-medium">Total Earning</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">$150,000</div>
+          <div className="text-2xl font-semibold">$150,000</div>
         </CardContent>
       </Card>
 

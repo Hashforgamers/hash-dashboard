@@ -230,10 +230,10 @@ function ReviewsPageContent() {
         </div>
 
         <div className="reviews-summary grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
-          <div className="gaming-panel rounded-xl border border-border bg-muted/45 p-3">
+          <div className="gaming-panel rounded-lg border border-border bg-muted/45 p-3">
             <p className="text-xs uppercase tracking-wide text-muted-foreground">Average Rating</p>
             <div className="mt-2 flex items-center gap-3">
-              <span className="text-2xl font-bold text-foreground sm:text-3xl">
+              <span className="text-2xl font-semibold text-foreground sm:text-3xl">
                 {summary ? summary.average.toFixed(2) : "--"}
               </span>
               <RatingStars rating={summary?.average || 0} />
@@ -243,7 +243,7 @@ function ReviewsPageContent() {
             </p>
           </div>
 
-          <div className="gaming-panel rounded-xl border border-border bg-muted/45 p-3">
+          <div className="gaming-panel rounded-lg border border-border bg-muted/45 p-3">
             <p className="text-xs uppercase tracking-wide text-muted-foreground">Ratings Breakdown</p>
             <div className="mt-3 space-y-2">
               {breakdown.map((row) => (
@@ -261,7 +261,7 @@ function ReviewsPageContent() {
             </div>
           </div>
 
-          <div className="gaming-panel rounded-xl border border-border bg-muted/45 p-3">
+          <div className="gaming-panel rounded-lg border border-border bg-muted/45 p-3">
             <p className="text-xs uppercase tracking-wide text-muted-foreground">Filters</p>
             <div className="dashboard-filter-stack mt-3">
               <select
@@ -297,17 +297,17 @@ function ReviewsPageContent() {
         </div>
 
         {summaryError ? (
-          <div className="rounded-xl border border-amber-500/35 bg-amber-500/10 p-3 text-xs text-amber-200">
+          <div className="rounded-lg border border-amber-500/35 bg-amber-500/10 p-3 text-xs text-amber-200">
             Summary sync issue: {summaryError}
           </div>
         ) : null}
         {reviewsError ? (
-          <div className="rounded-xl border border-red-500/35 bg-red-500/10 p-3 text-xs text-red-200">
+          <div className="rounded-lg border border-red-500/35 bg-red-500/10 p-3 text-xs text-red-200">
             Reviews sync issue: {reviewsError}
           </div>
         ) : null}
 
-        <div className="reviews-list gaming-panel rounded-xl border border-border bg-muted/45">
+        <div className="reviews-list gaming-panel rounded-lg border border-border bg-muted/45">
           <div className="flex items-center justify-between gap-3 border-b border-border px-3 py-2.5">
             <h2 className="section-title">Recent Reviews</h2>
             <span className="text-xs text-muted-foreground">{reviews.length} items</span>

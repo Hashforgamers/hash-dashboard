@@ -20,7 +20,7 @@ export function OffersTable({ offers, onEdit, onDelete, deletingOfferId, getCons
           <thead className="dashboard-module-table-head sticky top-0 z-10">
             <tr>
               {["Offer Name", "Console", "Pricing", "Validity", "Actions"].map((h) => (
-                <th key={h} className="table-cell dashboard-module-table-header text-[11px] font-bold uppercase tracking-wider sm:text-xs">
+                <th key={h} className="table-cell dashboard-module-table-header text-xs font-semibold uppercase tracking-wider sm:text-xs">
                   {h}
                 </th>
               ))}
@@ -35,7 +35,7 @@ export function OffersTable({ offers, onEdit, onDelete, deletingOfferId, getCons
                   <td className="table-cell">
                     <p className="body-text font-semibold">{offer.offer_name}</p>
                     {offer.is_currently_active && (
-                      <span className="mt-0.5 flex items-center gap-1 text-[10px] font-bold text-emerald-300">
+                      <span className="mt-0.5 flex items-center gap-1 text-xs font-semibold text-emerald-300">
                         <span className="h-1 w-1 rounded-full animate-pulse bg-emerald-400" />
                         LIVE NOW
                       </span>
@@ -51,7 +51,7 @@ export function OffersTable({ offers, onEdit, onDelete, deletingOfferId, getCons
                     <div className="flex items-center gap-2">
                       <span className="stat-value text-primary">₹{offer.offered_price}</span>
                       <span className="body-text-muted line-through">₹{offer.default_price}</span>
-                      <span className="rounded px-1.5 py-0.5 text-[10px] font-bold bg-emerald-500/10 text-emerald-300">
+                      <span className="rounded px-1.5 py-0.5 text-xs font-semibold bg-emerald-500/10 text-emerald-300">
                         {offer.discount_percentage}%
                       </span>
                     </div>

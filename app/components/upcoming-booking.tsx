@@ -1092,7 +1092,7 @@ export function UpcomingBookings({
                               {booking.username || "Guest User"}
                             </button>
                             {squadEnabled && (
-                              <span className="shrink-0 rounded border border-border px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+                              <span className="shrink-0 rounded border border-border px-1.5 py-0.5 text-xs font-medium text-muted-foreground">
                                 x{squadPlayerCount}
                               </span>
                             )}
@@ -1128,7 +1128,7 @@ export function UpcomingBookings({
                             <StatusPill
                               tone="alert"
                               label="Duplicate"
-                              className="h-5 text-[11px]"
+                              className="h-5 text-xs"
                               title="This gamer has another booking for the same time. Cancel the extra one so they are not billed twice."
                             />
                           )}
@@ -1136,7 +1136,7 @@ export function UpcomingBookings({
 
                         <div className="flex items-center justify-between gap-2 rounded-md border border-border px-2 py-1.5">
                           <div className="flex min-w-0 items-center gap-2">
-                            <span className="text-[11px] text-muted-foreground">Access code</span>
+                            <span className="text-xs text-muted-foreground">Access code</span>
                             <span className="select-all font-mono text-sm font-semibold tracking-widest text-foreground">
                               {(booking.merged_access_codes?.length ? booking.merged_access_codes.join(" · ") : null) || booking.access_code || booking.accessCode || "Unavailable"}
                             </span>
@@ -1163,7 +1163,7 @@ export function UpcomingBookings({
                         </div>
 
                         {squadEnabled && squadMemberNames.length > 0 && !expanded && (
-                          <p className="truncate text-[11px] text-muted-foreground">
+                          <p className="truncate text-xs text-muted-foreground">
                             Members: {squadMemberNames.join(", ")}
                             {squadPlayerCount - squadMemberNames.length > 0
                               ? ` +${squadPlayerCount - squadMemberNames.length} more`
@@ -1171,7 +1171,7 @@ export function UpcomingBookings({
                           </p>
                         )}
                         {squadEnabled && expanded && (
-                          <div className="rounded-md border border-border bg-primary/10 p-1.5 text-[11px] text-foreground">
+                          <div className="rounded-md border border-border bg-primary/10 p-1.5 text-xs text-foreground">
                             <p className="font-semibold">Squad Details</p>
                             <p>Members: {squadMembers.map((m: any) => m?.name).filter(Boolean).join(", ") || "Not available"}</p>
                             {String(booking?.squadDetails?.console_group || "").toLowerCase() === "pc" ? (
@@ -1207,7 +1207,7 @@ export function UpcomingBookings({
                             whileHover={{ scale: 1.02 }}
                             whileTap={{ scale: 0.98 }}
                             onClick={() => start(booking)}
-                            className={`inline-flex h-8 min-w-[96px] items-center justify-center gap-1 rounded-md !px-2.5 !py-0 text-[11px] font-semibold transition-all sm:min-w-[104px] sm:text-xs ${
+                            className={`inline-flex h-8 min-w-[96px] items-center justify-center gap-1 rounded-md !px-2.5 !py-0 text-xs font-semibold transition-all sm:min-w-[104px] sm:text-xs ${
                               canStartNow
                                 ? "dashboard-btn-primary"
                                 : "border border-border bg-transparent text-muted-foreground"
@@ -1259,11 +1259,11 @@ export function UpcomingBookings({
           onClick={() => setContactOverlay({ open: false, booking: null })}
         >
           <div
-            className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-xl border border-border bg-card shadow-2xl"
+            className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-lg border border-border bg-card shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between border-b border-border px-4 py-3">
-              <h3 className="text-sm font-semibold uppercase tracking-[0.08em] text-primary">Booking details</h3>
+              <h3 className="text-sm font-semibold uppercase tracking-wide text-primary">Booking details</h3>
               <button
                 type="button"
                 onClick={() => setContactOverlay({ open: false, booking: null })}
@@ -1332,7 +1332,7 @@ export function UpcomingBookings({
 
       {isMounted && cancelDialog.open && createPortal(
         <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/40 p-4">
-          <div className="w-full max-w-md rounded-2xl border border-border bg-card p-5 shadow-2xl">
+          <div className="w-full max-w-md rounded-lg border border-border bg-card p-5 shadow-2xl">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-semibold text-foreground">Cancel Booking</h3>
               <button
@@ -1404,7 +1404,7 @@ export function UpcomingBookings({
 
       {isMounted && noShowDialog.open && createPortal(
         <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/40 p-4">
-          <div className="w-full max-w-md rounded-2xl border border-border bg-card p-5 shadow-2xl">
+          <div className="w-full max-w-md rounded-lg border border-border bg-card p-5 shadow-2xl">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-semibold text-foreground">Mark Booking As No Show</h3>
               <button

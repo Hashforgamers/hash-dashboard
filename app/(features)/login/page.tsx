@@ -439,7 +439,7 @@ export default function LoginPage() {
             <CardTitle className="premium-heading mb-1 text-2xl font-semibold text-foreground">
               Sign in to Hash
             </CardTitle>
-            <CardDescription className="mx-auto max-w-sm text-[15px] font-medium text-muted-foreground">
+            <CardDescription className="mx-auto max-w-sm text-base font-medium text-muted-foreground">
               Access your gaming cafe operations dashboard.
             </CardDescription>
           </CardHeader>
@@ -463,7 +463,7 @@ export default function LoginPage() {
                           placeholder="Enter your email"
                           type="email"
                           autoComplete="email"
-                          className="h-11 rounded-lg border border-white/10 bg-white/[0.06] px-3 text-[15px] text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/20"
+                          className="h-11 rounded-lg border border-white/10 bg-white/[0.06] px-3 text-base text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/20"
                           {...field}
                           onChange={(e) => {
                             field.onChange(e);
@@ -496,7 +496,7 @@ export default function LoginPage() {
                         <PasswordInput
                           placeholder="Enter your password"
                           autoComplete="current-password"
-                          className="h-11 rounded-lg border border-white/10 bg-white/[0.06] px-3 text-[15px] text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/20"
+                          className="h-11 rounded-lg border border-white/10 bg-white/[0.06] px-3 text-base text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/20"
                           {...field}
                           onChange={(e) => {
                             field.onChange(e);
@@ -535,12 +535,12 @@ export default function LoginPage() {
             </Form>
 
             <div className="flex items-center justify-center gap-4 border-t border-white/10 pt-4">
-              <div className="flex items-center gap-2 text-[12px] font-medium text-muted-foreground">
+              <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
                 <Shield className="w-3 h-3" />
                 <span>Secure Login</span>
               </div>
               <div className="h-1 w-1 rounded-full bg-[#48484a]"></div>
-              <div className="flex items-center gap-2 text-[12px] font-medium text-muted-foreground">
+              <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
                 <span className="h-2 w-2 rounded-full bg-emerald-500/80" />
                 <span>Encrypted Session</span>
               </div>
