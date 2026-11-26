@@ -5,6 +5,8 @@ import { Copy, Download, ExternalLink, FileText, Printer, QrCode, Share2 } from 
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { useAccess } from "@/app/context/AccessContext";
+import { useApiClient } from "@/app/hooks/useApiClient";
+import { DASHBOARD_URL } from "@/src/config/env";
 import { useDashboardData } from "@/app/context/DashboardDataContext";
 import { encodeQr, qrSvgPath } from "@/lib/qr-code";
 import {
@@ -16,11 +18,13 @@ import {
   canvasToPngBlob,
   downloadBlob,
   fileSafeName,
+  printableUrl,
   printCanvas,
   renderPosterCanvas,
   renderQrCanvas,
 } from "@/lib/booking-poster";
 
+/** Registered name from the login payload, used until the Settings display name loads. */
 function readCafeName(vendorId: number | string | null): string {
   if (!vendorId) return "";
   try {
@@ -41,11 +45,28 @@ export function CafeBookingLink() {
   const [busy, setBusy] = useState<string | null>(null);
   const [posterStyle, setPosterStyle] = useState<PosterStyle>("gaming");
 
-  useEffect(() => setCafeName(readCafeName(cafeId)), [cafeId]);
+  const api = useApiClient();
 
-  const link = cafeId ? cafeBookingUrl(cafeId) : "";
-  const shareLink = cafeId ? cafeBookingUrl(cafeId, SHARE_SOURCE) : "";
-  const qrLink = cafeId ? cafeBookingUrl(cafeId, QR_SOURCE) : "";
+  // Prefer the display name set in Settings (Business details); fall back to the registered name.
+  useEffect(() => {
+    setCafeName(readCafeName(cafeId));
+    if (!cafeId) return;
+    let cancelled = false;
+    api
+      .get<any>(`${DASHBOARD_URL}/api/vendor/${cafeId}/dashboard`, { timeoutMs: 10_000, retries: 1 })
+      .then((res) => {
+        const details = res?.businessDetails || {};
+        const profile = res?.cafeProfile || {};
+        const name = String(details.displayName || profile.displayName || details.businessName || profile.name || "").trim();
+        if (!cancelled && name) setCafeName(name);
+      })
+      .catch(() => { /* keep the registered name */ });
+    return () => { cancelled = true; };
+  }, [api, cafeId]);
+
+  const link = cafeId ? cafeBookingUrl(cafeId, cafeName) : "";
+  const shareLink = cafeId ? cafeBookingUrl(cafeId, cafeName, SHARE_SOURCE) : "";
+  const qrLink = cafeId ? cafeBookingUrl(cafeId, cafeName, QR_SOURCE) : "";
   const displayName = cafeName || (cafeId ? `Café #${cafeId}` : "");
   const qr = useMemo(() => (qrLink ? encodeQr(qrLink, "Q") : null), [qrLink]);
   const fileBase = `hash-booking-${fileSafeName(displayName)}`;
@@ -66,7 +87,7 @@ export function CafeBookingLink() {
     }
   };
 
-  const poster = () => renderPosterCanvas({ cafeName: displayName, qrUrl: qrLink, displayUrl: link.replace(/^https?:\/\//, "") }, posterStyle);
+  const poster = () => renderPosterCanvas({ cafeName: displayName, qrUrl: qrLink, displayUrl: printableUrl(link) }, posterStyle);
 
   const copyLink = run("copy", async () => {
     await navigator.clipboard.writeText(shareLink);
@@ -117,7 +138,7 @@ export function CafeBookingLink() {
               </Button>
             </div>
           </div>
-          <p className="text-xs text-muted-foreground">Put it in your Instagram bio, Google Business profile or WhatsApp status. The link never changes.</p>
+          <p className="text-xs text-muted-foreground">Uses your display name from Settings. Put it in your Instagram bio, Google Business profile or WhatsApp status. Old links and printed QRs keep working if you rename the café.</p>
         </div>
 
         <div className="space-y-2">
