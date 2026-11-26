@@ -1,5 +1,6 @@
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { isFlexBooking } from "@/lib/flex-booking";
 import { StatusPill } from "./live-session-due";
 
 import { creditAuthHeaders } from "@/lib/credit-auth"
@@ -1113,6 +1114,7 @@ export function UpcomingBookings({
                           <span className="inline-flex items-center gap-1.5 whitespace-nowrap tabular-nums">
                             <Clock className="h-3 w-3 shrink-0" />
                             {booking.time || "No time set"}
+                            {isFlexBooking(booking) && <span className="ml-1.5 rounded border border-border px-1 text-[10px] font-medium uppercase text-muted-foreground" title="Custom start time: exact minutes, not slot times">Custom</span>}
                           </span>
                           {booking.duplicate_booking && (
                             <StatusPill
