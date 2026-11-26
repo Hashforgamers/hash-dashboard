@@ -20,9 +20,9 @@ const CONSOLE_OPTIONS = [
 
 export const ConsoleFilter = ({ selectedConsole, onConsoleChange }: ConsoleFilterProps) => {
   return (
-    <Card className="rounded-xl border border-zinc-700 bg-zinc-800/50 backdrop-blur-sm p-4 mb-6">
+    <Card className="rounded-xl border border-border bg-muted/50 backdrop-blur-sm p-4 mb-6">
       <div className="flex items-center gap-3">
-        <span className="text-xs font-medium text-zinc-400 uppercase">Select Console</span>
+        <span className="text-xs font-medium text-muted-foreground uppercase">Select Console</span>
         
         <div className="flex flex-wrap items-center gap-2">
           {CONSOLE_OPTIONS.map(({ type, icon: Icon, label }) => (
@@ -34,8 +34,8 @@ export const ConsoleFilter = ({ selectedConsole, onConsoleChange }: ConsoleFilte
                 'inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium uppercase',
                 'transition-all duration-200',
                 selectedConsole === type
-                  ? 'bg-blue-600 text-white shadow-md'
-                  : 'bg-zinc-700 text-zinc-300 hover:bg-zinc-600 border border-zinc-600'
+                  ? 'bg-primary text-white shadow-md'
+                  : 'bg-muted text-muted-foreground hover:bg-muted border border-border'
               )}
             >
               <Icon className="h-3.5 w-3.5" />

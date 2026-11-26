@@ -326,7 +326,7 @@ export default function ForgotPasswordPage() {
                             placeholder="Enter your registered email"
                             type="email"
                             autoComplete="email"
-                            className="h-12 bg-input border-input text-foreground placeholder:text-muted-foreground focus:border-blue-400 focus:ring-blue-400/20"
+                            className="h-12 bg-input border-input text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-primary/20"
                             {...field}
                           />
                         </FormControl>
@@ -383,7 +383,7 @@ export default function ForgotPasswordPage() {
                                   <InputOTPSlot
                                     key={i}
                                     index={i}
-                                    className="w-12 h-12 text-lg font-bold bg-input border border-input text-foreground rounded-md focus:border-blue-400 focus:ring-blue-400/30 transition-all duration-200"
+                                    className="w-12 h-12 text-lg font-bold bg-input border border-input text-foreground rounded-md focus:border-primary focus:ring-primary/30 transition-all duration-200"
                                   />
                                 ))}
                               </InputOTPGroup>
@@ -395,7 +395,7 @@ export default function ForgotPasswordPage() {
                                   <InputOTPSlot
                                     key={i}
                                     index={i}
-                                    className="w-12 h-12 text-lg font-bold bg-input border border-input text-foreground rounded-md focus:border-blue-400 focus:ring-blue-400/30 transition-all duration-200"
+                                    className="w-12 h-12 text-lg font-bold bg-input border border-input text-foreground rounded-md focus:border-primary focus:ring-primary/30 transition-all duration-200"
                                   />
                                 ))}
                               </InputOTPGroup>
@@ -487,7 +487,7 @@ export default function ForgotPasswordPage() {
                           <PasswordInput
                             placeholder="Enter new password (min 8 chars)"
                             autoComplete="new-password"
-                            className="h-12 bg-input border-input text-foreground placeholder:text-muted-foreground focus:border-blue-400 focus:ring-blue-400/20"
+                            className="h-12 bg-input border-input text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-primary/20"
                             {...field}
                           />
                         </FormControl>
@@ -509,7 +509,7 @@ export default function ForgotPasswordPage() {
                           <PasswordInput
                             placeholder="Re-enter your new password"
                             autoComplete="new-password"
-                            className="h-12 bg-input border-input text-foreground placeholder:text-muted-foreground focus:border-blue-400 focus:ring-blue-400/20"
+                            className="h-12 bg-input border-input text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-primary/20"
                             {...field}
                           />
                         </FormControl>

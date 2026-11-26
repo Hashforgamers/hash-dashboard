@@ -236,7 +236,7 @@ const MealSelector: React.FC<MealSelectorProps> = ({
               <ChefHat size={20} /> {/* ✅ size 20 instead of 28 */}
             </div>
             <div>
-              <h2 className="text-sm font-semibold text-zinc-800 dark:text-white">
+              <h2 className="text-sm font-semibold text-white">
                 Add Meals & Extras
               </h2>
 
@@ -258,11 +258,11 @@ const MealSelector: React.FC<MealSelectorProps> = ({
         <div className="compact-dialog-body"> {/* ✅ Adjusted height calculation */}
           {/* ✅ Compact Sidebar */}
           <aside className="compact-meal-sidebar meal-selector-sidebar w-56 overflow-auto p-3">
-            <h3 className="mb-3 text-xs font-semibold uppercase text-zinc-700 dark:text-zinc-300">
+            <h3 className="mb-3 text-xs font-semibold uppercase text-muted-foreground">
               Categories
             </h3>
             {categories.length === 0 && (
-              <p className="text-xs text-zinc-500 dark:text-zinc-400">No categories</p>
+              <p className="text-xs text-muted-foreground">No categories</p>
             )}
             <ul>
               {categories.map((category) => (
@@ -293,7 +293,7 @@ const MealSelector: React.FC<MealSelectorProps> = ({
             {loading && (
               <div className="flex flex-col items-center justify-center space-y-3 h-32"> {/* ✅ h-32 for fixed height */}
                 <Loader2 size={36} className="animate-spin text-emerald-600" /> {/* ✅ size 36 instead of 48 */}
-                <p className="text-emerald-800 dark:text-emerald-400 text-sm">Loading meals…</p> {/* ✅ text-sm */}
+                <p className="text-emerald-400 text-sm">Loading meals…</p> {/* ✅ text-sm */}
               </div>
             )}
             {error && !loading && (
@@ -310,7 +310,7 @@ const MealSelector: React.FC<MealSelectorProps> = ({
               </div>
             )}
             {!loading && !error && categories.length === 0 && (
-              <div className="flex flex-col items-center justify-center gap-4 text-zinc-400 h-32">
+              <div className="flex flex-col items-center justify-center gap-4 text-muted-foreground h-32">
                 <ChefHat size={48} /> {/* ✅ size 48 instead of 64 */}
                 <p className="text-sm">No meals available</p> {/* ✅ text-sm */}
               </div>
@@ -354,18 +354,18 @@ const MealSelector: React.FC<MealSelectorProps> = ({
 
                           {/* ✅ Compact Card Content */}
                           <div className="min-w-0 flex-1">
-                            <h3 className="mb-1 line-clamp-1 text-sm font-semibold text-zinc-800 dark:text-white">
+                            <h3 className="mb-1 line-clamp-1 text-sm font-semibold text-white">
                               {item.name}
                             </h3>
                             {item.description && (
-                              <p className="mb-1 line-clamp-1 text-xs text-zinc-500 dark:text-zinc-400">
+                              <p className="mb-1 line-clamp-1 text-xs text-muted-foreground">
                                 {item.description}
                               </p>
                             )}
 
                             {/* ✅ Compact Price and Controls */}
                             <div className="flex items-center justify-between">
-                              <div className="flex items-center space-x-1 text-emerald-600 dark:text-emerald-300">
+                              <div className="flex items-center space-x-1 text-emerald-300">
                                 <IndianRupee size={16} /> {/* ✅ size 16 instead of 20 */}
                                 <span className="text-sm font-semibold">{item.price}</span> {/* ✅ text-lg instead of text-xl */}
                               </div>
@@ -383,7 +383,7 @@ const MealSelector: React.FC<MealSelectorProps> = ({
                                 >
                                   <Minus size={12} /> {/* ✅ size 12 instead of 16 */}
                                 </button>
-                                <span className="min-w-[20px] text-center text-sm font-semibold text-zinc-800 dark:text-white">
+                                <span className="min-w-[20px] text-center text-sm font-semibold text-white">
                                   {quantity}
                                 </span>
                                 <button
@@ -415,12 +415,12 @@ const MealSelector: React.FC<MealSelectorProps> = ({
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <div>
-                <p className="text-xs text-zinc-600 dark:text-zinc-400">
+                <p className="text-xs text-muted-foreground">
                   {getTotalItems()} item{getTotalItems() !== 1 ? 's' : ''} selected
                 </p>
                 <div className="flex items-center gap-1">
-                  <IndianRupee className="h-4 w-4 text-emerald-600 dark:text-emerald-300" />
-                  <span className="text-sm font-semibold text-emerald-600 dark:text-emerald-300">
+                  <IndianRupee className="h-4 w-4 text-emerald-300" />
+                  <span className="text-sm font-semibold text-emerald-300">
                     {getTotalCost().toFixed(2)}
                   </span>
                 </div>

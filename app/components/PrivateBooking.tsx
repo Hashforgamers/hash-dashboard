@@ -302,7 +302,7 @@ const PrivateBookingForm: React.FC<PrivateBookingFormProps> = ({ onBack }) => {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="max-w-sm w-full bg-white dark:bg-zinc-800 rounded-xl shadow-lg p-6 text-center"
+          className="max-w-sm w-full bg-muted rounded-xl shadow-lg p-6 text-center"
         >
           <motion.div
             initial={{ scale: 0 }}
@@ -310,39 +310,39 @@ const PrivateBookingForm: React.FC<PrivateBookingFormProps> = ({ onBack }) => {
             transition={{ type: 'spring', stiffness: 200, damping: 20 }}
             className="w-16 h-16 mx-auto mb-4 rounded-full bg-emerald-500/15 flex items-center justify-center border border-emerald-400/30"
           >
-            <CheckCircle className="w-8 h-8 text-emerald-600 dark:text-emerald-300" />
+            <CheckCircle className="w-8 h-8 text-emerald-300" />
           </motion.div>
 
-          <h2 className="text-xl font-bold text-zinc-800 dark:text-white mb-2">
+          <h2 className="text-xl font-bold text-white mb-2">
             Private Booking Created!
           </h2>
-          <p className="text-zinc-600 dark:text-zinc-300 mb-4 text-sm">
+          <p className="text-muted-foreground mb-4 text-sm">
             Booking for <span className="font-semibold text-emerald-600">{customerInfo.name}</span> has been successfully created.
           </p>
 
-          <div className="bg-emerald-50 dark:bg-emerald-900/20 rounded-lg p-3 mb-4 text-xs text-left">
+          <div className="bg-emerald-900/20 rounded-lg p-3 mb-4 text-xs text-left">
             <div className="flex justify-between items-center py-1">
-              <span className="text-zinc-600 dark:text-zinc-400">Game Type</span>
-              <span className="font-medium text-zinc-800 dark:text-white">{selectedGame?.name}</span>
+              <span className="text-muted-foreground">Game Type</span>
+              <span className="font-medium text-white">{selectedGame?.name}</span>
             </div>
             <div className="flex justify-between items-center py-1">
-              <span className="text-zinc-600 dark:text-zinc-400">Date</span>
-              <span className="font-medium text-zinc-800 dark:text-white">{bookingDate}</span>
+              <span className="text-muted-foreground">Date</span>
+              <span className="font-medium text-white">{bookingDate}</span>
             </div>
             <div className="flex justify-between items-center py-1">
-              <span className="text-zinc-600 dark:text-zinc-400">Time</span>
-              <span className="font-medium text-zinc-800 dark:text-white">{startTime} - {endTime}</span>
+              <span className="text-muted-foreground">Time</span>
+              <span className="font-medium text-white">{startTime} - {endTime}</span>
             </div>
             <div className="flex justify-between items-center py-1">
-              <span className="text-zinc-600 dark:text-zinc-400">Duration</span>
-              <span className="font-medium text-zinc-800 dark:text-white">{durationHours} hrs</span>
+              <span className="text-muted-foreground">Duration</span>
+              <span className="font-medium text-white">{durationHours} hrs</span>
             </div>
             <div className="flex justify-between items-center py-1">
-              <span className="text-zinc-600 dark:text-zinc-400">Payment</span>
-              <span className="font-medium text-zinc-800 dark:text-white">{paymentMode}</span>
+              <span className="text-muted-foreground">Payment</span>
+              <span className="font-medium text-white">{paymentMode}</span>
             </div>
             <div className="flex justify-between items-center py-1">
-              <span className="text-zinc-600 dark:text-zinc-400">Total Amount</span>
+              <span className="text-muted-foreground">Total Amount</span>
               <span className="font-bold text-emerald-600 text-lg">₹{totalAmount}</span>
             </div>
           </div>
@@ -361,32 +361,32 @@ const PrivateBookingForm: React.FC<PrivateBookingFormProps> = ({ onBack }) => {
   }
 
   return (
-    <div className="h-full flex flex-col bg-white dark:bg-zinc-900">
+    <div className="h-full flex flex-col bg-card">
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="flex items-center justify-between p-3 bg-white dark:bg-zinc-800 border-b border-zinc-200 dark:border-zinc-700"
+        className="flex items-center justify-between p-3 bg-muted border-b border-border"
       >
         <div className="flex items-center gap-3">
           <motion.button
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
             onClick={onBack}
-            className="p-1.5 hover:bg-zinc-100 dark:hover:bg-zinc-700 rounded-full transition-all duration-200"
+            className="p-1.5 hover:bg-muted rounded-full transition-all duration-200"
           >
-            <ChevronLeft className="w-5 h-5 text-zinc-600 dark:text-zinc-400" />
+            <ChevronLeft className="w-5 h-5 text-muted-foreground" />
           </motion.button>
           <div>
             <h1 className="text-lg font-bold text-foreground">
               Private Booking
             </h1>
-            <p className="text-xs text-zinc-500">Manual booking without slot restrictions</p>
+            <p className="text-xs text-muted-foreground">Manual booking without slot restrictions</p>
           </div>
         </div>
-        <div className="flex items-center gap-2 bg-purple-100/50 dark:bg-purple-900/30 px-3 py-1 rounded-full">
-          <GameController2 className="w-4 h-4 text-purple-600 dark:text-purple-300" />
-          <span className="text-purple-700 dark:text-purple-300 font-medium text-sm">Private Mode</span>
+        <div className="flex items-center gap-2 bg-purple-900/30 px-3 py-1 rounded-full">
+          <GameController2 className="w-4 h-4 text-purple-300" />
+          <span className="text-purple-300 font-medium text-sm">Private Mode</span>
         </div>
       </motion.div>
 
@@ -400,13 +400,13 @@ const PrivateBookingForm: React.FC<PrivateBookingFormProps> = ({ onBack }) => {
               <motion.div
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
-                className="bg-white dark:bg-zinc-800 rounded-lg p-3 shadow-sm border border-zinc-200 dark:border-zinc-700"
+                className="bg-muted rounded-lg p-3 shadow-sm border border-border"
               >
                 <div className="flex items-center gap-2 mb-3">
-                  <div className="p-1 bg-blue-100 dark:bg-blue-900/30 rounded">
-                    <User className="w-4 h-4 text-blue-600" />
+                  <div className="p-1 bg-primary/30 rounded">
+                    <User className="w-4 h-4 text-primary" />
                   </div>
-                  <h3 className="text-sm font-semibold text-zinc-800 dark:text-white">Customer Information</h3>
+                  <h3 className="text-sm font-semibold text-white">Customer Information</h3>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -419,15 +419,15 @@ const PrivateBookingForm: React.FC<PrivateBookingFormProps> = ({ onBack }) => {
                       onFocus={() => setFocusedInput('email')}
                       onBlur={() => setTimeout(() => setFocusedInput(''), 150)}
                       placeholder="Email"
-                      className={`w-full pl-8 pr-2 py-2 bg-white dark:bg-zinc-900 rounded border transition-all duration-200 text-sm ${
+                      className={`w-full pl-8 pr-2 py-2 bg-card rounded border transition-all duration-200 text-sm ${
                         errors.email
                           ? 'border-red-500 focus:border-red-500'
                           : focusedInput === 'email'
-                          ? 'border-blue-500 focus:border-blue-500'
-                          : 'border-zinc-200 dark:border-zinc-600 focus:border-blue-500'
-                      } focus:outline-none focus:ring-1 focus:ring-blue-500/20`}
+                          ? 'border-primary focus:border-primary'
+                          : 'border-border focus:border-primary'
+                      } focus:outline-none focus:ring-1 focus:ring-primary/20`}
                     />
-                    <Mail className="w-4 h-4 text-zinc-400 absolute left-2.5 top-2.5" />
+                    <Mail className="w-4 h-4 text-muted-foreground absolute left-2.5 top-2.5" />
 
                     {/* Email suggestions */}
                     <AnimatePresence>
@@ -436,16 +436,16 @@ const PrivateBookingForm: React.FC<PrivateBookingFormProps> = ({ onBack }) => {
                           initial={{ opacity: 0, y: -5 }}
                           animate={{ opacity: 1, y: 0 }}
                           exit={{ opacity: 0, y: -5 }}
-                          className="absolute z-20 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded shadow-lg w-full mt-1 max-h-32 overflow-y-auto"
+                          className="absolute z-20 bg-muted border border-border rounded shadow-lg w-full mt-1 max-h-32 overflow-y-auto"
                         >
                           {emailSuggestions.map((user, idx) => (
                             <li
                               key={idx}
-                              className="px-2 py-1.5 hover:bg-blue-50 dark:hover:bg-blue-900/30 cursor-pointer text-xs"
+                              className="px-2 py-1.5 hover:bg-primary/30 cursor-pointer text-xs"
                               onMouseDown={() => handleSuggestionClick(user)}
                             >
-                              <p className="font-medium text-zinc-800 dark:text-white">{user.name}</p>
-                              <p className="text-zinc-600 dark:text-zinc-400">{user.email}</p>
+                              <p className="font-medium text-white">{user.name}</p>
+                              <p className="text-muted-foreground">{user.email}</p>
                             </li>
                           ))}
                         </motion.ul>
@@ -462,15 +462,15 @@ const PrivateBookingForm: React.FC<PrivateBookingFormProps> = ({ onBack }) => {
                       onFocus={() => setFocusedInput('phone')}
                       onBlur={() => setTimeout(() => setFocusedInput(''), 150)}
                       placeholder="Phone"
-                      className={`w-full pl-8 pr-2 py-2 bg-white dark:bg-zinc-900 rounded border transition-all duration-200 text-sm ${
+                      className={`w-full pl-8 pr-2 py-2 bg-card rounded border transition-all duration-200 text-sm ${
                         errors.phone
                           ? 'border-red-500 focus:border-red-500'
                           : focusedInput === 'phone'
-                          ? 'border-blue-500 focus:border-blue-500'
-                          : 'border-zinc-200 dark:border-zinc-600 focus:border-blue-500'
-                      } focus:outline-none focus:ring-1 focus:ring-blue-500/20`}
+                          ? 'border-primary focus:border-primary'
+                          : 'border-border focus:border-primary'
+                      } focus:outline-none focus:ring-1 focus:ring-primary/20`}
                     />
-                    <Phone className="w-4 h-4 text-zinc-400 absolute left-2.5 top-2.5" />
+                    <Phone className="w-4 h-4 text-muted-foreground absolute left-2.5 top-2.5" />
 
                     {/* Phone suggestions */}
                     <AnimatePresence>
@@ -479,16 +479,16 @@ const PrivateBookingForm: React.FC<PrivateBookingFormProps> = ({ onBack }) => {
                           initial={{ opacity: 0, y: -5 }}
                           animate={{ opacity: 1, y: 0 }}
                           exit={{ opacity: 0, y: -5 }}
-                          className="absolute z-20 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded shadow-lg w-full mt-1 max-h-32 overflow-y-auto"
+                          className="absolute z-20 bg-muted border border-border rounded shadow-lg w-full mt-1 max-h-32 overflow-y-auto"
                         >
                           {phoneSuggestions.map((user, idx) => (
                             <li
                               key={idx}
-                              className="px-2 py-1.5 hover:bg-blue-50 dark:hover:bg-blue-900/30 cursor-pointer text-xs"
+                              className="px-2 py-1.5 hover:bg-primary/30 cursor-pointer text-xs"
                               onMouseDown={() => handleSuggestionClick(user)}
                             >
-                              <p className="font-medium text-zinc-800 dark:text-white">{user.name}</p>
-                              <p className="text-zinc-600 dark:text-zinc-400">{user.phone}</p>
+                              <p className="font-medium text-white">{user.name}</p>
+                              <p className="text-muted-foreground">{user.phone}</p>
                             </li>
                           ))}
                         </motion.ul>
@@ -505,15 +505,15 @@ const PrivateBookingForm: React.FC<PrivateBookingFormProps> = ({ onBack }) => {
                       onFocus={() => setFocusedInput('name')}
                       onBlur={() => setTimeout(() => setFocusedInput(''), 150)}
                       placeholder="Full Name"
-                      className={`w-full pl-8 pr-2 py-2 bg-white dark:bg-zinc-900 rounded border transition-all duration-200 text-sm ${
+                      className={`w-full pl-8 pr-2 py-2 bg-card rounded border transition-all duration-200 text-sm ${
                         errors.name
                           ? 'border-red-500 focus:border-red-500'
                           : focusedInput === 'name'
-                          ? 'border-blue-500 focus:border-blue-500'
-                          : 'border-zinc-200 dark:border-zinc-600 focus:border-blue-500'
-                      } focus:outline-none focus:ring-1 focus:ring-blue-500/20`}
+                          ? 'border-primary focus:border-primary'
+                          : 'border-border focus:border-primary'
+                      } focus:outline-none focus:ring-1 focus:ring-primary/20`}
                     />
-                    <User className="w-4 h-4 text-zinc-400 absolute left-2.5 top-2.5" />
+                    <User className="w-4 h-4 text-muted-foreground absolute left-2.5 top-2.5" />
 
                     {/* Name suggestions */}
                     <AnimatePresence>
@@ -522,16 +522,16 @@ const PrivateBookingForm: React.FC<PrivateBookingFormProps> = ({ onBack }) => {
                           initial={{ opacity: 0, y: -5 }}
                           animate={{ opacity: 1, y: 0 }}
                           exit={{ opacity: 0, y: -5 }}
-                          className="absolute z-20 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded shadow-lg w-full mt-1 max-h-32 overflow-y-auto"
+                          className="absolute z-20 bg-muted border border-border rounded shadow-lg w-full mt-1 max-h-32 overflow-y-auto"
                         >
                           {nameSuggestions.map((user, idx) => (
                             <li
                               key={idx}
-                              className="px-2 py-1.5 hover:bg-blue-50 dark:hover:bg-blue-900/30 cursor-pointer text-xs"
+                              className="px-2 py-1.5 hover:bg-primary/30 cursor-pointer text-xs"
                               onMouseDown={() => handleSuggestionClick(user)}
                             >
-                              <p className="font-medium text-zinc-800 dark:text-white">{user.name}</p>
-                              <p className="text-zinc-600 dark:text-zinc-400">{user.email}</p>
+                              <p className="font-medium text-white">{user.name}</p>
+                              <p className="text-muted-foreground">{user.email}</p>
                             </li>
                           ))}
                         </motion.ul>
@@ -546,13 +546,13 @@ const PrivateBookingForm: React.FC<PrivateBookingFormProps> = ({ onBack }) => {
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.1 }}
-                className="bg-white dark:bg-zinc-800 rounded-lg p-3 shadow-sm border border-zinc-200 dark:border-zinc-700"
+                className="bg-muted rounded-lg p-3 shadow-sm border border-border"
               >
                 <div className="flex items-center gap-2 mb-3">
-                  <div className="p-1 bg-purple-100 dark:bg-purple-900/30 rounded">
+                  <div className="p-1 bg-purple-900/30 rounded">
                     <GameController2 className="w-4 h-4 text-purple-600" />
                   </div>
-                  <h3 className="text-sm font-semibold text-zinc-800 dark:text-white">Select Game Type</h3>
+                  <h3 className="text-sm font-semibold text-white">Select Game Type</h3>
                 </div>
 
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
@@ -569,14 +569,14 @@ const PrivateBookingForm: React.FC<PrivateBookingFormProps> = ({ onBack }) => {
                       }}
                       className={`p-3 rounded-lg border transition-all duration-200 text-sm ${
                         selectedGame?.id === game.id
-                          ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300'
-                          : 'border-zinc-200 dark:border-zinc-600 hover:border-purple-300 hover:bg-purple-50/50 dark:hover:bg-purple-900/20'
+                          ? 'border-purple-500 bg-purple-900/30 text-purple-300'
+                          : 'border-border hover:border-purple-300 hover:bg-purple-900/20'
                       }`}
                     >
                       <div className="flex flex-col items-center gap-1">
                         <GameController2 className="w-5 h-5" />
                         <span className="font-medium">{game.name}</span>
-                        <span className="text-xs text-zinc-500">₹{game.price}/hr</span>
+                        <span className="text-xs text-muted-foreground">₹{game.price}/hr</span>
                       </div>
                     </motion.button>
                   ))}
@@ -597,56 +597,56 @@ const PrivateBookingForm: React.FC<PrivateBookingFormProps> = ({ onBack }) => {
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.2 }}
-                className="bg-white dark:bg-zinc-800 rounded-lg p-3 shadow-sm border border-zinc-200 dark:border-zinc-700"
+                className="bg-muted rounded-lg p-3 shadow-sm border border-border"
               >
                 <div className="flex items-center gap-2 mb-3">
-                  <div className="p-1 bg-emerald-100 dark:bg-emerald-900/30 rounded">
+                  <div className="p-1 bg-emerald-900/30 rounded">
                     <CalendarDays className="w-4 h-4 text-emerald-600" />
                   </div>
-                  <h3 className="text-sm font-semibold text-zinc-800 dark:text-white">Schedule</h3>
+                  <h3 className="text-sm font-semibold text-white">Schedule</h3>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
                   <div className="space-y-1">
-                    <label className="text-xs text-zinc-600 dark:text-zinc-400">Date</label>
+                    <label className="text-xs text-muted-foreground">Date</label>
                     <input
                       type="date"
                       value={bookingDate}
                       min={new Date().toISOString().split('T')[0]}
                       onChange={(e) => setBookingDate(e.target.value)}
-                      className="w-full px-2 py-2 bg-white dark:bg-zinc-900 rounded border border-zinc-200 dark:border-zinc-600 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500/20 transition-all duration-200 text-sm"
+                      className="w-full px-2 py-2 bg-card rounded border border-border focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500/20 transition-all duration-200 text-sm"
                     />
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-xs text-zinc-600 dark:text-zinc-400">Start Time</label>
+                    <label className="text-xs text-muted-foreground">Start Time</label>
                     <input
                       type="time"
                       value={startTime}
                       onChange={(e) => setStartTime(e.target.value)}
-                      className="w-full px-2 py-2 bg-white dark:bg-zinc-900 rounded border border-zinc-200 dark:border-zinc-600 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500/20 transition-all duration-200 text-sm"
+                      className="w-full px-2 py-2 bg-card rounded border border-border focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500/20 transition-all duration-200 text-sm"
                     />
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-xs text-zinc-600 dark:text-zinc-400">End Time</label>
+                    <label className="text-xs text-muted-foreground">End Time</label>
                     <input
                       type="time"
                       value={endTime}
                       onChange={(e) => setEndTime(e.target.value)}
-                      className="w-full px-2 py-2 bg-white dark:bg-zinc-900 rounded border border-zinc-200 dark:border-zinc-600 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500/20 transition-all duration-200 text-sm"
+                      className="w-full px-2 py-2 bg-card rounded border border-border focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500/20 transition-all duration-200 text-sm"
                     />
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-xs text-zinc-600 dark:text-zinc-400">Duration (hrs)</label>
+                    <label className="text-xs text-muted-foreground">Duration (hrs)</label>
                     <input
                       type="number"
                       step="0.5"
                       min="0.5"
                       value={durationHours}
                       onChange={(e) => setDurationHours(parseFloat(e.target.value))}
-                      className="w-full px-2 py-2 bg-white dark:bg-zinc-900 rounded border border-zinc-200 dark:border-zinc-600 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500/20 transition-all duration-200 text-sm"
+                      className="w-full px-2 py-2 bg-card rounded border border-border focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500/20 transition-all duration-200 text-sm"
                     />
                   </div>
                 </div>
@@ -657,13 +657,13 @@ const PrivateBookingForm: React.FC<PrivateBookingFormProps> = ({ onBack }) => {
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.3 }}
-                className="bg-white dark:bg-zinc-800 rounded-lg p-3 shadow-sm border border-zinc-200 dark:border-zinc-700"
+                className="bg-muted rounded-lg p-3 shadow-sm border border-border"
               >
                 <div className="flex items-center gap-2 mb-3">
-                  <div className="p-1 bg-amber-100 dark:bg-amber-900/30 rounded">
+                  <div className="p-1 bg-amber-900/30 rounded">
                     <Plus className="w-4 h-4 text-amber-600" />
                   </div>
-                  <h3 className="text-sm font-semibold text-zinc-800 dark:text-white">Extras & Notes</h3>
+                  <h3 className="text-sm font-semibold text-white">Extras & Notes</h3>
                 </div>
 
                 <div className="space-y-3">
@@ -682,12 +682,12 @@ const PrivateBookingForm: React.FC<PrivateBookingFormProps> = ({ onBack }) => {
                     {selectedMeals.length > 0 && (
                       <div className="mt-2 space-y-1">
                         {selectedMeals.map((meal) => (
-                          <div key={meal.menu_item_id} className="bg-amber-50 dark:bg-amber-900/20 rounded p-2 text-xs">
+                          <div key={meal.menu_item_id} className="bg-amber-900/20 rounded p-2 text-xs">
                             <div className="flex justify-between">
                               <span className="font-medium">{meal.name}</span>
                               <span className="font-bold text-amber-600">₹{meal.total}</span>
                             </div>
-                            <div className="text-zinc-500">
+                            <div className="text-muted-foreground">
                               {meal.quantity} × ₹{meal.price}
                             </div>
                           </div>
@@ -698,13 +698,13 @@ const PrivateBookingForm: React.FC<PrivateBookingFormProps> = ({ onBack }) => {
 
                   {/* Notes */}
                   <div>
-                    <label className="text-xs text-zinc-600 dark:text-zinc-400 block mb-1">Notes (Optional)</label>
+                    <label className="text-xs text-muted-foreground block mb-1">Notes (Optional)</label>
                     <textarea
                       value={notes}
                       onChange={(e) => setNotes(e.target.value)}
                       placeholder="Add any special instructions..."
                       rows={2}
-                      className="w-full px-2 py-2 bg-white dark:bg-zinc-900 rounded border border-zinc-200 dark:border-zinc-600 focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500/20 transition-all duration-200 text-sm resize-none"
+                      className="w-full px-2 py-2 bg-card rounded border border-border focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500/20 transition-all duration-200 text-sm resize-none"
                     />
                   </div>
                 </div>
@@ -717,73 +717,73 @@ const PrivateBookingForm: React.FC<PrivateBookingFormProps> = ({ onBack }) => {
                 initial={{ opacity: 0, x: 10 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.4 }}
-                className="bg-white dark:bg-zinc-800 rounded-lg p-3 shadow-sm border border-zinc-200 dark:border-zinc-700"
+                className="bg-muted rounded-lg p-3 shadow-sm border border-border"
               >
                 <div className="flex items-center gap-2 mb-3">
-                  <div className="p-1 bg-blue-100 dark:bg-blue-900/30 rounded">
-                    <IndianRupee className="w-4 h-4 text-blue-600" />
+                  <div className="p-1 bg-primary/30 rounded">
+                    <IndianRupee className="w-4 h-4 text-primary" />
                   </div>
-                  <h3 className="text-sm font-semibold text-zinc-800 dark:text-white">Summary</h3>
+                  <h3 className="text-sm font-semibold text-white">Summary</h3>
                 </div>
 
                 <div className="space-y-2 text-xs">
-                  <div className="flex justify-between py-1 border-b border-zinc-100 dark:border-zinc-700">
-                    <span className="text-zinc-600 dark:text-zinc-400">Game</span>
+                  <div className="flex justify-between py-1 border-b border-border">
+                    <span className="text-muted-foreground">Game</span>
                     <span className="font-medium">{selectedGame?.name || '-'}</span>
                   </div>
 
-                  <div className="flex justify-between py-1 border-b border-zinc-100 dark:border-zinc-700">
-                    <span className="text-zinc-600 dark:text-zinc-400">Duration</span>
+                  <div className="flex justify-between py-1 border-b border-border">
+                    <span className="text-muted-foreground">Duration</span>
                     <span className="font-medium">{durationHours} hrs</span>
                   </div>
 
-                  <div className="flex justify-between py-1 border-b border-zinc-100 dark:border-zinc-700">
-                    <span className="text-zinc-600 dark:text-zinc-400">Hourly Rate</span>
+                  <div className="flex justify-between py-1 border-b border-border">
+                    <span className="text-muted-foreground">Hourly Rate</span>
                     <input
                       type="number"
                       value={hourlyRate}
                       onChange={(e) => setHourlyRate(Number(e.target.value))}
-                      className="w-16 text-right px-1 py-0.5 rounded border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-900 text-xs"
+                      className="w-16 text-right px-1 py-0.5 rounded border border-border bg-card text-xs"
                       min="0"
                     />
                   </div>
 
-                  <div className="flex justify-between py-1 border-b border-zinc-100 dark:border-zinc-700">
-                    <span className="text-zinc-600 dark:text-zinc-400">Slot Cost</span>
+                  <div className="flex justify-between py-1 border-b border-border">
+                    <span className="text-muted-foreground">Slot Cost</span>
                     <span className="font-medium">₹{slotCost}</span>
                   </div>
 
-                  <div className="flex justify-between py-1 border-b border-zinc-100 dark:border-zinc-700">
-                    <span className="text-zinc-600 dark:text-zinc-400">Meals/Extras</span>
+                  <div className="flex justify-between py-1 border-b border-border">
+                    <span className="text-muted-foreground">Meals/Extras</span>
                     <span className="font-medium">₹{mealsTotal}</span>
                   </div>
 
-                  <div className="flex justify-between py-1 border-b border-zinc-100 dark:border-zinc-700">
-                    <span className="text-zinc-600 dark:text-zinc-400">Manual Discount</span>
+                  <div className="flex justify-between py-1 border-b border-border">
+                    <span className="text-muted-foreground">Manual Discount</span>
                     <input
                       type="number"
                       value={manualDiscount}
                       onChange={(e) => setManualDiscount(Number(e.target.value))}
                       placeholder="0"
-                      className="w-16 text-right px-1 py-0.5 rounded border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-900 text-xs"
+                      className="w-16 text-right px-1 py-0.5 rounded border border-border bg-card text-xs"
                       min="0"
                     />
                   </div>
 
-                  <div className="flex justify-between py-1 border-b border-zinc-100 dark:border-zinc-700">
-                    <span className="text-zinc-600 dark:text-zinc-400">Waive Off</span>
+                  <div className="flex justify-between py-1 border-b border-border">
+                    <span className="text-muted-foreground">Waive Off</span>
                     <input
                       type="number"
                       value={waiveOffAmount}
                       onChange={(e) => setWaiveOffAmount(Number(e.target.value))}
                       placeholder="0"
-                      className="w-16 text-right px-1 py-0.5 rounded border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-900 text-xs"
+                      className="w-16 text-right px-1 py-0.5 rounded border border-border bg-card text-xs"
                       min="0"
                     />
                   </div>
 
-                  <div className="flex justify-between py-2 bg-purple-50 dark:bg-purple-900/30 rounded px-2">
-                    <span className="font-bold text-zinc-800 dark:text-white text-sm">Total</span>
+                  <div className="flex justify-between py-2 bg-purple-900/30 rounded px-2">
+                    <span className="font-bold text-white text-sm">Total</span>
                     <span className="font-bold text-lg text-purple-600">₹{totalAmount}</span>
                   </div>
                 </div>
@@ -794,13 +794,13 @@ const PrivateBookingForm: React.FC<PrivateBookingFormProps> = ({ onBack }) => {
                 initial={{ opacity: 0, x: 10 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.5 }}
-                className="bg-white dark:bg-zinc-800 rounded-lg p-3 shadow-sm border border-zinc-200 dark:border-zinc-700"
+                className="bg-muted rounded-lg p-3 shadow-sm border border-border"
               >
                 <div className="flex items-center gap-2 mb-2">
-                  <div className="p-1 bg-amber-100 dark:bg-amber-900/30 rounded">
+                  <div className="p-1 bg-amber-900/30 rounded">
                     <IndianRupee className="w-4 h-4 text-amber-600" />
                   </div>
-                  <h3 className="text-sm font-semibold text-zinc-800 dark:text-white">Payment Mode</h3>
+                  <h3 className="text-sm font-semibold text-white">Payment Mode</h3>
                 </div>
 
                 <div className="grid grid-cols-3 gap-2">
@@ -811,8 +811,8 @@ const PrivateBookingForm: React.FC<PrivateBookingFormProps> = ({ onBack }) => {
                       onClick={() => setPaymentMode(mode)}
                       className={`p-2 rounded border transition-all duration-200 text-xs ${
                         paymentMode === mode
-                          ? 'border-amber-500 bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300'
-                          : 'border-zinc-200 dark:border-zinc-600 hover:border-amber-300 hover:bg-amber-50/50 dark:hover:bg-amber-900/20'
+                          ? 'border-amber-500 bg-amber-900/30 text-amber-300'
+                          : 'border-border hover:border-amber-300 hover:bg-amber-900/20'
                       }`}
                     >
                       {mode}
@@ -831,7 +831,7 @@ const PrivateBookingForm: React.FC<PrivateBookingFormProps> = ({ onBack }) => {
             disabled={isSubmitting}
             className={`w-full py-2.5 rounded-lg font-bold text-white transition-all duration-200 shadow-md ${
               isSubmitting
-                ? 'bg-zinc-400 cursor-not-allowed'
+                ? 'bg-muted cursor-not-allowed'
                 : 'bg-purple-600 hover:bg-purple-700'
             }`}
           >

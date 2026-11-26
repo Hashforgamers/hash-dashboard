@@ -161,7 +161,7 @@ const PassRedemption: React.FC<{ vendorId: number }> = ({ vendorId }) => {
                 value={passUid}
                 onChange={(e) => setPassUid(e.target.value.toUpperCase())}
                 placeholder="HFG-XXXXXXXXXXXX"
-                className="flex-1 px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="flex-1 px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary"
                 disabled={loading || passDetails !== null}
                 onKeyPress={(e) => e.key === 'Enter' && validatePass()}
               />
@@ -177,7 +177,7 @@ const PassRedemption: React.FC<{ vendorId: number }> = ({ vendorId }) => {
               ) : (
                 <button
                   onClick={resetForm}
-                  className="px-6 py-2 bg-zinc-600 text-white rounded-lg hover:bg-zinc-700"
+                  className="px-6 py-2 bg-muted text-white rounded-lg hover:bg-muted"
                 >
                   Reset
                 </button>
@@ -205,45 +205,45 @@ const PassRedemption: React.FC<{ vendorId: number }> = ({ vendorId }) => {
 
       {/* Pass Details Card */}
       {passDetails && (
-        <div className="bg-blue-50/70 dark:bg-blue-900/20 rounded-lg shadow-md p-6 space-y-6">
+        <div className="bg-primary/20 rounded-lg shadow-md p-6 space-y-6">
           <div className="flex items-start justify-between">
             <div>
-              <h3 className="text-xl font-bold text-zinc-900">
+              <h3 className="text-xl font-bold text-foreground">
                 {passDetails.pass_name}
               </h3>
-              <p className="text-sm text-zinc-600 mt-1">
+              <p className="text-sm text-muted-foreground mt-1">
                 {passDetails.is_global ? '🌍 Global Pass' : '📍 Vendor-Specific Pass'}
               </p>
             </div>
             <div className="text-right">
-              <div className="text-3xl font-bold text-blue-600">
+              <div className="text-3xl font-bold text-primary">
                 {passDetails.remaining_hours.toFixed(2)}
               </div>
-              <div className="text-sm text-zinc-600">hours remaining</div>
+              <div className="text-sm text-muted-foreground">hours remaining</div>
             </div>
           </div>
 
           {/* Pass Info Grid */}
           <div className="grid grid-cols-2 gap-4">
             <div className="bg-white rounded-lg p-4">
-              <div className="text-sm text-zinc-600">Total Hours</div>
+              <div className="text-sm text-muted-foreground">Total Hours</div>
               <div className="text-lg font-semibold">{passDetails.total_hours.toFixed(2)} hrs</div>
             </div>
             <div className="bg-white rounded-lg p-4">
-              <div className="text-sm text-zinc-600">User ID</div>
+              <div className="text-sm text-muted-foreground">User ID</div>
               <div className="text-lg font-semibold flex items-center gap-2">
                 <User className="w-4 h-4" />
                 #{passDetails.user_id}
               </div>
             </div>
             <div className="bg-white rounded-lg p-4">
-              <div className="text-sm text-zinc-600">Valid From</div>
+              <div className="text-sm text-muted-foreground">Valid From</div>
               <div className="text-lg font-semibold">
                 {new Date(passDetails.valid_from).toLocaleDateString()}
               </div>
             </div>
             <div className="bg-white rounded-lg p-4">
-              <div className="text-sm text-zinc-600">Valid Until</div>
+              <div className="text-sm text-muted-foreground">Valid Until</div>
               <div className="text-lg font-semibold">
                 {passDetails.valid_to 
                   ? new Date(passDetails.valid_to).toLocaleDateString()
@@ -269,7 +269,7 @@ const PassRedemption: React.FC<{ vendorId: number }> = ({ vendorId }) => {
                   value={hoursToDeduct}
                   onChange={(e) => setHoursToDeduct(e.target.value)}
                   placeholder="e.g., 2.0"
-                  className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary"
                 />
               </div>
 
@@ -281,7 +281,7 @@ const PassRedemption: React.FC<{ vendorId: number }> = ({ vendorId }) => {
                   type="time"
                   value={sessionStart}
                   onChange={(e) => setSessionStart(e.target.value)}
-                  className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary"
                 />
               </div>
 
@@ -293,7 +293,7 @@ const PassRedemption: React.FC<{ vendorId: number }> = ({ vendorId }) => {
                   type="time"
                   value={sessionEnd}
                   onChange={(e) => setSessionEnd(e.target.value)}
-                  className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary"
                 />
               </div>
 
@@ -306,7 +306,7 @@ const PassRedemption: React.FC<{ vendorId: number }> = ({ vendorId }) => {
                   onChange={(e) => setNotes(e.target.value)}
                   placeholder="Additional notes..."
                   rows={2}
-                  className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary"
                 />
               </div>
             </div>

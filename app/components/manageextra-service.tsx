@@ -91,7 +91,7 @@ const getCategoryIcon = (categoryName: string) => {
     return <UtensilsCrossed className="icon-lg text-amber-400" />
   }
   if (name.includes('drink') || name.includes('beverage')) {
-    return <Coffee className="icon-lg text-blue-400" />
+    return <Coffee className="icon-lg text-primary" />
   }
   return <UtensilsCrossed className="icon-lg text-primary" />
 }
@@ -541,11 +541,11 @@ export default function ManageExtraServices() {
         {vendorId && (
           loading ? (
             <div className="flex items-center justify-center py-12 gap-3 text-muted-foreground">
-              <Loader2 className="w-8 h-8 animate-spin text-blue-400" />
+              <Loader2 className="w-8 h-8 animate-spin text-primary" />
               <p className="body-text-muted">Loading categories...</p>
             </div>
           ) : !Array.isArray(categories) || categories.length === 0 ? (
-            <div className="gaming-panel flex flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed border-blue-400/20 py-8">
+            <div className="gaming-panel flex flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed border-border py-8">
               <UtensilsCrossed className="w-12 h-12 text-muted-foreground/30" />
               <h3 className="section-title text-muted-foreground/60">No categories yet</h3>
               <p className="body-text-muted">Create your first category to get started</p>
@@ -605,13 +605,13 @@ export default function ManageExtraServices() {
 
                           {/* ✅ View Mode Toggle */}
                           {!isMobile && (
-                            <div className="flex items-center gap-1 rounded-lg border border-zinc-300 bg-white/90 p-1 dark:border-blue-400/20 dark:bg-zinc-900/60">
+                            <div className="flex items-center gap-1 rounded-lg border p-1 border-border bg-card">
                             <button
                               onClick={() => setViewMode(cat.id, 'grid')}
                               className={`p-1.5 rounded-md transition-all ${
                                 mode === 'grid'
-                                  ? 'bg-zinc-200 shadow-sm text-zinc-900 dark:bg-zinc-800 dark:text-blue-300'
-                                  : 'text-zinc-500 hover:text-zinc-900 dark:text-muted-foreground dark:hover:text-blue-200'
+                                  ? 'shadow-sm bg-muted text-primary'
+                                  : 'text-muted-foreground dark:text-muted-foreground hover:text-primary'
                               }`}
                               title="Grid View"
                               aria-label="Grid view"
@@ -623,8 +623,8 @@ export default function ManageExtraServices() {
                               onClick={() => setViewMode(cat.id, 'table')}
                               className={`p-1.5 rounded-md transition-all ${
                                 mode === 'table'
-                                  ? 'bg-zinc-200 shadow-sm text-zinc-900 dark:bg-zinc-800 dark:text-blue-300'
-                                  : 'text-zinc-500 hover:text-zinc-900 dark:text-muted-foreground dark:hover:text-blue-200'
+                                  ? 'shadow-sm bg-muted text-primary'
+                                  : 'text-muted-foreground dark:text-muted-foreground hover:text-primary'
                               }`}
                               title="Table View"
                               aria-label="Table view"
@@ -720,15 +720,15 @@ export default function ManageExtraServices() {
                                           </p>
                                         )}
                                         <div className="flex items-center justify-between gap-1 pt-0.5">
-                                          <div className="flex items-center gap-0.5 text-blue-400 font-bold text-sm">
+                                          <div className="flex items-center gap-0.5 text-primary font-bold text-sm">
                                             <IndianRupee className="w-3 h-3" />
                                             <span>{item.price}</span>
                                           </div>
                                           <span className={clsx(
                                             "rounded-full border px-1.5 py-0.5 text-[10px] font-semibold",
                                             item.is_low_stock
-                                              ? "border-amber-300 bg-amber-50 text-amber-700 dark:border-amber-400/40 dark:bg-amber-500/15 dark:text-amber-300"
-                                              : "border-zinc-300 bg-zinc-100 text-zinc-700 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-200"
+                                              ? "border-amber-400/40 bg-amber-500/15 text-amber-300"
+                                              : "border-border bg-muted text-foreground"
                                           )}>
                                             {item.stock_quantity ?? 0} {item.stock_unit || "units"}
                                           </span>
@@ -840,8 +840,8 @@ export default function ManageExtraServices() {
                                               <span className={clsx(
                                                 "rounded-full border px-2 py-0.5 text-xs font-semibold",
                                                 item.is_low_stock
-                                                  ? "border-amber-300 bg-amber-50 text-amber-700 dark:border-amber-400/40 dark:bg-amber-500/15 dark:text-amber-300"
-                                                  : "border-zinc-300 bg-zinc-100 text-zinc-700 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-200"
+                                                  ? "border-amber-400/40 bg-amber-500/15 text-amber-300"
+                                                  : "border-border bg-muted text-foreground"
                                               )}>
                                                 {(item.stock_quantity ?? 0)} {item.stock_unit || "units"}
                                               </span>
@@ -863,8 +863,8 @@ export default function ManageExtraServices() {
                                               className={clsx(
                                                 "px-2 py-0.5 rounded-full text-xs font-bold border transition-all disabled:cursor-not-allowed disabled:opacity-50",
                                                 item.is_active
-                                                  ? "border-emerald-300 bg-emerald-50 text-emerald-800 hover:bg-emerald-100 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-400"
-                                                  : "border-border bg-muted/20 text-zinc-600 hover:bg-muted/40 dark:text-muted-foreground"
+                                                  ? "hover:bg-emerald-100 border-emerald-500/20 bg-emerald-500/10 text-emerald-400"
+                                                  : "border-border bg-muted/20 text-muted-foreground hover:bg-muted/40 dark:text-muted-foreground"
                                               )}
                                               title={item.is_active ? "Click to deactivate" : "Click to activate"}
                                             >
@@ -916,8 +916,8 @@ export default function ManageExtraServices() {
           {actionError && <p role="alert" className="text-sm text-red-300">{actionError}</p>}
           <DialogHeader>
             <DialogTitle className="ui-dialog-title flex items-center gap-2 text-lg font-bold tracking-wide">
-              <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-blue-400/35 bg-blue-500/10">
-                <FolderPlus className="h-4 w-4 text-blue-300" />
+              <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-primary/35 bg-primary/10">
+                <FolderPlus className="h-4 w-4 text-primary" />
               </span>
               New Category
             </DialogTitle>
@@ -927,23 +927,23 @@ export default function ManageExtraServices() {
           </DialogHeader>
           <div className="space-y-4 py-2">
             <div className="space-y-1.5">
-              <label className="text-xs font-bold uppercase tracking-wider text-zinc-700 dark:text-blue-100/80">Name *</label>
+              <label className="text-xs font-bold uppercase tracking-wider text-foreground">Name *</label>
               <Input
                 value={categoryForm.name}
                 onChange={e => setCategoryForm({ ...categoryForm, name: e.target.value })}
                 placeholder="e.g. Food, Drinks, Snacks"
                 disabled={categoryLoading}
-                className="ui-input-surface focus-visible:ring-blue-400/60"
+                className="ui-input-surface focus-visible:ring-primary/60"
               />
             </div>
             <div className="space-y-1.5">
-              <label className="text-xs font-bold uppercase tracking-wider text-zinc-700 dark:text-blue-100/80">Description</label>
+              <label className="text-xs font-bold uppercase tracking-wider text-foreground">Description</label>
               <Input
                 value={categoryForm.description}
                 onChange={e => setCategoryForm({ ...categoryForm, description: e.target.value })}
                 placeholder="Optional description"
                 disabled={categoryLoading}
-                className="ui-input-surface focus-visible:ring-blue-400/60"
+                className="ui-input-surface focus-visible:ring-primary/60"
               />
             </div>
           </div>
@@ -979,28 +979,28 @@ export default function ManageExtraServices() {
           </DialogHeader>
           <div className="space-y-4 py-2 max-h-[60vh] overflow-y-auto pr-1">
             <div className="space-y-1.5">
-              <label className="text-xs font-bold uppercase tracking-wider text-zinc-700 dark:text-blue-100/80">Name *</label>
+              <label className="text-xs font-bold uppercase tracking-wider text-foreground">Name *</label>
               <Input
                 value={menuForm.name}
                 onChange={e => setMenuForm({ ...menuForm, name: e.target.value })}
                 placeholder="e.g. Burger, Coffee"
                 disabled={menuLoading}
-                className="ui-input-surface focus-visible:ring-blue-400/60"
+                className="ui-input-surface focus-visible:ring-primary/60"
               />
             </div>
             <div className="space-y-1.5">
-              <label className="text-xs font-bold uppercase tracking-wider text-zinc-700 dark:text-blue-100/80">Description</label>
+              <label className="text-xs font-bold uppercase tracking-wider text-foreground">Description</label>
               <Textarea
                 value={menuForm.description}
                 onChange={e => setMenuForm({ ...menuForm, description: e.target.value })}
                 placeholder="Optional description"
                 disabled={menuLoading}
                 rows={3}
-                className="ui-input-surface resize-none focus-visible:ring-blue-400/60"
+                className="ui-input-surface resize-none focus-visible:ring-primary/60"
               />
             </div>
             <div className="space-y-1.5">
-              <label className="text-xs font-bold uppercase tracking-wider text-zinc-700 dark:text-blue-100/80">Price (₹) *</label>
+              <label className="text-xs font-bold uppercase tracking-wider text-foreground">Price (₹) *</label>
               <div className="relative">
                 <IndianRupee className="absolute left-3 top-1/2 -translate-y-1/2 icon-md text-muted-foreground" />
                 <Input
@@ -1011,13 +1011,13 @@ export default function ManageExtraServices() {
                   min="0"
                   step="0.01"
                   disabled={menuLoading}
-                  className="ui-input-surface pl-9 focus-visible:ring-blue-400/60"
+                  className="ui-input-surface pl-9 focus-visible:ring-primary/60"
                 />
               </div>
             </div>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
               <div className="space-y-1.5">
-                <label className="text-xs font-bold uppercase tracking-wider text-zinc-700 dark:text-blue-100/80">Opening Stock</label>
+                <label className="text-xs font-bold uppercase tracking-wider text-foreground">Opening Stock</label>
                 <Input
                   type="number"
                   value={menuForm.stock_quantity}
@@ -1026,22 +1026,22 @@ export default function ManageExtraServices() {
                   min="0"
                   step="1"
                   disabled={menuLoading}
-                  className="ui-input-surface focus-visible:ring-blue-400/60"
+                  className="ui-input-surface focus-visible:ring-primary/60"
                 />
               </div>
               <div className="space-y-1.5">
-                <label className="text-xs font-bold uppercase tracking-wider text-zinc-700 dark:text-blue-100/80">Unit</label>
+                <label className="text-xs font-bold uppercase tracking-wider text-foreground">Unit</label>
                 <Input
                   value={menuForm.stock_unit}
                   onChange={e => setMenuForm({ ...menuForm, stock_unit: e.target.value })}
                   placeholder="units"
                   maxLength={32}
                   disabled={menuLoading}
-                  className="ui-input-surface focus-visible:ring-blue-400/60"
+                  className="ui-input-surface focus-visible:ring-primary/60"
                 />
               </div>
               <div className="space-y-1.5">
-                <label className="text-xs font-bold uppercase tracking-wider text-zinc-700 dark:text-blue-100/80">Low Stock Alert</label>
+                <label className="text-xs font-bold uppercase tracking-wider text-foreground">Low Stock Alert</label>
                 <Input
                   type="number"
                   value={menuForm.low_stock_threshold}
@@ -1050,18 +1050,18 @@ export default function ManageExtraServices() {
                   min="0"
                   step="1"
                   disabled={menuLoading}
-                  className="ui-input-surface focus-visible:ring-blue-400/60"
+                  className="ui-input-surface focus-visible:ring-primary/60"
                 />
               </div>
             </div>
             <div className="space-y-1.5">
-              <label className="text-xs font-bold uppercase tracking-wider text-zinc-700 dark:text-blue-100/80">Image (optional)</label>
+              <label className="text-xs font-bold uppercase tracking-wider text-foreground">Image (optional)</label>
               <Input
                 type="file"
                 accept="image/*"
                 onChange={handleImageSelect}
                 disabled={menuLoading}
-                className="ui-input-surface text-zinc-900 file:border-0 file:bg-transparent file:font-medium file:text-blue-700 dark:text-zinc-200 dark:file:text-blue-300"
+                className="ui-input-surface file:border-0 file:bg-transparent file:font-medium text-foreground file:text-primary"
               />
               {menuForm.imageFile && (
                 <p className="body-text-muted text-xs mt-1">
@@ -1096,9 +1096,9 @@ export default function ManageExtraServices() {
           </DialogHeader>
           <div className="space-y-3 py-1">
             <div className="space-y-1.5">
-              <label className="text-xs font-bold uppercase tracking-wider text-zinc-700 dark:text-blue-100/80">Mode</label>
+              <label className="text-xs font-bold uppercase tracking-wider text-foreground">Mode</label>
               <Select value={inventoryMode} onValueChange={(value: "set" | "increment" | "decrement") => setInventoryMode(value)}>
-                <SelectTrigger className="ui-input-surface focus-visible:ring-blue-400/60">
+                <SelectTrigger className="ui-input-surface focus-visible:ring-primary/60">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -1110,7 +1110,7 @@ export default function ManageExtraServices() {
             </div>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div className="space-y-1.5">
-                <label className="text-xs font-bold uppercase tracking-wider text-zinc-700 dark:text-blue-100/80">Quantity</label>
+                <label className="text-xs font-bold uppercase tracking-wider text-foreground">Quantity</label>
                 <Input
                   type="number"
                   min="0"
@@ -1118,21 +1118,21 @@ export default function ManageExtraServices() {
                   aria-label="Stock quantity"
                   value={inventoryQuantity}
                   onChange={(e) => setInventoryQuantity(e.target.value)}
-                  className="ui-input-surface focus-visible:ring-blue-400/60"
+                  className="ui-input-surface focus-visible:ring-primary/60"
                 />
               </div>
               <div className="space-y-1.5">
-                <label className="text-xs font-bold uppercase tracking-wider text-zinc-700 dark:text-blue-100/80">Unit</label>
+                <label className="text-xs font-bold uppercase tracking-wider text-foreground">Unit</label>
                 <Input
                   value={inventoryUnit}
                   maxLength={32}
                   onChange={(e) => setInventoryUnit(e.target.value)}
-                  className="ui-input-surface focus-visible:ring-blue-400/60"
+                  className="ui-input-surface focus-visible:ring-primary/60"
                 />
               </div>
             </div>
             <div className="space-y-1.5">
-              <label className="text-xs font-bold uppercase tracking-wider text-zinc-700 dark:text-blue-100/80">Low Stock Alert</label>
+              <label className="text-xs font-bold uppercase tracking-wider text-foreground">Low Stock Alert</label>
               <Input
                 type="number"
                 min="0"
@@ -1140,7 +1140,7 @@ export default function ManageExtraServices() {
                 aria-label="Low stock threshold"
                 value={inventoryThreshold}
                 onChange={(e) => setInventoryThreshold(e.target.value)}
-                className="ui-input-surface focus-visible:ring-blue-400/60"
+                className="ui-input-surface focus-visible:ring-primary/60"
               />
             </div>
           </div>

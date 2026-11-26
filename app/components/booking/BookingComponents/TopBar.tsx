@@ -25,8 +25,8 @@ export const TopBar = ({ selectedSlots, onNewBooking }: TopBarProps) => {
             'rounded-lg text-white shadow-lg transition-all duration-200',
             'px-5 py-2 text-sm font-semibold',
             selectedSlots.length > 0
-              ? 'bg-blue-600 hover:bg-blue-700'
-              : 'bg-zinc-500 cursor-not-allowed'
+              ? 'bg-primary hover:bg-primary'
+              : 'bg-muted cursor-not-allowed'
           )}
         >
           <Plus className="mr-2 h-4 w-4" />
@@ -34,8 +34,8 @@ export const TopBar = ({ selectedSlots, onNewBooking }: TopBarProps) => {
           {selectedSlots.length > 0 && ` (${selectedSlots.length})`}
         </Button>
 
-        <Button variant="outline" size="icon" className="rounded-lg border-zinc-600 bg-zinc-700 hover:bg-zinc-600">
-          <MoreVertical className="h-4 w-4 text-zinc-300" />
+        <Button variant="outline" size="icon" className="rounded-lg border-border bg-muted hover:bg-muted">
+          <MoreVertical className="h-4 w-4 text-muted-foreground" />
         </Button>
       </div>
     </div>

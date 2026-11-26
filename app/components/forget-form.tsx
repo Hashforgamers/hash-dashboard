@@ -42,7 +42,7 @@ export function Forget() {
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit(onSubmit)}
-        className="space-y-6 max-w-5xl mx-auto py-6 px-12 border border-zinc-300 rounded-md shadow-lg"
+        className="space-y-6 max-w-5xl mx-auto py-6 px-12 border border-border rounded-md shadow-lg"
       >
        
         <div className="text-center">
@@ -81,7 +81,7 @@ export function Forget() {
         {/* Submit Button */}
         <Button
           type="submit"
-          className="w-full bg-white hover:bg-white text-black focus:outline-none focus:ring-4 dark:hover:bg-white font-medium"
+          className="w-full bg-white text-black focus:outline-none focus:ring-4 hover:bg-white font-medium"
         >
           Reset Password
         </Button>

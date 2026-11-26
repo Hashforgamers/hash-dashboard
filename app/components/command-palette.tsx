@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
-import { Bell, Gamepad2, KeyRound, RefreshCw, Search, Settings, Shield, Store, Wallet } from "lucide-react"
+import { Bell, Gamepad2, KeyRound, RefreshCw, Search, Settings, Shield, ShoppingBag, Store, Wallet } from "lucide-react"
 import { DialogTitle } from "@/components/ui/dialog"
 import { CommandDialog, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
 import { useAccess } from "@/app/context/AccessContext"
@@ -69,6 +69,9 @@ export function CommandPalette({ onRefresh }: { onRefresh: () => void }) {
           <CommandGroup heading="Administration">
             {can("staff.manage") && <CommandItem onSelect={go("/employee-access")}><Shield className="mr-2" />Team Access</CommandItem>}
             {can("account.manage") && <CommandItem onSelect={go("/account")}><Settings className="mr-2" />Settings</CommandItem>}
+            {can("account.manage") && [["Payment methods", "payment-methods"], ["Notification preferences", "notification-preferences"], ["Operating hours", "operating-hours"], ["Subscription", "subscription-details"]].map(([label, slug]) => (
+              <CommandItem key={slug} value={`settings ${label}`} onSelect={go(`/account?section=${slug}`)}><Settings className="mr-2" />Settings · {label}</CommandItem>
+            ))}
             <CommandItem onSelect={go("/select-cafe")}><Store className="mr-2" />Switch café</CommandItem>
           </CommandGroup>
           <CommandGroup heading="Actions">
@@ -81,6 +84,7 @@ export function CommandPalette({ onRefresh }: { onRefresh: () => void }) {
             ))}
             <CommandItem value="notifications alerts" onSelect={run(() => window.dispatchEvent(new Event("hash:open-notifications")))}><Bell className="mr-2" />Open notifications</CommandItem>
             <CommandItem value="payment queue pay at cafe requests" onSelect={run(() => window.dispatchEvent(new Event("hash:open-payment-queue")))}><Wallet className="mr-2" />Open payment queue</CommandItem>
+            {can("store.manage") && <CommandItem value="shop marketplace orders store" onSelect={go("/store?view=orders")}><ShoppingBag className="mr-2" />Shop orders</CommandItem>}
             <CommandItem onSelect={run(onRefresh)}><RefreshCw className="mr-2" />Refresh dashboard data</CommandItem>
           </CommandGroup>
         </CommandList>

@@ -20,8 +20,8 @@ import { useDashboardData } from '@/app/context/DashboardDataContext';
 const PER_PAGE  = 5;
 
 const STATUS_BADGE: Record<EventStatus, string> = {
-  draft:     'bg-zinc-500/20 text-zinc-400',
-  published: 'bg-blue-500/20 text-blue-400',
+  draft:     'bg-muted/20 text-muted-foreground',
+  published: 'bg-primary/20 text-primary',
   ongoing:   'bg-emerald-500/20 text-emerald-400',
   completed: 'bg-purple-500/20 text-purple-400',
   canceled:  'bg-red-500/20 text-red-400',
@@ -177,13 +177,13 @@ export default function TournamentsPage() {
         <div className="dashboard-table-shell">
           <div className="dashboard-table-wrap">
             <table className="dashboard-table">
-            <thead className="bg-zinc-900/70">
+            <thead className="bg-card">
               <tr>
-                <th className="table-cell text-left text-[11px] font-bold uppercase tracking-wider text-blue-100/80 sm:text-xs">Tournament</th>
-                <th className="table-cell text-left text-[11px] font-bold uppercase tracking-wider text-blue-100/80 sm:text-xs">Start Date</th>
-                <th className="table-cell text-left text-[11px] font-bold uppercase tracking-wider text-blue-100/80 sm:text-xs">End Date</th>
-                <th className="table-cell text-left text-[11px] font-bold uppercase tracking-wider text-blue-100/80 sm:text-xs">Status</th>
-                <th className="table-cell text-right text-[11px] font-bold uppercase tracking-wider text-blue-100/80 sm:text-xs">Actions</th>
+                <th className="table-cell text-left text-[11px] font-bold uppercase tracking-wider text-foreground sm:text-xs">Tournament</th>
+                <th className="table-cell text-left text-[11px] font-bold uppercase tracking-wider text-foreground sm:text-xs">Start Date</th>
+                <th className="table-cell text-left text-[11px] font-bold uppercase tracking-wider text-foreground sm:text-xs">End Date</th>
+                <th className="table-cell text-left text-[11px] font-bold uppercase tracking-wider text-foreground sm:text-xs">Status</th>
+                <th className="table-cell text-right text-[11px] font-bold uppercase tracking-wider text-foreground sm:text-xs">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -192,7 +192,7 @@ export default function TournamentsPage() {
                   <tr key={i} className="table-row animate-pulse">
                     {[...Array(5)].map((_, j) => (
                       <td key={j} className="table-cell">
-                        <div className="h-4 w-full max-w-[180px] rounded bg-zinc-800/80" />
+                        <div className="h-4 w-full max-w-[180px] rounded bg-muted/80" />
                       </td>
                     ))}
                   </tr>
@@ -210,7 +210,7 @@ export default function TournamentsPage() {
                             : 'No tournaments returned for this cafe.'}
                       </p>
                       {!search && !statusFilter && !loadingData && (
-                        <p className="max-w-md text-xs text-zinc-400">
+                        <p className="max-w-md text-xs text-muted-foreground">
                           If you just created one, use Refresh. If it still does not appear, the tournament may belong to another selected cafe/vendor.
                         </p>
                       )}
@@ -239,11 +239,11 @@ export default function TournamentsPage() {
                           <img
                             src={ev.banner_image_url}
                             alt={ev.title}
-                            className="h-10 w-10 flex-shrink-0 rounded-lg border border-blue-400/20 object-cover"
+                            className="h-10 w-10 flex-shrink-0 rounded-lg border border-border object-cover"
                           />
                         ) : (
                           <div className="icon-blue flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg">
-                            <Trophy className="icon-md text-blue-400" />
+                            <Trophy className="icon-md text-primary" />
                           </div>
                         )}
                         <span className="table-cell-text font-medium">{ev.title}</span>
@@ -280,17 +280,17 @@ export default function TournamentsPage() {
                       </button>
                       {openMenuId === ev.id && (
                         <div
-                          className="absolute right-4 top-10 z-20 w-44 rounded-lg border border-blue-400/20 bg-zinc-900/95 py-1 shadow-xl"
+                          className="absolute right-4 top-10 z-20 w-44 rounded-lg border border-border bg-card py-1 shadow-xl"
                           onClick={(e) => e.stopPropagation()}
                         >
                           <button
-                            className="w-full px-4 py-2 text-left text-sm text-zinc-100 transition-colors hover:bg-zinc-800"
+                            className="w-full px-4 py-2 text-left text-sm text-foreground transition-colors hover:bg-muted"
                             onClick={() => router.push(`/tournaments/${ev.id}`)}
                           >
                             View Details
                           </button>
                           <button
-                            className="w-full px-4 py-2 text-left text-sm text-zinc-100 transition-colors hover:bg-zinc-800"
+                            className="w-full px-4 py-2 text-left text-sm text-foreground transition-colors hover:bg-muted"
                             onClick={() => router.push(`/tournaments/${ev.id}?tab=registrations`)}
                           >
                             View Registrations
@@ -327,8 +327,8 @@ export default function TournamentsPage() {
                   onClick={() => setPage(n)}
                   className={`w-8 h-8 rounded-lg text-sm font-medium transition-colors ${
                     page === n
-                      ? 'bg-blue-500 text-white'
-                      : 'border border-blue-400/20 bg-zinc-900/70 text-zinc-200 hover:border-blue-300/45 hover:bg-zinc-800/80'
+                      ? 'bg-primary text-white'
+                      : 'border border-border bg-card text-foreground hover:border-primary/45 hover:bg-muted/80'
                   }`}
                 >
                   {n}

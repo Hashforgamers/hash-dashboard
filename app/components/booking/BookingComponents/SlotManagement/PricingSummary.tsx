@@ -40,19 +40,19 @@ export const PricingSummary = memo(({
   selectedMealsCount
 }: PricingSummaryProps) => {
   return (
-    <Card className="p-6 bg-emerald-50/70 dark:bg-emerald-900/20">
+    <Card className="p-6 bg-emerald-900/20">
       <div className="flex items-center gap-2 mb-4">
-        <div className="p-1 bg-emerald-100 dark:bg-emerald-900/30 rounded">
+        <div className="p-1 bg-emerald-900/30 rounded">
           <Wallet className="w-4 h-4 text-emerald-600" />
         </div>
-        <h3 className="text-lg font-semibold text-zinc-800 dark:text-white">Pricing Summary</h3>
+        <h3 className="text-lg font-semibold text-white">Pricing Summary</h3>
       </div>
 
       <div className="space-y-3">
         {/* Console Total */}
         <div className="flex justify-between items-center py-2">
-          <span className="text-zinc-700 dark:text-zinc-300">Console Charges</span>
-          <span className="font-medium text-zinc-800 dark:text-white">₹{consoleTotal}</span>
+          <span className="text-muted-foreground">Console Charges</span>
+          <span className="font-medium text-white">₹{consoleTotal}</span>
         </div>
 
         {/* Meals */}
@@ -60,16 +60,16 @@ export const PricingSummary = memo(({
           <button
             type="button"
             onClick={onMealsClick}
-            className="text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 underline text-sm"
+            className="hover:text-emerald-700 text-emerald-400 underline text-sm"
           >
             Meals & Extras {selectedMealsCount > 0 && `(${selectedMealsCount})`}
           </button>
-          <span className="font-medium text-zinc-800 dark:text-white">₹{mealsTotal}</span>
+          <span className="font-medium text-white">₹{mealsTotal}</span>
         </div>
 
         {/* Manual Waive Off */}
         <div className="flex justify-between items-center py-2">
-          <span className="text-zinc-700 dark:text-zinc-300">Manual Waive-off</span>
+          <span className="text-muted-foreground">Manual Waive-off</span>
           <div className="flex items-center gap-2">
             <Button
               type="button"
@@ -80,7 +80,7 @@ export const PricingSummary = memo(({
             >
               <Minus className="w-3 h-3" />
             </Button>
-            <span className="font-medium text-zinc-800 dark:text-white w-16 text-center">
+            <span className="font-medium text-white w-16 text-center">
               -₹{waiveOffAmount}
             </span>
             <Button
@@ -98,8 +98,8 @@ export const PricingSummary = memo(({
         {/* Auto Waive Off */}
         {autoWaiveOffAmount > 0 && (
           <div className="flex justify-between items-center py-2">
-            <span className="text-zinc-700 dark:text-zinc-300">Auto Waive-off (Late Entry)</span>
-            <span className="font-medium text-amber-600 dark:text-amber-400">-₹{autoWaiveOffAmount}</span>
+            <span className="text-muted-foreground">Auto Waive-off (Late Entry)</span>
+            <span className="font-medium text-amber-400">-₹{autoWaiveOffAmount}</span>
           </div>
         )}
 
@@ -107,7 +107,7 @@ export const PricingSummary = memo(({
           <>
         {/* Extra Controller */}
         <div className="flex justify-between items-center py-2">
-          <span className="text-zinc-700 dark:text-zinc-300">Extra Controller</span>
+          <span className="text-muted-foreground">Extra Controller</span>
           <div className="flex items-center gap-2">
             <Button
               type="button"
@@ -119,7 +119,7 @@ export const PricingSummary = memo(({
             >
               <Minus className="w-3 h-3" />
             </Button>
-            <span className="font-medium text-zinc-800 dark:text-white min-w-[72px] text-center">
+            <span className="font-medium text-white min-w-[72px] text-center">
               {extraControllerQty} qty
             </span>
             <Button
@@ -132,21 +132,21 @@ export const PricingSummary = memo(({
             >
               <Plus className="w-3 h-3" />
             </Button>
-            <span className="font-medium text-zinc-800 dark:text-white min-w-[90px] text-right">
+            <span className="font-medium text-white min-w-[90px] text-right">
               +₹{extraControllerFare}
             </span>
           </div>
         </div>
 
-        <div className="rounded-lg border border-emerald-200 dark:border-emerald-800/50 bg-white/60 dark:bg-zinc-900/40 p-3">
-          <p className="text-xs font-semibold tracking-wide text-zinc-700 dark:text-zinc-300">
+        <div className="rounded-lg border border-emerald-800/50 bg-muted/40 p-3">
+          <p className="text-xs font-semibold tracking-wide text-muted-foreground">
             Controller Rules
           </p>
           {controllerPricingLoading ? (
-            <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">Loading pricing rules...</p>
+            <p className="text-xs text-muted-foreground mt-1">Loading pricing rules...</p>
           ) : (
             <div className="mt-1 space-y-1">
-              <p className="text-xs text-zinc-600 dark:text-zinc-400">
+              <p className="text-xs text-muted-foreground">
                 Base (1 controller): ₹{controllerBasePrice}
               </p>
               {controllerTiers.length > 0 ? (
@@ -154,14 +154,14 @@ export const PricingSummary = memo(({
                   {controllerTiers.map((tier) => (
                     <span
                       key={tier.quantity}
-                      className="rounded-full border border-emerald-300 dark:border-emerald-700 px-2 py-0.5 text-[11px] text-emerald-700 dark:text-emerald-300"
+                      className="rounded-full border border-emerald-700 px-2 py-0.5 text-[11px] text-emerald-300"
                     >
                       {tier.quantity} = ₹{tier.total_price}
                     </span>
                   ))}
                 </div>
               ) : (
-                <p className="text-xs text-zinc-500 dark:text-zinc-400">No bundle tiers configured</p>
+                <p className="text-xs text-muted-foreground">No bundle tiers configured</p>
               )}
             </div>
           )}
@@ -170,10 +170,10 @@ export const PricingSummary = memo(({
         )}
 
         {/* Total */}
-        <div className="pt-3 border-t-2 border-emerald-300 dark:border-emerald-700">
+        <div className="pt-3 border-t-2 border-emerald-700">
           <div className="flex justify-between items-center">
-            <span className="text-lg font-bold text-zinc-800 dark:text-white">Total Amount</span>
-            <span className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
+            <span className="text-lg font-bold text-white">Total Amount</span>
+            <span className="text-2xl font-bold text-emerald-400">
               ₹{totalAmount}
             </span>
           </div>

@@ -267,7 +267,7 @@ export function ManageBooking() {
             initial="hidden"
             animate="visible"
             exit="exit"
-            className="relative bg-card rounded-lg shadow-lg p-6 border dark:border-zinc-800"
+            className="relative bg-card rounded-lg shadow-lg p-6 border border-border"
           >
             <div className="absolute inset-0 bg-background/60 rounded-lg " />
             <div className="relative">{renderForm()}</div>
@@ -980,11 +980,11 @@ function ListBooking() {
 
   const getStatusBadge = (status: string) => {
     const variants = {
-      rejected: "bg-red-100 dark:bg-red-950",
-      confirmed: "bg-emerald-100 dark:bg-emerald-950",
+      rejected: "bg-red-950",
+      confirmed: "bg-emerald-950",
     };
     return (
-      <span className={`px-3 py-1 rounded-full ${variants[status] || 'bg-zinc-300 text-black dark:bg-zinc-700 dark:text-white'}`}>
+      <span className={`px-3 py-1 rounded-full ${variants[status] || 'bg-muted text-white'}`}>
         {status}
       </span>
     );
