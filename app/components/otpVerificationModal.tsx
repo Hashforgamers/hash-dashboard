@@ -91,7 +91,7 @@ export function OTPVerificationModal({
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.9 }}
-        className="dashboard-module-panel mx-auto w-full max-w-md rounded-lg p-5 shadow-[0_30px_70px_-36px_rgba(2,6,23,0.4)] md:p-6"
+        className="dashboard-module-panel mx-auto w-full max-w-md rounded-lg p-4 shadow-[0_30px_70px_-36px_rgba(2,6,23,0.4)]"
       >
         <div className="space-y-5">
           {/* Header */}

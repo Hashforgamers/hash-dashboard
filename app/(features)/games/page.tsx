@@ -572,7 +572,7 @@ export default function GamesManagementPage() {
                 onClick={(e) => e.stopPropagation()}
               >
                 {/* Modal Header */}
-                <div className="border-b border-border p-6">
+                <div className="border-b border-border p-4">
                   <div className="flex items-center justify-between">
                     <div>
                       <h2 className="ui-dialog-title flex items-center gap-2 text-xl font-semibold sm:text-2xl">
@@ -899,7 +899,7 @@ export default function GamesManagementPage() {
                 </div>
 
                 {/* Footer */}
-                <div className="flex items-center justify-between border-t border-border p-6">
+                <div className="flex items-center justify-between border-t border-border p-4">
                   <div>
                     {modalStep === 2 && (
                       <div className="text-sm text-muted-foreground">

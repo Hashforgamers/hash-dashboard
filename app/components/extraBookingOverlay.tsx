@@ -755,7 +755,7 @@ const SettlementOverlay: React.FC<ExtraBookingOverlayProps> = ({
           >
             <motion.div
             ref={overlayRef}
-            className="session-settlement-modal dashboard-module-panel relative w-full max-w-4xl mx-3 sm:mx-4 rounded-lg p-4 sm:p-6 shadow-2xl max-h-[92vh] overflow-y-auto max-sm:mx-0 max-sm:h-[100dvh] max-sm:max-h-[100dvh] max-sm:rounded-none max-sm:p-3"
+            className="session-settlement-modal dashboard-module-panel relative w-full max-w-4xl mx-3 sm:mx-4 rounded-lg p-4 shadow-2xl max-h-[92vh] overflow-y-auto max-sm:mx-0 max-sm:h-[100dvh] max-sm:max-h-[100dvh] max-sm:rounded-none max-sm:p-3"
             initial={{ scale: 0.95, y: 30, opacity: 0 }}
             animate={{ scale: 1, y: 0, opacity: 1 }}
             exit={{ scale: 0.95, y: 30, opacity: 0 }}
@@ -784,7 +784,7 @@ const SettlementOverlay: React.FC<ExtraBookingOverlayProps> = ({
               </span>
             </div>
 
-            {summaryLoading || !paymentSummary || summaryBookingId !== resolveBookingId(selectedSlot) ? <div className="rounded-lg border border-border p-8 text-center" aria-live="polite" aria-busy={summaryLoading}>
+            {summaryLoading || !paymentSummary || summaryBookingId !== resolveBookingId(selectedSlot) ? <div className="rounded-lg border border-border p-4 text-center" aria-live="polite" aria-busy={summaryLoading}>
               {summaryError ? <><p role="alert" className="text-sm text-red-300">{summaryError}</p><button type="button" className="mt-4 rounded-md border px-4 py-2 text-sm" onClick={()=>{setSummaryLoading(true);setSummaryVersion(v=>v+1);}}>Retry</button></> : <><Loader2 className="mx-auto mb-3 h-5 w-5 animate-spin text-muted-foreground"/><p className="text-sm">Checking the bill…</p></>}
               <button type="button" className="mt-4 ml-2 rounded-md border px-4 py-2 text-sm" onClick={()=>setShowOverlay(false)}>Cancel</button>
             </div> : <div className="grid grid-cols-1 gap-3 sm:gap-4 lg:grid-cols-[minmax(0,1fr)_330px]">
@@ -809,7 +809,7 @@ const SettlementOverlay: React.FC<ExtraBookingOverlayProps> = ({
                 </div>
 
                 <div className="mb-3 grid grid-cols-1 gap-2 sm:mb-4 sm:grid-cols-2 sm:gap-3">
-                  <div className="rounded-lg border border-red-500/30 bg-red-500/10 p-2.5 sm:p-3">
+                  <div className="rounded-lg border border-red-500/30 bg-red-500/10 p-3 sm:p-3">
                     <p className="text-xs font-medium text-red-200">Extra time</p>
                     <p className="mt-1 inline-flex items-center gap-1 text-base font-semibold text-red-300 sm:text-lg">
                       <Timer className="h-4 w-4" />
@@ -837,7 +837,7 @@ const SettlementOverlay: React.FC<ExtraBookingOverlayProps> = ({
                     )}
                   </div>
                   {!noOvertime && (overtimeQuote?.needs_end_time || playedUntil) && (
-                    <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 p-2.5 sm:p-3">
+                    <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 p-3 sm:p-3">
                       <label htmlFor="played-until" className="text-xs font-medium text-amber-100">
                         This session ran more than 3 hours over. When did play end?
                       </label>
@@ -870,7 +870,7 @@ const SettlementOverlay: React.FC<ExtraBookingOverlayProps> = ({
                 )}
 
                 <div className="mb-3 grid grid-cols-1 gap-2 sm:mb-4 sm:gap-3 xl:grid-cols-2">
-                  <div className="rounded-lg border border-border bg-muted/55 p-2.5 sm:p-3">
+                  <div className="rounded-lg border border-border bg-muted/55 p-3 sm:p-3">
                     <p className="mb-2 text-sm font-semibold text-foreground">Charges to collect</p>
                     <div className="space-y-1.5 text-xs text-muted-foreground">
                       <div className="flex items-center justify-between">
@@ -897,7 +897,7 @@ const SettlementOverlay: React.FC<ExtraBookingOverlayProps> = ({
                     </div>
                   </div>
 
-                  <div className="rounded-lg border border-border bg-muted/55 p-2.5 sm:p-3">
+                  <div className="rounded-lg border border-border bg-muted/55 p-3 sm:p-3">
                     <p className="mb-2 text-sm font-semibold text-foreground">Payment history</p>
                     <div className="space-y-1.5 text-xs text-muted-foreground">
                       <div className="flex items-center justify-between">
@@ -921,7 +921,7 @@ const SettlementOverlay: React.FC<ExtraBookingOverlayProps> = ({
                 </div>
               </div>
 
-              <div className="rounded-lg border border-border bg-muted/55 p-2.5 sm:p-3 lg:sticky lg:top-2 lg:h-fit">
+              <div className="rounded-lg border border-border bg-muted/55 p-3 sm:p-3 lg:sticky lg:top-2 lg:h-fit">
                 {!upiQr && (<>
                 <div className="mb-3 sm:mb-4">
                   <label htmlFor="waive-off-amount" className="mb-2 block text-sm font-medium text-foreground">
@@ -934,7 +934,7 @@ const SettlementOverlay: React.FC<ExtraBookingOverlayProps> = ({
                     onChange={handleWaiveOffChange}
                     inputMode="decimal"
                     pattern="[0-9]*\.?[0-9]*"
-                    className={`w-full rounded-lg border bg-card p-2.5 text-sm text-foreground transition-all duration-200 focus:border-primary focus:ring-2 focus:ring-primary sm:p-3 ${
+                    className={`w-full rounded-lg border bg-card p-3 text-sm text-foreground transition-all duration-200 focus:border-primary focus:ring-2 focus:ring-primary sm:p-3 ${
                       waiveOffError ? "border-red-500 focus:ring-ring/40" : "border-border"
                     }`}
                     placeholder="0.00"
@@ -993,7 +993,7 @@ const SettlementOverlay: React.FC<ExtraBookingOverlayProps> = ({
                 </>)}
 
                 {paymentMode === "credit" && (
-                  <div className="mb-4 rounded-lg border border-border bg-card p-2.5 sm:mb-5 sm:p-3">
+                  <div className="mb-4 rounded-lg border border-border bg-card p-3 sm:mb-5 sm:p-3">
                     <div className="flex items-start justify-between gap-3">
                       <div>
                         <p className="text-sm font-semibold text-foreground">Credit Account Status</p>

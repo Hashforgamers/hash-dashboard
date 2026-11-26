@@ -143,7 +143,7 @@ const PassRedemption: React.FC<{ vendorId: number }> = ({ vendorId }) => {
 
   return (
     <div className="max-w-4xl mx-auto p-6 space-y-6">
-      <div className="bg-white rounded-lg shadow-md p-6">
+      <div className="bg-white rounded-lg shadow-md p-4">
         <h2 className="text-2xl font-semibold mb-6 flex items-center gap-2">
           <Clock className="w-6 h-6" />
           Hour-Based Pass Redemption
@@ -205,7 +205,7 @@ const PassRedemption: React.FC<{ vendorId: number }> = ({ vendorId }) => {
 
       {/* Pass Details Card */}
       {passDetails && (
-        <div className="bg-primary/20 rounded-lg shadow-md p-6 space-y-6">
+        <div className="bg-primary/20 rounded-lg shadow-md p-4 space-y-6">
           <div className="flex items-start justify-between">
             <div>
               <h3 className="text-xl font-semibold text-foreground">
@@ -253,7 +253,7 @@ const PassRedemption: React.FC<{ vendorId: number }> = ({ vendorId }) => {
           </div>
 
           {/* Redemption Form */}
-          <div className="bg-white rounded-lg p-6 space-y-4">
+          <div className="bg-white rounded-lg p-4 space-y-4">
             <h4 className="font-semibold text-lg mb-4">Redeem Hours</h4>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

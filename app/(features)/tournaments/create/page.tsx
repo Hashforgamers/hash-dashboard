@@ -619,7 +619,7 @@ export default function CreateTournamentPage() {
                 </select>
               </div>
               </div>
-              <details className="rounded-lg border border-border p-2.5">
+              <details className="rounded-lg border border-border p-3">
                 <summary className="cursor-pointer text-xs font-medium">Server, maps & veto</summary>
                 <div className="mt-3 space-y-3">
               <div>

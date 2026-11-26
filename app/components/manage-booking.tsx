@@ -267,7 +267,7 @@ export function ManageBooking() {
             initial="hidden"
             animate="visible"
             exit="exit"
-            className="relative bg-card rounded-lg shadow-lg p-6 border border-border"
+            className="relative bg-card rounded-lg shadow-lg p-4 border border-border"
           >
             <div className="absolute inset-0 bg-background/60 rounded-lg " />
             <div className="relative">{renderForm()}</div>

@@ -2123,7 +2123,7 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
       <motion.div
         initial={false}
         style={{ zIndex: overlayZIndex }}
-        className="fixed inset-0 flex items-center justify-center bg-black/45 p-3 sm:p-5"
+        className="fixed inset-0 flex items-center justify-center bg-black/45 p-3"
       >
         <motion.div
           initial={false}
@@ -3144,7 +3144,7 @@ function TopBar({
   // Main TopBar return
   return (
     <div className={cn("booking-topbar mb-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between", compact && "mb-2 gap-2", slab && "dashboard-booking-topbar")}>
-      <Card className={cn("booking-console-filter rounded-lg border p-2.5 shadow-sm backdrop-blur-sm", compact && "p-2")}>
+      <Card className={cn("booking-console-filter rounded-lg border p-3 shadow-sm backdrop-blur-sm", compact && "p-2")}>
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
           <span className="booking-console-label text-xs font-medium uppercase tracking-wide">Select Console</span>
           <select aria-label="Select console" value={selectedConsole} onChange={event => onConsoleChange(event.target.value)} className={scheduleStyles.consoleSelect}>

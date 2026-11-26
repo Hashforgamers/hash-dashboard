@@ -331,7 +331,7 @@ const MealSelector: React.FC<MealSelectorProps> = ({
                         <motion.div
                           key={item.id}
                           layout
-                          className={`meal-selector-item flex items-center gap-2.5 rounded-lg border p-2.5 ${
+                          className={`meal-selector-item flex items-center gap-2.5 rounded-lg border p-3 ${
                             quantity > 0
                               ? "meal-selector-item-active"
                               : ""

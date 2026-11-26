@@ -127,7 +127,7 @@ export const PaymentSection = memo(({
       </Card>
 
       {/* Payment Type Selection */}
-      <Card className="p-6 bg-muted/30">
+      <Card className="p-4 bg-muted/30">
         <div className="flex items-center gap-2 mb-4">
           <div className="p-1 bg-emerald-900/30 rounded">
             <CreditCard className="w-4 h-4 text-emerald-600" />
@@ -182,7 +182,7 @@ export const PaymentSection = memo(({
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
           >
-            <Card className="p-6 bg-purple-900/20 border-purple-700">
+            <Card className="p-4 bg-purple-900/20 border-purple-700">
               <h3 className="text-lg font-semibold text-purple-200 mb-4">
                 Pass Validation
               </h3>

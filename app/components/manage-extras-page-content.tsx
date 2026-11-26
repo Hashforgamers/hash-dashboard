@@ -177,7 +177,7 @@ export default function ManageExtrasPageContent() {
           <Loader />
         </div>
       ) : categories.length === 0 ? (
-        <div className="p-6 rounded-lg border border-dashed border-border bg-muted text-muted-foreground text-center">
+        <div className="p-4 rounded-lg border border-dashed border-border bg-muted text-muted-foreground text-center">
           No categories found. Add one to get started.
         </div>
       ) : (

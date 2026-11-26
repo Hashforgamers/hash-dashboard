@@ -1005,7 +1005,7 @@ const UpdatingOverlay = ({ visible }: { visible: boolean }) => {
       exit={{ opacity: 0 }}
       className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex flex-col items-center justify-center"
     >
-      <div className="bg-card border border-border rounded-lg p-8 shadow-2xl max-w-md mx-4">
+      <div className="bg-card border border-border rounded-lg p-4 shadow-2xl max-w-md mx-4">
         <div className="flex flex-col items-center space-y-4 text-center">
           {/* Animated Spinner */}
           <div className="relative">
@@ -1290,7 +1290,7 @@ const handleCancelEdit = () => {
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.9 }}
-          className="bg-card rounded-lg p-4 md:p-6 max-w-5xl max-h-[90vh] w-full mx-auto shadow-2xl border border-border"
+          className="bg-card rounded-lg p-4 max-w-5xl max-h-[90vh] w-full mx-auto shadow-2xl border border-border"
         >
           <div className="flex justify-between items-center mb-4 border-b border-border pb-3">
             <h3 className="text-lg md:text-xl font-semibold text-foreground">Preview: {previewDocumentName}</h3>
@@ -1968,7 +1968,7 @@ const ToggleSwitch = ({
             {/* Field Label and Content */}
             <div className="flex-1 space-y-1">
               <Label className="text-sm font-medium text-foreground">{field.label}</Label>
-              {field.key === "displayName" && <p className="text-xs text-muted-foreground">Shown to gamers in the app. Leave blank to use your business name. Your registered business name stays unchanged.</p>}
+              {field.key === "displayName" && <p className="text-xs text-muted-foreground">Shown to gamers. Leave blank to use your business name.</p>}
               
               {editingBusinessField === field.key ? (
                 // Edit Mode
@@ -2082,7 +2082,7 @@ const ToggleSwitch = ({
         <Label className="text-foreground">Operating Hours</Label>
         {hoursMessage && <p role="status" className="text-sm">{hoursMessage}</p>}
         {!isOwnerSession && <p className="text-sm text-muted-foreground">Sign in as the cafe owner to change operating hours.</p>}
-        <p className="text-sm text-muted-foreground">Closing before opening means overnight. Equal times mean 24 hours. Changes apply to new bookings immediately. Existing bookings and held sessions are kept, even outside the new hours.</p>
+        <p className="text-sm text-muted-foreground">Closing before opening means overnight; equal times mean 24 hours. Existing bookings are kept.</p>
         <p className="text-xs text-muted-foreground">Set `open` and `close` to same time (or use `24H`) for 24-hour operation.</p>
         
         <div className="space-y-3">
@@ -2884,7 +2884,7 @@ const ToggleSwitch = ({
           </div>
         ) : (
           <div className="space-y-4">
-            <p className="text-sm text-muted-foreground">These switches control the payment methods accepted by this cafe in Hash. Cafe Wallet uses the balance held at this cafe for PC QR checkout. Global Hash Wallet is a separate balance.</p>
+            <p className="text-sm text-muted-foreground">Payment methods this cafe accepts. Cafe Wallet and Hash Wallet are separate balances.</p>
             {/* Available Payment Methods */}
             {Array.isArray(paymentMethods) && paymentMethods.length > 0 ? (
               <>
