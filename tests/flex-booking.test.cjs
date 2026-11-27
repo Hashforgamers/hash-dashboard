@@ -27,7 +27,8 @@ test('station labels explain the longest fit',()=>{
 
 test('desk form only offers custom start when the cafe enabled it and sends additive fields',()=>{
   const form=fs.readFileSync(path.join(__dirname,'../app/components/newSlot.tsx'),'utf8')
-  assert.match(form,/flexSettings\.flex_enabled && <option value="flex">/)
+  assert.match(form,/const flexMode = timeMode === "quick" && flexSettings\.flex_enabled/)
+  assert.match(form,/assignLater: stationAuto && \(!!deskCard \|\| flexMode\) \? true : undefined/)
   assert.match(form,/timingMode: 'flex',\s*gameId: flexQuote\.game_id,\s*startAt: flexQuote\.window\.start_at,\s*durationMinutes: flexQuote\.window\.duration_minutes/)
   assert.match(form,/\.\.\.\(flexActive && flexQuote \? \{/)
 })

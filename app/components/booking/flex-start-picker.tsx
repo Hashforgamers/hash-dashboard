@@ -171,3 +171,56 @@ export function FlexStartPicker({ vendor, gameId, date, players, squad, settings
     </div>
   )
 }
+
+type QuoteInput = {
+  vendor: number | null
+  gameId: number
+  date: string
+  clock: string
+  minutes: number
+  players: number
+  squad: boolean
+  deskProfile?: string
+  deskRevision?: number
+  pricingGame?: string
+  enabled: boolean
+}
+
+/**
+ * Server quote for a custom-start window (price, held slots, free stations), for the
+ * click-only desk form. Same window, players and rate card always give the same price.
+ */
+export function useFlexQuote({ vendor, gameId, date, clock, minutes, players, squad, deskProfile, deskRevision, pricingGame, enabled }: QuoteInput) {
+  const [quote, setQuote] = useState<FlexQuote | null>(null)
+  const [problem, setProblem] = useState<FlexQuoteError | null>(null)
+  const [loading, setLoading] = useState(false)
+  const day = date || istDate()
+
+  useEffect(() => {
+    if (!enabled || !vendor || !gameId || !clock || !(minutes > 0)) { setQuote(null); setProblem(null); setLoading(false); return }
+    const abort = new AbortController()
+    setLoading(true)
+    const timer = setTimeout(() => {
+      fetch(`${BOOKING_URL}/api/vendor/${vendor}/flex-booking/quote`, {
+        method: "POST", headers: creditAuthHeaders(), signal: abort.signal,
+        body: JSON.stringify({
+          gameId, startAt: istStartAt(day, clock), durationMinutes: minutes, players,
+          squadDetails: { enabled: squad, playerCount: players },
+          deskProfile: deskProfile || undefined, deskRevision: deskProfile ? deskRevision : undefined,
+          pricingGame: deskProfile ? (pricingGame ?? "") : undefined,
+        }),
+      })
+        .then(async response => ({ ok: response.ok, data: await response.json().catch(() => ({})) }))
+        .then(({ ok, data }) => {
+          if (abort.signal.aborted) return
+          if (ok && data?.success) { setQuote(data as FlexQuote); setProblem(null) }
+          else { setQuote(null); setProblem({ success: false, code: data?.code || "error", message: data?.message || "Could not check this time.", ...data }) }
+        })
+        .catch(() => { if (!abort.signal.aborted) { setQuote(null); setProblem({ success: false, code: "network", message: "Could not reach the booking service." }) } })
+        .finally(() => { if (!abort.signal.aborted) setLoading(false) })
+    }, 150)
+    return () => { clearTimeout(timer); abort.abort() }
+  }, [enabled, vendor, gameId, day, clock, minutes, players, squad, deskProfile, deskRevision, pricingGame])
+
+  return { quote, problem, loading }
+}
