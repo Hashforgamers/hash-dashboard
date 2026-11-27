@@ -10,16 +10,15 @@ export function SessionConsoleDialog({ open, onClose, consoles, selectedIds, req
   return <Dialog open={open} onOpenChange={(next) => { if (!next && !submitting) onClose(); }}>
     <DialogContent data-workspace-dialog={undefined} className="flex max-h-[90dvh] w-[calc(100%-2rem)] max-w-xl flex-col gap-0 overflow-hidden rounded-lg p-0 border-border bg-card text-foreground">
       <div className="border-b p-4 border-border">
-        <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-emerald-400">Session setup</p>
-        <DialogTitle>Select {requiredCount > 1 ? `${requiredCount} consoles` : "a console"}</DialogTitle>
-        <DialogDescription className="mt-2 text-sm text-muted-foreground">Choose {requiredCount > 1 ? "a station for each player" : "an available station"} to start your {system || "gaming"} session.</DialogDescription>
+        <DialogTitle>Start {system || "session"}</DialogTitle>
+        <DialogDescription className="mt-1 text-sm text-muted-foreground">{requiredCount > 1 ? `Pick ${requiredCount} stations, then Start.` : selectedIds.length ? "Station held for this booking. Start, or tap another." : "Tap a free station to start."}</DialogDescription>
       </div>
-      <div className="min-h-0 overflow-y-auto p-6" aria-busy={loading}>
+      <div className="min-h-0 overflow-y-auto p-4" aria-busy={loading}>
         {loading ? <div role="status" className="flex items-center justify-center gap-3 py-12 text-sm text-muted-foreground"><RefreshCw className="h-4 w-4 animate-spin" />Loading consoles…</div> : <>
           <div className="mb-3 flex justify-between text-xs font-medium text-muted-foreground"><span>{consoles.length} available</span><span aria-live="polite">{selectedIds.length} of {requiredCount} selected</span></div>
-          {consoles.length ? <div className="grid grid-cols-1 gap-3 sm:grid-cols-2" aria-label="Available consoles">{consoles.map((console) => {
+          {consoles.length ? <div className="grid grid-cols-2 gap-2 sm:grid-cols-3" aria-label="Available consoles">{consoles.map((console) => {
             const selected = selectedIds.includes(console.consoleId);
-            return <button type="button" key={console.consoleId} aria-pressed={selected} disabled={submitting || (!selected && requiredCount > 1 && selectedIds.length >= requiredCount)} onClick={() => onSelect(console.consoleId)} className={`flex items-start gap-3 rounded-lg border p-4 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 disabled:cursor-not-allowed disabled:opacity-50 ${selected ? "border-emerald-500 bg-emerald-500/10" : "border-border hover:border-border"}`}>
+            return <button type="button" key={console.consoleId} aria-pressed={selected} disabled={submitting || (!selected && requiredCount > 1 && selectedIds.length >= requiredCount)} onClick={() => onSelect(console.consoleId)} className={`flex items-start gap-2 rounded-lg border p-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 disabled:cursor-not-allowed disabled:opacity-50 ${selected ? "border-emerald-500 bg-emerald-500/10" : "border-border hover:border-border"}`}>
               <Monitor className={`mt-1 h-5 w-5 shrink-0 ${selected ? "text-emerald-500" : "text-muted-foreground"}`} />
               <span className="min-w-0 flex-1"><span className="block break-words text-sm font-semibold">{console.consoleModelNumber || `Console ${console.consoleId}`}</span><span className="mt-1 block text-xs text-muted-foreground">{console.brand || system} · #{console.consoleId}</span></span>
               <span className={`mt-1 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border ${selected ? "border-emerald-500 bg-emerald-500 text-white" : "border-border"}`}>{selected && <Check className="h-3 w-3" />}</span>

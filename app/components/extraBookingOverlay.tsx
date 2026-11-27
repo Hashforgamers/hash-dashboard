@@ -2,13 +2,14 @@ import { buttonVariants } from "@/components/ui/button";
 import { cafeCall, rupees } from "@/lib/cafe-api";
 import { creditAuthHeaders } from "@/lib/credit-auth";
 import { AnimatePresence, motion } from "framer-motion";
-import { IndianRupee, CreditCard, Smartphone, X, CheckCircle, Loader2, Gamepad2, Timer, Wallet, Receipt, QrCode } from "lucide-react";
+import { IndianRupee, CreditCard, Smartphone, X, CheckCircle, Loader2, Wallet, QrCode } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { BOOKING_URL } from "@/src/config/env";
 import CreditAccountModal, { type MonthlyCreditAccountSummary } from "./credit-account-modal";
 import { UpiQrPanel, cancelUpiQr, createUpiQr, useUpiQrPolling, type UpiQrState } from "./upi-qr-collect";
 import { useTimeFormat } from "@/app/hooks/useTimeFormat";
 import { TimeField } from "./time-field";
+import { durationLabel, endChoices, formatRupees, istIso } from "@/lib/desk-bill";
 
 interface ExtraBookingOverlayProps {
   showOverlay: boolean;
@@ -87,6 +88,30 @@ const KIOSK_METHODS: Record<string, string> = { cash: "cash", card: "card", upi:
 const istInputValue = (date: Date) =>
   new Date(date.getTime() + 330 * 60 * 1000).toISOString().slice(0, 16);
 
+// Unused paid time when play ends before the booked end (hfg-booking services/early_release.py).
+interface ReleaseQuote {
+  booking_ids: number[];
+  booked_start: string;
+  booked_end: string;
+  booked_minutes: number;
+  played_minutes: number;
+  unused_minutes: number;
+  eligible: boolean;
+  paid_amount: number;
+  pending_amount: number;
+  return_amount: number;
+  pending_reduction: number;
+  policy: string;
+  min_unused_minutes: number;
+  modes: string[];
+  default_mode: string;
+  refund_method: string;
+  recorded: { mode: string; amount: number } | null;
+}
+
+const istDate = (naive?: string | null) => (naive ? new Date(`${naive.slice(0, 19)}+05:30`) : null);
+const clockOfIso = (naive?: string | null) => (naive ? naive.slice(11, 16) : "");
+
 interface VendorUserSummary {
   id?: number;
   name: string;
@@ -149,6 +174,11 @@ const SettlementOverlay: React.FC<ExtraBookingOverlayProps> = ({
   const [quoteError, setQuoteError] = useState("");
   const [playedUntil, setPlayedUntil] = useState("");
   const [chargeFullOvertime, setChargeFullOvertime] = useState(false);
+  // "When did play end?" as one tap: now, at the booked end, or a few minutes back.
+  const [endKey, setEndKey] = useState("now");
+  const [releaseQuote, setReleaseQuote] = useState<ReleaseQuote | null>(null);
+  const [returnMode, setReturnMode] = useState("");
+  const [discountKey, setDiscountKey] = useState<"none" | "10" | "20" | "custom">("none");
 
   // Focus management for accessibility
   useEffect(() => {
@@ -290,6 +320,51 @@ const SettlementOverlay: React.FC<ExtraBookingOverlayProps> = ({
     return () => controller.abort();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showOverlay, selectedSlot, noOvertime, playedUntil, summaryVersion]);
+
+  useEffect(() => {
+    const bookingId = resolveBookingId(selectedSlot);
+    if (!showOverlay || !selectedSlot || noOvertime || !bookingId || !vendorId) {
+      setReleaseQuote(null);
+      return;
+    }
+    const controller = new AbortController();
+    const params = new URLSearchParams();
+    const consoleId = selectedSlot.consoleId || selectedSlot.consoleNumber;
+    if (consoleId) params.set("console_id", String(consoleId));
+    if (playedUntil) params.set("ended_at", `${playedUntil.slice(0, 16)}:00`);
+    fetch(`${BOOKING_URL}/api/vendor/${vendorId}/booking/${bookingId}/release-quote?${params}`, {
+      cache: "no-store",
+      headers: { "Content-Type": "application/json", ...creditAuthHeaders() },
+      signal: controller.signal,
+    })
+      .then(async (response) => {
+        const data = await response.json().catch(() => ({}));
+        // An older booking service has no early release yet: the dialog works as before.
+        if (!response.ok || !data?.quote) { setReleaseQuote(null); return; }
+        const quote = data.quote as ReleaseQuote;
+        setReleaseQuote(quote);
+        setReturnMode((mode) => (quote.modes.includes(mode) ? mode : quote.default_mode));
+      })
+      .catch((error) => { if (error?.name !== "AbortError") setReleaseQuote(null); });
+    return () => controller.abort();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showOverlay, selectedSlot, noOvertime, playedUntil, summaryVersion, vendorId]);
+
+  const recordEarlyRelease = async (bookingId: number) => {
+    const response = await fetch(`${BOOKING_URL}/api/vendor/${vendorId}/booking/${bookingId}/early-release`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...creditAuthHeaders() },
+      body: JSON.stringify({
+        mode: returnAmount > 0 ? returnMode : undefined,
+        refund_method: returnMode === "refund" ? releaseQuote?.refund_method : undefined,
+        ended_at: playedUntil ? `${playedUntil.slice(0, 16)}:00` : undefined,
+        console_id: selectedSlot?.consoleId || selectedSlot?.consoleNumber || undefined,
+      }),
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(data?.message || "Could not record the unused time. Try again.");
+    return data;
+  };
 
   useEffect(() => {
     if (!showOverlay || !runtimeId || !vendorId) {
@@ -578,7 +653,7 @@ const SettlementOverlay: React.FC<ExtraBookingOverlayProps> = ({
       return;
     }
     if (overtimeQuote?.needs_end_time && !playedUntil && !chargeFullOvertime) {
-      setSettlementError("This session ran more than 3 hours over. Enter when play ended, or confirm the full time.");
+      setSettlementError("Played 3h+ over. Pick when play ended, or tap Charge all.");
       return;
     }
     if (kioskBlocker) {
@@ -589,7 +664,8 @@ const SettlementOverlay: React.FC<ExtraBookingOverlayProps> = ({
     setLoading(true);
     const extraTime = frozenExtraSeconds;
     const amount = computedExtraAmount;
-    const parsedWaiveOff = parseFloat(waiveOffAmount) || 0;
+    // Unpaid gaming time not played comes off what is collected (cafe policy decides).
+    const parsedWaiveOff = Math.min((parseFloat(waiveOffAmount) || 0) + pendingReduction, dueBeforeWaive + kioskDue);
 
     const extraBookingPayload = {
       consoleNumber: selectedSlot.consoleId || selectedSlot.consoleNumber,
@@ -610,6 +686,9 @@ const SettlementOverlay: React.FC<ExtraBookingOverlayProps> = ({
     };
 
     try {
+      if (releaseQuote && !releaseQuote.recorded && (returnAmount > 0 || pendingReduction > 0)) {
+        await recordEarlyRelease(bookingId);
+      }
       if (meteredByKiosk && !(await settleKioskTime(kioskDuePaise, bookingId))) {
         setLoading(false);
         return;
@@ -698,7 +777,7 @@ const SettlementOverlay: React.FC<ExtraBookingOverlayProps> = ({
         .filter((item) => !isExtraType(item.booking_type) && isPendingStatus(item.settlement_status))
         .reduce((sum, item) => sum + Number(item.line_total || 0), 0);
       // Extra PC time can be discounted too, so the cap is the whole bill.
-      const maxWaiveOff = dueBeforeWaive + kioskDue;
+      const maxWaiveOff = Math.max(dueBeforeWaive + kioskDue - pendingReduction, 0);
       if (parsedValue < 0) {
         setWaiveOffError("Discount cannot be negative");
         setWaiveOffAmount("");
@@ -735,7 +814,10 @@ const SettlementOverlay: React.FC<ExtraBookingOverlayProps> = ({
   const totalPaidAmount = paidInitialAmount + paidMealsAmount + paidExtraAmount;
   // The server subtracts overtime already recorded on this booking.
   const computedExtraAmount = noOvertime ? 0 : Number(overtimeQuote?.amount || 0);
-  const parsedWaiveOff = parseFloat(waiveOffAmount) || 0;
+  const releaseEligible = Boolean(releaseQuote?.eligible && !releaseQuote?.recorded);
+  const returnAmount = releaseEligible ? Number(releaseQuote?.return_amount || 0) : 0;
+  const pendingReduction = releaseEligible ? Number(releaseQuote?.pending_reduction || 0) : 0;
+  const parsedWaiveOff = (parseFloat(waiveOffAmount) || 0) + pendingReduction;
   const dueBeforeWaive = computedExtraAmount + pendingMealsAmount + historicalPendingExtraAmount + pendingBaseAmount;
   const kioskDuePaise = meteredByKiosk ? Number(runtimeBill?.billing.amount_due_paise || 0) : 0;
   const kioskDue = kioskDuePaise / 100;
@@ -762,6 +844,40 @@ const SettlementOverlay: React.FC<ExtraBookingOverlayProps> = ({
     ? Math.max(Number(creditAccount.credit_limit || 0) - Number(creditAccount.outstanding_amount || 0), 0)
     : 0;
 
+  const pausedAt = settlementPausedAt || new Date();
+  const bookedEnd = istDate(releaseQuote?.booked_end || overtimeQuote?.scheduled_end);
+  const quickEnds = endChoices(pausedAt, bookedEnd);
+  const pickEnd = (key: string) => {
+    setEndKey(key);
+    setChargeFullOvertime(false);
+    if (key === "other") return;
+    const choice = quickEnds.find((item) => item.key === key);
+    setPlayedUntil(key === "now" || !choice ? "" : istIso(choice.at).slice(0, 16));
+  };
+  const pickDiscount = (key: "none" | "10" | "20" | "custom") => {
+    setDiscountKey(key);
+    setWaiveOffError("");
+    if (key === "none") setWaiveOffAmount("");
+    else if (key !== "custom") setWaiveOffAmount(String(Math.min(Number(key), Math.max(dueBeforeWaive + kioskDue - pendingReduction, 0))));
+  };
+  const overtimeMinutes = Math.round(computedExtraSeconds / 60);
+  const playedMinutes = releaseQuote ? releaseQuote.played_minutes + (releaseQuote.unused_minutes === 0 ? overtimeMinutes : 0) : null;
+  const bookedPaid = releaseQuote ? releaseQuote.paid_amount : paidInitialAmount;
+  const rowCls = "flex items-baseline justify-between gap-3 py-1.5";
+  const chip = (active: boolean) => `rounded-md border px-3 py-1.5 text-sm font-medium transition-colors disabled:opacity-50 ${active ? "border-primary bg-primary/15 text-primary" : "border-border bg-card text-foreground hover:bg-muted"}`;
+  const methods = [
+    { key: "cash", label: "Cash", Icon: IndianRupee },
+    { key: "upi", label: "Café UPI", Icon: Smartphone },
+    { key: "card", label: "Card", Icon: CreditCard },
+    { key: "upi_qr", label: "UPI QR", Icon: QrCode },
+    { key: "credit", label: "Credit a/c", Icon: Wallet },
+  ].filter(({ key }) => !(isGroupBill && key === "upi_qr"));
+  const returnLabel = returnMode === "refund" ? `Refund ${formatRupees(returnAmount)}${releaseQuote?.refund_method ? ` by ${releaseQuote.refund_method === "upi" ? "UPI" : releaseQuote.refund_method}` : ""}` : `Return ${formatRupees(returnAmount)} as credit`;
+  const primaryLabel = payableAmount > 0
+    ? (paymentMode === "credit" ? `Add ${formatRupees(payableAmount)} to credit & end` : paymentMode === "upi_qr" ? `Show QR for ${formatRupees(payableAmount)}` : `Collect ${formatRupees(payableAmount)} & end`)
+    : returnAmount > 0 ? (returnMode === "refund" ? `End & refund ${formatRupees(returnAmount)}` : `End & credit ${formatRupees(returnAmount)}`)
+    : "End session";
+
   return (
     <AnimatePresence>
       {showOverlay && selectedSlot && (
@@ -771,377 +887,204 @@ const SettlementOverlay: React.FC<ExtraBookingOverlayProps> = ({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            onClick={() => { if (!upiQr) setShowOverlay(false); }}
+            onClick={() => { if (!upiQr && !loading) setShowOverlay(false); }}
           >
             <motion.div
-            ref={overlayRef}
-            className="session-settlement-modal dashboard-module-panel relative w-full max-w-4xl mx-3 sm:mx-4 rounded-lg p-4 shadow-xl max-h-[92vh] overflow-y-auto max-sm:mx-0 max-sm:h-[100dvh] max-sm:max-h-[100dvh] max-sm:rounded-none max-sm:p-3"
-            initial={{ scale: 0.95, y: 30, opacity: 0 }}
-            animate={{ scale: 1, y: 0, opacity: 1 }}
-            exit={{ scale: 0.95, y: 30, opacity: 0 }}
-            transition={{ type: "spring", damping: 20, stiffness: 300 }}
-            onClick={(e) => e.stopPropagation()}
-            role="dialog"
-            aria-labelledby="extra-payment-title"
-            aria-modal="true"
-            tabIndex={-1}
-          >
-
-            <div className="relative mb-3 flex flex-col justify-between gap-2 sm:mb-5 sm:flex-row sm:items-start sm:gap-3">
-              <div>
-                <h2 id="extra-payment-title" className="text-xl font-semibold text-foreground sm:text-2xl">
-                  End session
-                </h2>
-                <p className="mt-1 text-xs text-muted-foreground sm:text-sm">
-                  Check the bill before freeing up the console.
-                </p>
-                {settlementPausedAt ? (
-                  <p className="mt-1 text-xs text-primary">Timer paused at {showClock(settlementPausedAt)}</p>
-                ) : null}
-              </div>
-              <span className="w-fit rounded-full border border-amber-500/30 bg-amber-500/15 px-2.5 py-1 text-xs font-semibold uppercase tracking-wide text-amber-300 sm:px-3 sm:text-xs">
-                Live Session
-              </span>
-            </div>
-
-            {summaryLoading || !paymentSummary || summaryBookingId !== resolveBookingId(selectedSlot) ? <div className="rounded-lg border border-border p-4 text-center" aria-live="polite" aria-busy={summaryLoading}>
-              {summaryError ? <><p role="alert" className="text-sm text-red-300">{summaryError}</p><button type="button" className="mt-4 rounded-md border px-4 py-2 text-sm" onClick={()=>{setSummaryLoading(true);setSummaryVersion(v=>v+1);}}>Retry</button></> : <><Loader2 className="mx-auto mb-3 h-5 w-5 animate-spin text-muted-foreground"/><p className="text-sm">Checking the bill…</p></>}
-              <button type="button" className="mt-4 ml-2 rounded-md border px-4 py-2 text-sm" onClick={()=>setShowOverlay(false)}>Cancel</button>
-            </div> : <div className="grid grid-cols-1 gap-3 sm:gap-4 lg:grid-cols-[minmax(0,1fr)_330px]">
-              <div>
-                <div className="relative mb-3 rounded-lg border border-border bg-muted/65 p-3 sm:mb-4 sm:p-4">
-                  <div className="flex flex-wrap items-center gap-2 text-xs text-foreground sm:gap-3 sm:text-sm">
-                    <span className="inline-flex items-center gap-1.5 rounded-md bg-muted/70 px-2.5 py-1">
-                      <Gamepad2 className="h-4 w-4 text-primary" />
-                      {selectedSlot.consoleType} #{selectedSlot.consoleNumber}
-                    </span>
-                    <span className="inline-flex items-center gap-1.5 rounded-md bg-muted/70 px-2.5 py-1">
-                      <Receipt className="h-4 w-4 text-emerald-300" />
-                      {isGroupBill ? `Bookings ${groupBookingIds.map((id) => `#${id}`).join(", ")}` : `Booking #${resolveBookingId(selectedSlot) || "N/A"}`}
-                    </span>
-                  </div>
-                  <p className="mt-2 text-xs text-muted-foreground sm:text-sm">
-                    Session for <span className="font-semibold text-foreground">{selectedSlot.username}</span>
-                    {computedExtraSeconds > 0
-                      ? " has played past the booked end time."
-                      : ""}
+              ref={overlayRef}
+              className="session-settlement-modal dashboard-module-panel relative mx-3 flex max-h-[92vh] w-full max-w-lg flex-col overflow-hidden rounded-lg shadow-xl max-sm:mx-0 max-sm:h-[100dvh] max-sm:max-h-[100dvh] max-sm:rounded-none"
+              initial={{ scale: 0.97, y: 20, opacity: 0 }}
+              animate={{ scale: 1, y: 0, opacity: 1 }}
+              exit={{ scale: 0.97, y: 20, opacity: 0 }}
+              transition={{ type: "spring", damping: 22, stiffness: 320 }}
+              onClick={(e) => e.stopPropagation()}
+              role="dialog"
+              aria-labelledby="extra-payment-title"
+              aria-modal="true"
+              tabIndex={-1}
+            >
+              <div className="flex items-start justify-between gap-3 border-b border-border px-4 py-3">
+                <div className="min-w-0">
+                  <h2 id="extra-payment-title" className="text-lg font-semibold text-foreground">End session</h2>
+                  <p className="truncate text-xs text-muted-foreground">
+                    {selectedSlot.username} · {selectedSlot.consoleType}{selectedSlot.consoleNumber ? ` #${selectedSlot.consoleNumber}` : ""} · {isGroupBill ? groupBookingIds.map((id) => `#${id}`).join(", ") : `#${resolveBookingId(selectedSlot) || "—"}`}
                   </p>
                 </div>
-
-                <div className="mb-3 grid grid-cols-1 gap-2 sm:mb-4 sm:grid-cols-2 sm:gap-3">
-                  <div className="rounded-lg border border-red-500/30 bg-red-500/10 p-3 sm:p-3">
-                    <p className="text-xs font-medium text-red-200">Extra time</p>
-                    <p className="mt-1 inline-flex items-center gap-1 text-base font-semibold text-red-300 sm:text-lg">
-                      <Timer className="h-4 w-4" />
-                      {meteredByKiosk ? (runtimeBill ? rupees(kioskDuePaise) : runtimeError ? "Unavailable" : "Pricing…") : sessionClosed ? "None (session ended)" : quoteLoading && !overtimeQuote ? "Pricing…" : formatTime(computedExtraSeconds)}
-                    </p>
-                    {overtimeQuote && overtimeQuote.overtime_seconds > 0 && (
-                      <p className="mt-1 text-xs text-red-200/80">
-                        ₹{overtimeQuote.rate_per_hour.toFixed(2)}/hour, priced by the server
-                        {overtimeQuote.already_recorded > 0 ? ` · ₹${overtimeQuote.already_recorded.toFixed(2)} already recorded` : ""}
-                      </p>
-                    )}
-                    {overtimeQuote && overtimeQuote.overtime_seconds > 0 && overtimeQuote.pricing_source === "rate_card" && (
-                      <p className="mt-0.5 text-xs text-red-200/80">
-                        Priced from rate card: {overtimeQuote.rate_card?.name || "cafe rates"}
-                        {(overtimeQuote.players || 1) > 1 ? ` · ${overtimeQuote.players} players` : ""}
-                      </p>
-                    )}
-                    {quoteError && <p role="alert" className="mt-1 text-xs text-amber-300">{quoteError}</p>}
-                    {meteredByKiosk && runtimeBill && (
-                      <p className="mt-1 text-xs text-red-200/80">
-                        Metered by the PC{runtimeBill.ended_at ? "" : ", still running until you confirm"}
-                        {runtimeBill.billing.wallet_funded_paise > 0 ? ` · ${rupees(runtimeBill.billing.wallet_funded_paise)} paid from wallet` : ""}
-                        {runtimeBill.billing.cafe_policy_credit_paise ? ` · ${rupees(runtimeBill.billing.cafe_policy_credit_paise)} from PC auto-extend` : ""}
-                      </p>
-                    )}
-                    {meteredByKiosk && (runtimeBill?.billing.requires_reconciliation || (!runtimeBill && runtimeError)) && (
-                      <p role="alert" className="mt-1 text-xs text-amber-300">
-                        {runtimeBill?.billing.pricing_error || runtimeError || "PC extra time could not be priced yet."}{" "}
-                        <button type="button" className="underline" onClick={() => setSummaryVersion((v) => v + 1)}>Retry</button>
-                      </p>
-                    )}
-                  </div>
-                  {!noOvertime && (overtimeQuote?.needs_end_time || playedUntil) && (
-                    <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 p-3 sm:p-3">
-                      <label htmlFor="played-until" className="text-xs font-medium text-amber-100">
-                        This session ran more than 3 hours over. When did play end?
-                      </label>
-                      <div className="mt-1 flex flex-wrap items-center gap-2">
-                        <input
-                          id="played-until"
-                          type="date"
-                          aria-label="Play ended on"
-                          className="rounded-md border border-amber-500/40 bg-card px-2 py-1 text-sm text-foreground"
-                          max={istInputValue(new Date()).slice(0, 10)}
-                          value={playedUntil.slice(0, 10)}
-                          onChange={(e) => {
-                            setPlayedUntil(e.target.value ? `${e.target.value}T${playedUntil.slice(11, 16) || "00:00"}` : "");
-                            setChargeFullOvertime(false);
-                          }}
-                        />
-                        <TimeField
-                          aria-label="Play ended at"
-                          minuteStep={1}
-                          value={playedUntil.slice(11, 16)}
-                          onValueChange={(time) => {
-                            setPlayedUntil(`${playedUntil.slice(0, 10) || istInputValue(new Date()).slice(0, 10)}T${time}`);
-                            setChargeFullOvertime(false);
-                          }}
-                        />
-                      </div>
-                      {!playedUntil && (
-                        <label className="mt-2 flex items-center gap-2 text-xs text-amber-100">
-                          <input type="checkbox" checked={chargeFullOvertime} onChange={(e) => setChargeFullOvertime(e.target.checked)} />
-                          They really played the whole time. Charge it all.
-                        </label>
-                      )}
-                    </div>
-                  )}
-                </div>
-                {(summaryLoading || summaryError) && (
-                  <div className="mb-4 rounded-lg border border-border bg-muted/50 px-3 py-2">
-                    {summaryLoading && (
-                      <p className="text-xs text-muted-foreground">Loading full transaction history…</p>
-                    )}
-                    {summaryError && (
-                      <p className="text-xs text-amber-300">{summaryError}</p>
-                    )}
-                  </div>
-                )}
-
-                <div className="mb-3 grid grid-cols-1 gap-2 sm:mb-4 sm:gap-3 xl:grid-cols-2">
-                  <div className="rounded-lg border border-border bg-muted/55 p-3 sm:p-3">
-                    <p className="mb-2 text-sm font-semibold text-foreground">Charges to collect</p>
-                    <div className="space-y-1.5 text-xs text-muted-foreground">
-                      <div className="flex items-center justify-between">
-                        <span>Extra time</span>
-                        <span className="font-semibold text-foreground">₹{(computedExtraAmount + kioskDue).toFixed(2)}</span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span>Unpaid meals</span>
-                        <span className="font-semibold text-foreground">₹{pendingMealsAmount.toFixed(2)}</span>
-                      </div>
-                      {historicalPendingExtraAmount > 0 ? (
-                        <div className="flex items-center justify-between">
-                          <span>Earlier extra time</span>
-                          <span className="font-semibold text-foreground">₹{historicalPendingExtraAmount.toFixed(2)}</span>
-                        </div>
-                      ) : null}
-                      {pendingBaseAmount > 0 && <div className="flex items-center justify-between"><span>Unpaid booking</span><span className="font-semibold text-foreground">₹{pendingBaseAmount.toFixed(2)}</span></div>}
-                      {parsedWaiveOff > 0 && (
-                        <div className="flex items-center justify-between">
-                          <span>Discount</span>
-                          <span className="font-semibold text-amber-300">− ₹{parsedWaiveOff.toFixed(2)}</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="rounded-lg border border-border bg-muted/55 p-3 sm:p-3">
-                    <p className="mb-2 text-sm font-semibold text-foreground">Payment history</p>
-                    <div className="space-y-1.5 text-xs text-muted-foreground">
-                      <div className="flex items-center justify-between">
-                        <span>Initial booking paid</span>
-                        <span className="font-semibold text-foreground">₹{paidInitialAmount.toFixed(2)}</span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span>Meals paid</span>
-                        <span className="font-semibold text-foreground">₹{paidMealsAmount.toFixed(2)}</span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span>Extra time paid</span>
-                        <span className="font-semibold text-foreground">₹{paidExtraAmount.toFixed(2)}</span>
-                      </div>
-                      <div className="flex items-center justify-between border-t border-border pt-1.5 text-sm">
-                        <span className="font-semibold text-foreground">Total paid amount</span>
-                        <span className="font-semibold text-emerald-300">₹{totalPaidAmount.toFixed(2)}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                <button type="button" aria-label="Close" disabled={loading} onClick={() => setShowOverlay(false)} className="rounded-md p-1.5 text-muted-foreground hover:bg-muted disabled:opacity-50"><X className="h-4 w-4" /></button>
               </div>
 
-              <div className="rounded-lg border border-border bg-muted/55 p-3 sm:p-3 lg:sticky lg:top-2 lg:h-fit">
-                {!upiQr && (<>
-                <div className="mb-3 sm:mb-4">
-                  <label htmlFor="waive-off-amount" className="mb-2 block text-sm font-medium text-foreground">
-                    Discount (optional, ₹)
-                  </label>
-                  <motion.input
-                    id="waive-off-amount"
-                    type="text"
-                    value={waiveOffAmount}
-                    onChange={handleWaiveOffChange}
-                    inputMode="decimal"
-                    pattern="[0-9]*\.?[0-9]*"
-                    className={`w-full rounded-lg border bg-card p-3 text-sm text-foreground transition-all duration-200 focus:border-primary focus:ring-2 focus:ring-primary sm:p-3 ${
-                      waiveOffError ? "border-red-500 focus:ring-ring/40" : "border-border"
-                    }`}
-                    placeholder="0.00"
-                    aria-invalid={waiveOffError ? "true" : "false"}
-                    aria-describedby={waiveOffError ? "waive-off-error" : undefined}
-                    whileFocus={{ scale: 1.02 }}
-                  />
-                  {waiveOffError && (
-                    <p id="waive-off-error" className="mt-1 text-sm text-red-400">
-                      {waiveOffError}
-                    </p>
-                  )}
+              {summaryLoading || !paymentSummary || summaryBookingId !== resolveBookingId(selectedSlot) ? (
+                <div className="p-6 text-center" aria-live="polite" aria-busy={summaryLoading}>
+                  {summaryError
+                    ? <><p role="alert" className="text-sm text-red-300">{summaryError}</p><button type="button" className="mt-3 rounded-md border px-4 py-2 text-sm" onClick={() => { setSummaryLoading(true); setSummaryVersion((v) => v + 1); }}>Retry</button></>
+                    : <><Loader2 className="mx-auto mb-2 h-5 w-5 animate-spin text-muted-foreground" /><p className="text-sm">Checking the bill…</p></>}
                 </div>
-
-                <div className="mb-4 sm:mb-5">
-                  <label className="mb-2 block text-sm font-medium text-foreground">
-                    Payment method
-                  </label>
-                  <div className="grid grid-cols-2 gap-2" role="radiogroup" aria-label="Payment method">
-                    {[
-                      { key: "cash", label: "Cash", Icon: IndianRupee },
-                      { key: "card", label: "Card", Icon: CreditCard },
-                      { key: "upi_qr", label: "Hash UPI QR", Icon: QrCode },
-                      { key: "upi", label: "Café UPI", Icon: Smartphone },
-                      { key: "credit", label: "Gamer credit", Icon: Wallet },
-                    ].filter(({ key }) => !(isGroupBill && key === "upi_qr")).map(({ key, label, Icon }) => (
-                      <motion.button
-                        key={key}
-                        disabled={!!upiQr}
-                        onClick={() => setPaymentMode(key)}
-                        onKeyDown={(e) => handlePaymentModeKeyDown(e, key)}
-                        className={`flex min-h-16 flex-col items-center justify-center rounded-lg border p-2 sm:min-h-0 sm:p-3 transition-all duration-200
-                          ${
-                            paymentMode === key
-                              ? "border-primary bg-primary/20 ring-2 ring-primary/30"
-                              : "border-border bg-card text-foreground hover:bg-muted"
-                          }`}
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        aria-checked={paymentMode === key}
-                        role="radio"
-                      >
-                        <Icon
-                          className={`mb-1.5 h-5 w-5 ${paymentMode === key ? "text-primary" : "text-muted-foreground"}`}
-                        />
-                        <span
-                          className={`text-xs font-medium sm:text-sm ${paymentMode === key ? "text-primary" : "text-foreground"}`}
-                        >
-                          {label}
-                        </span>
-                      </motion.button>
-                    ))}
-                  </div>
-                </div>
-                </>)}
-
-                {paymentMode === "credit" && (
-                  <div className="mb-4 rounded-lg border border-border bg-card p-3 sm:mb-5 sm:p-3">
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <p className="text-sm font-semibold text-foreground">Credit Account Status</p>
-                        <p className="text-xs text-muted-foreground">
-                          {selectedUserProfile?.id
-                            ? `Matched customer: ${selectedUserProfile.name}`
-                            : "No credit-enabled customer matched yet."}
+              ) : (
+                <div className="min-h-0 flex-1 overflow-y-auto px-4 py-3 text-sm">
+                  {!noOvertime && (
+                    <div className="mb-3">
+                      <p className="mb-1.5 text-xs font-medium text-muted-foreground">Play ended</p>
+                      <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label="When did play end">
+                        {quickEnds.map((choice) => (
+                          <button key={choice.key} type="button" role="radio" aria-checked={endKey === choice.key} disabled={loading || !!upiQr} onClick={() => pickEnd(choice.key)} className={chip(endKey === choice.key)}>{choice.label}</button>
+                        ))}
+                        <button type="button" role="radio" aria-checked={endKey === "other"} disabled={loading || !!upiQr} onClick={() => pickEnd("other")} className={chip(endKey === "other")}>Other</button>
+                      </div>
+                      {endKey === "other" && (
+                        <div className="mt-2 flex flex-wrap items-center gap-2">
+                          <input type="date" aria-label="Play ended on" className="rounded-md border border-border bg-card px-2 py-1 text-sm text-foreground"
+                            max={istInputValue(new Date()).slice(0, 10)} value={playedUntil.slice(0, 10)}
+                            onChange={(e) => setPlayedUntil(e.target.value ? `${e.target.value}T${playedUntil.slice(11, 16) || "00:00"}` : "")} />
+                          <TimeField aria-label="Play ended at" minuteStep={1} value={playedUntil.slice(11, 16)}
+                            onValueChange={(time) => setPlayedUntil(`${playedUntil.slice(0, 10) || istInputValue(new Date()).slice(0, 10)}T${time}`)} />
+                        </div>
+                      )}
+                      {overtimeQuote?.needs_end_time && !playedUntil && (
+                        <p role="alert" className="mt-2 text-xs text-amber-300">
+                          Played 3h+ over. Pick when play ended, or{" "}
+                          <button type="button" className={`underline ${chargeFullOvertime ? "font-semibold" : ""}`} onClick={() => setChargeFullOvertime((v) => !v)}>{chargeFullOvertime ? "charging all ✓" : "charge all"}</button>.
                         </p>
-                      </div>
-                      {!creditAccount?.is_active && (
-                        <button
-                          type="button"
-                          onClick={() => setShowCreditAccountModal(true)}
-                          className={buttonVariants({ variant: "soft-info", size: "sm" })}
-                        >
-                          Create Credit Account
-                        </button>
                       )}
                     </div>
-                    {creditAccountLoading ? (
-                      <p className="mt-2 text-xs text-muted-foreground">Loading credit account…</p>
-                    ) : creditAccount?.is_active ? (
-                      <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-3">
-                        <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-3 py-2">
-                          <p className="text-xs uppercase tracking-wide text-emerald-300">Limit</p>
-                          <p className="text-sm font-semibold text-emerald-100">₹{Number(creditAccount.credit_limit || 0).toFixed(2)}</p>
-                        </div>
-                        <div className="rounded-lg border border-amber-500/20 bg-amber-500/10 px-3 py-2">
-                          <p className="text-xs uppercase tracking-wide text-amber-300">Outstanding</p>
-                          <p className="text-sm font-semibold text-amber-100">₹{Number(creditAccount.outstanding_amount || 0).toFixed(2)}</p>
-                        </div>
-                        <div className="rounded-lg border border-border bg-primary/10 px-3 py-2">
-                          <p className="text-xs uppercase tracking-wide text-primary">Available</p>
-                          <p className="text-sm font-semibold text-foreground">₹{availableCreditAmount.toFixed(2)}</p>
-                        </div>
+                  )}
+
+                  <div className="divide-y divide-border rounded-lg border border-border px-3" aria-label="Bill">
+                    <div className={rowCls}>
+                      <span className="text-muted-foreground">Booked{releaseQuote ? ` ${clockOfIso(releaseQuote.booked_start)}–${clockOfIso(releaseQuote.booked_end)} · ${durationLabel(releaseQuote.booked_minutes)}` : ""}</span>
+                      <span className="tabular-nums text-foreground">paid {formatRupees(bookedPaid)}</span>
+                    </div>
+                    {playedMinutes !== null && (
+                      <div className={rowCls}><span className="text-muted-foreground">Played</span><span className="tabular-nums text-foreground">{durationLabel(playedMinutes)}</span></div>
+                    )}
+                    {meteredByKiosk ? (
+                      <div className={rowCls}>
+                        <span className="text-muted-foreground">PC extra time{runtimeBill && !runtimeBill.ended_at ? " (still running)" : ""}</span>
+                        <span className="tabular-nums text-foreground">{runtimeBill ? rupees(kioskDuePaise) : runtimeError ? "Unavailable" : "…"}</span>
                       </div>
-                    ) : (
-                      <div className="mt-2 rounded-lg border border-red-500/20 bg-red-500/10 px-3 py-2 text-xs text-red-300">
-                        {creditAccountError || "No credit account configured for this customer."}
+                    ) : !sessionClosed && (computedExtraAmount > 0 || overtimeMinutes > 0) ? (
+                      <div className={rowCls}>
+                        <span className="text-muted-foreground">
+                          Extra +{durationLabel(overtimeMinutes)}
+                          {overtimeQuote ? <span className="block text-xs">₹{overtimeQuote.rate_per_hour.toFixed(0)}/h{overtimeQuote.pricing_source === "rate_card" ? ` · ${overtimeQuote.rate_card?.name || "rate card"}` : ""}{overtimeQuote.already_recorded > 0 ? ` · ₹${overtimeQuote.already_recorded.toFixed(0)} already billed` : ""}</span> : null}
+                        </span>
+                        <span className="tabular-nums text-foreground">{quoteLoading && !overtimeQuote ? "…" : formatRupees(computedExtraAmount)}</span>
+                      </div>
+                    ) : null}
+                    {releaseQuote && releaseQuote.unused_minutes > 0 && !releaseQuote.recorded && (
+                      <div className={rowCls}>
+                        <span className="text-muted-foreground">
+                          Unused −{durationLabel(releaseQuote.unused_minutes)}
+                          {!releaseQuote.eligible && <span className="block text-xs">Under {releaseQuote.min_unused_minutes} min, nothing back</span>}
+                          {releaseQuote.eligible && releaseQuote.policy === "none" && <span className="block text-xs">Cafe setting: no return</span>}
+                        </span>
+                        <span className="tabular-nums text-emerald-400">
+                          {returnAmount > 0 ? formatRupees(-returnAmount) : pendingReduction > 0 ? `${formatRupees(-pendingReduction)} off` : "₹0"}
+                        </span>
+                      </div>
+                    )}
+                    {releaseQuote?.recorded && (
+                      <div className={rowCls}><span className="text-muted-foreground">Unused time</span><span className="text-xs text-muted-foreground">{releaseQuote.recorded.mode === "none" ? "No return recorded" : `${formatRupees(releaseQuote.recorded.amount)} ${releaseQuote.recorded.mode} recorded`}</span></div>
+                    )}
+                    {historicalPendingExtraAmount > 0 && <div className={rowCls}><span className="text-muted-foreground">Earlier extra time</span><span className="tabular-nums">{formatRupees(historicalPendingExtraAmount)}</span></div>}
+                    {pendingMealsAmount > 0 && <div className={rowCls}><span className="text-muted-foreground">Meals unpaid</span><span className="tabular-nums">{formatRupees(pendingMealsAmount)}</span></div>}
+                    {pendingBaseAmount > 0 && <div className={rowCls}><span className="text-muted-foreground">Booking unpaid</span><span className="tabular-nums">{formatRupees(pendingBaseAmount)}</span></div>}
+                    {!upiQr && dueBeforeWaive + kioskDue - pendingReduction > 0 && (
+                      <div className={rowCls}>
+                        <span className="text-muted-foreground">Discount</span>
+                        <span className="flex flex-wrap items-center justify-end gap-1">
+                          {(["none", "10", "20", "custom"] as const).map((key) => (
+                            <button key={key} type="button" disabled={loading} onClick={() => pickDiscount(key)} className={`rounded px-2 py-0.5 text-xs ${discountKey === key ? "bg-primary/15 text-primary" : "text-muted-foreground hover:bg-muted"}`}>
+                              {key === "none" ? "None" : key === "custom" ? "Custom" : `₹${key}`}
+                            </button>
+                          ))}
+                          {discountKey === "custom" && (
+                            <input aria-label="Discount amount" inputMode="decimal" value={waiveOffAmount} onChange={handleWaiveOffChange} placeholder="₹"
+                              className="w-16 rounded border border-border bg-card px-1.5 py-0.5 text-right text-xs" />
+                          )}
+                        </span>
                       </div>
                     )}
                   </div>
-                )}
+                  {waiveOffError && <p className="mt-1 text-xs text-red-400">{waiveOffError}</p>}
+                  {quoteError && <p role="alert" className="mt-1 text-xs text-amber-300">{quoteError}</p>}
+                  {meteredByKiosk && (runtimeBill?.billing.requires_reconciliation || (!runtimeBill && runtimeError)) && (
+                    <p role="alert" className="mt-1 text-xs text-amber-300">{runtimeBill?.billing.pricing_error || runtimeError || "PC extra time could not be priced yet."} <button type="button" className="underline" onClick={() => setSummaryVersion((v) => v + 1)}>Retry</button></p>
+                  )}
 
-                {settlementError && <div role="alert" className="mb-3 rounded-lg border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-300">{settlementError}</div>}
-                {upiQr ? (
-                  <UpiQrPanel
-                    vendorId={vendorId as number}
-                    onUpdate={setUpiQr}
-                    qr={upiQr}
-                    now={qrNow}
-                    busy={loading}
-                    paidLabel="Ending session…"
-                    paidActionLabel="Release console"
-                    onCancel={handleCancelUpiQr}
-                    onNewQr={() => { setUpiQr(null); void handleSettle(); }}
-                    onPaidAction={() => { setLoading(true); void releaseAndClose(); }}
-                  />
-                ) : (
-                <div className="settlement-actions flex flex-col gap-2">
-                  <div className="mb-2 flex items-center justify-between border-t border-white/10 pt-3 text-sm"><span className="text-muted-foreground">Collect now</span><strong className="text-lg tabular-nums text-foreground">₹{payableAmount.toFixed(2)}</strong></div>
-                  {meteredByKiosk && runtimeBill && !runtimeBill.ended_at && <p className="mb-2 text-xs text-muted-foreground">Confirming stops the PC and finalises its extra time.</p>}
-                  {payableAmount > 0 && <p className="mb-2 text-xs text-muted-foreground">{paymentMode === "credit" ? "This amount will be added to the customer’s credit account." : paymentMode === "upi_qr" ? "The customer scans a QR. The bill is marked paid and the session ends automatically once the payment arrives." : "Confirm only after receiving payment."}</p>}
-                  <motion.button
-                    onClick={handleSettle}
-                    className="dashboard-btn-primary w-full rounded-md px-4 py-2.5 text-sm font-medium disabled:opacity-50 sm:px-6 sm:py-2"
-                    disabled={loading || summaryLoading || !!summaryError || !!waiveOffError || !vendorId || !!kioskBlocker || (paymentMode === "credit" && (!creditAccount?.is_active || availableCreditAmount < bookingPayable))}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    aria-label="End session"
-                  >
-                    <span className="flex items-center justify-center gap-2">
-                      {loading ? (
-                        <>
-                          <Loader2 className="w-4 h-4 animate-spin" />
-                          Processing…
-                        </>
-                      ) : (
-                        <>
-                          <CheckCircle className="w-4 h-4" />
-                          {payableAmount === 0 ? "End session" : paymentMode === "credit" ? "Add to credit & end session" : paymentMode === "upi_qr" ? "Show payment QR" : "Payment received & end session"}
-                        </>
-                      )}
-                    </span>
-                  </motion.button>
-                  <motion.button
-                    onClick={() => {
-                      setShowOverlay(false);
-                      setWaiveOffAmount("");
-                      setWaiveOffError("");
-                      setPaymentSummary(null);
-                      setSummaryError("");
-                    }}
-                    className="w-full rounded-md border border-border bg-card px-4 py-2.5 text-sm font-medium text-foreground transition-all duration-200 hover:bg-muted disabled:opacity-50 sm:px-5 sm:py-2"
-                    disabled={loading}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    aria-label="Cancel extra payment"
-                  >
-                    <span className="flex items-center justify-center gap-2">
-                      <X className="w-4 h-4" />
-                      Cancel
-                    </span>
-                  </motion.button>
+                  <div className="mt-3 space-y-1.5">
+                    {(payableAmount > 0 || returnAmount === 0) && (
+                      <div className="flex items-baseline justify-between"><span className="text-muted-foreground">Collect</span><strong className="text-2xl tabular-nums text-foreground">{formatRupees(payableAmount)}</strong></div>
+                    )}
+                    {returnAmount > 0 && (
+                      <div className="flex items-baseline justify-between gap-2">
+                        <span className="text-muted-foreground">{returnLabel}</span>
+                        <span className="flex items-center gap-2">
+                          {releaseQuote && releaseQuote.modes.length > 1 && (
+                            <button type="button" disabled={loading} className="text-xs text-primary underline" onClick={() => setReturnMode(returnMode === "refund" ? "credit" : "refund")}>
+                              {returnMode === "refund" ? "Give credit instead" : "Refund instead"}
+                            </button>
+                          )}
+                          <strong className="text-2xl tabular-nums text-emerald-400">{formatRupees(returnAmount)}</strong>
+                        </span>
+                      </div>
+                    )}
+                  </div>
+
+                  {!upiQr && payableAmount > 0 && (
+                    <div className="mt-3 flex flex-wrap gap-1.5" role="radiogroup" aria-label="Payment method">
+                      {methods.map(({ key, label, Icon }) => (
+                        <button key={key} type="button" role="radio" aria-checked={paymentMode === key} disabled={loading}
+                          onClick={() => setPaymentMode(key)} onKeyDown={(e) => handlePaymentModeKeyDown(e, key)}
+                          className={`${chip(paymentMode === key)} inline-flex items-center gap-1.5`}>
+                          <Icon className="h-3.5 w-3.5" />{label}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  {paymentMode === "credit" && payableAmount > 0 && (
+                    <div className="mt-2 rounded-md border border-border bg-card px-3 py-2 text-xs">
+                      {creditAccountLoading ? <span className="text-muted-foreground">Loading credit account…</span>
+                        : creditAccount?.is_active ? <span className="text-muted-foreground">Credit available {formatRupees(availableCreditAmount)}{availableCreditAmount < bookingPayable ? " · not enough" : ""}</span>
+                        : <span className="flex items-center justify-between gap-2 text-red-300">{creditAccountError || "No credit account for this gamer."}<button type="button" onClick={() => setShowCreditAccountModal(true)} className={buttonVariants({ variant: "soft-info", size: "sm" })}>Create</button></span>}
+                    </div>
+                  )}
+
+                  {settlementError && <div role="alert" className="mt-3 rounded-md border border-red-500/30 bg-red-500/10 p-2.5 text-sm text-red-300">{settlementError}</div>}
+                  {upiQr && (
+                    <div className="mt-3">
+                      <UpiQrPanel
+                        vendorId={vendorId as number}
+                        onUpdate={setUpiQr}
+                        qr={upiQr}
+                        now={qrNow}
+                        busy={loading}
+                        paidLabel="Ending session…"
+                        paidActionLabel="Release console"
+                        onCancel={handleCancelUpiQr}
+                        onNewQr={() => { setUpiQr(null); void handleSettle(); }}
+                        onPaidAction={() => { setLoading(true); void releaseAndClose(); }}
+                      />
+                    </div>
+                  )}
                 </div>
-                )}
-              </div>
-            </div>}
+              )}
+
+              {!upiQr && paymentSummary && !summaryLoading && (
+                <div className="flex gap-2 border-t border-border px-4 py-3">
+                  <button type="button" onClick={() => setShowOverlay(false)} disabled={loading} className="rounded-md border border-border bg-card px-4 py-2.5 text-sm font-medium hover:bg-muted disabled:opacity-50">Cancel</button>
+                  <button
+                    type="button"
+                    onClick={handleSettle}
+                    aria-label="End session"
+                    className="dashboard-btn-primary flex-1 rounded-md px-4 py-2.5 text-sm font-semibold disabled:opacity-50"
+                    disabled={loading || summaryLoading || !!summaryError || !!waiveOffError || !vendorId || !!kioskBlocker || (paymentMode === "credit" && payableAmount > 0 && (!creditAccount?.is_active || availableCreditAmount < bookingPayable))}
+                  >
+                    <span className="flex items-center justify-center gap-2">
+                      {loading ? <><Loader2 className="h-4 w-4 animate-spin" />Ending…</> : <><CheckCircle className="h-4 w-4" />{primaryLabel}</>}
+                    </span>
+                  </button>
+                </div>
+              )}
             </motion.div>
           </motion.div>
           <CreditAccountModal
@@ -1156,12 +1099,7 @@ const SettlementOverlay: React.FC<ExtraBookingOverlayProps> = ({
             onClose={() => setShowCreditAccountModal(false)}
             onCreated={({ account, user }) => {
               setCreditAccount(account);
-              setSelectedUserProfile({
-                id: user.userId || undefined,
-                name: user.name,
-                email: user.email || "",
-                phone: user.phone || "",
-              });
+              setSelectedUserProfile({ id: user.userId || undefined, name: user.name, email: user.email || "", phone: user.phone || "" });
               setShowCreditAccountModal(false);
             }}
           />
