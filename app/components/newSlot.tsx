@@ -164,7 +164,7 @@ import { useDashboardData } from "@/app/context/DashboardDataContext"
 import { useApiClient } from "@/app/hooks/useApiClient"
 import { httpJson, clearHttpClientCache } from "@/lib/http-client"
 import { getBookingSettings } from "@/lib/booking-settings"
-import { slotOffer, slotUnitPrice } from "@/lib/slot-price"
+import { elapsedDiscountForSession, slotOffer, slotUnitPrice } from "@/lib/slot-price"
 import { useTimeFormat } from "@/app/hooks/useTimeFormat"
 import { formatClock, formatMinutes } from "@/lib/time-format"
 import { TimeField } from "@/app/components/time-field"
@@ -1626,9 +1626,9 @@ const getEffectivePrice = (slot: SelectedSlot): number => slotUnitPrice(slot, ac
     ? Number(((consoleTotal * squadDiscountPercent) / 100).toFixed(2))
     : 0
   const gamingNet = Math.max(0, consoleTotal - squadDiscountAmount)
-  const suggestedDeskDiscount = deskPrice !== null && consoleUnitTotal > 0
-    ? Math.round(suggestedDiscount * deskPrice / consoleUnitTotal * 100) / 100
-    : suggestedDiscount
+  // The elapsed-time discount is measured on one unit per slot; scale it to
+  // what this session actually costs (PC squad x players, rate card, squad discount).
+  const suggestedDeskDiscount = elapsedDiscountForSession(suggestedDiscount, consoleUnitTotal, gamingNet)
   const autoWaiveOffAmount = Math.min(Math.max(0, gamingNet - waiveOffAmount), discountOverride ?? suggestedDeskDiscount)
   const totalAmount = Math.max(
     0,

@@ -29,3 +29,15 @@ test('Without base_slot_price (older booking service) the previous active-pricin
  assert.equal(slotUnitPrice({console_name:'PS5',console_price:60},active),40)
  assert.equal(slotUnitPrice({console_name:'PC',console_price:80},active),80)
 })
+test('Elapsed-time discount covers the whole PC squad',()=>{
+ const {elapsedDiscountForSession}=load()
+ // 3 players x Rs 60, half the slot gone: Rs 90 off (one-player rule gave Rs 30).
+ assert.equal(elapsedDiscountForSession(30,60,180),90)
+ // With a 10% squad discount the session nets Rs 162: half of it is Rs 81.
+ assert.equal(elapsedDiscountForSession(30,60,162),81)
+ // Solo: unchanged. Rate card Rs 90 for the hour: Rs 45.
+ assert.equal(elapsedDiscountForSession(30,60,60),30)
+ assert.equal(elapsedDiscountForSession(30,60,90),45)
+ assert.equal(elapsedDiscountForSession(0,60,180),0)
+ assert.equal(elapsedDiscountForSession(70,60,60),60)
+})
