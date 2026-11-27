@@ -498,7 +498,9 @@ export function NotificationButton({
           variant="ghost"
           size="sm"
           onClick={() => setIsOpen(!isOpen)}
-          className="relative h-10 w-10 rounded-full border-0 bg-transparent p-0 shadow-none hover:bg-emerald-500/10 transition-colors duration-200"
+          aria-label={unreadCount > 0 ? `Notifications, ${unreadCount} unread` : "Notifications"}
+          data-shell-notify=""
+          className="relative h-8 w-8 rounded-lg border-0 bg-transparent p-0 shadow-none transition-colors duration-200 hover:bg-white/[0.05]"
         >
           <Bell className={`w-4 h-4 ${
             unreadCount > 0
@@ -511,7 +513,7 @@ export function NotificationButton({
           {unreadCount > 0 && (
             <Badge
               variant="destructive"
-              className="absolute -top-2 -right-2 h-5 w-5 p-0 flex items-center justify-center text-xs font-semibold animate-bounce"
+              className="absolute -right-1 -top-1 flex h-4 min-w-[16px] items-center justify-center border-2 border-background px-1 text-[10px] font-semibold leading-none"
             >
               {unreadCount > 9 ? '9+' : unreadCount}
             </Badge>
@@ -519,7 +521,7 @@ export function NotificationButton({
         </Button>
 
         <div
-          className={`absolute -bottom-1 -right-1 w-3 h-3 rounded-full border-2 border-white ${statusInfo.color} ${
+          className={`pointer-events-none absolute bottom-1 right-1 h-2 w-2 rounded-full border border-background ${statusInfo.color} ${
             connectionStatus === 'disconnected' ? 'animate-pulse' : ''
           }`}
           title={statusInfo.title}
