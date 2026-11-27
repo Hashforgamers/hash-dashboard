@@ -1,6 +1,9 @@
 "use client";
 import { useEffect, useState } from "react";
-import { PlusCircle, List, Monitor, ArrowLeft, Tv, Gamepad, Headset } from 'lucide-react';
+import { PlusCircle, List, Monitor, ArrowLeft, Tv, Gamepad, Headset, Map as MapIcon } from 'lucide-react';
+import dynamic from "next/dynamic";
+import { useRouter, useSearchParams } from "next/navigation";
+import { StationMapView } from "./station-map/station-map-view";
 import { KioskDownload } from "./kiosk-download";
 import { AddConsoleForm } from "./add-console-form";
 import { ConsoleList } from "./console-list";
@@ -46,8 +49,14 @@ const DEFAULT_CONSOLE_TYPES = [
   },
 ];
 
+// Hosts the New session form so the map can open it on a station without leaving the page.
+const SessionFormHost = dynamic(() => import("./newSlot"), { ssr: false });
+
 export function ManageGamingConsole() {
-  const [selectedAction, setSelectedAction] = useState<string | null>("list");
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  // Map is the default view; ?view=list keeps the old console list one click away.
+  const [selectedAction, setSelectedAction] = useState<string | null>(() => searchParams.get("view") === "list" ? "list" : "map");
   const [selectedConsoleType, setSelectedConsoleType] = useState<string | null>(null);
   const [consoleTypes, setConsoleTypes] = useState(DEFAULT_CONSOLE_TYPES);
   const [editingConsole, setEditingConsole] = useState<any | null>(null);
@@ -102,6 +111,9 @@ export function ManageGamingConsole() {
   const handleActionClick = (actionType: string) => {
     setSelectedAction(actionType);
     setSelectedConsoleType(null);
+    if (actionType === "map" || actionType === "list") {
+      router.replace(actionType === "list" ? "/gaming?view=list" : "/gaming", { scroll: false });
+    }
   };
 
   const handleConsoleTypeClick = (consoleType: string) => {
@@ -159,6 +171,20 @@ export function ManageGamingConsole() {
       );
     }
 
+    if (selectedAction === "map") {
+      return (
+        <motion.div
+          key="map"
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -12 }}
+          className="h-full min-h-0 w-full"
+        >
+          <StationMapView />
+        </motion.div>
+      );
+    }
+
     if (selectedAction === "list") {
       return (
         <motion.div
@@ -185,6 +211,11 @@ export function ManageGamingConsole() {
           <details className="relative"><summary className="cursor-pointer text-muted-foreground">Setup</summary><div className="absolute z-20 right-0 mt-2 w-64 rounded-lg border bg-background p-3 shadow-lg"><p>Install on each PC, then link it to your cafe. Each linked PC uses one licence.</p><a className="mt-2 inline-block underline" href="https://drive.google.com/drive/folders/171RmdWLzuBhl0qE5xAhFvmtgyppmN0Cv?usp=sharing" target="_blank" rel="noopener noreferrer">All releases</a></div></details>
         </div>
         <div className="tab-container" aria-label="Console views">
+          <button type="button" aria-pressed={selectedAction === "map"}
+            className={selectedAction === "map" ? "tab-active" : "tab-inactive"}
+            onClick={() => handleActionClick("map")}>
+            <MapIcon className="h-4 w-4" /> Map
+          </button>
           <button type="button" aria-pressed={selectedAction === "list"}
             className={selectedAction === "list" ? "tab-active" : "tab-inactive"}
             onClick={() => handleActionClick("list")}>
@@ -207,6 +238,8 @@ export function ManageGamingConsole() {
       <div className="min-h-0 flex-1 overflow-y-auto">
         <AnimatePresence mode="wait">{renderContent()}</AnimatePresence>
       </div>
+
+        {selectedAction === "map" && <SessionFormHost embedded formOnly />}
 
         {/* Edit Modal */}
         {editingConsole && (
