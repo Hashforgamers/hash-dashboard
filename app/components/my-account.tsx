@@ -47,6 +47,7 @@ import { useApiClient } from "@/app/hooks/useApiClient";
 import { CafeKeyboardShortcuts } from "@/app/components/cafe-keyboard-shortcuts";
 import { CafeLocationEditor } from "@/app/components/cafe-location-editor";
 import { FlexBookingSettings } from "@/app/components/flex-booking-settings";
+import { UnusedTimeSettings } from "@/app/components/unused-time-settings";
 
 const ACCOUNT_NAV_GROUPS = [
   { title: "Cafe", items: [
@@ -1809,7 +1810,7 @@ const ToggleSwitch = ({
 
 {page === "Keyboard Shortcuts" && <CafeKeyboardShortcuts />}
 {page === "Time Format" && <TimeFormatSettings />}
-{page === "Session Timing" && <FlexBookingSettings vendorId={vendorId ? Number(vendorId) : null} canEdit={can("account.manage")} />}
+{page === "Session Timing" && <><FlexBookingSettings vendorId={vendorId ? Number(vendorId) : null} canEdit={can("account.manage")} /><UnusedTimeSettings vendorId={vendorId ? Number(vendorId) : null} canEdit={can("account.manage")} /></>}
 
  {page === "Cafe Gallery" && (
   <div>
