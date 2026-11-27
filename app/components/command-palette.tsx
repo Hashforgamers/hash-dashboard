@@ -46,10 +46,11 @@ export function CommandPalette({ onRefresh }: { onRefresh: () => void }) {
         onClick={() => setOpen(true)}
         aria-label="Search pages and actions"
         title="Search pages and actions (Ctrl/⌘ K)"
-        className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 transition-colors hover:bg-white/[0.06] hover:text-foreground"
+        className="shell-search-trigger"
       >
         <Search className="h-3.5 w-3.5" />
-        <kbd className="hidden font-sans text-xs text-muted-foreground md:inline">⌘K</kbd>
+        <span className="hidden pr-6 lg:inline">Search</span>
+        <kbd className="hidden font-sans md:inline-flex">⌘K</kbd>
       </button>
       <CommandDialog open={open} onOpenChange={setOpen}>
         <DialogTitle className="sr-only">Search pages and actions</DialogTitle>

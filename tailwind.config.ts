@@ -51,6 +51,25 @@ const config: Config = {
           DEFAULT: 'hsl(var(--destructive))',
           foreground: 'hsl(var(--destructive-foreground))'
         },
+        success: {
+          DEFAULT: 'hsl(var(--success))',
+          foreground: 'hsl(var(--success-foreground))'
+        },
+        warning: {
+          DEFAULT: 'hsl(var(--warning))',
+          foreground: 'hsl(var(--warning-foreground))'
+        },
+        info: {
+          DEFAULT: 'hsl(var(--info))',
+          foreground: 'hsl(var(--info-foreground))'
+        },
+        // raised surfaces, lowest to highest
+        surface: {
+          '0': 'hsl(var(--background))',
+          '1': 'hsl(var(--card))',
+          '2': 'hsl(var(--popover))',
+          '3': 'hsl(var(--muted))'
+        },
         border: 'hsl(var(--border))',
         input: 'hsl(var(--input))',
         ring: 'hsl(var(--ring))',
@@ -73,9 +92,20 @@ const config: Config = {
         }
       },
       borderRadius: {
+        xl: 'calc(var(--radius) + 4px)',
         lg: 'var(--radius)',
         md: 'calc(var(--radius) - 2px)',
         sm: 'calc(var(--radius) - 4px)'
+      },
+      // px type scale (html is 14px, so rem-based sizes run small): 12/13/14/16/20/24/30
+      fontSize: {
+        'ui-12': ['12px', { lineHeight: '16px' }],
+        'ui-13': ['13px', { lineHeight: '20px' }],
+        'ui-14': ['14px', { lineHeight: '20px' }],
+        'ui-16': ['16px', { lineHeight: '24px' }],
+        'ui-20': ['20px', { lineHeight: '28px', letterSpacing: '-0.01em' }],
+        'ui-24': ['24px', { lineHeight: '30px', letterSpacing: '-0.02em' }],
+        'ui-30': ['30px', { lineHeight: '36px', letterSpacing: '-0.02em' }]
       },
       keyframes: {
         'accordion-down': {

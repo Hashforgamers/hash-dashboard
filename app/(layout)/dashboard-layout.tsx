@@ -1,7 +1,7 @@
 "use client"
 
 import { useCallback, useEffect, useMemo, useState } from "react"
-import { Clock, Menu, Pin, PinOff, RefreshCw, User, X } from "lucide-react"
+import { ChevronsLeft, ChevronsRight } from "lucide-react"
 import { usePathname, useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { MainNav } from "../components/main-nav"
@@ -12,10 +12,11 @@ import { canAccessPath } from "@/lib/rbac"
 import { useSubscription } from "@/hooks/useSubscription"
 import { useSocket } from "../context/SocketContext"
 import { useDashboardData } from "../context/DashboardDataContext"
-import { NotificationButton } from "../components/NotificationButton"
-import { CommandPalette } from "../components/command-palette"
 import { GamerProfileHost } from "../components/gamer-profile-host"
-import { BookingShortcuts } from "../components/booking-shortcuts"
+import { TopBar } from "../components/shell/top-bar"
+import { StatusBar } from "../components/shell/status-bar"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import { useIsMobile } from "@/components/ui/use-mobile"
 import { normalizeConsoleSlug, resolveConsoleColor, resolveConsoleIcon } from "../components/console-catalog"
 
 interface DashboardLayoutProps {
@@ -23,11 +24,11 @@ interface DashboardLayoutProps {
   contentScroll?: "page" | "contained"
 }
 
-const NAV_PIN_STORAGE_KEY = "dashboard_nav_pinned_v1"
+const NAV_COLLAPSED_STORAGE_KEY = "dashboard_nav_collapsed_v1"
 
 export function DashboardLayout({ children, contentScroll = "page" }: DashboardLayoutProps) {
   const [isNavOpen, setIsNavOpen] = useState(false)
-  const [isNavPinned, setIsNavPinned] = useState(false)
+  const [isNavCollapsed, setIsNavCollapsed] = useState(false)
   const [nowISTDateText, setNowISTDateText] = useState<string>("")
   const [nowISTTimeText, setNowISTTimeText] = useState<string>("")
   const [isManualRefreshing, setIsManualRefreshing] = useState(false)
@@ -48,7 +49,6 @@ export function DashboardLayout({ children, contentScroll = "page" }: DashboardL
   const subscriptionUnavailable = subscriptionStatus?.message === "Unable to verify subscription status"
   const isSelectCafeRoute = pathname === "/select-cafe" || pathname.startsWith("/select-cafe/")
   const showSidebar = !isSelectCafeRoute
-  const showMobileHeader = !isSelectCafeRoute
   const showGlobalRibbon = !isSelectCafeRoute
 
   useEffect(() => {
@@ -121,30 +121,37 @@ export function DashboardLayout({ children, contentScroll = "page" }: DashboardL
 
   useEffect(() => {
     try {
-      const saved = localStorage.getItem(NAV_PIN_STORAGE_KEY)
-      if (saved === "1") {
-        setIsNavPinned(true)
-      }
+      setIsNavCollapsed(localStorage.getItem(NAV_COLLAPSED_STORAGE_KEY) === "1")
     } catch {
       // noop
     }
   }, [])
 
+  const toggleNavCollapsed = useCallback(() => {
+    setIsNavCollapsed((prev) => {
+      const next = !prev
+      try {
+        localStorage.setItem(NAV_COLLAPSED_STORAGE_KEY, next ? "1" : "0")
+      } catch {
+        // noop
+      }
+      return next
+    })
+  }, [])
+
   useEffect(() => {
-    try {
-      localStorage.setItem(NAV_PIN_STORAGE_KEY, isNavPinned ? "1" : "0")
-    } catch {
-      // noop
-    }
-  }, [isNavPinned])
+    if (!isNavOpen) return
+    const onKey = (event: KeyboardEvent) => { if (event.key === "Escape") setIsNavOpen(false) }
+    window.addEventListener("keydown", onKey)
+    return () => window.removeEventListener("keydown", onKey)
+  }, [isNavOpen])
 
   useEffect(() => {
     const dateFormatter = new Intl.DateTimeFormat("en-IN", {
       timeZone: "Asia/Kolkata",
       weekday: "short",
-      day: "2-digit",
+      day: "numeric",
       month: "short",
-      year: "numeric",
     })
     const timeFormatter = new Intl.DateTimeFormat("en-IN", {
       timeZone: "Asia/Kolkata",
@@ -162,89 +169,84 @@ export function DashboardLayout({ children, contentScroll = "page" }: DashboardL
     return () => clearInterval(timer)
   }, [is24h])
 
+  const isMobile = useIsMobile()
+  // The mobile drawer always shows labels; the icon rail is a desktop preference.
+  const collapsed = isNavCollapsed && !isMobile
+
   return (
-    <div className="workspace-ui premium-shell dashboard-typography flex h-dvh overflow-hidden text-foreground">
-      {showMobileHeader && (
-        <header className="dashboard-nav dashboard-nav-surface dashboard-nav-divider fixed left-0 right-0 top-0 z-[20030] flex items-center justify-between border-b px-4 py-3 backdrop-blur md:hidden">
-          <div className="flex items-center">
+    <TooltipProvider delayDuration={250}>
+    <div className="workspace-ui premium-shell dashboard-typography shell-root flex h-dvh overflow-hidden text-foreground">
+      {showSidebar && (
+        <aside
+          aria-label="Sidebar"
+          data-collapsed={collapsed || undefined}
+          className={`shell-sidebar dashboard-nav ${isNavOpen ? "translate-x-0" : "-translate-x-full"}`}
+        >
+          <div className="shell-sidebar-brand">
             <Image
               src="/hash_for_gamer_logo.png"
-              alt="Hash Logo"
-              width={36}
-              height={36}
-              className="shrink-0 rounded-lg"
+              alt="Hash For Gamers"
+              width={28}
+              height={28}
+              priority
+              className="h-7 w-7 shrink-0 rounded-[7px]"
             />
+            {!collapsed && (
+              <span className="min-w-0 leading-tight">
+                <span className="block text-[14px] font-semibold tracking-[-0.01em] text-foreground">Hash</span>
+                <span className="block text-[11px] text-muted-foreground">for Gamers</span>
+              </span>
+            )}
           </div>
 
-          <Button
-            variant="ghost"
-            size="sm"
-            aria-label={isNavOpen ? 'Close navigation' : 'Open navigation'}
-            onClick={() => setIsNavOpen(!isNavOpen)}
-            className="md:hidden"
-          >
-            {isNavOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-          </Button>
-        </header>
+          <MainNav
+            className="min-h-0 flex-1"
+            collapsed={collapsed}
+            onItemClick={() => setIsNavOpen(false)}
+          />
+
+          <div className="hidden shrink-0 border-t border-white/[0.06] p-2 md:block">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  type="button"
+                  onClick={toggleNavCollapsed}
+                  aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+                  aria-expanded={!collapsed}
+                  className={`shell-nav-item w-full ${collapsed ? "shell-nav-item-collapsed" : ""}`}
+                >
+                  {collapsed ? <ChevronsRight className="shell-nav-icon" /> : <ChevronsLeft className="shell-nav-icon" />}
+                  {!collapsed && <span>Collapse</span>}
+                </button>
+              </TooltipTrigger>
+              {collapsed && <TooltipContent side="right" sideOffset={10}>Expand sidebar</TooltipContent>}
+            </Tooltip>
+          </div>
+        </aside>
       )}
 
-      <div className={`flex min-h-0 flex-1 overflow-hidden ${showMobileHeader ? "pt-[58px] md:pt-0" : ""}`}>
-        {showSidebar && (
-          <div className={`hidden shrink-0 md:block md:w-60 ${isNavPinned ? 'xl:w-60' : 'xl:w-[64px]'}`} aria-hidden="true" />
-        )}
-        {showSidebar && (
-          <aside
-            className={`
-              dashboard-nav dashboard-nav-surface dashboard-nav-divider group fixed left-0 top-0 z-[20040] pointer-events-auto flex h-full w-[86vw] max-w-60 flex-col overflow-hidden border-r p-3 backdrop-blur-xl transition-transform duration-300 ease-out
-              md:fixed md:top-0 md:h-dvh md:w-60 md:max-w-none md:translate-x-0 md:shrink-0
-              ${isNavPinned ? "xl:w-60" : "xl:w-[64px] xl:hover:w-60"}
-              ${isNavOpen ? "translate-x-0" : "-translate-x-full"}
-            `}
-          >
-            <button
-              type="button"
-              aria-label={isNavPinned ? "Unpin sidebar" : "Pin sidebar"}
-              title={isNavPinned ? "Unpin sidebar" : "Pin sidebar"}
-              onClick={() => setIsNavPinned((prev) => !prev)}
-              className={`dashboard-nav-panel absolute right-2 top-2 z-10 hidden rounded-md border p-1.5 text-muted-foreground transition-colors hover:text-foreground md:inline-flex ${
-                isNavPinned ? "xl:inline-flex" : "xl:hidden xl:group-hover:inline-flex"
-              }`}
-            >
-              {isNavPinned ? <PinOff className="h-4 w-4" /> : <Pin className="h-4 w-4" />}
-            </button>
+      {showSidebar && isNavOpen && (
+        <div
+          className="fixed inset-0 z-[20020] bg-black/60 backdrop-blur-sm md:hidden"
+          onClick={() => setIsNavOpen(false)}
+          aria-hidden="true"
+        />
+      )}
 
-            <div
-              className={`mb-3 hidden overflow-hidden md:mb-4 md:flex ${
-                isNavPinned
-                  ? "items-end justify-start space-x-2"
-                  : "items-center justify-center xl:justify-center xl:group-hover:justify-start xl:group-hover:space-x-2"
-              }`}
-            >
-              <Image
-                src="/hash_for_gamer_logo.png"
-                alt="Hash Logo"
-                width={36}
-                height={36}
-                className="shrink-0 rounded-lg"
-              />
-            </div>
-
-            <MainNav
-              className={isNavPinned ? "min-h-0 flex-1 items-start" : "min-h-0 flex-1 items-start xl:items-center xl:group-hover:items-start"}
-              onItemClick={() => setIsNavOpen(false)}
-              isNavPinned={isNavPinned}
+      <div className="relative z-0 flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+          {showGlobalRibbon && (
+            <TopBar
+              vendorId={vendorId}
+              dateText={nowISTDateText}
+              timeText={nowISTTimeText}
+              isConnected={isConnected}
+              isRefreshing={isManualRefreshing}
+              onRefresh={() => void handleManualRefresh()}
+              showNavToggle={showSidebar}
+              isNavOpen={isNavOpen}
+              onToggleNav={() => setIsNavOpen((open) => !open)}
             />
-          </aside>
-        )}
-
-        {showSidebar && isNavOpen && (
-          <div
-            className="fixed inset-0 z-[20020] md:hidden bg-black/60 backdrop-blur-sm"
-            onClick={() => setIsNavOpen(false)}
-          />
-        )}
-
-        <div className="relative z-0 flex min-h-0 flex-1 flex-col overflow-hidden">
+          )}
           <main
             data-dashboard-scroll-root="true"
             className={`relative z-0 min-h-0 h-full flex-1 overflow-y-auto px-2.5 pb-2.5 pt-2.5 sm:px-4 sm:pb-4 md:px-5 md:pb-5 md:pt-5 ${
@@ -288,63 +290,9 @@ export function DashboardLayout({ children, contentScroll = "page" }: DashboardL
           </main>
           <GamerProfileHost />
 
-          {showGlobalRibbon && (
-            <div className="dashboard-nav-divider shrink-0 border-t px-3 py-1.5 sm:px-4 md:px-5">
-              <div className="flex items-center justify-between gap-1.5 px-1 py-1 text-xs text-muted-foreground md:flex-wrap max-md:flex-nowrap">
-                <div className="min-w-0 flex-1 max-md:overflow-x-auto max-md:[scrollbar-width:none] max-md:[&::-webkit-scrollbar]:hidden md:overflow-visible">
-                  <div className="flex items-center gap-3 md:flex-wrap max-md:w-max max-md:whitespace-nowrap">
-                    <span className="inline-flex items-center gap-1.5 font-medium tabular-nums text-foreground">
-                      <Clock className="h-3.5 w-3.5 text-muted-foreground" />
-                      {nowISTTimeText}
-                    </span>
-                    <span>{nowISTDateText}</span>
-                    <button type="button" onClick={()=>router.push("/account")} title={activeStaff ? `${activeStaff.name} · ${activeStaff.role} — Open account settings` : "Loading active session"} className="inline-flex items-center gap-1.5 rounded-md px-1.5 py-0.5 transition-colors hover:bg-white/[0.06] hover:text-foreground">
-                      <User className="h-3.5 w-3.5" />
-                      {activeStaff ? (activeStaff.role === "owner" ? "Owner" : `${activeStaff.name} · ${activeStaff.role === "manager" ? "Manager" : "Staff"}`) : "Loading user…"}
-                    </button>
-                    <span
-                      className="inline-flex items-center gap-1.5"
-                    >
-                      <span aria-hidden="true" className={`h-1.5 w-1.5 rounded-full ${isConnected ? "bg-emerald-500" : "animate-pulse bg-amber-400"}`} />
-                      {isConnected ? "Connected" : "Reconnecting…"}
-                    </span>
-                    {consolesLoading && <span role="status" className="text-muted-foreground">Loading consoles…</span>}
-                    {platforms.map((platform) => {
-                      const PlatformIcon = platform.icon
-                      return (
-                        <button type="button" onClick={()=>router.push(`/gaming?type=${encodeURIComponent(platform.type)}`)}
-                          key={`global-ribbon-${platform.type}`}
-                          className="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 tabular-nums transition-colors hover:bg-white/[0.06] hover:text-foreground"
-                          title={`Manage ${platform.name} · ${platform.total} consoles`} aria-label={`Manage ${platform.name}, ${platform.total} consoles`}
-                        >
-                          <PlatformIcon className="h-3.5 w-3.5" style={{ color: platform.color }} />
-                          <span>{platform.total}</span>
-                        </button>
-                      )
-                    })}
-                  </div>
-                </div>
-                <div className="ml-1 flex shrink-0 items-center gap-1.5">
-                  <CommandPalette onRefresh={() => void handleManualRefresh()} />
-                  <BookingShortcuts />
-                  <NotificationButton vendorId={vendorId} />
-                  <button
-                    type="button"
-                    onClick={handleManualRefresh}
-                    className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 transition-colors hover:bg-white/[0.06] hover:text-foreground disabled:opacity-60"
-                    disabled={isManualRefreshing}
-                    title="Refresh"
-                    aria-label="Refresh dashboard data"
-                  >
-                    <RefreshCw className={`h-3.5 w-3.5 ${isManualRefreshing ? "animate-spin" : ""}`} />
-                    {isManualRefreshing ? "Syncing" : "Refresh"}
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
+          {showGlobalRibbon && <StatusBar platforms={platforms} loading={consolesLoading} />}
       </div>
     </div>
+    </TooltipProvider>
   )
 }
