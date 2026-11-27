@@ -8,7 +8,6 @@ interface PricingSummaryProps {
   consoleTotal: number
   mealsTotal: number
   waiveOffAmount: number
-  autoWaiveOffAmount: number
   extraControllerQty: number
   extraControllerFare: number
   totalAmount: number
@@ -26,7 +25,6 @@ export const PricingSummary = memo(({
   consoleTotal,
   mealsTotal,
   waiveOffAmount,
-  autoWaiveOffAmount,
   extraControllerQty,
   extraControllerFare,
   totalAmount,
@@ -96,12 +94,6 @@ export const PricingSummary = memo(({
         </div>
 
         {/* Auto Waive Off */}
-        {autoWaiveOffAmount > 0 && (
-          <div className="flex justify-between items-center py-2">
-            <span className="text-muted-foreground">Auto Waive-off (Late Entry)</span>
-            <span className="font-medium text-amber-400">-₹{autoWaiveOffAmount}</span>
-          </div>
-        )}
 
         {controllerPricingSupported && (
           <>

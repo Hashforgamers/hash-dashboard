@@ -13,7 +13,7 @@ import { useBookingForm } from '../../hooks/useBookingForm'
 import { useUserSuggestions } from '../../hooks/useUserSuggestions'
 import { usePassValidation } from '../../hooks/usePassValidation'
 import { bookingService } from '../../services/api/bookingService'
-import { calculateAutoWaiveOff, calculateConsoleTotal, calculateMealsTotal, calculateTotalAmount } from '../../utils/priceCalculations'
+import { calculateConsoleTotal, calculateMealsTotal, calculateTotalAmount } from '../../utils/priceCalculations'
 import { normalizeBookedDate } from '../../utils/dataHelpers'
 
 import { CustomerInfo } from './CustomerInfo'
@@ -139,7 +139,6 @@ export const SlotBookingForm = ({
   const [vendorId, setVendorId] = useState<number | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isSubmitted, setIsSubmitted] = useState(false)
-  const [autoWaiveOffAmount, setAutoWaiveOffAmount] = useState(0)
   const [isMealSelectorOpen, setIsMealSelectorOpen] = useState(false)
   const [controllerPricingConfig, setControllerPricingConfig] = useState<ControllerPricingConfig>({
     base_price: 0,
@@ -173,15 +172,6 @@ export const SlotBookingForm = ({
     }
   }, [])
 
-  // Calculate auto waive-off
-  useEffect(() => {
-    if (selectedSlots.length > 0) {
-      const autoWaiveOff = calculateAutoWaiveOff(selectedSlots)
-      setAutoWaiveOffAmount(autoWaiveOff)
-    } else {
-      setAutoWaiveOffAmount(0)
-    }
-  }, [selectedSlots])
 
   const selectedControllerType = normalizeControllerType(selectedSlots[0]?.console_name)
   const isControllerPricingSupported = selectedControllerType !== null
@@ -276,7 +266,8 @@ const handleSubmit = async (e: React.FormEvent) => {
       ? await approvePassBooking(vendorId, state.passUid) : undefined
 
     // ✅ FIXED: Match the exact format from your working code
-    const totalWaiveOff = Number(state.waiveOffAmount || 0) + Number(autoWaiveOffAmount || 0)
+    // Staff-entered discount only: a price never changes with the clock.
+    const totalWaiveOff = Number(state.waiveOffAmount || 0)
     
     const bookingPayload: BookingPayload = {
       consoleType: selectedSlots[0]?.console_name || '', // ✅ Keep as console_name
@@ -375,7 +366,6 @@ const handleSubmit = async (e: React.FormEvent) => {
     consoleTotal,
     mealsTotal,
     state.waiveOffAmount,
-    autoWaiveOffAmount,
     state.extraControllerFare
   )
 
@@ -510,7 +500,6 @@ const handleSubmit = async (e: React.FormEvent) => {
                 consoleTotal={consoleTotal}
                 mealsTotal={mealsTotal}
                 waiveOffAmount={state.waiveOffAmount}
-                autoWaiveOffAmount={autoWaiveOffAmount}
                 extraControllerQty={state.extraControllerQty}
                 extraControllerFare={state.extraControllerFare}
                 totalAmount={totalAmount}

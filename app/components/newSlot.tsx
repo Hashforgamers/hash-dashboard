@@ -164,7 +164,7 @@ import { useDashboardData } from "@/app/context/DashboardDataContext"
 import { useApiClient } from "@/app/hooks/useApiClient"
 import { httpJson, clearHttpClientCache } from "@/lib/http-client"
 import { getBookingSettings } from "@/lib/booking-settings"
-import { elapsedDiscountForSession, slotOffer, slotUnitPrice } from "@/lib/slot-price"
+import { slotOffer, slotUnitPrice } from "@/lib/slot-price"
 import { useTimeFormat } from "@/app/hooks/useTimeFormat"
 import { formatClock, formatMinutes } from "@/lib/time-format"
 import { TimeField } from "@/app/components/time-field"
@@ -575,8 +575,6 @@ export function SlotBookingForm({
   const [waiveOffAmount, setWaiveOffAmount] = useState<number>(0)
   const [extraControllerQty, setExtraControllerQty] = useState<number>(0)
   const [extraControllerFare, setExtraControllerFare] = useState<number>(0)
-  const [suggestedDiscount, setSuggestedDiscount] = useState<number>(0)
-  const [discountOverride, setDiscountOverride] = useState<number | null>(null)
 
   const [controllerPricingConfig, setControllerPricingConfig] = useState<ControllerPricingConfig>({
     base_price: 0,
@@ -836,56 +834,6 @@ export function SlotBookingForm({
 
 
 
-  const calculateAutoWaiveOff = (slots: SelectedSlot[]) => {
-    
-    const nowTs = Date.now()
-    
-    let totalAutoWaiveOff = 0
-    
-    slots.forEach(slot => {
-      const slotDateTime = new Date(`${slot.date}T${slot.start_time}+05:30`)
-      const slotEndTs = getSlotEndTimestampIST(slot.date, slot.start_time, slot.end_time)
-      const slotEndTime = new Date(Number.isFinite(slotEndTs) ? slotEndTs : `${slot.date}T${slot.end_time}+05:30`)
-      
-      const slotDurationMs = slotEndTime.getTime() - slotDateTime.getTime()
-      const slotDurationMinutes = slotDurationMs / (1000 * 60)
-      
-      console.log(`🕐 Slot Analysis for ${slot.start_time}-${slot.end_time}:`, {
-        slotId: slot.slot_id,
-        slotDurationMinutes,
-        currentTime: new Date(nowTs).toLocaleTimeString('en-IN', { timeZone: IST_TIMEZONE }),
-        slotStart: slotDateTime.toLocaleTimeString('en-IN'),
-        slotEnd: slotEndTime.toLocaleTimeString('en-IN')
-      })
-      
-      if (nowTs >= slotDateTime.getTime() && nowTs < slotEndTime.getTime()) {
-        const elapsedMs = nowTs - slotDateTime.getTime()
-        const elapsedMinutes = elapsedMs / (1000 * 60)
-        
-        const elapsedPercentage = elapsedMinutes / slotDurationMinutes
-        const waveOffAmount = slot.console_price * elapsedPercentage
-        
-        console.log(`💰 Wave-off Calculation:`, {
-          elapsedMinutes: Math.round(elapsedMinutes * 10) / 10,
-          totalSlotMinutes: slotDurationMinutes,
-          elapsedPercentage: Math.round(elapsedPercentage * 100) + '%',
-          waveOffAmount: Math.round(waveOffAmount),
-          consolePrice: slot.console_price
-        })
-        
-        totalAutoWaiveOff += waveOffAmount
-      }
-      else if (nowTs < slotDateTime.getTime()) {
-      }
-      else if (nowTs >= slotEndTime.getTime()) {
-        totalAutoWaiveOff += slot.console_price
-      }
-    })
-    
-    const finalWaveOff = Math.round(totalAutoWaiveOff)
-    return finalWaveOff
-  }
-
   const resetPassFlow = () => {
     setPassUid("")
     setValidatedPass(null)
@@ -1043,15 +991,6 @@ export function SlotBookingForm({
   }
 
 
-  useEffect(() => {
-    setDiscountOverride(null)
-    if (selectedSlots.length > 0) {
-      const autoWaiveOff = calculateAutoWaiveOff(selectedSlots)
-      setSuggestedDiscount(autoWaiveOff)
-    } else {
-      setSuggestedDiscount(0)
-    }
-  }, [selectedSlots])
 
   useEffect(() => {
     if (!isOpen) return
@@ -1626,13 +1565,10 @@ const getEffectivePrice = (slot: SelectedSlot): number => slotUnitPrice(slot, ac
     ? Number(((consoleTotal * squadDiscountPercent) / 100).toFixed(2))
     : 0
   const gamingNet = Math.max(0, consoleTotal - squadDiscountAmount)
-  // The elapsed-time discount is measured on one unit per slot; scale it to
-  // what this session actually costs (PC squad x players, rate card, squad discount).
-  const suggestedDeskDiscount = elapsedDiscountForSession(suggestedDiscount, consoleUnitTotal, gamingNet)
-  const autoWaiveOffAmount = Math.min(Math.max(0, gamingNet - waiveOffAmount), discountOverride ?? suggestedDeskDiscount)
+  // No time-based discount: the price covers exactly the booked minutes (same inputs, same price).
   const totalAmount = Math.max(
     0,
-    consoleTotal - squadDiscountAmount - waiveOffAmount - autoWaiveOffAmount + extraControllerFare + mealsTotal
+    consoleTotal - squadDiscountAmount - waiveOffAmount + extraControllerFare + mealsTotal
   )
 
   const paymentMethodMeta: Record<string, {
@@ -1898,7 +1834,6 @@ const getEffectivePrice = (slot: SelectedSlot): number => slotUnitPrice(slot, ac
     consoleTotal,
     mealsTotal,
     waiveOffAmount,
-    autoWaiveOffAmount,
     extraControllerFare,
     totalAmount
   })
@@ -2012,7 +1947,7 @@ const getEffectivePrice = (slot: SelectedSlot): number => slotUnitPrice(slot, ac
         pass_uid: paymentType === 'Pass' ? validatedPass?.pass_uid : undefined,
         pass_verification_token: paymentType === 'Pass' ? passVerificationToken : undefined,
         bookingType: isSquadMode ? 'squad' : 'direct',
-        waiveOffAmount: waiveOffAmount + autoWaiveOffAmount,
+        waiveOffAmount, // staff-entered discount only
         extraControllerQty: supportsExtraController ? extraControllerQty : 0,
         extraControllerFare: supportsExtraController ? extraControllerFare : 0,
         selectedMeals: selectedMeals.map(meal => ({
@@ -2842,18 +2777,6 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                         />
                       </div>
 
-                      {suggestedDiscount > 0 && (
-                        <div className="flex justify-between items-center py-2 border-b border-border">
-                          <span className="text-amber-400 font-medium">Auto Discount:</span>
-                          <div className="text-right">
-                            <input aria-label="Auto Discount" type="number" min={0} max={Math.max(0, consoleTotal - squadDiscountAmount - waiveOffAmount)} step="0.01"
-                              className="w-20 rounded border bg-background px-2 py-1 text-right"
-                              value={autoWaiveOffAmount} onChange={e => setDiscountOverride(Math.max(0, Math.min(Number(e.target.value) || 0, consoleTotal - squadDiscountAmount - waiveOffAmount)))} />
-                            {discountOverride !== null && <button type="button" className="ml-2 text-xs underline" onClick={() => setDiscountOverride(null)}>Reset</button>}
-
-                          </div>
-                        </div>
-                      )}
 
                       {supportsExtraController && (
                         <div className="flex justify-between items-center py-2 border-b border-border">

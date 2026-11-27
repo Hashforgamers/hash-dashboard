@@ -125,7 +125,6 @@ const BookingForm: React.FC<BookingFormProps> = ({ selectedConsole, onBack }) =>
   const [waiveOffAmount, setWaiveOffAmount] = useState(0);
   const [extraControllerQty, setExtraControllerQty] = useState(0);
   const [extraControllerFare, setExtraControllerFare] = useState(0);
-  const [autoWaiveOffAmount, setAutoWaiveOffAmount] = useState(0);
   const [controllerPricingConfig, setControllerPricingConfig] = useState<ControllerPricingConfig>({
     base_price: 0,
     tiers: []
@@ -182,7 +181,7 @@ const [isPrivateMode, setIsPrivateMode] = useState<boolean>(false);
   
   const totalAmount = Math.max(
     0,
-    selectedSlots.length * consolePrice - waiveOffAmount - autoWaiveOffAmount + extraControllerFare + mealsTotal
+    selectedSlots.length * consolePrice - waiveOffAmount + extraControllerFare + mealsTotal
   );
 
   // ✅ Calculate hours needed for selected slots
@@ -250,55 +249,6 @@ const [isPrivateMode, setIsPrivateMode] = useState<boolean>(false);
     }
   };
 
-  // ENHANCED: Calculate automatic wave-off amount based on elapsed time
-  const calculateAutoWaiveOff = (slots: string[], slotsData: any[]) => {
-    const nowIST = new Date(
-      new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' })
-    );
-    
-    let totalAutoWaiveOff = 0;
-    
-    slots.forEach(slotId => {
-      const slotData = slotsData.find(s => s.slot_id === slotId);
-      if (!slotData) return;
-      
-      const slotDateTime = new Date(`${selectedDate}T${slotData.start_time}+05:30`);
-      const slotEndTime = new Date(`${selectedDate}T${slotData.end_time}+05:30`);
-      
-      // Calculate slot duration in minutes
-      const slotDurationMs = slotEndTime.getTime() - slotDateTime.getTime();
-      const slotDurationMinutes = slotDurationMs / (1000 * 60);
-      
-      // Check if booking is made during the slot time
-      if (nowIST >= slotDateTime && nowIST < slotEndTime) {
-        // Calculate elapsed time since slot started
-        const elapsedMs = nowIST.getTime() - slotDateTime.getTime();
-        const elapsedMinutes = elapsedMs / (1000 * 60);
-        
-        // Calculate wave-off percentage based on elapsed time
-        const elapsedPercentage = elapsedMinutes / slotDurationMinutes;
-        const waveOffAmount = consolePrice * elapsedPercentage;
-        
-        totalAutoWaiveOff += waveOffAmount;
-      }
-      else if (nowIST >= slotEndTime) {
-        totalAutoWaiveOff += consolePrice;
-      }
-    });
-    
-    // Round to nearest rupee
-    return Math.round(totalAutoWaiveOff);
-  };
-
-  // Update automatic wave-off when selected slots change
-  useEffect(() => {
-    if (selectedSlots.length > 0 && availableSlots.length > 0) {
-      const autoWaiveOff = calculateAutoWaiveOff(selectedSlots, availableSlots);
-      setAutoWaiveOffAmount(autoWaiveOff);
-    } else {
-      setAutoWaiveOffAmount(0);
-    }
-  }, [selectedSlots, availableSlots, consolePrice, selectedDate]);
 
   // ✅ Revalidate pass when slots change
   useEffect(() => {
@@ -647,7 +597,7 @@ const [isPrivateMode, setIsPrivateMode] = useState<boolean>(false);
           pass_uid: paymentType === "Pass" ? passUid.trim() : undefined,
           pass_verification_token: passApproval,
           bookingType: 'direct',
-          waiveOffAmount: waiveOffAmount + autoWaiveOffAmount,
+          waiveOffAmount, // staff-entered only; no time-based discount
           extraControllerQty: supportsExtraController ? extraControllerQty : 0,
           extraControllerFare: supportsExtraController ? extraControllerFare : 0,
           selectedMeals: selectedMeals.map(meal => ({
@@ -1504,17 +1454,6 @@ const [isPrivateMode, setIsPrivateMode] = useState<boolean>(false);
                         />
                       </div>
 
-                      {autoWaiveOffAmount > 0 && (
-                        <div className="flex justify-between items-center py-1 border-b border-border bg-amber-900/20 rounded px-2">
-                          <span className="text-amber-400 font-medium">⏰ Auto Waive Off:</span>
-                          <div className="text-right">
-                            <span className="font-semibold text-amber-400">₹{Math.round(autoWaiveOffAmount)}</span>
-                            <div className="text-xs text-amber-300">
-                              (Time-based discount)
-                            </div>
-                          </div>
-                        </div>
-                      )}
 
                       {supportsExtraController && (
                         <div className="flex justify-between items-center py-1 border-b border-border">

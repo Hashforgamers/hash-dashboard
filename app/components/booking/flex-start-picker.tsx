@@ -128,7 +128,7 @@ export function FlexStartPicker({ vendor, gameId, date, players, squad, settings
           <span className="font-semibold text-foreground">₹{quote.price.net_amount.toLocaleString("en-IN")}</span>
         </div>
         <p className="mt-1 text-muted-foreground">
-          {formatMinutes(quote.window.duration_minutes)} · holds slots {quote.blocked_slots.map(s => s.start_time).join(", ")}
+          {formatMinutes(quote.window.duration_minutes)}
           {quote.price.basis === "slot_prorated" ? ` · billed ${formatMinutes(quote.price.billed_minutes)}` : " · rate card"}
           {quote.live ? " · starts now" : ""}
         </p>
