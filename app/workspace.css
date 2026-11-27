@@ -431,6 +431,8 @@ svg[data-search-icon],
   border-color: hsl(var(--border)) !important;
   border-radius: 8px;
 }
+/* New session: two-panel dialog (floor map | details) covers most of the screen. */
+.slot-booking-modal.slot-booking-wide { max-width: min(1600px, 100%); max-height: none; }
 .slot-booking-title { color: hsl(var(--foreground)); font-weight: 600; }
 .slot-booking-context { color: hsl(var(--muted-foreground)); }
 .slot-booking-modal .slot-section-title { font-weight: 600; }

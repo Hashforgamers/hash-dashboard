@@ -8,8 +8,8 @@ import { createPortal } from "react-dom"
 
 import { cn } from "@/lib/utils"
 import { contiguousDeskSlots, coveringDeskSlots } from "@/lib/desk-time-range"
-import { StationPicker, useDeskStations, type PickerStation } from "./station-map/station-picker"
-import { STATION_STATE_LABEL, buildStations, istClockOf } from "@/lib/station-map"
+import { StationFloorPicker, useDeskStations, useStationZones, type PickerStation } from "./station-map/station-picker"
+import { STATION_STATE_LABEL, buildStations, istClockOf, type Station } from "@/lib/station-map"
 import { deskSubtotal, rateLabel, resolveSessionRate, useDeskCards } from "./desk-rate-card"
 import { useFlexQuote, useFlexSettings } from "./booking/flex-start-picker"
 import { istClock, istDate } from "@/lib/flex-booking"
@@ -1492,6 +1492,18 @@ const getEffectivePrice = (slot: SelectedSlot): number => slotUnitPrice(slot, ac
   }
   const preferredMissing = !!preferredStation && !stationAuto && stationIds.length === 0 && !stationLoading && !!stationSource
     && !pickerStations.some(st => st.id === preferredStation && st.available)
+  const floorZones = useStationZones(settingsVendorId, isOpen)
+  const consoleOf = (station: Station) => availableConsoles.find(item => Number(item.id) === station.gameId)
+    || availableConsoles.find(item => !!item.type && item.type === station.type)
+  // A tile of another console type switches the form to that type and picks the tile once it is free.
+  const switchToStation = (station: Station) => {
+    const item = consoleOf(station)
+    if (!item || isSubmitting || String(item.id) === activePickerConsole) return null
+    return () => {
+      setPickerConsole(String(item.id)); setDeskChoice(""); setPricingGame(""); setStationIds([])
+      setStationAuto(false); setPreferredStation(station.id)
+    }
+  }
   const sameSlots = (next: SelectedSlot[]) => next.length === selectedSlots.length &&
     next.every((slot, i) => slot.slot_id === selectedSlots[i]?.slot_id && slot.date === selectedSlots[i]?.date && Number(slot.console_id) === Number(selectedSlots[i]?.console_id))
   useEffect(() => { setStationIds([]) }, [activePickerConsole, startClock, durationMin, flexUnits])
@@ -1789,8 +1801,7 @@ const getEffectivePrice = (slot: SelectedSlot): number => slotUnitPrice(slot, ac
   const chipClass = (active: boolean) => cn("rounded-md border px-3 py-1.5 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40",
     active ? "border-primary bg-primary/15 text-primary" : "border-border bg-card text-foreground hover:bg-muted")
 
-  const paymentMethodCard = (
-    <div>
+  const paymentSelector = (
       <div className="flex flex-wrap items-center gap-2">
         <div className={segGroup} role="radiogroup" aria-label="Payment">
           {(showMorePayments || !(MAIN_PAYMENT_TYPES as readonly string[]).includes(paymentType) ? PAYMENT_TYPES : MAIN_PAYMENT_TYPES).map(method => {
@@ -1805,8 +1816,12 @@ const getEffectivePrice = (slot: SelectedSlot): number => slotUnitPrice(slot, ac
           <button type="button" className="h-8 rounded-md px-2.5 text-xs text-muted-foreground hover:bg-white/[0.06] hover:text-foreground" onClick={() => setShowMorePayments(true)}>More…</button>
         )}
       </div>
-      {paymentType === "pay_at_cafe" && <p className="mt-2 text-xs text-muted-foreground">Collect when play ends.</p>}
-      {paymentType === "UPI QR" && <p className="mt-2 text-xs text-muted-foreground">After saving, a QR appears. The booking is marked paid once the customer pays.</p>}
+  )
+  const paymentHint = paymentType === "pay_at_cafe" ? "Collect when play ends."
+    : paymentType === "UPI QR" ? "After saving, a QR appears. The booking is marked paid once the customer pays." : ""
+  // Credit account and pass checks need room: they sit in the form, the method stays in the pinned panel.
+  const paymentDetails = (paymentType === 'Monthly Credit' || paymentType === 'Pass') && (
+    <div>
       {paymentType === 'Monthly Credit' && (
         <div className="mt-2 space-y-2">
           <p className="rounded-md border px-2.5 py-1.5 text-xs border-amber-700 bg-amber-900/25 text-amber-300">
@@ -2002,8 +2017,6 @@ const getEffectivePrice = (slot: SelectedSlot): number => slotUnitPrice(slot, ac
           </motion.div>
         )}
       </AnimatePresence>
-
-      {errors.payment && <p className="text-red-500 text-sm mt-2">{errors.payment}</p>}
     </div>
   )
 
@@ -2266,11 +2279,6 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
   const subLabel = "w-[4.5rem] shrink-0 pt-2 text-xs font-medium text-muted-foreground"
   const selectedStationCodes = stationAuto ? [] : stationIds.map(id => pickerStations.find(st => st.id === id)?.code || `#${id}`)
   const summaryStation = stationAuto ? (stationSource ? "Auto-assign" : null) : selectedStationCodes.join(", ") || "Pick a station"
-  const summaryLine = [
-    summaryStation,
-    windowStart && windowEnd ? `${showClock(clock(windowStart))} – ${showClock(clock(windowEnd))}` : null,
-    sessionMinutes > 0 ? durationLabel(sessionMinutes) : null,
-  ].filter(Boolean).join(" · ")
   const confirmOnEnter = (event: React.KeyboardEvent<HTMLDivElement>) => {
     if (event.key !== "Enter" || event.shiftKey || event.defaultPrevented || event.nativeEvent.isComposing) return
     const target = event.target as HTMLElement
@@ -2294,12 +2302,12 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
           aria-modal="true"
           aria-label="New Gaming Session"
           onKeyDown={confirmOnEnter}
-          className="slot-booking-modal flex max-h-[94vh] w-full max-w-[680px] flex-col overflow-hidden rounded-lg border shadow-xl"
+          className="slot-booking-modal slot-booking-wide flex h-[94vh] w-full max-w-[1600px] flex-col overflow-hidden rounded-lg border shadow-xl sm:h-[88vh] sm:w-[92vw]"
         >
           <div className="slot-booking-modal-header relative flex items-center justify-between gap-3 border-b px-5 py-3.5">
             <div className="min-w-0">
-              <h2 className="slot-booking-title text-base">New session</h2>
-              <p className="slot-booking-context mt-0.5 truncate text-xs tabular-nums">{contextLine || "Pick a time"}</p>
+              <h2 className="slot-booking-title text-lg">New session</h2>
+              <p className="slot-booking-context mt-0.5 truncate text-sm tabular-nums">{contextLine || "Pick a time"}</p>
             </div>
             <div className="flex items-center gap-1">
               <button type="button" aria-label="Booking settings" title="Player fields"
@@ -2379,7 +2387,35 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
             )}
           </div>
 
-          <div className="slot-booking-body min-h-0 flex-1 overflow-y-auto text-sm">
+          <div className="flex min-h-0 flex-1 flex-col overflow-y-auto lg:flex-row lg:overflow-hidden">
+            {/* Left: the cafe floor, as arranged in Gaming Stations > Map. Tiles pick the station. */}
+            <section aria-label="Station" className="flex h-[52vh] min-h-[340px] shrink-0 flex-col border-b border-border p-4 lg:h-auto lg:min-h-0 lg:w-[60%] lg:border-b-0 lg:border-r lg:p-5">
+              <div className="mb-3 flex items-baseline justify-between gap-3">
+                <h3 className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">Station</h3>
+                <span className="truncate text-xs text-muted-foreground">{!stationSource ? "View only" : stationAuto ? "Auto-assign picks a free station" : "Click a free tile"}</span>
+              </div>
+              <StationFloorPicker
+                floor={floorStations}
+                stations={pickerStations}
+                zones={floorZones}
+                selected={stationIds}
+                auto={stationAuto}
+                need={stationNeed}
+                loading={stationLoading}
+                disabled={isSubmitting}
+                canPick={!!stationSource}
+                onAuto={() => { setStationAuto(true); setStationIds([]); setPreferredStation(null) }}
+                onToggle={toggleStation}
+                switchFor={switchToStation}
+                note={!stationSource ? "Stations are assigned when the session starts."
+                  : preferredMissing ? `${pickerStations.find(st => st.id === preferredStation)?.code || "That station"} is not free for this time. Pick another or use Auto-assign.`
+                  : stationSource === "desk" && deskStations.error ? deskStations.error : undefined}
+              />
+            </section>
+
+            {/* Right: details, then the pinned amount panel. */}
+            <div className="flex min-w-0 flex-col lg:min-h-0 lg:w-[40%]">
+          <div className="slot-booking-body text-sm lg:min-h-0 lg:flex-1 lg:overflow-y-auto">
             <form id="slot-booking-form" onSubmit={handleSubmit} className="divide-y divide-border">
               {submitError && (
                 <div className="px-5 pt-4">
@@ -2388,7 +2424,7 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
               )}
 
               {availableConsoles.length > 1 && (
-                <FormSection label="Console">
+                <FormSection label="Console type">
                   <div className={segGroup} role="radiogroup" aria-label="Console">
                     {availableConsoles.map(item => {
                       const ConsoleIcon = resolveSafeConsoleIcon(item.icon, item.type)
@@ -2489,24 +2525,6 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                 {deskRateError && <p role="status" className="mt-2 text-xs text-amber-400">{deskRateError} Reopen to retry.</p>}
                 {variantPricingRequired && !matchingDeskCards.length && <p role="alert" className="mt-2 text-xs text-amber-400">No rate covers this time and player count.</p>}
               </FormSection>
-
-              {(pickerStations.length > 0 || stationSource) && (
-                <FormSection label="Station">
-                  <StationPicker
-                    stations={pickerStations}
-                    selected={stationIds}
-                    auto={stationAuto}
-                    need={stationNeed}
-                    loading={stationLoading}
-                    disabled={isSubmitting}
-                    onAuto={() => { setStationAuto(true); setStationIds([]); setPreferredStation(null) }}
-                    onToggle={toggleStation}
-                    note={!stationSource ? "Stations are assigned when the session starts."
-                      : preferredMissing ? `${pickerStations.find(st => st.id === preferredStation)?.code || "That station"} is not free for this time. Pick another or use Auto-assign.`
-                      : stationSource === "desk" && deskStations.error ? deskStations.error : undefined}
-                  />
-                </FormSection>
-              )}
 
               <FormSection label={isSquadMode ? "Captain" : "Player"}>
               <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
@@ -2796,31 +2814,50 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                     </AnimatePresence>
               </FormSection>
 
-              <FormSection label="Payment">
-                {paymentMethodCard}
-              </FormSection>
+              {paymentDetails && (
+                <FormSection label="Payment details">
+                  {paymentDetails}
+                </FormSection>
+              )}
             </form>
           </div>
 
-          <div className="slot-booking-modal-footer shrink-0 border-t px-5 py-3.5">
-            <div className="flex items-end gap-4">
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium tabular-nums text-foreground" title={summaryLine}>{summaryLine || "Pick a time"}</p>
-                <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-muted-foreground" aria-label="Bill">
-                  {bill.lines.map(line => (
-                    <span key={line.key} className="tabular-nums">
-                      {line.label} <span className={line.tone === "discount" ? "text-emerald-400" : "text-foreground/80"}>{formatRupees(line.amount)}</span>
-                    </span>
-                  ))}
-                </div>
+          <div className="slot-booking-modal-footer sticky bottom-0 shrink-0 space-y-3 border-t px-5 py-4">
+            <div className="flex items-start justify-between gap-4">
+              <div className="min-w-0">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">Station</p>
+                <p className={cn("truncate text-base font-semibold tabular-nums", summaryStation === "Pick a station" ? "text-amber-300" : "text-foreground")} title={summaryStation || ""}>
+                  {summaryStation || "Assigned at start"}
+                </p>
+                <p className="mt-0.5 truncate text-sm tabular-nums text-muted-foreground">
+                  {[windowStart && windowEnd ? `${showClock(clock(windowStart))} – ${showClock(clock(windowEnd))}` : "Pick a time", sessionMinutes > 0 ? durationLabel(sessionMinutes) : null].filter(Boolean).join(" · ")}
+                </p>
               </div>
               <div className="shrink-0 text-right">
                 <p className="text-[11px] text-muted-foreground">Total · GST incl.</p>
-                <strong className="text-2xl font-semibold leading-tight tabular-nums">{formatRupees(totalAmount)}</strong>
+                <strong className="text-3xl font-semibold leading-tight tabular-nums">{formatRupees(totalAmount)}</strong>
               </div>
-              <Button type="submit" form="slot-booking-form" disabled={confirmBlocked} className="ui-action-primary h-11 shrink-0 gap-2 px-6 text-sm font-semibold disabled:opacity-50">
-                {isSubmitting ? <><Loader2 className="h-4 w-4 animate-spin" />Booking…</> : <><CheckCircle className="h-4 w-4" />Confirm<kbd className="ml-1 hidden rounded border border-white/25 px-1.5 text-[10px] font-medium opacity-80 sm:inline">↵</kbd></>}
-              </Button>
+            </div>
+            {bill.lines.length > 0 && (
+              <dl className="space-y-1 rounded-lg border border-border bg-muted/25 px-3 py-2 text-xs" aria-label="Bill">
+                {bill.lines.map(line => (
+                  <div key={line.key} className="flex items-baseline justify-between gap-3 tabular-nums">
+                    <dt className="truncate text-muted-foreground">{line.label}</dt>
+                    <dd className={line.tone === "discount" ? "text-emerald-400" : "text-foreground/90"}>{formatRupees(line.amount)}</dd>
+                  </div>
+                ))}
+              </dl>
+            )}
+            <div>
+              <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">Payment</p>
+              {paymentSelector}
+              {paymentHint && <p className="mt-1.5 text-xs text-muted-foreground">{paymentHint}</p>}
+              {errors.payment && <p className="mt-1.5 text-xs text-red-500">{errors.payment}</p>}
+            </div>
+            <Button type="submit" form="slot-booking-form" disabled={confirmBlocked} className="ui-action-primary h-12 w-full gap-2 text-base font-semibold disabled:opacity-50">
+              {isSubmitting ? <><Loader2 className="h-4 w-4 animate-spin" />Booking…</> : <><CheckCircle className="h-4 w-4" />Confirm · {formatRupees(totalAmount)}<kbd className="ml-1 hidden rounded border border-white/25 px-1.5 text-[10px] font-medium opacity-80 sm:inline">↵</kbd></>}
+            </Button>
+          </div>
             </div>
           </div>
           <MealSelector

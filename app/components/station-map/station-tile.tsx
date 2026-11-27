@@ -4,6 +4,14 @@ import { cn } from "@/lib/utils"
 import { resolveConsoleIcon } from "../console-catalog"
 import { STATION_STATE_LABEL, type StationState } from "@/lib/station-map"
 
+// Floor map grid, shared by Gaming Stations > Map and the New session picker
+// so both draw the cafe exactly the same way.
+export const MAP_CELL_W = 108
+export const MAP_CELL_H = 88
+export const MAP_GAP = 10
+export const MAP_COLUMNS = 10
+export const mapCellPos = (cell: { x: number; y: number }) => ({ left: cell.x * (MAP_CELL_W + MAP_GAP), top: cell.y * (MAP_CELL_H + MAP_GAP) })
+
 // One look for station status everywhere (map, popover, New session picker).
 // Colours follow the dashboard's soft status badges: emerald free, primary in
 // session, amber ending, purple booked, muted offline.

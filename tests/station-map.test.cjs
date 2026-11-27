@@ -68,6 +68,22 @@ test('station map is the Gaming Stations default and hosts the New session form'
   assert.match(page,/<SessionFormHost embedded formOnly \/>/)
   const form=fs.readFileSync(path.join(__dirname,'../app/components/newSlot.tsx'),'utf8')
   assert.match(form,/if \(formOnly\) return bookingForm/)
-  assert.match(form,/<StationPicker/)
+  assert.match(form,/<StationFloorPicker/)
   assert.match(form,/extendsBookingId: flexQuote\.extends_booking_id \|\| undefined/)
+})
+
+test('New session is a two-panel dialog: floor map left, details right, pinned amount and payment',()=>{
+  const form=fs.readFileSync(path.join(__dirname,'../app/components/newSlot.tsx'),'utf8')
+  assert.match(form,/slot-booking-wide/)
+  assert.match(form,/lg:w-\[60%\][\s\S]*<StationFloorPicker[\s\S]*lg:w-\[40%\]/)
+  assert.match(form,/switchFor=\{switchToStation\}/)
+  assert.match(form,/slot-booking-modal-footer sticky bottom-0[\s\S]*\{paymentSelector\}[\s\S]*type="submit" form="slot-booking-form"/)
+  const picker=fs.readFileSync(path.join(__dirname,'../app/components/station-map/station-picker.tsx'),'utf8')
+  assert.match(picker,/layoutStations\(entries, MAP_COLUMNS\)/)
+  assert.match(picker,/\/api\/vendor\/\$\{vendorId\}\/station-map/)
+})
+
+test('zone labels: saved first, auto suggestions only for unlabelled rows',()=>{
+  const z=m.mergeZones([{label:'PC Zone',x:0,y:0,w:6}],[{label:'PC',x:0,y:0,w:6},{label:'PS5',x:0,y:4,w:6}])
+  assert.equal(z.map(x=>x.label).join('|'),'PC Zone|PS5')
 })

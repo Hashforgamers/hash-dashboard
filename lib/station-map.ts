@@ -297,3 +297,8 @@ export function layoutStations(
   }
   return { cells, autoZones, rows: Math.max(maxY + 1, 1), cols: maxX + 1 }
 }
+
+/** Saved zone labels plus a suggested label for each auto-placed console block the cafe has not labelled yet. */
+export function mergeZones(saved: Zone[], autoZones: Zone[]): Zone[] {
+  return [...saved, ...autoZones.filter(z => !saved.some(s => s.y === z.y))]
+}

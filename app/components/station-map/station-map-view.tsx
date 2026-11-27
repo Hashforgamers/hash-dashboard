@@ -16,21 +16,20 @@ import { useSocket } from "@/app/context/SocketContext"
 import { useTimeFormat } from "@/app/hooks/useTimeFormat"
 import { BOOK_CONSOLE_EVENT, type BookConsoleEventDetail } from "@/app/lib/cafe-shortcuts"
 import {
-  STATION_STATE_LABEL, buildStations, istClockOf, layoutStations, phoneTail, remainingLabel, stateCounts,
+  STATION_STATE_LABEL, buildStations, mergeZones, istClockOf, layoutStations, phoneTail, remainingLabel, stateCounts,
   type Cell, type Station, type StationState, type Zone,
 } from "@/lib/station-map"
 import { formatRupees } from "@/lib/desk-bill"
 import ExtraBookingOverlay from "../extraBookingOverlay"
 import { BookingQuickView } from "../booking-quick-view"
 import { calculateExtraAmount, calculateExtraTime, formatTime, normalizeLiveSlot, releaseSlot } from "../current-slot"
-import { STATE_STYLE, StateDot, StationTile } from "./station-tile"
+import {
+  MAP_CELL_H as CELL_H, MAP_CELL_W as CELL_W, MAP_COLUMNS, MAP_GAP as GAP, STATE_STYLE, StateDot, StationTile, mapCellPos,
+} from "./station-tile"
 
-const CELL_W = 108
-const CELL_H = 88
-const GAP = 10
 const ZOOM_MIN = 0.5
 const ZOOM_MAX = 1.6
-const DEFAULT_COLUMNS = 10
+const DEFAULT_COLUMNS = MAP_COLUMNS
 const LEGEND: StationState[] = ["free", "busy", "ending", "booked", "offline"]
 const EXTEND_CHOICES = [15, 30, 60]
 const REFRESH_EVENTS = ["console_availability", "booking", "upcoming_booking", "booking_payment_update", "current_slot"]
@@ -41,7 +40,7 @@ export function requestStationBooking(detail: BookConsoleEventDetail): boolean {
 }
 
 const cellKey = (cell: Cell) => `${cell.x}:${cell.y}`
-const at = (cell: Cell) => ({ left: cell.x * (CELL_W + GAP), top: cell.y * (CELL_H + GAP) })
+const at = (cell: Cell) => mapCellPos(cell)
 
 export function StationMapView() {
   const { vendorId, consoles, landingData, refreshConsoles, refreshLanding, consolesLoading } = useDashboardData()
@@ -140,9 +139,7 @@ export function StationMapView() {
 
   const layout = useMemo(() => layoutStations(stations, DEFAULT_COLUMNS), [stations])
   const liveZones = useMemo(() => {
-    const zones = savedZones ?? []
-    // Suggest a label for each auto-placed console block the cafe has not labelled yet.
-    return [...zones, ...layout.autoZones.filter(z => !zones.some(s => s.y === z.y))]
+    return mergeZones(savedZones ?? [], layout.autoZones)
   }, [savedZones, layout.autoZones])
 
   const cells = arranging ? draftCells : layout.cells
