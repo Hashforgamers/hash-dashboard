@@ -29,7 +29,16 @@ export const RESERVED_SHORTCUT_KEYS: Record<string, string> = {
 }
 
 export const BOOK_CONSOLE_EVENT = "hash:book-console"
-export type BookConsoleEventDetail = { type: string }
+export type BookConsoleEventDetail = {
+  type: string
+  // Additive (station map): open the form on one station, optionally prefilled.
+  gameId?: number
+  stationId?: number
+  startClock?: string // "HH:MM" IST
+  durationMin?: number
+  customer?: { name: string; phone: string; email?: string }
+  extendsBookingId?: number
+}
 const PENDING_BOOKING_KEY = "hash:pending-book-console"
 
 const STORAGE_PREFIX = "hash-cafe-shortcuts-v2:"

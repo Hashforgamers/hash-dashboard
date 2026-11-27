@@ -184,13 +184,15 @@ type QuoteInput = {
   deskRevision?: number
   pricingGame?: string
   enabled: boolean
+  // Additive: price/check an extension of this booking on the same station.
+  extendsBookingId?: number | null
 }
 
 /**
  * Server quote for a custom-start window (price, held slots, free stations), for the
  * click-only desk form. Same window, players and rate card always give the same price.
  */
-export function useFlexQuote({ vendor, gameId, date, clock, minutes, players, squad, deskProfile, deskRevision, pricingGame, enabled }: QuoteInput) {
+export function useFlexQuote({ vendor, gameId, date, clock, minutes, players, squad, deskProfile, deskRevision, pricingGame, enabled, extendsBookingId }: QuoteInput) {
   const [quote, setQuote] = useState<FlexQuote | null>(null)
   const [problem, setProblem] = useState<FlexQuoteError | null>(null)
   const [loading, setLoading] = useState(false)
@@ -208,6 +210,7 @@ export function useFlexQuote({ vendor, gameId, date, clock, minutes, players, sq
           squadDetails: { enabled: squad, playerCount: players },
           deskProfile: deskProfile || undefined, deskRevision: deskProfile ? deskRevision : undefined,
           pricingGame: deskProfile ? (pricingGame ?? "") : undefined,
+          extendsBookingId: extendsBookingId || undefined,
         }),
       })
         .then(async response => ({ ok: response.ok, data: await response.json().catch(() => ({})) }))
@@ -220,7 +223,7 @@ export function useFlexQuote({ vendor, gameId, date, clock, minutes, players, sq
         .finally(() => { if (!abort.signal.aborted) setLoading(false) })
     }, 150)
     return () => { clearTimeout(timer); abort.abort() }
-  }, [enabled, vendor, gameId, day, clock, minutes, players, squad, deskProfile, deskRevision, pricingGame])
+  }, [enabled, vendor, gameId, day, clock, minutes, players, squad, deskProfile, deskRevision, pricingGame, extendsBookingId])
 
   return { quote, problem, loading }
 }

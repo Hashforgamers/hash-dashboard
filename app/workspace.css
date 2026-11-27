@@ -431,6 +431,15 @@ svg[data-search-icon],
   border-color: hsl(var(--border)) !important;
   border-radius: 8px;
 }
+/* New session: two-panel dialog (floor map | details) covers most of the screen. */
+.slot-booking-modal.slot-booking-wide { max-width: min(1600px, 100%); max-height: none; }
 .slot-booking-title { color: hsl(var(--foreground)); font-weight: 600; }
 .slot-booking-context { color: hsl(var(--muted-foreground)); }
 .slot-booking-modal .slot-section-title { font-weight: 600; }
+
+/* Station map "Booked soon" accent. Plain classes because module pages normalise
+   bg-/border-/text-purple utilities to neutral (premium.css legacy rules). */
+.station-booked-tile { border-color: rgb(192 132 252 / 0.45); background-color: rgb(168 85 247 / 0.06); }
+.station-booked-tile:hover { border-color: rgb(216 180 254 / 0.8); }
+.station-booked-dot { background-color: rgb(192 132 252); }
+.station-booked-text { color: rgb(216 180 254); }
