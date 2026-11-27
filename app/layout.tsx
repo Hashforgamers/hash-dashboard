@@ -4,6 +4,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import "./premium.css";
 import "./workspace.css";
+import "./shell.css";
 
 const dashboardBaseUrl =
   process.env.NEXT_PUBLIC_DASHBOARD_URL || "https://dashboard.hashforgamers.com";
@@ -51,8 +52,8 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#0b0b0d" },
-    { media: "(prefers-color-scheme: dark)", color: "#0b0b0d" },
+    { media: "(prefers-color-scheme: light)", color: "#0b0d12" },
+    { media: "(prefers-color-scheme: dark)", color: "#0b0d12" },
   ],
 };
 

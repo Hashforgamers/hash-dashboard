@@ -4,7 +4,7 @@
 
 html {
   color-scheme: dark; /* native date pickers, scrollbars and form controls render dark */
-  background-color: #0a0a0b !important;
+  background-color: #0b0d12 !important; /* = --background */
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Segoe UI", Arial, Helvetica, sans-serif;
 }
 
@@ -28,31 +28,40 @@ body {
 
 @layer base {
   :root {
-    --background: 240 4% 4%;
-    --foreground: 0 0% 98%;
-    --card: 240 3% 11%;
-    --card-foreground: 0 0% 98%;
-    --popover: 240 2% 15%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 217 91% 60%;
+    /* Hash dark palette: near-black blue-gray base, three raised surface steps, hairline borders.
+       Brand accent = Hash blue, taken from the blue end of the logo gradient. */
+    --background: 225 24% 6%;          /* #0b0d12 app base */
+    --foreground: 220 20% 96%;
+    --card: 224 20% 9%;                /* surface 1: cards, panels, sidebar */
+    --card-foreground: 220 20% 96%;
+    --popover: 224 18% 12%;            /* surface 2: menus, dialogs */
+    --popover-foreground: 220 20% 96%;
+    --primary: 224 92% 64%;            /* Hash blue */
     --primary-foreground: 0 0% 100%;
-    --secondary: 240 3% 18%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 240 3% 18%;
-    --muted-foreground: 240 4% 61%;
-    --accent: 240 2% 23%;
-    --accent-foreground: 0 0% 98%;
-    --destructive: 0 84% 60%;
+    --secondary: 224 16% 15%;
+    --secondary-foreground: 220 20% 96%;
+    --muted: 224 16% 15%;              /* surface 3: hover / selected fills */
+    --muted-foreground: 222 11% 62%;
+    --accent: 224 14% 19%;
+    --accent-foreground: 220 20% 96%;
+    --destructive: 0 78% 60%;
     --destructive-foreground: 0 0% 100%;
-    --border: 0 0% 100% / 0.08;
-    --input: 0 0% 100% / 0.1;
-    --ring: 217 91% 60%;
+    --success: 152 62% 45%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 92% 55%;
+    --warning-foreground: 30 40% 8%;
+    --info: 204 90% 60%;
+    --info-foreground: 0 0% 100%;
+    --brand-green: 104 50% 53%;        /* logo wordmark green, for brand moments only */
+    --border: 0 0% 100% / 0.06;
+    --input: 0 0% 100% / 0.08;
+    --ring: 224 92% 64%;
+    --radius: 8px;                     /* rounded-md 6px · rounded-lg 8px · rounded-xl 12px */
     --chart-1: 217 91% 60%;
     --chart-2: 160 84% 39%;
     --chart-3: 38 92% 50%;
     --chart-4: 271 91% 65%;
     --chart-5: 0 84% 60%;
-    --radius: 0.75rem;
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 240 5.3% 26.1%;
     --sidebar-primary: 240 5.9% 10%;
@@ -64,25 +73,35 @@ body {
   }
 
   .dark {
-    --background: 240 4% 4%;
-    --foreground: 0 0% 98%;
-    --card: 240 3% 11%;
-    --card-foreground: 0 0% 98%;
-    --popover: 240 2% 15%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 217 91% 60%;
+    /* Hash dark palette: near-black blue-gray base, three raised surface steps, hairline borders.
+       Brand accent = Hash blue, taken from the blue end of the logo gradient. */
+    --background: 225 24% 6%;          /* #0b0d12 app base */
+    --foreground: 220 20% 96%;
+    --card: 224 20% 9%;                /* surface 1: cards, panels, sidebar */
+    --card-foreground: 220 20% 96%;
+    --popover: 224 18% 12%;            /* surface 2: menus, dialogs */
+    --popover-foreground: 220 20% 96%;
+    --primary: 224 92% 64%;            /* Hash blue */
     --primary-foreground: 0 0% 100%;
-    --secondary: 240 3% 18%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 240 3% 18%;
-    --muted-foreground: 240 4% 61%;
-    --accent: 240 2% 23%;
-    --accent-foreground: 0 0% 98%;
-    --destructive: 0 84% 60%;
+    --secondary: 224 16% 15%;
+    --secondary-foreground: 220 20% 96%;
+    --muted: 224 16% 15%;              /* surface 3: hover / selected fills */
+    --muted-foreground: 222 11% 62%;
+    --accent: 224 14% 19%;
+    --accent-foreground: 220 20% 96%;
+    --destructive: 0 78% 60%;
     --destructive-foreground: 0 0% 100%;
-    --border: 0 0% 100% / 0.08;
-    --input: 0 0% 100% / 0.1;
-    --ring: 217 91% 60%;
+    --success: 152 62% 45%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 92% 55%;
+    --warning-foreground: 30 40% 8%;
+    --info: 204 90% 60%;
+    --info-foreground: 0 0% 100%;
+    --brand-green: 104 50% 53%;        /* logo wordmark green, for brand moments only */
+    --border: 0 0% 100% / 0.06;
+    --input: 0 0% 100% / 0.08;
+    --ring: 224 92% 64%;
+    --radius: 8px;                     /* rounded-md 6px · rounded-lg 8px · rounded-xl 12px */
   }
 
   * {
