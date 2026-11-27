@@ -8,7 +8,8 @@ import { createPortal } from "react-dom"
 
 import { cn } from "@/lib/utils"
 import { contiguousDeskSlots, coveringDeskSlots } from "@/lib/desk-time-range"
-import { DeskConsolePicker } from "./desk-console-picker"
+import { StationPicker, useDeskStations, type PickerStation } from "./station-map/station-picker"
+import { STATION_STATE_LABEL, buildStations, istClockOf } from "@/lib/station-map"
 import { deskSubtotal, rateLabel, resolveSessionRate, useDeskCards } from "./desk-rate-card"
 import { useFlexQuote, useFlexSettings } from "./booking/flex-start-picker"
 import { istClock, istDate } from "@/lib/flex-booking"
@@ -243,6 +244,16 @@ interface SlotBookingFormProps {
   allSlots: { [key: string]: any[] }
   onBookingComplete: (result?: any) => void
   availableConsoles: ConsoleType[]
+  preset?: BookingPreset | null
+}
+
+/** Station map: open the form on one station, optionally prefilled (extend). */
+export type BookingPreset = {
+  stationId: number
+  startClock?: string
+  durationMin?: number
+  customer?: { name: string; phone: string; email: string }
+  extendsBookingId?: number
 }
 
 const resolveSafeConsoleIcon = (iconCandidate: unknown, slugHint?: string) => {
@@ -496,10 +507,11 @@ export function SlotBookingForm({
   onSlotSelect,
   allSlots,
   onBookingComplete,
-  availableConsoles 
+  availableConsoles,
+  preset = null,
 }: SlotBookingFormProps) {
   const { can } = useAccess()
-  const { vendorId: settingsVendorId, moduleVersions } = useDashboardData()
+  const { vendorId: settingsVendorId, moduleVersions, consoles: floorConsoles, landingData: floorLanding } = useDashboardData()
   const settingsVersion = moduleVersions[`pricing:${settingsVendorId}`] || 0
   const settingsVendorRef = useRef(settingsVendorId)
   settingsVendorRef.current = settingsVendorId
@@ -521,6 +533,8 @@ export function SlotBookingForm({
   const [nowClock, setNowClock] = useState(() => istClock())
   const [stationAuto, setStationAuto] = useState(true)
   const [stationIds, setStationIds] = useState<number[]>([])
+  // Station picked on the floor map (or by Extend); kept until staff pick another or Auto-assign.
+  const [preferredStation, setPreferredStation] = useState<number | null>(null)
   const [showMorePayments, setShowMorePayments] = useState(false)
   const [showDiscount, setShowDiscount] = useState(false)
   const [pickerDate, setPickerDate] = useState("")
@@ -554,7 +568,14 @@ export function SlotBookingForm({
     const now = istClock()
     setNowClock(now); setPickerDate(""); setShowOtherTime(false); setStationAuto(true); setStationIds([])
     setShowMorePayments(false); setShowDiscount(false)
-    if (!selectedSlots.length) { setTimeMode("quick"); setStartKey("now"); setDurationMin(60); return }
+    setPreferredStation(preset?.stationId ?? null)
+    if (preset?.stationId) setStationAuto(false)
+    if (!selectedSlots.length) {
+      setTimeMode("quick"); setDurationMin(preset?.durationMin || 60)
+      if (preset?.startClock && preset.startClock > now) { setStartKey("custom"); setCustomClock(preset.startClock) }
+      else setStartKey("now")
+      return
+    }
     const sorted = [...selectedSlots].sort((a, b) => a.start_time.localeCompare(b.start_time))
     const contiguous = sorted.every((slot, i) => !i || sorted[i - 1].end_time === slot.start_time)
     setTimeMode(contiguous ? "quick" : "slots")
@@ -1366,7 +1387,6 @@ const getEffectivePrice = (slot: SelectedSlot): number => slotUnitPrice(slot, ac
     || normalizeControllerType(selectedSlots[0]?.console_name)
   )
   const { cards: deskCards, error: deskRateError, loading: deskRatesLoading } = useDeskCards(isOpen ? settingsVendorId : null)
-  const [deskConsoleIds, setDeskConsoleIds] = useState<number[] | null>(null)
   const [deskChoice, setDeskChoice] = useState("")
   const [pricingGame, setPricingGame] = useState("")
   // Custom start ("any minute"): only offered once the cafe turns it on in Settings > Session Timing.
@@ -1374,6 +1394,9 @@ const getEffectivePrice = (slot: SelectedSlot): number => slotUnitPrice(slot, ac
 
   // Custom-start cafes book exactly the minutes asked for; passes still use slot times.
   const flexMode = timeMode === "quick" && flexSettings.flex_enabled && !!onReplaceSlots && paymentType !== "Pass"
+  // Extend from the station map: only while the start still sits on the booking's end.
+  const extensionOf = preset?.extendsBookingId && preset.startClock && startKey === "custom" && customClock === preset.startClock
+    && Number(activePickerConsole) && preferredStation === preset.stationId ? preset.extendsBookingId : null
   const choices = startChoices(nowClock, pickerSlots.map((slot: any) => slot.start_time), flexMode)
   const startClock = startKey === "custom" ? customClock : (choices.find(choice => choice.key === startKey) || choices[0])?.clock || ""
   // +15m/+30m late at night roll into the next day.
@@ -1397,11 +1420,78 @@ const getEffectivePrice = (slot: SelectedSlot): number => slotUnitPrice(slot, ac
     enabled: isOpen && flexMode, vendor: settingsVendorId, gameId: Number(activePickerConsole), date: startDate,
     clock: startClock, minutes: durationMin, players: isSquadMode ? squadPlayerCount : 1, squad: isSquadMode,
     deskProfile: deskCard?.profile, deskRevision: deskCard?.revision, pricingGame,
+    extendsBookingId: extensionOf,
   })
   const flexUnits = flexQuote?.units || 1
   // Station now or at start: "Auto-assign" leaves it to the server (now) or to the start dialog (later).
   const flexConsoleIds = !stationAuto && stationIds.length === flexUnits ? stationIds : null
   const flexActive = flexMode && !!flexQuote && flexQuote.available !== false && (stationAuto || !!flexConsoleIds)
+  // Rate-card desks (not custom start): stations free for the whole of the held slots.
+  const deskQuantity = isSquadMode && squadConsoleGroup === "pc" ? squadPlayerCount : 1
+  const deskStations = useDeskStations({
+    vendor: settingsVendorId, game: Number(activePickerConsole), profile: deskCard?.profile,
+    date: selectedSlots[0] ? normalizeBookedDate(selectedSlots[0].date) : "", slotIds: selectedSlots.map(slot => slot.slot_id),
+    enabled: isOpen && !!deskCard && !flexMode,
+  })
+  const deskConsoleIds = !stationAuto && stationIds.length === deskQuantity ? stationIds : null
+  const stationNeed = flexMode ? flexUnits : deskQuantity
+  const stationSource: "flex" | "desk" | null = flexMode ? "flex" : deskCard ? "desk" : null
+  const stationLoading = stationSource === "flex" ? flexLoading : stationSource === "desk" ? deskStations.loading : false
+  const floorStations = useMemo(() => isOpen ? buildStations(floorConsoles, floorLanding, Date.now()) : [],
+    // Live states only need to be fresh when the form opens or data arrives.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [isOpen, floorConsoles, floorLanding])
+  const pickerStations: PickerStation[] = useMemo(() => {
+    const gameId = Number(activePickerConsole)
+    const slug = pickerConsoleItem?.type || ""
+    const flexRows = stationSource === "flex" ? (flexQuote?.stations || flexProblem?.stations || []) : []
+    const deskIds = new Set(stationSource === "desk" ? deskStations.rows.map(row => row.id) : [])
+    const flexById = new Map(flexRows.map(row => [row.console_id, row]))
+    const ids = new Set<number>([
+      ...floorStations.filter(st => st.gameId === gameId || (!!slug && st.type === slug)).map(st => st.id),
+      ...flexRows.map(row => row.console_id), ...deskIds,
+    ])
+    return Array.from(ids).map(id => {
+      const st = floorStations.find(item => item.id === id)
+      const flexRow = flexById.get(id)
+      const available = stationSource === "flex" ? !!flexRow?.available : stationSource === "desk" ? deskIds.has(id) : false
+      const liveState = st?.state && st.state !== "free" ? st.state : "booked"
+      const reason = !stationSource ? "Stations are assigned when the session starts"
+        : st?.state === "offline" ? "Offline / maintenance"
+        : flexRow && !flexRow.available ? (flexRow.max_minutes_available > 0 && flexRow.next_busy_at ? `Busy from ${showClock(String(flexRow.next_busy_at).slice(11, 16))}` : "Busy for this time")
+        : (st?.state === "busy" || st?.state === "ending") && st.end ? `In session until ${showClock(istClockOf(st.end))}`
+        : "Booked for this time"
+      const caption = !stationSource ? STATION_STATE_LABEL[st?.state || "free"]
+        : (st?.state === "busy" || st?.state === "ending") && st.end ? `Till ${showClock(istClockOf(st.end))}`
+        : st?.state === "offline" ? "Offline" : "Booked"
+      return {
+        id, code: st?.code || flexRow?.name || deskStations.rows.find(row => row.id === id)?.name || `#${id}`,
+        fullName: st?.fullName || flexRow?.name || deskStations.rows.find(row => row.id === id)?.name || `Station ${id}`,
+        icon: st?.icon || "", type: st?.type || slug, typeName: st?.typeName || pickerConsoleItem?.name || "",
+        number: st?.number ?? null, mapX: st?.mapX ?? null, mapY: st?.mapY ?? null,
+        available, state: available ? "free" : !stationSource ? (st?.state || "free") : liveState, reason, caption,
+      }
+    })
+  }, [activePickerConsole, pickerConsoleItem, stationSource, flexQuote, flexProblem, deskStations.rows, floorStations, showClock])
+  const stationAvailableKey = pickerStations.filter(st => st.available).map(st => st.id).join(",")
+  // Drop picks that stopped being free; re-pick the station chosen on the floor map when it is free.
+  useEffect(() => {
+    if (!isOpen || stationLoading || !stationSource) return
+    const free = new Set(pickerStations.filter(st => st.available).map(st => st.id))
+    setStationIds(ids => {
+      const kept = ids.filter(id => free.has(id))
+      if (kept.length === 0 && preferredStation && free.has(preferredStation)) return [preferredStation]
+      return kept.length === ids.length ? ids : kept
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, stationLoading, stationSource, stationAvailableKey, preferredStation])
+  const toggleStation = (id: number) => {
+    setPreferredStation(null)
+    setStationAuto(false)
+    setStationIds(ids => stationNeed === 1 ? [id] : ids.includes(id) ? ids.filter(item => item !== id) : [...ids, id].slice(-stationNeed))
+  }
+  const preferredMissing = !!preferredStation && !stationAuto && stationIds.length === 0 && !stationLoading && !!stationSource
+    && !pickerStations.some(st => st.id === preferredStation && st.available)
   const sameSlots = (next: SelectedSlot[]) => next.length === selectedSlots.length &&
     next.every((slot, i) => slot.slot_id === selectedSlots[i]?.slot_id && slot.date === selectedSlots[i]?.date && Number(slot.console_id) === Number(selectedSlots[i]?.console_id))
   useEffect(() => { setStationIds([]) }, [activePickerConsole, startClock, durationMin, flexUnits])
@@ -1701,17 +1791,22 @@ const getEffectivePrice = (slot: SelectedSlot): number => slotUnitPrice(slot, ac
 
   const paymentMethodCard = (
     <div>
-      <div className="flex flex-wrap items-center gap-1.5" role="radiogroup" aria-label="Payment">
-        {(showMorePayments || !(MAIN_PAYMENT_TYPES as readonly string[]).includes(paymentType) ? PAYMENT_TYPES : MAIN_PAYMENT_TYPES).map(method => (
-          <button key={method} type="button" role="radio" aria-checked={paymentType === method} disabled={isSubmitting}
-            onClick={() => pickPayment(method)} className={chipClass(paymentType === method)}>{paymentMethodMeta[method].label}</button>
-        ))}
+      <div className="flex flex-wrap items-center gap-2">
+        <div className={segGroup} role="radiogroup" aria-label="Payment">
+          {(showMorePayments || !(MAIN_PAYMENT_TYPES as readonly string[]).includes(paymentType) ? PAYMENT_TYPES : MAIN_PAYMENT_TYPES).map(method => {
+            const MethodIcon = paymentMethodMeta[method].icon
+            return (
+              <button key={method} type="button" role="radio" aria-checked={paymentType === method} disabled={isSubmitting} title={paymentMethodMeta[method].hint}
+                onClick={() => pickPayment(method)} className={cn(segItem(paymentType === method), "gap-1.5")}><MethodIcon className="h-3.5 w-3.5 opacity-80" />{paymentMethodMeta[method].label}</button>
+            )
+          })}
+        </div>
         {!showMorePayments && (MAIN_PAYMENT_TYPES as readonly string[]).includes(paymentType) && (
-          <button type="button" className="px-2 text-xs text-muted-foreground underline" onClick={() => setShowMorePayments(true)}>More</button>
+          <button type="button" className="h-8 rounded-md px-2.5 text-xs text-muted-foreground hover:bg-white/[0.06] hover:text-foreground" onClick={() => setShowMorePayments(true)}>More…</button>
         )}
       </div>
-      {paymentType === "pay_at_cafe" && <p className="mt-1 text-xs text-muted-foreground">Collect when play ends.</p>}
-      {paymentType === "UPI QR" && <p className="mt-1 text-xs text-muted-foreground">After saving, a QR appears. The booking is marked paid once the customer pays.</p>}
+      {paymentType === "pay_at_cafe" && <p className="mt-2 text-xs text-muted-foreground">Collect when play ends.</p>}
+      {paymentType === "UPI QR" && <p className="mt-2 text-xs text-muted-foreground">After saving, a QR appears. The booking is marked paid once the customer pays.</p>}
       {paymentType === 'Monthly Credit' && (
         <div className="mt-2 space-y-2">
           <p className="rounded-md border px-2.5 py-1.5 text-xs border-amber-700 bg-amber-900/25 text-amber-300">
@@ -2051,6 +2146,7 @@ const getEffectivePrice = (slot: SelectedSlot): number => slotUnitPrice(slot, ac
           startAt: flexQuote.window.start_at,
           durationMinutes: flexQuote.window.duration_minutes,
           flexConsoleIds: flexConsoleIds || undefined,
+          extendsBookingId: flexQuote.extends_booking_id || undefined,
         } : {}),
         deskRevision: deskCard?.revision,
         deskSubtotal: deskPrice ?? undefined,
@@ -2158,8 +2254,6 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
     windowStart && windowEnd ? sessionWindowLabel(windowStart, windowEnd, sessionMinutes, showClock) : null,
     activePickerDate !== istDate() ? new Date(`${startDate}T12:00:00`).toLocaleDateString("en-GB", { day: "numeric", month: "short" }) : null,
   ].filter(Boolean).join(" · ")
-  const stationRows = flexMode && flexQuote ? flexQuote.stations : []
-  const freeStations = stationRows.filter(station => station.available)
   const confirmBlocked = selectedSlots.length === 0 || isSubmitting || submissionUncertain || slotShortfall
     || (flexMode && (!flexActive || flexLoading))
     || (!!deskCard && !stationAuto && !(flexMode ? flexConsoleIds : deskConsoleIds))
@@ -2169,8 +2263,22 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
     ? (flexLoading ? "Checking…" : flexProblem ? flexProblem.message : flexQuote && !flexQuote.available ? "No station free for the whole time." : "")
     : selectedSlots.length === 0 ? `No free ${pickerConsoleItem?.name || "console"} at ${startClock || "that time"}.`
     : slotShortfall ? `Only ${durationLabel(selectedMinutes)} free from ${startClock}.` : ""
-  const row = "flex flex-wrap items-center gap-1.5"
-  const label = "w-16 shrink-0 text-xs font-medium text-muted-foreground"
+  const subLabel = "w-[4.5rem] shrink-0 pt-2 text-xs font-medium text-muted-foreground"
+  const selectedStationCodes = stationAuto ? [] : stationIds.map(id => pickerStations.find(st => st.id === id)?.code || `#${id}`)
+  const summaryStation = stationAuto ? (stationSource ? "Auto-assign" : null) : selectedStationCodes.join(", ") || "Pick a station"
+  const summaryLine = [
+    summaryStation,
+    windowStart && windowEnd ? `${showClock(clock(windowStart))} – ${showClock(clock(windowEnd))}` : null,
+    sessionMinutes > 0 ? durationLabel(sessionMinutes) : null,
+  ].filter(Boolean).join(" · ")
+  const confirmOnEnter = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    if (event.key !== "Enter" || event.shiftKey || event.defaultPrevented || event.nativeEvent.isComposing) return
+    const target = event.target as HTMLElement
+    // Inputs submit the form themselves; leave textareas and selects alone.
+    if (target.closest("input, textarea, select, [role='listbox'], .slot-booking-popover")) return
+    event.preventDefault()
+    if (!confirmBlocked) (document.getElementById("slot-booking-form") as HTMLFormElement | null)?.requestSubmit()
+  }
 
   return createPortal(
     <AnimatePresence>
@@ -2185,12 +2293,13 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
           data-booking-form
           aria-modal="true"
           aria-label="New Gaming Session"
-          className="slot-booking-modal flex max-h-[92vh] w-full max-w-[600px] flex-col overflow-hidden rounded-lg border shadow-xl"
+          onKeyDown={confirmOnEnter}
+          className="slot-booking-modal flex max-h-[94vh] w-full max-w-[680px] flex-col overflow-hidden rounded-lg border shadow-xl"
         >
-          <div className="slot-booking-modal-header relative flex items-center justify-between gap-2 border-b px-4 py-2.5">
+          <div className="slot-booking-modal-header relative flex items-center justify-between gap-3 border-b px-5 py-3.5">
             <div className="min-w-0">
-              <h2 className="slot-booking-title">New session</h2>
-              <p className="slot-booking-context truncate tabular-nums">{contextLine || "Pick a time"}</p>
+              <h2 className="slot-booking-title text-base">New session</h2>
+              <p className="slot-booking-context mt-0.5 truncate text-xs tabular-nums">{contextLine || "Pick a time"}</p>
             </div>
             <div className="flex items-center gap-1">
               <button type="button" aria-label="Booking settings" title="Player fields"
@@ -2271,114 +2380,136 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
           </div>
 
           <div className="slot-booking-body min-h-0 flex-1 overflow-y-auto text-sm">
-            <form id="slot-booking-form" onSubmit={handleSubmit} className="space-y-3 p-4">
+            <form id="slot-booking-form" onSubmit={handleSubmit} className="divide-y divide-border">
               {submitError && (
-                <div role="alert" className="rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs leading-relaxed text-amber-200">{submitError}</div>
+                <div className="px-5 pt-4">
+                  <div role="alert" className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs leading-relaxed text-amber-200">{submitError}</div>
+                </div>
               )}
 
               {availableConsoles.length > 1 && (
-                <div className={row} role="radiogroup" aria-label="Console">
-                  <span className={label}>Console</span>
-                  {availableConsoles.map(item => (
-                    <button key={item.id} type="button" role="radio" aria-checked={String(item.id) === activePickerConsole} disabled={isSubmitting}
-                      onClick={() => { setPickerConsole(String(item.id)); setDeskChoice(""); setPricingGame(""); setDeskConsoleIds(null) }}
-                      className={chipClass(String(item.id) === activePickerConsole)}>{item.name}</button>
-                  ))}
-                </div>
+                <FormSection label="Console">
+                  <div className={segGroup} role="radiogroup" aria-label="Console">
+                    {availableConsoles.map(item => {
+                      const ConsoleIcon = resolveSafeConsoleIcon(item.icon, item.type)
+                      const active = String(item.id) === activePickerConsole
+                      return (
+                        <button key={item.id} type="button" role="radio" aria-checked={active} disabled={isSubmitting}
+                          onClick={() => { setPickerConsole(String(item.id)); setDeskChoice(""); setPricingGame(""); setStationIds([]) }}
+                          className={cn(segItem(active), "gap-2 px-3.5")}>
+                          <ConsoleIcon className="h-4 w-4" />{item.name}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </FormSection>
               )}
 
-              {timeMode === "quick" ? <>
-                <div className={row} role="radiogroup" aria-label="Start">
-                  <span className={label}>Start</span>
-                  {choices.map(choice => (
-                    <button key={choice.key} type="button" role="radio" aria-checked={startKey === choice.key} disabled={isSubmitting}
-                      onClick={() => { if (choice.key === "now") setNowClock(istClock()); setStartKey(choice.key); setShowOtherTime(false) }}
-                      className={cn(chipClass(startKey === choice.key), "tabular-nums")}>{choice.key.startsWith("slot:") ? showClock(choice.clock) : choice.label}</button>
-                  ))}
-                  <button type="button" aria-expanded={showOtherTime} className={cn(chipClass(startKey === "custom"), "border-dashed")}
-                    onClick={() => setShowOtherTime(v => !v)}>{startKey === "custom" && customClock ? showClock(customClock) : "Other"}</button>
-                </div>
-                {showOtherTime && (
-                  <div className="ml-[4.375rem] flex flex-wrap items-end gap-2 text-xs">
-                    <label>Date
-                      <select value={activePickerDate} onChange={(event) => { setPickerConsole(activePickerConsole); setPickerDate(event.target.value) }}
-                        className="mt-1 block h-8 rounded-md border border-border bg-background px-2 text-sm">
-                        {Array.from(new Set([istDate(), ...slotDates])).sort().map((date) => <option key={date} value={date}>{date}</option>)}
-                      </select>
-                    </label>
-                    <label>Time<TimeField className="mt-1 flex" aria-label="Start time" minuteStep={flexMode ? 1 : 15} value={customClock} onValueChange={(value) => { setCustomClock(value); setStartKey("custom") }} /></label>
-                    {onReplaceSlots && <button type="button" className="pb-1.5 text-muted-foreground underline" onClick={() => setTimeMode("slots")}>Pick slots instead</button>}
+              <FormSection label="When">
+                {timeMode === "quick" ? <div className="space-y-2.5">
+                  <div className="flex gap-2">
+                    <span className={subLabel}>Start</span>
+                    <div className="min-w-0 flex-1 space-y-2">
+                      <div className={segGroup} role="radiogroup" aria-label="Start">
+                        {choices.map(choice => (
+                          <button key={choice.key} type="button" role="radio" aria-checked={startKey === choice.key} disabled={isSubmitting}
+                            onClick={() => { if (choice.key === "now") setNowClock(istClock()); setStartKey(choice.key); setShowOtherTime(false) }}
+                            className={cn(segItem(startKey === choice.key), "tabular-nums")}>{choice.key.startsWith("slot:") ? showClock(choice.clock) : choice.label}</button>
+                        ))}
+                        <button type="button" aria-expanded={showOtherTime} className={cn(segItem(startKey === "custom"), "tabular-nums")}
+                          onClick={() => setShowOtherTime(v => !v)}>{startKey === "custom" && customClock ? showClock(customClock) : "Other…"}</button>
+                      </div>
+                      {showOtherTime && (
+                        <div className="flex flex-wrap items-end gap-3 rounded-lg border border-border bg-muted/20 p-2.5 text-xs text-muted-foreground">
+                          <label>Date
+                            <select value={activePickerDate} onChange={(event) => { setPickerConsole(activePickerConsole); setPickerDate(event.target.value) }}
+                              className="mt-1 block h-9 rounded-md border border-border bg-background px-2 text-sm text-foreground">
+                              {Array.from(new Set([istDate(), ...slotDates])).sort().map((date) => <option key={date} value={date}>{date}</option>)}
+                            </select>
+                          </label>
+                          <label>Time<TimeField className="mt-1 flex" aria-label="Start time" minuteStep={flexMode ? 1 : 15} value={customClock} onValueChange={(value) => { setCustomClock(value); setStartKey("custom") }} /></label>
+                          {onReplaceSlots && <button type="button" className="pb-2 underline hover:text-foreground" onClick={() => setTimeMode("slots")}>Pick slots instead</button>}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <span className={subLabel}>Duration</span>
+                    <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
+                      <div className={segGroup} role="radiogroup" aria-label="Duration">
+                        {DURATION_CHIPS.map(minutes => (
+                          <button key={minutes} type="button" role="radio" aria-checked={durationMin === minutes} disabled={isSubmitting}
+                            onClick={() => setDurationMin(minutes)} className={segItem(durationMin === minutes)}>{chipDurationLabel(minutes)}</button>
+                        ))}
+                      </div>
+                      <span className={cn("inline-flex h-10 items-center overflow-hidden rounded-lg border bg-muted/40", (DURATION_CHIPS as readonly number[]).includes(durationMin) ? "border-border" : "border-primary/60 text-primary")}>
+                        <button type="button" aria-label="15 minutes less" disabled={isSubmitting || durationMin <= CUSTOM_STEP_MINUTES} className="grid h-full w-9 place-items-center text-muted-foreground hover:bg-white/[0.06] hover:text-foreground disabled:opacity-40" onClick={() => setDurationMin(m => Math.max(CUSTOM_STEP_MINUTES, m - CUSTOM_STEP_MINUTES))}>−</button>
+                        <span className="min-w-[3.75rem] px-1 text-center text-sm font-medium tabular-nums">{durationLabel(durationMin)}</span>
+                        <button type="button" aria-label="15 minutes more" disabled={isSubmitting || durationMin >= 720} className="grid h-full w-9 place-items-center text-muted-foreground hover:bg-white/[0.06] hover:text-foreground disabled:opacity-40" onClick={() => setDurationMin(m => Math.min(720, m + CUSTOM_STEP_MINUTES))}>+</button>
+                      </span>
+                    </div>
+                  </div>
+                </div> : (
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between text-xs"><span className="font-medium text-muted-foreground">Pick slots · {activePickerDate}</span>
+                      <button type="button" className="text-muted-foreground underline hover:text-foreground" onClick={() => setTimeMode("quick")}>Back to quick times</button></div>
+                    <div className="flex max-h-40 flex-wrap gap-1.5 overflow-y-auto">
+                      {pickerSlots.map((slot: any) => {
+                        const selected = selectedSlots.some((item) => item.slot_id === slot.slot_id && item.date === activePickerDate && String(item.console_id) === activePickerConsole)
+                        return <button key={slot.slot_id} type="button" aria-pressed={selected} disabled={isSubmitting}
+                          onClick={() => onSlotSelect({
+                            slot_id: slot.slot_id, date: activePickerDate, start_time: slot.start_time, end_time: slot.end_time,
+                            console_id: Number(activePickerConsole), console_name: pickerConsoleItem?.name || pickerConsoleItem?.type || "",
+                            console_price: slot.single_slot_price ?? pickerConsoleItem?.price ?? 0, base_price: slot.base_slot_price ?? undefined,
+                            available_count: Number(slot.available_slot),
+                          })}
+                          className={cn(chipClass(selected), "px-2 py-1 text-xs tabular-nums")}>{showClock(slot.start_time)}–{showClock(slot.end_time)}</button>
+                      })}
+                      {pickerSlots.length === 0 && <p className="py-2 text-xs text-muted-foreground">No free slots.</p>}
+                    </div>
                   </div>
                 )}
-
-                <div className={row} role="radiogroup" aria-label="Duration">
-                  <span className={label}>Play</span>
-                  {DURATION_CHIPS.map(minutes => (
-                    <button key={minutes} type="button" role="radio" aria-checked={durationMin === minutes} disabled={isSubmitting}
-                      onClick={() => setDurationMin(minutes)} className={chipClass(durationMin === minutes)}>{chipDurationLabel(minutes)}</button>
-                  ))}
-                  <span className={cn("inline-flex items-center overflow-hidden rounded-md border", (DURATION_CHIPS as readonly number[]).includes(durationMin) ? "border-border" : "border-primary")}>
-                    <button type="button" aria-label="15 minutes less" disabled={isSubmitting || durationMin <= CUSTOM_STEP_MINUTES} className="px-2 py-1.5 hover:bg-muted" onClick={() => setDurationMin(m => Math.max(CUSTOM_STEP_MINUTES, m - CUSTOM_STEP_MINUTES))}>−</button>
-                    <span className="min-w-[3.25rem] px-1 text-center text-sm tabular-nums">{durationLabel(durationMin)}</span>
-                    <button type="button" aria-label="15 minutes more" disabled={isSubmitting || durationMin >= 720} className="px-2 py-1.5 hover:bg-muted" onClick={() => setDurationMin(m => Math.min(720, m + CUSTOM_STEP_MINUTES))}>+</button>
-                  </span>
-                </div>
-              </> : (
-                <div className="space-y-1.5">
-                  <div className="flex items-center justify-between text-xs"><span className="font-medium text-muted-foreground">Pick slots · {activePickerDate}</span>
-                    <button type="button" className="text-muted-foreground underline" onClick={() => setTimeMode("quick")}>Back to quick times</button></div>
-                  <div className="flex max-h-40 flex-wrap gap-1.5 overflow-y-auto">
-                    {pickerSlots.map((slot: any) => {
-                      const selected = selectedSlots.some((item) => item.slot_id === slot.slot_id && item.date === activePickerDate && String(item.console_id) === activePickerConsole)
-                      return <button key={slot.slot_id} type="button" aria-pressed={selected} disabled={isSubmitting}
-                        onClick={() => onSlotSelect({
-                          slot_id: slot.slot_id, date: activePickerDate, start_time: slot.start_time, end_time: slot.end_time,
-                          console_id: Number(activePickerConsole), console_name: pickerConsoleItem?.name || pickerConsoleItem?.type || "",
-                          console_price: slot.single_slot_price ?? pickerConsoleItem?.price ?? 0, base_price: slot.base_slot_price ?? undefined,
-                          available_count: Number(slot.available_slot),
-                        })}
-                        className={cn(chipClass(selected), "px-2 py-1 text-xs tabular-nums")}>{showClock(slot.start_time)}–{showClock(slot.end_time)}</button>
-                    })}
-                    {pickerSlots.length === 0 && <p className="py-2 text-xs text-muted-foreground">No free slots.</p>}
+                {deviceCards.some(card => card.definition.game_variant?.trim()) && (
+                  <div className="mt-2.5 flex gap-2"><span className={subLabel}>Game</span>
+                    <div className={segGroup}>
+                      {["", ...new Set(deviceCards.map(card => card.definition.game_variant?.trim()).filter(Boolean) as string[])].map(title => (
+                        <button key={title || "standard"} type="button" onClick={() => { setPricingGame(title); setDeskChoice(""); setStationIds([]) }} className={segItem(pricingGame === title)}>{title || "Other games"}</button>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              )}
-              {timeStatus && <p role="status" className="ml-[4.375rem] text-xs text-amber-500">{timeStatus}</p>}
+                )}
+                {matchingDeskCards.length > 1 && (
+                  <div className="mt-2.5 flex gap-2"><span className={subLabel}>Rate</span>
+                    <div className={segGroup}>
+                      {matchingDeskCards.map(card => <button key={card.profile} type="button" onClick={() => setDeskChoice(card.profile)} className={segItem(effectiveDeskChoice === card.profile)}>{rateLabel(card)}</button>)}
+                    </div>
+                  </div>
+                )}
+                {timeStatus && <p role="status" className="mt-2 text-xs text-amber-400">{timeStatus}</p>}
+                {deskRateError && <p role="status" className="mt-2 text-xs text-amber-400">{deskRateError} Reopen to retry.</p>}
+                {variantPricingRequired && !matchingDeskCards.length && <p role="alert" className="mt-2 text-xs text-amber-400">No rate covers this time and player count.</p>}
+              </FormSection>
 
-              {(deskCard || flexMode) && (
-                <div className={row} role="radiogroup" aria-label="Station">
-                  <span className={label}>Station</span>
-                  <button type="button" role="radio" aria-checked={stationAuto} disabled={isSubmitting} onClick={() => { setStationAuto(true); setStationIds([]) }} className={chipClass(stationAuto)}>Auto-assign</button>
-                  {flexMode ? freeStations.slice(0, 10).map(station => {
-                    const chosen = !stationAuto && stationIds.includes(station.console_id)
-                    return <button key={station.console_id} type="button" role="radio" aria-checked={chosen} disabled={isSubmitting}
-                      onClick={() => { setStationAuto(false); setStationIds(ids => flexUnits === 1 ? [station.console_id] : ids.includes(station.console_id) ? ids.filter(id => id !== station.console_id) : [...ids, station.console_id].slice(-flexUnits)) }}
-                      className={chipClass(chosen)}>{station.name || `#${station.console_id}`}</button>
-                  }) : (
-                    <button type="button" role="radio" aria-checked={!stationAuto} disabled={isSubmitting} onClick={() => setStationAuto(false)} className={chipClass(!stationAuto)}>Choose</button>
-                  )}
-                  {flexMode && !stationAuto && flexUnits > 1 && <span className="text-xs text-muted-foreground">{stationIds.length}/{flexUnits}</span>}
-                </div>
+              {(pickerStations.length > 0 || stationSource) && (
+                <FormSection label="Station">
+                  <StationPicker
+                    stations={pickerStations}
+                    selected={stationIds}
+                    auto={stationAuto}
+                    need={stationNeed}
+                    loading={stationLoading}
+                    disabled={isSubmitting}
+                    onAuto={() => { setStationAuto(true); setStationIds([]); setPreferredStation(null) }}
+                    onToggle={toggleStation}
+                    note={!stationSource ? "Stations are assigned when the session starts."
+                      : preferredMissing ? `${pickerStations.find(st => st.id === preferredStation)?.code || "That station"} is not free for this time. Pick another or use Auto-assign.`
+                      : stationSource === "desk" && deskStations.error ? deskStations.error : undefined}
+                  />
+                </FormSection>
               )}
-              {deskCard && !flexMode && !stationAuto && selectedSlots.length > 0 && (
-                <div className="ml-[4.375rem]"><DeskConsolePicker key={`${activePickerConsole}-${deskCard.profile}`} vendor={settingsVendorId} game={Number(activePickerConsole)} profile={deskCard.profile} date={normalizeBookedDate(selectedSlots[0].date)} slotIds={selectedSlots.map(slot=>slot.slot_id)} quantity={isSquadMode && squadConsoleGroup === "pc" ? squadPlayerCount : 1} onChange={setDeskConsoleIds} /></div>
-              )}
-              {deviceCards.some(card => card.definition.game_variant?.trim()) && (
-                <div className={row}><span className={label}>Game</span>
-                  {["", ...new Set(deviceCards.map(card => card.definition.game_variant?.trim()).filter(Boolean) as string[])].map(title => (
-                    <button key={title || "standard"} type="button" onClick={() => { setPricingGame(title); setDeskChoice(""); setDeskConsoleIds(null) }} className={chipClass(pricingGame === title)}>{title || "Other games"}</button>
-                  ))}
-                </div>
-              )}
-              {matchingDeskCards.length > 1 && (
-                <div className={row}><span className={label}>Rate</span>
-                  {matchingDeskCards.map(card => <button key={card.profile} type="button" onClick={() => setDeskChoice(card.profile)} className={chipClass(effectiveDeskChoice === card.profile)}>{rateLabel(card)}</button>)}
-                </div>
-              )}
-              {deskRateError && <p role="status" className="text-xs text-amber-500">{deskRateError} Reopen to retry.</p>}
-              {variantPricingRequired && !matchingDeskCards.length && <p role="alert" className="text-xs text-amber-500">No rate covers this time and player count.</p>}
 
-              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+              <FormSection label={isSquadMode ? "Captain" : "Player"}>
+              <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
                       {bookingFieldConfig.phone.visible && (
                         <div className="relative">
                           <input
@@ -2390,16 +2521,16 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                             autoComplete="off"
                             placeholder={isSquadMode ? "Captain Mobile Number" : "Mobile Number"}
                             className={cn(
-                              "w-full pl-10 pr-4 py-2 bg-muted border rounded-lg transition-all duration-200",
+                              "h-10 w-full rounded-lg border bg-background pl-10 pr-4 text-sm transition-colors duration-150",
                               errors.phone
                                 ? "border-red-500 focus:border-ring"
                                 : focusedInput === "phone"
-                                ? "border-emerald-500 focus:border-ring"
+                                ? "border-ring"
                                 : "border-border focus:border-ring",
                               "focus:outline-none focus:ring-1 focus:ring-ring/40"
                             )}
                           />
-                          <Phone className="w-4 h-4 text-muted-foreground absolute left-3 top-2.5" />
+                          <Phone className="w-4 h-4 text-muted-foreground absolute left-3 top-3" />
                           <AnimatePresence>
                             {focusedInput === "phone" && (phoneSuggestions.length > 0 || isSuggestionLoading.phone) && (
                               <motion.ul
@@ -2423,7 +2554,7 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                                         <User className="w-3 h-3 text-emerald-600" />
                                       </div>
                                       <div>
-                                        <p className="font-medium text-white text-sm">{user.name}</p>
+                                        <p className="font-medium text-foreground text-sm">{user.name}</p>
                                         <p className="text-muted-foreground text-xs">{user.phone}</p>
                                       </div>
                                     </div>
@@ -2445,16 +2576,16 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                           autoComplete="off"
                           placeholder={isSquadMode ? "Captain Name" : "Player Name"}
                           className={cn(
-                            "w-full pl-10 pr-4 py-2 bg-muted border rounded-lg transition-all duration-200",
+                            "h-10 w-full rounded-lg border bg-background pl-10 pr-4 text-sm transition-colors duration-150",
                             errors.name
                               ? "border-red-500 focus:border-ring"
                               : focusedInput === "name"
-                              ? "border-emerald-500 focus:border-ring"
+                              ? "border-ring"
                               : "border-border focus:border-ring",
                             "focus:outline-none focus:ring-1 focus:ring-ring/40"
                           )}
                         />
-                        <User className="w-4 h-4 text-muted-foreground absolute left-3 top-2.5" />
+                        <User className="w-4 h-4 text-muted-foreground absolute left-3 top-3" />
                         <AnimatePresence>
                           {focusedInput === "name" && (nameSuggestions.length > 0 || isSuggestionLoading.name) && (
                             <motion.ul
@@ -2478,7 +2609,7 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                                       <User className="w-3 h-3 text-emerald-600" />
                                     </div>
                                     <div>
-                                      <p className="font-medium text-white text-sm">{user.name}</p>
+                                      <p className="font-medium text-foreground text-sm">{user.name}</p>
                                       <p className="text-muted-foreground text-xs">{user.phone || user.email}</p>
                                     </div>
                                   </div>
@@ -2500,16 +2631,16 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                             autoComplete="off"
                             placeholder={isSquadMode ? "Captain email" : "Email"}
                             className={cn(
-                              "w-full pl-10 pr-4 py-2 bg-muted border rounded-lg transition-all duration-200",
+                              "h-10 w-full rounded-lg border bg-background pl-10 pr-4 text-sm transition-colors duration-150",
                               errors.email
                                 ? "border-red-500 focus:border-ring"
                                 : focusedInput === "email"
-                                ? "border-emerald-500 focus:border-ring"
+                                ? "border-ring"
                                 : "border-border focus:border-ring",
                               "focus:outline-none focus:ring-1 focus:ring-ring/40"
                             )}
                           />
-                          <Mail className="w-4 h-4 text-muted-foreground absolute left-3 top-2.5" />
+                          <Mail className="w-4 h-4 text-muted-foreground absolute left-3 top-3" />
                           <AnimatePresence>
                             {focusedInput === "email" && (emailSuggestions.length > 0 || isSuggestionLoading.email) && (
                               <motion.ul
@@ -2533,7 +2664,7 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                                         <User className="w-3 h-3 text-emerald-600" />
                                       </div>
                                       <div>
-                                        <p className="font-medium text-white text-sm">{user.name}</p>
+                                        <p className="font-medium text-foreground text-sm">{user.name}</p>
                                         <p className="text-muted-foreground text-xs">{user.email}</p>
                                       </div>
                                     </div>
@@ -2547,7 +2678,7 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                       )}
               </div>
               {suggestionError && (
-                <p role="status" className="text-xs text-amber-600">{suggestionError}{' '}
+                <p role="status" className="mt-2 text-xs text-amber-500">{suggestionError}{' '}
                   <button type="button" className="underline" onClick={() => {
                     if (focusedInput === 'phone') void fetchUserSuggestions('phone', phone, setPhoneSuggestions)
                     else if (focusedInput === 'email') void fetchUserSuggestions('email', email, setEmailSuggestions)
@@ -2555,40 +2686,42 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                   }}>Retry</button>
                 </p>
               )}
+              </FormSection>
 
-              <div className="flex flex-wrap items-center gap-1.5">
-                <button type="button" disabled={!squadSupported} aria-pressed={isSquadMode}
-                  title={squadPolicyState === "loading" ? "Loading" : !squadSupported ? "This console is solo only" : "Book for a group"}
-                  onClick={() => setBookingModeQuick(isSquadMode ? "solo" : "squad")} className={chipClass(isSquadMode)}>
-                  <Users className="mr-1 inline h-3.5 w-3.5" />{isSquadMode ? `Squad · ${squadPlayerCount}` : "Squad"}
-                </button>
-                {isSquadMode && <span className="inline-flex items-center overflow-hidden rounded-md border border-border">
-                  <button type="button" aria-label="One player less" className="px-2 py-1.5 hover:bg-muted" onClick={() => setSquadPlayerCount((prev) => Math.max(2, prev - 1))}>−</button>
-                  <span className="px-1 text-sm tabular-nums">{squadPlayerCount}</span>
-                  <button type="button" aria-label="One player more" className="px-2 py-1.5 hover:bg-muted" onClick={() => setSquadPlayerCount((prev) => Math.min(squadMaxPlayers, prev + 1))}>+</button>
-                </span>}
-                {supportsExtraController && <span className="inline-flex items-center overflow-hidden rounded-md border border-border text-xs">
-                  <span className="px-2 text-muted-foreground">Controllers</span>
-                  <button type="button" aria-label="One controller less" className="px-2 py-1.5 hover:bg-muted" disabled={isControllerPricingLoading} onClick={() => applyExtraControllerQty(extraControllerQty - 1)}>−</button>
-                  <span className="px-1 tabular-nums">{extraControllerQty}</span>
-                  <button type="button" aria-label="One controller more" className="px-2 py-1.5 hover:bg-muted" disabled={isControllerPricingLoading} onClick={() => applyExtraControllerQty(extraControllerQty + 1)}>+</button>
-                </span>}
-                <button type="button" onClick={() => setIsMealSelectorOpen(true)} className={chipClass(selectedMeals.length > 0)}>
-                  <Plus className="mr-1 inline h-3 w-3" />{selectedMeals.length ? `Snacks (${selectedMeals.reduce((n, meal) => n + meal.quantity, 0)})` : "Snacks"}
-                </button>
-                <button type="button" onClick={() => setShowDiscount(v => !v)} className={chipClass(waiveOffAmount > 0)}>{waiveOffAmount > 0 ? `Discount ${formatRupees(waiveOffAmount)}` : "Discount"}</button>
-                {showDiscount && <input type="number" min={0} aria-label="Discount" autoFocus value={waiveOffAmount || ""} placeholder="₹"
-                  onChange={(e) => setWaiveOffAmount(Math.max(0, Math.min(gamingNet, Number(e.target.value) || 0)))}
-                  className="h-8 w-20 rounded-md border border-border bg-muted px-2 text-right text-sm" />}
-              </div>
-              {errors.squad && <p className="text-xs text-red-500">{errors.squad}</p>}
+              <FormSection label="Extras">
+                <div className="flex flex-wrap items-center gap-2">
+                  <button type="button" disabled={!squadSupported} aria-pressed={isSquadMode}
+                    title={squadPolicyState === "loading" ? "Loading" : !squadSupported ? "This console is solo only" : "Book for a group"}
+                    onClick={() => setBookingModeQuick(isSquadMode ? "solo" : "squad")} className={extraClass(isSquadMode)}>
+                    <Users className="h-3.5 w-3.5" />{isSquadMode ? `Squad · ${squadPlayerCount}` : "Squad"}
+                  </button>
+                  {isSquadMode && <span className="inline-flex h-8 items-center overflow-hidden rounded-md border border-border">
+                    <button type="button" aria-label="One player less" className="grid h-full w-8 place-items-center hover:bg-muted" onClick={() => setSquadPlayerCount((prev) => Math.max(2, prev - 1))}>−</button>
+                    <span className="px-1.5 text-sm tabular-nums">{squadPlayerCount}</span>
+                    <button type="button" aria-label="One player more" className="grid h-full w-8 place-items-center hover:bg-muted" onClick={() => setSquadPlayerCount((prev) => Math.min(squadMaxPlayers, prev + 1))}>+</button>
+                  </span>}
+                  {supportsExtraController && <span className="inline-flex h-8 items-center overflow-hidden rounded-md border border-border text-xs">
+                    <span className="px-2.5 text-muted-foreground">Controllers</span>
+                    <button type="button" aria-label="One controller less" className="grid h-full w-8 place-items-center hover:bg-muted" disabled={isControllerPricingLoading} onClick={() => applyExtraControllerQty(extraControllerQty - 1)}>−</button>
+                    <span className="px-1 tabular-nums">{extraControllerQty}</span>
+                    <button type="button" aria-label="One controller more" className="grid h-full w-8 place-items-center hover:bg-muted" disabled={isControllerPricingLoading} onClick={() => applyExtraControllerQty(extraControllerQty + 1)}>+</button>
+                  </span>}
+                  <button type="button" onClick={() => setIsMealSelectorOpen(true)} className={extraClass(selectedMeals.length > 0)}>
+                    <Plus className="h-3.5 w-3.5" />{selectedMeals.length ? `Snacks (${selectedMeals.reduce((n, meal) => n + meal.quantity, 0)})` : "Snacks"}
+                  </button>
+                  <button type="button" onClick={() => setShowDiscount(v => !v)} className={extraClass(waiveOffAmount > 0)}>{waiveOffAmount > 0 ? `Discount ${formatRupees(waiveOffAmount)}` : "Discount"}</button>
+                  {showDiscount && <input type="number" min={0} aria-label="Discount" autoFocus value={waiveOffAmount || ""} placeholder="₹"
+                    onChange={(e) => setWaiveOffAmount(Math.max(0, Math.min(gamingNet, Number(e.target.value) || 0)))}
+                    className="h-8 w-24 rounded-md border border-border bg-background px-2 text-right text-sm" />}
+                </div>
+                {errors.squad && <p className="mt-2 text-xs text-red-500">{errors.squad}</p>}
                     <AnimatePresence>
                       {isSquadMode && (
                         <motion.div
                           initial={{ opacity: 0, height: 0 }}
                           animate={{ opacity: 1, height: 'auto' }}
                           exit={{ opacity: 0, height: 0 }}
-                          className="mt-4 rounded-lg border p-3 border-border"
+                          className="mt-3 rounded-lg border p-3 border-border"
                         >
                           <div className="mb-2 flex items-center justify-between">
                             <p className="text-xs font-semibold text-muted-foreground">
@@ -2661,32 +2794,35 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                         </motion.div>
                       )}
                     </AnimatePresence>
+              </FormSection>
 
-              {paymentMethodCard}
-
-              <div className="rounded-md border border-border px-3 py-1.5 text-xs" aria-label="Bill">
-                {bill.lines.map(line => (
-                  <div key={line.key} className="flex justify-between gap-3 py-0.5">
-                    <span className="text-muted-foreground">{line.label}</span>
-                    <span className={cn("tabular-nums", line.tone === "discount" ? "text-emerald-500" : "text-foreground")}>{formatRupees(line.amount)}</span>
-                  </div>
-                ))}
-              </div>
+              <FormSection label="Payment">
+                {paymentMethodCard}
+              </FormSection>
             </form>
           </div>
 
-          <div className="slot-booking-modal-footer shrink-0 border-t px-4 py-2.5">
-            <div className="flex items-center gap-3">
+          <div className="slot-booking-modal-footer shrink-0 border-t px-5 py-3.5">
+            <div className="flex items-end gap-4">
               <div className="min-w-0 flex-1">
-                <p className="text-xs text-muted-foreground">Total · GST incl.</p>
-                <strong className="text-xl tabular-nums">{formatRupees(totalAmount)}</strong>
+                <p className="truncate text-sm font-medium tabular-nums text-foreground" title={summaryLine}>{summaryLine || "Pick a time"}</p>
+                <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-muted-foreground" aria-label="Bill">
+                  {bill.lines.map(line => (
+                    <span key={line.key} className="tabular-nums">
+                      {line.label} <span className={line.tone === "discount" ? "text-emerald-400" : "text-foreground/80"}>{formatRupees(line.amount)}</span>
+                    </span>
+                  ))}
+                </div>
               </div>
-              <Button type="submit" form="slot-booking-form" disabled={confirmBlocked} className="ui-action-primary h-10 px-6 disabled:opacity-50">
-                {isSubmitting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Booking…</> : <><CheckCircle className="mr-2 h-4 w-4" />Confirm</>}
+              <div className="shrink-0 text-right">
+                <p className="text-[11px] text-muted-foreground">Total · GST incl.</p>
+                <strong className="text-2xl font-semibold leading-tight tabular-nums">{formatRupees(totalAmount)}</strong>
+              </div>
+              <Button type="submit" form="slot-booking-form" disabled={confirmBlocked} className="ui-action-primary h-11 shrink-0 gap-2 px-6 text-sm font-semibold disabled:opacity-50">
+                {isSubmitting ? <><Loader2 className="h-4 w-4 animate-spin" />Booking…</> : <><CheckCircle className="h-4 w-4" />Confirm<kbd className="ml-1 hidden rounded border border-white/25 px-1.5 text-[10px] font-medium opacity-80 sm:inline">↵</kbd></>}
               </Button>
             </div>
           </div>
-
           <MealSelector
             vendorId={getVendorIdFromToken() || 0}
             isOpen={isMealSelectorOpen}
@@ -2738,6 +2874,29 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
     document.body
   )
 }
+// New session dialog building blocks: one section rhythm, one segmented look,
+// accent only on the selected item.
+function FormSection({ label, aside, children }: { label: string; aside?: React.ReactNode; children: React.ReactNode }) {
+  return (
+    <section className="px-5 py-4">
+      <div className="mb-2.5 flex items-center justify-between gap-2">
+        <h3 className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">{label}</h3>
+        {aside}
+      </div>
+      {children}
+    </section>
+  )
+}
+const segGroup = "inline-flex max-w-full flex-wrap items-center gap-1 rounded-lg border border-border bg-muted/40 p-1"
+const segItem = (active: boolean) => cn(
+  "inline-flex h-8 items-center justify-center whitespace-nowrap rounded-md px-3 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40",
+  active ? "bg-primary/15 text-primary shadow-sm ring-1 ring-inset ring-primary/40" : "text-muted-foreground hover:bg-white/[0.06] hover:text-foreground",
+)
+const extraClass = (active: boolean) => cn(
+  "inline-flex h-8 items-center gap-1.5 rounded-md border px-3 text-xs font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40",
+  active ? "border-primary/50 bg-primary/10 text-primary" : "border-dashed border-border text-muted-foreground hover:border-foreground/30 hover:text-foreground",
+)
+
 function SlotPill({
   label,
   color,
@@ -4535,6 +4694,8 @@ function ListBooking() {
 interface SlotManagementProps {
   embedded?: boolean
   slab?: boolean
+  // Only host the New session form (the station map opens it for one station).
+  formOnly?: boolean
 }
 
 function DashboardQuickBookingSlab({
@@ -4725,11 +4886,12 @@ function DashboardQuickBookingSlab({
   )
 }
 
-export default function SlotManagement({ embedded = false, slab = false }: SlotManagementProps) {
+export default function SlotManagement({ embedded = false, slab = false, formOnly = false }: SlotManagementProps) {
   const { moduleCache, moduleVersions, setModuleCache } = useDashboardData()
   const [selectedConsole, setSelectedConsole] = useState<ConsoleFilter>("")
   const [selectedSlots, setSelectedSlots] = useState<SelectedSlot[]>([])
   const [showBookingForm, setShowBookingForm] = useState(false)
+  const [bookingPreset, setBookingPreset] = useState<BookingPreset | null>(null)
   const [availableConsoles, setAvailableConsoles] = useState<ConsoleType[]>([])
   const [allSlots, setAllSlots] = useState<{ [key: string]: any[] }>({})
   const [recentBookings, setRecentBookings] = useState<any[]>([])
@@ -5256,9 +5418,10 @@ useEffect(() => {
   // open the booking form with that console type preselected.
   const shortcutState = useRef({ availableConsoles, showBookingForm, selectedSlots })
   shortcutState.current = { availableConsoles, showBookingForm, selectedSlots }
-  const openConsoleBooking = (type: string) => {
+  const openConsoleBooking = (type: string, detail?: BookConsoleEventDetail) => {
     const { availableConsoles, showBookingForm, selectedSlots } = shortcutState.current
-    const consoleItem = availableConsoles.find((item) => item.type === type)
+    const consoleItem = (detail?.gameId ? availableConsoles.find((item) => Number(item.id) === Number(detail.gameId)) : undefined)
+      || availableConsoles.find((item) => item.type === type)
     if (!consoleItem) {
       toast.error("That console type has no bookable consoles right now.")
       return
@@ -5267,7 +5430,12 @@ useEffect(() => {
       toast.info("Finish or close the current booking before switching console.")
       return
     }
-    handleConsoleChange(type)
+    handleConsoleChange(consoleItem.type)
+    setBookingPreset(detail?.stationId ? {
+      stationId: detail.stationId, startClock: detail.startClock, durationMin: detail.durationMin,
+      customer: detail.customer ? { name: detail.customer.name, phone: detail.customer.phone, email: detail.customer.email || "" } : undefined,
+      extendsBookingId: detail.extendsBookingId,
+    } : null)
     setShowBookingForm(true)
   }
   const openConsoleBookingRef = useRef(openConsoleBooking)
@@ -5276,10 +5444,11 @@ useEffect(() => {
   useEffect(() => {
     const onBookConsole = (event: Event) => {
       if (event.defaultPrevented) return // another booking workspace took it
-      const type = (event as CustomEvent<BookConsoleEventDetail>).detail?.type
+      const detail = (event as CustomEvent<BookConsoleEventDetail>).detail
+      const type = detail?.type
       if (!type) return
       event.preventDefault()
-      openConsoleBookingRef.current(type)
+      openConsoleBookingRef.current(type, detail)
     }
     window.addEventListener(BOOK_CONSOLE_EVENT, onBookConsole)
     return () => window.removeEventListener(BOOK_CONSOLE_EVENT, onBookConsole)
@@ -5299,6 +5468,26 @@ useEffect(() => {
 
   const hasRenderableSnapshot =
     availableConsoles.length > 0 && Object.keys(allSlots || {}).length > 0
+
+  const bookingForm = (
+    <SlotBookingForm
+      key={recordsRevision}
+      isOpen={showBookingForm}
+      onClose={() => { setShowBookingForm(false); setBookingPreset(null) }}
+      selectedSlots={selectedSlots}
+      defaultConsoleId={availableConsoles.find(console => console.type === selectedConsole)?.id}
+      onReplaceSlots={setSelectedSlots}
+      onRemoveSelectedSlot={handleRemoveSelectedSlot}
+      onSlotSelect={handleSlotSelect}
+      allSlots={allSlots}
+      onBookingComplete={handleBookingComplete}
+      availableConsoles={availableConsoles}
+      preset={bookingPreset}
+      initialCustomer={bookingPreset?.customer}
+    />
+  )
+
+  if (formOnly) return bookingForm
 
   if (isLoading && !hasRenderableSnapshot) {
     return (
@@ -5391,19 +5580,7 @@ useEffect(() => {
         )}
       </div>
 
-      <SlotBookingForm
-        key={recordsRevision}
-        isOpen={showBookingForm}
-        onClose={() => setShowBookingForm(false)}
-        selectedSlots={selectedSlots}
-        defaultConsoleId={availableConsoles.find(console => console.type === selectedConsole)?.id}
-        onReplaceSlots={setSelectedSlots}
-        onRemoveSelectedSlot={handleRemoveSelectedSlot}
-        onSlotSelect={handleSlotSelect}
-        allSlots={allSlots}
-        onBookingComplete={handleBookingComplete}
-        availableConsoles={availableConsoles}
-      />
+      {bookingForm}
     </main>
   )
 }

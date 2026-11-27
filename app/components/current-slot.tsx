@@ -1962,3 +1962,6 @@ export function CurrentSlots({ currentSlots: initialSlots, historyBookings: init
     </div>
   );
 }
+
+// Shared with the station map so it opens the same End session flow.
+export { formatTime, calculateExtraTime, calculateExtraAmount, releaseSlot, normalizeLiveSlot };

@@ -44,6 +44,7 @@ export type FlexQuote = {
   max_minutes_available: number
   closes_at: string | null
   price: { basis: "rate_card" | "slot_prorated"; unit_price: number; base_amount: number; squad_discount_percent: number; squad_discount_amount: number; net_amount: number; billed_minutes: number; players: number; multiplier: number }
+  extends_booking_id?: number | null
 }
 
 export type FlexQuoteError = { success: false; code: string; message: string; max_minutes?: number; limit_at?: string; stations?: FlexStation[] }
