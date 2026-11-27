@@ -100,7 +100,7 @@ const transactionColumns: Array<{ key: ColumnKey; label: string }> = [
   { key: "netAmount", label: "Net Amount" },
   { key: "breakup", label: "Breakup" },
   { key: "gst", label: "GST" },
-  { key: "totalWithTax", label: "Total+GST" },
+  { key: "totalWithTax", label: "Total (incl. GST)" },
   { key: "modeOfPayment", label: "Mode of Payment" },
   { key: "paymentUseCase", label: "Use Case" },
   { key: "bookingType", label: "Booking Type" },
