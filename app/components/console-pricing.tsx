@@ -1965,14 +1965,11 @@ export default function ConsolePricing() {
                     />
                   </div>
 
-                  <label className="flex items-center gap-2 text-sm text-foreground sm:col-span-2">
-                    <input
-                      type="checkbox"
-                      checked={taxProfile.tax_inclusive}
-                      onChange={(e) => setTaxProfile((prev) => ({ ...prev, tax_inclusive: e.target.checked }))}
-                    />
-                    Tax Inclusive Pricing (price already includes GST)
-                  </label>
+                  {/* GST is always inside the price now; tax_inclusive is kept as saved for older readers. */}
+                  <p className="text-sm text-muted-foreground sm:col-span-2">
+                    Prices include GST. Enter every console, rate card, food and extra-time price with GST already in it.
+                    Gamers pay that price on every channel; bills and reports show the GST inside it.
+                  </p>
                 </CardContent>
               </Card>
 
