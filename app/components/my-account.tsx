@@ -2295,14 +2295,10 @@ const ToggleSwitch = ({
             />
           </div>
 
-          <label className="flex items-center gap-2 text-sm text-foreground">
-            <input
-              type="checkbox"
-              checked={gstProfile.tax_inclusive}
-              onChange={(e) => setGstProfile((p) => ({ ...p, tax_inclusive: e.target.checked }))}
-            />
-            Tax Inclusive Pricing
-          </label>
+          {/* GST is always inside the price now; tax_inclusive is kept as saved for older readers. */}
+          <p className="text-sm text-muted-foreground">
+            Prices include GST. Enter every price with GST already in it; bills and reports show the GST inside it.
+          </p>
 
           <Button variant="soft-info"
             type="button"
