@@ -41,16 +41,3 @@ export function slotOffer(slot: PricedSlot, activePricing: Record<string, Active
   }
   return { isOffer: !!entry?.is_offer, basePrice: slot.console_price, name: entry?.is_offer ? entry.offer_name : undefined }
 }
-
-/**
- * Discount for time already gone in a started slot, for the whole session.
- *
- * calculateAutoWaiveOff measures the elapsed share on one console's slot price
- * (unitTotal). A PC squad pays unitTotal x players (less the squad discount),
- * so the old one-player figure under-discounted: 3 players at Rs 60, half the
- * slot gone, got Rs 30 off a Rs 180 session instead of Rs 90.
- */
-export function elapsedDiscountForSession(unitDiscount: number, unitTotal: number, sessionNet: number): number {
-  if (!(unitDiscount > 0) || !(unitTotal > 0) || !(sessionNet > 0)) return 0
-  return Math.min(sessionNet, Math.round(unitDiscount * sessionNet / unitTotal * 100) / 100)
-}

@@ -348,6 +348,7 @@ export function UpcomingBookings({
   const submitInFlight = useRef(false);
   const consoleRequest = useRef(0);
   const reservedStartConsoles = useRef<number[]>([]);
+  const startPool = useRef<number[]>([]);
   const [selectedGameId, setSelectedGameId] = useState<string | null>(null);
   const [selectedBookingId, setSelectedBookingId] = useState<string | null>(null);
   const [expandedBookingRows, setExpandedBookingRows] = useState<Record<string, boolean>>({});
@@ -697,7 +698,12 @@ export function UpcomingBookings({
     setRequiredConsoleCount(neededConsoles);
     setSelectedConsoleIds([]);
     setStartCard(true);
-    reservedStartConsoles.current = booking?.squadDetails?.desk_console_ids || [];
+    // Stations held at booking (linked rate or custom start) are preselected; a booking made
+    // with "Auto-assign" only narrows the list to its rate card's consoles, if any.
+    const details = booking?.squadDetails || {};
+    const held = (details.desk_console_ids?.length ? details.desk_console_ids : details.assigned_console_ids) || [];
+    reservedStartConsoles.current = held.map(Number).filter((id: number) => id > 0);
+    startPool.current = (details.desk_console_pool || []).map(Number).filter((id: number) => id > 0);
     fetchAvailableConsoles(resolvedGameId, resolvedVendorId);
   };
 
@@ -715,9 +721,11 @@ export function UpcomingBookings({
       const available = rows.filter((row) => [true, 1, "true", "1"].includes(row?.is_available))
         .map((row) => ({ ...row, consoleId: Number(row.consoleId) }))
         .filter((row) => Number.isSafeInteger(row.consoleId) && row.consoleId > 0);
-      const compatible = reservedIds.length ? available.filter(row=>reservedIds.includes(row.consoleId)) : available;
+      const held = reservedIds.length ? available.filter(row=>reservedIds.includes(row.consoleId)) : [];
+      const pool = startPool.current;
+      const compatible = held.length ? held : pool.length ? available.filter(row => pool.includes(row.consoleId)) : available;
       setAvailableConsoles(Array.from(new Map(compatible.map((row) => [row.consoleId, row])).values()));
-      if (reservedIds.length) setSelectedConsoleIds(compatible.map(row=>row.consoleId));
+      if (held.length) setSelectedConsoleIds(held.map(row=>row.consoleId));
     } catch (error) {
       if (requestId !== consoleRequest.current) return;
       setConsoleError(error instanceof Error ? error.message : "Unable to load consoles. Please retry.");
@@ -727,9 +735,10 @@ export function UpcomingBookings({
   };
 
   // Handle session start submission
-  const handleSubmit = async () => {
-    if (submitInFlight.current || isLoading || selectedConsoleIds.length !== requiredConsoleCount) return;
-    const effectiveSelected = selectedConsoleIds.filter((id) => availableConsoles.some((console) => console.consoleId === id));
+  const handleSubmit = async (picked?: number[]) => {
+    const chosen = picked || selectedConsoleIds;
+    if (submitInFlight.current || isLoading || chosen.length !== requiredConsoleCount) return;
+    const effectiveSelected = chosen.filter((id) => availableConsoles.some((console) => console.consoleId === id));
     if (effectiveSelected.length !== requiredConsoleCount) return;
     if (effectiveSelected.length > 0 && selectedGameId && selectedBookingId) {
       submitInFlight.current = true;
@@ -808,7 +817,9 @@ export function UpcomingBookings({
     if (isSubmitting || isLoading) return;
     setConsoleError("");
     if (!isPcSquadStart) {
+      // One player, one tap: picking the station starts the session.
       setSelectedConsoleIds([consoleId]);
+      void handleSubmit([consoleId]);
       return;
     }
     setSelectedConsoleIds((prev) => {
@@ -982,7 +993,7 @@ export function UpcomingBookings({
           error={consoleError}
           onSelect={handleConsoleSelection}
           onRetry={() => { if (selectedGameId) fetchAvailableConsoles(selectedGameId, String(vendorId)); }}
-          onStart={handleSubmit}
+          onStart={() => void handleSubmit()}
         />
 
         {/* Header + Search */}
