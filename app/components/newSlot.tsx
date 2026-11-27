@@ -65,6 +65,10 @@ interface SelectedSlot {
   console_id: number
   console_name: string
   console_price: number
+  // Undiscounted price from the slot listing. Present when console_price is
+  // already the price for this slot's own date and time (offers applied by
+  // the booking service), which is what newBooking charges.
+  base_price?: number
   available_count: number
 }
 
@@ -160,6 +164,7 @@ import { useDashboardData } from "@/app/context/DashboardDataContext"
 import { useApiClient } from "@/app/hooks/useApiClient"
 import { httpJson, clearHttpClientCache } from "@/lib/http-client"
 import { getBookingSettings } from "@/lib/booking-settings"
+import { slotOffer, slotUnitPrice } from "@/lib/slot-price"
 import { useTimeFormat } from "@/app/hooks/useTimeFormat"
 import { formatClock, formatMinutes } from "@/lib/time-format"
 import { TimeField } from "@/app/components/time-field"
@@ -537,6 +542,7 @@ export function SlotBookingForm({
       end_time: slot.end_time, console_id: Number(activePickerConsole),
       console_name: pickerConsoleItem?.name || pickerConsoleItem?.type || "",
       console_price: slot.single_slot_price ?? pickerConsoleItem?.price ?? 0,
+      base_price: slot.base_slot_price ?? undefined,
       available_count: Number(slot.available_slot),
     })))
   }
@@ -1353,16 +1359,8 @@ useEffect(() => {
   }
 
   // ADD THIS HELPER
-const getEffectivePrice = (slot: SelectedSlot): number => {
-  const key = slot.console_name.toLowerCase()  // e.g. "ps5", "pc gaming"
-  // Try exact key first, then partial match
-  const pricingEntry = activePricing[key] || 
-    Object.values(activePricing).find(p => 
-      p.console_type.toLowerCase() === slot.console_name.toLowerCase()
-    )
-  if (pricingEntry) return pricingEntry.price
-  return slot.console_price
-}
+// The slot's own date/time price (see lib/slot-price.ts), not whatever offer is on right now.
+const getEffectivePrice = (slot: SelectedSlot): number => slotUnitPrice(slot, activePricing)
 
 
   const handleMealSelectorClose = () => {
@@ -2336,6 +2334,7 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                                 console_id: Number(activePickerConsole),
                                 console_name: pickerConsoleItem?.name || pickerConsoleItem?.type || "",
                                 console_price: slot.single_slot_price ?? pickerConsoleItem?.price ?? 0,
+                                base_price: slot.base_slot_price ?? undefined,
                                 available_count: Number(slot.available_slot),
                               })}
                               className={cn("rounded-md border px-2 py-1.5 text-xs tabular-nums transition-colors",
@@ -2372,17 +2371,13 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                           <div className="flex items-center gap-2">
                             <span className="flex items-center gap-2 font-semibold">
                               {!deskCard && (() => {
-                                const key = slot.console_name.toLowerCase()
-                                const entry = activePricing[key] ||
-                                  Object.values(activePricing).find((p) =>
-                                    p.console_type.toLowerCase() === slot.console_name.toLowerCase()
-                                  )
-                                const isOffer = entry?.is_offer
+                                const offer = slotOffer(slot, activePricing)
+                                const isOffer = offer.isOffer
                                 return (
                                   <>
                                     {isOffer && (
                                       <span className="text-xs text-muted-foreground line-through">
-                                        ₹{slot.console_price}
+                                        ₹{offer.basePrice}
                                       </span>
                                     )}
                                     <span className="slot-booking-price">
@@ -2390,7 +2385,7 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                                     </span>
                                     {isOffer && (
                                       <span className="slot-booking-offer">
-                                        {entry?.offer_name}
+                                        {offer.name}
                                       </span>
                                     )}
                                   </>
@@ -3529,6 +3524,7 @@ function ScheduleGrid({
     console_id: gameConsole.id!,
     console_name: gameConsole.name,
     console_price: matchingSlot.single_slot_price || gameConsole.price!,
+    base_price: matchingSlot.base_slot_price ?? undefined,
     available_count: matchingSlot.available_slot || 0,
   }
 
@@ -4905,6 +4901,7 @@ function DashboardQuickBookingSlab({
       console_id: selectedConsoleId,
       console_name: selectedConsoleItem?.name || selectedConsoleItem?.type || selectedConsole,
       console_price: slot.single_slot_price || selectedConsoleItem?.price || 0,
+      base_price: slot.base_slot_price ?? undefined,
       available_count: slot.available_slot || 0,
     }
     if (openBooking) onQuickBooking(selectedSlot)
