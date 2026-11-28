@@ -1,3 +1,5 @@
+import { normaliseLayout } from "./station-map"
+
 // Per-device memory for the station floor map: zoom per view, and a copy of the
 // arranged layout kept when the server could not save it (synced later).
 
@@ -34,7 +36,13 @@ export function readLocalLayout(vendorId: number | null, storage?: StorageLike |
     if (!raw) return null
     const data = JSON.parse(raw)
     if (!Array.isArray(data?.positions) || !Array.isArray(data?.zones)) return null
-    return { positions: data.positions, zones: data.zones, savedAt: Number(data.savedAt) || 0 }
+    // Older copies may hold a label row at -1 (pre-fix auto layout): normalise on the way in.
+    const clean = normaliseLayout(
+      data.positions.filter((p: any) => Number.isInteger(Number(p?.console_id)) && Number(p.console_id) > 0)
+        .map((p: any) => ({ console_id: Number(p.console_id), x: p.x ?? null, y: p.y ?? null })),
+      data.zones.filter((z: any) => z && typeof z === "object"),
+    )
+    return { ...clean, savedAt: Number(data.savedAt) || 0 }
   } catch {
     return null
   }

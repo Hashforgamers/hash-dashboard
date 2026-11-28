@@ -275,7 +275,8 @@ export function layoutStations(
   }
   const autoZones: Zone[] = []
   const savedAny = cells.size > 0
-  let row = maxY + (savedAny ? 2 : 0)
+  // First auto block starts at row 0 (its label row); below saved cells leave one empty row.
+  let row = savedAny ? maxY + 2 : 0
   for (const [, list] of groups) {
     list.sort((a, b) => (a.number ?? 1e9) - (b.number ?? 1e9) || a.id - b.id)
     // Leave a row for the zone label above each block.
@@ -301,4 +302,45 @@ export function layoutStations(
 /** Saved zone labels plus a suggested label for each auto-placed console block the cafe has not labelled yet. */
 export function mergeZones(saved: Zone[], autoZones: Zone[]): Zone[] {
   return [...saved, ...autoZones.filter(z => !saved.some(s => s.y === z.y))]
+}
+
+export const GRID_MAX = 200 // cells per axis the server accepts (0..199)
+const ZONE_MAX_WIDTH = 24
+
+export type SavePosition = { console_id: number; x: number | null; y: number | null }
+
+/**
+ * Make a layout safe to save: whole-number cells, nothing above row 0 or left
+ * of column 0 (the whole floor shifts down/right together), zone labels inside
+ * the grid with a sane width. Stations that cannot fit lose their cell and are
+ * auto-placed instead of failing the save.
+ */
+export function normaliseLayout(positions: SavePosition[], zones: Zone[]): { positions: SavePosition[]; zones: Zone[] } {
+  const num = (v: unknown) => (typeof v === "number" && Number.isFinite(v) ? Math.round(v) : null)
+  const placed = positions.map(p => {
+    const x = num(p.x), y = num(p.y)
+    return { console_id: p.console_id, x: x !== null && y !== null ? x : null, y: x !== null && y !== null ? y : null }
+  })
+  const cleanZones = zones
+    .map(z => ({ label: String(z.label ?? "").trim().slice(0, 40), x: num(z.x) ?? 0, y: num(z.y) ?? 0, w: Math.min(ZONE_MAX_WIDTH, Math.max(1, num(z.w) ?? 1)) }))
+    .filter(z => z.label)
+  let minX = 0, minY = 0
+  for (const p of placed) if (p.x !== null && p.y !== null) { minX = Math.min(minX, p.x); minY = Math.min(minY, p.y) }
+  for (const z of cleanZones) { minX = Math.min(minX, z.x); minY = Math.min(minY, z.y) }
+  const dx = -minX, dy = -minY
+  const taken = new Set<string>()
+  const outPositions = placed.map(p => {
+    if (p.x === null || p.y === null) return p
+    const x = p.x + dx, y = p.y + dy
+    const key = `${x}:${y}`
+    if (x >= GRID_MAX || y >= GRID_MAX || taken.has(key)) return { ...p, x: null, y: null }
+    taken.add(key)
+    return { ...p, x, y }
+  })
+  const outZones = cleanZones.map(z => ({
+    ...z,
+    x: Math.min(GRID_MAX - 1, z.x + dx),
+    y: Math.min(GRID_MAX - 1, z.y + dy),
+  }))
+  return { positions: outPositions, zones: outZones }
 }
