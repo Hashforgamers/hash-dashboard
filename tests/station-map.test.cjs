@@ -93,7 +93,7 @@ test('zone labels: saved first, auto suggestions only for unlabelled rows',()=>{
 
 const storeSource=fs.readFileSync(path.join(__dirname,'../lib/station-map-storage.ts'),'utf8')
 const storeMod={exports:{}}
-vm.runInNewContext(ts.transpileModule(storeSource,{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2020}}).outputText,{module:storeMod,exports:storeMod.exports,Date,Math,Number,Map,JSON,String,Array})
+vm.runInNewContext(ts.transpileModule(storeSource,{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2020}}).outputText,{module:storeMod,exports:storeMod.exports,require:id=>{if(id==='./station-map')return m;throw Error(id)},Date,Math,Number,Map,Set,JSON,String,Array})
 const st=storeMod.exports
 const memory=()=>{const d=new Map();return{getItem:k=>d.has(k)?d.get(k):null,setItem:(k,v)=>d.set(k,String(v)),removeItem:k=>d.delete(k)}}
 
@@ -120,4 +120,35 @@ test('save failures explain themselves: backend not deployed vs permission vs mi
   assert.equal(st.saveFailureMessage(403).keepLocally,false)
   assert.match(st.saveFailureMessage(503,'Floor map needs a database update').message,/database update/)
   assert.equal(st.saveFailureMessage(400,'Stations 1 and 2 share the same cell').message,'Stations 1 and 2 share the same cell')
+})
+
+// Live bug 2026-11-28: a cafe with no saved cells got its first zone label at row -1,
+// and the server rejected the save with "zone y must be between 0 and 199".
+const firstSavePayload={positions:[{console_id:101,x:0,y:0},{console_id:102,x:1,y:0},{console_id:121,x:0,y:3}],
+  zones:[{label:'PC',x:0,y:-1,w:6},{label:'PS5',x:0,y:2,w:6}]}
+
+test('auto layout of a cafe with no saved cells starts its first label at row 0',()=>{
+  const list=[...Array.from({length:11},(_,i)=>({id:i+1,type:'pc',typeName:'PC',number:i+1,mapX:null,mapY:null})),{id:20,type:'ps5',typeName:'PS5',number:1,mapX:null,mapY:null}]
+  const l=m.layoutStations(list,10)
+  assert.equal(l.autoZones[0].y,0);assert.equal(l.cells.get(1).y,1)
+  for(const z of l.autoZones)assert.ok(z.y>=0)
+  l.cells.forEach(c=>assert.ok(c.x>=0&&c.y>=0))
+  // Below saved cells: one empty row, then the label.
+  const mixed=m.layoutStations([{id:1,type:'pc',typeName:'PC',number:1,mapX:0,mapY:0},{id:2,type:'ps5',typeName:'PS5',number:1,mapX:null,mapY:null}],10)
+  assert.equal(mixed.autoZones[0].y,2);assert.equal(mixed.cells.get(2).y,3)
+})
+
+test('the payload that failed live is normalised: whole floor shifts down, nothing negative',()=>{
+  const out=m.normaliseLayout(firstSavePayload.positions,firstSavePayload.zones)
+  assert.equal(JSON.stringify(out.zones.map(z=>z.y)),'[0,3]')
+  assert.equal(JSON.stringify(out.positions.map(p=>[p.x,p.y])),'[[0,1],[1,1],[0,4]]')
+  const odd=m.normaliseLayout([{console_id:1,x:2.4,y:1},{console_id:2,x:250,y:0},{console_id:3,x:2,y:1}],[{label:'  ',x:0,y:0,w:2},{label:'Far',x:300,y:0.6,w:99}])
+  assert.equal(JSON.stringify(odd.positions.map(p=>[p.x,p.y])),'[[2,1],[null,null],[null,null]]')
+  assert.equal(JSON.stringify(odd.zones),'[{"label":"Far","x":199,"y":1,"w":24}]')
+})
+
+test('a device-only layout saved before the fix is cleaned when read back',()=>{
+  const mem=memory();mem.setItem(st.layoutKey(5),JSON.stringify({...firstSavePayload,savedAt:1}))
+  const kept=st.readLocalLayout(5,mem)
+  assert.ok(kept.zones.every(z=>z.y>=0));assert.ok(kept.positions.every(p=>p.y===null||p.y>=0))
 })

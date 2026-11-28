@@ -4,7 +4,7 @@ import { Check, LayoutGrid, Maximize2, Minus, Plus, Sparkles, Tag } from "lucide
 import { cn } from "@/lib/utils"
 import { BOOKING_URL, DASHBOARD_URL } from "@/src/config/env"
 import { creditAuthHeaders } from "@/lib/credit-auth"
-import { STATION_STATE_LABEL, layoutStations, mergeZones, type Station, type StationState, type Zone } from "@/lib/station-map"
+import { STATION_STATE_LABEL, layoutStations, mergeZones, normaliseLayout, type Station, type StationState, type Zone } from "@/lib/station-map"
 import { clearLocalLayout, readLocalLayout, readZoom, writeZoom, zoomKey, type LocalLayout } from "@/lib/station-map-storage"
 import { MAP_CELL_H, MAP_CELL_W, MAP_COLUMNS, MAP_GAP, StateDot, StationTile, mapCellPos } from "./station-tile"
 
@@ -34,7 +34,7 @@ export type StationMapBody = Omit<LocalLayout, "savedAt">
 export async function putStationMap(vendorId: number, body: StationMapBody): Promise<{ ok: boolean; status: number | null; data: any }> {
   try {
     const res = await fetch(`${DASHBOARD_URL}/api/vendor/${vendorId}/station-map`, {
-      method: "PUT", headers: creditAuthHeaders(), body: JSON.stringify(body),
+      method: "PUT", headers: creditAuthHeaders(), body: JSON.stringify(normaliseLayout(body.positions, body.zones)),
     })
     const data = await res.json().catch(() => ({}))
     return { ok: res.ok, status: res.status, data }
