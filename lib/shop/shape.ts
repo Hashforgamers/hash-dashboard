@@ -358,3 +358,17 @@ export function addressFromBuyer(buyer: any): ShopAddress {
     phone,
   }
 }
+
+/**
+ * Email for the cafe's marketplace store account. Medusa needs one and it must not
+ * collide with the owner's gamer account, so the cafe email gets a "+hashcafe<id>"
+ * tag (still delivered to the same inbox by most providers). Without a usable cafe
+ * email, a per-cafe address on the Hash domain is used. Receipts use the email
+ * entered at checkout, not this one.
+ */
+export function cafeStoreEmail(email: unknown, vendorId: number) {
+  const raw = String(email || "").trim().toLowerCase()
+  const match = /^([^\s@+]{1,48})(?:\+[^\s@]*)?@([a-z0-9.-]+\.[a-z]{2,})$/.exec(raw)
+  if (match) return `${match[1]}+hashcafe${vendorId}@${match[2]}`
+  return `cafe-${vendorId}@buyers.hashforgamers.com`
+}

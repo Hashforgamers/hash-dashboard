@@ -6,7 +6,7 @@
  * (POST /auth/customer/hfg-cafe) and keeps the Medusa customer token here.
  */
 import { createHash } from "node:crypto"
-import { cartView, orderDetail, orderSummary, parseAddress, productCard, productDetail } from "./shape"
+import { cafeStoreEmail, cartView, orderDetail, orderSummary, parseAddress, productCard, productDetail } from "./shape"
 
 const MEDUSA_URL = () => (process.env.HASH_MEDUSA_URL || "https://hash-medusa.onrender.com").replace(/\/$/, "")
 const DASHBOARD_URL = () => (process.env.HFG_DASHBOARD_URL || process.env.NEXT_PUBLIC_DASHBOARD_URL || "").replace(/\/$/, "")
@@ -110,11 +110,14 @@ async function customerSession(b: Buyer): Promise<CustomerSession> {
     if (buyer?.owner_name) profile.first_name = String(buyer.owner_name).slice(0, 60)
     const phone = String(buyer?.phone || "").replace(/[^\d+]/g, "")
     if (/^\+?\d{8,15}$/.test(phone)) profile.phone = phone
-    // No email: the owner's email may already belong to their own gamer store account.
+    // Medusa requires an email for a store account, unique among accounts. The owner's own
+    // gamer account may already use their email, so the cafe gets a per-cafe tagged address.
+    profile.email = cafeStoreEmail(buyer?.email, b.vendorId)
     try {
       await call(MEDUSA_URL(), "/store/customers", { method: "POST", body: profile, token, headers: { "x-publishable-api-key": config.publishable_api_key } })
     } catch (error) {
-      if (!(error instanceof ShopError && [400, 409, 422].includes(error.status))) throw error
+      // 409/422: a concurrent first sign-in already created it; the re-exchange decides.
+      if (!(error instanceof ShopError && [409, 422].includes(error.status))) throw error
     }
     token = await exchange(b)
     if (!peekJwt(token).actor_id) throw new ShopError(502, "Your cafe's store account is still being set up. Try again.")
