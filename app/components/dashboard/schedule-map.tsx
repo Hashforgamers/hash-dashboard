@@ -1,7 +1,6 @@
 "use client"
 import { useEffect, useMemo, useState } from "react"
 import { Ban, CalendarDays, Clock, Copy, Eye, Info, LogIn, Phone, Play, Power, UserX, UtensilsCrossed, X } from "lucide-react"
-import { toast } from "sonner"
 import { cn } from "@/lib/utils"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Button } from "@/components/ui/button"
@@ -11,17 +10,16 @@ import { useSocket } from "@/app/context/SocketContext"
 import { buildStations, istClockOf, phoneTail, type Station } from "@/lib/station-map"
 import { applyLocalPositions, zoomKey } from "@/lib/station-map-storage"
 import {
-  bookingWindowOf, gapStartAt, liveActions, paymentLabel, upcomingActions, hourlyDensity, istAt, istDayOf, istMinutesOf, slotCapacityFor, stationDayBlocks, windowAvailability,
+  bookingWindowOf, extensionStart, gapStartAt, liveActions, hourlyDensity, istAt, istDayOf, istMinutesOf, slotCapacityFor, stationDayBlocks, windowAvailability,
   type StationWindow, type WindowBooking, type WindowState,
 } from "@/lib/schedule-map"
 import { CUSTOM_STEP_MINUTES, DURATION_CHIPS, chipDurationLabel, durationLabel, formatRupees } from "@/lib/desk-bill"
 import ExtraBookingOverlay from "../extraBookingOverlay"
 import MealDetailsModal from "../mealsDetailmodal"
-import UpcomingSlotManager from "../upcoming-slot-manager"
 import { calculateExtraAmount, calculateExtraTime, formatTime, normalizeLiveSlot, releaseSlot } from "../current-slot"
-import { ActionButton, CancelBookingDialog, NoShowDialog, useCheckIn } from "./booking-actions"
+import { ActionButton } from "./booking-actions"
+import { BookingSummary, UpcomingActionGrid, useBookingActionHost } from "./booking-card"
 import { useFlexQuote, useFlexSettings } from "../booking/flex-start-picker"
-import { BookingQuickView } from "../booking-quick-view"
 import { FloorCanvas, SELECTED_TILE, SelectedBadge, useStationLayout } from "../station-map/station-picker"
 import { StateDot, StationTile } from "../station-map/station-tile"
 import type { ConsoleType } from "../types"
@@ -83,7 +81,6 @@ export function ScheduleMap({ availableConsoles, selectedConsole, onConsoleChang
   const [duration, setDuration] = useState(60)
   const [selected, setSelected] = useState<number | null>(null)
   const [openId, setOpenId] = useState<number | null>(null)
-  const [details, setDetails] = useState<{ booking: WindowBooking; code: string; name: string } | null>(null)
   const nowMin = istMinutesOf(now)
   useEffect(() => {
     try {
@@ -163,51 +160,27 @@ export function ScheduleMap({ availableConsoles, selectedConsole, onConsoleChang
   }, [station, bookings, day, today, now])
 
   // ---- Booking actions (same flows as the Upcoming list / Gaming Stations map) ----
-  const [cancelling, setCancelling] = useState<{ row: any; paid: boolean } | null>(null)
-  const [noShow, setNoShow] = useState<any | null>(null)
   const [endSlot, setEndSlot] = useState<any | null>(null)
   const [meals, setMeals] = useState<{ bookingId: string; name: string } | null>(null)
-  const [manage, setManage] = useState<{ booking: WindowBooking; code: string; name: string } | null>(null)
   const afterAction = () => { setOpenId(null); void refreshLanding(true); void refreshConsoles(true) }
-  const checkIn = useCheckIn(vendorId, afterAction)
+  const actions = useBookingActionHost(vendorId, afterAction)
   const clockMs = (ms: number) => showClock(istClockOf(ms))
-  const copyPhone = (phone: string) => {
-    void navigator.clipboard?.writeText(phone).then(() => toast.success("Phone number copied"), () => toast.error("Could not copy"))
-  }
   const extend = (st: Station, minutes: number) => {
     if (st.end === null || !consoleItem) return
     setOpenId(null)
+    const next = extensionStart(st, now)
     onBook({
-      type: st.type, gameId: st.gameId ?? undefined, stationId: st.id,
-      startClock: istClockOf(Math.max(st.end, now)), durationMin: minutes,
+      type: st.type, gameId: st.gameId ?? undefined, stationId: st.id, mode: "extend",
+      startClock: istClockOf(next.start), durationMin: minutes,
       customer: st.player ? { name: st.player, phone: st.phone } : undefined,
-      extendsBookingId: st.end > now && st.end % 60000 === 0 ? st.bookingId ?? undefined : undefined,
+      extendsBookingId: next.extendsBookingId ?? undefined,
     })
-  }
-
-  function UpcomingActions({ booking, code, name, compact }: { booking: WindowBooking; code: string; name: string; compact?: boolean }) {
-    const rules = upcomingActions(booking, now, clockMs)
-    const row = booking.raw || {}
-    return (
-      <div className={cn("grid gap-2", compact ? "grid-cols-3" : "grid-cols-2")}>
-        <ActionButton rule={rules.checkIn} tone="primary" className={compact ? "" : "col-span-2"} onClick={() => { setOpenId(null); checkIn.open(row, booking.stationId) }}>
-          <LogIn className="h-3.5 w-3.5" />Check in{booking.stationId && !compact ? ` on ${code}` : ""}
-        </ActionButton>
-        <ActionButton rule={rules.noShow} tone="warning" onClick={() => { setOpenId(null); setNoShow(row) }}><UserX className="h-3.5 w-3.5" />No-show</ActionButton>
-        <ActionButton rule={rules.cancel} tone="danger" onClick={() => { setOpenId(null); setCancelling({ row, paid: rules.paid }) }}><Ban className="h-3.5 w-3.5" />Cancel</ActionButton>
-        {!compact && <>
-          <ActionButton rule={{ enabled: !!booking.phone, reason: "No phone on this booking" }} onClick={() => copyPhone(booking.phone)}><Copy className="h-3.5 w-3.5" />Copy phone</ActionButton>
-          <ActionButton rule={{ enabled: true, reason: "" }} onClick={() => { setOpenId(null); setManage({ booking, code, name }) }}><Eye className="h-3.5 w-3.5" />Details & times</ActionButton>
-        </>}
-      </div>
-    )
   }
 
   function TilePopover({ station: st, window: w, onClose }: { station: Station; window: StationWindow; onClose: () => void }) {
     const live = w.state === "busy"
     const b = w.booking
     const rules = live ? liveActions(st, true) : null
-    const pay = b?.raw ? paymentLabel(b.raw) : null
     return (
       <div className="text-sm">
         <div className="flex items-start justify-between gap-2 border-b border-border px-4 py-3">
@@ -220,18 +193,10 @@ export function ScheduleMap({ availableConsoles, selectedConsole, onConsoleChang
           <button type="button" aria-label="Close" className="text-muted-foreground hover:text-foreground" onClick={onClose}><X className="h-4 w-4" /></button>
         </div>
         <div className="space-y-3 px-4 py-3">
-          {b ? (
-            <div className="flex items-start justify-between gap-3">
-              <div className="min-w-0">
-                <p className="truncate font-medium text-foreground">{b.name}</p>
-                {b.phone && <a href={`tel:${b.phone}`} className="mt-0.5 inline-flex items-center gap-1 text-xs tabular-nums text-primary hover:underline"><Phone className="h-3 w-3" />{b.phone}</a>}
-              </div>
-              <div className="shrink-0 text-right">
-                <p className="text-xs tabular-nums text-foreground">{clockMs(b.start)} – {clockMs(b.end)}</p>
-                <p className="mt-0.5 text-[11px] text-muted-foreground">{b.bookingId ? `#${b.bookingId}` : ""}{pay ? ` · ${pay}` : ""}{live && st.amountDue > 0 ? ` · ${formatRupees(st.amountDue)} due` : ""}</p>
-              </div>
-            </div>
-          ) : <p className="text-xs text-muted-foreground">Taken for part of this time{w.freeFrom ? ` (free from ${clockMs(w.freeFrom)})` : ""}.</p>}
+          {b ? <>
+            <BookingSummary booking={b} code={st.code} />
+            {live && st.amountDue > 0 && <p className="text-xs text-amber-300">{formatRupees(st.amountDue)} due on this session</p>}
+          </> : <p className="text-xs text-muted-foreground">Taken for part of this time{w.freeFrom ? ` (free from ${clockMs(w.freeFrom)})` : ""}.</p>}
 
           {live && rules ? <>
             <div>
@@ -243,9 +208,9 @@ export function ScheduleMap({ availableConsoles, selectedConsole, onConsoleChang
             <div className="grid grid-cols-2 gap-2">
               <ActionButton rule={rules.meals} onClick={() => { onClose(); setMeals({ bookingId: String(st.bookingId), name: st.player || "Guest" }) }}><UtensilsCrossed className="h-3.5 w-3.5" />Add meals</ActionButton>
               <ActionButton rule={rules.end} tone="danger" onClick={() => { onClose(); setEndSlot(normalizeLiveSlot(st.liveSlot)) }}><Power className="h-3.5 w-3.5" />{rules.due ? "End & collect" : "End session"}</ActionButton>
-              {b && <ActionButton rule={{ enabled: true, reason: "" }} className="col-span-2" onClick={() => { onClose(); setDetails({ booking: b, code: st.code, name: st.fullName }) }}><Eye className="h-3.5 w-3.5" />Details</ActionButton>}
+              {b && <ActionButton rule={{ enabled: true, reason: "" }} className="col-span-2" onClick={() => { onClose(); actions.details({ booking: b, code: st.code, name: st.fullName, live: true }) }}><Eye className="h-3.5 w-3.5" />Details</ActionButton>}
             </div>
-          </> : b ? <UpcomingActions booking={b} code={st.code} name={st.fullName} /> : null}
+          </> : b ? <UpcomingActionGrid booking={b} code={st.code} name={st.fullName} now={now} host={actions} before={onClose} /> : null}
 
           {w.freeFrom && istDayOf(w.freeFrom) === day && (
             <button type="button" className="inline-flex w-full items-center justify-center gap-1.5 rounded-md border border-dashed border-border px-2.5 py-1.5 text-xs text-muted-foreground hover:border-primary/60 hover:text-foreground"
@@ -389,7 +354,7 @@ export function ScheduleMap({ availableConsoles, selectedConsole, onConsoleChang
                           <span className="truncate font-medium text-foreground">{b.name}</span>
                           <span className="shrink-0 text-xs tabular-nums text-muted-foreground">{clockMs(b.start)} – {clockMs(b.end)}{b.bookingId ? ` · #${b.bookingId}` : ""}</span>
                         </div>
-                        <UpcomingActions booking={b} code="" name={consoleItem?.name || ""} compact />
+                        <UpcomingActionGrid booking={b} code="" name={consoleItem?.name || ""} now={now} host={actions} compact before={() => setOpenId(null)} />
                       </div>
                     ))}
                   </div>
@@ -397,6 +362,11 @@ export function ScheduleMap({ availableConsoles, selectedConsole, onConsoleChang
               </Popover>
             )}
             {window_.end <= now && <p className="mt-0.5 text-xs text-muted-foreground">This time has passed. Pick a later start.</p>}
+            {flex.flex_enabled && !quote.loading && !quoteStations && quote.problem && ["network", "error"].includes(quote.problem.code) && (
+              <p className="mt-0.5 flex items-center gap-1 text-xs text-amber-300"><Info className="h-3.5 w-3.5 shrink-0" />
+                Live check unavailable ({quote.problem.message.replace(/\.$/, "")}). Showing known sessions and bookings.
+                <button type="button" className="font-semibold underline" onClick={quote.retry}>Retry</button></p>
+            )}
           </div>}
           legend={<div className="flex flex-wrap items-center gap-1.5" aria-label="Legend">
             {(["free", "booked", "busy", "offline"] as WindowState[]).map(state => (
@@ -484,34 +454,14 @@ export function ScheduleMap({ availableConsoles, selectedConsole, onConsoleChang
         </section>
       )}
 
-      {checkIn.dialog}
-      {cancelling && <CancelBookingDialog booking={cancelling.row} paid={cancelling.paid} onClose={() => setCancelling(null)} onDone={() => { setCancelling(null); afterAction() }} />}
-      {noShow && <NoShowDialog booking={noShow} onClose={() => setNoShow(null)} onDone={() => { setNoShow(null); afterAction() }} />}
+      {actions.host}
       {meals && <MealDetailsModal isOpen onClose={() => setMeals(null)} bookingId={meals.bookingId} customerName={meals.name} initialMode="add" vendorId={vendorId ? String(vendorId) : undefined} />}
       {endSlot && (
         <ExtraBookingOverlay showOverlay setShowOverlay={open => { if (!open) setEndSlot(null) }} selectedSlot={endSlot} vendorId={vendorId}
           setRefreshSlots={() => afterAction()} setSelectedSlot={setEndSlot}
           calculateExtraTime={calculateExtraTime} calculateExtraAmount={calculateExtraAmount} formatTime={formatTime} releaseSlot={releaseSlot} />
       )}
-      {manage && (
-        <BookingQuickView open onClose={() => setManage(null)} userId={manage.booking.raw?.userId} booking={{
-          bookingId: manage.booking.bookingId, name: manage.booking.name, phone: manage.booking.phone || null, email: manage.booking.raw?.customer_email || null,
-          console: `${manage.code} · ${manage.name}`,
-          when: `${dayLabel(istDayOf(manage.booking.start), today)} · ${showClock(istClockOf(manage.booking.start))} – ${showClock(istClockOf(manage.booking.end))}`,
-          status: manage.booking.status || "Confirmed",
-        }}>
-          <UpcomingSlotManager booking={manage.booking.raw || {}} vendorId={String(vendorId || "")} onChanged={afterAction}
-            onRemove={row => { setManage(null); setCancelling({ row, paid: paymentLabel(row) === "Paid" }) }} />
-        </BookingQuickView>
-      )}
-      {details && (
-        <BookingQuickView open onClose={() => setDetails(null)} booking={{
-          bookingId: details.booking.bookingId, name: details.booking.name, phone: details.booking.phone || null, email: null,
-          console: `${details.code} · ${details.name}`,
-          when: `${dayLabel(istDayOf(details.booking.start), today)} · ${showClock(istClockOf(details.booking.start))} – ${showClock(istClockOf(details.booking.end))}`,
-          status: details.booking.status || "Confirmed",
-        }} />
-      )}
+
     </div>
   )
 }

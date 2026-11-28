@@ -1,5 +1,5 @@
 "use client"
-import { useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import { BOOKING_URL } from "@/src/config/env"
 import { creditAuthHeaders } from "@/lib/credit-auth"
 import { cn } from "@/lib/utils"
@@ -196,34 +196,53 @@ export function useFlexQuote({ vendor, gameId, date, clock, minutes, players, sq
   const [quote, setQuote] = useState<FlexQuote | null>(null)
   const [problem, setProblem] = useState<FlexQuoteError | null>(null)
   const [loading, setLoading] = useState(false)
+  const [attempt, setAttempt] = useState(0)
   const day = date || istDate()
 
   useEffect(() => {
     if (!enabled || !vendor || !gameId || !clock || !(minutes > 0)) { setQuote(null); setProblem(null); setLoading(false); return }
     const abort = new AbortController()
+    let timedOut = false
     setLoading(true)
-    const timer = setTimeout(() => {
-      fetch(`${BOOKING_URL}/api/vendor/${vendor}/flex-booking/quote`, {
-        method: "POST", headers: creditAuthHeaders(), signal: abort.signal,
-        body: JSON.stringify({
-          gameId, startAt: istStartAt(day, clock), durationMinutes: minutes, players,
-          squadDetails: { enabled: squad, playerCount: players },
-          deskProfile: deskProfile || undefined, deskRevision: deskProfile ? deskRevision : undefined,
-          pricingGame: deskProfile ? (pricingGame ?? "") : undefined,
-          extendsBookingId: extendsBookingId || undefined,
-        }),
-      })
+    const body = JSON.stringify({
+      gameId, startAt: istStartAt(day, clock), durationMinutes: minutes, players,
+      squadDetails: { enabled: squad, playerCount: players },
+      deskProfile: deskProfile || undefined, deskRevision: deskProfile ? deskRevision : undefined,
+      pricingGame: deskProfile ? (pricingGame ?? "") : undefined,
+      extendsBookingId: extendsBookingId || undefined,
+    })
+    // A slow or dropped request (gateway timeout, cold start) is retried once before telling staff.
+    const send = (tries: number): Promise<{ ok: boolean; data: any }> => {
+      const guard = new AbortController()
+      const onAbort = () => guard.abort()
+      abort.signal.addEventListener("abort", onAbort)
+      const timer = setTimeout(() => { timedOut = true; guard.abort() }, 15_000)
+      return fetch(`${BOOKING_URL}/api/vendor/${vendor}/flex-booking/quote`, { method: "POST", headers: creditAuthHeaders(), signal: guard.signal, body })
         .then(async response => ({ ok: response.ok, data: await response.json().catch(() => ({})) }))
+        .catch(error => {
+          if (abort.signal.aborted || tries <= 0) throw error
+          timedOut = false
+          return new Promise<{ ok: boolean; data: any }>(resolve => setTimeout(resolve, 800)).then(() => send(tries - 1))
+        })
+        .finally(() => { clearTimeout(timer); abort.signal.removeEventListener("abort", onAbort) })
+    }
+    const timer = setTimeout(() => {
+      send(1)
         .then(({ ok, data }) => {
           if (abort.signal.aborted) return
           if (ok && data?.success) { setQuote(data as FlexQuote); setProblem(null) }
-          else { setQuote(null); setProblem({ success: false, code: data?.code || "error", message: data?.message || "Could not check this time.", ...data }) }
+          else { setQuote(null); setProblem({ success: false, code: data?.code || "error", message: data?.message || data?.error || "Could not check this time.", ...data }) }
         })
-        .catch(() => { if (!abort.signal.aborted) { setQuote(null); setProblem({ success: false, code: "network", message: "Could not reach the booking service." }) } })
+        .catch(() => {
+          if (abort.signal.aborted) return
+          setQuote(null)
+          setProblem({ success: false, code: "network", message: timedOut ? "The booking service took too long to answer." : "Could not reach the booking service." })
+        })
         .finally(() => { if (!abort.signal.aborted) setLoading(false) })
     }, 150)
     return () => { clearTimeout(timer); abort.abort() }
-  }, [enabled, vendor, gameId, day, clock, minutes, players, squad, deskProfile, deskRevision, pricingGame, extendsBookingId])
+  }, [enabled, vendor, gameId, day, clock, minutes, players, squad, deskProfile, deskRevision, pricingGame, extendsBookingId, attempt])
 
-  return { quote, problem, loading }
+  const retry = useCallback(() => setAttempt(n => n + 1), [])
+  return { quote, problem, loading, retry }
 }

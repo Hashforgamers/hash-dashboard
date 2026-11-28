@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils"
 import { contiguousDeskSlots, coveringDeskSlots } from "@/lib/desk-time-range"
 import { StationFloorPicker, useDeskStations, useStationLayout, type PickerStation } from "./station-map/station-picker"
 import { applyLocalPositions, zoomKey } from "@/lib/station-map-storage"
+import { bookingWindowOf, istAt, windowAvailability, type WindowBooking } from "@/lib/schedule-map"
 import { STATION_STATE_LABEL, buildStations, istClockOf } from "@/lib/station-map"
 import { deskSubtotal, rateLabel, resolveSessionRate, useDeskCards } from "./desk-rate-card"
 import { useFlexQuote, useFlexSettings } from "./booking/flex-start-picker"
@@ -250,6 +251,11 @@ interface SlotBookingFormProps {
 }
 
 /** Station map: open the form on one station, optionally prefilled (extend). */
+const clockToMinutes = (clock: string): number | null => {
+  const match = /^(\d{1,2}):(\d{2})/.exec(clock || "")
+  return match ? Number(match[1]) * 60 + Number(match[2]) : null
+}
+
 export type BookingPreset = {
   stationId: number
   startClock?: string
@@ -257,6 +263,7 @@ export type BookingPreset = {
   customer?: { name: string; phone: string; email: string }
   extendsBookingId?: number
   date?: string // yyyy-mm-dd (IST); Schedule map books future days
+  mode?: "extend" // compact Extend session sheet: station, player and start are fixed
 }
 
 const resolveSafeConsoleIcon = (iconCandidate: unknown, slugHint?: string) => {
@@ -1433,7 +1440,7 @@ const getEffectivePrice = (slot: SelectedSlot): number => slotUnitPrice(slot, ac
   const controllersIncluded = !!deskCard?.definition.controllers_included
   const supportsExtraController = !controllersIncluded && selectedControllerType !== null && hasControllerPricingConfigured
   const bookingFlowMode: "solo" | "squad" = isSquadMode ? "squad" : "solo"
-  const { quote: flexQuote, problem: flexProblem, loading: flexLoading } = useFlexQuote({
+  const { quote: flexQuote, problem: flexProblem, loading: flexLoading, retry: retryFlexQuote } = useFlexQuote({
     enabled: isOpen && flexMode, vendor: settingsVendorId, gameId: Number(activePickerConsole), date: startDate,
     clock: startClock, minutes: durationMin, players: isSquadMode ? squadPlayerCount : 1, squad: isSquadMode,
     deskProfile: deskCard?.profile, deskRevision: deskCard?.revision, pricingGame,
@@ -1459,12 +1466,26 @@ const getEffectivePrice = (slot: SelectedSlot): number => slotUnitPrice(slot, ac
     // Live states only need to be fresh when the form opens or data arrives.
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [isOpen, floorConsoles, floorLanding, floorLayout.local])
+  const quoteUnverified = stationSource === "flex" && !flexLoading && !flexQuote && !!flexProblem
+    && !(flexProblem.stations && flexProblem.stations.length) && ["network", "error"].includes(flexProblem.code)
+  const fallbackAvailability = useMemo(() => {
+    if (!quoteUnverified) return null
+    const startMinutes = clockToMinutes(startClock)
+    if (startMinutes === null) return null
+    const rows: any[] = [...(Array.isArray(floorLanding?.upcomingBookings) ? floorLanding.upcomingBookings : []), ...(Array.isArray(floorLanding?.currentSlots) ? floorLanding.currentSlots : [])]
+    const bookings = rows.map(bookingWindowOf).filter((b): b is WindowBooking => !!b && b.bookingId !== (preset?.extendsBookingId ?? -1))
+    const start = istAt(startDate, startMinutes)
+    return windowAvailability(floorStations, bookings, { start, end: start + durationMin * 60000 }, Date.now(), Number(activePickerConsole) || null).stations
+  }, [quoteUnverified, startClock, startDate, durationMin, floorLanding, floorStations, activePickerConsole, preset?.extendsBookingId])
   const pickerStations: PickerStation[] = useMemo(() => {
     const gameId = Number(activePickerConsole)
     const slug = pickerConsoleItem?.type || ""
     const flexRows = stationSource === "flex" ? (flexQuote?.stations || flexProblem?.stations || []) : []
     const deskIds = new Set(stationSource === "desk" ? deskStations.rows.map(row => row.id) : [])
     const flexById = new Map(flexRows.map(row => [row.console_id, row]))
+    // The quote could not be checked: never paint every station Booked. Fall back to what the
+    // dashboard knows (live sessions and bookings with a station) and mark it unconfirmed.
+    const known = quoteUnverified ? fallbackAvailability : null
     const ids = new Set<number>([
       ...floorStations.filter(st => st.gameId === gameId || (!!slug && st.type === slug)).map(st => st.id),
       ...flexRows.map(row => row.console_id), ...deskIds,
@@ -1472,16 +1493,21 @@ const getEffectivePrice = (slot: SelectedSlot): number => slotUnitPrice(slot, ac
     return Array.from(ids).map(id => {
       const st = floorStations.find(item => item.id === id)
       const flexRow = flexById.get(id)
-      const available = stationSource === "flex" ? !!flexRow?.available : stationSource === "desk" ? deskIds.has(id) : false
+      const knownState = known?.get(id)?.state
+      const available = known ? knownState === "free" : stationSource === "flex" ? !!flexRow?.available : stationSource === "desk" ? deskIds.has(id) : false
       // A live session only explains a clash for today's bookings.
       const liveToday = startDate === istDate()
       const liveState = liveToday && st?.state && st.state !== "free" ? st.state : "booked"
+      const knownBooking = known?.get(id)?.booking
       const reason = !stationSource ? "Stations are assigned when the session starts"
         : st?.state === "offline" ? "Offline / maintenance"
+        : known && available ? "Not confirmed yet: the booking service did not answer"
+        : known && knownBooking ? `${knownState === "busy" ? "In session" : "Booked"} until ${showClock(istClockOf(knownBooking.end))}`
         : flexRow && !flexRow.available ? (flexRow.max_minutes_available > 0 && flexRow.next_busy_at ? `Busy from ${showClock(String(flexRow.next_busy_at).slice(11, 16))}` : "Busy for this time")
         : liveToday && (st?.state === "busy" || st?.state === "ending") && st.end ? `In session until ${showClock(istClockOf(st.end))}`
         : "Booked for this time"
       const caption = !stationSource ? STATION_STATE_LABEL[st?.state || "free"]
+        : known && available ? "Free (unconfirmed)"
         : liveToday && (st?.state === "busy" || st?.state === "ending") && st.end ? `Till ${showClock(istClockOf(st.end))}`
         : st?.state === "offline" ? "Offline" : "Booked"
       return {
@@ -1492,7 +1518,7 @@ const getEffectivePrice = (slot: SelectedSlot): number => slotUnitPrice(slot, ac
         available, state: available ? "free" : !stationSource ? (st?.state || "free") : liveState, reason, caption,
       }
     })
-  }, [activePickerConsole, pickerConsoleItem, stationSource, flexQuote, flexProblem, deskStations.rows, floorStations, showClock, startDate])
+  }, [activePickerConsole, pickerConsoleItem, stationSource, flexQuote, flexProblem, deskStations.rows, floorStations, showClock, startDate, quoteUnverified, fallbackAvailability])
   const stationAvailableKey = pickerStations.filter(st => st.available).map(st => st.id).join(",")
   // Drop picks that stopped being free; re-pick the station chosen on the floor map when it is free.
   useEffect(() => {
@@ -2247,6 +2273,20 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
     }
   }
 
+  // Escape closes the form from anywhere (focus may still be on the page behind it).
+  const escapeState = useRef({ onClose, busy: false })
+  escapeState.current = { onClose, busy: isSubmitting || isMealSelectorOpen || showCreditAccountModal || isFieldConfigOpen || !!upiQrBooking }
+  useEffect(() => {
+    if (!isOpen) return
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key !== "Escape" || event.defaultPrevented || escapeState.current.busy) return
+      if ((event.target as HTMLElement | null)?.closest?.("[role='listbox'], [role='menu'], .slot-booking-popover")) return
+      escapeState.current.onClose()
+    }
+    window.addEventListener("keydown", onKey)
+    return () => window.removeEventListener("keydown", onKey)
+  }, [isOpen])
+
   if (!isOpen) return null
 
   if (!portalReady) return null
@@ -2272,6 +2312,8 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
     windowStart && windowEnd ? sessionWindowLabel(windowStart, windowEnd, sessionMinutes, showClock) : null,
     activePickerDate !== istDate() ? new Date(`${startDate}T12:00:00`).toLocaleDateString("en-GB", { day: "numeric", month: "short" }) : null,
   ].filter(Boolean).join(" · ")
+  // A quote that did not come back must not look like a ₹0 session.
+  const priceKnown = !flexMode || !!flexQuote
   const confirmBlocked = selectedSlots.length === 0 || isSubmitting || submissionUncertain || slotShortfall
     || (flexMode && (!flexActive || flexLoading))
     || (!!deskCard && !stationAuto && !(flexMode ? flexConsoleIds : deskConsoleIds))
@@ -2291,6 +2333,101 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
     if (target.closest("input, textarea, select, [role='listbox'], .slot-booking-popover")) return
     event.preventDefault()
     if (!confirmBlocked) (document.getElementById("slot-booking-form") as HTMLFormElement | null)?.requestSubmit()
+  }
+
+  const extendMode = preset?.mode === "extend"
+  if (extendMode) {
+    const station = floorStations.find(st => st.id === preset?.stationId)
+    const code = station?.code || pickerStations.find(st => st.id === preset?.stationId)?.code || "Station"
+    const quoteRow = (flexQuote?.stations || flexProblem?.stations || []).find(row => row.console_id === preset?.stationId)
+    const startMinutes = clockToMinutes(startClock) ?? 0
+    const endLabel = windowEnd ? showClock(clock(windowEnd)) : showClock(`${String(Math.floor((startMinutes + durationMin) / 60) % 24).padStart(2, "0")}:${String((startMinutes + durationMin) % 60).padStart(2, "0")}`)
+    const maxMinutes = quoteRow && !quoteRow.available ? Math.floor((quoteRow.max_minutes_available || 0) / CUSTOM_STEP_MINUTES) * CUSTOM_STEP_MINUTES : null
+    const busyFrom = quoteRow?.next_busy_at ? showClock(String(quoteRow.next_busy_at).slice(11, 16)) : null
+    const blockedNote = quoteRow && !quoteRow.available
+      ? `${code} is booked${busyFrom ? ` from ${busyFrom}` : " for part of this time"}${maxMinutes ? `, max +${durationLabel(maxMinutes)}` : ""}.`
+      : !flexMode && timeStatus ? timeStatus : ""
+    const extendChoices = [15, 30, 45, 60, 90, 120]
+    const needsPlayer = !name.trim() || (bookingFieldConfig.phone.visible && bookingFieldConfig.phone.required && !phone.trim())
+    return createPortal(
+      <div style={{ zIndex: overlayZIndex }} className="fixed inset-0 flex items-center justify-center bg-black/60 p-3 backdrop-blur-sm" onKeyDown={confirmOnEnter}>
+        <div role="dialog" aria-modal="true" aria-label="Extend session" data-booking-form style={{ maxWidth: 480 }} className="slot-booking-modal flex max-h-[92vh] w-full flex-col overflow-hidden rounded-xl border shadow-xl">
+          <div className="flex items-start justify-between gap-3 border-b border-border px-5 py-4">
+            <div className="min-w-0">
+              <h2 className="text-lg font-semibold text-foreground">Extend session</h2>
+              <p className="mt-0.5 truncate text-sm text-muted-foreground">{code} · {name || "Guest"}</p>
+            </div>
+            <button type="button" onClick={onClose} aria-label="Close" className="slot-booking-modal-close rounded-lg p-2"><X className="h-5 w-5" /></button>
+          </div>
+          <form id="slot-booking-form" onSubmit={handleSubmit} className="min-h-0 flex-1 space-y-4 overflow-y-auto px-5 py-4 text-sm">
+            {submitError && <div role="alert" className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-200">{submitError}</div>}
+            <div className="flex items-end justify-between gap-3 rounded-xl border border-border bg-muted/25 px-4 py-3">
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">Until</p>
+                <p className="text-3xl font-semibold leading-tight tabular-nums text-foreground">{endLabel}</p>
+                <p className="text-xs tabular-nums text-muted-foreground">from {showClock(startClock)} · +{durationLabel(durationMin)}</p>
+              </div>
+              <div className="text-right">
+                <p className="text-[11px] text-muted-foreground">Extra · GST incl.</p>
+                <p className="text-2xl font-semibold tabular-nums text-foreground">{priceKnown ? formatRupees(totalAmount) : "—"}</p>
+              </div>
+            </div>
+            <div className={segGroup} role="radiogroup" aria-label="Extra time">
+              {extendChoices.map(m => (
+                <button key={m} type="button" role="radio" aria-checked={durationMin === m} disabled={isSubmitting} onClick={() => setDurationMin(m)} className={segItem(durationMin === m)}>+{chipDurationLabel(m)}</button>
+              ))}
+            </div>
+            {flexLoading ? <p role="status" className="text-xs text-muted-foreground">Checking {code}…</p>
+              : quoteUnverified ? (
+                <div role="alert" className="flex items-center justify-between gap-3 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-200">
+                  <span>{flexProblem?.message} Price and {code} are not confirmed yet.</span>
+                  <button type="button" className="shrink-0 font-semibold underline" onClick={retryFlexQuote}>Retry</button>
+                </div>
+              ) : blockedNote ? (
+                <div role="status" className="flex items-center justify-between gap-3 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-200">
+                  <span>{blockedNote}</span>
+                  {maxMinutes ? <button type="button" className="shrink-0 font-semibold underline" onClick={() => setDurationMin(maxMinutes)}>Use +{durationLabel(maxMinutes)}</button> : null}
+                </div>
+              ) : flexProblem ? <p role="status" className="text-xs text-amber-300">{flexProblem.message}</p>
+              : <p role="status" className="text-xs text-emerald-400">{code} is free until {endLabel}.</p>}
+            {needsPlayer && (
+              <div className="grid grid-cols-2 gap-2">
+                <input value={name} onChange={e => handleNameInputChange(e.target.value)} placeholder="Player Name" aria-label="Player name" className="h-10 rounded-lg border border-border bg-background px-3 text-sm" />
+                <input type="tel" value={phone} onChange={e => handlePhoneInputChange(e.target.value)} placeholder="Mobile Number" aria-label="Mobile number" className="h-10 rounded-lg border border-border bg-background px-3 text-sm" />
+                {(errors.name || errors.phone) && <p className="col-span-2 text-xs text-red-500">{errors.name || errors.phone}</p>}
+              </div>
+            )}
+            {bill.lines.length > 0 && priceKnown && (
+              <dl className="space-y-1 rounded-lg border border-border bg-muted/25 px-3 py-2 text-xs" aria-label="Bill">
+                {bill.lines.map(line => (
+                  <div key={line.key} className="flex items-baseline justify-between gap-3 tabular-nums">
+                    <dt className="truncate text-muted-foreground">{line.label}</dt>
+                    <dd className={line.tone === "discount" ? "text-emerald-400" : "text-foreground/90"}>{formatRupees(line.amount)}</dd>
+                  </div>
+                ))}
+              </dl>
+            )}
+            <div>
+              <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">Payment</p>
+              {paymentSelector}
+              {paymentHint && <p className="mt-1.5 text-xs text-muted-foreground">{paymentHint}</p>}
+              {errors.payment && <p className="mt-1.5 text-xs text-red-500">{errors.payment}</p>}
+            </div>
+            {paymentDetails}
+          </form>
+          <div className="slot-booking-modal-footer border-t px-5 py-4">
+            <Button type="submit" form="slot-booking-form" disabled={confirmBlocked || !priceKnown} className="ui-action-primary h-11 w-full gap-2 text-base font-semibold disabled:opacity-50">
+              {isSubmitting ? <><Loader2 className="h-4 w-4 animate-spin" />Extending…</> : <><CheckCircle className="h-4 w-4" />Extend to {endLabel}{priceKnown ? ` · ${formatRupees(totalAmount)}` : ""}</>}
+            </Button>
+          </div>
+        </div>
+        <CreditAccountModal open={showCreditAccountModal} vendorId={getVendorIdFromToken()}
+          customer={{ userId: matchedPrimaryUser?.id ?? null, name, email, phone }}
+          onClose={() => setShowCreditAccountModal(false)}
+          onCreated={({ account }) => { setCreditAccount(account); setShowCreditAccountModal(false) }} />
+      </div>,
+      document.body,
+    )
   }
 
   return createPortal(
@@ -2526,13 +2663,67 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                     </div>
                   </div>
                 )}
-                {timeStatus && <p role="status" className="mt-2 text-xs text-amber-400">{timeStatus}</p>}
+                {timeStatus && <p role="status" className="mt-2 text-xs text-amber-400">{timeStatus}{quoteUnverified && <> Price and stations are not confirmed. <button type="button" className="font-semibold underline" onClick={retryFlexQuote}>Retry</button></>}</p>}
                 {deskRateError && <p role="status" className="mt-2 text-xs text-amber-400">{deskRateError} Reopen to retry.</p>}
                 {variantPricingRequired && !matchingDeskCards.length && <p role="alert" className="mt-2 text-xs text-amber-400">No rate covers this time and player count.</p>}
               </FormSection>
 
               <FormSection label={isSquadMode ? "Captain" : "Player"}>
               <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+                      <div className="relative">
+                        <input
+                          type="text"
+                          value={name}
+                          onChange={(e) => handleNameInputChange(e.target.value)}
+                          onFocus={handleNameFocus}
+                          onBlur={handleBlur}
+                          autoComplete="off"
+                          placeholder={isSquadMode ? "Captain Name" : "Player Name"}
+                          className={cn(
+                            "h-10 w-full rounded-lg border bg-background pl-10 pr-4 text-sm transition-colors duration-150",
+                            errors.name
+                              ? "border-red-500 focus:border-ring"
+                              : focusedInput === "name"
+                              ? "border-ring"
+                              : "border-border focus:border-ring",
+                            "focus:outline-none focus:ring-1 focus:ring-ring/40"
+                          )}
+                        />
+                        <User className="w-4 h-4 text-muted-foreground absolute left-3 top-3" />
+                        <AnimatePresence>
+                          {focusedInput === "name" && (nameSuggestions.length > 0 || isSuggestionLoading.name) && (
+                            <motion.ul
+                              initial={{ opacity: 0, y: -5 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0, y: -5 }}
+                              className="absolute z-20 bg-muted border border-border rounded-lg shadow-lg w-full mt-1 max-h-40 overflow-y-auto"
+                            >
+                              {isSuggestionLoading.name && nameSuggestions.length === 0 && (
+                                <li className="px-3 py-2 text-sm text-muted-foreground">Searching customers…</li>
+                              )}
+                              {nameSuggestions.slice(0, 5).map((user, idx) => (
+                                <motion.li
+                                  key={idx}
+                                  whileHover={{ backgroundColor: "rgba(16, 185, 129, 0.1)" }}
+                                  className="px-3 py-2 hover:bg-emerald-900/30 cursor-pointer border-b border-border last:border-b-0"
+                                  onMouseDown={() => handleSuggestionClick(user)}
+                                >
+                                  <div className="flex items-center gap-2">
+                                    <div className="p-1 bg-emerald-900/30 rounded-full">
+                                      <User className="w-3 h-3 text-emerald-600" />
+                                    </div>
+                                    <div>
+                                      <p className="font-medium text-foreground text-sm">{user.name}</p>
+                                      <p className="text-muted-foreground text-xs">{user.phone || user.email}</p>
+                                    </div>
+                                  </div>
+                                </motion.li>
+                              ))}
+                            </motion.ul>
+                          )}
+                        </AnimatePresence>
+                        {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name}</p>}
+                      </div>
                       {bookingFieldConfig.phone.visible && (
                         <div className="relative">
                           <input
@@ -2589,60 +2780,6 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                           {errors.phone && <p className="text-red-500 text-xs mt-1">{errors.phone}</p>}
                         </div>
                       )}
-                      <div className="relative">
-                        <input
-                          type="text"
-                          value={name}
-                          onChange={(e) => handleNameInputChange(e.target.value)}
-                          onFocus={handleNameFocus}
-                          onBlur={handleBlur}
-                          autoComplete="off"
-                          placeholder={isSquadMode ? "Captain Name" : "Player Name"}
-                          className={cn(
-                            "h-10 w-full rounded-lg border bg-background pl-10 pr-4 text-sm transition-colors duration-150",
-                            errors.name
-                              ? "border-red-500 focus:border-ring"
-                              : focusedInput === "name"
-                              ? "border-ring"
-                              : "border-border focus:border-ring",
-                            "focus:outline-none focus:ring-1 focus:ring-ring/40"
-                          )}
-                        />
-                        <User className="w-4 h-4 text-muted-foreground absolute left-3 top-3" />
-                        <AnimatePresence>
-                          {focusedInput === "name" && (nameSuggestions.length > 0 || isSuggestionLoading.name) && (
-                            <motion.ul
-                              initial={{ opacity: 0, y: -5 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              exit={{ opacity: 0, y: -5 }}
-                              className="absolute z-20 bg-muted border border-border rounded-lg shadow-lg w-full mt-1 max-h-40 overflow-y-auto"
-                            >
-                              {isSuggestionLoading.name && nameSuggestions.length === 0 && (
-                                <li className="px-3 py-2 text-sm text-muted-foreground">Searching customers…</li>
-                              )}
-                              {nameSuggestions.slice(0, 5).map((user, idx) => (
-                                <motion.li
-                                  key={idx}
-                                  whileHover={{ backgroundColor: "rgba(16, 185, 129, 0.1)" }}
-                                  className="px-3 py-2 hover:bg-emerald-900/30 cursor-pointer border-b border-border last:border-b-0"
-                                  onMouseDown={() => handleSuggestionClick(user)}
-                                >
-                                  <div className="flex items-center gap-2">
-                                    <div className="p-1 bg-emerald-900/30 rounded-full">
-                                      <User className="w-3 h-3 text-emerald-600" />
-                                    </div>
-                                    <div>
-                                      <p className="font-medium text-foreground text-sm">{user.name}</p>
-                                      <p className="text-muted-foreground text-xs">{user.phone || user.email}</p>
-                                    </div>
-                                  </div>
-                                </motion.li>
-                              ))}
-                            </motion.ul>
-                          )}
-                        </AnimatePresence>
-                        {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name}</p>}
-                      </div>
                       {bookingFieldConfig.email.visible && (
                         <div className="relative">
                           <input
@@ -2852,10 +2989,10 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
               </div>
               <div className="shrink-0 text-right">
                 <p className="text-[11px] text-muted-foreground">Total · GST incl.</p>
-                <strong className="text-3xl font-semibold leading-tight tabular-nums">{formatRupees(totalAmount)}</strong>
+                <strong className="text-3xl font-semibold leading-tight tabular-nums">{priceKnown ? formatRupees(totalAmount) : "—"}</strong>
               </div>
             </div>
-            {bill.lines.length > 0 && (
+            {bill.lines.length > 0 && priceKnown && (
               <dl className="space-y-1 rounded-lg border border-border bg-muted/25 px-3 py-2 text-xs" aria-label="Bill">
                 {bill.lines.map(line => (
                   <div key={line.key} className="flex items-baseline justify-between gap-3 tabular-nums">
@@ -2872,7 +3009,7 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
               {errors.payment && <p className="mt-1.5 text-xs text-red-500">{errors.payment}</p>}
             </div>
             <Button type="submit" form="slot-booking-form" disabled={confirmBlocked} className="ui-action-primary h-12 w-full gap-2 text-base font-semibold disabled:opacity-50">
-              {isSubmitting ? <><Loader2 className="h-4 w-4 animate-spin" />Booking…</> : <><CheckCircle className="h-4 w-4" />Confirm · {formatRupees(totalAmount)}<kbd className="ml-1 hidden rounded border border-white/25 px-1.5 text-[10px] font-medium opacity-80 sm:inline">↵</kbd></>}
+              {isSubmitting ? <><Loader2 className="h-4 w-4 animate-spin" />Booking…</> : <><CheckCircle className="h-4 w-4" />{priceKnown ? `Confirm · ${formatRupees(totalAmount)}` : "Confirm"}<kbd className="ml-1 hidden rounded border border-white/25 px-1.5 text-[10px] font-medium opacity-80 sm:inline">↵</kbd></>}
             </Button>
           </div>
             </div>
@@ -5488,7 +5625,7 @@ useEffect(() => {
     setBookingPreset(detail?.stationId ? {
       stationId: detail.stationId, startClock: detail.startClock, durationMin: detail.durationMin,
       customer: detail.customer ? { name: detail.customer.name, phone: detail.customer.phone, email: detail.customer.email || "" } : undefined,
-      extendsBookingId: detail.extendsBookingId, date: detail.date,
+      extendsBookingId: detail.extendsBookingId, date: detail.date, mode: detail.mode,
     } : null)
     setShowBookingForm(true)
   }
