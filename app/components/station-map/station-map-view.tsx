@@ -44,17 +44,27 @@ export function requestStationBooking(detail: BookConsoleEventDetail): boolean {
 const cellKey = (cell: Cell) => `${cell.x}:${cell.y}`
 const at = (cell: Cell) => mapCellPos(cell)
 
-export function StationMapView() {
+/** Ask an open station map to open one station's popover (Dashboard rail → map). */
+export const FOCUS_STATION_EVENT = "hash:focus-station"
+export function focusStation(stationId: number) {
+  window.dispatchEvent(new CustomEvent(FOCUS_STATION_EVENT, { detail: { stationId } }))
+}
+
+export function StationMapView({ embedded = false, actions }: {
+  /** Dashboard overview: no Arrange (that stays in Gaming Stations), own zoom memory. */
+  embedded?: boolean
+  actions?: React.ReactNode
+} = {}) {
   const { vendorId, consoles, landingData, refreshConsoles, refreshLanding, consolesLoading } = useDashboardData()
   const { can } = useAccess()
   const { socket, isConnected, joinVendor } = useSocket()
   const { time: showClock } = useTimeFormat()
   const canBook = can("booking.manage")
-  const canArrange = can("gaming.manage")
+  const canArrange = can("gaming.manage") && !embedded
 
   const [now, setNow] = useState(() => Date.now())
   const [typeFilter, setTypeFilter] = useState<string>("all")
-  const zoomStorage = zoomKey(vendorId, "gaming-stations")
+  const zoomStorage = zoomKey(vendorId, embedded ? "dashboard-overview" : "gaming-stations")
   const [zoom, setZoomState] = useState(1)
   // A zoom picked by hand (or with Fit) is remembered per vendor; auto-fit only until then.
   const zoomRemembered = useRef(false)
@@ -81,6 +91,17 @@ export function StationMapView() {
   const viewportRef = useRef<HTMLDivElement>(null)
   const [mounted, setMounted] = useState(false)
   useEffect(() => setMounted(true), [])
+  useEffect(() => {
+    const onFocus = (event: Event) => {
+      const id = Number((event as CustomEvent<{ stationId: number }>).detail?.stationId)
+      if (!id) return
+      setTypeFilter("all")
+      setOpenId(id)
+      window.requestAnimationFrame(() => document.querySelector(`[data-station-id="${id}"]`)?.scrollIntoView({ block: "center", inline: "center", behavior: "smooth" }))
+    }
+    window.addEventListener(FOCUS_STATION_EVENT, onFocus)
+    return () => window.removeEventListener(FOCUS_STATION_EVENT, onFocus)
+  }, [])
 
   useEffect(() => {
     const timer = window.setInterval(() => setNow(Date.now()), 1000)
@@ -292,10 +313,10 @@ export function StationMapView() {
     <div className="flex h-full min-h-0 flex-col gap-3">
       {/* Summary + controls */}
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-        <div className="flex items-baseline gap-2">
+        {!embedded && <div className="flex items-baseline gap-2">
           <span className="text-2xl font-semibold tabular-nums text-foreground">{occupied}<span className="text-muted-foreground">/{stations.length}</span></span>
           <span className="text-sm text-muted-foreground">occupied</span>
-        </div>
+        </div>}
         <div className="flex flex-wrap items-center gap-1.5" aria-label="Station status">
           {LEGEND.map(state => (
             <span key={state} className="inline-flex h-7 items-center gap-1.5 rounded-md border border-border bg-card px-2.5 text-xs text-muted-foreground">
@@ -307,6 +328,7 @@ export function StationMapView() {
         </div>
         <span className={cn("text-xs", isConnected ? "text-emerald-400" : "text-amber-400")}>{isConnected ? "Live" : "Syncing"}</span>
         <div className="ml-auto flex items-center gap-2">
+          {!arranging && actions}
           {!arranging && (
             <div className="inline-flex items-center rounded-lg border border-border bg-card" role="group" aria-label="Zoom">
               <button type="button" aria-label="Zoom out" className="grid h-8 w-8 place-items-center text-muted-foreground hover:text-foreground disabled:opacity-40" disabled={zoom <= ZOOM_MIN} onClick={() => setZoom(zoom - 0.1)}><Minus className="h-4 w-4" /></button>
@@ -425,7 +447,7 @@ export function StationMapView() {
                 )
                 const note = arranging ? null : tileFootnote(s)
                 return (
-                  <div key={s.id} className={cn("absolute z-10 transition-[left,top,opacity] duration-200", dimmed && "pointer-events-none opacity-20")}
+                  <div key={s.id} data-station-id={s.id} className={cn("absolute z-10 transition-[left,top,opacity] duration-200", dimmed && "pointer-events-none opacity-20")}
                     style={{ ...at(cell), width: CELL_W, height: CELL_H }}>
                     {note && <p className={cn("absolute inset-x-0.5 bottom-0 truncate text-[11px] leading-4 tabular-nums", note.tone)}>{note.text}</p>}
                     {arranging ? tile : (
