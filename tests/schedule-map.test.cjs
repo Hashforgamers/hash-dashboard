@@ -71,7 +71,7 @@ test('overview KPIs and needs-attention order',()=>{
     st(4,{state:'busy',remainingMs:20*60000,amountDue:60}),st(5),st(6,{state:'offline'})]
   const upcoming=[row({id:1,date:D,time:'03:40 PM - 04:40 PM'}),row({id:2,date:D,time:'05:30 PM - 06:30 PM'}),row({id:3,date:D,time:'03:30 PM - 04:00 PM',status:'cancelled'})].map(m.bookingWindowOf)
   const k=m.overviewKpis(stations,upcoming,now)
-  assert.equal(JSON.stringify(k),JSON.stringify({total:6,occupied:4,live:4,endingSoon:1,overtime:1,upcomingHour:1,unpaidLive:2}))
+  assert.equal(JSON.stringify(k),JSON.stringify({total:6,occupied:4,live:4,endingSoon:2,overtime:1,upcomingHour:1,unpaidLive:2}))
   assert.equal(m.needsAttention(stations).map(i=>`${i.kind}:${i.stationId}`).join(','),'overtime:3,ending:2,unpaid:4')
 })
 
@@ -102,4 +102,23 @@ test('in-session actions follow what the live row allows',()=>{
   assert.equal(full.extend.enabled&&full.end.enabled&&full.meals.enabled,true);assert.equal(full.due,true)
   const bare=m.liveActions({end:null,bookingId:null,liveSlot:null,amountDue:0},false)
   assert.equal(bare.extend.reason,"Your role can't book sessions");assert.equal(bare.end.enabled,false);assert.equal(bare.meals.enabled,false)
+})
+
+test('extension starts at the booking end so its own booking never blocks it',()=>{
+  const live={end:ist(D,'16:19')+30000,bookingId:77,liveSlot:{bookId:77,date:D,startTime:'02:49 PM',endTime:'04:19 PM'}}
+  const r=m.extensionStart(live,now) // runtime end 16:19:30, booking end 16:19
+  assert.equal(r.start,ist(D,'16:19'));assert.equal(r.extendsBookingId,77)
+  const w=m.windowAvailability([st(3,{state:'busy',end:ist(D,'16:19'),start:ist(D,'14:49'),bookingId:77})],[],{start:r.start,end:r.start+15*60000},now,7)
+  assert.equal(w.stations.get(3).state,'free')
+  const over=m.extensionStart({end:ist(D,'15:00'),bookingId:77,liveSlot:{bookId:77,date:D,startTime:'02:00 PM',endTime:'03:00 PM'}},now)
+  assert.equal(over.extendsBookingId,null);assert.ok(over.start>=now)
+})
+
+test('coming up: the same booking listed twice shows once; squad stations stay',()=>{
+  const a=m.bookingWindowOf({bookingId:5,username:'Nikhil',date:D,time:'04:25 PM - 05:25 PM',consoleId:null,game_id:7})
+  const b=m.bookingWindowOf({bookingId:5,username:'Nikhil',date:D,startAt:'2026-11-28T16:26:00+05:30',endAt:'2026-11-28T17:26:00+05:30',consoleId:4,game_id:7})
+  const out=m.dedupeBookings([a,b])
+  assert.equal(out.length,1);assert.equal(out[0].stationId,4)
+  const s1=m.bookingWindowOf({bookingId:6,date:D,time:'05:00 PM - 06:00 PM',consoleId:1}),s2=m.bookingWindowOf({bookingId:6,date:D,time:'05:00 PM - 06:00 PM',consoleId:2})
+  assert.equal(m.dedupeBookings([s1,s2]).length,2)
 })

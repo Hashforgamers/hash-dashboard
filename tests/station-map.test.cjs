@@ -49,7 +49,7 @@ test('station states: busy, ending soon, booked soon, free, offline',()=>{
 })
 
 test('remaining time reads as a countdown and overtime',()=>{
-  assert.equal(m.remainingLabel(5*60000+7000),'5:07 left');assert.equal(m.remainingLabel(-(61*60000)),'+1h 01m over');assert.equal(m.remainingLabel(null),'')
+  assert.equal(m.remainingLabel(5*60000+7000),'5:07 left');assert.equal(m.remainingLabel(-(61*60000)),'1h 01m over');assert.equal(m.remainingLabel(-(17*60000+8000)),'17m over');assert.equal(m.remainingLabel(null),'')
 })
 
 test('saved cells win; the rest auto-flow by console type without collisions',()=>{
@@ -151,4 +151,33 @@ test('a device-only layout saved before the fix is cleaned when read back',()=>{
   const mem=memory();mem.setItem(st.layoutKey(5),JSON.stringify({...firstSavePayload,savedAt:1}))
   const kept=st.readLocalLayout(5,mem)
   assert.ok(kept.zones.every(z=>z.y>=0));assert.ok(kept.positions.every(p=>p.y===null||p.y>=0))
+})
+
+test('New session asks for the player name before the phone; extend sheet too',()=>{
+  const form=fs.readFileSync(path.join(__dirname,'../app/components/newSlot.tsx'),'utf8')
+  const player=form.slice(form.indexOf('<FormSection label={isSquadMode ? "Captain" : "Player"}>'))
+  assert.ok(player.indexOf('"Player Name"')<player.indexOf('"Mobile Number"'))
+  const sheet=form.slice(form.indexOf('aria-label="Extend session"'))
+  assert.ok(sheet.indexOf('placeholder="Player Name"')<sheet.indexOf('placeholder="Mobile Number"'))
+})
+
+test('a failed quote falls back to known stations and never prices the session at ₹0',()=>{
+  const form=fs.readFileSync(path.join(__dirname,'../app/components/newSlot.tsx'),'utf8')
+  assert.match(form,/const quoteUnverified = stationSource === "flex" && !flexLoading && !flexQuote/)
+  assert.match(form,/const available = known \? knownState === "free"/)
+  assert.match(form,/priceKnown \? formatRupees\(totalAmount\) : "—"/)
+  const picker=fs.readFileSync(path.join(__dirname,'../app/components/booking/flex-start-picker.tsx'),'utf8')
+  assert.match(picker,/send\(1\)/);assert.match(picker,/15_000/)
+})
+
+test('maps show one console type at a time with a readable fit',()=>{
+  const view=fs.readFileSync(path.join(__dirname,'../app/components/station-map/station-map-view.tsx'),'utf8')
+  assert.doesNotMatch(view,/All stations/)
+  const tile=fs.readFileSync(path.join(__dirname,'../app/components/station-map/station-tile.tsx'),'utf8')
+  const mod={exports:{}}
+  const fitSrc=tile.slice(tile.indexOf('export const READABLE_MIN'),tile.indexOf('// One look for station status'))
+  vm.runInNewContext(ts.transpileModule(fitSrc,{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2020}}).outputText,{module:mod,exports:mod.exports,Math,Number})
+  assert.equal(mod.exports.readableFit(600,400,1170,500),0.8) // too wide: stays readable, panel scrolls
+  assert.equal(mod.exports.readableFit(1200,800,700,300),1.4)
+  assert.equal(mod.exports.readableFit(900,700,1000,300),0.9)
 })

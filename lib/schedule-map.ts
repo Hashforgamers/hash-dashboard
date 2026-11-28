@@ -211,7 +211,8 @@ export function overviewKpis(stations: Pick<Station, "state" | "remainingMs" | "
     total: stations.length,
     occupied: live.length,
     live: live.length,
-    endingSoon: live.filter(s => s.remainingMs !== null && s.remainingMs >= 0 && s.remainingMs <= 10 * MINUTE).length,
+    // Same rule as the "Ending soon" tiles: 10 minutes or less left, overtime included.
+    endingSoon: live.filter(s => s.remainingMs !== null && s.remainingMs <= 10 * MINUTE).length,
     overtime: live.filter(s => s.remainingMs !== null && s.remainingMs < 0).length,
     upcomingHour: upcoming.filter(b => b.start >= now - 5 * MINUTE && b.start <= now + 60 * MINUTE && !/cancel|reject/i.test(b.status)).length,
     unpaidLive: live.filter(s => s.amountDue > 0).length,
@@ -281,4 +282,39 @@ export function liveActions(s: Pick<Station, "end" | "bookingId" | "liveSlot" | 
   const end = !s.liveSlot ? no("Live session details are still loading") : ok
   const meals = !s.bookingId ? no("No booking linked to this session") : ok
   return { extend, end, meals, due: s.amountDue > 0 }
+}
+
+/**
+ * Extending a live session: start where the booking is scheduled to end so
+ * the booking service excludes the session's own booking (extendsBookingId).
+ * Overtime (the scheduled end has passed) starts now without chaining.
+ */
+export function extensionStart(st: Pick<Station, "end" | "bookingId" | "liveSlot">, now: number): { start: number; extendsBookingId: number | null } {
+  const scheduled = st.liveSlot ? bookingWindowOf(st.liveSlot)?.end ?? null : null
+  const end = scheduled ?? st.end
+  if (end !== null && end > now) {
+    const exact = Math.ceil(end / MINUTE) * MINUTE
+    return { start: exact, extendsBookingId: scheduled !== null && st.bookingId ? st.bookingId : null }
+  }
+  return { start: Math.ceil(now / MINUTE) * MINUTE, extendsBookingId: null }
+}
+
+/**
+ * One row per booking. The landing list can carry the same booking twice (a
+ * realtime insert next to the fetched row, or a flex window next to its slot
+ * row); keep the richer one: the flex window (startAt) wins, then the later start.
+ */
+export function dedupeBookings(list: WindowBooking[]): WindowBooking[] {
+  const byId = new Map<number, WindowBooking>()
+  const out: WindowBooking[] = []
+  for (const b of list) {
+    if (!b.bookingId) { out.push(b); continue }
+    const seen = byId.get(b.bookingId)
+    if (!seen) { byId.set(b.bookingId, b); continue }
+    // A squad holds one booking on several stations: those are not duplicates.
+    if (seen.stationId && b.stationId && seen.stationId !== b.stationId) { out.push(b); continue }
+    const flexB = !!(b.raw?.startAt || b.raw?.start_at), flexSeen = !!(seen.raw?.startAt || seen.raw?.start_at)
+    if ((flexB && !flexSeen) || (flexB === flexSeen && (b.stationId && !seen.stationId))) byId.set(b.bookingId, b)
+  }
+  return [...out, ...byId.values()]
 }

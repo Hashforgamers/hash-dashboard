@@ -111,8 +111,10 @@ export function remainingLabel(ms: number | null): string {
   const h = Math.floor(total / 3600)
   const m = Math.floor((total % 3600) / 60)
   const s = total % 60
+  // Overtime reads in whole minutes ("17m over"); a countdown under an hour keeps seconds.
+  if (over) return h > 0 ? `${h}h ${String(m).padStart(2, "0")}m over` : `${Math.max(1, m)}m over`
   const body = h > 0 ? `${h}h ${String(m).padStart(2, "0")}m` : `${m}:${String(s).padStart(2, "0")}`
-  return over ? `+${body} over` : `${body} left`
+  return `${body} left`
 }
 
 const TYPE_PREFIX: Record<string, string> = {
