@@ -14,6 +14,7 @@ import { formatRupees } from "@/lib/desk-bill"
 import { StationMapView, focusStation, requestStationBooking } from "../station-map/station-map-view"
 import { CurrentSlots } from "../current-slot"
 import PayAtCafeRequests from "../pay-at-cafe-requests"
+import { queueScheduleFocus } from "./schedule-map"
 
 type View = "map" | "list"
 const viewKey = (vendorId: number | null) => `hash.dashboard.overviewView.${vendorId || 0}`
@@ -136,7 +137,7 @@ export function OverviewBoard({ vendorId, landing, stats, isOwner, isConnected, 
 
           <RailCard title="Coming up" count={soon.length} icon={CalendarClock} action={<button type="button" className="text-xs text-muted-foreground hover:text-foreground" onClick={onOpenSchedule}>Schedule</button>}>
             {soon.length === 0 ? <Empty text="Nothing in the next 3 hours" /> : soon.map(b => (
-              <RailRow key={`${b.bookingId}-${b.stationId}-${b.start}`} onClick={() => openStation(b.stationId)}
+              <RailRow key={`${b.bookingId}-${b.stationId}-${b.start}`} onClick={() => { queueScheduleFocus(b); onOpenSchedule() }}
                 lead={<span className="w-[4.25rem] shrink-0 text-xs font-semibold tabular-nums text-foreground">{showClock(istClockOf(b.start))}</span>}
                 title={b.name}
                 meta={[stationCode(b.stationId) || "Station at check-in", phoneTail(b.phone) ? `··${phoneTail(b.phone)}` : null, `${Math.round((b.end - b.start) / 60000)}m`].filter(Boolean).join(" · ")}

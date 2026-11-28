@@ -74,3 +74,32 @@ test('overview KPIs and needs-attention order',()=>{
   assert.equal(JSON.stringify(k),JSON.stringify({total:6,occupied:4,live:4,endingSoon:1,overtime:1,upcomingHour:1,unpaidLive:2}))
   assert.equal(m.needsAttention(stations).map(i=>`${i.kind}:${i.stationId}`).join(','),'overtime:3,ending:2,unpaid:4')
 })
+
+const clock=ms=>new Date(ms+330*60000).toISOString().slice(11,16)
+const up=(o)=>m.bookingWindowOf({bookingId:o.id??40,username:'Tara',game_id:7,date:D,time:o.time||'03:30 PM - 04:30 PM',consoleId:3,lifecycleStatus:o.lifecycle||'upcoming',status:o.status||'Confirmed',settlement_status:o.settle,...(o.extra||{})})
+
+test('upcoming actions: check-in opens 5 minutes early and closes at the end',()=>{
+  const b=up({}) // 15:30–16:30, now 15:10
+  let r=m.upcomingActions(b,now,clock)
+  assert.equal(r.checkIn.enabled,false);assert.equal(r.checkIn.reason,'Check-in opens at 15:25')
+  assert.equal(r.cancel.enabled,true);assert.equal(r.noShow.enabled,false);assert.equal(r.noShow.reason,'Available from 15:30')
+  r=m.upcomingActions(b,ist(D,'15:26'),clock);assert.equal(r.checkIn.enabled,true);assert.equal(r.noShow.enabled,false)
+  r=m.upcomingActions(b,ist(D,'15:45'),clock);assert.equal(r.checkIn.enabled,true);assert.equal(r.noShow.enabled,true)
+  r=m.upcomingActions(b,ist(D,'16:31'),clock);assert.equal(r.checkIn.enabled,false);assert.equal(r.checkIn.reason,'The booking time has passed')
+})
+
+test('upcoming actions: started or closed bookings cannot be cancelled; paid ones get the refund choice',()=>{
+  let r=m.upcomingActions(up({lifecycle:'current'}),now,clock)
+  assert.equal(r.cancel.enabled,false);assert.match(r.cancel.reason,/end it instead/);assert.equal(r.noShow.enabled,false);assert.equal(r.checkIn.enabled,false)
+  r=m.upcomingActions(up({status:'cancelled'}),now,clock);assert.equal(r.cancel.enabled,false)
+  assert.equal(m.upcomingActions(up({settle:'completed'}),now,clock).paid,true)
+  assert.equal(m.upcomingActions(up({settle:'pending'}),now,clock).paid,false)
+  assert.equal(m.upcomingActions(up({extra:{game_id:null}}),ist(D,'15:40'),clock).checkIn.reason,'Booking details are incomplete')
+})
+
+test('in-session actions follow what the live row allows',()=>{
+  const full=m.liveActions({end:ist(D,'16:00'),bookingId:9,liveSlot:{},amountDue:120},true)
+  assert.equal(full.extend.enabled&&full.end.enabled&&full.meals.enabled,true);assert.equal(full.due,true)
+  const bare=m.liveActions({end:null,bookingId:null,liveSlot:null,amountDue:0},false)
+  assert.equal(bare.extend.reason,"Your role can't book sessions");assert.equal(bare.end.enabled,false);assert.equal(bare.meals.enabled,false)
+})

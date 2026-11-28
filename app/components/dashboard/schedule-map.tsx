@@ -1,19 +1,25 @@
 "use client"
 import { useEffect, useMemo, useState } from "react"
-import { CalendarDays, Clock, Info, Phone, Play, X } from "lucide-react"
+import { Ban, CalendarDays, Clock, Copy, Eye, Info, LogIn, Phone, Play, Power, UserX, UtensilsCrossed, X } from "lucide-react"
+import { toast } from "sonner"
 import { cn } from "@/lib/utils"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Button } from "@/components/ui/button"
 import { useDashboardData } from "@/app/context/DashboardDataContext"
 import { useTimeFormat } from "@/app/hooks/useTimeFormat"
 import { useSocket } from "@/app/context/SocketContext"
-import { buildStations, istClockOf, phoneTail } from "@/lib/station-map"
+import { buildStations, istClockOf, phoneTail, type Station } from "@/lib/station-map"
 import { applyLocalPositions, zoomKey } from "@/lib/station-map-storage"
 import {
-  bookingWindowOf, gapStartAt, hourlyDensity, istAt, istDayOf, istMinutesOf, slotCapacityFor, stationDayBlocks, windowAvailability,
+  bookingWindowOf, gapStartAt, liveActions, paymentLabel, upcomingActions, hourlyDensity, istAt, istDayOf, istMinutesOf, slotCapacityFor, stationDayBlocks, windowAvailability,
   type StationWindow, type WindowBooking, type WindowState,
 } from "@/lib/schedule-map"
-import { CUSTOM_STEP_MINUTES, DURATION_CHIPS, chipDurationLabel, durationLabel } from "@/lib/desk-bill"
+import { CUSTOM_STEP_MINUTES, DURATION_CHIPS, chipDurationLabel, durationLabel, formatRupees } from "@/lib/desk-bill"
+import ExtraBookingOverlay from "../extraBookingOverlay"
+import MealDetailsModal from "../mealsDetailmodal"
+import UpcomingSlotManager from "../upcoming-slot-manager"
+import { calculateExtraAmount, calculateExtraTime, formatTime, normalizeLiveSlot, releaseSlot } from "../current-slot"
+import { ActionButton, CancelBookingDialog, NoShowDialog, useCheckIn } from "./booking-actions"
 import { useFlexQuote, useFlexSettings } from "../booking/flex-start-picker"
 import { BookingQuickView } from "../booking-quick-view"
 import { FloorCanvas, SELECTED_TILE, SelectedBadge, useStationLayout } from "../station-map/station-picker"
@@ -32,6 +38,11 @@ const dayLabel = (day: string, today: string) => {
   if (diff === 0) return "Today"
   if (diff === 1) return "Tomorrow"
   return date.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", timeZone: "Asia/Kolkata" })
+}
+/** Overview → Schedule: open the map on one booking (its day, start and station). */
+export const SCHEDULE_FOCUS_KEY = "hash.schedule.focus"
+export function queueScheduleFocus(booking: { start: number; stationId: number | null }) {
+  try { sessionStorage.setItem(SCHEDULE_FOCUS_KEY, JSON.stringify({ day: istDayOf(booking.start), startMin: istMinutesOf(booking.start), stationId: booking.stationId })) } catch { /* ignore */ }
 }
 const addDays = (day: string, n: number) => new Date(new Date(`${day}T12:00:00+05:30`).getTime() + n * 86400000).toISOString().slice(0, 10)
 
@@ -74,6 +85,17 @@ export function ScheduleMap({ availableConsoles, selectedConsole, onConsoleChang
   const [openId, setOpenId] = useState<number | null>(null)
   const [details, setDetails] = useState<{ booking: WindowBooking; code: string; name: string } | null>(null)
   const nowMin = istMinutesOf(now)
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem(SCHEDULE_FOCUS_KEY)
+      if (!raw) return
+      sessionStorage.removeItem(SCHEDULE_FOCUS_KEY)
+      const focus = JSON.parse(raw)
+      if (typeof focus?.day === "string") setDay(focus.day)
+      if (Number.isFinite(focus?.startMin)) setStartMin(Math.max(0, Math.floor(focus.startMin / 5) * 5))
+      if (Number(focus?.stationId) > 0) { setSelected(Number(focus.stationId)); window.setTimeout(() => setOpenId(Number(focus.stationId)), 600) }
+    } catch { /* ignore */ }
+  }, [])
   // Never offer a start in the past.
   useEffect(() => {
     if (!days.includes(day)) setDay(days[0])
@@ -139,6 +161,102 @@ export function ScheduleMap({ availableConsoles, selectedConsole, onConsoleChang
     }
     return list.sort((a, b) => a.start - b.start)
   }, [station, bookings, day, today, now])
+
+  // ---- Booking actions (same flows as the Upcoming list / Gaming Stations map) ----
+  const [cancelling, setCancelling] = useState<{ row: any; paid: boolean } | null>(null)
+  const [noShow, setNoShow] = useState<any | null>(null)
+  const [endSlot, setEndSlot] = useState<any | null>(null)
+  const [meals, setMeals] = useState<{ bookingId: string; name: string } | null>(null)
+  const [manage, setManage] = useState<{ booking: WindowBooking; code: string; name: string } | null>(null)
+  const afterAction = () => { setOpenId(null); void refreshLanding(true); void refreshConsoles(true) }
+  const checkIn = useCheckIn(vendorId, afterAction)
+  const clockMs = (ms: number) => showClock(istClockOf(ms))
+  const copyPhone = (phone: string) => {
+    void navigator.clipboard?.writeText(phone).then(() => toast.success("Phone number copied"), () => toast.error("Could not copy"))
+  }
+  const extend = (st: Station, minutes: number) => {
+    if (st.end === null || !consoleItem) return
+    setOpenId(null)
+    onBook({
+      type: st.type, gameId: st.gameId ?? undefined, stationId: st.id,
+      startClock: istClockOf(Math.max(st.end, now)), durationMin: minutes,
+      customer: st.player ? { name: st.player, phone: st.phone } : undefined,
+      extendsBookingId: st.end > now && st.end % 60000 === 0 ? st.bookingId ?? undefined : undefined,
+    })
+  }
+
+  function UpcomingActions({ booking, code, name, compact }: { booking: WindowBooking; code: string; name: string; compact?: boolean }) {
+    const rules = upcomingActions(booking, now, clockMs)
+    const row = booking.raw || {}
+    return (
+      <div className={cn("grid gap-2", compact ? "grid-cols-3" : "grid-cols-2")}>
+        <ActionButton rule={rules.checkIn} tone="primary" className={compact ? "" : "col-span-2"} onClick={() => { setOpenId(null); checkIn.open(row, booking.stationId) }}>
+          <LogIn className="h-3.5 w-3.5" />Check in{booking.stationId && !compact ? ` on ${code}` : ""}
+        </ActionButton>
+        <ActionButton rule={rules.noShow} tone="warning" onClick={() => { setOpenId(null); setNoShow(row) }}><UserX className="h-3.5 w-3.5" />No-show</ActionButton>
+        <ActionButton rule={rules.cancel} tone="danger" onClick={() => { setOpenId(null); setCancelling({ row, paid: rules.paid }) }}><Ban className="h-3.5 w-3.5" />Cancel</ActionButton>
+        {!compact && <>
+          <ActionButton rule={{ enabled: !!booking.phone, reason: "No phone on this booking" }} onClick={() => copyPhone(booking.phone)}><Copy className="h-3.5 w-3.5" />Copy phone</ActionButton>
+          <ActionButton rule={{ enabled: true, reason: "" }} onClick={() => { setOpenId(null); setManage({ booking, code, name }) }}><Eye className="h-3.5 w-3.5" />Details & times</ActionButton>
+        </>}
+      </div>
+    )
+  }
+
+  function TilePopover({ station: st, window: w, onClose }: { station: Station; window: StationWindow; onClose: () => void }) {
+    const live = w.state === "busy"
+    const b = w.booking
+    const rules = live ? liveActions(st, true) : null
+    const pay = b?.raw ? paymentLabel(b.raw) : null
+    return (
+      <div className="text-sm">
+        <div className="flex items-start justify-between gap-2 border-b border-border px-4 py-3">
+          <div className="min-w-0">
+            <p className="flex items-center gap-2 text-base font-semibold text-foreground">{st.code}
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-border px-2 py-0.5 text-[11px] font-medium text-muted-foreground"><StateDot state={TILE_STATE[w.state]} className="h-1.5 w-1.5" />{live ? "In session" : "Upcoming"}</span>
+            </p>
+            <p className="mt-0.5 truncate text-xs text-muted-foreground">{st.typeName} · {st.fullName}</p>
+          </div>
+          <button type="button" aria-label="Close" className="text-muted-foreground hover:text-foreground" onClick={onClose}><X className="h-4 w-4" /></button>
+        </div>
+        <div className="space-y-3 px-4 py-3">
+          {b ? (
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="truncate font-medium text-foreground">{b.name}</p>
+                {b.phone && <a href={`tel:${b.phone}`} className="mt-0.5 inline-flex items-center gap-1 text-xs tabular-nums text-primary hover:underline"><Phone className="h-3 w-3" />{b.phone}</a>}
+              </div>
+              <div className="shrink-0 text-right">
+                <p className="text-xs tabular-nums text-foreground">{clockMs(b.start)} – {clockMs(b.end)}</p>
+                <p className="mt-0.5 text-[11px] text-muted-foreground">{b.bookingId ? `#${b.bookingId}` : ""}{pay ? ` · ${pay}` : ""}{live && st.amountDue > 0 ? ` · ${formatRupees(st.amountDue)} due` : ""}</p>
+              </div>
+            </div>
+          ) : <p className="text-xs text-muted-foreground">Taken for part of this time{w.freeFrom ? ` (free from ${clockMs(w.freeFrom)})` : ""}.</p>}
+
+          {live && rules ? <>
+            <div>
+              <p className="mb-1.5 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Extend</p>
+              <div className="grid grid-cols-3 gap-2">
+                {[15, 30, 60].map(m => <ActionButton key={m} rule={rules.extend} onClick={() => extend(st, m)}>+{m === 60 ? "1h" : `${m}m`}</ActionButton>)}
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <ActionButton rule={rules.meals} onClick={() => { onClose(); setMeals({ bookingId: String(st.bookingId), name: st.player || "Guest" }) }}><UtensilsCrossed className="h-3.5 w-3.5" />Add meals</ActionButton>
+              <ActionButton rule={rules.end} tone="danger" onClick={() => { onClose(); setEndSlot(normalizeLiveSlot(st.liveSlot)) }}><Power className="h-3.5 w-3.5" />{rules.due ? "End & collect" : "End session"}</ActionButton>
+              {b && <ActionButton rule={{ enabled: true, reason: "" }} className="col-span-2" onClick={() => { onClose(); setDetails({ booking: b, code: st.code, name: st.fullName }) }}><Eye className="h-3.5 w-3.5" />Details</ActionButton>}
+            </div>
+          </> : b ? <UpcomingActions booking={b} code={st.code} name={st.fullName} /> : null}
+
+          {w.freeFrom && istDayOf(w.freeFrom) === day && (
+            <button type="button" className="inline-flex w-full items-center justify-center gap-1.5 rounded-md border border-dashed border-border px-2.5 py-1.5 text-xs text-muted-foreground hover:border-primary/60 hover:text-foreground"
+              onClick={() => { onClose(); const at = ceilTo(istMinutesOf(w.freeFrom as number), 5); setStartMin(at); book(st.id, at) }}>
+              <Play className="h-3 w-3" />Book {st.code} from {clockMs(w.freeFrom)}
+            </button>
+          )}
+        </div>
+      </div>
+    )
+  }
 
   const book = (stationId?: number, at = startMin) => {
     if (!consoleItem) return
@@ -255,8 +373,28 @@ export function ScheduleMap({ availableConsoles, selectedConsole, onConsoleChang
           toolbar={<div className="min-w-0">
             <p className="text-sm text-foreground"><span className="text-lg font-semibold tabular-nums">{freeCount}</span> <span className="text-muted-foreground">of {stations.length} {consoleItem?.name} free · {dayLabel(day, today)} {windowLabel}</span></p>
             {unassigned.length > 0 && (
-              <p className="mt-0.5 flex items-center gap-1 text-xs text-amber-300"><Info className="h-3.5 w-3.5" />
-                {unassigned.length} booking{unassigned.length > 1 ? "s" : ""} in this window {unassigned.length > 1 ? "have" : "has"} no station yet, so fewer stations are really free than tiles show.</p>
+              <Popover open={openId === -1} onOpenChange={open => setOpenId(open ? -1 : null)}>
+                <PopoverTrigger asChild>
+                  <button type="button" className="mt-0.5 flex items-center gap-1 text-left text-xs text-amber-300 hover:underline">
+                    <Info className="h-3.5 w-3.5 shrink-0" />
+                    {unassigned.length} booking{unassigned.length > 1 ? "s" : ""} in this window {unassigned.length > 1 ? "have" : "has"} no station yet, so fewer stations are really free than tiles show. Manage
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent align="start" sideOffset={6} className="w-[380px] bg-popover p-0">
+                  <p className="border-b border-border px-4 py-2.5 text-sm font-semibold text-foreground">No station yet · {dayLabel(day, today)}</p>
+                  <div className="max-h-[360px] divide-y divide-border overflow-y-auto">
+                    {unassigned.map(b => (
+                      <div key={`${b.bookingId}-${b.start}`} className="space-y-2 px-4 py-3">
+                        <div className="flex items-baseline justify-between gap-3 text-sm">
+                          <span className="truncate font-medium text-foreground">{b.name}</span>
+                          <span className="shrink-0 text-xs tabular-nums text-muted-foreground">{clockMs(b.start)} – {clockMs(b.end)}{b.bookingId ? ` · #${b.bookingId}` : ""}</span>
+                        </div>
+                        <UpcomingActions booking={b} code="" name={consoleItem?.name || ""} compact />
+                      </div>
+                    ))}
+                  </div>
+                </PopoverContent>
+              </Popover>
             )}
             {window_.end <= now && <p className="mt-0.5 text-xs text-muted-foreground">This time has passed. Pick a later start.</p>}
           </div>}
@@ -289,31 +427,7 @@ export function ScheduleMap({ availableConsoles, selectedConsole, onConsoleChang
                 <Popover open={openId === s.id} onOpenChange={open => setOpenId(open ? s.id : null)}>
                   <PopoverTrigger asChild>{tile}</PopoverTrigger>
                   <PopoverContent side="right" align="start" sideOffset={8} collisionPadding={12} className="w-[300px] bg-popover p-0">
-                    <div className="space-y-3 p-4">
-                      <div className="flex items-start justify-between gap-2">
-                        <div>
-                          <p className="text-sm font-semibold text-foreground">{s.code} · {STATE_LABEL[w.state]}</p>
-                          <p className="text-xs text-muted-foreground">{s.fullName}</p>
-                        </div>
-                        <button type="button" aria-label="Close" className="text-muted-foreground hover:text-foreground" onClick={() => setOpenId(null)}><X className="h-4 w-4" /></button>
-                      </div>
-                      {w.booking ? (
-                        <dl className="space-y-1.5 rounded-lg border border-border bg-muted/30 p-3 text-xs">
-                          <div className="flex justify-between gap-3"><dt className="text-muted-foreground">Player</dt><dd className="font-medium text-foreground">{w.booking.name}</dd></div>
-                          <div className="flex justify-between gap-3"><dt className="text-muted-foreground">Time</dt><dd className="tabular-nums text-foreground">{showClock(istClockOf(w.booking.start))} – {showClock(istClockOf(w.booking.end))}</dd></div>
-                          {phoneTail(w.booking.phone) && <div className="flex justify-between gap-3"><dt className="text-muted-foreground">Phone</dt><dd className="inline-flex items-center gap-1 tabular-nums text-foreground"><Phone className="h-3 w-3" />··{phoneTail(w.booking.phone)}</dd></div>}
-                          {w.booking.bookingId && <div className="flex justify-between gap-3"><dt className="text-muted-foreground">Booking</dt><dd className="tabular-nums text-foreground">#{w.booking.bookingId}</dd></div>}
-                        </dl>
-                      ) : <p className="text-xs text-muted-foreground">Taken for part of this time{w.freeFrom ? ` (free from ${showClock(istClockOf(w.freeFrom))})` : ""}.</p>}
-                      <div className="flex flex-wrap gap-2">
-                        {w.freeFrom && istDayOf(w.freeFrom) === day && (
-                          <Button type="button" size="sm" className="ui-action-primary h-8 gap-1.5" onClick={() => { setOpenId(null); setStartMin(ceilTo(istMinutesOf(w.freeFrom as number), 5)); book(s.id, ceilTo(istMinutesOf(w.freeFrom as number), 5)) }}>
-                            <Play className="h-3.5 w-3.5" />Book from {showClock(istClockOf(w.freeFrom))}
-                          </Button>
-                        )}
-                        {w.booking && <Button type="button" size="sm" variant="outline" className="h-8" onClick={() => { setOpenId(null); setDetails({ booking: w.booking as WindowBooking, code: s.code, name: s.fullName }) }}>Details</Button>}
-                      </div>
-                    </div>
+                    <TilePopover station={s} window={w} onClose={() => setOpenId(null)} />
                   </PopoverContent>
                 </Popover>
               ) : tile}
@@ -370,6 +484,26 @@ export function ScheduleMap({ availableConsoles, selectedConsole, onConsoleChang
         </section>
       )}
 
+      {checkIn.dialog}
+      {cancelling && <CancelBookingDialog booking={cancelling.row} paid={cancelling.paid} onClose={() => setCancelling(null)} onDone={() => { setCancelling(null); afterAction() }} />}
+      {noShow && <NoShowDialog booking={noShow} onClose={() => setNoShow(null)} onDone={() => { setNoShow(null); afterAction() }} />}
+      {meals && <MealDetailsModal isOpen onClose={() => setMeals(null)} bookingId={meals.bookingId} customerName={meals.name} initialMode="add" vendorId={vendorId ? String(vendorId) : undefined} />}
+      {endSlot && (
+        <ExtraBookingOverlay showOverlay setShowOverlay={open => { if (!open) setEndSlot(null) }} selectedSlot={endSlot} vendorId={vendorId}
+          setRefreshSlots={() => afterAction()} setSelectedSlot={setEndSlot}
+          calculateExtraTime={calculateExtraTime} calculateExtraAmount={calculateExtraAmount} formatTime={formatTime} releaseSlot={releaseSlot} />
+      )}
+      {manage && (
+        <BookingQuickView open onClose={() => setManage(null)} userId={manage.booking.raw?.userId} booking={{
+          bookingId: manage.booking.bookingId, name: manage.booking.name, phone: manage.booking.phone || null, email: manage.booking.raw?.customer_email || null,
+          console: `${manage.code} · ${manage.name}`,
+          when: `${dayLabel(istDayOf(manage.booking.start), today)} · ${showClock(istClockOf(manage.booking.start))} – ${showClock(istClockOf(manage.booking.end))}`,
+          status: manage.booking.status || "Confirmed",
+        }}>
+          <UpcomingSlotManager booking={manage.booking.raw || {}} vendorId={String(vendorId || "")} onChanged={afterAction}
+            onRemove={row => { setManage(null); setCancelling({ row, paid: paymentLabel(row) === "Paid" }) }} />
+        </BookingQuickView>
+      )}
       {details && (
         <BookingQuickView open onClose={() => setDetails(null)} booking={{
           bookingId: details.booking.bookingId, name: details.booking.name, phone: details.booking.phone || null, email: null,

@@ -18,6 +18,7 @@ export type WindowBooking = {
   stationId: number | null
   gameId: number | null
   status: string
+  raw?: any // the landing row, for the booking actions
 }
 
 export type StationWindow = {
@@ -86,6 +87,7 @@ export function bookingWindowOf(row: any): WindowBooking | null {
     stationId: idOf(row?.consoleId ?? row?.console_id),
     gameId: idOf(row?.game_id ?? row?.gameId),
     status: String(row?.status || ""),
+    raw: row,
   }
 }
 
@@ -230,4 +232,53 @@ export function needsAttention(stations: Pick<Station, "id" | "code" | "state" |
   }
   const rank = { overtime: 0, ending: 1, unpaid: 2 }
   return items.sort((a, b) => rank[a.kind] - rank[b.kind] || (a.remainingMs ?? 0) - (b.remainingMs ?? 0))
+}
+
+// ---- Booking actions (same rules as the Upcoming bookings list) ----
+
+const TERMINAL = ["cancelled", "canceled", "rejected", "completed", "discarded", "no_show"]
+export const CHECK_IN_EARLY_MINUTES = 5
+
+export type ActionRule = { enabled: boolean; reason: string }
+const ok: ActionRule = { enabled: true, reason: "" }
+const no = (reason: string): ActionRule => ({ enabled: false, reason })
+
+/** "Paid" | "Part paid" | "Payment due" | "Payment unverified", as the Upcoming list labels it. */
+export function paymentLabel(row: any): string {
+  const details = row?.squadDetails || {}
+  const status = String(row?.settlement_status || row?.settlementStatus || details.settlement_status || details.settlementStatus || "").toLowerCase()
+  if (["paid", "completed", "settled", "done"].includes(status)) return "Paid"
+  if (["partial", "part_paid", "partially_paid"].includes(status)) return "Part paid"
+  if (["pending", "unpaid", "due"].includes(status) || (row?.payment_use_case || details.payment_use_case || details.paymentUseCase) === "pay_at_cafe") return "Payment due"
+  return "Payment unverified"
+}
+
+/**
+ * What staff may do with an upcoming booking right now. Check-in opens
+ * CHECK_IN_EARLY_MINUTES before the start and closes at the end; cancel while
+ * it is not started or finished; no-show from the start time.
+ */
+export function upcomingActions(b: Pick<WindowBooking, "start" | "end" | "bookingId" | "raw">, now: number, clock: (ms: number) => string) {
+  const row = b.raw || {}
+  const lifecycle = String(row.lifecycleStatus || "").toLowerCase()
+  const record = String(row.bookingRecordStatus || row.status || "").toLowerCase()
+  const open = !["current", "completed"].includes(lifecycle) && !TERMINAL.includes(record)
+  const opensAt = b.start - CHECK_IN_EARLY_MINUTES * MINUTE
+  const checkIn = !b.bookingId || !(row.game_id ?? row.gameId) ? no("Booking details are incomplete")
+    : !open ? no("This booking is no longer open")
+    : now > b.end ? no("The booking time has passed")
+    : now < opensAt ? no(`Check-in opens at ${clock(opensAt)}`)
+    : ok
+  const cancel = !b.bookingId ? no("Booking details are incomplete") : open ? ok : lifecycle === "current" ? no("Session already started: end it instead") : no("This booking is closed")
+  const noShow = !cancel.enabled ? cancel : now < b.start ? no(`Available from ${clock(b.start)}`) : ok
+  const label = paymentLabel(row)
+  return { checkIn, cancel, noShow, paid: label === "Paid" || label === "Part paid", paymentLabel: label }
+}
+
+/** In-session tile: extend needs a known end, end/meals need the live row. */
+export function liveActions(s: Pick<Station, "end" | "bookingId" | "liveSlot" | "amountDue">, canBook: boolean) {
+  const extend = !canBook ? no("Your role can't book sessions") : s.end === null ? no("Session end time unknown") : ok
+  const end = !s.liveSlot ? no("Live session details are still loading") : ok
+  const meals = !s.bookingId ? no("No booking linked to this session") : ok
+  return { extend, end, meals, due: s.amountDue > 0 }
 }
