@@ -75,11 +75,11 @@ function serverHarness(routes) {
 
 const config = ['GET /hash-store/config', () => [200, {version: 1, publishable_api_key: 'pk_x', region_id: 'reg_1', sales_channel_id: 'sc_1'}]];
 
-test('first sign-in registers the cafe as a store customer without an email, then reuses the token', async () => {
+test('first sign-in registers the cafe as a store customer with a per-cafe email, then reuses the token', async () => {
   let exchanges = 0;
   const {server, calls} = serverHarness(Object.fromEntries([config,
     ['POST /auth/customer/hfg-cafe', (init) => { exchanges++; const body = JSON.parse(init.body); assert.equal(body.vendor_id, 7); return [200, {token: jwt(exchanges === 1 ? {actor_id: ''} : {actor_id: 'cus_7', exp: Math.floor(Date.now() / 1000) + 3600})}]; }],
-    ['POST /store/customers', (init) => { const body = JSON.parse(init.body); assert.equal(body.email, undefined); assert.equal(body.metadata.hfg_vendor_id, '7'); return [200, {customer: {id: 'cus_7'}}]; }],
+    ['POST /store/customers', (init) => { const body = JSON.parse(init.body); assert.equal(body.email, 'cafe-7@buyers.hashforgamers.com'); assert.equal(body.metadata.hfg_vendor_id, '7'); return [200, {customer: {id: 'cus_7'}}]; }],
     ['GET /store/orders', (init) => { assert.equal(init.headers.Authorization, `Bearer ${jwt({actor_id: 'cus_7', exp: JSON.parse(Buffer.from(init.headers.Authorization.split('.')[1], 'base64url')).exp})}`); return [200, {orders: [{id: 'order_1', display_id: 3, total: 10, items: []}]}]; }],
   ]));
   const buyer = {dashToken: 'dash-token-long-enough', vendorId: 7};
@@ -107,4 +107,19 @@ test('a refused cafe session surfaces as sign in again, and bad ids never reach 
   await assert.rejects(server.shopOps.order({dashToken: 'x', vendorId: 7}, {orderId: '../admin'}), /Invalid order/);
   await assert.rejects(server.shopOps['cart.add']({dashToken: 'x', vendorId: 7}, {variantId: 'variant_1', quantity: 0}), /Invalid quantity/);
   assert.equal(calls.length, before);
+});
+
+test('cafe store email is unique per cafe and never the owner gamer email', () => {
+  assert.equal(shape.cafeStoreEmail('Owner@Gmail.com', 12), 'owner+hashcafe12@gmail.com');
+  assert.equal(shape.cafeStoreEmail('owner+old@x.in', 3), 'owner+hashcafe3@x.in');
+  assert.equal(shape.cafeStoreEmail('', 9), 'cafe-9@buyers.hashforgamers.com');
+  assert.equal(shape.cafeStoreEmail('not an email', 9), 'cafe-9@buyers.hashforgamers.com');
+});
+
+test('a rejected store account creation is reported, not hidden behind a retry message', async () => {
+  const {server} = serverHarness(Object.fromEntries([config,
+    ['POST /auth/customer/hfg-cafe', () => [200, {token: jwt({actor_id: ''})}]],
+    ['POST /store/customers', () => [400, {message: 'Email is required to create a customer'}]],
+  ]));
+  await assert.rejects(server.shopOps.orders({dashToken: 'dash-token-long-enough-3', vendorId: 7}, {}), /Email is required/);
 });
