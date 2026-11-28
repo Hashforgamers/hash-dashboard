@@ -8,8 +8,9 @@ import { createPortal } from "react-dom"
 
 import { cn } from "@/lib/utils"
 import { contiguousDeskSlots, coveringDeskSlots } from "@/lib/desk-time-range"
-import { StationFloorPicker, useDeskStations, useStationZones, type PickerStation } from "./station-map/station-picker"
-import { STATION_STATE_LABEL, buildStations, istClockOf, type Station } from "@/lib/station-map"
+import { StationFloorPicker, useDeskStations, useStationLayout, type PickerStation } from "./station-map/station-picker"
+import { applyLocalPositions, zoomKey } from "@/lib/station-map-storage"
+import { STATION_STATE_LABEL, buildStations, istClockOf } from "@/lib/station-map"
 import { deskSubtotal, rateLabel, resolveSessionRate, useDeskCards } from "./desk-rate-card"
 import { useFlexQuote, useFlexSettings } from "./booking/flex-start-picker"
 import { istClock, istDate } from "@/lib/flex-booking"
@@ -449,8 +450,6 @@ async function fetchSlotsBatch(vendorId: number, gameIds: number[], dates: strin
 
 // Update this constant
 const PAYMENT_TYPES = ['Cash', 'UPI', 'Card', 'Monthly Credit', 'pay_at_cafe', 'UPI QR', 'Pass', 'cafe_wallet'] as const
-// One row of chips at the desk; the rest sit behind "More".
-const MAIN_PAYMENT_TYPES = ['Cash', 'UPI', 'Card', 'Monthly Credit', 'pay_at_cafe'] as const
 const DEFAULT_SQUAD_PRICING_POLICY_FALLBACK: Record<string, Record<string, number>> = {
   pc: { "2": 0, "3": 3, "4": 5, "5": 8 },
 }
@@ -535,7 +534,6 @@ export function SlotBookingForm({
   const [stationIds, setStationIds] = useState<number[]>([])
   // Station picked on the floor map (or by Extend); kept until staff pick another or Auto-assign.
   const [preferredStation, setPreferredStation] = useState<number | null>(null)
-  const [showMorePayments, setShowMorePayments] = useState(false)
   const [showDiscount, setShowDiscount] = useState(false)
   const [pickerDate, setPickerDate] = useState("")
   const [pickerConsole, setPickerConsole] = useState("")
@@ -567,7 +565,7 @@ export function SlotBookingForm({
     clearTypedTimes()
     const now = istClock()
     setNowClock(now); setPickerDate(""); setShowOtherTime(false); setStationAuto(true); setStationIds([])
-    setShowMorePayments(false); setShowDiscount(false)
+    setShowDiscount(false)
     setPreferredStation(preset?.stationId ?? null)
     if (preset?.stationId) setStationAuto(false)
     if (!selectedSlots.length) {
@@ -895,6 +893,22 @@ export function SlotBookingForm({
     setPassVerificationToken("")
     setPassOtpMessage("")
   }
+
+  // Closing the form (cancel, X, or after Confirm) clears the gamer and extras,
+  // so the next booking starts clean. Time and station are reset on open.
+  useEffect(() => {
+    if (isOpen) return
+    setName(""); setEmail(""); setPhone("")
+    setPhoneSuggestions([]); setNameSuggestions([]); setEmailSuggestions([]); setFocusedInput(""); setSuggestionError("")
+    setIsSquadMode(false); setSquadPlayerCount(2); setSquadMembers([]); setSquadMemberSuggestions({}); setFocusedSquadMemberId(null)
+    setSelectedMeals([]); setWaiveOffAmount(0); setExtraControllerQty(0)
+    setCreditAccount(null); setCreditAccountError(""); setShowCreditAccountModal(false)
+    resetPassFlow()
+    setPaymentType("Cash")
+    setErrors({}); setSubmitError("")
+    setStationIds([]); setStationAuto(true); setPreferredStation(null); setPickerConsole("")
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen])
 
   const fetchValidPassOptions = async (userId: number) => {
     const vendorId = getVendorIdFromToken()
@@ -1437,10 +1451,11 @@ const getEffectivePrice = (slot: SelectedSlot): number => slotUnitPrice(slot, ac
   const stationNeed = flexMode ? flexUnits : deskQuantity
   const stationSource: "flex" | "desk" | null = flexMode ? "flex" : deskCard ? "desk" : null
   const stationLoading = stationSource === "flex" ? flexLoading : stationSource === "desk" ? deskStations.loading : false
-  const floorStations = useMemo(() => isOpen ? buildStations(floorConsoles, floorLanding, Date.now()) : [],
+  const floorLayout = useStationLayout(settingsVendorId, isOpen)
+  const floorStations = useMemo(() => isOpen ? applyLocalPositions(buildStations(floorConsoles, floorLanding, Date.now()), floorLayout.local) : [],
     // Live states only need to be fresh when the form opens or data arrives.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [isOpen, floorConsoles, floorLanding])
+    [isOpen, floorConsoles, floorLanding, floorLayout.local])
   const pickerStations: PickerStation[] = useMemo(() => {
     const gameId = Number(activePickerConsole)
     const slug = pickerConsoleItem?.type || ""
@@ -1492,18 +1507,6 @@ const getEffectivePrice = (slot: SelectedSlot): number => slotUnitPrice(slot, ac
   }
   const preferredMissing = !!preferredStation && !stationAuto && stationIds.length === 0 && !stationLoading && !!stationSource
     && !pickerStations.some(st => st.id === preferredStation && st.available)
-  const floorZones = useStationZones(settingsVendorId, isOpen)
-  const consoleOf = (station: Station) => availableConsoles.find(item => Number(item.id) === station.gameId)
-    || availableConsoles.find(item => !!item.type && item.type === station.type)
-  // A tile of another console type switches the form to that type and picks the tile once it is free.
-  const switchToStation = (station: Station) => {
-    const item = consoleOf(station)
-    if (!item || isSubmitting || String(item.id) === activePickerConsole) return null
-    return () => {
-      setPickerConsole(String(item.id)); setDeskChoice(""); setPricingGame(""); setStationIds([])
-      setStationAuto(false); setPreferredStation(station.id)
-    }
-  }
   const sameSlots = (next: SelectedSlot[]) => next.length === selectedSlots.length &&
     next.every((slot, i) => slot.slot_id === selectedSlots[i]?.slot_id && slot.date === selectedSlots[i]?.date && Number(slot.console_id) === Number(selectedSlots[i]?.console_id))
   useEffect(() => { setStationIds([]) }, [activePickerConsole, startClock, durationMin, flexUnits])
@@ -1804,7 +1807,7 @@ const getEffectivePrice = (slot: SelectedSlot): number => slotUnitPrice(slot, ac
   const paymentSelector = (
       <div className="flex flex-wrap items-center gap-2">
         <div className={segGroup} role="radiogroup" aria-label="Payment">
-          {(showMorePayments || !(MAIN_PAYMENT_TYPES as readonly string[]).includes(paymentType) ? PAYMENT_TYPES : MAIN_PAYMENT_TYPES).map(method => {
+          {PAYMENT_TYPES.map(method => {
             const MethodIcon = paymentMethodMeta[method].icon
             return (
               <button key={method} type="button" role="radio" aria-checked={paymentType === method} disabled={isSubmitting} title={paymentMethodMeta[method].hint}
@@ -1812,9 +1815,6 @@ const getEffectivePrice = (slot: SelectedSlot): number => slotUnitPrice(slot, ac
             )
           })}
         </div>
-        {!showMorePayments && (MAIN_PAYMENT_TYPES as readonly string[]).includes(paymentType) && (
-          <button type="button" className="h-8 rounded-md px-2.5 text-xs text-muted-foreground hover:bg-white/[0.06] hover:text-foreground" onClick={() => setShowMorePayments(true)}>More…</button>
-        )}
       </div>
   )
   const paymentHint = paymentType === "pay_at_cafe" ? "Collect when play ends."
@@ -2397,7 +2397,7 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
               <StationFloorPicker
                 floor={floorStations}
                 stations={pickerStations}
-                zones={floorZones}
+                zones={floorLayout.zones}
                 selected={stationIds}
                 auto={stationAuto}
                 need={stationNeed}
@@ -2406,7 +2406,7 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                 canPick={!!stationSource}
                 onAuto={() => { setStationAuto(true); setStationIds([]); setPreferredStation(null) }}
                 onToggle={toggleStation}
-                switchFor={switchToStation}
+                zoomStorageKey={zoomKey(settingsVendorId, `new-session.${pickerConsoleItem?.type || activePickerConsole}`)}
                 note={!stationSource ? "Stations are assigned when the session starts."
                   : preferredMissing ? `${pickerStations.find(st => st.id === preferredStation)?.code || "That station"} is not free for this time. Pick another or use Auto-assign.`
                   : stationSource === "desk" && deskStations.error ? deskStations.error : undefined}
@@ -2706,18 +2706,31 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
               )}
               </FormSection>
 
+              <FormSection label="Booking for">
+                <div className="flex flex-wrap items-center gap-2">
+                  <div className={segGroup} role="radiogroup" aria-label="Booking for">
+                    <button type="button" role="radio" aria-checked={!isSquadMode} disabled={isSubmitting}
+                      onClick={() => setBookingModeQuick("solo")} className={cn(segItem(!isSquadMode), "gap-1.5 px-4")}>
+                      <User className="h-3.5 w-3.5" />Individual
+                    </button>
+                    <button type="button" role="radio" aria-checked={isSquadMode} disabled={isSubmitting || !squadSupported}
+                      title={squadPolicyState === "loading" ? "Loading" : !squadSupported ? "This console is solo only" : "Book for a group"}
+                      onClick={() => setBookingModeQuick("squad")} className={cn(segItem(isSquadMode), "gap-1.5 px-4")}>
+                      <Users className="h-3.5 w-3.5" />Squad
+                    </button>
+                  </div>
+                  {isSquadMode && <span className="inline-flex h-10 items-center overflow-hidden rounded-lg border border-border bg-muted/40" aria-label="Players">
+                    <button type="button" aria-label="One player less" className="grid h-full w-9 place-items-center text-muted-foreground hover:bg-white/[0.06] hover:text-foreground disabled:opacity-40" disabled={squadPlayerCount <= 2} onClick={() => setSquadPlayerCount((prev) => Math.max(2, prev - 1))}>−</button>
+                    <span className="min-w-[5.5rem] px-1 text-center text-sm font-medium tabular-nums">{squadPlayerCount} players</span>
+                    <button type="button" aria-label="One player more" className="grid h-full w-9 place-items-center text-muted-foreground hover:bg-white/[0.06] hover:text-foreground disabled:opacity-40" disabled={squadPlayerCount >= squadMaxPlayers} onClick={() => setSquadPlayerCount((prev) => Math.min(squadMaxPlayers, prev + 1))}>+</button>
+                  </span>}
+                  {!squadSupported && squadPolicyState !== "loading" && <span className="text-xs text-muted-foreground">Solo only for this console</span>}
+                </div>
+                {errors.squad && <p className="mt-2 text-xs text-red-500">{errors.squad}</p>}
+              </FormSection>
+
               <FormSection label="Extras">
                 <div className="flex flex-wrap items-center gap-2">
-                  <button type="button" disabled={!squadSupported} aria-pressed={isSquadMode}
-                    title={squadPolicyState === "loading" ? "Loading" : !squadSupported ? "This console is solo only" : "Book for a group"}
-                    onClick={() => setBookingModeQuick(isSquadMode ? "solo" : "squad")} className={extraClass(isSquadMode)}>
-                    <Users className="h-3.5 w-3.5" />{isSquadMode ? `Squad · ${squadPlayerCount}` : "Squad"}
-                  </button>
-                  {isSquadMode && <span className="inline-flex h-8 items-center overflow-hidden rounded-md border border-border">
-                    <button type="button" aria-label="One player less" className="grid h-full w-8 place-items-center hover:bg-muted" onClick={() => setSquadPlayerCount((prev) => Math.max(2, prev - 1))}>−</button>
-                    <span className="px-1.5 text-sm tabular-nums">{squadPlayerCount}</span>
-                    <button type="button" aria-label="One player more" className="grid h-full w-8 place-items-center hover:bg-muted" onClick={() => setSquadPlayerCount((prev) => Math.min(squadMaxPlayers, prev + 1))}>+</button>
-                  </span>}
                   {supportsExtraController && <span className="inline-flex h-8 items-center overflow-hidden rounded-md border border-border text-xs">
                     <span className="px-2.5 text-muted-foreground">Controllers</span>
                     <button type="button" aria-label="One controller less" className="grid h-full w-8 place-items-center hover:bg-muted" disabled={isControllerPricingLoading} onClick={() => applyExtraControllerQty(extraControllerQty - 1)}>−</button>
@@ -2732,7 +2745,6 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                     onChange={(e) => setWaiveOffAmount(Math.max(0, Math.min(gamingNet, Number(e.target.value) || 0)))}
                     className="h-8 w-24 rounded-md border border-border bg-background px-2 text-right text-sm" />}
                 </div>
-                {errors.squad && <p className="mt-2 text-xs text-red-500">{errors.squad}</p>}
                     <AnimatePresence>
                       {isSquadMode && (
                         <motion.div
