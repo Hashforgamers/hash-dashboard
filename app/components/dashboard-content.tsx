@@ -3,10 +3,8 @@ import NumberFlow from "@number-flow/react"
 
 import React, { useCallback, useEffect, useRef, useState } from "react"
 import { Card, CardContent } from "@/components/ui/card"
-import { UpcomingBookings } from "./upcoming-booking"
-import { CurrentSlots } from "./current-slot"
 import SlotManagement from "./newSlot"
-import PayAtCafeRequests from "./pay-at-cafe-requests"
+import { OverviewBoard } from "./dashboard/overview-board"
 import dynamic from "next/dynamic"
 import { motion } from "framer-motion"
 import {
@@ -470,11 +468,9 @@ export function DashboardContent() {
                 </div>
               </div>
 
-              {isOwnerSession && activeDashboardTab === "live" && <button type="button" aria-expanded={showAnalytics} className="justify-self-end rounded border px-3 py-1.5 text-xs" onClick={()=>setShowAnalytics(!showAnalytics)}>{showAnalytics ? "Hide analytics" : "Show analytics"}</button>}
             </div>
           </motion.div>
 
-          {isOwnerSession && activeDashboardTab === "live" && showAnalytics && <div className="shrink-0">{topMetricsStrip}</div>}
 
           {activeDashboardTab === "wallet" && can("wallet.topup") ? (
             <div className="mt-2 min-h-0 flex-1 overflow-y-auto rounded-lg"><DashboardWallet embedded /></div>
@@ -490,57 +486,19 @@ export function DashboardContent() {
               </div>
             </motion.div>
           ) : (
-            <div className="mt-2 flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto xl:overflow-visible max-md:mt-1 max-md:gap-1.5 sm:mt-3 sm:gap-3">
-              <div className="operations-booking-row grid shrink-0 grid-cols-1 gap-2 sm:gap-3">
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ duration: 0.15 }}
-                  className="dashboard-booking-slab gaming-panel min-w-0 overflow-hidden rounded-lg"
-                >
-                  <div className="dashboard-booking-slab-body">
-                    <SlotManagement embedded slab />
-                  </div>
-                </motion.div>
-                <div className="min-w-0">
-                  <PayAtCafeRequests vendorId={vendorId?Number(vendorId):null}/>
-                </div>
-              </div>
-
-              <div className="operations-workspace grid flex-1 grid-cols-1 gap-2 overflow-hidden max-xl:min-h-[520px] max-md:grid-rows-[auto_auto] max-md:gap-1.5 sm:gap-3 xl:grid-cols-12">
-                <div className="space-y-2 sm:space-y-3 flex flex-col min-h-0 xl:col-span-8 2xl:col-span-9 max-md:h-full max-md:min-h-0">
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.15 }}
-                  className="flex-1 min-h-0 lg:h-full max-md:overflow-hidden"
-                >
-                  <div className="relative h-full overflow-hidden">
-                    <CurrentSlots
-                      currentSlots={dashboardData.currentSlots}
-                      historyBookings={dashboardData.historyBookings || []}
-                      refreshSlots={refreshSlots}
-                      setRefreshSlots={setRefreshSlots}
-                    />
-                  </div>
-                </motion.div>
-                </div>
-
-                <motion.div
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.15 }}
-                  className="flex flex-col min-h-0 xl:col-span-4 2xl:col-span-3 xl:h-full max-md:h-full max-md:min-h-0"
-                >
-                  <div className="relative flex-1 min-h-[280px] overflow-hidden rounded-[14px] xl:h-full xl:min-h-0">
-                    <UpcomingBookings
-                      upcomingBookings={dashboardData.upcomingBookings || []}
-                      vendorId={vendorId?.toString()}
-                      setRefreshSlots={setRefreshSlots}
-                    />
-                  </div>
-                </motion.div>
-              </div>
+            <div className="mt-2 flex min-h-0 flex-1 flex-col sm:mt-3">
+              <OverviewBoard
+                vendorId={vendorId ? Number(vendorId) : null}
+                landing={dashboardData}
+                stats={{ netEarnings: Number(currentStats.netEarnings || 0), netPendingAmount: Number(currentStats.netPendingAmount || 0), todayBookings: Number(currentStats.todayBookings || 0) }}
+                isOwner={isOwnerSession}
+                isConnected={isConnected}
+                refreshSlots={refreshSlots}
+                setRefreshSlots={setRefreshSlots}
+                onOpenSchedule={() => openDashboardTab("booking")}
+              />
+              {/* New session form for the map's Start / Extend and "+ New session". */}
+              <SlotManagement embedded formOnly />
             </div>
           )}
 

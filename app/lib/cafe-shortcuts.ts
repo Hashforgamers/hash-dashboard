@@ -38,6 +38,7 @@ export type BookConsoleEventDetail = {
   durationMin?: number
   customer?: { name: string; phone: string; email?: string }
   extendsBookingId?: number
+  date?: string // yyyy-mm-dd IST (Dashboard schedule map, future days)
 }
 const PENDING_BOOKING_KEY = "hash:pending-book-console"
 

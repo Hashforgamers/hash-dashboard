@@ -53,6 +53,7 @@ import { ConsoleType } from './types'
 import MealSelector from './mealSelector'
 import { BOOK_CONSOLE_EVENT, takePendingConsoleBooking, type BookConsoleEventDetail } from "@/app/lib/cafe-shortcuts"
 import BookingRecords from "./booking-records"
+import { ScheduleMap } from "./dashboard/schedule-map"
 import scheduleStyles from "./schedule-workspace.module.css"
 import CreditAccountModal, { type MonthlyCreditAccountSummary } from './credit-account-modal'
 
@@ -255,6 +256,7 @@ export type BookingPreset = {
   durationMin?: number
   customer?: { name: string; phone: string; email: string }
   extendsBookingId?: number
+  date?: string // yyyy-mm-dd (IST); Schedule map books future days
 }
 
 const resolveSafeConsoleIcon = (iconCandidate: unknown, slugHint?: string) => {
@@ -564,13 +566,14 @@ export function SlotBookingForm({
     openedRef.current = true
     clearTypedTimes()
     const now = istClock()
-    setNowClock(now); setPickerDate(""); setShowOtherTime(false); setStationAuto(true); setStationIds([])
+    const presetDate = preset?.date && preset.date > istDate() ? preset.date : ""
+    setNowClock(now); setPickerDate(presetDate); setShowOtherTime(false); setStationAuto(true); setStationIds([])
     setShowDiscount(false)
     setPreferredStation(preset?.stationId ?? null)
     if (preset?.stationId) setStationAuto(false)
     if (!selectedSlots.length) {
       setTimeMode("quick"); setDurationMin(preset?.durationMin || 60)
-      if (preset?.startClock && preset.startClock > now) { setStartKey("custom"); setCustomClock(preset.startClock) }
+      if (preset?.startClock && (presetDate || preset.startClock > now)) { setStartKey("custom"); setCustomClock(preset.startClock) }
       else setStartKey("now")
       return
     }
@@ -1470,14 +1473,16 @@ const getEffectivePrice = (slot: SelectedSlot): number => slotUnitPrice(slot, ac
       const st = floorStations.find(item => item.id === id)
       const flexRow = flexById.get(id)
       const available = stationSource === "flex" ? !!flexRow?.available : stationSource === "desk" ? deskIds.has(id) : false
-      const liveState = st?.state && st.state !== "free" ? st.state : "booked"
+      // A live session only explains a clash for today's bookings.
+      const liveToday = startDate === istDate()
+      const liveState = liveToday && st?.state && st.state !== "free" ? st.state : "booked"
       const reason = !stationSource ? "Stations are assigned when the session starts"
         : st?.state === "offline" ? "Offline / maintenance"
         : flexRow && !flexRow.available ? (flexRow.max_minutes_available > 0 && flexRow.next_busy_at ? `Busy from ${showClock(String(flexRow.next_busy_at).slice(11, 16))}` : "Busy for this time")
-        : (st?.state === "busy" || st?.state === "ending") && st.end ? `In session until ${showClock(istClockOf(st.end))}`
+        : liveToday && (st?.state === "busy" || st?.state === "ending") && st.end ? `In session until ${showClock(istClockOf(st.end))}`
         : "Booked for this time"
       const caption = !stationSource ? STATION_STATE_LABEL[st?.state || "free"]
-        : (st?.state === "busy" || st?.state === "ending") && st.end ? `Till ${showClock(istClockOf(st.end))}`
+        : liveToday && (st?.state === "busy" || st?.state === "ending") && st.end ? `Till ${showClock(istClockOf(st.end))}`
         : st?.state === "offline" ? "Offline" : "Booked"
       return {
         id, code: st?.code || flexRow?.name || deskStations.rows.find(row => row.id === id)?.name || `#${id}`,
@@ -1487,7 +1492,7 @@ const getEffectivePrice = (slot: SelectedSlot): number => slotUnitPrice(slot, ac
         available, state: available ? "free" : !stationSource ? (st?.state || "free") : liveState, reason, caption,
       }
     })
-  }, [activePickerConsole, pickerConsoleItem, stationSource, flexQuote, flexProblem, deskStations.rows, floorStations, showClock])
+  }, [activePickerConsole, pickerConsoleItem, stationSource, flexQuote, flexProblem, deskStations.rows, floorStations, showClock, startDate])
   const stationAvailableKey = pickerStations.filter(st => st.available).map(st => st.id).join(",")
   // Drop picks that stopped being free; re-pick the station chosen on the floor map when it is free.
   useEffect(() => {
@@ -2460,7 +2465,7 @@ if (result?.success === true || result?.success === 'true' || result?.booking ||
                           <label>Date
                             <select value={activePickerDate} onChange={(event) => { setPickerConsole(activePickerConsole); setPickerDate(event.target.value) }}
                               className="mt-1 block h-9 rounded-md border border-border bg-background px-2 text-sm text-foreground">
-                              {Array.from(new Set([istDate(), ...slotDates])).sort().map((date) => <option key={date} value={date}>{date}</option>)}
+                              {Array.from(new Set([istDate(), activePickerDate, ...slotDates])).filter(Boolean).sort().map((date) => <option key={date} value={date}>{date}</option>)}
                             </select>
                           </label>
                           <label>Time<TimeField className="mt-1 flex" aria-label="Start time" minuteStep={flexMode ? 1 : 15} value={customClock} onValueChange={(value) => { setCustomClock(value); setStartKey("custom") }} /></label>
@@ -5483,7 +5488,7 @@ useEffect(() => {
     setBookingPreset(detail?.stationId ? {
       stationId: detail.stationId, startClock: detail.startClock, durationMin: detail.durationMin,
       customer: detail.customer ? { name: detail.customer.name, phone: detail.customer.phone, email: detail.customer.email || "" } : undefined,
-      extendsBookingId: detail.extendsBookingId,
+      extendsBookingId: detail.extendsBookingId, date: detail.date,
     } : null)
     setShowBookingForm(true)
   }
@@ -5508,6 +5513,14 @@ useEffect(() => {
     const pending = takePendingConsoleBooking()
     if (pending) openConsoleBookingRef.current(pending)
   }, [availableConsoles])
+
+  // Schedule: the Booking records table under the map can be folded away; remembered on this device.
+  const [recordsOpen, setRecordsOpen] = useState(true)
+  useEffect(() => { try { setRecordsOpen(localStorage.getItem("hash.dashboard.recordsOpen") !== "0") } catch { /* ignore */ } }, [])
+  const toggleRecords = () => setRecordsOpen(open => {
+    try { localStorage.setItem("hash.dashboard.recordsOpen", open ? "0" : "1") } catch { /* ignore */ }
+    return !open
+  })
 
   const handleBookingComplete = () => {
     setRecordsRevision(value => value + 1)
@@ -5577,31 +5590,23 @@ useEffect(() => {
                 onDateChange={() => setSelectedSlots([])}
               />
             ) : (
-              <div className="shrink-0 space-y-3">
-                <TopBar
-                  selectedSlots={selectedSlots}
-                  onNewBooking={handleNewBooking}
+              <div className="min-h-0 flex-1 space-y-3 overflow-y-auto pr-1">
+                {/* Map-based booking: the cafe's floor for the chosen day, start and duration. */}
+                <ScheduleMap
+                  availableConsoles={availableConsoles}
                   selectedConsole={selectedConsole}
                   onConsoleChange={handleConsoleChange}
-                  availableConsoles={availableConsoles}
-                  compact
-                />
-                <ScheduleGrid
-                  availableConsoles={availableConsoles}
-                  selectedConsole={selectedConsole}
-                  selectedSlots={selectedSlots}
-                  onSlotSelect={handleSlotSelect}
-                  onQuickBooking={handleQuickBooking}
                   allSlots={allSlots}
-                  isLoading={isLoading}
-                  fetchSlotBookings={fetchSlotBookings}
-                  compact
+                  onBook={detail => openConsoleBookingRef.current(detail.type, detail)}
                 />
-              </div>
-            )}
-            {!slab && (
-              <div className="min-h-0 flex-1 overflow-hidden">
-                <BookingRecords key={vendorId} vendorId={vendorId} refreshKey={recordsRevision} />
+                <section className="gaming-panel rounded-xl border border-border" aria-label="Booking records">
+                  <button type="button" aria-expanded={recordsOpen} onClick={() => toggleRecords()}
+                    className="flex w-full items-center gap-2 px-4 py-3 text-left text-sm font-semibold text-foreground">
+                    <ListTodo className="h-4 w-4 text-muted-foreground" />Booking records
+                    <span className="ml-auto text-xs font-normal text-muted-foreground">{recordsOpen ? "Hide" : "Show"}</span>
+                  </button>
+                  {recordsOpen && <div className="h-[560px] border-t border-border"><BookingRecords key={vendorId} vendorId={vendorId} refreshKey={recordsRevision} /></div>}
+                </section>
               </div>
             )}
           </>

@@ -94,40 +94,33 @@ export function zonesForCells(zones: Zone[], cells: Iterable<{ x: number; y: num
   return zones.filter(z => z.y >= minY - 1 && z.y <= maxY && z.x <= maxX && z.x + z.w - 1 >= minX)
 }
 
+export type FloorEntry = { id: number; type: string; typeName: string; number: number | null; mapX: number | null; mapY: number | null }
+
 /**
- * New session floor picker: only the chosen console type's stations, at the
- * cells arranged in Gaming Stations > Map (empty space of other types trimmed
- * away), with their zone label. Free stations for the chosen time can be picked.
+ * One console type's block of the cafe floor, at the cells arranged in Gaming
+ * Stations > Map (other types' space trimmed away), with its zone label, zoom
+ * that is remembered, and a tile renderer supplied by the caller. Used by the
+ * New session picker and the Dashboard schedule map.
  */
-export function StationFloorPicker({
-  floor, stations, zones: savedZones, selected, auto, need, onAuto, onToggle, disabled, loading, note, canPick, zoomStorageKey,
+export function FloorCanvas<T extends FloorEntry>({
+  entries, zones: savedZones, zoomStorageKey, toolbar, note, loading, emptyText, renderTile, legend, minHeight,
 }: {
-  floor: Station[] // every station with its live state and map cell
-  stations: PickerStation[] // the chosen console type, with availability for the chosen time
+  entries: T[]
   zones: Zone[]
-  selected: number[]
-  auto: boolean
-  need: number
-  onAuto: () => void
-  onToggle: (id: number) => void
-  disabled?: boolean
+  zoomStorageKey: string
+  toolbar?: React.ReactNode
+  note?: React.ReactNode
   loading?: boolean
-  note?: string
-  canPick: boolean // false: the server assigns the station (view only)
-  zoomStorageKey: string // zoom is remembered per vendor and console type
+  emptyText: string
+  renderTile: (entry: T) => React.ReactNode // drawn inside a MAP_CELL_W x MAP_CELL_H box
+  legend?: React.ReactNode
+  minHeight?: number
 }) {
-  const floorById = useMemo(() => new Map(floor.map(f => [f.id, f])), [floor])
-  // Cells come from the floor (saved map, or this device's pending layout).
-  const entries = useMemo(() => stations.map(s => {
-    const f = floorById.get(s.id)
-    return { ...s, mapX: f ? f.mapX : s.mapX, mapY: f ? f.mapY : s.mapY }
-  }), [stations, floorById])
   const layout = useMemo(() => layoutStations(entries, MAP_COLUMNS), [entries])
   const zones = useMemo(() => {
     const savedCells = entries.filter(e => e.mapX !== null && e.mapY !== null).map(e => layout.cells.get(e.id)!).filter(Boolean)
     return mergeZones(zonesForCells(savedZones, savedCells), layout.autoZones)
   }, [entries, layout, savedZones])
-  // Bounding box of this type's block, so other consoles' space does not shrink the fit.
   const extent = useMemo(() => {
     let minX = Infinity, minY = Infinity, maxX = 0, maxY = 0
     layout.cells.forEach(c => { minX = Math.min(minX, c.x); minY = Math.min(minY, c.y); maxX = Math.max(maxX, c.x + 1); maxY = Math.max(maxY, c.y + 1) })
@@ -169,12 +162,118 @@ export function StationFloorPicker({
     return () => observer.disconnect()
   }, [fitScale])
 
+  return (
+    <div className="flex h-full min-h-0 flex-col gap-3">
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+        {toolbar}
+        <div className="ml-auto inline-flex items-center rounded-lg border border-border bg-card" role="group" aria-label="Zoom">
+          <button type="button" aria-label="Zoom out" className="grid h-8 w-8 place-items-center text-muted-foreground hover:text-foreground disabled:opacity-40" disabled={zoom <= ZOOM_MIN} onClick={() => setZoom(zoom - 0.1)}><Minus className="h-4 w-4" /></button>
+          <span className="w-11 text-center text-xs tabular-nums text-muted-foreground">{Math.round(zoom * 100)}%</span>
+          <button type="button" aria-label="Zoom in" className="grid h-8 w-8 place-items-center text-muted-foreground hover:text-foreground disabled:opacity-40" disabled={zoom >= ZOOM_MAX} onClick={() => setZoom(zoom + 0.1)}><Plus className="h-4 w-4" /></button>
+          <button type="button" aria-label="Fit to panel" title="Fit" className="grid h-8 w-8 place-items-center border-l border-border text-muted-foreground hover:text-foreground" onClick={() => { const scale = fitScale(); if (scale !== null) setZoom(scale) }}><Maximize2 className="h-3.5 w-3.5" /></button>
+        </div>
+      </div>
+      {note}
+
+      <div ref={viewportRef} role="group" aria-label="Stations" style={minHeight ? { minHeight } : undefined}
+        className={cn("relative min-h-0 flex-1 overflow-auto rounded-xl border border-border bg-[radial-gradient(hsl(var(--foreground)/0.06)_1px,transparent_1px)] [background-size:18px_18px]", loading && "opacity-70")}>
+        {entries.length === 0 ? (
+          <div className="grid h-full place-items-center p-8 text-center">
+            <div><LayoutGrid className="mx-auto mb-2 h-8 w-8 text-muted-foreground" /><p className="text-sm text-muted-foreground">{loading ? "Loading stations…" : emptyText}</p></div>
+          </div>
+        ) : (
+          <div className="mx-auto p-5" style={{ width: canvasW * zoom + 40, height: canvasH * zoom + 40 }}>
+            <div className="relative origin-top-left" style={{ width: canvasW, height: canvasH, transform: `scale(${zoom})` }}>
+              {zones.map((zone, index) => (
+                <div key={`zone-${index}`} className="pointer-events-none absolute z-0 flex items-end pb-1"
+                  style={{ ...pos(zone), width: zone.w * (MAP_CELL_W + MAP_GAP) - MAP_GAP, height: MAP_CELL_H }}>
+                  <span className="flex w-full items-center gap-2 border-b border-border pb-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    <Tag className="h-3 w-3 opacity-70" />{zone.label}
+                  </span>
+                </div>
+              ))}
+              {entries.map(entry => {
+                const cell = layout.cells.get(entry.id)
+                if (!cell) return null
+                return (
+                  <div key={entry.id} className="absolute z-10" style={{ ...pos(cell), width: MAP_CELL_W, height: MAP_CELL_H }}>
+                    {renderTile(entry)}
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )}
+      </div>
+      {legend}
+    </div>
+  )
+}
+
+export function SelectedBadge() {
+  return (
+    <span aria-hidden className="absolute -right-1.5 -top-1.5 z-20 grid h-5 w-5 place-items-center rounded-full bg-primary text-primary-foreground shadow">
+      <Check className="h-3 w-3" strokeWidth={3} />
+    </span>
+  )
+}
+export const SELECTED_TILE = "border-primary ring-[3px] ring-primary/70 shadow-[0_0_0_6px_hsl(var(--primary)/0.12)]"
+
+export function StateLegend({ extra }: { extra?: React.ReactNode }) {
+  return (
+    <div className="flex flex-wrap items-center gap-1.5" aria-label="Legend">
+      {LEGEND.map(state => (
+        <span key={state} className="inline-flex h-6 items-center gap-1.5 rounded-md border border-border bg-card px-2 text-[11px] text-muted-foreground">
+          <StateDot state={state} />{STATION_STATE_LABEL[state]}
+        </span>
+      ))}
+      <span className="inline-flex h-6 items-center gap-1.5 rounded-md border border-primary/50 bg-primary/10 px-2 text-[11px] text-primary">
+        <Check className="h-3 w-3" />Selected
+      </span>
+      {extra}
+    </div>
+  )
+}
+
+/**
+ * New session floor picker: only the chosen console type's stations, at the
+ * cells arranged in Gaming Stations > Map, with their zone label. Free
+ * stations for the chosen time can be picked.
+ */
+export function StationFloorPicker({
+  floor, stations, zones, selected, auto, need, onAuto, onToggle, disabled, loading, note, canPick, zoomStorageKey,
+}: {
+  floor: Station[] // every station with its live state and map cell
+  stations: PickerStation[] // the chosen console type, with availability for the chosen time
+  zones: Zone[]
+  selected: number[]
+  auto: boolean
+  need: number
+  onAuto: () => void
+  onToggle: (id: number) => void
+  disabled?: boolean
+  loading?: boolean
+  note?: string
+  canPick: boolean // false: the server assigns the station (view only)
+  zoomStorageKey: string // zoom is remembered per vendor and console type
+}) {
+  const floorById = useMemo(() => new Map(floor.map(f => [f.id, f])), [floor])
+  // Cells come from the floor (saved map, or this device's pending layout).
+  const entries = useMemo(() => stations.map(s => {
+    const f = floorById.get(s.id)
+    return { ...s, mapX: f ? f.mapX : s.mapX, mapY: f ? f.mapY : s.mapY }
+  }), [stations, floorById])
   const freeCount = stations.filter(s => s.available).length
   const typeName = stations[0]?.typeName || ""
 
   return (
-    <div className="flex h-full min-h-0 flex-col gap-3">
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+    <FloorCanvas
+      entries={entries}
+      zones={zones}
+      zoomStorageKey={zoomStorageKey}
+      loading={loading}
+      emptyText={`No ${typeName || "stations"} on the floor map yet.`}
+      toolbar={<>
         {canPick && (
           <button type="button" role="radio" aria-checked={auto} disabled={disabled} onClick={onAuto}
             className={cn("inline-flex h-9 items-center gap-1.5 rounded-lg border px-3 text-sm font-medium transition-colors disabled:opacity-50",
@@ -188,79 +287,33 @@ export function StationFloorPicker({
             : `${stations.length} ${typeName}`}
         </span>
         {need > 1 && canPick && !auto && <span className="text-sm tabular-nums text-muted-foreground">{selected.length}/{need} picked</span>}
-        <div className="ml-auto inline-flex items-center rounded-lg border border-border bg-card" role="group" aria-label="Zoom">
-          <button type="button" aria-label="Zoom out" className="grid h-8 w-8 place-items-center text-muted-foreground hover:text-foreground disabled:opacity-40" disabled={zoom <= ZOOM_MIN} onClick={() => setZoom(zoom - 0.1)}><Minus className="h-4 w-4" /></button>
-          <span className="w-11 text-center text-xs tabular-nums text-muted-foreground">{Math.round(zoom * 100)}%</span>
-          <button type="button" aria-label="Zoom in" className="grid h-8 w-8 place-items-center text-muted-foreground hover:text-foreground disabled:opacity-40" disabled={zoom >= ZOOM_MAX} onClick={() => setZoom(zoom + 0.1)}><Plus className="h-4 w-4" /></button>
-          <button type="button" aria-label="Fit to panel" title="Fit" className="grid h-8 w-8 place-items-center border-l border-border text-muted-foreground hover:text-foreground" onClick={() => { const scale = fitScale(); if (scale !== null) setZoom(scale) }}><Maximize2 className="h-3.5 w-3.5" /></button>
-        </div>
-      </div>
-      {note && <p className="rounded-lg border border-border bg-muted/30 px-3 py-2 text-xs text-muted-foreground">{note}</p>}
-
-      <div ref={viewportRef} role="group" aria-label="Stations"
-        className={cn("relative min-h-0 flex-1 overflow-auto rounded-xl border border-border bg-[radial-gradient(hsl(var(--foreground)/0.06)_1px,transparent_1px)] [background-size:18px_18px]", loading && "opacity-70")}>
-        {entries.length === 0 ? (
-          <div className="grid h-full place-items-center p-8 text-center">
-            <div><LayoutGrid className="mx-auto mb-2 h-8 w-8 text-muted-foreground" /><p className="text-sm text-muted-foreground">{loading ? "Loading stations…" : `No ${typeName || "stations"} on the floor map yet.`}</p></div>
-          </div>
-        ) : (
-          <div className="mx-auto p-5" style={{ width: canvasW * zoom + 40, height: canvasH * zoom + 40 }}>
-            <div className="relative origin-top-left" style={{ width: canvasW, height: canvasH, transform: `scale(${zoom})` }}>
-              {zones.map((zone, index) => (
-                <div key={`zone-${index}`} className="pointer-events-none absolute z-0 flex items-end pb-1"
-                  style={{ ...pos(zone), width: zone.w * (MAP_CELL_W + MAP_GAP) - MAP_GAP, height: MAP_CELL_H }}>
-                  <span className="flex w-full items-center gap-2 border-b border-border pb-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                    <Tag className="h-3 w-3 opacity-70" />{zone.label}
-                  </span>
-                </div>
-              ))}
-              {entries.map(pick => {
-                const cell = layout.cells.get(pick.id)
-                if (!cell) return null
-                const live = floorById.get(pick.id)
-                const chosen = canPick && !auto && selected.includes(pick.id)
-                const full = !chosen && need > 1 && selected.length >= need
-                const clickable = canPick && pick.available && !full
-                return (
-                  <div key={pick.id} className="absolute z-10" style={{ ...pos(cell), width: MAP_CELL_W, height: MAP_CELL_H }}>
-                    <StationTile
-                      code={pick.code}
-                      icon={pick.icon}
-                      consoleType={pick.type}
-                      state={canPick && pick.available ? "free" : pick.state}
-                      progress={live?.progress}
-                      caption={canPick && pick.available ? (chosen ? "Selected" : "Free") : pick.caption}
-                      title={`${pick.code} · ${pick.fullName}${canPick && pick.available ? "" : ` · ${pick.reason}`}`}
-                      selected={chosen}
-                      disabled={disabled || !clickable}
-                      onClick={() => onToggle(pick.id)}
-                      className={cn(chosen && "border-primary ring-[3px] ring-primary/70 shadow-[0_0_0_6px_hsl(var(--primary)/0.12)]")}
-                    />
-                    {chosen && (
-                      <span aria-hidden className="absolute -right-1.5 -top-1.5 z-20 grid h-5 w-5 place-items-center rounded-full bg-primary text-primary-foreground shadow">
-                        <Check className="h-3 w-3" strokeWidth={3} />
-                      </span>
-                    )}
-                    {canPick && !pick.available && <p className="absolute inset-x-0.5 bottom-0 truncate text-[11px] leading-4 text-muted-foreground">{pick.reason}</p>}
-                  </div>
-                )
-              })}
-            </div>
-          </div>
-        )}
-      </div>
-
-      <div className="flex flex-wrap items-center gap-1.5" aria-label="Legend">
-        {LEGEND.map(state => (
-          <span key={state} className="inline-flex h-6 items-center gap-1.5 rounded-md border border-border bg-card px-2 text-[11px] text-muted-foreground">
-            <StateDot state={state} />{STATION_STATE_LABEL[state]}
-          </span>
-        ))}
-        <span className="inline-flex h-6 items-center gap-1.5 rounded-md border border-primary/50 bg-primary/10 px-2 text-[11px] text-primary">
-          <Check className="h-3 w-3" />Selected
-        </span>
-      </div>
-    </div>
+      </>}
+      note={note ? <p className="rounded-lg border border-border bg-muted/30 px-3 py-2 text-xs text-muted-foreground">{note}</p> : null}
+      legend={<StateLegend />}
+      renderTile={pick => {
+        const live = floorById.get(pick.id)
+        const chosen = canPick && !auto && selected.includes(pick.id)
+        const full = !chosen && need > 1 && selected.length >= need
+        const clickable = canPick && pick.available && !full
+        return <>
+          <StationTile
+            code={pick.code}
+            icon={pick.icon}
+            consoleType={pick.type}
+            state={canPick && pick.available ? "free" : pick.state}
+            progress={live?.progress}
+            caption={canPick && pick.available ? (chosen ? "Selected" : "Free") : pick.caption}
+            title={`${pick.code} · ${pick.fullName}${canPick && pick.available ? "" : ` · ${pick.reason}`}`}
+            selected={chosen}
+            disabled={disabled || !clickable}
+            onClick={() => onToggle(pick.id)}
+            className={cn(chosen && SELECTED_TILE)}
+          />
+          {chosen && <SelectedBadge />}
+          {canPick && !pick.available && <p className="absolute inset-x-0.5 bottom-0 truncate text-[11px] leading-4 text-muted-foreground">{pick.reason}</p>}
+        </>
+      }}
+    />
   )
 }
 
