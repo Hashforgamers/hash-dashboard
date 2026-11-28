@@ -27,7 +27,7 @@ function bookingDate(value?:string){
   return Number.isNaN(date.getTime())?value:date.toLocaleDateString('en-IN',{day:'numeric',month:'short'});
 }
 
-export default function PayAtCafeRequests({vendorId}:{vendorId:number|null}){
+export default function PayAtCafeRequests({vendorId,onCount}:{vendorId:number|null;onCount?:(count:number)=>void}){
   const {activeStaff,can}=useAccess();
   const {socket,isConnected}=useSocket();
   const [requests,setRequests]=useState<Request[]>([]);
@@ -74,6 +74,8 @@ export default function PayAtCafeRequests({vendorId}:{vendorId:number|null}){
     const timer=setTimeout(()=>setMessage(''),3000);
     return ()=>clearTimeout(timer);
   },[message]);
+  const countRef=useRef(onCount);countRef.current=onCount;
+  useEffect(()=>{countRef.current?.(requests.length)},[requests.length]);
   const index=Math.min(page,Math.max(0,requests.length-1));
   const row=requests[index];
   selectedRequest.current=row?.bookingId??null;
