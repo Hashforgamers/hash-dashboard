@@ -8,8 +8,6 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
-import { creditAuthHeaders } from "@/lib/credit-auth"
-import { DASHBOARD_URL } from "@/src/config/env"
 import { useDashboardData } from "@/app/context/DashboardDataContext"
 import { useAccess } from "@/app/context/AccessContext"
 import { useSocket } from "@/app/context/SocketContext"
@@ -23,6 +21,10 @@ import { formatRupees } from "@/lib/desk-bill"
 import ExtraBookingOverlay from "../extraBookingOverlay"
 import { BookingQuickView } from "../booking-quick-view"
 import { calculateExtraAmount, calculateExtraTime, formatTime, normalizeLiveSlot, releaseSlot } from "../current-slot"
+import {
+  applyLocalPositions, clearLocalLayout, readLocalLayout, readZoom, saveFailureMessage, writeLocalLayout, writeZoom, zoomKey,
+} from "@/lib/station-map-storage"
+import { putStationMap, useStationLayout } from "./station-picker"
 import {
   MAP_CELL_H as CELL_H, MAP_CELL_W as CELL_W, MAP_COLUMNS, MAP_GAP as GAP, STATE_STYLE, StateDot, StationTile, mapCellPos,
 } from "./station-tile"
@@ -51,9 +53,22 @@ export function StationMapView() {
   const canArrange = can("gaming.manage")
 
   const [now, setNow] = useState(() => Date.now())
-  const [savedZones, setSavedZones] = useState<Zone[] | null>(null)
   const [typeFilter, setTypeFilter] = useState<string>("all")
-  const [zoom, setZoom] = useState(1)
+  const zoomStorage = zoomKey(vendorId, "gaming-stations")
+  const [zoom, setZoomState] = useState(1)
+  // A zoom picked by hand (or with Fit) is remembered per vendor; auto-fit only until then.
+  const zoomRemembered = useRef(false)
+  useEffect(() => {
+    const saved = readZoom(zoomStorage, ZOOM_MIN, ZOOM_MAX)
+    zoomRemembered.current = saved !== null
+    if (saved !== null) setZoomState(saved)
+  }, [zoomStorage])
+  const setZoom = useCallback((value: number) => {
+    const next = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, Number(value.toFixed(2))))
+    zoomRemembered.current = true
+    writeZoom(zoomStorage, next)
+    setZoomState(next)
+  }, [zoomStorage])
   const [openId, setOpenId] = useState<number | null>(null)
   const [arranging, setArranging] = useState(false)
   const [draftCells, setDraftCells] = useState<Map<number, Cell>>(new Map())
@@ -72,16 +87,9 @@ export function StationMapView() {
     return () => window.clearInterval(timer)
   }, [])
 
-  const loadZones = useCallback(async () => {
-    if (!vendorId) return
-    try {
-      const res = await fetch(`${DASHBOARD_URL}/api/vendor/${vendorId}/station-map`, { headers: creditAuthHeaders() })
-      const data = res.ok ? await res.json() : null
-      setSavedZones(Array.isArray(data?.zones) ? data.zones : [])
-    } catch {
-      setSavedZones([]) // map still works with auto-placed stations
-    }
-  }, [vendorId])
+  // Zone labels from the server; a layout kept on this device (server not updated / offline) wins until it syncs.
+  const mapLayout = useStationLayout(vendorId, false, () => { void refreshConsoles(true) })
+  const loadZones = mapLayout.reload
 
   const refreshAll = useCallback(() => {
     void refreshConsoles(true)
@@ -128,7 +136,8 @@ export function StationMapView() {
     return () => { window.removeEventListener("refresh-dashboard", onRefresh); window.clearInterval(poll) }
   }, [refreshAll])
 
-  const stations = useMemo(() => buildStations(consoles, landingData, now), [consoles, landingData, now])
+  const stations = useMemo(() => applyLocalPositions(buildStations(consoles, landingData, now), mapLayout.local),
+    [consoles, landingData, now, mapLayout.local])
   const types = useMemo(() => {
     const map = new Map<string, { name: string; count: number }>()
     stations.forEach(s => map.set(s.type, { name: s.typeName, count: (map.get(s.type)?.count || 0) + 1 }))
@@ -139,8 +148,8 @@ export function StationMapView() {
 
   const layout = useMemo(() => layoutStations(stations, DEFAULT_COLUMNS), [stations])
   const liveZones = useMemo(() => {
-    return mergeZones(savedZones ?? [], layout.autoZones)
-  }, [savedZones, layout.autoZones])
+    return mergeZones(mapLayout.zones, layout.autoZones)
+  }, [mapLayout.zones, layout.autoZones])
 
   const cells = arranging ? draftCells : layout.cells
   const zones = arranging ? draftZones : liveZones
@@ -156,15 +165,17 @@ export function StationMapView() {
 
   const fit = useCallback(() => {
     const box = viewportRef.current
-    if (!box) return
+    if (!box) return null
     const scale = Math.min((box.clientWidth - 32) / canvasW, (box.clientHeight - 32) / canvasH, 1.25)
-    setZoom(Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, Number(scale.toFixed(2)))))
+    return Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, Number(scale.toFixed(2))))
   }, [canvasW, canvasH])
   const fittedOnce = useRef(false)
   useEffect(() => {
     if (fittedOnce.current || stations.length === 0) return
     fittedOnce.current = true
-    fit()
+    if (zoomRemembered.current) return
+    const scale = fit()
+    if (scale) setZoomState(scale) // first visit: fit, but do not remember until chosen
   }, [stations.length, fit])
 
   // ---- Arrange mode ----
@@ -212,18 +223,25 @@ export function StationMapView() {
         }),
         zones: draftZones.filter(z => z.label.trim()).map(z => ({ ...z, label: z.label.trim().slice(0, 40) })),
       }
-      const res = await fetch(`${DASHBOARD_URL}/api/vendor/${vendorId}/station-map`, {
-        method: "PUT", headers: creditAuthHeaders(), body: JSON.stringify(body),
-      })
-      const data = await res.json().catch(() => ({}))
-      if (!res.ok) throw new Error(data?.error || "Could not save the layout")
-      setSavedZones(Array.isArray(data?.zones) ? data.zones : body.zones)
-      await refreshConsoles(true)
+      const saved = await putStationMap(vendorId, body)
+      if (saved.ok) {
+        clearLocalLayout(vendorId)
+        mapLayout.setLocal(null)
+        mapLayout.setServerZones(Array.isArray(saved.data?.zones) ? saved.data.zones : body.zones)
+        setArranging(false)
+        setEditingZone(null)
+        await refreshConsoles(true)
+        toast.success("Floor map saved")
+        return
+      }
+      const failure = saveFailureMessage(saved.status, saved.data?.error)
+      if (!failure.keepLocally) { toast.error(failure.message); return }
+      // Keep the arrangement on this device so it is not lost; it syncs when the server accepts it.
+      writeLocalLayout(vendorId, body)
+      mapLayout.setLocal(readLocalLayout(vendorId))
       setArranging(false)
       setEditingZone(null)
-      toast.success("Floor map saved")
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Could not save the layout")
+      toast.warning(failure.message, { duration: 8000 })
     } finally {
       setSaving(false)
     }
@@ -291,10 +309,10 @@ export function StationMapView() {
         <div className="ml-auto flex items-center gap-2">
           {!arranging && (
             <div className="inline-flex items-center rounded-lg border border-border bg-card" role="group" aria-label="Zoom">
-              <button type="button" aria-label="Zoom out" className="grid h-8 w-8 place-items-center text-muted-foreground hover:text-foreground disabled:opacity-40" disabled={zoom <= ZOOM_MIN} onClick={() => setZoom(z => Math.max(ZOOM_MIN, +(z - 0.1).toFixed(2)))}><Minus className="h-4 w-4" /></button>
+              <button type="button" aria-label="Zoom out" className="grid h-8 w-8 place-items-center text-muted-foreground hover:text-foreground disabled:opacity-40" disabled={zoom <= ZOOM_MIN} onClick={() => setZoom(zoom - 0.1)}><Minus className="h-4 w-4" /></button>
               <span className="w-11 text-center text-xs tabular-nums text-muted-foreground">{Math.round(zoom * 100)}%</span>
-              <button type="button" aria-label="Zoom in" className="grid h-8 w-8 place-items-center text-muted-foreground hover:text-foreground disabled:opacity-40" disabled={zoom >= ZOOM_MAX} onClick={() => setZoom(z => Math.min(ZOOM_MAX, +(z + 0.1).toFixed(2)))}><Plus className="h-4 w-4" /></button>
-              <button type="button" aria-label="Fit to screen" title="Fit" className="grid h-8 w-8 place-items-center border-l border-border text-muted-foreground hover:text-foreground" onClick={fit}><Maximize2 className="h-3.5 w-3.5" /></button>
+              <button type="button" aria-label="Zoom in" className="grid h-8 w-8 place-items-center text-muted-foreground hover:text-foreground disabled:opacity-40" disabled={zoom >= ZOOM_MAX} onClick={() => setZoom(zoom + 0.1)}><Plus className="h-4 w-4" /></button>
+              <button type="button" aria-label="Fit to screen" title="Fit" className="grid h-8 w-8 place-items-center border-l border-border text-muted-foreground hover:text-foreground" onClick={() => { const scale = fit(); if (scale) setZoom(scale) }}><Maximize2 className="h-3.5 w-3.5" /></button>
             </div>
           )}
           {canArrange && !arranging && (
@@ -324,6 +342,13 @@ export function StationMapView() {
               {t.name}<span className="tabular-nums opacity-70">{t.count}</span>
             </button>
           ))}
+        </div>
+      )}
+
+      {mapLayout.local && !arranging && (
+        <div role="status" className="flex flex-wrap items-center gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-200">
+          This layout is saved on this device only: {mapLayout.serverReady === false ? "the server is not updated for floor maps yet." : "it has not reached the server yet."} It syncs automatically.
+          <button type="button" className="ml-auto underline hover:text-amber-100" onClick={() => void loadZones()}>Retry now</button>
         </div>
       )}
 

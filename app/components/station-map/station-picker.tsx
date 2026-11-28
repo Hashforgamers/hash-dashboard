@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils"
 import { BOOKING_URL, DASHBOARD_URL } from "@/src/config/env"
 import { creditAuthHeaders } from "@/lib/credit-auth"
 import { STATION_STATE_LABEL, layoutStations, mergeZones, type Station, type StationState, type Zone } from "@/lib/station-map"
+import { clearLocalLayout, readLocalLayout, readZoom, writeZoom, zoomKey, type LocalLayout } from "@/lib/station-map-storage"
 import { MAP_CELL_H, MAP_CELL_W, MAP_COLUMNS, MAP_GAP, StateDot, StationTile, mapCellPos } from "./station-tile"
 
 export type PickerStation = {
@@ -27,36 +28,81 @@ const ZOOM_MIN = 0.4
 const ZOOM_MAX = 1.6
 const LEGEND: StationState[] = ["free", "busy", "ending", "booked", "offline"]
 
-/** Saved zone labels from Gaming Stations > Map (empty when none / not reachable). */
-export function useStationZones(vendorId: number | null, enabled: boolean) {
-  const [zones, setZones] = useState<Zone[]>([])
-  useEffect(() => {
-    if (!enabled || !vendorId) return
-    const abort = new AbortController()
-    fetch(`${DASHBOARD_URL}/api/vendor/${vendorId}/station-map`, { headers: creditAuthHeaders(), signal: abort.signal })
-      .then(r => (r.ok ? r.json() : null))
-      .then(data => { if (!abort.signal.aborted) setZones(Array.isArray(data?.zones) ? data.zones : []) })
-      .catch(() => { if (!abort.signal.aborted) setZones([]) }) // auto-placed blocks still get labels
-    return () => abort.abort()
-  }, [vendorId, enabled])
-  return zones
-}
+export type StationMapBody = Omit<LocalLayout, "savedAt">
 
-type FloorEntry = {
-  id: number; code: string; fullName: string; icon: string; type: string; typeName: string
-  number: number | null; mapX: number | null; mapY: number | null; state: StationState
+/** PUT the arranged floor; status null = network/CORS failure. */
+export async function putStationMap(vendorId: number, body: StationMapBody): Promise<{ ok: boolean; status: number | null; data: any }> {
+  try {
+    const res = await fetch(`${DASHBOARD_URL}/api/vendor/${vendorId}/station-map`, {
+      method: "PUT", headers: creditAuthHeaders(), body: JSON.stringify(body),
+    })
+    const data = await res.json().catch(() => ({}))
+    return { ok: res.ok, status: res.status, data }
+  } catch {
+    return { ok: false, status: null, data: null }
+  }
 }
 
 /**
- * New session floor picker: the cafe's own floor map (saved cells and zone
- * labels, same tiles as Gaming Stations > Map). Stations of the chosen console
- * type can be picked when free for the chosen time; other types are dimmed and
- * a click switches the console type to that station's.
+ * Zone labels from Gaming Stations > Map, plus a layout kept on this device when
+ * the server could not save it. A kept layout is pushed to the server as soon as
+ * the endpoint answers, then dropped.
+ */
+export function useStationLayout(vendorId: number | null, enabled: boolean, onSynced?: () => void) {
+  const [serverZones, setServerZones] = useState<Zone[] | null>(null)
+  const [local, setLocal] = useState<LocalLayout | null>(null)
+  const [serverReady, setServerReady] = useState<boolean | null>(null)
+  const synced = useRef(onSynced)
+  synced.current = onSynced
+  const reload = useCallback(async () => {
+    if (!vendorId) return
+    const pending = readLocalLayout(vendorId)
+    setLocal(pending)
+    try {
+      const res = await fetch(`${DASHBOARD_URL}/api/vendor/${vendorId}/station-map`, { headers: creditAuthHeaders() })
+      if (!res.ok) { setServerReady(false); setServerZones([]); return }
+      const data = await res.json().catch(() => null)
+      setServerReady(true)
+      setServerZones(Array.isArray(data?.zones) ? data.zones : [])
+      if (pending) {
+        const saved = await putStationMap(vendorId, { positions: pending.positions, zones: pending.zones })
+        if (saved.ok) {
+          clearLocalLayout(vendorId)
+          setLocal(null)
+          setServerZones(Array.isArray(saved.data?.zones) ? saved.data.zones : pending.zones)
+          synced.current?.()
+        }
+      }
+    } catch {
+      setServerReady(false) // map still works with auto-placed stations
+      setServerZones([])
+    }
+  }, [vendorId])
+  useEffect(() => { if (enabled) void reload() }, [enabled, reload])
+  return {
+    zones: local ? local.zones : serverZones ?? [],
+    loaded: serverZones !== null,
+    local, serverReady, reload, setLocal, setServerZones,
+  }
+}
+
+/** Saved zone labels that sit on (or just above) a block of cells; other blocks' labels are dropped. */
+export function zonesForCells(zones: Zone[], cells: Iterable<{ x: number; y: number }>): Zone[] {
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity
+  for (const c of cells) { minX = Math.min(minX, c.x); minY = Math.min(minY, c.y); maxX = Math.max(maxX, c.x); maxY = Math.max(maxY, c.y) }
+  if (!Number.isFinite(minX)) return []
+  return zones.filter(z => z.y >= minY - 1 && z.y <= maxY && z.x <= maxX && z.x + z.w - 1 >= minX)
+}
+
+/**
+ * New session floor picker: only the chosen console type's stations, at the
+ * cells arranged in Gaming Stations > Map (empty space of other types trimmed
+ * away), with their zone label. Free stations for the chosen time can be picked.
  */
 export function StationFloorPicker({
-  floor, stations, zones: savedZones, selected, auto, need, onAuto, onToggle, switchFor, disabled, loading, note, canPick,
+  floor, stations, zones: savedZones, selected, auto, need, onAuto, onToggle, disabled, loading, note, canPick, zoomStorageKey,
 }: {
-  floor: Station[] // every station with its live state
+  floor: Station[] // every station with its live state and map cell
   stations: PickerStation[] // the chosen console type, with availability for the chosen time
   zones: Zone[]
   selected: number[]
@@ -64,22 +110,24 @@ export function StationFloorPicker({
   need: number
   onAuto: () => void
   onToggle: (id: number) => void
-  /** Click handler for another console type's station (switches the form to that type), or null when not bookable. */
-  switchFor: (station: Station) => (() => void) | null
   disabled?: boolean
   loading?: boolean
   note?: string
   canPick: boolean // false: the server assigns the station (view only)
+  zoomStorageKey: string // zoom is remembered per vendor and console type
 }) {
-  const pickById = useMemo(() => new Map(stations.map(s => [s.id, s])), [stations])
-  // Whole floor; quoted stations missing from the console list still get a cell.
-  const entries: FloorEntry[] = useMemo(() => [
-    ...floor,
-    ...stations.filter(s => !floor.some(f => f.id === s.id)).map(s => ({ ...s, state: s.state })),
-  ], [floor, stations])
+  const floorById = useMemo(() => new Map(floor.map(f => [f.id, f])), [floor])
+  // Cells come from the floor (saved map, or this device's pending layout).
+  const entries = useMemo(() => stations.map(s => {
+    const f = floorById.get(s.id)
+    return { ...s, mapX: f ? f.mapX : s.mapX, mapY: f ? f.mapY : s.mapY }
+  }), [stations, floorById])
   const layout = useMemo(() => layoutStations(entries, MAP_COLUMNS), [entries])
-  const zones = useMemo(() => mergeZones(savedZones, layout.autoZones), [savedZones, layout.autoZones])
-  // Bounding box of what is on the floor, so empty leading rows/columns do not shrink the fit.
+  const zones = useMemo(() => {
+    const savedCells = entries.filter(e => e.mapX !== null && e.mapY !== null).map(e => layout.cells.get(e.id)!).filter(Boolean)
+    return mergeZones(zonesForCells(savedZones, savedCells), layout.autoZones)
+  }, [entries, layout, savedZones])
+  // Bounding box of this type's block, so other consoles' space does not shrink the fit.
   const extent = useMemo(() => {
     let minX = Infinity, minY = Infinity, maxX = 0, maxY = 0
     layout.cells.forEach(c => { minX = Math.min(minX, c.x); minY = Math.min(minY, c.y); maxX = Math.max(maxX, c.x + 1); maxY = Math.max(maxY, c.y + 1) })
@@ -92,24 +140,34 @@ export function StationFloorPicker({
   const canvasH = extent.rows * (MAP_CELL_H + MAP_GAP) - MAP_GAP
 
   const viewportRef = useRef<HTMLDivElement>(null)
-  const [zoom, setZoom] = useState(1)
-  const manualZoom = useRef(false)
-  const fit = useCallback(() => {
+  const [zoom, setZoomState] = useState(() => readZoom(zoomStorageKey, ZOOM_MIN, ZOOM_MAX) ?? 1)
+  // Saved zoom wins; auto-fit (and refit on resize) only until a zoom is chosen.
+  const remembered = useRef(readZoom(zoomStorageKey, ZOOM_MIN, ZOOM_MAX) !== null)
+  useEffect(() => {
+    const saved = readZoom(zoomStorageKey, ZOOM_MIN, ZOOM_MAX)
+    remembered.current = saved !== null
+    if (saved !== null) setZoomState(saved)
+  }, [zoomStorageKey])
+  const setZoom = useCallback((value: number) => {
+    const next = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, Number(value.toFixed(2))))
+    remembered.current = true
+    writeZoom(zoomStorageKey, next)
+    setZoomState(next)
+  }, [zoomStorageKey])
+  const fitScale = useCallback(() => {
     const box = viewportRef.current
-    if (!box || !box.clientWidth) return
-    const scale = Math.min((box.clientWidth - 40) / canvasW, (box.clientHeight - 40) / canvasH, 1.25)
-    setZoom(Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, Number(scale.toFixed(2)))))
+    if (!box || !box.clientWidth) return null
+    return Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, Number(Math.min((box.clientWidth - 40) / canvasW, (box.clientHeight - 40) / canvasH, 1.25).toFixed(2))))
   }, [canvasW, canvasH])
-  // Fit to the panel, and again when the panel resizes, until zoomed by hand.
   useEffect(() => {
     const box = viewportRef.current
     if (!box) return
-    if (!manualZoom.current) fit()
-    const observer = new ResizeObserver(() => { if (!manualZoom.current) fit() })
+    const autoFit = () => { if (remembered.current) return; const scale = fitScale(); if (scale !== null) setZoomState(scale) }
+    autoFit()
+    const observer = new ResizeObserver(autoFit)
     observer.observe(box)
     return () => observer.disconnect()
-  }, [fit])
-  const zoomBy = (step: number) => { manualZoom.current = true; setZoom(z => Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, +(z + step).toFixed(2)))) }
+  }, [fitScale])
 
   const freeCount = stations.filter(s => s.available).length
   const typeName = stations[0]?.typeName || ""
@@ -131,10 +189,10 @@ export function StationFloorPicker({
         </span>
         {need > 1 && canPick && !auto && <span className="text-sm tabular-nums text-muted-foreground">{selected.length}/{need} picked</span>}
         <div className="ml-auto inline-flex items-center rounded-lg border border-border bg-card" role="group" aria-label="Zoom">
-          <button type="button" aria-label="Zoom out" className="grid h-8 w-8 place-items-center text-muted-foreground hover:text-foreground disabled:opacity-40" disabled={zoom <= ZOOM_MIN} onClick={() => zoomBy(-0.1)}><Minus className="h-4 w-4" /></button>
+          <button type="button" aria-label="Zoom out" className="grid h-8 w-8 place-items-center text-muted-foreground hover:text-foreground disabled:opacity-40" disabled={zoom <= ZOOM_MIN} onClick={() => setZoom(zoom - 0.1)}><Minus className="h-4 w-4" /></button>
           <span className="w-11 text-center text-xs tabular-nums text-muted-foreground">{Math.round(zoom * 100)}%</span>
-          <button type="button" aria-label="Zoom in" className="grid h-8 w-8 place-items-center text-muted-foreground hover:text-foreground disabled:opacity-40" disabled={zoom >= ZOOM_MAX} onClick={() => zoomBy(0.1)}><Plus className="h-4 w-4" /></button>
-          <button type="button" aria-label="Fit to panel" title="Fit" className="grid h-8 w-8 place-items-center border-l border-border text-muted-foreground hover:text-foreground" onClick={() => { manualZoom.current = false; fit() }}><Maximize2 className="h-3.5 w-3.5" /></button>
+          <button type="button" aria-label="Zoom in" className="grid h-8 w-8 place-items-center text-muted-foreground hover:text-foreground disabled:opacity-40" disabled={zoom >= ZOOM_MAX} onClick={() => setZoom(zoom + 0.1)}><Plus className="h-4 w-4" /></button>
+          <button type="button" aria-label="Fit to panel" title="Fit" className="grid h-8 w-8 place-items-center border-l border-border text-muted-foreground hover:text-foreground" onClick={() => { const scale = fitScale(); if (scale !== null) setZoom(scale) }}><Maximize2 className="h-3.5 w-3.5" /></button>
         </div>
       </div>
       {note && <p className="rounded-lg border border-border bg-muted/30 px-3 py-2 text-xs text-muted-foreground">{note}</p>}
@@ -143,7 +201,7 @@ export function StationFloorPicker({
         className={cn("relative min-h-0 flex-1 overflow-auto rounded-xl border border-border bg-[radial-gradient(hsl(var(--foreground)/0.06)_1px,transparent_1px)] [background-size:18px_18px]", loading && "opacity-70")}>
         {entries.length === 0 ? (
           <div className="grid h-full place-items-center p-8 text-center">
-            <div><LayoutGrid className="mx-auto mb-2 h-8 w-8 text-muted-foreground" /><p className="text-sm text-muted-foreground">{loading ? "Loading stations…" : "No stations on the floor map yet."}</p></div>
+            <div><LayoutGrid className="mx-auto mb-2 h-8 w-8 text-muted-foreground" /><p className="text-sm text-muted-foreground">{loading ? "Loading stations…" : `No ${typeName || "stations"} on the floor map yet.`}</p></div>
           </div>
         ) : (
           <div className="mx-auto p-5" style={{ width: canvasW * zoom + 40, height: canvasH * zoom + 40 }}>
@@ -156,64 +214,34 @@ export function StationFloorPicker({
                   </span>
                 </div>
               ))}
-              {entries.map(entry => {
-                const cell = layout.cells.get(entry.id)
+              {entries.map(pick => {
+                const cell = layout.cells.get(pick.id)
                 if (!cell) return null
-                const pick = pickById.get(entry.id)
-                const station = floor.find(f => f.id === entry.id)
-                const chosen = !!pick && !auto && selected.includes(entry.id)
+                const live = floorById.get(pick.id)
+                const chosen = canPick && !auto && selected.includes(pick.id)
                 const full = !chosen && need > 1 && selected.length >= need
-                let tileState: StationState = entry.state
-                let caption: string | undefined
-                let title: string
-                let footnote: string | null = null
-                let clickable = false
-                let onClick: (() => void) | undefined
-                let dimmed = false
-                if (pick) {
-                  if (canPick) {
-                    tileState = pick.available ? "free" : pick.state
-                    caption = pick.available ? (chosen ? "Selected" : "Free") : pick.caption
-                    title = `${pick.code} · ${pick.fullName}${pick.available ? "" : ` · ${pick.reason}`}`
-                    footnote = pick.available ? null : pick.reason
-                    clickable = pick.available && !full
-                    onClick = () => onToggle(entry.id)
-                  } else {
-                    caption = pick.caption
-                    title = `${pick.code} · ${pick.fullName} · ${pick.reason}`
-                  }
-                } else {
-                  dimmed = true
-                  const handler = station ? switchFor(station) : null
-                  title = `${entry.code} · ${entry.fullName} · ${STATION_STATE_LABEL[entry.state]}${handler ? ` · Click to book ${entry.typeName}` : ""}`
-                  caption = entry.typeName
-                  clickable = !!handler
-                  onClick = handler || undefined
-                }
+                const clickable = canPick && pick.available && !full
                 return (
-                  <div key={entry.id}
-                    className={cn("group/cell absolute z-10 transition-opacity duration-150", dimmed && "opacity-35 hover:opacity-80")}
-                    style={{ ...pos(cell), width: MAP_CELL_W, height: MAP_CELL_H }}>
+                  <div key={pick.id} className="absolute z-10" style={{ ...pos(cell), width: MAP_CELL_W, height: MAP_CELL_H }}>
                     <StationTile
-                      code={entry.code}
-                      icon={entry.icon}
-                      consoleType={entry.type}
-                      state={tileState}
-                      progress={station?.progress}
-                      caption={caption}
-                      title={title}
+                      code={pick.code}
+                      icon={pick.icon}
+                      consoleType={pick.type}
+                      state={canPick && pick.available ? "free" : pick.state}
+                      progress={live?.progress}
+                      caption={canPick && pick.available ? (chosen ? "Selected" : "Free") : pick.caption}
+                      title={`${pick.code} · ${pick.fullName}${canPick && pick.available ? "" : ` · ${pick.reason}`}`}
                       selected={chosen}
                       disabled={disabled || !clickable}
-                      onClick={onClick}
-                      className={cn(chosen && "border-primary ring-[3px] ring-primary/70 shadow-[0_0_0_6px_hsl(var(--primary)/0.12)]",
-                        !clickable && dimmed && "cursor-default")}
+                      onClick={() => onToggle(pick.id)}
+                      className={cn(chosen && "border-primary ring-[3px] ring-primary/70 shadow-[0_0_0_6px_hsl(var(--primary)/0.12)]")}
                     />
                     {chosen && (
                       <span aria-hidden className="absolute -right-1.5 -top-1.5 z-20 grid h-5 w-5 place-items-center rounded-full bg-primary text-primary-foreground shadow">
                         <Check className="h-3 w-3" strokeWidth={3} />
                       </span>
                     )}
-                    {footnote && <p className="absolute inset-x-0.5 bottom-0 truncate text-[11px] leading-4 text-muted-foreground">{footnote}</p>}
+                    {canPick && !pick.available && <p className="absolute inset-x-0.5 bottom-0 truncate text-[11px] leading-4 text-muted-foreground">{pick.reason}</p>}
                   </div>
                 )
               })}
@@ -231,7 +259,6 @@ export function StationFloorPicker({
         <span className="inline-flex h-6 items-center gap-1.5 rounded-md border border-primary/50 bg-primary/10 px-2 text-[11px] text-primary">
           <Check className="h-3 w-3" />Selected
         </span>
-        {entries.some(e => !pickById.has(e.id)) && <span className="ml-auto text-[11px] text-muted-foreground">Faded tiles are other consoles. Click one to switch.</span>}
       </div>
     </div>
   )
