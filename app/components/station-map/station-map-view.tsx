@@ -18,15 +18,17 @@ import {
   type Cell, type Station, type StationState, type Zone,
 } from "@/lib/station-map"
 import { formatRupees } from "@/lib/desk-bill"
+import { bookingWindowOf, extensionStart } from "@/lib/schedule-map"
+import { BookingDetailsDialog } from "../dashboard/booking-card"
 import ExtraBookingOverlay from "../extraBookingOverlay"
 import { BookingQuickView } from "../booking-quick-view"
 import { calculateExtraAmount, calculateExtraTime, formatTime, normalizeLiveSlot, releaseSlot } from "../current-slot"
 import {
   applyLocalPositions, clearLocalLayout, readLocalLayout, readZoom, saveFailureMessage, writeLocalLayout, writeZoom, zoomKey,
 } from "@/lib/station-map-storage"
-import { putStationMap, useStationLayout } from "./station-picker"
+import { putStationMap, useStationLayout, zonesForCells } from "./station-picker"
 import {
-  MAP_CELL_H as CELL_H, MAP_CELL_W as CELL_W, MAP_COLUMNS, MAP_GAP as GAP, STATE_STYLE, StateDot, StationTile, mapCellPos,
+  MAP_CELL_H as CELL_H, MAP_CELL_W as CELL_W, MAP_COLUMNS, MAP_GAP as GAP, STATE_STYLE, StateDot, StationTile, mapCellPos, readableFit,
 } from "./station-tile"
 
 const ZOOM_MIN = 0.5
@@ -42,7 +44,6 @@ export function requestStationBooking(detail: BookConsoleEventDetail): boolean {
 }
 
 const cellKey = (cell: Cell) => `${cell.x}:${cell.y}`
-const at = (cell: Cell) => mapCellPos(cell)
 
 /** Ask an open station map to open one station's popover (Dashboard rail → map). */
 export const FOCUS_STATION_EVENT = "hash:focus-station"
@@ -63,8 +64,17 @@ export function StationMapView({ embedded = false, actions }: {
   const canArrange = can("gaming.manage") && !embedded
 
   const [now, setNow] = useState(() => Date.now())
-  const [typeFilter, setTypeFilter] = useState<string>("all")
-  const zoomStorage = zoomKey(vendorId, embedded ? "dashboard-overview" : "gaming-stations")
+  // One console type at a time (remembered per vendor and view) so tiles stay readable.
+  const view = embedded ? "dashboard-overview" : "gaming-stations"
+  const typeKey = `hash.stationMap.type.${vendorId || 0}.${view}`
+  const [typeFilter, setTypeFilterState] = useState<string>("")
+  useEffect(() => { try { setTypeFilterState(localStorage.getItem(typeKey) || "") } catch { /* ignore */ } }, [typeKey])
+  const setTypeFilter = useCallback((type: string) => {
+    setTypeFilterState(type)
+    try { localStorage.setItem(typeKey, type) } catch { /* ignore */ }
+  }, [typeKey])
+  const [zoomType, setZoomType] = useState("")
+  const zoomStorage = zoomKey(vendorId, `${view}.${zoomType || "default"}`)
   const [zoom, setZoomState] = useState(1)
   // A zoom picked by hand (or with Fit) is remembered per vendor; auto-fit only until then.
   const zoomRemembered = useRef(false)
@@ -95,13 +105,14 @@ export function StationMapView({ embedded = false, actions }: {
     const onFocus = (event: Event) => {
       const id = Number((event as CustomEvent<{ stationId: number }>).detail?.stationId)
       if (!id) return
-      setTypeFilter("all")
+      const type = stationsRef.current.find(s => s.id === id)?.type
+      if (type) setTypeFilter(type)
       setOpenId(id)
       window.requestAnimationFrame(() => document.querySelector(`[data-station-id="${id}"]`)?.scrollIntoView({ block: "center", inline: "center", behavior: "smooth" }))
     }
     window.addEventListener(FOCUS_STATION_EVENT, onFocus)
     return () => window.removeEventListener(FOCUS_STATION_EVENT, onFocus)
-  }, [])
+  }, [setTypeFilter])
 
   useEffect(() => {
     const timer = window.setInterval(() => setNow(Date.now()), 1000)
@@ -159,13 +170,26 @@ export function StationMapView({ embedded = false, actions }: {
 
   const stations = useMemo(() => applyLocalPositions(buildStations(consoles, landingData, now), mapLayout.local),
     [consoles, landingData, now, mapLayout.local])
+  const stationsRef = useRef(stations)
+  stationsRef.current = stations
   const types = useMemo(() => {
-    const map = new Map<string, { name: string; count: number }>()
-    stations.forEach(s => map.set(s.type, { name: s.typeName, count: (map.get(s.type)?.count || 0) + 1 }))
+    const map = new Map<string, { name: string; count: number; live: number; free: number }>()
+    stations.forEach(s => {
+      const t = map.get(s.type) || { name: s.typeName, count: 0, live: 0, free: 0 }
+      t.count += 1
+      if (s.state === "busy" || s.state === "ending") t.live += 1
+      if (s.state === "free") t.free += 1
+      map.set(s.type, t)
+    })
     return Array.from(map, ([type, v]) => ({ type, ...v }))
   }, [stations])
-  const counts = useMemo(() => stateCounts(stations), [stations])
-  const occupied = counts.busy + counts.ending
+  // Default: the type with the most stations; a remembered type wins while it still exists.
+  const activeType = types.some(t => t.type === typeFilter) ? typeFilter
+    : [...types].sort((a, b) => b.count - a.count)[0]?.type || ""
+  const typeStations = useMemo(() => stations.filter(s => s.type === activeType), [stations, activeType])
+  useEffect(() => setZoomType(activeType), [activeType])
+  const counts = useMemo(() => stateCounts(typeStations), [typeStations])
+  const occupied = stations.filter(s => s.state === "busy" || s.state === "ending").length
 
   const layout = useMemo(() => layoutStations(stations, DEFAULT_COLUMNS), [stations])
   const liveZones = useMemo(() => {
@@ -173,31 +197,41 @@ export function StationMapView({ embedded = false, actions }: {
   }, [mapLayout.zones, layout.autoZones])
 
   const cells = arranging ? draftCells : layout.cells
-  const zones = arranging ? draftZones : liveZones
+  // Outside Arrange, only the chosen type's block is drawn (its own labels, other types' space trimmed).
+  const typeCells = useMemo(() => typeStations.map(s => layout.cells.get(s.id)).filter((c): c is Cell => !!c), [typeStations, layout.cells])
+  const zones = arranging ? draftZones : zonesForCells(liveZones, typeCells)
   const extent = useMemo(() => {
-    let cols = DEFAULT_COLUMNS, rows = 1
-    cells.forEach(c => { cols = Math.max(cols, c.x + 1); rows = Math.max(rows, c.y + 1) })
-    zones.forEach(z => { cols = Math.max(cols, z.x + z.w); rows = Math.max(rows, z.y + 1) })
-    if (arranging) { cols += 2; rows += 2 } // room to drag into
-    return { cols, rows }
-  }, [cells, zones, arranging])
+    if (arranging) {
+      let cols = DEFAULT_COLUMNS, rows = 1
+      cells.forEach(c => { cols = Math.max(cols, c.x + 1); rows = Math.max(rows, c.y + 1) })
+      zones.forEach(z => { cols = Math.max(cols, z.x + z.w); rows = Math.max(rows, z.y + 1) })
+      return { x0: 0, y0: 0, cols: cols + 2, rows: rows + 2 } // room to drag into
+    }
+    let minX = Infinity, minY = Infinity, maxX = 0, maxY = 0
+    typeCells.forEach(c => { minX = Math.min(minX, c.x); minY = Math.min(minY, c.y); maxX = Math.max(maxX, c.x + 1); maxY = Math.max(maxY, c.y + 1) })
+    zones.forEach(z => { minX = Math.min(minX, z.x); minY = Math.min(minY, z.y); maxX = Math.max(maxX, z.x + z.w); maxY = Math.max(maxY, z.y + 1) })
+    if (!Number.isFinite(minX)) return { x0: 0, y0: 0, cols: 1, rows: 1 }
+    return { x0: minX, y0: minY, cols: maxX - minX, rows: maxY - minY }
+  }, [cells, zones, arranging, typeCells])
+  const at = (cell: Cell) => mapCellPos({ x: cell.x - extent.x0, y: cell.y - extent.y0 })
   const canvasW = extent.cols * (CELL_W + GAP) - GAP
   const canvasH = extent.rows * (CELL_H + GAP) - GAP
 
   const fit = useCallback(() => {
     const box = viewportRef.current
-    if (!box) return null
-    const scale = Math.min((box.clientWidth - 32) / canvasW, (box.clientHeight - 32) / canvasH, 1.25)
-    return Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, Number(scale.toFixed(2))))
+    if (!box || !box.clientWidth) return null
+    return readableFit(box.clientWidth - 32, box.clientHeight - 32, canvasW, canvasH)
   }, [canvasW, canvasH])
-  const fittedOnce = useRef(false)
+  // Until a zoom is chosen for this type, fit it to the panel (and refit on resize).
   useEffect(() => {
-    if (fittedOnce.current || stations.length === 0) return
-    fittedOnce.current = true
-    if (zoomRemembered.current) return
-    const scale = fit()
-    if (scale) setZoomState(scale) // first visit: fit, but do not remember until chosen
-  }, [stations.length, fit])
+    const box = viewportRef.current
+    if (!box || typeStations.length === 0 || arranging) return
+    const autoFit = () => { if (zoomRemembered.current) return; const scale = fit(); if (scale) setZoomState(scale) }
+    autoFit()
+    const observer = new ResizeObserver(autoFit)
+    observer.observe(box)
+    return () => observer.disconnect()
+  }, [typeStations.length, fit, arranging])
 
   // ---- Arrange mode ----
   const startArrange = () => {
@@ -277,12 +311,13 @@ export function StationMapView({ embedded = false, actions }: {
   const extend = (s: Station, minutes: number) => {
     if (s.end === null) return
     setOpenId(null)
+    // Starts at the booking's scheduled end so its own booking never blocks the extra time.
+    const next = extensionStart(s, now)
     const handled = requestStationBooking({
-      type: s.type, gameId: s.gameId ?? undefined, stationId: s.id,
-      startClock: istClockOf(Math.max(s.end, now)), durationMin: minutes,
+      type: s.type, gameId: s.gameId ?? undefined, stationId: s.id, mode: "extend",
+      startClock: istClockOf(next.start), durationMin: minutes,
       customer: s.player ? { name: s.player, phone: s.phone } : undefined,
-      // Custom-start cafes chain the extension to the booking; it must start exactly at its end.
-      extendsBookingId: s.end > now && s.end % 60000 === 0 ? s.bookingId ?? undefined : undefined,
+      extendsBookingId: next.extendsBookingId ?? undefined,
     })
     if (!handled) toast.info("Booking form is still loading. Try again in a moment.")
   }
@@ -356,12 +391,16 @@ export function StationMapView({ embedded = false, actions }: {
           </div>
         </div>
       ) : types.length > 1 && (
-        <div className="flex flex-wrap items-center gap-1.5" role="radiogroup" aria-label="Console type">
-          {[{ type: "all", name: "All stations", count: stations.length }, ...types].map(t => (
-            <button key={t.type} type="button" role="radio" aria-checked={typeFilter === t.type} onClick={() => setTypeFilter(t.type)}
-              className={cn("inline-flex h-8 items-center gap-1.5 rounded-full border px-3 text-xs font-medium transition-colors",
-                typeFilter === t.type ? "border-primary bg-primary/15 text-primary" : "border-border bg-card text-muted-foreground hover:text-foreground")}>
-              {t.name}<span className="tabular-nums opacity-70">{t.count}</span>
+        <div className="inline-flex max-w-full flex-wrap items-center gap-1 self-start rounded-lg border border-border bg-muted/40 p-1" role="radiogroup" aria-label="Console type">
+          {types.map(t => (
+            <button key={t.type} type="button" role="radio" aria-checked={activeType === t.type} onClick={() => { setTypeFilter(t.type); setOpenId(null) }}
+              title={`${t.name}: ${t.live} in session, ${t.free} free of ${t.count}`}
+              className={cn("inline-flex h-8 items-center gap-2 rounded-md px-3 text-sm font-medium transition-colors",
+                activeType === t.type ? "bg-primary/15 text-primary ring-1 ring-inset ring-primary/40" : "text-muted-foreground hover:bg-white/[0.06] hover:text-foreground")}>
+              {t.name}
+              <span className="inline-flex items-center gap-1 text-xs tabular-nums opacity-80">
+                <StateDot state={t.live ? "busy" : "free"} className="h-1.5 w-1.5" />{t.live}/{t.count}
+              </span>
             </button>
           ))}
         </div>
@@ -422,10 +461,10 @@ export function StationMapView({ embedded = false, actions }: {
                 </div>
               ))}
 
-              {stations.map(s => {
+              {(arranging ? stations : typeStations).map(s => {
                 const cell = cells.get(s.id)
                 if (!cell) return null
-                const dimmed = !arranging && typeFilter !== "all" && s.type !== typeFilter
+                const dimmed = false
                 const tile = (
                   <StationTile
                     code={s.code}
@@ -484,13 +523,12 @@ export function StationMapView({ embedded = false, actions }: {
         document.body,
       )}
       {details && (
-        <BookingQuickView open onClose={() => setDetails(null)} userId={details.userId}
-          booking={{
-            bookingId: details.bookingId, name: details.player || "Guest", phone: details.phone || null, email: null,
-            console: `${details.code} · ${details.fullName}`,
-            when: details.start !== null && details.end !== null ? `${showClock(istClockOf(details.start))} – ${showClock(istClockOf(details.end))}` : null,
-            status: STATION_STATE_LABEL[details.state],
-          }} />
+        <BookingDetailsDialog live vendorId={vendorId} code={details.code} name={details.fullName}
+          booking={(details.liveSlot && bookingWindowOf(details.liveSlot)) || {
+            bookingId: details.bookingId, name: details.player || "Guest", phone: details.phone, start: details.start ?? now, end: details.end ?? now,
+            stationId: details.id, gameId: details.gameId, status: "current", raw: details.liveSlot || {},
+          }}
+          onClose={() => setDetails(null)} onAfter={refreshAll} onCheckIn={() => {}} onCancel={() => {}} onNoShow={() => {}} />
       )}
     </div>
   )

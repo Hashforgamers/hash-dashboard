@@ -6,7 +6,7 @@ import { BOOKING_URL, DASHBOARD_URL } from "@/src/config/env"
 import { creditAuthHeaders } from "@/lib/credit-auth"
 import { STATION_STATE_LABEL, layoutStations, mergeZones, normaliseLayout, type Station, type StationState, type Zone } from "@/lib/station-map"
 import { clearLocalLayout, readLocalLayout, readZoom, writeZoom, zoomKey, type LocalLayout } from "@/lib/station-map-storage"
-import { MAP_CELL_H, MAP_CELL_W, MAP_COLUMNS, MAP_GAP, StateDot, StationTile, mapCellPos } from "./station-tile"
+import { MAP_CELL_H, MAP_CELL_W, MAP_COLUMNS, MAP_GAP, StateDot, StationTile, mapCellPos, readableFit } from "./station-tile"
 
 export type PickerStation = {
   id: number
@@ -150,7 +150,7 @@ export function FloorCanvas<T extends FloorEntry>({
   const fitScale = useCallback(() => {
     const box = viewportRef.current
     if (!box || !box.clientWidth) return null
-    return Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, Number(Math.min((box.clientWidth - 40) / canvasW, (box.clientHeight - 40) / canvasH, 1.25).toFixed(2))))
+    return readableFit(box.clientWidth - 40, box.clientHeight - 40, canvasW, canvasH)
   }, [canvasW, canvasH])
   useEffect(() => {
     const box = viewportRef.current

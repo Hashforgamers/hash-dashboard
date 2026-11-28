@@ -12,6 +12,19 @@ export const MAP_GAP = 10
 export const MAP_COLUMNS = 10
 export const mapCellPos = (cell: { x: number; y: number }) => ({ left: cell.x * (MAP_CELL_W + MAP_GAP), top: cell.y * (MAP_CELL_H + MAP_GAP) })
 
+/**
+ * Zoom that fits the floor to the panel width without making tiles unreadable:
+ * never below READABLE_MIN (the panel scrolls instead), never above 1.4.
+ */
+export const READABLE_MIN = 0.8
+export function readableFit(width: number, height: number, canvasW: number, canvasH: number): number {
+  if (!(width > 0) || !(canvasW > 0)) return 1
+  const byWidth = width / canvasW
+  const byHeight = height > 0 && canvasH > 0 ? height / canvasH : byWidth
+  const scale = Math.min(byWidth, Math.max(byHeight, READABLE_MIN), 1.4)
+  return Math.max(READABLE_MIN, Number(scale.toFixed(2)))
+}
+
 // One look for station status everywhere (map, popover, New session picker).
 // Colours follow the dashboard's soft status badges: emerald free, primary in
 // session, amber ending, purple booked, muted offline.

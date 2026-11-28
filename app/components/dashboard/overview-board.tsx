@@ -2,19 +2,20 @@
 import { useEffect, useMemo, useState } from "react"
 import { toast } from "sonner"
 import {
-  AlarmClock, AlertTriangle, CalendarClock, ChevronRight, Eye, EyeOff, IndianRupee, LayoutGrid, List, MonitorPlay, Plus, Wallet,
+  AlarmClock, AlertTriangle, CalendarClock, ChevronRight, X, Eye, EyeOff, IndianRupee, LayoutGrid, List, MonitorPlay, Plus, Wallet,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { useDashboardData } from "@/app/context/DashboardDataContext"
 import { useTimeFormat } from "@/app/hooks/useTimeFormat"
 import { buildStations, istClockOf, phoneTail, remainingLabel } from "@/lib/station-map"
-import { bookingWindowOf, needsAttention, overviewKpis, type WindowBooking } from "@/lib/schedule-map"
-import { formatRupees } from "@/lib/desk-bill"
+import { bookingWindowOf, dedupeBookings, needsAttention, overviewKpis, paymentLabel, type WindowBooking } from "@/lib/schedule-map"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { BookingSummary, PayChip, UpcomingActionGrid, useBookingActionHost } from "./booking-card"
+import { durationLabel, formatRupees } from "@/lib/desk-bill"
 import { StationMapView, focusStation, requestStationBooking } from "../station-map/station-map-view"
 import { CurrentSlots } from "../current-slot"
 import PayAtCafeRequests from "../pay-at-cafe-requests"
-import { queueScheduleFocus } from "./schedule-map"
 
 type View = "map" | "list"
 const viewKey = (vendorId: number | null) => `hash.dashboard.overviewView.${vendorId || 0}`
@@ -50,11 +51,13 @@ export function OverviewBoard({ vendorId, landing, stats, isOwner, isConnected, 
   const stations = useMemo(() => buildStations(consoles, landing, now), [consoles, landing, now])
   const upcoming = useMemo<WindowBooking[]>(() => {
     const rows: any[] = Array.isArray(landing?.upcomingBookings) ? landing.upcomingBookings : []
-    return rows.map(bookingWindowOf).filter((b): b is WindowBooking => !!b && b.end > now).sort((a, b) => a.start - b.start)
+    return dedupeBookings(rows.map(bookingWindowOf).filter((b): b is WindowBooking => !!b && b.end > now)).sort((a, b) => a.start - b.start)
   }, [landing, now])
   const kpis = useMemo(() => overviewKpis(stations, upcoming, now), [stations, upcoming, now])
   const attention = useMemo(() => needsAttention(stations), [stations])
-  const soon = upcoming.filter(b => b.start <= now + 3 * 3600_000).slice(0, 6)
+  const soon = upcoming.filter(b => b.start <= now + 3 * 3600_000).slice(0, 8)
+  const [openBooking, setOpenBooking] = useState<string | null>(null)
+  const actions = useBookingActionHost(vendorId, () => { setOpenBooking(null); refreshDashboard() })
   const stationCode = (id: number | null) => stations.find(s => s.id === id)?.code
 
   const openStation = (id: number | null) => {
@@ -77,7 +80,7 @@ export function OverviewBoard({ vendorId, landing, stats, isOwner, isConnected, 
           foot={<span className="block h-1.5 w-full overflow-hidden rounded-full bg-muted"><span className="block h-full rounded-full bg-primary transition-[width]" style={{ width: `${Math.round(occupancy * 100)}%` }} /></span>} />
         <Kpi icon={CalendarClock} tone="primary" label="Live sessions" value={String(kpis.live)}
           foot={<span className={kpis.overtime ? "text-red-300" : ""}>{kpis.overtime ? `${kpis.overtime} overtime` : isConnected ? "Live" : "Syncing"}</span>} />
-        <Kpi icon={AlarmClock} tone="amber" label="Ending ≤ 10 min" value={String(kpis.endingSoon)} foot="Ready to extend or end" />
+        <Kpi icon={AlarmClock} tone="amber" label="Ending soon" value={String(kpis.endingSoon)} foot={kpis.overtime ? `${kpis.overtime} already over time` : "10 min or less left"} />
         <Kpi icon={CalendarClock} tone="violet" label="Next hour" value={String(kpis.upcomingHour)} foot="Bookings starting" />
         {isOwner ? (
           <Kpi icon={IndianRupee} tone="emerald" label="Today (net)"
@@ -136,19 +139,48 @@ export function OverviewBoard({ vendorId, landing, stats, isOwner, isConnected, 
           <div className="shrink-0"><PayAtCafeRequests vendorId={vendorId} onCount={setPayAtCafe} /></div>
 
           <RailCard title="Coming up" count={soon.length} icon={CalendarClock} action={<button type="button" className="text-xs text-muted-foreground hover:text-foreground" onClick={onOpenSchedule}>Schedule</button>}>
-            {soon.length === 0 ? <Empty text="Nothing in the next 3 hours" /> : soon.map(b => (
-              <RailRow key={`${b.bookingId}-${b.stationId}-${b.start}`} onClick={() => { queueScheduleFocus(b); onOpenSchedule() }}
-                lead={<span className="w-[4.25rem] shrink-0 text-xs font-semibold tabular-nums text-foreground">{showClock(istClockOf(b.start))}</span>}
-                title={b.name}
-                meta={[stationCode(b.stationId) || "Station at check-in", phoneTail(b.phone) ? `··${phoneTail(b.phone)}` : null, `${Math.round((b.end - b.start) / 60000)}m`].filter(Boolean).join(" · ")}
-                tone="text-muted-foreground" />
-            ))}
+            {soon.length === 0 ? <Empty text="Nothing in the next 3 hours" /> : soon.map(b => {
+              const key = `${b.bookingId}-${b.start}`
+              const code = stationCode(b.stationId)
+              const pay = b.raw ? paymentLabel(b.raw) : null
+              return (
+                <Popover key={key} open={openBooking === key} onOpenChange={open => setOpenBooking(open ? key : null)}>
+                  <PopoverTrigger asChild>
+                    <button type="button" className={cn("group flex w-full items-center gap-2.5 rounded-lg px-2 py-2 text-left transition-colors hover:bg-muted/60", openBooking === key && "bg-muted/60")}>
+                      <span className="w-[4.25rem] shrink-0 text-xs font-semibold tabular-nums text-foreground">{showClock(istClockOf(b.start))}</span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate text-sm font-medium text-foreground">{b.name}</span>
+                        <span className="mt-0.5 flex flex-wrap items-center gap-1.5 text-[11px] tabular-nums text-muted-foreground">
+                          {code ? <span className="rounded bg-muted px-1.5 py-px font-semibold text-foreground">{code}</span> : <span className="rounded bg-amber-500/15 px-1.5 py-px text-amber-300">No station yet</span>}
+                          {pay && <PayChip label={pay} />}
+                          <span>{durationLabel(Math.round((b.end - b.start) / 60000))}</span>
+                        </span>
+                      </span>
+                      <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent side="left" align="start" sideOffset={8} collisionPadding={12} className="w-[320px] bg-popover p-0">
+                    <div className="space-y-3 p-4 text-sm">
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Upcoming booking{b.bookingId ? ` · #${b.bookingId}` : ""}</p>
+                        <button type="button" aria-label="Close" className="text-muted-foreground hover:text-foreground" onClick={() => setOpenBooking(null)}><X className="h-4 w-4" /></button>
+                      </div>
+                      <BookingSummary booking={b} code={code} />
+                      <UpcomingActionGrid booking={b} code={code || ""} name={stations.find(s => s.id === b.stationId)?.fullName || ""} now={now} host={actions} before={() => setOpenBooking(null)} />
+                    </div>
+                  </PopoverContent>
+                </Popover>
+              )
+            })}
           </RailCard>
         </aside>
       </div>
+      {actions.host}
     </div>
   )
 }
+
+const refreshDashboard = () => { if (typeof window !== "undefined") window.dispatchEvent(new CustomEvent("refresh-dashboard")) }
 
 const TONES = {
   primary: "bg-primary/12 text-primary",
